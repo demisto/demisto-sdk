@@ -110,15 +110,15 @@ class TestFormattingJson:
 
 class TestFormattingIncidentTypes:
     EXTRACTION_MODE_VARIATIONS = [
-        ('All', False),
-        ('Specific', False),
-        (None, True),
-        ('', True),
-        ('all', True)
+        ('All', '', 'All'),
+        ('Specific', '', 'Specific'),
+        (None, 'All', 'All'),
+        ('', 'Specific', 'Specific'),
+        ('all', 'All', 'All')
     ]
 
-    @pytest.mark.parametrize("extract_mode, answer", EXTRACTION_MODE_VARIATIONS)
-    def test_format_autoextract_mode(self, extract_mode, answer, capsys, mocker):
+    @pytest.mark.parametrize("existing_extract_mode, user_answer, expected", EXTRACTION_MODE_VARIATIONS)
+    def test_format_autoextract_mode(self, mocker, existing_extract_mode, user_answer, expected):
         """
         Given
         - an incident type without auto extract mode or with a valid/invalid auto extract mode.
@@ -132,7 +132,7 @@ class TestFormattingIncidentTypes:
         """
         mock_dict = {
             'extractSettings': {
-                'mode': extract_mode,
+                'mode': existing_extract_mode,
                 'fieldCliNameToExtractSettings': {
                     "incident_field": {
                         "extractAsIsIndicatorTypeId": "",
@@ -143,10 +143,44 @@ class TestFormattingIncidentTypes:
             }
         }
         mocker.patch('demisto_sdk.commands.format.update_generic.get_dict_from_file', return_value=(mock_dict, 'mock_type'))
+        mocker.patch('demisto_sdk.commands.format.update_incidenttype.click.prompt', return_value=user_answer)
         formatter = IncidentTypesJSONFormat("test")
         formatter.format_auto_extract_mode()
-        captured = capsys.readouterr()
-        assert captured.out == "hello\n"
+        current_mode = formatter.data.get('extractSettings', {}).get('mode')
+        assert current_mode == expected
+
+    def test_format_autoextract_mode_bad_user_input(self, mocker):
+        """
+        Given
+        - an incident type without auto extract mode.
+
+        When
+        - Running format_auto_extract_mode on it.
+
+        Then
+        - If user's input is invalid, prompt will keep on asking for a valid input.
+        """
+        mock_dict = {
+            'extractSettings': {
+                'fieldCliNameToExtractSettings': {
+                    "incident_field": {
+                        "extractAsIsIndicatorTypeId": "",
+                        "isExtractingAllIndicatorTypes": False,
+                        "extractIndicatorTypesIDs": []
+                    }
+                }
+            }
+        }
+        mocker.patch('demisto_sdk.commands.format.update_generic.get_dict_from_file',
+                     return_value=(mock_dict, 'mock_type'))
+        mock_func = mocker.patch('demisto_sdk.commands.format.update_incidenttype.click.prompt')
+        mock_func.side_effect = ['all', 'a', 'g', 'All']
+
+        formatter = IncidentTypesJSONFormat("test")
+        formatter.format_auto_extract_mode()
+        current_mode = formatter.data.get('extractSettings', {}).get('mode')
+        assert mock_func.call_count == 4
+        assert current_mode == 'All'
 
 
 def test_update_connection_removes_unnecessary_keys(tmpdir, monkeypatch):

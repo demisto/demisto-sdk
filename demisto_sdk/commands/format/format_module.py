@@ -163,20 +163,21 @@ def update_content_entity_ids(files: List[str], verbose: bool):
     """
     if not CONTENT_ENTITY_IDS_TO_UPDATE:
         return
+
+    if verbose:
+        click.echo(f'Collected content entities IDs to update:\n{CONTENT_ENTITY_IDS_TO_UPDATE}\n'
+                   f'Going over files to update these IDs in other files...')
+    for file in files:
+        file_path = file.replace('\\', '/')
         if verbose:
-            click.echo(f'Collected content entities IDs to update:\n{CONTENT_ENTITY_IDS_TO_UPDATE}\n'
-                       f'Going over files to update these IDs in other files...')
-        for file in files:
-            file_path = file.replace('\\', '/')
-            if verbose:
-                click.echo(f'Processing file {file_path} to check for content entities IDs to update')
-            with open(file_path, 'r+') as f:
-                file_content = f.read()
-                for id_to_replace, updated_id in CONTENT_ENTITY_IDS_TO_UPDATE.items():
-                    file_content = file_content.replace(id_to_replace, updated_id)
-                f.seek(0)
-                f.write(file_content)
-                f.truncate()
+            click.echo(f'Processing file {file_path} to check for content entities IDs to update')
+        with open(file_path, 'r+') as f:
+            file_content = f.read()
+            for id_to_replace, updated_id in CONTENT_ENTITY_IDS_TO_UPDATE.items():
+                file_content = file_content.replace(id_to_replace, updated_id)
+            f.seek(0)
+            f.write(file_content)
+            f.truncate()
 
 
 def run_format_on_file(input: str, file_type: str, from_version: str, **kwargs) -> \

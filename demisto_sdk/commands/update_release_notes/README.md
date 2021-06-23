@@ -38,6 +38,10 @@ Supported content entities:
 
     Update all release notes in every pack which has been changed. Please note that the `-u` argument will be applied to **all** changed packs.
 
+* **-f, --force**
+
+    Update the release notes of a pack even if no changes that require update were made.
+
 * **--pre_release**
 
     Indicates that this update is for a pre-release version. The `currentVersion` will change to reflect the pre-release version number.

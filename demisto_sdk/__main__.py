@@ -1036,13 +1036,15 @@ def merge_id_sets(**kwargs):
 )
 @click.option(
     '-u', '--update_type', help="The type of update being done. [major, minor, revision, maintenance, documentation]",
-    type=click.Choice(['major', 'minor', 'revision', 'maintenance', 'documentation'])
+    type=click.Choice(['major', 'minor', 'revision', 'documentation'])
 )
 @click.option(
     '-v', '--version', help="Bump to a specific version."
 )
 @click.option(
-    '--all', help="Update all changed packs", is_flag=True
+    '-g', '--use-git',
+    help="Use git to identify the relevant changed files, will be used by default if '-i' is not set",
+    is_flag=True
 )
 @click.option(
     '--text', help="Text to add to all of the release notes files",
@@ -1060,11 +1062,11 @@ def update_release_notes(**kwargs):
     """Auto-increment pack version and generate release notes template."""
     check_configuration_file('update-release-notes', kwargs)
 
-    if not kwargs.get('all') and not kwargs.get('input'):
+    if not kwargs.get('use_git') and not kwargs.get('input'):
         click.confirm('No specific pack was given, do you want to update all changed packs?', abort=True)
 
     rn_mng = UpdateReleaseNotesManager(user_input=kwargs.get('input'), update_type=kwargs.get('update_type'),
-                                       pre_release=kwargs.get('pre_release'), is_all=kwargs.get('all'),
+                                       pre_release=kwargs.get('pre_release'), is_all=kwargs.get('use_git'),
                                        text=kwargs.get('text'), specific_version=kwargs.get('version'),
                                        id_set_path=kwargs.get('id_set_path'), prev_ver=kwargs.get('prev_ver'))
     rn_mng.manage_rn_update()

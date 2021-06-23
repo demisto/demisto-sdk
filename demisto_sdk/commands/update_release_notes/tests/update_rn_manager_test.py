@@ -65,13 +65,11 @@ class TestUpdateRNManager:
             - case 1: update_api_modules_dependents_rn is called.
             - case 2: update_api_modules_dependents_rn is called.
         """
-        from demisto_sdk.commands.update_release_notes.update_rn_manager import click
         from demisto_sdk.commands.update_release_notes import update_rn_manager
         mock_func = mocker.patch.object(update_rn_manager, 'update_api_modules_dependents_rn')
         mng = UpdateReleaseNotesManager(user_input=path_to_api_module)
         if not path_to_api_module:
             mng.changed_packs_from_git = 'Packs/ApiModules/Scripts/Test1'
-            mocker.patch.object(click, 'confirm', return_value=True)
         mng.handle_api_module_change(set(), set())
         assert mock_func.called
 
@@ -138,18 +136,18 @@ class TestUpdateRNManager:
     def test_manage_rn_update_fail(self, mocker):
         """
         Given:
-            - a specific pack is given and --all flag was given.
+            - a specific pack is given and -g flag was given.
         When:
             - manage_rn_update is called.
         Then:
-            - an error message to remove the --all flag should be printed.
+            - an error message to remove the -g flag should be printed.
         """
         err = mocker.patch('demisto_sdk.commands.update_release_notes.update_rn_manager.print_error')
         with pytest.raises(SystemExit) as pytest_wrapped_e:
             mng = UpdateReleaseNotesManager(user_input='Packs/test1', is_all=True)
             mng.manage_rn_update()
         assert pytest_wrapped_e.type == SystemExit
-        assert 'Please remove the --all flag' in err.call_args[0][0]
+        assert 'Please remove the -g flag' in err.call_args[0][0]
 
     def test_manage_rn_update_success(self, mocker):
         """

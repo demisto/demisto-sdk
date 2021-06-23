@@ -34,9 +34,10 @@ Supported content entities:
     - maintenance (revision)
     - documentation (revision)
 
-* **--all**
+* **-g, --use-git**
 
-    Update all release notes in every pack which has been changed. Please note that the `-u` argument will be applied to **all** changed packs.
+    Uses git to identify the relevant changed files and updates all release notes in every pack which has been changed.
+    Will be used by default if '-i' is not set. Please note that the `-u` argument will be applied to **all** changed packs.
 
 * **--pre_release**
 
@@ -67,7 +68,7 @@ demisto-sdk update-release-notes -i Packs/HelloWorld -u revision
 This will create a new markdown file in the `ReleaseNotes` folder for the HelloWorld pack and bump the `currentVersion` with a **revision** increment.
 <br/><br/>
 ```
-demisto-sdk update-release-notes --all -u revision
+demisto-sdk update-release-notes -g -u revision
 ```
 This will create a new markdown file in the `ReleaseNotes` folder for **all** changed packs and bump the `currentVersion` for **all** changed packs with a **revision** increment.
 <br/><br/>

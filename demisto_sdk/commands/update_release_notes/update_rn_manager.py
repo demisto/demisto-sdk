@@ -2,15 +2,16 @@ import os
 import sys
 from typing import Optional, Tuple
 
-import click
 import git
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK, SKIP_RELEASE_NOTES_FOR_TYPES)
-from demisto_sdk.commands.common.tools import (filter_files_by_type,
+from demisto_sdk.commands.common.tools import (LOG_COLORS,
+                                               filter_files_by_type,
                                                filter_files_on_pack,
                                                get_pack_name,
                                                get_pack_names_from_files,
-                                               print_error, print_warning)
+                                               print_color, print_error,
+                                               print_warning)
 from demisto_sdk.commands.update_release_notes.update_rn import (
     UpdateRN, update_api_modules_dependents_rn)
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
@@ -32,15 +33,16 @@ class UpdateReleaseNotesManager:
         self.id_set_path = id_set_path
         self.prev_ver = prev_ver
         self.packs_existing_rn: dict = {}
+        self.total_updated_packs: set = set()
 
     def manage_rn_update(self):
         """
             Manages the entire update release notes process.
         """
         try:
-            # When a user choose a specific pack to update rn, the --all flag should not be passed
+            # When a user choose a specific pack to update rn, the -g flag should not be passed
             if self.given_pack and self.is_all:
-                print_error('Please remove the --all flag when specifying only one pack.')
+                print_error('Please remove the -g flag when specifying only one pack.')
                 sys.exit(0)
 
             print('Starting to update release notes.')
@@ -57,6 +59,9 @@ class UpdateReleaseNotesManager:
 
             self.handle_api_module_change(modified_files, added_files)
             self.create_release_notes(modified_files, added_files, old_format_files)
+            if len(self.total_updated_packs) > 1:
+                print_color('\nSuccessfully updated the following packs:\n' + '\n'.join(self.total_updated_packs),
+                            LOG_COLORS.GREEN)
             sys.exit(0)
         except Exception as e:
             print_error(f'An error occurred while updating the release notes: {str(e)}')
@@ -101,17 +106,13 @@ class UpdateReleaseNotesManager:
                 added_files: A set of new added files
                 modified_files: A set of modified files
         """
-        # The user gave a path to the api module which was changed
-        if self.given_pack and API_MODULES_PACK in self.given_pack:
-            update_api_modules_dependents_rn(self.pre_release, self.update_type, added_files,
-                                             modified_files, self.id_set_path, self.text)
-
-        # The user didn't give a path to the api module but they have changed.
-        elif self.changed_packs_from_git and API_MODULES_PACK in self.changed_packs_from_git:
-            if click.confirm('Some API modules seem to have changed, '
-                             'would you like to update all the packs that depend on them?'):
-                update_api_modules_dependents_rn(self.pre_release, self.update_type, added_files,
-                                                 modified_files, self.id_set_path, self.text)
+        # The user gave a path to the api module which was changed or he didn't give a path but some api modules
+        # have changed.
+        if (self.given_pack and API_MODULES_PACK in self.given_pack) or (
+                self.changed_packs_from_git and API_MODULES_PACK in self.changed_packs_from_git):
+            updated_packs = update_api_modules_dependents_rn(self.pre_release, self.update_type, added_files,
+                                                             modified_files, self.id_set_path, self.text)
+            self.total_updated_packs = self.total_updated_packs.union(updated_packs)
 
     def create_release_notes(self, modified_files: set, added_files: set, old_format_files: set):
         """ Iterates over the packs which needs an update and creates a release notes for them.
@@ -130,6 +131,8 @@ class UpdateReleaseNotesManager:
 
         elif self.changed_packs_from_git:  # update all changed packs
             for pack in self.changed_packs_from_git:
+                if 'APIModules' in pack:  # We already handled Api Modules so we can skip it.
+                    continue
                 self.create_pack_release_notes(pack, filtered_modified_files, filtered_added_files, old_format_files)
         else:
             print_warning('No changes that require release notes were detected. If such changes were made, '
@@ -161,9 +164,12 @@ class UpdateReleaseNotesManager:
                                       text=self.text,
                                       existing_rn_version_path=existing_rn_version)
             updated = update_pack_rn.execute_update()
-            # If new release notes were created and if previous release notes existed, remove previous
-            if updated and update_pack_rn.should_delete_existing_rn:
-                os.unlink(self.packs_existing_rn[pack])
+            # If new release notes were created add it to the total number of packs that were updated.
+            if updated:
+                self.total_updated_packs.add(pack)
+                # If previous release notes existed, remove previous
+                if update_pack_rn.should_delete_existing_rn:
+                    os.unlink(self.packs_existing_rn[pack])
         else:
             print_warning(f'Either no changes were found in {pack} pack '
                           f'or the changes found should not be documented in the release notes file '

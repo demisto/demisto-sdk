@@ -169,7 +169,7 @@ class UpdateRN:
                             f"https://xsoar.pan.dev/docs/integrations/changelog", LOG_COLORS.GREEN)
                 return True
             else:
-                click.secho("No changes to pack files were detected from the previous time "
+                click.secho(f"No changes to {self.pack} pack files were detected from the previous time "
                             "this command was run. The release notes have not been "
                             "changed.", fg='green')
         else:
@@ -666,7 +666,7 @@ def get_file_description(path, file_type) -> str:
 
 def update_api_modules_dependents_rn(pre_release: bool, update_type: Union[str, None],
                                      added: Union[list, set], modified: Union[list, set],
-                                     id_set_path: Optional[str] = None, text: str = ''):
+                                     id_set_path: Optional[str] = None, text: str = '') -> set:
     """ Updates release notes for any pack that depends on API module that has changed.
 
         :param
@@ -677,21 +677,23 @@ def update_api_modules_dependents_rn(pre_release: bool, update_type: Union[str, 
             id_set_path: The id set path
             text: Text to add to the release notes files
 
-        :rtype: ``str``
+        :rtype: ``set``
         :return
-        The file description if exists otherwise returns %%UPDATE_RN%%
+        A set of updated packs
     """
-    print_warning("Changes introduced to APIModule, trying to update dependent integrations.")
+    total_updated_packs: set = set()
     if not id_set_path:
         if not os.path.isfile(DEFAULT_ID_SET_PATH):
             print_error("Failed to update integrations dependent on the APIModule pack - no id_set.json is "
                         "available. Please run `demisto-sdk create-id-set` to generate it, and rerun this command.")
-            return
+            return total_updated_packs
         id_set_path = DEFAULT_ID_SET_PATH
     with open(id_set_path, 'r') as conf_file:
         id_set = json.load(conf_file)
     api_module_set = get_api_module_ids(added)
     api_module_set = api_module_set.union(get_api_module_ids(modified))
+    print_warning(f"Changes were found in the following APIModules: {api_module_set}, trying to update dependent "
+                  f"integrations.")
     integrations = get_api_module_integrations_set(api_module_set, id_set.get('integrations', []))
     for integration in integrations:
         integration_path = integration.get('file_path')
@@ -699,7 +701,10 @@ def update_api_modules_dependents_rn(pre_release: bool, update_type: Union[str, 
         update_pack_rn = UpdateRN(pack_path=integration_pack, update_type=update_type,
                                   modified_files_in_pack={integration_path}, pre_release=pre_release,
                                   added_files=set(), pack=integration_pack, text=text)
-        update_pack_rn.execute_update()
+        updated = update_pack_rn.execute_update()
+        if updated:
+            total_updated_packs.add(integration_pack)
+    return total_updated_packs
 
 
 def check_docker_image_changed(added_or_modified_yml: str) -> Optional[str]:

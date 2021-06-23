@@ -368,7 +368,7 @@ def test_update_release_on_matadata_change(demisto_client, mocker, repo):
 
     with ChangeCWD(repo.path):
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [UPDATE_RN_COMMAND, "--all"])
+        result = runner.invoke(main, [UPDATE_RN_COMMAND, "-g"])
         print(result.stdout)
     assert result.exit_code == 0
     assert 'No changes that require release notes were detected. If such changes were made, ' \

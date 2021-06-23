@@ -9,7 +9,7 @@ from demisto_sdk.commands.common.update_id_set import re_create_id_set
 
 class IDSetCreator:
 
-    def __init__(self, output: str = '', input: str = '', print_logs: bool = True):
+    def __init__(self, output: str = '', input: str = '', print_logs: bool = True, fail_duplicates: bool = False):
         """IDSetCreator
 
         Args:
@@ -17,18 +17,21 @@ class IDSetCreator:
             output (str, optional): The output path. Set to None to avoid creation of a file. '' means the default path.
              Defaults to 'Tests/id_set.json'.
             print_logs (bool, optional): Print log output. Defaults to True.
+            fail_duplicates(bool, optional): Flag which marks whether create_id_set fails when duplicates
+             are found or not
         """
         self.output = output
         self.input = input
         self.print_logs = print_logs
+        self.fail_duplicates = fail_duplicates
         self.id_set = OrderedDict()  # type: ignore
 
-    def create_id_set(self, fail_on_duplicates=False):
+    def create_id_set(self):
         self.id_set = re_create_id_set(
             id_set_path=self.output,
             pack_to_create=self.input,
             print_logs=self.print_logs,
-            fail_on_duplicates=fail_on_duplicates
+            fail_on_duplicates=self.fail_duplicates
         )
         self.add_command_to_implementing_integrations_mapping()
         self.save_id_set()

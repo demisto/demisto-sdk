@@ -1,5 +1,6 @@
 import os
 import re
+from typing import Optional
 
 from demisto_sdk.commands.common.constants import (API_MODULES_PACK,
                                                    DEPRECATED_REGEXES,
@@ -9,11 +10,10 @@ from demisto_sdk.commands.common.hook_validations.content_entity_validator impor
     ContentEntityValidator
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
-from demisto_sdk.commands.common.tools import (get_core_pack_list,
-                                               get_files_in_dir, get_pack_name,
-                                               get_file_version_suffix_if_exists,
-                                               server_version_compare)
-from typing import Optional
+from demisto_sdk.commands.common.tools import (
+    get_core_pack_list, get_file_version_suffix_if_exists, get_files_in_dir,
+    get_pack_name, server_version_compare)
+
 
 class ScriptValidator(ContentEntityValidator):
     """ScriptValidator is designed to validate the correctness of the file structure we enter to content repo. And

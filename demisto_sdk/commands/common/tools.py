@@ -1555,9 +1555,12 @@ def arg_to_list(arg: Union[str, List[str]], separator: str = ",") -> List[str]:
     return [arg]
 
 
-def get_file_version_suffix_if_exists(current_file: Dict) -> Optional[str]:
+def get_file_version_suffix_if_exists(current_file: Dict, check_in_display=False) -> Optional[str]:
     versioned_file_regex = r'v([0-9]+)$'
-    matching_regex = re.findall(versioned_file_regex, current_file.get('display'))
+    name = current_file.get('display') if check_in_display else current_file.get('name')
+    if not name:
+        return None
+    matching_regex = re.findall(versioned_file_regex, name.lower())
     if matching_regex:
         return matching_regex[-1]
     return None

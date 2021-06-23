@@ -1,7 +1,7 @@
 import os
 import re
 from typing import Dict
-
+from typing import Optional
 import yaml
 from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
                                                    DBOT_SCORES_DICT,
@@ -26,7 +26,7 @@ from demisto_sdk.commands.common.hook_validations.docker import \
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.tools import (
     _get_file_id, compare_context_path_in_yml_and_readme, get_core_pack_list,
-    get_files_in_dir, get_pack_name, is_v2_file, print_error,
+    get_files_in_dir, get_pack_name, get_file_version_suffix_if_exists, print_error,
     server_version_compare)
 
 
@@ -954,13 +954,14 @@ class IntegrationValidator(ContentEntityValidator):
 
     def is_valid_display_name(self):
         # type: () -> bool
-        if not is_v2_file(self.current_file, check_in_display=True):
+        maybe_version_number: Optional[str] = get_file_version_suffix_if_exists(self.current_file)
+        if not maybe_version_number:
             return True
         else:
             display_name = self.current_file.get('display')
-            correct_name = " v2"
+            correct_name = f' v{maybe_version_number}'
             if not display_name.endswith(correct_name):  # type: ignore
-                error_message, error_code = Errors.invalid_v2_integration_name()
+                error_message, error_code = Errors.invalid_version_integration_name(maybe_version_number)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
 

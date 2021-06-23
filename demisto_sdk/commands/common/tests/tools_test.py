@@ -36,10 +36,11 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, arg_to_list,
                                                get_ryaml, get_to_version,
                                                has_remote_configured,
                                                is_origin_content_repo,
-                                               is_pack_path, is_v2_file,
+                                               is_pack_path,
                                                retrieve_file_ending,
                                                run_command_os,
-                                               server_version_compare)
+                                               server_version_compare,
+                                               get_file_version_suffix_if_exists)
 from demisto_sdk.tests.constants_test import (IGNORED_PNG,
                                               INDICATORFIELD_EXTRA_FIELDS,
                                               SOURCE_FORMAT_INTEGRATION_COPY,
@@ -745,6 +746,11 @@ V2_WRONG_DISPLAY = {"display": "integrationname V2", "name": "integrationname v2
 NOT_V2_VIA_DISPLAY_NOR_NAME = {"display": "integrationname", "name": "integrationv2name", "id": "integrationv2name"}
 NOT_V2_VIA_DISPLAY = {"display": "integrationname", "name": "integrationname v2", "id": "integrationv2name"}
 NOT_V2_VIA_NAME = {"display": "integrationname V2", "name": "integrationname", "id": "integrationv2name"}
+V3_VALID = {"display": "integrationname v3", "name": "integrationname v3", "id": "integrationname v3"}
+V3_WRONG_DISPLAY = {"display": "integrationname V2", "name": "integrationname v3", "id": "integrationname V3"}
+NOT_V3_VIA_DISPLAY_NOR_NAME = {"display": "integrationname", "name": "integrationv3name", "id": "integrationv3name"}
+NOT_V3_VIA_DISPLAY = {"display": "integrationname", "name": "integrationname v3", "id": "integrationv3name"}
+NOT_V3_VIA_NAME = {"display": "integrationname V3", "name": "integrationname", "id": "integrationv3Gname"}
 V2_NAME_INPUTS = [
     (V2_VALID, True),
     (V2_WRONG_DISPLAY, True),
@@ -755,11 +761,11 @@ V2_NAME_INPUTS = [
 
 
 @pytest.mark.parametrize("current, answer", V2_NAME_INPUTS)
-def test_is_v2_file_via_name(current, answer):
-    assert is_v2_file(current) is answer
+def test_get_file_version_suffix_if_exists_via_name(current, answer):
+    assert get_file_version_suffix_if_exists(current) is answer
 
 
-V2_DISPLAY_INPUTS = [
+GET_FILE_VERSION_SUFFIX_IF_EXIST_INPUTS = [
     (V2_VALID, True),
     (V2_WRONG_DISPLAY, True),
     (NOT_V2_VIA_DISPLAY, False),
@@ -768,9 +774,9 @@ V2_DISPLAY_INPUTS = [
 ]
 
 
-@pytest.mark.parametrize("current, answer", V2_DISPLAY_INPUTS)
-def test_is_v2_file_via_display(current, answer):
-    assert is_v2_file(current, check_in_display=True) is answer
+@pytest.mark.parametrize("current, answer", GET_FILE_VERSION_SUFFIX_IF_EXIST_INPUTS)
+def test_get_file_version_suffix_if_exists_via_display(current, answer):
+    assert get_file_version_suffix_if_exists(current, check_in_display=True) is answer
 
 
 def test_get_to_version_with_to_version(repo):

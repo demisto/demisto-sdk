@@ -79,7 +79,7 @@ class UpdateReleaseNotesManager:
         """
         try:
             validate_manager = ValidateManager(skip_pack_rn_validation=True, prev_ver=self.prev_ver,
-                                               silence_init_prints=True)
+                                               silence_init_prints=True, skip_conf_json=True, check_is_unskipped=False)
             validate_manager.setup_git_params()
             return validate_manager.get_changed_files_from_git()
         except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError):

@@ -91,6 +91,7 @@ ERROR_CODE = {
     "changed_integration_yml_fields": {'code': "IN138", "ui_applicable": False, 'related_field': 'script'},
     "incident_in_command_name_or_args": {'code': "IN139", "ui_applicable": False,
                                          'related_field': 'script.commands.name'},
+    "integration_is_skipped": {'code': "IN140", 'ui_applicable': False, 'related_field': ''},
     "invalid_v2_script_name": {'code': "SC100", 'ui_applicable': True, 'related_field': 'name'},
     "invalid_deprecated_script": {'code': "SC101", 'ui_applicable': False, 'related_field': 'comment'},
     "invalid_command_name_in_script": {'code': "SC102", 'ui_applicable': False, 'related_field': ''},
@@ -132,6 +133,7 @@ ERROR_CODE = {
     "integration_not_registered": {'code': "CJ102", 'ui_applicable': False, 'related_field': ''},
     "no_test_playbook": {'code': "CJ103", 'ui_applicable': False, 'related_field': ''},
     "test_playbook_not_configured": {'code': "CJ104", 'ui_applicable': False, 'related_field': ''},
+    "all_entity_test_playbooks_are_skipped": {'code': "CJ105", 'ui_applicable': False, 'related_field': ''},
     "missing_release_notes": {'code': "RN100", 'ui_applicable': False, 'related_field': ''},
     "no_new_release_notes": {'code': "RN101", 'ui_applicable': False, 'related_field': ''},
     "release_notes_not_formatted_correctly": {'code': "RN102", 'ui_applicable': False, 'related_field': ''},
@@ -165,7 +167,8 @@ ERROR_CODE = {
     "description_contains_contrib_details": {'code': "DS105", 'ui_applicable': False,
                                              'related_field': 'detaileddescription'},
     "invalid_description_name": {'code': "DS106", 'ui_applicable': False, 'related_field': ''},
-    "description_contains_demisto_word": {'code': "DS107", 'ui_applicable': True, 'related_field': 'detaileddescription'},
+    "description_contains_demisto_word": {'code': "DS107", 'ui_applicable': True,
+                                          'related_field': 'detaileddescription'},
     "invalid_incident_field_name": {'code': "IF100", 'ui_applicable': True, 'related_field': 'name'},
     "invalid_incident_field_content_key_value": {'code': "IF101", 'ui_applicable': False, 'related_field': 'content'},
     "invalid_incident_field_system_key_value": {'code': "IF102", 'ui_applicable': False, 'related_field': 'system'},
@@ -220,6 +223,7 @@ ERROR_CODE = {
     "empty_readme_error": {'code': "RM104", 'ui_applicable': False, 'related_field': ''},
     "readme_equal_description_error": {'code': "RM105", 'ui_applicable': False, 'related_field': ''},
     "readme_contains_demisto_word": {'code': "RM106", 'ui_applicable': False, 'related_field': ''},
+    "template_sentence_in_readme": {'code': "RM107", 'ui_applicable': False, 'related_field': ''},
     "wrong_version_reputations": {'code': "RP100", 'ui_applicable': False, 'related_field': 'version'},
     "reputation_expiration_should_be_numeric": {'code': "RP101", 'ui_applicable': True, 'related_field': 'expiration'},
     "reputation_id_and_details_not_equal": {'code': "RP102", 'ui_applicable': False, 'related_field': 'id'},
@@ -264,7 +268,9 @@ ERROR_CODE = {
     "invalid_version_in_layoutscontainer": {'code': "LO101", 'ui_applicable': False, 'related_field': 'version'},
     "invalid_file_path_layout": {'code': "LO102", 'ui_applicable': False, 'related_field': ''},
     "invalid_file_path_layoutscontainer": {'code': "LO103", 'ui_applicable': False, 'related_field': ''},
-    "invalid_incident_field_in_layout": {'code': "LO104", 'ui_applicable': False, 'related_field': ''}
+    "invalid_incident_field_in_layout": {'code': "LO104", 'ui_applicable': False, 'related_field': ''},
+    "xsoar_config_file_is_not_json": {'code': "XC100", 'ui_applicable': False, 'related_field': ''},
+    "xsoar_config_file_malformed": {'code': "XC101", 'ui_applicable': False, 'related_field': ''},
 }
 
 
@@ -1025,9 +1031,9 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def description_missing_in_beta_integration():
-        return f"No detailed description file was found in the package. Please add one, " \
-               f"and make sure it includes the beta disclaimer note." \
-               f"Add the following to the detailed description:\n{BETA_INTEGRATION_DISCLAIMER}"
+        return f"No detailed description file (<integration_name>_description.md) was found in the package." \
+               f" Please add one, and make sure it includes the beta disclaimer note." \
+               f" Add the following to the detailed description:\n{BETA_INTEGRATION_DISCLAIMER}"
 
     @staticmethod
     @error_code_decorator
@@ -1329,6 +1335,11 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def template_sentence_in_readme(line_nums):
+        return f"Please update the integration version differences section in lines: {line_nums}."
+
+    @staticmethod
+    @error_code_decorator
     def image_path_error(path, alternative_path):
         return f'Detected following image url:\n{path}\n' \
                f'Which is not the raw link. You probably want to use the following raw image url:\n{alternative_path}'
@@ -1580,6 +1591,21 @@ class Errors:
                f"must be with equal value. "
 
     @staticmethod
+    @error_code_decorator
+    def integration_is_skipped(integration_id):
+        return f"The integration {integration_id} is currently in skipped. Please add working tests and unskip."
+
+    @staticmethod
+    @error_code_decorator
+    def all_entity_test_playbooks_are_skipped(entity_id):
+        return f"All test playbooks for {entity_id} in this pack are currently skipped. " \
+               f"Please unskip at least one of the relevant test playbooks.\n " \
+               f"You can do this by deleting the line relevant to one of the test playbooks " \
+               f"in the 'skipped_tests' section inside the conf.json file and deal " \
+               f"with the matching issue,\n  or create a new active test playbook " \
+               f"and add the id to the 'tests' field in the yml."
+
+    @staticmethod
     def wrong_filename(file_type):
         return 'This is not a valid {} filename.'.format(file_type)
 
@@ -1625,3 +1651,14 @@ class Errors:
     @error_code_decorator
     def playbook_condition_has_no_else_path(tasks_ids):
         return f'Playbook conditional tasks with ids: {" ".join([str(id) for id in tasks_ids])} have no else path'
+
+    @staticmethod
+    @error_code_decorator
+    def xsoar_config_file_is_not_json(file_path):
+        return f"Could not load {file_path} as a JSON XSOAR configuration file."
+
+    @staticmethod
+    @error_code_decorator
+    def xsoar_config_file_malformed(configuration_file_path, schema_file_path, errors_table):
+        return f'Errors were found in the configuration file: "{configuration_file_path}" ' \
+               f'with schema "{schema_file_path}":\n {errors_table}'

@@ -1000,7 +1000,7 @@ def create_id_set(**kwargs):
     """Create the content dependency tree by ids."""
     check_configuration_file('create-id-set', kwargs)
     id_set_creator = IDSetCreator(**kwargs)
-    fail_on_duplicates = kwargs.get('fail-duplicates')
+    fail_on_duplicates = kwargs.get('fail_duplicates')
     id_set_creator.create_id_set(fail_on_duplicates)
 
 

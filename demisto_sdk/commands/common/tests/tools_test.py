@@ -774,6 +774,21 @@ def test_get_file_version_suffix_if_exists_via_display(current, answer):
     assert get_file_version_suffix_if_exists(current, check_in_display=True) is answer
 
 
+def test_test_get_file_version_suffix_if_exists_no_name_and_no_display():
+    """
+    Given:
+    - 'current_file': Dict representing YML data of an integration or script.
+
+    When:
+    - Invalid dict given, not containing display and name values.
+
+    Then:
+    - Ensure None is returned.
+    """
+    assert get_file_version_suffix_if_exists(dict(), check_in_display=True) is None
+    assert get_file_version_suffix_if_exists(dict(), check_in_display=False) is None
+
+
 def test_get_to_version_with_to_version(repo):
     pack = repo.create_pack('Pack')
     integration = pack.create_integration('INT', yml={'toversion': '4.5.0'})

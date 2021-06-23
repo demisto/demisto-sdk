@@ -263,6 +263,13 @@ class TestCreateMetadata:
         }
 
 
+def test_pack_init_without_filling_metadata(monkeypatch, mocker, initiator):
+    monkeypatch.setattr('builtins.input', 'n')
+    mocker.patch.object(Initiator, 'create_new_directory', return_value=True)
+    user_choice = initiator.pack_init()
+    assert user_choice
+
+
 def test_get_valid_user_input(monkeypatch, initiator):
     monkeypatch.setattr('builtins.input', generate_multiple_inputs(deque(['InvalidInput', '100', '1'])))
     user_choice = initiator.get_valid_user_input(INTEGRATION_CATEGORIES, 'Choose category')

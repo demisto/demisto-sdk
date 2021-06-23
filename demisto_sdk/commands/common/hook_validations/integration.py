@@ -955,7 +955,7 @@ class IntegrationValidator(ContentEntityValidator):
     def is_valid_display_name(self):
         # type: () -> bool
         version_number: Optional[str] = get_file_version_suffix_if_exists(self.current_file,
-                                                                                check_in_display=True)
+                                                                          check_in_display=True)
         if not version_number:
             return True
         else:

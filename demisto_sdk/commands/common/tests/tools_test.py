@@ -1,10 +1,13 @@
 import glob
 import json
 import os
+import shutil
 from pathlib import Path
 from typing import List, Union
 
+import git
 import pytest
+import requests
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    LAYOUTS_DIR, PACKS_DIR,
@@ -327,6 +330,40 @@ class TestGetRemoteFile:
     def test_should_file_skip_validation_positive(self, file_path):
         should_skip = tools.should_file_skip_validation(file_path)
         assert should_skip
+
+
+class TestGetRemoteFileLocally:
+    REPO_NAME = 'example_repo'
+    FILE_NAME = 'somefile.json'
+    FILE_CONTENT = '{"id": "some_file"}'
+
+    def setup_method(self):
+        # create local git repo
+        example_repo = git.Repo.init(self.REPO_NAME)
+        example_repo.git.checkout('-b', 'origin/master')
+        with open(os.path.join(self.REPO_NAME, self.FILE_NAME), 'w+') as somefile:
+            somefile.write(self.FILE_CONTENT)
+        example_repo.git.add(self.FILE_NAME)
+        example_repo.git.config('user.email', 'automatic@example.com')
+        example_repo.git.config('user.name', 'AutomaticTest')
+        example_repo.git.commit('-m', 'test_commit', '-a')
+        example_repo.git.checkout('-b', 'master')
+
+    def test_get_file_from_master_when_in_private_repo(self, mocker):
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+
+        class Response:
+            ok = False
+
+        mocker.patch.object(requests, 'get', return_value=Response)
+        mocker.patch.object(os, 'getenv', return_value=False)
+        some_file_json = tools.get_remote_file(os.path.join(self.REPO_NAME, self.FILE_NAME),
+                                               github_repo=self.REPO_NAME)
+        assert some_file_json
+        assert some_file_json['id'] == 'some_file'
+
+    def teardown_method(self):
+        shutil.rmtree(self.REPO_NAME)
 
 
 class TestServerVersionCompare:

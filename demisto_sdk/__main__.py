@@ -918,6 +918,10 @@ def init(**kwargs):
     is_flag=True)
 @click.option(
     "-v", "--verbose", is_flag=True, help="Verbose output - mainly for debugging purposes.")
+@click.option(
+    "--input-old-version", help="Path of the old integration version yml file.")
+@click.option(
+    "--skip-breaking-changes", is_flag=True, help="Skip generating of breaking changes section.")
 def generate_docs(**kwargs):
     """Generate documentation for integration, playbook or script from yaml file."""
     check_configuration_file('generate-docs', kwargs)
@@ -929,6 +933,8 @@ def generate_docs(**kwargs):
     limitations = kwargs.get('limitations')
     insecure: bool = kwargs.get('insecure', False)
     verbose: bool = kwargs.get('verbose', False)
+    input_old_version: str = kwargs.get('input_old_version', '')
+    skip_breaking_changes: bool = kwargs.get('skip_breaking_changes', False)
 
     # validate inputs
     if input_path and not os.path.isfile(input_path):
@@ -955,6 +961,14 @@ def generate_docs(**kwargs):
         print_error('File is not an Integration, Script or a Playbook.')
         return 1
 
+    if input_old_version and not os.path.isfile(input_old_version):
+        print_error(F'Input old version file {input_old_version} was not found.')
+        return 1
+
+    if input_old_version and not input_old_version.lower().endswith('.yml'):
+        print_error(F'Input old version {input_old_version} is not a valid yml file.')
+        return 1
+
     print(f'Start generating {file_type.value} documentation...')
     if file_type == FileType.INTEGRATION:
         use_cases = kwargs.get('use_cases')
@@ -962,7 +976,8 @@ def generate_docs(**kwargs):
         return generate_integration_doc(input_path=input_path, output=output_path, use_cases=use_cases,
                                         examples=examples, permissions=permissions,
                                         command_permissions=command_permissions, limitations=limitations,
-                                        insecure=insecure, verbose=verbose, command=command)
+                                        insecure=insecure, verbose=verbose, command=command,
+                                        input_old_version=input_old_version, skip_breaking_changes=skip_breaking_changes)
     elif file_type == FileType.SCRIPT:
         return generate_script_doc(input_path=input_path, output=output_path, examples=examples,
                                    permissions=permissions,
@@ -1534,13 +1549,20 @@ def doc_review(**kwargs):
     '-n', '--new', type=str, help='The path to the new version of the integration', required=True)
 @click.option(
     '-o', '--old', type=str, help='The path to the old version of the integration', required=True)
+@click.option(
+    '--docs-format', is_flag=True,
+    help='will return the output in docs format for the version differences section in readme')
 def integration_diff(**kwargs):
     """
     Checks for differences between two versions of an integration, and verified that the new version covered the old version.
     """
 
-    integration_diff_detector = IntegrationDiffDetector(kwargs.get('new', ''), kwargs.get('old', ''))
-    result = integration_diff_detector.check_diff()
+    integration_diff_detector = IntegrationDiffDetector(
+        new=kwargs.get('new', ''),
+        old=kwargs.get('old', ''),
+        docs_format=kwargs.get('docs_format', False)
+    )
+    result = integration_diff_detector.check_different()
 
     if result:
         sys.exit(0)

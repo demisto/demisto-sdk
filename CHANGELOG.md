@@ -1,5 +1,5 @@
 # Changelog
-
+* Added the `--fail-duplicates` flag for the **create-id-set** command which will fail the command if duplicates are found.
 
 # 1.4.0
 * Enable passing a comma-separated list of paths for the `--input` option of the **lint** command.

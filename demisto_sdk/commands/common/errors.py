@@ -1030,9 +1030,9 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def description_missing_in_beta_integration():
-        return f"No detailed description file was found in the package. Please add one, " \
-               f"and make sure it includes the beta disclaimer note." \
-               f"Add the following to the detailed description:\n{BETA_INTEGRATION_DISCLAIMER}"
+        return f"No detailed description file (<integration_name>_description.md) was found in the package." \
+               f" Please add one, and make sure it includes the beta disclaimer note." \
+               f" Add the following to the detailed description:\n{BETA_INTEGRATION_DISCLAIMER}"
 
     @staticmethod
     @error_code_decorator

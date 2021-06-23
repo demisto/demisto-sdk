@@ -602,7 +602,7 @@ class TestGenerateIntegrationDoc:
     """
         readme = os.path.join(os.path.dirname(TEST_INTEGRATION_2_PATH), 'README.md')
         # Generate doc
-        generate_integration_doc(TEST_INTEGRATION_2_PATH)
+        generate_integration_doc(TEST_INTEGRATION_2_PATH, skip_breaking_changes=True)
         with open(readme) as readme_file:
             with open(os.path.join(os.path.dirname(TEST_INTEGRATION_2_PATH), 'README.md')) as new_readme:
                 readme_data = readme_file.read()

@@ -741,39 +741,36 @@ def test_arg_to_list(arg: Union[List[str], str], expected_result: List[str]):
 
 
 V2_VALID = {"display": "integrationname v2", "name": "integrationname v2", "id": "integrationname v2"}
-V3_VALID = {"display": "integrationname v3", "name": "integrationname v3", "id": "integrationname v3"}
 V2_WRONG_DISPLAY = {"display": "integrationname V2", "name": "integrationname v2", "id": "integrationname V2"}
 NOT_V2_VIA_DISPLAY_NOR_NAME = {"display": "integrationname", "name": "integrationv2name", "id": "integrationv2name"}
 NOT_V2_VIA_DISPLAY = {"display": "integrationname", "name": "integrationname v2", "id": "integrationv2name"}
 NOT_V2_VIA_NAME = {"display": "integrationname V2", "name": "integrationname", "id": "integrationv2name"}
 V2_NAME_INPUTS = [
-    (V2_VALID, 'v2'),
-    (V3_VALID, 'v3'),
-    (V2_WRONG_DISPLAY, 'v2'),
-    (NOT_V2_VIA_DISPLAY_NOR_NAME, ''),
-    (NOT_V2_VIA_NAME, ''),
-    (NOT_V2_VIA_DISPLAY, 'v2')
+    (V2_VALID, True),
+    (V2_WRONG_DISPLAY, True),
+    (NOT_V2_VIA_DISPLAY_NOR_NAME, False),
+    (NOT_V2_VIA_NAME, False),
+    (NOT_V2_VIA_DISPLAY, True)
 ]
 
 
 @pytest.mark.parametrize("current, answer", V2_NAME_INPUTS)
 def test_is_v2_file_via_name(current, answer):
-    assert is_v2_file(current) == answer
+    assert is_v2_file(current) is answer
 
 
 V2_DISPLAY_INPUTS = [
-    (V2_VALID, 'v2'),
-    (V3_VALID, 'v3'),
-    (V2_WRONG_DISPLAY, 'v2'),
-    (NOT_V2_VIA_DISPLAY, ''),
-    (NOT_V2_VIA_NAME, 'v2'),
-    (NOT_V2_VIA_DISPLAY_NOR_NAME, '')
+    (V2_VALID, True),
+    (V2_WRONG_DISPLAY, True),
+    (NOT_V2_VIA_DISPLAY, False),
+    (NOT_V2_VIA_NAME, True),
+    (NOT_V2_VIA_DISPLAY_NOR_NAME, False)
 ]
 
 
 @pytest.mark.parametrize("current, answer", V2_DISPLAY_INPUTS)
 def test_is_v2_file_via_display(current, answer):
-    assert is_v2_file(current, check_in_display=True) == answer
+    assert is_v2_file(current, check_in_display=True) is answer
 
 
 def test_get_to_version_with_to_version(repo):

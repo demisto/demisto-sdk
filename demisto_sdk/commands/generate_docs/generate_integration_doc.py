@@ -120,7 +120,7 @@ def generate_integration_doc(
             docs.extend(add_lines(yml_data.get('description')))
             docs.extend(['This integration was integrated and tested with version xx of {}'.format(yml_data['name']), ''])
             # Checks if the integration is a new version
-            integration_version = is_v2_file(current_file=yml_data, check_in_display=True)
+            integration_version = re.findall("[vV][2-9]$", yml_data.get("display", ""))
             if integration_version and not skip_breaking_changes:
                 docs.extend(['Some changes have been made that might affect your existing content. '
                              '\nIf you are upgrading from a previous of this integration, see [Breaking Changes]'

@@ -1555,25 +1555,19 @@ def arg_to_list(arg: Union[str, List[str]], separator: str = ",") -> List[str]:
 
 
 def is_v2_file(current_file, check_in_display=False):
-    """
-    Check if the specific integration of script is a v2(+), and gets the specific version if so.
-
-    Args:
-        current_file: The file yml date to check.
-        check_in_display: Whether to check in the display name.
-
+    """Check if the specific integration of script is a v2
     Returns:
-        str. The specific version if it's an v2(+), and empty str if not.
+        bool. Whether the file is a v2 file
     """
     # integrations should be checked via display field, other entities should check name field
     if check_in_display:
         name = current_file.get('display', '')
     else:
         name = current_file.get('name', '')
-    suffix = re.findall("[vV][2-9]$", name)
-    if suffix:
-        return suffix[0].lower()
-    return ''
+    suffix = str(name[-2:].lower())
+    if suffix != "v2":
+        return False
+    return True
 
 
 def get_all_incident_and_indicator_fields_from_id_set(id_set_file, entity_type):

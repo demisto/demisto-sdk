@@ -32,8 +32,9 @@ from demisto_sdk.commands.common.constants import (
     PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
     PACKS_README_FILE_NAME, PLAYBOOKS_DIR, RELEASE_NOTES_DIR,
     RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR,
-    TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, DemistoException,
+    TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, XSOAR_CONFIG_FILE,
     FileType, GithubContentConfig, urljoin)
+from demisto_sdk.commands.common.git_util import GitUtil
 from packaging.version import parse
 from ruamel.yaml import YAML
 
@@ -207,9 +208,10 @@ def get_remote_file(
     """
     github_config = GithubContentConfig(github_repo)
     # 'origin/' prefix is used to compared with remote branches but it is not a part of the github url.
-    tag = tag.replace('origin/', '').replace('demisto/', '')
+    github_tag = tag.replace('origin/', '').replace('demisto/', '')
+    local_content = '{}'
 
-    github_path = urljoin(github_config.CONTENT_GITHUB_LINK, tag, full_file_path)
+    github_path = urljoin(github_config.CONTENT_GITHUB_LINK, github_tag, full_file_path)
     try:
         external_repo = is_external_repository()
         if external_repo:
@@ -232,12 +234,20 @@ def get_remote_file(
                 res = requests.get(github_path, verify=False, timeout=10)
                 # And maybe it's just not defined. 😢
                 if not res.ok:
-                    raise DemistoException(
-                        f'You are working in a private repository: "{githhub_config.CURRENT_REPOSITORY}".\n'
-                        f'Please define your github token in your environment.\n'
-                        f'`export {githhub_config.Credentials.ENV_TOKEN_NAME}=<TOKEN>`',
-                        LOG_COLORS.RED
-                    )
+                    if not suppress_print:
+                        print_warning(
+                            f'You are working in a private repository: "{githhub_config.CURRENT_REPOSITORY}".\n'
+                            f'The github token in your environment is undefined.\n'
+                            f'Getting file from local repository instead. \n'
+                            f'If you wish to get the file from the remote repository, \n'
+                            f'Please define your github token in your environment.\n'
+                            f'`export {githhub_config.Credentials.ENV_TOKEN_NAME}=<TOKEN>`'
+                        )
+                    # Get from local git origin/master instead
+                    repo = git.Repo(os.path.dirname(full_file_path), search_parent_directories=True)
+                    repo_git_util = GitUtil(repo)
+                    github_path = repo_git_util.get_local_remote_file_path(full_file_path, tag)
+                    local_content = repo_git_util.get_local_remote_file_content(github_path)
         else:
             res = requests.get(github_path, verify=False, timeout=10)
             res.raise_for_status()
@@ -249,12 +259,13 @@ def get_remote_file(
                 f'Reason: {exc}'
             )
         return {}
+    file_content = res.content if res.ok else local_content
     if return_content:
-        return res.content
+        return file_content
     if full_file_path.endswith('json'):
-        details = res.json()
+        details = res.json() if res.ok else json.loads(local_content)
     elif full_file_path.endswith('yml'):
-        details = yaml.safe_load(res.content)
+        details = yaml.safe_load(file_content)  # type: ignore[arg-type]
     # if neither yml nor json then probably a CHANGELOG or README file.
     else:
         details = {}
@@ -992,6 +1003,9 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
 
     if path.endswith('.js'):
         return FileType.JAVASCRIPT_FILE
+
+    if path.endswith(XSOAR_CONFIG_FILE):
+        return FileType.XSOAR_CONFIG
 
     try:
         if not _dict and not file_type:

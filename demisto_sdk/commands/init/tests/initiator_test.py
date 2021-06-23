@@ -264,10 +264,10 @@ class TestCreateMetadata:
 
 
 def test_pack_init_without_filling_metadata(monkeypatch, mocker, initiator):
-    monkeypatch.setattr('builtins.input', 'n')
+    monkeypatch.setattr('builtins.input', lambda _: 'n')
     mocker.patch.object(Initiator, 'create_new_directory', return_value=True)
-    user_choice = initiator.pack_init()
-    assert user_choice
+    mocker.patch.object(os, 'mkdir', return_value=None)
+    assert initiator.pack_init()
 
 
 def test_get_valid_user_input(monkeypatch, initiator):

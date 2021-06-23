@@ -108,6 +108,47 @@ class TestFormattingJson:
                              "  Please specify a correct output."
 
 
+class TestFormattingIncidentTypes:
+    EXTRACTION_MODE_VARIATIONS = [
+        ('All', False),
+        ('Specific', False),
+        (None, True),
+        ('', True),
+        ('all', True)
+    ]
+
+    @pytest.mark.parametrize("extract_mode, answer", EXTRACTION_MODE_VARIATIONS)
+    def test_format_autoextract_mode(self, extract_mode, answer, capsys, mocker):
+        """
+        Given
+        - an incident type without auto extract mode or with a valid/invalid auto extract mode.
+
+        When
+        - Running format_auto_extract_mode on it.
+
+        Then
+        - If the auto extract mode is valid, then no format is needed.
+        - If the auto extract mode is invalid or doesn't exist, the user will choose between the two options.
+        """
+        mock_dict = {
+            'extractSettings': {
+                'mode': extract_mode,
+                'fieldCliNameToExtractSettings': {
+                    "incident_field": {
+                        "extractAsIsIndicatorTypeId": "",
+                        "isExtractingAllIndicatorTypes": False,
+                        "extractIndicatorTypesIDs": []
+                    }
+                }
+            }
+        }
+        mocker.patch('demisto_sdk.commands.format.update_generic.get_dict_from_file', return_value=(mock_dict, 'mock_type'))
+        formatter = IncidentTypesJSONFormat("test")
+        formatter.format_auto_extract_mode()
+        captured = capsys.readouterr()
+        assert captured.out == "hello\n"
+
+
 def test_update_connection_removes_unnecessary_keys(tmpdir, monkeypatch):
     """
     Given

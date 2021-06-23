@@ -161,7 +161,8 @@ def update_content_entity_ids(files: List[str], verbose: bool):
         verbose (bool): whether to print
 
     """
-    if CONTENT_ENTITY_IDS_TO_UPDATE:
+    if not CONTENT_ENTITY_IDS_TO_UPDATE:
+        return
         if verbose:
             click.echo(f'Collected content entities IDs to update:\n{CONTENT_ENTITY_IDS_TO_UPDATE}\n'
                        f'Going over files to update these IDs in other files...')

@@ -5,8 +5,8 @@ from typing import Any, Dict, List, Optional, Tuple
 from demisto_sdk.commands.common.constants import (
     CONTEXT_OUTPUT_README_TABLE_HEADER, DOCS_COMMAND_SECTION_REGEX)
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_yaml,
-                                               print_color, print_error,
-                                               print_warning, is_v2_file)
+                                               is_v2_file, print_color,
+                                               print_error, print_warning)
 from demisto_sdk.commands.generate_docs.common import (
     add_lines, build_example_dict, generate_numbered_section, generate_section,
     generate_table_section, save_output, string_escape_md)

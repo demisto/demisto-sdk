@@ -79,7 +79,7 @@ class TestDockerImagesCollection:
         integration_path: Path = create_integration(content_path=demisto_content,
                                                     image=exp_image,
                                                     image_py_num=exp_py_num)
-        runner = initiate_linter(demisto_content, integration_path)
+        runner = initiate_linter(demisto_content, integration_path, True)
         runner._gather_facts(modules={})
 
         assert runner._facts["images"][0][0] == exp_image

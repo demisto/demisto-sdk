@@ -568,10 +568,13 @@ class LintManager:
                             if tests:
                                 print_v(wrapper_docker_image.fill(image['image']), log_verbose=self._verbose)
                                 for test_case in tests:
-                                    if test_case.get("call", {}).get("outcome") != "failed":
+                                    outcome = test_case.get("call", {}).get("outcome")
+                                    if outcome != "failed":
                                         name = re.sub(pattern=r"\[.*\]",
                                                       repl="",
                                                       string=test_case.get("name"))
+                                        if outcome and outcome != "passed":
+                                            name = f'{name} ({outcome.upper()})'
                                         print_v(wrapper_test.fill(name), log_verbose=self._verbose)
 
         # Log failed unit-tests

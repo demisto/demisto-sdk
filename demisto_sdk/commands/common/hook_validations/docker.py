@@ -50,15 +50,12 @@ class DockerImageValidator(BaseValidator):
             return True
 
         if not self.docker_image_latest_tag:
-            self.is_valid = False
-
-        elif not self.is_docker_image_latest_tag():
-            self.is_valid = False
-
-        if not self.docker_image_latest_tag:
             error_message, error_code = Errors.non_existing_docker(self.yml_docker_image)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
+
+        elif not self.is_docker_image_latest_tag():
+            self.is_valid = False
 
         return self.is_valid
 

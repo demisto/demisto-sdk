@@ -68,7 +68,7 @@ ERROR_CODE = {
     "pwsh_wrong_version": {'code': "IN120", 'ui_applicable': False, 'related_field': 'fromversion'},
     "parameter_missing_from_yml": {'code': "IN121", 'ui_applicable': True, 'related_field': 'configuration'},
     "parameter_missing_for_feed": {'code': "IN122", 'ui_applicable': True, 'related_field': 'configuration'},
-    "invalid_v2_integration_name": {'code': "IN123", 'ui_applicable': True, 'related_field': 'display'},
+    "invalid_version_integration_name": {'code': "IN123", 'ui_applicable': True, 'related_field': 'display'},
     "found_hidden_param": {'code': "IN124", 'ui_applicable': False, 'related_field': '<parameter-name>.hidden'},
     "no_default_value_in_parameter": {'code': "IN125", 'ui_applicable': False,
                                       'related_field': '<parameter-name>.default'},
@@ -92,7 +92,7 @@ ERROR_CODE = {
     "incident_in_command_name_or_args": {'code': "IN139", "ui_applicable": False,
                                          'related_field': 'script.commands.name'},
     "integration_is_skipped": {'code': "IN140", 'ui_applicable': False, 'related_field': ''},
-    "invalid_v2_script_name": {'code': "SC100", 'ui_applicable': True, 'related_field': 'name'},
+    "invalid_version_script_name": {'code': "SC100", 'ui_applicable': True, 'related_field': 'name'},
     "invalid_deprecated_script": {'code': "SC101", 'ui_applicable': False, 'related_field': 'comment'},
     "invalid_command_name_in_script": {'code': "SC102", 'ui_applicable': False, 'related_field': ''},
     "is_valid_script_file_path_in_folder": {'code': "SC103", 'ui_applicable': False, 'related_field': ''},
@@ -223,6 +223,7 @@ ERROR_CODE = {
     "empty_readme_error": {'code': "RM104", 'ui_applicable': False, 'related_field': ''},
     "readme_equal_description_error": {'code': "RM105", 'ui_applicable': False, 'related_field': ''},
     "readme_contains_demisto_word": {'code': "RM106", 'ui_applicable': False, 'related_field': ''},
+    "template_sentence_in_readme": {'code': "RM107", 'ui_applicable': False, 'related_field': ''},
     "wrong_version_reputations": {'code': "RP100", 'ui_applicable': False, 'related_field': 'version'},
     "reputation_expiration_should_be_numeric": {'code': "RP101", 'ui_applicable': True, 'related_field': 'expiration'},
     "reputation_id_and_details_not_equal": {'code': "RP102", 'ui_applicable': False, 'related_field': 'id'},
@@ -617,9 +618,10 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_v2_integration_name():
-        return "The display name of this v2 integration is incorrect , should be **name** v2.\n" \
-               "e.g: Kenna v2, Jira v2"
+    def invalid_version_integration_name(version_number: str):
+        return f"The display name of this v{version_number} integration is incorrect , " \
+               f"should be **name** v{version_number}.\n" \
+               f"e.g: Kenna v{version_number}, Jira v{version_number}"
 
     @staticmethod
     @error_code_decorator
@@ -640,9 +642,9 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_v2_script_name():
-        return "The name of this v2 script is incorrect , should be **name**V2." \
-               " e.g: DBotTrainTextClassifierV2"
+    def invalid_version_script_name(version_number: str):
+        return f"The name of this v{version_number} script is incorrect , should be **name**V{version_number}." \
+               f" e.g: DBotTrainTextClassifierV{version_number}"
 
     @staticmethod
     @error_code_decorator
@@ -1330,6 +1332,11 @@ class Errors:
     @error_code_decorator
     def readme_contains_demisto_word(line_nums):
         return f'Found the word \'Demisto\' in the readme content in lines: {line_nums}.'
+
+    @staticmethod
+    @error_code_decorator
+    def template_sentence_in_readme(line_nums):
+        return f"Please update the integration version differences section in lines: {line_nums}."
 
     @staticmethod
     @error_code_decorator

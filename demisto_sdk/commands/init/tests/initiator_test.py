@@ -270,7 +270,7 @@ def test_pack_init_without_filling_metadata(monkeypatch, mocker, initiator):
     When
         - Creating new pack without filling the metadata file.
     Then
-        - Ensure it's not fail.
+        - Ensure it does not fail.
     """
     monkeypatch.setattr('builtins.input', lambda _: 'n')
     mocker.patch.object(Initiator, 'create_new_directory', return_value=True)

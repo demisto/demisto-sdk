@@ -251,7 +251,7 @@ class LintManager:
                          no_pylint: bool, no_coverage: bool, coverage_report: str,
                          no_vulture: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
                          keep_container: bool,
-                         test_xml: str, failure_report: str) -> int:
+                         test_xml: str, failure_report: str, docker_timeout: int) -> int:
         """ Runs the Lint command on all given packages.
 
         Args:
@@ -270,6 +270,7 @@ class LintManager:
             keep_container(bool): Whether to keep the test container
             test_xml(str): Path for saving pytest xml results
             failure_report(str): Path for store failed packs report
+            docker_timeout(int): timeout for docker requests
 
         Returns:
             int: exit code by fail exit codes by var EXIT_CODES
@@ -320,7 +321,8 @@ class LintManager:
                                         Path(self._facts["content_repo"].working_dir),
                                         req_2=self._facts["requirements_2"],
                                         req_3=self._facts["requirements_3"],
-                                        docker_engine=self._facts["docker_engine"])
+                                        docker_engine=self._facts["docker_engine"],
+                                        docker_timeout=docker_timeout)
                 results.append(executor.submit(linter.run_dev_packages,
                                                no_flake8=no_flake8,
                                                no_bandit=no_bandit,

@@ -1,5 +1,5 @@
 # Changelog
-* Added a warning to ensure that pack_metadata description field is no longer than 130 chars.
+* Added a warning when pack_metadata's description field is longer than 130 characters.
 
 # 1.4.1
 * When in private repo without `DEMSITO_SDK_GITHUB_TOKEN` configured, get_remote_file will take files from the local origin/master.

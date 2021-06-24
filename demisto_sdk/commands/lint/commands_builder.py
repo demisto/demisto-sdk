@@ -178,44 +178,6 @@ def build_mypy_command(files: List[Path], version: float) -> str:
     command += " --pretty"
     # This flag enables redefinion of a variable with an arbitrary type in some contexts.
     command += " --allow-redefinition"
-    # Get the full path to the file.
-    command += " --show-absolute-path"
-    # Disable cache creation
-    command += " --cache-dir=/dev/null"
-    # Generating path patterns - file1 file2 file3,..
-    files_list = [str(item) for item in files]
-    command += " " + " ".join(files_list)
-
-    return command
-
-
-def build_mypy_command_docker(files: List[Path], version: float) -> str:
-    """ Build command to execute with mypy module
-        https://mypy.readthedocs.io/en/stable/command_line.html
-    Args:
-        files(List[Path]): files to execute lint
-        version(float): python varsion X.Y (3.7, 2.7 ..)
-
-    Returns:
-        str: mypy command
-    """
-    command = "python3 -m mypy"
-    # Define python versions
-    command += f" --python-version {version}"
-    # This flag enable type checks the body of every function, regardless of whether it has type annotations.
-    command += " --check-untyped-defs"
-    # This flag makes mypy ignore all missing imports.
-    command += " --ignore-missing-imports"
-    # This flag adjusts how mypy follows imported modules that were not explicitly passed in via the command line
-    command += " --follow-imports=silent"
-    # This flag will add column offsets to error messages.
-    command += " --show-column-numbers"
-    # This flag will precede all errors with “note” messages explaining the context of the error.
-    command += " --show-error-codes"
-    # Use visually nicer output in error messages
-    command += " --pretty"
-    # This flag enables redefinion of a variable with an arbitrary type in some contexts.
-    command += " --allow-redefinition"
     # this flag enable mypy to install all the stub modules (from mypy version 0.9)
     command += " --install-types"
     # force the install-types to install the missed types without asking for confirmation

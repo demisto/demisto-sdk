@@ -497,7 +497,7 @@ class LintManager:
             all_packs(bool) if all packs runs then no need for warnings messages.
         """
         if not all_packs:
-            for check in ["flake8", "XSOAR_linter", "bandit", "mypy", "vulture"]:
+            for check in ["flake8", "XSOAR_linter", "bandit", "vulture"]:
                 if EXIT_CODES[check] & return_warning_code:
                     sentence = f" {check.capitalize()} warnings "
                     print(f"\n{Colors.Fg.orange}{'#' * len(sentence)}{Colors.reset}")

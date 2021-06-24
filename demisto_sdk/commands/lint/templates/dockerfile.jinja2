@@ -35,4 +35,8 @@ RUN update-ca-certificates
 COPY . .
 RUN chown -R :4000 /devwork
 RUN chmod -R 775 /devwork
+{# Create  /.local dir used by Mypy to install missing types libraries via pip #}
+RUN mkdir -p /.local/
+RUN chown -R :4000 /.local
+RUN chmod -R 775 /.local
 {% endif %}

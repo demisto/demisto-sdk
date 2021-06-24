@@ -997,4 +997,3 @@ class TestPlaybookEntitiesVersionsValid:
             is_subplaybook_name_exist = self.validator.is_subplaybook_name_valid(
                 self.playbook_with_invalid_sub_playbook_name, pack.path)
             assert not is_subplaybook_name_exist
-

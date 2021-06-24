@@ -265,7 +265,7 @@ class IDSetValidations(BaseValidator):
                 sub_playbooks_list.remove(playbook_name)
         if sub_playbooks_list:
             error_message, error_code = Errors.invalid_playbook_name(sub_playbooks_list, main_playbook_name)
-            if self.handle_error(error_message, error_code, file_path, warning=True):
+            if self.handle_error(error_message, error_code, file_path):
                 return False
         return True
 

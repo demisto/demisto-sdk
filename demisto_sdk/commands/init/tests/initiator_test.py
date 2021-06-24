@@ -501,8 +501,6 @@ def test_template_integration_init_with_ignore_secrets(initiator, tmpdir, mocker
     integration_path = os.path.join(temp_pack_dir, INTEGRATION_NAME)
     mocker.patch('builtins.input', return_value='y')
     mocker.patch('demisto_sdk.commands.init.initiator.get_pack_name', return_value='PackName')
-    if os.path.isfile(secrets_ignore_path):
-        os.remove(secrets_ignore_path)
 
     res = initiator.integration_init()
 
@@ -517,7 +515,8 @@ def test_template_integration_init_with_ignore_secrets(initiator, tmpdir, mocker
     assert os.path.isdir(integration_path)
     diff = expected_files.difference(integration_dir_files)
     assert not diff, f'There\'s a missing file in the copied files, diff is {diff}'
-    assert os.stat("Packs/PackName/.secrets-ignore").st_size > 0
+    assert os.stat(secrets_ignore_path).st_size > 0
+    open(secrets_ignore_path, 'w').close()  # remove the secrets
 
 
 def test_script_init(mocker, initiator, tmpdir):

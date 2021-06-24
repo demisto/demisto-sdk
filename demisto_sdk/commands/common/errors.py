@@ -217,7 +217,7 @@ ERROR_CODE = {
     "invalid_core_pack_dependencies": {'code': "PA124", 'ui_applicable': True, 'related_field': ''},
     "pack_name_is_not_in_xsoar_standards": {'code': "PA125", 'ui_applicable': False, 'related_field': ''},
     "readme_error": {'code': "RM100", 'ui_applicable': False, 'related_field': ''},
-    "image_path_error": {'code': "RM101", 'ui_applicable': False, 'related_field': ''}, # till here
+    "image_path_error": {'code': "RM101", 'ui_applicable': False, 'related_field': ''},  # till here
     "readme_missing_output_context": {'code': "RM102", 'ui_applicable': False, 'related_field': ''},
     "error_starting_mdx_server": {'code': "RM103", 'ui_applicable': False, 'related_field': ''},
     "empty_readme_error": {'code': "RM104", 'ui_applicable': False, 'related_field': ''},

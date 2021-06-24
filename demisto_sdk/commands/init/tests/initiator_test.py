@@ -481,7 +481,9 @@ def test_template_integration_init_with_ignore_secrets(initiator, tmpdir, mocker
     initiator.template = 'HelloWorld'
     initiator.category = 'Utilities'
     mocker.patch('builtins.input', return_value='y')
-    mocker.patch('demisto_sdk.commands.common.tools.get_pack_name', return_value='PackName')
+    mocker.patch('demisto_sdk.commands.init.initiator.get_pack_name', return_value='PackName')
+    mocker.patch('demisto_sdk.commands.secrets.secrets.get_pack_name', return_value='PackName')
+
     integration_path = os.path.join(temp_pack_dir, INTEGRATION_NAME)
 
     # from mock import mock_open, patch

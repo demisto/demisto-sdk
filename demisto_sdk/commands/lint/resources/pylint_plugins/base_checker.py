@@ -64,7 +64,7 @@ class CustomBaseChecker(BaseChecker):
         self._quit_checker(node)
         self._exit_checker(node)
         self._commandresults_indicator_check(node)
-        self._executecommand_checker(node)
+        self._execute_command_checker(node)
 
     def visit_importfrom(self, node):
         self._common_server_import(node)
@@ -126,16 +126,22 @@ class CustomBaseChecker(BaseChecker):
         except Exception:
             pass
 
-    def _executecommand_checker(self, node):
+    def _execute_command_checker(self, node):
         try:
             if node.func.expr.name == 'demisto' and node.func.attrname == 'executeCommand':
+
                 if node.args[0].value == 'getIncidents' or node.args[0].value == 'DeleteContext':
                     self.add_message("missing-permission", node=node)
+
                 elif node.args[0].value == 'setIncident':
-                    if node.args[1].items and node.args[1].items[0][0].value == 'id':
-                        self.add_message("missing-permission", node=node)
+                    inferred_args = node.args[1].inferred()
 
+                    if inferred_args and isinstance(inferred_args[0], astroid.Dict):
+                        inferred_args = inferred_args[0]
 
+                        for item in inferred_args.items:
+                            if item[0].value == 'id':
+                                self.add_message("missing-permission", node=node)
         except Exception:
             pass
 

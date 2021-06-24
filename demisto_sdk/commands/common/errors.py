@@ -988,8 +988,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_playbook_name(playbook_entry_to_check, pb_task):
-        return f"in task {pb_task} the playbook {playbook_entry_to_check} was not found in the id_set.json file. " \
+    def invalid_playbook_name(playbook_entry_to_check, file_path):
+        return f"sub playbooks {playbook_entry_to_check} in {file_path} not found in the id_set.json file. " \
                f"Please make sure:\n" \
                f"1 - The right playbook name is set and the spelling is correct.\n" \
                f"2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \

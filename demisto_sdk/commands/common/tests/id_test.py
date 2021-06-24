@@ -821,28 +821,50 @@ class TestPlaybookEntitiesVersionsValid:
             ]
         }
     }}
+    playbook_with_valid_sub_playbook_name = {"Example Playbook": {
+        "name": "Example Playbook",
+        "file_path": playbook_path,
+        "fromversion": "5.0.0",
+        "pack": "Example",
+        "implementing_playbooks": [
+            "SubPlaybook_version_5_5"
+        ]
+    }}
+    playbook_with_invalid_sub_playbook_name = {"Example Playbook": {
+        "name": "Example Playbook",
+        "file_path": playbook_path,
+        "fromversion": "5.0.0",
+        "pack": "Example",
+        "implementing_playbooks": [
+            "SubPlaybook_version_5_5 "
+        ]
+    }}
     id_set = {
         'playbooks': [
             {
                 'SubPlaybook_version_5': {
+                    'name': 'SubPlaybook_version_5',
                     'fromversion': "5.0.0",
                     "file_path": playbook_path,
                 }
             },
             {
                 'SubPlaybook_no_version': {
+                    'name': 'SubPlaybook_no_version',
                     'fromversion': "",
                     "file_path": playbook_path,
                 }
             },
             {
                 'SubPlaybook_version_5_5': {
+                    'name': 'SubPlaybook_version_5_5',
                     'fromversion': "5.5.0",
                     "file_path": playbook_path,
                 }
             },
             {
                 'Example Playbook': {
+                    'name': 'test',
                     'fromversion': "5.5.0",
                     "file_path": playbook_path,
                     "command_to_integration": {
@@ -929,3 +951,50 @@ class TestPlaybookEntitiesVersionsValid:
             is_integration_version_invalid = self.validator._are_playbook_entities_versions_valid(
                 self.playbook_with_invalid_integration_version, self.playbook_path)
             assert not is_integration_version_invalid
+
+    def test_playbook_sub_playbook_exist(self, repo, mocker):
+        """
+
+        Given
+        - A playbook with sub playbook
+        - An id_set file.
+
+        When
+        - validating playbook - sub playbook exists in id_set
+
+        Then
+        - In case sub playbook names does not exist in id_set , prints a warning.
+        """
+        pack = repo.create_pack("Pack1")
+        self.validator.playbook_set = self.id_set["playbooks"]
+
+        with ChangeCWD(repo.path):
+
+            # playbook uses existing sub playbooks
+            is_subplaybook_name_exist = self.validator.is_subplaybook_name_valid(
+                self.playbook_with_valid_sub_playbook_name, pack.path)
+            assert is_subplaybook_name_exist
+
+    def test_playbook_sub_playbook_not_exist(self, repo, mocker):
+        """
+
+        Given
+        - A playbook with sub playbook names
+        - An id_set file.
+
+        When
+        - validating playbook - sub playbook does not exist in id_set
+
+        Then
+        - In case playbook name does not exist in id_set , prints a warning.
+        """
+        pack = repo.create_pack("Pack1")
+        self.validator.playbook_set = self.id_set["playbooks"]
+
+        with ChangeCWD(repo.path):
+
+            # playbook uses existing sub playbooks
+            is_subplaybook_name_exist = self.validator.is_subplaybook_name_valid(
+                self.playbook_with_invalid_sub_playbook_name, pack.path)
+            assert not is_subplaybook_name_exist
+

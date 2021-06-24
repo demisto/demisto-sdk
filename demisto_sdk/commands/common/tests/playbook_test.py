@@ -253,21 +253,6 @@ class TestPlaybookValidator:
         (PLAYBOOK_JSON_INVALID_SCRIPT_NAME, ID_SET_INVALID_SCRIPT_NAME, False),
     ]
 
-    PLAYBOOK_JSON_VALID_SUB_PB_NAME = {
-        "tasks": {"0": {"task": {"playbookName": "playbookId1"}},
-                  "1": {"task": {"playbookName": "playbookId2"}}}}
-    ID_SET_VALID_SUB_PB_ID = {"playbooks": [{"playbookId1": {"name": "name"}}, {"playbookId2": {"name": "name"}}]}
-
-    PLAYBOOK_JSON_INVALID_SUB_PB_NAME = {
-        "tasks": {"0": {"task": {"playbookName": "playbookId1 "}},
-                  "1": {"task": {"playbookName": "playbookId2"}}}}
-    ID_SET_INVALID_SUB_PB_ID = {"playbooks": [{"playbookId2": {"name": "name"}}]}
-
-    IS_SUB_PLAYBOOK_ID_VALID = [
-        (PLAYBOOK_JSON_VALID_SUB_PB_NAME, ID_SET_VALID_SUB_PB_ID, True),
-        (PLAYBOOK_JSON_VALID_SUB_PB_NAME, ID_SET_INVALID_SUB_PB_ID, False),
-        (PLAYBOOK_JSON_INVALID_SUB_PB_NAME, ID_SET_VALID_SUB_PB_ID, False)
-    ]
     PlAYBOOK_JSON_VALID_TASKID = {
         "0": {"task": {"id": "8bff5d33-9554-4ab9-833c-cc0c0d5fdfd8"},
               "taskid": "8bff5d33-9554-4ab9-833c-cc0c0d5fdfd8"},
@@ -367,26 +352,6 @@ class TestPlaybookValidator:
         structure = mock_structure("", playbook_json)
         validator = PlaybookValidator(structure)
         assert validator.is_script_id_valid(id_set_json) == expected_result
-
-    @pytest.mark.parametrize("playbook_json, id_set_json, expected_result", IS_SUB_PLAYBOOK_ID_VALID)
-    def test_playbook_sub_playbook_id(self, mocker, playbook, repo, playbook_json, id_set_json, expected_result):
-        """
-
-        Given
-        - A playbook with playbook names
-        - An id_set file.
-
-        When
-        - validating playbook
-
-        Then
-        - In case playbook name does not exist in id_set , prints a warning.
-        """
-        playbook.yml.write_dict(playbook_json)
-        repo.id_set.write_json(id_set_json)
-        structure = mock_structure("", playbook_json)
-        validator = PlaybookValidator(structure)
-        assert validator.is_subplaybook_name_valid(id_set_json) == expected_result
 
     @pytest.mark.parametrize("playbook_json, expected_result", IS_NO_ROLENAME_INPUTS)
     def test_is_added_required_fields(self, playbook_json, expected_result):

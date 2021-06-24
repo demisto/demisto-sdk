@@ -37,7 +37,6 @@ class PlaybookValidator(ContentEntityValidator):
             self.is_delete_context_all_in_playbook(),
             self.are_tests_configured(),
             self.is_script_id_valid(id_set_file),
-            self.is_subplaybook_name_valid(id_set_file),
             self._is_id_uuid(),
             self._is_taskid_equals_id(),
             self.verify_condition_tasks_has_else_path(),
@@ -350,46 +349,6 @@ class PlaybookValidator(ContentEntityValidator):
         return any(
             [pb_script_name == id_set_dict[key].get('name') for id_set_dict in id_set_scripts
              for key in id_set_dict])
-
-    def is_subplaybook_name_valid(self, id_set_file):
-        """Checks whether a sub playbook name is valid (i.e id exists in set_id)
-        Args:
-            id_set_file (dict): id_set.json file
-            this will also determine whether a new id_set can be created by validate.
-
-        Return:
-            bool. if all sub playbooks names of this playbook are valid.
-        """
-        is_valid = True
-
-        if not id_set_file:
-            click.secho("Skipping playbook sub-playbooks id validation. Could not read id_set.json.", fg="yellow")
-            return is_valid
-
-        id_set_scripts = id_set_file.get("playbooks")
-        pb_tasks = self.current_file.get('tasks', {})
-        for id, task_dict in pb_tasks.items():
-            pb_task = task_dict.get('task', {})
-            playbook_name_to_check = pb_task.get('playbookName')
-            if playbook_name_to_check:
-                is_valid = self.is_playbook_name_exist_in_id_set(playbook_name_to_check, id_set_scripts)
-
-            if not is_valid:
-                error_message, error_code = Errors.invalid_playbook_name(playbook_name_to_check, pb_task)
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
-                    return is_valid
-        return is_valid
-
-    def is_playbook_name_exist_in_id_set(self, playbook_name_used_in_task, id_set_playbooks):
-        """
-        Checks if playbook name exists in at least one of id_set's dicts
-        Args:
-            playbook_name_used_in_task (str): sub playbook name from playbook
-            id_set_playbooks (list): all playbooks of id_set
-        Returns:
-            True if playbook_name_used_in_task exists in id_set
-        """
-        return any([playbook_name_used_in_task in id_set_dict for id_set_dict in id_set_playbooks])
 
     def _is_else_path_in_condition_task(self, task):
         next_tasks: Dict = task.get('nexttasks', {})

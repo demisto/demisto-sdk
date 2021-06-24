@@ -1005,6 +1005,12 @@ def generate_docs(**kwargs):
     help="Output file path, the default is the Tests directory.",
     default=''
 )
+@click.option(
+    '-fd',
+    '--fail-duplicates',
+    help="Fails the process if any duplicates are found.",
+    is_flag=True
+)
 def create_id_set(**kwargs):
     """Create the content dependency tree by ids."""
     check_configuration_file('create-id-set', kwargs)

@@ -415,7 +415,7 @@ def test_integration_init(initiator, tmpdir):
 
 
 @pytest.mark.parametrize("template", ["HelloWorld", "FeedHelloWorld"])
-def test_template_integration_init(initiator, tmpdir, template):
+def test_template_integration_init(mocker, initiator, tmpdir, template):
     """
     Tests `integration_init` function with a given integration template name.
 
@@ -439,6 +439,7 @@ def test_template_integration_init(initiator, tmpdir, template):
     initiator.is_integration = True
     initiator.template = template
     initiator.category = 'Utilities'
+    mocker.patch('builtins.input', return_value='n')
 
     integration_path = os.path.join(temp_pack_dir, INTEGRATION_NAME)
     res = initiator.integration_init()
@@ -455,7 +456,53 @@ def test_template_integration_init(initiator, tmpdir, template):
     assert not diff, f'There\'s a missing file in the copied files, diff is {diff}'
 
 
-def test_script_init(initiator, tmpdir):
+def test_template_integration_init_with_ignore_secrets(initiator, tmpdir, mocker):
+    """
+    Tests `integration_init` function with a given integration template name.
+
+    Given
+        - Inputs to init integration in a given output.
+        - An integration template - HelloWorld.
+
+    When
+        - Running the init command.
+
+    Then
+        - Ensure the function's return value is True
+        - Ensure integration directory with the desired integration name is created successfully.
+        - Ensure integration directory contains all the files of the template integration.
+    """
+    temp_pack_dir = os.path.join(tmpdir, PACK_NAME)
+    os.makedirs(temp_pack_dir, exist_ok=True)
+
+    initiator.output = temp_pack_dir
+    initiator.dir_name = INTEGRATION_NAME
+    initiator.is_integration = True
+    initiator.template = 'HelloWorld'
+    initiator.category = 'Utilities'
+    mocker.patch('builtins.input', return_value='y')
+    mocker.patch('demisto_sdk.commands.common.tools.get_pack_name', return_value='PackName')
+    integration_path = os.path.join(temp_pack_dir, INTEGRATION_NAME)
+
+    # from mock import mock_open, patch
+    # m = mock_open()
+    # with patch('{}.open'.format(__name__), m, create=True):
+    res = initiator.integration_init()
+
+    integration_dir_files = set(listdir(integration_path))
+    expected_files = {
+        "Pipfile", "Pipfile.lock", "README.md", f"{INTEGRATION_NAME}.py",
+        f"{INTEGRATION_NAME}.yml", f"{INTEGRATION_NAME}_description.md", f"{INTEGRATION_NAME}_test.py",
+        f"{INTEGRATION_NAME}_image.png", "test_data", "command_examples"
+    }
+
+    assert res
+    assert os.path.isdir(integration_path)
+    diff = expected_files.difference(integration_dir_files)
+    assert not diff, f'There\'s a missing file in the copied files, diff is {diff}'
+
+
+def test_script_init(mocker, initiator, tmpdir):
     """
     Tests `script_init` function.
 
@@ -477,6 +524,7 @@ def test_script_init(initiator, tmpdir):
     initiator.dir_name = SCRIPT_NAME
     initiator.output = temp_pack_dir
     script_path = os.path.join(temp_pack_dir, SCRIPT_NAME)
+    mocker.patch('builtins.input', return_value='n')
     res = initiator.script_init()
 
     script_dir_files = {file for file in listdir(script_path)}

@@ -21,7 +21,7 @@ class UpdateReleaseNotesManager:
     def __init__(self, user_input: Optional[str] = None, update_type: Optional[str] = None,
                  pre_release: Optional[bool] = False, is_all: Optional[bool] = False, text: Optional[str] = None,
                  specific_version: Optional[str] = None, id_set_path: Optional[str] = None,
-                 prev_ver: Optional[str] = None):
+                 prev_ver: Optional[str] = None, is_force: Optional[bool] = False):
         self.given_pack = user_input
         self.changed_packs_from_git: set = set()
         self.update_type = update_type
@@ -29,6 +29,7 @@ class UpdateReleaseNotesManager:
         # update release notes to every required pack if not specified.
         self.is_all = True if not self.given_pack else is_all
         self.text: str = '' if text is None else text
+        self.is_force = False if not is_force else is_force
         self.specific_version = specific_version
         self.id_set_path = id_set_path
         self.prev_ver = prev_ver
@@ -156,12 +157,12 @@ class UpdateReleaseNotesManager:
         pack_old = filter_files_on_pack(pack, old_format_files)
 
         # Checks if update is required
-        if pack_modified or pack_added or pack_old:
+        if pack_modified or pack_added or pack_old or self.is_force:
             update_pack_rn = UpdateRN(pack_path=f'Packs/{pack}', update_type=self.update_type,
                                       modified_files_in_pack=pack_modified.union(pack_old),
                                       pre_release=self.pre_release,
                                       added_files=pack_added, specific_version=self.specific_version,
-                                      text=self.text,
+                                      text=self.text, is_force=self.is_force,
                                       existing_rn_version_path=existing_rn_version)
             updated = update_pack_rn.execute_update()
             # If new release notes were created add it to the total number of packs that were updated.

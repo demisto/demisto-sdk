@@ -30,7 +30,8 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
 class UpdateRN:
     def __init__(self, pack_path: str, update_type: Union[str, None], modified_files_in_pack: set, added_files: set,
                  specific_version: str = None, pre_release: bool = False, pack: str = None,
-                 pack_metadata_only: bool = False, text: str = '', existing_rn_version_path: str = ''):
+                 pack_metadata_only: bool = False, text: str = '', existing_rn_version_path: str = '',
+                 is_force: bool = False):
         self.pack = pack if pack else get_pack_name(pack_path)
         self.update_type = update_type
         self.pack_path = self.init_pack_path()
@@ -48,7 +49,7 @@ class UpdateRN:
         self.existing_rn_version_path = existing_rn_version_path
         self.should_delete_existing_rn = False
         self.pack_metadata_only = pack_metadata_only
-
+        self.is_force = is_force
         self.metadata_path = os.path.join(self.pack_path, 'pack_metadata.json')
         self.master_version = self.get_master_version()
 
@@ -151,7 +152,7 @@ class UpdateRN:
         rn_string = self.handle_existing_rn_version_path(rn_path)
         if not rn_string:
             rn_string = self.build_rn_template(changed_files)
-        if len(rn_string) > 0:
+        if len(rn_string) > 0 or self.is_force:
             if self.is_bump_required():
                 self.write_metadata_to_file(new_metadata)
             self.create_markdown(rn_path, rn_string, changed_files, docker_image_name)
@@ -242,7 +243,7 @@ class UpdateRN:
                 Whether a version bump is required
         """
         try:
-            if self.only_docs_changed():
+            if self.only_docs_changed() and not self.is_force:
                 return False
             new_metadata = self.get_pack_metadata()
             new_version = new_metadata.get('currentVersion', '99.99.99')
@@ -468,6 +469,8 @@ class UpdateRN:
             rn_string += f'\n#### Integrations\n##### {self.pack}\n- Documentation and metadata improvements.\n'
             return rn_string
         rn_template_as_dict: dict = {}
+        if self.is_force:
+            rn_string = self.build_rn_desc(content_name=self.pack)
         for content_name, data in sorted(changed_items.items(),
                                          key=lambda x: RN_HEADER_BY_FILE_TYPE[x[1].get('type', '')] if x[1].get('type')
                                          else ''):  # Sort RN by header
@@ -489,8 +492,8 @@ class UpdateRN:
 
         return rn_string
 
-    def build_rn_desc(self, _type: FileType, content_name: str, desc: str, is_new_file: bool, text: str,
-                      from_version: str = '') -> str:
+    def build_rn_desc(self, _type: FileType = None, content_name: str = '', desc: str = '', is_new_file: bool = False,
+                      text: str = '', from_version: str = '') -> str:
         """ Builds the release notes description.
 
             :param

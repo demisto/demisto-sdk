@@ -8,7 +8,7 @@
 * Added the *--docs-format* flag in the **integration-diff** command to get the output in README format.
 * Added the *--input-old-version* and *--skip-breaking-changes* flags in the **generate-docs** command to get the details for the breaking section and to skip the breaking changes section.
 * Refactor **update-release-notes** command - new classs manager, split some logic to smaller functions, added docsrings and type annotations.
-
+* Added a  *--force* flag to the **update-release-notes** command, so the update can take place even without a change in the pack.
 
 # 1.4.0
 * Enable passing a comma-separated list of paths for the `--input` option of the **lint** command.

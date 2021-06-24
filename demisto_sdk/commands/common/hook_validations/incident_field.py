@@ -420,4 +420,4 @@ class IncidentFieldValidator(ContentEntityValidator):
                     file_path=self.file_path,
                     suggested_fix=Errors.suggest_fix_field_name(field_name, pack_name)):
                 return False
-
+        return True

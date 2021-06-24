@@ -480,28 +480,30 @@ def test_template_integration_init_with_ignore_secrets(initiator, tmpdir, mocker
         - An integration template - HelloWorld.
 
     When
-        - Running the init command.
+        - Running the init command with secrete ignore.
 
     Then
         - Ensure the function's return value is True
         - Ensure integration directory with the desired integration name is created successfully.
         - Ensure integration directory contains all the files of the template integration.
+        - Ensure .secrets-ignore file is not empty.
     """
     temp_pack_dir = os.path.join(tmpdir, PACK_NAME)
     os.makedirs(temp_pack_dir, exist_ok=True)
+    secrets_ignore_path = 'Packs/PackName/.secrets-ignore'
 
     initiator.output = temp_pack_dir
     initiator.dir_name = INTEGRATION_NAME
     initiator.is_integration = True
     initiator.template = 'HelloWorld'
     initiator.category = 'Utilities'
-    mocker.patch('builtins.input', return_value='y')
-    mocker.patch('demisto_sdk.commands.common.tools.get_pack_name', return_value='PackName')
-    integration_path = os.path.join(temp_pack_dir, INTEGRATION_NAME)
 
-    # from mock import mock_open, patch
-    # m = mock_open()
-    # with patch('{}.open'.format(__name__), m, create=True):
+    integration_path = os.path.join(temp_pack_dir, INTEGRATION_NAME)
+    mocker.patch('builtins.input', return_value='y')
+    mocker.patch('demisto_sdk.commands.init.initiator.get_pack_name', return_value='PackName')
+    if os.path.isfile(secrets_ignore_path):
+        os.remove(secrets_ignore_path)
+
     res = initiator.integration_init()
 
     integration_dir_files = set(listdir(integration_path))
@@ -515,6 +517,7 @@ def test_template_integration_init_with_ignore_secrets(initiator, tmpdir, mocker
     assert os.path.isdir(integration_path)
     diff = expected_files.difference(integration_dir_files)
     assert not diff, f'There\'s a missing file in the copied files, diff is {diff}'
+    assert os.stat("Packs/PackName/.secrets-ignore").st_size > 0
 
 
 def test_script_init(mocker, initiator, tmpdir):

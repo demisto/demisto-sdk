@@ -11,6 +11,7 @@
 * Added a version differences section to readme in **generate-docs** command.
 * Added the *--docs-format* flag in the **integration-diff** command to get the output in README format.
 * Added the *--input-old-version* and *--skip-breaking-changes* flags in the **generate-docs** command to get the details for the breaking section and to skip the breaking changes section.
+* Enhanced the `is_valid_file` validation for scripts and integrations in the **validate** command to check for every versioned script or integration, and not only v2.
 
 # 1.4.0
 * Enable passing a comma-separated list of paths for the `--input` option of the **lint** command.

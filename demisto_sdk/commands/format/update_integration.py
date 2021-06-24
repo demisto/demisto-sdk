@@ -8,7 +8,6 @@ from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
                                                    INTEGRATION, TYPE_PWSH)
 from demisto_sdk.commands.common.hook_validations.integration import \
     IntegrationValidator
-from demisto_sdk.commands.common.tools import get_remote_file
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
@@ -160,6 +159,3 @@ class IntegrationYMLFormat(BaseUpdateYML):
             return format, SKIP_RETURN_CODE
         else:
             return format, self.initiate_file_validator(IntegrationValidator)
-
-    def retrieve_integration_parameter(self):
-        old_file = get_remote_file(self.pa)

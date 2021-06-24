@@ -1,5 +1,6 @@
 # Changelog
 * Fixed an issue where running **init** command without filling the metadata file.
+* Updated the dockerimage in integration/script yml files to be required.
 
 # 1.4.1
 * When in private repo without `DEMSITO_SDK_GITHUB_TOKEN` configured, get_remote_file will take files from the local origin/master.

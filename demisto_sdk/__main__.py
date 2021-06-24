@@ -1045,7 +1045,7 @@ def merge_id_sets(**kwargs):
     '--all', help="Update all changed packs", is_flag=True
 )
 @click.option(
-    '-f', '--force', help="Force update rn (even if not required).", is_flag=True
+    '-f', '--force', help="Force update release notes for a pack (even if not required).", is_flag=True
 )
 @click.option(
     '--text', help="Text to add to all of the release notes files",

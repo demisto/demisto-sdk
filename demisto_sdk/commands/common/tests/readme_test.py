@@ -358,3 +358,29 @@ def test_demisto_not_in_readme(repo):
     readme_validator = ReadMeValidator(integration.readme.path)
 
     assert readme_validator.verify_demisto_in_readme_content()
+
+
+def test_verify_template_not_in_readme(repo):
+    """
+        Given
+            - An integration README contains the generic sentence '%%FILL HERE%%'.
+
+        When
+            - Running verify_template_not_in_readme.
+
+        Then
+            - Ensure that the validation fails.
+    """
+
+    pack = repo.create_pack('PackName')
+    integration = pack.create_integration('IntName')
+
+    readme_path = glob.glob(os.path.join(os.path.dirname(integration.yml.path), '*README.md'))[0]
+
+    with open(readme_path, 'w') as f:
+        f.write('This checks if we have the sentence %%FILL HERE%% in the README.')
+
+    with ChangeCWD(repo.path):
+        readme_validator = ReadMeValidator(integration.readme.path)
+
+        assert not readme_validator.verify_template_not_in_readme()

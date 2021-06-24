@@ -1,10 +1,17 @@
 # Changelog
+* Fixed an issue where running **init** command without filling the metadata file.
+* Added a playbook validation to check if a task sub playbook exists in the id set in the **validate** command.
+
+# 1.4.1
 * When in private repo without `DEMSITO_SDK_GITHUB_TOKEN` configured, get_remote_file will take files from the local origin/master.
 * Enhanced the **unify** command when giving input of a file and not a directory return a clear error message.
 * Added a validation to ensure integrations are not skipped and at least one test playbook is not skipped for each integration or script.
 * Added to the Content Tests support for `context_print_dt`, which queries the incident context and prints the result as a json.
 * Added new validation for the `xsoar_config.json` file in the **validate** command.
-* Added a playbook validation to check if a task sub playbook exists in the id set in the **validate** command.
+* Updated the **find-dependencies** command to return the 'dependencies' according the layout type ('incident', 'indicator').
+* Added a version differences section to readme in **generate-docs** command.
+* Added the *--docs-format* flag in the **integration-diff** command to get the output in README format.
+* Added the *--input-old-version* and *--skip-breaking-changes* flags in the **generate-docs** command to get the details for the breaking section and to skip the breaking changes section.
 
 # 1.4.0
 * Enable passing a comma-separated list of paths for the `--input` option of the **lint** command.

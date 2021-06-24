@@ -1,4 +1,5 @@
 # Changelog
+* Added to `pylint` summary an indication if a test was skipped.
 * Fixed an issue where running **init** command without filling the metadata file.
 
 # 1.4.1

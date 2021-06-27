@@ -77,7 +77,8 @@ class Linter:
             "additional_requirements": [],
             "docker_engine": docker_engine,
             "is_script": False,
-            "commands": None
+            "commands": None,
+            "runas": ''
         }
         # Pack lint status object - visualize it
         self._pkg_lint_status: Dict = {
@@ -196,6 +197,7 @@ class Linter:
             self._facts['is_script'] = True if 'Scripts' in yml_file.parts else False
             self._facts['is_long_running'] = script_obj.get('longRunning')
             self._facts['commands'] = self._get_commands_list(script_obj)
+            self._facts['runas'] = script_obj.get('runas', '')
             self._pkg_lint_status["pack_type"] = script_obj.get('type')
         except (FileNotFoundError, IOError, KeyError):
             self._pkg_lint_status["errors"].append('Unable to parse package yml')
@@ -401,6 +403,7 @@ class Linter:
             # as a result we can use the env vars as a getway.
             myenv['commands'] = ','.join([str(elem) for elem in self._facts['commands']]) \
                 if self._facts['commands'] else ''
+            myenv['runas'] = self._facts['runas']
             stdout, stderr, exit_code = run_command_os(
                 command=build_xsoar_linter_command(lint_files, py_num, self._facts.get('support_level', 'base')),
                 cwd=self._pack_abs_dir, env=myenv)

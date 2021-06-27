@@ -55,6 +55,7 @@ class CustomBaseChecker(BaseChecker):
         super(CustomBaseChecker, self).__init__(linter)
         self.commands = os.getenv('commands', '').split(',') if os.getenv('commands') else []
         self.is_script = True if os.getenv('is_script') == 'True' else False
+        self.runas = os.getenv('runas')
         # we treat scripts as they already implement the test-module
         self.test_module_implemented = False if not self.is_script else True
 
@@ -127,6 +128,9 @@ class CustomBaseChecker(BaseChecker):
             pass
 
     def _execute_command_checker(self, node):
+        if not self.is_script or self.runas == 'DBotRole':
+            return
+
         try:
             if node.func.expr.name == 'demisto' and node.func.attrname == 'executeCommand':
 

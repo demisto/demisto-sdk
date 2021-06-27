@@ -1624,9 +1624,9 @@ def error_code(config, **kwargs):
     check_configuration_file('error-code-info', kwargs)
     sys.path.append(config.configuration.env_dir)
 
-    generate_error_code_information(kwargs.get('input'))
+    result = generate_error_code_information(kwargs.get('input'))
 
-    sys.exit(0)
+    sys.exit(result)
 
 
 @main.resultcallback()

@@ -33,9 +33,10 @@ def generate_error_code_information(error_code):
     func_name, error_data = find_error(error_code)
     if not func_name:
         click.secho(f'{Fore.RED}No such error')
-        return
+        return 1
 
     func = getattr(errors.Errors, func_name)
     sig = signature(func)
 
     print_error_information(func_name, error_data, func, sig)
+    return 0

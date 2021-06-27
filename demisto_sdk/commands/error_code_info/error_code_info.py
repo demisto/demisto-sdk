@@ -16,7 +16,7 @@ def print_error_information(func_name, error_data, func, sig):
     print(TEMPLATE.format(
         code=error_data['code'],
         func=f'{func_name}{sig}',
-        msg=func(**{a: f'<{a}>' for a in list(sig.parameters)}),
+        msg=func(**{a: f'<{a}>' for a in list(sig.parameters)})[0],
     ))
 
 

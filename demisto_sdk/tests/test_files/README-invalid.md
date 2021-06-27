@@ -349,22 +349,3 @@ accessdata-get-processing-case-id
 
 ##### Valid image path
 <img width="500" src="https://github.com/demisto/content/raw/123/Packs/valid/doc_files/test.png" />
-
-
-##### Invalid images relative paths
-![Identity with High Risk Score](../../default.png)
-
-##### valid images relative paths
-![Identity with High Risk Score](default.png)
-
-##### Invalid images absolute paths
-![Identity with High Risk Score](https://github.com/demisto/content/raw/123/Packs/valid/doc_files/test2.png)
-
-##### valid images absolute paths
-![Identity with High Risk Score](https://github.com/demisto/content/raw/2e4e0056580ea5de30f55dcbe2ccacaadf01b74e/Packs/SailPointIdentityIQ/doc_files/High_Risk_User.png)
-
-
-
-
-
-

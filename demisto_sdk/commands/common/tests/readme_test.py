@@ -13,6 +13,7 @@ INVALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-invalid.md'
 INVALID2_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-invalid2.md'
 INVALID3_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-short-invalid.md'
 PACK_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-pack.md'
+IMAGES_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-images.md'
 EMPTY_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-empty.md'
 FAKE_INTEGRATION_README = f'{git_path()}/demisto_sdk/tests/test_files/fake_integration/fake_README.md'
 
@@ -436,7 +437,7 @@ def test_verify_readme_image_paths_general_readme(mocker):
     captured_output = io.StringIO()
     sys.stdout = captured_output  # redirect stdout.
 
-    readme_validator = ReadMeValidator(INVALID_MD)
+    readme_validator = ReadMeValidator(IMAGES_MD)
     mocker.patch('demisto_sdk.commands.common.hook_validations.readme.get_pack_name', return_value='test_pack')
     mocker.patch.object(BaseValidator, 'check_file_flags', return_value=None)
     result = readme_validator.verify_readme_image_paths()

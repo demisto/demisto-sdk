@@ -616,7 +616,7 @@ class TestValidators:
     def test_create_ignored_errors_list(self):
         validate_manager = ValidateManager()
         errors_to_check = ["IN", "SC", "CJ", "DA", "DB", "DO", "ID", "DS", "IM", "IF", "IT", "RN", "RM", "PA", "PB",
-                           "WD", "RP", "BA100", "BC100", "ST", "CL", "MP", "LO"]
+                           "WD", "RP", "BA100", "BC100", "ST", "CL", "MP", "LO", "XC"]
         ignored_list = validate_manager.create_ignored_errors_list(errors_to_check)
         assert ignored_list == ["BA101", "BA102", "BA103", "BA104", "BA105", "BA106", "BA107", "BA108", "BA109",
                                 "BA110", "BC101", "BC102", "BC103", "BC104"]
@@ -959,7 +959,7 @@ class TestValidators:
                           'Packs/Malware/IncidentTypes/incidenttype-Malware.json',
                           'Packs/Claroty/Layouts/layoutscontainer-Claroty_Integrity_Incident.json'}
         packs = {'CortexXDR', 'Claroty', 'McAfee_ESM', 'Malware'}
-        validate_manager = ValidateManager(skip_conf_json=True)
+        validate_manager = ValidateManager(skip_conf_json=True, check_is_unskipped=False)
         packs_found = validate_manager.get_packs(modified_files)
         assert packs_found == packs
 
@@ -1013,7 +1013,7 @@ def test_should_raise_pack_version(pack_name, expected):
     Then
         - validate should_raise_pack_version runs as expected.
     """
-    validate_manager = ValidateManager()
+    validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
     res = validate_manager.should_raise_pack_version(pack_name)
     assert res == expected
 
@@ -1031,7 +1031,7 @@ def test_run_validation_using_git_on_only_metadata_changed(mocker):
     mocker.patch.object(ValidateManager, 'get_changed_files_from_git',
                         return_value=(set(), set(), {'/Packs/ForTesting/pack_metadata.json'}, set()))
 
-    validate_manager = ValidateManager()
+    validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
     res = validate_manager.run_validation_using_git()
     assert res
 
@@ -1120,7 +1120,7 @@ def test_get_packs_that_should_have_version_raised(repo):
     moodified_test_playbook = existing_pack4.create_test_playbook('TestBook')
     moodified_test_playbook.create_default_test_playbook()
 
-    validate_manager = ValidateManager()
+    validate_manager = ValidateManager(check_is_unskipped=False)
     validate_manager.new_packs = {'NewPack'}
 
     modified_files = {moodified_integration.yml.rel_path, moodified_test_playbook.yml.rel_path}

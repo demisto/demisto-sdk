@@ -484,3 +484,35 @@ class GitUtil:
             return ''
 
         return diff_line.split()[0].upper() if not diff_line.startswith('?') else 'A'
+
+    def get_local_remote_file_content(self, git_file_path: str) -> str:
+        """Get local file content from remote branch. For example get origin/master:README.md
+
+        Args:
+            git_file_path: The git file path. For example get origin/master:README.md
+
+        Returns:
+            The fetched file content.
+        """
+        file_content = self.repo.git.show(git_file_path)
+        return file_content
+
+    def get_local_remote_file_path(self, full_file_path: str, tag: str) -> str:
+        """Get local file path of remote branch. For example get origin/master:README.md
+
+        Args:
+            full_file_path: The file path to fetch. For example 'content/README.md'
+            tag: The tag of the branch. For example 'master'
+
+        Returns:
+            The git file path. For example get origin/master:README.md
+        """
+        relative_file_path = os.path.relpath(full_file_path, self.git_path())
+        try:
+            remote_name = self.repo.remote().name
+        except ValueError as exc:
+            if "Remote named 'origin' didn't exist" in str(exc):
+                remote_name = 'origin'
+            else:
+                raise exc
+        return f'{remote_name}/{tag}:{relative_file_path}'

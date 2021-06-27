@@ -81,14 +81,14 @@ class ReadMeValidator(BaseValidator):
         """
         return all([
             self.is_image_path_valid(),
+            self.verify_readme_image_paths(),
             self.is_mdx_file(),
             self.verify_no_empty_sections(),
             self.verify_no_default_sections_left(),
             self.verify_readme_is_not_too_short(),
             self.is_context_different_in_yml(),
             self.verify_demisto_in_readme_content(),
-            self.verify_template_not_in_readme(),
-            self.verify_readme_image_paths()
+            self.verify_template_not_in_readme()
         ])
 
     def mdx_verify(self) -> bool:

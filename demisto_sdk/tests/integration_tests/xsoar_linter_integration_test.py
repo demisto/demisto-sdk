@@ -25,7 +25,8 @@ files = [
         " implemented in your code. The commands that are not implemented are ['error']",
         "test-module command is not implemented in the python file, it is essential for every"
         " integration. Please add it to your code. For more information see: "
-        "https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
+        "https://xsoar.pan.dev/docs/integrations/code-conventions#test-module",
+        "Your script require elevated permissions. Please add the `runas: DBotRole` to the yml file."
     ],
         ['kace-machines-list', 'kace-assets-list', 'kace-queues-list', 'kace-tickets-list', 'error']),
     (Path(f"{XSOAR_LINTER_PY3_INVALID_WARNINGS}"), 3.8, 'certified partner', False, 4,

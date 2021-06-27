@@ -54,7 +54,8 @@ class Linter:
             docker_engine(bool):  Whether docker engine detected by docker-sdk.
     """
 
-    def __init__(self, pack_dir: Path, content_repo: Path, req_3: list, req_2: list, docker_engine: bool):
+    def __init__(self, pack_dir: Path, content_repo: Path, req_3: list, req_2: list, docker_engine: bool,
+                 docker_timeout: int):
         self._req_3 = req_3
         self._req_2 = req_2
         self._content_repo = content_repo
@@ -62,7 +63,7 @@ class Linter:
         self._pack_name = None
         # Docker client init
         if docker_engine:
-            self._docker_client: docker.DockerClient = docker.from_env()
+            self._docker_client: docker.DockerClient = docker.from_env(timeout=docker_timeout)
             self._docker_hub_login = self._docker_login()
         # Facts gathered regarding pack lint and test
         self._facts: Dict[str, Any] = {

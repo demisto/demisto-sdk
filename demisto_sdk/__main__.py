@@ -541,7 +541,7 @@ def secrets(config, **kwargs):
     "--coverage-report", help="Specify directory for the coverage report files",
     type=PathsParamType()
 )
-@click.option("-dt", "--docker-timeout", default=60, help="The timeout for requests done by the docker client",
+@click.option("-dt", "--docker-timeout", default=60, help="The timeout (in seconds) for requests done by the docker client",
               type=int)
 def lint(**kwargs):
     """Lint command will perform:

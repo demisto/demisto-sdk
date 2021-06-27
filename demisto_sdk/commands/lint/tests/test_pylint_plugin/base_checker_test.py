@@ -756,6 +756,7 @@ class TestExecuteCommandChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that there is no errors, Check that there is no error message.
         """
+        self.checker.is_script = True
         _, node_b = astroid.extract_node("""
             def test_function(): #@
                 demisto.executeCommand('') #@
@@ -773,6 +774,7 @@ class TestExecuteCommandChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that the correct message id is being added to the message errors of pylint
         """
+        self.checker.is_script = True
         _, node_b = astroid.extract_node("""
             def test_function(): #@
                 demisto.executeCommand('DeleteContext') #@
@@ -795,6 +797,7 @@ class TestExecuteCommandChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that the correct message id is being added to the message errors of pylint
         """
+        self.checker.is_script = True
         _, node_b = astroid.extract_node("""
             def test_function(): #@
                 demisto.executeCommand('getIncidents') #@
@@ -818,6 +821,7 @@ class TestExecuteCommandChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that the correct message id is being added to the message errors of pylint
         """
+        self.checker.is_script = True
         _, node_b = astroid.extract_node("""
             def test_function(): #@
                 demisto.executeCommand('setIncident', {'id': 'incident_id', 'name': 'incident_name'}) #@
@@ -841,6 +845,7 @@ class TestExecuteCommandChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that the correct message id is being added to the message errors of pylint
         """
+        self.checker.is_script = True
         _, node_b, node_c = astroid.extract_node("""
             def test_function(): #@
                 args = {'name': 'incident_name', 'id': 'incident_id'} #@
@@ -864,6 +869,7 @@ class TestExecuteCommandChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that there is no errors, Check that there is no error message.
         """
+        self.checker.is_script = True
         _, node_b, node_c = astroid.extract_node("""
             def test_function(): #@
                 args = {'name': 'incident_name'} #@

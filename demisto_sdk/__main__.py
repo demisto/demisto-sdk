@@ -581,7 +581,7 @@ def lint(**kwargs):
         failure_report=kwargs.get('failure_report'),  # type: ignore[arg-type]
         no_coverage=kwargs.get('no_coverage'),     # type: ignore[arg-type]
         coverage_report=kwargs.get('coverage_report'),  # type: ignore[arg-type]
-        docker_timeout=kwargs.get('docker_timeout')  # type: ignore[arg-type]
+        docker_timeout=kwargs.get('docker_timeout'),  # type: ignore[arg-type]
     )
 
 

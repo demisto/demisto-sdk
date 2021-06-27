@@ -12,6 +12,7 @@ VALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-valid.md'
 INVALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-invalid.md'
 INVALID2_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-invalid2.md'
 INVALID3_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-short-invalid.md'
+PACK_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-pack.md'
 EMPTY_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-empty.md'
 FAKE_INTEGRATION_README = f'{git_path()}/demisto_sdk/tests/test_files/fake_integration/fake_README.md'
 
@@ -358,3 +359,71 @@ def test_demisto_not_in_readme(repo):
     readme_validator = ReadMeValidator(integration.readme.path)
 
     assert readme_validator.verify_demisto_in_readme_content()
+
+
+def test_verify_readme_image_paths_pack_readme(mocker):
+    """
+    Given
+        - A pack README file with relative image paths in it and an absolute path in it.
+    When
+        - Run validate on README file
+    Then
+        - Ensure:
+            - Validation fails
+            - Image paths were caught correctly
+            - An Error was printed
+            - Valid absolute path is not caught
+    """
+    from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
+    captured_output = io.StringIO()
+    sys.stdout = captured_output  # redirect stdout.
+
+    readme_validator = ReadMeValidator(PACK_MD)
+    readme_validator.file_path = '/Packs/test_pack/README.md'
+    mocker.patch('demisto_sdk.commands.common.hook_validations.readme.get_pack_name', return_value='test_pack')
+    mocker.patch.object(BaseValidator, 'check_file_flags', return_value=None)
+    result = readme_validator.verify_readme_image_paths()
+    sys.stdout = sys.__stdout__  # reset stdout.
+    assert not result
+    assert 'Detected following image: ![Identity with High Risk Score](doc_files/High_Risk_User.png) ' \
+           'which is not using an absolute url' in captured_output.getvalue()
+    assert 'Detected following image: ![Identity with High Risk Score](home/test1/test2/doc_files/High_Risk_User.png) ' \
+           'which is not using an absolute url' in captured_output.getvalue()
+    assert 'https://github.com/demisto/content/raw' not in captured_output.getvalue()
+
+
+def test_verify_readme_image_paths_general_readme(mocker):
+    """
+    Given
+        - A README file (not pack README) with valid/invalid relative image
+         paths and valid/invalid absolute image paths in it.
+    When
+        - Run validate on README file
+    Then
+        - Ensure:
+            - Validation fails
+            - Image paths were caught correctly
+            - An Error was printed
+            - valid paths are not caught
+    """
+    from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
+    captured_output = io.StringIO()
+    sys.stdout = captured_output  # redirect stdout.
+
+    readme_validator = ReadMeValidator(INVALID_MD)
+    mocker.patch('demisto_sdk.commands.common.hook_validations.readme.get_pack_name', return_value='test_pack')
+    mocker.patch.object(BaseValidator, 'check_file_flags', return_value=None)
+    result = readme_validator.verify_readme_image_paths()
+    sys.stdout = sys.__stdout__  # reset stdout.
+    captured_output = captured_output.getvalue()
+    assert not result
+    assert 'The following relative path is not valid - ../../default.png please recheck it.' in captured_output
+    assert 'The following relative path is not valid - default.png please recheck it.' not in captured_output
+
+    assert 'The following link seems to be broken, please repair it - ' \
+           'https://github.com/demisto/content/raw/123/Packs/valid/doc_files/test.png' in captured_output
+    assert 'The following link seems to be broken, please repair it - ' \
+           'https://github.com/demisto/content/raw/123/Packs/valid/doc_files/test2.png' in captured_output
+    assert 'The following link seems to be broken, please repair it - ' \
+           'https://github.com/demisto/content/raw/2e4e0056580ea5de30f55dcbe2ccacaadf01b74e/Packs' \
+           not in captured_output

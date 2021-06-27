@@ -266,7 +266,10 @@ ERROR_CODE = {
     "invalid_version_in_layoutscontainer": {'code': "LO101", 'ui_applicable': False, 'related_field': 'version'},
     "invalid_file_path_layout": {'code': "LO102", 'ui_applicable': False, 'related_field': ''},
     "invalid_file_path_layoutscontainer": {'code': "LO103", 'ui_applicable': False, 'related_field': ''},
-    "invalid_incident_field_in_layout": {'code': "LO104", 'ui_applicable': False, 'related_field': ''}
+    "invalid_incident_field_in_layout": {'code': "LO104", 'ui_applicable': False, 'related_field': ''},
+    "image_relative_path_error": {'code': "RM105", 'ui_applicable': False, 'related_field': ''},
+    "invalid_image_relative_path_error": {'code': "RM106", 'ui_applicable': False, 'related_field': ''},
+    "invalid_image_absolute_path_error": {'code': "RM107", 'ui_applicable': False, 'related_field': ''},
 }
 
 
@@ -1333,6 +1336,24 @@ class Errors:
     def image_path_error(path, alternative_path):
         return f'Detected following image url:\n{path}\n' \
                f'Which is not the raw link. You probably want to use the following raw image url:\n{alternative_path}'
+
+    @staticmethod
+    @error_code_decorator
+    def image_relative_path_error(path):
+        return f'Detected following image: {path} which is ' \
+               f'not using an absolute url (url does not start with http/https). See ' \
+               f'https://xsoar.pan.dev/docs/integrations/integration-docs#images for further info on how to ' \
+               f'add images to README files.'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_image_relative_path_error(path):
+        return f'The following relative path is not valid - {path} please recheck it.'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_image_absolute_path_error(path):
+        return f'The following link seems to be broken, please repair it - {path}'
 
     @staticmethod
     @error_code_decorator

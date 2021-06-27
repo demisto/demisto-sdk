@@ -13,6 +13,7 @@ from demisto_sdk.commands.common.constants import (API_MODULES_PACK,
                                                    OLDEST_SUPPORTED_VERSION,
                                                    PACKS_DIR,
                                                    PACKS_PACK_META_FILE_NAME,
+                                                   PACKS_README_FILE_NAME,
                                                    TESTS_AND_DOC_DIRECTORIES,
                                                    FileType)
 from demisto_sdk.commands.common.content import Content
@@ -283,6 +284,9 @@ class ValidateManager:
             if content_dir in CONTENT_ENTITIES_DIRS:
                 pack_entities_validation_results.add(self.run_validation_on_content_entities(content_entity_path,
                                                                                              pack_error_ignore_list))
+            elif PACKS_README_FILE_NAME in content_dir:  # Run validation on pack README file
+                pack_entities_validation_results.add(self.run_validations_on_file(content_entity_path,
+                                                                                  pack_error_ignore_list))
             else:
                 self.ignored_files.add(content_entity_path)
 
@@ -902,8 +906,8 @@ class ValidateManager:
                 if not BaseValidator(ignored_errors=ignored_errors_list,
                                      print_as_warnings=self.print_ignored_errors,
                                      json_file_path=self.json_file_path).handle_error(
-                        error_message, error_code,
-                        file_path=os.path.join(os.getcwd(), PACKS_DIR, pack, PACKS_PACK_META_FILE_NAME)
+                    error_message, error_code,
+                    file_path=os.path.join(os.getcwd(), PACKS_DIR, pack, PACKS_PACK_META_FILE_NAME)
                 ):
                     is_valid.add(True)
 

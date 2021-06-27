@@ -12,7 +12,7 @@ def test_error_code_info_sanity():
     assert result.stderr == ""
 
 
-def test_error_code_info_sanity():
+def test_error_code_info_failure():
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(main, ['error-code', '-i', 'KELLER'])
 

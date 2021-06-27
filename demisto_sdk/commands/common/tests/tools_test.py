@@ -55,6 +55,7 @@ from demisto_sdk.tests.constants_test import (IGNORED_PNG,
                                               VALID_WIDGET_PATH)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     LAYOUT, MAPPER, OLD_CLASSIFIER, REPUTATION)
+from pytest import raises
 from TestSuite.pack import Pack
 from TestSuite.playbook import Playbook
 from TestSuite.repo import Repo
@@ -74,7 +75,9 @@ class TestGenericFunctions:
 
     def test_get_file_exception(self):
         path_to_here = f'{git_path()}/demisto_sdk/tests/test_files/'
-        assert get_file(json.load, os.path.join(path_to_here, 'fake_integration.yml'), ('yml', 'yaml')) == {}
+        with raises(ValueError) as e:
+            result = get_file(json.load, os.path.join(path_to_here, 'fake_integration.yml'), ('yml', 'yaml'))
+            assert result == e.value
 
     @pytest.mark.parametrize('dir_path', ['demisto_sdk', f'{git_path()}/demisto_sdk/tests/test_files'])
     def test_get_yml_paths_in_dir(self, dir_path):

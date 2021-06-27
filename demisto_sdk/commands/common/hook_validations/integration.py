@@ -107,7 +107,8 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_integration_file_path(),
             self.has_no_duplicate_params(),
             self.has_no_duplicate_args(),
-            self.is_there_separators_in_names()
+            self.is_there_separators_in_names(),
+            self.is_valid_endpoint_params()
         ]
 
         if not skip_test_conf:
@@ -1196,3 +1197,49 @@ class IntegrationValidator(ContentEntityValidator):
                 return False
 
         return True
+
+    def is_valid_endpoint_command(self):
+        """
+        Check if the input for endpoint commands includes ip, hostname or id, and that ip is the default argument.
+
+        Returns:
+            true if the inputs are valid
+        """
+        commands = self.current_file.get('script', {}).get('commands', [])
+
+        if 'endpoint' not in [x.get('name') for x in commands]:
+            return True
+        else:
+            # extracting the specific command from commands.
+            endpoint_command = [arg for arg in commands if arg.get('name') == 'endpoint'][0]
+            self._is_valid_endpoint_inputs(endpoint_command)
+
+
+    def _is_valid_endpoint_inputs(self, command_data: dict):
+        ip = 'ip'
+        endpoint_command_inputs = command_data.get('arguments', [])
+        required_arguments = set(ip, "id", "hostname")
+        existing_arguments = set([arg.name for arg in endpoint_command_inputs])
+
+        # checking at least one of the required argument is found as argument
+        if not required_arguments.intersection(existing_arguments):
+            print('Error')
+
+        # checking if ip argument is only default:
+
+        args_with_default = [(arg.get('name'), arg.get('default', False)) for arg in endpoint_command_inputs]
+        # getting only arguments with 'default'=True. Expecting only 'ip' to be with True if 'ip' is argument.
+        defaults = list(filter(lambda x: x[1] == True, args_with_default))
+
+        if (ip in existing_arguments and defaults == [('ip', True)]) or (ip not in existing_arguments and not defaults):
+            return True
+        else:
+            'error - ip argument is only default allowed and required.'
+
+
+
+
+
+
+
+

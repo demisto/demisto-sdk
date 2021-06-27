@@ -61,6 +61,8 @@ from demisto_sdk.commands.common.hook_validations.structure import \
 from demisto_sdk.commands.common.hook_validations.test_playbook import \
     TestPlaybookValidator
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
+from demisto_sdk.commands.common.hook_validations.xsoar_config_json import \
+    XSOARConfigJsonValidator
 from demisto_sdk.commands.common.tools import (find_type, get_api_module_ids,
                                                get_api_module_integrations_set,
                                                get_pack_ignore_file_path,
@@ -353,6 +355,10 @@ class ValidateManager:
             if self.handle_error(error_message=error_message, error_code=error_code, file_path=file_path,
                                  drop_line=True):
                 return False
+
+        if file_type == FileType.XSOAR_CONFIG:
+            xsoar_config_validator = XSOARConfigJsonValidator(file_path)
+            return xsoar_config_validator.is_valid_xsoar_config_file()
 
         if not self.check_only_schema:
             validation_print = f"\nValidating {file_path} as {file_type.value}"

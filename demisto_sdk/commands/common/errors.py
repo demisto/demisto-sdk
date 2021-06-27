@@ -68,7 +68,7 @@ ERROR_CODE = {
     "pwsh_wrong_version": {'code': "IN120", 'ui_applicable': False, 'related_field': 'fromversion'},
     "parameter_missing_from_yml": {'code': "IN121", 'ui_applicable': True, 'related_field': 'configuration'},
     "parameter_missing_for_feed": {'code': "IN122", 'ui_applicable': True, 'related_field': 'configuration'},
-    "invalid_v2_integration_name": {'code': "IN123", 'ui_applicable': True, 'related_field': 'display'},
+    "invalid_version_integration_name": {'code': "IN123", 'ui_applicable': True, 'related_field': 'display'},
     "found_hidden_param": {'code': "IN124", 'ui_applicable': False, 'related_field': '<parameter-name>.hidden'},
     "no_default_value_in_parameter": {'code': "IN125", 'ui_applicable': False,
                                       'related_field': '<parameter-name>.default'},
@@ -92,7 +92,7 @@ ERROR_CODE = {
     "incident_in_command_name_or_args": {'code': "IN139", "ui_applicable": False,
                                          'related_field': 'script.commands.name'},
     "integration_is_skipped": {'code': "IN140", 'ui_applicable': False, 'related_field': ''},
-    "invalid_v2_script_name": {'code': "SC100", 'ui_applicable': True, 'related_field': 'name'},
+    "invalid_version_script_name": {'code': "SC100", 'ui_applicable': True, 'related_field': 'name'},
     "invalid_deprecated_script": {'code': "SC101", 'ui_applicable': False, 'related_field': 'comment'},
     "invalid_command_name_in_script": {'code': "SC102", 'ui_applicable': False, 'related_field': ''},
     "is_valid_script_file_path_in_folder": {'code': "SC103", 'ui_applicable': False, 'related_field': ''},
@@ -167,7 +167,8 @@ ERROR_CODE = {
     "description_contains_contrib_details": {'code': "DS105", 'ui_applicable': False,
                                              'related_field': 'detaileddescription'},
     "invalid_description_name": {'code': "DS106", 'ui_applicable': False, 'related_field': ''},
-    "description_contains_demisto_word": {'code': "DS107", 'ui_applicable': True, 'related_field': 'detaileddescription'},
+    "description_contains_demisto_word": {'code': "DS107", 'ui_applicable': True,
+                                          'related_field': 'detaileddescription'},
     "invalid_incident_field_name": {'code': "IF100", 'ui_applicable': True, 'related_field': 'name'},
     "invalid_incident_field_content_key_value": {'code': "IF101", 'ui_applicable': False, 'related_field': 'content'},
     "invalid_incident_field_system_key_value": {'code': "IF102", 'ui_applicable': False, 'related_field': 'system'},
@@ -222,6 +223,7 @@ ERROR_CODE = {
     "empty_readme_error": {'code': "RM104", 'ui_applicable': False, 'related_field': ''},
     "readme_equal_description_error": {'code': "RM105", 'ui_applicable': False, 'related_field': ''},
     "readme_contains_demisto_word": {'code': "RM106", 'ui_applicable': False, 'related_field': ''},
+    "template_sentence_in_readme": {'code': "RM107", 'ui_applicable': False, 'related_field': ''},
     "wrong_version_reputations": {'code': "RP100", 'ui_applicable': False, 'related_field': 'version'},
     "reputation_expiration_should_be_numeric": {'code': "RP101", 'ui_applicable': True, 'related_field': 'expiration'},
     "reputation_id_and_details_not_equal": {'code': "RP102", 'ui_applicable': False, 'related_field': 'id'},
@@ -267,9 +269,11 @@ ERROR_CODE = {
     "invalid_file_path_layout": {'code': "LO102", 'ui_applicable': False, 'related_field': ''},
     "invalid_file_path_layoutscontainer": {'code': "LO103", 'ui_applicable': False, 'related_field': ''},
     "invalid_incident_field_in_layout": {'code': "LO104", 'ui_applicable': False, 'related_field': ''},
-    "image_relative_path_error": {'code': "RM105", 'ui_applicable': False, 'related_field': ''},
-    "invalid_image_relative_path_error": {'code': "RM106", 'ui_applicable': False, 'related_field': ''},
-    "invalid_image_absolute_path_error": {'code': "RM107", 'ui_applicable': False, 'related_field': ''},
+    "xsoar_config_file_is_not_json": {'code': "XC100", 'ui_applicable': False, 'related_field': ''},
+    "xsoar_config_file_malformed": {'code': "XC101", 'ui_applicable': False, 'related_field': ''},
+    "image_relative_path_error": {'code': "RM108", 'ui_applicable': False, 'related_field': ''},
+    "invalid_image_relative_path_error": {'code': "RM109", 'ui_applicable': False, 'related_field': ''},
+    "invalid_image_absolute_path_error": {'code': "RM110", 'ui_applicable': False, 'related_field': ''},
 }
 
 
@@ -617,9 +621,10 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_v2_integration_name():
-        return "The display name of this v2 integration is incorrect , should be **name** v2.\n" \
-               "e.g: Kenna v2, Jira v2"
+    def invalid_version_integration_name(version_number: str):
+        return f"The display name of this v{version_number} integration is incorrect , " \
+               f"should be **name** v{version_number}.\n" \
+               f"e.g: Kenna v{version_number}, Jira v{version_number}"
 
     @staticmethod
     @error_code_decorator
@@ -640,9 +645,9 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_v2_script_name():
-        return "The name of this v2 script is incorrect , should be **name**V2." \
-               " e.g: DBotTrainTextClassifierV2"
+    def invalid_version_script_name(version_number: str):
+        return f"The name of this v{version_number} script is incorrect , should be **name**V{version_number}." \
+               f" e.g: DBotTrainTextClassifierV{version_number}"
 
     @staticmethod
     @error_code_decorator
@@ -1030,9 +1035,9 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def description_missing_in_beta_integration():
-        return f"No detailed description file was found in the package. Please add one, " \
-               f"and make sure it includes the beta disclaimer note." \
-               f"Add the following to the detailed description:\n{BETA_INTEGRATION_DISCLAIMER}"
+        return f"No detailed description file (<integration_name>_description.md) was found in the package." \
+               f" Please add one, and make sure it includes the beta disclaimer note." \
+               f" Add the following to the detailed description:\n{BETA_INTEGRATION_DISCLAIMER}"
 
     @staticmethod
     @error_code_decorator
@@ -1330,6 +1335,11 @@ class Errors:
     @error_code_decorator
     def readme_contains_demisto_word(line_nums):
         return f'Found the word \'Demisto\' in the readme content in lines: {line_nums}.'
+
+    @staticmethod
+    @error_code_decorator
+    def template_sentence_in_readme(line_nums):
+        return f"Please update the integration version differences section in lines: {line_nums}."
 
     @staticmethod
     @error_code_decorator
@@ -1662,3 +1672,14 @@ class Errors:
     @error_code_decorator
     def playbook_condition_has_no_else_path(tasks_ids):
         return f'Playbook conditional tasks with ids: {" ".join([str(id) for id in tasks_ids])} have no else path'
+
+    @staticmethod
+    @error_code_decorator
+    def xsoar_config_file_is_not_json(file_path):
+        return f"Could not load {file_path} as a JSON XSOAR configuration file."
+
+    @staticmethod
+    @error_code_decorator
+    def xsoar_config_file_malformed(configuration_file_path, schema_file_path, errors_table):
+        return f'Errors were found in the configuration file: "{configuration_file_path}" ' \
+               f'with schema "{schema_file_path}":\n {errors_table}'

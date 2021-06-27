@@ -418,12 +418,13 @@ class LintManager:
         self.report_failed_image_creation(return_exit_code=return_exit_code,
                                           pkgs_status=pkgs_status,
                                           lint_status=lint_status)
-        self.report_summary(pkg=self._pkgs, lint_status=lint_status, all_packs=self._all_packs)
         if not no_coverage:
             if coverage_report:
                 generate_coverage_report(html=True, xml=True, cov_dir=coverage_report)
             else:
                 generate_coverage_report()
+
+        self.report_summary(pkg=self._pkgs, lint_status=lint_status, all_packs=self._all_packs)
         self.create_json_output()
 
     @staticmethod

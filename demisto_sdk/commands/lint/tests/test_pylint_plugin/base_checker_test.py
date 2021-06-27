@@ -739,3 +739,137 @@ class TestCommandResultsIndicatorsChecker(pylint.testutils.CheckerTestCase):
         assert node_a
         with self.assertNoMessages():
             self.checker.visit_call(node_a)
+
+
+class TestExecuteCommandChecker(pylint.testutils.CheckerTestCase):
+    """
+    Class which tests the functionality of executeCommand checker.
+    """
+    CHECKER_CLASS = base_checker.CustomBaseChecker
+
+    def test_only_execute_command_exists(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - executeCommand function exists in the code without any build in command.
+        Then:
+            - Ensure that there is no errors, Check that there is no error message.
+        """
+        _, node_b = astroid.extract_node("""
+            def test_function(): #@
+                demisto.executeCommand('') #@
+        """)
+        assert node_b is not None
+        with self.assertNoMessages():
+            self.checker.visit_call(node_b)
+
+    def test_execute_command_with_delete_context_exists(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - executeCommand function exists in the code with the 'DeleteContext' build in command.
+        Then:
+            - Ensure that the correct message id is being added to the message errors of pylint
+        """
+        _, node_b = astroid.extract_node("""
+            def test_function(): #@
+                demisto.executeCommand('DeleteContext') #@
+        """)
+        assert node_b is not None
+        with self.assertAddsMessages(
+                pylint.testutils.Message(
+                    msg_id='missing-permission',
+                    node=node_b,
+                )
+        ):
+            self.checker.visit_call(node_b)
+
+    def test_execute_command_with_get_incidents_exists(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - executeCommand function exists in the code with the 'getIncidents' build in command.
+        Then:
+            - Ensure that the correct message id is being added to the message errors of pylint
+        """
+        _, node_b = astroid.extract_node("""
+            def test_function(): #@
+                demisto.executeCommand('getIncidents') #@
+        """)
+        assert node_b is not None
+        with self.assertAddsMessages(
+                pylint.testutils.Message(
+                    msg_id='missing-permission',
+                    node=node_b,
+                )
+        ):
+            self.checker.visit_call(node_b)
+
+    def test_execute_command_with_set_incident_and_id_exists(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - executeCommand function exists in the code with the 'setIncident' build in command
+              and a given incident id.
+        Then:
+            - Ensure that the correct message id is being added to the message errors of pylint
+        """
+        _, node_b = astroid.extract_node("""
+            def test_function(): #@
+                demisto.executeCommand('setIncident', {'id': 'incident_id', 'name': 'incident_name'}) #@
+        """)
+        assert node_b is not None
+        with self.assertAddsMessages(
+                pylint.testutils.Message(
+                    msg_id='missing-permission',
+                    node=node_b,
+                )
+        ):
+            self.checker.visit_call(node_b)
+
+    def test_execute_command_with_set_incident_and_id_in_args_exists(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - executeCommand function exists in the code with the 'setIncident' build in command
+              and a given incident id which is predefined in 'args'.
+        Then:
+            - Ensure that the correct message id is being added to the message errors of pylint
+        """
+        _, node_b, node_c = astroid.extract_node("""
+            def test_function(): #@
+                args = {'name': 'incident_name', 'id': 'incident_id'} #@
+                demisto.executeCommand('setIncident', args) #@
+        """)
+        assert node_b is not None and node_c is not None
+        with self.assertAddsMessages(
+                pylint.testutils.Message(
+                    msg_id='missing-permission',
+                    node=node_c,
+                )
+        ):
+            self.checker.visit_call(node_c)
+
+    def test_execute_command_with_set_incident_and_without_id_in_args_exists(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - executeCommand function exists in the code with the 'setIncident' build in command without incident id.
+        Then:
+            - Ensure that there is no errors, Check that there is no error message.
+        """
+        _, node_b, node_c = astroid.extract_node("""
+            def test_function(): #@
+                args = {'name': 'incident_name'} #@
+                demisto.executeCommand('setIncident', args) #@
+        """)
+        assert node_b is not None and node_c is not None
+        with self.assertNoMessages():
+            self.checker.visit_call(node_b)
+            self.checker.visit_call(node_c)

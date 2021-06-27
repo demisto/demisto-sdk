@@ -541,6 +541,8 @@ def secrets(config, **kwargs):
     "--coverage-report", help="Specify directory for the coverage report files",
     type=PathsParamType()
 )
+@click.option("-dt", "--docker-timeout", default=60, help="The timeout (in seconds) for requests done by the docker client",
+              type=int)
 def lint(**kwargs):
     """Lint command will perform:
         1. Package in host checks - flake8, bandit, mypy, vulture.
@@ -579,6 +581,7 @@ def lint(**kwargs):
         failure_report=kwargs.get('failure_report'),  # type: ignore[arg-type]
         no_coverage=kwargs.get('no_coverage'),     # type: ignore[arg-type]
         coverage_report=kwargs.get('coverage_report'),  # type: ignore[arg-type]
+        docker_timeout=kwargs.get('docker_timeout'),  # type: ignore[arg-type]
     )
 
 
@@ -1004,6 +1007,12 @@ def generate_docs(**kwargs):
     "-o", "--output",
     help="Output file path, the default is the Tests directory.",
     default=''
+)
+@click.option(
+    '-fd',
+    '--fail-duplicates',
+    help="Fails the process if any duplicates are found.",
+    is_flag=True
 )
 def create_id_set(**kwargs):
     """Create the content dependency tree by ids."""

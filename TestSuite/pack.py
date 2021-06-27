@@ -111,6 +111,7 @@ class Pack:
             self,
             name: Optional[str] = None,
             code: Optional[str] = None,
+            test: Optional[str] = None,
             yml: Optional[dict] = None,
             readme: Optional[str] = None,
             description: Optional[str] = None,
@@ -124,6 +125,7 @@ class Pack:
         integration = Integration(self._integrations_path, name, self._repo)
         integration.build(
             code,
+            test,
             yml,
             readme,
             description,
@@ -138,6 +140,7 @@ class Pack:
             name: Optional[str] = None,
             yml: Optional[dict] = None,
             code: str = '',
+            test: str = '',
             readme: str = '',
             description: str = '',
             changelog: str = '',
@@ -150,6 +153,7 @@ class Pack:
         script = Script(self._scripts_path, name, self._repo)
         script.build(
             code,
+            test,
             yml,
             readme,
             description,

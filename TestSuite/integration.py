@@ -26,6 +26,7 @@ class Integration:
 
         self.path = str(self._tmpdir_integration_path)
         self.code = File(self._tmpdir_integration_path / f'{self.name}.py', self._repo.path)
+        self.test = File(self._tmpdir_integration_path / f'{self.name}_test.py', self._repo.path)
         self.yml = YAML(self._tmpdir_integration_path / f'{self.name}.yml', self._repo.path)
         self.readme = File(self._tmpdir_integration_path / 'README.md', self._repo.path)
         self.description = File(self._tmpdir_integration_path / f'{self.name}_description.md', self._repo.path)
@@ -35,6 +36,7 @@ class Integration:
     def build(
             self,
             code: Optional[str] = None,
+            test: Optional[str] = None,
             yml: Optional[dict] = None,
             readme: Optional[str] = None,
             description: Optional[str] = None,
@@ -45,6 +47,8 @@ class Integration:
         """
         if code is not None:
             self.code.write(code)
+        if test is not None:
+            self.test.write(test)
         if yml is not None:
             self.yml.write_dict(yml)
         if readme is not None:
@@ -61,6 +65,8 @@ class Integration:
 
         with open(suite_join_path(default_integration_dir, 'sample.py')) as code_file:
             code = str(code_file.read())
+        with open(suite_join_path(default_integration_dir, 'sample_test.py')) as test_file:
+            test = str(test_file.read())
         with open(suite_join_path(default_integration_dir, 'sample.yml')) as yml_file:
             yml = yaml.safe_load(yml_file)
         with open(suite_join_path(default_integration_dir, 'sample_image.png'), 'rb') as image_file:
@@ -72,6 +78,7 @@ class Integration:
 
         self.build(
             code=code,
+            test=test,
             yml=yml,
             image=image,
             changelog=changelog,

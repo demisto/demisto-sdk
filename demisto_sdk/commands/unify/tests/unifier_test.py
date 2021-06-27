@@ -83,7 +83,7 @@ TESTS_DIR = f'{git_path()}/demisto_sdk/tests'
 
 def test_clean_python_code(repo):
     pack = repo.create_pack('PackName')
-    integration = pack.create_integration('integration', 'bla', INTEGRATION_YAML)
+    integration = pack.create_integration('integration', 'bla', yml=INTEGRATION_YAML)
     unifier = Unifier(str(integration.path))
     script_code = "import demistomock as demisto\nfrom CommonServerPython import *  # test comment being removed\n" \
                   "from CommonServerUserPython import *\nfrom __future__ import print_function"
@@ -767,7 +767,7 @@ def test_unify_partner_contributed_pack(mocker, repo):
         - Ensure unify create unified file with partner support notes.
     """
     pack = repo.create_pack('PackName')
-    integration = pack.create_integration('integration', 'bla', INTEGRATION_YAML)
+    integration = pack.create_integration('integration', 'bla', yml=INTEGRATION_YAML)
     pack.pack_metadata.write_json(PACK_METADATA_PARTNER)
     mocker.patch.object(Unifier, 'insert_script_to_yml', return_value=(PARTNER_UNIFY, ''))
     mocker.patch.object(Unifier, 'insert_image_to_yml', return_value=(PARTNER_UNIFY, ''))
@@ -797,7 +797,7 @@ def test_unify_partner_contributed_pack_no_email(mocker, repo):
         - Ensure unify create unified file with partner support notes.
     """
     pack = repo.create_pack('PackName')
-    integration = pack.create_integration('integration', 'bla', INTEGRATION_YAML)
+    integration = pack.create_integration('integration', 'bla', yml=INTEGRATION_YAML)
     pack.pack_metadata.write_json(PACK_METADATA_PARTNER_NO_EMAIL)
     mocker.patch.object(Unifier, 'insert_script_to_yml', return_value=(PARTNER_UNIFY_NO_EMAIL, ''))
     mocker.patch.object(Unifier, 'insert_image_to_yml', return_value=(PARTNER_UNIFY_NO_EMAIL, ''))
@@ -829,7 +829,7 @@ def test_unify_contributor_emails_list(mocker, repo, pack_metadata):
         - Ensure unify create a unified file with partner support email list.
     """
     pack = repo.create_pack('PackName')
-    integration = pack.create_integration('integration', 'bla', INTEGRATION_YAML)
+    integration = pack.create_integration('integration', 'bla', yml=INTEGRATION_YAML)
     pack.pack_metadata.write_json(pack_metadata)
     mocker.patch.object(Unifier, 'insert_image_to_yml', return_value=(PARTNER_UNIFY_EMAIL_LIST, ''))
     mocker.patch.object(Unifier, 'insert_description_to_yml', return_value=(PARTNER_UNIFY_EMAIL_LIST, ''))
@@ -853,7 +853,7 @@ def test_unify_partner_contributed_pack_no_url(mocker, repo):
         - Ensure unify create unified file with partner support notes.
     """
     pack = repo.create_pack('PackName')
-    integration = pack.create_integration('integration', 'bla', INTEGRATION_YAML)
+    integration = pack.create_integration('integration', 'bla', yml=INTEGRATION_YAML)
     pack.pack_metadata.write_json(PACK_METADATA_PARTNER_NO_URL)
     mocker.patch.object(Unifier, 'insert_script_to_yml', return_value=(PARTNER_UNIFY_NO_URL, ''))
     mocker.patch.object(Unifier, 'insert_image_to_yml', return_value=(PARTNER_UNIFY_NO_URL, ''))
@@ -883,7 +883,7 @@ def test_unify_not_partner_contributed_pack(mocker, repo):
         - Ensure unify create unified file without partner support notes.
     """
     pack = repo.create_pack('PackName')
-    integration = pack.create_integration('integration', 'bla', INTEGRATION_YAML)
+    integration = pack.create_integration('integration', 'bla', yml=INTEGRATION_YAML)
     pack.pack_metadata.write_json(PACK_METADATA_XSOAR)
     mocker.patch.object(Unifier, 'insert_script_to_yml', return_value=(XSOAR_UNIFY, ''))
     mocker.patch.object(Unifier, 'insert_image_to_yml', return_value=(XSOAR_UNIFY, ''))
@@ -912,7 +912,7 @@ def test_unify_community_contributed(mocker, repo):
     """
 
     pack = repo.create_pack('PackName')
-    integration = pack.create_integration('integration', 'bla', INTEGRATION_YAML)
+    integration = pack.create_integration('integration', 'bla', yml=INTEGRATION_YAML)
     pack.pack_metadata.write_json(PACK_METADATA_COMMUNITY)
     mocker.patch.object(Unifier, 'insert_script_to_yml', return_value=(COMMUNITY_UNIFY, ''))
     mocker.patch.object(Unifier, 'insert_image_to_yml', return_value=(COMMUNITY_UNIFY, ''))
@@ -944,7 +944,7 @@ def test_invalid_path_to_unifier(repo):
 
     """
     pack = repo.create_pack('PackName')
-    integration = pack.create_integration('integration', 'bla', INTEGRATION_YAML)
+    integration = pack.create_integration('integration', 'bla', yml=INTEGRATION_YAML)
     integration.create_default_integration()
 
     with ChangeCWD(pack.repo_path):

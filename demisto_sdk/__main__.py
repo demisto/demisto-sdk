@@ -31,7 +31,8 @@ from demisto_sdk.commands.create_artifacts.content_artifacts_creator import \
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from demisto_sdk.commands.doc_reviewer.doc_reviewer import DocReviewer
 from demisto_sdk.commands.download.downloader import Downloader
-from demisto_sdk.commands.error_code_info.error_code_info import generate_error_code_information
+from demisto_sdk.commands.error_code_info.error_code_info import \
+    generate_error_code_information
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
 from demisto_sdk.commands.format.format_module import format_manager

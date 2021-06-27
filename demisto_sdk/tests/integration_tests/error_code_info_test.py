@@ -10,4 +10,3 @@ def test_error_code_info_sanity():
     assert "The version for our files should always be <expected>, please update the file." in result.output
     assert result.exit_code == 0
     assert result.stderr == ""
-

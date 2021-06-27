@@ -1,4 +1,5 @@
 # Changelog
+* Added the *--docker-timeout* flag in the **lint** command to control the request timeout for the Docker client.
 
 # 1.4.1
 * When in private repo without `DEMSITO_SDK_GITHUB_TOKEN` configured, get_remote_file will take files from the local origin/master.

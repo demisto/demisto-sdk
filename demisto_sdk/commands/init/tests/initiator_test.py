@@ -1,4 +1,6 @@
+import json
 import os
+import shutil
 from collections import OrderedDict, deque
 from os import listdir
 from pathlib import Path
@@ -488,8 +490,19 @@ def test_template_integration_init_with_ignore_secrets(initiator, tmpdir, mocker
         - Ensure integration directory contains all the files of the template integration.
         - Ensure .secrets-ignore file is not empty.
     """
+
+    white_list = {
+        "files": [],
+        "iocs": {},
+        "generic_strings": []
+    }
     temp_pack_dir = os.path.join(tmpdir, PACK_NAME)
     os.makedirs(temp_pack_dir, exist_ok=True)
+    os.makedirs('Tests')
+    os.makedirs('Packs/PackName')
+    with open('Tests/secrets_white_list.json', 'w') as f:
+        json.dump(white_list, f)
+
     secrets_ignore_path = 'Packs/PackName/.secrets-ignore'
 
     initiator.output = temp_pack_dir
@@ -516,7 +529,8 @@ def test_template_integration_init_with_ignore_secrets(initiator, tmpdir, mocker
     diff = expected_files.difference(integration_dir_files)
     assert not diff, f'There\'s a missing file in the copied files, diff is {diff}'
     assert os.stat(secrets_ignore_path).st_size > 0
-    open(secrets_ignore_path, 'w').close()  # remove the secrets
+    shutil.rmtree('Packs')
+    shutil.rmtree('Tests')
 
 
 def test_script_init(mocker, initiator, tmpdir):

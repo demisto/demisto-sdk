@@ -16,11 +16,10 @@ ALLOWED_IGNORE_ERRORS = [
     'MP106',
     'PA113', 'PA116', 'PA124', 'PA125',
     'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112'
-    'RM100', 'RM102', 'RM104', 'RM106',
+                                                 'RM100', 'RM102', 'RM104', 'RM106',
     'RP102', 'RP104',
     'SC100', 'SC101', 'SC105',
 ]
-
 
 PRESET_ERROR_TO_IGNORE = {
     'community': ['BC', 'CJ', 'DS100', 'DS101', 'DS102', 'DS103', 'DS104', 'IN125', 'IN126'],
@@ -1668,10 +1667,10 @@ class Errors:
     def invalid_incident_field_prefix(field_name):
         return f"Field name: {field_name} is invalid. Field name must start with the relevant pack name."
 
-
     @staticmethod
-    def suggest_fix_field_name(field_name, pack_name):
-        return f"To fix the problem, add pack name prefix to the field name." \
-               f"you can use the pack name or one of the prefixes in packe.metadat itemPrefix. Example: {pack_name} {field_name}." \
-               "Also make sure to update the field id and cliName accordingly." \
-               f"or add the pack name to the ignored packs"
+    def suggest_fix_field_name(field_name, pack_prefix):
+        return f"To fix the problem, add pack name prefix to the field name. " \
+               f"You can use the pack name or one of the prefixes found in the itemPrefix field in the packe.metadat. " \
+               f"Example: {pack_prefix} {field_name}.\n" \
+               f"Also make sure to update the field id and cliName accordingly. " \
+               f"Example: cliName: {pack_prefix.replace(' ', '')}{field_name.replace(' ', '')}, "

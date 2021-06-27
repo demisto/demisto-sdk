@@ -634,10 +634,10 @@ class ValidateManager:
                                                           print_as_warnings=self.print_ignored_errors,
                                                           json_file_path=self.json_file_path)
         if is_modified and self.is_backward_check:
-            return all([incident_field_validator.is_valid_file(validate_rn=False, is_new_file=True, validate_all=self.validate_all),
+            return all([incident_field_validator.is_valid_file(validate_rn=False, is_new_file=not is_modified, validate_all=self.validate_all),
                         incident_field_validator.is_backward_compatible()])
         else:
-            return incident_field_validator.is_valid_file(validate_rn=False, is_new_file=True, validate_all=self.validate_all)
+            return incident_field_validator.is_valid_file(validate_rn=False, is_new_file=not is_modified, validate_all=self.validate_all)
 
     def validate_reputation(self, structure_validator, pack_error_ignore_list):
         reputation_validator = ReputationValidator(structure_validator, ignored_errors=pack_error_ignore_list,

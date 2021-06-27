@@ -2,7 +2,7 @@
 * Added to `pylint` summary an indication if a test was skipped.
 * Fixed an issue where running **init** command without filling the metadata file.
 * Added the *--docker-timeout* flag in the **lint** command to control the request timeout for the Docker client.
-
+* Fixed **find_type** function to correctly find test files, such as, test script and test playbook.
 # 1.4.1
 * When in private repo without `DEMSITO_SDK_GITHUB_TOKEN` configured, get_remote_file will take files from the local origin/master.
 * Enhanced the **unify** command when giving input of a file and not a directory return a clear error message.

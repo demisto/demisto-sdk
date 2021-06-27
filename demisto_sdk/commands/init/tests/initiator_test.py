@@ -498,8 +498,8 @@ def test_template_integration_init_with_ignore_secrets(initiator, tmpdir, mocker
     }
     temp_pack_dir = os.path.join(tmpdir, PACK_NAME)
     os.makedirs(temp_pack_dir, exist_ok=True)
-    os.makedirs('Tests')
-    os.makedirs('Packs/PackName')
+    os.makedirs('Tests', exist_ok=True)
+    os.makedirs('Packs/PackName', exist_ok=True)
     with open('Tests/secrets_white_list.json', 'w') as f:
         json.dump(white_list, f)
 

@@ -1,3 +1,4 @@
+import decorator
 from typing import Any, Dict, List
 
 from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
@@ -289,11 +290,9 @@ def get_error_object(error_code: str) -> Dict:
     return {}
 
 
-def error_code_decorator(f):
-    def wrapper(*args, **kwargs):
-        return f(*args, **kwargs), ERROR_CODE[f.__name__].get('code')
-
-    return wrapper
+@decorator.decorator
+def error_code_decorator(func, *args, **kwargs):
+    return func(*args, **kwargs), ERROR_CODE[func.__name__].get('code')
 
 
 class Errors:

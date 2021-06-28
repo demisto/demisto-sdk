@@ -387,7 +387,7 @@ class UpdateRN:
             if docker_image:
                 rn_desc += f'- Updated the Docker image to: *{docker_image}*.'
 
-            if _header_by_type in current_rn_without_docker_images:
+            if _header_by_type and _header_by_type in current_rn_without_docker_images:
                 if content_name in current_rn_without_docker_images:
                     if docker_image:
                         new_rn = self.handle_existing_rn_with_docker_image(new_rn, _header_by_type, docker_image,

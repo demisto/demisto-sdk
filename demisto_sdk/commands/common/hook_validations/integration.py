@@ -1200,10 +1200,10 @@ class IntegrationValidator(ContentEntityValidator):
 
     def is_valid_endpoint_command(self):
         """
-        Check if the input for endpoint commands includes ip, hostname or id, and that ip is the default argument.
+        Check if the endpoint command in yml is valid by standard.
 
         Returns:
-            true if the inputs are valid
+            true if the inputs and outputs are valid.
         """
         commands = self.current_file.get('script', {}).get('commands', [])
 
@@ -1213,9 +1213,14 @@ class IntegrationValidator(ContentEntityValidator):
             # extracting the specific command from commands.
             endpoint_command = [arg for arg in commands if arg.get('name') == 'endpoint'][0]
             self._is_valid_endpoint_inputs(endpoint_command)
+            self._is_valid_endpoint_outputs(endpoint_command)
 
-
-    def _is_valid_endpoint_inputs(self, command_data: dict):
+    def _is_valid_endpoint_inputs(self, command_data):
+        """
+        Check if the input for endpoint commands includes ip, hostname or id, and that ip is the default argument.
+        Returns:
+            true if the inputs are valid.
+        """
         ip = 'ip'
         endpoint_command_inputs = command_data.get('arguments', [])
         required_arguments = set(ip, "id", "hostname")
@@ -1226,7 +1231,6 @@ class IntegrationValidator(ContentEntityValidator):
             print('Error')
 
         # checking if ip argument is only default:
-
         args_with_default = [(arg.get('name'), arg.get('default', False)) for arg in endpoint_command_inputs]
         # getting only arguments with 'default'=True. Expecting only 'ip' to be with True if 'ip' is argument.
         defaults = list(filter(lambda x: x[1] == True, args_with_default))
@@ -1236,6 +1240,24 @@ class IntegrationValidator(ContentEntityValidator):
         else:
             'error - ip argument is only default allowed and required.'
 
+    def _is_valid_endpoint_outputs(self, command_data):
+        context_standard = "https://xsoar.pan.dev/docs/integrations/context-standards"
+        output_for_reputation_valid = True
+        command_name = command_data.get('name')
+        context_outputs_paths = set()
+        for output in command_data.get('outputs', []):
+            context_outputs_paths.add(output.get('contextPath'))
+
+        # validate the IOC output
+        reputation_output = IOC_OUTPUTS_DICT.get(command_name)
+        if reputation_output and not reputation_output.intersection(context_outputs_paths):
+            error_message, error_code = Errors.missing_reputation(command_name, reputation_output,
+                                                                          context_standard)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                output_for_reputation_valid = False
+
+        return output_for_reputation_valid
 
 
 

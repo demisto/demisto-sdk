@@ -951,7 +951,8 @@ IOC_OUTPUTS_DICT = {
     'domain': {'Domain.Name'},
     'file': {'File.MD5', 'File.SHA1', 'File.SHA256'},
     'ip': {'IP.Address'},
-    'url': {'URL.Data'}
+    'url': {'URL.Data'},
+    'endpoint' : {'Endpoint.Hostname', 'Endpoint.IPAddress', 'Endpoint.ID'}
 }
 XSOAR_SUPPORT = "xsoar"
 XSOAR_AUTHOR = "Cortex XSOAR"

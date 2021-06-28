@@ -1032,19 +1032,26 @@ def create_id_set(**kwargs):
     help='File path of the united id_set',
     required=True
 )
+@click.option(
+    '-fd',
+    '--fail-duplicates',
+    help="Fails the process if any duplicates are found.",
+    is_flag=True
+)
 def merge_id_sets(**kwargs):
     """Merge two id_sets"""
     check_configuration_file('merge-id-sets', kwargs)
     first = kwargs['id_set1']
     second = kwargs['id_set2']
     output = kwargs['output']
+    fail_duplicates = kwargs['fail_duplicates']
 
     _, duplicates = merge_id_sets_from_files(
         first_id_set_path=first,
         second_id_set_path=second,
         output_id_set_path=output
     )
-    if duplicates:
+    if duplicates and fail_duplicates:
         print_error(f'Failed to merge ID sets: {first} with {second}, '
                     f'there are entities with ID: {duplicates} that exist in both ID sets')
         sys.exit(1)

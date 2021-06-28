@@ -82,7 +82,7 @@ def create_content_repo():
     create_a_pack_entity(prisma_cloud_compute, FileType.INCIDENT_TYPE, 'Prisma Cloud Compute Cloud Discovery',
                          'Prisma Cloud Compute Cloud Discovery')
 
-    # Create a pack called 'PrismaCloudCompute' with 1 playbook.
+    # Create a pack called 'Expanse' with 1 playbook.
     expanse = repo.create_pack('Expanse')
     create_a_pack_entity(expanse, FileType.PLAYBOOK, 'Expanse_Incident_Playbook')
 

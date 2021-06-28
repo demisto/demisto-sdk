@@ -17,9 +17,9 @@ import docker.models.containers
 import requests.exceptions
 import urllib3.exceptions
 from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
-                                                   SCRIPTS_DIR,
                                                    PACKS_PACK_META_FILE_NAME,
-                                                   TYPE_PWSH, TYPE_PYTHON)
+                                                   SCRIPTS_DIR, TYPE_PWSH,
+                                                   TYPE_PYTHON)
 # Local packages
 from demisto_sdk.commands.common.tools import (get_all_docker_images,
                                                run_command_os)

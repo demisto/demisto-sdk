@@ -269,7 +269,7 @@ class ReadMeValidator(BaseValidator):
         """
         valid = True
         absolute_links = re.findall(
-            r'(\!\[.*?\]|src\=)(\(|\")(https://github.com/demisto/content/(raw).*?)(\)|\")', self.readme_content,
+            r'(\!\[.*?\]|src\=)(\(|\")(https://github.com/demisto/content/(raw|blob).*?)(\)|\")', self.readme_content,
             re.IGNORECASE)
 
         if absolute_links:

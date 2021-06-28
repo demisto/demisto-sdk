@@ -4,6 +4,7 @@ import os
 import sys
 
 import pytest
+import requests_mock
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from TestSuite.test_tools import ChangeCWD
@@ -38,6 +39,8 @@ def test_is_file_valid(mocker, current, answer):
         return
     mocker.patch.dict(os.environ, {'DEMISTO_README_VALIDATION': 'yes', 'DEMISTO_MDX_CMD_VERIFY': 'yes'})
     assert readme_validator.is_valid_file() is answer
+    print("$$$$$$$$$$$$$$$$$$$")
+    print(ReadMeValidator._MDX_SERVER_PROCESS)
     assert not ReadMeValidator._MDX_SERVER_PROCESS
 
 
@@ -388,35 +391,72 @@ def test_verify_template_not_in_readme(repo):
         assert not readme_validator.verify_template_not_in_readme()
 
 
-def test_verify_readme_image_paths_pack_readme(mocker):
+def test_verify_readme_image_paths_pack_readme_relative(mocker):
     """
     Given
-        - A pack README file with relative image paths in it and an absolute path in it.
+        - A pack README file with relative image paths in it.
     When
         - Run validate on README file
     Then
         - Ensure:
             - Validation fails
-            - Image paths were caught correctly
+            - Relative image paths were caught correctly
             - An Error was printed
-            - Valid absolute path is not caught
     """
     from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
+    from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
     captured_output = io.StringIO()
     sys.stdout = captured_output  # redirect stdout.
-
     readme_validator = ReadMeValidator(PACK_MD)
     readme_validator.file_path = '/Packs/test_pack/README.md'
     mocker.patch('demisto_sdk.commands.common.hook_validations.readme.get_pack_name', return_value='test_pack')
     mocker.patch.object(BaseValidator, 'check_file_flags', return_value=None)
+    mocker.patch.object(ReadMeValidator, 'check_pack_absolute_image_paths', return_value=True)
     result = readme_validator.verify_readme_image_paths()
+
     sys.stdout = sys.__stdout__  # reset stdout.
+
     assert not result
     assert 'Detected following image: ![Identity with High Risk Score](doc_files/High_Risk_User.png) ' \
            'which is not using an absolute url' in captured_output.getvalue()
     assert 'Detected following image: ![Identity with High Risk Score](home/test1/test2/doc_files/High_Risk_User.png) ' \
            'which is not using an absolute url' in captured_output.getvalue()
-    assert 'https://github.com/demisto/content/raw' not in captured_output.getvalue()
+
+
+def test_verify_readme_image_paths_pack_readme_absolute(mocker):
+    """
+    Given
+        - A pack README file with absolute image paths in it.
+    When
+        - Run validate on README file
+    Then
+        - Ensure:
+            - Validation fails
+            - Absolute image paths were caught correctly
+            - An Error was printed
+    """
+    from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
+    from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
+    captured_output = io.StringIO()
+    sys.stdout = captured_output  # redirect stdout.
+    readme_validator = ReadMeValidator(PACK_MD)
+    readme_validator.file_path = '/Packs/test_pack/README.md'
+    mocker.patch('demisto_sdk.commands.common.hook_validations.readme.get_pack_name', return_value='test_pack')
+    mocker.patch.object(BaseValidator, 'check_file_flags', return_value=None)
+    mocker.patch.object(ReadMeValidator, 'check_pack_relative_image_paths', return_value=True)
+    with requests_mock.Mocker() as m:
+        # Mock get requests
+        m.get('https://github.com/demisto/content/raw/test1',
+              status_code=200, text="Test1")
+        m.get('https://github.com/demisto/content/raw/test2',
+              status_code=404, text="Test2")
+        result = readme_validator.verify_readme_image_paths()
+
+    sys.stdout = sys.__stdout__  # reset stdout.
+
+    assert not result
+    assert 'please repair it - https://github.com/demisto/content/raw/test1' not in captured_output.getvalue()
+    assert 'please repair it - https://github.com/demisto/content/raw/test2' in captured_output.getvalue()
 
 
 def test_verify_readme_image_paths_general_readme(mocker):
@@ -434,23 +474,31 @@ def test_verify_readme_image_paths_general_readme(mocker):
             - valid paths are not caught
     """
     from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
+
     captured_output = io.StringIO()
     sys.stdout = captured_output  # redirect stdout.
 
     readme_validator = ReadMeValidator(IMAGES_MD)
     mocker.patch('demisto_sdk.commands.common.hook_validations.readme.get_pack_name', return_value='test_pack')
     mocker.patch.object(BaseValidator, 'check_file_flags', return_value=None)
-    result = readme_validator.verify_readme_image_paths()
+    with requests_mock.Mocker() as m:
+        # Mock get requests
+        m.get('https://github.com/demisto/content/raw/123/Packs/valid/doc_files/test.png',
+              status_code=404, text="Test1")
+        m.get('https://github.com/demisto/content/raw/123/Packs/valid/doc_files/test2.png',
+              status_code=404, text="Test2")
+        m.get('https://github.com/demisto/content/raw/2e4e0056580ea5de30f55dcbe2ccacaadf01b74e/Packs'
+              '/SailPointIdentityIQ/doc_files/High_Risk_User.png',
+              status_code=200, text="Test3")
+
+        result = readme_validator.verify_readme_image_paths()
     sys.stdout = sys.__stdout__  # reset stdout.
     captured_output = captured_output.getvalue()
     assert not result
-    assert 'The following relative path is not valid - ../../default.png please recheck it.' in captured_output
-    assert 'The following relative path is not valid - default.png please recheck it.' not in captured_output
+    assert 'The following relative path is not valid - ../../default.png' in captured_output
+    assert 'The following relative path is not valid - default.png' not in captured_output
 
-    assert 'The following link seems to be broken, please repair it - ' \
-           'https://github.com/demisto/content/raw/123/Packs/valid/doc_files/test.png' in captured_output
-    assert 'The following link seems to be broken, please repair it - ' \
-           'https://github.com/demisto/content/raw/123/Packs/valid/doc_files/test2.png' in captured_output
-    assert 'The following link seems to be broken, please repair it - ' \
-           'https://github.com/demisto/content/raw/2e4e0056580ea5de30f55dcbe2ccacaadf01b74e/Packs' \
+    assert 'please repair it - https://github.com/demisto/content/raw/123/Packs/valid/doc_files/test.png' in captured_output
+    assert 'please repair it - https://github.com/demisto/content/raw/123/Packs/valid/doc_files/test2.png' in captured_output
+    assert 'please repair it - https://github.com/demisto/content/raw/2e4e0056580ea5de30f55dcbe2ccacaadf01b74e/Packs' \
            not in captured_output

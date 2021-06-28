@@ -1,7 +1,6 @@
 import astroid
 import pylint.testutils
 import pytest
-
 from demisto_sdk.commands.lint.resources.pylint_plugins import base_checker
 
 # You can find documentation about adding new test checker here:
@@ -872,7 +871,7 @@ class TestExecuteCommandChecker(pylint.testutils.CheckerTestCase):
         """
         self.checker.is_script = True
         self.checker.runas = 'DBotRole'
-        _, node_b = astroid.extract_node(f"""
+        _, node_b = astroid.extract_node("""
             def test_function(): #@
                 demisto.executeCommand('getIncidents') #@
         """)

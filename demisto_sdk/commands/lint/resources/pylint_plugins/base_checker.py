@@ -1,9 +1,9 @@
 import os
 
 import astroid
+from demisto_sdk.commands.common.constants import BUILD_IN_COMMANDS
 from pylint.checkers import BaseChecker
 from pylint.interfaces import IAstroidChecker
-from demisto_sdk.commands.common.constants import BUILD_IN_COMMANDS
 
 # You can find documentation about adding new checker here:
 # http://pylint.pycqa.org/en/latest/how_tos/custom_checkers.html#write-a-checker

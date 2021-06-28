@@ -511,7 +511,8 @@ class TestRNUpdate(unittest.TestCase):
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
 
-        desc = update_rn.build_rn_desc(_type=FileType.TEST_SCRIPT, content_name='Hello World Test', desc='Test description',
+        desc = update_rn.build_rn_desc(_type=FileType.TEST_SCRIPT, content_name='Hello World Test',
+                                       desc='Test description',
                                        is_new_file=True, text='', from_version='5.5.0', docker_image=None)
         assert '(Available from Cortex XSOAR 5.5.0).' in desc
 
@@ -529,7 +530,8 @@ class TestRNUpdate(unittest.TestCase):
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
 
-        desc = update_rn.build_rn_desc(_type=FileType.TEST_SCRIPT, content_name='Hello World Test', desc='Test description',
+        desc = update_rn.build_rn_desc(_type=FileType.TEST_SCRIPT, content_name='Hello World Test',
+                                       desc='Test description',
                                        is_new_file=False, text='', from_version='5.5.0', docker_image=None)
         assert '(Available from Cortex XSOAR 5.5.0).' not in desc
 
@@ -549,7 +551,8 @@ class TestRNUpdate(unittest.TestCase):
                                         'fromversion': '5.0.0'},
             'Hello World Playbook': {'type': FileType.PLAYBOOK, 'description': '', 'is_new_file': True,
                                      'fromversion': '5.5.0'},
-            "Hello World Script": {'type': FileType.SCRIPT, 'description': '', 'is_new_file': True, 'fromversion': '6.0.0'},
+            "Hello World Script": {'type': FileType.SCRIPT, 'description': '', 'is_new_file': True,
+                                   'fromversion': '6.0.0'},
         }
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
@@ -957,15 +960,15 @@ class TestRNUpdateUnit:
         modified = {'/Packs/ApiModules/Scripts/ApiModules_script/ApiModules_script.yml'}
         added = {}
         id_set_content = {'integrations':
-                          [
-                              {'FeedTAXII_integration':
-                               {'name': 'FeedTAXII_integration',
-                                'file_path': '/FeedTAXII_integration.yml',
-                                'pack': 'FeedTAXII',
-                                'api_modules': 'ApiModules_script'
-                                }
-                               }
-                          ]}
+            [
+                {'FeedTAXII_integration':
+                     {'name': 'FeedTAXII_integration',
+                      'file_path': '/FeedTAXII_integration.yml',
+                      'pack': 'FeedTAXII',
+                      'api_modules': 'ApiModules_script'
+                      }
+                 }
+            ]}
         id_set_f = tmpdir / "id_set.json"
         id_set_f.write(json.dumps(id_set_content))
 
@@ -1100,7 +1103,7 @@ class TestRNUpdateUnit:
         mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
         client = UpdateRN(pack_path="demisto_sdk/commands/update_release_notes/tests_data/Packs/Test",
                           update_type='minor', modified_files_in_pack={
-                              'Packs/Test/Integrations/Test.yml'}, added_files=set('Packs/Test/some_added_file.py'))
+                'Packs/Test/Integrations/Test.yml'}, added_files=set('Packs/Test/some_added_file.py'))
         client.execute_update()
         with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md', 'r') as file:
             RN = file.read()
@@ -1240,3 +1243,39 @@ def test_docker_image_is_added_for_every_integration(mocker, repo):
         rn_text = f.read()
     assert rn_text.count('Updated the Docker image to: *demisto/python3:3.9.5.124*.') == 0
     assert rn_text.count('Updated the Docker image to: *demisto/python3:3.9.5.125*.') == 2
+
+
+HANDLE_EXISTING_RN_WITH_DOCKER_IMAGE_INPUTS = [
+    ('#### Integrations\n##### IBM QRadar v2\n- %%UPDATE_RN%%\n##### IBM QRadar v3\n- %%UPDATE_RN%%',
+     'Integrations', 'demisto/python3:3.9.5.21276', 'IBM QRadar v3',
+     '#### Integrations\n##### IBM QRadar v2\n- %%UPDATE_RN%%\n##### IBM QRadar v3\n- Updated the Docker image to: '
+     '*demisto/python3:3.9.5.21276*.\n- %%UPDATE_RN%%'),
+    ('#### Integrations\n##### IBM QRadar v3\n- %%UPDATE_RN%%',
+     'Integrations', 'demisto/python3:3.9.5.21276', 'IBM QRadar v3',
+     '#### Integrations\n##### IBM QRadar v3\n- Updated the Docker image to: '
+     '*demisto/python3:3.9.5.21276*.\n- %%UPDATE_RN%%'),
+    ('',
+     'Integrations', 'demisto/python3:3.9.5.21276', 'IBM QRadar v3',
+     '#### Integrations\n##### IBM QRadar v3\n- Updated the Docker image to: '
+     '*demisto/python3:3.9.5.21276*.\n- %%UPDATE_RN%%')
+]
+
+
+@pytest.mark.parametrize('new_rn, header_by_type, docker_image, content_name, expected',
+                         HANDLE_EXISTING_RN_WITH_DOCKER_IMAGE_INPUTS)
+def test_handle_existing_rn_with_docker_image(new_rn: str, header_by_type: str, docker_image: str,
+                                              content_name: str, expected: str):
+    """
+
+    Args:
+        new_rn:
+        header_by_type:
+        docker_image:
+        content_name:
+        expected:
+
+    Returns:
+
+    """
+    assert UpdateRN.handle_existing_rn_with_docker_image(new_rn, header_by_type, docker_image,
+                                                         content_name) == expected

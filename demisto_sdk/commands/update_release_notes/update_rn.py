@@ -390,17 +390,8 @@ class UpdateRN:
             if _header_by_type in current_rn_without_docker_images:
                 if content_name in current_rn_without_docker_images:
                     if docker_image:
-                        # Writing or re-writing docker image to release notes.
-                        rn_parts = new_rn.split(_header_by_type)
-                        new_rn_part = f'- Updated the Docker image to: *{docker_image}*.'
-                        if len(rn_parts) > 1:
-                            # Splitting again by content name to append the docker image release note to corresponding
-                            # content entry only
-                            content_parts = rn_parts[1].split(f'{content_name}\n')
-                            new_rn = f'{rn_parts[0]}{_header_by_type}{content_parts[0]}{content_name}\n{new_rn_part}' \
-                                     f'{content_parts[1]}'
-                        else:
-                            new_rn = ''.join(rn_parts) + new_rn_part
+                        new_rn = self.handle_existing_rn_with_docker_image(new_rn, _header_by_type, docker_image,
+                                                                           content_name)
                 else:
                     self.existing_rn_changed = True
                     rn_parts = new_rn.split(_header_by_type)
@@ -421,6 +412,33 @@ class UpdateRN:
                     new_rn += new_rn_part
         if new_rn != current_rn:
             self.existing_rn_changed = True
+        return new_rn
+
+    @staticmethod
+    def handle_existing_rn_with_docker_image(new_rn: str, header_by_type: str, docker_image: str,
+                                             content_name: str) -> str:
+        """
+        Receives the new RN to be written, performs operations to add the docker image to the given RN.
+        Args:
+            new_rn (str): new RN.
+            header_by_type (str): Header of the RN to add docker image to, e.g 'Integrations', 'Scripts'
+            docker_image (str): Docker image to add
+            content_name (str): The content name to add the docker image entry to, e.g integration name, script name.
+
+        Returns:
+            (str): Updated RN
+        """
+        # Writing or re-writing docker image to release notes.
+        rn_parts = new_rn.split(header_by_type)
+        new_rn_part = f'- Updated the Docker image to: *{docker_image}*.'
+        if len(rn_parts) > 1:
+            # Splitting again by content name to append the docker image release note to corresponding
+            # content entry only
+            content_parts = rn_parts[1].split(f'{content_name}\n')
+            new_rn = f'{rn_parts[0]}{header_by_type}{content_parts[0]}{content_name}\n{new_rn_part}\n' \
+                     f'{content_parts[1]}'
+        else:
+            print_warning(f'Could not parse release notes {new_rn} by header type: {header_by_type}')
         return new_rn
 
     def create_markdown(self, release_notes_path: str, rn_string: str, changed_files: dict):

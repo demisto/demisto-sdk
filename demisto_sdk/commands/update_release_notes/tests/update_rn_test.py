@@ -511,8 +511,7 @@ class TestRNUpdate(unittest.TestCase):
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
 
-        desc = update_rn.build_rn_desc(_type=FileType.TEST_SCRIPT, content_name='Hello World Test',
-                                       desc='Test description',
+        desc = update_rn.build_rn_desc(_type=FileType.TEST_SCRIPT, content_name='Hello World Test', desc='Test description',
                                        is_new_file=True, text='', from_version='5.5.0', docker_image=None)
         assert '(Available from Cortex XSOAR 5.5.0).' in desc
 
@@ -530,8 +529,7 @@ class TestRNUpdate(unittest.TestCase):
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
 
-        desc = update_rn.build_rn_desc(_type=FileType.TEST_SCRIPT, content_name='Hello World Test',
-                                       desc='Test description',
+        desc = update_rn.build_rn_desc(_type=FileType.TEST_SCRIPT, content_name='Hello World Test', desc='Test description',
                                        is_new_file=False, text='', from_version='5.5.0', docker_image=None)
         assert '(Available from Cortex XSOAR 5.5.0).' not in desc
 
@@ -551,8 +549,7 @@ class TestRNUpdate(unittest.TestCase):
                                         'fromversion': '5.0.0'},
             'Hello World Playbook': {'type': FileType.PLAYBOOK, 'description': '', 'is_new_file': True,
                                      'fromversion': '5.5.0'},
-            "Hello World Script": {'type': FileType.SCRIPT, 'description': '', 'is_new_file': True,
-                                   'fromversion': '6.0.0'},
+            "Hello World Script": {'type': FileType.SCRIPT, 'description': '', 'is_new_file': True, 'fromversion': '6.0.0'},
         }
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
@@ -1253,12 +1250,7 @@ HANDLE_EXISTING_RN_WITH_DOCKER_IMAGE_INPUTS = [
     ('#### Integrations\n##### IBM QRadar v3\n- %%UPDATE_RN%%',
      'Integrations', 'demisto/python3:3.9.5.21276', 'IBM QRadar v3',
      '#### Integrations\n##### IBM QRadar v3\n- Updated the Docker image to: '
-     '*demisto/python3:3.9.5.21276*.\n- %%UPDATE_RN%%'),
-    ('',
-     'Integrations', 'demisto/python3:3.9.5.21276', 'IBM QRadar v3',
-     '#### Integrations\n##### IBM QRadar v3\n- Updated the Docker image to: '
-     '*demisto/python3:3.9.5.21276*.\n- %%UPDATE_RN%%')
-]
+     '*demisto/python3:3.9.5.21276*.\n- %%UPDATE_RN%%')]
 
 
 @pytest.mark.parametrize('new_rn, header_by_type, docker_image, content_name, expected',
@@ -1266,15 +1258,21 @@ HANDLE_EXISTING_RN_WITH_DOCKER_IMAGE_INPUTS = [
 def test_handle_existing_rn_with_docker_image(new_rn: str, header_by_type: str, docker_image: str,
                                               content_name: str, expected: str):
     """
+    Given:
+    - 'new_rn': new RN.
+    - 'header_by_type': Header of the RN to add docker image to, e.g 'Integrations', 'Scripts'
+    - 'docker_image': Docker image to add
+    - 'content_name': The content name to add the docker image entry to, e.g integration name, script name.
 
-    Args:
-        new_rn:
-        header_by_type:
-        docker_image:
-        content_name:
-        expected:
+    When:
+    - Adding docker image entry to the relevant RN.
+    Case a: Two integrations, adding docker image only to QRadar v3.
+    Case b: One integration.
 
-    Returns:
+    Then:
+    - Ensure expected entry of docker image is added in the expected spot.
+    Case a: Added only to QRadar v3 but not to QRadar v2.
+    Case b: Added to the integration as expected.
 
     """
     assert UpdateRN.handle_existing_rn_with_docker_image(new_rn, header_by_type, docker_image,

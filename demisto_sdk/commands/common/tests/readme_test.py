@@ -38,11 +38,17 @@ def test_is_file_valid(mocker, current, answer):
     if not valid:
         pytest.skip('skipping mdx test. ' + MDX_SKIP_NPM_MESSAGE)
         return
-    mocker.patch.dict(os.environ, {'DEMISTO_README_VALIDATION': 'yes', 'DEMISTO_MDX_CMD_VERIFY': 'yes'})
-    assert readme_validator.is_valid_file() is answer
-    print("$$$$$$$$$$$$$$$$$$$")
-    print(ReadMeValidator._MDX_SERVER_PROCESS)
-    assert not ReadMeValidator._MDX_SERVER_PROCESS
+    with requests_mock.Mocker() as m:
+        # Mock get requests
+        m.get('https://github.com/demisto/content/blob/123/Packs/AutoFocus/doc_files/AutoFocusPolling.png',
+              status_code=200, text="Test1")
+        m.get('https://github.com/demisto/content/blob/123/Packs/FeedOffice365/doc_files/test.png',
+              status_code=200, text="Test2")
+        m.get('https://github.com/demisto/content/raw/123/Packs/valid/doc_files/test.png',
+              status_code=200, text="Test3")
+        mocker.patch.dict(os.environ, {'DEMISTO_README_VALIDATION': 'yes', 'DEMISTO_MDX_CMD_VERIFY': 'yes'})
+        assert readme_validator.is_valid_file() is answer
+        assert not ReadMeValidator._MDX_SERVER_PROCESS
 
 
 @pytest.mark.parametrize("current, answer", README_INPUTS)

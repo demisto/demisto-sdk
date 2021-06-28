@@ -3,6 +3,7 @@ import os
 import astroid
 from pylint.checkers import BaseChecker
 from pylint.interfaces import IAstroidChecker
+from demisto_sdk.commands.common.constants import BUILD_IN_COMMANDS
 
 # You can find documentation about adding new checker here:
 # http://pylint.pycqa.org/en/latest/how_tos/custom_checkers.html#write-a-checker
@@ -34,9 +35,9 @@ base_msg = {
               "test-module command is not implemented in the python file, it is essential for every"
               " integration. Please add it to your code. For more information see: "
               "https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"),
-    "E9012": ("Your script require elevated permissions. Please add the `runas: DBotRole` to the yml file.",
+    "E9012": ("Your script requires elevated permissions. Please add the `runas: DBotRole` to the yml file.",
               "missing-permission",
-              "Your script require elevated permissions. Please add the `runas: DBotRole` to the yml file.")
+              "Your script requires elevated permissions. Please add the `runas: DBotRole` to the yml file.")
 }
 
 
@@ -128,16 +129,28 @@ class CustomBaseChecker(BaseChecker):
             pass
 
     def _execute_command_checker(self, node):
+        """
+        Checks if there is a call to the executeCommand function with build-in commands, and returns an error message
+        if 'runas: DBotRole' not set in script.
+
+        Args:
+            node: A astroid node.
+        """
+        # If it's not a script or 'runas' is already set to 'DBotRole'.
         if not self.is_script or self.runas == 'DBotRole':
             return
 
         try:
             if node.func.expr.name == 'demisto' and node.func.attrname == 'executeCommand':
 
-                if node.args[0].value == 'getIncidents' or node.args[0].value == 'DeleteContext':
+                # Check whether a built-in command was passed as an argument in the executeCommand
+                if node.args[0].value in BUILD_IN_COMMANDS:
                     self.add_message("missing-permission", node=node)
 
+                # If 'setIncident' was passed in the executeCommand,
+                # we would like to check if an incident id has also been passed.
                 elif node.args[0].value == 'setIncident':
+                    # Trying to infer if the args contains an incident id.
                     inferred_args = node.args[1].inferred()
 
                     if inferred_args and isinstance(inferred_args[0], astroid.Dict):

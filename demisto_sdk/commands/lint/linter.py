@@ -17,6 +17,7 @@ import docker.models.containers
 import requests.exceptions
 import urllib3.exceptions
 from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
+                                                   SCRIPTS_DIR,
                                                    PACKS_PACK_META_FILE_NAME,
                                                    TYPE_PWSH, TYPE_PYTHON)
 # Local packages
@@ -958,7 +959,7 @@ class Linter:
         return exit_code, output
 
     def _update_support_level(self):
-        pack_dir = self._pack_abs_dir.parent if self._pack_abs_dir.parts[-1] == INTEGRATIONS_DIR else \
+        pack_dir = self._pack_abs_dir.parent if self._pack_abs_dir.parts[-1] in [INTEGRATIONS_DIR, SCRIPTS_DIR] else \
             self._pack_abs_dir.parent.parent
         pack_meta_content: Dict = json.load((pack_dir / PACKS_PACK_META_FILE_NAME).open())
         self._facts['support_level'] = pack_meta_content.get('support')

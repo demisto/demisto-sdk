@@ -1,5 +1,7 @@
 import astroid
 import pylint.testutils
+import pytest
+
 from demisto_sdk.commands.lint.resources.pylint_plugins import base_checker
 
 # You can find documentation about adding new test checker here:
@@ -752,9 +754,9 @@ class TestExecuteCommandChecker(pylint.testutils.CheckerTestCase):
         Given:
             - String of a code part which is being examined by pylint plugin.
         When:
-            - executeCommand function exists in the code without any build in command.
+            - executeCommand function exists in the code without any build-in command.
         Then:
-            - Ensure that there is no errors, Check that there is no error message.
+            - Ensure that there are no errors, check that there is no error message.
         """
         self.checker.is_script = True
         _, node_b = astroid.extract_node("""
@@ -765,42 +767,21 @@ class TestExecuteCommandChecker(pylint.testutils.CheckerTestCase):
         with self.assertNoMessages():
             self.checker.visit_call(node_b)
 
-    def test_execute_command_with_delete_context_exists(self):
+    @pytest.mark.parametrize('command', ['getIncidents', 'DeleteContext', 'isWhitelisted', 'excludeIndicators',
+                                         'deleteIndicators', 'extractIndicators'])
+    def test_execute_command_with_build_in_commands_exists(self, command):
         """
         Given:
             - String of a code part which is being examined by pylint plugin.
         When:
-            - executeCommand function exists in the code with the 'DeleteContext' build in command.
+            - executeCommand function exists in the code with the build-in commands.
         Then:
-            - Ensure that the correct message id is being added to the message errors of pylint
+            - Ensure that the correct message id is being added to the message errors of pylint.
         """
         self.checker.is_script = True
-        _, node_b = astroid.extract_node("""
+        _, node_b = astroid.extract_node(f"""
             def test_function(): #@
-                demisto.executeCommand('DeleteContext') #@
-        """)
-        assert node_b is not None
-        with self.assertAddsMessages(
-                pylint.testutils.Message(
-                    msg_id='missing-permission',
-                    node=node_b,
-                )
-        ):
-            self.checker.visit_call(node_b)
-
-    def test_execute_command_with_get_incidents_exists(self):
-        """
-        Given:
-            - String of a code part which is being examined by pylint plugin.
-        When:
-            - executeCommand function exists in the code with the 'getIncidents' build in command.
-        Then:
-            - Ensure that the correct message id is being added to the message errors of pylint
-        """
-        self.checker.is_script = True
-        _, node_b = astroid.extract_node("""
-            def test_function(): #@
-                demisto.executeCommand('getIncidents') #@
+                demisto.executeCommand('{command}') #@
         """)
         assert node_b is not None
         with self.assertAddsMessages(
@@ -816,10 +797,10 @@ class TestExecuteCommandChecker(pylint.testutils.CheckerTestCase):
         Given:
             - String of a code part which is being examined by pylint plugin.
         When:
-            - executeCommand function exists in the code with the 'setIncident' build in command
+            - executeCommand function exists in the code with the 'setIncident' build-in command
               and a given incident id.
         Then:
-            - Ensure that the correct message id is being added to the message errors of pylint
+            - Ensure that the correct message id is being added to the message errors of pylint.
         """
         self.checker.is_script = True
         _, node_b = astroid.extract_node("""
@@ -840,10 +821,10 @@ class TestExecuteCommandChecker(pylint.testutils.CheckerTestCase):
         Given:
             - String of a code part which is being examined by pylint plugin.
         When:
-            - executeCommand function exists in the code with the 'setIncident' build in command
+            - executeCommand function exists in the code with the 'setIncident' build-in command
               and a given incident id which is predefined in 'args'.
         Then:
-            - Ensure that the correct message id is being added to the message errors of pylint
+            - Ensure that the correct message id is being added to the message errors of pylint.
         """
         self.checker.is_script = True
         _, node_b, node_c = astroid.extract_node("""
@@ -865,9 +846,9 @@ class TestExecuteCommandChecker(pylint.testutils.CheckerTestCase):
         Given:
             - String of a code part which is being examined by pylint plugin.
         When:
-            - executeCommand function exists in the code with the 'setIncident' build in command without incident id.
+            - executeCommand function exists in the code with the 'setIncident' build-in command without incident id.
         Then:
-            - Ensure that there is no errors, Check that there is no error message.
+            - Ensure that there are no errors, check that there is no error message.
         """
         self.checker.is_script = True
         _, node_b, node_c = astroid.extract_node("""
@@ -879,3 +860,22 @@ class TestExecuteCommandChecker(pylint.testutils.CheckerTestCase):
         with self.assertNoMessages():
             self.checker.visit_call(node_b)
             self.checker.visit_call(node_c)
+
+    def test_execute_command_with_delete_context_exists_when_dbotrole_set(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - executeCommand function exists in the code with the build-in commands and runas set to DBotRole.
+        Then:
+            - Ensure that there are no errors, check that there is no error message.
+        """
+        self.checker.is_script = True
+        self.checker.runas = 'DBotRole'
+        _, node_b = astroid.extract_node(f"""
+            def test_function(): #@
+                demisto.executeCommand('getIncidents') #@
+        """)
+        assert node_b is not None
+        with self.assertNoMessages():
+            self.checker.visit_call(node_b)

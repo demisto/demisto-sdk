@@ -17,7 +17,7 @@ class Script(Integration):
         """Creates a new script with basic data.
 
         Args:
-            name (:obj:`str`, optional): The name and ID of the new script, default is "sample_script".
+            name: The name and ID of the new script, default is "sample_script".
 
         """
 

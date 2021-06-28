@@ -60,8 +60,8 @@ class Integration:
         """Creates a new integration with basic data
 
         Args:
-            name (:obj:`str`, optional): The name and ID of the new integration, default is "Sample".
-            commands: (:obj:`list[str]`, optional): List of additional commands to add to the integration.
+            name: The name and ID of the new integration, default is "Sample".
+            commands: List of additional commands to add to the integration.
 
         """
         default_integration_dir = 'assets/default_integration'

@@ -16,6 +16,7 @@
 * Enhanced the `is_valid_file` validation for scripts and integrations in the **validate** command to check for every versioned script or integration, and not only v2.
 * Added the `--fail-duplicates` flag for the **create-id-set** command which will fail the command if duplicates are found.
 * Added to the **generate-docs** command automatic addition to git when a new readme file is created.
+* Added the `--fail-duplicates` flag for the **merge-id-set** command which will fail the command if duplicates are found.
 
 # 1.4.0
 * Enable passing a comma-separated list of paths for the `--input` option of the **lint** command.

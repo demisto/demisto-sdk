@@ -1522,11 +1522,6 @@ def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=
             if dict1.get('kind', '') != dict2.get('kind', ''):
                 return False
 
-        # If they have the same pack name they actually the same entity.
-        # Added to support merge between two ID sets that contain the same pack.
-        if dict1.get('pack') == dict2.get('pack'):
-            return False
-
         # A: 3.0.0 - 3.6.0
         # B: 3.5.0 - 4.5.0
         # C: 3.5.2 - 3.5.4

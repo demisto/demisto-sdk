@@ -17,7 +17,7 @@ files = [
         "https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
     ], [], False),
     (Path(f"{XSOAR_LINTER_PY3_INVALID}"), 3.8, 'base', False, 1, [
-        "Your script require elevated permissions. Please add the `runas: DBotRole` to the yml file."
+        "Your script requires elevated permissions. Please add the `runas: DBotRole` to the yml file."
     ], [], True),
     (Path(f"{XSOAR_LINTER_PY3_INVALID}"), 3.8, 'base', False, 1, [
         'Print is found, Please remove all prints from the code.',

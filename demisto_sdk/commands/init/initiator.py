@@ -468,7 +468,11 @@ class Initiator:
         yml_dict["commonfields"]["id"] = self.id
         yml_dict['name'] = self.id
 
-        if LooseVersion(yml_dict.get('fromversion', '0.0.0')) < LooseVersion(self.SUPPORTED_FROM_VERSION):
+        from_version = input("\nThe fromversion value that will be used (optional): ")
+        if from_version:
+            yml_dict['fromversion'] = from_version
+
+        elif LooseVersion(yml_dict.get('fromversion', '0.0.0')) < LooseVersion(self.SUPPORTED_FROM_VERSION):
             yml_dict['fromversion'] = self.SUPPORTED_FROM_VERSION
 
         if integration:

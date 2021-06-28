@@ -9,7 +9,7 @@ from demisto_sdk.commands.common.git_util import GitUtil
 # dirs
 from git import InvalidGitRepositoryError
 
-CAN_START_WITH_DOT_SLASH = '(?:./)?'
+CAN_START_WITH_DOT_SLASH = r'(?:\./)?'
 NOT_TEST = '(?!Test)'
 INTEGRATIONS_DIR = 'Integrations'
 SCRIPTS_DIR = 'Scripts'
@@ -859,7 +859,6 @@ class GithubContentConfig:
 
 
 OFFICIAL_CONTENT_ID_SET_PATH = 'https://storage.googleapis.com/marketplace-dist/content/id_set.json'
-
 
 # Run all test signal
 RUN_ALL_TESTS_FORMAT = 'Run all tests'

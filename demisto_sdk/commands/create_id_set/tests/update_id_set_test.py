@@ -19,7 +19,8 @@ from demisto_sdk.commands.common.update_id_set import (
     get_report_data, get_script_data, get_values_for_keys_recursively,
     get_widget_data, has_duplicate, merge_id_sets, process_general_items,
     process_incident_fields, process_integration, process_script,
-    re_create_id_set)
+    re_create_id_set, get_filters_and_transformers_from_playbook,
+    get_filters_and_transformers_from_complex_value)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from TestSuite.utils import IsEqualFunctions
 
@@ -2233,3 +2234,105 @@ def test_merged_id_sets_with_legal_duplicates(caplog):
     }
 
     assert not duplicates
+
+
+def test_get_filters_and_transformers_from_complex_value():
+    """
+    Given
+    - complex value with 3 transformers: Length, Length and toUpperCase
+      and 3 filters: isEqualString, isEqualString and StringContainsArray
+
+    When
+    - parsing transformers and filters from the value
+
+    Then
+    - parsing 2 transformers successfully
+    - Length transformer shows once
+    - parsing 2 filters successfully
+    - isEqualString filter shows once
+
+    """
+
+    data = {'transformers': [{'operator': 'toUpperCase'},
+                             {'operator': 'Length'},
+                             {'operator': 'Length'}],
+            'filters': [[{'operator': 'isEqualString'}],
+                        [{'operator': 'isEqualString'}],
+                        [{'operator': 'StringContainsArray'}]]}
+    transformers, filters = get_filters_and_transformers_from_complex_value(data)
+    assert len(transformers) == 2
+    assert len(filters) == 2
+    assert 'toUpperCase' in transformers
+    assert 'Length' in transformers
+    assert 'isEqualString' in filters
+    assert 'StringContainsArray' in filters
+
+
+def test_get_filters_from_playbook():
+    """
+    Given
+    - playbook with one task and 3 filters: isEqualString, isEqualString and StringContainsArray
+
+    When
+    - parsing filters from the playbook
+
+    Then
+    - parsing 2 filters successfully
+    - isEqualString filter shows once
+
+    """
+    data = {'tasks': {'0': {'scriptarguments': {'value': {'complex': {'filters': [[{'operator': 'isEqualString'}],
+                                                                                  [{'operator': 'isEqualString'}],
+                                                                                  [{'operator': 'StringContainsArray'}]
+                                                                                  ]}}}}}}
+    _, filters = get_filters_and_transformers_from_playbook(data)
+    assert len(filters) == 2
+    assert 'isEqualString' in filters
+    assert 'StringContainsArray' in filters
+
+
+def test_get_transformers_from_playbook():
+    """
+    Given
+    - playbook with one task and 3 transformers: Length, Length and toUpperCase
+
+    When
+    - parsing transformers from the playbook
+
+    Then
+    - parsing 2 transformers successfully
+    - Length transformer shows once
+
+    """
+    data = {'tasks': {'0': {'scriptarguments': {'value': {'complex': {'transformers': [{'operator': 'toUpperCase'},
+                                                                                       {'operator': 'Length'},
+                                                                                       {'operator': 'Length'}
+                                                                                       ]}}}}}}
+    transformers, _ = get_filters_and_transformers_from_playbook(data)
+    assert len(transformers) == 2
+    assert 'toUpperCase' in transformers
+    assert 'Length' in transformers
+
+    @staticmethod
+    def test_process_mappers__no_types_fields():
+        """
+        Given
+            - An mapper file called classifier-mapper-to-test-no-types-fields.json with incident type
+            related to it
+
+        When
+            - parsing mapper files
+
+        Then
+            - parsing all the data from file successfully
+        """
+        test_file = os.path.join(git_path(), 'demisto_sdk', 'commands', 'create_id_set', 'tests',
+                                 'test_data', 'classifier-mapper-to-test-no-types-fields.json')
+
+        res = get_mapper_data(test_file)
+        result = res.get('dummy mapper')
+        assert 'name' in result.keys()
+        assert 'file_path' in result.keys()
+        assert 'fromversion' in result.keys()
+        assert 'incident_types' not in result.keys()
+        assert 'incident_fields' not in result.keys()

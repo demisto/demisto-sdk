@@ -116,7 +116,8 @@ def test_xsoar_linter_errors(mocker, file, python_version, support_level, long_r
                            pack_dir=test_path,
                            req_2=[],
                            req_3=[],
-                           docker_engine=True)
+                           docker_engine=True,
+                           docker_timeout=60)
     runner._facts['support_level'] = support_level
     runner._facts['is_long_running'] = long_running
     runner._facts['commands'] = commands

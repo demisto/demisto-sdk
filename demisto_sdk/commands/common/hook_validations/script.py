@@ -1,5 +1,6 @@
 import os
 import re
+from typing import Optional
 
 from demisto_sdk.commands.common.constants import (API_MODULES_PACK,
                                                    DEPRECATED_REGEXES,
@@ -9,10 +10,9 @@ from demisto_sdk.commands.common.hook_validations.content_entity_validator impor
     ContentEntityValidator
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
-from demisto_sdk.commands.common.tools import (get_core_pack_list,
-                                               get_files_in_dir, get_pack_name,
-                                               is_v2_file,
-                                               server_version_compare)
+from demisto_sdk.commands.common.tools import (
+    get_core_pack_list, get_file_version_suffix_if_exists, get_files_in_dir,
+    get_pack_name, server_version_compare)
 
 
 class ScriptValidator(ContentEntityValidator):
@@ -227,13 +227,14 @@ class ScriptValidator(ContentEntityValidator):
 
     def is_valid_name(self):
         # type: () -> bool
-        if not is_v2_file(self.current_file):
+        version_number: Optional[str] = get_file_version_suffix_if_exists(self.current_file)
+        if not version_number:
             return True
         else:
             name = self.current_file.get('name')
-            correct_name = "V2"
+            correct_name = f'V{version_number}'
             if not name.endswith(correct_name):  # type: ignore
-                error_message, error_code = Errors.invalid_v2_script_name()
+                error_message, error_code = Errors.invalid_version_script_name(version_number)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
 

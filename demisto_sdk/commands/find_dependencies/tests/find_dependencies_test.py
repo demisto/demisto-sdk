@@ -6,6 +6,7 @@ import pytest
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
+from TestSuite.test_tools import ChangeCWD
 from TestSuite.utils import IsEqualFunctions
 
 
@@ -913,10 +914,126 @@ class TestDependsOnPlaybook:
 
 
 class TestDependsOnLayout:
-    def test_collect_layouts_dependencies(self, id_set):
+
+    @pytest.mark.parametrize('pack, pack_in_repo, expected_dependencies', [
+        ('pack3', 2, 'pack1'),  # pack3 has a layout of type incident that depends in an incident of pack1
+        ('pack4', 3, 'pack2')  # pack4 has a layout of type indicator that depends in an indicator of pack2
+    ])
+    def test_layouts_dependencies(self, mocker, repo, pack, pack_in_repo, expected_dependencies):
         """
         Given
-            - A layout entry in the id_set.
+            - A repo with 4 packs,
+            'pack1' has an incident_field called 'example',
+            'pack2' has an indicator_field also called 'example',
+            'pack3' has a layout of type 'incident' that depends on the 'example' incident,
+            'pack4' has a layout of type 'indicator' that depends on the 'example' indicator,
+
+        When
+            - Building dependency graph for pack.
+
+        Then
+            - Extracting the packs that the layout depends on, by the layouts type (incident/indicator).
+        """
+
+        incident = {
+            "id": "incident_example",
+            "name": "example",
+            "cliName": "example",
+        }
+        indicator = {
+            "id": "indicator_example",
+            "name": "example",
+            "cliName": "example",
+        }
+        incident_layout = {
+            "detailsV2": {
+                "tabs": [
+                    {
+                        "id": "caseinfoid",
+                        "name": "Incident Info",
+                        "sections": [
+                            {
+                                "items": [
+                                    {
+                                        "endCol": 2,
+                                        "fieldId": "incident_example",
+                                        "height": 22,
+                                        "id": "example",
+                                        "index": 0,
+                                        "sectionItemType": "field",
+                                        "startCol": 0
+                                    }
+                                ]
+                            }
+                        ],
+                        "type": "custom"
+                    },
+                ]
+            },
+            "group": "incident",
+            "id": "example",
+            "name": "example",
+            "system": "false",
+            "version": -1,
+            "fromVersion": "6.0.0",
+            "description": ""
+        }
+        indicator_layout = {
+            "group": "indicator",
+            "id": "example",
+            "indicatorsDetails": {
+                "tabs": [
+                    {
+                        "sections": [
+                            {
+                                "items": [
+                                    {
+                                        "endCol": 2,
+                                        "fieldId": "indicator_example",
+                                        "height": 22,
+                                        "id": "example",
+                                        "index": 0,
+                                        "sectionItemType": "field",
+                                        "startCol": 0
+                                    }
+                                ]
+                            }
+                        ],
+                        "type": "custom"
+                    }
+                ]
+            },
+            "name": "example",
+            "system": "false",
+            "version": -1,
+            "fromVersion": "6.0.0",
+        }
+
+        pack1 = repo.create_pack('pack1')
+        pack2 = repo.create_pack('pack2')
+        pack3 = repo.create_pack('pack3')
+        pack4 = repo.create_pack('pack4')
+
+        pack1.create_incident_field('example', incident)
+        pack2.create_indicator_field('example', indicator)
+        pack3.create_layoutcontainer('example', incident_layout)
+        pack4.create_layoutcontainer('example', indicator_layout)
+
+        with ChangeCWD(repo.path):
+            # Circle froze on 3.7 dut to high usage of processing power.
+            # pool = Pool(processes=cpu_count() * 2) is the line that in charge of the multiprocessing initiation,
+            # so changing `cpu_count` return value to 1 still gives you multiprocessing but with only 2 processors,
+            # and not the maximum amount.
+            import demisto_sdk.commands.common.update_id_set as uis
+            mocker.patch.object(uis, 'cpu_count', return_value=1)
+            PackDependencies.find_dependencies(pack, silent_mode=True)
+            dependencies = list(repo.packs[pack_in_repo].pack_metadata.read_json_as_dict().get('dependencies').keys())
+            assert dependencies == [expected_dependencies]
+
+    def test_collect_incident_layout_dependencies(self, id_set):
+        """
+        Given
+            - A layout of type incident entry in the id_set.
 
         When
             - Building dependency graph for pack.
@@ -924,8 +1041,7 @@ class TestDependsOnLayout:
         Then
             - Extracting the packs that the layout depends on.
         """
-        expected_result = {("FeedMitreAttack", True), ("PrismaCloudCompute", True), ("CommonTypes", True),
-                           ("CrisisManagement", True)}
+        expected_result = {("PrismaCloudCompute", True)}
 
         test_input = [
             {
@@ -934,6 +1050,46 @@ class TestDependsOnLayout:
                     "name": "Dummy Layout",
                     "pack": "dummy_pack",
                     "kind": "edit",
+                    "path": "dummy_path",
+                    "incident_and_indicator_types": [
+                        "MITRE ATT&CK",
+                        "Prisma Cloud Compute Cloud Discovery"
+                    ],
+                    "incident_and_indicator_fields": [
+                        "indicator_adminname",
+                        "indicator_jobtitle"
+                    ]
+                }
+            }
+        ]
+
+        found_result = PackDependencies._collect_layouts_dependencies(pack_layouts=test_input,
+                                                                      id_set=id_set,
+                                                                      verbose=False,
+                                                                      )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
+    def test_collect_indicator_layout_dependencies(self, id_set):
+        """
+        Given
+            - A layout of type indicator entry in the id_set.
+
+        When
+            - Building dependency graph for pack.
+
+        Then
+            - Extracting the packs that the layout depends on.
+        """
+        expected_result = {("FeedMitreAttack", True), ("CommonTypes", True), ("CrisisManagement", True)}
+
+        test_input = [
+            {
+                "Dummy Layout": {
+                    "typeID": "dummy_layout",
+                    "name": "Dummy Layout",
+                    "pack": "dummy_pack",
+                    "kind": "indicatorsDetails",
                     "path": "dummy_path",
                     "incident_and_indicator_types": [
                         "MITRE ATT&CK",
@@ -974,7 +1130,7 @@ class TestDependsOnLayout:
                     "typeID": "dummy_layout",
                     "name": "Dummy Layout",
                     "pack": "dummy_pack",
-                    "kind": "edit",
+                    "kind": "indicatorsDetails",
                     "path": "dummy_path",
                     "incident_and_indicator_types": [
                         "accountRep",

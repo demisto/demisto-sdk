@@ -128,14 +128,14 @@ def test_build_pylint_command_3_9_docker():
 def test_build_pytest_command_1():
     """Build Pytest command without json"""
     from demisto_sdk.commands.lint.commands_builder import build_pytest_command
-    command = "python -m pytest --junitxml=/devwork/report_pytest.xml"
+    command = "python -m pytest -ra --junitxml=/devwork/report_pytest.xml"
     assert command == build_pytest_command(test_xml="test")
 
 
 def test_build_pytest_command_2():
     """Build Pytest command with json"""
     from demisto_sdk.commands.lint.commands_builder import build_pytest_command
-    command = "python -m pytest --junitxml=/devwork/report_pytest.xml --json=/devwork/report_pytest.json"
+    command = "python -m pytest -ra --junitxml=/devwork/report_pytest.xml --json=/devwork/report_pytest.json"
     assert command == build_pytest_command(test_xml="test",
                                            json=True)
 
@@ -143,7 +143,7 @@ def test_build_pytest_command_2():
 def test_build_pytest_command_3():
     """Build Pytest command with cov"""
     from demisto_sdk.commands.lint.commands_builder import build_pytest_command
-    command = "python -m pytest --junitxml=/devwork/report_pytest.xml --cov-report= --cov=test"
+    command = "python -m pytest -ra --junitxml=/devwork/report_pytest.xml --cov-report= --cov=test"
     assert command == build_pytest_command(test_xml="test", cov="test")
 
 

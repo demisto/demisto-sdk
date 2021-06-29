@@ -160,7 +160,7 @@ jobs:
               export PYTHONPATH=".:${PYTHONPATH}"
               demisto-sdk -v
 
-              CI_COMMIT_BRANCH="master" demisto-sdk create-id-set -o ./Tests/id_set.json
+              CI_COMMIT_BRANCH="master" demisto-sdk create-id-set -o ./Tests/id_set.json --fail-duplicates
         - run:
             name: Merge Id Set
             when: always

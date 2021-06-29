@@ -92,6 +92,8 @@ ERROR_CODE = {
     "changed_integration_yml_fields": {'code': "IN138", "ui_applicable": False, 'related_field': 'script'},
     "incident_in_command_name_or_args": {'code': "IN139", "ui_applicable": False,
                                          'related_field': 'script.commands.name'},
+    "reputation_missing_argument": {'code': "IN140", 'ui_applicable': True, 'related_field': '<argument-name>.default'},
+
     "integration_is_skipped": {'code': "IN140", 'ui_applicable': False, 'related_field': ''},
     "invalid_version_script_name": {'code': "SC100", 'ui_applicable': True, 'related_field': 'name'},
     "invalid_deprecated_script": {'code': "SC101", 'ui_applicable': False, 'related_field': 'comment'},
@@ -413,9 +415,17 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def reputation_missing_argument(arg_name, command_name, all=False):
+        missing_msg = "These" if all else 'At least one of these'
+        return "{} arguments '{}' are required int the command '{}' and are not configured in yml." \
+            .format(missing_msg, arg_name, command_name)
+
+    @staticmethod
+    @error_code_decorator
     def wrong_default_argument(arg_name, command_name):
         return "The argument '{}' of the command '{}' is not configured as default" \
             .format(arg_name, command_name)
+
 
     @staticmethod
     @error_code_decorator

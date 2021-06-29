@@ -1,7 +1,9 @@
 # Changelog
 * Added to `pylint` summary an indication if a test was skipped.
+* Added to the **init** command the option to specify fromversion.
 * Fixed an issue where running **init** command without filling the metadata file.
 * Added the *--docker-timeout* flag in the **lint** command to control the request timeout for the Docker client.
+* Added a validation in the **validate** command to ensure that '!endpoint' is configured correctly in yml file.
 
 # 1.4.1
 * When in private repo without `DEMSITO_SDK_GITHUB_TOKEN` configured, get_remote_file will take files from the local origin/master.

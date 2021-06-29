@@ -949,7 +949,17 @@ ACCEPTED_FILE_EXTENSIONS = [
     '.yml', '.json', '.md', '.py', '.js', '.ps1', '.png', '', '.lock'
 ]
 
-BANG_COMMAND_NAMES = {'file', 'email', 'domain', 'url', 'ip', 'cve'}
+BANG_COMMAND_NAMES = {'file', 'email', 'domain', 'url', 'ip', 'cve', 'endpoint'}
+
+BANG_COMMAND_ARGS_MAPPING = {'file': {'default': 'file',},
+                'email': {'default': 'email'},
+                'domain': {'default': 'domain'},
+                'url': {'default': 'url'},
+                'ip': {'default': 'ip'},
+                'cve': {'default': 'cve_id'},
+                'endpoint': {'default': 'ip', 'required': False}
+                }
+ENDPOINT_FLEXIBLE_REQUIRED_ARGS = ["ip", "id", "hostname"]
 
 GENERIC_COMMANDS_NAMES = BANG_COMMAND_NAMES.union({'send-mail', 'send-notification', 'cve-latest', 'cve-search'})
 

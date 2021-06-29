@@ -3,7 +3,8 @@ import re
 from typing import Dict, Optional
 
 import yaml
-from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
+from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES, ENDPOINT_FLEXIBLE_REQUIRED_ARGS,
+                                                   BANG_COMMAND_ARGS_MAPPING,
                                                    DBOT_SCORES_DICT,
                                                    DEPRECATED_REGEXES,
                                                    FEED_REQUIRED_PARAMS,
@@ -113,7 +114,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.has_no_duplicate_args(),
             self.is_there_separators_in_names(),
             self.name_not_contain_the_type(),
-            self.is_valid_endpoint_params()
+            self.is_valid_endpoint_command()
 
         ]
 
@@ -311,7 +312,7 @@ class IntegrationValidator(ContentEntityValidator):
     def is_valid_default_argument_in_reputation_command(self):
         # type: () -> bool
         """Check if a reputation command (domain/email/file/ip/url/cve)
-            has a default non required argument with the same name
+            has a default non required argument.
 
         Returns:
             bool. Whether a reputation command hold a valid argument
@@ -326,7 +327,7 @@ class IntegrationValidator(ContentEntityValidator):
                 flag_found_arg = False
                 for arg in command.get('arguments', []):
                     arg_name = arg.get('name')
-                    if arg_name == command_name or (command_name == 'cve' and arg_name == 'cve_id'):
+                    if arg_name == BANG_COMMAND_ARGS_MAPPING[command_name]['default']:
                         flag_found_arg = True
                         if arg.get('default') is False:
                             error_message, error_code = Errors.wrong_default_argument(arg_name,
@@ -335,7 +336,8 @@ class IntegrationValidator(ContentEntityValidator):
                                 self.is_valid = False
                                 flag = False
 
-                if not flag_found_arg:
+                flag_found_required = BANG_COMMAND_ARGS_MAPPING[command_name].get('required', True)
+                if not flag_found_arg and flag_found_required:
                     error_message, error_code = Errors.no_default_arg(command_name)
                     if self.handle_error(error_message, error_code, file_path=self.file_path):
                         flag = False
@@ -1260,6 +1262,7 @@ class IntegrationValidator(ContentEntityValidator):
     def is_valid_endpoint_command(self):
         """
         Check if the endpoint command in yml is valid by standard.
+        This command is separated than other reputation command as the inputs are different standard.
 
         Returns:
             true if the inputs and outputs are valid.
@@ -1271,33 +1274,41 @@ class IntegrationValidator(ContentEntityValidator):
         else:
             # extracting the specific command from commands.
             endpoint_command = [arg for arg in commands if arg.get('name') == 'endpoint'][0]
-            self._is_valid_endpoint_inputs(endpoint_command)
-            self._is_valid_endpoint_outputs(endpoint_command)
+            return self._is_valid_endpoint_inputs(endpoint_command, required_arguments=ENDPOINT_FLEXIBLE_REQUIRED_ARGS) \
+                   and self._is_valid_endpoint_outputs(endpoint_command)
 
-    def _is_valid_endpoint_inputs(self, command_data):
+    def _is_valid_endpoint_inputs(self, command_data, required_arguments):
         """
-        Check if the input for endpoint commands includes ip, hostname or id, and that ip is the default argument.
+        Check if the input for endpoint commands includes at least one required_arguments,
+        and that only ip is the default argument.
         Returns:
             true if the inputs are valid.
         """
-        ip = 'ip'
         endpoint_command_inputs = command_data.get('arguments', [])
-        required_arguments = set(ip, "id", "hostname")
-        existing_arguments = set([arg.name for arg in endpoint_command_inputs])
+        existing_arguments = set([arg['name'] for arg in endpoint_command_inputs])
 
         # checking at least one of the required argument is found as argument
-        if not required_arguments.intersection(existing_arguments):
-            print('Error')
+        if not set(required_arguments).intersection(existing_arguments):
+            error_message, error_code = Errors.reputation_missing_argument(list(required_arguments),
+                                                                           command_data.get('name'),
+                                                                           all=False)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                return False
 
-        # checking if ip argument is only default:
-        args_with_default = [(arg.get('name'), arg.get('default', False)) for arg in endpoint_command_inputs]
-        # getting only arguments with 'default'=True. Expecting only 'ip' to be with True if 'ip' is argument.
-        defaults = list(filter(lambda x: x[1] == True, args_with_default))
+        # checking no other arguments are default argument:
+        default_args = [(arg.get('name'), arg.get('default', False)) for arg in endpoint_command_inputs]
+        default_args = list(filter(lambda x: x[1] == True, default_args))
 
-        if (ip in existing_arguments and defaults == [('ip', True)]) or (ip not in existing_arguments and not defaults):
-            return True
-        else:
-            'error - ip argument is only default allowed and required.'
+        default_arg_name = BANG_COMMAND_ARGS_MAPPING[command_data.get('name')]['default']
+
+        if (default_arg_name in existing_arguments and default_args != [(default_arg_name, True)]) \
+                or (default_arg_name not in existing_arguments and default_args):
+            error_message, error_code = Errors.wrong_default_argument(default_arg_name, command_data.get('name'))
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                return False
+        return True
 
     def _is_valid_endpoint_outputs(self, command_data):
         context_standard = "https://xsoar.pan.dev/docs/integrations/context-standards"

@@ -1,5 +1,6 @@
 from typing import Any, Dict, List
 
+import decorator
 from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
                                                    CONF_PATH,
                                                    INTEGRATION_CATEGORIES,
@@ -289,11 +290,9 @@ def get_error_object(error_code: str) -> Dict:
     return {}
 
 
-def error_code_decorator(f):
-    def wrapper(*args, **kwargs):
-        return f(*args, **kwargs), ERROR_CODE[f.__name__].get('code')
-
-    return wrapper
+@decorator.decorator
+def error_code_decorator(func, *args, **kwargs):
+    return func(*args, **kwargs), ERROR_CODE[func.__name__].get('code')
 
 
 class Errors:
@@ -974,8 +973,8 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_deprecated_playbook():
-        return 'The description of all deprecated playbooks should follow one of the formats:' \
-               '1. "Deprecated. Use <PLAYBOOK_NAME> instead."' \
+        return 'The description of all deprecated playbooks should follow one of the formats:\n' \
+               '1. "Deprecated. Use <PLAYBOOK_NAME> instead."\n' \
                '2. "Deprecated. <REASON> No available replacement."'
 
     @staticmethod

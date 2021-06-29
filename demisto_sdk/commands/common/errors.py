@@ -177,7 +177,6 @@ ERROR_CODE = {
     "invalid_incident_field_group_value": {'code': "IF104", 'ui_applicable': False, 'related_field': 'group'},
     "invalid_incident_field_cli_name_regex": {'code': "IF105", 'ui_applicable': False, 'related_field': 'cliName'},
     "invalid_incident_field_cli_name_value": {'code': "IF106", 'ui_applicable': True, 'related_field': 'cliName'},
-    "incident_field_or_type_from_version_5": {'code': "IF107", 'ui_applicable': True, 'related_field': 'fromVersion'},
     "invalid_incident_field_or_type_from_version": {'code': "IF108", 'ui_applicable': False,
                                                     'related_field': 'fromVersion'},
     "new_incident_field_required": {'code': "IF109", 'ui_applicable': True, 'related_field': 'required'},

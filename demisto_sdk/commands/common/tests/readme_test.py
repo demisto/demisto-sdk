@@ -13,7 +13,6 @@ VALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-valid.md'
 INVALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-invalid.md'
 INVALID2_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-invalid2.md'
 INVALID3_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-short-invalid.md'
-PACK_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-pack.md'
 IMAGES_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-images.md'
 EMPTY_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-empty.md'
 FAKE_INTEGRATION_README = f'{git_path()}/demisto_sdk/tests/test_files/fake_integration/fake_README.md'
@@ -399,75 +398,7 @@ def test_verify_template_not_in_readme(repo):
         assert not readme_validator.verify_template_not_in_readme()
 
 
-def test_verify_readme_image_paths_pack_readme_relative(mocker):
-    """
-    Given
-        - A pack README file with relative image paths in it.
-    When
-        - Run validate on README file
-    Then
-        - Ensure:
-            - Validation fails
-            - Relative image paths were caught correctly
-            - An Error was printed
-    """
-    from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
-    from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
-    captured_output = io.StringIO()
-    sys.stdout = captured_output  # redirect stdout.
-    readme_validator = ReadMeValidator(PACK_MD)
-    readme_validator.file_path = '/Packs/test_pack/README.md'
-    mocker.patch('demisto_sdk.commands.common.hook_validations.readme.get_pack_name', return_value='test_pack')
-    mocker.patch.object(BaseValidator, 'check_file_flags', return_value=None)
-    mocker.patch.object(ReadMeValidator, 'check_pack_absolute_image_paths', return_value=True)
-    result = readme_validator.verify_readme_image_paths()
-
-    sys.stdout = sys.__stdout__  # reset stdout.
-
-    assert not result
-    assert 'Detected following image: ![Identity with High Risk Score](doc_files/High_Risk_User.png) ' \
-           'which is not using an absolute url' in captured_output.getvalue()
-    assert 'Detected following image: ![Identity with High Risk Score](home/test1/test2/doc_files/High_Risk_User.png) ' \
-           'which is not using an absolute url' in captured_output.getvalue()
-
-
-def test_verify_readme_image_paths_pack_readme_absolute(mocker):
-    """
-    Given
-        - A pack README file with absolute image paths in it.
-    When
-        - Run validate on README file
-    Then
-        - Ensure:
-            - Validation fails
-            - Absolute image paths were caught correctly
-            - An Error was printed
-    """
-    from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
-    from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
-    captured_output = io.StringIO()
-    sys.stdout = captured_output  # redirect stdout.
-    readme_validator = ReadMeValidator(PACK_MD)
-    readme_validator.file_path = '/Packs/test_pack/README.md'
-    mocker.patch('demisto_sdk.commands.common.hook_validations.readme.get_pack_name', return_value='test_pack')
-    mocker.patch.object(BaseValidator, 'check_file_flags', return_value=None)
-    mocker.patch.object(ReadMeValidator, 'check_pack_relative_image_paths', return_value=True)
-    with requests_mock.Mocker() as m:
-        # Mock get requests
-        m.get('https://github.com/demisto/content/raw/test1',
-              status_code=200, text="Test1")
-        m.get('https://github.com/demisto/content/raw/test2',
-              status_code=404, text="Test2")
-        result = readme_validator.verify_readme_image_paths()
-
-    sys.stdout = sys.__stdout__  # reset stdout.
-
-    assert not result
-    assert 'please repair it - https://github.com/demisto/content/raw/test1' not in captured_output.getvalue()
-    assert 'please repair it - https://github.com/demisto/content/raw/test2' in captured_output.getvalue()
-
-
-def test_verify_readme_image_paths_general_readme(mocker):
+def test_verify_readme_image_paths(mocker):
     """
     Given
         - A README file (not pack README) with valid/invalid relative image
@@ -478,17 +409,12 @@ def test_verify_readme_image_paths_general_readme(mocker):
         - Ensure:
             - Validation fails
             - Image paths were caught correctly
-            - An Error was printed
-            - valid paths are not caught
+            - Valid paths are not caught
     """
-    from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
-
     captured_output = io.StringIO()
     sys.stdout = captured_output  # redirect stdout.
 
     readme_validator = ReadMeValidator(IMAGES_MD)
-    mocker.patch('demisto_sdk.commands.common.hook_validations.readme.get_pack_name', return_value='test_pack')
-    mocker.patch.object(BaseValidator, 'check_file_flags', return_value=None)
     with requests_mock.Mocker() as m:
         # Mock get requests
         m.get('https://github.com/demisto/content/raw/123/Packs/valid/doc_files/test.png',

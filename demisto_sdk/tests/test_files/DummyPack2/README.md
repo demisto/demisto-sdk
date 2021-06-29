@@ -8,7 +8,12 @@ This integration was integrated and tested with version 1.0.1 of PhishTank.
 
 ##### valid images absolute paths
 ![Identity with High Risk Score](https://github.com/demisto/content/raw/test1)
+![Identity with High Risk Score](https://raw.githubusercontent.com/demisto/content/raw/test1)
+
+##### invalid images absolute paths
 ![Identity with High Risk Score](https://github.com/demisto/content/raw/test2)
+![Identity with High Risk Score](https://raw.githubusercontent.com/demisto/content/raw/test2)
+
 
 
 

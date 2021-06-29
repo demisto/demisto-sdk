@@ -271,9 +271,9 @@ ERROR_CODE = {
     "invalid_incident_field_in_layout": {'code': "LO104", 'ui_applicable': False, 'related_field': ''},
     "xsoar_config_file_is_not_json": {'code': "XC100", 'ui_applicable': False, 'related_field': ''},
     "xsoar_config_file_malformed": {'code': "XC101", 'ui_applicable': False, 'related_field': ''},
-    "image_relative_path_error": {'code': "RM108", 'ui_applicable': False, 'related_field': ''},
-    "invalid_image_relative_path_error": {'code': "RM109", 'ui_applicable': False, 'related_field': ''},
-    "invalid_image_absolute_path_error": {'code': "RM110", 'ui_applicable': False, 'related_field': ''},
+    "pack_readme_image_relative_path_error": {'code': "RM108", 'ui_applicable': False, 'related_field': ''},
+    "invalid_readme_image_relative_path_error": {'code': "RM109", 'ui_applicable': False, 'related_field': ''},
+    "invalid_readme_image_absolute_path_error": {'code': "RM110", 'ui_applicable': False, 'related_field': ''},
 }
 
 
@@ -1349,7 +1349,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def image_relative_path_error(path):
+    def pack_readme_image_relative_path_error(path):
         return f'Detected following image: {path} which is ' \
                f'not using an absolute url (url does not start with http/https). See ' \
                f'https://xsoar.pan.dev/docs/integrations/integration-docs#images for further info on how to ' \
@@ -1357,12 +1357,12 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_image_relative_path_error(path):
+    def invalid_readme_image_relative_path_error(path):
         return f'The following relative path is not valid - {path} please recheck it.'
 
     @staticmethod
     @error_code_decorator
-    def invalid_image_absolute_path_error(path):
+    def invalid_readme_image_absolute_path_error(path):
         return f'The following link seems to be broken, please repair it - {path}'
 
     @staticmethod

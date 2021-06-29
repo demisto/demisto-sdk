@@ -286,9 +286,6 @@ class ValidateManager:
             if content_dir in CONTENT_ENTITIES_DIRS:
                 pack_entities_validation_results.add(self.run_validation_on_content_entities(content_entity_path,
                                                                                              pack_error_ignore_list))
-            elif PACKS_README_FILE_NAME in content_dir:  # Run validation on pack README file
-                pack_entities_validation_results.add(self.run_validations_on_file(content_entity_path,
-                                                                                  pack_error_ignore_list))
             else:
                 self.ignored_files.add(content_entity_path)
 

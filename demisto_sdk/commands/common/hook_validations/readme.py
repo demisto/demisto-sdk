@@ -11,15 +11,14 @@ from typing import Callable, List, Optional
 
 import click
 import requests
-from demisto_sdk.commands.common.constants import PACKS_README_FILE_NAME
 from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
                                                 Errors)
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.tools import (
-    compare_context_path_in_yml_and_readme, get_content_path, get_pack_name,
-    get_yaml, get_yml_paths_in_dir, print_warning, run_command_os)
+    compare_context_path_in_yml_and_readme, get_content_path, get_yaml,
+    get_yml_paths_in_dir, print_warning, run_command_os)
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 
@@ -220,58 +219,73 @@ class ReadMeValidator(BaseValidator):
         return True
 
     def verify_readme_image_paths(self) -> bool:
-        """ Validate readme images relative/absolute paths.
+        """ Validate readme (not pack readme) images relative and absolute paths.
 
         Returns:
-            bool: True If all links relative/absolutes are valid else False.
+            bool: True If all links both relative and absolute are valid else False.
         """
-        return all([self.check_pack_relative_image_paths(), self.check_pack_absolute_image_paths()])
+        # If there are errors in one of the following validations return False
+        if any([self.check_readme_relative_image_paths(),
+                self.check_readme_absolute_image_paths()]):
+            return False
+        return True
 
-    def check_pack_relative_image_paths(self) -> bool:
+    def check_readme_relative_image_paths(self, is_pack_readme: bool = False) -> list:
         """ Validate readme images relative paths.
             (1) prints an error if relative paths in the pack README are found since they are not supported.
             (2) Checks if relative paths are valid (in other readme files).
 
+        Arguments:
+            is_pack_readme (bool) - True if the the README file is a pack README, default: False
+
         Returns:
-            bool: True If all relative links are valid else False.
+            list: List of the errors found
         """
-        valid = True
-        pack_name = get_pack_name(self.pack_path)
-        is_pack_readme = f'/Packs/{pack_name}/{PACKS_README_FILE_NAME}' in str(self.file_path)
+        error_list = []
+        should_print_error = not is_pack_readme  # print error if its not pack readme
         relative_images = re.findall(r'(\!\[.*?\])(\((?!http).*?\))', self.readme_content, re.IGNORECASE)
-
         if relative_images:
-            for img in relative_images:
-                try:
-                    relative_path = img[1]
-                except IndexError:
-                    continue
-                # playbook doc generator automatically adds 'Insert the link to your image here' to the readme
-                # image path.
-                if relative_path and relative_path != '(Insert the link to your image here)':
-                    # Check if the file is a pack README, relative paths are not supported in pack README.
-                    if is_pack_readme:
-                        error_message, error_code = Errors.image_relative_path_error(img[0] + relative_path)
-                        self.handle_error(error_message, error_code, file_path=self.file_path)
-                        valid = False
-                    else:
-                        # Not pack's Readme, relative paths are allowed but have to be valid.
-                        relative_path = relative_path.strip('()')
-                        if not os.path.exists(str(self.pack_path) + '/' + relative_path):
-                            error_message, error_code = Errors.invalid_image_relative_path_error(relative_path)
-                            self.handle_error(error_message, error_code, file_path=self.file_path)
-                            valid = False
-        return valid
+            if is_pack_readme:  # Check whether the README type is pack README which do not support relative paths.
+                for img in relative_images:
+                    try:
+                        relative_path = img[1]
+                    except IndexError:
+                        continue
+                    if relative_path:
+                        error_message, error_code = Errors.pack_readme_image_relative_path_error(img[0] + relative_path)
+                        formatted_error = self.handle_error(error_message, error_code, file_path=self.file_path,
+                                                            should_print=should_print_error)
+                        error_list.append(formatted_error)
 
-    def check_pack_absolute_image_paths(self) -> bool:
+            else:  # Not pack readme relative paths are allowed but have to be valid.
+                for img in relative_images:
+                    try:
+                        relative_path = img[1]
+                    except IndexError:
+                        continue
+                    # playbook doc generator automatically adds 'Insert the link to your image here' to the
+                    # readme image path, which we want to skip.
+                    if relative_path and relative_path != '(Insert the link to your image here)':
+                        relative_path = relative_path.strip('()')
+                        if not os.path.exists(f'{str(self.pack_path)}/{relative_path}'):
+                            error_message, error_code = Errors.invalid_readme_image_relative_path_error(relative_path)
+                            formatted_error = self.handle_error(error_message, error_code, file_path=self.file_path)
+                            error_list.append(formatted_error)
+        return error_list
+
+    def check_readme_absolute_image_paths(self, is_pack_readme: bool = False) -> list:
         """ Validate readme images absolute paths - Check if absolute paths are not broken.
 
+        Arguments:
+            is_pack_readme (bool) - True if the the README file is a pack README, default: False
+
         Returns:
-            bool: True If all absolute links are valid else False.
+            list: List of the errors found
         """
-        valid = True
+        error_list = []
+        should_print_error = not is_pack_readme  # print error if its not pack readme
         absolute_links = re.findall(
-            r'(\!\[.*?\]|src\=)(\(|\")(https://github.com/demisto/content/(raw|blob).*?)(\)|\")', self.readme_content,
+            r'(\!\[.*?\]|src\=)(\(|\")(https://(raw.githubusercontent|github).com/demisto/content/.*?)(\)|\")', self.readme_content,
             re.IGNORECASE)
 
         if absolute_links:
@@ -283,10 +297,12 @@ class ReadMeValidator(BaseValidator):
                 img_url = img_url.strip('()')
                 response = requests.get(img_url, verify=False, timeout=10)
                 if response.status_code != 200:
-                    error_message, error_code = Errors.invalid_image_absolute_path_error(img_url)
-                    self.handle_error(error_message, error_code, file_path=self.file_path)
-                    valid = False
-        return valid
+                    error_message, error_code = Errors.invalid_readme_image_absolute_path_error(img_url)
+                    formatted_error = \
+                        self.handle_error(error_message, error_code, file_path=self.file_path,
+                                          should_print=should_print_error)
+                    error_list.append(formatted_error)
+        return error_list
 
     def verify_no_empty_sections(self) -> bool:
         """ Check that if the following headlines exists, they are not empty:

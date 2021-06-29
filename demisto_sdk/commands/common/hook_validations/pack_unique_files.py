@@ -23,6 +23,7 @@ from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
+from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.tools import (get_core_pack_list, get_json,
                                                get_remote_file,
                                                pack_name_to_path)
@@ -169,6 +170,16 @@ class PackUniqueFilesValidator(BaseValidator):
                 return True
 
         return False
+
+    def validate_pack_readme_images(self):
+        readme_file_path = os.path.join(self.pack_path, self.readme_file)
+        readme_validator = ReadMeValidator(readme_file_path)
+        errors = readme_validator.check_readme_relative_image_paths(is_pack_readme=True) + \
+            readme_validator.check_readme_absolute_image_paths(is_pack_readme=True)
+        if errors:
+            self._errors.extend(errors)
+            return False
+        return True
 
     def validate_pack_readme_file_is_not_empty(self):
         """
@@ -509,6 +520,7 @@ class PackUniqueFilesValidator(BaseValidator):
 
         self.validate_pack_readme_file_is_not_empty()
         self.validate_pack_readme_and_pack_description()
+        self.validate_pack_readme_images()
 
         # We only check pack dependencies for -g flag
         if self.validate_dependencies:

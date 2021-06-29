@@ -8,7 +8,7 @@ from demisto_sdk.__main__ import main
 INIT_CMD = "init"
 
 
-def test_integration_init_integration_positive(tmp_path):
+def test_integration_init_integration_positive(monkeypatch, tmp_path):
     """
     Given
     - Inputs to init pack with integration.
@@ -33,12 +33,13 @@ def test_integration_init_integration_positive(tmp_path):
     pack_tags = "SuperTag1,SuperTag2"
     pack_reviewers = "GithubUser1, GithubUser2"
     create_integration = 'Y'
+    from_version = '6.0.0'
     use_category_from_pack_metadata = 'Y'
     integration_name = "SuperIntegration"
     use_dir_name_as_id = 'Y'
     inputs = [fill_pack_metadata, pack_display_name, pack_desc, support_type, pack_category,
               pack_author, pack_url, pack_email, pack_dev_email, pack_tags, pack_reviewers, create_integration,
-              use_category_from_pack_metadata, integration_name, use_dir_name_as_id]
+              use_category_from_pack_metadata, integration_name, use_dir_name_as_id, from_version]
 
     d = tmp_path / 'TestPacks'
     d.mkdir()

@@ -288,6 +288,8 @@ class TestIncidentFieldsValidator:
         structure.current_file = current_from_version
         validator = IncidentFieldValidator(structure)
         assert validator.is_changed_from_version() is answer
+        structure.quite_bc = True
+        assert validator.is_changed_from_version() is False
 
     data_required = [
         (True, False),
@@ -322,6 +324,8 @@ class TestIncidentFieldsValidator:
         validator = IncidentFieldValidator(structure)
         assert validator.is_changed_type() == is_valid, f'is_changed_type({current_type}, {old_type})' \
                                                         f' returns {not is_valid}.'
+        structure.quite_bc = True
+        assert validator.is_changed_type() is False
 
     TYPES_FROMVERSION = [
         ('grid', '5.5.0', 'indicatorfield', True),

@@ -56,6 +56,7 @@ DOCUMENTATION = 'doc'
 MAPPER = 'classifier-mapper'
 CANVAS = 'canvas'
 OLD_REPUTATION = 'reputations.json'
+XSOAR_CONFIG_FILE = 'xsoar_config.json'
 
 
 class FileType(Enum):
@@ -91,6 +92,8 @@ class FileType(Enum):
     METADATA = 'metadata'
     WHITE_LIST = 'whitelist'
     LANDING_PAGE_SECTIONS_JSON = 'landingPage_sections.json'
+    CONTRIBUTORS = 'contributors'
+    XSOAR_CONFIG = 'xsoar_config'
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -431,6 +434,15 @@ CONNECTIONS_REGEX = r'{}{}.*canvas-context-connections.*\.json$'.format(CAN_STAR
 
 INDICATOR_TYPES_REPUTATIONS_REGEX = r'{}{}.reputations\.json$'.format(CAN_START_WITH_DOT_SLASH, INDICATOR_TYPES_DIR)
 
+# deprecated regex
+DEPRECATED_DESC_REGEX = r"Deprecated\.\s*(.*?Use .*? instead\.*?)"
+DEPRECATED_NO_REPLACE_DESC_REGEX = r"Deprecated\.\s*(.*?No available replacement\.*?)"
+
+DEPRECATED_REGEXES: List[str] = [
+    DEPRECATED_DESC_REGEX,
+    DEPRECATED_NO_REPLACE_DESC_REGEX
+]
+
 PACK_METADATA_NAME = 'name'
 PACK_METADATA_DESC = 'description'
 PACK_METADATA_SUPPORT = 'support'
@@ -480,6 +492,7 @@ PACKS_WHITELIST_FILE_NAME = '.secrets-ignore'
 PACKS_PACK_IGNORE_FILE_NAME = '.pack-ignore'
 PACKS_PACK_META_FILE_NAME = 'pack_metadata.json'
 PACKS_README_FILE_NAME = 'README.md'
+PACKS_CONTRIBUTORS_FILE_NAME = 'CONTRIBUTORS.md'
 
 PYTHON_TEST_REGEXES = [
     PACKS_SCRIPT_TEST_PY_REGEX,
@@ -788,7 +801,7 @@ def urljoin(*args: str):
 
 
 class GithubCredentials:
-    ENV_TOKEN_NAME = 'GITHUB_TOKEN'
+    ENV_TOKEN_NAME = 'DEMISTO_SDK_GITHUB_TOKEN'
     TOKEN: Optional[str]
 
     def __init__(self):
@@ -1152,7 +1165,19 @@ DEFAULT_ID_SET_PATH = "./Tests/id_set.json"
 
 CONTEXT_OUTPUT_README_TABLE_HEADER = '| **Path** | **Type** | **Description** |'
 
-ARGUMENT_FIELDS_TO_CHECK = ['default', 'required', 'isArray']
+ARGUMENT_FIELDS_TO_CHECK = ['defaultValue', 'required', 'isArray']
+
+PARAM_FIELDS_TO_CHECK = ['defaultvalue', 'type', 'required']
+
+INTEGRATION_ARGUMENT_TYPES = {
+    '0': 'ShortText',
+    '4': 'Encrypted',
+    '8': 'Boolean',
+    '9': 'Authentication',
+    '12': 'LongText',
+    '15': 'SingleSelect',
+    '16': 'MultiSelect'
+}
 
 
 class ContentItems(Enum):

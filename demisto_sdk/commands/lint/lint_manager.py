@@ -30,6 +30,7 @@ from demisto_sdk.commands.common.tools import (find_file, find_type,
 from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, PWSH_CHECKS,
                                                PY_CHCEKS,
                                                build_skipped_exit_code,
+                                               generate_coverage_report,
                                                get_test_modules, validate_env)
 from demisto_sdk.commands.lint.linter import Linter
 from wcmatch.pathlib import Path
@@ -247,10 +248,10 @@ class LintManager:
         return list(pkgs_to_check)
 
     def run_dev_packages(self, parallel: int, no_flake8: bool, no_xsoar_linter: bool, no_bandit: bool, no_mypy: bool,
-                         no_pylint: bool,
+                         no_pylint: bool, no_coverage: bool, coverage_report: str,
                          no_vulture: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
                          keep_container: bool,
-                         test_xml: str, failure_report: str) -> int:
+                         test_xml: str, failure_report: str, docker_timeout: int) -> int:
         """ Runs the Lint command on all given packages.
 
         Args:
@@ -261,12 +262,15 @@ class LintManager:
             no_mypy(bool): Whether to skip mypy
             no_vulture(bool): Whether to skip vulture
             no_pylint(bool): Whether to skip pylint
+            no_coverage(bool): Run pytest without coverage report
+            coverage_report(str): the directory fo exporting the coverage data
             no_test(bool): Whether to skip pytest
             no_pwsh_analyze(bool): Whether to skip powershell code analyzing
             no_pwsh_test(bool): whether to skip powershell tests
             keep_container(bool): Whether to keep the test container
             test_xml(str): Path for saving pytest xml results
             failure_report(str): Path for store failed packs report
+            docker_timeout(int): timeout for docker requests
 
         Returns:
             int: exit code by fail exit codes by var EXIT_CODES
@@ -317,7 +321,8 @@ class LintManager:
                                         Path(self._facts["content_repo"].working_dir),
                                         req_2=self._facts["requirements_2"],
                                         req_3=self._facts["requirements_3"],
-                                        docker_engine=self._facts["docker_engine"])
+                                        docker_engine=self._facts["docker_engine"],
+                                        docker_timeout=docker_timeout)
                 results.append(executor.submit(linter.run_dev_packages,
                                                no_flake8=no_flake8,
                                                no_bandit=no_bandit,
@@ -330,7 +335,8 @@ class LintManager:
                                                no_pwsh_test=no_pwsh_test,
                                                modules=self._facts["test_modules"],
                                                keep_container=keep_container,
-                                               test_xml=test_xml))
+                                               test_xml=test_xml,
+                                               no_coverage=no_coverage))
             try:
                 for future in concurrent.futures.as_completed(results):
                     pkg_status = future.result()
@@ -369,7 +375,9 @@ class LintManager:
                              return_exit_code=return_exit_code,
                              return_warning_code=return_warning_code,
                              skipped_code=int(skipped_code),
-                             pkgs_type=pkgs_type)
+                             pkgs_type=pkgs_type,
+                             no_coverage=no_coverage,
+                             coverage_report=coverage_report)
         self._create_failed_packs_report(lint_status=lint_status, path=failure_report)
 
         # check if there were any errors during lint run , if so set to FAIL as some error codes are bigger
@@ -380,7 +388,8 @@ class LintManager:
 
     def _report_results(self, lint_status: dict, pkgs_status: dict, return_exit_code: int, return_warning_code: int,
                         skipped_code: int,
-                        pkgs_type: list):
+                        pkgs_type: list,
+                        no_coverage: bool, coverage_report: str):
         """ Log report to console
 
         Args:
@@ -390,6 +399,7 @@ class LintManager:
             return_warning_code(int): warning code will indicate which lint or test caused warning messages
             skipped_code(int): skipped test code
             pkgs_type(list): list determine which pack type exits.
+            no_coverage(bool): Do NOT create coverage report.
 
      """
         self.report_pass_lint_checks(return_exit_code=return_exit_code,
@@ -408,6 +418,12 @@ class LintManager:
         self.report_failed_image_creation(return_exit_code=return_exit_code,
                                           pkgs_status=pkgs_status,
                                           lint_status=lint_status)
+        if not no_coverage:
+            if coverage_report:
+                generate_coverage_report(html=True, xml=True, cov_dir=coverage_report)
+            else:
+                generate_coverage_report()
+
         self.report_summary(pkg=self._pkgs, lint_status=lint_status, all_packs=self._all_packs)
         self.create_json_output()
 
@@ -555,10 +571,13 @@ class LintManager:
                             if tests:
                                 print_v(wrapper_docker_image.fill(image['image']), log_verbose=self._verbose)
                                 for test_case in tests:
-                                    if test_case.get("call", {}).get("outcome") != "failed":
+                                    outcome = test_case.get("call", {}).get("outcome")
+                                    if outcome != "failed":
                                         name = re.sub(pattern=r"\[.*\]",
                                                       repl="",
                                                       string=test_case.get("name"))
+                                        if outcome and outcome != "passed":
+                                            name = f'{name} ({outcome.upper()})'
                                         print_v(wrapper_test.fill(name), log_verbose=self._verbose)
 
         # Log failed unit-tests

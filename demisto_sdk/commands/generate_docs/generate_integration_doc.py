@@ -1,6 +1,6 @@
 import os.path
 import re
-from typing import Any, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from demisto_sdk.commands.common.constants import (
     CONTEXT_OUTPUT_README_TABLE_HEADER, DOCS_COMMAND_SECTION_REGEX)
@@ -10,6 +10,10 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, get_yaml,
 from demisto_sdk.commands.generate_docs.common import (
     add_lines, build_example_dict, generate_numbered_section, generate_section,
     generate_table_section, save_output, string_escape_md)
+from demisto_sdk.commands.integration_diff.integration_diff_detector import \
+    IntegrationDiffDetector
+
+CREDENTIALS = 9
 
 
 def append_or_replace_command_in_docs(old_docs: str, new_doc_section: str, command_name: str) -> Tuple[str, list]:
@@ -52,7 +56,9 @@ def generate_integration_doc(
         limitations: Optional[str] = None,
         insecure: bool = False,
         verbose: bool = False,
-        command: Optional[str] = None):
+        command: Optional[str] = None,
+        input_old_version: str = '',
+        skip_breaking_changes: bool = False):
     """ Generate integration documentation.
 
     Args:
@@ -112,7 +118,14 @@ def generate_integration_doc(
         else:
             docs = []  # type: list
             docs.extend(add_lines(yml_data.get('description')))
-            docs.extend(['This integration was integrated and tested with version xx of {}'.format(yml_data['name'])])
+            docs.extend(['This integration was integrated and tested with version xx of {}'.format(yml_data['name']), ''])
+            # Checks if the integration is a new version
+            integration_version = re.findall("[vV][2-9]$", yml_data.get("display", ""))
+            if integration_version and not skip_breaking_changes:
+                docs.extend(['Some changes have been made that might affect your existing content. '
+                             '\nIf you are upgrading from a previous of this integration, see [Breaking Changes]'
+                             '(#breaking-changes-from-the-previous-version-of-this-integration-'
+                             f'{yml_data.get("display", "").replace(" ", "-").lower()}).', ''])
             # Integration use cases
             if use_cases:
                 docs.extend(generate_numbered_section('Use Cases', use_cases))
@@ -127,6 +140,11 @@ def generate_integration_doc(
             command_section, command_errors = generate_commands_section(yml_data, example_dict,
                                                                         command_permissions_dict, command=command)
             docs.extend(command_section)
+            # breaking changes
+            if integration_version and not skip_breaking_changes:
+                docs.extend(generate_versions_differences_section(input_path, input_old_version,
+                                                                  yml_data.get("display", "")))
+
             errors.extend(command_errors)
             # Known limitations
             if limitations:
@@ -156,18 +174,15 @@ def generate_setup_section(yaml_data: dict):
         '2. Search for {}.'.format(yaml_data['name']),
         '3. Click **Add instance** to create and configure a new integration instance.'
     ]
-    access_data = []
+    access_data: List[Dict] = []
 
     for conf in yaml_data['configuration']:
-        access_data.append(
-            {'Parameter': conf.get('display'),
-             'Description': string_escape_md(conf.get('additionalinfo', '')),
-             'Required': conf.get('required', '')})
-
-        if conf['type'] == 9:
+        if conf['type'] == CREDENTIALS:
+            add_access_data_of_type_credentials(access_data, conf)
+        else:
             access_data.append(
-                {'Parameter': conf.get('displaypassword', 'Password'),
-                 'Description': '',
+                {'Parameter': conf.get('display'),
+                 'Description': string_escape_md(conf.get('additionalinfo', '')),
                  'Required': conf.get('required', '')})
 
     # Check if at least one parameter has additional info field.
@@ -311,6 +326,99 @@ def generate_single_command_section(cmd: dict, example_dict: dict, command_permi
     return section, errors
 
 
+def generate_versions_differences_section(input_path, input_old_version, display_name) -> list:
+    """
+    Generate the version differences section to the README.md file.
+
+    Arguments:
+        input_path : The integration file path.
+
+    Returns:
+        List of the section lines.
+    """
+
+    differences_section = [
+        f'## Breaking changes from the previous version of this integration - {display_name}',
+        '%%FILL HERE%%',
+        'The following sections list the changes in this version.',
+        ''
+    ]
+
+    if not input_old_version:
+        user_response = str(input('Enter the path of the previous integration version file if any. Press Enter to skip.\n'))
+
+        if user_response:
+            input_old_version = user_response
+
+    if input_old_version:
+        differences = get_previous_version_differences(input_path, input_old_version)
+
+        if differences[0] != '':
+            differences_section.extend(differences)
+
+        else:
+            # If there are no differences, remove the headers.
+            differences_section = []
+
+    else:
+
+        differences_section.extend(['### Commands',
+                                    '#### The following commands were removed in this version:',
+                                    '* *commandName* - this command was replaced by XXX.',
+                                    '* *commandName* - this command was replaced by XXX.',
+                                    '',
+                                    '### Arguments',
+                                    '#### The following arguments were removed in this version:',
+                                    '',
+                                    'In the *commandName* command:',
+                                    '* *argumentName* - this argument was replaced by XXX.',
+                                    '* *argumentName* - this argument was replaced by XXX.',
+                                    '',
+                                    '#### The behavior of the following arguments was changed:',
+                                    '',
+                                    'In the *commandName* command:',
+                                    '* *argumentName* - is now required.',
+                                    '* *argumentName* - supports now comma separated values.',
+                                    '',
+                                    '### Outputs',
+                                    '#### The following outputs were removed in this version:',
+                                    '',
+                                    'In the *commandName* command:',
+                                    '* *outputPath* - this output was replaced by XXX.',
+                                    '* *outputPath* - this output was replaced by XXX.',
+                                    '',
+                                    'In the *commandName* command:',
+                                    '* *outputPath* - this output was replaced by XXX.',
+                                    '* *outputPath* - this output was replaced by XXX.',
+                                    ''])
+
+    differences_section.extend(['## Additional Considerations for this version', '%%FILL HERE%%',
+                                '* Insert any API changes, any behavioral changes, limitations, or restrictions '
+                                'that would be new to this version.', ''])
+
+    return differences_section
+
+
+def get_previous_version_differences(new_integration_path, previous_integration_path) -> list:
+    """
+    Gets the section of the previous integration version differences.
+
+    Args:
+        new_integration_path: The new integration path.
+        previous_integration_path: The old integration path.
+
+    Return:
+        List of the differences section lines.
+    """
+
+    differences_detector = IntegrationDiffDetector(new=new_integration_path, old=previous_integration_path)
+    differences_detector.missing_items_report = differences_detector.get_differences()
+
+    differences_section = [differences_detector.print_items_in_docs_format(secho_result=False)]
+
+    return differences_section
+
+
 def generate_command_example(cmd, cmd_example=None):
     errors = []
     context_example = None
@@ -421,3 +529,25 @@ def command_permissions_filter(permission):
     elif permission.startswith('!'):
         return f'{permission}'
     return permission
+
+
+def add_access_data_of_type_credentials(access_data: List[Dict], credentials_conf: Dict) -> None:
+    """
+    Adds to 'access_data' the parameter data of credentials configuration parameter.
+    Args:
+        access_data (List[Dict]): Access data to add the credentials conf data to.
+        credentials_conf (Dict): Credentials conf data.
+
+    Returns:
+        (None): Adds the data to 'access_data'.
+    """
+    display_name = credentials_conf.get('display')
+    if display_name:
+        access_data.append(
+            {'Parameter': display_name,
+             'Description': string_escape_md(credentials_conf.get('additionalinfo', '')),
+             'Required': credentials_conf.get('required', '')})
+    access_data.append(
+        {'Parameter': credentials_conf.get('displaypassword', 'Password'),
+         'Description': '' if display_name else string_escape_md(credentials_conf.get('additionalinfo', '')),
+         'Required': credentials_conf.get('required', '')})

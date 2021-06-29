@@ -368,7 +368,7 @@ class PackUniqueFilesValidator(BaseValidator):
         try:
             pack_meta_file_content = json.loads(self._read_file_content(self.pack_meta_file))
             if pack_meta_file_content[PACK_METADATA_SUPPORT] not in SUPPORT_TYPES:
-                self._add_error(Errors.pack_metadata_invalid_support_type(self.pack_meta_file), self.pack_meta_file)
+                self._add_error(Errors.pack_metadata_invalid_support_type(), self.pack_meta_file)
                 return False
             self.support = pack_meta_file_content[PACK_METADATA_SUPPORT]
         except (ValueError, TypeError):

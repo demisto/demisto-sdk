@@ -131,17 +131,19 @@ class ContentGitRepo:
             res = runner.invoke(
                 main,
                 "validate -g --staged --skip-pack-dependencies --skip-pack-release-notes "
-                "--no-docker-checks --debug-git"
+                "--no-docker-checks --debug-git --allow-skipped"
             )
 
             assert res.exit_code == 0, f"stdout = {res.stdout}\nstderr = {res.stderr}"
 
             # build flow - validate on all changed files
-            res = runner.invoke(main, "validate -g --skip-pack-dependencies --no-docker-checks --debug-git")
+            res = runner.invoke(main, "validate -g --skip-pack-dependencies --no-docker-checks --debug-git "
+                                      "--allow-skipped")
             assert res.exit_code == 0, f"stdout = {res.stdout}\nstderr = {res.stderr}"
 
             # local run - validation with untracked files
-            res = runner.invoke(main, "validate -g --skip-pack-dependencies --no-docker-checks --debug-git -iu")
+            res = runner.invoke(main, "validate -g --skip-pack-dependencies --no-docker-checks --debug-git -iu "
+                                      "--allow-skipped")
             assert res.exit_code == 0, f"stdout = {res.stdout}\nstderr = {res.stderr}"
 
     def git_cleanup(self):
@@ -260,6 +262,7 @@ def modify_entity(content_repo: ContentGitRepo, monkeypatch: MonkeyPatch):
     # Modify the entity
     script = yaml.safe_load(open("./HelloWorldScript.yml"))
     script['args'][0]["description"] = "new description"
+
     yaml.safe_dump(script, open("./HelloWorldScript.yml", "w"))
     content_repo.run_command("git add .")
     monkeypatch.chdir(content_repo.content)

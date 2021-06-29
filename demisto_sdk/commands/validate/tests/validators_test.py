@@ -479,6 +479,7 @@ class TestValidators:
             os.path.join(__file__, git_path(), 'demisto_sdk', 'tests', 'test_files', 'id_set', 'id_set.json'))
         validate_manager = ValidateManager(skip_conf_json=True, id_set_path=id_set_path)
         mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_readme_and_pack_description', return_value=True)
+        mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_readme_images', return_value=True)
         result = validate_manager.validate_pack_unique_files('QRadar', pack_error_ignore_list={})
         assert not result
 

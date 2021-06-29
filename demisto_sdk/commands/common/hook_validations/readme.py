@@ -246,7 +246,9 @@ class ReadMeValidator(BaseValidator):
                     relative_path = img[1]
                 except IndexError:
                     continue
-                if relative_path:
+                # playbook doc generator automatically adds 'Insert the link to your image here' to the readme
+                # image path.
+                if relative_path and relative_path != '(Insert the link to your image here)':
                     # Check if the file is a pack README, relative paths are not supported in pack README.
                     if is_pack_readme:
                         error_message, error_code = Errors.image_relative_path_error(img[0] + relative_path)

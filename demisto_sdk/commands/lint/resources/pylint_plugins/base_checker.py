@@ -136,7 +136,7 @@ class CustomBaseChecker(BaseChecker):
         Args:
             node: A astroid node.
         """
-        # If it's not a script or 'runas' is already set to 'DBotRole'.
+        # If it's not a script or 'runas' is already set to 'DBotRole' simply return.
         if not self.is_script or self.runas == 'DBotRole':
             return
 

@@ -635,10 +635,10 @@ class ValidateManager:
                                                           print_as_warnings=self.print_ignored_errors,
                                                           json_file_path=self.json_file_path)
         if is_modified and self.is_backward_check:
-            return all([incident_field_validator.is_valid_file(validate_rn=False),
+            return all([incident_field_validator.is_valid_file(validate_rn=False, is_new_file=not is_modified, use_git=self.use_git),
                         incident_field_validator.is_backward_compatible()])
         else:
-            return incident_field_validator.is_valid_file(validate_rn=False)
+            return incident_field_validator.is_valid_file(validate_rn=False, is_new_file=not is_modified, use_git=self.use_git)
 
     def validate_reputation(self, structure_validator, pack_error_ignore_list):
         reputation_validator = ReputationValidator(structure_validator, ignored_errors=pack_error_ignore_list,
@@ -1164,6 +1164,8 @@ class ValidateManager:
 
                 except MissingSectionHeaderError:
                     pass
+            else:
+                click.secho(f'Could not find pack-ignore file at path {pack_ignore_path}', fg="bright_red")
 
         return ignored_errors_list
 

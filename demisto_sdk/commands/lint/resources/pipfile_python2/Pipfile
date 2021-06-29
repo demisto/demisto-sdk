@@ -12,6 +12,7 @@ pytest-xdist = "*"
 pytest-json = "*"
 
 [packages]
+freezegun = "*"
 
 [requires]
 python_version = "2.7"

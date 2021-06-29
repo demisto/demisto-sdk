@@ -458,33 +458,26 @@ class LintManager:
             pkgs_status(dict): All pkgs status dict
             return_exit_code(int): exit code will indicate which lint or test failed
         """
-        for check in ["flake8", "XSOAR_linter", "bandit", "vulture"]:
+        for check in ["flake8", "XSOAR_linter", "bandit", "mypy", "vulture", "pylint", "pwsh_analyze", "pwsh_test"]:
             if EXIT_CODES[check] & return_exit_code:
-                sentence = f" {check.capitalize()} errors "
-                print(f"\n{Colors.Fg.red}{'#' * len(sentence)}{Colors.reset}")
-                print(f"{Colors.Fg.red}{sentence}{Colors.reset}")
-                print(f"{Colors.Fg.red}{'#' * len(sentence)}{Colors.reset}\n")
-                for fail_pack in lint_status[f"fail_packs_{check}"]:
-                    print(f"{Colors.Fg.red}{pkgs_status[fail_pack]['pkg']}{Colors.reset}")
-                    print(pkgs_status[fail_pack][f"{check}_errors"])
-                    self.linters_error_list.append({
-                        'linter': check,
-                        'pack': fail_pack,
-                        'type': 'error',
-                        'messages': pkgs_status[fail_pack][f"{check}_errors"]
-                    })
-
-        for check in ["mypy", "pylint", "pwsh_analyze", "pwsh_test"]:
-            check_str = check.capitalize().replace('_', ' ')
-            if EXIT_CODES[check] & return_exit_code:
-                sentence = f" {check_str} errors "
+                sentence = f" {check.capitalize().replace('_', ' ')} errors "
                 print(f"\n{Colors.Fg.red}{'#' * len(sentence)}{Colors.reset}")
                 print(f"{Colors.Fg.red}{sentence}{Colors.reset}")
                 print(f"{Colors.Fg.red}{'#' * len(sentence)}{Colors.reset}\n")
                 for fail_pack in lint_status[f"fail_packs_{check}"]:
                     print(f"{Colors.Fg.red}{fail_pack}{Colors.reset}")
-                    for image in pkgs_status[fail_pack]["images"]:
-                        print(image[f"{check}_errors"])
+                    if pkgs_status[fail_pack].get(f"{check}_errors", None):
+                        # print(f"{Colors.Fg.red}{pkgs_status[fail_pack]['pkg']}{Colors.reset}")
+                        print(pkgs_status[fail_pack][f"{check}_errors"])
+                        self.linters_error_list.append({
+                            'linter': check,
+                            'pack': fail_pack,
+                            'type': 'error',
+                            'messages': pkgs_status[fail_pack][f"{check}_errors"]
+                        })
+                    elif pkgs_status[fail_pack].get("images", None):
+                        for image in pkgs_status[fail_pack]["images"]:
+                            print(image[f"{check}_errors"])
 
     def report_warning_lint_checks(self, lint_status: dict, pkgs_status: dict, return_warning_code: int,
                                    all_packs: bool):

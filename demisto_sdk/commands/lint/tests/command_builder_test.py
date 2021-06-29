@@ -76,15 +76,17 @@ def test_build_bandit_command(files):
     assert expected == output
 
 
-@pytest.mark.parametrize(argnames="files, py_num", argvalues=[(values[0], "2.7"), (values[1], "3.7")])
+@pytest.mark.parametrize(argnames="files, py_num", argvalues=[(values[0], 2.7), (values[1], 3.7)])
 def test_build_mypy_command(files, py_num):
     """Build Mypy command"""
     from demisto_sdk.commands.lint.commands_builder import build_mypy_command
     output = build_mypy_command(files, py_num)
     files = [str(file) for file in files]
+    redirect_stdout = ' >/dev/null' if py_num >= 3 else ''
     expected = f"python3 -m mypy --python-version {py_num} --check-untyped-defs --ignore-missing-imports " \
                f"--follow-imports=silent --show-column-numbers --show-error-codes --pretty --allow-redefinition " \
-               f"--show-absolute-path --cache-dir=/dev/null {' '.join(files)}"
+               f"--install-types --non-interactive --cache-dir=./mypy_cache --show-absolute-path {' '.join(files)}" \
+               f"{redirect_stdout}"
     assert expected == output
 
 

@@ -190,6 +190,10 @@ def build_mypy_command(files: List[Path], version: float) -> str:
     files_list = [file.name for file in files]
     command += " " + " ".join(files_list)
 
+    # python files > 3 mayp run in docker container, so ignore the info printed to the stdout by pip
+    if version >= 3:
+        command += " >/dev/null"
+
     return command
 
 

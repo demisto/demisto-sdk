@@ -29,7 +29,10 @@ from demisto_sdk.commands.lint.commands_builder import (
 from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, RERUN, RL,
                                                SUCCESS, WARNING,
                                                add_tmp_lint_files,
+                                               add_typing_module,
                                                coverage_report_editor,
+                                               get_checks_on_docker,
+                                               get_checks_on_local_os,
                                                get_file_from_container,
                                                get_python_version_from_image,
                                                pylint_plugin,
@@ -135,15 +138,18 @@ class Linter:
                                     modules=modules,
                                     pack_type=self._pkg_lint_status["pack_type"]):
                 # Run lint check on host - flake8, bandit
+                # in python2 files mypy will run in local os and in python3 mypy will run in docker container
+                py_version = self._facts["python_version"]
                 if self._pkg_lint_status["pack_type"] == TYPE_PYTHON:
                     self._run_lint_in_host(no_flake8=no_flake8,
                                            no_bandit=no_bandit,
+                                           no_mypy=no_mypy or 3 <= py_version,
                                            no_vulture=no_vulture,
                                            no_xsoar_linter=no_xsoar_linter)
 
                 # Run lint and test check on pack docker image
                 if self._facts["docker_engine"]:
-                    self._run_lint_on_docker_image(no_mypy=no_mypy,
+                    self._run_lint_on_docker_image(no_mypy=no_mypy or py_version < 3,
                                                    no_pylint=no_pylint,
                                                    no_test=no_test,
                                                    no_pwsh_analyze=no_pwsh_analyze,
@@ -209,7 +215,8 @@ class Linter:
             # Gather environment variables for docker execution
             self._facts["env_vars"] = {
                 "CI": os.getenv("CI", False),
-                "DEMISTO_LINT_UPDATE_CERTS": os.getenv('DEMISTO_LINT_UPDATE_CERTS', "yes")
+                "DEMISTO_LINT_UPDATE_CERTS": os.getenv('DEMISTO_LINT_UPDATE_CERTS', "yes"),
+                "PIP_QUIET": 3
             }
         lint_files = set()
         # Facts for python pack
@@ -285,7 +292,7 @@ class Linter:
                 self._facts['lint_unittest_files'].append(lint_file)
                 self._facts["lint_files"].remove(lint_file)
 
-    def _run_lint_in_host(self, no_flake8: bool, no_bandit: bool, no_vulture: bool,
+    def _run_lint_in_host(self, no_flake8: bool, no_bandit: bool, no_mypy: bool, no_vulture: bool,
                           no_xsoar_linter: bool):
         """ Run lint check on host
 
@@ -298,7 +305,7 @@ class Linter:
         error = []
         other = []
         exit_code: int = 0
-        for lint_check in ["flake8", "XSOAR_linter", "bandit", "vulture"]:
+        for lint_check in get_checks_on_local_os(self._facts["python_version"]):
             exit_code = SUCCESS
             output = ""
             if self._facts["lint_files"] or self._facts["lint_unittest_files"]:
@@ -314,6 +321,10 @@ class Linter:
                 if lint_check == "XSOAR_linter" and not no_xsoar_linter:
                     exit_code, output = self._run_xsoar_linter(py_num=self._facts["python_version"],
                                                                lint_files=self._facts["lint_files"])
+                elif lint_check == "mypy" and not no_mypy:
+                    exit_code, output = self._run_mypy(py_num=self._facts["python_version"],
+                                                       lint_files=self._facts["lint_files"])
+
                 elif lint_check == "bandit" and not no_bandit:
                     exit_code, output = self._run_bandit(lint_files=self._facts["lint_files"])
 
@@ -452,6 +463,36 @@ class Linter:
 
         return SUCCESS, ""
 
+    def _run_mypy(self, py_num: float, lint_files: List[Path]) -> Tuple[int, str]:
+        """ Run mypy in pack dir
+
+        Args:
+            py_num(float): The python version in use
+            lint_files(List[Path]): file to perform lint
+
+        Returns:
+           int:  0 on successful else 1, errors
+           str: Bandit errors
+        """
+        log_prompt = f"{self._pack_name} - Mypy"
+        logger.info(f"{log_prompt} - Start")
+        with add_typing_module(lint_files=lint_files, python_version=py_num):
+            stdout, stderr, exit_code = run_command_os(command=build_mypy_command(files=lint_files, version=py_num),
+                                                       cwd=self._pack_abs_dir)
+        logger.debug(f"{log_prompt} - Finished exit-code: {exit_code}")
+        logger.debug(f"{log_prompt} - Finished stdout: {RL if stdout else ''}{stdout}")
+        logger.debug(f"{log_prompt} - Finished stderr: {RL if stderr else ''}{stderr}")
+        if stderr or exit_code:
+            logger.info(f"{log_prompt}- Finished Finished errors found")
+            if stderr:
+                return FAIL, stderr
+            else:
+                return FAIL, stdout
+
+        logger.info(f"{log_prompt} - Successfully finished")
+
+        return SUCCESS, ""
+
     def _run_vulture(self, py_num: float, lint_files: List[Path]) -> Tuple[int, str]:
         """ Run vulture in pack dir
 
@@ -519,7 +560,7 @@ class Linter:
 
             if image_id and not errors:
                 # Set image creation status
-                for check in ["mypy", "pylint", "pytest", "pwsh_analyze", "pwsh_test"]:
+                for check in get_checks_on_docker(self._facts["python_version"]):  # ["mypy", "pylint", "pytest", "pwsh_analyze", "pwsh_test"]:
                     exit_code = SUCCESS
                     output = ""
                     for trial in range(2):

@@ -535,3 +535,17 @@ def generate_coverage_report(html=False, xml=False, report=True, cov_dir='covera
         except coverage.misc.CoverageException as warning:
             logger.warning(str(warning))
             return
+
+
+def get_checks_on_local_os(python_version: float):
+    result = ["flake8", "XSOAR_linter", "bandit", "vulture"]
+    if python_version < 3:
+        result.append("mypy")
+    return result
+
+
+def get_checks_on_docker(python_version: float):
+    result = ["pylint", "pytest", "pwsh_analyze", "pwsh_test"]
+    if python_version >= 3:
+        result.append("mypy")
+    return result

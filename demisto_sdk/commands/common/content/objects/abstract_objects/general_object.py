@@ -91,3 +91,6 @@ class GeneralObject(object):
         dest_file = self._create_target_dump_dir(dest_dir) / self.normalize_file_name()
 
         return [copyfile(src=self.path, dst=dest_file)]
+
+    def type(self):
+        return None

@@ -19,7 +19,7 @@ This command is used in order to run integration or script commands of a remote 
 
     The query to run
 
-* **-k, --insecure**
+* **--insecure**
 
     Skip certificate validation
 

@@ -1,5 +1,6 @@
 import json
 import os
+from typing import Dict, List
 
 import pytest
 from demisto_sdk.commands.common.legacy_git_tools import git_path
@@ -8,7 +9,7 @@ from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from demisto_sdk.commands.generate_docs.generate_integration_doc import (
     append_or_replace_command_in_docs, generate_commands_section,
     generate_integration_doc, generate_setup_section,
-    generate_single_command_section)
+    generate_single_command_section, get_command_examples)
 from demisto_sdk.commands.generate_docs.generate_script_doc import \
     generate_script_doc
 
@@ -17,6 +18,8 @@ FAKE_ID_SET = get_json(os.path.join(FILES_PATH, 'fake_id_set.json'))
 TEST_PLAYBOOK_PATH = os.path.join(FILES_PATH, 'playbook-Test_playbook.yml')
 TEST_SCRIPT_PATH = os.path.join(FILES_PATH, 'script-test_script.yml')
 TEST_INTEGRATION_PATH = os.path.join(FILES_PATH, 'fake_integration/fake_integration.yml')
+TEST_INTEGRATION_2_PATH = os.path.join(FILES_PATH, 'integration-display-credentials-none/integration-display'
+                                                   '-credentials-none.yml')
 
 
 # common tests
@@ -576,12 +579,86 @@ class TestGenerateIntegrationDoc:
         fake_readme = os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), 'fake_README.md')
         # Generate doc
         generate_integration_doc(TEST_INTEGRATION_PATH)
-        assert open(fake_readme).read() == open(
-            os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), 'README.md')).read()
+        with open(fake_readme) as fake_file:
+            with open(os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), 'README.md')) as real_file:
+                fake_data = fake_file.read()
+                assert fake_data == real_file.read()
 
-        assert "The type of the newly created user. Possible values are: Basic, Pro, Corporate. Default is Basic." \
-               in open(fake_readme).read()
-        assert "Number of users to return. Max 300. Default is 30." in open(fake_readme).read()
+                assert "The type of the newly created user. Possible values are: Basic, Pro, " \
+                       "Corporate. Default is Basic." in fake_data
+                assert "Number of users to return. Max 300. Default is 30." in fake_data
+
+    def test_integration_doc_credentials_display_missing(self):
+        """
+        Given
+            - YML file representing an integration, containing display None for credentials parameter.
+        When
+            - Running generate_integration_doc command on the integration.
+        Then
+            - Validate that the integration README was created correctly, specifically that line numbers are not being
+              reset after a table.
+            - Test that the predefined values and default values are added to the README.
+            - Test that credentials parameter name shown in README is using display password field.
+    """
+        readme = os.path.join(os.path.dirname(TEST_INTEGRATION_2_PATH), 'README.md')
+        # Generate doc
+        generate_integration_doc(TEST_INTEGRATION_2_PATH, skip_breaking_changes=True)
+        with open(readme) as readme_file:
+            with open(os.path.join(os.path.dirname(TEST_INTEGRATION_2_PATH), 'README.md')) as new_readme:
+                readme_data = readme_file.read()
+                assert readme_data == new_readme.read()
+                assert '| None | The API key to use for the connection. | False |' not in readme_data
+                assert '| API Token | The API key to use for the connection. | False |' in readme_data
+
+
+def test_get_command_examples_with_exclamation_mark(tmp_path):
+    """
+        Given
+            - command_examples file with exclamation mark.
+            - list of specific commands
+        When
+            - Running get_command_examples with the given command examples and specific commands.
+        Then
+            - Verify that the returned commands from the examples are only the specific sommands
+    """
+    command_examples = tmp_path / "command_examples"
+
+    with open(command_examples, 'w+') as ce:
+        ce.write('!zoom-create-user\n!zoom-create-meeting\n!zoom-fetch-recording\n!zoom-list-users\n!zoom-delete-user')
+
+    command_example_a = 'zoom-create-user'
+    command_example_b = 'zoom-list-users'
+
+    specific_commands = [command_example_a, command_example_b]
+
+    commands = get_command_examples(commands_file_path=command_examples, specific_commands=specific_commands)
+
+    assert commands == [f'!{command_example_a}', f'!{command_example_b}']
+
+
+def test_get_command_examples_without_exclamation_mark(tmp_path):
+    """
+        Given
+            - command_examples file without exclamation mark.
+            - list of specific commands
+        When
+            - Running get_command_examples with the given command examples and specific commands.
+        Then
+            - Verify that the returned commands from the examples are only the specific sommands
+    """
+    command_examples = tmp_path / "command_examples"
+
+    with open(command_examples, 'w+') as ce:
+        ce.write('zoom-create-user\nzoom-create-meeting\nzoom-fetch-recording\nzoom-list-users\nzoom-delete-user')
+
+    command_example_a = 'zoom-create-user'
+    command_example_b = 'zoom-list-users'
+
+    specific_commands = [command_example_a, command_example_b]
+
+    commands = get_command_examples(commands_file_path=command_examples, specific_commands=specific_commands)
+
+    assert commands == [f'!{command_example_a}', f'!{command_example_b}']
 
 
 def test_generate_table_section_numbered_section():
@@ -635,6 +712,28 @@ yml_data_cases = [(
          '', '    | **Parameter** | **Description** | **Required** |', '    | --- | --- | --- |',
          '    | test1 | More info | True |', '    | test2 | Some more data | True |', '',
          '4. Click **Test** to validate the URLs, token, and connection.']  # expected
+),
+    (
+        {"name": "test", "configuration": [
+            {'display': 'userName', 'displaypassword': 'password', 'name': 'userName', 'additionalinfo': 'Credentials',
+             'required': True, 'type': 9},
+        ]},  # case credentials parameter have displaypassword
+        ['1. Navigate to **Settings** > **Integrations** > **Servers & Services**.',
+         '2. Search for test.', '3. Click **Add instance** to create and configure a new integration instance.',
+         '', '    | **Parameter** | **Description** | **Required** |', '    | --- | --- | --- |',
+         '    | userName | Credentials | True |', '    | password |  | True |', '',
+         '4. Click **Test** to validate the URLs, token, and connection.']  # expected
+),
+    (
+        {"name": "test", "configuration": [
+            {'display': 'userName', 'name': 'userName', 'additionalinfo': 'Credentials',
+             'required': True, 'type': 9},
+        ]},  # case credentials parameter have no displaypassword
+        ['1. Navigate to **Settings** > **Integrations** > **Servers & Services**.',
+         '2. Search for test.', '3. Click **Add instance** to create and configure a new integration instance.',
+         '', '    | **Parameter** | **Description** | **Required** |', '    | --- | --- | --- |',
+         '    | userName | Credentials | True |', '    | Password |  | True |', '',
+         '4. Click **Test** to validate the URLs, token, and connection.']  # expected
 )
 
 ]
@@ -653,3 +752,190 @@ def test_generate_setup_section_with_additional_info(yml_input, expected_results
     """
     section = generate_setup_section(yml_input)
     assert section == expected_results
+
+
+def test_scripts_in_playbook(repo):
+    """
+        Given
+            - A test playbook file
+        When
+            - Run get_playbook_dependencies command
+        Then
+            - Ensure that the scripts we get are from both the script and scriptName fields.
+    """
+    from demisto_sdk.commands.generate_docs.generate_playbook_doc import \
+        get_playbook_dependencies
+    pack = repo.create_pack('pack')
+    playbook = pack.create_playbook('LargePlaybook')
+    test_task_1 = {
+        "id": "1",
+        "ignoreworker": False,
+        "isautoswitchedtoquietmode": False,
+        "isoversize": False,
+        "nexttasks": {
+            '#none#': ["2"]
+        },
+        "note": False,
+        "quietmode": 0,
+        "separatecontext": True,
+        "skipunavailable": False,
+        "task": {
+            "brand": "",
+            "id": "dcf48154-7e80-42b3-8464-7156e1cd3d10",
+            "iscommand": False,
+            "name": "test_script",
+            "scriptName": "test_1",
+            "type": "regular",
+            "version": -1
+        },
+        "scriptarguments": {
+            "encoding": {},
+            "entryID": {
+                "simple": "entryId"
+            },
+            "maxFileSize": {}
+        },
+        "taskid": "dcf48154-7e80-42b3-8464-7156e1cd3d10",
+        "timertriggers": [],
+        "type": "playbook"
+    }
+    test_task_2 = {
+        "id": "2",
+        "ignoreworker": False,
+        "isautoswitchedtoquietmode": False,
+        "isoversize": False,
+        "nexttasks": {
+            '#none#': ["3"]
+        },
+        "note": False,
+        "quietmode": 0,
+        "separatecontext": True,
+        "skipunavailable": False,
+        "task": {
+            "brand": "",
+            "id": "dcf48154-7e80-42b3-8464-7156e1cd3d10",
+            "iscommand": False,
+            "name": "test_script",
+            "script": "test_2",
+            "type": "regular",
+            "version": -1
+        },
+        "scriptarguments": {
+            "encoding": {},
+            "entryID": {
+                "simple": "entryId"
+            },
+            "maxFileSize": {}
+        },
+        "taskid": "dcf48154-7e80-42b3-8464-7156e1cd3d10",
+        "timertriggers": [],
+        "type": "playbook"
+    }
+    playbook.create_default_playbook()
+    playbook_data = playbook.yml.read_dict()
+    playbook_data['tasks']['1'] = test_task_1
+    playbook_data['tasks']['2'] = test_task_2
+    playbook.yml.write_dict(playbook_data)
+
+    playbooks, integrations, scripts, commands = get_playbook_dependencies(playbook_data,
+                                                                           playbook_path=playbook.yml.rel_path)
+
+    assert "test_1" in scripts
+    assert "test_2" in scripts
+
+
+TEST_ADD_ACCESS_DATA_OF_TYPE_CREDENTIALS_INPUTS = [
+    ([], {'display': 'username', 'additionalinfo': 'Username', 'required': True},
+     [{'Parameter': 'username', 'Description': 'Username', 'Required': True},
+      {'Description': '', 'Parameter': 'Password', 'Required': True}]),
+    ([], {'displaypassword': 'specialPassword', 'additionalinfo': 'Enter your password', 'required': False},
+     [{'Description': 'Enter your password', 'Parameter': 'specialPassword', 'Required': False}]),
+    ([], {'display': 'username', 'additionalinfo': 'Username', 'required': True, 'displaypassword': 'specialPassword'},
+     [{'Parameter': 'username', 'Description': 'Username', 'Required': True},
+      {'Description': '', 'Parameter': 'specialPassword', 'Required': True}])
+]
+
+
+@pytest.mark.parametrize('access_data, credentials_conf, expected', TEST_ADD_ACCESS_DATA_OF_TYPE_CREDENTIALS_INPUTS)
+def test_add_access_data_of_type_credentials(access_data: List[Dict], credentials_conf: Dict, expected: List[Dict]):
+    """
+    Given:
+    - 'access_data': Containing parameter data to be added to README file.
+    - 'credentials_conf': Credentials configuration data represented as a dict.
+
+    When:
+    - Adding to README the parameter credential conf configuration details.
+    Case a: Only display name exists, display password does not.
+    Case b: Only display password name exists, display not.
+    Case c: Both display name and display password name exists.
+
+    Then:
+    - Ensure the expected credentials data is added to 'access_data'.
+    Case a: Display name is added, also 'Password' is added as default for display password name missing.
+    Case b: 'Password' is added as default for display password name missing.
+    Case c: Both display name and display password name are added.
+    """
+    from demisto_sdk.commands.generate_docs.generate_integration_doc import add_access_data_of_type_credentials
+    add_access_data_of_type_credentials(access_data, credentials_conf)
+    assert access_data == expected
+
+
+def test_generate_versions_differences_section(monkeypatch):
+    """
+        Given
+            - A new version of an integration.
+        When
+            - Running the generate_versions_differences_section command.
+        Then
+            - Add a section of differences between versions in README.
+    """
+
+    from demisto_sdk.commands.generate_docs.generate_integration_doc import generate_versions_differences_section
+    monkeypatch.setattr(
+        'builtins.input',
+        lambda _: ''
+    )
+    section = generate_versions_differences_section('', '', 'Integration_Display_Name')
+
+    expected_section = [
+        '## Breaking changes from the previous version of this integration - Integration_Display_Name',
+        '%%FILL HERE%%',
+        'The following sections list the changes in this version.',
+        '',
+        '### Commands',
+        '#### The following commands were removed in this version:',
+        '* *commandName* - this command was replaced by XXX.',
+        '* *commandName* - this command was replaced by XXX.',
+        '',
+        '### Arguments',
+        '#### The following arguments were removed in this version:',
+        '',
+        'In the *commandName* command:',
+        '* *argumentName* - this argument was replaced by XXX.',
+        '* *argumentName* - this argument was replaced by XXX.',
+        '',
+        '#### The behavior of the following arguments was changed:',
+        '',
+        'In the *commandName* command:',
+        '* *argumentName* - is now required.',
+        '* *argumentName* - supports now comma separated values.',
+        '',
+        '### Outputs',
+        '#### The following outputs were removed in this version:',
+        '',
+        'In the *commandName* command:',
+        '* *outputPath* - this output was replaced by XXX.',
+        '* *outputPath* - this output was replaced by XXX.',
+        '',
+        'In the *commandName* command:',
+        '* *outputPath* - this output was replaced by XXX.',
+        '* *outputPath* - this output was replaced by XXX.',
+        '',
+        '## Additional Considerations for this version',
+        '%%FILL HERE%%',
+        '* Insert any API changes, any behavioral changes, limitations, or '
+        'restrictions that would be new to this version.',
+        ''
+    ]
+
+    assert section == expected_section

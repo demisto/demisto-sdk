@@ -5,9 +5,10 @@ import copy
 import errno
 import json
 import os
+import re
 import sys
 from distutils.version import LooseVersion
-from typing import Union
+from typing import Optional, Union
 
 import click
 from demisto_sdk.commands.common.constants import (
@@ -22,23 +23,19 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                get_from_version, get_json,
                                                get_latest_release_notes_text,
                                                get_pack_name, get_remote_file,
-                                               get_yaml, pack_name_to_path,
-                                               print_color, print_error,
-                                               print_warning, run_command)
+                                               get_yaml, print_color,
+                                               print_error, print_warning,
+                                               run_command)
 
 
 class UpdateRN:
     def __init__(self, pack_path: str, update_type: Union[str, None], modified_files_in_pack: set, added_files: set,
                  specific_version: str = None, pre_release: bool = False, pack: str = None,
-                 pack_metadata_only: bool = False, text: str = '', prev_rn_text: str = ''):
+                 pack_metadata_only: bool = False, text: str = '', existing_rn_version_path: str = ''):
         self.pack = pack if pack else get_pack_name(pack_path)
         self.update_type = update_type
         self.pack_meta_file = PACKS_PACK_META_FILE_NAME
-        try:
-            self.pack_path = pack_name_to_path(self.pack)
-        except TypeError:
-            click.secho(f'Please verify the pack path is correct: {self.pack}.', fg='red')
-            sys.exit(1)
+        self.pack_path = pack_path
         # renamed files will appear in the modified list as a tuple: (old path, new path)
         modified_files_in_pack = {file_[1] if isinstance(file_, tuple) else file_ for file_ in modified_files_in_pack}
         self.modified_files_in_pack = set()
@@ -50,7 +47,8 @@ class UpdateRN:
         self.specific_version = specific_version
         self.existing_rn_changed = False
         self.text = text
-        self.prev_rn_text = prev_rn_text
+        self.existing_rn_version_path = existing_rn_version_path
+        self.should_delete_existing_rn = False
         self.pack_metadata_only = pack_metadata_only
 
         self.metadata_path = os.path.join(self.pack_path, 'pack_metadata.json')
@@ -91,26 +89,39 @@ class UpdateRN:
             self.check_rn_dir(rn_path)
             changed_files = {}
             self.find_added_pack_files()
-            is_docker_image_changed = False
             for packfile in self.modified_files_in_pack:
                 file_name, file_type = self.identify_changed_file_type(packfile)
-                if 'yml' in packfile and file_type == FileType.INTEGRATION:
-                    is_docker_image_changed, docker_image_name = check_docker_image_changed(packfile)
+                if 'yml' in packfile and file_type == FileType.INTEGRATION and packfile not in self.added_files:
+                    docker_image_name = check_docker_image_changed(packfile)
+                else:
+                    docker_image_name = None
                 changed_files[file_name] = {
                     'type': file_type,
                     'description': get_file_description(packfile, file_type),
                     'is_new_file': True if packfile in self.added_files else False,
-                    'fromversion': get_from_version_at_update_rn(packfile)
+                    'fromversion': get_from_version_at_update_rn(packfile),
+                    'dockerimage': docker_image_name
                 }
-            rn_string = self.prev_rn_text
+
+            rn_string = ''
+            if self.existing_rn_version_path:
+                self.should_delete_existing_rn = False if self.existing_rn_version_path == rn_path else True
+                try:
+                    with open(self.existing_rn_version_path, 'r') as f:
+                        rn_string = f.read()
+                except Exception as e:
+                    print_error(f'Failed to load the previous release notes file content: {e}')
+
             if not rn_string:
                 rn_string = self.build_rn_template(changed_files)
             if len(rn_string) > 0:
                 if self.is_bump_required():
                     self.commit_to_bump(new_metadata)
                 self.create_markdown(rn_path, rn_string, changed_files)
-                if is_docker_image_changed:
-                    self.update_markdown(rn_path, f'- Updated the Docker image to: *{docker_image_name}*.')
+                try:
+                    run_command(f'git add {rn_path}', exit_on_error=False)
+                except RuntimeError:
+                    print_warning(f'Could not add the release note files to git: {rn_path}')
                 if self.existing_rn_changed:
                     print_color(f"Finished updating release notes for {self.pack}."
                                 f"\nNext Steps:\n - Please review the "
@@ -141,12 +152,12 @@ class UpdateRN:
         Get the current version from origin/master if available, otherwise return '0.0.0'
         """
         master_current_version = '0.0.0'
+        master_metadata = None
         try:
             master_metadata = get_remote_file(self.metadata_path)
         except Exception as e:
             print_error(f"master branch is unreachable.\n The reason is:{e} \n "
                         f"The updated version will be taken from local metadata file instead of master")
-            pass
         if master_metadata:
             master_current_version = master_metadata.get('currentVersion', '0.0.0')
         return master_current_version
@@ -198,6 +209,8 @@ class UpdateRN:
         file_data = struct.load_data_from_file()
         if 'display' in file_data:
             name = file_data.get('display', None)
+        elif 'layout' in file_data and isinstance(file_data['layout'], dict):
+            name = file_data['layout'].get('id')
         elif 'name' in file_data:
             name = file_data.get('name', None)
         elif 'TypeName' in file_data:
@@ -311,11 +324,12 @@ class UpdateRN:
             is_new_file = data.get('is_new_file', False)
             _type = data.get('type', '')
             from_version = data.get('fromversion', '')
+            docker_image = data.get('dockerimage')
             # Skipping the invalid files
             if not _type or content_name == 'N/A':
                 continue
             rn_desc = self.build_rn_desc(_type=_type, content_name=content_name, desc=desc, is_new_file=is_new_file,
-                                         text=self.text, from_version=from_version)
+                                         text=self.text, docker_image=docker_image, from_version=from_version)
 
             header = f'\n#### {RN_HEADER_BY_FILE_TYPE[_type]}\n'
             rn_template_as_dict[header] = rn_template_as_dict.get(header, '') + rn_desc
@@ -325,7 +339,8 @@ class UpdateRN:
 
         return rn_string
 
-    def build_rn_desc(self, _type, content_name, desc, is_new_file, text, from_version=''):
+    def build_rn_desc(self, _type: str, content_name: str, desc: str, is_new_file: bool, text: str,
+                      docker_image: Optional[str], from_version: str = ''):
         if _type in (FileType.CONNECTION, FileType.INCIDENT_TYPE, FileType.REPUTATION, FileType.LAYOUT,
                      FileType.INCIDENT_FIELD, FileType.INDICATOR_FIELD):
             rn_desc = f'- **{content_name}**\n'
@@ -343,15 +358,20 @@ class UpdateRN:
                     rn_desc += '- Documentation and metadata improvements.\n'
                 else:
                     rn_desc += f'- {text or "%%UPDATE_RN%%"}\n'
-
+        if docker_image:
+            rn_desc += f'- Updated the Docker image to: *{docker_image}*.\n'
         return rn_desc
 
     def update_existing_rn(self, current_rn, changed_files):
-        new_rn = current_rn
+        update_docker_image_regex = r'- Updated the Docker image to: \*.*\*\.'
+        # Deleting old entry for docker images, will re-write later, this allows easier generating of updated rn.
+        current_rn_without_docker_images = re.sub(update_docker_image_regex, '', current_rn)
+        new_rn = current_rn_without_docker_images
         for content_name, data in sorted(changed_files.items(), reverse=True):
             is_new_file = data.get('is_new_file')
             desc = data.get('description', '')
             _type = data.get('type', '')
+            docker_image = data.get('dockerimage')
 
             if _type is None:
                 continue
@@ -364,10 +384,14 @@ class UpdateRN:
             else:
                 rn_desc = f'\n##### New: {content_name}\n- {desc}\n' if is_new_file \
                     else f'\n##### {content_name}\n- %%UPDATE_RN%%\n'
+            if docker_image:
+                rn_desc += f'- Updated the Docker image to: *{docker_image}*.'
 
-            if _header_by_type in current_rn:
-                if content_name in current_rn:
-                    continue
+            if _header_by_type and _header_by_type in current_rn_without_docker_images:
+                if content_name in current_rn_without_docker_images:
+                    if docker_image:
+                        new_rn = self.handle_existing_rn_with_docker_image(new_rn, _header_by_type, docker_image,
+                                                                           content_name)
                 else:
                     self.existing_rn_changed = True
                     rn_parts = new_rn.split(_header_by_type)
@@ -386,6 +410,35 @@ class UpdateRN:
                 else:
                     new_rn_part = f'\n#### {_header_by_type}{rn_desc}'
                     new_rn += new_rn_part
+        if new_rn != current_rn:
+            self.existing_rn_changed = True
+        return new_rn
+
+    @staticmethod
+    def handle_existing_rn_with_docker_image(new_rn: str, header_by_type: str, docker_image: str,
+                                             content_name: str) -> str:
+        """
+        Receives the new RN to be written, performs operations to add the docker image to the given RN.
+        Args:
+            new_rn (str): new RN.
+            header_by_type (str): Header of the RN to add docker image to, e.g 'Integrations', 'Scripts'
+            docker_image (str): Docker image to add
+            content_name (str): The content name to add the docker image entry to, e.g integration name, script name.
+
+        Returns:
+            (str): Updated RN
+        """
+        # Writing or re-writing docker image to release notes.
+        rn_parts = new_rn.split(header_by_type)
+        new_rn_part = f'- Updated the Docker image to: *{docker_image}*.'
+        if len(rn_parts) > 1:
+            # Splitting again by content name to append the docker image release note to corresponding
+            # content entry only
+            content_parts = rn_parts[1].split(f'{content_name}\n')
+            new_rn = f'{rn_parts[0]}{header_by_type}{content_parts[0]}{content_name}\n{new_rn_part}\n' \
+                     f'{content_parts[1]}'
+        else:
+            print_warning(f'Could not parse release notes {new_rn} by header type: {header_by_type}')
         return new_rn
 
     def create_markdown(self, release_notes_path: str, rn_string: str, changed_files: dict):
@@ -400,15 +453,6 @@ class UpdateRN:
             self.existing_rn_changed = True
             with open(release_notes_path, 'w') as fp:
                 fp.write(rn_string)
-
-    def update_markdown(self, release_notes_path: str, rn_string: str):
-        if os.path.exists(release_notes_path):
-            self.existing_rn_changed = True
-            with open(release_notes_path, 'a') as fp:
-                fp.write(rn_string)
-        else:
-            print_warning(f"Changes were detected, but could not find release notes file to update."
-                          f"\ngiven path: {release_notes_path}")
 
 
 def get_file_description(path, file_type):
@@ -458,17 +502,17 @@ def check_docker_image_changed(added_or_modified_yml):
         diff = run_command(f'git diff origin/master -- {added_or_modified_yml}', exit_on_error=False)
     except RuntimeError as e:
         if any(['is outside repository' in exp for exp in e.args]):
-            return False, ''
+            return None
         else:
             print_warning(f'skipping docker image check, Encountered the following error:\n{e.args[0]}')
-            return False, ''
+            return None
     else:
         diff_lines = diff.splitlines()
         for diff_line in diff_lines:
             if '+  dockerimage:' in diff_line:  # search whether exists a line that notes that the Docker image was
                 # changed.
-                return True, diff_line.split()[-1]
-        return False, ''
+                return diff_line.split()[-1]
+        return None
 
 
 def get_from_version_at_update_rn(path: str):

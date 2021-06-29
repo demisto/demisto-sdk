@@ -231,17 +231,21 @@ class ContributionConverter:
                 for _, _, files in os.walk(src_path, topdown=False):
                     for name in files:
                         src_file_path = os.path.join(src_path, name)
-                        shutil.move(src_file_path, dst_path)
+                        dst_file_path = os.path.join(dst_path, name)
+                        shutil.move(src_file_path, dst_file_path)
+                shutil.rmtree(src_path, ignore_errors=True)
             else:
                 # replace dst folder with src folder
                 shutil.move(src_path, dst_path)
 
     def format_converted_pack(self) -> None:
         """Runs the demisto-sdk's format command on the pack converted from the contribution zipfile"""
-        click.echo(f'Executing \'format\' on the restructured contribution zip files at "{self.pack_dir_path}"')
+        click.echo(
+            f'Executing \'format\' on the restructured contribution zip new/modified files at {self.pack_dir_path}'
+        )
         from_version = '6.0.0' if self.create_new else ''
         format_manager(
-            input=self.pack_dir_path, from_version=from_version, no_validate=True, update_docker=True, assume_yes=True
+            from_version=from_version, no_validate=True, update_docker=True, verbose=True, assume_yes=True
         )
 
     def generate_readme_for_pack_content_item(self, yml_path: str) -> None:

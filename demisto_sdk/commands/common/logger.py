@@ -1,5 +1,6 @@
 import logging
 import os
+import sys
 from typing import Optional
 
 
@@ -18,27 +19,53 @@ def logging_setup(verbose: int, quiet: Optional[bool] = False,
     """
     if quiet:
         verbose = 0
-    logger: logging.Logger = logging.getLogger('demisto-sdk')
-    logger.setLevel(logging.DEBUG)
+    l: logging.Logger = logging.getLogger('demisto-sdk')
+    l.setLevel(logging.DEBUG)
+
     log_level = logging.getLevelName((6 - 2 * verbose) * 10)
-    fmt = logging.Formatter('%(message)s')
+
+    fmt = logging.Formatter('[%(levelname)s] %(message)s')
+    console_handler_index = -1
+    file_handler_index = -1
+
+    if l.hasHandlers():
+        for i, h in enumerate(l.handlers):
+            if h.name == 'console-handler':
+                console_handler_index = i
+            elif h.name == 'file-handler':
+                file_handler_index = i
 
     if verbose:
-        console_handler = logging.StreamHandler()
-        console_handler.setLevel(log_level)
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.name = 'console-handler'
         console_handler.setFormatter(fmt)
-        logger.addHandler(console_handler)
+        console_handler.setLevel(log_level)
+
+        if console_handler_index == -1:
+            l.addHandler(console_handler)
+        else:
+            l.handlers[console_handler_index] = console_handler
 
     # Setting debug log file if in circleci
     if log_path:
         file_handler = logging.FileHandler(filename=os.path.join(log_path, 'lint_debug_log.log'))
-        file_handler.setFormatter(fmt)
+        file_handler.setFormatter(
+            logging.Formatter('[%(asctime)s] - [%(threadName)s] - [%(levelname)s] - %(message)s'))
+        file_handler.name = 'file-handler'
         file_handler.setLevel(level=logging.DEBUG)
-        logger.addHandler(file_handler)
 
-    logger.propagate = False
+        if file_handler_index == -1:
+            l.addHandler(file_handler)
+        else:
+            l.handlers[file_handler_index] = file_handler
 
-    return logger
+    l.propagate = False
+
+    return l
+
+
+logger: logging.Logger = logging_setup(verbose=2,
+                                       quiet=False)
 
 
 # Python program to print

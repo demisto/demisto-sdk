@@ -1,5 +1,6 @@
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.hook_validations.id import IDSetValidations
+from TestSuite.test_tools import ChangeCWD
 
 CONFIG = Configuration()
 
@@ -551,6 +552,219 @@ def test_is_mapper_incident_types_found__missing_classifier():
         "The mapper incidenttypes was found"
 
 
+def test_is_unique_file_valid_in_set(pack):
+    """
+    Given
+        - pack with pack_metadata file.
+    When
+        - is_unique_file_valid_in_set is called
+    Then
+        - Ensure it is valid and no error is returned.
+    """
+    pack_metadata_data = {
+        "VMware": {
+            "name": "VMware",
+            "current_version": "1.1.0",
+            "author": "Cortex XSOAR",
+            "certification": "certified",
+            "tags": [],
+            "use_cases": [],
+            "categories": [
+                "IT Services"
+            ],
+            "id": "VMware"
+        }
+    }
+    pack.pack_metadata.write_json(pack_metadata_data)
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+    is_valid, error = validator.is_unique_file_valid_in_set(pack_path=pack.path)
+    assert is_valid
+    assert not error
+
+
+def test_new_valid_is_pack_display_name_already_exist():
+    """
+    Given
+        - pack_metadata file with a pack name that does not exist in our repo.
+    When
+        - _is_pack_display_name_already_exist is called
+    Then
+        - Ensure it is valid and no error is returned.
+    """
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+
+    validator.packs_set = {
+        "VMware": {
+            "name": "VMware",
+            "current_version": "1.1.0",
+            "author": "Cortex XSOAR",
+            "certification": "certified",
+            "tags": [],
+            "use_cases": [],
+            "categories": [
+                "IT Services"
+            ],
+            "id": "VMware"
+        }
+    }
+
+    pack_metadata_data = {
+        "VMware": {
+            "name": "VMware",
+            "current_version": "1.1.0",
+            "author": "Cortex XSOAR",
+            "certification": "certified",
+            "tags": [],
+            "use_cases": [],
+            "categories": [
+                "IT Services"
+            ],
+            "id": "VMware"
+        }
+    }
+    is_valid, error = validator._is_pack_display_name_already_exist(pack_metadata_data=pack_metadata_data)
+    assert is_valid
+    assert not error
+
+
+def test_valid_is_pack_display_name_already_exist():
+    """
+    Given
+        - pack_metadata file with a pack name that does not exist in our repo.
+    When
+        - _is_pack_display_name_already_exist is called
+    Then
+        - Ensure it is valid and no error is returned.
+    """
+
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+
+    validator.packs_set = {
+        "VMware": {
+            "name": "VMware",
+            "current_version": "1.1.0",
+            "author": "Cortex XSOAR",
+            "certification": "certified",
+            "tags": [],
+            "use_cases": [],
+            "categories": [
+                "IT Services"
+            ],
+            "id": "VMware"
+        }
+    }
+
+    pack_metadata_data = {
+        "VMware2": {
+            "name": "VMware2",
+            "current_version": "1.1.0",
+            "author": "Cortex XSOAR",
+            "certification": "certified",
+            "tags": [],
+            "use_cases": [],
+            "categories": [
+                "IT Services"
+            ],
+            "id": "VMware"
+        }
+    }
+    is_valid, error = validator._is_pack_display_name_already_exist(pack_metadata_data=pack_metadata_data)
+    assert is_valid
+    assert not error
+
+
+def test_invalid_is_pack_display_name_already_exist():
+    """
+    Given
+        - pack_metadata file with a pack name that already exists in our repo.
+    When
+        - _is_pack_display_name_already_exist is called
+    Then
+        - Ensure it is invalid and the error message is returned.
+    """
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+
+    validator.packs_set = {
+        "VMware": {
+            "name": "VMware",
+            "current_version": "1.1.0",
+            "author": "Cortex XSOAR",
+            "certification": "certified",
+            "tags": [],
+            "use_cases": [],
+            "categories": [
+                "IT Services"
+            ],
+            "id": "VMware"
+        }
+    }
+
+    pack_metadata_data = {
+        "VMwareV2": {
+            "name": "VMware",
+            "current_version": "1.1.0",
+            "author": "Cortex XSOAR",
+            "certification": "certified",
+            "tags": [],
+            "use_cases": [],
+            "categories": [
+                "IT Services"
+            ],
+            "id": "VMware"
+        }
+    }
+    is_valid, error = validator._is_pack_display_name_already_exist(pack_metadata_data=pack_metadata_data)
+    assert not is_valid
+    assert error == ("A pack named: VMware already exists in content repository, change the pack's "
+                     "name in the metadata file.", 'PA122')
+
+
+def test_new_invalid_is_pack_display_name_already_exist():
+    """
+    Given
+        - pack_metadata file with a pack name that already exists in our repo.
+    When
+        - _is_pack_display_name_already_exist is called
+    Then
+        - Ensure it is invalid and the error message is returned.
+    """
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+
+    validator.packs_set = {
+        "CiscoEmailSecurity": {
+            "name": "Cisco Email Security",
+            "current_version": "1.1.0",
+            "author": "Cortex XSOAR",
+            "certification": "certified",
+            "tags": [],
+            "use_cases": [],
+            "categories": [
+                "IT Services"
+            ],
+            "id": "VMware"
+        }
+    }
+
+    pack_metadata_data = {
+        "CiscoEmailSecurityV2": {
+            "name": "Cisco Email Security",
+            "current_version": "1.1.0",
+            "author": "Cortex XSOAR",
+            "certification": "certified",
+            "tags": [],
+            "use_cases": [],
+            "categories": [
+                "IT Services"
+            ],
+            "id": "VMware"
+        }
+    }
+    is_valid, error = validator._is_pack_display_name_already_exist(pack_metadata_data=pack_metadata_data)
+    assert not is_valid
+    assert error == ("A pack named: Cisco Email Security already exists in content repository, change the pack's "
+                     "name in the metadata file.", 'PA122')
+
+
 class TestPlaybookEntitiesVersionsValid:
     validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
     playbook_path = "Packs/Example/Playbooks/playbook-Example_Playbook.yml"
@@ -693,23 +907,25 @@ class TestPlaybookEntitiesVersionsValid:
         self.validator.integration_set = self.id_set["integrations"]
         self.validator.script_set = self.id_set["scripts"]
 
-        # all playbook's entities has valid versions
-        is_playbook_version_valid = self.validator._are_playbook_entities_versions_valid(
-            self.playbook_with_valid_versions, pack.path)
-        assert is_playbook_version_valid
+        with ChangeCWD(repo.path):
 
-        # playbook uses scripts with invalid versions
-        is_script_version_invalid = self.validator._are_playbook_entities_versions_valid(
-            self.playbook_with_invalid_scripts_version, pack.path)
-        assert not is_script_version_invalid
+            # all playbook's entities has valid versions
+            is_playbook_version_valid = self.validator._are_playbook_entities_versions_valid(
+                self.playbook_with_valid_versions, pack.path)
+            assert is_playbook_version_valid
 
-        # playbook uses sub playbooks with invalid versions
-        is_sub_playbook_version_invalid = self.validator._are_playbook_entities_versions_valid(
-            self.playbook_with_invalid_sub_playbook_version, pack.path)
-        assert not is_sub_playbook_version_invalid
+            # playbook uses scripts with invalid versions
+            is_script_version_invalid = self.validator._are_playbook_entities_versions_valid(
+                self.playbook_with_invalid_scripts_version, pack.path)
+            assert not is_script_version_invalid
 
-        # playbook uses integration's commands with invalid versions
-        mocker.patch.object(self.validator, 'handle_error', return_value=True)
-        is_integration_version_invalid = self.validator._are_playbook_entities_versions_valid(
-            self.playbook_with_invalid_integration_version, self.playbook_path)
-        assert not is_integration_version_invalid
+            # playbook uses sub playbooks with invalid versions
+            is_sub_playbook_version_invalid = self.validator._are_playbook_entities_versions_valid(
+                self.playbook_with_invalid_sub_playbook_version, pack.path)
+            assert not is_sub_playbook_version_invalid
+
+            # playbook uses integration's commands with invalid versions
+            mocker.patch.object(self.validator, 'handle_error', return_value=True)
+            is_integration_version_invalid = self.validator._are_playbook_entities_versions_valid(
+                self.playbook_with_invalid_integration_version, self.playbook_path)
+            assert not is_integration_version_invalid

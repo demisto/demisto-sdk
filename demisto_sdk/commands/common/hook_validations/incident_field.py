@@ -9,6 +9,9 @@ from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
+from demisto_sdk.commands.common.tools import (get_core_pack_list,
+                                               get_pack_metadata,
+                                               get_pack_name)
 
 
 class TypeFields(Enum):
@@ -176,23 +179,30 @@ class IncidentFieldValidator(ContentEntityValidator):
 
         return not is_bc_broke
 
-    def is_valid_file(self, validate_rn=True):
+    def is_valid_file(self, validate_rn=True, is_new_file=False, use_git=False):
         """Check whether the Incident Field is valid or not
         """
-        return all(
-            [
-                super().is_valid_file(validate_rn),
-                self.is_valid_name(),
-                self.is_valid_type(),
-                self.is_valid_group(),
-                self.is_valid_content_flag(),
-                self.is_valid_system_flag(),
-                self.is_valid_cliname(),
-                self.is_valid_version(),
-                self.is_valid_required(),
-                self.is_valid_indicator_grid_fromversion()
-            ]
-        )
+        answers = [
+            super().is_valid_file(validate_rn),
+            self.is_valid_type(),
+            self.is_valid_group(),
+            self.is_valid_content_flag(),
+            self.is_valid_system_flag(),
+            self.is_valid_cliname(),
+            self.is_valid_version(),
+            self.is_valid_required(),
+            self.is_valid_indicator_grid_fromversion(),
+        ]
+
+        core_packs_list = get_core_pack_list()
+
+        pack = get_pack_name(self.file_path)
+        is_core = pack in core_packs_list
+        if is_core:
+            answers.append(self.is_valid_name())
+        if is_new_file and use_git:
+            answers.append(self.is_valid_incident_field_name_prefix())
+        return all(answers)
 
     def is_valid_name(self):
         """Validate that the name and cliName does not contain any potential incident synonyms."""
@@ -228,11 +238,21 @@ class IncidentFieldValidator(ContentEntityValidator):
             "XDR Alerts",  # Needed for XDR_Alerts.json
             "Indeni Issue ID",  # Needed for incidentfield-Indeni_Device_ID.json
         }
+        found_words = []
         if name not in whitelisted_field_names:
             for word in name.split():
                 if word.lower() in bad_words:
-                    error_message, error_code = Errors.invalid_incident_field_name(word)
-                    self.handle_error(error_message, error_code, file_path=self.file_path, warning=True)
+                    found_words.append(word)
+
+        if found_words:
+            error_message, error_code = Errors.invalid_incident_field_name(found_words)
+            if self.handle_error(
+                error_message,
+                error_code,
+                file_path=self.file_path,
+                suggested_fix=Errors.suggest_server_allowlist_fix(words=found_words),
+            ):
+                return False
 
         return True
 
@@ -341,7 +361,8 @@ class IncidentFieldValidator(ContentEntityValidator):
             current_from_version = self.current_file.get('fromVersion', None)
             if old_from_version != current_from_version:
                 error_message, error_code = Errors.from_version_modified_after_rename()
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                     warning=self.structure_validator.quite_bc):
                     is_fromversion_changed = True
 
         return is_fromversion_changed
@@ -355,7 +376,8 @@ class IncidentFieldValidator(ContentEntityValidator):
             old_type = self.old_file.get('type', {})
             if old_type and old_type != current_type:
                 error_message, error_code = Errors.incident_field_type_change()
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                     warning=self.structure_validator.quite_bc):
                     is_type_changed = True
 
         return is_type_changed
@@ -373,7 +395,32 @@ class IncidentFieldValidator(ContentEntityValidator):
         if current_version < LooseVersion('5.5.0'):
             error_message, error_code = Errors.indicator_field_type_grid_minimal_version(current_version)
 
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
+            if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                 warning=self.structure_validator.quite_bc):
+                return False
+
+        return True
+
+    def is_valid_incident_field_name_prefix(self):
+        # type: () -> bool
+        """Validate that an indicator field name starts with its pack name or one of the itemPrefixes from
+        pack.metadat"""
+        ignored_packs = ['Common Types']
+        pack_metadata = get_pack_metadata(self.file_path)
+        pack_name = pack_metadata.get("name")
+        name_prefixes = pack_metadata.get('itemPrefix', []) if pack_metadata.get('itemPrefix') else [pack_name]
+        field_name = self.current_file.get("name", "")
+        if pack_name and pack_name not in ignored_packs:
+            for prefix in name_prefixes:
+                if self.current_file.get("name", "").startswith(prefix):
+                    return True
+
+            error_message, error_code = Errors.invalid_incident_field_prefix(field_name)
+            if self.handle_error(
+                    error_message,
+                    error_code,
+                    file_path=self.file_path,
+                    suggested_fix=Errors.suggest_fix_field_name(field_name, pack_prefix=name_prefixes[0])):
                 return False
 
         return True

@@ -1,10 +1,13 @@
 import glob
 import json
 import os
+import shutil
 from pathlib import Path
 from typing import List, Union
 
+import git
 import pytest
+import requests
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    LAYOUTS_DIR, PACKS_DIR,
@@ -13,28 +16,16 @@ from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
                                                    FileType)
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.tools import (LOG_COLORS, arg_to_list,
-                                               filter_files_by_type,
-                                               filter_files_on_pack,
-                                               filter_packagify_changes,
-                                               find_type, get_code_lang,
-                                               get_dict_from_file,
-                                               get_entity_id_by_entity_type,
-                                               get_entity_name_by_entity_type,
-                                               get_file,
-                                               get_file_displayed_name,
-                                               get_files_in_dir,
-                                               get_ignore_pack_skipped_tests,
-                                               get_last_release_version,
-                                               get_latest_release_notes_text,
-                                               get_release_notes_file_path,
-                                               get_ryaml, get_to_version,
-                                               has_remote_configured,
-                                               is_origin_content_repo,
-                                               is_v2_file,
-                                               retrieve_file_ending,
-                                               run_command_os,
-                                               server_version_compare)
+from demisto_sdk.commands.common.tools import (
+    LOG_COLORS, arg_to_list, filter_files_by_type, filter_files_on_pack,
+    filter_packagify_changes, find_type, get_code_lang, get_dict_from_file,
+    get_entity_id_by_entity_type, get_entity_name_by_entity_type, get_file,
+    get_file_displayed_name, get_file_version_suffix_if_exists,
+    get_files_in_dir, get_ignore_pack_skipped_tests, get_last_release_version,
+    get_last_remote_release_version, get_latest_release_notes_text,
+    get_pack_metadata, get_release_notes_file_path, get_ryaml, get_to_version,
+    has_remote_configured, is_origin_content_repo, is_pack_path,
+    retrieve_file_ending, run_command_os, server_version_compare)
 from demisto_sdk.tests.constants_test import (IGNORED_PNG,
                                               INDICATORFIELD_EXTRA_FIELDS,
                                               SOURCE_FORMAT_INTEGRATION_COPY,
@@ -105,7 +96,8 @@ class TestGenericFunctions:
         (VALID_SCRIPT_PATH, FileType.SCRIPT),
         (VALID_WIDGET_PATH, FileType.WIDGET),
         (IGNORED_PNG, None),
-        ('', None)
+        ('', None),
+        ('Author_image.png', None),
     ]
 
     @pytest.mark.parametrize('path, _type', data_test_find_type)
@@ -121,6 +113,21 @@ class TestGenericFunctions:
         output = find_type(VALID_BETA_INTEGRATION_PATH, ignore_sub_categories=True)
         assert output == FileType.INTEGRATION, \
             f'find_type({VALID_BETA_INTEGRATION_PATH}) returns: {output} instead {FileType.INTEGRATION}'
+
+    def test_find_type_no_file(self):
+        """
+        Given
+        - A non existing file path.
+
+        When
+        - Running find_type.
+
+        Then
+        - Ensure None is returned
+        """
+        madeup_path = 'some/path'
+        output = find_type(madeup_path)
+        assert not output
 
     test_path_md = [
         VALID_MD
@@ -192,19 +199,30 @@ class TestGenericFunctions:
 
 
 class TestGetRemoteFile:
+    content_repo = 'demisto/content'
+
     def test_get_remote_file_sanity(self):
-        hello_world_yml = tools.get_remote_file('Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml')
+        hello_world_yml = tools.get_remote_file(
+            'Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml',
+            github_repo=self.content_repo
+        )
         assert hello_world_yml
         assert hello_world_yml['commonfields']['id'] == 'HelloWorld'
 
     def test_get_remote_file_content_sanity(self):
-        hello_world_py = tools.get_remote_file('Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.py',
-                                               return_content=True)
+        hello_world_py = tools.get_remote_file(
+            'Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.py',
+            return_content=True,
+            github_repo=self.content_repo
+        )
         assert hello_world_py
 
     def test_get_remote_file_content(self):
-        hello_world_py = tools.get_remote_file('Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.py',
-                                               return_content=True)
+        hello_world_py = tools.get_remote_file(
+            'Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.py',
+            return_content=True,
+            github_repo=self.content_repo
+        )
         hello_world_text = hello_world_py.decode()
         assert isinstance(hello_world_py, bytes)
         assert hello_world_py
@@ -212,38 +230,68 @@ class TestGetRemoteFile:
         assert hello_world_text.startswith('"""HelloWorld Integration for Cortex XSOAR (aka Demisto)')
 
     def test_get_remote_file_origin(self):
-        hello_world_yml = tools.get_remote_file('Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml', 'master')
+        hello_world_yml = tools.get_remote_file(
+            'Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml',
+            'master',
+            github_repo=self.content_repo
+        )
         assert hello_world_yml
         assert hello_world_yml['commonfields']['id'] == 'HelloWorld'
 
     def test_get_remote_file_tag(self):
-        gmail_yml = tools.get_remote_file('Integrations/Gmail/Gmail.yml', '19.10.0')
+        gmail_yml = tools.get_remote_file(
+            'Integrations/Gmail/Gmail.yml',
+            '19.10.0',
+            github_repo=self.content_repo
+        )
         assert gmail_yml
         assert gmail_yml['commonfields']['id'] == 'Gmail'
 
     def test_get_remote_file_origin_tag(self):
-        gmail_yml = tools.get_remote_file('Integrations/Gmail/Gmail.yml', 'origin/19.10.0')
+        gmail_yml = tools.get_remote_file(
+            'Integrations/Gmail/Gmail.yml',
+            'origin/19.10.0',
+            github_repo=self.content_repo
+        )
         assert gmail_yml
         assert gmail_yml['commonfields']['id'] == 'Gmail'
 
     def test_get_remote_file_invalid(self):
-        invalid_yml = tools.get_remote_file('Integrations/File/File.yml', '19.10.0')
+        invalid_yml = tools.get_remote_file(
+            'Integrations/File/File.yml',
+            '19.10.0',
+            github_repo=self.content_repo
+        )
         assert not invalid_yml
 
     def test_get_remote_file_invalid_branch(self):
-        invalid_yml = tools.get_remote_file('Integrations/Gmail/Gmail.yml', 'NoSuchBranch')
+        invalid_yml = tools.get_remote_file(
+            'Integrations/Gmail/Gmail.yml',
+            'NoSuchBranch',
+            github_repo=self.content_repo
+        )
         assert not invalid_yml
 
     def test_get_remote_file_invalid_origin_branch(self):
-        invalid_yml = tools.get_remote_file('Integrations/Gmail/Gmail.yml', 'origin/NoSuchBranch')
+        invalid_yml = tools.get_remote_file(
+            'Integrations/Gmail/Gmail.yml',
+            'origin/NoSuchBranch',
+            github_repo=self.content_repo
+        )
         assert not invalid_yml
 
     def test_get_remote_md_file_origin(self):
-        hello_world_readme = tools.get_remote_file('Packs/HelloWorld/README.md', 'master')
+        hello_world_readme = tools.get_remote_file(
+            'Packs/HelloWorld/README.md',
+            'master',
+            github_repo=self.content_repo
+        )
         assert hello_world_readme == {}
 
     def test_should_file_skip_validation_negative(self):
-        should_skip = tools.should_file_skip_validation('Packs/HelloWorld/Integrations/HelloWorld/search_alerts.json')
+        should_skip = tools.should_file_skip_validation(
+            'Packs/HelloWorld/Integrations/HelloWorld/search_alerts.json'
+        )
         assert not should_skip
 
     SKIPPED_FILE_PATHS = [
@@ -268,6 +316,40 @@ class TestGetRemoteFile:
     def test_should_file_skip_validation_positive(self, file_path):
         should_skip = tools.should_file_skip_validation(file_path)
         assert should_skip
+
+
+class TestGetRemoteFileLocally:
+    REPO_NAME = 'example_repo'
+    FILE_NAME = 'somefile.json'
+    FILE_CONTENT = '{"id": "some_file"}'
+
+    def setup_method(self):
+        # create local git repo
+        example_repo = git.Repo.init(self.REPO_NAME)
+        example_repo.git.checkout('-b', 'origin/master')
+        with open(os.path.join(self.REPO_NAME, self.FILE_NAME), 'w+') as somefile:
+            somefile.write(self.FILE_CONTENT)
+        example_repo.git.add(self.FILE_NAME)
+        example_repo.git.config('user.email', 'automatic@example.com')
+        example_repo.git.config('user.name', 'AutomaticTest')
+        example_repo.git.commit('-m', 'test_commit', '-a')
+        example_repo.git.checkout('-b', 'master')
+
+    def test_get_file_from_master_when_in_private_repo(self, mocker):
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+
+        class Response:
+            ok = False
+
+        mocker.patch.object(requests, 'get', return_value=Response)
+        mocker.patch.object(os, 'getenv', return_value=False)
+        some_file_json = tools.get_remote_file(os.path.join(self.REPO_NAME, self.FILE_NAME),
+                                               github_repo=self.REPO_NAME)
+        assert some_file_json
+        assert some_file_json['id'] == 'some_file'
+
+    def teardown_method(self):
+        shutil.rmtree(self.REPO_NAME)
 
 
 class TestServerVersionCompare:
@@ -649,32 +731,62 @@ V2_WRONG_DISPLAY = {"display": "integrationname V2", "name": "integrationname v2
 NOT_V2_VIA_DISPLAY_NOR_NAME = {"display": "integrationname", "name": "integrationv2name", "id": "integrationv2name"}
 NOT_V2_VIA_DISPLAY = {"display": "integrationname", "name": "integrationname v2", "id": "integrationv2name"}
 NOT_V2_VIA_NAME = {"display": "integrationname V2", "name": "integrationname", "id": "integrationv2name"}
-V2_NAME_INPUTS = [
-    (V2_VALID, True),
-    (V2_WRONG_DISPLAY, True),
-    (NOT_V2_VIA_DISPLAY_NOR_NAME, False),
-    (NOT_V2_VIA_NAME, False),
-    (NOT_V2_VIA_DISPLAY, True)
+V3_VALID = {"display": "integrationname v3", "name": "integrationname v3", "id": "integrationname v3"}
+V3_WRONG_DISPLAY = {"display": "integrationname V3", "name": "integrationname v3", "id": "integrationname V3"}
+NOT_V3_VIA_DISPLAY_NOR_NAME = {"display": "integrationname", "name": "integrationv3name", "id": "integrationv3name"}
+NOT_V3_VIA_DISPLAY = {"display": "integrationname", "name": "integrationname v3", "id": "integrationv3name"}
+NOT_V3_VIA_NAME = {"display": "integrationname V3", "name": "integrationname", "id": "integrationv3Gname"}
+GET_FILE_VERSION_SUFFIX_IF_EXISTS_NAME_INPUTS = [
+    (V2_VALID, '2'),
+    (V2_WRONG_DISPLAY, '2'),
+    (NOT_V2_VIA_DISPLAY_NOR_NAME, None),
+    (NOT_V2_VIA_NAME, None),
+    (NOT_V2_VIA_DISPLAY, '2'),
+    (V3_VALID, '3'),
+    (V3_WRONG_DISPLAY, '3'),
+    (NOT_V3_VIA_DISPLAY_NOR_NAME, None),
+    (NOT_V3_VIA_NAME, None),
+    (NOT_V3_VIA_DISPLAY, '3')
 ]
 
 
-@pytest.mark.parametrize("current, answer", V2_NAME_INPUTS)
-def test_is_v2_file_via_name(current, answer):
-    assert is_v2_file(current) is answer
+@pytest.mark.parametrize("current, answer", GET_FILE_VERSION_SUFFIX_IF_EXISTS_NAME_INPUTS)
+def test_get_file_version_suffix_if_exists_via_name(current, answer):
+    assert get_file_version_suffix_if_exists(current) is answer
 
 
-V2_DISPLAY_INPUTS = [
-    (V2_VALID, True),
-    (V2_WRONG_DISPLAY, True),
-    (NOT_V2_VIA_DISPLAY, False),
-    (NOT_V2_VIA_NAME, True),
-    (NOT_V2_VIA_DISPLAY_NOR_NAME, False)
+GET_FILE_VERSION_SUFFIX_IF_EXIST_INPUTS = [
+    (V2_VALID, '2'),
+    (V2_WRONG_DISPLAY, '2'),
+    (NOT_V2_VIA_DISPLAY, None),
+    (NOT_V2_VIA_NAME, '2'),
+    (NOT_V2_VIA_DISPLAY_NOR_NAME, None),
+    (V3_VALID, '3'),
+    (V3_WRONG_DISPLAY, '3'),
+    (NOT_V3_VIA_DISPLAY, None),
+    (NOT_V3_VIA_NAME, '3'),
+    (NOT_V3_VIA_DISPLAY_NOR_NAME, None),
 ]
 
 
-@pytest.mark.parametrize("current, answer", V2_DISPLAY_INPUTS)
-def test_is_v2_file_via_display(current, answer):
-    assert is_v2_file(current, check_in_display=True) is answer
+@pytest.mark.parametrize("current, answer", GET_FILE_VERSION_SUFFIX_IF_EXIST_INPUTS)
+def test_get_file_version_suffix_if_exists_via_display(current, answer):
+    assert get_file_version_suffix_if_exists(current, check_in_display=True) is answer
+
+
+def test_test_get_file_version_suffix_if_exists_no_name_and_no_display():
+    """
+    Given:
+    - 'current_file': Dict representing YML data of an integration or script.
+
+    When:
+    - Invalid dict given, not containing display and name values.
+
+    Then:
+    - Ensure None is returned.
+    """
+    assert get_file_version_suffix_if_exists(dict(), check_in_display=True) is None
+    assert get_file_version_suffix_if_exists(dict(), check_in_display=False) is None
 
 
 def test_get_to_version_with_to_version(repo):
@@ -862,3 +974,62 @@ def test_get_file_displayed_name__image(repo):
     with ChangeCWD(repo.path):
         display_name = get_file_displayed_name(integration.image.path)
         assert display_name == os.path.basename(integration.image.rel_path)
+
+
+def test_get_pack_metadata(repo):
+    """
+    Given
+    - The path to some file in the repo.
+
+    When
+    - Running get_pack_metadata.
+
+    Then:
+    - Ensure the returned pack metadata of the file's pack.
+    """
+    metadata_json = {"name": "MyPack", "support": "xsoar", "currentVersion": "1.1.0"}
+
+    pack = repo.create_pack('MyPack')
+    pack_metadata = pack.pack_metadata
+    pack_metadata.update(metadata_json)
+
+    result = get_pack_metadata(pack.path)
+
+    assert metadata_json == result
+
+
+def test_get_last_remote_release_version(requests_mock):
+    """
+    When
+    - Get latest release tag from remote pypi api
+
+    Then:
+    - Ensure the returned version is as expected
+    """
+    os.environ['DEMISTO_SDK_SKIP_VERSION_CHECK'] = ''
+    os.environ['CI'] = ''
+    expected_version = '1.3.8'
+    requests_mock.get(r"https://pypi.org/pypi/demisto-sdk/json", json={'info': {'version': expected_version}})
+    assert get_last_remote_release_version() == expected_version
+
+
+IS_PACK_PATH_INPUTS = [('Packs/BitcoinAbuse', True),
+                       ('Packs/BitcoinAbuse/Layouts', False),
+                       ('Packs/BitcoinAbuse/Classifiers', False),
+                       ('Unknown', False)]
+
+
+@pytest.mark.parametrize('input_path, expected', IS_PACK_PATH_INPUTS)
+def test_is_pack_path(input_path: str, expected: bool):
+    """
+    Given:
+        - 'input_path': Path to some file or directory
+
+    When:
+        - Checking whether pack is to a pack directory.
+
+    Then:
+        - Ensure expected boolean is returned.
+
+    """
+    assert is_pack_path(input_path) == expected

@@ -475,6 +475,48 @@ def test_format_pack_dir_name(contrib_converter, input_name, expected_output_nam
     assert not output_name.endswith(('-', '_')), 'The output\'s last character must be alphanumeric'
 
 
+def test_convert_contribution_dir_to_pack_contents(tmp_path):
+    """
+    Scenario: convert a directory which was unarchived from a contribution zip into the content
+        pack directory into which the contribution is intended to update, and the contribution
+        includes a file that already exists in the pack
+
+    Given
+    - The pack's original content contains incident field files and appears like so
+
+        ├── IncidentFields
+        │   └── incidentfield-SomeIncidentField.json
+
+    When
+    - After the contribution zip files have been unarchived to the destination pack the pack
+        directory tree appears like so
+
+        ├── IncidentFields
+        │   └── incidentfield-SomeIncidentField.json
+        ├── incidentfield
+        │   └── incidentfield-SomeIncidentField.json
+
+    Then
+    - Ensure the file '.../incidentfield/incidentfield-SomeIncidentField.json' is moved to
+        '.../IncidentFields/incidentfield-SomeIncidentField.json' and overwrites the existing file
+    """
+    fake_pack_subdir = tmp_path / 'IncidentFields'
+    fake_pack_subdir.mkdir()
+    extant_file = fake_pack_subdir / 'incidentfield-SomeIncidentField.json'
+    old_json = {"field": "old_value"}
+    extant_file.write_text(json.dumps(old_json))
+    fake_pack_extracted_dir = tmp_path / 'incidentfield'
+    fake_pack_extracted_dir.mkdir()
+    update_file = fake_pack_extracted_dir / 'incidentfield-SomeIncidentField.json'
+    new_json = {"field": "new_value"}
+    update_file.write_text(json.dumps(new_json))
+    cc = ContributionConverter()
+    cc.pack_dir_path = tmp_path
+    cc.convert_contribution_dir_to_pack_contents(fake_pack_extracted_dir)
+    assert json.loads(extant_file.read_text()) == new_json
+    assert not fake_pack_extracted_dir.exists()
+
+
 @pytest.mark.parametrize('contribution_converter', ['TestPack'], indirect=True)
 class TestEnsureUniquePackDirName:
     def test_ensure_unique_pack_dir_name_no_conflict(self, contribution_converter):

@@ -10,6 +10,7 @@ pytest-mock = "*"
 requests-mock = "*"
 pytest-xdist = "*"
 pytest-json = "*"
+pytest-cov = "*"
 
 [packages]
 freezegun = "*"

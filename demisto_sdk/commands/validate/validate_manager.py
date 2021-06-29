@@ -3,6 +3,7 @@ from configparser import ConfigParser, MissingSectionHeaderError
 from typing import Optional, Set, Tuple
 
 import click
+from colorama import Fore
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (API_MODULES_PACK,
@@ -30,6 +31,8 @@ from demisto_sdk.commands.common.hook_validations.conf_json import \
     ConfJsonValidator
 from demisto_sdk.commands.common.hook_validations.dashboard import \
     DashboardValidator
+from demisto_sdk.commands.common.hook_validations.description import \
+    DescriptionValidator
 from demisto_sdk.commands.common.hook_validations.id import IDSetValidations
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.hook_validations.incident_field import \
@@ -57,14 +60,14 @@ from demisto_sdk.commands.common.hook_validations.structure import \
 from demisto_sdk.commands.common.hook_validations.test_playbook import \
     TestPlaybookValidator
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
+from demisto_sdk.commands.common.hook_validations.xsoar_config_json import \
+    XSOARConfigJsonValidator
 from demisto_sdk.commands.common.tools import (find_type, get_api_module_ids,
                                                get_api_module_integrations_set,
-                                               get_content_release_identifier,
                                                get_pack_ignore_file_path,
                                                get_pack_name,
                                                get_pack_names_from_files,
-                                               get_yaml, open_id_set_file,
-                                               run_command)
+                                               get_yaml, open_id_set_file)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from git import InvalidGitRepositoryError
 from packaging import version
@@ -76,7 +79,8 @@ class ValidateManager:
             print_ignored_files=False, skip_conf_json=True, validate_id_set=False, file_path=None,
             validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
             silence_init_prints=False, no_docker_checks=False, skip_dependencies=False, id_set_path=None, staged=False,
-            create_id_set=False, json_file_path=None, skip_schema_check=False
+            create_id_set=False, json_file_path=None, skip_schema_check=False, debug_git=False, include_untracked=False,
+            pykwalify_logs=False, check_is_unskipped=True, quite_bc=False
     ):
         # General configuration
         self.skip_docker_checks = False
@@ -87,14 +91,19 @@ class ValidateManager:
         self.validate_all = validate_all
         self.use_git = use_git
         self.skip_pack_rn_validation = skip_pack_rn_validation
-        self.prev_ver = prev_ver if prev_ver else 'origin/master'
         self.print_ignored_files = print_ignored_files
         self.print_ignored_errors = print_ignored_errors
         self.skip_dependencies = skip_dependencies or not use_git
-        self.skip_id_set_creation = not create_id_set or self.skip_dependencies
+        self.skip_id_set_creation = not create_id_set or skip_dependencies
         self.compare_type = '...'
         self.staged = staged
         self.skip_schema_check = skip_schema_check
+        self.debug_git = debug_git
+        self.include_untracked = include_untracked
+        self.pykwalify_logs = pykwalify_logs
+        self.quite_bc = quite_bc
+        self.check_is_unskipped = check_is_unskipped
+        self.conf_json_data = {}
 
         if json_file_path:
             self.json_file_path = os.path.join(json_file_path, 'validate_outputs.json') if \
@@ -121,7 +130,7 @@ class ValidateManager:
         try:
             self.git_util = GitUtil(repo=Content.git())
             self.branch_name = self.git_util.get_current_working_branch()
-        except InvalidGitRepositoryError:
+        except (InvalidGitRepositoryError, TypeError):
             # if we are using git - fail the validation by raising the exception.
             if self.use_git:
                 raise
@@ -131,13 +140,12 @@ class ValidateManager:
                 self.git_util = None  # type: ignore[assignment]
                 self.branch_name = ''
 
-        self.branch_name = ''
+        self.prev_ver = self.setup_prev_ver(prev_ver)
         self.check_only_schema = False
         self.always_valid = False
         self.ignored_files = set()
         self.new_packs = set()
         self.skipped_file_types = (FileType.CHANGELOG,
-                                   FileType.DESCRIPTION,
                                    FileType.DOC_IMAGE)
 
         self.is_external_repo = is_external_repo
@@ -155,9 +163,14 @@ class ValidateManager:
             self.skip_docker_checks = True
             self.skip_pack_rn_validation = True
             self.print_percent = True
+            self.check_is_unskipped = False
 
         if no_docker_checks:
             self.skip_docker_checks = True
+
+        if self.check_is_unskipped or not self.skip_conf_json:
+            self.conf_json_validator = ConfJsonValidator()
+            self.conf_json_data = self.conf_json_validator.conf_data
 
     def print_final_report(self, valid):
         self.print_ignored_files_report(self.print_ignored_files)
@@ -238,13 +251,14 @@ class ValidateManager:
         all_packs_valid = set()
 
         if not self.skip_conf_json:
-            conf_json_validator = ConfJsonValidator()
-            all_packs_valid.add(conf_json_validator.is_valid_conf_json())
+            all_packs_valid.add(self.conf_json_validator.is_valid_conf_json())
 
-        num_of_packs = len(os.listdir(PACKS_DIR))
         count = 1
+        all_packs = os.listdir(PACKS_DIR) if os.listdir(PACKS_DIR) else []
+        num_of_packs = len(all_packs)
+        all_packs.sort(key=str.lower)
 
-        for pack_name in os.listdir(PACKS_DIR):
+        for pack_name in all_packs:
             self.completion_percentage = format((count / num_of_packs) * 100, ".2f")  # type: ignore
             pack_path = os.path.join(PACKS_DIR, pack_name)
             all_packs_valid.add(self.run_validations_on_pack(pack_path))
@@ -338,10 +352,18 @@ class ValidateManager:
                                  drop_line=True):
                 return False
 
+        if file_type == FileType.XSOAR_CONFIG:
+            xsoar_config_validator = XSOARConfigJsonValidator(file_path)
+            return xsoar_config_validator.is_valid_xsoar_config_file()
+
         if not self.check_only_schema:
             validation_print = f"\nValidating {file_path} as {file_type.value}"
             if self.print_percent:
-                validation_print += f' [{self.completion_percentage}%]'
+                if FOUND_FILES_AND_ERRORS:
+                    validation_print += f' {Fore.RED}[{self.completion_percentage}%]{Fore.RESET}'
+                else:
+                    validation_print += f' {Fore.GREEN}[{self.completion_percentage}%]{Fore.RESET}'
+
             click.echo(validation_print)
 
         structure_validator = StructureValidator(file_path, predefined_scheme=file_type,
@@ -350,10 +372,12 @@ class ValidateManager:
                                                  old_file_path=old_file_path, branch_name=self.branch_name,
                                                  is_new_file=not is_modified,
                                                  json_file_path=self.json_file_path,
-                                                 skip_schema_check=self.skip_schema_check)
+                                                 skip_schema_check=self.skip_schema_check,
+                                                 pykwalify_logs=self.pykwalify_logs,
+                                                 quite_bc=self.quite_bc)
 
         # schema validation
-        if file_type not in {FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT}:
+        if file_type not in {FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT, FileType.DESCRIPTION}:
             if not structure_validator.is_valid_file():
                 return False
 
@@ -366,6 +390,13 @@ class ValidateManager:
         if self.id_set_validations and not self.id_set_validations.is_file_valid_in_set(file_path, file_type,
                                                                                         pack_error_ignore_list):
             return False
+
+        # conf.json validation
+        valid_in_conf = True
+        if self.check_is_unskipped and file_type in {FileType.INTEGRATION, FileType.SCRIPT, FileType.BETA_INTEGRATION}:
+            if not self.conf_json_validator.is_valid_file_in_conf_json(structure_validator.current_file, file_type,
+                                                                       file_path):
+                valid_in_conf = False
 
         # Note: these file are not ignored but there are no additional validators for connections
         if file_type == FileType.CONNECTION:
@@ -381,6 +412,8 @@ class ValidateManager:
                                                    is_modified)
             else:
                 click.secho('Skipping release notes validation', fg='yellow')
+        elif file_type == FileType.DESCRIPTION:
+            return self.validate_description(file_path, pack_error_ignore_list)
 
         elif file_type == FileType.README:
             return self.validate_readme(file_path, pack_error_ignore_list)
@@ -392,10 +425,12 @@ class ValidateManager:
             return self.validate_playbook(structure_validator, pack_error_ignore_list, file_type)
 
         elif file_type == FileType.INTEGRATION:
-            return self.validate_integration(structure_validator, pack_error_ignore_list, is_modified, file_type)
+            return all([self.validate_integration(structure_validator, pack_error_ignore_list, is_modified,
+                                                  file_type), valid_in_conf])
 
         elif file_type == FileType.SCRIPT:
-            return self.validate_script(structure_validator, pack_error_ignore_list, is_modified, file_type)
+            return all([self.validate_script(structure_validator, pack_error_ignore_list, is_modified,
+                                             file_type), valid_in_conf])
 
         elif file_type == FileType.BETA_INTEGRATION:
             return self.validate_beta_integration(structure_validator, pack_error_ignore_list)
@@ -424,7 +459,7 @@ class ValidateManager:
             return self.validate_incident_type(structure_validator, pack_error_ignore_list, is_modified)
 
         elif file_type == FileType.MAPPER:
-            return self.validate_mapper(structure_validator, pack_error_ignore_list)
+            return self.validate_mapper(structure_validator, pack_error_ignore_list, is_modified)
 
         elif file_type in (FileType.OLD_CLASSIFIER, FileType.CLASSIFIER):
             return self.validate_classifier(structure_validator, pack_error_ignore_list, file_type)
@@ -470,6 +505,12 @@ class ValidateManager:
 
     """ ######################################## Unique Validations ####################################### """
 
+    def validate_description(self, file_path, pack_error_ignore_list):
+        description_validator = DescriptionValidator(file_path, ignored_errors=pack_error_ignore_list,
+                                                     print_as_warnings=self.print_ignored_errors,
+                                                     json_file_path=self.json_file_path)
+        return description_validator.is_valid_file()
+
     def validate_readme(self, file_path, pack_error_ignore_list):
         readme_validator = ReadMeValidator(file_path, ignored_errors=pack_error_ignore_list,
                                            print_as_warnings=self.print_ignored_errors,
@@ -485,12 +526,6 @@ class ValidateManager:
 
     def validate_release_notes(self, file_path, added_files, modified_files, pack_error_ignore_list, is_modified):
         pack_name = get_pack_name(file_path)
-
-        # modified existing RN
-        if is_modified:
-            error_message, error_code = Errors.modified_existing_release_notes(pack_name)
-            if self.handle_error(error_message=error_message, error_code=error_code, file_path=file_path):
-                return False
 
         # added new RN to a new pack
         if pack_name in self.new_packs:
@@ -543,12 +578,15 @@ class ValidateManager:
                                                                validator=integration_validator)
         if deprecated_result is not None:
             return deprecated_result
-
         if is_modified and self.is_backward_check:
-            return all([integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json),
+            return all([integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json,
+                                                            check_is_unskipped=self.check_is_unskipped,
+                                                            conf_json_data=self.conf_json_data),
                         integration_validator.is_backward_compatible()])
         else:
-            return integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json)
+            return integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json,
+                                                       check_is_unskipped=self.check_is_unskipped,
+                                                       conf_json_data=self.conf_json_data)
 
     def validate_script(self, structure_validator, pack_error_ignore_list, is_modified, file_type):
         script_validator = ScriptValidator(structure_validator, ignored_errors=pack_error_ignore_list,
@@ -596,10 +634,10 @@ class ValidateManager:
                                                           print_as_warnings=self.print_ignored_errors,
                                                           json_file_path=self.json_file_path)
         if is_modified and self.is_backward_check:
-            return all([incident_field_validator.is_valid_file(validate_rn=False),
+            return all([incident_field_validator.is_valid_file(validate_rn=False, is_new_file=not is_modified, use_git=self.use_git),
                         incident_field_validator.is_backward_compatible()])
         else:
-            return incident_field_validator.is_valid_file(validate_rn=False)
+            return incident_field_validator.is_valid_file(validate_rn=False, is_new_file=not is_modified, use_git=self.use_git)
 
     def validate_reputation(self, structure_validator, pack_error_ignore_list):
         reputation_validator = ReputationValidator(structure_validator, ignored_errors=pack_error_ignore_list,
@@ -637,10 +675,15 @@ class ValidateManager:
         else:
             return incident_type_validator.is_valid_incident_type(validate_rn=False)
 
-    def validate_mapper(self, structure_validator, pack_error_ignore_list):
+    def validate_mapper(self, structure_validator, pack_error_ignore_list, is_modified):
         mapper_validator = MapperValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                            print_as_warnings=self.print_ignored_errors,
                                            json_file_path=self.json_file_path)
+        if is_modified and self.is_backward_check:
+            return all([mapper_validator.is_valid_mapper(validate_rn=False, id_set_file=self.id_set_file,
+                                                         is_circle=self.is_circle),
+                        mapper_validator.is_backward_compatible()])
+
         return mapper_validator.is_valid_mapper(validate_rn=False, id_set_file=self.id_set_file,
                                                 is_circle=self.is_circle)
 
@@ -692,7 +735,7 @@ class ValidateManager:
                                                                skip_id_set_creation=self.skip_id_set_creation,
                                                                prev_ver=self.prev_ver,
                                                                json_file_path=self.json_file_path)
-        pack_errors = pack_unique_files_validator.are_valid_files()
+        pack_errors = pack_unique_files_validator.are_valid_files(self.id_set_validations)
         if pack_errors:
             click.secho(pack_errors, fg="bright_red")
             return False
@@ -729,7 +772,7 @@ class ValidateManager:
                                                          added_files=added_files))
         return all(valid_files)
 
-    @ staticmethod
+    @staticmethod
     def should_raise_pack_version(pack: str) -> bool:
         """
         Args:
@@ -779,7 +822,7 @@ class ValidateManager:
             yaml_data = get_yaml(file_path)
             # we only fail on old format if no toversion (meaning it is latest) or if the ynl is not deprecated.
             if 'toversion' not in yaml_data and not yaml_data.get('deprecated'):
-                error_message, error_code = Errors.invalid_package_structure(file_path)
+                error_message, error_code = Errors.invalid_package_structure()
                 if self.handle_error(error_message, error_code, file_path=file_path):
                     handle_error = False
         return handle_error
@@ -824,12 +867,14 @@ class ValidateManager:
         packs_that_should_have_new_rn_api_module_related: set = set()
         # existing packs that have files changed (which are not RN, README nor test files) - should have new RN
         changed_files = modified_files.union(old_format_files).union(added_files)
-        packs_that_should_have_new_rn = get_pack_names_from_files(changed_files,
-                                                                  skip_file_types={FileType.RELEASE_NOTES,
-                                                                                   FileType.README,
-                                                                                   FileType.TEST_PLAYBOOK,
-                                                                                   FileType.TEST_SCRIPT,
-                                                                                   FileType.DOC_IMAGE})
+        packs_that_should_have_new_rn = get_pack_names_from_files(
+            changed_files,
+            skip_file_types={FileType.RELEASE_NOTES,
+                             FileType.README,
+                             FileType.TEST_PLAYBOOK,
+                             FileType.TEST_SCRIPT,
+                             FileType.DOC_IMAGE}
+        )
         if API_MODULES_PACK in packs_that_should_have_new_rn:
             api_module_set = get_api_module_ids(changed_files)
             integrations = get_api_module_integrations_set(api_module_set,
@@ -849,7 +894,7 @@ class ValidateManager:
 
         packs_that_have_missing_rn = packs_that_should_have_new_rn.difference(packs_that_have_new_rn)
 
-        if len(packs_that_have_missing_rn) > 0:
+        if packs_that_have_missing_rn:
             is_valid = set()
             for pack in packs_that_have_missing_rn:
                 # # ignore RN in NonSupported pack
@@ -863,7 +908,9 @@ class ValidateManager:
                 if not BaseValidator(ignored_errors=ignored_errors_list,
                                      print_as_warnings=self.print_ignored_errors,
                                      json_file_path=self.json_file_path).handle_error(
-                        error_message, error_code, file_path=os.path.join(PACKS_DIR, pack)):
+                        error_message, error_code,
+                        file_path=os.path.join(os.getcwd(), PACKS_DIR, pack, PACKS_PACK_META_FILE_NAME)
+                ):
                     is_valid.add(True)
 
                 else:
@@ -876,6 +923,19 @@ class ValidateManager:
             return True
 
     """ ######################################## Git Tools and filtering ####################################### """
+
+    def setup_prev_ver(self, prev_ver: Optional[str]):
+        """Setting up the prev_ver parameter"""
+        # if prev_ver parameter is set, use it
+        if prev_ver:
+            return prev_ver
+
+        # check if git is connected and if demisto exists in remotes if so set prev_ver as 'demisto/master'
+        if self.git_util and self.git_util.check_if_remote_exists('demisto'):
+            return 'demisto/master'
+
+        # default to 'origin/master' if none of the above apply
+        return 'origin/master'
 
     def setup_git_params(self):
         """Setting up the git relevant params"""
@@ -892,7 +952,8 @@ class ValidateManager:
         # if running on release branch check against last release.
         if self.branch_name.startswith('21.') or self.branch_name.startswith('22.'):
             self.skip_pack_rn_validation = True
-            self.prev_ver = get_content_release_identifier(self.branch_name)
+            self.prev_ver = os.environ.get('GIT_SHA1')
+            self.is_circle = True
 
             # when running against git while on release branch - show errors but don't fail the validation
             self.always_valid = True
@@ -948,11 +1009,14 @@ class ValidateManager:
         """
         # get files from git by status identification against prev-ver
         modified_files = self.git_util.modified_files(prev_ver=self.prev_ver,
-                                                      committed_only=self.is_circle, staged_only=self.staged)
+                                                      committed_only=self.is_circle, staged_only=self.staged,
+                                                      debug=self.debug_git, include_untracked=self.include_untracked)
         added_files = self.git_util.added_files(prev_ver=self.prev_ver, committed_only=self.is_circle,
-                                                staged_only=self.staged)
+                                                staged_only=self.staged, debug=self.debug_git,
+                                                include_untracked=self.include_untracked)
         renamed_files = self.git_util.renamed_files(prev_ver=self.prev_ver, committed_only=self.is_circle,
-                                                    staged_only=self.staged)
+                                                    staged_only=self.staged, debug=self.debug_git,
+                                                    include_untracked=self.include_untracked)
 
         # filter files only to relevant files
         filtered_modified, old_format_files = self.filter_to_relevant_files(modified_files)
@@ -1023,7 +1087,7 @@ class ValidateManager:
             return None
 
         # redirect non-test code files to the associated yml file
-        if file_type in [FileType.PYTHON_FILE, FileType.POWERSHELL_FILE, FileType.JAVSCRIPT_FILE]:
+        if file_type in [FileType.PYTHON_FILE, FileType.POWERSHELL_FILE, FileType.JAVASCRIPT_FILE]:
             if not (str(file_path).endswith('_test.py') or str(file_path).endswith('.Tests.ps1') or
                     str(file_path).endswith('_test.js')):
                 file_path = file_path.replace('.py', '.yml').replace('.ps1', '.yml').replace('.js', '.yml')
@@ -1048,7 +1112,7 @@ class ValidateManager:
 
     """ ######################################## Validate Tools ############################################### """
 
-    @ staticmethod
+    @staticmethod
     def create_ignored_errors_list(errors_to_check):
         ignored_error_list = []
         all_errors = get_all_error_codes()
@@ -1059,7 +1123,7 @@ class ValidateManager:
 
         return ignored_error_list
 
-    @ staticmethod
+    @staticmethod
     def get_allowed_ignored_errors_from_list(error_list):
         allowed_ignore_list = []
         for error in error_list:
@@ -1099,11 +1163,10 @@ class ValidateManager:
 
                 except MissingSectionHeaderError:
                     pass
+            else:
+                click.secho(f'Could not find pack-ignore file at path {pack_ignore_path}', fg="bright_red")
 
         return ignored_errors_list
-
-    def get_content_release_identifier(self) -> Optional[str]:
-        return tools.get_content_release_identifier(self.branch_name)
 
     @staticmethod
     def is_old_file_format(file_path, file_type):
@@ -1121,7 +1184,7 @@ class ValidateManager:
             return True
         return False
 
-    @ staticmethod
+    @staticmethod
     def get_packs_with_added_release_notes(added_files):
         added_rn = set()
         for file in added_files:
@@ -1158,7 +1221,7 @@ class ValidateManager:
 
         return modified_packs_that_should_have_version_raised
 
-    @ staticmethod
+    @staticmethod
     def get_packs(changed_files):
         packs = set()
         for changed_file in changed_files:
@@ -1189,9 +1252,9 @@ class ValidateManager:
         else:
             id_set = open_id_set_file(id_set_path)
 
-        if not id_set:
+        if not id_set and not self.no_configuration_prints:
             error_message, error_code = Errors.no_id_set_file()
-            self.handle_error(error_message, error_code, file_path=id_set_path, warning=True)
+            self.handle_error(error_message, error_code, file_path=os.path.join(os.getcwd(), id_set_path), warning=True)
 
         return id_set
 
@@ -1214,14 +1277,11 @@ class ValidateManager:
             False if current_file is deprecated and invalid.
             None if current_file is not deprecated.
         """
-        if file_type == FileType.PLAYBOOK:
-            is_deprecated = "hidden" in current_file and current_file["hidden"]
-        else:
-            is_deprecated = "deprecated" in current_file and current_file["deprecated"]
+        is_deprecated = current_file.get("deprecated")
 
         toversion_is_old = "toversion" in current_file and \
-            version.parse(current_file.get("toversion", "99.99.99")) < \
-            version.parse(OLDEST_SUPPORTED_VERSION)
+                           version.parse(current_file.get("toversion", "99.99.99")) < \
+                           version.parse(OLDEST_SUPPORTED_VERSION)
 
         if is_deprecated or toversion_is_old:
             click.echo(f"Validating deprecated file: {file_path}")

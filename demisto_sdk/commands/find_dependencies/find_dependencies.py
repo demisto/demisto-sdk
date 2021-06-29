@@ -4,14 +4,18 @@ import os
 import sys
 from copy import deepcopy
 from distutils.version import LooseVersion
-from typing import Union
+from typing import Optional, Union
 
 import click
 import networkx as nx
 from demisto_sdk.commands.common import constants
 from demisto_sdk.commands.common.constants import GENERIC_COMMANDS_NAMES
-from demisto_sdk.commands.common.tools import print_error
+from demisto_sdk.commands.common.tools import (get_content_id_set,
+                                               is_external_repository,
+                                               print_error, print_warning)
+from demisto_sdk.commands.common.update_id_set import merge_id_sets
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
+from requests import RequestException
 
 MINIMUM_DEPENDENCY_VERSION = LooseVersion('6.0.0')
 COMMON_TYPES_PACK = 'CommonTypes'
@@ -139,6 +143,29 @@ def update_pack_metadata_with_dependencies(pack_folder_name: str, first_level_de
         pack_metadata_file.truncate()
 
 
+def get_merged_official_and_local_id_set(local_id_set: dict, silent_mode: bool = False) -> dict:
+    """Merging local idset with content id_set
+    Args:
+        local_id_set: The local ID set (when running in a local repo)
+        silent_mode: When True, will not print logs. False will print logs.
+    Returns:
+        A unified id_set from local and official content
+    """
+    try:
+        official_id_set = get_content_id_set()
+    except RequestException as exception:
+        raise RequestException(
+            f'Could not download official content from {constants.OFFICIAL_CONTENT_ID_SET_PATH}\n'
+            f'Stopping execution.'
+        ) from exception
+    unified_id_set, duplicates = merge_id_sets(
+        official_id_set,
+        local_id_set,
+        print_logs=not silent_mode
+    )
+    return unified_id_set.get_dict()
+
+
 class PackDependencies:
     """
     Pack dependencies calculation class with relevant static methods.
@@ -191,7 +218,8 @@ class PackDependencies:
     @staticmethod
     def _search_packs_by_items_names_or_ids(items_names: Union[str, list],
                                             items_list: list,
-                                            exclude_ignored_dependencies: bool = True) -> set:
+                                            exclude_ignored_dependencies: bool = True,
+                                            incident_or_indicator: Optional[str] = 'Both') -> set:
         """
         Searches for implemented packs of the given items.
 
@@ -199,7 +227,10 @@ class PackDependencies:
             items_names (str or list): items names to search.
             items_list (list): specific section of id set.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
-
+            incident_or_indicator (str):
+                'Indicator' to search packs with indicator fields,
+                'Incident' to search packs with incident fields,
+                'Both' to search packs with indicator fields and incident fields.
         Returns:
             set: found pack ids.
 
@@ -209,11 +240,18 @@ class PackDependencies:
             items_names = [items_names]
 
         for item_name in items_names:
-            item_possible_names = [item_name, f'incident_{item_name}', f'indicator_{item_name}', f'{item_name}-mapper']
+            if incident_or_indicator == 'Incident':
+                item_possible_ids = [item_name, f'incident_{item_name}', f'{item_name}-mapper']
+            elif incident_or_indicator == 'Indicator':
+                item_possible_ids = [item_name, f'indicator_{item_name}', f'{item_name}-mapper']
+            elif incident_or_indicator == 'Both':
+                item_possible_ids = [item_name, f'incident_{item_name}', f'indicator_{item_name}',
+                                     f'{item_name}-mapper']
+
             for item_from_id_set in items_list:
                 machine_name = list(item_from_id_set.keys())[0]
                 item_details = list(item_from_id_set.values())[0]
-                if (machine_name in item_possible_names or item_name == item_details.get('name')) \
+                if (machine_name in item_possible_ids or item_name == item_details.get('name')) \
                         and item_details.get('pack') \
                         and LooseVersion(item_details.get('toversion', '99.99.99')) >= MINIMUM_DEPENDENCY_VERSION \
                         and (item_details['pack'] not in constants.IGNORED_DEPENDENCY_CALCULATION or
@@ -484,7 +522,7 @@ class PackDependencies:
                 playbook_dependencies.update(pack_dependencies_data)
 
             # ---- indicator fields packs ----
-            # playbook dependencies from incident fields should be marked as optional unless CommonTypes pack,
+            # playbook dependencies from indicator fields should be marked as optional unless CommonTypes pack,
             # as customers do not have to use the OOTB inputs.
             indicator_fields = playbook_data.get('indicator_fields', [])
             packs_found_from_indicator_fields = PackDependencies._search_packs_by_items_names_or_ids(
@@ -514,7 +552,7 @@ class PackDependencies:
         Collects layouts pack dependencies.
 
         Args:
-            pack_layouts (list): collection of pack playbooks data.
+            pack_layouts (list): collection of pack layouts data.
             id_set (dict): id set json.
             verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
@@ -530,10 +568,14 @@ class PackDependencies:
         for layout in pack_layouts:
             layout_data = next(iter(layout.values()))
             layout_dependencies = set()
+            if layout_data.get('group') == 'indicator' or layout_data.get('kind') == 'indicatorsDetails':
+                layout_type = 'Indicator'
+            else:
+                layout_type = 'Incident'
 
-            related_incident_and_indicator_types = layout_data.get('incident_and_indicator_types', [])
+            related_incident_or_indicator_types = layout_data.get('incident_and_indicator_types', [])
             packs_found_from_incident_indicator_types = PackDependencies._search_packs_by_items_names(
-                related_incident_and_indicator_types, id_set['IncidentTypes'] + id_set['IndicatorTypes'],
+                related_incident_or_indicator_types, id_set[f'{layout_type}Types'],
                 exclude_ignored_dependencies)
 
             if packs_found_from_incident_indicator_types:
@@ -541,10 +583,10 @@ class PackDependencies:
                     _label_as_mandatory(packs_found_from_incident_indicator_types)
                 layout_dependencies.update(pack_dependencies_data)
 
-            related_incident_and_indicator_fields = layout_data.get('incident_and_indicator_fields', [])
+            related_incident_or_indicator_fields = layout_data.get('incident_and_indicator_fields', [])
             packs_found_from_incident_indicator_fields = PackDependencies._search_packs_by_items_names_or_ids(
-                related_incident_and_indicator_fields, id_set['IncidentFields'] + id_set['IndicatorFields'],
-                exclude_ignored_dependencies)
+                related_incident_or_indicator_fields, id_set[f'{layout_type}Fields'],
+                exclude_ignored_dependencies, layout_type)
 
             if packs_found_from_incident_indicator_fields:
                 pack_dependencies_data = PackDependencies. \
@@ -953,6 +995,7 @@ class PackDependencies:
         pack_items['playbooks'] = PackDependencies._search_for_pack_items(pack_id, id_set['playbooks'])
         pack_items['layouts'] = PackDependencies._search_for_pack_items(pack_id, id_set['Layouts'])
         pack_items['incidents_fields'] = PackDependencies._search_for_pack_items(pack_id, id_set['IncidentFields'])
+        pack_items['indicators_fields'] = PackDependencies._search_for_pack_items(pack_id, id_set['IndicatorFields'])
         pack_items['indicators_types'] = PackDependencies._search_for_pack_items(pack_id, id_set['IndicatorTypes'])
         pack_items['integrations'] = PackDependencies._search_for_pack_items(pack_id, id_set['integrations'])
         pack_items['incidents_types'] = PackDependencies._search_for_pack_items(pack_id, id_set['IncidentTypes'])
@@ -1162,10 +1205,18 @@ class PackDependencies:
         return graph
 
     @staticmethod
-    def find_dependencies(pack_name: str, id_set_path: str = '', exclude_ignored_dependencies: bool = True,
-                          update_pack_metadata: bool = True, silent_mode: bool = False, verbose: bool = False,
-                          debug_file_path: str = '', skip_id_set_creation: bool = False,
-                          complete_data: bool = False) -> dict:
+    def find_dependencies(
+            pack_name: str,
+            id_set_path: str = '',
+            exclude_ignored_dependencies: bool = True,
+            update_pack_metadata: bool = True,
+            silent_mode: bool = False,
+            verbose: bool = False,
+            debug_file_path: str = '',
+            skip_id_set_creation: bool = False,
+            use_pack_metadata: bool = False,
+            complete_data: bool = False
+    ) -> dict:
         """
         Main function for dependencies search and pack metadata update.
 
@@ -1191,13 +1242,23 @@ class PackDependencies:
         else:
             with open(id_set_path, 'r') as id_set_file:
                 id_set = json.load(id_set_file)
+        if is_external_repository():
+            print_warning('Running in a private repository, will download the id set from official content')
+            id_set = get_merged_official_and_local_id_set(id_set, silent_mode=silent_mode)
 
         dependency_graph = PackDependencies.build_dependency_graph(
-            pack_id=pack_name, id_set=id_set, verbose=verbose,
-            exclude_ignored_dependencies=exclude_ignored_dependencies)
-        first_level_dependencies, _ = parse_for_pack_metadata(dependency_graph, pack_name, verbose,
-                                                              complete_data=complete_data, id_set_data=id_set,
-                                                              )
+            pack_id=pack_name,
+            id_set=id_set,
+            verbose=verbose,
+            exclude_ignored_dependencies=exclude_ignored_dependencies
+        )
+        first_level_dependencies, _ = parse_for_pack_metadata(
+            dependency_graph,
+            pack_name,
+            verbose,
+            complete_data=complete_data,
+            id_set_data=id_set,
+        )
         if update_pack_metadata:
             update_pack_metadata_with_dependencies(pack_name, first_level_dependencies)
         if not silent_mode:
@@ -1205,4 +1266,45 @@ class PackDependencies:
             click.echo(click.style(f"Found dependencies result for {pack_name} pack:", bold=True))
             dependency_result = json.dumps(first_level_dependencies, indent=4)
             click.echo(click.style(dependency_result, bold=True))
+
+        if use_pack_metadata:
+            first_level_dependencies = PackDependencies.update_dependencies_from_pack_metadata(pack_name,
+                                                                                               first_level_dependencies)
+
         return first_level_dependencies
+
+    @staticmethod
+    def update_dependencies_from_pack_metadata(pack_name, first_level_dependencies):
+        """
+        Update the dependencies by the pack metadata.
+
+        Args:
+            pack_name (str): the pack name to take the metadata from.
+            first_level_dependencies (list): the given dependencies from the id set.
+
+        Returns:
+            A list of the updated dependencies.
+        """
+        pack_meta_file_content = PackDependencies.get_metadata_from_pack(pack_name)
+
+        manual_dependencies = pack_meta_file_content.get('dependencies', {})
+        first_level_dependencies.update(manual_dependencies)
+
+        return first_level_dependencies
+
+    @staticmethod
+    def get_metadata_from_pack(pack_name):
+        """
+        Returns the pack metadata content of a given pack name.
+
+        Args:
+            pack_name (str): the pack name.
+
+        Return:
+            The pack metadata content.
+        """
+
+        with open(find_pack_path(pack_name)[0], "r") as pack_metadata:
+            pack_meta_file_content = json.loads(pack_metadata.read())
+
+        return pack_meta_file_content

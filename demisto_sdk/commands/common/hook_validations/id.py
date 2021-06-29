@@ -13,6 +13,7 @@ from demisto_sdk.commands.common.update_id_set import (get_classifier_data,
                                                        get_incident_type_data,
                                                        get_integration_data,
                                                        get_mapper_data,
+                                                       get_pack_metadata_data,
                                                        get_playbook_data,
                                                        get_script_data)
 from demisto_sdk.commands.unify.unifier import Unifier
@@ -41,6 +42,7 @@ class IDSetValidations(BaseValidator):
     LAYOUTS_SECTION = "Layouts"
     MAPPERS_SECTION = "Mappers"
     INCIDENT_TYPES_SECTION = "IncidentTypes"
+    PACKS_SECTION = "Packs"
 
     def __init__(self, is_test_run=False, is_circle=False, configuration=Configuration(), ignored_errors=None,
                  print_as_warnings=False, suppress_print=False, id_set_file=None, json_file_path=None):
@@ -58,6 +60,7 @@ class IDSetValidations(BaseValidator):
             self.layouts_set = self.id_set_file[self.LAYOUTS_SECTION]
             self.mappers_set = self.id_set_file[self.MAPPERS_SECTION]
             self.incident_types_set = self.id_set_file[self.INCIDENT_TYPES_SECTION]
+            self.packs_set = self.id_set_file[self.PACKS_SECTION]
 
     def _is_incident_type_default_playbook_found(self, incident_type_data):
         """Check if the default playbook of an incident type is in the id_set
@@ -397,3 +400,37 @@ class IDSetValidations(BaseValidator):
                 is_valid = self._are_playbook_entities_versions_valid(playbook_data, file_path)
 
         return is_valid
+
+    def _is_pack_display_name_already_exist(self, pack_metadata_data):
+        """Check if the pack display name already exists in our repo
+        Args:
+            pack_metadata_data (dict): Dictionary that holds the extracted details from the given metadata file.
+        Returns:
+            bool. Whether the metadata file is valid or not.
+        """
+        new_pack_folder_name = list(pack_metadata_data.keys())[0]
+        new_pack_name = pack_metadata_data[new_pack_folder_name]['name']
+        for pack_folder_name, pack_data in self.packs_set.items():
+            if new_pack_name == pack_data['name'] and new_pack_folder_name != pack_folder_name:
+                return False, Errors.pack_name_already_exists(new_pack_name)
+        return True, None
+
+    def is_unique_file_valid_in_set(self, pack_path, ignored_errors=None):
+        """Check if unique files are valid against the rest of the files, using the ID set.
+        Args:
+            pack_path (string): Path to the file.
+            ignored_errors (list): a list of ignored errors for the specific file
+        Returns:
+            bool. Whether the file is valid in the id_set or not.
+            string. Error massage if the file is invalid else None.
+        """
+        self.ignored_errors = ignored_errors
+        is_valid = True
+        error = None
+        if self.is_circle:
+            click.echo(f"id set validations for: {pack_path}")
+
+            is_valid, error = self._is_pack_display_name_already_exist(
+                get_pack_metadata_data(f'{pack_path}/pack_metadata.json', False))
+
+        return is_valid, error

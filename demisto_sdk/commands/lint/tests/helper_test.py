@@ -1,7 +1,9 @@
+import importlib
 import os
 
 import pytest
-from demisto_sdk.commands.lint.helpers import split_warnings_errors
+from demisto_sdk.commands.lint.helpers import (generate_coverage_report,
+                                               split_warnings_errors)
 
 
 def test_validate_env(mocker) -> None:
@@ -146,3 +148,29 @@ def test_split_warnings_errors(linter_name, input_msg, output_error, output_warn
     assert error == output_error
     assert warning == output_warning
     assert other == output_other
+
+
+class TestGenerateCoverageReport:
+    coverage = importlib.import_module('coverage')
+
+    @staticmethod
+    def mock_path_exists(mocker):
+        mocker.patch('os.path.exists', return_value=True)
+
+    def test_generate_coverage_report_with_report(self, mocker):
+        mock_report = mocker.patch.object(self.coverage.Coverage, 'report')
+        self.mock_path_exists(mocker)
+        generate_coverage_report()
+        mock_report.assert_called_once()
+
+    def test_generate_coverage_report_with_html(self, mocker):
+        mock_html_report = mocker.patch.object(self.coverage.Coverage, 'html_report')
+        self.mock_path_exists(mocker)
+        generate_coverage_report(report=False, html=True)
+        mock_html_report.assert_called_once_with(directory='coverage_report/html')
+
+    def test_generate_coverage_report_with_xml(self, mocker):
+        mock_xml_report = mocker.patch.object(self.coverage.Coverage, 'xml_report')
+        self.mock_path_exists(mocker)
+        generate_coverage_report(report=False, xml=True)
+        mock_xml_report.assert_called_once_with(outfile='coverage_report/coverage.xml')

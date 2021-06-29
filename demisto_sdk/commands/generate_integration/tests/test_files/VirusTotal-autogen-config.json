@@ -1,0 +1,1220 @@
+{
+    "name": "VirusTotalTest",
+    "display_name": "VirusTotal Test",
+    "description": "Virus Total collection description",
+    "category": "Utilities",
+    "command_prefix": "vt-test",
+    "docker_image": "demisto/python3:3.8.6.12176",
+    "url": "https://www.virustotal.com",
+    "base_url_path": "",
+    "auth": {
+        "type": "apikey",
+        "apikey": [
+            {
+                "key": "in",
+                "value": "query",
+                "type": "string"
+            },
+            {
+                "key": "key",
+                "value": "apikey",
+                "type": "string"
+            }
+        ]
+    },
+    "context_path": "VirusTotalTest",
+    "code_type": "python",
+    "code_subtype": "python3",
+    "is_fetch": false,
+    "fix_code": true,
+    "commands": [
+        {
+            "name": "url-report",
+            "url_path": "vtapi/v2/url/report",
+            "http_method": "GET",
+            "description": "URL Report description",
+            "context_path": "UrlReport",
+            "root_object": "",
+            "headers": null,
+            "unique_key": "",
+            "body_format": null,
+            "upload_file": false,
+            "returns_file": false,
+            "returns_entry_file": false,
+            "arguments": [
+                {
+                    "name": "resource",
+                    "description": "",
+                    "required": false,
+                    "is_array": false,
+                    "default_value": "",
+                    "predefined_values": [],
+                    "ref": null,
+                    "type_": null,
+                    "in_": "query",
+                    "in_object": null
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "scan_id",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "resource",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "url",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "response_code",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "scan_date",
+                    "description": "",
+                    "type_": "Date"
+                },
+                {
+                    "name": "permalink",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "verbose_msg",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "filescan_id",
+                    "description": "",
+                    "type_": "Unknown"
+                },
+                {
+                    "name": "positives",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "total",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "scans.CMC Threat Intelligence.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.CMC Threat Intelligence.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.CLEAN MX.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.CLEAN MX.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.DNS8.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.DNS8.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.MalSilo.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.MalSilo.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.NotMining.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.NotMining.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.AICC (MONITORAPP).detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.AICC (MONITORAPP).result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.VX Vault.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.VX Vault.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.securolytics.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.securolytics.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.Tencent.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.Tencent.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.MalwarePatrol.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.MalwarePatrol.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.Armis.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.Armis.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.MalBeacon.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.MalBeacon.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.Comodo Valkyrie Verdict.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.Comodo Valkyrie Verdict.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.PhishLabs.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.PhishLabs.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.EmergingThreats.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.EmergingThreats.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.Sangfor.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.Sangfor.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.K7AntiVirus.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.K7AntiVirus.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.Virusdie External Site Scan.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.Virusdie External Site Scan.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.Artists Against 419.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.Artists Against 419.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.CINS Army.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.CINS Army.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.Cyren.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.Cyren.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.Quttera.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.Quttera.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.AegisLab WebGuard.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.AegisLab WebGuard.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.MalwareDomainList.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.MalwareDomainList.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.MalwareDomainList.detail",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.Lumu.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.Lumu.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.zvelo.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.zvelo.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.Google Safebrowsing.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.Google Safebrowsing.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.Kaspersky.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.Kaspersky.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.BitDefender.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.BitDefender.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.GreenSnow.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.GreenSnow.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.IPsum.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.IPsum.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.G-Data.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.G-Data.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.CyberCrime.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.CyberCrime.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.Malware Domain Blocklist.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.Malware Domain Blocklist.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.AutoShun.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.AutoShun.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.Feodo Tracker.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.Feodo Tracker.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.Web Security Guard.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.Web Security Guard.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.Cyan.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.Cyan.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.CyRadar.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.CyRadar.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.desenmascara.me.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.desenmascara.me.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.ADMINUSLabs.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.ADMINUSLabs.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.SCUMWARE.org.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.SCUMWARE.org.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.Dr.Web.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.Dr.Web.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.AlienVault.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.AlienVault.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.Emsisoft.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.Emsisoft.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.Spamhaus.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.Spamhaus.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.malwares.com URL checker.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.malwares.com URL checker.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.Phishtank.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.Phishtank.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.EonScope.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.EonScope.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.Malwared.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.Malwared.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.Avira.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.Avira.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.Cisco Talos IP Blacklist.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.Cisco Talos IP Blacklist.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.OpenPhish.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.OpenPhish.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.Antiy-AVL.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.Antiy-AVL.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.Forcepoint ThreatSeeker.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.Forcepoint ThreatSeeker.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.Spam404.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.Spam404.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.Trustwave.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.Trustwave.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.Certego.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.Certego.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.URLhaus.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.URLhaus.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.Yandex Safebrowsing.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.Yandex Safebrowsing.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.Yandex Safebrowsing.detail",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.ESET.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.ESET.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.Threatsourcing.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.Threatsourcing.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.BlockList.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.BlockList.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.SecureBrain.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.SecureBrain.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.Nucleon.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.Nucleon.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.PREBYTES.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.PREBYTES.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.Sophos.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.Sophos.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.Blueliv.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.Blueliv.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.Hoplite Industries.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.Hoplite Industries.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.Netcraft.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.Netcraft.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.CRDF.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.CRDF.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.ThreatHive.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.ThreatHive.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.BADWARE.INFO.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.BADWARE.INFO.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.FraudScore.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.FraudScore.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.Quick Heal.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.Quick Heal.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.Rising.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.Rising.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.StopBadware.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.StopBadware.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.Sucuri SiteCheck.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.Sucuri SiteCheck.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.Fortinet.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.Fortinet.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.StopForumSpam.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.StopForumSpam.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.ZeroCERT.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.ZeroCERT.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.Baidu-International.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.Baidu-International.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "scans.Phishing Database.detected",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "scans.Phishing Database.result",
+                    "description": "",
+                    "type_": "String"
+                }
+            ]
+        },
+        {
+            "name": "domain-report",
+            "url_path": "vtapi/v2/domain/report",
+            "http_method": "GET",
+            "description": "Domain Report description",
+            "context_path": "DomainReport",
+            "root_object": "",
+            "headers": [
+                {
+                    "Content-Type": "application/json"
+                },
+                {
+                    "Accept": "application/json"
+                }
+            ],
+            "unique_key": "",
+            "body_format": null,
+            "upload_file": false,
+            "returns_file": false,
+            "returns_entry_file": false,
+            "arguments": [
+                {
+                    "name": "domain",
+                    "description": "",
+                    "required": false,
+                    "is_array": false,
+                    "default_value": "",
+                    "predefined_values": [],
+                    "ref": null,
+                    "type_": null,
+                    "in_": "query",
+                    "in_object": null
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "undetected_downloaded_samples.date",
+                    "description": "",
+                    "type_": "Date"
+                },
+                {
+                    "name": "undetected_downloaded_samples.positives",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "undetected_downloaded_samples.total",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "undetected_downloaded_samples.sha256",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "whois_timestamp",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "detected_downloaded_samples.date",
+                    "description": "",
+                    "type_": "Date"
+                },
+                {
+                    "name": "detected_downloaded_samples.positives",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "detected_downloaded_samples.total",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "detected_downloaded_samples.sha256",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "Forcepoint ThreatSeeker category",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "undetected_urls",
+                    "description": "",
+                    "type_": "Date"
+                },
+                {
+                    "name": "Comodo Valkyrie Verdict category",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "undetected_referrer_samples.date",
+                    "description": "",
+                    "type_": "Date"
+                },
+                {
+                    "name": "undetected_referrer_samples.positives",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "undetected_referrer_samples.total",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "undetected_referrer_samples.sha256",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "resolutions.last_resolved",
+                    "description": "",
+                    "type_": "Date"
+                },
+                {
+                    "name": "resolutions.ip_address",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "subdomains",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "sophos category",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "whois",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "response_code",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "verbose_msg",
+                    "description": "",
+                    "type_": "String"
+                }
+            ]
+        },
+        {
+            "name": "file-scan",
+            "url_path": "vtapi/v2/file/scan",
+            "http_method": "POST",
+            "description": "File scan description",
+            "context_path": "FileScan",
+            "root_object": "",
+            "headers": null,
+            "unique_key": "",
+            "body_format": null,
+            "upload_file": false,
+            "returns_file": false,
+            "returns_entry_file": false,
+            "arguments": [],
+            "outputs": [
+                {
+                    "name": "scan_id",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "sha1",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "resource",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "response_code",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "sha256",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "permalink",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "md5",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "verbose_msg",
+                    "description": "",
+                    "type_": "String"
+                }
+            ]
+        },
+        {
+            "name": "file-download",
+            "url_path": "vtapi/v2/file/download",
+            "http_method": "GET",
+            "description": "file download description",
+            "context_path": "FileDownload",
+            "root_object": "",
+            "headers": null,
+            "unique_key": "",
+            "body_format": null,
+            "upload_file": false,
+            "returns_file": true,
+            "returns_entry_file": false,
+            "arguments": [
+                {
+                    "name": "hash",
+                    "description": "",
+                    "required": false,
+                    "is_array": false,
+                    "default_value": "",
+                    "predefined_values": [],
+                    "ref": null,
+                    "type_": null,
+                    "in_": "query",
+                    "in_object": null
+                }
+            ],
+            "outputs": []
+        }
+    ],
+    "params": [
+        {
+            "name": "url",
+            "display": "Server URL",
+            "defaultvalue": "https://www.virustotal.com",
+            "type_": "STRING",
+            "required": true
+        },
+        {
+            "name": "proxy",
+            "display": "Use system proxy",
+            "defaultvalue": "",
+            "type_": "BOOLEAN",
+            "required": false
+        },
+        {
+            "name": "insecure",
+            "display": "Trust any certificate",
+            "defaultvalue": "",
+            "type_": "BOOLEAN",
+            "required": false
+        },
+        {
+            "name": "api_key",
+            "display": "API Key",
+            "defaultvalue": "",
+            "type_": "ENCRYPTED",
+            "required": true
+        }
+    ]
+}

@@ -81,8 +81,10 @@ class MicrosoftClient(BaseClient):
 TESTS_DIR = f'{git_path()}/demisto_sdk/tests'
 
 
-def test_clean_python_code():
-    unifier = Unifier("test_files/VulnDB")
+def test_clean_python_code(repo):
+    pack = repo.create_pack('PackName')
+    integration = pack.create_integration('integration', 'bla', INTEGRATION_YAML)
+    unifier = Unifier(str(integration.path))
     script_code = "import demistomock as demisto\nfrom CommonServerPython import *  # test comment being removed\n" \
                   "from CommonServerUserPython import *\nfrom __future__ import print_function"
     # Test remove_print_future is False
@@ -738,6 +740,7 @@ PARTNER_UNIFY_NO_EMAIL = PARTNER_UNIFY.copy()
 PARTNER_UNIFY_NO_URL = PARTNER_UNIFY.copy()
 XSOAR_UNIFY = PARTNER_UNIFY.copy()
 COMMUNITY_UNIFY = PARTNER_UNIFY.copy()
+PARTNER_UNIFY_EMAIL_LIST = PARTNER_UNIFY.copy()
 
 INTEGRATION_YAML = {'display': 'test', 'script': {'type': 'python'}}
 
@@ -828,16 +831,16 @@ def test_unify_contributor_emails_list(mocker, repo, pack_metadata):
     pack = repo.create_pack('PackName')
     integration = pack.create_integration('integration', 'bla', INTEGRATION_YAML)
     pack.pack_metadata.write_json(pack_metadata)
-    mocker.patch.object(Unifier, 'insert_image_to_yml', return_value=(PARTNER_UNIFY, ''))
-    mocker.patch.object(Unifier, 'insert_description_to_yml', return_value=(PARTNER_UNIFY, ''))
+    mocker.patch.object(Unifier, 'insert_image_to_yml', return_value=(PARTNER_UNIFY_EMAIL_LIST, ''))
+    mocker.patch.object(Unifier, 'insert_description_to_yml', return_value=(PARTNER_UNIFY_EMAIL_LIST, ''))
     mocker.patch.object(Unifier, 'get_data', return_value=(pack_metadata, pack.pack_metadata.path))
 
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
         runner.invoke(main, [UNIFY_CMD, '-i', integration.path, '-o', integration.path], catch_exceptions=True)
     # Verifying the unified file data
-    assert "**Email**: [support1@test.com]" in PARTNER_UNIFY["detaileddescription"]
-    assert "**Email**: [support2@test.com]" in PARTNER_UNIFY["detaileddescription"]
+    assert "**Email**: [support1@test.com]" in PARTNER_UNIFY_EMAIL_LIST["detaileddescription"]
+    assert "**Email**: [support2@test.com]" in PARTNER_UNIFY_EMAIL_LIST["detaileddescription"]
 
 
 def test_unify_partner_contributed_pack_no_url(mocker, repo):
@@ -926,3 +929,26 @@ def test_unify_community_contributed(mocker, repo):
     assert COMMUNITY_UNIFY["display"] == COMMUNITY_DISPLAY_NAME
     assert '#### Integration Author:' in COMMUNITY_UNIFY["detaileddescription"]
     assert 'No support or maintenance is provided by the author.' in COMMUNITY_UNIFY["detaileddescription"]
+
+
+def test_invalid_path_to_unifier(repo):
+    """
+    Given:
+    - Input path to integration YML for unify command.
+
+    When:
+    - Performing unify command.
+
+    Then:
+    - Ensure error message indicating path should be to a directory returned.
+
+    """
+    pack = repo.create_pack('PackName')
+    integration = pack.create_integration('integration', 'bla', INTEGRATION_YAML)
+    integration.create_default_integration()
+
+    with ChangeCWD(pack.repo_path):
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [UNIFY_CMD, '-i', f'{integration.path}/integration.yml'])
+    assert 'You have failed to provide a legal file path, a legal file path should be to a directory of an ' \
+           'integration or a script.' in result.stdout

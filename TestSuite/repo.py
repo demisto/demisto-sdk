@@ -160,10 +160,17 @@ class Repo:
         playbook.yml.update({'id': f'{name}_playbook'})
         playbook.yml.update({'name': f'{name}_playbook'})
 
-        test_playbook = pack.create_test_playbook(f'{name}_test_playbook')
+        test_playbook = pack.create_test_playbook(f'{name}_integration_test_playbook')
         test_playbook.create_default_playbook()
-        test_playbook.yml.update({'id': f'{name}_test_playbook'})
-        test_playbook.yml.update({'name': f'{name}_test_playbook'})
+        test_playbook.yml.update({'id': f'{name}_integration_test_playbook'})
+        test_playbook.yml.update({'name': f'{name}_integration_test_playbook'})
+        integration.yml.update({'tests': [f'{name}_integration_test_playbook']})
+
+        test_playbook = pack.create_test_playbook(f'{name}_script_test_playbook')
+        test_playbook.create_default_playbook()
+        test_playbook.yml.update({'id': f'{name}_script_test_playbook'})
+        test_playbook.yml.update({'name': f'{name}_script_test_playbook'})
+        script.yml.update({'tests': [f'{name}_script_test_playbook']})
 
         return pack
 
@@ -193,3 +200,8 @@ class Repo:
         dir_path = os.path.join(self.path, dir_name)
         os.mkdir(dir_path)
         return dir_path
+
+    def make_file(self, file_name: str, file_content: str):
+        file_path = os.path.join(self.path, file_name)
+        with open(file_path, 'w') as f:
+            f.write(file_content)

@@ -30,6 +30,8 @@ mapping:
     required: true
   hidden:
     type: bool
+  deprecated:
+    type: bool
   starttaskid:
     type: str
     required: true
@@ -321,7 +323,6 @@ schema;arg_filter_schema:
           required: true
         iscontext:
           type: bool
-          required: true
     right:
       type: map
       mapping:

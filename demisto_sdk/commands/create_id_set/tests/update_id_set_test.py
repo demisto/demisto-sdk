@@ -107,12 +107,13 @@ class TestIDSetCreator:
         packs = repo.packs
 
         pack_to_create_id_set_on = repo.create_pack('pack_to_create_id_set_on')
-        pack_to_create_id_set_on.create_integration(yml={'commonfields': {'id': 'id1'}, 'name':
-                                                         'integration to create id set'}, name='integration1')
+        pack_to_create_id_set_on.create_integration(yml={'commonfields': {'id': 'id1'}, 'category': '', 'name':
+                                                         'integration to create id set', 'script': {'type': 'python'}},
+                                                    name='integration1')
         packs.append(pack_to_create_id_set_on)
 
         pack_to_not_create_id_set_on = repo.create_pack('pack_to_not_create_id_set_on')
-        pack_to_not_create_id_set_on.create_integration(yml={'commonfields': {'id2': 'id'}, 'name':
+        pack_to_not_create_id_set_on.create_integration(yml={'commonfields': {'id2': 'id'}, 'category': '', 'name':
                                                              'integration to not create id set'}, name='integration2')
         packs.append(pack_to_not_create_id_set_on)
 
@@ -562,6 +563,7 @@ class TestScripts:
     PACK_SCRIPT_DATA = {
         "DummyScript": {
             "name": "DummyScript",
+            "pack": "DummyPack",
             "file_path": TESTS_DIR + "/test_files/Packs/DummyPack/Scripts/DummyScript/DummyScript.yml",
         }
     }

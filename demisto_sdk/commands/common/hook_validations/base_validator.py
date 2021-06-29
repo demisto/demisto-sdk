@@ -89,7 +89,7 @@ class BaseValidator:
             if suggested_fix:
                 click.secho(formatted_error[:-1], fg="bright_red")
                 if error_code == 'ST109':
-                    click.secho("Please add to the root of the yml a description.\n", fg="bright_red")
+                    click.secho("Please add to the root of the yml.\n", fg="bright_red")
                 else:
                     click.secho(suggested_fix + "\n", fg="bright_red")
 
@@ -109,14 +109,12 @@ class BaseValidator:
     def check_deprecated(self, file_path):
         if file_path.endswith('.yml'):
             yml_dict = get_yaml(file_path)
-            if ('deprecated' in yml_dict and yml_dict['deprecated'] is True) or \
-                    (find_type(file_path) == FileType.PLAYBOOK and 'hidden' in yml_dict and
-                     yml_dict['hidden'] is True):
+            if yml_dict.get('deprecated'):
                 self.add_flag_to_ignore_list(file_path, 'deprecated')
 
     @staticmethod
     def get_metadata_file_content(meta_file_path):
-        with io.open(meta_file_path, mode="r", encoding="utf-8") as file:
+        with io.open(meta_file_path, encoding="utf-8") as file:
             metadata_file_content = file.read()
 
         return json.loads(metadata_file_content)
@@ -178,32 +176,36 @@ class BaseValidator:
         error_data = get_error_object(error_code)
 
         output = {
-            "severity": "warning" if warning else "error",
-            "code": error_code,
-            "message": error_message,
-            "ui": error_data.get('ui_applicable'),
-            'related-field': error_data.get('related_field')
+            'severity': 'warning' if warning else 'error',
+            'errorCode': error_code,
+            'message': error_message,
+            'ui': error_data.get('ui_applicable'),
+            'relatedField': error_data.get('related_field'),
+            'linter': 'validate'
         }
 
+        json_contents = []
         if os.path.exists(self.json_file_path):
-            json_contents = get_json(self.json_file_path)
-
-        else:
-            json_contents = {}
+            existing_json = get_json(self.json_file_path)
+            if isinstance(existing_json, list):
+                json_contents = existing_json
 
         file_type = find_type(file_path)
-        if file_path in json_contents:
-            if output in json_contents[file_path].get('outputs'):
-                return
-            json_contents[file_path]['outputs'].append(output)
-        else:
-            json_contents[file_path] = {
-                "file-type": os.path.splitext(file_path)[1].replace('.', ''),
-                "entity-type": file_type.value if file_type else 'pack',
-                "display-name": get_file_displayed_name(file_path),
-                "outputs": [
-                    output
-                ]
-            }
+        entity_type = file_type.value if file_type else 'pack'
+
+        # handling unified yml image errors
+        if entity_type == FileType.INTEGRATION.value and error_code.startswith('IM'):
+            entity_type = FileType.IMAGE.value
+
+        formatted_error_output = {
+            'filePath': file_path,
+            'fileType': os.path.splitext(file_path)[1].replace('.', ''),
+            'entityType': entity_type,
+            'errorType': 'Settings',
+            'name': get_file_displayed_name(file_path),
+            'linter': 'validate',
+            **output
+        }
+        json_contents.append(formatted_error_output)
         with open(self.json_file_path, 'w') as f:
             json.dump(json_contents, f, indent=4)

@@ -256,7 +256,7 @@ def test_sign_packs_failure(repo, capsys, key, tool):
     from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
         ArtifactsManager, sign_packs)
 
-    cca.logger = logging_setup(3)
+    cca.logger = logging_setup(2)
 
     with ChangeCWD(repo.path):
         with temp_dir() as temp:
@@ -278,4 +278,4 @@ def test_sign_packs_failure(repo, capsys, key, tool):
 
     captured = capsys.readouterr()
     assert 'Failed to sign packs. In order to do so, you need to provide both signature_key and ' \
-           'sign_directory arguments.' in captured.err
+           'sign_directory arguments.' in captured.out

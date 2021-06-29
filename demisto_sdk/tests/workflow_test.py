@@ -1,3 +1,4 @@
+import logging
 import os
 import tempfile
 import uuid
@@ -6,10 +7,16 @@ from subprocess import PIPE, Popen
 from typing import Callable, Generator, Optional, Tuple
 
 import pytest
+from _pytest.monkeypatch import MonkeyPatch
 from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 from ruamel import yaml
 from TestSuite.test_tools import ChangeCWD
+
+
+class TestError(BaseException):
+    __test__ = False
+    pass
 
 
 def list_files(path: Path) -> Generator[str, None, None]:
@@ -46,20 +53,20 @@ class ContentGitRepo:
         self.tmpdir = tempfile.TemporaryDirectory()
         tmpdir = Path(self.tmpdir.name)
         self.content = tmpdir / 'content'
+        logging.debug('Content dir path: %s ' % content_git_repo)
         # In circleCI, the dir is already there
         if os.path.isdir(circle_content_dir):
+            logging.debug('Found circle content dir, copying')
             self.run_command(f"cp -r {circle_content_dir} {tmpdir}", cwd=Path(os.getcwd()))
-        # Local machine - search for content alias
+        # # Local machine - search for content alias
         elif os.environ.get('CONTENT'):
+            logging.debug('Found CONTENT env var, copying.')
             curr_content = os.environ.get('CONTENT')
             self.run_command(f"cp -r {curr_content} {tmpdir}", cwd=Path(os.getcwd()))
-        # Cloning content
+        # # Cloning content
         else:
+            logging.debug('Cloning content repo')
             self.run_command("git clone --depth 1 https://github.com/demisto/content.git", cwd=tmpdir)
-        # Resetting the git branch
-        self.git_cleanup()
-        # pulling if not pulled
-        self.run_command("git pull")
 
     def __del__(self):
         """
@@ -107,20 +114,37 @@ class ContentGitRepo:
         Run all of the following validations:
         * secrets
         * lint -g --no-test
+        * validate -g --staged
         * validate -g
+        * validate -g --include-untracked
         """
         with ChangeCWD(self.content):
             runner = CliRunner(mix_stderr=False)
             self.run_command("git add .")
+            # commit flow - secrets, lint and validate only on staged files without rn
             res = runner.invoke(main, "secrets")
-            try:
-                assert res.exit_code == 0
-                res = runner.invoke(main, "lint -g --no-test")
-                assert res.exit_code == 0
-                res = runner.invoke(main, "validate -g --skip-pack-dependencies --no-docker-checks")
-                assert res.exit_code == 0
-            except AssertionError:
-                raise AssertionError(f"stdout = {res.stdout}\nstderr = {res.stderr}")
+            assert res.exit_code == 0, f"stdout = {res.stdout}\nstderr = {res.stderr}"
+
+            res = runner.invoke(main, "lint -g --no-test")
+            assert res.exit_code == 0, f"stdout = {res.stdout}\nstderr = {res.stderr}"
+
+            res = runner.invoke(
+                main,
+                "validate -g --staged --skip-pack-dependencies --skip-pack-release-notes "
+                "--no-docker-checks --debug-git --allow-skipped"
+            )
+
+            assert res.exit_code == 0, f"stdout = {res.stdout}\nstderr = {res.stderr}"
+
+            # build flow - validate on all changed files
+            res = runner.invoke(main, "validate -g --skip-pack-dependencies --no-docker-checks --debug-git "
+                                      "--allow-skipped")
+            assert res.exit_code == 0, f"stdout = {res.stdout}\nstderr = {res.stderr}"
+
+            # local run - validation with untracked files
+            res = runner.invoke(main, "validate -g --skip-pack-dependencies --no-docker-checks --debug-git -iu "
+                                      "--allow-skipped")
+            assert res.exit_code == 0, f"stdout = {res.stdout}\nstderr = {res.stderr}"
 
     def git_cleanup(self):
         """
@@ -130,6 +154,7 @@ class ContentGitRepo:
             self.run_command("git reset --hard origin/master")
             self.run_command("git clean -f -xd")
             self.run_command("git checkout master")
+            self.run_command("git pull")
 
     def update_rn(self, notes: str = "New rns! Hooray!"):
         """
@@ -160,7 +185,7 @@ class ContentGitRepo:
                 stream.write(content)
 
 
-content_git_repo = None
+content_git_repo: Optional[ContentGitRepo] = None
 
 
 @pytest.fixture(autouse=True)
@@ -176,7 +201,7 @@ def function_setup():
     content_git_repo.create_branch()
 
 
-def init_pack(content_repo: ContentGitRepo):
+def init_pack(content_repo: ContentGitRepo, _):
     """
     Given: Instruction to create a new pack using the sdk.
         Fill metadata: y
@@ -190,20 +215,16 @@ def init_pack(content_repo: ContentGitRepo):
 
     Then: Validate lint, secrets and validate exit code is 0
     """
-    with ChangeCWD(content_repo.content):
-        runner = CliRunner(mix_stderr=False)
-        res = runner.invoke(
-            main, "init --pack --name Sample",
-            input="\n".join(["y", "Sample", "description", "1", "1", "n"])
-        )
-        try:
-            assert res.exit_code == 0
-        except AssertionError:
-            raise AssertionError(f"Could not run the init command.\nstdout={res.stdout}\nstderr={res.stderr}")
-        content_repo.run_validations()
+    runner = CliRunner(mix_stderr=False)
+    res = runner.invoke(
+        main, "init --pack --name Sample",
+        input="\n".join(["y", "Sample", "description", "1", "1", "n", "6.0.0"])
+    )
+    assert res.exit_code == 0, f"Could not run the init command.\nstdout={res.stdout}\nstderr={res.stderr}"
+    content_repo.run_validations()
 
 
-def init_integration(content_repo: ContentGitRepo):
+def init_integration(content_repo: ContentGitRepo, monkeypatch: MonkeyPatch):
     """
     Given: Instruction to create a new integration using the sdk.
         Use ID for as dir name: y
@@ -214,21 +235,21 @@ def init_integration(content_repo: ContentGitRepo):
     """
     runner = CliRunner(mix_stderr=False)
     hello_world_path = content_repo.content / "Packs" / "HelloWorld" / "Integrations"
-    with ChangeCWD(hello_world_path):
-        res = runner.invoke(main, "init --integration -n Sample", input='y')
-        assert res.exit_code == 0
-        content_repo.run_command("git add .")
+    monkeypatch.chdir(hello_world_path)
+    res = runner.invoke(main, "init --integration -n Sample", input="\n".join(["y", "6.0.0", "1"]))
+    assert res.exit_code == 0, f"stdout = {res.stdout}\nstderr = {res.stderr}"
+    content_repo.run_command("git add .")
+    monkeypatch.chdir(content_repo.content)
+    res = runner.invoke(main, "update-release-notes -i Packs/HelloWorld -u revision")
+    assert res.exit_code == 0, f"stdout = {res.stdout}\nstderr = {res.stderr}"
+    try:
+        content_repo.update_rn()
+    except IndexError as exception:
+        raise TestError(f"stdout = {res.stdout}\nstderr = {res.stderr}") from exception
+    content_repo.run_validations()
 
-    with ChangeCWD(content_repo.content):
-        try:
-            res = runner.invoke(main, "update-release-notes -i Packs/HelloWorld -u revision")
-            assert res.exit_code == 0
-        except AssertionError as e:
-            raise AssertionError(f"stdout = {res.stdout}\nstderr = {res.stderr}", e)
-        content_repo.run_validations()
 
-
-def modify_entity(content_repo: ContentGitRepo):
+def modify_entity(content_repo: ContentGitRepo, monkeypatch: MonkeyPatch):
     """
     Given: Modify entity description.
 
@@ -237,25 +258,26 @@ def modify_entity(content_repo: ContentGitRepo):
     Then: Validate lint, secrets and validate exit code is 0
     """
     runner = CliRunner(mix_stderr=False)
-    with ChangeCWD(content_repo.content / "Packs" / "HelloWorld" / "Scripts" / "HelloWorldScript"):
-        # Modify the entity
-        script = yaml.safe_load(open("./HelloWorldScript.yml"))
-        script['args'][0]["description"] = "new description"
-        yaml.safe_dump(script, open("./HelloWorldScript.yml", "w"))
-        content_repo.run_command("git add .")
-    with ChangeCWD(content_repo.content):
-        res = runner.invoke(main, "update-release-notes -i Packs/HelloWorld -u revision")
-        try:
-            assert res.exit_code == 0
-        except AssertionError:
-            raise AssertionError(f"stdout = {res.stdout}\nstderr = {res.stderr}")
-        content_repo.run_command("git add .")
-        # Get the newest rn file and modify it.
+    monkeypatch.chdir(content_repo.content / "Packs" / "HelloWorld" / "Scripts" / "HelloWorldScript")
+    # Modify the entity
+    script = yaml.safe_load(open("./HelloWorldScript.yml"))
+    script['args'][0]["description"] = "new description"
+
+    yaml.safe_dump(script, open("./HelloWorldScript.yml", "w"))
+    content_repo.run_command("git add .")
+    monkeypatch.chdir(content_repo.content)
+    res = runner.invoke(main, "update-release-notes -i Packs/HelloWorld -u revision")
+    assert res.exit_code == 0, f"stdout = {res.stdout}\nstderr = {res.stderr}"
+    content_repo.run_command("git add .")
+    # Get the newest rn file and modify it.
+    try:
         content_repo.update_rn()
-        content_repo.run_validations()
+    except IndexError as exception:
+        raise TestError(f"stdout = {res.stdout}\nstderr = {res.stderr}") from exception
+    content_repo.run_validations()
 
 
-def all_files_renamed(content_repo: ContentGitRepo):
+def all_files_renamed(content_repo: ContentGitRepo, _):
     """
     Given: HelloWorld Integration
 
@@ -265,26 +287,24 @@ def all_files_renamed(content_repo: ContentGitRepo):
     """
     path_to_hello_world_pack = Path("Packs") / "HelloWorld" / "Integrations" / "HelloWorld"
     hello_world_path = content_repo.content / path_to_hello_world_pack
-
     # rename all files in dir
     for file in list_files(hello_world_path):
-        new_file = file.replace('HelloWorld', 'Hello_World')
+        new_file = file.replace('HelloWorld', 'helloworld')
         if not file == new_file:
             content_repo.run_command(
                 f"git mv {path_to_hello_world_pack / file} {path_to_hello_world_pack / new_file}"
             )
-    with ChangeCWD(content_repo.content):
-        runner = CliRunner(mix_stderr=False)
-        res = runner.invoke(main, "update-release-notes -i Packs/HelloWorld -u revision")
-        try:
-            assert res.exit_code == 0
-        except AssertionError:
-            raise AssertionError(f"stdout = {res.stdout}\nstderr = {res.stderr}")
+    runner = CliRunner(mix_stderr=False)
+    res = runner.invoke(main, "update-release-notes -i Packs/HelloWorld -u revision")
+    assert res.exit_code == 0, f"stdout = {res.stdout}\nstderr = {res.stderr}"
+    try:
         content_repo.update_rn()
+    except IndexError as exception:
+        raise TestError(f"stdout = {res.stdout}\nstderr = {res.stderr}") from exception
     content_repo.run_validations()
 
 
-def rename_incident_field(content_repo: ContentGitRepo):
+def rename_incident_field(content_repo: ContentGitRepo, _):
     """
     Given: Incident field in HelloWorld pack.
 
@@ -293,17 +313,20 @@ def rename_incident_field(content_repo: ContentGitRepo):
     Then: Validate lint, secrets and validate exit code is 0
 
     """
-    with ChangeCWD(content_repo.content):
-        hello_world_incidentfields_path = Path("Packs/HelloWorld/IncidentFields/")
-        curr_incident_field = hello_world_incidentfields_path / "incidentfield-Hello_World_ID.json"
+    hello_world_incidentfields_path = Path("Packs/HelloWorld/IncidentFields/")
+    curr_incident_field = hello_world_incidentfields_path / "incidentfield-Hello_World_ID.json"
 
-        content_repo.run_command(
-            f"git mv {curr_incident_field} {hello_world_incidentfields_path / 'incidentfield-new.json'}"
-        )
-        runner = CliRunner(mix_stderr=False)
-        runner.invoke(main, "update-release-notes -i Packs/HelloWorld -u revision")
+    content_repo.run_command(
+        f"git mv {curr_incident_field} {hello_world_incidentfields_path / 'incidentfield-new.json'}"
+    )
+    runner = CliRunner(mix_stderr=False)
+    res = runner.invoke(main, "update-release-notes -i Packs/HelloWorld -u revision")
+    assert res.exit_code == 0, f"stdout = {res.stdout}\nstderr = {res.stderr}"
+    try:
         content_repo.update_rn()
-        content_repo.run_validations()
+    except IndexError as exception:
+        raise TestError(f"stdout = {res.stdout}\nstderr = {res.stderr}") from exception
+    content_repo.run_validations()
 
 
 @pytest.mark.parametrize("function", [
@@ -313,11 +336,12 @@ def rename_incident_field(content_repo: ContentGitRepo):
     all_files_renamed,
     rename_incident_field
 ])
-def test_workflow_by_sequence(function: Callable):
+def test_workflow_by_sequence(function: Callable, monkeypatch: MonkeyPatch):
     """
     Pytest will execute tests in parallel. This function ensures the tests will run by sequence.
     Args:
         function: A test to run
+        monkeypatch: A pytest's mocker object. Used to change working directory.
 
     Workflow:
         The tests will use ContentGitRepo as a base content repository.
@@ -327,12 +351,12 @@ def test_workflow_by_sequence(function: Callable):
         Create/Modify files:
             The test will create new files or will modify them.
         Run Demisto-SDK commands:
-            Will run any tested demisto-sdk functionality. as the init command and update-release-notes.
-        Run validations:
+            Will run any tested demisto-sdk functionality. as the init com
             Will run all validation with expected the test to pass.
             * secrets
             * lint -g --no-test
             * validate -g
     """
     global content_git_repo
-    function(content_git_repo)
+    monkeypatch.chdir(content_git_repo.content)  # type: ignore
+    function(content_git_repo, monkeypatch)

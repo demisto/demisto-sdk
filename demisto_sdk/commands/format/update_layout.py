@@ -37,7 +37,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
                  verbose: bool = False,
                  **kwargs):
         super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
-                         verbose=verbose)
+                         verbose=verbose, **kwargs)
 
         # layoutscontainer kinds are unique fields to containers, and shouldn't be in layouts
         self.is_container = any(self.data.get(kind) for kind in LAYOUTS_CONTAINER_KINDS)
@@ -104,6 +104,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         self.set_fromVersion(from_version=VERSION_6_0_0)
         self.set_group_field()
         self.layoutscontainer__set_output_path()
+        self.update_id()
 
     def layoutscontainer__set_output_path(self):
         output_basename = os.path.basename(self.output_file)

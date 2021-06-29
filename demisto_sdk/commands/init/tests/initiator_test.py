@@ -488,7 +488,7 @@ def test_script_init(monkeypatch, initiator, tmpdir):
         - Ensure script directory with the desired script name is created successfully.
         - Ensure script directory contain all files.
     """
-    monkeypatch.setattr('builtins.input', generate_multiple_inputs(deque(['6.0.0'])))
+    monkeypatch.setattr('builtins.input', lambda _: '6.0.0')
     temp_pack_dir = os.path.join(tmpdir, PACK_NAME)
     os.makedirs(temp_pack_dir, exist_ok=True)
 

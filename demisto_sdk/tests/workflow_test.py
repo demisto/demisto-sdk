@@ -218,7 +218,7 @@ def init_pack(content_repo: ContentGitRepo, _):
     runner = CliRunner(mix_stderr=False)
     res = runner.invoke(
         main, "init --pack --name Sample",
-        input="\n".join(["y", "Sample", "description", "1", "1", "n"])
+        input="\n".join(["y", "Sample", "description", "1", "1", "n", "6.0.0"])
     )
     assert res.exit_code == 0, f"Could not run the init command.\nstdout={res.stdout}\nstderr={res.stderr}"
     content_repo.run_validations()
@@ -236,7 +236,7 @@ def init_integration(content_repo: ContentGitRepo, monkeypatch: MonkeyPatch):
     runner = CliRunner(mix_stderr=False)
     hello_world_path = content_repo.content / "Packs" / "HelloWorld" / "Integrations"
     monkeypatch.chdir(hello_world_path)
-    res = runner.invoke(main, "init --integration -n Sample", input="\n".join(["y", "1"]))
+    res = runner.invoke(main, "init --integration -n Sample", input="\n".join(["y", "6.0.0", "1"]))
     assert res.exit_code == 0, f"stdout = {res.stdout}\nstderr = {res.stderr}"
     content_repo.run_command("git add .")
     monkeypatch.chdir(content_repo.content)

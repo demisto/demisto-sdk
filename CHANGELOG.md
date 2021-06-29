@@ -4,7 +4,7 @@
 * Fixed an issue where running **init** command without filling the metadata file.
 * Added the *--docker-timeout* flag in the **lint** command to control the request timeout for the Docker client.
 * Fixed an issue where **update-release-notes** command added only one docker image release notes entry for release notes file, and not for every entity whom docker image was updated.
-* Added a validation to ensure that incident/indicator fields names starts with their pack name in the **validate** command.
+* Added a validation to ensure that incident/indicator fields names starts with their pack name in the **validate** command. (Checked only for new files and only when using git *-g*)
 * Updated the **find-dependencies** command to return the 'dependencies' according the layout type ('incident', 'indicator').
 * Enhanced the "vX" display name validation for scripts and integrations in the **validate** command to check for every versioned script or integration, and not only v2.
 * Added the *--fail-duplicates* flag for the **create-id-set** command which will fail the command if duplicates are found.

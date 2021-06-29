@@ -285,7 +285,9 @@ def unify(**kwargs):
 )
 @click.option('-i', '--input',
               help=("The packs to create artifacts for. Optional values are: `all` or "
-                    "csv list of pack names. "), required=True)
+                    "csv list of pack names. "),
+              type=PathsParamType(exists=True, resolve_path=True),
+              required=True)
 @click.option('-o', '--output', help='The destination directory to create the packs.',
               type=click.Path(file_okay=False, resolve_path=True), required=True)
 @click.option('-v', '--content_version', help='The content version in CommonServerPython.', default='0.0.0')
@@ -709,7 +711,7 @@ def upload(**kwargs):
     if kwargs.pop('unify', False):
         pack_path = kwargs['input']
         packs_unifier = PacksUnifier(pack_paths=pack_path, output=tempfile.gettempdir(),
-                                     content_version='0.0.0', zip_all=True, quite_mode=True)
+                                     content_version='0.0.0', zip_all=True, quiet_mode=True)
         packs_zip_path, pack_names = packs_unifier.unify_packs()
         if packs_zip_path is None:
             return EX_FAIL

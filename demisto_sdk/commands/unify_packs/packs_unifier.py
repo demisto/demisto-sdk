@@ -18,23 +18,21 @@ EX_FAIL = 1
 
 class PacksUnifier:
 
-    def __init__(self, pack_paths: str, output: str, content_version: str, zip_all: bool, quite_mode: bool = False):
-        default_args = dict(packs=True, zip=True, cpus=os.cpu_count(), suffix='')
+    def __init__(self, pack_paths: str, output: str, content_version: str, zip_all: bool, quiet_mode: bool = False):
         self.artifacts_manager = PacksManager(
             pack_paths=pack_paths,
             artifacts_path=output,
             content_version=content_version,
             all_in_one_zip=zip_all,
-            quite_mode=quite_mode,
-            **default_args,
+            quiet_mode=quiet_mode,
         )
 
     def unify_packs(self):
-        """
-        Compress the given packs to one zip file or zip for each pack (depended on the zip_all flag)
+        """Compress the given packs to one zip file or zip for each pack (depended on the zip_all flag).
 
-        Returns: tuple (the created zip path or the directory of the pack zips, list of the pack names)
-                 or (None, None) if the pack names are empty
+        Returns:
+            tuple: (the created zip path or the directory of the pack zips, list of the pack names)
+                    or (None, None) if the pack names are empty
 
         """
         if self.artifacts_manager.pack_names:
@@ -46,21 +44,28 @@ class PacksUnifier:
 
 
 class PacksManager(ArtifactsManager):
-    def __init__(self, pack_paths: str, all_in_one_zip: bool, quite_mode: bool, **kwargs):
-        super().__init__(**kwargs)
+    """Managed the work with packs in unify-packs command.
+
+    Attributes:
+        zip_all (bool): Flag indicating whether to zip all the packs in one zip or not.
+        quiet_mode (bool): Flag indicating is in quiet mode or not.
+        output_path (str): The target of the created zip
+
+    """
+
+    def __init__(self, pack_paths: str, all_in_one_zip: bool, quiet_mode: bool, **kwargs):
+        super().__init__(packs=True, zip=True, cpus=1, suffix='', **kwargs)
         self.init_packs(pack_paths)
         self.zip_all = all_in_one_zip
-        self.quite_mode = quite_mode
+        self.quiet_mode = quiet_mode
         self.output_path = f'{self.content_uploadable_zips_path}.zip' if self.zip_all \
             else str(self.content_uploadable_zips_path)
 
     def init_packs(self, pack_paths):
-        """
+        """Init dict that map pack name to Pack object and init also the pack_names property.
 
         Args:
-            pack_paths: CSV str with the pack paths
-
-        init dict that map pack name to Pack object and init also the pack_names property
+            pack_paths (str): CSV str with the pack paths.
 
         """
         self.packs = {}
@@ -78,13 +83,13 @@ class PacksManager(ArtifactsManager):
         self.pack_names = [*self.packs]
 
     def get_relative_pack_path(self, content_object: ContentObject):
-        """
+        """Get the path of the given object relatively from the Packs directory, for example HelloWorld/Scripts.
 
         Args:
-            content_object: the object to get the relative path for
+            content_object (ContentObject): The object to get the relative path for.
 
         Returns:
-            the path of the given object relative from the pack directory, for example HelloWorld/Scripts
+            Path: The relative path.
 
 
         """
@@ -93,19 +98,20 @@ class PacksManager(ArtifactsManager):
                 return content_object.path.relative_to(self.packs[part].path.parent)
 
     def get_base_path(self):
-        """
+        """Override the method from ``ArtifactsManager`` class to return None,
+            as packs may come outside from Content directory.
 
         Returns:
-            None, as packs can came outside from Content directory
+            None.
 
         """
         return None
 
     def get_dir_to_delete(self):
-        """
+        """Get list of directories to delete after the unify process finished.
 
         Returns:
-            the value of ArtifactsManager.get_dir_to_delete and if zip_all is True - also the uploadable_packs dir
+            list: The value from ArtifactsManager.get_dir_to_delete, if zip_all is True - the uploadable_packsalso dir also
         """
 
         result = super().get_dir_to_delete()
@@ -114,42 +120,43 @@ class PacksManager(ArtifactsManager):
         return result
 
     def dump_packs(self):
-        """
-
-        Dump all the packs stored in the packs field
+        """Dump all the packs stored in the packs field
         and will print summery according to the quit_mode field
 
         """
         reports = []
-        # we quite the outputs and in case we want the output - a summery will be printed
-        with QuiteModeController(quite_logger=True, quite_output=True), PacksDirsHandler(self):
+        # we quiet the outputs and in case we want the output - a summery will be printed
+        with QuietModeController(quiet_logger=True, quiet_output=True), PacksDirsHandler(self):
             for pack_name in self.pack_names:
                 if pack_name not in IGNORED_PACKS:
                     reports.append(dump_pack(self, self.packs[pack_name]))
 
-        if not self.quite_mode:
+        if not self.quiet_mode:
             logger = logging.getLogger('demisto-sdk')
             for report in reports:
                 logger.info(report.to_str(self.get_base_path()))
 
 
-class QuiteModeController:
-    """
-    Quite mode controller
-    in entry will quite the stdout and the logger according ti the flag passed to the constructor
-    and in exit will return to the previous status of both the stdout and logger
+class QuietModeController:
+    """Control a quiet mode for loggers and stdout.
+
+    Attributes:
+        quiet_modes (dict): Dict with bool flags for the various outputs (logger, stdout).
+        old_stdout (TextIO): The previous target of the system stdout.
+        logger (logging.Logger): The active logger.
+        prev_logger_level (int): The previous log level before quiet mode was activated.
     """
 
-    def __init__(self, quite_logger: bool, quite_output):
-        self.quite_modes = dict(quite_logger=quite_logger, quite_output=quite_output)
+    def __init__(self, quiet_logger: bool, quiet_output):
+        self.quiet_modes = dict(quiet_logger=quiet_logger, quiet_output=quiet_output)
         self.old_stdout = sys.stdout
         self.logger = logging.getLogger('demisto-sdk')
         self.prev_logger_level = self.logger.getEffectiveLevel()
 
     def __enter__(self):
-        if self.quite_modes['quite_output']:
+        if self.quiet_modes['quiet_output']:
             sys.stdout = open(os.devnull, 'w')
-        if self.quite_modes['quite_logger']:
+        if self.quiet_modes['quiet_logger']:
             self.logger.setLevel(logging.ERROR)
 
     def __exit__(self, exc_type, exc_val, exc_tb):

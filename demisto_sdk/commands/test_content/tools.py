@@ -16,7 +16,7 @@ def update_server_configuration(client, server_configuration,
         client (demisto_client): The configured client to use.
         server_configuration (dict): The server configuration to be added
         error_msg (str): The error message
-        logging_manager (): Logging manager object
+        logging_manager (logging.Logger): Logging manager object
         config_keys_to_delete (set): The server configuration keys to be deleted
 
     Returns:

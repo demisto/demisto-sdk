@@ -259,7 +259,7 @@ class Pack:
         # turn off the sign check
         # upload
         # turn on the check
-        logger.info('turn off the server verification for signed packs')
+        logger.info('Turn off the server verification for signed packs')
         _, _, prev_conf = tools.update_server_configuration(client=client,
                                                             server_configuration={PACK_VERIFY_KEY: 'false'},
                                                             error_msg='Can not turn off the pack verification')
@@ -277,7 +277,7 @@ class Pack:
                 else:
                     config_keys_to_delete = {PACK_VERIFY_KEY}
 
-                logger.info('setting the server verification to be as previously')
+                logger.info('Setting the server verification to be as previously')
                 tools.update_server_configuration(client=client,
                                                   server_configuration=config_keys_to_update,
                                                   config_keys_to_delete=config_keys_to_delete,

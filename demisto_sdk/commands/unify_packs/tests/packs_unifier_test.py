@@ -10,13 +10,11 @@ from demisto_sdk.__main__ import unify_packs
 from demisto_sdk.commands.common.tools import src_root
 from demisto_sdk.commands.upload import uploader
 from demisto_sdk.commands.upload.uploader import Uploader
+from demisto_sdk.tests.constants_test import PACK_TARGET
 from packaging.version import parse
 
 UNIT_TEST_DATA = (src_root() / 'commands' / 'unify_packs' / 'tests' / 'data')
-TEST_DATA = src_root() / 'tests' / 'test_files'
-TEST_CONTENT_REPO = TEST_DATA / 'content_slim'
-TEST_PACK_DIR = src_root() / 'Packs'
-TEST_PACK_PATH = src_root().parent / 'Packs' / 'TestPack'
+TEST_PACK_PATH = Path(PACK_TARGET)
 
 
 @contextmanager

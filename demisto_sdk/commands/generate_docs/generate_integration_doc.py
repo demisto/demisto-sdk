@@ -433,6 +433,8 @@ def disable_md_autolinks(markdown: str) -> str:
     Returns:
         str: processed markdown
     """
+    if not markdown:
+        return markdown
     return re.sub(r'\b(?<!\)\[)(https?)://([\w\d]+?\.[\w\d]+?)\b', r'\1:<span>//</span>\2', markdown, flags=re.IGNORECASE)
 
 

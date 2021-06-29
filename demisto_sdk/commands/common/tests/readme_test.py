@@ -33,7 +33,6 @@ MDX_SKIP_NPM_MESSAGE = 'Required npm modules are not installed. To run this test
 @pytest.mark.parametrize("current, answer", README_INPUTS)
 def test_is_file_valid(mocker, current, answer):
     readme_validator = ReadMeValidator(current)
-    readme_validator.stop_mdx_server()
     valid = readme_validator.are_modules_installed_for_verify(readme_validator.content_path)
     if not valid:
         pytest.skip('skipping mdx test. ' + MDX_SKIP_NPM_MESSAGE)
@@ -60,7 +59,9 @@ def test_is_file_valid_mdx_server(mocker, current, answer):
         return
     mocker.patch.dict(os.environ, {'DEMISTO_README_VALIDATION': 'yes'})
     assert readme_validator.is_valid_file() is answer
+    print('0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000')
     assert ReadMeValidator._MDX_SERVER_PROCESS is not None
+    print('0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000')
     ReadMeValidator.stop_mdx_server()
 
 

@@ -419,6 +419,23 @@ def get_previous_version_differences(new_integration_path, previous_integration_
     return differences_section
 
 
+def disable_md_autolinks(markdown: str) -> str:
+    """Disable auto links that markdown clients (such as xosar.pan.dev) auto create. This behaviour is more
+    consistent with how the Server works were links are only created for explicitly defined links.
+    We take: https//lgtm.com/rules/9980089 and change to: https:<span>//</span>lgtm.com/rules/9980089
+    Note that we don't want to change legitimate md links of the form: (link)[http://test.com]. We avoid
+    legitimate md links by using a negative lookbehind in the regex to make sure before the http match
+    we don't have ")[".
+
+    Args:
+        markdown (str): markdown to process
+
+    Returns:
+        str: processed markdown
+    """
+    return re.sub(r'\b(?<!\)\[)(https?)://([\w\d]+?\.[\w\d]+?)\b', r'\1:<span>//</span>\2', markdown, flags=re.IGNORECASE)
+
+
 def generate_command_example(cmd, cmd_example=None):
     errors = []
     context_example = None
@@ -445,7 +462,7 @@ def generate_command_example(cmd, cmd_example=None):
         ])
     example.extend([
         '#### Human Readable Output',
-        '{}'.format('>'.join(f'\n{md_example}'.splitlines(True))),  # prefix human readable with quote
+        '{}'.format('>'.join(f'\n{disable_md_autolinks(md_example)}'.splitlines(True))),  # prefix human readable with quote
         '',
     ])
 

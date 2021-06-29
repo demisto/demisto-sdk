@@ -2313,26 +2313,27 @@ def test_get_transformers_from_playbook():
     assert 'toUpperCase' in transformers
     assert 'Length' in transformers
 
-    @staticmethod
-    def test_process_mappers__no_types_fields():
-        """
-        Given
-            - An mapper file called classifier-mapper-to-test-no-types-fields.json with incident type
-            related to it
 
-        When
-            - parsing mapper files
+def test_process_mappers__complex_value():
+    """
+    Given
+        - An mapper file called classifier-mapper-to-test-complex-value.json with one transformer and one filter
 
-        Then
-            - parsing all the data from file successfully
-        """
-        test_file = os.path.join(git_path(), 'demisto_sdk', 'commands', 'create_id_set', 'tests',
-                                 'test_data', 'classifier-mapper-to-test-no-types-fields.json')
+    When
+        - parsing mapper files
 
-        res = get_mapper_data(test_file)
-        result = res.get('dummy mapper')
-        assert 'name' in result.keys()
-        assert 'file_path' in result.keys()
-        assert 'fromversion' in result.keys()
-        assert 'incident_types' not in result.keys()
-        assert 'incident_fields' not in result.keys()
+    Then
+        - parsing one filter and one transformer from file successfully
+    """
+    test_file = os.path.join(git_path(), 'demisto_sdk', 'commands', 'create_id_set', 'tests',
+                             'test_data', 'classifier-mapper-to-test-complex-value.json')
+
+    res = get_mapper_data(test_file)
+    result = res.get('dummy mapper')
+    transformers = result.get('transformers')
+    filters = result.get('filters')
+    assert len(transformers) == 1
+    assert 'toUpperCase' in transformers
+    assert len(filters) == 1
+    assert 'isEqualString' in filters
+

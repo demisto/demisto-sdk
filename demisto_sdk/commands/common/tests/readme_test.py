@@ -58,9 +58,7 @@ def test_is_file_valid_mdx_server(mocker, current, answer):
         return
     mocker.patch.dict(os.environ, {'DEMISTO_README_VALIDATION': 'yes'})
     assert readme_validator.is_valid_file() is answer
-    print('0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000')
     assert ReadMeValidator._MDX_SERVER_PROCESS is not None
-    print('0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000')
     ReadMeValidator.stop_mdx_server()
 
 

@@ -67,7 +67,8 @@ from demisto_sdk.commands.common.tools import (find_type, get_api_module_ids,
                                                get_pack_ignore_file_path,
                                                get_pack_name,
                                                get_pack_names_from_files,
-                                               get_yaml, open_id_set_file)
+                                               get_yaml, open_id_set_file,
+                                               print_error)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from git import InvalidGitRepositoryError
 from packaging import version
@@ -1163,6 +1164,8 @@ class ValidateManager:
 
                 except MissingSectionHeaderError:
                     pass
+            else:
+                print_error(f'Could not find pack-ignore file at path {pack_ignore_path}')
 
         return ignored_errors_list
 

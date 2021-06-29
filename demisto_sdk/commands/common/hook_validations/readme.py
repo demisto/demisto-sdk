@@ -285,7 +285,7 @@ class ReadMeValidator(BaseValidator):
         error_list = []
         should_print_error = not is_pack_readme  # print error if its not pack readme
         absolute_links = re.findall(
-            r'(\!\[.*?\]|src\=)(\(|\")(https://(raw.githubusercontent|github).com/demisto/content/.*?)(\)|\")', self.readme_content,
+            r'(\!\[.*?\]|src\=)(\(|\")(https://(raw\.githubusercontent|github).com/demisto/content/.*?)(\)|\")', self.readme_content,
             re.IGNORECASE)
 
         if absolute_links:
@@ -295,13 +295,16 @@ class ReadMeValidator(BaseValidator):
                 except IndexError:
                     continue
                 img_url = img_url.strip('()')
-                response = requests.get(img_url, verify=False, timeout=10)
-                if response.status_code != 200:
-                    error_message, error_code = Errors.invalid_readme_image_absolute_path_error(img_url)
-                    formatted_error = \
-                        self.handle_error(error_message, error_code, file_path=self.file_path,
-                                          should_print=should_print_error)
-                    error_list.append(formatted_error)
+                try:
+                    response = requests.get(img_url, verify=False, timeout=10)
+                    if response.status_code != 200:
+                        error_message, error_code = Errors.invalid_readme_image_absolute_path_error(img_url)
+                        formatted_error = \
+                            self.handle_error(error_message, error_code, file_path=self.file_path,
+                                              should_print=should_print_error)
+                        error_list.append(formatted_error)
+                except requests.HTTPError as ex:
+                    raise Exception(f'Failed reaching to integration doc link {img_url} - {ex}')
         return error_list
 
     def verify_no_empty_sections(self) -> bool:

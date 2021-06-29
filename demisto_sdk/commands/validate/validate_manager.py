@@ -13,7 +13,6 @@ from demisto_sdk.commands.common.constants import (API_MODULES_PACK,
                                                    OLDEST_SUPPORTED_VERSION,
                                                    PACKS_DIR,
                                                    PACKS_PACK_META_FILE_NAME,
-                                                   PACKS_README_FILE_NAME,
                                                    TESTS_AND_DOC_DIRECTORIES,
                                                    FileType)
 from demisto_sdk.commands.common.content import Content

@@ -1,5 +1,6 @@
 # Changelog
 * Added to `pylint` summary an indication if a test was skipped.
+* Added to the **init** command the option to specify fromversion.
 * Fixed an issue where running **init** command without filling the metadata file.
 * Added the *--docker-timeout* flag in the **lint** command to control the request timeout for the Docker client.
 

@@ -1533,7 +1533,7 @@ def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=
             dict2_from_version < dict1_to_version <= dict2_to_version,  # will catch (C, B), (C, A)
         ]):
             print_warning('The following {} have the same ID ({}) and their versions overlap: '
-                          '"1.{}-{}", "2.{}-{}".'.format(object_type, id_to_check, dict1_from_version, dict1_to_version,
+                          '1) "{}-{}", 2) "{}-{}".'.format(object_type, id_to_check, dict1_from_version, dict1_to_version,
                                                          dict2_from_version, dict2_to_version))
             return True
 

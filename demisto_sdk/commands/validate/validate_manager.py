@@ -1163,6 +1163,8 @@ class ValidateManager:
 
                 except MissingSectionHeaderError:
                     pass
+            else:
+                click.secho(f'Could not find pack-ignore file at path {pack_ignore_path}', fg="bright_red")
 
         return ignored_errors_list
 

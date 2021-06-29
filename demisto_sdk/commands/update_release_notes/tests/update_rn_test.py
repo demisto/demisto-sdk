@@ -512,7 +512,7 @@ class TestRNUpdate(unittest.TestCase):
                              added_files=set())
 
         desc = update_rn.build_rn_desc(_type=FileType.TEST_SCRIPT, content_name='Hello World Test', desc='Test description',
-                                       is_new_file=True, text='', from_version='5.5.0')
+                                       is_new_file=True, text='', from_version='5.5.0', docker_image=None)
         assert '(Available from Cortex XSOAR 5.5.0).' in desc
 
     def test_build_rn_desc_old_file(self):
@@ -530,7 +530,7 @@ class TestRNUpdate(unittest.TestCase):
                              added_files=set())
 
         desc = update_rn.build_rn_desc(_type=FileType.TEST_SCRIPT, content_name='Hello World Test', desc='Test description',
-                                       is_new_file=False, text='', from_version='5.5.0')
+                                       is_new_file=False, text='', from_version='5.5.0', docker_image=None)
         assert '(Available from Cortex XSOAR 5.5.0).' not in desc
 
     def test_build_rn_template_with_fromversion(self):
@@ -558,24 +558,6 @@ class TestRNUpdate(unittest.TestCase):
         assert '(Available from Cortex XSOAR 5.0.0).' in desc
         assert '(Available from Cortex XSOAR 5.5.0).' in desc
         assert '(Available from Cortex XSOAR 6.0.0).' in desc
-
-    @mock.patch('demisto_sdk.commands.update_release_notes.update_rn.get_pack_name')
-    def test_get_pack_name_fails(self, mock_master):
-        """
-            Given
-                - Pack path for update release notes
-            When
-                - get_pack_name tool function could not extract the pack name
-            Then
-               - Pack name is None and system exit occurs
-            """
-        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
-        mock_master.return_value = None
-        with pytest.raises(SystemExit) as e:
-            UpdateRN(pack_path="Packs/Test", update_type='minor', modified_files_in_pack={
-                'Packs/Test/Integrations/Test.yml'}, added_files=set('Packs/Test/some_added_file.py'))
-        assert e.type == SystemExit
-        assert e.value.code == 1
 
     @mock.patch.object(UpdateRN, 'bump_version_number')
     @mock.patch.object(UpdateRN, 'is_bump_required')
@@ -759,8 +741,7 @@ class TestRNUpdateUnit:
                              added_files=set())
         filepath = os.path.join(TestRNUpdate.FILES_PATH, 'ReleaseNotes/1_1_1.md')
         md_string = '### Test'
-        update_rn.create_markdown(release_notes_path=filepath, rn_string=md_string, changed_files={},
-                                  docker_image_name=None)
+        update_rn.create_markdown(release_notes_path=filepath, rn_string=md_string, changed_files={})
 
     def test_update_existing_rn(self, mocker):
         """
@@ -1037,19 +1018,16 @@ class TestRNUpdateUnit:
             pack_data = json.load(file)
         mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.run_command',
                      return_value='+  dockerimage:python/test:1243')
-        mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.pack_name_to_path',
-                     return_value='demisto_sdk/commands/update_release_notes/tests_data/Packs/Test')
         mocker.patch.object(UpdateRN, 'is_bump_required', return_value=False)
         mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value=pack_data)
-        mocker.patch.object(UpdateRN, 'build_rn_template', return_value='##### Test')
         mocker.patch.object(UpdateRN, 'identify_changed_file_type', return_value=('Test', FileType.INTEGRATION))
         mocker.patch.object(UpdateRN, 'return_release_notes_path',
                             return_value='demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes'
                                          '/1_1_0.md')
         mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
 
-        client = UpdateRN(pack_path="Packs/Test", update_type='minor',
-                          modified_files_in_pack={'Packs/Test/Integrations/Test.yml'},
+        client = UpdateRN(pack_path="demisto_sdk/commands/update_release_notes/tests_data/Packs/Test",
+                          update_type='minor', modified_files_in_pack={'Packs/Test/Integrations/Test.yml'},
                           added_files=set())
         client.execute_update()
         with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md', 'r') as file:
@@ -1111,8 +1089,6 @@ class TestRNUpdateUnit:
             pack_data = json.load(file)
         mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.run_command',
                      return_value='+  type:True')
-        mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.pack_name_to_path',
-                     return_value='demisto_sdk/commands/update_release_notes/tests_data/Packs/Test')
         mocker.patch.object(UpdateRN, 'is_bump_required', return_value=True)
         mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value=pack_data)
         mocker.patch.object(UpdateRN, 'get_display_name', return_value='Test')
@@ -1122,8 +1098,9 @@ class TestRNUpdateUnit:
                                                                                 '/Packs/release_notes/1_1_0.md')
         mocker.patch.object(UpdateRN, 'identify_changed_file_type', return_value=('Test', FileType.INTEGRATION))
         mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
-        client = UpdateRN(pack_path="Packs/Test", update_type='minor', modified_files_in_pack={
-            'Packs/Test/Integrations/Test.yml'}, added_files=set('Packs/Test/some_added_file.py'))
+        client = UpdateRN(pack_path="demisto_sdk/commands/update_release_notes/tests_data/Packs/Test",
+                          update_type='minor', modified_files_in_pack={
+                              'Packs/Test/Integrations/Test.yml'}, added_files=set('Packs/Test/some_added_file.py'))
         client.execute_update()
         with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md', 'r') as file:
             RN = file.read()
@@ -1146,8 +1123,6 @@ class TestRNUpdateUnit:
             pack_data = json.load(file)
         mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.run_command',
                      return_value='+  dockerimage:python/test:1243')
-        mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.pack_name_to_path',
-                     return_value='demisto_sdk/commands/update_release_notes/tests_data/Packs/Test')
         mocker.patch.object(UpdateRN, 'is_bump_required', return_value=False)
         mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value=pack_data)
         mocker.patch.object(UpdateRN, 'build_rn_template', return_value='##### Test')
@@ -1157,8 +1132,8 @@ class TestRNUpdateUnit:
                                          '/1_1_0.md')
         mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
 
-        client = UpdateRN(pack_path="Packs/Test", update_type='minor',
-                          modified_files_in_pack={'Packs/Test/Integrations/Test.yml'},
+        client = UpdateRN(pack_path="demisto_sdk/commands/update_release_notes/tests_data/Packs/Test",
+                          update_type='minor', modified_files_in_pack={'Packs/Test/Integrations/Test.yml'},
                           added_files={'Packs/Test/Integrations/Test.yml'})
         client.execute_update()
         with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md', 'r') as file:
@@ -1178,30 +1153,6 @@ class TestRNUpdateUnit:
          '#### Integrations\n##### BitcoinAbuse Feed\n- %%UPDATE_RN%%\n- Updated the Docker image '
          'to: *demisto/python3:3.9.1.149616*.\n', True)
     ]
-
-    @pytest.mark.parametrize('rn, docker_image, expected_rn, expected_existing_rn_changed', docker_image_test_data)
-    def test_rn_with_docker_image(self, rn, docker_image, expected_rn, expected_existing_rn_changed):
-        """
-        Given
-        - Case a: Release notes existed, did not contain updated docker image notes, docker image was not updated
-        - Case b: Release notes existed, did not contain updated docker image notes, docker image was updated
-        - Case c: Release notes existed, contains updated docker image notes, docker image was not updated since
-                  last release notes.
-        - Case d: Release notes existed, contains updated docker image notes, docker image was updated again since
-                  last release notes.
-        When
-        - Checking if docker image update occurred.
-
-        Then
-        - Case a: Release notes were not changed, existing_rn_changed is false.
-        - Case b: Release notes were changed with the updated docker image, existing_rn_changed is true.
-        - Case c: Release notes were not changed, existing_rn_changed is false.
-        - Case d: Release notes were changed to most updated docker image, existing_rn_changed is true.
-        """
-        client = UpdateRN(pack_path="Packs/Test", update_type='minor', modified_files_in_pack={
-            'Packs/Test/Integrations/Test.yml'}, added_files=set('Packs/Test/some_added_file.py'))
-        assert client.rn_with_docker_image(rn, docker_image) == expected_rn
-        assert client.existing_rn_changed == expected_existing_rn_changed
 
 
 def test_get_from_version_at_update_rn(integration):
@@ -1244,3 +1195,85 @@ def test_get_display_name(data, answer, mocker):
     client = UpdateRN(pack_path="Packs/Test", update_type='minor', modified_files_in_pack={
         'Packs/Test/Integrations/Test.yml'}, added_files=set('Packs/Test/some_added_file.py'))
     assert client.get_display_name('Packs/Test/test.yml') == answer
+
+
+def test_docker_image_is_added_for_every_integration(mocker, repo):
+    """
+    Given:
+    - Pack to update with release notes.
+
+    When:
+    - First call to update release notes: Two YMLs had their docker image updated.
+    - Second call to update release notes: Two YMLs were updated again.
+
+    Then:
+    - Ensure two entries for update docker image are added to release notes, one for each YML.
+    - Ensure two entries for update docker images are added to release notes, one for each YML, with the
+      newer docker image.
+
+    """
+    yml_mock = {'display': 'test', 'script': {'type': 'python', 'dockerimage': 'demisto/python3:3.9.5.123'}}
+    pack = repo.create_pack('PackName')
+    mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.check_docker_image_changed',
+                 return_value='demisto/python3:3.9.5.124')
+    integration = pack.create_integration('integration', 'bla', yml_mock)
+    integration.create_default_integration()
+    integration.yml.update({'display': 'Sample1'})
+    integration2 = pack.create_integration('integration2', 'bla2', yml_mock)
+    integration2.create_default_integration()
+    integration2.yml.update({'display': 'Sample2'})
+    pack.pack_metadata.write_json({'currentVersion': '0.0.0'})
+    client = UpdateRN(pack_path=str(pack.path), update_type='revision',
+                      modified_files_in_pack={f'{str(integration.path)}/integration.yml',
+                                              f'{str(integration2.path)}/integration2.yml'}, added_files=set())
+    client.execute_update()
+    with open(str(f'{pack.path}/ReleaseNotes/0_0_1.md')) as f:
+        rn_text = f.read()
+    assert rn_text.count('Updated the Docker image to: *demisto/python3:3.9.5.124*.') == 2
+    mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.check_docker_image_changed',
+                 return_value='demisto/python3:3.9.5.125')
+    client = UpdateRN(pack_path=str(pack.path), update_type=None,
+                      modified_files_in_pack={f'{str(integration.path)}/integration.yml',
+                                              f'{str(integration2.path)}/integration2.yml'}, added_files=set())
+    client.execute_update()
+    with open(str(f'{pack.path}/ReleaseNotes/0_0_1.md')) as f:
+        rn_text = f.read()
+    assert rn_text.count('Updated the Docker image to: *demisto/python3:3.9.5.124*.') == 0
+    assert rn_text.count('Updated the Docker image to: *demisto/python3:3.9.5.125*.') == 2
+
+
+HANDLE_EXISTING_RN_WITH_DOCKER_IMAGE_INPUTS = [
+    ('#### Integrations\n##### IBM QRadar v2\n- %%UPDATE_RN%%\n##### IBM QRadar v3\n- %%UPDATE_RN%%',
+     'Integrations', 'demisto/python3:3.9.5.21276', 'IBM QRadar v3',
+     '#### Integrations\n##### IBM QRadar v2\n- %%UPDATE_RN%%\n##### IBM QRadar v3\n- Updated the Docker image to: '
+     '*demisto/python3:3.9.5.21276*.\n- %%UPDATE_RN%%'),
+    ('#### Integrations\n##### IBM QRadar v3\n- %%UPDATE_RN%%',
+     'Integrations', 'demisto/python3:3.9.5.21276', 'IBM QRadar v3',
+     '#### Integrations\n##### IBM QRadar v3\n- Updated the Docker image to: '
+     '*demisto/python3:3.9.5.21276*.\n- %%UPDATE_RN%%')]
+
+
+@pytest.mark.parametrize('new_rn, header_by_type, docker_image, content_name, expected',
+                         HANDLE_EXISTING_RN_WITH_DOCKER_IMAGE_INPUTS)
+def test_handle_existing_rn_with_docker_image(new_rn: str, header_by_type: str, docker_image: str,
+                                              content_name: str, expected: str):
+    """
+    Given:
+    - 'new_rn': new RN.
+    - 'header_by_type': Header of the RN to add docker image to, e.g 'Integrations', 'Scripts'
+    - 'docker_image': Docker image to add
+    - 'content_name': The content name to add the docker image entry to, e.g integration name, script name.
+
+    When:
+    - Adding docker image entry to the relevant RN.
+    Case a: Two integrations, adding docker image only to QRadar v3.
+    Case b: One integration.
+
+    Then:
+    - Ensure expected entry of docker image is added in the expected spot.
+    Case a: Added only to QRadar v3 but not to QRadar v2.
+    Case b: Added to the integration as expected.
+
+    """
+    assert UpdateRN.handle_existing_rn_with_docker_image(new_rn, header_by_type, docker_image,
+                                                         content_name) == expected

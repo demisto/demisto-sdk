@@ -879,6 +879,38 @@ class TestDependsOnPlaybook:
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
+    def test_collect_playbooks_dependencies_on_filter(self, id_set):
+        """
+        Given
+            - A playbook entry in the id_set with filter from the CommonScripts pack.
+            -
+
+        When
+            - Building dependency graph for pack.
+
+        Then
+            - Extracting the packs that the playbook depends on.
+        """
+        expected_result = {("CommonScripts", True)}
+
+        test_input = [
+            {
+                'Dummy Playbook': {
+                    'name': 'Dummy Playbook',
+                    'file_path': 'dummy_path',
+                    'fromversion': 'dummy_version',
+                    "filters": ["IsInCidrRanges"]
+                }
+            },
+        ]
+
+        found_result = PackDependencies._collect_playbooks_dependencies(pack_playbooks=test_input,
+                                                                        id_set=id_set,
+                                                                        verbose=False,
+                                                                        )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
 
 class TestDependsOnLayout:
     def test_collect_layouts_dependencies(self, id_set):
@@ -1194,6 +1226,36 @@ class TestDependsOnClassifiers:
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
+    def test_collect_classifier_dependencies_on_filter(self, id_set):
+        """
+        Given
+            - A classifier entry in the id_set with filter from the CommonScripts pack.
+        When
+            - Building dependency graph for pack.
+        Then
+            - Extracting the packs that the classifier depends on a mandatory dependencies.
+        """
+        expected_result = {("CommonScripts", True)}
+
+        test_input = [
+            {
+                "Dummy Classifier": {
+                    "name": "Dummy Classifier",
+                    "fromversion": "5.0.0",
+                    "pack": "dummy_pack",
+                    "filters": ["IsInCidrRanges"]
+                }
+            }
+        ]
+
+        found_result = PackDependencies._collect_classifiers_dependencies(
+            pack_classifiers=test_input,
+            id_set=id_set,
+            verbose=False,
+        )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
 
 class TestDependsOnMappers:
     def test_collect_mapper_dependencies(self, id_set):
@@ -1254,6 +1316,36 @@ class TestDependsOnMappers:
                     "incident_types": [
                         "Authentication"
                     ]
+                }
+            }
+        ]
+
+        found_result = PackDependencies._collect_mappers_dependencies(
+            pack_mappers=test_input,
+            id_set=id_set,
+            verbose=False,
+        )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
+    def test_collect_mapper_dependencies_on_filter(self, id_set):
+        """
+        Given
+            - A mapper entry in the id_set with filter from the CommonScripts pack.
+        When
+            - Building dependency graph for pack.
+        Then
+            - Extracting the packs that the mapper depends on a mandatory dependencies.
+        """
+        expected_result = {("CommonScripts", True)}
+
+        test_input = [
+            {
+                "Dummy Mapper": {
+                    "name": "Dummy Mapper",
+                    "fromversion": "5.0.0",
+                    "pack": "dummy_pack",
+                    "filters": ["IsInCidrRanges"]
                 }
             }
         ]

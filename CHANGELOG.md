@@ -4,7 +4,11 @@
 * Fixed an issue where running **init** command without filling the metadata file.
 * Added the *--docker-timeout* flag in the **lint** command to control the request timeout for the Docker client.
 * Fixed an issue where **update-release-notes** command added only one docker image release notes entry for release notes file, and not for every entity whom docker image was updated.
-* Added a validation to ensure that incident/indicator fields names starts with their pack name in the **validate** command.
+* Added a validation to ensure that incident/indicator fields names starts with their pack name in the **validate** command. (Checked only for new files and only when using git *-g*)
+* Updated the **find-dependencies** command to return the 'dependencies' according the layout type ('incident', 'indicator').
+* Enhanced the "vX" display name validation for scripts and integrations in the **validate** command to check for every versioned script or integration, and not only v2.
+* Added the *--fail-duplicates* flag for the **create-id-set** command which will fail the command if duplicates are found.
+* Added to the **generate-docs** command automatic addition to git when a new readme file is created.
 * Added new validation that DBotRole is set for scripts that requires elevated permissions to the `XSOAR-linter` in the **lint** command.
 
 # 1.4.1
@@ -13,13 +17,9 @@
 * Added a validation to ensure integrations are not skipped and at least one test playbook is not skipped for each integration or script.
 * Added to the Content Tests support for `context_print_dt`, which queries the incident context and prints the result as a json.
 * Added new validation for the `xsoar_config.json` file in the **validate** command.
-* Updated the **find-dependencies** command to return the 'dependencies' according the layout type ('incident', 'indicator').
 * Added a version differences section to readme in **generate-docs** command.
 * Added the *--docs-format* flag in the **integration-diff** command to get the output in README format.
 * Added the *--input-old-version* and *--skip-breaking-changes* flags in the **generate-docs** command to get the details for the breaking section and to skip the breaking changes section.
-* Enhanced the `is_valid_file` validation for scripts and integrations in the **validate** command to check for every versioned script or integration, and not only v2.
-* Added the `--fail-duplicates` flag for the **create-id-set** command which will fail the command if duplicates are found.
-* Added to the **generate-docs** command automatic addition to git when a new readme file is created.
 
 # 1.4.0
 * Enable passing a comma-separated list of paths for the `--input` option of the **lint** command.

@@ -40,6 +40,9 @@ files = [
     (Path(f"{XSOAR_LINTER_PY3_INVALID}"), 3.8, 'base', False, 1, [
         "Your script requires elevated permissions. Please add the `runas: DBotRole` to the yml file."
     ], [], True),
+    
+    # -------------------- For Invalid file with support level base and long running False -----------------------
+
     (Path(f"{XSOAR_LINTER_PY3_INVALID}"), 3.8, 'base', False, 1, [
         'Print is found, Please remove all prints from the code.',
         'Sleep is found, Please remove all sleep statements from the code.',

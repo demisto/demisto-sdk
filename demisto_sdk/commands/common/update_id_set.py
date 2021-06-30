@@ -11,10 +11,11 @@ from distutils.version import LooseVersion
 from enum import Enum
 from functools import partial
 from multiprocessing import Pool, cpu_count
-from typing import Callable, Dict, Optional, Tuple, List
+from typing import Callable, Dict, List, Optional, Tuple
 
 import click
 import networkx
+
 from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    COMMON_TYPES_PACK,
                                                    DASHBOARDS_DIR,

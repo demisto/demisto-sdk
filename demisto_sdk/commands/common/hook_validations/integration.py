@@ -3,18 +3,12 @@ import re
 from typing import Dict, Optional
 
 import yaml
-from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES, ENDPOINT_FLEXIBLE_REQUIRED_ARGS,
-                                                   BANG_COMMAND_ARGS_MAPPING,
-                                                   DBOT_SCORES_DICT,
-                                                   DEPRECATED_REGEXES,
-                                                   FEED_REQUIRED_PARAMS,
-                                                   FETCH_REQUIRED_PARAMS,
-                                                   FIRST_FETCH,
-                                                   FIRST_FETCH_PARAM,
-                                                   INTEGRATION_CATEGORIES,
-                                                   IOC_OUTPUTS_DICT, MAX_FETCH,
-                                                   MAX_FETCH_PARAM,
-                                                   PYTHON_SUBTYPES, TYPE_PWSH)
+from demisto_sdk.commands.common.constants import (
+    BANG_COMMAND_ARGS_MAPPING_DICT, BANG_COMMAND_NAMES, DBOT_SCORES_DICT,
+    DEPRECATED_REGEXES, ENDPOINT_FLEXIBLE_REQUIRED_ARGS, FEED_REQUIRED_PARAMS,
+    FETCH_REQUIRED_PARAMS, FIRST_FETCH, FIRST_FETCH_PARAM,
+    INTEGRATION_CATEGORIES, IOC_OUTPUTS_DICT, MAX_FETCH, MAX_FETCH_PARAM,
+    PYTHON_SUBTYPES, TYPE_PWSH)
 from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
                                                 Errors)
@@ -114,7 +108,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.has_no_duplicate_args(),
             self.is_there_separators_in_names(),
             self.name_not_contain_the_type(),
-            self.is_valid_endpoint_command()
+            self.is_valid_endpoint_command(),
 
         ]
 
@@ -322,12 +316,13 @@ class IntegrationValidator(ContentEntityValidator):
             commands = []
         flag = True
         for command in commands:
-            command_name = command.get('name')
+            command_name = command.get('name', '')
             if command_name in BANG_COMMAND_NAMES:
+                command_mapping: dict = BANG_COMMAND_ARGS_MAPPING_DICT[command_name]
                 flag_found_arg = False
                 for arg in command.get('arguments', []):
                     arg_name = arg.get('name')
-                    if arg_name == BANG_COMMAND_ARGS_MAPPING[command_name]['default']:
+                    if arg_name == command_mapping['default']:
                         flag_found_arg = True
                         if arg.get('default') is False:
                             error_message, error_code = Errors.wrong_default_argument(arg_name,
@@ -336,7 +331,7 @@ class IntegrationValidator(ContentEntityValidator):
                                 self.is_valid = False
                                 flag = False
 
-                flag_found_required = BANG_COMMAND_ARGS_MAPPING[command_name].get('required', True)
+                flag_found_required = command_mapping.get('required', True)
                 if not flag_found_arg and flag_found_required:
                     error_message, error_code = Errors.no_default_arg(command_name)
                     if self.handle_error(error_message, error_code, file_path=self.file_path):
@@ -1275,7 +1270,7 @@ class IntegrationValidator(ContentEntityValidator):
             # extracting the specific command from commands.
             endpoint_command = [arg for arg in commands if arg.get('name') == 'endpoint'][0]
             return self._is_valid_endpoint_inputs(endpoint_command, required_arguments=ENDPOINT_FLEXIBLE_REQUIRED_ARGS) \
-                   and self._is_valid_endpoint_outputs(endpoint_command)
+                and self._is_valid_endpoint_outputs(endpoint_command)
 
     def _is_valid_endpoint_inputs(self, command_data, required_arguments):
         """
@@ -1285,7 +1280,7 @@ class IntegrationValidator(ContentEntityValidator):
             true if the inputs are valid.
         """
         endpoint_command_inputs = command_data.get('arguments', [])
-        existing_arguments = set([arg['name'] for arg in endpoint_command_inputs])
+        existing_arguments = {arg['name'] for arg in endpoint_command_inputs}
 
         # checking at least one of the required argument is found as argument
         if not set(required_arguments).intersection(existing_arguments):
@@ -1297,13 +1292,13 @@ class IntegrationValidator(ContentEntityValidator):
                 return False
 
         # checking no other arguments are default argument:
-        default_args = [(arg.get('name'), arg.get('default', False)) for arg in endpoint_command_inputs]
-        default_args = list(filter(lambda x: x[1] == True, default_args))
+        default_args_found = [(arg.get('name'), arg.get('default', False)) for arg in endpoint_command_inputs]
+        default_args_found = list(filter(lambda x: x[1] is True, default_args_found))
+        command_default_arg_map = BANG_COMMAND_ARGS_MAPPING_DICT[command_data.get('name')]
+        default_arg_name = command_default_arg_map['default']
 
-        default_arg_name = BANG_COMMAND_ARGS_MAPPING[command_data.get('name')]['default']
-
-        if (default_arg_name in existing_arguments and default_args != [(default_arg_name, True)]) \
-                or (default_arg_name not in existing_arguments and default_args):
+        if (default_arg_name in existing_arguments and default_args_found != [(default_arg_name, True)]) \
+                or (default_arg_name not in existing_arguments and default_args_found):
             error_message, error_code = Errors.wrong_default_argument(default_arg_name, command_data.get('name'))
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
@@ -1322,16 +1317,9 @@ class IntegrationValidator(ContentEntityValidator):
         reputation_output = IOC_OUTPUTS_DICT.get(command_name)
         if reputation_output and not reputation_output.intersection(context_outputs_paths):
             error_message, error_code = Errors.missing_reputation(command_name, reputation_output,
-                                                                          context_standard)
+                                                                  context_standard)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
                 output_for_reputation_valid = False
 
         return output_for_reputation_valid
-
-
-
-
-
-
-

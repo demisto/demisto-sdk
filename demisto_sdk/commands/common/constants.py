@@ -951,14 +951,16 @@ ACCEPTED_FILE_EXTENSIONS = [
 
 BANG_COMMAND_NAMES = {'file', 'email', 'domain', 'url', 'ip', 'cve', 'endpoint'}
 
-BANG_COMMAND_ARGS_MAPPING = {'file': {'default': 'file',},
-                'email': {'default': 'email'},
-                'domain': {'default': 'domain'},
-                'url': {'default': 'url'},
-                'ip': {'default': 'ip'},
-                'cve': {'default': 'cve_id'},
-                'endpoint': {'default': 'ip', 'required': False}
-                }
+BANG_COMMAND_ARGS_MAPPING_DICT = {
+    'file': {'default': 'file', },
+    'email': {'default': 'email'},
+    'domain': {'default': 'domain'},
+    'url': {'default': 'url'},
+    'ip': {'default': 'ip'},
+    'cve': {'default': 'cve'},
+    'endpoint': {'default': 'ip', 'required': False}
+}
+
 ENDPOINT_FLEXIBLE_REQUIRED_ARGS = ["ip", "id", "hostname"]
 
 GENERIC_COMMANDS_NAMES = BANG_COMMAND_NAMES.union({'send-mail', 'send-notification', 'cve-latest', 'cve-search'})
@@ -975,7 +977,7 @@ IOC_OUTPUTS_DICT = {
     'file': {'File.MD5', 'File.SHA1', 'File.SHA256'},
     'ip': {'IP.Address'},
     'url': {'URL.Data'},
-    'endpoint' : {'Endpoint.Hostname', 'Endpoint.IPAddress', 'Endpoint.ID'}
+    'endpoint': {'Endpoint.Hostname', 'Endpoint.IPAddress', 'Endpoint.ID'}
 }
 XSOAR_SUPPORT = "xsoar"
 XSOAR_AUTHOR = "Cortex XSOAR"

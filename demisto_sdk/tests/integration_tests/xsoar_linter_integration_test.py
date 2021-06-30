@@ -35,7 +35,7 @@ files = [
         "https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
     ], [], False),
 
-    # -------------------- For Invalid file with support level base and long running False -----------------------
+    # -------------------- For Invalid file with support level base and is a script -----------------------
 
     (Path(f"{XSOAR_LINTER_PY3_INVALID}"), 3.8, 'base', False, 1, [
         "Your script requires elevated permissions. Please add the `runas: DBotRole` to the yml file."

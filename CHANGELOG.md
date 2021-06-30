@@ -1,4 +1,5 @@
 # Changelog
+* Added new validation that DBotRole is set for scripts that requires elevated permissions to the `XSOAR-linter` in the **lint** command.
 
 # 1.4.2
 * Added to `pylint` summary an indication if a test was skipped.
@@ -11,7 +12,6 @@
 * Enhanced the "vX" display name validation for scripts and integrations in the **validate** command to check for every versioned script or integration, and not only v2.
 * Added the *--fail-duplicates* flag for the **create-id-set** command which will fail the command if duplicates are found.
 * Added to the **generate-docs** command automatic addition to git when a new readme file is created.
-* Added new validation that DBotRole is set for scripts that requires elevated permissions to the `XSOAR-linter` in the **lint** command.
 
 # 1.4.1
 * When in private repo without `DEMSITO_SDK_GITHUB_TOKEN` configured, get_remote_file will take files from the local origin/master.

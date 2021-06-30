@@ -1042,6 +1042,9 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
             return FileType.REPORT
 
         if 'color' in _dict and 'cliName' not in _dict:  # check against another key to make it more robust
+            if 'object' in _dict:
+                return FileType.OBJECT_TYPE
+
             return FileType.INCIDENT_TYPE
 
         # 'regex' key can be found in new reputations files while 'reputations' key is for the old reputations

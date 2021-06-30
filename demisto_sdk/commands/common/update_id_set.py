@@ -45,8 +45,7 @@ CONTENT_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Cl
 
 ID_SET_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Classifiers',
                    'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
-                   'Layouts', 'Reports', 'Widgets', 'Mappers','ObjectDefinition', 'ObjectTypes', 'ObjectFields',
-                   'ObjectPages']
+                   'Layouts', 'Reports', 'Widgets', 'Mappers', 'ObjectTypes']
 
 
 BUILT_IN_FIELDS = [
@@ -985,6 +984,7 @@ def process_general_items(file_path: str, print_logs: bool, expected_file_types:
     """
     res = []
     try:
+        print(find_type(file_path))
         if find_type(file_path) in expected_file_types:
             if print_logs:
                 print(f'adding {file_path} to id_set')
@@ -1084,8 +1084,33 @@ def get_general_paths(path, pack_to_create):
     files = list()
     for path in path_list:
         files.extend(glob.glob(os.path.join(*path)))
+    print_color(f"files: {files}", LOG_COLORS.WHITE)
 
     return files
+
+
+def get_object_types_paths(path, pack_to_create):
+    """
+
+    """
+    if pack_to_create:
+        path_list = [
+            [pack_to_create, path, '*', '*.json']
+        ]
+
+    else:
+        path_list = [
+            [path, '*'],
+            ['Packs', '*', path, '*', '*.json']
+        ]
+
+    files = list()
+    for path in path_list:
+        files.extend(glob.glob(os.path.join(*path)))
+    print_color(f"files: {files}", LOG_COLORS.WHITE)
+
+    return files
+
 
 def get_object_type_data(path):
     json_data = get_json(path)
@@ -1102,8 +1127,11 @@ def get_object_type_data(path):
     if playbook_id and playbook_id != '':
         data['playbooks'] = playbook_id
 
-    if object and object != '':
+    if object:
+        print_color("object found!!!", LOG_COLORS.GREEN)
         data['object'] = object
+    else:
+        print_color("object not found!!!", LOG_COLORS.RED)
 
     return {id_: data}
 
@@ -1125,6 +1153,7 @@ class IDSetType(Enum):
     INDICATOR_TYPE = 'IndicatorTypes'
     LAYOUTS = 'Layouts'
     PACKS = 'Packs'
+    OBJECT_TYPE = 'ObjectTypes'
 
     @classmethod
     def has_value(cls, value):
@@ -1467,12 +1496,13 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
         # 'ObjectFields', 'ObjectPages'
         if 'ObjectTypes' in objects_to_create:
             print_color("\nStarting iteration over ObjectTypes", LOG_COLORS.GREEN)
+            print_color(f"pack to create: {pack_to_create}", LOG_COLORS.YELLOW)
             for arr in pool.map(partial(process_general_items,
                                         print_logs=print_logs,
                                         expected_file_types=(FileType.OBJECT_TYPE,),
                                         data_extraction_func=get_object_type_data,
                                         ),
-                                get_general_paths(OBJECT_TYPE_DIR, pack_to_create)):
+                                get_object_types_paths(OBJECT_TYPE_DIR, pack_to_create)):
                 object_types_list.extend(arr)
 
         progress_bar.update(1)
@@ -1495,7 +1525,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     new_ids_dict['Widgets'] = sort(widgets_list)
     new_ids_dict['Mappers'] = sort(mappers_list)
     new_ids_dict['Packs'] = packs_dict
-    new_ids_dict['ObjectTypeslist'] = sort(object_types_list)
+    new_ids_dict['ObjectTypes'] = sort(object_types_list)
 
     exec_time = time.time() - start_time
     print_color("Finished the creation of the id_set. Total time: {} seconds".format(exec_time), LOG_COLORS.GREEN)

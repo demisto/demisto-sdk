@@ -11,7 +11,7 @@ from distutils.version import LooseVersion
 from enum import Enum
 from functools import partial
 from multiprocessing import Pool, cpu_count
-from typing import Callable, Dict, Optional, Tuple
+from typing import Callable, Dict, Optional, Tuple, List
 
 import click
 import networkx
@@ -713,8 +713,8 @@ def get_classifier_data(path):
     toversion = json_data.get('toVersion')
     pack = get_pack_name(path)
     incidents_types = set()
-    transformers = []
-    filters = []
+    transformers: List[str] = []
+    filters: List[str] = []
 
     default_incident_type = json_data.get('defaultIncidentType')
     if default_incident_type and default_incident_type != '':
@@ -723,9 +723,11 @@ def get_classifier_data(path):
     for key, value in key_type_map.items():
         incidents_types.add(value)
 
-    complex_value = json_data.get('transformer', {}).get('complex', {})
-    if complex_value:
-        transformers, filters = get_filters_and_transformers_from_complex_value(complex_value)
+    transformer = json_data.get('transformer', {})
+    if transformer is dict:
+        complex_value = transformer.get('complex', {})
+        if complex_value:
+            transformers, filters = get_filters_and_transformers_from_complex_value(complex_value)
 
     data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
     if incidents_types:

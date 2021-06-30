@@ -495,8 +495,8 @@ class PackDependencies:
                     playbook_dependencies.update(pack_dependencies_data)
 
             implementing_scripts = playbook_data.get('implementing_scripts', []) + \
-                                   playbook_data.get('filters', []) + \
-                                   playbook_data.get('transformers', [])
+                playbook_data.get('filters', []) + \
+                playbook_data.get('transformers', [])
 
             # searching for packs of implementing scripts
             playbook_dependencies.update(PackDependencies._differentiate_playbook_implementing_objects(

@@ -1,4 +1,6 @@
 # Changelog
+
+# 1.4.2
 * Added to `pylint` summary an indication if a test was skipped.
 * Added to the **init** command the option to specify fromversion.
 * Fixed an issue where running **init** command without filling the metadata file.

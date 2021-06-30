@@ -26,7 +26,12 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    LAYOUTS_DIR, MAPPERS_DIR,
                                                    REPORTS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
-                                                   WIDGETS_DIR, FileType)
+                                                   WIDGETS_DIR, FileType,
+                                                   OBJECT_DEFINITION_DIR,
+                                                   OBJECT_TYPE_DIR,
+                                                   OBJECT_FIELD_DIR,
+                                                   OBJECT_PAGE_DIR
+                                                   )
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type, get_json,
                                                get_pack_name, get_yaml,
                                                print_color, print_error,
@@ -35,11 +40,14 @@ from demisto_sdk.commands.unify.unifier import Unifier
 
 CONTENT_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
                     'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
-                    'Layouts', 'Reports', 'Widgets', 'Mappers', 'Packs']
+                    'Layouts', 'Reports', 'Widgets', 'Mappers', 'Packs', 'ObjectDefinition', 'ObjectTypes',
+                    'ObjectFields', 'ObjectPages']
 
 ID_SET_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Classifiers',
                    'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
-                   'Layouts', 'Reports', 'Widgets', 'Mappers']
+                   'Layouts', 'Reports', 'Widgets', 'Mappers','ObjectDefinition', 'ObjectTypes', 'ObjectFields',
+                   'ObjectPages']
+
 
 BUILT_IN_FIELDS = [
     "name",
@@ -1079,6 +1087,27 @@ def get_general_paths(path, pack_to_create):
 
     return files
 
+def get_object_type_data(path):
+    json_data = get_json(path)
+
+    id_ = json_data.get('id')
+    name = json_data.get('name', '')
+    fromversion = json_data.get('fromVersion')
+    toversion = json_data.get('toVersion')
+    playbook_id = json_data.get('playbookId')
+    pack = get_pack_name(path)
+    object = json_data.get('object')
+
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
+    if playbook_id and playbook_id != '':
+        data['playbooks'] = playbook_id
+
+    if object and object != '':
+        data['object'] = object
+
+    return {id_: data}
+
+
 
 class IDSetType(Enum):
     PLAYBOOK = 'playbooks'
@@ -1243,6 +1272,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     reports_list = []
     widgets_list = []
     mappers_list = []
+    object_types_list = []
     packs_dict: Dict[str, Dict] = {}
 
     pool = Pool(processes=int(cpu_count()))
@@ -1433,6 +1463,20 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
 
         progress_bar.update(1)
 
+        # 'ObjectDefinition', 'ObjectTypes',
+        # 'ObjectFields', 'ObjectPages'
+        if 'ObjectTypes' in objects_to_create:
+            print_color("\nStarting iteration over ObjectTypes", LOG_COLORS.GREEN)
+            for arr in pool.map(partial(process_general_items,
+                                        print_logs=print_logs,
+                                        expected_file_types=(FileType.OBJECT_TYPE,),
+                                        data_extraction_func=get_object_type_data,
+                                        ),
+                                get_general_paths(OBJECT_TYPE_DIR, pack_to_create)):
+                object_types_list.extend(arr)
+
+        progress_bar.update(1)
+
     new_ids_dict = OrderedDict()
     # we sort each time the whole set in case someone manually changed something
     # it shouldn't take too much time
@@ -1451,6 +1495,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     new_ids_dict['Widgets'] = sort(widgets_list)
     new_ids_dict['Mappers'] = sort(mappers_list)
     new_ids_dict['Packs'] = packs_dict
+    new_ids_dict['ObjectTypeslist'] = sort(object_types_list)
 
     exec_time = time.time() - start_time
     print_color("Finished the creation of the id_set. Total time: {} seconds".format(exec_time), LOG_COLORS.GREEN)

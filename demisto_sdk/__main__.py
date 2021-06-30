@@ -304,7 +304,8 @@ def unify_packs(**kwargs) -> int:
     should_upload = kwargs.pop('upload', False)
     zip_all = kwargs.pop('zip_all', False) or should_upload
 
-    zip_path, unified_pack_names = PacksUnifier(zip_all=zip_all, pack_paths=kwargs.pop('input'), **kwargs).unify_packs()
+    packs_unifier = PacksUnifier(zip_all=zip_all, pack_paths=kwargs.pop('input'), quiet_mode=zip_all, **kwargs)
+    zip_path, unified_pack_names = packs_unifier.unify_packs()
 
     if should_upload and zip_path:
         return Uploader(input=zip_path, pack_names=unified_pack_names).upload()

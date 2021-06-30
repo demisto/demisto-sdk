@@ -423,7 +423,7 @@ class TestIntegrationValidator:
         {"name": "endpoint", "arguments": [{"name": "id", "required": False, "default": True}]}]
     CASE_INVALID_MISSING_OUTPUT = [
         {"name": "endpoint", "arguments": [{"name": "ip", "required": False, "default": True}],
-         "outputs": [{'contextPath': 'Endpoint.IPAddress'},{'contextPath': 'Endpoint.Hostname'}]}]
+         "outputs": [{'contextPath': 'Endpoint.IPAddress'}, {'contextPath': 'Endpoint.Hostname'}]}]
     ENDPOINT_CASES = [
         (CASE_EXISTS_WITH_DEFAULT_TRUE, True),
         (CASE_REQUIRED_ARG_WITH_DEFAULT_FALSE, True),
@@ -1275,4 +1275,3 @@ class TestisContextChanged:
             res = validator.is_context_change_in_readme()
             assert res == expected
         patcher.stop()
-

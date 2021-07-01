@@ -2,7 +2,7 @@ import os
 import re
 from enum import Enum
 from functools import reduce
-from typing import Iterable, List, Optional
+from typing import Iterable, List, Optional, Dict
 
 import click
 from demisto_sdk.commands.common.git_util import GitUtil

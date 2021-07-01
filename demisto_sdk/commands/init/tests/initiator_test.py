@@ -434,7 +434,7 @@ def test_integration_init(monkeypatch, initiator, tmpdir):
 
 
 @pytest.mark.parametrize("template", ["HelloWorld", "FeedHelloWorld"])
-def test_template_integration_init(mocker, monkeypatch, initiator, tmpdir, template):
+def test_template_integration_init(monkeypatch, initiator, tmpdir, template):
     """
     Tests `integration_init` function with a given integration template name.
 
@@ -450,7 +450,7 @@ def test_template_integration_init(mocker, monkeypatch, initiator, tmpdir, templ
         - Ensure integration directory with the desired integration name is created successfully.
         - Ensure integration directory contains all the files of the template integration.
     """
-    monkeypatch.setattr('builtins.input', generate_multiple_inputs(deque(['6.0.0'])))
+    monkeypatch.setattr('builtins.input', generate_multiple_inputs(deque(['6.0.0', 'n'])))
     temp_pack_dir = os.path.join(tmpdir, PACK_NAME)
     os.makedirs(temp_pack_dir, exist_ok=True)
 
@@ -459,7 +459,6 @@ def test_template_integration_init(mocker, monkeypatch, initiator, tmpdir, templ
     initiator.is_integration = True
     initiator.template = template
     initiator.category = 'Utilities'
-    mocker.patch('builtins.input', return_value='n')
 
     integration_path = os.path.join(temp_pack_dir, INTEGRATION_NAME)
     res = initiator.integration_init()
@@ -476,7 +475,7 @@ def test_template_integration_init(mocker, monkeypatch, initiator, tmpdir, templ
     assert not diff, f'There\'s a missing file in the copied files, diff is {diff}'
 
 
-def test_template_integration_init_with_ignore_secrets(mocker, monkeypatch, initiator, tmpdir):
+def test_template_integration_init_with_ignore_secrets(monkeypatch, mocker, initiator, tmpdir):
     """
     Tests `integration_init` function with a given integration template name.
 
@@ -492,7 +491,7 @@ def test_template_integration_init_with_ignore_secrets(mocker, monkeypatch, init
         - Ensure integration directory contains all the files of the template integration.
         - Ensure .secrets-ignore file is not empty.
     """
-    monkeypatch.setattr('builtins.input', lambda _: '6.0.0')
+    monkeypatch.setattr('builtins.input', generate_multiple_inputs(deque(['6.0.0', 'y'])))
     white_list = {
         "files": [],
         "iocs": {},
@@ -514,7 +513,6 @@ def test_template_integration_init_with_ignore_secrets(mocker, monkeypatch, init
     initiator.category = 'Utilities'
 
     integration_path = os.path.join(temp_pack_dir, INTEGRATION_NAME)
-    mocker.patch('builtins.input', return_value='y')
     mocker.patch('demisto_sdk.commands.init.initiator.get_pack_name', return_value='PackName')
 
     res = initiator.integration_init()
@@ -535,7 +533,7 @@ def test_template_integration_init_with_ignore_secrets(mocker, monkeypatch, init
     shutil.rmtree('Tests')
 
 
-def test_script_init(mocker, monkeypatch, initiator, tmpdir):
+def test_script_init(monkeypatch, initiator, tmpdir):
     """
     Tests `script_init` function.
 
@@ -550,7 +548,7 @@ def test_script_init(mocker, monkeypatch, initiator, tmpdir):
         - Ensure script directory with the desired script name is created successfully.
         - Ensure script directory contain all files.
     """
-    monkeypatch.setattr('builtins.input', lambda _: '6.0.0')
+    monkeypatch.setattr('builtins.input', generate_multiple_inputs(deque(['6.0.0', 'n'])))
     temp_pack_dir = os.path.join(tmpdir, PACK_NAME)
     os.makedirs(temp_pack_dir, exist_ok=True)
 
@@ -558,7 +556,6 @@ def test_script_init(mocker, monkeypatch, initiator, tmpdir):
     initiator.dir_name = SCRIPT_NAME
     initiator.output = temp_pack_dir
     script_path = os.path.join(temp_pack_dir, SCRIPT_NAME)
-    mocker.patch('builtins.input', return_value='n')
     res = initiator.script_init()
 
     script_dir_files = {file for file in listdir(script_path)}
@@ -569,7 +566,7 @@ def test_script_init(mocker, monkeypatch, initiator, tmpdir):
             "README.md", "test_data"} == script_dir_files
 
 
-def test_script_init_with_ignore_secrets(initiator, monkeypatch, tmpdir, mocker):
+def test_script_init_with_ignore_secrets(mocker, monkeypatch, initiator, tmpdir):
     """
     Tests `script_init` function with a given script template name.
 
@@ -585,7 +582,7 @@ def test_script_init_with_ignore_secrets(initiator, monkeypatch, tmpdir, mocker)
         - Ensure script directory contain all files.
         - Ensure .secrets-ignore file is not empty.
     """
-    monkeypatch.setattr('builtins.input', lambda _: '6.0.0')
+    monkeypatch.setattr('builtins.input', generate_multiple_inputs(deque(['6.0.0', 'y'])))
     white_list = {
         "files": [],
         "iocs": {},
@@ -606,7 +603,6 @@ def test_script_init_with_ignore_secrets(initiator, monkeypatch, tmpdir, mocker)
     initiator.category = 'Utilities'
 
     script_path = os.path.join(temp_pack_dir, SCRIPT_NAME)
-    mocker.patch('builtins.input', return_value='y')
     mocker.patch('demisto_sdk.commands.init.initiator.get_pack_name', return_value='PackName')
 
     res = initiator.script_init()

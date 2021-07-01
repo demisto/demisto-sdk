@@ -1295,8 +1295,8 @@ class IntegrationValidator(ContentEntityValidator):
         default_args_found = [(arg.get('name'), arg.get('default', False)) for arg in endpoint_command_inputs]
         command_default_arg_map = BANG_COMMAND_ARGS_MAPPING_DICT[command_data.get('name')]
         default_arg_name = command_default_arg_map['default']
-        other_default_args_found = list(filter(lambda x: x[1] is True and x[0] not in default_arg_name, default_args_found))
-        # invalid_defaults = list(filter(lambda arg: arg[0] not in command_default_arg_map, default_args_found))
+        other_default_args_found = list(filter(
+            lambda x: x[1] is True and x[0] not in default_arg_name, default_args_found))
         if other_default_args_found:
             error_message, error_code = Errors.wrong_default_argument(default_arg_name, command_data.get('name'))
             if self.handle_error(error_message, error_code, file_path=self.file_path):

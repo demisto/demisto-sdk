@@ -283,6 +283,79 @@ def create_content_repo():
     create_a_pack_entity(impossible_traveler, FileType.INCIDENT_FIELD, 'travelmaplink' 'Travel Map Link')
     create_a_pack_entity(impossible_traveler, FileType.INCIDENT_TYPE, 'impossibletraveler' 'Impossible Traveler')
 
+    incident_layout = {
+        "detailsV2": {
+            "tabs": [
+                {
+                    "id": "caseinfoid",
+                    "name": "Incident Info",
+                    "sections": [
+                        {
+                            "items": [
+                                {
+                                    "endCol": 2,
+                                    "fieldId": "incident_example",
+                                    "height": 22,
+                                    "id": "example",
+                                    "index": 0,
+                                    "sectionItemType": "field",
+                                    "startCol": 0
+                                }
+                            ]
+                        }
+                    ],
+                    "type": "custom"
+                },
+            ]
+        },
+        "group": "incident",
+        "id": "example",
+        "name": "example",
+        "system": "false",
+        "version": -1,
+        "fromVersion": "6.0.0",
+        "description": ""
+    }
+    indicator_layout = {
+        "group": "indicator",
+        "id": "example",
+        "indicatorsDetails": {
+            "tabs": [
+                {
+                    "sections": [
+                        {
+                            "items": [
+                                {
+                                    "endCol": 2,
+                                    "fieldId": "indicator_example",
+                                    "height": 22,
+                                    "id": "example",
+                                    "index": 0,
+                                    "sectionItemType": "field",
+                                    "startCol": 0
+                                }
+                            ]
+                        }
+                    ],
+                    "type": "custom"
+                }
+            ]
+        },
+        "name": "example",
+        "system": "false",
+        "version": -1,
+        "fromVersion": "6.0.0",
+    }
+
+    pack1 = repo.create_pack('pack1')
+    create_a_pack_entity(pack1, FileType.INCIDENT_FIELD, 'example', 'example')
+    pack2 = repo.create_pack('pack2')
+    create_a_pack_entity(pack2, FileType.INDICATOR_FIELD, 'example', 'example')
+    pack3 = repo.create_pack('pack3')
+    pack3.create_layoutcontainer('example', incident_layout)
+    pack4 = repo.create_pack('pack4')
+    pack4.create_layoutcontainer('example', indicator_layout)
+
     with ChangeCWD(repo.path):
         ids = cis.IDSetCreator()
         ids.create_id_set()
@@ -1157,6 +1230,15 @@ class TestDependsOnPlaybook:
 
 
 class TestDependsOnLayout:
+    @pytest.mark.parametrize('pack, expected_dependencies', [
+        ('pack3', 'pack1'),  # pack3 has a layout of type incident that depends in an incident of pack1
+        ('pack4', 'pack2')  # pack4 has a layout of type indicator that depends in an indicator of pack2
+    ])
+    def test_layouts_dependencies(self, pack, expected_dependencies):
+        dependencies = PackDependencies.find_dependencies(pack, id_set_path="Content/Tests/id_set.json",
+                                                          update_pack_metadata=False)
+        assert list(dependencies.keys())[0] == expected_dependencies
+
     def test_collect_incident_layouts_dependencies(self, id_set):
         """
         Given

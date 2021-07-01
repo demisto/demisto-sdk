@@ -423,12 +423,14 @@ class TestIntegrationValidator:
         {"name": "endpoint", "arguments": [{"name": "id", "required": False, "default": True}]}]
     CASE_INVALID_MISSING_OUTPUT = [
         {"name": "endpoint", "arguments": [{"name": "ip", "required": False, "default": True}],
-         "outputs": [{'contextPath': 'Endpoint.IPAddress'}, {'contextPath': 'Endpoint.Hostname'}]}]
+         "outputs": [{'contextPath': 'Endpoint.IPAddress'}, {'contextPath': 'Endpoint.Hostname'},
+                     {'contextPath': 'Endpoint.Test'}]}]
     ENDPOINT_CASES = [
         (CASE_EXISTS_WITH_DEFAULT_TRUE, True),
         (CASE_REQUIRED_ARG_WITH_DEFAULT_FALSE, True),
         (CASE_INVALID_MISSING_REQUIRED_ARGS, False),
-        (CASE_INVALID_NON_DEFAULT_ARG_WITH_DEFAULT_TRUE, False)
+        (CASE_INVALID_NON_DEFAULT_ARG_WITH_DEFAULT_TRUE, False),
+        (CASE_INVALID_MISSING_OUTPUT, False)
     ]
 
     @pytest.mark.parametrize("current, answer", ENDPOINT_CASES)

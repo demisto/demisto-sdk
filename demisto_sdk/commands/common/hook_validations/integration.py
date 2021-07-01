@@ -1314,7 +1314,7 @@ class IntegrationValidator(ContentEntityValidator):
 
         # validate the IOC output
         reputation_output = IOC_OUTPUTS_DICT.get(command_name)
-        if reputation_output and not reputation_output.intersection(context_outputs_paths):
+        if reputation_output and (reputation_output - context_outputs_paths):
             error_message, error_code = Errors.missing_reputation(command_name, reputation_output,
                                                                   context_standard)
             if self.handle_error(error_message, error_code, file_path=self.file_path):

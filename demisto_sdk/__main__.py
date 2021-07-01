@@ -65,13 +65,12 @@ from demisto_sdk.commands.split_yml.extractor import Extractor
 from demisto_sdk.commands.test_content.execute_test_content import \
     execute_test_content
 from demisto_sdk.commands.unify.unifier import Unifier
-from demisto_sdk.commands.unify_packs.packs_unifier import (EX_FAIL,
-                                                            EX_SUCCESS,
-                                                            PacksUnifier)
 from demisto_sdk.commands.update_release_notes.update_rn import (
     UpdateRN, update_api_modules_dependents_rn)
 from demisto_sdk.commands.upload.uploader import Uploader
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
+from demisto_sdk.commands.zip_packs.packs_zipper import (EX_FAIL, EX_SUCCESS,
+                                                         PacksZipper)
 
 
 class PathsParamType(click.Path):
@@ -278,7 +277,7 @@ def unify(**kwargs):
     return 0
 
 
-# ====================== unify-packs ====================== #
+# ====================== zip-packs ====================== #
 @main.command(hidden=True)
 @click.help_option(
     '-h', '--help'
@@ -293,19 +292,19 @@ def unify(**kwargs):
 @click.option('-v', '--content_version', help='The content version in CommonServerPython.', default='0.0.0')
 @click.option('-u', '--upload', is_flag=True, help='Upload the unified packs to the marketplace.', default=False)
 @click.option('--zip_all', is_flag=True, help='Zip all the packs in one zip file.', default=False)
-def unify_packs(**kwargs) -> int:
+def zip_packs(**kwargs) -> int:
     """Generating the following artifacts:
        1. uploadable_packs - Contains zipped packs that are ready to be uploaded to Cortex XSOAR machine.
     """
     logging_setup(3)
-    check_configuration_file('unify-packs', kwargs)
+    check_configuration_file('zip-packs', kwargs)
 
     # if upload is true - all zip packs will be compressed to one zip file
     should_upload = kwargs.pop('upload', False)
     zip_all = kwargs.pop('zip_all', False) or should_upload
 
-    packs_unifier = PacksUnifier(zip_all=zip_all, pack_paths=kwargs.pop('input'), quiet_mode=zip_all, **kwargs)
-    zip_path, unified_pack_names = packs_unifier.unify_packs()
+    packs_zipper = PacksZipper(zip_all=zip_all, pack_paths=kwargs.pop('input'), quiet_mode=zip_all, **kwargs)
+    zip_path, unified_pack_names = packs_zipper.zip_packs()
 
     if should_upload and zip_path:
         return Uploader(input=zip_path, pack_names=unified_pack_names).upload()
@@ -684,6 +683,7 @@ def format(
 )
 @click.option(
     "-i", "--input",
+    type=PathsParamType(exists=True, resolve_path=True),
     help="The path of file or a directory to upload. The following are supported:\n"
          "- Pack\n"
          "- A content entity directory that is inside a pack. For example: an Integrations "
@@ -692,8 +692,8 @@ def format(
          "helloWorld.yml", required=True
 )
 @click.option(
-    "-u", "--unify",
-    help="Unify the pack to zip before upload", is_flag=True
+    "-z", "--zip",
+    help="Compress the pack to zip before upload, this flag is relevant only for upload packs", is_flag=True
 )
 @click.option(
     "--insecure",
@@ -709,11 +709,11 @@ def upload(**kwargs):
     DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
     * Note: Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up. *
     """
-    if kwargs.pop('unify', False):
+    if kwargs.pop('zip', False):
         pack_path = kwargs['input']
-        packs_unifier = PacksUnifier(pack_paths=pack_path, output=tempfile.gettempdir(),
-                                     content_version='0.0.0', zip_all=True, quiet_mode=True)
-        packs_zip_path, pack_names = packs_unifier.unify_packs()
+        packs_unifier = PacksZipper(pack_paths=pack_path, output=tempfile.gettempdir(),
+                                    content_version='0.0.0', zip_all=True, quiet_mode=True)
+        packs_zip_path, pack_names = packs_unifier.zip_packs()
         if packs_zip_path is None:
             return EX_FAIL
 

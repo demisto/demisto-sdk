@@ -6,14 +6,14 @@ import click
 import demisto_client
 import pytest
 from demisto_client.demisto_api import DefaultApi
-from demisto_sdk.__main__ import unify_packs
+from demisto_sdk.__main__ import zip_packs
 from demisto_sdk.commands.common.tools import src_root
 from demisto_sdk.commands.upload import uploader
 from demisto_sdk.commands.upload.uploader import Uploader
 from demisto_sdk.tests.constants_test import PACK_TARGET
 from packaging.version import parse
 
-UNIT_TEST_DATA = (src_root() / 'commands' / 'unify_packs' / 'tests' / 'data')
+UNIT_TEST_DATA = (src_root() / 'commands' / 'zip_packs' / 'tests' / 'data')
 TEST_PACK_PATH = Path(PACK_TARGET)
 
 
@@ -35,13 +35,13 @@ def temp_dir():
         rmtree(temp)
 
 
-class TestPacksUnifier:
+class TestPacksZipper:
     """
     Happy path tests:
-        1. Unify packs to one zip file (content_packs.zip)
-        2. Unify pack to pack zip file (TestPack.zip)
-        3. Unify packs with the Upload flag
-        4. Unify packs to zip files to ensure the created file are zip of zips
+        1. Zip packs to one zip file (content_packs.zip)
+        2. Zip pack to pack zip file (TestPack.zip)
+        3. Zip packs with the Upload flag
+        4. Zip packs to zip files to ensure the created file are zip of zips
 
     Edge cases tests:
         1. Invalid pack name
@@ -52,22 +52,22 @@ class TestPacksUnifier:
     @pytest.mark.parametrize(argnames='zip_all, expected_path',
                              argvalues=[(True, 'uploadable_packs.zip'),
                                         (False, 'uploadable_packs/TestPack.zip')])
-    def test_unify_packs(self, zip_all, expected_path):
+    def test_zip_packs(self, zip_all, expected_path):
         """
         Given:
             - zip_all arg as True or False
         When:
-            - run the unify_packs command
+            - run the zip_packs command
         Then:
             - validate the zip file exist in the destination output
         """
 
         with temp_dir() as tmp_output_dir:
-            click.Context(command=unify_packs).invoke(unify_packs,
-                                                      input=TEST_PACK_PATH,
-                                                      output=tmp_output_dir,
-                                                      content_version='0.0.0',
-                                                      zip_all=zip_all)
+            click.Context(command=zip_packs).invoke(zip_packs,
+                                                    input=TEST_PACK_PATH,
+                                                    output=tmp_output_dir,
+                                                    content_version='0.0.0',
+                                                    zip_all=zip_all)
 
             assert Path(f'{tmp_output_dir}/{expected_path}').exists()
 
@@ -76,26 +76,26 @@ class TestPacksUnifier:
         Given:
             - zip_all arg as True
         When:
-            - run the unify_packs command
+            - run the zip_packs command
         Then:
             - validate the zip file created and contain the pack zip inside it
         """
 
         with temp_dir() as tmp_output_dir:
-            click.Context(command=unify_packs).invoke(unify_packs,
-                                                      input=TEST_PACK_PATH,
-                                                      output=tmp_output_dir,
-                                                      content_version='0.0.0',
-                                                      zip_all=True)
+            click.Context(command=zip_packs).invoke(zip_packs,
+                                                    input=TEST_PACK_PATH,
+                                                    output=tmp_output_dir,
+                                                    content_version='0.0.0',
+                                                    zip_all=True)
             unpack_archive(f'{tmp_output_dir}/uploadable_packs.zip', tmp_output_dir)
             assert Path(f'{tmp_output_dir}/TestPack.zip').exists()
 
-    def test_unify_with_upload(self, mocker):
+    def test_zip_with_upload(self, mocker):
         """
         Given:
             - the upload flag is turn on
         When:
-            - run the unify_packs command
+            - run the zip_packs command
         Then:
             - validate the pack.zipped_pack_uploader was called with correct path
         """
@@ -104,11 +104,11 @@ class TestPacksUnifier:
         mocker.patch.object(Uploader, 'zipped_pack_uploader')
 
         with temp_dir() as tmp_output_dir:
-            click.Context(command=unify_packs).invoke(unify_packs,
-                                                      input=TEST_PACK_PATH,
-                                                      output=tmp_output_dir,
-                                                      content_version='0.0.0',
-                                                      zip_all=True, upload=True)
+            click.Context(command=zip_packs).invoke(zip_packs,
+                                                    input=TEST_PACK_PATH,
+                                                    output=tmp_output_dir,
+                                                    content_version='0.0.0',
+                                                    zip_all=True, upload=True)
 
             assert Uploader.zipped_pack_uploader.call_args[1]['path'] == f'{tmp_output_dir}/uploadable_packs.zip'
 
@@ -118,17 +118,17 @@ class TestPacksUnifier:
         Given:
             - invalid content pack name
         When:
-            - run the unify_packs command
+            - run the zip_packs command
         Then:
             - validate zip is not created
         """
 
         with temp_dir() as tmp_output_dir:
-            click.Context(command=unify_packs).invoke(unify_packs,
-                                                      input='invalid_pack_name',
-                                                      output=tmp_output_dir,
-                                                      content_version='0.0.0',
-                                                      zip_all=False)
+            click.Context(command=zip_packs).invoke(zip_packs,
+                                                    input='invalid_pack_name',
+                                                    output=tmp_output_dir,
+                                                    content_version='0.0.0',
+                                                    zip_all=False)
 
             assert not Path(f'{tmp_output_dir}/uploadable_packs/TestPack.zip').exists()
 
@@ -137,15 +137,15 @@ class TestPacksUnifier:
         Given:
             - invalid destination
         When:
-            - run the unify_packs command
+            - run the zip_packs command
         Then:
             - validate the missed directory is created and the zip is exist
         """
         with temp_dir() as tmp_output_dir:
-            click.Context(command=unify_packs).invoke(unify_packs,
-                                                      input=TEST_PACK_PATH,
-                                                      output=tmp_output_dir,
-                                                      content_version='0.0.0',
-                                                      zip_all=True)
+            click.Context(command=zip_packs).invoke(zip_packs,
+                                                    input=TEST_PACK_PATH,
+                                                    output=tmp_output_dir,
+                                                    content_version='0.0.0',
+                                                    zip_all=True)
 
             assert Path(f'{tmp_output_dir}/uploadable_packs.zip').exists()

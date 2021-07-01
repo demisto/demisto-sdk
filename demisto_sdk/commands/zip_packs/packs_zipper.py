@@ -16,7 +16,7 @@ EX_SUCCESS = 0
 EX_FAIL = 1
 
 
-class PacksUnifier:
+class PacksZipper:
 
     def __init__(self, pack_paths: str, output: str, content_version: str, zip_all: bool, quiet_mode: bool = False):
         self.artifacts_manager = PacksManager(
@@ -27,7 +27,7 @@ class PacksUnifier:
             quiet_mode=quiet_mode,
         )
 
-    def unify_packs(self):
+    def zip_packs(self):
         """Compress the given packs to one zip file or zip for each pack (depended on the zip_all flag).
 
         Returns:
@@ -44,7 +44,7 @@ class PacksUnifier:
 
 
 class PacksManager(ArtifactsManager):
-    """Managed the work with packs in unify-packs command.
+    """Managed the work with packs in zip-packs command.
 
     Attributes:
         zip_all (bool): Flag indicating whether to zip all the packs in one zip or not.
@@ -135,6 +135,8 @@ class PacksManager(ArtifactsManager):
             logger = logging.getLogger('demisto-sdk')
             for report in reports:
                 logger.info(report.to_str(self.get_base_path()))
+            logger.info('Created zips:')
+            logger.info(f'zip created in: {self.output_path}')
 
 
 class QuietModeController:

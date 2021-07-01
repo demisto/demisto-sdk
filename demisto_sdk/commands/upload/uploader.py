@@ -279,7 +279,7 @@ class Uploader:
             zipped_pack.upload(logger, self.client)
             self.successfully_uploaded_files.extend([(pack_name, FileType.PACK.value) for pack_name in self.pack_names])
             return SUCCESS_RETURN_CODE
-        except Exception as err:
+        except (Exception, KeyboardInterrupt) as err:
             file_name = zipped_pack.path.name  # type: ignore
             message = parse_error_response(err, FileType.PACK.value, file_name, self.log_verbose)
             self.failed_uploaded_files.append((file_name, FileType.PACK.value, message))
@@ -313,6 +313,8 @@ def parse_error_response(error: ApiException, file_type: str, file_name: str, pr
     if print_error:
         click.secho(str(f'\nUpload {file_type}: {file_name} failed:'), fg='bright_red')
         click.secho(str(message), fg='bright_red')
+    if isinstance(error, KeyboardInterrupt):
+        message = 'Aborted due to keyboard interrupt'
     return message
 
 

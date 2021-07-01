@@ -38,7 +38,10 @@ def create_a_pack_entity(pack, entity_type: FileType = None, entity_id: str = No
         content = {'id': entity_id, 'name': entity_name, 'transformer': '', 'keyTypeMap': {}, 'type': 'classification'}
         pack.create_classifier(entity_id, content)
     elif entity_type == FileType.LAYOUT:
-        content = {"TypeName": entity_id, "kind": "details", "layout": {}, "typeId": entity_id}
+        content = {"typeId": entity_id, "TypeName": entity_id, "kind": "details", "layout": {}}
+        pack.create_layout(entity_id, content)
+    elif entity_type == FileType.LAYOUTS_CONTAINER:
+        content = {"id": entity_id, "name": entity_name, "group": "incident", "detailsV2": {}}
         pack.create_layout(entity_id, content)
     elif entity_type == FileType.MAPPER:
         content = {'id': entity_id, 'name': entity_name, 'mapping': {}, 'type': 'mapping-incomming'}

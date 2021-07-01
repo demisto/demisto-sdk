@@ -2,7 +2,7 @@ import os
 import re
 from enum import Enum
 from functools import reduce
-from typing import Iterable, List, Optional, Dict
+from typing import Dict, Iterable, List, Optional
 
 import click
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -957,7 +957,7 @@ BANG_COMMAND_ARGS_MAPPING_DICT: Dict[str, dict] = {
     'domain': {'default': ['domain']},
     'url': {'default': ['url']},
     'ip': {'default': ['ip']},
-    'cve': {'default': ['cve','cve_id']},
+    'cve': {'default': ['cve', 'cve_id']},
     'endpoint': {'default': ['ip'], 'required': False}
 }
 

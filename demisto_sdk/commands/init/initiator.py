@@ -25,6 +25,27 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS,
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
 
 
+def extract_values_from_nested_dict_to_a_set(given_dictionary: dict, return_set: set):
+    """A recursive function that extracts values (the values are of type list) from a nested dictionary,
+    and return the values to a set.
+
+    Args:
+        given_dictionary: The nested dictionary to extract the values from there.
+        return_set: the set with the return values.
+
+    Returns:
+        A set with the values from the dictionary.
+
+    """
+
+    for value in given_dictionary.values():
+        if isinstance(value, dict):  # value can be a dictionary
+            extract_values_from_nested_dict_to_a_set(value, return_set)
+        else:
+            for i in value:  # value is a list
+                return_set.add(i)
+
+
 class Initiator:
     """Initiator creates a new pack/integration/script.
 
@@ -386,18 +407,13 @@ class Initiator:
 
         sv = SecretsValidator(white_list_path='./Tests/secrets_white_list.json')
         # remove directories and irrelevant files
-        files = [f for f in files_and_directories if os.path.isfile(f) and sv.is_text_file(f)]
-        all_secrets = sv.search_potential_secrets(files)  # -> {'a': {'b': ['c', 'd'], 'e': ['f']}, 'g': ['h']}
+        files = [file for file in files_and_directories if os.path.isfile(file) and sv.is_text_file(file)]
+        # The search_potential_secrets method returns a nested dict with values of type list the values are the secrets
+        # {'a': {'b': ['secret1', 'secret2'], 'e': ['secret1']}, 'g': ['secret3']}
+        all_secrets = sv.search_potential_secrets(files)
         secrets: set = set()
 
-        def extract_values_from_nested_dict_to_a_set(d, s):
-            for v in d.values():
-                if isinstance(v, dict):  # v can be a dictbur
-                    extract_values_from_nested_dict_to_a_set(v, s)
-                else:
-                    for i in v:  # v is a list
-                        s.add(i)
-
+        # {'a': {'b': ['secret1', 'secret2'], 'e': ['secret1']}, 'g': ['secret3']} -> (secret1, secret2, secret3)
         extract_values_from_nested_dict_to_a_set(all_secrets, secrets)
 
         with open(f'Packs/{pack_dir}/.secrets-ignore', 'a') as f:

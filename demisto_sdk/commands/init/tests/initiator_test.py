@@ -473,16 +473,15 @@ def test_template_integration_init(mocker, initiator, tmpdir, template):
     assert not diff, f'There\'s a missing file in the copied files, diff is {diff}'
 
 
-def test_template_integration_init_with_ignore_secrets(initiator, tmpdir, mocker):
+def test_template_integration_init_with_ignore_secrets(mocker, initiator, tmpdir):
     """
     Tests `integration_init` function with a given integration template name.
 
     Given
-        - Inputs to init integration in a given output.
         - An integration template - HelloWorld.
 
     When
-        - Running the init command with secrete ignore.
+        - Running the init command with secrets ignore.
 
     Then
         - Ensure the function's return value is True
@@ -527,7 +526,7 @@ def test_template_integration_init_with_ignore_secrets(initiator, tmpdir, mocker
     assert res
     assert os.path.isdir(integration_path)
     diff = expected_files.difference(integration_dir_files)
-    assert not diff, f'There\'s a missing file in the copied files, diff is {diff}'
+    assert not diff, f'There\'s a missing file in the files that are expected to be created, missing file\'s is {diff}'
     assert os.stat(secrets_ignore_path).st_size > 0
     shutil.rmtree('Packs')
     shutil.rmtree('Tests')
@@ -564,3 +563,56 @@ def test_script_init(mocker, initiator, tmpdir):
     assert os.path.isdir(script_path)
     assert {f"{SCRIPT_NAME}.py", f"{SCRIPT_NAME}.yml", f"{SCRIPT_NAME}_test.py",
             "README.md", "test_data"} == script_dir_files
+
+
+def test_script_init_with_ignore_secrets(initiator, tmpdir, mocker):
+    """
+    Tests `script_init` function with a given script template name.
+
+    Given
+        - A script template - BaseScript.
+
+    When
+        - Running the init command with secrets ignore.
+
+    Then
+        - Ensure the function's return value is True
+        - Ensure script directory with the desired script name is created successfully.
+        - Ensure script directory contain all files.
+        - Ensure .secrets-ignore file is not empty.
+    """
+
+    white_list = {
+        "files": [],
+        "iocs": {},
+        "generic_strings": []
+    }
+    temp_pack_dir = os.path.join(tmpdir, PACK_NAME)
+    os.makedirs(temp_pack_dir, exist_ok=True)
+    os.makedirs('Tests', exist_ok=True)
+    os.makedirs('Packs/PackName', exist_ok=True)
+    with open('Tests/secrets_white_list.json', 'w') as f:
+        json.dump(white_list, f)
+
+    secrets_ignore_path = 'Packs/PackName/.secrets-ignore'
+
+    initiator.output = temp_pack_dir
+    initiator.dir_name = SCRIPT_NAME
+    initiator.template = DEFAULT_SCRIPT
+    initiator.category = 'Utilities'
+
+    script_path = os.path.join(temp_pack_dir, SCRIPT_NAME)
+    mocker.patch('builtins.input', return_value='y')
+    mocker.patch('demisto_sdk.commands.init.initiator.get_pack_name', return_value='PackName')
+
+    res = initiator.script_init()
+
+    script_dir_files = {file for file in listdir(script_path)}
+
+    assert res
+    assert os.path.isdir(script_path)
+    assert {f"{SCRIPT_NAME}.py", f"{SCRIPT_NAME}.yml", f"{SCRIPT_NAME}_test.py",
+            "README.md", "test_data"} == script_dir_files
+    assert os.stat(secrets_ignore_path).st_size > 0
+    shutil.rmtree('Packs')
+    shutil.rmtree('Tests')

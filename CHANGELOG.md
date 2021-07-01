@@ -1,4 +1,7 @@
 # Changelog
+* Fixed an issue where empty pack an README.md file could caused an error in the validation process.
+* Added a warning in case of an empty pack README.md file.
+
 
 # 1.4.2
 * Added to `pylint` summary an indication if a test was skipped.

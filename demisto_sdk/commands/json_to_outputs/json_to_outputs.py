@@ -164,6 +164,10 @@ def parse_json(data, command_name, prefix, verbose=False, interactive=False):
 
         raise ValueError('Invalid input JSON')
 
+    # if data is a list of dictionaries [{'a': 'b', 'c': 'd'}, {'e': 'f'}] -> {'a': 'b', 'c': 'd', 'e': 'f'}
+    if isinstance(data, list):
+        data = {k: v for d in data for k, v in d.items()}
+
     flattened_data = flatten_json(data)
     if prefix:
         flattened_data = {f'{prefix}.{key}': value for key, value in flattened_data.items()}

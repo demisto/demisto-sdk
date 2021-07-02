@@ -1,4 +1,5 @@
 # Changelog
+* Fixed an issue were **json-to-outputs** command returned an incorrect output when json is a list.
 
 # 1.4.2
 * Added to `pylint` summary an indication if a test was skipped.

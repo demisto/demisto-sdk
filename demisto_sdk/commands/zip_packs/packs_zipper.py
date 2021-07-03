@@ -135,8 +135,10 @@ class PacksManager(ArtifactsManager):
             logger = logging.getLogger('demisto-sdk')
             for report in reports:
                 logger.info(report.to_str(self.get_base_path()))
-            logger.info('Created zips:')
-            logger.info(f'zip created in: {self.output_path}')
+
+            created_zip_path = self.output_path if self.zip_all \
+                else '\n'.join([f'{self.output_path}/{pack_name}.zip' for pack_name in self.pack_names])
+            logger.info(f'\nCreated zips:\n{created_zip_path}')
 
 
 class QuietModeController:

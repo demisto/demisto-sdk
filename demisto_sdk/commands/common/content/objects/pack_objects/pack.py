@@ -30,8 +30,10 @@ from demisto_sdk.commands.common.content.objects_factory import \
 from demisto_sdk.commands.test_content import tools
 from wcmatch.pathlib import Path
 
-TURN_VERIFICATION_ERROR_MSG = "Can not turn on the pack verification, In the server - go to Settings -> troubleshooting\
- and manually delete the key content.pack.verify"
+TURN_VERIFICATION_ERROR_MSG = "Can not turn on the pack verification,\nIn the server - go to Settings -> troubleshooting\
+ and manually {action}."
+DELETE_VERIFY_KEY_ACTION = f'delete the key "{PACK_VERIFY_KEY}"'
+SET_VERIFY_KEY_ACTION = f'set the key "{PACK_VERIFY_KEY}" to ' + '{}'
 
 
 class Pack:
@@ -267,20 +269,20 @@ class Pack:
             logger.info('Uploading...')
             return client.upload_content_packs(file=self.path)  # type: ignore
         finally:
+            config_keys_to_update = None
+            config_keys_to_delete = None
             try:
                 prev_key_val = prev_conf.get(PACK_VERIFY_KEY, None)
-                config_keys_to_update = None
-                config_keys_to_delete = None
-
                 if prev_key_val is not None:
                     config_keys_to_update = {PACK_VERIFY_KEY: prev_key_val}
                 else:
                     config_keys_to_delete = {PACK_VERIFY_KEY}
-
                 logger.info('Setting the server verification to be as previously')
                 tools.update_server_configuration(client=client,
                                                   server_configuration=config_keys_to_update,
                                                   config_keys_to_delete=config_keys_to_delete,
                                                   error_msg=TURN_VERIFICATION_ERROR_MSG)
             except (Exception, KeyboardInterrupt):
-                raise Exception(TURN_VERIFICATION_ERROR_MSG)
+                action = DELETE_VERIFY_KEY_ACTION if prev_key_val is None \
+                    else SET_VERIFY_KEY_ACTION.format(prev_key_val)
+                raise Exception(TURN_VERIFICATION_ERROR_MSG.format(action=action))

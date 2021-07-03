@@ -696,6 +696,9 @@ def format(
     help="Compress the pack to zip before upload, this flag is relevant only for upload packs", is_flag=True
 )
 @click.option(
+    "--keep-zip-in", help="Directory where to store the zip after creation, this argument is relevant only for packs "
+                          "and in case -z is used", required=False, type=click.Path(exists=True))
+@click.option(
     "--insecure",
     help="Skip certificate validation", is_flag=True
 )
@@ -711,7 +714,8 @@ def upload(**kwargs):
     """
     if kwargs.pop('zip', False):
         pack_path = kwargs['input']
-        packs_unifier = PacksZipper(pack_paths=pack_path, output=tempfile.gettempdir(),
+        output_zip_path = kwargs.pop('keep_zip_in') or tempfile.gettempdir()
+        packs_unifier = PacksZipper(pack_paths=pack_path, output=output_zip_path,
                                     content_version='0.0.0', zip_all=True, quiet_mode=True)
         packs_zip_path, pack_names = packs_unifier.zip_packs()
         if packs_zip_path is None:

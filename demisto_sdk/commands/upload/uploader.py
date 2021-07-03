@@ -279,7 +279,7 @@ class Uploader:
             logger = logging.getLogger('demisto-sdk')
 
             if not self.pack_names:
-                self.pack_names = [zipped_pack.path.name]
+                self.pack_names = [zipped_pack.path.stem]
 
             if self.notify_user_should_override_packs():
                 zipped_pack.upload(logger, self.client)

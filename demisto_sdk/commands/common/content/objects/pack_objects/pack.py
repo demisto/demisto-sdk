@@ -281,7 +281,7 @@ class Pack:
                 tools.update_server_configuration(client=client,
                                                   server_configuration=config_keys_to_update,
                                                   config_keys_to_delete=config_keys_to_delete,
-                                                  error_msg=TURN_VERIFICATION_ERROR_MSG)
+                                                  error_msg='Can not turn on the pack verification')
             except (Exception, KeyboardInterrupt):
                 action = DELETE_VERIFY_KEY_ACTION if prev_key_val is None \
                     else SET_VERIFY_KEY_ACTION.format(prev_key_val)

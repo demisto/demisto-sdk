@@ -723,6 +723,8 @@ def upload(**kwargs):
 
         kwargs['input'] = packs_zip_path
         kwargs['pack_names'] = pack_names
+    else:
+        kwargs.pop('keep_zip_in')
 
     check_configuration_file('upload', kwargs)
     return Uploader(**kwargs).upload()

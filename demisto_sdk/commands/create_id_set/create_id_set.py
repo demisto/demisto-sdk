@@ -76,7 +76,6 @@ class IDSetCreator:
         raise TypeError
 
     def save_id_set(self):
-        print(self.output)
         if self.output == "":
             self.output = DEFAULT_ID_SET_PATH
         if self.output:

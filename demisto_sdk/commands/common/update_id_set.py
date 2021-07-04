@@ -1070,7 +1070,6 @@ def process_general_items(file_path: str, print_logs: bool, expected_file_types:
     """
     res = []
     try:
-        print(find_type(file_path))
         if find_type(file_path) in expected_file_types:
             if print_logs:
                 print(f'adding {file_path} to id_set')
@@ -1214,10 +1213,7 @@ def get_object_type_data(path):
         data['playbooks'] = playbook_id
 
     if object:
-        print_color("object found!!!", LOG_COLORS.GREEN)
         data['object'] = object
-    else:
-        print_color("object not found!!!", LOG_COLORS.RED)
 
     return {id_: data}
 

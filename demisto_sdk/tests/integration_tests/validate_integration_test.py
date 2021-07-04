@@ -2550,3 +2550,94 @@ class TestValidationUsingGit:
         assert 'Running on committed and staged files' in result.stdout
         assert f'Validating {integration.yml.rel_path}' in result.stdout
         assert f'Validating {script.yml.rel_path}' not in result.stdout
+
+    def test_validation_using_git_on_specific_file_renamed(self, mocker, repo):
+        """
+        Given
+        - A repo with a pack with a renamed integration and modified script.
+
+        When
+        - Running validate using git on it with -i flag aiming at the integration yml path specifically.
+
+        Then
+        - Ensure the integration is validated.
+        - Ensure the script is not validated.
+        """
+        pack = repo.create_pack('FeedAzure')
+        integration = pack.create_integration()
+        integration.create_default_integration()
+        script = pack.create_script()
+        script.create_default_script()
+
+        modified_files = {(integration.yml.rel_path, integration.yml.rel_path), script.yml.rel_path}
+        mocker.patch.object(tools, 'is_external_repository', return_value=False)
+        mocker.patch.object(ValidateManager, 'setup_git_params', return_value=True)
+        mocker.patch.object(ValidateManager, 'setup_prev_ver', return_value='origin/master')
+
+        mocker.patch.object(PackDependencies, 'find_dependencies', return_value={})
+        mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_meta_file', return_value=True)
+        mocker.patch.object(BaseValidator, 'update_checked_flags_by_support_level', return_value=None)
+        mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, set(),
+                                                                                         set(), set()))
+        mocker.patch.object(GitUtil, '__init__', return_value=None)
+        mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
+
+        with ChangeCWD(repo.path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-g', '--no-docker-checks', '--no-conf-json',
+                                          '--skip-pack-release-notes', '-i', integration.yml.rel_path],
+                                   catch_exceptions=False)
+
+        assert 'Running on committed and staged files' in result.stdout
+        assert f'Validating {integration.yml.rel_path}' in result.stdout
+        assert f'Validating {script.yml.rel_path}' not in result.stdout
+
+    def test_validation_using_git_on_specific_pack(self, mocker, repo):
+        """
+        Given
+        - A repo with two packs.
+
+        When
+        - Running validate using git on it with -i flag aiming at the pack_1 path specifically.
+
+        Then
+        - Ensure the entities in pack 1 are validated
+        - Ensure the entities in pack 2 are not validated.
+        """
+        pack_1 = repo.create_pack('Pack1')
+        integration = pack_1.create_integration()
+        integration.create_default_integration()
+        script = pack_1.create_script()
+        script.create_default_script()
+
+        pack_2 = repo.create_pack('Pack2')
+        integration_2 = pack_2.create_integration()
+        integration_2.create_default_integration()
+        script_2 = pack_2.create_script()
+        script_2.create_default_script()
+
+        modified_files = {(integration.yml.rel_path, integration.yml.rel_path), script.yml.rel_path,
+                          integration_2.yml.rel_path, script_2.yml.rel_path}
+        mocker.patch.object(tools, 'is_external_repository', return_value=False)
+        mocker.patch.object(ValidateManager, 'setup_git_params', return_value=True)
+        mocker.patch.object(ValidateManager, 'setup_prev_ver', return_value='origin/master')
+
+        mocker.patch.object(PackDependencies, 'find_dependencies', return_value={})
+        mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_meta_file', return_value=True)
+        mocker.patch.object(BaseValidator, 'update_checked_flags_by_support_level', return_value=None)
+        mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, set(),
+                                                                                         set(), set()))
+        mocker.patch.object(GitUtil, '__init__', return_value=None)
+        mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
+
+        with ChangeCWD(repo.path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-g', '--no-docker-checks', '--no-conf-json',
+                                          '--skip-pack-release-notes', '-i', pack_1.path],
+                                   catch_exceptions=False)
+
+        assert 'Running on committed and staged files' in result.stdout
+        assert f'Validating {integration.yml.rel_path}' in result.stdout
+        assert f'Validating {script.yml.rel_path}' in result.stdout
+        assert f'Validating {integration_2.yml.rel_path}' not in result.stdout
+        assert f'Validating {script_2.yml.rel_path}' not in result.stdout

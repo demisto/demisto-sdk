@@ -491,18 +491,27 @@ class ValidateManager:
                            file_path: str) -> Tuple[Set, Set, Set]:
         """Given a specific file path identify in which git status set
         it exists and return a set containing that file and 2 additional empty sets."""
-        filtered_modified_files = set()
-        filtered_added_files = set()
-        filtered_old_format = set()
+        filtered_modified_files: Set = set()
+        filtered_added_files: Set = set()
+        filtered_old_format: Set = set()
 
-        if file_path in modified_files:
-            filtered_modified_files.add(file_path)
+        # go through modified files and try to identify if the file is there
+        for file in modified_files:
+            if isinstance(file, str) and file == file_path:
+                filtered_modified_files.add(file_path)
+                return filtered_modified_files, filtered_added_files, filtered_old_format
 
-        elif file_path in old_format_files:
+            # handle renamed files which are in tuples
+            elif file_path in file:
+                filtered_modified_files.add(file)
+                return filtered_modified_files, filtered_added_files, filtered_old_format
+
+        # if the file is not modified check if it is in old format files
+        if file_path in old_format_files:
             filtered_old_format.add(file_path)
 
         else:
-            # consider the file newly added
+            # if not found in either modified or old format consider the file newly added
             filtered_added_files.add(file_path)
 
         return filtered_modified_files, filtered_added_files, filtered_old_format
@@ -510,9 +519,13 @@ class ValidateManager:
     @staticmethod
     def specify_files_from_directory(file_set: Set, directory_path: str) -> Set:
         """Filter a set of file paths to only include ones which are from a specified directory."""
-        filtered_set = set()
+        filtered_set: Set = set()
         for file in file_set:
-            if directory_path in str(file):
+            if isinstance(file, str) and directory_path in file:
+                filtered_set.add(file)
+
+            # handle renamed files
+            elif isinstance(file, tuple) and directory_path in file[1]:
                 filtered_set.add(file)
 
         return filtered_set

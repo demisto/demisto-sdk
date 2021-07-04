@@ -1,6 +1,7 @@
 # Changelog
 * Fixed an issue where if a pack README.md did not exist it could cause an error in the validation process.
 * Fixed an issue where the *--name* was incorrectly required in the **init** command.
+* Adding the option to run **validate** on a specific path while using git (*-i* & *-g*).
 
 # 1.4.2
 * Added to `pylint` summary an indication if a test was skipped.

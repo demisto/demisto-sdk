@@ -23,7 +23,8 @@ from demisto_sdk.commands.common.tools import (
     get_file_displayed_name, get_file_version_suffix_if_exists,
     get_files_in_dir, get_ignore_pack_skipped_tests, get_last_release_version,
     get_last_remote_release_version, get_latest_release_notes_text,
-    get_pack_metadata, get_release_notes_file_path, get_ryaml, get_to_version,
+    get_pack_metadata, get_relative_path_from_packs_dir,
+    get_release_notes_file_path, get_ryaml, get_to_version,
     has_remote_configured, is_origin_content_repo, is_pack_path, is_uuid,
     retrieve_file_ending, run_command_os, server_version_compare)
 from demisto_sdk.tests.constants_test import (IGNORED_PNG,
@@ -1059,3 +1060,26 @@ def test_is_uuid(s, is_valid_uuid):
         assert is_uuid(s)
     else:
         assert not is_uuid(s)
+
+
+def test_get_relative_path_from_packs_dir():
+    """
+    Given:
+        - 'input_path': Path to some file or directory
+
+    When:
+        - Running get_relative_path_from_packs_dir
+
+    Then:
+        - Ensure that:
+          - If it is an absolute path to a pack related object - it returns the relative path from Packs dir.
+          - If it is a relative path from Packs dir or an unrelated path - return the path unchanged.
+
+    """
+    abs_path = '/Users/who/dev/demisto/content/Packs/Accessdata/Integrations/Accessdata/Accessdata.yml'
+    rel_path = 'Packs/Accessdata/Integrations/Accessdata/Accessdata.yml'
+    unrelated_path = '/Users/who/dev/demisto'
+
+    assert get_relative_path_from_packs_dir(abs_path) == rel_path
+    assert get_relative_path_from_packs_dir(rel_path) == rel_path
+    assert get_relative_path_from_packs_dir(unrelated_path) == unrelated_path

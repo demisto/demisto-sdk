@@ -402,7 +402,8 @@ def get_last_remote_release_version():
 
     :return: tag
     """
-    if not os.environ.get('CI'):  # Check only when no on CI. If you want to disable it - use `DEMISTO_SDK_SKIP_VERSION_CHECK` environment variable
+    if not os.environ.get(
+            'CI'):  # Check only when no on CI. If you want to disable it - use `DEMISTO_SDK_SKIP_VERSION_CHECK` environment variable
         try:
             pypi_request = requests.get(SDK_PYPI_VERSION, verify=False, timeout=5)
             pypi_request.raise_for_status()
@@ -1841,7 +1842,7 @@ def get_relative_path_from_packs_dir(file_path: str) -> str:
     if PACKS_DIR not in file_path or file_path.startswith(PACKS_DIR):
         return file_path
 
-    return str(os.path.join(PACKS_DIR, os.path.relpath(file_path, PACKS_DIR)))
+    return file_path[file_path.find(PACKS_DIR):]
 
 
 def is_uuid(s: str) -> Optional[Match]:

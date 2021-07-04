@@ -73,7 +73,6 @@ class FileType(Enum):
     LAYOUTS_CONTAINER = 'layoutscontainer'
     DASHBOARD = 'dashboard'
     INCIDENT_TYPE = 'incidenttype'
-    INDICATOR_TYPE = 'indicatortype'
     MAPPER = 'mapper'
     OLD_CLASSIFIER = 'classifier_5_9_9'
     CLASSIFIER = 'classifier'

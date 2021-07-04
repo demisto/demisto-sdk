@@ -55,7 +55,7 @@ def create_a_pack_entity(pack, entity_type: FileType = None, entity_id: str = No
     elif entity_type == FileType.INDICATOR_FIELD:
         content = {'id': f'indicator_{entity_id}', 'name': entity_name}
         pack.create_indicator_field(entity_id, content)
-    elif entity_type == FileType.INDICATOR_TYPE:
+    elif entity_type == FileType.REPUTATION:
         content = {'id': entity_id, 'details': entity_name, 'regex': ''}
         pack.create_indicator_type(entity_id, content)
 
@@ -175,7 +175,7 @@ def create_content_repo():
         create_a_pack_entity(common_types, FileType.INCIDENT_TYPE, field_id, field_name)
     for field_id, field_name in zip(ct_indicator_field_ids, ct_indicator_field_names):
         create_a_pack_entity(common_types, FileType.INDICATOR_FIELD, field_id, field_name)
-    create_a_pack_entity(common_types, FileType.INDICATOR_TYPE, 'accountrep', 'Account Rep')
+    create_a_pack_entity(common_types, FileType.REPUTATION, 'accountrep', 'Account Rep')
 
     # Create a pack called 'SafeBreach' with 1 incident_field and 1 integration.
     safe_breach = repo.create_pack('SafeBreach')
@@ -205,7 +205,7 @@ def create_content_repo():
 
     # Create a pack called 'FeedMitreAttack' with 1 indicator_type.
     feed_mitre_attack = repo.create_pack('FeedMitreAttack')
-    create_a_pack_entity(feed_mitre_attack, FileType.INDICATOR_TYPE, 'MITRE ATT&CK', 'MITRE ATT&CK')
+    create_a_pack_entity(feed_mitre_attack, FileType.REPUTATION, 'MITRE ATT&CK', 'MITRE ATT&CK')
 
     # Create a pack called 'CrisisManagement' with 1 incident_type and 1 incident_field.
     crisis_management = repo.create_pack('CrisisManagement')

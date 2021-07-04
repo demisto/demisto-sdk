@@ -242,17 +242,23 @@ class ReadMeValidator(BaseValidator):
             list: List of the errors found
         """
         error_list = []
-        should_print_error = not is_pack_readme  # print error if its not pack readme
-        relative_images = re.findall(r'(\!\[.*?\])(\((?!http).*?\))', self.readme_content, re.IGNORECASE)
+        should_print_error = not is_pack_readme  # If error was found, print it only if its not pack readme.
+        relative_images = re.findall(r'(\!\[.*?\])\(((?!http).*?\.(png|jpe?g))\)', self.readme_content, re.IGNORECASE)
+        relative_images += re.findall(  # HTML image tag
+            r'(src\s*=\s*"((?!http).*?\.(png|jpe?g))")', self.readme_content,
+            re.IGNORECASE)
         if relative_images:
             if is_pack_readme:  # Check whether the README type is pack README which do not support relative paths.
                 for img in relative_images:
                     try:
+                        prefix = img[0]
                         relative_path = img[1]
                     except IndexError:
                         continue
                     if relative_path:
-                        error_message, error_code = Errors.pack_readme_image_relative_path_error(img[0] + relative_path)
+                        if 'src' in prefix:  # format for print when img came from HTML path.
+                            prefix = ''
+                        error_message, error_code = Errors.pack_readme_image_relative_path_error(prefix + f'({relative_path})')
                         formatted_error = self.handle_error(error_message, error_code, file_path=self.file_path,
                                                             should_print=should_print_error)
                         error_list.append(formatted_error)
@@ -263,10 +269,7 @@ class ReadMeValidator(BaseValidator):
                         relative_path = img[1]
                     except IndexError:
                         continue
-                    # playbook doc generator automatically adds 'Insert the link to your image here' to the
-                    # readme image path, which we want to skip.
-                    if relative_path and relative_path != '(Insert the link to your image here)':
-                        relative_path = relative_path.strip('()')
+                    if relative_path:
                         if not os.path.exists(f'{str(self.pack_path)}/{relative_path}'):
                             error_message, error_code = Errors.invalid_readme_image_relative_path_error(relative_path)
                             formatted_error = self.handle_error(error_message, error_code, file_path=self.file_path)
@@ -285,26 +288,28 @@ class ReadMeValidator(BaseValidator):
         error_list = []
         should_print_error = not is_pack_readme  # print error if its not pack readme
         absolute_links = re.findall(
-            r'(\!\[.*?\]|src\=)(\(|\")(https://(raw\.githubusercontent|github).com/demisto/content/.*?)(\)|\")', self.readme_content,
+            r'(!\[.*\])\((https://(raw\.githubusercontent|github)\.com/demisto/content/.*\.(png|jpe?g))\)', self.readme_content,
             re.IGNORECASE)
-
+        absolute_links += re.findall(  # image tag
+            r'(src\s*=\s*"(https://.+?\.(png|jpe?g))")', self.readme_content,
+            re.IGNORECASE)
         if absolute_links:
             for link in absolute_links:
                 try:
-                    img_url = link[2]
+                    img_url = link[1]
                 except IndexError:
                     continue
-                img_url = img_url.strip('()')
                 try:
                     response = requests.get(img_url, verify=False, timeout=10)
-                    if response.status_code != 200:
-                        error_message, error_code = Errors.invalid_readme_image_absolute_path_error(img_url)
-                        formatted_error = \
-                            self.handle_error(error_message, error_code, file_path=self.file_path,
-                                              should_print=should_print_error)
-                        error_list.append(formatted_error)
-                except requests.HTTPError as ex:
-                    raise Exception(f'Failed reaching to integration doc link {img_url} - {ex}')
+                except Exception as ex:
+                    raise Exception(f'Failed reaching {img_url} - {ex}')
+                if response.status_code != 200:
+                    error_message, error_code = Errors.invalid_readme_image_absolute_path_error(img_url)
+                    formatted_error = \
+                        self.handle_error(error_message, error_code, file_path=self.file_path,
+                                          should_print=should_print_error)
+                    error_list.append(formatted_error)
+
         return error_list
 
     def verify_no_empty_sections(self) -> bool:

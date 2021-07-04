@@ -714,7 +714,7 @@ class ValidateManager:
         Runs validations on the following pack files:
         * .secret-ignore: Validates that the file exist and that the file's secrets can be parsed as a list delimited by '\n'
         * .pack-ignore: Validates that the file exists and that all regexes in it can be compiled
-        * README.md file: Validates that the file exists
+        * README.md file: Validates that the file exists and image links are valid
         * 2.pack_metadata.json: Validates that the file exists and that it has a valid structure
         Runs validation on the pack dependencies
         Args:

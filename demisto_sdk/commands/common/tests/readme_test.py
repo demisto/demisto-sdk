@@ -396,7 +396,7 @@ def test_verify_template_not_in_readme(repo):
         assert not readme_validator.verify_template_not_in_readme()
 
 
-def test_verify_readme_image_paths(mocker):
+def test_verify_readme_image_paths():
     """
     Given
         - A README file (not pack README) with valid/invalid relative image

@@ -465,8 +465,12 @@ class PackDependencies:
 
             # searching for packs of implementing integrations
             implementing_commands_and_integrations = playbook_data.get('command_to_integration', {})
-            if implementing_commands_and_integrations.get('send-notification'):
-                del implementing_commands_and_integrations['send-notification']
+
+            # Delete integrations that depend on generic commands
+            for generic_command in GENERIC_COMMANDS_NAMES:
+                if implementing_commands_and_integrations.get(generic_command):
+                    del implementing_commands_and_integrations[generic_command]
+
             for command, integration_name in implementing_commands_and_integrations.items():
                 packs_found_from_integration = set()
                 if integration_name:

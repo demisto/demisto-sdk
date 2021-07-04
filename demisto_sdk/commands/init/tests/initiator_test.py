@@ -1,3 +1,4 @@
+import json
 import os
 from collections import OrderedDict, deque
 from os import listdir
@@ -12,6 +13,7 @@ from demisto_sdk.commands.common.constants import (
     INTEGRATION_CATEGORIES, MARKETPLACE_LIVE_DISCUSSIONS, PACK_INITIAL_VERSION,
     PACK_SUPPORT_OPTIONS, XSOAR_AUTHOR, XSOAR_SUPPORT, XSOAR_SUPPORT_URL)
 from demisto_sdk.commands.init.initiator import Initiator
+from TestSuite.test_tools import ChangeCWD
 
 DIR_NAME = 'DirName'
 PACK_NAME = 'PackName'
@@ -473,6 +475,60 @@ def test_template_integration_init(monkeypatch, initiator, tmpdir, template):
     assert not diff, f'There\'s a missing file in the copied files, diff is {diff}'
 
 
+def test_integration_init_with_ignore_secrets(initiator, tmpdir, monkeypatch, mocker):
+    """
+    Tests `integration_init` function with a given script template name.
+    Given
+        - An Integration template - HelloWorld.
+    When
+        - Running the init command with secrets ignore.
+    Then
+        - Ensure the function's ('integration_init') return value is True
+        - Ensure integration directory with the desired integration name is created successfully.
+        - Ensure integration directory contain all files.
+        - Ensure .secrets-ignore file is not empty.
+    """
+    monkeypatch.setattr('builtins.input', generate_multiple_inputs(deque(['6.0.0', 'y'])))
+    white_list = {
+        "files": [],
+        "iocs": {},
+        "generic_strings": []
+    }
+    temp_test_dir = os.path.join(tmpdir, 'Tests')
+    os.makedirs(temp_test_dir, exist_ok=True)
+    with open(f'{temp_test_dir}/secrets_white_list.json', 'w') as f:
+        json.dump(white_list, f)
+
+    temp_pack_dir = os.path.join(tmpdir, 'Packs', PACK_NAME)
+    os.makedirs(temp_pack_dir, exist_ok=True)
+    secrets_ignore_path = f'{temp_pack_dir}/.secrets-ignore'
+
+    initiator.output = temp_pack_dir
+    initiator.dir_name = INTEGRATION_NAME
+    initiator.is_integration = True
+    initiator.template = 'HelloWorld'
+    initiator.category = 'Utilities'
+    mocker.patch('demisto_sdk.commands.init.initiator.get_pack_name', return_value='PackName')
+
+    integration_path = os.path.join(temp_pack_dir, INTEGRATION_NAME)
+
+    with ChangeCWD(tmpdir):
+        res = initiator.integration_init()
+
+    integration_dir_files = set(listdir(integration_path))
+    expected_files = {
+        "Pipfile", "Pipfile.lock", "README.md", f"{INTEGRATION_NAME}.py",
+        f"{INTEGRATION_NAME}.yml", f"{INTEGRATION_NAME}_description.md", f"{INTEGRATION_NAME}_test.py",
+        f"{INTEGRATION_NAME}_image.png", "test_data", "command_examples"
+    }
+
+    assert res
+    assert os.path.isdir(integration_path)
+    diff = expected_files.difference(integration_dir_files)
+    assert not diff, f'There\'s a missing file in the copied files, diff is {diff}'
+    assert os.stat(secrets_ignore_path).st_size > 0
+
+
 def test_script_init(monkeypatch, initiator, tmpdir):
     """
     Tests `script_init` function.
@@ -504,3 +560,51 @@ def test_script_init(monkeypatch, initiator, tmpdir):
     assert os.path.isdir(script_path)
     assert {f"{SCRIPT_NAME}.py", f"{SCRIPT_NAME}.yml", f"{SCRIPT_NAME}_test.py",
             "README.md", "test_data"} == script_dir_files
+
+
+def test_script_init_with_ignore_secrets(initiator, tmpdir, monkeypatch, mocker):
+    """
+    Tests `script_init` function with a given script template name.
+    Given
+        - A script template - BaseScript.
+    When
+        - Running the init command with secrets ignore.
+    Then
+        - Ensure the function's ('script_init') return value is True
+        - Ensure script directory with the desired script name is created successfully.
+        - Ensure script directory contain all files.
+        - Ensure .secrets-ignore file is not empty.
+    """
+    monkeypatch.setattr('builtins.input', generate_multiple_inputs(deque(['6.0.0', 'y'])))
+    white_list = {
+        "files": [],
+        "iocs": {},
+        "generic_strings": []
+    }
+    temp_test_dir = os.path.join(tmpdir, 'Tests')
+    os.makedirs(temp_test_dir, exist_ok=True)
+    with open(f'{temp_test_dir}/secrets_white_list.json', 'w') as f:
+        json.dump(white_list, f)
+
+    temp_pack_dir = os.path.join(tmpdir, 'Packs', PACK_NAME)
+    os.makedirs(temp_pack_dir, exist_ok=True)
+    secrets_ignore_path = f'{temp_pack_dir}/.secrets-ignore'
+
+    initiator.output = temp_pack_dir
+    initiator.dir_name = SCRIPT_NAME
+    initiator.template = DEFAULT_SCRIPT
+    initiator.category = 'Utilities'
+
+    script_path = os.path.join(temp_pack_dir, SCRIPT_NAME)
+    mocker.patch('demisto_sdk.commands.init.initiator.get_pack_name', return_value='PackName')
+
+    with ChangeCWD(tmpdir):
+        res = initiator.script_init()
+
+    script_dir_files = {file for file in listdir(script_path)}
+
+    assert res
+    assert os.path.isdir(script_path)
+    assert {f"{SCRIPT_NAME}.py", f"{SCRIPT_NAME}.yml", f"{SCRIPT_NAME}_test.py",
+            "README.md", "test_data"} == script_dir_files
+    assert os.stat(secrets_ignore_path).st_size > 0

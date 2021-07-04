@@ -106,7 +106,7 @@ def test_integration_init_integration_positive_no_inline_pack_name(monkeypatch, 
     pack_category = "4"
     pack_author = "SuperMario"
     pack_url = "https://www.github.com/supermario"
-    pack_email = "mario@super.com"
+    pack_email = "luigi@super.com"
     pack_dev_email = "mario1@super.com,mario2@super.com"
     pack_tags = "SuperTag1,SuperTag2"
     pack_reviewers = "GithubUser1, GithubUser2"

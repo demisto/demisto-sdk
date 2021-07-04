@@ -1,4 +1,5 @@
 # Changelog
+* Fixed an issue where if a pack README.md did not exist it could cause an error in the validation process.
 * Added a playbook validation to check if a task sub playbook exists in the id set in the **validate** command.
 
 # 1.4.2

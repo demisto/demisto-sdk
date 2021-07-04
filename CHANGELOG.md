@@ -1,5 +1,6 @@
 # Changelog
 * Fixed an issue where if a pack README.md did not exist it could cause an error in the validation process.
+* Added an option to ignore secrets automatically when using the **init** command to create a pack
 
 # 1.4.2
 * Added to `pylint` summary an indication if a test was skipped.

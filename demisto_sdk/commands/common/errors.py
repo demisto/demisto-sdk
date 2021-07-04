@@ -224,7 +224,6 @@ ERROR_CODE = {
     "readme_equal_description_error": {'code': "RM105", 'ui_applicable': False, 'related_field': ''},
     "readme_contains_demisto_word": {'code': "RM106", 'ui_applicable': False, 'related_field': ''},
     "template_sentence_in_readme": {'code': "RM107", 'ui_applicable': False, 'related_field': ''},
-    "pack_readme_is_empty": {'code': "RM108", 'ui_applicable': False, 'related_field': ''},
     "wrong_version_reputations": {'code': "RP100", 'ui_applicable': False, 'related_field': 'version'},
     "reputation_expiration_should_be_numeric": {'code': "RP101", 'ui_applicable': True, 'related_field': 'expiration'},
     "reputation_id_and_details_not_equal": {'code': "RP102", 'ui_applicable': False, 'related_field': 'id'},
@@ -1336,11 +1335,6 @@ class Errors:
     @error_code_decorator
     def template_sentence_in_readme(line_nums):
         return f"Please update the integration version differences section in lines: {line_nums}."
-
-    @staticmethod
-    @error_code_decorator
-    def pack_readme_is_empty():
-        return "Pack README.md file is empty - Consider filling it."
 
     @staticmethod
     @error_code_decorator

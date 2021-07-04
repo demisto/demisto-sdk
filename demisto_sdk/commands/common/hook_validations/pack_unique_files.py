@@ -8,6 +8,7 @@ import re
 from datetime import datetime
 from distutils.version import LooseVersion
 from pathlib import Path
+from typing import Tuple
 
 import click
 from dateutil import parser
@@ -77,7 +78,7 @@ class PackUniqueFilesValidator(BaseValidator):
         self.support = support
 
     # error handling
-    def _add_error(self, error, file_path, warning=False):
+    def _add_error(self, error: Tuple[str, str], file_path: str):
         """Adds error entry to a list under pack's name
         Returns True if added and false otherwise"""
         error_message, error_code = error
@@ -85,8 +86,7 @@ class PackUniqueFilesValidator(BaseValidator):
         if self.pack_path not in file_path:
             file_path = os.path.join(self.pack_path, file_path)
 
-        formatted_error = self.handle_error(error_message, error_code, file_path=file_path, should_print=False,
-                                            warning=warning)
+        formatted_error = self.handle_error(error_message, error_code, file_path=file_path, should_print=False)
         if formatted_error:
             self._errors.append(formatted_error)
             return True
@@ -189,16 +189,12 @@ class PackUniqueFilesValidator(BaseValidator):
         pack_meta_file_content = self._read_file_content(self.pack_meta_file)
         metadata = json.loads(pack_meta_file_content)
         metadata_description = metadata.get(PACK_METADATA_DESC, '').lower().strip()
-        if not self._check_if_file_is_empty(self.readme_file):
+        if self._is_pack_file_exists(self.readme_file) and not self._check_if_file_is_empty(self.readme_file):
             pack_readme = self._read_file_content(self.readme_file)
-            if pack_readme:
-                readme_content = pack_readme.lower().strip()
-                if metadata_description == readme_content:
-                    self._add_error(Errors.readme_equal_description_error(), f"{self.pack_path}/{self.readme_file}")
-                    return False
-
-            else:
-                self._add_error(Errors.pack_readme_is_empty, f"{self.pack_path}/{self.readme_file}", warning=True)
+            readme_content = pack_readme.lower().strip()
+            if metadata_description == readme_content:
+                self._add_error(Errors.readme_equal_description_error(), self.readme_file)
+                return False
 
         return True
 

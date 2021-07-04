@@ -511,3 +511,27 @@ class TestPackUniqueFilesValidator:
             if not is_valid:
                 assert 'README.md content is equal to pack description. ' \
                        'Please remove the duplicate description from README.md file' in self.validator.get_errors()
+
+    @pytest.mark.parametrize('pack_description, is_valid', [
+        ('Hey there, just testing', True),
+        ('This is will fail cause the description here is too long.test test test test test test test test test test'
+         'test test test test test test test test test test test test', True),
+    ])
+    def test_is_pack_metadata_desc_too_long(self, repo, pack_description, is_valid):
+        """
+        Given:
+            - Case A: Valid description length
+            - Case B: Invalid description length - higher than 130
+
+        When:
+            - Validating pack description length
+
+        Then:
+            - Case A: Ensure validation passes as the description field length is valid.
+            - Case B: Ensure validation passes although description field length is higher than 130-
+            will print a warning.
+        """
+
+        assert self.validator.is_pack_metadata_desc_too_long(pack_description) == is_valid
+
+

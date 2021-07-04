@@ -14,7 +14,7 @@ from demisto_sdk.commands.common.constants import (API_MODULES_PACK,
                                                    PACKS_DIR,
                                                    PACKS_PACK_META_FILE_NAME,
                                                    TESTS_AND_DOC_DIRECTORIES,
-                                                   FileType)
+                                                   FileType, PathLevel)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
                                                 FOUND_FILES_AND_ERRORS,
@@ -208,20 +208,29 @@ class ValidateManager:
         return self.print_final_report(is_valid)
 
     @staticmethod
-    def detect_file_level(file_path):
+    def detect_file_level(file_path: str) -> PathLevel:
+        """
+        Detect the whether the path points to a file, a content entity dir, a pack dir or package dir
+
+        Args:
+             file_path(str): the path to check.
+
+        Returns:
+            PathLevel. File, ContentDir, Pack or Package - depending on the file path level.
+        """
         if os.path.isfile(file_path):
-            return 'File'
+            return PathLevel.FILE
 
         file_path = file_path.rstrip('/')
         dir_name = os.path.basename(file_path)
         if dir_name in CONTENT_ENTITIES_DIRS:
-            'ContentDir'
+            return PathLevel.CONTENT_ENTITY_DIR
 
         if os.path.basename(os.path.dirname(file_path)) == PACKS_DIR:
-            return 'Pack'
+            return PathLevel.PACK
 
         else:
-            return 'Package'
+            return PathLevel.PACKAGE
 
     def run_validation_on_specific_files(self):
         """Run validations only on specific files
@@ -232,16 +241,16 @@ class ValidateManager:
             error_ignore_list = self.get_error_ignore_list(get_pack_name(path))
             file_level = self.detect_file_level(path)
 
-            if file_level == 'File':
+            if file_level == PathLevel.FILE:
                 click.secho('\n================= Validating file =================', fg="bright_cyan")
                 files_validation_result.add(self.run_validations_on_file(path, error_ignore_list))
 
-            elif file_level == 'ContentDir':
+            elif file_level == PathLevel.CONTENT_ENTITY_DIR:
                 click.secho(f'\n================= Validating content directory {path} =================',
                             fg="bright_cyan")
                 files_validation_result.add(self.run_validation_on_content_entities(path, error_ignore_list))
 
-            elif file_level == 'Pack':
+            elif file_level == PathLevel.PACK:
                 click.secho(f'\n================= Validating pack {path} =================',
                             fg="bright_cyan")
                 files_validation_result.add(self.run_validations_on_pack(path))
@@ -490,7 +499,17 @@ class ValidateManager:
     def get_file_by_status(modified_files: Set, old_format_files: Set,
                            file_path: str) -> Tuple[Set, Set, Set]:
         """Given a specific file path identify in which git status set
-        it exists and return a set containing that file and 2 additional empty sets."""
+        it exists and return a set containing that file and 2 additional empty sets.
+
+        Args:
+            modified_files(Set): A set of modified and renamed files.
+            old_format_files(Set): A set of old format files.
+            file_path(str): The file path to check.
+
+        Returns:
+            Tuple[Set, Set, Set]. 3 sets representing modified, added or old format files respectively
+            where the file path is in the appropriate set
+        """
         filtered_modified_files: Set = set()
         filtered_added_files: Set = set()
         filtered_old_format: Set = set()
@@ -518,7 +537,15 @@ class ValidateManager:
 
     @staticmethod
     def specify_files_from_directory(file_set: Set, directory_path: str) -> Set:
-        """Filter a set of file paths to only include ones which are from a specified directory."""
+        """Filter a set of file paths to only include ones which are from a specified directory.
+
+        Args:
+            file_set(Set): A set of file paths - could be stings or tuples for rename files.
+            directory_path(str): the directory path in which to check for the files.
+
+        Returns:
+            Set. A set of all the paths of files that appear in the given directory.
+        """
         filtered_set: Set = set()
         for file in file_set:
             if isinstance(file, str) and directory_path in file:
@@ -532,7 +559,17 @@ class ValidateManager:
 
     def specify_files_by_status(self, modified_files: Set, added_files: Set, old_format_files: Set) -> \
             Tuple[Set, Set, Set]:
-        """Filter the files identified from git to only specified files"""
+        """Filter the files identified from git to only specified files.
+
+        Args:
+            modified_files(Set): A set of modified and renamed files.
+            added_files(Set): A set of added files.
+            old_format_files(Set): A set of old format files.
+
+        Returns:
+            Tuple[Set, Set, Set]. 3 sets for modified, added an old format files where the only files that
+            appear are the ones specified by the 'file_path' ValidateManager parameter
+        """
         filtered_modified_files: Set = set()
         filtered_added_files: Set = set()
         filtered_old_format: Set = set()

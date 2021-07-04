@@ -860,7 +860,6 @@ class GithubContentConfig:
 
 OFFICIAL_CONTENT_ID_SET_PATH = 'https://storage.googleapis.com/marketplace-dist/content/id_set.json'
 
-
 # Run all test signal
 RUN_ALL_TESTS_FORMAT = 'Run all tests'
 FILTER_CONF = './artifacts/filter_file.txt'
@@ -1229,6 +1228,13 @@ CONTENT_ITEMS_DISPLAY_FOLDERS = {
     CLASSIFIERS_DIR,
     WIDGETS_DIR
 }
+
+
+class PathLevel(Enum):
+    PACK = 'Pack',
+    CONTENT_ENTITY_DIR = 'ContentDir',
+    PACKAGE = 'Package',
+    FILE = 'File'
 
 
 class DemistoException(Exception):

@@ -1,5 +1,6 @@
 # Changelog
 * Added new validation that DBotRole is set for scripts that requires elevated permissions to the `XSOAR-linter` in the **lint** command.
+* Fixed an issue where if a pack README.md did not exist it could cause an error in the validation process.
 
 # 1.4.2
 * Added to `pylint` summary an indication if a test was skipped.

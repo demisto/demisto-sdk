@@ -1239,3 +1239,6 @@ class PathLevel(Enum):
 
 class DemistoException(Exception):
     pass
+
+
+UUID_REGEX = r'([\w]{8}-[\w]{4}-[\w]{4}-[\w]{4}-[\w]{8,12})'

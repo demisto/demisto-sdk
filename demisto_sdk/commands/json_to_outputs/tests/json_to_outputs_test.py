@@ -100,7 +100,7 @@ def test_json_to_outputs__a_list_of_dict():
         - ensure the returned type is correct
     """
     yaml_output = parse_json(
-        data='[{"a": "b", "c": "d"}, {"e": "f"}]',
+        data='[{"a": "b", "c": "d"}, {"a": 1}]',
         command_name='jira-ticket',
         prefix='Jira.Ticket'
     )
@@ -110,11 +110,8 @@ name: jira-ticket
 outputs:
 - contextPath: Jira.Ticket.a
   description: ''
-  type: String
+  type: Number
 - contextPath: Jira.Ticket.c
-  description: ''
-  type: String
-- contextPath: Jira.Ticket.e
   description: ''
   type: String
 '''

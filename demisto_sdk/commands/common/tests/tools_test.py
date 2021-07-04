@@ -641,7 +641,7 @@ def test_get_ignore_pack_tests__ignore_test(tmpdir, mocker):
     """
     fake_pack_name = 'FakeTestPack'
     fake_test_name = 'FakeTestPlaybook'
-    expected_id = 'sample playbook'
+    expected_id = 'SamplePlaybookTest'
 
     # prepare repo
     repo = Repo(tmpdir)

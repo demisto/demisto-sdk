@@ -109,8 +109,10 @@ class UpdateReleaseNotesManager:
         """
         # The user gave a path to the api module which was changed or he didn't give a path but some api modules
         # have changed.
-        if (self.given_pack and API_MODULES_PACK in self.given_pack) or (
-                self.changed_packs_from_git and API_MODULES_PACK in self.changed_packs_from_git):
+        api_module_was_given = self.given_pack and API_MODULES_PACK in self.given_pack
+        api_module_changed_in_git = self.changed_packs_from_git and API_MODULES_PACK in self.changed_packs_from_git
+
+        if api_module_was_given or api_module_changed_in_git:
             updated_packs = update_api_modules_dependents_rn(self.pre_release, self.update_type, added_files,
                                                              modified_files, self.id_set_path, self.text)
             self.total_updated_packs = self.total_updated_packs.union(updated_packs)

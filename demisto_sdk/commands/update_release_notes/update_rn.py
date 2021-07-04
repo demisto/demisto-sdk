@@ -721,7 +721,7 @@ def update_api_modules_dependents_rn(pre_release: bool, update_type: Union[str, 
         id_set = json.load(conf_file)
     api_module_set = get_api_module_ids(added)
     api_module_set = api_module_set.union(get_api_module_ids(modified))
-    print_warning(f"Changes were found in the following APIModules: {api_module_set}, trying to update dependent "
+    print_warning(f"Changes were found in the following APIModules: {api_module_set}, updating all dependent "
                   f"integrations.")
     integrations = get_api_module_integrations_set(api_module_set, id_set.get('integrations', []))
     for integration in integrations:

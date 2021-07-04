@@ -5,9 +5,10 @@ from unittest.mock import MagicMock, patch
 
 import demisto_client
 import pytest
+from click.testing import CliRunner
 from demisto_client.demisto_api import DefaultApi
 from demisto_client.demisto_api.rest import ApiException
-from demisto_sdk.__main__ import upload
+from demisto_sdk.__main__ import main, upload
 from demisto_sdk.commands.common import constants
 from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    INTEGRATIONS_DIR,
@@ -886,6 +887,25 @@ class TestZippedPackUpload:
 
         # validate
         tools.update_server_configuration.call_count == exp_call_count
+
+    def test_upload_zip_does_not_exist(self):
+        """
+        Given:
+            - Zip path which does not exist.
+
+        When:
+            - Uploading the zipped pack.
+
+        Then:
+            - Ensure upload fails.
+            - Ensure failure upload message is printed to the stderr as the failure caused by click.Path.convert check.
+        """
+        invalid_zip_path = 'not_exist_dir/not_exist_zip'
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, ['upload', "-i", invalid_zip_path, "--insecure"])
+        assert result.exit_code == 2
+        assert isinstance(result.exception, SystemExit)
+        assert f"Invalid value for '-i' / '--input': Path '{invalid_zip_path}' does not exist" in result.stderr
 
 
 def exception_raiser(**kwargs):

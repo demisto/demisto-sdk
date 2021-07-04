@@ -1027,14 +1027,13 @@ def test_run_validation_using_git_on_only_metadata_changed(mocker):
     Then
         - validate That no error returns.
     """
-    with ChangeCWD('../../../../'):
-        mocker.patch.object(ValidateManager, 'setup_git_params')
-        mocker.patch.object(ValidateManager, 'get_changed_files_from_git',
-                            return_value=(set(), set(), {'/Packs/ForTesting/pack_metadata.json'}, set()))
+    mocker.patch.object(ValidateManager, 'setup_git_params')
+    mocker.patch.object(ValidateManager, 'get_changed_files_from_git',
+                        return_value=(set(), set(), {'/Packs/ForTesting/pack_metadata.json'}, set()))
 
-        validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
-        res = validate_manager.run_validation_using_git()
-        assert res
+    validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
+    res = validate_manager.run_validation_using_git()
+    assert res
 
 
 def test_is_mapping_fields_command_exist(integration):

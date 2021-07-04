@@ -56,6 +56,7 @@ DOCUMENTATION = 'doc'
 MAPPER = 'classifier-mapper'
 CANVAS = 'canvas'
 OLD_REPUTATION = 'reputations.json'
+XSOAR_CONFIG_FILE = 'xsoar_config.json'
 
 
 class FileType(Enum):
@@ -92,6 +93,7 @@ class FileType(Enum):
     WHITE_LIST = 'whitelist'
     LANDING_PAGE_SECTIONS_JSON = 'landingPage_sections.json'
     CONTRIBUTORS = 'contributors'
+    XSOAR_CONFIG = 'xsoar_config'
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -799,7 +801,7 @@ def urljoin(*args: str):
 
 
 class GithubCredentials:
-    ENV_TOKEN_NAME = 'GITHUB_TOKEN'
+    ENV_TOKEN_NAME = 'DEMISTO_SDK_GITHUB_TOKEN'
     TOKEN: Optional[str]
 
     def __init__(self):
@@ -1162,9 +1164,19 @@ DEFAULT_ID_SET_PATH = "./Tests/id_set.json"
 
 CONTEXT_OUTPUT_README_TABLE_HEADER = '| **Path** | **Type** | **Description** |'
 
-ARGUMENT_FIELDS_TO_CHECK = ['default', 'required', 'isArray']
+ARGUMENT_FIELDS_TO_CHECK = ['defaultValue', 'required', 'isArray']
 
-PARAM_FIELDS_TO_CHECK = ['type', 'required']
+PARAM_FIELDS_TO_CHECK = ['defaultvalue', 'type', 'required']
+
+INTEGRATION_ARGUMENT_TYPES = {
+    '0': 'ShortText',
+    '4': 'Encrypted',
+    '8': 'Boolean',
+    '9': 'Authentication',
+    '12': 'LongText',
+    '15': 'SingleSelect',
+    '16': 'MultiSelect'
+}
 
 
 class ContentItems(Enum):

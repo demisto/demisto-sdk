@@ -1,5 +1,6 @@
 from typing import Any, Dict, List
 
+import decorator
 from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
                                                    CONF_PATH,
                                                    INTEGRATION_CATEGORIES,
@@ -15,12 +16,11 @@ ALLOWED_IGNORE_ERRORS = [
     'IN109', 'IN110', 'IN122', 'IN126', 'IN128', 'IN135', 'IN136', 'IN139',
     'MP106',
     'PA113', 'PA116', 'PA124', 'PA125',
-    'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112'
+    'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112',
     'RM100', 'RM102', 'RM104', 'RM106',
     'RP102', 'RP104',
     'SC100', 'SC101', 'SC105',
 ]
-
 
 PRESET_ERROR_TO_IGNORE = {
     'community': ['BC', 'CJ', 'DS100', 'DS101', 'DS102', 'DS103', 'DS104', 'IN125', 'IN126'],
@@ -68,7 +68,7 @@ ERROR_CODE = {
     "pwsh_wrong_version": {'code': "IN120", 'ui_applicable': False, 'related_field': 'fromversion'},
     "parameter_missing_from_yml": {'code': "IN121", 'ui_applicable': True, 'related_field': 'configuration'},
     "parameter_missing_for_feed": {'code': "IN122", 'ui_applicable': True, 'related_field': 'configuration'},
-    "invalid_v2_integration_name": {'code': "IN123", 'ui_applicable': True, 'related_field': 'display'},
+    "invalid_version_integration_name": {'code': "IN123", 'ui_applicable': True, 'related_field': 'display'},
     "found_hidden_param": {'code': "IN124", 'ui_applicable': False, 'related_field': '<parameter-name>.hidden'},
     "no_default_value_in_parameter": {'code': "IN125", 'ui_applicable': False,
                                       'related_field': '<parameter-name>.default'},
@@ -92,7 +92,7 @@ ERROR_CODE = {
     "incident_in_command_name_or_args": {'code': "IN139", "ui_applicable": False,
                                          'related_field': 'script.commands.name'},
     "integration_is_skipped": {'code': "IN140", 'ui_applicable': False, 'related_field': ''},
-    "invalid_v2_script_name": {'code': "SC100", 'ui_applicable': True, 'related_field': 'name'},
+    "invalid_version_script_name": {'code': "SC100", 'ui_applicable': True, 'related_field': 'name'},
     "invalid_deprecated_script": {'code': "SC101", 'ui_applicable': False, 'related_field': 'comment'},
     "invalid_command_name_in_script": {'code': "SC102", 'ui_applicable': False, 'related_field': ''},
     "is_valid_script_file_path_in_folder": {'code': "SC103", 'ui_applicable': False, 'related_field': ''},
@@ -176,7 +176,6 @@ ERROR_CODE = {
     "invalid_incident_field_group_value": {'code': "IF104", 'ui_applicable': False, 'related_field': 'group'},
     "invalid_incident_field_cli_name_regex": {'code': "IF105", 'ui_applicable': False, 'related_field': 'cliName'},
     "invalid_incident_field_cli_name_value": {'code': "IF106", 'ui_applicable': True, 'related_field': 'cliName'},
-    "incident_field_or_type_from_version_5": {'code': "IF107", 'ui_applicable': True, 'related_field': 'fromVersion'},
     "invalid_incident_field_or_type_from_version": {'code': "IF108", 'ui_applicable': False,
                                                     'related_field': 'fromVersion'},
     "new_incident_field_required": {'code': "IF109", 'ui_applicable': True, 'related_field': 'required'},
@@ -184,6 +183,7 @@ ERROR_CODE = {
     "incident_field_type_change": {'code': "IF111", 'ui_applicable': False, 'related_field': 'type'},
     "indicator_field_type_grid_minimal_version": {'code': "IF112", 'ui_applicable': False,
                                                   'related_field': 'fromVersion'},
+    "invalid_incident_field_prefix": {'code': "IF113", 'ui_applicable': False, 'related_field': 'name'},
     "incident_type_integer_field": {'code': "IT100", 'ui_applicable': True, 'related_field': ''},
     "incident_type_invalid_playbook_id_field": {'code': "IT101", 'ui_applicable': False, 'related_field': 'playbookId'},
     "incident_type_auto_extract_fields_invalid": {'code': "IT102", 'ui_applicable': False,
@@ -289,11 +289,9 @@ def get_error_object(error_code: str) -> Dict:
     return {}
 
 
-def error_code_decorator(f):
-    def wrapper(*args, **kwargs):
-        return f(*args, **kwargs), ERROR_CODE[f.__name__].get('code')
-
-    return wrapper
+@decorator.decorator
+def error_code_decorator(func, *args, **kwargs):
+    return func(*args, **kwargs), ERROR_CODE[func.__name__].get('code')
 
 
 class Errors:
@@ -618,9 +616,10 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_v2_integration_name():
-        return "The display name of this v2 integration is incorrect , should be **name** v2.\n" \
-               "e.g: Kenna v2, Jira v2"
+    def invalid_version_integration_name(version_number: str):
+        return f"The display name of this v{version_number} integration is incorrect , " \
+               f"should be **name** v{version_number}.\n" \
+               f"e.g: Kenna v{version_number}, Jira v{version_number}"
 
     @staticmethod
     @error_code_decorator
@@ -641,9 +640,9 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_v2_script_name():
-        return "The name of this v2 script is incorrect , should be **name**V2." \
-               " e.g: DBotTrainTextClassifierV2"
+    def invalid_version_script_name(version_number: str):
+        return f"The name of this v{version_number} script is incorrect , should be **name**V{version_number}." \
+               f" e.g: DBotTrainTextClassifierV{version_number}"
 
     @staticmethod
     @error_code_decorator
@@ -973,8 +972,8 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_deprecated_playbook():
-        return 'The description of all deprecated playbooks should follow one of the formats:' \
-               '1. "Deprecated. Use <PLAYBOOK_NAME> instead."' \
+        return 'The description of all deprecated playbooks should follow one of the formats:\n' \
+               '1. "Deprecated. Use <PLAYBOOK_NAME> instead."\n' \
                '2. "Deprecated. <REASON> No available replacement."'
 
     @staticmethod
@@ -1661,3 +1660,16 @@ class Errors:
     def xsoar_config_file_malformed(configuration_file_path, schema_file_path, errors_table):
         return f'Errors were found in the configuration file: "{configuration_file_path}" ' \
                f'with schema "{schema_file_path}":\n {errors_table}'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_incident_field_prefix(field_name):
+        return f"Field name: {field_name} is invalid. Field name must start with the relevant pack name."
+
+    @staticmethod
+    def suggest_fix_field_name(field_name, pack_prefix):
+        return f"To fix the problem, add pack name prefix to the field name. " \
+               f"You can use the pack name or one of the prefixes found in the itemPrefix field in the packe.metadat. " \
+               f"Example: {pack_prefix} {field_name}.\n" \
+               f"Also make sure to update the field id and cliName accordingly. " \
+               f"Example: cliName: {pack_prefix.replace(' ', '')}{field_name.replace(' ', '')}, "

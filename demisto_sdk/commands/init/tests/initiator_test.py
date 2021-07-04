@@ -263,6 +263,21 @@ class TestCreateMetadata:
         }
 
 
+def test_pack_init_without_filling_metadata(monkeypatch, mocker, initiator):
+    """
+    Given
+        - Pack init inputs.
+    When
+        - Creating new pack without filling the metadata file.
+    Then
+        - Ensure it does not fail.
+    """
+    monkeypatch.setattr('builtins.input', lambda _: 'n')
+    mocker.patch.object(Initiator, 'create_new_directory', return_value=True)
+    mocker.patch.object(os, 'mkdir', return_value=None)
+    assert initiator.pack_init()
+
+
 def test_get_valid_user_input(monkeypatch, initiator):
     monkeypatch.setattr('builtins.input', generate_multiple_inputs(deque(['InvalidInput', '100', '1'])))
     user_choice = initiator.get_valid_user_input(INTEGRATION_CATEGORIES, 'Choose category')
@@ -288,7 +303,8 @@ def test_create_new_directory(mocker, monkeypatch, initiator):
     assert initiator.create_new_directory() is False
 
 
-def test_yml_reformatting(tmp_path, initiator):
+def test_yml_reformatting(monkeypatch, tmp_path, initiator):
+    monkeypatch.setattr('builtins.input', generate_multiple_inputs(deque(['6.0.0'])))
     integration_id = 'HelloWorld'
     initiator.id = integration_id
     initiator.category = 'Utilities'
@@ -320,7 +336,7 @@ def test_yml_reformatting(tmp_path, initiator):
             }),
             'display': 'HelloWorld',
             'name': 'HelloWorld',
-            'fromversion': initiator.SUPPORTED_FROM_VERSION,
+            'fromversion': '6.0.0',
             'category': 'Utilities'
         })
 
@@ -376,7 +392,7 @@ def test_get_remote_templates__invalid(mocker, initiator):
     os.rmdir(PACK_NAME)
 
 
-def test_integration_init(initiator, tmpdir):
+def test_integration_init(monkeypatch, initiator, tmpdir):
     """
     Tests `integration_init` function.
 
@@ -391,6 +407,7 @@ def test_integration_init(initiator, tmpdir):
         - Ensure integration directory with the desired integration name is created successfully.
         - Ensure integration directory contain all files of the Boilerplate template.
     """
+    monkeypatch.setattr('builtins.input', generate_multiple_inputs(deque(['6.0.0'])))
     temp_pack_dir = os.path.join(tmpdir, PACK_NAME)
     os.makedirs(temp_pack_dir, exist_ok=True)
 
@@ -415,7 +432,7 @@ def test_integration_init(initiator, tmpdir):
 
 
 @pytest.mark.parametrize("template", ["HelloWorld", "FeedHelloWorld"])
-def test_template_integration_init(initiator, tmpdir, template):
+def test_template_integration_init(monkeypatch, initiator, tmpdir, template):
     """
     Tests `integration_init` function with a given integration template name.
 
@@ -431,6 +448,7 @@ def test_template_integration_init(initiator, tmpdir, template):
         - Ensure integration directory with the desired integration name is created successfully.
         - Ensure integration directory contains all the files of the template integration.
     """
+    monkeypatch.setattr('builtins.input', generate_multiple_inputs(deque(['6.0.0'])))
     temp_pack_dir = os.path.join(tmpdir, PACK_NAME)
     os.makedirs(temp_pack_dir, exist_ok=True)
 
@@ -455,7 +473,7 @@ def test_template_integration_init(initiator, tmpdir, template):
     assert not diff, f'There\'s a missing file in the copied files, diff is {diff}'
 
 
-def test_script_init(initiator, tmpdir):
+def test_script_init(monkeypatch, initiator, tmpdir):
     """
     Tests `script_init` function.
 
@@ -470,6 +488,7 @@ def test_script_init(initiator, tmpdir):
         - Ensure script directory with the desired script name is created successfully.
         - Ensure script directory contain all files.
     """
+    monkeypatch.setattr('builtins.input', lambda _: '6.0.0')
     temp_pack_dir = os.path.join(tmpdir, PACK_NAME)
     os.makedirs(temp_pack_dir, exist_ok=True)
 

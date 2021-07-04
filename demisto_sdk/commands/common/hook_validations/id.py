@@ -250,12 +250,13 @@ class IDSetValidations(BaseValidator):
         """Checks whether a sub playbook name is valid (i.e id exists in set_id)
         Args:
             playbook_data (dict): Dictionary that holds the extracted details from the given playbook.
+             {playbook name: playbook data (dict)}
             file_path (string): Path to the file (current playbook).
 
         Return:
             bool. if all sub playbooks names of this playbook are valid.
         """
-
+        # Get a dict with all playbook fields from the playbook data dict.
         playbook_data_2nd_level = playbook_data.get(list(playbook_data.keys())[0])
         main_playbook_name = playbook_data_2nd_level.get("name")
         sub_playbooks_list = playbook_data_2nd_level.get("implementing_playbooks", [])
@@ -263,10 +264,12 @@ class IDSetValidations(BaseValidator):
             playbook_name = list(playbook_dict.values())[0].get('name')
             if playbook_name in sub_playbooks_list:
                 sub_playbooks_list.remove(playbook_name)
+
         if sub_playbooks_list:
-            error_message, error_code = Errors.invalid_playbook_name(sub_playbooks_list, main_playbook_name)
+            error_message, error_code = Errors.invalid_subplaybook_name(sub_playbooks_list, main_playbook_name)
             if self.handle_error(error_message, error_code, file_path):
                 return False
+
         return True
 
     def get_commands_to_integration(self, file_name, file_path):

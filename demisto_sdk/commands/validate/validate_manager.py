@@ -577,7 +577,7 @@ class ValidateManager:
         for path in self.file_path.split(','):
             path = get_relative_path_from_packs_dir(path)
             file_level = self.detect_file_level(path)
-            if file_level == 'File':
+            if file_level == PathLevel.FILE:
                 temp_modified, temp_added, temp_old_format = self.get_file_by_status(modified_files,
                                                                                      old_format_files, path)
                 filtered_modified_files = filtered_modified_files.union(temp_modified)

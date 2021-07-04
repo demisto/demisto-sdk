@@ -12,7 +12,7 @@ from enum import Enum
 from functools import partial
 from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen, check_output
-from typing import Callable, Dict, List, Optional, Tuple, Type, Union
+from typing import Callable, Dict, List, Match, Optional, Tuple, Type, Union
 
 import click
 import colorama
@@ -1842,3 +1842,15 @@ def get_relative_path_from_packs_dir(file_path: str) -> str:
         return file_path
 
     return str(os.path.join(PACKS_DIR, os.path.relpath(file_path, PACKS_DIR)))
+
+
+def is_uuid(s: str) -> Optional[Match]:
+    """Checks whether given string is a UUID
+
+    Args:
+         s (str): The string to check if it is a UUID
+
+    Returns:
+        Match: Returns the match if given string is a UUID, otherwise None
+    """
+    return re.match(UUID_REGEX, s)

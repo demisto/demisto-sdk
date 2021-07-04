@@ -25,7 +25,7 @@ from demisto_sdk.commands.common.tools import (
     get_last_remote_release_version, get_latest_release_notes_text,
     get_pack_metadata, get_relative_path_from_packs_dir,
     get_release_notes_file_path, get_ryaml, get_to_version,
-    has_remote_configured, is_origin_content_repo, is_pack_path,
+    has_remote_configured, is_origin_content_repo, is_pack_path, is_uuid,
     retrieve_file_ending, run_command_os, server_version_compare)
 from demisto_sdk.tests.constants_test import (IGNORED_PNG,
                                               INDICATORFIELD_EXTRA_FIELDS,
@@ -1034,6 +1034,32 @@ def test_is_pack_path(input_path: str, expected: bool):
 
     """
     assert is_pack_path(input_path) == expected
+
+
+@pytest.mark.parametrize('s, is_valid_uuid', [
+    ('', False),
+    ('ffc9fbb0-1a73-448c-89a8-fe979e0f0c3e', True),
+    ('somestring', False)
+])
+def test_is_uuid(s, is_valid_uuid):
+    """
+    Given:
+        - Case A: Empty string
+        - Case B: Valid UUID
+        - Case C: Invalid UUID
+
+    When:
+        - Checking if the string is a valid UUID
+
+    Then:
+        - Case A: False as it is an empty string
+        - Case B: True as it is a valid UUID
+        - Case C: False as it is a string which is not a valid UUID
+    """
+    if is_valid_uuid:
+        assert is_uuid(s)
+    else:
+        assert not is_uuid(s)
 
 
 def test_get_relative_path_from_packs_dir():

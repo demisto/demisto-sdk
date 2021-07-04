@@ -24,14 +24,12 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    INDICATOR_FIELDS_DIR,
                                                    INDICATOR_TYPES_DIR,
                                                    LAYOUTS_DIR, MAPPERS_DIR,
+                                                   OBJECT_FIELD_DIR,
+                                                   OBJECT_MODULE_DIR,
+                                                   OBJECT_TYPE_DIR,
                                                    REPORTS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
-                                                   WIDGETS_DIR, FileType,
-                                                   OBJECT_DEFINITION_DIR,
-                                                   OBJECT_TYPE_DIR,
-                                                   OBJECT_FIELD_DIR,
-                                                   OBJECT_PAGE_DIR
-                                                   )
+                                                   WIDGETS_DIR, FileType)
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type, get_json,
                                                get_pack_name, get_yaml,
                                                print_color, print_error,
@@ -40,13 +38,12 @@ from demisto_sdk.commands.unify.unifier import Unifier
 
 CONTENT_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
                     'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
-                    'Layouts', 'Reports', 'Widgets', 'Mappers', 'Packs', 'ObjectDefinition', 'ObjectTypes',
-                    'ObjectFields', 'ObjectPages']
+                    'Layouts', 'Reports', 'Widgets', 'Mappers', 'Packs', 'ObjectTypes',
+                    'ObjectFields', 'ObjectModules']
 
 ID_SET_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Classifiers',
                    'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
-                   'Layouts', 'Reports', 'Widgets', 'Mappers', 'ObjectTypes', 'ObjectFields']
-
+                   'Layouts', 'Reports', 'Widgets', 'Mappers', 'ObjectTypes', 'ObjectFields', 'ObjectModules']
 
 BUILT_IN_FIELDS = [
     "name",
@@ -885,6 +882,29 @@ def get_object_field_data(path, objects_types_list):
     return {id_: data}
 
 
+def get_object_module_data(path):
+    json_data = get_json(path)
+    id_ = json_data.get('id')
+    name = json_data.get('name', '')
+    pack = get_pack_name(path)
+    definitions = json_data.get('definitions', [])
+    definitions = [{definition.get('id'): definition.get('name')} for definition in definitions]
+    views = json_data.get('views', [])
+    views = [
+        {view.get('name'): {
+            'title': view.get('title'),
+            'dashboards': [{tab.get('dashboardId', '') for tab in view.get('tabs', [])}]}}
+        for view in views]
+
+    data = create_common_entity_data(path=path, name=name, to_version=None, from_version=None, pack=pack)
+    if definitions:
+        data['definitions'] = list(definitions)
+    if views:
+        data['views'] = list(views)
+
+    return {id_: data}
+
+
 def get_depends_on(data_dict):
     depends_on = data_dict.get('dependson', {}).get('must', [])
     depends_on_list = list({cmd.split('|')[-1] for cmd in depends_on})
@@ -1000,6 +1020,7 @@ def process_indicator_types(file_path: str, print_logs: bool, all_integrations: 
 
     return res
 
+
 def process_object_fields(file_path: str, print_logs: bool, objects_types_list: list) -> list:
     """
     Process an object field JSON file
@@ -1009,7 +1030,7 @@ def process_object_fields(file_path: str, print_logs: bool, objects_types_list: 
         incidents_types_list: List of all the incident types in the system.
 
     Returns:
-        a list of incident field data.
+        a list of object field data.
     """
     res = []
     try:
@@ -1021,6 +1042,7 @@ def process_object_fields(file_path: str, print_logs: bool, objects_types_list: 
         print_error(f'failed to process {file_path}, Error: {str(exp)}')
         raise
     return res
+
 
 def process_general_items(file_path: str, print_logs: bool, expected_file_types: Tuple[FileType],
                           data_extraction_func: Callable) -> list:
@@ -1366,6 +1388,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     mappers_list = []
     object_types_list = []
     object_fields_list = []
+    object_modules_list = []
     packs_dict: Dict[str, Dict] = {}
 
     pool = Pool(processes=int(cpu_count()))
@@ -1559,7 +1582,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
         # 'ObjectDefinition', 'ObjectTypes',
         # 'ObjectFields', 'ObjectPages'
         if 'ObjectTypes' in objects_to_create:
-            print_color("\nStarting iteration over ObjectTypes", LOG_COLORS.GREEN)
+            print_color("\nStarting iteration over Object Types", LOG_COLORS.GREEN)
             print_color(f"pack to create: {pack_to_create}", LOG_COLORS.YELLOW)
             for arr in pool.map(partial(process_general_items,
                                         print_logs=print_logs,
@@ -1573,7 +1596,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
 
         # Has to be called after 'ObjectTypes' is called
         if 'ObjectFields' in objects_to_create:
-            print_color("\nStarting iteration over Incident Fields", LOG_COLORS.GREEN)
+            print_color("\nStarting iteration over Objects Fields", LOG_COLORS.GREEN)
             for arr in pool.map(partial(process_object_fields,
                                         print_logs=print_logs,
                                         objects_types_list=object_types_list
@@ -1583,7 +1606,17 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
 
         progress_bar.update(1)
 
+        if 'ObjectModules' in objects_to_create:
+            print_color("\nStarting iteration over Object Modules", LOG_COLORS.GREEN)
+            for arr in pool.map(partial(process_general_items,
+                                        print_logs=print_logs,
+                                        expected_file_types=(FileType.OBJECT_MODULE,),
+                                        data_extraction_func=get_object_module_data,
+                                        ),
+                                get_general_paths(OBJECT_MODULE_DIR, pack_to_create)):
+                object_modules_list.extend(arr)
 
+        progress_bar.update(1)
 
     new_ids_dict = OrderedDict()
     # we sort each time the whole set in case someone manually changed something
@@ -1605,6 +1638,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     new_ids_dict['Packs'] = packs_dict
     new_ids_dict['ObjectTypes'] = sort(object_types_list)
     new_ids_dict['ObjectFields'] = sort(object_fields_list)
+    new_ids_dict['ObjectModules'] = sort(object_modules_list)
 
     exec_time = time.time() - start_time
     print_color("Finished the creation of the id_set. Total time: {} seconds".format(exec_time), LOG_COLORS.GREEN)

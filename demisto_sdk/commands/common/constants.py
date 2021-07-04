@@ -32,10 +32,9 @@ RELEASE_NOTES_DIR = 'ReleaseNotes'
 TESTS_DIR = 'Tests'
 DOC_FILES_DIR = 'doc_files'
 DOCUMENTATION_DIR = 'Documentation'
-OBJECT_DEFINITION_DIR = 'ObjectDefinition'
+OBJECT_MODULE_DIR = 'ObjectModules'
 OBJECT_TYPE_DIR = 'ObjectTypes'
 OBJECT_FIELD_DIR = 'ObjectFields'
-OBJECT_PAGE_DIR = 'ObjectPages'
 
 SCRIPT = 'script'
 AUTOMATION = 'automation'
@@ -98,11 +97,9 @@ class FileType(Enum):
     LANDING_PAGE_SECTIONS_JSON = 'landingPage_sections.json'
     CONTRIBUTORS = 'contributors'
     XSOAR_CONFIG = 'xsoar_config'
-    OBJECT_DEFINITION = 'ObjectDefinition'
     OBJECT_TYPE = 'ObjectType'
     OBJECT_FIELD = 'ObjectField'
-    OBJECT_PAGE = 'ObjectPage'
-
+    OBJECT_MODULE = 'ObjectModules'
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -868,7 +865,6 @@ class GithubContentConfig:
 
 
 OFFICIAL_CONTENT_ID_SET_PATH = 'https://storage.googleapis.com/marketplace-dist/content/id_set.json'
-
 
 # Run all test signal
 RUN_ALL_TESTS_FORMAT = 'Run all tests'

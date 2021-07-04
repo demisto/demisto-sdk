@@ -416,7 +416,7 @@ class Errors:
     @error_code_decorator
     def reputation_missing_argument(arg_name, command_name, all=False):
         missing_msg = "These" if all else 'At least one of these'
-        return "{} arguments '{}' are required int the command '{}' and are not configured in yml." \
+        return "{} arguments '{}' are required in the command '{}' and are not configured in yml." \
             .format(missing_msg, arg_name, command_name)
 
     @staticmethod

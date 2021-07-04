@@ -26,8 +26,7 @@ from demisto_sdk.commands.secrets.secrets import SecretsValidator
 
 
 def extract_values_from_nested_dict_to_a_set(given_dictionary: dict, return_set: set):
-    """A recursive function that extracts values (the values are of type list) from a nested dictionary,
-    and return the values to a set.
+    """A recursive function that extracts values (the values are of type list) from a nested dictionary to a set.
 
     Args:
         given_dictionary: The nested dictionary to extract the values from there.

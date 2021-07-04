@@ -1082,6 +1082,8 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
                     return FileType.INCIDENT_FIELD
                 if _id.startswith('indicator'):
                     return FileType.INDICATOR_FIELD
+                if 'object' in _dict:
+                    return FileType.OBJECT_FIELD
             else:
                 print(f'The file {path} could not be recognized, please update the "id" to be a string')
 

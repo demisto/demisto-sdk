@@ -45,7 +45,7 @@ CONTENT_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Cl
 
 ID_SET_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Classifiers',
                    'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
-                   'Layouts', 'Reports', 'Widgets', 'Mappers', 'ObjectTypes']
+                   'Layouts', 'Reports', 'Widgets', 'Mappers', 'ObjectTypes', 'ObjectFields']
 
 
 BUILT_IN_FIELDS = [
@@ -842,6 +842,49 @@ def get_general_data(path):
     return {id_: data}
 
 
+def get_object_field_data(path, objects_types_list):
+    json_data = get_json(path)
+
+    id_ = json_data.get('id')
+    name = json_data.get('name', '')
+    fromversion = json_data.get('fromVersion')
+    toversion = json_data.get('toVersion')
+    pack = get_pack_name(path)
+    all_associated_types: set = set()
+    all_scripts = set()
+    object = json_data.get('object')
+
+    associated_types = json_data.get('associatedTypes')
+    if associated_types:
+        all_associated_types = set(associated_types)
+
+    system_associated_types = json_data.get('systemAssociatedTypes')
+    if system_associated_types:
+        all_associated_types = all_associated_types.union(set(system_associated_types))
+
+    if 'all' in all_associated_types:
+        all_associated_types = {list(object_type.keys())[0] for object_type in objects_types_list}
+
+    scripts = json_data.get('script')
+    if scripts:
+        all_scripts = {scripts}
+
+    field_calculations_scripts = json_data.get('fieldCalcScript')
+    if field_calculations_scripts:
+        all_scripts = all_scripts.union({field_calculations_scripts})
+
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
+
+    if all_associated_types:
+        data['object_types'] = list(all_associated_types)
+    if all_scripts:
+        data['scripts'] = list(all_scripts)
+    if object:
+        data['object'] = object
+
+    return {id_: data}
+
+
 def get_depends_on(data_dict):
     depends_on = data_dict.get('dependson', {}).get('must', [])
     depends_on_list = list({cmd.split('|')[-1] for cmd in depends_on})
@@ -957,6 +1000,27 @@ def process_indicator_types(file_path: str, print_logs: bool, all_integrations: 
 
     return res
 
+def process_object_fields(file_path: str, print_logs: bool, objects_types_list: list) -> list:
+    """
+    Process an object field JSON file
+    Args:
+        file_path: The file path from incident field folder
+        print_logs: Whether to print logs to stdout.
+        incidents_types_list: List of all the incident types in the system.
+
+    Returns:
+        a list of incident field data.
+    """
+    res = []
+    try:
+        if find_type(file_path) == FileType.OBJECT_FIELD:
+            if print_logs:
+                print(f'adding {file_path} to id_set')
+            res.append(get_object_field_data(file_path, objects_types_list))
+    except Exception as exp:  # noqa
+        print_error(f'failed to process {file_path}, Error: {str(exp)}')
+        raise
+    return res
 
 def process_general_items(file_path: str, print_logs: bool, expected_file_types: Tuple[FileType],
                           data_extraction_func: Callable) -> list:
@@ -1089,9 +1153,9 @@ def get_general_paths(path, pack_to_create):
     return files
 
 
-def get_object_types_paths(path, pack_to_create):
+def get_object_entities_paths(path, pack_to_create):
     """
-
+    get paths of objectTypes, objectFields, objectPages
     """
     if pack_to_create:
         path_list = [
@@ -1134,7 +1198,6 @@ def get_object_type_data(path):
         print_color("object not found!!!", LOG_COLORS.RED)
 
     return {id_: data}
-
 
 
 class IDSetType(Enum):
@@ -1302,6 +1365,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     widgets_list = []
     mappers_list = []
     object_types_list = []
+    object_fields_list = []
     packs_dict: Dict[str, Dict] = {}
 
     pool = Pool(processes=int(cpu_count()))
@@ -1502,10 +1566,24 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         expected_file_types=(FileType.OBJECT_TYPE,),
                                         data_extraction_func=get_object_type_data,
                                         ),
-                                get_object_types_paths(OBJECT_TYPE_DIR, pack_to_create)):
+                                get_object_entities_paths(OBJECT_TYPE_DIR, pack_to_create)):
                 object_types_list.extend(arr)
 
         progress_bar.update(1)
+
+        # Has to be called after 'ObjectTypes' is called
+        if 'ObjectFields' in objects_to_create:
+            print_color("\nStarting iteration over Incident Fields", LOG_COLORS.GREEN)
+            for arr in pool.map(partial(process_object_fields,
+                                        print_logs=print_logs,
+                                        objects_types_list=object_types_list
+                                        ),
+                                get_object_entities_paths(OBJECT_FIELD_DIR, pack_to_create)):
+                object_fields_list.extend(arr)
+
+        progress_bar.update(1)
+
+
 
     new_ids_dict = OrderedDict()
     # we sort each time the whole set in case someone manually changed something
@@ -1526,6 +1604,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     new_ids_dict['Mappers'] = sort(mappers_list)
     new_ids_dict['Packs'] = packs_dict
     new_ids_dict['ObjectTypes'] = sort(object_types_list)
+    new_ids_dict['ObjectFields'] = sort(object_fields_list)
 
     exec_time = time.time() - start_time
     print_color("Finished the creation of the id_set. Total time: {} seconds".format(exec_time), LOG_COLORS.GREEN)

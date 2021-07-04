@@ -1,5 +1,6 @@
 # Changelog
 * Fixed an issue where if a pack README.md did not exist it could cause an error in the validation process.
+* Adding the option to run **validate** on a specific path while using git (*-i* & *-g*).
 
 # 1.4.2
 * Added to `pylint` summary an indication if a test was skipped.
@@ -53,7 +54,6 @@
 * Removed the **DISABLE_SDK_VERSION_CHECK** environment variable. To disable new version checks, use the **DEMISTO_SDK_SKIP_VERSION_CHECK** envirnoment variable.
 * Fixed an issue where the demisto-sdk version check failed due to a rate limit.
 * Fixed an issue with playbooks scheme validation.
-* Adding the option to run **validate** on a specific path while using git (*-i* & *-g*).
 
 # 1.3.8
 * Updated the **secrets** command to work on forked branches.

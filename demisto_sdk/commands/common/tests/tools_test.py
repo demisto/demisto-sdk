@@ -16,31 +16,16 @@ from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
                                                    FileType)
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.tools import (LOG_COLORS, arg_to_list,
-                                               filter_files_by_type,
-                                               filter_files_on_pack,
-                                               filter_packagify_changes,
-                                               find_type, get_code_lang,
-                                               get_dict_from_file,
-                                               get_entity_id_by_entity_type,
-                                               get_entity_name_by_entity_type,
-                                               get_file,
-                                               get_file_displayed_name,
-                                               get_files_in_dir,
-                                               get_ignore_pack_skipped_tests,
-                                               get_last_release_version,
-                                               get_last_remote_release_version,
-                                               get_latest_release_notes_text,
-                                               get_pack_metadata,
-                                               get_release_notes_file_path,
-                                               get_ryaml, get_to_version,
-                                               has_remote_configured,
-                                               is_origin_content_repo,
-                                               is_pack_path, is_uuid,
-                                               is_v2_file,
-                                               retrieve_file_ending,
-                                               run_command_os,
-                                               server_version_compare)
+from demisto_sdk.commands.common.tools import (
+    LOG_COLORS, arg_to_list, filter_files_by_type, filter_files_on_pack,
+    filter_packagify_changes, find_type, get_code_lang, get_dict_from_file,
+    get_entity_id_by_entity_type, get_entity_name_by_entity_type, get_file,
+    get_file_displayed_name, get_file_version_suffix_if_exists,
+    get_files_in_dir, get_ignore_pack_skipped_tests, get_last_release_version,
+    get_last_remote_release_version, get_latest_release_notes_text,
+    get_pack_metadata, get_release_notes_file_path, get_ryaml, get_to_version,
+    has_remote_configured, is_origin_content_repo, is_pack_path, is_uuid,
+    retrieve_file_ending, run_command_os, server_version_compare)
 from demisto_sdk.tests.constants_test import (IGNORED_PNG,
                                               INDICATORFIELD_EXTRA_FIELDS,
                                               SOURCE_FORMAT_INTEGRATION_COPY,
@@ -746,32 +731,62 @@ V2_WRONG_DISPLAY = {"display": "integrationname V2", "name": "integrationname v2
 NOT_V2_VIA_DISPLAY_NOR_NAME = {"display": "integrationname", "name": "integrationv2name", "id": "integrationv2name"}
 NOT_V2_VIA_DISPLAY = {"display": "integrationname", "name": "integrationname v2", "id": "integrationv2name"}
 NOT_V2_VIA_NAME = {"display": "integrationname V2", "name": "integrationname", "id": "integrationv2name"}
-V2_NAME_INPUTS = [
-    (V2_VALID, True),
-    (V2_WRONG_DISPLAY, True),
-    (NOT_V2_VIA_DISPLAY_NOR_NAME, False),
-    (NOT_V2_VIA_NAME, False),
-    (NOT_V2_VIA_DISPLAY, True)
+V3_VALID = {"display": "integrationname v3", "name": "integrationname v3", "id": "integrationname v3"}
+V3_WRONG_DISPLAY = {"display": "integrationname V3", "name": "integrationname v3", "id": "integrationname V3"}
+NOT_V3_VIA_DISPLAY_NOR_NAME = {"display": "integrationname", "name": "integrationv3name", "id": "integrationv3name"}
+NOT_V3_VIA_DISPLAY = {"display": "integrationname", "name": "integrationname v3", "id": "integrationv3name"}
+NOT_V3_VIA_NAME = {"display": "integrationname V3", "name": "integrationname", "id": "integrationv3Gname"}
+GET_FILE_VERSION_SUFFIX_IF_EXISTS_NAME_INPUTS = [
+    (V2_VALID, '2'),
+    (V2_WRONG_DISPLAY, '2'),
+    (NOT_V2_VIA_DISPLAY_NOR_NAME, None),
+    (NOT_V2_VIA_NAME, None),
+    (NOT_V2_VIA_DISPLAY, '2'),
+    (V3_VALID, '3'),
+    (V3_WRONG_DISPLAY, '3'),
+    (NOT_V3_VIA_DISPLAY_NOR_NAME, None),
+    (NOT_V3_VIA_NAME, None),
+    (NOT_V3_VIA_DISPLAY, '3')
 ]
 
 
-@pytest.mark.parametrize("current, answer", V2_NAME_INPUTS)
-def test_is_v2_file_via_name(current, answer):
-    assert is_v2_file(current) is answer
+@pytest.mark.parametrize("current, answer", GET_FILE_VERSION_SUFFIX_IF_EXISTS_NAME_INPUTS)
+def test_get_file_version_suffix_if_exists_via_name(current, answer):
+    assert get_file_version_suffix_if_exists(current) is answer
 
 
-V2_DISPLAY_INPUTS = [
-    (V2_VALID, True),
-    (V2_WRONG_DISPLAY, True),
-    (NOT_V2_VIA_DISPLAY, False),
-    (NOT_V2_VIA_NAME, True),
-    (NOT_V2_VIA_DISPLAY_NOR_NAME, False)
+GET_FILE_VERSION_SUFFIX_IF_EXIST_INPUTS = [
+    (V2_VALID, '2'),
+    (V2_WRONG_DISPLAY, '2'),
+    (NOT_V2_VIA_DISPLAY, None),
+    (NOT_V2_VIA_NAME, '2'),
+    (NOT_V2_VIA_DISPLAY_NOR_NAME, None),
+    (V3_VALID, '3'),
+    (V3_WRONG_DISPLAY, '3'),
+    (NOT_V3_VIA_DISPLAY, None),
+    (NOT_V3_VIA_NAME, '3'),
+    (NOT_V3_VIA_DISPLAY_NOR_NAME, None),
 ]
 
 
-@pytest.mark.parametrize("current, answer", V2_DISPLAY_INPUTS)
-def test_is_v2_file_via_display(current, answer):
-    assert is_v2_file(current, check_in_display=True) is answer
+@pytest.mark.parametrize("current, answer", GET_FILE_VERSION_SUFFIX_IF_EXIST_INPUTS)
+def test_get_file_version_suffix_if_exists_via_display(current, answer):
+    assert get_file_version_suffix_if_exists(current, check_in_display=True) is answer
+
+
+def test_test_get_file_version_suffix_if_exists_no_name_and_no_display():
+    """
+    Given:
+    - 'current_file': Dict representing YML data of an integration or script.
+
+    When:
+    - Invalid dict given, not containing display and name values.
+
+    Then:
+    - Ensure None is returned.
+    """
+    assert get_file_version_suffix_if_exists(dict(), check_in_display=True) is None
+    assert get_file_version_suffix_if_exists(dict(), check_in_display=False) is None
 
 
 def test_get_to_version_with_to_version(repo):

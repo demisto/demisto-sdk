@@ -13,7 +13,7 @@ class Script(Integration):
     def __init__(self, tmpdir: Path, name, repo, create_unified=False):
         super().__init__(tmpdir, name, repo, create_unified)
 
-    def create_default_script(self, name: str = None):
+    def create_default_script(self, name: str = 'sample_script'):
         """Creates a new script with basic data.
 
         Args:
@@ -27,8 +27,7 @@ class Script(Integration):
             code = str(code_file.read())
         with open(suite_join_path(default_script_dir, 'sample_script.yml')) as yml_file:
             yml = yaml.load(yml_file, Loader=yaml.FullLoader)
-            if name:
-                yml['name'] = yml['commonfields']['id'] = name
+            yml['name'] = yml['commonfields']['id'] = name
         with open(suite_join_path(default_script_dir, 'sample_script_image.png'), 'rb') as image_file:
             image = image_file.read()
         with open(suite_join_path(default_script_dir, 'CHANGELOG.md')) as changelog_file:

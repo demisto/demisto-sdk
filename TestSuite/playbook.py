@@ -40,7 +40,7 @@ class Playbook:
         if not self.is_test_playbook and readme is not None:
             self.readme.write(readme)
 
-    def create_default_playbook(self, name: str = None):
+    def create_default_playbook(self, name: str = 'sample playbook'):
         """Creates a new playbook with basic data.
 
         Args:
@@ -50,14 +50,12 @@ class Playbook:
         default_playbook_dir = 'assets/default_playbook'
         with open(suite_join_path(default_playbook_dir, 'playbook-sample.yml')) as yml_file:
             yml = yaml.safe_load(yml_file)
-            if name:
-                yml['id'] = yml['name'] = name
+            yml['id'] = yml['name'] = name
             self.build(yml=yml)
 
-    def create_default_test_playbook(self, name: str = None):
+    def create_default_test_playbook(self, name: str = 'SamplePlaybookTest'):
         default_test_playbook_dir = 'assets/default_playbook'
         with open(suite_join_path(default_test_playbook_dir, 'playbook-sample.yml')) as yml_file:
             yml = yaml.safe_load(yml_file)
-            if name:
-                yml['id'] = yml['name'] = name
+            yml['id'] = yml['name'] = name
             self.build(yml=yml)

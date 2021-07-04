@@ -1279,7 +1279,7 @@ class TestDependsOnLayout:
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
-    def test_collect_indicaotr_layouts_dependencies(self, id_set):
+    def test_collect_indicator_layouts_dependencies(self, id_set):
         """
         Given
             - A layout entry in the id_set.

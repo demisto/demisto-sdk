@@ -56,7 +56,7 @@ class Integration:
         if image is not None:
             self.image.write_bytes(image)
 
-    def create_default_integration(self, name: str = None, commands: List[str] = None):
+    def create_default_integration(self, name: str = 'Sample', commands: List[str] = None):
         """Creates a new integration with basic data
 
         Args:
@@ -70,8 +70,7 @@ class Integration:
             code = str(code_file.read())
         with open(suite_join_path(default_integration_dir, 'sample.yml')) as yml_file:
             yml = yaml.safe_load(yml_file)
-            if name:
-                yml['name'] = yml['commonfields']['id'] = name
+            yml['name'] = yml['commonfields']['id'] = name
             if commands:
                 for command in commands:
                     yml['script']['commands'].append({'name': command})

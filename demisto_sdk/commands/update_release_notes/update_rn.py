@@ -22,9 +22,9 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                get_from_version, get_json,
                                                get_latest_release_notes_text,
                                                get_pack_name, get_remote_file,
-                                               get_yaml, pack_name_to_path,
-                                               print_color, print_error,
-                                               print_warning, run_command)
+                                               get_yaml, print_color,
+                                               print_error, print_warning,
+                                               run_command)
 
 
 class UpdateRN:
@@ -34,7 +34,7 @@ class UpdateRN:
                  is_force: bool = False):
         self.pack = pack if pack else get_pack_name(pack_path)
         self.update_type = update_type
-        self.pack_path = self.init_pack_path()
+        self.pack_path = pack_path
         # renamed files will appear in the modified list as a tuple: (old path, new path)
         modified_files_in_pack = {file_[1] if isinstance(file_, tuple) else file_ for file_ in modified_files_in_pack}
         self.modified_files_in_pack = set()
@@ -52,19 +52,6 @@ class UpdateRN:
         self.is_force = is_force
         self.metadata_path = os.path.join(self.pack_path, 'pack_metadata.json')
         self.master_version = self.get_master_version()
-
-    def init_pack_path(self) -> str:
-        """ Extracts pack path from pack name if exists, otherwise throws an error and exit.
-
-            :rtype: ``str``
-            :return
-                The pack path
-        """
-        try:
-            return pack_name_to_path(self.pack)
-        except TypeError:
-            click.secho(f'Please verify the pack path is correct: {self.pack}.', fg='red')
-            sys.exit(1)
 
     @staticmethod
     def change_image_or_desc_file_path(file_path: str) -> str:

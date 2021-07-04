@@ -27,6 +27,8 @@ from demisto_sdk.commands.create_artifacts.content_artifacts_creator import \
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from demisto_sdk.commands.doc_reviewer.doc_reviewer import DocReviewer
 from demisto_sdk.commands.download.downloader import Downloader
+from demisto_sdk.commands.error_code_info.error_code_info import \
+    generate_error_code_information
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
 from demisto_sdk.commands.format.format_module import format_manager
@@ -537,6 +539,8 @@ def secrets(config, **kwargs):
     "--coverage-report", help="Specify directory for the coverage report files",
     type=PathsParamType()
 )
+@click.option("-dt", "--docker-timeout", default=60, help="The timeout (in seconds) for requests done by the docker client",
+              type=int)
 def lint(**kwargs):
     """Lint command will perform:
         1. Package in host checks - flake8, bandit, mypy, vulture.
@@ -575,6 +579,7 @@ def lint(**kwargs):
         failure_report=kwargs.get('failure_report'),  # type: ignore[arg-type]
         no_coverage=kwargs.get('no_coverage'),     # type: ignore[arg-type]
         coverage_report=kwargs.get('coverage_report'),  # type: ignore[arg-type]
+        docker_timeout=kwargs.get('docker_timeout'),  # type: ignore[arg-type]
     )
 
 
@@ -1000,6 +1005,12 @@ def generate_docs(**kwargs):
     "-o", "--output",
     help="Output file path, the default is the Tests directory.",
     default=''
+)
+@click.option(
+    '-fd',
+    '--fail-duplicates',
+    help="Fails the process if any duplicates are found.",
+    is_flag=True
 )
 def create_id_set(**kwargs):
     """Create the content dependency tree by ids."""
@@ -1517,6 +1528,28 @@ def convert(config, **kwargs):
         sys.exit(1)
 
     sys.exit(0)
+
+
+@main.command(
+    name='error-code',
+    help='Quickly find relevant information regarding an error code.',
+    hidden=True,
+)
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    '-i', '--input', required=True,
+    help='The error code to search for.',
+)
+@pass_config
+def error_code(config, **kwargs):
+    check_configuration_file('error-code-info', kwargs)
+    sys.path.append(config.configuration.env_dir)
+
+    result = generate_error_code_information(kwargs.get('input'))
+
+    sys.exit(result)
 
 
 @main.resultcallback()

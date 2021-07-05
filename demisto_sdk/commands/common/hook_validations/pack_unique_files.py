@@ -8,6 +8,7 @@ import re
 from datetime import datetime
 from distutils.version import LooseVersion
 from pathlib import Path
+from typing import Tuple
 
 import click
 from dateutil import parser
@@ -78,7 +79,7 @@ class PackUniqueFilesValidator(BaseValidator):
         self.support = support
 
     # error handling
-    def _add_error(self, error, file_path, warning=False):
+    def _add_error(self, error: Tuple[str, str], file_path: str, warning=False):
         """Adds error entry to a list under pack's name
         Returns True if added and false otherwise"""
         error_message, error_code = error
@@ -190,9 +191,9 @@ class PackUniqueFilesValidator(BaseValidator):
         pack_meta_file_content = self._read_file_content(self.pack_meta_file)
         metadata = json.loads(pack_meta_file_content)
         metadata_description = metadata.get(PACK_METADATA_DESC, '').lower().strip()
-        if not self._check_if_file_is_empty(self.readme_file):
-            readme = self._read_file_content(self.readme_file)
-            readme_content = readme.lower().strip()
+        if self._is_pack_file_exists(self.readme_file) and not self._check_if_file_is_empty(self.readme_file):
+            pack_readme = self._read_file_content(self.readme_file)
+            readme_content = pack_readme.lower().strip()
             if metadata_description == readme_content:
                 self._add_error(Errors.readme_equal_description_error(), self.readme_file)
                 return False

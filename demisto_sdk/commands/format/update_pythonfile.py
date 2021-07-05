@@ -69,5 +69,5 @@ class PythonFileFormat(BaseUpdate):
 
     def format_file(self) -> Tuple[int, int]:
         """Manager function for the integration python updater."""
-        format = self.run_format()
-        return format, SKIP_VALIDATE_PY_RETURN_CODE
+        format_res = self.run_format()
+        return format_res, SKIP_VALIDATE_PY_RETURN_CODE

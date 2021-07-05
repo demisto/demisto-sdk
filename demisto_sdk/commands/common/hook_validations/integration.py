@@ -1,6 +1,6 @@
 import os
 import re
-from typing import Dict
+from typing import Dict, Optional
 
 import yaml
 from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
@@ -25,9 +25,9 @@ from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.tools import (
-    compare_context_path_in_yml_and_readme, get_core_pack_list,
-    get_files_in_dir, get_pack_name, is_v2_file, print_error,
-    server_version_compare)
+    _get_file_id, compare_context_path_in_yml_and_readme, get_core_pack_list,
+    get_file_version_suffix_if_exists, get_files_in_dir, get_pack_name,
+    print_error, server_version_compare)
 
 
 class IntegrationValidator(ContentEntityValidator):
@@ -44,7 +44,8 @@ class IntegrationValidator(ContentEntityValidator):
             return True
 
         error_message, error_code = Errors.wrong_version()
-        if self.handle_error(error_message, error_code, file_path=self.file_path):
+        if self.handle_error(error_message, error_code, file_path=self.file_path,
+                             suggested_fix=Errors.suggest_fix(self.file_path)):
             self.is_valid = False
             return False
 
@@ -69,13 +70,16 @@ class IntegrationValidator(ContentEntityValidator):
         ]
         return not any(answers)
 
-    def is_valid_file(self, validate_rn: bool = True, skip_test_conf: bool = False) -> bool:
+    def is_valid_file(self, validate_rn: bool = True, skip_test_conf: bool = False,
+                      check_is_unskipped: bool = True, conf_json_data: dict = {}) -> bool:
         """Check whether the Integration is valid or not according to the LEVEL SUPPORT OPTIONS
         that depends on the contributor type
 
             Args:
                 validate_rn (bool): Whether to validate release notes (changelog) or not.
                 skip_test_conf (bool): If true then will skip test playbook configuration validation
+                check_is_unskipped (bool): Whether to check if the integration is unskipped.
+                conf_file (dict):
 
             Returns:
                 bool: True if integration is valid, False otherwise.
@@ -112,6 +116,9 @@ class IntegrationValidator(ContentEntityValidator):
             self.name_not_contain_the_type()
 
         ]
+
+        if check_is_unskipped:
+            answers.append(self.is_unskipped_integration(conf_json_data))
 
         if not skip_test_conf:
             answers.append(self.are_tests_configured())
@@ -155,6 +162,16 @@ class IntegrationValidator(ContentEntityValidator):
             self._is_valid_deprecated_integration_description(),
         ]
         return all(answers)
+
+    def is_unskipped_integration(self, conf_json_data):
+        """Validated the integration testing is not skipped."""
+        skipped_integrations = conf_json_data.get('skipped_integrations', {})
+        integration_id = _get_file_id('integration', self.current_file)
+        if skipped_integrations and integration_id in skipped_integrations:
+            error_message, error_code = Errors.integration_is_skipped(integration_id)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+        return self.is_valid
 
     def _is_valid_deprecated_integration_display_name(self) -> bool:
         is_valid = True
@@ -228,8 +245,9 @@ class IntegrationValidator(ContentEntityValidator):
                         err_msgs.append(formatted_message)
 
         if err_msgs:
-            print_error('{} Received the following error for {} validation:\n{}'
-                        .format(self.file_path, param_name, '\n'.join(err_msgs)))
+            print_error('{} Received the following error for {} validation:\n{}\n {}\n'
+                        .format(self.file_path, param_name, '\n'.join(err_msgs),
+                                Errors.suggest_fix(file_path=self.file_path)))
             self.is_valid = False
             return False
         return True
@@ -857,7 +875,8 @@ class IntegrationValidator(ContentEntityValidator):
                 if param not in params:
                     error_message, error_code = Errors.parameter_missing_from_yml(param.get('name'),
                                                                                   yaml.dump(param))
-                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                         suggested_fix=Errors.suggest_fix(self.file_path)):
                         fetch_params_exist = False
 
         return fetch_params_exist
@@ -931,20 +950,23 @@ class IntegrationValidator(ContentEntityValidator):
                 param_structure = dict(equal_key_values, **contained_key_values, name=required_param.get('name'))
                 error_message, error_code = Errors.parameter_missing_for_feed(required_param.get('name'),
                                                                               yaml.dump(param_structure))
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                     suggested_fix=Errors.suggest_fix(self.file_path)):
                     params_exist = False
 
         return params_exist
 
     def is_valid_display_name(self):
         # type: () -> bool
-        if not is_v2_file(self.current_file, check_in_display=True):
+        version_number: Optional[str] = get_file_version_suffix_if_exists(self.current_file,
+                                                                          check_in_display=True)
+        if not version_number:
             return True
         else:
             display_name = self.current_file.get('display')
-            correct_name = " v2"
+            correct_name = f' v{version_number}'
             if not display_name.endswith(correct_name):  # type: ignore
-                error_message, error_code = Errors.invalid_v2_integration_name()
+                error_message, error_code = Errors.invalid_version_integration_name(version_number)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
 

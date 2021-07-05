@@ -8,6 +8,7 @@ import re
 from datetime import datetime
 from distutils.version import LooseVersion
 from pathlib import Path
+from typing import Tuple
 
 import click
 from dateutil import parser
@@ -77,7 +78,7 @@ class PackUniqueFilesValidator(BaseValidator):
         self.support = support
 
     # error handling
-    def _add_error(self, error, file_path):
+    def _add_error(self, error: Tuple[str, str], file_path: str):
         """Adds error entry to a list under pack's name
         Returns True if added and false otherwise"""
         error_message, error_code = error
@@ -188,9 +189,9 @@ class PackUniqueFilesValidator(BaseValidator):
         pack_meta_file_content = self._read_file_content(self.pack_meta_file)
         metadata = json.loads(pack_meta_file_content)
         metadata_description = metadata.get(PACK_METADATA_DESC, '').lower().strip()
-        if not self._check_if_file_is_empty(self.readme_file):
-            readme = self._read_file_content(self.readme_file)
-            readme_content = readme.lower().strip()
+        if self._is_pack_file_exists(self.readme_file) and not self._check_if_file_is_empty(self.readme_file):
+            pack_readme = self._read_file_content(self.readme_file)
+            readme_content = pack_readme.lower().strip()
             if metadata_description == readme_content:
                 self._add_error(Errors.readme_equal_description_error(), self.readme_file)
                 return False
@@ -387,7 +388,9 @@ class PackUniqueFilesValidator(BaseValidator):
         try:
             approved_usecases = tools.get_approved_usecases()
             pack_meta_file_content = json.loads(self._read_file_content(self.pack_meta_file))
-            non_approved_usecases = set(pack_meta_file_content[PACK_METADATA_USE_CASES]) - set(approved_usecases)
+            current_usecases = tools.get_current_usecases()
+            non_approved_usecases = set(pack_meta_file_content[PACK_METADATA_USE_CASES]) - set(
+                approved_usecases + current_usecases)
             if non_approved_usecases:
                 if self._add_error(
                         Errors.pack_metadata_non_approved_usecases(non_approved_usecases), self.pack_meta_file):
@@ -407,7 +410,8 @@ class PackUniqueFilesValidator(BaseValidator):
         try:
             approved_tags = tools.get_approved_tags()
             pack_meta_file_content = json.loads(self._read_file_content(self.pack_meta_file))
-            non_approved_tags = set(pack_meta_file_content[PACK_METADATA_TAGS]) - set(approved_tags)
+            current_tags = tools.get_current_tags()
+            non_approved_tags = set(pack_meta_file_content[PACK_METADATA_TAGS]) - set(approved_tags + current_tags)
             if non_approved_tags:
                 if self._add_error(Errors.pack_metadata_non_approved_tags(non_approved_tags), self.pack_meta_file):
                     return False

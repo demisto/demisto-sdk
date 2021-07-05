@@ -980,7 +980,7 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
         if 'README' in path:
             return FileType.README
 
-        if RELEASE_NOTES_DIR == os.path.basename(os.path.dirname(path)):
+        if RELEASE_NOTES_DIR == Path(path).parts[-2]:  # [-2] is the file's dir name
             return FileType.RELEASE_NOTES
 
         if 'description' in path:
@@ -1024,13 +1024,13 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
             return FileType.INTEGRATION
 
         if 'script' in _dict:
-            if f"/{TEST_PLAYBOOKS_DIR}/" in path and not ignore_sub_categories:
+            if TEST_PLAYBOOKS_DIR in Path(path).parts and not ignore_sub_categories:
                 return FileType.TEST_SCRIPT
 
             return FileType.SCRIPT
 
         if 'tasks' in _dict:
-            if f"/{TEST_PLAYBOOKS_DIR}/" in path:
+            if TEST_PLAYBOOKS_DIR in Path(path).parts:
                 return FileType.TEST_PLAYBOOK
 
             return FileType.PLAYBOOK

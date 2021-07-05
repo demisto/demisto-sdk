@@ -1024,13 +1024,13 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
             return FileType.INTEGRATION
 
         if 'script' in _dict:
-            if TEST_PLAYBOOKS_DIR in Path(path).parts and not ignore_sub_categories:
+            if f"/{TEST_PLAYBOOKS_DIR}/" in path and not ignore_sub_categories:
                 return FileType.TEST_SCRIPT
 
             return FileType.SCRIPT
 
         if 'tasks' in _dict:
-            if TEST_PLAYBOOKS_DIR in Path(path).parts:
+            if f"/{TEST_PLAYBOOKS_DIR}/" in path:
                 return FileType.TEST_PLAYBOOK
 
             return FileType.PLAYBOOK

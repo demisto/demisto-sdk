@@ -483,14 +483,19 @@ def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
     mocker.patch.object(update_generic, 'is_file_from_content_repo',
                         return_value=(True, f'{playbook.path}/playbook.yml'))
     mocker.patch.object(PlaybookValidator, 'is_script_id_valid', return_value=True)
+    mocker.patch.object(PlaybookValidator, 'name_not_contain_the_type', return_value=True)
+
     mocker.patch.object(tools, 'is_external_repository', return_value=True)
     monkeypatch.setattr('builtins.input', lambda _: 'N')
     success_reg = re.compile("Format Status .+?- Success\n")
     with ChangeCWD(playbook.path):
         runner = CliRunner(mix_stderr=False)
         result_format = runner.invoke(main, [FORMAT_CMD, '-i', 'playbook.yml', '-v'], catch_exceptions=False)
-        result_validate = runner.invoke(main, ['validate', '-i', 'playbook.yml', '--no-docker-checks'],
-                                        catch_exceptions=False)
+
+        with ChangeCWD(repo.path):
+            result_validate = runner.invoke(main, ['validate', '-i', 'Packs/PackName/Playbooks/playbook.yml',
+                                                   '--no-docker-checks', '--no-conf-json', '--allow-skipped'],
+                                            catch_exceptions=False)
 
     assert '======= Updating file:' in result_format.stdout
     assert success_reg.search(result_format.stdout)
@@ -515,7 +520,7 @@ def test_format_integration_skipped_files(repo):
     pack.create_doc_file()
 
     runner = CliRunner(mix_stderr=False)
-    format_result = runner.invoke(main, [FORMAT_CMD, '-i', str(pack.path), '-v'], catch_exceptions=False)
+    format_result = runner.invoke(main, [FORMAT_CMD, '-i', str(pack.path)], catch_exceptions=False)
 
     assert '======= Updating file:' in format_result.stdout
     assert 'Success' in format_result.stdout
@@ -752,3 +757,70 @@ def test_format_playbook_no_input_specified(mocker, repo):
     assert 'Success' in format_result.stdout
     assert playbook.yml.read_dict().get('id') == playbook_id
     assert playbook.yml.read_dict().get('name') == playbook_name
+
+
+def test_format_incident_type_layout_id(repo):
+    """
+    Given:
+        - Content pack with incident type and layout
+        - Layout with ID which is a UUID string
+        - Incident type which is linked to the above layout
+
+    When:
+        - Running format on the content pack
+
+    Then:
+        - Verify layout ID is updated
+        - Verify the updated layout ID is also updated in the incident type
+    """
+    pack = repo.create_pack('PackName')
+    layout = pack.create_layoutcontainer(
+        name='layout',
+        content={
+            'id': '8f503eb3-883d-4626-8a45-16f56995bd43',
+            'name': 'IncidentLayout',
+            'group': 'incident',
+            'detailsV2': {"tabs": []}
+        }
+    )
+    incident_type = pack.create_incident_type(
+        name='incidentype',
+        content={
+            'layout': '8f503eb3-883d-4626-8a45-16f56995bd43',
+            'color': '',
+            'playbookId': '9f503eb3-333d-2226-7b45-16f56885bd45'
+        }
+    )
+    playbook = pack.create_playbook(
+        name='playbook',
+        yml={
+            'id': '9f503eb3-333d-2226-7b45-16f56885bd45',
+            'name': 'PlaybookName',
+            'tasks': {},
+            'fromversion': '5.0.0',
+            'description': ''
+        }
+    )
+
+    runner = CliRunner(mix_stderr=False)
+    format_result = runner.invoke(main, [FORMAT_CMD, '-i', str(pack.path), '-v', '-y'], catch_exceptions=False)
+
+    assert format_result.exit_code == 0
+    assert 'Success' in format_result.stdout
+    assert f'======= Updating file: {pack.path}' in format_result.stdout
+    assert f'======= Updating file: {layout.path}' in format_result.stdout
+    assert f'======= Updating file: {incident_type.path}' in format_result.stdout
+    assert f'======= Updating file: {playbook.yml.path}' in format_result.stdout
+
+    with open(layout.path) as layout_file:
+        layout_content = json.loads(layout_file.read())
+        assert layout_content['name'] == layout_content['id']
+
+    with open(playbook.yml.path) as playbook_file:
+        playbook_content = yaml.load(playbook_file.read())
+        assert playbook_content['name'] == playbook_content['id']
+
+    with open(incident_type.path) as incident_type_file:
+        incident_type_content = json.loads(incident_type_file.read())
+        assert incident_type_content['layout'] == 'IncidentLayout'
+        assert incident_type_content['playbookId'] == 'PlaybookName'

@@ -53,6 +53,11 @@ class TestPackUniqueFilesValidator:
     validator = PackUniqueFilesValidator(FAKE_PATH_NAME)
     validator.pack_path = FAKE_PACK_PATH
 
+    def restart_validator(self):
+        self.validator.pack_path = ''
+        self.validator = PackUniqueFilesValidator(self.FAKE_PATH_NAME)
+        self.validator.pack_path = self.FAKE_PACK_PATH
+
     def test_is_error_added_name_only(self):
         self.validator._add_error(('boop', '101'), 'file_name')
         assert f'{self.validator.pack_path}/file_name: [101] - boop\n' in self.validator.get_errors(True)
@@ -181,6 +186,7 @@ class TestPackUniqueFilesValidator:
         Then
         - Ensure that the validation fails and that the invalid id set error is printed.
         """
+        self.restart_validator()
 
         def error_raising_function(*args, **kwargs):
             raise ValueError("Couldn't find any items for pack 'PackID'. make sure your spelling is correct.")
@@ -203,6 +209,7 @@ class TestPackUniqueFilesValidator:
         Then
         - Ensure that the validation fails and that the invalid core pack dependencies error is printed.
         """
+        self.restart_validator()
         dependencies_packs = {'dependency_pack_1': {'mandatory': True, 'display_name': 'dependency pack 1'},
                               'dependency_pack_2': {'mandatory': False, 'display_name': 'dependency pack 2'},
                               'dependency_pack_3': {'mandatory': True, 'display_name': 'dependency pack 3'}}
@@ -223,6 +230,7 @@ class TestPackUniqueFilesValidator:
         Then
         - Ensure that the validation passes and that the skipping message is printed.
         """
+        self.restart_validator()
         self.validator.skip_id_set_creation = True
         res = self.validator.validate_pack_dependencies()
         self.validator.skip_id_set_creation = False  # reverting to default for next tests
@@ -258,6 +266,7 @@ class TestPackUniqueFilesValidator:
             - Case E: Ensure validation fails as it contains a non-approved usecase (NewUseCase2)
                       Verify expected error is printed
         """
+        self.restart_validator()
         pack_name = 'PackName'
         pack = repo.create_pack(pack_name)
         pack.pack_metadata.write_json({
@@ -267,9 +276,11 @@ class TestPackUniqueFilesValidator:
         })
         mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': branch_usecases}, 'json'))
         self.validator.pack_path = pack.path
-        assert self.validator._is_approved_usecases() == is_valid
-        if not is_valid:
-            assert 'The pack metadata contains non approved usecases: NonApprovedUsecase' in self.validator.get_errors()
+
+        with ChangeCWD(repo.path):
+            assert self.validator._is_approved_usecases() == is_valid
+            if not is_valid:
+                assert 'The pack metadata contains non approved usecases: NonApprovedUsecase' in self.validator.get_errors()
 
     @pytest.mark.parametrize('tags, is_valid, branch_tags', [
         ([], True, []),
@@ -299,6 +310,7 @@ class TestPackUniqueFilesValidator:
             - Case E: Ensure validation fails as it contains a non-approved tag (NewTag2)
                       Verify expected error is printed
         """
+        self.restart_validator()
         pack_name = 'PackName'
         pack = repo.create_pack(pack_name)
         pack.pack_metadata.write_json({
@@ -308,9 +320,11 @@ class TestPackUniqueFilesValidator:
         })
         mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': branch_tags}, 'json'))
         self.validator.pack_path = pack.path
-        assert self.validator._is_approved_tags() == is_valid
-        if not is_valid:
-            assert 'The pack metadata contains non approved tags: NonApprovedTag' in self.validator.get_errors()
+
+        with ChangeCWD(repo.path):
+            assert self.validator._is_approved_tags() == is_valid
+            if not is_valid:
+                assert 'The pack metadata contains non approved tags: NonApprovedTag' in self.validator.get_errors()
 
     @pytest.mark.parametrize('pack_content, tags, is_valid', [
         ("none", [], True),
@@ -321,6 +335,7 @@ class TestPackUniqueFilesValidator:
         ("playbook", [], True),
     ])
     def test_is_right_usage_of_usecase_tag(self, repo, pack_content, tags, is_valid):
+        self.restart_validator()
         pack_name = 'PackName'
         pack = repo.create_pack(pack_name)
         pack.pack_metadata.write_json({
@@ -337,7 +352,9 @@ class TestPackUniqueFilesValidator:
             pack.create_layout(name="Layout")
 
         self.validator.pack_path = pack.path
-        assert self.validator.is_right_usage_of_usecase_tag() == is_valid
+
+        with ChangeCWD(repo.path):
+            assert self.validator.is_right_usage_of_usecase_tag() == is_valid
 
     @pytest.mark.parametrize('type, is_valid', [
         ('community', True),
@@ -358,6 +375,7 @@ class TestPackUniqueFilesValidator:
         Then:
             - Ensure True when the support types are valid, else False with the right error message.
         """
+        self.restart_validator()
         pack_name = 'PackName'
         pack = repo.create_pack(pack_name)
         pack.pack_metadata.write_json({
@@ -366,10 +384,12 @@ class TestPackUniqueFilesValidator:
         })
 
         self.validator.pack_path = pack.path
-        assert self.validator._is_valid_support_type() == is_valid
-        if not is_valid:
-            assert 'Support field should be one of the following: xsoar, partner, developer or community.' in \
-                   self.validator.get_errors()
+
+        with ChangeCWD(repo.path):
+            assert self.validator._is_valid_support_type() == is_valid
+            if not is_valid:
+                assert 'Support field should be one of the following: xsoar, partner, developer or community.' in \
+                       self.validator.get_errors()
 
     def test_get_master_private_repo_meta_file_running_on_master(self, mocker, repo, capsys):
         """
@@ -382,6 +402,7 @@ class TestPackUniqueFilesValidator:
         Then:
             - Ensure result is None and the appropriate skipping message is printed.
         """
+        self.restart_validator()
         pack_name = 'PackName'
         pack = repo.create_pack(pack_name)
         pack.pack_metadata.write_json(PACK_METADATA_PARTNER)
@@ -406,6 +427,7 @@ class TestPackUniqueFilesValidator:
         Then:
             - Ensure result is None and the appropriate skipping message is printed.
         """
+        self.restart_validator()
         pack_name = 'PackName'
         pack = repo.create_pack(pack_name)
         pack.pack_metadata.write_json(PACK_METADATA_PARTNER)
@@ -436,6 +458,7 @@ class TestPackUniqueFilesValidator:
         Then:
             - Ensure result is None and the appropriate skipping message is printed.
         """
+        self.restart_validator()
         pack_name = 'PackName'
         pack = repo.create_pack(pack_name)
         pack.pack_metadata.write_json(PACK_METADATA_PARTNER)
@@ -510,6 +533,7 @@ class TestPackUniqueFilesValidator:
             - Case B: Ensure validation fails as the pack readme is the same as the pack description.
                       Verify expected error is printed
         """
+        self.restart_validator()
         pack_name = 'PackName'
         pack = repo.create_pack(pack_name)
         pack.readme.write_text(readme_content)
@@ -518,7 +542,32 @@ class TestPackUniqueFilesValidator:
         })
 
         self.validator.pack_path = pack.path
-        assert self.validator.validate_pack_readme_and_pack_description() == is_valid
-        if not is_valid:
+
+        with ChangeCWD(repo.path):
+            assert self.validator.validate_pack_readme_and_pack_description() == is_valid
+            if not is_valid:
+                assert 'README.md content is equal to pack description. ' \
+                       'Please remove the duplicate description from README.md file' in self.validator.get_errors()
+
+    def test_validate_pack_readme_and_pack_description_no_readme_file(self, repo):
+        """
+        Given:
+            - A pack with no readme.
+
+        When:
+            - Validating pack readme vs pack description
+
+        Then:
+            - Fail on no README file and not on descrption error.
+        """
+        self.restart_validator()
+        pack_name = 'PackName'
+        pack = repo.create_pack(pack_name)
+        self.validator.pack_path = pack.path
+
+        with ChangeCWD(repo.path):
+            os.remove(pack.readme.path)
+            assert self.validator.validate_pack_readme_and_pack_description()
+            assert '"README.md" file does not exist, create one in the root of the pack' in self.validator.get_errors()
             assert 'README.md content is equal to pack description. ' \
-                   'Please remove the duplicate description from README.md file' in self.validator.get_errors()
+                   'Please remove the duplicate description from README.md file' not in self.validator.get_errors()

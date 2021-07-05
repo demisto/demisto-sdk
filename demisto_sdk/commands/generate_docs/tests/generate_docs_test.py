@@ -579,12 +579,14 @@ class TestGenerateIntegrationDoc:
         fake_readme = os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), 'fake_README.md')
         # Generate doc
         generate_integration_doc(TEST_INTEGRATION_PATH)
-        assert open(fake_readme).read() == open(
-            os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), 'README.md')).read()
+        with open(fake_readme) as fake_file:
+            with open(os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), 'README.md')) as real_file:
+                fake_data = fake_file.read()
+                assert fake_data == real_file.read()
 
-        assert "The type of the newly created user. Possible values are: Basic, Pro, Corporate. Default is Basic." \
-               in open(fake_readme).read()
-        assert "Number of users to return. Max 300. Default is 30." in open(fake_readme).read()
+                assert "The type of the newly created user. Possible values are: Basic, Pro, " \
+                       "Corporate. Default is Basic." in fake_data
+                assert "Number of users to return. Max 300. Default is 30." in fake_data
 
     def test_integration_doc_credentials_display_missing(self):
         """
@@ -600,12 +602,13 @@ class TestGenerateIntegrationDoc:
     """
         readme = os.path.join(os.path.dirname(TEST_INTEGRATION_2_PATH), 'README.md')
         # Generate doc
-        generate_integration_doc(TEST_INTEGRATION_2_PATH)
-        readme_data = open(readme).read()
-        assert readme_data == open(
-            os.path.join(os.path.dirname(TEST_INTEGRATION_2_PATH), 'README.md')).read()
-        assert '| None | The API key to use for the connection. | False |' not in readme_data
-        assert '| API Token | The API key to use for the connection. | False |' in readme_data
+        generate_integration_doc(TEST_INTEGRATION_2_PATH, skip_breaking_changes=True)
+        with open(readme) as readme_file:
+            with open(os.path.join(os.path.dirname(TEST_INTEGRATION_2_PATH), 'README.md')) as new_readme:
+                readme_data = readme_file.read()
+                assert readme_data == new_readme.read()
+                assert '| None | The API key to use for the connection. | False |' not in readme_data
+                assert '| API Token | The API key to use for the connection. | False |' in readme_data
 
 
 def test_get_command_examples_with_exclamation_mark(tmp_path):
@@ -875,3 +878,64 @@ def test_add_access_data_of_type_credentials(access_data: List[Dict], credential
     from demisto_sdk.commands.generate_docs.generate_integration_doc import add_access_data_of_type_credentials
     add_access_data_of_type_credentials(access_data, credentials_conf)
     assert access_data == expected
+
+
+def test_generate_versions_differences_section(monkeypatch):
+    """
+        Given
+            - A new version of an integration.
+        When
+            - Running the generate_versions_differences_section command.
+        Then
+            - Add a section of differences between versions in README.
+    """
+
+    from demisto_sdk.commands.generate_docs.generate_integration_doc import generate_versions_differences_section
+    monkeypatch.setattr(
+        'builtins.input',
+        lambda _: ''
+    )
+    section = generate_versions_differences_section('', '', 'Integration_Display_Name')
+
+    expected_section = [
+        '## Breaking changes from the previous version of this integration - Integration_Display_Name',
+        '%%FILL HERE%%',
+        'The following sections list the changes in this version.',
+        '',
+        '### Commands',
+        '#### The following commands were removed in this version:',
+        '* *commandName* - this command was replaced by XXX.',
+        '* *commandName* - this command was replaced by XXX.',
+        '',
+        '### Arguments',
+        '#### The following arguments were removed in this version:',
+        '',
+        'In the *commandName* command:',
+        '* *argumentName* - this argument was replaced by XXX.',
+        '* *argumentName* - this argument was replaced by XXX.',
+        '',
+        '#### The behavior of the following arguments was changed:',
+        '',
+        'In the *commandName* command:',
+        '* *argumentName* - is now required.',
+        '* *argumentName* - supports now comma separated values.',
+        '',
+        '### Outputs',
+        '#### The following outputs were removed in this version:',
+        '',
+        'In the *commandName* command:',
+        '* *outputPath* - this output was replaced by XXX.',
+        '* *outputPath* - this output was replaced by XXX.',
+        '',
+        'In the *commandName* command:',
+        '* *outputPath* - this output was replaced by XXX.',
+        '* *outputPath* - this output was replaced by XXX.',
+        '',
+        '## Additional Considerations for this version',
+        '%%FILL HERE%%',
+        '* Insert any API changes, any behavioral changes, limitations, or '
+        'restrictions that would be new to this version.',
+        ''
+    ]
+
+    assert section == expected_section

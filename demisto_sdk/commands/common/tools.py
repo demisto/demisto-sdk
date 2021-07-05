@@ -12,7 +12,7 @@ from enum import Enum
 from functools import partial
 from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen, check_output
-from typing import Callable, Dict, List, Optional, Tuple, Type, Union
+from typing import Callable, Dict, List, Match, Optional, Tuple, Type, Union
 
 import click
 import colorama
@@ -32,8 +32,9 @@ from demisto_sdk.commands.common.constants import (
     PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
     PACKS_README_FILE_NAME, PLAYBOOKS_DIR, RELEASE_NOTES_DIR,
     RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR,
-    TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, DemistoException,
+    TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, XSOAR_CONFIG_FILE,
     FileType, GithubContentConfig, urljoin)
+from demisto_sdk.commands.common.git_util import GitUtil
 from packaging.version import parse
 from ruamel.yaml import YAML
 
@@ -207,9 +208,10 @@ def get_remote_file(
     """
     github_config = GithubContentConfig(github_repo)
     # 'origin/' prefix is used to compared with remote branches but it is not a part of the github url.
-    tag = tag.replace('origin/', '').replace('demisto/', '')
+    github_tag = tag.replace('origin/', '').replace('demisto/', '')
+    local_content = '{}'
 
-    github_path = urljoin(github_config.CONTENT_GITHUB_LINK, tag, full_file_path)
+    github_path = urljoin(github_config.CONTENT_GITHUB_LINK, github_tag, full_file_path)
     try:
         external_repo = is_external_repository()
         if external_repo:
@@ -232,12 +234,20 @@ def get_remote_file(
                 res = requests.get(github_path, verify=False, timeout=10)
                 # And maybe it's just not defined. 😢
                 if not res.ok:
-                    raise DemistoException(
-                        f'You are working in a private repository: "{githhub_config.CURRENT_REPOSITORY}".\n'
-                        f'Please define your github token in your environment.\n'
-                        f'`export {githhub_config.Credentials.ENV_TOKEN_NAME}=<TOKEN>`',
-                        LOG_COLORS.RED
-                    )
+                    if not suppress_print:
+                        print_warning(
+                            f'You are working in a private repository: "{githhub_config.CURRENT_REPOSITORY}".\n'
+                            f'The github token in your environment is undefined.\n'
+                            f'Getting file from local repository instead. \n'
+                            f'If you wish to get the file from the remote repository, \n'
+                            f'Please define your github token in your environment.\n'
+                            f'`export {githhub_config.Credentials.ENV_TOKEN_NAME}=<TOKEN>`'
+                        )
+                    # Get from local git origin/master instead
+                    repo = git.Repo(os.path.dirname(full_file_path), search_parent_directories=True)
+                    repo_git_util = GitUtil(repo)
+                    github_path = repo_git_util.get_local_remote_file_path(full_file_path, tag)
+                    local_content = repo_git_util.get_local_remote_file_content(github_path)
         else:
             res = requests.get(github_path, verify=False, timeout=10)
             res.raise_for_status()
@@ -249,12 +259,13 @@ def get_remote_file(
                 f'Reason: {exc}'
             )
         return {}
+    file_content = res.content if res.ok else local_content
     if return_content:
-        return res.content
+        return file_content
     if full_file_path.endswith('json'):
-        details = res.json()
+        details = res.json() if res.ok else json.loads(local_content)
     elif full_file_path.endswith('yml'):
-        details = yaml.safe_load(res.content)
+        details = yaml.safe_load(file_content)  # type: ignore[arg-type]
     # if neither yml nor json then probably a CHANGELOG or README file.
     else:
         details = {}
@@ -391,7 +402,8 @@ def get_last_remote_release_version():
 
     :return: tag
     """
-    if not os.environ.get('CI'):  # Check only when no on CI. If you want to disable it - use `DEMISTO_SDK_SKIP_VERSION_CHECK` environment variable
+    if not os.environ.get(
+            'CI'):  # Check only when no on CI. If you want to disable it - use `DEMISTO_SDK_SKIP_VERSION_CHECK` environment variable
         try:
             pypi_request = requests.get(SDK_PYPI_VERSION, verify=False, timeout=5)
             pypi_request.raise_for_status()
@@ -737,7 +749,7 @@ def get_pack_name(file_path):
     if isinstance(file_path, Path):
         file_path = str(file_path)
     # the regex extracts pack name from relative paths, for example: Packs/EWSv2 -> EWSv2
-    match = re.search(rf'^{PACKS_DIR_REGEX}[/\\]([^/\\]+)[/\\]?', file_path)
+    match = re.search(rf'{PACKS_DIR_REGEX}[/\\]([^/\\]+)[/\\]?', file_path)
     return match.group(1) if match else None
 
 
@@ -992,6 +1004,9 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
 
     if path.endswith('.js'):
         return FileType.JAVASCRIPT_FILE
+
+    if path.endswith(XSOAR_CONFIG_FILE):
+        return FileType.XSOAR_CONFIG
 
     try:
         if not _dict and not file_type:
@@ -1514,7 +1529,7 @@ def get_demisto_version(demisto_client: demisto_client) -> str:
     try:
         resp = demisto_client.generic_request('/about', 'GET')
         about_data = json.loads(resp[0].replace("'", '"'))
-        return parse(about_data.get('demistoVersion'))
+        return parse(about_data.get('demistoVersion'))  # type: ignore
     except Exception:
         return "0"
 
@@ -1540,20 +1555,24 @@ def arg_to_list(arg: Union[str, List[str]], separator: str = ",") -> List[str]:
     return [arg]
 
 
-def is_v2_file(current_file, check_in_display=False):
-    """Check if the specific integration of script is a v2
-    Returns:
-        bool. Whether the file is a v2 file
+def get_file_version_suffix_if_exists(current_file: Dict, check_in_display: bool = False) -> Optional[str]:
     """
-    # integrations should be checked via display field, other entities should check name field
-    if check_in_display:
-        name = current_file.get('display', '')
-    else:
-        name = current_file.get('name', '')
-    suffix = str(name[-2:].lower())
-    if suffix != "v2":
-        return False
-    return True
+    Checks if current YML file name is versioned or no, e.g, ends with v<number>.
+    Args:
+        current_file (Dict): Dict representing YML data of an integration or script.
+        check_in_display (bool): Whether to get name by 'display' field or not (by 'name' field).
+
+    Returns:
+        (Optional[str]): Number of the version as a string, if the file ends with version suffix. None otherwise.
+    """
+    versioned_file_regex = r'v([0-9]+)$'
+    name = current_file.get('display') if check_in_display else current_file.get('name')
+    if not name:
+        return None
+    matching_regex = re.findall(versioned_file_regex, name.lower())
+    if matching_regex:
+        return matching_regex[-1]
+    return None
 
 
 def get_all_incident_and_indicator_fields_from_id_set(id_set_file, entity_type):
@@ -1798,6 +1817,44 @@ def get_pack_metadata(file_path: str) -> dict:
         return pack_metadata
     except Exception:
         return {}
+
+
+def is_pack_path(input_path: str) -> bool:
+    """
+    Checks whether pack given in input path is for a pack.
+    Args:
+        input_path (str): Input path.
+    Examples
+        - input_path = 'Packs/BitcoinAbuse
+          Returns: True
+        - input_path = 'Packs/BitcoinAbuse/Layouts'
+          Returns: False
+    Returns:
+        (bool):
+        - True if the input path is for a given pack.
+        - False if the input path is not for a given pack.
+    """
+    return os.path.basename(os.path.dirname(input_path)) == PACKS_DIR
+
+
+def get_relative_path_from_packs_dir(file_path: str) -> str:
+    """Get the relative path for a given file_path starting in the Packs directory"""
+    if PACKS_DIR not in file_path or file_path.startswith(PACKS_DIR):
+        return file_path
+
+    return file_path[file_path.find(PACKS_DIR):]
+
+
+def is_uuid(s: str) -> Optional[Match]:
+    """Checks whether given string is a UUID
+
+    Args:
+         s (str): The string to check if it is a UUID
+
+    Returns:
+        Match: Returns the match if given string is a UUID, otherwise None
+    """
+    return re.match(UUID_REGEX, s)
 
 
 def get_current_usecases() -> list:

@@ -2,7 +2,7 @@ import os
 import re
 from copy import deepcopy
 from distutils.version import LooseVersion
-from typing import Optional, Set, Union
+from typing import Dict, Optional, Set, Union
 
 import click
 import yaml
@@ -50,7 +50,8 @@ class BaseUpdate:
                  from_version: str = '',
                  no_validate: bool = False,
                  verbose: bool = False,
-                 assume_yes: bool = False):
+                 assume_yes: bool = False,
+                 deprecate: bool = False):
         self.source_file = input
         self.output_file = self.set_output_file_path(output)
         self.verbose = verbose
@@ -61,6 +62,7 @@ class BaseUpdate:
         self.from_version = from_version
         self.no_validate = no_validate
         self.assume_yes = assume_yes
+        self.updated_ids: Dict = {}
 
         if not self.source_file:
             raise Exception('Please provide <source path>, <optional - destination path>.')
@@ -314,7 +316,7 @@ class BaseUpdate:
         if self.data.get('id'):
             self.data['id'] = self.data.get('id', '').replace('_copy', '').replace('_dev', '')
 
-    def initiate_file_validator(self, validator_type):
+    def initiate_file_validator(self, validator_type) -> int:
         """ Run schema validate and file validate of file
         Returns:
             int 0 in case of success

@@ -10,8 +10,10 @@ pytest-mock = "*"
 requests-mock = "*"
 pytest-xdist = "*"
 pytest-json = "*"
+pytest-cov = "*"
 
 [packages]
+freezegun = "*"
 
 [requires]
 python_version = "2.7"

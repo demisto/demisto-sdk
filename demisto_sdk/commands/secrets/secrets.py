@@ -107,8 +107,8 @@ class SecretsValidator(object):
                                             ' remove the files asap and report it.\n'
 
                 secrets_found_string += 'For more information about whitelisting visit: ' \
-                                        'https://github.com/demisto/demisto-sdk/tree/master/demisto_sdk/' \
-                                        'commands/secrets'
+                                        'https://pull-request-696--demisto-content-docs.netlify.app/docs/concepts/demisto-sdk' \
+                                        '#secrets'
                 print_error(secrets_found_string)
         return secret_to_location_mapping
 
@@ -295,7 +295,7 @@ class SecretsValidator(object):
         dates = re.findall(DATES_REGEX, line)
         if dates:
             false_positives += [date[0].lower() for date in dates]
-        # UUID REGEX
+        # UUID REGEX - for false positives
         uuids = re.findall(UUID_REGEX, line)
         if uuids:
             false_positives += uuids

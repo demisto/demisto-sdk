@@ -1,6 +1,8 @@
 import os
-from typing import List, Tuple
+from pathlib import Path
+from typing import Dict, List, Tuple
 
+import click
 from demisto_sdk.commands.common.legacy_git_tools import get_changed_files
 from demisto_sdk.commands.common.tools import (find_type, get_files_in_dir,
                                                print_error, print_success,
@@ -65,6 +67,8 @@ UNFORMATTED_FILES = ['readme',
 VALIDATE_RES_SKIPPED_CODE = 2
 VALIDATE_RES_FAILED_CODE = 3
 
+CONTENT_ENTITY_IDS_TO_UPDATE: Dict = {}
+
 
 def format_manager(input: str = None,
                    output: str = None,
@@ -72,7 +76,8 @@ def format_manager(input: str = None,
                    no_validate: bool = False,
                    verbose: bool = False,
                    update_docker: bool = False,
-                   assume_yes: bool = False):
+                   assume_yes: bool = False,
+                   deprecate: bool = False):
     """
     Format_manager is a function that activated format command on different type of files.
     Args:
@@ -96,7 +101,7 @@ def format_manager(input: str = None,
                         "Only file path can be a output path.  Please specify a correct output.")
 
     log_list = []
-    error_list = []
+    error_list: List[Tuple[int, int]] = []
     if files:
         format_excluded_file = excluded_files + ['pack_metadata.json']
         for file in files:
@@ -121,9 +126,8 @@ def format_manager(input: str = None,
                                                                  no_validate=no_validate,
                                                                  verbose=verbose,
                                                                  update_docker=update_docker,
-                                                                 assume_yes=assume_yes)
-                if err_res:
-                    error_list.append("err_res")
+                                                                 assume_yes=assume_yes,
+                                                                 deprecate=deprecate)
                 if err_res:
                     log_list.extend([(err_res, print_error)])
                 if info_res:
@@ -137,6 +141,8 @@ def format_manager(input: str = None,
                 log_list.append(([f"Was unable to identify the file type for the following file: {file_path}"],
                                  print_error))
 
+        update_content_entity_ids(files, verbose)
+
     else:
         log_list.append(([f'Failed format file {input}.' + "No such file or directory"], print_error))
 
@@ -147,6 +153,32 @@ def format_manager(input: str = None,
     if error_list:
         return 1
     return 0
+
+
+def update_content_entity_ids(files: List[str], verbose: bool):
+    """Update the changed content entity ids in the files.
+    Args:
+        files (list): a list of files in which to update the content ids.
+        verbose (bool): whether to print
+
+    """
+    if not CONTENT_ENTITY_IDS_TO_UPDATE:
+        return
+
+    if verbose:
+        click.echo(f'Collected content entities IDs to update:\n{CONTENT_ENTITY_IDS_TO_UPDATE}\n'
+                   f'Going over files to update these IDs in other files...')
+    for file in files:
+        file_path = str(Path(file))
+        if verbose:
+            click.echo(f'Processing file {file_path} to check for content entities IDs to update')
+        with open(file_path, 'r+') as f:
+            file_content = f.read()
+            for id_to_replace, updated_id in CONTENT_ENTITY_IDS_TO_UPDATE.items():
+                file_content = file_content.replace(id_to_replace, updated_id)
+            f.seek(0)
+            f.write(file_content)
+            f.truncate()
 
 
 def run_format_on_file(input: str, file_type: str, from_version: str, **kwargs) -> \
@@ -165,14 +197,19 @@ def run_format_on_file(input: str, file_type: str, from_version: str, **kwargs) 
     if file_type not in ('integration', 'script') and 'update_docker' in kwargs:
         # non code formatters don't support update_docker param. remove it
         del kwargs['update_docker']
-    UpdateObject = FILE_TYPE_AND_LINKED_CLASS[file_type](input=input, path=schema_path,
-                                                         from_version=from_version,
-                                                         **kwargs)
-    format_res, validate_res = UpdateObject.format_file()  # type: ignore
+    update_object = FILE_TYPE_AND_LINKED_CLASS[file_type](input=input, path=schema_path,
+                                                          from_version=from_version,
+                                                          **kwargs)
+    format_res, validate_res = update_object.format_file()  # type: ignore
+    CONTENT_ENTITY_IDS_TO_UPDATE.update(update_object.updated_ids)
     return logger(input, format_res, validate_res)
 
 
-def logger(input: str, format_res: int, validate_res: int) -> Tuple[List[str], List[str], List[str]]:
+def logger(
+        input: str,
+        format_res: int,
+        validate_res: int,
+) -> Tuple[List[str], List[str], List[str]]:
     info_list = []
     error_list = []
     skipped_list = []

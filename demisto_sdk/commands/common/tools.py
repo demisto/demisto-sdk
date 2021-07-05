@@ -9,7 +9,7 @@ import sys
 from configparser import ConfigParser, MissingSectionHeaderError
 from distutils.version import LooseVersion
 from enum import Enum
-from functools import partial
+from functools import lru_cache, partial
 from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from typing import Callable, Dict, List, Optional, Tuple, Type, Union
@@ -965,6 +965,7 @@ def get_dict_from_file(path: str, use_ryaml: bool = False) -> Tuple[Dict, Union[
 
 
 # flake8: noqa: C901
+@lru_cache()
 def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignore_sub_categories: bool = False):
     """
     returns the content file type
@@ -1638,6 +1639,7 @@ def find_file(root_path, file_name):
     return ''
 
 
+@lru_cache()
 def get_file_displayed_name(file_path):
     """Gets the file name that is displayed in the UI by the file's path.
     If there is no displayed name - returns the file name"""

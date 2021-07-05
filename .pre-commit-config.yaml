@@ -36,4 +36,4 @@ repos:
     rev: v0.782
     hooks:
     -   id: mypy
-        exclude: tests/.*|demisto_sdk/commands/init/templates/.*
+        

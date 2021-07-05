@@ -105,11 +105,13 @@ class MapperValidator(ContentEntityValidator):
             self.from_version = from_version
             if LooseVersion(from_version) < LooseVersion(FROM_VERSION):
                 error_message, error_code = Errors.invalid_from_version_in_mapper()
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                     suggested_fix=Errors.suggest_fix(self.file_path)):
                     return False
         else:
             error_message, error_code = Errors.missing_from_version_in_mapper()
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
+            if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                 suggested_fix=Errors.suggest_fix(self.file_path)):
                 return False
         return True
 

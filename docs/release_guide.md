@@ -13,8 +13,10 @@ To do so, you can do the following:\
   b. If needed, trigger the nightly Content build from the Content repository by running:\
   `./Utils/trigger_content_nightly_build.sh <circle_token> <branch_name>` and make sure to wait until the build is finished.\
   circle_token is a private key, if you don't have one - you can generate your own in your circle user settings under `Personal API Tokens`. \
-6) Create a new content branch and update the version of the SDK in Demisto's Content repository by updating the demisto-sdk version in the [**dev-requirements-py3.txt**](https://github.com/demisto/content/blob/master/dev-requirements-py3.txt) file. Use the release branch first - replace the `demisto-sdk==version` line with this line: `git+https://github.com/demisto/demisto-sdk.git@release-branch-name.`
-7) Open a PR for that content branch, and verify that the build triggered is green. Note that in order to trigger the build, opening the PR is requiered.
+6) In Demisto's content-private repository create a new branch and go to the build configuration file [**config.yml**](https://github.com/demisto/content-private/blob/master/.github/workflows/config.yml) and update the SDK installation command by replacing the line: `pip3 install demisto-sdk` with this line: `pip3 install git+https://github.com/demisto/demisto-sdk.git@release-branch-name.`
+7) Open a PR for that content-private branch, and verify the build triggered is green. Note that **this PR is for SDK version check only and it shouldn't be merged**, after build is finished successfully - you should discard this change and close the PR.
+8) Create a new content branch and update the version of the SDK in Demisto's Content repository by updating the demisto-sdk version in the [**dev-requirements-py3.txt**](https://github.com/demisto/content/blob/master/dev-requirements-py3.txt) file. Use the release branch first - replace the `demisto-sdk==version` line with this line: `git+https://github.com/demisto/demisto-sdk.git@release-branch-name.`
+9) Open a PR for that content branch, and verify that the build triggered is green. Note that in order to trigger the build, opening the PR is required.
 
 ### Release process:
 1) In demisto-sdk repository's main page click on **releases**.

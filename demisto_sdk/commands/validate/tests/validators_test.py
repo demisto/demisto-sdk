@@ -7,6 +7,7 @@ from typing import Any, Type, Union
 
 import demisto_sdk.commands.validate.validate_manager
 import pytest
+from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (CONF_PATH, TEST_PLAYBOOK,
                                                    FileType)
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -446,12 +447,13 @@ class TestValidators:
             assert not validate_manager.run_validations_on_file(file_path=integration.yml.path,
                                                                 pack_error_ignore_list=[], is_modified=True)
 
-    def test_files_validator_validate_pack_unique_files(self):
+    def test_files_validator_validate_pack_unique_files(self, mocker):
+        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
         validate_manager = ValidateManager(skip_conf_json=True)
         result = validate_manager.validate_pack_unique_files(VALID_PACK, pack_error_ignore_list={})
         assert result
 
-    def test_validate_pack_dependencies(self):
+    def test_validate_pack_dependencies(self, mocker):
         """
             Given:
                 - A file path with valid pack dependencies
@@ -462,6 +464,7 @@ class TestValidators:
         """
         id_set_path = os.path.normpath(
             os.path.join(__file__, git_path(), 'demisto_sdk', 'tests', 'test_files', 'id_set', 'id_set.json'))
+        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
         validate_manager = ValidateManager(skip_conf_json=True, id_set_path=id_set_path)
         result = validate_manager.validate_pack_unique_files(VALID_PACK, pack_error_ignore_list={})
         assert result
@@ -1031,6 +1034,7 @@ def test_run_validation_using_git_on_only_metadata_changed(mocker):
     mocker.patch.object(ValidateManager, 'setup_git_params')
     mocker.patch.object(ValidateManager, 'get_changed_files_from_git',
                         return_value=(set(), set(), {'/Packs/ForTesting/pack_metadata.json'}, set()))
+    mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
 
     validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
     res = validate_manager.run_validation_using_git()

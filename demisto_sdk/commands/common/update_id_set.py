@@ -839,72 +839,6 @@ def get_general_data(path):
     return {id_: data}
 
 
-def get_object_field_data(path, objects_types_list):
-    json_data = get_json(path)
-
-    id_ = json_data.get('id')
-    name = json_data.get('name', '')
-    fromversion = json_data.get('fromVersion')
-    toversion = json_data.get('toVersion')
-    pack = get_pack_name(path)
-    all_associated_types: set = set()
-    all_scripts = set()
-    object = json_data.get('object')
-
-    associated_types = json_data.get('associatedTypes')
-    if associated_types:
-        all_associated_types = set(associated_types)
-
-    system_associated_types = json_data.get('systemAssociatedTypes')
-    if system_associated_types:
-        all_associated_types = all_associated_types.union(set(system_associated_types))
-
-    if 'all' in all_associated_types:
-        all_associated_types = {list(object_type.keys())[0] for object_type in objects_types_list}
-
-    scripts = json_data.get('script')
-    if scripts:
-        all_scripts = {scripts}
-
-    field_calculations_scripts = json_data.get('fieldCalcScript')
-    if field_calculations_scripts:
-        all_scripts = all_scripts.union({field_calculations_scripts})
-
-    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
-
-    if all_associated_types:
-        data['object_types'] = list(all_associated_types)
-    if all_scripts:
-        data['scripts'] = list(all_scripts)
-    if object:
-        data['object'] = object
-
-    return {id_: data}
-
-
-def get_object_module_data(path):
-    json_data = get_json(path)
-    id_ = json_data.get('id')
-    name = json_data.get('name', '')
-    pack = get_pack_name(path)
-    definitions = json_data.get('definitions', [])
-    definitions = [{definition.get('id'): definition.get('name')} for definition in definitions]
-    views = json_data.get('views', [])
-    views = [
-        {view.get('name'): {
-            'title': view.get('title'),
-            'dashboards': [{tab.get('dashboardId', '') for tab in view.get('tabs', [])}]}}
-        for view in views]
-
-    data = create_common_entity_data(path=path, name=name, to_version=None, from_version=None, pack=pack)
-    if definitions:
-        data['definitions'] = list(definitions)
-    if views:
-        data['views'] = list(views)
-
-    return {id_: data}
-
-
 def get_depends_on(data_dict):
     depends_on = data_dict.get('dependson', {}).get('must', [])
     depends_on_list = list({cmd.split('|')[-1] for cmd in depends_on})
@@ -1025,9 +959,9 @@ def process_object_fields(file_path: str, print_logs: bool, objects_types_list: 
     """
     Process an object field JSON file
     Args:
-        file_path: The file path from incident field folder
+        file_path: The file path from pbject field folder
         print_logs: Whether to print logs to stdout.
-        incidents_types_list: List of all the incident types in the system.
+        objects_types_list: List of all the object types in the system.
 
     Returns:
         a list of object field data.
@@ -1206,14 +1140,82 @@ def get_object_type_data(path):
     toversion = json_data.get('toVersion')
     playbook_id = json_data.get('playbookId')
     pack = get_pack_name(path)
-    object = json_data.get('object')
+    definitionId = json_data.get('definitionId')
+    layout = json_data.get('layout')
 
     data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
     if playbook_id and playbook_id != '':
         data['playbooks'] = playbook_id
 
+    if definitionId:
+        data['definitionId'] = definitionId
+    if layout:
+        data['layout'] = layout
+    return {id_: data}
+
+
+def get_object_field_data(path, objects_types_list):
+    json_data = get_json(path)
+
+    id_ = json_data.get('id')
+    name = json_data.get('name', '')
+    fromversion = json_data.get('fromVersion')
+    toversion = json_data.get('toVersion')
+    pack = get_pack_name(path)
+    all_associated_types: set = set()
+    all_scripts = set()
+    definitionId = json_data.get('definitionId')
+
+    associated_types = json_data.get('associatedTypes')
+    if associated_types:
+        all_associated_types = set(associated_types)
+
+    system_associated_types = json_data.get('systemAssociatedTypes')
+    if system_associated_types:
+        all_associated_types = all_associated_types.union(set(system_associated_types))
+
+    if 'all' in all_associated_types:
+        all_associated_types = {list(object_type.keys())[0] for object_type in objects_types_list}
+
+    scripts = json_data.get('script')
+    if scripts:
+        all_scripts = {scripts}
+
+    field_calculations_scripts = json_data.get('fieldCalcScript')
+    if field_calculations_scripts:
+        all_scripts = all_scripts.union({field_calculations_scripts})
+
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
+
+    if all_associated_types:
+        data['object_types'] = list(all_associated_types)
+    if all_scripts:
+        data['scripts'] = list(all_scripts)
     if object:
-        data['object'] = object
+        data['definitionId'] = definitionId
+
+    return {id_: data}
+
+
+def get_object_module_data(path):
+    json_data = get_json(path)
+    id_ = json_data.get('id')
+    name = json_data.get('name', '')
+    pack = get_pack_name(path)
+    fromversion = json_data.get('fromVersion')
+    toversion = json_data.get('toVersion')
+    definitions = json_data.get('definitions', [])
+    definitions = {definition.get('id'): definition.get('name') for definition in definitions}
+    views = json_data.get('views', [])
+    views = {view.get('name'): {
+        'title': view.get('title'),
+        'dashboards': [tab.get('dashboardId', '') for tab in view.get('tabs', [])]} for view in views}
+
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
+    if definitions:
+        data['definitions'] = list(definitions)
+    if views:
+        data['views'] = list(views)
 
     return {id_: data}
 
@@ -1575,8 +1577,18 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
 
         progress_bar.update(1)
 
-        # 'ObjectDefinition', 'ObjectTypes',
-        # 'ObjectFields', 'ObjectPages'
+        if 'ObjectModules' in objects_to_create:
+            print_color("\nStarting iteration over Object Modules", LOG_COLORS.GREEN)
+            for arr in pool.map(partial(process_general_items,
+                                        print_logs=print_logs,
+                                        expected_file_types=(FileType.OBJECT_MODULE,),
+                                        data_extraction_func=get_object_module_data,
+                                        ),
+                                get_general_paths(OBJECT_MODULE_DIR, pack_to_create)):
+                object_modules_list.extend(arr)
+
+        progress_bar.update(1)
+
         if 'ObjectTypes' in objects_to_create:
             print_color("\nStarting iteration over Object Types", LOG_COLORS.GREEN)
             print_color(f"pack to create: {pack_to_create}", LOG_COLORS.YELLOW)
@@ -1602,17 +1614,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
 
         progress_bar.update(1)
 
-        if 'ObjectModules' in objects_to_create:
-            print_color("\nStarting iteration over Object Modules", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_general_items,
-                                        print_logs=print_logs,
-                                        expected_file_types=(FileType.OBJECT_MODULE,),
-                                        data_extraction_func=get_object_module_data,
-                                        ),
-                                get_general_paths(OBJECT_MODULE_DIR, pack_to_create)):
-                object_modules_list.extend(arr)
 
-        progress_bar.update(1)
 
     new_ids_dict = OrderedDict()
     # we sort each time the whole set in case someone manually changed something

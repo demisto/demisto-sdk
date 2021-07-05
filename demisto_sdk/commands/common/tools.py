@@ -1042,7 +1042,7 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
             return FileType.REPORT
 
         if 'color' in _dict and 'cliName' not in _dict:  # check against another key to make it more robust
-            if 'object' in _dict:
+            if 'definitionId' in _dict:
                 return FileType.OBJECT_TYPE
 
             return FileType.INCIDENT_TYPE
@@ -1082,7 +1082,7 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
                     return FileType.INCIDENT_FIELD
                 if _id.startswith('indicator'):
                     return FileType.INDICATOR_FIELD
-                if 'object' in _dict:
+                if 'definitionId' in _dict:
                     return FileType.OBJECT_FIELD
                 if 'definitions' in _dict:
                     return FileType.OBJECT_MODULE

@@ -164,7 +164,9 @@ def parse_json(data, command_name, prefix, verbose=False, interactive=False):
 
         raise ValueError('Invalid input JSON')
 
-    # if data is a list of dictionaries [{'a': 'b', 'c': 'd'}, {'e': 'f'}] -> {'a': 'b', 'c': 'd', 'e': 'f'}
+    # If data is a list of dictionaries [{'a': 'b', 'c': 'd'}, {'e': 'f'}] -> {'a': 'b', 'c': 'd', 'e': 'f'}.
+    # In case there are two identical keys (in two different dictionaries) with values of different types,
+    # the type will be determined by the last dictionary [{'a': 'b'}, {'a': 1}] -> {'a': 1} -> type of 'a' = Number.
     if isinstance(data, list):
         data = {k: v for d in data for k, v in d.items()}
 

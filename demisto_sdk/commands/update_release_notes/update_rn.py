@@ -110,7 +110,7 @@ class UpdateRN:
             changed_files = {}
             for packfile in self.modified_files_in_pack:
                 file_name, file_type = self.get_changed_file_name_and_type(packfile)
-                if 'yml' in packfile and file_type == FileType.INTEGRATION and packfile not in self.added_files:
+                if 'yml' in packfile and file_type in [FileType.INTEGRATION, FileType.SCRIPT] and packfile not in self.added_files:
                     docker_image_name = check_docker_image_changed(packfile)
                 else:
                     docker_image_name = None
@@ -757,7 +757,7 @@ def check_docker_image_changed(added_or_modified_yml: str) -> Optional[str]:
     else:
         diff_lines = diff.splitlines()
         for diff_line in diff_lines:
-            if '+  dockerimage:' in diff_line:  # search whether exists a line that notes that the Docker image was
+            if 'dockerimage:' in diff_line:  # search whether exists a line that notes that the Docker image was
                 # changed.
                 return diff_line.split()[-1]
         return None

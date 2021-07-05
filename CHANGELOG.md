@@ -1,5 +1,11 @@
 # Changelog
 * Fixed an issue where if a pack README.md did not exist it could cause an error in the validation process.
+* Refactor **update-release-notes** command - new class manager.
+* Added a  *--force* flag to the **update-release-notes** command, so the update can take place even without a change in the pack.
+* In **update-release-notes** command changed the *--all* flag to *-g* and *--use-git* flag.
+* The **update-release-notes** command will now update all dependent integrations on ApiModule change, even if not specified.
+* If more than one pack has changed, the full list of updated packs will be printed at the end of **update-release-notes** command execution.
+* Fixed an issue where **update-release-notes** command did not add docker image release notes entry for release notes file if a script was changed.
 
 # 1.4.2
 * Added to `pylint` summary an indication if a test was skipped.
@@ -22,8 +28,6 @@
 * Added a version differences section to readme in **generate-docs** command.
 * Added the *--docs-format* flag in the **integration-diff** command to get the output in README format.
 * Added the *--input-old-version* and *--skip-breaking-changes* flags in the **generate-docs** command to get the details for the breaking section and to skip the breaking changes section.
-* Refactor **update-release-notes** command - new classs manager, split some logic to smaller functions, added docsrings and type annotations.
-* Added a  *--force* flag to the **update-release-notes** command, so the update can take place even without a change in the pack.
 
 # 1.4.0
 * Enable passing a comma-separated list of paths for the `--input` option of the **lint** command.

@@ -4,6 +4,7 @@
 * Adding the option to run **validate** on a specific path while using git (*-i* & *-g*).
 * The **format** command will now change UUIDs in .yml and .json files to their respective content entity name.
 * Added a playbook validation to check if a task sub playbook exists in the id set in the **validate** command.
+* Fixed **find_type** function to correctly find test files, such as, test script and test playbook.
 
 # 1.4.2
 * Added to `pylint` summary an indication if a test was skipped.

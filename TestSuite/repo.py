@@ -133,7 +133,7 @@ class Repo:
 
         indicator_type = pack.create_indicator_type(f'{name}_indicator-type')
         indicator_type.write_json({'id': f'{name} - indicator_type'})
-        indicator_type.update({'name': f'{name} - indicator_type'})
+        indicator_type.update({'details': f'{name} - indicator_type'})
         indicator_type.update({'regex': ''})
 
         indicator_field = pack.create_indicator_field(f'{name}_indicator-field')

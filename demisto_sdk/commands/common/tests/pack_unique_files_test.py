@@ -280,7 +280,7 @@ class TestPackUniqueFilesValidator:
         with ChangeCWD(repo.path):
             assert self.validator._is_approved_usecases() == is_valid
             if not is_valid:
-                assert 'The pack metadata contains non approved usecases: NonApprovedUsecase' in self.validator.get_errors()
+                assert 'The pack metadata contains non approved usecases:' in self.validator.get_errors()
 
     @pytest.mark.parametrize('tags, is_valid, branch_tags', [
         ([], True, []),
@@ -324,7 +324,7 @@ class TestPackUniqueFilesValidator:
         with ChangeCWD(repo.path):
             assert self.validator._is_approved_tags() == is_valid
             if not is_valid:
-                assert 'The pack metadata contains non approved tags: NonApprovedTag' in self.validator.get_errors()
+                assert 'The pack metadata contains non approved tags:' in self.validator.get_errors()
 
     @pytest.mark.parametrize('pack_content, tags, is_valid', [
         ("none", [], True),

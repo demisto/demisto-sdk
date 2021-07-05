@@ -510,9 +510,9 @@ class TestPackUniqueFilesValidator:
             result = self.validator.validate_pack_readme_images()
             errors = self.validator.get_errors()
         assert result
-        assert 'please repair it - https://github.com/demisto/content/raw/test1.png' not in errors
-        assert 'please repair it - https://raw.githubusercontent.com/demisto/content/raw/test1.png' not in errors
-        assert 'please repair it - https://raw.githubusercontent.com/demisto/content/raw/test1.jpg' not in errors
+        assert 'please repair it:\n![Identity with High Risk Score](https://github.com/demisto/content/raw/test1.png)' not in errors
+        assert 'please repair it:\n![Identity with High Risk Score](https://raw.githubusercontent.com/demisto/content/raw/test1.png)' not in errors
+        assert 'please repair it:\n(https://raw.githubusercontent.com/demisto/content/raw/test1.jpg)' not in errors
 
     def test_validate_pack_readme_invalid_images(self):
         """
@@ -540,15 +540,14 @@ class TestPackUniqueFilesValidator:
             result = self.validator.validate_pack_readme_images()
             errors = self.validator.get_errors()
         assert not result
-        assert 'Detected following image: ![Identity with High Risk Score](doc_files/High_Risk_User.png) ' \
-               'which is not using an absolute url' in errors
-        assert 'Detected following image: ![Identity with High Risk Score](home/test1/test2/doc_files/High_Risk_User.png) ' \
-               'which is not using an absolute url' in errors
-        assert 'Detected following image: (../../doc_files/Access_investigation_-_Generic_4_5.png) which is not using an absolute url' in errors
+        assert 'Detected the following image relative path: ![Identity with High Risk Score](doc_files/High_Risk_User.png)' in errors
+        assert 'Detected the following image relative path: ![Identity with High Risk Score](home/test1/test2/doc_files/High_Risk_User.png)' in errors
+        assert 'Detected the following image relative path: (../../doc_files/Access_investigation_-_Generic_4_5.png)' in errors
+        assert 'Image link was not found, either insert it or remove it:\n![Account Enrichment](Insert the link to your image here)' in errors
 
-        assert 'please repair it - https://github.com/demisto/content/raw/test1.png' in errors
-        assert 'please repair it - https://raw.githubusercontent.com/demisto/content/raw/test1.png' in errors
-        assert 'please repair it - https://raw.githubusercontent.com/demisto/content/raw/test1.jpg' in errors
+        assert 'please repair it:\n![Identity with High Risk Score](https://github.com/demisto/content/raw/test1.png)' in errors
+        assert 'please repair it:\n![Identity with High Risk Score](https://raw.githubusercontent.com/demisto/content/raw/test1.png)' in errors
+        assert 'please repair it:\n(https://raw.githubusercontent.com/demisto/content/raw/test1.jpg)' in errors
 
     @pytest.mark.parametrize('readme_content, is_valid', [
         ('Hey there, just testing', True),

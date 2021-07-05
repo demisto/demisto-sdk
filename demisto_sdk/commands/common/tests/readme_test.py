@@ -415,22 +415,25 @@ def test_verify_readme_image_paths():
     readme_validator = ReadMeValidator(IMAGES_MD)
     with requests_mock.Mocker() as m:
         # Mock get requests
-        m.get('https://github.com/demisto/content/raw/123/Packs/valid/doc_files/test.png',
+        m.get('https://github.com/demisto/test1.png',
               status_code=404, text="Test1")
-        m.get('https://github.com/demisto/content/raw/123/Packs/valid/doc_files/test2.png',
+        m.get('https://github.com/demisto/content/raw/test2.png',
               status_code=404, text="Test2")
-        m.get('https://github.com/demisto/content/raw/2e4e0056580ea5de30f55dcbe2ccacaadf01b74e/Packs'
-              '/SailPointIdentityIQ/doc_files/High_Risk_User.png',
+        m.get('https://github.com/demisto/test3.png',
               status_code=200, text="Test3")
 
         result = readme_validator.verify_readme_image_paths()
     sys.stdout = sys.__stdout__  # reset stdout.
     captured_output = captured_output.getvalue()
     assert not result
-    assert 'The following relative path is not valid - ../../default.png' in captured_output
-    assert 'The following relative path is not valid - default.png' not in captured_output
+    assert 'The following image relative path is not valid, please recheck it:\n' \
+           '![Identity with High Risk Score](../../default.png)' in captured_output
+    assert 'The following image relative path is not valid, please recheck it:\n' \
+           '![Identity with High Risk Score](default.png)' not in captured_output
 
-    assert 'please repair it - https://github.com/demisto/content/raw/123/Packs/valid/doc_files/test.png' in captured_output
-    assert 'please repair it - https://github.com/demisto/content/raw/123/Packs/valid/doc_files/test2.png' in captured_output
-    assert 'please repair it - https://github.com/demisto/content/raw/2e4e0056580ea5de30f55dcbe2ccacaadf01b74e/Packs' \
+    assert 'please repair it:\n' \
+           '![Identity with High Risk Score](https://github.com/demisto/test1.png)' in captured_output
+    assert 'please repair it:\n(https://github.com/demisto/content/raw/test2.png)' in captured_output
+    assert 'please repair it:\n' \
+           '![Identity with High Risk Score](https://github.com/demisto/test3.png)' \
            not in captured_output

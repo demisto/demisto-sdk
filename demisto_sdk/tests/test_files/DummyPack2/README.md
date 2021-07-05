@@ -6,6 +6,7 @@ This integration was integrated and tested with version 1.0.1 of PhishTank.
 ![Identity with High Risk Score](doc_files/High_Risk_User.png)
 ![Identity with High Risk Score](home/test1/test2/doc_files/High_Risk_User.png)
 <img src="../../doc_files/Access_investigation_-_Generic_4_5.png"/>
+![Account Enrichment](Insert the link to your image here)
 
 ##### images absolute paths
 ![Identity with High Risk Score](https://github.com/demisto/content/raw/test1.png)

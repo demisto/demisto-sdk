@@ -243,35 +243,39 @@ class ReadMeValidator(BaseValidator):
         """
         error_list = []
         should_print_error = not is_pack_readme  # If error was found, print it only if its not pack readme.
-        relative_images = re.findall(r'(\!\[.*?\])\(((?!http).*?\.(png|jpe?g))\)', self.readme_content, re.IGNORECASE)
+        relative_images = re.findall(r'(\!\[.*?\])\(((?!http).*?)\)', self.readme_content, re.IGNORECASE)
         relative_images += re.findall(  # HTML image tag
-            r'(src\s*=\s*"((?!http).*?\.(png|jpe?g))")', self.readme_content,
+            r'(src\s*=\s*\"((?!http).*?)\")', self.readme_content,
             re.IGNORECASE)
         if relative_images:
-            if is_pack_readme:  # Check whether the README type is pack README which do not support relative paths.
+            if is_pack_readme:  # check whether the README type is pack README which do not support relative paths.
                 for img in relative_images:
                     try:
-                        prefix = img[0]
-                        relative_path = img[1]
+                        prefix = '' if 'src' in img[0] else img[0].strip()  # striping in case there are whitespaces at the beginning/ending of url.
+                        relative_path = img[1].strip()
                     except IndexError:
                         continue
-                    if relative_path:
-                        if 'src' in prefix:  # format for print when img came from HTML path.
-                            prefix = ''
-                        error_message, error_code = Errors.pack_readme_image_relative_path_error(prefix + f'({relative_path})')
-                        formatted_error = self.handle_error(error_message, error_code, file_path=self.file_path,
-                                                            should_print=should_print_error)
-                        error_list.append(formatted_error)
+                    if 'Insert the link to your image here' in relative_path:
+                        error_message, error_code = Errors.invalid_readme_image_error(prefix + f'({relative_path})',
+                                                                                      error_type='insert_image_link_error')
+                    else:
+                        error_message, error_code = Errors.invalid_readme_image_error(prefix + f'({relative_path})',
+                                                                                      error_type='pack_readme_relative_error')
+                    formatted_error = self.handle_error(error_message, error_code, file_path=self.file_path,
+                                                        should_print=should_print_error)
+                    error_list.append(formatted_error)
 
-            else:  # Not pack readme relative paths are allowed but have to be valid.
+            else:  # not pack readme relative paths are allowed but have to be valid.
                 for img in relative_images:
                     try:
-                        relative_path = img[1]
+                        prefix = '' if 'src' in img[0] else img[0].strip()
+                        relative_path = img[1].strip()
                     except IndexError:
                         continue
                     if relative_path:
                         if not os.path.exists(f'{str(self.pack_path)}/{relative_path}'):
-                            error_message, error_code = Errors.invalid_readme_image_relative_path_error(relative_path)
+                            error_message, error_code = Errors.invalid_readme_image_error(prefix + f'({relative_path})',
+                                                                                          error_type='general_readme_relative_error')
                             formatted_error = self.handle_error(error_message, error_code, file_path=self.file_path)
                             error_list.append(formatted_error)
         return error_list
@@ -286,25 +290,28 @@ class ReadMeValidator(BaseValidator):
             list: List of the errors found
         """
         error_list = []
-        should_print_error = not is_pack_readme  # print error if its not pack readme
+        should_print_error = not is_pack_readme  # pack readme errors are handled and printed during the pack unique files validation.
         absolute_links = re.findall(
-            r'(!\[.*\])\((https://(raw\.githubusercontent|github)\.com/demisto/content/.*\.(png|jpe?g))\)', self.readme_content,
+            r'(!\[.*\])\((https://.*)\)', self.readme_content,
             re.IGNORECASE)
         absolute_links += re.findall(  # image tag
-            r'(src\s*=\s*"(https://.+?\.(png|jpe?g))")', self.readme_content,
+            r'(src\s*=\s*"(https://.*?)")', self.readme_content,
             re.IGNORECASE)
         if absolute_links:
             for link in absolute_links:
                 try:
-                    img_url = link[1]
+                    prefix = '' if 'src' in link[0] else link[0].strip()
+                    img_url = link[1].strip()  # striping in case there are whitespaces at the beginning/ending of url.
                 except IndexError:
                     continue
                 try:
                     response = requests.get(img_url, verify=False, timeout=10)
                 except Exception as ex:
-                    raise Exception(f'Failed reaching {img_url} - {ex}')
+                    click.secho(f"Could not validate the image link: {img_url}\n {ex}", fg='yellow')
+                    continue
                 if response.status_code != 200:
-                    error_message, error_code = Errors.invalid_readme_image_absolute_path_error(img_url)
+                    error_message, error_code = Errors.invalid_readme_image_error(prefix + f'({img_url})',
+                                                                                  error_type='general_readme_absolute_error')
                     formatted_error = \
                         self.handle_error(error_message, error_code, file_path=self.file_path,
                                           should_print=should_print_error)

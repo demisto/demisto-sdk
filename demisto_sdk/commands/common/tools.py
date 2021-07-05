@@ -980,7 +980,7 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
         if 'README' in path:
             return FileType.README
 
-        if RELEASE_NOTES_DIR == Path(path).parts[-2]:  # [-2] is the file's dir name
+        if RELEASE_NOTES_DIR in path:  # [-2] is the file's dir name
             return FileType.RELEASE_NOTES
 
         if 'description' in path:

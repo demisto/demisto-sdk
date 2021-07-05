@@ -386,18 +386,8 @@ class PackDependencies:
             all_dependencies_commands = list(set(depends_on + command_to_integration + script_executions))
             dependencies_commands = list(filter(lambda cmd: cmd not in GENERIC_COMMANDS_NAMES,
                                                 all_dependencies_commands))  # filter out generic commands
-            pack_with_commands = {}
-            for i in id_set.get('integrations', {}):
-                obj = i.values()
-                for j in obj:
-                    print(j['pack'])
-                    pack_with_commands[j['pack']] = j.get('commands')
 
             for command in dependencies_commands:
-                pack_name = list(script_mapping.values())[0]['pack']
-                if command in pack_with_commands.get(pack_name, {}):
-                    continue
-
                 # try to search dependency by scripts first
                 pack_name = PackDependencies._search_packs_by_items_names(command, id_set['scripts'],
                                                                           exclude_ignored_dependencies)

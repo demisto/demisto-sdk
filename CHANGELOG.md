@@ -6,6 +6,7 @@
 * Added a playbook validation to check if a task sub playbook exists in the id set in the **validate** command.
 * Added the option to add new tags/usecases to the approved list and to the pack metadata on the same pull request.
 * Fixed an issue in **test_content** where when different servers ran tests for the same integration, the server URL parameters were not set correctly.
+* Fixed the **find-dependencies** by packs with integrations that implement 'send-notification' command
 
 # 1.4.2
 * Added to `pylint` summary an indication if a test was skipped.
@@ -28,7 +29,6 @@
 * Added a version differences section to readme in **generate-docs** command.
 * Added the *--docs-format* flag in the **integration-diff** command to get the output in README format.
 * Added the *--input-old-version* and *--skip-breaking-changes* flags in the **generate-docs** command to get the details for the breaking section and to skip the breaking changes section.
-* Fixed the **find-dependencies** by packs with integrations that implement 'send-notification' command
 
 # 1.4.0
 * Enable passing a comma-separated list of paths for the `--input` option of the **lint** command.

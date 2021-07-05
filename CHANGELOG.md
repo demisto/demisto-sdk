@@ -1,5 +1,31 @@
 # Changelog
+* Fixed an issue where if a pack README.md did not exist it could cause an error in the validation process.
+* Fixed an issue where the *--name* was incorrectly required in the **init** command.
+* Adding the option to run **validate** on a specific path while using git (*-i* & *-g*).
+* The **format** command will now change UUIDs in .yml and .json files to their respective content entity name.
+* Added a playbook validation to check if a task sub playbook exists in the id set in the **validate** command.
 
+# 1.4.2
+* Added to `pylint` summary an indication if a test was skipped.
+* Added to the **init** command the option to specify fromversion.
+* Fixed an issue where running **init** command without filling the metadata file.
+* Added the *--docker-timeout* flag in the **lint** command to control the request timeout for the Docker client.
+* Fixed an issue where **update-release-notes** command added only one docker image release notes entry for release notes file, and not for every entity whom docker image was updated.
+* Added a validation to ensure that incident/indicator fields names starts with their pack name in the **validate** command. (Checked only for new files and only when using git *-g*)
+* Updated the **find-dependencies** command to return the 'dependencies' according the layout type ('incident', 'indicator').
+* Enhanced the "vX" display name validation for scripts and integrations in the **validate** command to check for every versioned script or integration, and not only v2.
+* Added the *--fail-duplicates* flag for the **create-id-set** command which will fail the command if duplicates are found.
+* Added to the **generate-docs** command automatic addition to git when a new readme file is created.
+
+# 1.4.1
+* When in private repo without `DEMSITO_SDK_GITHUB_TOKEN` configured, get_remote_file will take files from the local origin/master.
+* Enhanced the **unify** command when giving input of a file and not a directory return a clear error message.
+* Added a validation to ensure integrations are not skipped and at least one test playbook is not skipped for each integration or script.
+* Added to the Content Tests support for `context_print_dt`, which queries the incident context and prints the result as a json.
+* Added new validation for the `xsoar_config.json` file in the **validate** command.
+* Added a version differences section to readme in **generate-docs** command.
+* Added the *--docs-format* flag in the **integration-diff** command to get the output in README format.
+* Added the *--input-old-version* and *--skip-breaking-changes* flags in the **generate-docs** command to get the details for the breaking section and to skip the breaking changes section.
 
 # 1.4.0
 * Enable passing a comma-separated list of paths for the `--input` option of the **lint** command.

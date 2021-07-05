@@ -830,28 +830,50 @@ class TestPlaybookEntitiesVersionsValid:
             "SubPlaybook_not_in_id_set"
         ]
     }}
+    playbook_with_valid_sub_playbook_name = {"Example Playbook": {
+        "name": "Example Playbook",
+        "file_path": playbook_path,
+        "fromversion": "5.0.0",
+        "pack": "Example",
+        "implementing_playbooks": [
+            "SubPlaybook_version_5_5"
+        ]
+    }}
+    playbook_with_invalid_sub_playbook_name = {"Example Playbook": {
+        "name": "Example Playbook",
+        "file_path": playbook_path,
+        "fromversion": "5.0.0",
+        "pack": "Example",
+        "implementing_playbooks": [
+            "SubPlaybook_version_5_5 "
+        ]
+    }}
     id_set = {
         'playbooks': [
             {
                 'SubPlaybook_version_5': {
+                    'name': 'SubPlaybook_version_5',
                     'fromversion': "5.0.0",
                     "file_path": playbook_path,
                 }
             },
             {
                 'SubPlaybook_no_version': {
+                    'name': 'SubPlaybook_no_version',
                     'fromversion': "",
                     "file_path": playbook_path,
                 }
             },
             {
                 'SubPlaybook_version_5_5': {
+                    'name': 'SubPlaybook_version_5_5',
                     'fromversion': "5.5.0",
                     "file_path": playbook_path,
                 }
             },
             {
                 'Example Playbook': {
+                    'name': 'test',
                     'fromversion': "5.5.0",
                     "file_path": playbook_path,
                     "command_to_integration": {

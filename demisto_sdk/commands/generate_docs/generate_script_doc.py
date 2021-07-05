@@ -136,7 +136,7 @@ def get_script_info(script_path):
     res = [{'Name': 'Script Type', 'Description': script_type},
            {'Name': 'Tags', 'Description': tags}]
     if from_version != '0.0.0':
-        res.append({'Name': 'Demisto Version', 'Description': from_version})
+        res.append({'Name': 'Cortex XSOAR Version', 'Description': from_version})
     return res
 
 

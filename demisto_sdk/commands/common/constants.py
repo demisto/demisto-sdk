@@ -56,6 +56,7 @@ DOCUMENTATION = 'doc'
 MAPPER = 'classifier-mapper'
 CANVAS = 'canvas'
 OLD_REPUTATION = 'reputations.json'
+XSOAR_CONFIG_FILE = 'xsoar_config.json'
 
 
 class FileType(Enum):
@@ -92,6 +93,7 @@ class FileType(Enum):
     WHITE_LIST = 'whitelist'
     LANDING_PAGE_SECTIONS_JSON = 'landingPage_sections.json'
     CONTRIBUTORS = 'contributors'
+    XSOAR_CONFIG = 'xsoar_config'
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -858,7 +860,6 @@ class GithubContentConfig:
 
 OFFICIAL_CONTENT_ID_SET_PATH = 'https://storage.googleapis.com/marketplace-dist/content/id_set.json'
 
-
 # Run all test signal
 RUN_ALL_TESTS_FORMAT = 'Run all tests'
 FILTER_CONF = './artifacts/filter_file.txt'
@@ -1162,9 +1163,19 @@ DEFAULT_ID_SET_PATH = "./Tests/id_set.json"
 
 CONTEXT_OUTPUT_README_TABLE_HEADER = '| **Path** | **Type** | **Description** |'
 
-ARGUMENT_FIELDS_TO_CHECK = ['default', 'required', 'isArray']
+ARGUMENT_FIELDS_TO_CHECK = ['defaultValue', 'required', 'isArray']
 
-PARAM_FIELDS_TO_CHECK = ['type', 'required']
+PARAM_FIELDS_TO_CHECK = ['defaultvalue', 'type', 'required']
+
+INTEGRATION_ARGUMENT_TYPES = {
+    '0': 'ShortText',
+    '4': 'Encrypted',
+    '8': 'Boolean',
+    '9': 'Authentication',
+    '12': 'LongText',
+    '15': 'SingleSelect',
+    '16': 'MultiSelect'
+}
 
 
 class ContentItems(Enum):
@@ -1219,5 +1230,15 @@ CONTENT_ITEMS_DISPLAY_FOLDERS = {
 }
 
 
+class PathLevel(Enum):
+    PACK = 'Pack',
+    CONTENT_ENTITY_DIR = 'ContentDir',
+    PACKAGE = 'Package',
+    FILE = 'File'
+
+
 class DemistoException(Exception):
     pass
+
+
+UUID_REGEX = r'([\w]{8}-[\w]{4}-[\w]{4}-[\w]{4}-[\w]{8,12})'

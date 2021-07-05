@@ -251,7 +251,7 @@ class LintManager:
                          no_pylint: bool, no_coverage: bool, coverage_report: str,
                          no_vulture: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
                          keep_container: bool,
-                         test_xml: str, failure_report: str) -> int:
+                         test_xml: str, failure_report: str, docker_timeout: int) -> int:
         """ Runs the Lint command on all given packages.
 
         Args:
@@ -270,6 +270,7 @@ class LintManager:
             keep_container(bool): Whether to keep the test container
             test_xml(str): Path for saving pytest xml results
             failure_report(str): Path for store failed packs report
+            docker_timeout(int): timeout for docker requests
 
         Returns:
             int: exit code by fail exit codes by var EXIT_CODES
@@ -320,7 +321,8 @@ class LintManager:
                                         Path(self._facts["content_repo"].working_dir),
                                         req_2=self._facts["requirements_2"],
                                         req_3=self._facts["requirements_3"],
-                                        docker_engine=self._facts["docker_engine"])
+                                        docker_engine=self._facts["docker_engine"],
+                                        docker_timeout=docker_timeout)
                 results.append(executor.submit(linter.run_dev_packages,
                                                no_flake8=no_flake8,
                                                no_bandit=no_bandit,
@@ -416,12 +418,13 @@ class LintManager:
         self.report_failed_image_creation(return_exit_code=return_exit_code,
                                           pkgs_status=pkgs_status,
                                           lint_status=lint_status)
-        self.report_summary(pkg=self._pkgs, lint_status=lint_status, all_packs=self._all_packs)
         if not no_coverage:
             if coverage_report:
                 generate_coverage_report(html=True, xml=True, cov_dir=coverage_report)
             else:
                 generate_coverage_report()
+
+        self.report_summary(pkg=self._pkgs, lint_status=lint_status, all_packs=self._all_packs)
         self.create_json_output()
 
     @staticmethod
@@ -568,10 +571,13 @@ class LintManager:
                             if tests:
                                 print_v(wrapper_docker_image.fill(image['image']), log_verbose=self._verbose)
                                 for test_case in tests:
-                                    if test_case.get("call", {}).get("outcome") != "failed":
+                                    outcome = test_case.get("call", {}).get("outcome")
+                                    if outcome != "failed":
                                         name = re.sub(pattern=r"\[.*\]",
                                                       repl="",
                                                       string=test_case.get("name"))
+                                        if outcome and outcome != "passed":
+                                            name = f'{name} ({outcome.upper()})'
                                         print_v(wrapper_test.fill(name), log_verbose=self._verbose)
 
         # Log failed unit-tests

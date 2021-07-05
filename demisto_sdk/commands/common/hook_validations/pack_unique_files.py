@@ -304,7 +304,7 @@ class PackUniqueFilesValidator(BaseValidator):
                 if self._add_error(Errors.pack_metadata_field_invalid(), self.pack_meta_file):
                     return False
 
-            if not self.is_pack_metadata_desc_long(description_name):
+            if not self.is_pack_metadata_desc_too_long(description_name):
                 return False
 
             # check non mandatory dependency field

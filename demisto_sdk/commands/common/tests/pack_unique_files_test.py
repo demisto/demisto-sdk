@@ -533,5 +533,3 @@ class TestPackUniqueFilesValidator:
         """
 
         assert self.validator.is_pack_metadata_desc_too_long(pack_description) == is_valid
-
-

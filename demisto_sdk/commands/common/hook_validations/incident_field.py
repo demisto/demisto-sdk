@@ -9,7 +9,9 @@ from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
-from demisto_sdk.commands.common.tools import get_core_pack_list, get_pack_name
+from demisto_sdk.commands.common.tools import (get_core_pack_list,
+                                               get_pack_metadata,
+                                               get_pack_name)
 
 
 class TypeFields(Enum):
@@ -177,7 +179,7 @@ class IncidentFieldValidator(ContentEntityValidator):
 
         return not is_bc_broke
 
-    def is_valid_file(self, validate_rn=True):
+    def is_valid_file(self, validate_rn=True, is_new_file=False, use_git=False):
         """Check whether the Incident Field is valid or not
         """
         answers = [
@@ -198,7 +200,8 @@ class IncidentFieldValidator(ContentEntityValidator):
         is_core = pack in core_packs_list
         if is_core:
             answers.append(self.is_valid_name())
-
+        if is_new_file and use_git:
+            answers.append(self.is_valid_incident_field_name_prefix())
         return all(answers)
 
     def is_valid_name(self):
@@ -258,7 +261,8 @@ class IncidentFieldValidator(ContentEntityValidator):
         is_valid_flag = self.current_file.get("content") is content_value
         if not is_valid_flag:
             error_message, error_code = Errors.invalid_incident_field_content_key_value(content_value)
-            if not self.handle_error(error_message, error_code, file_path=self.file_path):
+            if not self.handle_error(error_message, error_code, file_path=self.file_path,
+                                     suggested_fix=Errors.suggest_fix(self.file_path)):
                 is_valid_flag = True
 
         return is_valid_flag
@@ -268,7 +272,8 @@ class IncidentFieldValidator(ContentEntityValidator):
         is_valid_flag = self.current_file.get("system", False) is system_value
         if not is_valid_flag:
             error_message, error_code = Errors.invalid_incident_field_system_key_value(system_value)
-            if not self.handle_error(error_message, error_code, file_path=self.file_path):
+            if not self.handle_error(error_message, error_code, file_path=self.file_path,
+                                     suggested_fix=Errors.suggest_fix(self.file_path)):
                 is_valid_flag = True
 
         return is_valid_flag
@@ -394,6 +399,30 @@ class IncidentFieldValidator(ContentEntityValidator):
 
             if self.handle_error(error_message, error_code, file_path=self.file_path,
                                  warning=self.structure_validator.quite_bc):
+                return False
+
+        return True
+
+    def is_valid_incident_field_name_prefix(self):
+        # type: () -> bool
+        """Validate that an indicator field name starts with its pack name or one of the itemPrefixes from
+        pack.metadat"""
+        ignored_packs = ['Common Types']
+        pack_metadata = get_pack_metadata(self.file_path)
+        pack_name = pack_metadata.get("name")
+        name_prefixes = pack_metadata.get('itemPrefix', []) if pack_metadata.get('itemPrefix') else [pack_name]
+        field_name = self.current_file.get("name", "")
+        if pack_name and pack_name not in ignored_packs:
+            for prefix in name_prefixes:
+                if self.current_file.get("name", "").startswith(prefix):
+                    return True
+
+            error_message, error_code = Errors.invalid_incident_field_prefix(field_name)
+            if self.handle_error(
+                    error_message,
+                    error_code,
+                    file_path=self.file_path,
+                    suggested_fix=Errors.suggest_fix_field_name(field_name, pack_prefix=name_prefixes[0])):
                 return False
 
         return True

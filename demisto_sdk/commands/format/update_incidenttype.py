@@ -44,28 +44,31 @@ class IncidentTypesJSONFormat(BaseUpdateJSON):
             return ERROR_RETURN_CODE
 
     def format_auto_extract_mode(self):
-        auto_extract_data = self.data.get('extractSettings', {})
-        if auto_extract_data:
-            auto_extract_mode = auto_extract_data.get('mode')
-            if not auto_extract_mode or auto_extract_mode not in ['All', 'Specific']:
-                user_input = ''
-                while user_input not in ['All', 'Specific']:
-                    user_input = click.prompt(
-                        ' The `mode` field under `extractSettings` should be one of the following: \n'
-                        '- "All" - To extract all indicator types regardless of auto-extraction settings. \n'
-                        '- "Specific" - To extract only the specific indicator types set in the auto-extraction '
-                        'settings.')
+        """
+         When formatting incident types with Auto-Extract rules and without mode field,
+         the function will add the user selected mode.
+        """
 
-                if user_input == 'All' and self.data['extractSettings']['fieldCliNameToExtractSettings']:
-                    click.secho('Cannot set mode to "All" since there are specific types under the '
-                                'fieldCliNameToExtractSettings, '
-                                'If you want the mode to be "All" you should delete them manually and run this '
-                                'command again.', fg='yellow')
-                    return
-                if user_input == 'Specific' and not self.data['extractSettings']['fieldCliNameToExtractSettings']:
-                    click.secho('Please notice that mode was set to "Specific" but there are no specific types under '
-                                'fieldCliNameToExtractSettings', fg='yellow')
-                self.data['extractSettings']['mode'] = user_input
+        auto_extract_mode = self.data.get('extractSettings', {}).get('mode')
+        if not auto_extract_mode or auto_extract_mode not in ['All', 'Specific']:
+            user_input = ''
+            while user_input not in ['All', 'Specific']:
+                user_input = click.prompt(
+                    ' The `mode` field under `extractSettings` should be one of the following: \n'
+                    '- "All" - To extract all indicator types regardless of auto-extraction settings. \n'
+                    '- "Specific" - To extract only the specific indicator types set in the auto-extraction '
+                    'settings.')
+
+            if user_input == 'All' and self.data['extractSettings']['fieldCliNameToExtractSettings']:
+                click.secho('Cannot set mode to "All" since there are specific types under the '
+                            'fieldCliNameToExtractSettings, '
+                            'If you want the mode to be "All" you should delete them manually and run this '
+                            'command again.', fg='yellow')
+                return
+            if user_input == 'Specific' and not self.data['extractSettings']['fieldCliNameToExtractSettings']:
+                click.secho('Please notice that mode was set to "Specific" but there are no specific types under '
+                            'fieldCliNameToExtractSettings', fg='yellow')
+            self.data['extractSettings']['mode'] = user_input
 
     def format_file(self) -> Tuple[int, int]:
         """Manager function for the incident type JSON updater."""

@@ -263,7 +263,7 @@ def build_pytest_command(test_xml: str = "", json: bool = False, cov: str = "") 
     Returns:
         str: pytest command
     """
-    command = "python -m pytest"
+    command = "python -m pytest -ra"
     # Generating junit-xml report - used in circle ci
     if test_xml:
         command += " --junitxml=/devwork/report_pytest.xml"

@@ -12,7 +12,7 @@ from enum import Enum
 from functools import partial
 from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen, check_output
-from typing import Callable, Dict, List, Optional, Tuple, Type, Union
+from typing import Callable, Dict, List, Match, Optional, Tuple, Type, Union
 
 import click
 import colorama
@@ -402,7 +402,8 @@ def get_last_remote_release_version():
 
     :return: tag
     """
-    if not os.environ.get('CI'):  # Check only when no on CI. If you want to disable it - use `DEMISTO_SDK_SKIP_VERSION_CHECK` environment variable
+    if not os.environ.get(
+            'CI'):  # Check only when no on CI. If you want to disable it - use `DEMISTO_SDK_SKIP_VERSION_CHECK` environment variable
         try:
             pypi_request = requests.get(SDK_PYPI_VERSION, verify=False, timeout=5)
             pypi_request.raise_for_status()
@@ -1554,20 +1555,24 @@ def arg_to_list(arg: Union[str, List[str]], separator: str = ",") -> List[str]:
     return [arg]
 
 
-def is_v2_file(current_file, check_in_display=False):
-    """Check if the specific integration of script is a v2
-    Returns:
-        bool. Whether the file is a v2 file
+def get_file_version_suffix_if_exists(current_file: Dict, check_in_display: bool = False) -> Optional[str]:
     """
-    # integrations should be checked via display field, other entities should check name field
-    if check_in_display:
-        name = current_file.get('display', '')
-    else:
-        name = current_file.get('name', '')
-    suffix = str(name[-2:].lower())
-    if suffix != "v2":
-        return False
-    return True
+    Checks if current YML file name is versioned or no, e.g, ends with v<number>.
+    Args:
+        current_file (Dict): Dict representing YML data of an integration or script.
+        check_in_display (bool): Whether to get name by 'display' field or not (by 'name' field).
+
+    Returns:
+        (Optional[str]): Number of the version as a string, if the file ends with version suffix. None otherwise.
+    """
+    versioned_file_regex = r'v([0-9]+)$'
+    name = current_file.get('display') if check_in_display else current_file.get('name')
+    if not name:
+        return None
+    matching_regex = re.findall(versioned_file_regex, name.lower())
+    if matching_regex:
+        return matching_regex[-1]
+    return None
 
 
 def get_all_incident_and_indicator_fields_from_id_set(id_set_file, entity_type):
@@ -1830,3 +1835,23 @@ def is_pack_path(input_path: str) -> bool:
         - False if the input path is not for a given pack.
     """
     return os.path.basename(os.path.dirname(input_path)) == PACKS_DIR
+
+
+def get_relative_path_from_packs_dir(file_path: str) -> str:
+    """Get the relative path for a given file_path starting in the Packs directory"""
+    if PACKS_DIR not in file_path or file_path.startswith(PACKS_DIR):
+        return file_path
+
+    return file_path[file_path.find(PACKS_DIR):]
+
+
+def is_uuid(s: str) -> Optional[Match]:
+    """Checks whether given string is a UUID
+
+    Args:
+         s (str): The string to check if it is a UUID
+
+    Returns:
+        Match: Returns the match if given string is a UUID, otherwise None
+    """
+    return re.match(UUID_REGEX, s)

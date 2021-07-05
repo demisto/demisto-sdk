@@ -3,6 +3,7 @@
 * Fixed an issue where the *--name* was incorrectly required in the **init** command.
 * Adding the option to run **validate** on a specific path while using git (*-i* & *-g*).
 * The **format** command will now change UUIDs in .yml and .json files to their respective content entity name.
+* Added a playbook validation to check if a task sub playbook exists in the id set in the **validate** command.
 * Added a warning when pack_metadata's description field is longer than 130 characters.
 
 # 1.4.2

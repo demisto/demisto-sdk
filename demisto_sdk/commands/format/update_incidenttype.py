@@ -56,6 +56,15 @@ class IncidentTypesJSONFormat(BaseUpdateJSON):
                         '- "Specific" - To extract only the specific indicator types set in the auto-extraction '
                         'settings.')
 
+                if user_input == 'All' and self.data['extractSettings']['fieldCliNameToExtractSettings']:
+                    click.secho('Cannot set mode to "All" since there are specific types under the '
+                                'fieldCliNameToExtractSettings, '
+                                'If you want the mode to be "All" you should delete them manually and run this '
+                                'command again.', fg='yellow')
+                    return
+                if user_input == 'Specific' and not self.data['extractSettings']['fieldCliNameToExtractSettings']:
+                    click.secho('Please notice that mode was set to "Specific" but there are no specific types under '
+                                'fieldCliNameToExtractSettings', fg='yellow')
                 self.data['extractSettings']['mode'] = user_input
 
     def format_file(self) -> Tuple[int, int]:

@@ -112,16 +112,15 @@ class TestFormattingIncidentTypes:
     EXTRACTION_MODE_VARIATIONS = [
         ('All', '', 'All'),
         ('Specific', '', 'Specific'),
-        (None, 'All', 'All'),
         ('', 'Specific', 'Specific'),
-        ('all', 'All', 'All')
+        ('specific', 'Specific', 'Specific')
     ]
 
     @pytest.mark.parametrize("existing_extract_mode, user_answer, expected", EXTRACTION_MODE_VARIATIONS)
     def test_format_autoextract_mode(self, mocker, existing_extract_mode, user_answer, expected):
         """
         Given
-        - an incident type without auto extract mode or with a valid/invalid auto extract mode.
+        - An incident type without auto extract mode or with a valid/invalid auto extract mode.
 
         When
         - Running format_auto_extract_mode on it.
@@ -152,7 +151,7 @@ class TestFormattingIncidentTypes:
     def test_format_autoextract_mode_bad_user_input(self, mocker):
         """
         Given
-        - an incident type without auto extract mode.
+        - An incident type without auto extract mode.
 
         When
         - Running format_auto_extract_mode on it.
@@ -181,6 +180,80 @@ class TestFormattingIncidentTypes:
         current_mode = formatter.data.get('extractSettings', {}).get('mode')
         assert mock_func.call_count == 4
         assert current_mode == 'All'
+
+    EXTRACTION_MODE_ALL_CONFLICT = [
+        ('All', None),
+        ('Specific', 'Specific'),
+    ]
+
+    @pytest.mark.parametrize("user_answer, expected", EXTRACTION_MODE_ALL_CONFLICT)
+    def test_format_autoextract_all_mode_conflict(self, mocker, user_answer, expected, capsys):
+        """
+        Given
+        - An incident type without auto extract mode with specific types under fieldCliNameToExtractSettings.
+
+        When
+        - Running format_auto_extract_mode on it.
+
+        Then
+        - If the user selected 'All', he will get an warning message and the mode will not be changed.
+        - If the user selected 'Specific', the mode will be changed.
+        """
+        mock_dict = {
+            'extractSettings': {
+                'mode': None,
+                'fieldCliNameToExtractSettings': {
+                    "incident_field": {
+                        "extractAsIsIndicatorTypeId": "",
+                        "isExtractingAllIndicatorTypes": False,
+                        "extractIndicatorTypesIDs": []
+                    }
+                }
+            }
+        }
+        mocker.patch('demisto_sdk.commands.format.update_generic.get_dict_from_file', return_value=(mock_dict, 'mock_type'))
+        mocker.patch('demisto_sdk.commands.format.update_incidenttype.click.prompt', return_value=user_answer)
+        formatter = IncidentTypesJSONFormat("test")
+        formatter.format_auto_extract_mode()
+        stdout, _ = capsys.readouterr()
+        current_mode = formatter.data.get('extractSettings', {}).get('mode')
+        assert current_mode == expected
+        if user_answer == 'All':
+            assert 'Cannot set mode to "All" since there are specific types' in stdout
+
+    EXTRACTION_MODE_SPECIFIC_CONFLICT = [
+        ('All', 'All'),
+        ('Specific', 'Specific'),
+    ]
+
+    @pytest.mark.parametrize("user_answer, expected", EXTRACTION_MODE_SPECIFIC_CONFLICT)
+    def test_format_autoextract_specific_mode_conflict(self, mocker, user_answer, expected, capsys):
+        """
+        Given
+        - An incident type without auto extract mode and without specific types under fieldCliNameToExtractSettings.
+
+        When
+        - Running format_auto_extract_mode on it.
+
+        Then
+        - If the user selected 'Specific', the mode will be changed but he will get a warning that no specific types were found.
+        - If the user selected 'All', the mode will be changed.
+        """
+        mock_dict = {
+            'extractSettings': {
+                'mode': None,
+                'fieldCliNameToExtractSettings': {}
+            }
+        }
+        mocker.patch('demisto_sdk.commands.format.update_generic.get_dict_from_file', return_value=(mock_dict, 'mock_type'))
+        mocker.patch('demisto_sdk.commands.format.update_incidenttype.click.prompt', return_value=user_answer)
+        formatter = IncidentTypesJSONFormat("test")
+        formatter.format_auto_extract_mode()
+        stdout, _ = capsys.readouterr()
+        current_mode = formatter.data.get('extractSettings', {}).get('mode')
+        assert current_mode == expected
+        if user_answer == 'Specific':
+            assert 'Please notice that mode was set to "Specific" but there are no specific types' in stdout
 
 
 def test_update_connection_removes_unnecessary_keys(tmpdir, monkeypatch):

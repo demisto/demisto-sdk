@@ -31,9 +31,9 @@ from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, RERUN, RL,
                                                add_tmp_lint_files,
                                                add_typing_module,
                                                coverage_report_editor,
-                                               get_checks_on_docker,
-                                               get_checks_on_local_os,
                                                get_file_from_container,
+                                               get_linters_on_docker,
+                                               get_linters_on_local_os,
                                                get_python_version_from_image,
                                                pylint_plugin,
                                                split_warnings_errors,
@@ -305,7 +305,7 @@ class Linter:
         error = []
         other = []
         exit_code: int = 0
-        for lint_check in get_checks_on_local_os(self._facts["python_version"]):
+        for lint_check in get_linters_on_local_os(self._facts["python_version"]):
             exit_code = SUCCESS
             output = ""
             if self._facts["lint_files"] or self._facts["lint_unittest_files"]:
@@ -321,12 +321,12 @@ class Linter:
                 if lint_check == "XSOAR_linter" and not no_xsoar_linter:
                     exit_code, output = self._run_xsoar_linter(py_num=self._facts["python_version"],
                                                                lint_files=self._facts["lint_files"])
+                elif lint_check == "bandit" and not no_bandit:
+                    exit_code, output = self._run_bandit(lint_files=self._facts["lint_files"])
+
                 elif lint_check == "mypy" and not no_mypy:
                     exit_code, output = self._run_mypy(py_num=self._facts["python_version"],
                                                        lint_files=self._facts["lint_files"])
-
-                elif lint_check == "bandit" and not no_bandit:
-                    exit_code, output = self._run_bandit(lint_files=self._facts["lint_files"])
 
                 elif lint_check == "vulture" and not no_vulture:
                     exit_code, output = self._run_vulture(py_num=self._facts["python_version"],
@@ -560,7 +560,7 @@ class Linter:
 
             if image_id and not errors:
                 # Set image creation status
-                for check in get_checks_on_docker(self._facts["python_version"]):  # ["mypy", "pylint", "pytest", "pwsh_analyze", "pwsh_test"]:
+                for check in get_linters_on_docker(self._facts["python_version"]):  # ["mypy", "pylint", "pytest", "pwsh_analyze", "pwsh_test"]:
                     exit_code = SUCCESS
                     output = ""
                     for trial in range(2):

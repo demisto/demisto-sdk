@@ -182,15 +182,13 @@ def build_mypy_command(files: List[Path], version: float) -> str:
     command += " --install-types"
     # force the install-types to install the missed types without asking for confirmation
     command += " --non-interactive"
-    # set the cache dir
-    command += " --cache-dir=./mypy_cache"
     # Get the full path to the file.
     command += " --show-absolute-path"
     # Generating file names - file1 file2 file3,..
     files_list = [file.name for file in files]
     command += " " + " ".join(files_list)
 
-    # python files > 3 mayp run in docker container, so ignore the info printed to the stdout by pip
+    # In Python 3 files mypy will run in docker container, so ignore the info printed to the stdout by pip
     if version >= 3:
         command += " >/dev/null"
 

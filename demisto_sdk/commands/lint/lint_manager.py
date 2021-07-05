@@ -470,7 +470,6 @@ class LintManager:
                 for fail_pack in lint_status[f"fail_packs_{check}"]:
                     print(f"{Colors.Fg.red}{fail_pack}{Colors.reset}")
                     if pkgs_status[fail_pack].get(f"{check}_errors", None):
-                        # print(f"{Colors.Fg.red}{pkgs_status[fail_pack]['pkg']}{Colors.reset}")
                         print(pkgs_status[fail_pack][f"{check}_errors"])
                         self.linters_error_list.append({
                             'linter': check,
@@ -493,7 +492,7 @@ class LintManager:
             all_packs(bool) if all packs runs then no need for warnings messages.
         """
         if not all_packs:
-            for check in ["flake8", "XSOAR_linter", "bandit", "vulture"]:
+            for check in ["flake8", "XSOAR_linter", "bandit", "mypy", "vulture"]:
                 if EXIT_CODES[check] & return_warning_code:
                     sentence = f" {check.capitalize()} warnings "
                     print(f"\n{Colors.Fg.orange}{'#' * len(sentence)}{Colors.reset}")

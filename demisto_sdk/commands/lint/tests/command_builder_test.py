@@ -85,7 +85,7 @@ def test_build_mypy_command(files, py_num):
     redirect_stdout = ' >/dev/null' if py_num >= 3 else ''
     expected = f"python3 -m mypy --python-version {py_num} --check-untyped-defs --ignore-missing-imports " \
                f"--follow-imports=silent --show-column-numbers --show-error-codes --pretty --allow-redefinition " \
-               f"--install-types --non-interactive --cache-dir=./mypy_cache --show-absolute-path {' '.join(files)}" \
+               f"--install-types --non-interactive --show-absolute-path {' '.join(files)}" \
                f"{redirect_stdout}"
     assert expected == output
 

@@ -216,8 +216,7 @@ class Linter:
             # Gather environment variables for docker execution
             self._facts["env_vars"] = {
                 "CI": os.getenv("CI", False),
-                "DEMISTO_LINT_UPDATE_CERTS": os.getenv('DEMISTO_LINT_UPDATE_CERTS', "yes"),
-                "PIP_QUIET": 3
+                "DEMISTO_LINT_UPDATE_CERTS": os.getenv('DEMISTO_LINT_UPDATE_CERTS', "yes")
             }
         lint_files = set()
         # Facts for python pack
@@ -328,7 +327,6 @@ class Linter:
                 elif lint_check == "mypy" and not no_mypy:
                     exit_code, output = self._run_mypy(py_num=self._facts["python_version"],
                                                        lint_files=self._facts["lint_files"])
-
                 elif lint_check == "vulture" and not no_vulture:
                     exit_code, output = self._run_vulture(py_num=self._facts["python_version"],
                                                           lint_files=self._facts["lint_files"])
@@ -545,6 +543,7 @@ class Linter:
             status = {
                 "image": image[0],
                 "image_errors": "",
+                "mypy_errors": "",
                 "pylint_errors": "",
                 "pytest_errors": "",
                 "pytest_json": {},
@@ -570,19 +569,19 @@ class Linter:
                             if not no_mypy and check == "mypy" and self._facts["lint_files"]:
                                 test_command = build_mypy_command(files=self._facts["lint_files"],
                                                                   version=self._facts["python_version"])
-                                exit_code, output = self._run_tests_in_docker(test_name=check.capitalize(),
-                                                                              test_command=test_command,
-                                                                              test_image=image_id,
-                                                                              keep_container=keep_container)
+                                exit_code, output = self._run_linters_in_docker(test_name=check.capitalize(),
+                                                                                test_command=test_command,
+                                                                                test_image=image_id,
+                                                                                keep_container=keep_container)
 
                             # Perform pylint
                             if not no_pylint and check == "pylint" and self._facts["lint_files"]:
                                 test_command = build_pylint_command(files=self._facts["lint_files"],
                                                                     docker_version=self._facts["python_version"])
-                                exit_code, output = self._run_tests_in_docker(test_name=check.capitalize(),
-                                                                              test_command=test_command,
-                                                                              test_image=image_id,
-                                                                              keep_container=keep_container)
+                                exit_code, output = self._run_linters_in_docker(test_name=check.capitalize(),
+                                                                                test_command=test_command,
+                                                                                test_image=image_id,
+                                                                                keep_container=keep_container)
                             # Perform pytest
                             elif not no_test and self._facts["test"] and check == "pytest":
                                 exit_code, output, test_json = self._docker_run_pytest(test_image=image_id,
@@ -747,8 +746,8 @@ class Linter:
             if platform.system() != 'Darwin' or 'Connection broken' not in str(err):
                 raise
 
-    def _run_tests_in_docker(self, test_name: str, test_command: str, test_image: str, keep_container: bool) -> Tuple[int, str]:
-        """ Run tests (Mypy, Pylint etc.) in created test image
+    def _run_linters_in_docker(self, test_name: str, test_command: str, test_image: str, keep_container: bool) -> Tuple[int, str]:
+        """ Run tests (Mypy, Pylint) in created test image
 
         Args:
             test_image(str): test image id/name
@@ -774,7 +773,7 @@ class Linter:
                 command=[test_command],
                 user=f"{os.getuid()}:4000",
                 detach=True,
-                environment=self._facts["env_vars"]
+                environment={**self._facts["env_vars"], "PIP_QUIET": 3}  # quiet pip to avoid pip info when run by mypy
             )
             stream_docker_container_output(container_obj.logs(stream=True))
             # wait for container to finish

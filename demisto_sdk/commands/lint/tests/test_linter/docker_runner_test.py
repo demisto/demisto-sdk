@@ -55,10 +55,10 @@ class BaseLintTest:
         mocker.patch.object(linter_obj, '_docker_client')
         linter_obj._docker_client.containers.run().wait.return_value = {"StatusCode": exp_container_exit_code}
         linter_obj._docker_client.containers.run().logs.return_value = exp_container_log.encode('utf-8')
-        act_container_exit_code, act_container_log = linter_obj._run_tests_in_docker(test_name=self.get_lint_name(),
-                                                                                     test_image='test-image',
-                                                                                     test_command='test-command',
-                                                                                     keep_container=False)
+        act_container_exit_code, act_container_log = linter_obj._run_linters_in_docker(test_name=self.get_lint_name(),
+                                                                                       test_image='test-image',
+                                                                                       test_command='test-command',
+                                                                                       keep_container=False)
 
         assert exp_container_exit_code == act_container_exit_code
         assert exp_container_log == act_container_log
@@ -76,10 +76,10 @@ class BaseLintTest:
         mocker.patch.object(linter_obj, '_docker_client')
         linter_obj._docker_client.containers.run().wait.return_value = {"StatusCode": exp_container_exit_code}
         linter_obj._docker_client.containers.run().logs.return_value = exp_container_log.encode('utf-8')
-        act_exit_code, act_output = linter_obj._run_tests_in_docker(test_name=self.get_lint_name(),
-                                                                    test_image='test-image',
-                                                                    test_command='test-command',
-                                                                    keep_container=False)
+        act_exit_code, act_output = linter_obj._run_linters_in_docker(test_name=self.get_lint_name(),
+                                                                      test_image='test-image',
+                                                                      test_command='test-command',
+                                                                      keep_container=False)
 
         assert act_exit_code == exp_exit_code
         assert act_output == exp_output
@@ -115,10 +115,10 @@ class TestMypy(BaseLintTest):
         mocker.patch.object(linter_obj, '_docker_client')
         linter_obj._facts["env_vars"] = env_vars
         linter_obj._docker_client.containers.run().wait.return_value = {"StatusCode": 0}
-        linter_obj._run_tests_in_docker(test_name=self.get_lint_name(),
-                                        test_image='test-image',
-                                        test_command='test-command',
-                                        keep_container=False)
+        linter_obj._run_linters_in_docker(test_name=self.get_lint_name(),
+                                          test_image='test-image',
+                                          test_command='test-command',
+                                          keep_container=False)
         linter_obj._docker_client.containers.run.call_args[1]['environment'] == env_vars
 
     def test_command_passed_to_docker(self, mocker, linter_obj, lint_files):
@@ -178,7 +178,7 @@ class TestMypy(BaseLintTest):
             "pack_type": TYPE_PYTHON,
         })
         mocker.patch.object(linter_obj, '_docker_client')
-        mocker.patch.object(linter_obj, '_run_tests_in_docker')
+        mocker.patch.object(linter_obj, '_run_linters_in_docker')
         mocker.patch.object(linter_obj, '_docker_image_create', return_value=("test-image", ""))
 
         # run
@@ -186,7 +186,7 @@ class TestMypy(BaseLintTest):
                                              no_pwsh_analyze=True, no_pwsh_test=True, test_xml="",
                                              keep_container=False, no_coverage=True)
 
-        linter_obj._run_tests_in_docker.assert_not_called()
+        linter_obj._run_linters_in_docker.assert_not_called()
 
     def test_python3_files_not_run_in_local_os(self, mocker, linter_obj, lint_files):
         """
@@ -272,7 +272,7 @@ class TestRunLintInContainer:
         })
         mocker.patch.object(linter_obj, '_docker_image_create', return_value=("test-image", ""))
         mocker.patch.object(linter_obj, '_docker_run_pytest', return_value=(0b0, '', {}))
-        mocker.patch.object(linter_obj, '_run_tests_in_docker', return_value=(0b0, ''))
+        mocker.patch.object(linter_obj, '_run_linters_in_docker', return_value=(0b0, ''))
         mocker.patch.object(linter_obj, '_docker_run_pwsh_analyze', return_value=(0b0, {}))
         mocker.patch.object(linter_obj, '_docker_run_pwsh_test', return_value=(0b0, ''))
 
@@ -288,7 +288,7 @@ class TestRunLintInContainer:
         if not no_test and pack_type == TYPE_PYTHON:
             linter_obj._docker_run_pytest.assert_called_once()
         elif (not no_pylint or not no_mypy) and pack_type == TYPE_PYTHON:
-            linter_obj._run_tests_in_docker.assert_called_once()
+            linter_obj._run_linters_in_docker.assert_called_once()
         elif not no_pwsh_analyze and pack_type == TYPE_PWSH:
             linter_obj._docker_run_pwsh_analyze.assert_called_once()
         elif not no_pwsh_test and pack_type == TYPE_PWSH:

@@ -1175,7 +1175,7 @@ def merge_id_sets(first_id_set_dict: dict, second_id_set_dict: dict, print_logs:
 
 
 def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_create=None,  # noqa : C901
-                     objects_to_create: list = None, print_logs: bool = True):
+                     objects_to_create: list = None, print_logs: bool = True, fail_on_duplicates: bool = False):
     """Re create the id set
 
     Args:
@@ -1183,6 +1183,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
             Defaults to DEFAULT_ID_SET_PATH.
         pack_to_create: The input path. the default is the content repo.
         objects_to_create (list, optional): [description]. Defaults to None.
+        fail_on_duplicates: If value is True an error will be raised if duplicates are found
 
     Returns: id set object
     """
@@ -1454,10 +1455,8 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     exec_time = time.time() - start_time
     print_color("Finished the creation of the id_set. Total time: {} seconds".format(exec_time), LOG_COLORS.GREEN)
     duplicates = find_duplicates(new_ids_dict, print_logs)
-    if any(duplicates) and print_logs:
-        print_error(
-            f'The following ids were found duplicates\n{json.dumps(duplicates, indent=4)}\n'
-        )
+    if any(duplicates) and fail_on_duplicates:
+        raise Exception(f'The following ids were found duplicates\n{json.dumps(duplicates, indent=4)}\n')
 
     return new_ids_dict
 
@@ -1518,10 +1517,6 @@ def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=
         dict1_to_version = LooseVersion(dict1.get('toversion', '99.99.99'))
         dict2_to_version = LooseVersion(dict2.get('toversion', '99.99.99'))
 
-        if print_logs and dict1.get('name') != dict2.get('name'):
-            print_warning('The following {} have the same ID ({}) but different names: '
-                          '"{}", "{}".'.format(object_type, id_to_check, dict1.get('name'), dict2.get('name')))
-
         # Checks if the Layouts kind is different then they are not duplicates
         if object_type == 'Layouts':
             if dict1.get('kind', '') != dict2.get('kind', ''):
@@ -1542,7 +1537,14 @@ def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=
             dict2_from_version <= dict1_from_version < dict2_to_version,  # will catch (C, B), (B, A), (C, A)
             dict2_from_version < dict1_to_version <= dict2_to_version,  # will catch (C, B), (C, A)
         ]):
+            print_warning('The following {} have the same ID ({}) and their versions overlap: '
+                          '"1.{}-{}", "2.{}-{}".'.format(object_type, id_to_check, dict1_from_version, dict1_to_version,
+                                                         dict2_from_version, dict2_to_version))
             return True
+
+        if print_logs and dict1.get('name') != dict2.get('name'):
+            print_warning('The following {} have the same ID ({}) but different names: '
+                          '"{}", "{}".'.format(object_type, id_to_check, dict1.get('name'), dict2.get('name')))
 
     return False
 

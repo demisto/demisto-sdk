@@ -482,6 +482,8 @@ def coverage_report_editor(coverage_file, code_file_absolute_path):
             cursor.execute('UPDATE file SET path = ? WHERE id = ?', (code_file_absolute_path, 1))
             sql_connection.commit()
         cursor.close()
+    if not index == 1:
+        os.remove(coverage_file)
 
 
 def coverage_files():
@@ -514,8 +516,10 @@ def generate_coverage_report(html=False, xml=False, report=True, cov_dir='covera
         try:
             cov.report(file=report_data)
         except coverage.misc.CoverageException as warning:
-            logger.warning(str(warning))
-            return
+            if isinstance(warning.args, tuple) and warning.args and warning.args[0] == 'No data to report.':
+                logger.info(f'No coverage data in file {cov_file}')
+                return
+            raise warning
         report_data.seek(0)
         logger.info(report_data.read())
 

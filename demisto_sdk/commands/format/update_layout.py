@@ -44,11 +44,11 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
 
     def format_file(self) -> Tuple[int, int]:
         """Manager function for the Layout JSON updater."""
-        format = self.run_format()
-        if format:
-            return format, SKIP_RETURN_CODE
+        format_res = self.run_format()
+        if format_res:
+            return format_res, SKIP_RETURN_CODE
         else:
-            return format, self.initiate_file_validator(LayoutValidator)
+            return format_res, self.initiate_file_validator(LayoutValidator)
 
     def run_format(self) -> int:
         try:
@@ -99,12 +99,12 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
 
             self.output_file = new_output_path
 
-    def layoutscontainer__run_format(self):
+    def layoutscontainer__run_format(self) -> None:
         """fromVersion 6.0.0 layout (container) format"""
         self.set_fromVersion(from_version=VERSION_6_0_0)
         self.set_group_field()
         self.layoutscontainer__set_output_path()
-        self.update_id()
+        self.update_id(field='name')
 
     def layoutscontainer__set_output_path(self):
         output_basename = os.path.basename(self.output_file)

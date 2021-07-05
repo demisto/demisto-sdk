@@ -1,5 +1,10 @@
 # Changelog
 * Fixed an issue where if a pack README.md did not exist it could cause an error in the validation process.
+* Fixed an issue where the *--name* was incorrectly required in the **init** command.
+* Adding the option to run **validate** on a specific path while using git (*-i* & *-g*).
+* The **format** command will now change UUIDs in .yml and .json files to their respective content entity name.
+* Added a playbook validation to check if a task sub playbook exists in the id set in the **validate** command.
+* Added the option to add new tags/usecases to the approved list and to the pack metadata on the same pull request.
 * Refactor **update-release-notes** command - new class manager.
 * Added a  *--force* flag to the **update-release-notes** command, so the update can take place even without a change in the pack.
 * In **update-release-notes** command changed the *--all* flag to *-g* and *--use-git* flag.

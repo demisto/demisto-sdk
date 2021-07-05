@@ -118,9 +118,9 @@ class Initiator:
         self.template = self.get_selected_template(template)
 
         self.full_output_path = ''
-
-        while ' ' in name:
-            name = str(input("The directory and file name cannot have spaces in it, Enter a different name: "))
+        if name:
+            while ' ' in name:
+                name = str(input("The directory and file name cannot have spaces in it, Enter a different name: "))
 
         self.dir_name = name
 

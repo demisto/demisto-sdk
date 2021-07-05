@@ -49,8 +49,8 @@ class DashboardJSONFormat(BaseUpdateJSON):
 
     def format_file(self) -> Tuple[int, int]:
         """Manager function for the Dashboard JSON updater."""
-        format = self.run_format()
-        if format:
-            return format, SKIP_RETURN_CODE
+        format_res = self.run_format()
+        if format_res:
+            return format_res, SKIP_RETURN_CODE
         else:
-            return format, self.initiate_file_validator(DashboardValidator)
+            return format_res, self.initiate_file_validator(DashboardValidator)

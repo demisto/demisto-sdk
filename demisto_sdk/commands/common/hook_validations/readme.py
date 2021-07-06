@@ -255,7 +255,13 @@ class ReadMeValidator(BaseValidator):
                         relative_path = img[1].strip()
                     except IndexError:
                         continue
+                    if 'insert URL to your image' in relative_path:
+                        # some old README files with HTML img tags contain this line but there are in a comment and
+                        # can be skipped
+                        continue
                     if 'Insert the link to your image here' in relative_path:
+                        # the line is generated automatically in playbooks readme, the user should replace it with
+                        # an image or remove the line.
                         error_message, error_code = Errors.invalid_readme_image_error(prefix + f'({relative_path})',
                                                                                       error_type='insert_image_link_error')
                     else:

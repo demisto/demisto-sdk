@@ -261,7 +261,8 @@ class IncidentFieldValidator(ContentEntityValidator):
         is_valid_flag = self.current_file.get("content") is content_value
         if not is_valid_flag:
             error_message, error_code = Errors.invalid_incident_field_content_key_value(content_value)
-            if not self.handle_error(error_message, error_code, file_path=self.file_path):
+            if not self.handle_error(error_message, error_code, file_path=self.file_path,
+                                     suggested_fix=Errors.suggest_fix(self.file_path)):
                 is_valid_flag = True
 
         return is_valid_flag
@@ -271,7 +272,8 @@ class IncidentFieldValidator(ContentEntityValidator):
         is_valid_flag = self.current_file.get("system", False) is system_value
         if not is_valid_flag:
             error_message, error_code = Errors.invalid_incident_field_system_key_value(system_value)
-            if not self.handle_error(error_message, error_code, file_path=self.file_path):
+            if not self.handle_error(error_message, error_code, file_path=self.file_path,
+                                     suggested_fix=Errors.suggest_fix(self.file_path)):
                 is_valid_flag = True
 
         return is_valid_flag

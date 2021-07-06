@@ -247,43 +247,35 @@ class ReadMeValidator(BaseValidator):
         relative_images += re.findall(  # HTML image tag
             r'(src\s*=\s*\"((?!http).*?)\")', self.readme_content,
             re.IGNORECASE)
-        if relative_images:
-            if is_pack_readme:  # check whether the README type is pack README which do not support relative paths.
-                for img in relative_images:
-                    try:
-                        prefix = '' if 'src' in img[0] else img[0].strip()  # striping in case there are whitespaces at the beginning/ending of url.
-                        relative_path = img[1].strip()
-                    except IndexError:
-                        continue
-                    if 'insert URL to your image' in relative_path:
-                        # some old README files with HTML img tags contain this line but there are in a comment and
-                        # can be skipped
-                        continue
-                    if 'Insert the link to your image here' in relative_path:
-                        # the line is generated automatically in playbooks readme, the user should replace it with
-                        # an image or remove the line.
-                        error_message, error_code = Errors.invalid_readme_image_error(prefix + f'({relative_path})',
-                                                                                      error_type='insert_image_link_error')
-                    else:
-                        error_message, error_code = Errors.invalid_readme_image_error(prefix + f'({relative_path})',
-                                                                                      error_type='pack_readme_relative_error')
-                    formatted_error = self.handle_error(error_message, error_code, file_path=self.file_path,
-                                                        should_print=should_print_error)
-                    error_list.append(formatted_error)
 
-            else:  # not pack readme relative paths are allowed but have to be valid.
-                for img in relative_images:
-                    try:
-                        prefix = '' if 'src' in img[0] else img[0].strip()
-                        relative_path = img[1].strip()
-                    except IndexError:
-                        continue
-                    if relative_path:
-                        if not os.path.exists(f'{str(self.pack_path)}/{relative_path}'):
-                            error_message, error_code = Errors.invalid_readme_image_error(prefix + f'({relative_path})',
-                                                                                          error_type='general_readme_relative_error')
-                            formatted_error = self.handle_error(error_message, error_code, file_path=self.file_path)
-                            error_list.append(formatted_error)
+        if relative_images:
+            for img in relative_images:
+                try:
+                    # striping in case there are whitespaces at the beginning/ending of url.
+                    prefix = '' if 'src' in img[0] else img[0].strip()
+                    relative_path = img[1].strip()
+                except IndexError:
+                    continue
+                if 'insert URL to your image' in relative_path:
+                    # some old README files with HTML img tags contain this line but there are in a comment and
+                    # can be skipped
+                    continue
+                if 'Insert the link to your image here' in relative_path:
+                    # the line is generated automatically in playbooks readme, the user should replace it with
+                    # an image or remove the line.
+                    error_message, error_code = Errors.invalid_readme_image_error(prefix + f'({relative_path})',
+                                                                                  error_type='insert_image_link_error')
+                elif is_pack_readme:
+                    error_message, error_code = Errors.invalid_readme_image_error(prefix + f'({relative_path})',
+                                                                                  error_type='pack_readme_relative_error')
+                else:
+                    if not os.path.exists(f'{str(self.pack_path)}/{relative_path}'):
+                        error_message, error_code = Errors.invalid_readme_image_error(prefix + f'({relative_path})',
+                                                                                      error_type='general_readme_relative_error')
+                formatted_error = self.handle_error(error_message, error_code, file_path=self.file_path,
+                                                    should_print=should_print_error)
+                error_list.append(formatted_error)
+
         return error_list
 
     def check_readme_absolute_image_paths(self, is_pack_readme: bool = False) -> list:

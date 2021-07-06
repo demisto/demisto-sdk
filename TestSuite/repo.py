@@ -184,12 +184,12 @@ class Repo:
         object_field = pack.create_object_field(f'{name}_object-field')
         object_field.write_json({'id': f'object_{name} - object_field'})
         object_field.update({'name': f'object_{name} - object_field'})
-        object_type.update({'definitionId': 'definitionId'})
+        object_field.update({'definitionId': 'definitionId'})
 
         object_module = pack.create_object_module(f'{name}_object-module')
         object_module.write_json({'id': f'object_{name} - object_module'})
-        object_field.update({'name': f'object_{name} - object_module'})
-        object_type.update({'definitions': [{'id': 'definitionId'}]})
+        object_module.update({'name': f'object_{name} - object_module'})
+        object_module.update({'definitions': [{'id': 'definitionId'}]})
 
         return pack
 

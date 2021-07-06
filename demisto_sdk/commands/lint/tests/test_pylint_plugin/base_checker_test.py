@@ -270,6 +270,65 @@ class TestQuithecker(pylint.testutils.CheckerTestCase):
             self.checker.visit_call(node_c)
 
 
+class TestTemplateNamesChecker(pylint.testutils.CheckerTestCase):
+    """
+    Class which tests the functionality of template name checker .
+    """
+    CHECKER_CLASS = base_checker.CustomBaseChecker
+
+    def test_template_exists(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - template name exists in the code
+            - template name exists in the code.
+        Then:
+            - Ensure that the correct message id is being added to the message errors of pylint for each appearance
+        """
+        _, node_a, node_b, _ = astroid.extract_node("""
+            def test_function(): #@
+                a=9
+                return_error(f'Failed to execute BaseScript. Error: {str(ex)}') #@
+                return_error(f'Failed to execute HelloWorldScript. Error: {str(ex)}') #@
+                return True #@
+        """)
+        assert node_b is not None and node_a is not None
+        with self.assertAddsMessages(
+                pylint.testutils.Message(
+                    msg_id='template-exists',
+                    node=node_a,
+                ),
+                pylint.testutils.Message(
+                    msg_id='template-exists',
+                    node=node_b,
+                ),
+        ):
+            self.checker.visit_call(node_a)
+            self.checker.visit_call(node_b)
+
+    def test_no_template_name(self):
+        """
+        Given:
+            - String of a code part which is being examined by pylint plugin.
+        When:
+            - script template name does not exists in the code .
+        Then:
+            - Ensure that there is no errors, Check that there is no error message.
+        """
+        _, node_a, node_b, _ = astroid.extract_node("""
+            def test_function(): #@
+                a=9
+                return_error(f'Failed to execute My_script. Error: {str(ex)}') #@
+                return_error(f'Failed to execute Good_script_name. Error: {str(ex)}') #@
+                return True #@
+        """)
+        assert node_a is not None and node_b is not None
+        with self.assertNoMessages():
+            self.checker.visit_call(node_a)
+            self.checker.visit_call(node_b)
+
+
 class TestImportCommonServerPythonChecker(pylint.testutils.CheckerTestCase):
     """
     Class which tests the functionality of commonServerPython import checker .

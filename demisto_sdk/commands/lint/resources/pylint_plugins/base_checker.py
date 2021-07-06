@@ -22,6 +22,10 @@ import astroid
 from pylint.checkers import BaseChecker
 from pylint.interfaces import IAstroidChecker
 
+
+TEST_MODULE = "test-module"
+SCRIPT_TEMPLATE_NAMES = ['BaseScript', 'HelloWorldScript']
+
 # -------------------------------------------- Messages for all linters ------------------------------------------------
 
 base_msg = {
@@ -39,6 +43,8 @@ base_msg = {
     "E9007": ("Invalid usage of indicators key in CommandResults was found, Please use indicator key instead.",
               "commandresults-indicators-exists",
               "Invalid usage of indicators key in CommandResults was found, Please use indicator key instead."),
+    "E9008": (f"Template name is found, Please remove all template names from the code, e.g {SCRIPT_TEMPLATE_NAMES}",
+              "template-exists", "Please remove all template names from the code.",),
     "E9010": ("Some commands from yml file are not implemented in the python file, Please make sure that every "
               "command is implemented in your code. The commands that are not implemented are %s",
               "unimplemented-commands-exist",
@@ -52,8 +58,6 @@ base_msg = {
               " integration. Please add it to your code. For more information see: "
               "https://xsoar.pan.dev/docs/integrations/code-conventions#test-module")
 }
-
-TEST_MODULE = "test-module"
 
 
 class CustomBaseChecker(BaseChecker):
@@ -84,6 +88,7 @@ class CustomBaseChecker(BaseChecker):
         self._quit_checker(node)
         self._exit_checker(node)
         self._commandresults_indicator_check(node)
+        self._script_template_name_exists(node)
 
     def visit_importfrom(self, node):
         self._common_server_import(node)
@@ -215,6 +220,22 @@ class CustomBaseChecker(BaseChecker):
         except Exception:
             pass
 
+    def _script_template_name_exists(self, node):
+        """
+        Args: node which is a Call Node.
+        Check:
+        - if script template name exists in the current node in return_error func.
+
+        Adds the relevant error message using `add_message` function if one of the above exists.
+        """
+        try:
+            if node.func.name == 'return_error':
+                for template_name in SCRIPT_TEMPLATE_NAMES:
+                    if template_name in node.args[0].values[0].value:
+                        self.add_message("template-exists", node=node)
+
+        except Exception:
+            pass
     # -------------------------------------------- Import From Node ---------------------------------------------
 
     def _common_server_import(self, node):

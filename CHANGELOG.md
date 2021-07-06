@@ -8,6 +8,7 @@
 * Added the option to add new tags/usecases to the approved list and to the pack metadata on the same pull request.
 * Fixed an issue in **test_content** where when different servers ran tests for the same integration, the server URL parameters were not set correctly.
 * Added a validation in the **validate** command to ensure that the ***endpoint*** command is configured correctly in yml file.
+* Added new code validations to check if script template names exist in the code in `XSOAR-linter`.
 
 # 1.4.2
 * Added to `pylint` summary an indication if a test was skipped.

@@ -79,7 +79,10 @@ def format_manager(input: str = None,
                    update_docker: bool = False,
                    assume_yes: bool = False,
                    deprecate: bool = False,
-                   use_git: bool = False):
+                   use_git: bool = False,
+                   prev_ver: str = 'demisto/master',
+                   include_untracked: bool=False
+                   ):
     """
     Format_manager is a function that activated format command on different type of files.
     Args:
@@ -90,7 +93,10 @@ def format_manager(input: str = None,
         verbose (bool): Whether to print verbose logs or not
         update_docker (flag): Whether to update the docker image.
         assume_yes (bool): Whether to assume "yes" as answer to all prompts and run non-interactively
+        deprecate (bool): Whether to deprecate the entity
         use_git (bool): Use git to automatically recognize which files changed and run format on them
+        prev_ver (str): Against which branch should the difference be recognized
+        include_untracked (bool): Whether to include untracked files when checking against git
     Returns:
         int 0 in case of success 1 otherwise
     """
@@ -101,7 +107,7 @@ def format_manager(input: str = None,
         files = get_files_in_dir(input, supported_file_types)
 
     elif use_git:
-        files = get_files_to_format(supported_file_types)
+        files = get_files_to_format_from_git(supported_file_types, prev_ver, include_untracked)
 
     if output and not output.endswith(('yml', 'json', 'py')):
         raise Exception("The given output path is not a specific file path.\n"
@@ -161,9 +167,12 @@ def format_manager(input: str = None,
         return 1
     return 0
 
-def get_files_to_format(supported_file_types) -> List[str]:
+
+def get_files_to_format_from_git(supported_file_types, prev_ver, include_untracked) -> List[str]:
+    """Get the files to format from git.
+    """
     git_util = GitUtil()
-    all_changed_files = git_util.get_all_changed_files()
+    all_changed_files = git_util.get_all_changed_files(prev_ver=prev_ver, include_untracked=include_untracked)
 
     filtered_files = []
     for file_path in all_changed_files:

@@ -92,6 +92,7 @@ ERROR_CODE = {
     "incident_in_command_name_or_args": {'code': "IN139", "ui_applicable": False,
                                          'related_field': 'script.commands.name'},
     "integration_is_skipped": {'code': "IN140", 'ui_applicable': False, 'related_field': ''},
+    "reputation_missing_argument": {'code': "IN141", 'ui_applicable': True, 'related_field': '<argument-name>.default'},
     "invalid_version_script_name": {'code': "SC100", 'ui_applicable': True, 'related_field': 'name'},
     "invalid_deprecated_script": {'code': "SC101", 'ui_applicable': False, 'related_field': 'comment'},
     "invalid_command_name_in_script": {'code': "SC102", 'ui_applicable': False, 'related_field': ''},
@@ -412,6 +413,13 @@ class Errors:
     def wrong_category(category):
         return "The category '{}' is not in the integration schemas, the valid options are:\n{}" \
             .format(category, '\n'.join(INTEGRATION_CATEGORIES))
+
+    @staticmethod
+    @error_code_decorator
+    def reputation_missing_argument(arg_name, command_name, all=False):
+        missing_msg = "These" if all else 'At least one of these'
+        return "{} arguments '{}' are required in the command '{}' and are not configured in yml." \
+            .format(missing_msg, arg_name, command_name)
 
     @staticmethod
     @error_code_decorator

@@ -1,11 +1,9 @@
 import json
 import logging
 import os
-import shutil
 import sys
 import tempfile
 import unittest
-from tempfile import mkdtemp
 
 import pytest
 from demisto_sdk.commands.common.constants import FileType
@@ -20,140 +18,9 @@ from demisto_sdk.commands.common.update_id_set import (
     get_widget_data, has_duplicate, merge_id_sets, process_general_items,
     process_incident_fields, process_integration, process_script,
     re_create_id_set)
-from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from TestSuite.utils import IsEqualFunctions
 
 TESTS_DIR = f'{git_path()}/demisto_sdk/tests'
-
-
-class TestIDSetCreator:
-    def setup(self):
-        self.id_set_full_path = os.path.join(TESTS_DIR, 'test_files', 'content_repo_example', 'id_set.json')
-        self._test_dir = mkdtemp()
-        self.file_path = os.path.join(self._test_dir, 'id_set.json')
-
-    def teardown(self):
-        # delete the id set file
-        try:
-            if os.path.isfile(self.file_path) or os.path.islink(self.file_path):
-                os.unlink(self.file_path)
-            elif os.path.isdir(self.file_path):
-                shutil.rmtree(self.file_path)
-        except Exception as err:
-            print(f'Failed to delete {self.file_path}. Reason: {err}')
-
-    def test_create_id_set_output(self):
-        id_set_creator = IDSetCreator(self.file_path)
-
-        id_set_creator.create_id_set()
-        assert os.path.exists(self.file_path)
-
-    def test_create_id_set_on_specific_pack_output(self):
-        """
-        Given
-        - input - specific pack to create from it ID set
-        - output - path to return the created ID set
-
-        When
-        - create ID set on this pack
-
-        Then
-        - ensure that the created ID set is in the path of the output
-
-        """
-        id_set_creator = IDSetCreator(self.file_path, input='Packs/AMP')
-
-        id_set_creator.create_id_set()
-        assert os.path.exists(self.file_path)
-
-    def test_create_id_set_no_output(self, mocker):
-        import demisto_sdk.commands.common.update_id_set as uis
-        mocker.patch.object(uis, 'cpu_count', return_value=1)
-        id_set_creator = IDSetCreator(output=None)
-
-        id_set = id_set_creator.create_id_set()
-        assert not os.path.exists(self.file_path)
-        assert id_set is not None
-        assert 'scripts' in id_set.keys()
-        assert 'integrations' in id_set.keys()
-        assert 'playbooks' in id_set.keys()
-        assert 'TestPlaybooks' in id_set.keys()
-        assert 'Classifiers' in id_set.keys()
-        assert 'Dashboards' in id_set.keys()
-        assert 'IncidentFields' in id_set.keys()
-        assert 'IncidentTypes' in id_set.keys()
-        assert 'IndicatorFields' in id_set.keys()
-        assert 'IndicatorTypes' in id_set.keys()
-        assert 'Layouts' in id_set.keys()
-        assert 'Reports' in id_set.keys()
-        assert 'Widgets' in id_set.keys()
-        assert 'Mappers' in id_set.keys()
-        assert 'Packs' in id_set.keys()
-
-    def test_create_id_set_on_specific_pack(self, repo):
-        """
-        Given
-        - two packs with integrations to create an ID set from
-
-        When
-        - create ID set on one of the packs
-
-        Then
-        - ensure there is only one integration in the ID set integrations list
-        - ensure output id_set contains only the pack on which created the ID set on
-        - ensure output id_set does not contain the second pack
-
-        """
-        packs = repo.packs
-
-        pack_to_create_id_set_on = repo.create_pack('pack_to_create_id_set_on')
-        pack_to_create_id_set_on.create_integration(yml={'commonfields': {'id': 'id1'}, 'category': '', 'name':
-                                                         'integration to create id set', 'script': {'type': 'python'}},
-                                                    name='integration1')
-        packs.append(pack_to_create_id_set_on)
-
-        pack_to_not_create_id_set_on = repo.create_pack('pack_to_not_create_id_set_on')
-        pack_to_not_create_id_set_on.create_integration(yml={'commonfields': {'id2': 'id'}, 'category': '', 'name':
-                                                             'integration to not create id set'}, name='integration2')
-        packs.append(pack_to_not_create_id_set_on)
-
-        id_set_creator = IDSetCreator(self.file_path, pack_to_create_id_set_on.path)
-
-        id_set_creator.create_id_set()
-
-        with open(self.file_path, 'r') as id_set_file:
-            private_id_set = json.load(id_set_file)
-
-        assert len(private_id_set['integrations']) == 1
-        assert private_id_set['integrations'][0].get('id1', {}).get('name', '') == 'integration to create id set'
-        assert private_id_set['integrations'][0].get('id2', {}).get('name', '') == ''
-
-    def test_create_id_set_on_specific_empty_pack(self, repo):
-        """
-        Given
-        - an empty pack to create from it ID set
-
-        When
-        - create ID set on this pack
-
-        Then
-        - ensure that an ID set is created and no error is returned
-        - ensure output id_set is empty
-
-        """
-        pack = repo.create_pack()
-
-        id_set_creator = IDSetCreator(self.file_path, pack.path)
-
-        id_set_creator.create_id_set()
-
-        with open(self.file_path, 'r') as id_set_file:
-            private_id_set = json.load(id_set_file)
-        for content_entity, content_entity_value_list in private_id_set.items():
-            if content_entity != 'Packs':
-                assert len(content_entity_value_list) == 0
-            else:
-                assert len(content_entity_value_list) == 1
 
 
 class TestPacksMetadata:
@@ -1993,11 +1860,11 @@ class TestFlow(unittest.TestCase):
                                      'IndicatorFields', 'IncidentFields'])
         with open(json_path) as json_file:
             data = json.load(json_file)
-            dup_data = find_duplicates(data)
+            dup_data = find_duplicates(data, False)
             assert any('temp-widget-dup-check' in i for i in dup_data)
             assert any('temp-report-dup-check' in i for i in dup_data)
             assert any('temp-widget-dup-check' in i for i in dup_data)
-            assert any('dup-check-dashbaord' in i for i in dup_data)
+            assert any('dup-check-dashboard' in i for i in dup_data)
             assert any('layout-dup-check-id' in i for i in dup_data)
             assert any('incident_account_field_dup_check' in i for i in dup_data)
 

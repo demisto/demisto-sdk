@@ -74,7 +74,7 @@ def test_init():
     - Ensure init returns valid file path and release notes contents.
     """
     filepath = os.path.join(FILES_PATH, 'ReleaseNotes', '1_1_1.md')
-    release_notes_validator = ReleaseNotesValidator(filepath)
+    release_notes_validator = ReleaseNotesValidator(filepath, pack_name='test')
     release_notes_validator.release_notes_file_path = 'demisto_sdk/tests/test_files/ReleaseNotes/1_1_1.md'
     assert release_notes_validator.release_notes_path == filepath
     assert release_notes_validator.latest_release_notes == '### Test'

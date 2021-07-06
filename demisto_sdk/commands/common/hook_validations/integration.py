@@ -3,17 +3,12 @@ import re
 from typing import Dict, Optional
 
 import yaml
-from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
-                                                   DBOT_SCORES_DICT,
-                                                   DEPRECATED_REGEXES,
-                                                   FEED_REQUIRED_PARAMS,
-                                                   FETCH_REQUIRED_PARAMS,
-                                                   FIRST_FETCH,
-                                                   FIRST_FETCH_PARAM,
-                                                   INTEGRATION_CATEGORIES,
-                                                   IOC_OUTPUTS_DICT, MAX_FETCH,
-                                                   MAX_FETCH_PARAM,
-                                                   PYTHON_SUBTYPES, TYPE_PWSH)
+from demisto_sdk.commands.common.constants import (
+    BANG_COMMAND_ARGS_MAPPING_DICT, BANG_COMMAND_NAMES, DBOT_SCORES_DICT,
+    DEPRECATED_REGEXES, ENDPOINT_COMMAND_NAME, ENDPOINT_FLEXIBLE_REQUIRED_ARGS,
+    FEED_REQUIRED_PARAMS, FETCH_REQUIRED_PARAMS, FIRST_FETCH,
+    FIRST_FETCH_PARAM, INTEGRATION_CATEGORIES, IOC_OUTPUTS_DICT, MAX_FETCH,
+    MAX_FETCH_PARAM, PYTHON_SUBTYPES, TYPE_PWSH, XSOAR_CONTEXT_STANDARD_URL)
 from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
                                                 Errors)
@@ -113,7 +108,8 @@ class IntegrationValidator(ContentEntityValidator):
             self.has_no_duplicate_params(),
             self.has_no_duplicate_args(),
             self.is_there_separators_in_names(),
-            self.name_not_contain_the_type()
+            self.name_not_contain_the_type(),
+            self.is_valid_endpoint_command(),
 
         ]
 
@@ -312,7 +308,7 @@ class IntegrationValidator(ContentEntityValidator):
     def is_valid_default_argument_in_reputation_command(self):
         # type: () -> bool
         """Check if a reputation command (domain/email/file/ip/url/cve)
-            has a default non required argument with the same name
+            has a default non required argument.
 
         Returns:
             bool. Whether a reputation command hold a valid argument
@@ -322,12 +318,13 @@ class IntegrationValidator(ContentEntityValidator):
             commands = []
         flag = True
         for command in commands:
-            command_name = command.get('name')
+            command_name = command.get('name', '')
             if command_name in BANG_COMMAND_NAMES:
+                command_mapping = BANG_COMMAND_ARGS_MAPPING_DICT[command_name]
                 flag_found_arg = False
                 for arg in command.get('arguments', []):
                     arg_name = arg.get('name')
-                    if arg_name == command_name or (command_name == 'cve' and arg_name == 'cve_id'):
+                    if arg_name in command_mapping['default']:
                         flag_found_arg = True
                         if arg.get('default') is False:
                             error_message, error_code = Errors.wrong_default_argument(arg_name,
@@ -336,7 +333,8 @@ class IntegrationValidator(ContentEntityValidator):
                                 self.is_valid = False
                                 flag = False
 
-                if not flag_found_arg:
+                flag_found_required = command_mapping.get('required', True)
+                if not flag_found_arg and flag_found_required:
                     error_message, error_code = Errors.no_default_arg(command_name)
                     if self.handle_error(error_message, error_code, file_path=self.file_path):
                         flag = False
@@ -378,7 +376,7 @@ class IntegrationValidator(ContentEntityValidator):
         Returns:
             bool. Whether a reputation command holds valid outputs
         """
-        context_standard = "https://xsoar.pan.dev/docs/integrations/context-standards"
+        context_standard = XSOAR_CONTEXT_STANDARD_URL
         commands = self.current_file.get('script', {}).get('commands', [])
         output_for_reputation_valid = True
         for command in commands:
@@ -1259,3 +1257,71 @@ class IntegrationValidator(ContentEntityValidator):
                 return False
 
         return True
+
+    def is_valid_endpoint_command(self):
+        """
+        Check if the endpoint command in yml is valid by standard.
+        This command is separated than other reputation command as the inputs are different standard.
+
+        Returns:
+            true if the inputs and outputs are valid.
+        """
+        commands = self.current_file.get('script', {}).get('commands', [])
+
+        if 'endpoint' not in [x.get('name') for x in commands]:
+            return True
+
+        # extracting the specific command from commands.
+        endpoint_command = [arg for arg in commands if arg.get('name') == 'endpoint'][0]
+        return self._is_valid_endpoint_inputs(endpoint_command, required_arguments=ENDPOINT_FLEXIBLE_REQUIRED_ARGS) \
+            and self._is_valid_endpoint_outputs(endpoint_command)
+
+    def _is_valid_endpoint_inputs(self, command_data, required_arguments):
+        """
+        Check if the input for endpoint commands includes at least one required_arguments,
+        and that only ip is the default argument.
+        Returns:
+            true if the inputs are valid.
+        """
+        endpoint_command_inputs = command_data.get('arguments', [])
+        existing_arguments = {arg['name'] for arg in endpoint_command_inputs}
+
+        # checking at least one of the required argument is found as argument
+        if not set(required_arguments).intersection(existing_arguments):
+            error_message, error_code = Errors.reputation_missing_argument(list(required_arguments),
+                                                                           command_data.get('name'),
+                                                                           all=False)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                return False
+
+        # checking no other arguments are default argument:
+        default_args_found = [(arg.get('name'), arg.get('default', False)) for arg in endpoint_command_inputs]
+        command_default_arg_map = BANG_COMMAND_ARGS_MAPPING_DICT[ENDPOINT_COMMAND_NAME]
+        default_arg_name = command_default_arg_map['default']
+        other_default_args_found = list(filter(
+            lambda x: x[1] is True and x[0] not in default_arg_name, default_args_found))
+        if other_default_args_found:
+            error_message, error_code = Errors.wrong_default_argument(default_arg_name, ENDPOINT_COMMAND_NAME)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                return False
+        return True
+
+    def _is_valid_endpoint_outputs(self, command_data):
+        context_standard = XSOAR_CONTEXT_STANDARD_URL
+        output_for_reputation_valid = True
+        context_outputs_paths = set()
+        for output in command_data.get('outputs', []):
+            context_outputs_paths.add(output.get('contextPath'))
+
+        # validate the reputation command outputs
+        reputation_output = IOC_OUTPUTS_DICT.get(ENDPOINT_COMMAND_NAME)
+        if reputation_output and (reputation_output - context_outputs_paths):
+            error_message, error_code = Errors.missing_reputation(ENDPOINT_COMMAND_NAME, reputation_output,
+                                                                  context_standard)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                output_for_reputation_valid = False
+
+        return output_for_reputation_valid

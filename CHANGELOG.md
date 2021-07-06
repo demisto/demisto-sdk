@@ -9,6 +9,7 @@
 * Fixed an issue in **test_content** where when different servers ran tests for the same integration, the server URL parameters were not set correctly.
 * Added a validation in the **validate** command to ensure that the ***endpoint*** command is configured correctly in yml file.
 * Added a warning when pack_metadata's description field is longer than 130 characters.
+* Fixed an issue where a redundant print occurred on release notes validation.
 * Fixed an issue where the **format** command has incorrectly recognized on which files to run when running using git.
 
 # 1.4.2

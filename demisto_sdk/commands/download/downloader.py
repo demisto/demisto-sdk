@@ -311,10 +311,6 @@ class Downloader:
         return main_id, main_name
 
     @staticmethod
-    def _find_type(path, _dict, file_type):
-        return find_type(path, _dict, file_type)
-
-    @staticmethod
     def update_file_prefix(file_name: str) -> str:
         """
         Custom content scripts are prefixed with automation instead of script.
@@ -373,7 +369,7 @@ class Downloader:
         For example: integration-HelloWorld.yml downloaded from Demisto.
         """
         file_data, file_ending = get_dict_from_file(file_path)  # For example: yml, for integration files
-        file_type = self._find_type(path=file_path, _dict=file_data, file_type=file_ending)  # For example: integration
+        file_type = find_type(path=file_path, _dict=file_data, file_type=file_ending)  # For example: integration
         if file_type:
             file_type = file_type.value
 

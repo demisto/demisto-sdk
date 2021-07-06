@@ -245,10 +245,10 @@ class ReadMeValidator(BaseValidator):
         error_code: str = ''
         error_message: str = ''
         should_print_error = not is_pack_readme  # If error was found, print it only if its not pack readme.
-        relative_images = re.findall(r'(\!\[.*?\])\(((?!http).*?)\)', self.readme_content, re.IGNORECASE)
+        relative_images = re.findall(r'(\!\[.*?\])\(((?!http).*?)\)$', self.readme_content, re.IGNORECASE | re.MULTILINE)
         relative_images += re.findall(  # HTML image tag
             r'(src\s*=\s*\"((?!http).*?)\")', self.readme_content,
-            re.IGNORECASE)
+            re.IGNORECASE | re.MULTILINE)
 
         if relative_images:
             for img in relative_images:
@@ -271,7 +271,8 @@ class ReadMeValidator(BaseValidator):
                     error_message, error_code = Errors.invalid_readme_image_error(prefix + f'({relative_path})',
                                                                                   error_type='pack_readme_relative_error')
                 else:
-                    if not os.path.exists(f'{str(self.pack_path)}/{relative_path}'):
+                    # generated absolute path from relative and checked for the file existence.
+                    if not os.path.exists(os.path.join(self.file_path.parent, relative_path)):
                         error_message, error_code = Errors.invalid_readme_image_error(prefix + f'({relative_path})',
                                                                                       error_type='general_readme_relative_error')
                 if error_code and error_message:  # error was found
@@ -294,11 +295,9 @@ class ReadMeValidator(BaseValidator):
         should_print_error = not is_pack_readme  # pack readme errors are handled and printed during the pack unique
         # files validation.
         absolute_links = re.findall(
-            r'(!\[.*\])\((https://.*)\)', self.readme_content,
-            re.IGNORECASE)
+            r'(!\[.*\])\((https://.*)\)$', self.readme_content, re.IGNORECASE | re.MULTILINE)
         absolute_links += re.findall(  # image tag
-            r'(src\s*=\s*"(https://.*?)")', self.readme_content,
-            re.IGNORECASE)
+            r'(src\s*=\s*"(https://.*?)")', self.readme_content, re.IGNORECASE | re.MULTILINE)
         if absolute_links:
             for link in absolute_links:
                 try:

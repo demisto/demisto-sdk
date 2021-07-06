@@ -66,6 +66,9 @@ class Repo:
             'Reports': [],
             'Widgets': [],
             'Mappers': [],
+            'ObjectTypes': [],
+            'ObjectFields': [],
+            'ObjectModules': []
         })
 
     def __del__(self):
@@ -171,6 +174,22 @@ class Repo:
         test_playbook.yml.update({'id': f'{name}_script_test_playbook'})
         test_playbook.yml.update({'name': f'{name}_script_test_playbook'})
         script.yml.update({'tests': [f'{name}_script_test_playbook']})
+
+        object_type = pack.create_object_type(f'{name}_object-type')
+        object_type.write_json({'id': f'{name} - _object_type'})
+        object_type.update({'name': f'{name} - _object_type'})
+        object_type.update({'definitionId': 'definitionId'})
+        object_type.update({'color': 'test'})
+
+        object_field = pack.create_object_field(f'{name}_object-field')
+        object_field.write_json({'id': f'object_{name} - object_field'})
+        object_field.update({'name': f'object_{name} - object_field'})
+        object_type.update({'definitionId': 'definitionId'})
+
+        object_module = pack.create_object_module(f'{name}_object-module')
+        object_module.write_json({'id': f'object_{name} - object_module'})
+        object_field.update({'name': f'object_{name} - object_module'})
+        object_type.update({'definitions': [{'id': 'definitionId'}]})
 
         return pack
 

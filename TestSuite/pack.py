@@ -48,7 +48,9 @@ class Pack:
         self.playbooks: List[Playbook] = list()
         self.test_playbooks: List[Playbook] = list()
         self.release_notes: List[TextBased] = list()
-
+        self.object_types: List[JSONBased] = list()
+        self.object_modules: List[JSONBased] = list()
+        self.object_fields: List[JSONBased] = list()
         # Create base pack
         self._pack_path = packs_dir / name
         self._pack_path.mkdir()
@@ -106,6 +108,15 @@ class Pack:
         self.readme = TextBased(self._pack_path, 'README.md')
 
         self.pack_metadata = JSONBased(self._pack_path, 'pack_metadata', '')
+
+        self._object_types_path = self._pack_path / 'ObjectTypes'
+        self._object_types_path.mkdir()
+
+        self._object_fields_path = self._pack_path / 'ObjectFields'
+        self._object_fields_path.mkdir()
+
+        self._object_module_path = self._pack_path / 'ObjectModules'
+        self._object_module_path.mkdir()
 
     def create_integration(
             self,
@@ -354,3 +365,25 @@ class Pack:
         doc_file_dir = self._pack_path / 'doc_files'
         doc_file_dir.mkdir()
         return File(doc_file_dir / f'{name}.png', self._repo.path)
+
+    def create_object_type(self, name, content: dict = None) -> JSONBased:
+        prefix = 'objecttype'
+        dir_path=self._object_types_path / name
+        dir_path.mkdir()
+        object_type = self._create_json_based(name, prefix, content, dir_path=dir_path)
+        self.object_types.append(object_type)
+        return object_type
+
+    def create_object_field(self, name, content: dict = None) -> JSONBased:
+        prefix = 'objectfield'
+        dir_path = self._object_fields_path / name
+        dir_path.mkdir()
+        object_field = self._create_json_based(name, prefix, content, dir_path=dir_path)
+        self.object_fields.append(object_field)
+        return object_field
+
+    def create_object_module(self, name, content: dict = None) -> JSONBased:
+        prefix = 'objectmodule'
+        object_module = self._create_json_based(name, prefix, content, dir_path=self._object_module_path)
+        self.object_modules.append(object_module)
+        return object_module

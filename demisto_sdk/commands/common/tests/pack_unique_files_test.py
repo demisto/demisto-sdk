@@ -19,6 +19,7 @@ from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from git import GitCommandError
 from TestSuite.test_tools import ChangeCWD
+import click
 
 VALIDATE_CMD = "validate"
 PACK_METADATA_PARTNER = {
@@ -212,7 +213,7 @@ class TestPackUniqueFilesValidator:
 
         assert not self.validator.validate_core_pack_dependencies(dependencies_packs)
         assert Errors.invalid_core_pack_dependencies('fake_pack', ['dependency_pack_1', 'dependency_pack_3'])[0] \
-            in self.validator.get_errors()
+               in self.validator.get_errors()
 
     def test_validate_pack_dependencies_skip_id_set_creation(self, capsys):
         """
@@ -551,24 +552,39 @@ class TestPackUniqueFilesValidator:
             assert 'README.md content is equal to pack description. ' \
                    'Please remove the duplicate description from README.md file' not in self.validator.get_errors()
 
-    @pytest.mark.parametrize('pack_description, is_valid', [
-        ('Hey there, just testing', True),
-        ('This is will fail cause the description here is too long.test test test test test test test test test test'
-         'test test test test test test test test test test test test', True),
-    ])
-    def test_is_pack_metadata_desc_too_long(self, repo, pack_description, is_valid):
+    def test_valid_is_pack_metadata_desc_too_long(self, repo):
         """
         Given:
-            - Case A: Valid description length
-            - Case B: Invalid description length - higher than 130
+            - Valid description length
 
         When:
             - Validating pack description length
 
         Then:
-            - Case A: Ensure validation passes as the description field length is valid.
-            - Case B: Ensure validation passes although description field length is higher than 130-
-            will print a warning.
-        """
+            - Ensure validation passes as the description field length is valid.
 
-        assert self.validator.is_pack_metadata_desc_too_long(pack_description) == is_valid
+        """
+        pack_description = 'Hey there, just testing'
+        assert self.validator.is_pack_metadata_desc_too_long(pack_description) is True
+
+    def test_invalid_is_pack_metadata_desc_too_long(self, mocker, repo):
+        """
+        Given:
+            - Invalid description length - higher than 130
+
+        When:
+            - Validating pack description length
+
+        Then:
+            - Ensure validation passes although description field length is higher than 130
+            - Ensure warning will be printed.
+        """
+        pack_description = 'This is will fail cause the description here is too long.' \
+                           'test test test test test test test test test test test test test test test test test' \
+                           ' test test test test test'
+        error_desc = 'The description field of the pack_metadata.json file is longer than 130 characters.'
+
+        mocker.patch("click.secho")
+
+        assert self.validator.is_pack_metadata_desc_too_long(pack_description) is True
+        assert error_desc in click.secho.call_args_list[0][0][0]

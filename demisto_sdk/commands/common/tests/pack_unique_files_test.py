@@ -1,6 +1,7 @@
 import json
 import os
 
+import click
 import pytest
 from click.testing import CliRunner
 from demisto_sdk.__main__ import main
@@ -19,7 +20,6 @@ from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from git import GitCommandError
 from TestSuite.test_tools import ChangeCWD
-import click
 
 VALIDATE_CMD = "validate"
 PACK_METADATA_PARTNER = {
@@ -217,7 +217,7 @@ class TestPackUniqueFilesValidator:
 
         assert not self.validator.validate_core_pack_dependencies(dependencies_packs)
         assert Errors.invalid_core_pack_dependencies('fake_pack', ['dependency_pack_1', 'dependency_pack_3'])[0] \
-               in self.validator.get_errors()
+            in self.validator.get_errors()
 
     def test_validate_pack_dependencies_skip_id_set_creation(self, capsys):
         """

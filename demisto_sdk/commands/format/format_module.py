@@ -179,10 +179,10 @@ def get_files_to_format_from_git(supported_file_types, prev_ver, include_untrack
     filtered_files = []
     for file_path in all_changed_files:
         str_file_path = str(file_path)
-        for file_type in supported_file_types:
-            if str_file_path.endswith(file_type) and os.path.exists(str_file_path):
-                filtered_files.append(str_file_path)
-                break
+        file_extention = os.path.splitext(str_file_path)[1]
+        if file_extention in supported_file_types and os.path.exists(str_file_path):
+            filtered_files.append(str_file_path)
+            break
 
     if filtered_files:
         detected_files_string = "\n".join(filtered_files)

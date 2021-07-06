@@ -1,3 +1,4 @@
+import glob
 import io
 import os
 import sys
@@ -5,6 +6,7 @@ import sys
 import pytest
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from TestSuite.test_tools import ChangeCWD
 
 VALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-valid.md'
 INVALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-invalid.md'
@@ -108,14 +110,16 @@ def test_unvalid_verify_no_empty_sections(integration, capsys, file_input, missi
 
     integration.readme.write(file_input)
     readme_path = integration.readme.path
-    readme_validator = ReadMeValidator(readme_path)
-    result = readme_validator.verify_no_empty_sections()
 
-    stdout, _ = capsys.readouterr()
-    section_error = f'{missing_section} is empty, please elaborate or delete the section.'
+    with ChangeCWD(integration.repo_path):
+        readme_validator = ReadMeValidator(readme_path)
+        result = readme_validator.verify_no_empty_sections()
 
-    assert not result
-    assert section_error in stdout
+        stdout, _ = capsys.readouterr()
+        section_error = f'{missing_section} is empty, please elaborate or delete the section.'
+
+        assert not result
+        assert section_error in stdout
 
 
 @pytest.mark.parametrize("file_input",
@@ -132,15 +136,17 @@ def test_combined_unvalid_verify_no_empty_sections(integration, capsys, file_inp
 
     integration.readme.write(file_input)
     readme_path = integration.readme.path
-    readme_validator = ReadMeValidator(readme_path)
-    result = readme_validator.verify_no_empty_sections()
 
-    stdout, _ = capsys.readouterr()
-    error = 'Failed verifying README.md Error Message is: Troubleshooting is empty, please elaborate or delete the' \
-            ' section.\nAdditional Information is empty, please elaborate or delete the section.'
+    with ChangeCWD(integration.repo_path):
+        readme_validator = ReadMeValidator(readme_path)
+        result = readme_validator.verify_no_empty_sections()
 
-    assert not result
-    assert error in stdout
+        stdout, _ = capsys.readouterr()
+        error = 'Failed verifying README.md Error Message is: Troubleshooting is empty, please elaborate or delete the' \
+                ' section.\nAdditional Information is empty, please elaborate or delete the section.'
+
+        assert not result
+        assert error in stdout
 
 
 @pytest.mark.parametrize("file_input",
@@ -178,7 +184,10 @@ def test_valid_sections(integration, file_input):
                           ("##### Required Permissions FILL IN REQUIRED PERMISSIONS HERE",
                            'FILL IN REQUIRED PERMISSIONS HERE'),
                           ("This integration was integrated and tested with version xx of integration v2",
-                           'version xx')])
+                           'version xx'),
+                          ("##Dummy Integration\n this integration is for getting started and learn how to build an "
+                           "integration. some extra text here",
+                           'getting started and learn how to build an integration')])
 def test_verify_no_default_sections_left(integration, capsys, file_input, section):
     """
     Given
@@ -190,13 +199,15 @@ def test_verify_no_default_sections_left(integration, capsys, file_input, sectio
     """
     integration.readme.write(file_input)
     readme_path = integration.readme.path
-    readme_validator = ReadMeValidator(readme_path)
-    result = readme_validator.verify_no_default_sections_left()
 
-    stdout, _ = capsys.readouterr()
-    section_error = f'Replace "{section}" with a suitable info.'
-    assert not result
-    assert section_error in stdout
+    with ChangeCWD(integration.repo_path):
+        readme_validator = ReadMeValidator(readme_path)
+        result = readme_validator.verify_no_default_sections_left()
+
+        stdout, _ = capsys.readouterr()
+        section_error = f'Replace "{section}" with a suitable info.'
+        assert not result
+        assert section_error in stdout
 
 
 ERROR_FOUND_CASES = [
@@ -204,6 +215,30 @@ ERROR_FOUND_CASES = [
     ([], [f'{FAKE_INTEGRATION_README} - [RM102]'], False),
     ([], [], True),
 ]
+
+
+@pytest.mark.parametrize("readme_fake_path, readme_text",
+                         [('/HelloWorld/README.md', 'getting started and learn how to build an integration')])
+def test_readme_ignore(integration, readme_fake_path, readme_text):
+    """
+    Check that packs in ignore list are ignored.
+       Given
+            - README path of ignore pack
+        When
+            - Run validate on README of ignored pack
+        Then
+            - Ensure validation ignored the pack
+    """
+    integration.readme.write(readme_text)
+    readme_path = integration.readme.path
+    readme_validator = ReadMeValidator(readme_path)
+    # change the pack path to readme_fake_path
+    from pathlib import Path
+    readme_validator.file_path = Path(readme_fake_path)
+    readme_validator.pack_path = readme_validator.file_path.parent
+
+    result = readme_validator.verify_no_default_sections_left()
+    assert result
 
 
 @pytest.mark.parametrize("errors_found, errors_ignore, expected", ERROR_FOUND_CASES)
@@ -225,8 +260,10 @@ def test_context_only_runs_once_when_error_exist(mocker, integration, errors_fou
 
 
 DIFFERENCE_CONTEXT_RESULTS_CASE = [
-    ({'zoom-create-user': {'only in yml': {'Zoom.User.id'}, 'only in readme': set()}}, False),  # case path exists only in yml
-    ({'zoom-list-users': {'only in yml': set(), 'only in readme': {'Zoom.User.last_name', 'Zoom.User.first_name'}}}, False),  # case path exists only in readme
+    ({'zoom-create-user': {'only in yml': {'Zoom.User.id'}, 'only in readme': set()}}, False),
+    # case path exists only in yml
+    ({'zoom-list-users': {'only in yml': set(), 'only in readme': {'Zoom.User.last_name', 'Zoom.User.first_name'}}},
+     False),  # case path exists only in readme
     ({}, True),  # case no changes were found
 ]
 
@@ -270,3 +307,80 @@ def test_invalid_short_file(capsys):
                          'Pack README files are expected to include a few sentences about the pack and/or images.'
     assert not result
     assert short_readme_error in stdout
+
+
+def test_demisto_in_readme(repo):
+    """
+        Given
+            - An integration README contains the word 'Demisto'.
+
+        When
+            - Running verify_demisto_in_readme_content.
+
+        Then
+            - Ensure that the validation fails.
+    """
+
+    pack = repo.create_pack('PackName')
+    integration = pack.create_integration('IntName')
+
+    readme_path = glob.glob(os.path.join(os.path.dirname(integration.yml.path), '*README.md'))[0]
+
+    with open(readme_path, 'w') as f:
+        f.write('This checks if we have the word Demisto in the README.')
+
+    with ChangeCWD(repo.path):
+        readme_validator = ReadMeValidator(integration.readme.path)
+
+        assert not readme_validator.verify_demisto_in_readme_content()
+
+
+def test_demisto_not_in_readme(repo):
+    """
+        Given
+            - An integration README without the word 'Demisto'.
+
+        When
+            - Running verify_demisto_in_readme_content.
+
+        Then
+            - Ensure that the validation passes.
+    """
+
+    pack = repo.create_pack('PackName')
+    integration = pack.create_integration('IntName')
+
+    readme_path = glob.glob(os.path.join(os.path.dirname(integration.yml.path), '*README.md'))[0]
+
+    with open(readme_path, 'w') as f:
+        f.write('This checks if we have the word XSOAR in the README.')
+
+    readme_validator = ReadMeValidator(integration.readme.path)
+
+    assert readme_validator.verify_demisto_in_readme_content()
+
+
+def test_verify_template_not_in_readme(repo):
+    """
+        Given
+            - An integration README contains the generic sentence '%%FILL HERE%%'.
+
+        When
+            - Running verify_template_not_in_readme.
+
+        Then
+            - Ensure that the validation fails.
+    """
+
+    pack = repo.create_pack('PackName')
+    integration = pack.create_integration('IntName')
+
+    readme_path = glob.glob(os.path.join(os.path.dirname(integration.yml.path), '*README.md'))[0]
+
+    with open(readme_path, 'w') as f:
+        f.write('This checks if we have the sentence %%FILL HERE%% in the README.')
+
+    with ChangeCWD(repo.path):
+        readme_validator = ReadMeValidator(integration.readme.path)
+
+        assert not readme_validator.verify_template_not_in_readme()

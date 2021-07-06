@@ -25,7 +25,7 @@ class MapperJSONFormat(BaseUpdateJSON):
                  verbose: bool = False,
                  **kwargs):
         super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
-                         verbose=verbose)
+                         verbose=verbose, **kwargs)
 
     def run_format(self) -> int:
         try:
@@ -44,8 +44,8 @@ class MapperJSONFormat(BaseUpdateJSON):
 
     def format_file(self) -> Tuple[int, int]:
         """Manager function for the mapper JSON updater."""
-        format = self.run_format()
-        return format, SKIP_RETURN_CODE
+        format_res = self.run_format()
+        return format_res, SKIP_RETURN_CODE
 
     def set_mapping(self):
         """

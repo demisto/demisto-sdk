@@ -278,4 +278,4 @@ def test_sign_packs_failure(repo, capsys, key, tool):
 
     captured = capsys.readouterr()
     assert 'Failed to sign packs. In order to do so, you need to provide both signature_key and ' \
-           'sign_directory arguments.' in captured.err
+           'sign_directory arguments.' in captured.out

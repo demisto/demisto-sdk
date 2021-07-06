@@ -17,6 +17,7 @@ from demisto_sdk.commands.upload.uploader import (
     Uploader, parse_error_response, print_summary,
     sort_directories_based_on_dependencies)
 from packaging.version import parse
+from TestSuite.test_tools import ChangeCWD
 
 DATA = ''
 
@@ -248,6 +249,29 @@ def test_upload_indicator_field_positive(demisto_client_configure, mocker):
     uploader.upload()
 
     assert [(indicator_field_name, FileType.INDICATOR_FIELD.value)] == uploader.successfully_uploaded_files
+
+
+def test_upload_report_positive(demisto_client_configure, mocker, repo):
+    """
+    Given
+        - A report to upload
+
+    When
+        - Uploading a report
+
+    Then
+        - Ensure report is uploaded successfully
+        - Ensure success upload message is printed as expected
+    """
+    mocker.patch.object(demisto_client, 'configure', return_value="object")
+    pack = repo.create_pack('pack')
+    report = pack.create_report('test-report')
+    report.write_json({"id": "dummy-report", "orientation": "portrait"})
+    with ChangeCWD(repo.path):
+        uploader = Uploader(input=report.path, insecure=False, verbose=False)
+        mocker.patch.object(uploader, 'client')
+        uploader.upload()
+    assert [(report.name, FileType.REPORT.value)] == uploader.successfully_uploaded_files
 
 
 def test_upload_incident_type_correct_file_change(demisto_client_configure, mocker):

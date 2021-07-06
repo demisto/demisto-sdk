@@ -160,8 +160,7 @@ jobs:
               export PYTHONPATH=".:${PYTHONPATH}"
               demisto-sdk -v
 
-              export CIRCLE_ARTIFACTS="/home/circleci/project/artifacts"
-              CIRCLE_BRANCH="master" demisto-sdk create-id-set -o ./Tests/id_set.json
+              CI_COMMIT_BRANCH="master" demisto-sdk create-id-set -o ./Tests/id_set.json --fail-duplicates
         - run:
             name: Merge Id Set
             when: always
@@ -174,7 +173,7 @@ jobs:
               export CIRCLE_ARTIFACTS="/home/circleci/project/artifacts"
 
               gsutil cp gs://marketplace-dist/content/private_id_set.json $CIRCLE_ARTIFACTS/unified_id_set.json
-              CIRCLE_BRANCH="master" demisto-sdk merge-id-sets -i1 ./Tests/id_set.json -i2 $CIRCLE_ARTIFACTS/unified_id_set.json -o $CIRCLE_ARTIFACTS/unified_id_set.json
+              CI_COMMIT_BRANCH="master" demisto-sdk merge-id-sets -i1 ./Tests/id_set.json -i2 $CIRCLE_ARTIFACTS/unified_id_set.json -o $CIRCLE_ARTIFACTS/unified_id_set.json
         - run:
             name: Test validate files and yaml
             when: always
@@ -184,10 +183,10 @@ jobs:
 
               export PYTHONPATH=".:${PYTHONPATH}"
               demisto-sdk -v
-              export CIRCLE_ARTIFACTS="/home/circleci/project/artifacts"
+              export ARTIFACTS_FOLDER="/home/circleci/project/artifacts"
 
-              CIRCLE_BRANCH="master" python3 ./Tests/scripts/update_conf_json.py
-              CIRCLE_BRANCH="master" ./Tests/scripts/validate.sh
+              CI_COMMIT_BRANCH="master" python3 ./Tests/scripts/update_conf_json.py
+              CI_COMMIT_BRANCH="master" ./Tests/scripts/validate.sh
   create-content-artifacts:
       docker:
         - image: circleci/python:3.8.3-buster-node

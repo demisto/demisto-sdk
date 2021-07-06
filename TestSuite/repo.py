@@ -133,7 +133,7 @@ class Repo:
 
         indicator_type = pack.create_indicator_type(f'{name}_indicator-type')
         indicator_type.write_json({'id': f'{name} - indicator_type'})
-        indicator_type.update({'name': f'{name} - indicator_type'})
+        indicator_type.update({'details': f'{name} - indicator_type'})
         indicator_type.update({'regex': ''})
 
         indicator_field = pack.create_indicator_field(f'{name}_indicator-field')
@@ -160,10 +160,17 @@ class Repo:
         playbook.yml.update({'id': f'{name}_playbook'})
         playbook.yml.update({'name': f'{name}_playbook'})
 
-        test_playbook = pack.create_test_playbook(f'{name}_test_playbook')
+        test_playbook = pack.create_test_playbook(f'{name}_integration_test_playbook')
         test_playbook.create_default_playbook()
-        test_playbook.yml.update({'id': f'{name}_test_playbook'})
-        test_playbook.yml.update({'name': f'{name}_test_playbook'})
+        test_playbook.yml.update({'id': f'{name}_integration_test_playbook'})
+        test_playbook.yml.update({'name': f'{name}_integration_test_playbook'})
+        integration.yml.update({'tests': [f'{name}_integration_test_playbook']})
+
+        test_playbook = pack.create_test_playbook(f'{name}_script_test_playbook')
+        test_playbook.create_default_playbook()
+        test_playbook.yml.update({'id': f'{name}_script_test_playbook'})
+        test_playbook.yml.update({'name': f'{name}_script_test_playbook'})
+        script.yml.update({'tests': [f'{name}_script_test_playbook']})
 
         return pack
 

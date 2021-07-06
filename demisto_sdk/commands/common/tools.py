@@ -9,10 +9,10 @@ import sys
 from configparser import ConfigParser, MissingSectionHeaderError
 from distutils.version import LooseVersion
 from enum import Enum
-from functools import lru_cache, partial
+from functools import partial
 from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen, check_output
-from typing import Callable, Dict, List, Optional, Tuple, Type, Union
+from typing import Callable, Dict, List, Match, Optional, Tuple, Type, Union
 
 import click
 import colorama
@@ -23,20 +23,21 @@ import urllib3
 import yaml
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK, CLASSIFIERS_DIR,
-    CONTENT_GITHUB_LINK, CONTENT_GITHUB_ORIGIN, CONTENT_GITHUB_UPSTREAM,
     CONTEXT_OUTPUT_README_TABLE_HEADER, DASHBOARDS_DIR, DEF_DOCKER,
     DEF_DOCKER_PWSH, DOC_FILES_DIR, ID_IN_COMMONFIELDS, ID_IN_ROOT,
     INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
-    INTEGRATIONS_DIR, LAYOUTS_DIR, PACK_IGNORE_TEST_FLAG,
-    PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
-    PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_README_FILE_NAME,
-    PLAYBOOKS_DIR, RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR,
-    SCRIPTS_DIR, SDK_API_GITHUB_RELEASES, TEST_PLAYBOOKS_DIR, TYPE_PWSH,
-    UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, FileType)
+    INTEGRATIONS_DIR, LAYOUTS_DIR, OFFICIAL_CONTENT_ID_SET_PATH,
+    PACK_IGNORE_TEST_FLAG, PACKAGE_SUPPORTING_DIRECTORIES,
+    PACKAGE_YML_FILE_REGEX, PACKS_DIR, PACKS_DIR_REGEX,
+    PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
+    PACKS_README_FILE_NAME, PLAYBOOKS_DIR, RELEASE_NOTES_DIR,
+    RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR,
+    TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, XSOAR_CONFIG_FILE,
+    FileType, GithubContentConfig, urljoin)
+from demisto_sdk.commands.common.git_util import GitUtil
 from packaging.version import parse
 from ruamel.yaml import YAML
 
-# disable insecure warnings
 urllib3.disable_warnings()
 
 # inialize color palette
@@ -59,6 +60,7 @@ LOG_VERBOSE = False
 
 LAYOUT_CONTAINER_FIELDS = {'details', 'detailsV2', 'edit', 'close', 'mobile', 'quickView', 'indicatorsQuickView',
                            'indicatorsDetails'}
+SDK_PYPI_VERSION = r'https://pypi.org/pypi/demisto-sdk/json'
 
 
 def set_log_verbose(verbose: bool):
@@ -162,38 +164,108 @@ def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
     return output
 
 
-@lru_cache(maxsize=64)
-def get_remote_file(full_file_path, tag='master', return_content=False, suppress_print=False):
+core_pack_list: Optional[
+    list] = None  # Initiated in get_core_pack_list function. Here to create a "cached" core_pack_list
+
+
+def get_core_pack_list() -> list:
+    """Getting the core pack list from Github content
+
+    Returns:
+        Core pack list
+    """
+    global core_pack_list
+    if isinstance(core_pack_list, list):
+        return core_pack_list
+    if not is_external_repository():
+        core_pack_list = get_remote_file(
+            'Tests/Marketplace/core_packs_list.json', github_repo=GithubContentConfig.OFFICIAL_CONTENT_REPO_NAME
+        ) or []
+    else:
+        # no core packs in external repos.
+        core_pack_list = []
+    return core_pack_list
+
+
+# @lru_cache(maxsize=64)
+def get_remote_file(
+        full_file_path: str,
+        tag: str = 'master',
+        return_content: bool = False,
+        suppress_print: bool = False,
+        github_repo: Optional[str] = None
+):
     """
     Args:
-        full_file_path (string):The full path of the file.
-        tag (string): The branch name. default is 'master'
-        return_content (bool): Determines whether to return the file's raw content or the dict representation of it.
-        suppress_print (bool): whether to suppress the warning message in case the file was not found.
+        full_file_path:The full path of the file.
+        tag: The branch name. default is 'master'
+        return_content: Determines whether to return the file's raw content or the dict representation of it.
+        suppress_print: whether to suppress the warning message in case the file was not found.
+        github_repo: The repository to grab the file from
     Returns:
         The file content in the required format.
 
     """
+    github_config = GithubContentConfig(github_repo)
     # 'origin/' prefix is used to compared with remote branches but it is not a part of the github url.
-    tag = tag.replace('origin/', '').replace('demisto/', '')
+    github_tag = tag.replace('origin/', '').replace('demisto/', '')
+    local_content = '{}'
 
-    # The replace in the end is for Windows support
-    github_path = os.path.join(CONTENT_GITHUB_LINK, tag, full_file_path).replace('\\', '/')
+    github_path = urljoin(github_config.CONTENT_GITHUB_LINK, github_tag, full_file_path)
     try:
-        res = requests.get(github_path, verify=False, timeout=10)
-        res.raise_for_status()
+        external_repo = is_external_repository()
+        if external_repo:
+            githhub_config = GithubContentConfig()
+            if githhub_config.Credentials.TOKEN:
+                res = requests.get(github_path, verify=False, timeout=10, headers={
+                    'Authorization': f"Bearer {githhub_config.Credentials.TOKEN}",
+                    'Accept': f'application/vnd.github.VERSION.raw',
+                })  # Sometime we need headers
+                if not res.ok:  # sometime we need param token
+                    res = requests.get(
+                        github_path,
+                        verify=False,
+                        timeout=10,
+                        params={'token': githhub_config.Credentials.TOKEN}
+                    )
+                res.raise_for_status()
+            else:
+                # If no token defined, maybe it's a open repo. 🤷‍♀️
+                res = requests.get(github_path, verify=False, timeout=10)
+                # And maybe it's just not defined. 😢
+                if not res.ok:
+                    if not suppress_print:
+                        print_warning(
+                            f'You are working in a private repository: "{githhub_config.CURRENT_REPOSITORY}".\n'
+                            f'The github token in your environment is undefined.\n'
+                            f'Getting file from local repository instead. \n'
+                            f'If you wish to get the file from the remote repository, \n'
+                            f'Please define your github token in your environment.\n'
+                            f'`export {githhub_config.Credentials.ENV_TOKEN_NAME}=<TOKEN>`'
+                        )
+                    # Get from local git origin/master instead
+                    repo = git.Repo(os.path.dirname(full_file_path), search_parent_directories=True)
+                    repo_git_util = GitUtil(repo)
+                    github_path = repo_git_util.get_local_remote_file_path(full_file_path, tag)
+                    local_content = repo_git_util.get_local_remote_file_content(github_path)
+        else:
+            res = requests.get(github_path, verify=False, timeout=10)
+            res.raise_for_status()
     except Exception as exc:
         if not suppress_print:
-            print_warning('Could not find the old entity file under "{}".\n'
-                          'please make sure that you did not break backward compatibility. '
-                          'Reason: {}'.format(github_path, exc))
+            print_warning(
+                f'Could not find the old entity file under "{github_path}".\n'
+                'please make sure that you did not break backward compatibility.\n'
+                f'Reason: {exc}'
+            )
         return {}
+    file_content = res.content if res.ok else local_content
     if return_content:
-        return res.content
+        return file_content
     if full_file_path.endswith('json'):
-        details = json.loads(res.content)
+        details = res.json() if res.ok else json.loads(local_content)
     elif full_file_path.endswith('yml'):
-        details = yaml.safe_load(res.content)
+        details = yaml.safe_load(file_content)  # type: ignore[arg-type]
     # if neither yml nor json then probably a CHANGELOG or README file.
     else:
         details = {}
@@ -219,7 +291,7 @@ def filter_files_on_pack(pack: str, file_paths_list=str()) -> set:
 
 def filter_packagify_changes(modified_files, added_files, removed_files, tag='master'):
     """
-    Mark scripts/integrations that were removed and added as modifiied.
+    Mark scripts/integrations that were removed and added as modified.
 
     :param modified_files: list of modified files in branch
     :param added_files: list of new files in branch
@@ -305,7 +377,7 @@ def has_remote_configured():
     :return: bool : True if remote is configured, False if not.
     """
     remotes = run_command('git remote -v')
-    if re.search(CONTENT_GITHUB_UPSTREAM, remotes):
+    if re.search(GithubContentConfig().CONTENT_GITHUB_UPSTREAM, remotes):
         return True
     else:
         return False
@@ -318,7 +390,7 @@ def is_origin_content_repo():
     :return: bool : True if remote is configured, False if not.
     """
     remotes = run_command('git remote -v')
-    if re.search(CONTENT_GITHUB_ORIGIN, remotes):
+    if re.search(GithubContentConfig().CONTENT_GITHUB_ORIGIN, remotes):
         return True
     else:
         return False
@@ -326,20 +398,18 @@ def is_origin_content_repo():
 
 def get_last_remote_release_version():
     """
-    Get latest release tag from remote github page
+    Get latest release tag from PYPI.
 
     :return: tag
     """
-    if not os.environ.get('DEMISTO_SDK_SKIP_VERSION_CHECK') and not os.environ.get('CI'):
+    if not os.environ.get(
+            'CI'):  # Check only when no on CI. If you want to disable it - use `DEMISTO_SDK_SKIP_VERSION_CHECK` environment variable
         try:
-            releases_request = requests.get(SDK_API_GITHUB_RELEASES, verify=False, timeout=5)
-            releases_request.raise_for_status()
-            releases = releases_request.json()
-            if isinstance(releases, list) and isinstance(releases[0], dict):
-                latest_release = releases[0].get('tag_name')
-                if isinstance(latest_release, str):
-                    # remove v prefix
-                    return latest_release[1:]
+            pypi_request = requests.get(SDK_PYPI_VERSION, verify=False, timeout=5)
+            pypi_request.raise_for_status()
+            pypi_json = pypi_request.json()
+            version = pypi_json.get('info', {}).get('version', '')
+            return version
         except Exception as exc:
             exc_msg = str(exc)
             if isinstance(exc, requests.exceptions.ConnectionError):
@@ -679,7 +749,7 @@ def get_pack_name(file_path):
     if isinstance(file_path, Path):
         file_path = str(file_path)
     # the regex extracts pack name from relative paths, for example: Packs/EWSv2 -> EWSv2
-    match = re.search(rf'^{PACKS_DIR_REGEX}[/\\]([^/\\]+)[/\\]?', file_path)
+    match = re.search(rf'{PACKS_DIR_REGEX}[/\\]([^/\\]+)[/\\]?', file_path)
     return match.group(1) if match else None
 
 
@@ -935,6 +1005,9 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
     if path.endswith('.js'):
         return FileType.JAVASCRIPT_FILE
 
+    if path.endswith(XSOAR_CONFIG_FILE):
+        return FileType.XSOAR_CONFIG
+
     try:
         if not _dict and not file_type:
             _dict, file_type = get_dict_from_file(path)
@@ -945,7 +1018,7 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
 
     if file_type == 'yml':
         if 'category' in _dict:
-            if 'beta' in _dict and not ignore_sub_categories:
+            if _dict.get('beta') and not ignore_sub_categories:
                 return FileType.BETA_INTEGRATION
 
             return FileType.INTEGRATION
@@ -1037,14 +1110,22 @@ def get_common_server_dir_pwsh(env_dir):
     return _get_common_server_dir_general(env_dir, 'CommonServerPowerShell')
 
 
-def is_external_repository():
+def is_external_repository() -> bool:
     """
     Returns True if script executed from private repository
 
     """
-    git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
-    private_settings_path = os.path.join(git_repo.working_dir, '.private-repo-settings')
-    return os.path.exists(private_settings_path)
+    try:
+        git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
+        private_settings_path = os.path.join(git_repo.working_dir, '.private-repo-settings')
+        return os.path.exists(private_settings_path)
+    except git.InvalidGitRepositoryError:
+        return True
+
+
+def get_content_id_set() -> dict:
+    """Getting the ID Set from official content's bucket"""
+    return requests.get(OFFICIAL_CONTENT_ID_SET_PATH).json()
 
 
 def get_content_path() -> str:
@@ -1448,7 +1529,7 @@ def get_demisto_version(demisto_client: demisto_client) -> str:
     try:
         resp = demisto_client.generic_request('/about', 'GET')
         about_data = json.loads(resp[0].replace("'", '"'))
-        return parse(about_data.get('demistoVersion'))
+        return parse(about_data.get('demistoVersion'))  # type: ignore
     except Exception:
         return "0"
 
@@ -1474,20 +1555,24 @@ def arg_to_list(arg: Union[str, List[str]], separator: str = ",") -> List[str]:
     return [arg]
 
 
-def is_v2_file(current_file, check_in_display=False):
-    """Check if the specific integration of script is a v2
-    Returns:
-        bool. Whether the file is a v2 file
+def get_file_version_suffix_if_exists(current_file: Dict, check_in_display: bool = False) -> Optional[str]:
     """
-    # integrations should be checked via display field, other entities should check name field
-    if check_in_display:
-        name = current_file.get('display', '')
-    else:
-        name = current_file.get('name', '')
-    suffix = str(name[-2:].lower())
-    if suffix != "v2":
-        return False
-    return True
+    Checks if current YML file name is versioned or no, e.g, ends with v<number>.
+    Args:
+        current_file (Dict): Dict representing YML data of an integration or script.
+        check_in_display (bool): Whether to get name by 'display' field or not (by 'name' field).
+
+    Returns:
+        (Optional[str]): Number of the version as a string, if the file ends with version suffix. None otherwise.
+    """
+    versioned_file_regex = r'v([0-9]+)$'
+    name = current_file.get('display') if check_in_display else current_file.get('name')
+    if not name:
+        return None
+    matching_regex = re.findall(versioned_file_regex, name.lower())
+    if matching_regex:
+        return matching_regex[-1]
+    return None
 
 
 def get_all_incident_and_indicator_fields_from_id_set(id_set_file, entity_type):
@@ -1686,3 +1771,107 @@ def to_pascal_case(s: str):
         return new_s
 
     return s
+
+
+def get_approved_usecases() -> list:
+    """Gets approved list of usecases from content master
+
+    Returns:
+        List of approved usecases
+    """
+    return get_remote_file(
+        'Tests/Marketplace/approved_usecases.json',
+        github_repo=GithubContentConfig.OFFICIAL_CONTENT_REPO_NAME
+    ).get('approved_list', [])
+
+
+def get_approved_tags() -> list:
+    """Gets approved list of tags from content master
+
+    Returns:
+        List of approved tags
+    """
+    return get_remote_file(
+        'Tests/Marketplace/approved_tags.json',
+        github_repo=GithubContentConfig.OFFICIAL_CONTENT_REPO_NAME
+    ).get('approved_list', [])
+
+
+def get_pack_metadata(file_path: str) -> dict:
+    """ Get the pack_metadata dict, of the pack containing the given file path.
+
+    Args:
+        file_path(str): file path
+
+    Returns: pack_metadata of the pack, that source_file related to,
+        on failure returns {}
+
+    """
+    pack_path = file_path if PACKS_DIR in file_path else os.path.realpath(__file__)
+    match = re.search(rf".*{PACKS_DIR}[/\\]([^/\\]+)[/\\]?", pack_path)
+    directory = match.group() if match else ''
+
+    try:
+        metadata_path = os.path.join(directory, PACKS_PACK_META_FILE_NAME)
+        pack_metadata, _ = get_dict_from_file(metadata_path)
+        return pack_metadata
+    except Exception:
+        return {}
+
+
+def is_pack_path(input_path: str) -> bool:
+    """
+    Checks whether pack given in input path is for a pack.
+    Args:
+        input_path (str): Input path.
+    Examples
+        - input_path = 'Packs/BitcoinAbuse
+          Returns: True
+        - input_path = 'Packs/BitcoinAbuse/Layouts'
+          Returns: False
+    Returns:
+        (bool):
+        - True if the input path is for a given pack.
+        - False if the input path is not for a given pack.
+    """
+    return os.path.basename(os.path.dirname(input_path)) == PACKS_DIR
+
+
+def get_relative_path_from_packs_dir(file_path: str) -> str:
+    """Get the relative path for a given file_path starting in the Packs directory"""
+    if PACKS_DIR not in file_path or file_path.startswith(PACKS_DIR):
+        return file_path
+
+    return file_path[file_path.find(PACKS_DIR):]
+
+
+def is_uuid(s: str) -> Optional[Match]:
+    """Checks whether given string is a UUID
+
+    Args:
+         s (str): The string to check if it is a UUID
+
+    Returns:
+        Match: Returns the match if given string is a UUID, otherwise None
+    """
+    return re.match(UUID_REGEX, s)
+
+
+def get_current_usecases() -> list:
+    """Gets approved list of usecases from current branch
+
+    Returns:
+        List of approved usecases from current branch
+    """
+    approved_usecases_json, _ = get_dict_from_file('Tests/Marketplace/approved_usecases.json')
+    return approved_usecases_json.get('approved_list', [])
+
+
+def get_current_tags() -> list:
+    """Gets approved list of tags from current branch
+
+    Returns:
+        List of approved tags from current branch
+    """
+    approved_tags_json, _ = get_dict_from_file('Tests/Marketplace/approved_tags.json')
+    return approved_tags_json.get('approved_list', [])

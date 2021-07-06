@@ -25,7 +25,7 @@ class IndicatorFieldJSONFormat(BaseUpdateJSON):
                  no_validate: bool = False,
                  verbose: bool = False,
                  **kwargs):
-        super().__init__(input, output, path, from_version, no_validate, verbose=verbose)
+        super().__init__(input, output, path, from_version, no_validate, verbose=verbose, **kwargs)
 
     def run_format(self) -> int:
         try:
@@ -42,8 +42,8 @@ class IndicatorFieldJSONFormat(BaseUpdateJSON):
 
     def format_file(self) -> Tuple[int, int]:
         """Manager function for the indicator fields JSON updater."""
-        format = self.run_format()
-        if format:
-            return format, SKIP_RETURN_CODE
+        format_rs = self.run_format()
+        if format_rs:
+            return format_rs, SKIP_RETURN_CODE
         else:
-            return format, self.initiate_file_validator(IncidentFieldValidator)
+            return format_rs, self.initiate_file_validator(IncidentFieldValidator)

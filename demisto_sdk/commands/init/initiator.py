@@ -16,7 +16,7 @@ from demisto_sdk.commands.common.constants import (
     INDICATOR_TYPES_DIR, INTEGRATION_CATEGORIES, INTEGRATIONS_DIR, LAYOUTS_DIR,
     MARKETPLACE_LIVE_DISCUSSIONS, PACK_INITIAL_VERSION, PACK_SUPPORT_OPTIONS,
     PLAYBOOKS_DIR, REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR,
-    XSOAR_AUTHOR, XSOAR_SUPPORT, XSOAR_SUPPORT_URL)
+    XSOAR_AUTHOR, XSOAR_SUPPORT, XSOAR_SUPPORT_URL, GithubContentConfig)
 from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                get_common_server_path,
                                                print_error, print_v,
@@ -98,7 +98,8 @@ class Initiator:
                 INDICATOR_TYPES_DIR, REPORTS_DIR, WIDGETS_DIR, DOC_FILES_DIR]
 
     def __init__(self, output: str, name: str = '', id: str = '', integration: bool = False, template: str = '',
-                 script: bool = False, pack: bool = False, demisto_mock: bool = False, common_server: bool = False):
+                 category: str = '', script: bool = False, pack: bool = False, demisto_mock: bool = False,
+                 common_server: bool = False):
         self.output = output if output else ''
         self.id = id
 
@@ -107,6 +108,7 @@ class Initiator:
         self.is_pack = pack
         self.demisto_mock = demisto_mock
         self.common_server = common_server
+        self.category = category
         self.configuration = Configuration()
 
         # if no flag given automatically create a pack.
@@ -116,9 +118,9 @@ class Initiator:
         self.template = self.get_selected_template(template)
 
         self.full_output_path = ''
-
-        while ' ' in name:
-            name = str(input("The directory and file name cannot have spaces in it, Enter a different name: "))
+        if name:
+            while ' ' in name:
+                name = str(input("The directory and file name cannot have spaces in it, Enter a different name: "))
 
         self.dir_name = name
 
@@ -209,6 +211,14 @@ class Initiator:
         elif os.path.isfile('content-descriptor.json'):
             self.full_output_path = os.path.join("Packs", self.dir_name)
 
+        # if in an external repo check for the existence of Packs directory
+        # if it does not exist create it
+        elif tools.is_external_repository():
+            if not os.path.isdir("Packs"):
+                print("Creating 'Packs' directory")
+                os.mkdir('Packs')
+            self.full_output_path = os.path.join("Packs", self.dir_name)
+
         # if non of the above conditions apply - create the pack in current directory
         else:
             self.full_output_path = self.dir_name
@@ -228,19 +238,25 @@ class Initiator:
 
         metadata_path = os.path.join(self.full_output_path, 'pack_metadata.json')
         with open(metadata_path, 'a') as fp:
-            user_response = input("\nWould you like fill pack's metadata file? Y/N ").lower()
+            user_response = str(input("\nWould you like fill pack's metadata file? Y/N ")).lower()
             fill_manually = user_response in ['y', 'yes']
 
             pack_metadata = Initiator.create_metadata(fill_manually)
+            self.category = pack_metadata['categories'][0] if pack_metadata['categories'] else 'Utilities'
             json.dump(pack_metadata, fp, indent=4)
 
             click.echo(f"Created pack metadata at path : {metadata_path}", color=LOG_COLORS.GREEN)
 
         create_integration = str(input("\nDo you want to create an integration in the pack? Y/N ")).lower()
         if create_integration in ['y', 'yes']:
+            is_same_category = str(input("\nDo you want to set the integration category as you defined in the pack "
+                                         "metadata? Y/N ")).lower()
+
+            integration_category = self.category if is_same_category in ['y', 'yes'] else ''
             integration_init = Initiator(output=os.path.join(self.full_output_path, 'Integrations'),
                                          integration=True, common_server=self.common_server,
-                                         demisto_mock=self.demisto_mock, template=self.template)
+                                         demisto_mock=self.demisto_mock, template=self.template,
+                                         category=integration_category)
             return integration_init.init()
 
         return True
@@ -452,11 +468,17 @@ class Initiator:
         yml_dict["commonfields"]["id"] = self.id
         yml_dict['name'] = self.id
 
+        from_version = input("\nThe fromversion value that will be used (optional): ")
+        if from_version:
+            yml_dict['fromversion'] = from_version
+
         if LooseVersion(yml_dict.get('fromversion', '0.0.0')) < LooseVersion(self.SUPPORTED_FROM_VERSION):
             yml_dict['fromversion'] = self.SUPPORTED_FROM_VERSION
 
         if integration:
             yml_dict["display"] = self.id
+            yml_dict["category"] = self.category if self.category else Initiator.get_valid_user_input(
+                options_list=INTEGRATION_CATEGORIES, option_message="\nIntegration category options: \n")
 
         with open(os.path.join(self.full_output_path, f"{self.dir_name}.yml"), 'w') as f:
             yaml.dump(
@@ -575,7 +597,7 @@ class Initiator:
             bool. True if the files were downloaded and saved successfully, False otherwise.
         """
         # create test_data dir
-        if self.template in [self.HELLO_WORLD_INTEGRATION] + self.DEFAULT_TEMPLATES\
+        if self.template in [self.HELLO_WORLD_INTEGRATION] + self.DEFAULT_TEMPLATES \
                 + [self.HELLO_WORLD_FEED_INTEGRATION]:
             os.mkdir(os.path.join(self.full_output_path, self.TEST_DATA_DIR))
 
@@ -598,7 +620,12 @@ class Initiator:
                     # is `README_example.md` - which happens when we do not want the readme
                     # files to appear in https://xsoar.pan.dev/docs/reference/index.
                     filename = file.replace('README.md', 'README_example.md')
-                file_content = tools.get_remote_file(os.path.join(path, filename), return_content=True)
+                file_content = tools.get_remote_file(
+                    os.path.join(path, filename),
+                    return_content=True,
+                    # Templates available only in the official repo
+                    github_repo=GithubContentConfig.OFFICIAL_CONTENT_REPO_NAME
+                )
                 with open(os.path.join(self.full_output_path, file), 'wb') as f:
                     f.write(file_content)
             except Exception:

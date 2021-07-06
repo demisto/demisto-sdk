@@ -22,7 +22,6 @@ import astroid
 from pylint.checkers import BaseChecker
 from pylint.interfaces import IAstroidChecker
 
-
 TEST_MODULE = "test-module"
 SCRIPT_TEMPLATE_NAMES = ['BaseScript', 'HelloWorldScript']
 

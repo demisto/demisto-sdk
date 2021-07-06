@@ -1110,7 +1110,8 @@ def get_general_paths(path, pack_to_create):
 
 def get_object_entities_paths(path, pack_to_create):
     """
-    get paths of objectTypes, objectFields, objectPages
+    get paths of objectTypes, objectFields
+
     """
     if pack_to_create:
         path_list = [

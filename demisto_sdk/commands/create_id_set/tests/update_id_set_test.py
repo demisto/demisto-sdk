@@ -19,7 +19,7 @@ from demisto_sdk.commands.common.update_id_set import (
     get_report_data, get_script_data, get_values_for_keys_recursively,
     get_widget_data, has_duplicate, merge_id_sets, process_general_items,
     process_incident_fields, process_integration, process_script,
-    re_create_id_set)
+    re_create_id_set, get_object_module_data, get_object_type_data)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from TestSuite.utils import IsEqualFunctions
 
@@ -2000,6 +2000,91 @@ class TestFlow(unittest.TestCase):
             assert any('dup-check-dashbaord' in i for i in dup_data)
             assert any('layout-dup-check-id' in i for i in dup_data)
             assert any('incident_account_field_dup_check' in i for i in dup_data)
+
+class TestObjectFields:
+    @staticmethod
+    def test_process_object_fields():
+        """
+        Given
+            - An incident field file called incidentfield-to-test.json
+
+        When
+            - parsing incident field files
+
+        Then
+            - parsing all the data from file successfully
+        """
+        test_dir = os.path.join(git_path(), 'demisto_sdk', 'commands', 'create_id_set', 'tests',
+                                'test_data', 'incidentfield-to-test.json')
+        res = process_incident_fields(test_dir, True, [])
+        assert len(res) == 1
+        result = res[0]
+        result = result.get('incidentfield-test')
+        assert 'name' in result.keys()
+        assert 'file_path' in result.keys()
+        assert 'fromversion' in result.keys()
+        assert 'toversion' in result.keys()
+        assert 'incident_types' in result.keys()
+        assert 'scripts' in result.keys()
+
+
+
+class TestObjectType:
+
+    @staticmethod
+    def test_get_object_type_data(pack):
+        """
+        Given
+            - An object type file
+
+        When
+            - parsing objec type files
+
+        Then
+            - parsing all the data from file successfully
+        """
+
+        object_type = pack.create_object_module('test-object-type')
+        object_type.write_json({"id": "type-id", "name": "type-name", "fromVersion": "version", "definitionId": "definitionid", "layout": "layout"})
+        test_dir = object_type.path
+
+        result = get_object_type_data(test_dir)
+        result = result.get('type-id')
+        assert 'name' in result.keys()
+        assert 'file_path' in result.keys()
+        assert 'fromversion' in result.keys()
+        assert 'integrations' not in result.keys()
+
+
+class TestObjectModule:
+    @staticmethod
+    def test_get_object_module_data(repo):
+        """
+        Given
+            - An object module file
+
+        When
+            - parsing generic object module files
+
+        Then
+            - parsing all the data from file successfully
+        """
+
+        pack = repo.create_pack('pack')
+        object_module = pack.create_object_module('test-object_module')
+        object_module.write_json({"id": "dummy-report", "orientation": "portrait"})
+        test_dir = object_module.path  #'{git_path()}/demisto_sdk/commands/create_id_set/tests/test_data/object-module-valid.json'
+
+        result = get_object_module_data(test_dir)
+        result = result.get('indicator-type-dummy')
+        assert 'name' in result.keys()
+        assert 'file_path' in result.keys()
+        assert 'fromversion' in result.keys()
+        assert 'integrations' in result.keys()
+        assert 'scripts' in result.keys()
+        assert "dummy-script" in result.get('scripts')
+        assert "dummy-script-2" in result.get('scripts')
+        assert "dummy-script-3" in result.get('scripts')
 
 
 def test_merge_id_sets(tmp_path):

@@ -108,13 +108,13 @@ class TestIDSetCreator:
 
         pack_to_create_id_set_on = repo.create_pack('pack_to_create_id_set_on')
         pack_to_create_id_set_on.create_integration(yml={'commonfields': {'id': 'id1'}, 'category': '', 'name':
-                                                         'integration to create id set', 'script': {'type': 'python'}},
+            'integration to create id set', 'script': {'type': 'python'}},
                                                     name='integration1')
         packs.append(pack_to_create_id_set_on)
 
         pack_to_not_create_id_set_on = repo.create_pack('pack_to_not_create_id_set_on')
         pack_to_not_create_id_set_on.create_integration(yml={'commonfields': {'id2': 'id'}, 'category': '', 'name':
-                                                             'integration to not create id set'}, name='integration2')
+            'integration to not create id set'}, name='integration2')
         packs.append(pack_to_not_create_id_set_on)
 
         id_set_creator = IDSetCreator(self.file_path, pack_to_create_id_set_on.path)
@@ -2001,6 +2001,7 @@ class TestFlow(unittest.TestCase):
             assert any('layout-dup-check-id' in i for i in dup_data)
             assert any('incident_account_field_dup_check' in i for i in dup_data)
 
+
 class TestObjectFields:
     @staticmethod
     def test_process_object_fields():
@@ -2028,7 +2029,6 @@ class TestObjectFields:
         assert 'scripts' in result.keys()
 
 
-
 class TestObjectType:
 
     @staticmethod
@@ -2045,7 +2045,9 @@ class TestObjectType:
         """
 
         object_type = pack.create_object_module('test-object-type')
-        object_type.write_json({"id": "type-id", "name": "type-name", "fromVersion": "version", "definitionId": "definitionid", "layout": "layout"})
+        object_type.write_json(
+            {"id": "type-id", "name": "type-name", "fromVersion": "version", "definitionId": "definitionid",
+             "layout": "layout"})
         test_dir = object_type.path
 
         result = get_object_type_data(test_dir)
@@ -2070,21 +2072,41 @@ class TestObjectModule:
             - parsing all the data from file successfully
         """
 
+        module_data = {"id": "id",
+                       "version": -1,
+                       "name": "Vulnerability Management",
+                       "fromVersion": "6.5.0",
+                       "definitions": [{
+                           "id": "assets",
+                           "name": "Assets"
+                       }, ],
+                       "views": [{
+                           "name": "Vulnerability Management",
+                           "title": "Risk Base Vulnerability Management",
+                           "tabs": [{
+                               "name": "Assets",
+                               "newButtonDefinitionId": "assets",
+                               "dashboard": {
+                                   "id": "assets_dashboard",
+                                   "version": -1,
+                                   "fromDate": "0001-01-01T00:00:00Z",
+                                   "toDate": "0001-01-01T00:00:00Z",
+                                   "name": "Assets Dashboard",
+                                   "prevName": "Assets Dashboard", }}]}]}
+
         pack = repo.create_pack('pack')
-        object_module = pack.create_object_module('test-object_module')
-        object_module.write_json({"id": "dummy-report", "orientation": "portrait"})
-        test_dir = object_module.path  #'{git_path()}/demisto_sdk/commands/create_id_set/tests/test_data/object-module-valid.json'
+        object_module = pack.create_object_module('test-object-module')
+        object_module.write_json(module_data)
+        test_dir = object_module.path
 
         result = get_object_module_data(test_dir)
-        result = result.get('indicator-type-dummy')
+        result = result.get('id')
         assert 'name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
-        assert 'integrations' in result.keys()
-        assert 'scripts' in result.keys()
-        assert "dummy-script" in result.get('scripts')
-        assert "dummy-script-2" in result.get('scripts')
-        assert "dummy-script-3" in result.get('scripts')
+        assert 'definitions' in result.keys()
+        assert 'views' in result.keys()
+        assert 'pack' in result.keys()
 
 
 def test_merge_id_sets(tmp_path):

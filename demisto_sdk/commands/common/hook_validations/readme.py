@@ -242,6 +242,8 @@ class ReadMeValidator(BaseValidator):
             list: List of the errors found
         """
         error_list = []
+        error_code: str = ''
+        error_message: str = ''
         should_print_error = not is_pack_readme  # If error was found, print it only if its not pack readme.
         relative_images = re.findall(r'(\!\[.*?\])\(((?!http).*?)\)', self.readme_content, re.IGNORECASE)
         relative_images += re.findall(  # HTML image tag
@@ -272,9 +274,10 @@ class ReadMeValidator(BaseValidator):
                     if not os.path.exists(f'{str(self.pack_path)}/{relative_path}'):
                         error_message, error_code = Errors.invalid_readme_image_error(prefix + f'({relative_path})',
                                                                                       error_type='general_readme_relative_error')
-                formatted_error = self.handle_error(error_message, error_code, file_path=self.file_path,
-                                                    should_print=should_print_error)
-                error_list.append(formatted_error)
+                if error_code and error_message:  # error was found
+                    formatted_error = self.handle_error(error_message, error_code, file_path=self.file_path,
+                                                        should_print=should_print_error)
+                    error_list.append(formatted_error)
 
         return error_list
 

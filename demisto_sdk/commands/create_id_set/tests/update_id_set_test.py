@@ -19,7 +19,7 @@ from demisto_sdk.commands.common.update_id_set import (
     get_report_data, get_script_data, get_values_for_keys_recursively,
     get_widget_data, has_duplicate, merge_id_sets, process_general_items,
     process_incident_fields, process_integration, process_script,
-    re_create_id_set, get_object_module_data, get_object_type_data)
+    re_create_id_set, get_object_module_data, get_object_type_data, get_object_field_data)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from TestSuite.utils import IsEqualFunctions
 
@@ -2004,10 +2004,10 @@ class TestFlow(unittest.TestCase):
 
 class TestObjectFields:
     @staticmethod
-    def test_process_object_fields():
+    def test_process_object_fields(pack):
         """
         Given
-            - An incident field file called incidentfield-to-test.json
+            - An object field file
 
         When
             - parsing incident field files
@@ -2015,18 +2015,36 @@ class TestObjectFields:
         Then
             - parsing all the data from file successfully
         """
-        test_dir = os.path.join(git_path(), 'demisto_sdk', 'commands', 'create_id_set', 'tests',
-                                'test_data', 'incidentfield-to-test.json')
-        res = process_incident_fields(test_dir, True, [])
-        assert len(res) == 1
-        result = res[0]
-        result = result.get('incidentfield-test')
+
+        field_data = {
+            "cliName": "operatigsystem",
+            "id": "id",
+            "name": "Operating System",
+            "definitionId": "assets",
+            "fromVersion": "6.5.0",
+            "associatedTypes": ["Asset Type"]}
+
+        objects_types_list = {
+            "Asset Type": {
+                "name": "Asset Type",
+                "file_path": "path/path",
+                "fromversion": "6.5.0",
+                "pack": "ObjectsExample",
+                "definitionId": "assets",
+                "layout": "Workstation Layout"
+            }
+        }
+        object_type = pack.create_object_module('test-object-field')
+        object_type.write_json(field_data)
+        test_dir = object_type.path
+
+        result = get_object_field_data(test_dir, objects_types_list=objects_types_list)
+        result = result.get('id')
         assert 'name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
-        assert 'toversion' in result.keys()
-        assert 'incident_types' in result.keys()
-        assert 'scripts' in result.keys()
+        assert 'definitionId' in result.keys()
+        assert 'object_types' in result.keys()
 
 
 class TestObjectType:
@@ -2038,7 +2056,7 @@ class TestObjectType:
             - An object type file
 
         When
-            - parsing objec type files
+            - parsing object type files
 
         Then
             - parsing all the data from file successfully
@@ -2055,7 +2073,7 @@ class TestObjectType:
         assert 'name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
-        assert 'integrations' not in result.keys()
+        assert 'layout' in result.keys()
 
 
 class TestObjectModule:

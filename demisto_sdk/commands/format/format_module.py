@@ -1,4 +1,5 @@
 import os
+import sys
 from pathlib import Path
 from typing import Dict, List, Tuple
 
@@ -80,8 +81,8 @@ def format_manager(input: str = None,
                    assume_yes: bool = False,
                    deprecate: bool = False,
                    use_git: bool = False,
-                   prev_ver: str = 'demisto/master',
-                   include_untracked: bool=False
+                   prev_ver: str = None,
+                   include_untracked: bool = False
                    ):
     """
     Format_manager is a function that activated format command on different type of files.
@@ -100,6 +101,7 @@ def format_manager(input: str = None,
     Returns:
         int 0 in case of success 1 otherwise
     """
+    prev_ver = prev_ver if prev_ver else 'demisto/master'
     supported_file_types = ['json', 'yml', 'py', 'md']
     use_git = use_git or not input
 
@@ -178,9 +180,17 @@ def get_files_to_format_from_git(supported_file_types, prev_ver, include_untrack
     for file_path in all_changed_files:
         str_file_path = str(file_path)
         for file_type in supported_file_types:
-            if str_file_path.endswith(file_type):
+            if str_file_path.endswith(file_type) and os.path.exists(str_file_path):
                 filtered_files.append(str_file_path)
                 break
+
+    if filtered_files:
+        detected_files_string = "\n".join(filtered_files)
+        click.secho(f'Found the following files:\n{detected_files_string}', fg='bright_cyan')
+
+    else:
+        click.secho('Did not find any files to format', fg='bright_red')
+        sys.exit(1)
 
     return filtered_files
 

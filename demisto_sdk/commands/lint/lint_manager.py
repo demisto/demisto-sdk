@@ -6,7 +6,6 @@ import os
 import re
 import sys
 import textwrap
-import timeit
 from typing import Any, Dict, List, Set
 
 # Third party packages
@@ -740,7 +739,6 @@ class LintManager:
         logger.info('Collecting results to write to file')
         # format all linters to JSON format -
         # if any additional linters are added, please add a formatting function here
-        start = timeit.default_timer()
         for check in self.linters_error_list:
             if check.get('linter') == 'flake8':
                 self.flake8_error_formatter(check, json_contents)
@@ -752,7 +750,6 @@ class LintManager:
                 self.vulture_error_formatter(check, json_contents)
             elif check.get('linter') == 'XSOAR_linter':
                 self.xsoar_linter_error_formatter(check, json_contents)
-        logger.info('total time aggreated linters: %f', timeit.default_timer() - start)
         with open(self.json_file_path, 'w+') as f:
             json.dump(json_contents, f, indent=4)
 

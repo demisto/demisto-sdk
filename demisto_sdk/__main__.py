@@ -143,8 +143,12 @@ def check_configuration_file(command, args):
     '-v', '--version', help='Get the demisto-sdk version.',
     is_flag=True, default=False, show_default=True
 )
+@click.option(
+    '-rn', '--release-notes', help='Get the release notes of the current demisto-sdk version.',
+    is_flag=True, default=False, show_default=True
+)
 @pass_config
-def main(config, version):
+def main(config, version, release_notes):
     config.configuration = Configuration()
     if not os.getenv('DEMISTO_SDK_SKIP_VERSION_CHECK') or version:  # If the key exists/called to version
         cur_version = get_distribution('demisto-sdk').version
@@ -153,6 +157,15 @@ def main(config, version):
         if last_release and cur_version != last_release:
             print_warning(f'however version {last_release} is available.\n'
                           f'You should consider upgrading via "pip3 install --upgrade demisto-sdk" command.')
+        if release_notes:
+            rn_entries = tools.get_release_note_entries(cur_version)
+
+            if not rn_entries:
+                print_warning('\nCould not get the release notes for this version.')
+            else:
+                print('The following are the release note entries for the current version:')
+                for rn in rn_entries:
+                    print(rn)
 
 
 # ====================== split-yml ====================== #

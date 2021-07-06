@@ -6,6 +6,7 @@
 * Added a playbook validation to check if a task sub playbook exists in the id set in the **validate** command.
 * Added the option to add new tags/usecases to the approved list and to the pack metadata on the same pull request.
 * Fixed an issue in **test_content** where when different servers ran tests for the same integration, the server URL parameters were not set correctly.
+* Fixed an issue where the release notes validation attempted to open a pack metadata file using an incorrect path.
 
 # 1.4.2
 * Added to `pylint` summary an indication if a test was skipped.

@@ -1,4 +1,5 @@
 # Changelog
+* Fixed an issue where **json-to-outputs** command returned an incorrect output when json is a list.
 * Fixed an issue where if a pack README.md did not exist it could cause an error in the validation process.
 * Fixed an issue where the *--name* was incorrectly required in the **init** command.
 * Adding the option to run **validate** on a specific path while using git (*-i* & *-g*).
@@ -6,6 +7,7 @@
 * Added a playbook validation to check if a task sub playbook exists in the id set in the **validate** command.
 * Added the option to add new tags/usecases to the approved list and to the pack metadata on the same pull request.
 * Fixed an issue in **test_content** where when different servers ran tests for the same integration, the server URL parameters were not set correctly.
+* Added a validation in the **validate** command to ensure that the ***endpoint*** command is configured correctly in yml file.
 * Fixed an issue where the release notes validation attempted to open a pack metadata file using an incorrect path.
 
 # 1.4.2

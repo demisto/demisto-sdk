@@ -291,7 +291,8 @@ class ReadMeValidator(BaseValidator):
             list: List of the errors found
         """
         error_list = []
-        should_print_error = not is_pack_readme  # pack readme errors are handled and printed during the pack unique files validation.
+        should_print_error = not is_pack_readme  # pack readme errors are handled and printed during the pack unique
+        # files validation.
         absolute_links = re.findall(
             r'(!\[.*\])\((https://.*)\)', self.readme_content,
             re.IGNORECASE)

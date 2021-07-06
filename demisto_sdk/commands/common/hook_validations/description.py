@@ -47,7 +47,8 @@ class DescriptionValidator(BaseValidator):
         contrib_details = re.findall(rf'### .* {CONTRIBUTOR_DETAILED_DESC}', description_content)
         if contrib_details:
             error_message, error_code = Errors.description_contains_contrib_details()
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
+            if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                 suggested_fix=Errors.suggest_fix(self.file_path)):
                 self._is_valid = False
                 return False
         return True

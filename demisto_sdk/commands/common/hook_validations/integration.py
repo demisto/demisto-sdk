@@ -39,7 +39,8 @@ class IntegrationValidator(ContentEntityValidator):
             return True
 
         error_message, error_code = Errors.wrong_version()
-        if self.handle_error(error_message, error_code, file_path=self.file_path):
+        if self.handle_error(error_message, error_code, file_path=self.file_path,
+                             suggested_fix=Errors.suggest_fix(self.file_path)):
             self.is_valid = False
             return False
 
@@ -240,8 +241,9 @@ class IntegrationValidator(ContentEntityValidator):
                         err_msgs.append(formatted_message)
 
         if err_msgs:
-            print_error('{} Received the following error for {} validation:\n{}'
-                        .format(self.file_path, param_name, '\n'.join(err_msgs)))
+            print_error('{} Received the following error for {} validation:\n{}\n {}\n'
+                        .format(self.file_path, param_name, '\n'.join(err_msgs),
+                                Errors.suggest_fix(file_path=self.file_path)))
             self.is_valid = False
             return False
         return True
@@ -871,7 +873,8 @@ class IntegrationValidator(ContentEntityValidator):
                 if param not in params:
                     error_message, error_code = Errors.parameter_missing_from_yml(param.get('name'),
                                                                                   yaml.dump(param))
-                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                         suggested_fix=Errors.suggest_fix(self.file_path)):
                         fetch_params_exist = False
 
         return fetch_params_exist
@@ -945,7 +948,8 @@ class IntegrationValidator(ContentEntityValidator):
                 param_structure = dict(equal_key_values, **contained_key_values, name=required_param.get('name'))
                 error_message, error_code = Errors.parameter_missing_for_feed(required_param.get('name'),
                                                                               yaml.dump(param_structure))
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                     suggested_fix=Errors.suggest_fix(self.file_path)):
                     params_exist = False
 
         return params_exist

@@ -160,6 +160,7 @@ ERROR_CODE = {
     "integration_version_not_match_playbook_version": {'code': "PB111", 'ui_applicable': False,
                                                        'related_field': 'toVersion'},
     "playbook_condition_has_no_else_path": {'code': "PB112", 'ui_applicable': False, 'related_field': 'nexttasks'},
+    "invalid_subplaybook_name": {'code': "PB113", 'ui_applicable': False, 'related_field': 'tasks'},
     "description_missing_in_beta_integration": {'code': "DS100", 'ui_applicable': False, 'related_field': ''},
     "no_beta_disclaimer_in_description": {'code': "DS101", 'ui_applicable': False, 'related_field': ''},
     "no_beta_disclaimer_in_yml": {'code': "DS102", 'ui_applicable': False, 'related_field': ''},
@@ -990,6 +991,15 @@ class Errors:
         return f"in task {pb_task} the script {script_entry_to_check} was not found in the id_set.json file. " \
                f"Please make sure:\n" \
                f"1 - The right script id is set and the spelling is correct.\n" \
+               f"2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
+               f" rerun the command."
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_subplaybook_name(playbook_entry_to_check, file_path):
+        return f"Sub-playbooks {playbook_entry_to_check} in {file_path} not found in the id_set.json file. " \
+               f"Please make sure:\n" \
+               f"1 - The right playbook name is set and the spelling is correct.\n" \
                f"2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
                f" rerun the command."
 

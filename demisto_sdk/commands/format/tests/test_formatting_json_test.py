@@ -173,13 +173,13 @@ class TestFormattingIncidentTypes:
         mocker.patch('demisto_sdk.commands.format.update_generic.get_dict_from_file',
                      return_value=(mock_dict, 'mock_type'))
         mock_func = mocker.patch('demisto_sdk.commands.format.update_incidenttype.click.prompt')
-        mock_func.side_effect = ['all', 'a', 'g', 'All']
+        mock_func.side_effect = ['all', 'a', 'g', 'Specific']
 
         formatter = IncidentTypesJSONFormat("test")
         formatter.format_auto_extract_mode()
         current_mode = formatter.data.get('extractSettings', {}).get('mode')
         assert mock_func.call_count == 4
-        assert current_mode == 'All'
+        assert current_mode == 'Specific'
 
     EXTRACTION_MODE_ALL_CONFLICT = [
         ('All', None),

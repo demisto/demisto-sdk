@@ -8,12 +8,29 @@ from demisto_sdk.commands.common.constants import (
     DELETED_JSON_FIELDS_BY_DEMISTO, DELETED_YML_FIELDS_BY_DEMISTO,
     INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
     INDICATOR_TYPES_DIR, INTEGRATIONS_DIR, LAYOUTS_DIR, PLAYBOOKS_DIR,
-    REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR)
+    REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR, FileType)
 from demisto_sdk.commands.common.tools import (get_child_files, get_json,
                                                get_yaml)
 from demisto_sdk.commands.download.downloader import Downloader
 from mock import patch
 from ruamel.yaml import YAML
+
+
+def mock_get_type(path: str, *args, **kwargs):
+    path_lower = path.lower()
+    if 'automation' in path_lower:
+        return FileType.SCRIPT
+    if 'integration-test_integration.yml' in path_lower:
+        return FileType.INTEGRATION
+    if 'layout-details-testlayout.json' in path_lower:
+        return FileType.LAYOUT
+    if 'playbook-dummy' in path_lower:
+        return FileType.PLAYBOOK
+    if 'DummyJSIntegration'.lower() in path_lower:
+        return FileType.INTEGRATION
+    if 'path':
+        return FileType.INTEGRATION
+    raise ValueError(f'You didn\'t mocked the path! {path}')
 
 
 def ordered(obj):
@@ -156,6 +173,10 @@ class Environment:
 
 
 class TestHelperMethods:
+    @pytest.fixture(autouse=True)
+    def mock_get_type(self, mocker):
+        mocker.patch.object(Downloader, '_find_type', side_effect=mock_get_type)
+
     @pytest.mark.parametrize('code_lang, file_type, file_name, err_msg, output', [
         ('javascript', 'integration', 'file name',
          'Downloading an integration written in JavaScript is not supported.', False),
@@ -218,6 +239,10 @@ class TestHelperMethods:
 
 
 class TestFlagHandlers:
+    @pytest.fixture(autouse=True)
+    def mock_get_type(self, mocker):
+        mocker.patch.object(Downloader, '_find_type', side_effect=mock_get_type)
+
     @pytest.mark.parametrize('lf, a, o, i, res, err', [
         (True, True, True, True, True, ''),
         (False, False, False, True, False, "Error: Missing option '-o' / '--output'."),
@@ -317,6 +342,10 @@ class TestBuildPackContent:
 
 
 class TestBuildCustomContent:
+    @pytest.fixture(autouse=True)
+    def mock_get_type(self, mocker):
+        mocker.patch.object(Downloader, '_find_type', side_effect=mock_get_type)
+
     def test_exist_in_pack_content(self, tmp_path):
         env = Environment(tmp_path)
         parameters = [
@@ -332,7 +361,8 @@ class TestBuildCustomContent:
             for param in parameters:
                 assert downloader.exist_in_pack_content(param['custom_content_object']) is param['exist_in_pack']
 
-    def test_build_custom_content_object(self, tmp_path):
+    def test_build_custom_content_object(self, tmp_path, mocker):
+        mocker.patch.object(Downloader, '_find_type', side_effect=mock_get_type)
         env = Environment(tmp_path)
         parameters = [
             {'path': env.CUSTOM_CONTENT_SCRIPT_PATH, 'output_custom_content_object': env.SCRIPT_CUSTOM_CONTENT_OBJECT},

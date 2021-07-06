@@ -1,5 +1,12 @@
 # Changelog
+* Fixed an issue where **json-to-outputs** command returned an incorrect output when json is a list.
 * Fixed an issue where if a pack README.md did not exist it could cause an error in the validation process.
+* Fixed an issue where the *--name* was incorrectly required in the **init** command.
+* Adding the option to run **validate** on a specific path while using git (*-i* & *-g*).
+* The **format** command will now change UUIDs in .yml and .json files to their respective content entity name.
+* Added a playbook validation to check if a task sub playbook exists in the id set in the **validate** command.
+* Added the option to add new tags/usecases to the approved list and to the pack metadata on the same pull request.
+* Fixed an issue in **test_content** where when different servers ran tests for the same integration, the server URL parameters were not set correctly.
 * Added an option to ignore secrets automatically when using the **init** command to create a pack
 
 # 1.4.2

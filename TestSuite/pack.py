@@ -368,7 +368,7 @@ class Pack:
 
     def create_object_type(self, name, content: dict = None) -> JSONBased:
         prefix = 'objecttype'
-        dir_path=self._object_types_path / name
+        dir_path = self._object_types_path / name
         dir_path.mkdir()
         object_type = self._create_json_based(name, prefix, content, dir_path=dir_path)
         self.object_types.append(object_type)

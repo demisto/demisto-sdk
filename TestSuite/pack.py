@@ -294,7 +294,7 @@ class Pack:
             name,
             content: dict = None
     ) -> JSONBased:
-        prefix = 'layoutcontainer'
+        prefix = 'layoutscontainer'
         layoutcontainer = self._create_json_based(name, prefix, content, dir_path=self._layout_path)
         self.layoutcontainers.append(layoutcontainer)
         return layoutcontainer

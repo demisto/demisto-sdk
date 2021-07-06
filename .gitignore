@@ -100,3 +100,4 @@ coverage_html_report
 # Unit Tests
 /demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md
 node_modules
+.DS_Store

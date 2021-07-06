@@ -1,3 +1,8 @@
+from distutils.version import LooseVersion
+
+from demisto_sdk.commands.common.constants import \
+    WIDGET_TYPE_METRICS_MIN_VERSION
+from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 
@@ -10,3 +15,40 @@ class WidgetValidator(ContentEntityValidator):
             True if version is valid, else False.
         """
         return self._is_valid_version()
+
+    def is_valid_file(self, validate_rn: bool = False):
+        """
+        Check whether the widget is valid or not.
+
+        Args:
+            validate_rn (bool): Whether to validate release notes (changelog) or not.
+
+        Returns:
+            bool: True if widget is valid, False otherwise.
+        """
+        answers = [
+            super().is_valid_file(validate_rn),
+            self._is_valid_fromversion(),
+        ]
+
+        return all(answers)
+
+    def _is_valid_fromversion(self):
+        """
+        Check whether the fromVersion field is valid.
+
+        Return:
+            bool: True if is valid, False otherwise.
+        """
+
+        widget_data_type = self.current_file.get('dataType', '')
+        widget_from_version = self.current_file.get('fromVersion', '')
+
+        if widget_data_type == 'metrics' and \
+                LooseVersion(widget_from_version) < LooseVersion(WIDGET_TYPE_METRICS_MIN_VERSION):
+
+            error_message, error_code = Errors.invalid_fromversion_for_type_metrics(self.file_path)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+
+        return True

@@ -121,6 +121,7 @@ ERROR_CODE = {
     "include_field_in_dashboard": {'code': "DA101", 'ui_applicable': False, 'related_field': ''},
     "remove_field_from_widget": {'code': "WD100", 'ui_applicable': False, 'related_field': ''},
     "include_field_in_widget": {'code': "WD101", 'ui_applicable': False, 'related_field': ''},
+    "invalid_fromversion_for_type_metrics": {'code': "WD102", 'ui_applicable': False, 'related_field': ''},
     "no_image_given": {'code': "IM100", 'ui_applicable': True, 'related_field': 'image'},
     "image_too_large": {'code': "IM101", 'ui_applicable': True, 'related_field': 'image'},
     "image_in_package_and_yml": {'code': "IM102", 'ui_applicable': False, 'related_field': 'image'},
@@ -794,6 +795,12 @@ class Errors:
     @error_code_decorator
     def include_field_in_widget(field, widget_name):
         return f'The field {field} needs to be included in the widget: {widget_name}. Please add it.'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_fromversion_for_type_metrics(file_path):
+        return f'The minimal fromVersion for widget with data type \'metrics\' is \'6.2.0\'.\n' \
+               f'You can run \'demisto-sdk format -i {file_path}\'.'
 
     @staticmethod
     @error_code_decorator

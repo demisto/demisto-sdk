@@ -24,6 +24,9 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    INDICATOR_FIELDS_DIR,
                                                    INDICATOR_TYPES_DIR,
                                                    LAYOUTS_DIR, MAPPERS_DIR,
+                                                   OBJECT_FIELD_DIR,
+                                                   OBJECT_MODULE_DIR,
+                                                   OBJECT_TYPE_DIR,
                                                    REPORTS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
                                                    WIDGETS_DIR, FileType)
@@ -35,11 +38,12 @@ from demisto_sdk.commands.unify.unifier import Unifier
 
 CONTENT_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
                     'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
-                    'Layouts', 'Reports', 'Widgets', 'Mappers', 'Packs']
+                    'Layouts', 'Reports', 'Widgets', 'Mappers', 'Packs', 'ObjectTypes',
+                    'ObjectFields', 'ObjectModules']
 
 ID_SET_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Classifiers',
                    'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
-                   'Layouts', 'Reports', 'Widgets', 'Mappers']
+                   'Layouts', 'Reports', 'Widgets', 'Mappers', 'ObjectTypes', 'ObjectFields', 'ObjectModules']
 
 BUILT_IN_FIELDS = [
     "name",
@@ -951,6 +955,29 @@ def process_indicator_types(file_path: str, print_logs: bool, all_integrations: 
     return res
 
 
+def process_object_fields(file_path: str, print_logs: bool, objects_types_list: list) -> list:
+    """
+    Process an object field JSON file
+    Args:
+        file_path: The file path from pbject field folder
+        print_logs: Whether to print logs to stdout.
+        objects_types_list: List of all the object types in the system.
+
+    Returns:
+        a list of object field data.
+    """
+    res = []
+    try:
+        if find_type(file_path) == FileType.OBJECT_FIELD:
+            if print_logs:
+                print(f'adding {file_path} to id_set')
+            res.append(get_object_field_data(file_path, objects_types_list))
+    except Exception as exp:  # noqa
+        print_error(f'failed to process {file_path}, Error: {str(exp)}')
+        raise
+    return res
+
+
 def process_general_items(file_path: str, print_logs: bool, expected_file_types: Tuple[FileType],
                           data_extraction_func: Callable) -> list:
     """
@@ -1076,8 +1103,122 @@ def get_general_paths(path, pack_to_create):
     files = list()
     for path in path_list:
         files.extend(glob.glob(os.path.join(*path)))
+    print_color(f"files: {files}", LOG_COLORS.WHITE)
 
     return files
+
+
+def get_object_entities_paths(path, pack_to_create):
+    """
+    get paths of objectTypes, objectFields
+
+    """
+    if pack_to_create:
+        path_list = [
+            [pack_to_create, path, '*', '*.json']
+        ]
+
+    else:
+        path_list = [
+            [path, '*'],
+            ['Packs', '*', path, '*', '*.json']
+        ]
+
+    files = list()
+    for path in path_list:
+        files.extend(glob.glob(os.path.join(*path)))
+    print_color(f"files: {files}", LOG_COLORS.WHITE)
+
+    return files
+
+
+def get_object_type_data(path):
+    json_data = get_json(path)
+
+    id_ = json_data.get('id')
+    name = json_data.get('name', '')
+    fromversion = json_data.get('fromVersion')
+    toversion = json_data.get('toVersion')
+    playbook_id = json_data.get('playbookId')
+    pack = get_pack_name(path)
+    definitionId = json_data.get('definitionId')
+    layout = json_data.get('layout')
+
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
+    if playbook_id and playbook_id != '':
+        data['playbooks'] = playbook_id
+
+    if definitionId:
+        data['definitionId'] = definitionId
+    if layout:
+        data['layout'] = layout
+    return {id_: data}
+
+
+def get_object_field_data(path, objects_types_list):
+    json_data = get_json(path)
+
+    id_ = json_data.get('id')
+    name = json_data.get('name', '')
+    fromversion = json_data.get('fromVersion')
+    toversion = json_data.get('toVersion')
+    pack = get_pack_name(path)
+    all_associated_types: set = set()
+    all_scripts = set()
+    definitionId = json_data.get('definitionId')
+
+    associated_types = json_data.get('associatedTypes')
+    if associated_types:
+        all_associated_types = set(associated_types)
+
+    system_associated_types = json_data.get('systemAssociatedTypes')
+    if system_associated_types:
+        all_associated_types = all_associated_types.union(set(system_associated_types))
+
+    if 'all' in all_associated_types:
+        all_associated_types = {list(object_type.keys())[0] for object_type in objects_types_list}
+
+    scripts = json_data.get('script')
+    if scripts:
+        all_scripts = {scripts}
+
+    field_calculations_scripts = json_data.get('fieldCalcScript')
+    if field_calculations_scripts:
+        all_scripts = all_scripts.union({field_calculations_scripts})
+
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
+
+    if all_associated_types:
+        data['object_types'] = list(all_associated_types)
+    if all_scripts:
+        data['scripts'] = list(all_scripts)
+    if object:
+        data['definitionId'] = definitionId
+
+    return {id_: data}
+
+
+def get_object_module_data(path):
+    json_data = get_json(path)
+    id_ = json_data.get('id')
+    name = json_data.get('name', '')
+    pack = get_pack_name(path)
+    fromversion = json_data.get('fromVersion')
+    toversion = json_data.get('toVersion')
+    definitions = json_data.get('definitions', [])
+    definitions = {definition.get('id'): definition.get('name') for definition in definitions}
+    views = json_data.get('views', [])
+    views = {view.get('name'): {
+        'title': view.get('title'),
+        'dashboards': [tab.get('dashboardId', '') for tab in view.get('tabs', [])]} for view in views}
+
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
+    if definitions:
+        data['definitions'] = list(definitions)
+    if views:
+        data['views'] = list(views)
+
+    return {id_: data}
 
 
 class IDSetType(Enum):
@@ -1096,6 +1237,7 @@ class IDSetType(Enum):
     INDICATOR_TYPE = 'IndicatorTypes'
     LAYOUTS = 'Layouts'
     PACKS = 'Packs'
+    OBJECT_TYPE = 'ObjectTypes'
 
     @classmethod
     def has_value(cls, value):
@@ -1243,6 +1385,9 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     reports_list = []
     widgets_list = []
     mappers_list = []
+    object_types_list = []
+    object_fields_list = []
+    object_modules_list = []
     packs_dict: Dict[str, Dict] = {}
 
     pool = Pool(processes=int(cpu_count()))
@@ -1433,6 +1578,45 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
 
         progress_bar.update(1)
 
+        if 'ObjectModules' in objects_to_create:
+            print_color("\nStarting iteration over Object Modules", LOG_COLORS.GREEN)
+            for arr in pool.map(partial(process_general_items,
+                                        print_logs=print_logs,
+                                        expected_file_types=(FileType.OBJECT_MODULE,),
+                                        data_extraction_func=get_object_module_data,
+                                        ),
+                                get_general_paths(OBJECT_MODULE_DIR, pack_to_create)):
+                object_modules_list.extend(arr)
+
+        progress_bar.update(1)
+
+        if 'ObjectTypes' in objects_to_create:
+            print_color("\nStarting iteration over Object Types", LOG_COLORS.GREEN)
+            print_color(f"pack to create: {pack_to_create}", LOG_COLORS.YELLOW)
+            for arr in pool.map(partial(process_general_items,
+                                        print_logs=print_logs,
+                                        expected_file_types=(FileType.OBJECT_TYPE,),
+                                        data_extraction_func=get_object_type_data,
+                                        ),
+                                get_object_entities_paths(OBJECT_TYPE_DIR, pack_to_create)):
+                object_types_list.extend(arr)
+
+        progress_bar.update(1)
+
+        # Has to be called after 'ObjectTypes' is called
+        if 'ObjectFields' in objects_to_create:
+            print_color("\nStarting iteration over Objects Fields", LOG_COLORS.GREEN)
+            for arr in pool.map(partial(process_object_fields,
+                                        print_logs=print_logs,
+                                        objects_types_list=object_types_list
+                                        ),
+                                get_object_entities_paths(OBJECT_FIELD_DIR, pack_to_create)):
+                object_fields_list.extend(arr)
+
+        progress_bar.update(1)
+
+
+
     new_ids_dict = OrderedDict()
     # we sort each time the whole set in case someone manually changed something
     # it shouldn't take too much time
@@ -1451,6 +1635,9 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     new_ids_dict['Widgets'] = sort(widgets_list)
     new_ids_dict['Mappers'] = sort(mappers_list)
     new_ids_dict['Packs'] = packs_dict
+    new_ids_dict['ObjectTypes'] = sort(object_types_list)
+    new_ids_dict['ObjectFields'] = sort(object_fields_list)
+    new_ids_dict['ObjectModules'] = sort(object_modules_list)
 
     exec_time = time.time() - start_time
     print_color("Finished the creation of the id_set. Total time: {} seconds".format(exec_time), LOG_COLORS.GREEN)

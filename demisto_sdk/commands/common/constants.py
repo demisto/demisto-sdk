@@ -32,6 +32,9 @@ RELEASE_NOTES_DIR = 'ReleaseNotes'
 TESTS_DIR = 'Tests'
 DOC_FILES_DIR = 'doc_files'
 DOCUMENTATION_DIR = 'Documentation'
+OBJECT_MODULE_DIR = 'ObjectModules'
+OBJECT_TYPE_DIR = 'ObjectTypes'
+OBJECT_FIELD_DIR = 'ObjectFields'
 
 SCRIPT = 'script'
 AUTOMATION = 'automation'
@@ -94,6 +97,9 @@ class FileType(Enum):
     LANDING_PAGE_SECTIONS_JSON = 'landingPage_sections.json'
     CONTRIBUTORS = 'contributors'
     XSOAR_CONFIG = 'xsoar_config'
+    OBJECT_TYPE = 'ObjectType'
+    OBJECT_FIELD = 'ObjectField'
+    OBJECT_MODULE = 'ObjectModules'
 
 
 RN_HEADER_BY_FILE_TYPE = {

@@ -798,9 +798,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_fromversion_for_type_metrics(file_path):
-        return f'The minimal fromVersion for widget with data type \'metrics\' is \'6.2.0\'.\n' \
-               f'You can run \'demisto-sdk format -i {file_path}\'.'
+    def invalid_fromversion_for_type_metrics():
+        return f'The minimal fromVersion for widget with data type \'metrics\' is \'6.2.0\'.\n'
 
     @staticmethod
     @error_code_decorator

@@ -24,6 +24,16 @@ def mock_structure(file_path=None, current_file=None, old_file=None, quite_bc=Fa
                                                   ({'dataType': 'metrics', 'fromVersion': '5.5.0'}, False),
                                                   ({'dataType': 'incidents', 'fromVersion': '6.2.0'}, True)])
 def test_is_valid_fromversion(current_file, answer):
+    """
+    Given:
+        A widget validator with dataType and fromVersion fields.
+
+    When:
+        Running is_valid_fromversion.
+
+    Then:
+        Ensure that the answer as expected.
+    """
     structure = mock_structure()
     widget_validator = WidgetValidator(structure)
 

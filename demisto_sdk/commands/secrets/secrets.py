@@ -295,7 +295,7 @@ class SecretsValidator(object):
         dates = re.findall(DATES_REGEX, line)
         if dates:
             false_positives += [date[0].lower() for date in dates]
-        # UUID REGEX
+        # UUID REGEX - for false positives
         uuids = re.findall(UUID_REGEX, line)
         if uuids:
             false_positives += uuids

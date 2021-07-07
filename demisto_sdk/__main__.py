@@ -910,7 +910,7 @@ def generate_test_playbook(**kwargs):
     '-h', '--help'
 )
 @click.option(
-    "-n", "--name", help="The name of the directory and file you want to create", required=True)
+    "-n", "--name", help="The name of the directory and file you want to create")
 @click.option(
     "--id", help="The id used in the yml file of the integration or script"
 )
@@ -1688,7 +1688,7 @@ def error_code(config, **kwargs):
     sys.exit(result)
 
 
-@main.resultcallback()
+@main.result_callback()
 def exit_from_program(result=0, **kwargs):
     sys.exit(result)
 
@@ -1696,4 +1696,4 @@ def exit_from_program(result=0, **kwargs):
 
 
 if __name__ == '__main__':
-    sys.exit(main())
+    main()

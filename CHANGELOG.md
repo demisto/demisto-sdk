@@ -1,5 +1,5 @@
 # Changelog
-* Fixed the **find-dependencies** by packs with integrations that implement 'send-notification' command
+* Fixed an issue where **find-dependencies** command on packs with playbooks that use generic commands (**send-notification**, **send-mail**, etc.) returned incorrect dependencies
 
 # 1.4.3
 * Fixed an issue where **json-to-outputs** command returned an incorrect output when json is a list.

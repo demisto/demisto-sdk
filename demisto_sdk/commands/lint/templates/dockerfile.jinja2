@@ -14,6 +14,7 @@ RUN chmod -R 775 /devwork
 RUN printf "{{ pypi_packs | join('\\n') }}" > /devwork/test-requirements.txt
 RUN OS_RELEASE=$(cat /etc/os-release); if echo "$OS_RELEASE" | grep -q "alpine"; \
 then apk add --no-cache --virtual .build-deps python3-dev gcc build-base; fi; \
+pip install --upgrade --no-cache-dir pip; \
 pip install --no-cache-dir -r /devwork/test-requirements.txt; \
 if echo "$OS_RELEASE" | grep -q "alpine"; then apk del .build-deps; fi;
 {# Container entry point (Every command will start with /bin/sh) #}

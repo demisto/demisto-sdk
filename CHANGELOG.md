@@ -1,9 +1,19 @@
 # Changelog
+
+# 1.4.3
+* Fixed an issue where **json-to-outputs** command returned an incorrect output when json is a list.
 * Fixed an issue where if a pack README.md did not exist it could cause an error in the validation process.
 * Fixed an issue where the *--name* was incorrectly required in the **init** command.
 * Adding the option to run **validate** on a specific path while using git (*-i* & *-g*).
 * The **format** command will now change UUIDs in .yml and .json files to their respective content entity name.
 * Added a playbook validation to check if a task sub playbook exists in the id set in the **validate** command.
+* Added the option to add new tags/usecases to the approved list and to the pack metadata on the same pull request.
+* Fixed an issue in **test_content** where when different servers ran tests for the same integration, the server URL parameters were not set correctly.
+* Added a validation in the **validate** command to ensure that the ***endpoint*** command is configured correctly in yml file.
+* Added a warning when pack_metadata's description field is longer than 130 characters.
+* Fixed an issue where a redundant print occurred on release notes validation.
+* Added new validation in the **validate** command to ensure that the minimal fromVersion in a widget of type metrics will be 6.2.0.
+* Added the *--release-notes* flag to demisto-sdk to get the current version release notes entries.
 
 # 1.4.2
 * Added to `pylint` summary an indication if a test was skipped.
@@ -784,35 +794,28 @@ reate-id-set* flag in the *validate* command did not work while not using git.
 * Added **json-to-outputs** command which generates the yaml section for outputs from an API raw response.
 
 # 0.2.6
-
 * Fixed an issue with locating release notes for beta integrations in **validate**.
 
 # 0.2.5
-
 * Fixed an issue with locating release notes for beta integrations in **validate**.
 
 # 0.2.4
-
 * Adding image validation to Beta_Integration and Packs in **validate**.
 
 # 0.2.3
-
 * Adding Beta_Integration to the structure validation process.
 * Fixing bug where **validate** did checks on TestPlaybooks.
 * Added requirements parameter to **lint**.
 
 # 0.2.2
-
 * Fixing bug where **lint** did not return exit code 1 on failure.
 * Fixing bug where **validate** did not print error message in case no release notes were give.
 
 # 0.2.1
-
 * **Validate** now checks that the id and name fields are identical in yml files.
 * Fixed a bug where sdk did not return any exit code.
 
 # 0.2.0
-
 * Added Release Notes Validator.
 * Fixed the Unifier selection of your python file to use as the code.
 * **Validate** now supports Indicator fields.
@@ -820,7 +823,6 @@ reate-id-set* flag in the *validate* command did not work while not using git.
 * **Validate** now runs on newly added scripts.
 
 # 0.1.8
-
 * Added support for `--version`.
 * Fixed an issue in file_validator when calling `checked_type` method with script regex.
 
@@ -831,13 +833,11 @@ reate-id-set* flag in the *validate* command did not work while not using git.
 * Added lint and unit test run.
 
 # 0.1.1
-
 * Added new logic to the unifier.
 * Added detailed README.
 * Some small adjustments and fixes.
 
 # 0.1.0
-
 Capabilities:
 * **Extract** components(code, image, description etc.) from a Demisto YAML file into a directory.
 * **Unify** components(code, image, description etc.) to a single Demisto YAML file.

@@ -1643,7 +1643,7 @@ def error_code(config, **kwargs):
     sys.exit(result)
 
 
-@main.resultcallback()
+@main.result_callback()
 def exit_from_program(result=0, **kwargs):
     sys.exit(result)
 
@@ -1652,4 +1652,4 @@ def exit_from_program(result=0, **kwargs):
 
 
 if __name__ == '__main__':
-    sys.exit(main())
+    main()

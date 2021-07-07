@@ -23,7 +23,7 @@ from demisto_sdk.commands.common.tools import (filter_files_by_type,
                                                filter_files_on_pack, find_type,
                                                get_last_remote_release_version,
                                                get_pack_name, print_error,
-                                               print_warning)
+                                               print_warning, get_release_note_entries)
 from demisto_sdk.commands.common.update_id_set import merge_id_sets_from_files
 from demisto_sdk.commands.convert.convert_manager import ConvertManager
 from demisto_sdk.commands.create_artifacts.content_artifacts_creator import \
@@ -158,14 +158,15 @@ def main(config, version, release_notes):
             print_warning(f'however version {last_release} is available.\n'
                           f'You should consider upgrading via "pip3 install --upgrade demisto-sdk" command.')
         if release_notes:
-            rn_entries = tools.get_release_note_entries(cur_version)
+            rn_entries = get_release_note_entries(cur_version)
 
             if not rn_entries:
                 print_warning('\nCould not get the release notes for this version.')
             else:
-                print('The following are the release note entries for the current version:')
+                click.echo('\nThe following are the release note entries for the current version:\n')
                 for rn in rn_entries:
-                    print(rn)
+                    click.echo(rn)
+                click.echo('')
 
 
 # ====================== split-yml ====================== #

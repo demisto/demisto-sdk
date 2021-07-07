@@ -1,10 +1,10 @@
 ## unify-packs
 
-unify content packs to uploadable zip file.
+zip content packs to uploadable zip file.
 
 **Use Cases**:
-This command is used in order to create a zip file, able to be uploaded to Demisto via the
-"Upload pack" button in Demisto's marketplace or directly with the -u flag in this command.
+This command is used in order to create a zip file, able to be uploaded to Cortex XSOAR via the
+"Upload pack" button in Cortex XSOAR's marketplace or directly with the -u flag in this command.
 
 **Arguments**:
 * **-i, --input**
@@ -23,5 +23,5 @@ This command is used in order to create a zip file, able to be uploaded to Demis
 This will unify the "Campaign" pack into Campaign.zip file in the "DestinationDir" directory.
 
 `demisto-sdk unify-packs -i Campaign -o "DestinationDir" -u`
-This will unify the "Campaign" pack into Campaign.zip file in the "DestinationDir" directory
-and will upload the created Campaign.zip to the marketplace.
+This will unify the "Campaign" pack into uploadable_packs.zip file in the "DestinationDir" directory
+and will upload the created uploadable_packs.zip to the marketplace.

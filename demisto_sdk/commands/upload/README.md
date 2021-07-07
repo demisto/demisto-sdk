@@ -38,9 +38,13 @@ Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up.
     4. Valid file that can be imported to Cortex XSOAR manually For example a playbook: HelloWorld.yml
     5. Path to zipped pack (may located outside the Content directory)
 
-* **-u, --unify**
+* **-z, --zip**
 
-    in case a pack was passed in the -i argument - unify the pack before upload
+    in case a pack was passed in the -i argument - zip the pack before upload
+
+* **--keep-zip-in <DIRECTORY_FOR_THE_ZIP>**
+
+    in case a pack was passed in the -i argument and -z is used, DIRECTORY_FOR_THE_ZIP is where to store the zip after creation.
 
 * **--insecure**
 
@@ -73,14 +77,19 @@ demisto-sdk upload -i Packs/HelloWorld
 This will iterate over **all content entities** under the pack `HelloWorld` and will and in turn will upload each entity to the Cortex XSOAR instance.
 <br/><br/>
 ```
-demisto-sdk upload -i Packs/HelloWorld -u
+demisto-sdk upload -i Packs/HelloWorld -z
 ```
-This will unify the pack `HelloWorld` and will upload the unified `uploadable_packs.zip` to the Cortex XSOAR instance.
+This will zip the pack `HelloWorld` and will upload the zip file `uploadable_packs.zip` to the Cortex XSOAR instance.
+<br/><br/>
+```
+demisto-sdk upload -i Packs/HelloWorld -z --keep-zip-in some/directory
+```
+This will zip the pack `HelloWorld` in `some/directory/uploadable_packs.zip` directory and will upload the zip file to the Cortex XSOAR instance.
 <br/><br/>
 ```
 demisto-sdk upload -i path/to/HelloWorld.zip
 ```
-This will upload the compiled `HelloWorld.zip` to the Cortex XSOAR instance.
+This will upload the zipped pack `HelloWorld.zip` to the Cortex XSOAR instance.
 <br/><br/>
 ```
 demisto-sdk upload -i Integrations/GoogleCloudTranslate/integration-GoogleCloudTranslate.yml --insecure

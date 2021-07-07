@@ -369,7 +369,7 @@ class Downloader:
         For example: integration-HelloWorld.yml downloaded from Demisto.
         """
         file_data, file_ending = get_dict_from_file(file_path)  # For example: yml, for integration files
-        file_type = find_type(path=file_path, _dict=file_data, file_type=file_ending)  # For example: integration
+        file_type = find_type(path=file_path)  # For example: integration
         if file_type:
             file_type = file_type.value
 

@@ -965,7 +965,6 @@ def get_dict_from_file(path: str, use_ryaml: bool = False) -> Tuple[Dict, Union[
     return {}, None
 
 
-@lru_cache()
 def find_type_by_path(path: str = '') -> Optional[FileType]:
     """Find docstring by file path only
     This function is here as we want to implement lru_cache and we can do it on `find_type`
@@ -1010,10 +1009,87 @@ def find_type_by_path(path: str = '') -> Optional[FileType]:
 
     return None
 
-# flake8: noqa: C901
+def find_file_by_content(path: str, ignore_sub_categories = False) -> Optional[FileType]:
+    """Find file type by it contents. Will open up the file (yml/json) and try to guess its type.
 
+    Args:
+        path (str): A path to check
+        ignore_sub_categories (bool, optional): Should ifnore sub dependencies. Defaults to False.
 
-def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignore_sub_categories: bool = False):
+    Returns:
+        Optional[FileType]: The file type if found.
+    """
+    file_data, file_ext = get_dict_from_file(path)
+    if file_ext == 'yml':
+        if 'category' in file_data:
+            if file_data.get('beta') and not ignore_sub_categories:
+                return FileType.BETA_INTEGRATION
+
+            return FileType.INTEGRATION
+
+        if 'script' in file_data:
+            if TEST_PLAYBOOKS_DIR in path and not ignore_sub_categories:
+                return FileType.TEST_SCRIPT
+
+            return FileType.SCRIPT
+
+        if 'tasks' in file_data:
+            if TEST_PLAYBOOKS_DIR in path:
+                return FileType.TEST_PLAYBOOK
+
+            return FileType.PLAYBOOK
+
+    if file_ext == 'json':
+        if 'widgetType' in file_data:
+            return FileType.WIDGET
+
+        if 'orientation' in file_data:
+            return FileType.REPORT
+
+        if 'color' in file_data and 'cliName' not in file_data:  # check against another key to make it more robust
+            return FileType.INCIDENT_TYPE
+
+        # 'regex' key can be found in new reputations files while 'reputations' key is for the old reputations
+        # located in reputations.json file.
+        if 'regex' in file_data or 'reputations' in file_data:
+            return FileType.REPUTATION
+
+        if 'brandName' in file_data and 'transformer' in file_data:
+            return FileType.OLD_CLASSIFIER
+
+        if ('transformer' in file_data and 'keyTypeMap' in file_data) or 'mapping' in file_data:
+            if file_data.get('type') and file_data.get('type') == 'classification':
+                return FileType.CLASSIFIER
+            elif file_data.get('type') and 'mapping' in file_data.get('type'):
+                return FileType.MAPPER
+            return None
+
+        if 'canvasContextConnections' in file_data:
+            return FileType.CONNECTION
+
+        if 'layout' in file_data or 'kind' in file_data:
+            if 'kind' in file_data or 'typeId' in file_data:
+                return FileType.LAYOUT
+
+            return FileType.DASHBOARD
+
+        if 'group' in file_data and LAYOUT_CONTAINER_FIELDS.intersection(file_data):
+            return FileType.LAYOUTS_CONTAINER
+
+        # When using it for all files validation- sometimes 'id' can be integer
+        if 'id' in file_data:
+            if isinstance(file_data['id'], str):
+                _id = file_data['id'].lower()
+                if _id.startswith('incident'):
+                    return FileType.INCIDENT_FIELD
+                if _id.startswith('indicator'):
+                    return FileType.INDICATOR_FIELD
+            else:
+                print(f'The file {path} could not be recognized, please update the "id" to be a string')
+        return None
+
+@lru_cache()
+def find_type(path: str = '', ignore_sub_categories: bool = False):
     """
     returns the content file type
 
@@ -1026,82 +1102,15 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
     type_by_path = find_type_by_path(path)
     if type_by_path:
         return type_by_path
+
     try:
-        if not _dict and not file_type:
-            _dict, file_type = get_dict_from_file(path)
+        _dict, file_type = get_dict_from_file(path)
 
     except FileNotFoundError:
         # unable to find the file - hence can't identify it
         return None
 
-    if file_type == 'yml':
-        if 'category' in _dict:
-            if _dict.get('beta') and not ignore_sub_categories:
-                return FileType.BETA_INTEGRATION
-
-            return FileType.INTEGRATION
-
-        if 'script' in _dict:
-            if TEST_PLAYBOOKS_DIR in path and not ignore_sub_categories:
-                return FileType.TEST_SCRIPT
-
-            return FileType.SCRIPT
-
-        if 'tasks' in _dict:
-            if TEST_PLAYBOOKS_DIR in path:
-                return FileType.TEST_PLAYBOOK
-
-            return FileType.PLAYBOOK
-
-    if file_type == 'json':
-        if 'widgetType' in _dict:
-            return FileType.WIDGET
-
-        if 'orientation' in _dict:
-            return FileType.REPORT
-
-        if 'color' in _dict and 'cliName' not in _dict:  # check against another key to make it more robust
-            return FileType.INCIDENT_TYPE
-
-        # 'regex' key can be found in new reputations files while 'reputations' key is for the old reputations
-        # located in reputations.json file.
-        if 'regex' in _dict or 'reputations' in _dict:
-            return FileType.REPUTATION
-
-        if 'brandName' in _dict and 'transformer' in _dict:
-            return FileType.OLD_CLASSIFIER
-
-        if ('transformer' in _dict and 'keyTypeMap' in _dict) or 'mapping' in _dict:
-            if _dict.get('type') and _dict.get('type') == 'classification':
-                return FileType.CLASSIFIER
-            elif _dict.get('type') and 'mapping' in _dict.get('type'):
-                return FileType.MAPPER
-            return None
-
-        if 'canvasContextConnections' in _dict:
-            return FileType.CONNECTION
-
-        if 'layout' in _dict or 'kind' in _dict:
-            if 'kind' in _dict or 'typeId' in _dict:
-                return FileType.LAYOUT
-
-            return FileType.DASHBOARD
-
-        if 'group' in _dict and LAYOUT_CONTAINER_FIELDS.intersection(_dict):
-            return FileType.LAYOUTS_CONTAINER
-
-        # When using it for all files validation- sometimes 'id' can be integer
-        if 'id' in _dict:
-            if isinstance(_dict['id'], str):
-                _id = _dict['id'].lower()
-                if _id.startswith('incident'):
-                    return FileType.INCIDENT_FIELD
-                if _id.startswith('indicator'):
-                    return FileType.INDICATOR_FIELD
-            else:
-                print(f'The file {path} could not be recognized, please update the "id" to be a string')
-
-    return None
+    return find_file_by_content(path, ignore_sub_categories)
 
 
 def get_common_server_path(env_dir):

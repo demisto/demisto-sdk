@@ -9,7 +9,7 @@ import sys
 from configparser import ConfigParser, MissingSectionHeaderError
 from distutils.version import LooseVersion
 from enum import Enum
-from functools import partial
+from functools import lru_cache, partial
 from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from typing import Callable, Dict, List, Match, Optional, Tuple, Type, Union
@@ -965,16 +965,17 @@ def get_dict_from_file(path: str, use_ryaml: bool = False) -> Tuple[Dict, Union[
     return {}, None
 
 
-# flake8: noqa: C901
-def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignore_sub_categories: bool = False):
-    """
-    returns the content file type
+@lru_cache()
+def find_type_by_path(path: str = '') -> Optional[FileType]:
+    """Find docstring by file path only
+    This function is here as we want to implement lru_cache and we can do it on `find_type`
+    as dict is not hashable.
 
-    Arguments:
-        path - a path to the file
+    Args:
+        path: Path to find its file type. Defaults to ''.
 
     Returns:
-        string representing the content file type
+        FileType: The file type if found. else None;
     """
     if path.endswith('.md'):
         if 'README' in path:
@@ -987,7 +988,6 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
             return FileType.DESCRIPTION
 
         return FileType.CHANGELOG
-
     # integration image
     if path.endswith('_image.png') and not path.endswith("Author_image.png"):
         return FileType.IMAGE
@@ -1008,6 +1008,24 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
     if path.endswith(XSOAR_CONFIG_FILE):
         return FileType.XSOAR_CONFIG
 
+    return None
+
+# flake8: noqa: C901
+
+
+def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignore_sub_categories: bool = False):
+    """
+    returns the content file type
+
+    Arguments:
+        path - a path to the file
+
+    Returns:
+        string representing the content file type
+    """
+    type_by_path = find_type_by_path(path)
+    if type_by_path:
+        return type_by_path
     try:
         if not _dict and not file_type:
             _dict, file_type = get_dict_from_file(path)
@@ -1639,6 +1657,7 @@ def find_file(root_path, file_name):
     return ''
 
 
+@lru_cache()
 def get_file_displayed_name(file_path):
     """Gets the file name that is displayed in the UI by the file's path.
     If there is no displayed name - returns the file name"""

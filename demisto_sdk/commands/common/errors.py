@@ -219,6 +219,7 @@ ERROR_CODE = {
     "is_wrong_usage_of_usecase_tag": {'code': "PA123", 'ui_applicable': False, 'related_field': ''},
     "invalid_core_pack_dependencies": {'code': "PA124", 'ui_applicable': True, 'related_field': ''},
     "pack_name_is_not_in_xsoar_standards": {'code': "PA125", 'ui_applicable': False, 'related_field': ''},
+    "pack_metadata_long_description": {'code': "PA126", 'ui_applicable': False, 'related_field': ''},
     "readme_error": {'code': "RM100", 'ui_applicable': False, 'related_field': ''},
     "image_path_error": {'code': "RM101", 'ui_applicable': False, 'related_field': ''},
     "readme_missing_output_context": {'code': "RM102", 'ui_applicable': False, 'related_field': ''},
@@ -1327,6 +1328,12 @@ class Errors:
         if reason == "wrong_word":
             return f'Pack metadata {PACK_METADATA_NAME} field is not valid. The pack name must not contain the words:' \
                    f' ["Pack", "Playbook", "Integration", "Script"]'
+
+    @staticmethod
+    @error_code_decorator
+    def pack_metadata_long_description():
+        return "The description field of the pack_metadata.json file is longer than 130 characters." \
+               " Consider modifying it."
 
     @staticmethod
     @error_code_decorator

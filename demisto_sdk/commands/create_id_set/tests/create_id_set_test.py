@@ -191,16 +191,15 @@ def setup_id_set():
 
 def test_create_command_to_implemented_integration_map(repo):
     """
-
     Given
-        - a list of integrations
+    - a list of integrations
 
     When
-        - create_command_to_implemented_integration_map is called
+    - create_command_to_implemented_integration_map is called
 
     Then
-        - Validates that a dictionary between command name and list of all integration that implement this command
-        was returned.
+    - Validates that a dictionary between command name and list of all integration that implement this command
+      was returned.
 
     """
     expected_output_map = {'test-command': ['Integration1', 'Integration2'],
@@ -216,16 +215,15 @@ class TestAddCommandToImplementingIntegrationsMapping:
     @staticmethod
     def test_add_command_to_implementing_integrations_mapping(repo):
         """
-
         Given
-            - an id_set file includes integrations and playbooks
+        - an id_set file includes integrations and playbooks
 
         When
-            - modify_id_set_command_to_integration_of_playbook is called
+        - modify_id_set_command_to_integration_of_playbook is called
 
         Then
-            - Validates that each command_to_integration in playbook is a dictionary between command name and list of all
-            integration that implement this command.
+        - Validates that each command_to_integration in playbook is a dictionary between command name and list of all
+          integration that implement this command.
 
         """
         id_set_creator = setup_id_set()
@@ -243,11 +241,15 @@ class TestAddCommandToImplementingIntegrationsMapping:
     @staticmethod
     def test_do_not_modify_specific_brand(repo):
         """
-        Given:
+        Given
+        - playbook with a command using a specific brand
+        - playbook with a command using a specific brand
 
-        When:
+        When
+        - updating the commands_to_integrations fields in playbooks
 
-        Then:
+        Then
+        - only update commands that don't have a specific brand
 
         """
         integrations = [

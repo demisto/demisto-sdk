@@ -943,6 +943,14 @@ def test_generate_versions_differences_section(monkeypatch):
 
 
 def test_disable_md_autolinks():
+    """
+        Given
+            - Markdown with http link.
+        When
+            - Run disable_md_autolinks.
+        Then
+            - Make sure non-md links are escaped. MD links should remain in place.
+    """
     assert disable_md_autolinks('http://test.com') == 'http:<span>//</span>test.com'
     no_replace_str = '(link)[http://test.com]'
     assert disable_md_autolinks(no_replace_str) == no_replace_str

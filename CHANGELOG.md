@@ -1,4 +1,6 @@
 # Changelog
+
+# 1.4.3
 * Fixed an issue where **json-to-outputs** command returned an incorrect output when json is a list.
 * Fixed an issue where if a pack README.md did not exist it could cause an error in the validation process.
 * Fixed an issue where the *--name* was incorrectly required in the **init** command.

@@ -2,6 +2,7 @@ import json
 import os
 from collections import OrderedDict
 from genericpath import exists
+from typing import Optional
 
 from demisto_sdk.commands.common.constants import DEFAULT_ID_SET_PATH
 from demisto_sdk.commands.common.update_id_set import re_create_id_set
@@ -9,7 +10,8 @@ from demisto_sdk.commands.common.update_id_set import re_create_id_set
 
 class IDSetCreator:
 
-    def __init__(self, output: str = '', input: str = '', print_logs: bool = True, fail_duplicates: bool = False):
+    def __init__(self, output: Optional[str] = '', input: str = '', print_logs: bool = True,
+                 fail_duplicates: bool = False):
         """IDSetCreator
 
         Args:

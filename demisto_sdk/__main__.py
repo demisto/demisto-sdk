@@ -22,8 +22,9 @@ from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.common.tools import (filter_files_by_type,
                                                filter_files_on_pack, find_type,
                                                get_last_remote_release_version,
-                                               get_pack_name, print_error,
-                                               print_warning, get_release_note_entries)
+                                               get_pack_name,
+                                               get_release_note_entries,
+                                               print_error, print_warning)
 from demisto_sdk.commands.common.update_id_set import merge_id_sets_from_files
 from demisto_sdk.commands.convert.convert_manager import ConvertManager
 from demisto_sdk.commands.create_artifacts.content_artifacts_creator import \

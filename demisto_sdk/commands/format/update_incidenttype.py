@@ -61,7 +61,7 @@ class IncidentTypesJSONFormat(BaseUpdateJSON):
                         '- "Specific" - To extract only the specific indicator types set in the auto-extraction '
                         'settings.')
 
-                if user_input == 'All' and self.data['extractSettings']['fieldCliNameToExtractSettings']:
+                if user_input == 'All' and auto_extract_settings['fieldCliNameToExtractSettings']:
                     click.secho('Cannot set mode to "All" since there are specific types under the '
                                 'fieldCliNameToExtractSettings, '
                                 'If you want the mode to be "All" you should delete them manually and run this '

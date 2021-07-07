@@ -1876,6 +1876,33 @@ def is_uuid(s: str) -> Optional[Match]:
     return re.match(UUID_REGEX, s)
 
 
+def get_release_note_entries(version='') -> list:
+    """
+    Gets the release notes entries for the current version.
+
+    Args:
+        version: The current demisto-sdk version.
+
+    Return:
+        list: A list of the release notes given from the CHANGELOG file.
+    """
+
+    changelog_file_content = get_remote_file(full_file_path='CHANGELOG.md',
+                                             return_content=True,
+                                             github_repo='demisto/demisto-sdk').decode('utf-8').split('\n')
+
+    if not version or 'dev' in version:
+        version = 'Changelog'
+
+    if f'# {version}' not in changelog_file_content:
+        return []
+
+    result = changelog_file_content[changelog_file_content.index(f'# {version}') + 1:]
+    result = result[:result.index('')]
+
+    return result
+
+
 def get_current_usecases() -> list:
     """Gets approved list of usecases from current branch
 

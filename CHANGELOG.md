@@ -1,4 +1,5 @@
 # Changelog
+* When formatting incident types with Auto-Extract rules and without mode field, the **format** command will now add the user selected mode.
 
 # 1.4.3
 * Fixed an issue where **json-to-outputs** command returned an incorrect output when json is a list.
@@ -14,8 +15,6 @@
 * Fixed an issue where a redundant print occurred on release notes validation.
 * Added new validation in the **validate** command to ensure that the minimal fromVersion in a widget of type metrics will be 6.2.0.
 * Added the *--release-notes* flag to demisto-sdk to get the current version release notes entries.
-* When formatting incident types with Auto-Extract rules and without mode field, the **format** command will now add the user selected mode.
-
 
 # 1.4.2
 * Added to `pylint` summary an indication if a test was skipped.

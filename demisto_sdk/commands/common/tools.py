@@ -1,4 +1,5 @@
 import argparse
+from demisto_sdk.commands.format.format_module import logger
 import glob
 import io
 import json
@@ -1019,7 +1020,12 @@ def find_file_by_content(path: str, ignore_sub_categories = False) -> Optional[F
     Returns:
         Optional[FileType]: The file type if found.
     """
-    file_data, file_ext = get_dict_from_file(path)
+    try:
+        file_data, file_ext = get_dict_from_file(path)
+    except FileNotFoundError:
+        # unable to find the file - hence can't identify it
+        return None
+    
     if file_ext == 'yml':
         if 'category' in file_data:
             if file_data.get('beta') and not ignore_sub_categories:
@@ -1102,13 +1108,6 @@ def find_type(path: str = '', ignore_sub_categories: bool = False):
     type_by_path = find_type_by_path(path)
     if type_by_path:
         return type_by_path
-
-    try:
-        _dict, file_type = get_dict_from_file(path)
-
-    except FileNotFoundError:
-        # unable to find the file - hence can't identify it
-        return None
 
     return find_file_by_content(path, ignore_sub_categories)
 

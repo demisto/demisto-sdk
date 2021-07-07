@@ -10,6 +10,7 @@
 * Added a validation in the **validate** command to ensure that the ***endpoint*** command is configured correctly in yml file.
 * Added a warning when pack_metadata's description field is longer than 130 characters.
 * Fixed an issue where a redundant print occurred on release notes validation.
+* Added new validation in the **validate** command to ensure that the minimal fromVersion in a widget of type metrics will be 6.2.0.
 
 # 1.4.2
 * Added to `pylint` summary an indication if a test was skipped.

@@ -7,6 +7,9 @@
 * Added a playbook validation to check if a task sub playbook exists in the id set in the **validate** command.
 * Added the option to add new tags/usecases to the approved list and to the pack metadata on the same pull request.
 * Fixed an issue in **test_content** where when different servers ran tests for the same integration, the server URL parameters were not set correctly.
+* Added a validation in the **validate** command to ensure that the ***endpoint*** command is configured correctly in yml file.
+* Added a warning when pack_metadata's description field is longer than 130 characters.
+* Fixed an issue where a redundant print occurred on release notes validation.
 * When formatting incident types with Auto-Extract rules and without mode field, the **format** command will now add the user selected mode.
 
 # 1.4.2

@@ -77,6 +77,7 @@ class IntegrationGeneratorArg:
                  ref=None,
                  in_object: Optional[List[str]] = None):
         self.name = name
+        self.arg_name = name.lower()
         self.description = description
         self.required = required
         self.is_array = is_array
@@ -231,7 +232,7 @@ class IntegrationGeneratorConfig:
         for arg in command.arguments:
             arguments_found = True
             code_arg_name = arg.name
-            ref_arg_name = arg.name
+            ref_arg_name = arg.name.lower()
             if arg.ref:
                 ref_arg_name = f'{arg.ref}_{ref_arg_name}'.lower()
                 code_arg_name = f'{arg.ref}_{code_arg_name}'.lower()
@@ -263,6 +264,7 @@ class IntegrationGeneratorConfig:
             else:
                 this_argument = this_argument.replace('$ARGTYPE$', '')
 
+            code_arg_name = code_arg_name.lower()
             this_argument = this_argument.replace('$SARGNAME$', code_arg_name)
             argument_names.append(code_arg_name)
             arguments.append(this_argument)
@@ -487,7 +489,7 @@ class IntegrationGeneratorConfig:
                     options = arg.predefined_values
 
                 args.append(XSOARIntegration.Script.Command.Argument(
-                    name=arg.name,
+                    name=arg.name.lower(),
                     description=arg.description or '',
                     required=required,
                     auto=auto,

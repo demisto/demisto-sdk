@@ -9,10 +9,10 @@ import sys
 from configparser import ConfigParser, MissingSectionHeaderError
 from distutils.version import LooseVersion
 from enum import Enum
-from functools import partial
+from functools import lru_cache, partial
 from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen, check_output
-from typing import Callable, Dict, List, Optional, Tuple, Type, Union
+from typing import Callable, Dict, List, Match, Optional, Tuple, Type, Union
 
 import click
 import colorama
@@ -402,7 +402,8 @@ def get_last_remote_release_version():
 
     :return: tag
     """
-    if not os.environ.get('CI'):  # Check only when no on CI. If you want to disable it - use `DEMISTO_SDK_SKIP_VERSION_CHECK` environment variable
+    if not os.environ.get(
+            'CI'):  # Check only when no on CI. If you want to disable it - use `DEMISTO_SDK_SKIP_VERSION_CHECK` environment variable
         try:
             pypi_request = requests.get(SDK_PYPI_VERSION, verify=False, timeout=5)
             pypi_request.raise_for_status()
@@ -964,16 +965,17 @@ def get_dict_from_file(path: str, use_ryaml: bool = False) -> Tuple[Dict, Union[
     return {}, None
 
 
-# flake8: noqa: C901
-def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignore_sub_categories: bool = False):
-    """
-    returns the content file type
+@lru_cache()
+def find_type_by_path(path: str = '') -> Optional[FileType]:
+    """Find docstring by file path only
+    This function is here as we want to implement lru_cache and we can do it on `find_type`
+    as dict is not hashable.
 
-    Arguments:
-        path - a path to the file
+    Args:
+        path: Path to find its file type. Defaults to ''.
 
     Returns:
-        string representing the content file type
+        FileType: The file type if found. else None;
     """
     if path.endswith('.md'):
         if 'README' in path:
@@ -986,7 +988,6 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
             return FileType.DESCRIPTION
 
         return FileType.CHANGELOG
-
     # integration image
     if path.endswith('_image.png') and not path.endswith("Author_image.png"):
         return FileType.IMAGE
@@ -1007,6 +1008,24 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
     if path.endswith(XSOAR_CONFIG_FILE):
         return FileType.XSOAR_CONFIG
 
+    return None
+
+# flake8: noqa: C901
+
+
+def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignore_sub_categories: bool = False):
+    """
+    returns the content file type
+
+    Arguments:
+        path - a path to the file
+
+    Returns:
+        string representing the content file type
+    """
+    type_by_path = find_type_by_path(path)
+    if type_by_path:
+        return type_by_path
     try:
         if not _dict and not file_type:
             _dict, file_type = get_dict_from_file(path)
@@ -1638,6 +1657,7 @@ def find_file(root_path, file_name):
     return ''
 
 
+@lru_cache()
 def get_file_displayed_name(file_path):
     """Gets the file name that is displayed in the UI by the file's path.
     If there is no displayed name - returns the file name"""
@@ -1834,3 +1854,70 @@ def is_pack_path(input_path: str) -> bool:
         - False if the input path is not for a given pack.
     """
     return os.path.basename(os.path.dirname(input_path)) == PACKS_DIR
+
+
+def get_relative_path_from_packs_dir(file_path: str) -> str:
+    """Get the relative path for a given file_path starting in the Packs directory"""
+    if PACKS_DIR not in file_path or file_path.startswith(PACKS_DIR):
+        return file_path
+
+    return file_path[file_path.find(PACKS_DIR):]
+
+
+def is_uuid(s: str) -> Optional[Match]:
+    """Checks whether given string is a UUID
+
+    Args:
+         s (str): The string to check if it is a UUID
+
+    Returns:
+        Match: Returns the match if given string is a UUID, otherwise None
+    """
+    return re.match(UUID_REGEX, s)
+
+
+def get_release_note_entries(version='') -> list:
+    """
+    Gets the release notes entries for the current version.
+
+    Args:
+        version: The current demisto-sdk version.
+
+    Return:
+        list: A list of the release notes given from the CHANGELOG file.
+    """
+
+    changelog_file_content = get_remote_file(full_file_path='CHANGELOG.md',
+                                             return_content=True,
+                                             github_repo='demisto/demisto-sdk').decode('utf-8').split('\n')
+
+    if not version or 'dev' in version:
+        version = 'Changelog'
+
+    if f'# {version}' not in changelog_file_content:
+        return []
+
+    result = changelog_file_content[changelog_file_content.index(f'# {version}') + 1:]
+    result = result[:result.index('')]
+
+    return result
+
+
+def get_current_usecases() -> list:
+    """Gets approved list of usecases from current branch
+
+    Returns:
+        List of approved usecases from current branch
+    """
+    approved_usecases_json, _ = get_dict_from_file('Tests/Marketplace/approved_usecases.json')
+    return approved_usecases_json.get('approved_list', [])
+
+
+def get_current_tags() -> list:
+    """Gets approved list of tags from current branch
+
+    Returns:
+        List of approved tags from current branch
+    """
+    approved_tags_json, _ = get_dict_from_file('Tests/Marketplace/approved_tags.json')
+    return approved_tags_json.get('approved_list', [])

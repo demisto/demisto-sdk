@@ -1,4 +1,7 @@
 # Changelog
+* Added an option to ignore secrets automatically when using the **init** command to create a pack
+
+# 1.4.3
 * Fixed an issue where **json-to-outputs** command returned an incorrect output when json is a list.
 * Fixed an issue where if a pack README.md did not exist it could cause an error in the validation process.
 * Fixed an issue where the *--name* was incorrectly required in the **init** command.
@@ -7,7 +10,11 @@
 * Added a playbook validation to check if a task sub playbook exists in the id set in the **validate** command.
 * Added the option to add new tags/usecases to the approved list and to the pack metadata on the same pull request.
 * Fixed an issue in **test_content** where when different servers ran tests for the same integration, the server URL parameters were not set correctly.
-* Added an option to ignore secrets automatically when using the **init** command to create a pack
+* Added a validation in the **validate** command to ensure that the ***endpoint*** command is configured correctly in yml file.
+* Added a warning when pack_metadata's description field is longer than 130 characters.
+* Fixed an issue where a redundant print occurred on release notes validation.
+* Added new validation in the **validate** command to ensure that the minimal fromVersion in a widget of type metrics will be 6.2.0.
+* Added the *--release-notes* flag to demisto-sdk to get the current version release notes entries.
 
 # 1.4.2
 * Added to `pylint` summary an indication if a test was skipped.

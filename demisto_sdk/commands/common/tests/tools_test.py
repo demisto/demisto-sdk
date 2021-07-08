@@ -24,9 +24,10 @@ from demisto_sdk.commands.common.tools import (
     get_files_in_dir, get_ignore_pack_skipped_tests, get_last_release_version,
     get_last_remote_release_version, get_latest_release_notes_text,
     get_pack_metadata, get_relative_path_from_packs_dir,
-    get_release_notes_file_path, get_ryaml, get_to_version,
-    has_remote_configured, is_origin_content_repo, is_pack_path, is_uuid,
-    retrieve_file_ending, run_command_os, server_version_compare)
+    get_release_note_entries, get_release_notes_file_path, get_ryaml,
+    get_to_version, has_remote_configured, is_origin_content_repo,
+    is_pack_path, is_uuid, retrieve_file_ending, run_command_os,
+    server_version_compare)
 from demisto_sdk.tests.constants_test import (IGNORED_PNG,
                                               INDICATORFIELD_EXTRA_FIELDS,
                                               SOURCE_FORMAT_INTEGRATION_COPY,
@@ -1083,3 +1084,22 @@ def test_get_relative_path_from_packs_dir():
     assert get_relative_path_from_packs_dir(abs_path) == rel_path
     assert get_relative_path_from_packs_dir(rel_path) == rel_path
     assert get_relative_path_from_packs_dir(unrelated_path) == unrelated_path
+
+
+@pytest.mark.parametrize('version,expected_result', [
+    ('1.3.8', ['* Updated the **secrets** command to work on forked branches.']),
+    ('1.3', [])
+])
+def test_get_release_note_entries(version, expected_result):
+    """
+    Given:
+        - Version of the demisto-sdk.
+
+    When:
+        - Running get_release_note_entries.
+
+    Then:
+        - Ensure that the result as expected.
+    """
+
+    assert get_release_note_entries(version) == expected_result

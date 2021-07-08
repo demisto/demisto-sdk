@@ -69,7 +69,7 @@ def main():
     args: Dict[str, Any] = demisto.args()
     url = params.get('url')
     verify_certificate: bool = not params.get('insecure', False)
-    proxy: bool = params.get('proxy', False)
+    proxy = params.get('proxy', False)
     $BASEAUTHPARAMS$
     headers = {}
     $BEARERAUTHPARAMS$

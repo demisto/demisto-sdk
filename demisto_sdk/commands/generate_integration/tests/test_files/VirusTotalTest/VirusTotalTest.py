@@ -45,7 +45,7 @@ class Client(BaseClient):
         return response
 
 
-def url_report_command(client, args):
+def url_report_command(client: Client, args: Dict[str, Any]) -> CommandResults:
     resource = args.get('resource')
 
     response = client.url_report_request(resource)
@@ -59,7 +59,7 @@ def url_report_command(client, args):
     return command_results
 
 
-def domain_report_command(client, args):
+def domain_report_command(client: Client, args: Dict[str, Any]) -> CommandResults:
     domain = args.get('domain')
 
     response = client.domain_report_request(domain)
@@ -73,7 +73,7 @@ def domain_report_command(client, args):
     return command_results
 
 
-def file_scan_command(client, args):
+def file_scan_command(client: Client, args: Dict[str, Any]) -> CommandResults:
 
     response = client.file_scan_request()
     command_results = CommandResults(
@@ -86,7 +86,7 @@ def file_scan_command(client, args):
     return command_results
 
 
-def file_download_command(client, args):
+def file_download_command(client: Client, args: Dict[str, Any]) -> CommandResults:
     hash = args.get('hash')
 
     response = client.file_download_request(hash)
@@ -100,17 +100,17 @@ def file_download_command(client, args):
     return command_results
 
 
-def test_module(client):
+def test_module(client: Client) -> None:
     # Test functions here
     return_results('ok')
 
 
 def main():
 
-    params = demisto.params()
-    args = demisto.args()
+    params: Dict[str, Any] = demisto.params()
+    args: Dict[str, Any] = demisto.args()
     url = params.get('url')
-    verify_certificate = not params.get('insecure', False)
+    verify_certificate: bool = not params.get('insecure', False)
     proxy = params.get('proxy', False)
 
     headers = {}
@@ -120,7 +120,7 @@ def main():
 
     try:
         requests.packages.urllib3.disable_warnings()
-        client = Client(urljoin(url, ''), verify_certificate, proxy, headers=headers, auth=None)
+        client: Client = Client(urljoin(url, ''), verify_certificate, proxy, headers=headers, auth=None)
         client.api_key = params['api_key']
         commands = {
             'vt-test-url-report': url_report_command,

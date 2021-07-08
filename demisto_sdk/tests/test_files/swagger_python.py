@@ -214,7 +214,7 @@ class Client(BaseClient):
 
 
 
-def add_pet_command(client, args):
+def add_pet_command(client: Client, args: Dict[str, Any]) -> CommandResults:
     pet_id = args.get('pet_id', None)
     pet_category_id = args.get('pet_category_id', None)
     pet_category_name = str(args.get('pet_category_name', ''))
@@ -235,7 +235,7 @@ def add_pet_command(client, args):
     return command_results
 
 
-def create_user_command(client, args):
+def create_user_command(client: Client, args: Dict[str, Any]) -> CommandResults:
     user_id = args.get('user_id', None)
     user_username = str(args.get('user_username', ''))
     user_firstname = str(args.get('user_firstname', ''))
@@ -256,7 +256,7 @@ def create_user_command(client, args):
     return command_results
 
 
-def create_users_with_array_input_command(client, args):
+def create_users_with_array_input_command(client: Client, args: Dict[str, Any]) -> CommandResults:
     user_id = args.get('user_id', None)
     user_username = str(args.get('user_username', ''))
     user_firstname = str(args.get('user_firstname', ''))
@@ -277,7 +277,7 @@ def create_users_with_array_input_command(client, args):
     return command_results
 
 
-def create_users_with_list_input_command(client, args):
+def create_users_with_list_input_command(client: Client, args: Dict[str, Any]) -> CommandResults:
     user_id = args.get('user_id', None)
     user_username = str(args.get('user_username', ''))
     user_firstname = str(args.get('user_firstname', ''))
@@ -298,7 +298,7 @@ def create_users_with_list_input_command(client, args):
     return command_results
 
 
-def delete_order_command(client, args):
+def delete_order_command(client: Client, args: Dict[str, Any]) -> CommandResults:
     orderId = args.get('orderId', None)
 
     response = client.delete_order_request(orderId)
@@ -312,7 +312,7 @@ def delete_order_command(client, args):
     return command_results
 
 
-def delete_pet_command(client, args):
+def delete_pet_command(client: Client, args: Dict[str, Any]) -> CommandResults:
     api_key = str(args.get('api_key', ''))
     petId = args.get('petId', None)
 
@@ -327,7 +327,7 @@ def delete_pet_command(client, args):
     return command_results
 
 
-def delete_user_command(client, args):
+def delete_user_command(client: Client, args: Dict[str, Any]) -> CommandResults:
     username = str(args.get('username', ''))
 
     response = client.delete_user_request(username)
@@ -341,7 +341,7 @@ def delete_user_command(client, args):
     return command_results
 
 
-def find_pets_by_status_command(client, args):
+def find_pets_by_status_command(client: Client, args: Dict[str, Any]) -> CommandResults:
     status = argToList(args.get('status', []))
 
     response = client.find_pets_by_status_request(status)
@@ -355,7 +355,7 @@ def find_pets_by_status_command(client, args):
     return command_results
 
 
-def find_pets_by_tags_command(client, args):
+def find_pets_by_tags_command(client: Client, args: Dict[str, Any]) -> CommandResults:
     tags = argToList(args.get('tags', []))
 
     response = client.find_pets_by_tags_request(tags)
@@ -369,7 +369,7 @@ def find_pets_by_tags_command(client, args):
     return command_results
 
 
-def get_inventory_command(client, args):
+def get_inventory_command(client: Client, args: Dict[str, Any]) -> CommandResults:
 
     response = client.get_inventory_request()
     command_results = CommandResults(
@@ -382,7 +382,7 @@ def get_inventory_command(client, args):
     return command_results
 
 
-def get_order_by_id_command(client, args):
+def get_order_by_id_command(client: Client, args: Dict[str, Any]) -> CommandResults:
     orderId = args.get('orderId', None)
 
     response = client.get_order_by_id_request(orderId)
@@ -396,7 +396,7 @@ def get_order_by_id_command(client, args):
     return command_results
 
 
-def get_pet_by_id_command(client, args):
+def get_pet_by_id_command(client: Client, args: Dict[str, Any]) -> CommandResults:
     petId = args.get('petId', None)
 
     response = client.get_pet_by_id_request(petId)
@@ -410,7 +410,7 @@ def get_pet_by_id_command(client, args):
     return command_results
 
 
-def get_user_by_name_command(client, args):
+def get_user_by_name_command(client: Client, args: Dict[str, Any]) -> CommandResults:
     username = str(args.get('username', ''))
 
     response = client.get_user_by_name_request(username)
@@ -424,7 +424,7 @@ def get_user_by_name_command(client, args):
     return command_results
 
 
-def login_user_command(client, args):
+def login_user_command(client: Client, args: Dict[str, Any]) -> CommandResults:
     username = str(args.get('username', ''))
     password = str(args.get('password', ''))
 
@@ -439,7 +439,7 @@ def login_user_command(client, args):
     return command_results
 
 
-def logout_user_command(client, args):
+def logout_user_command(client: Client, args: Dict[str, Any]) -> CommandResults:
 
     response = client.logout_user_request()
     command_results = CommandResults(
@@ -452,7 +452,7 @@ def logout_user_command(client, args):
     return command_results
 
 
-def place_order_command(client, args):
+def place_order_command(client: Client, args: Dict[str, Any]) -> CommandResults:
     order_id = args.get('order_id', None)
     order_petid = args.get('order_petid', None)
     order_quantity = args.get('order_quantity', None)
@@ -471,7 +471,7 @@ def place_order_command(client, args):
     return command_results
 
 
-def post_pet_upload_image_command(client, args):
+def post_pet_upload_image_command(client: Client, args: Dict[str, Any]) -> CommandResults:
     petId = args.get('petId', None)
     additionalMetadata = str(args.get('additionalMetadata', ''))
     file = str(args.get('file', ''))
@@ -487,7 +487,7 @@ def post_pet_upload_image_command(client, args):
     return command_results
 
 
-def post_pet_upload_image_by_uploadimage_command(client, args):
+def post_pet_upload_image_by_uploadimage_command(client: Client, args: Dict[str, Any]) -> CommandResults:
     petId = args.get('petId', None)
     additionalMetadata = str(args.get('additionalMetadata', ''))
     file = str(args.get('file', ''))
@@ -503,7 +503,7 @@ def post_pet_upload_image_by_uploadimage_command(client, args):
     return command_results
 
 
-def update_pet_command(client, args):
+def update_pet_command(client: Client, args: Dict[str, Any]) -> CommandResults:
     pet_id = args.get('pet_id', None)
     pet_category_id = args.get('pet_category_id', None)
     pet_category_name = str(args.get('pet_category_name', ''))
@@ -524,7 +524,7 @@ def update_pet_command(client, args):
     return command_results
 
 
-def update_pet_with_form_command(client, args):
+def update_pet_with_form_command(client: Client, args: Dict[str, Any]) -> CommandResults:
     petId = args.get('petId', None)
     name = str(args.get('name', ''))
     status = str(args.get('status', ''))
@@ -540,7 +540,7 @@ def update_pet_with_form_command(client, args):
     return command_results
 
 
-def update_user_command(client, args):
+def update_user_command(client: Client, args: Dict[str, Any]) -> CommandResults:
     username = str(args.get('username', ''))
     user_id = args.get('user_id', None)
     user_username = str(args.get('user_username', ''))
@@ -562,17 +562,17 @@ def update_user_command(client, args):
     return command_results
 
 
-def test_module(client):
+def test_module(client: Client) -> None:
     # Test functions here
     return_results('ok')
 
 
 def main():
 
-    params = demisto.params()
-    args = demisto.args()
+    params: Dict[str, Any] = demisto.params()
+    args: Dict[str, Any] = demisto.args()
     url = params.get('url')
-    verify_certificate = not params.get('insecure', False)
+    verify_certificate: bool = not params.get('insecure', False)
     proxy = params.get('proxy', False)
     headers = {}
     headers['Authorization'] = params['api_key']
@@ -582,7 +582,7 @@ def main():
 
     try:
         requests.packages.urllib3.disable_warnings()
-        client = Client(urljoin(url, '/v2'), verify_certificate, proxy, headers=headers, auth=None)
+        client: Client = Client(urljoin(url, '/v2'), verify_certificate, proxy, headers=headers, auth=None)
         
         commands = {
     		'testswagger-add-pet': add_pet_command,

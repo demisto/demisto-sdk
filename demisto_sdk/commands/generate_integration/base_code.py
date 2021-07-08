@@ -15,7 +15,7 @@ BASE_HEADER_API_KEY = """headers['$HEADER_API_KEY$'] = params['api_key']"""
 BASE_HEADER_FORMATTED = """headers['$HEADER_NAME$'] = $HEADER_FORMAT$"""
 BASE_CLIENT_API_KEY = """client.api_key = params['api_key']"""
 BASE_BEARER_TOKEN = """headers['Authorization'] = f'Bearer {params["token"]}'"""
-BASE_FUNCTION = """def $FUNCTIONNAME$_command(client, args):
+BASE_FUNCTION = """def $FUNCTIONNAME$_command(client: Client, args: Dict[str, Any]) -> CommandResults:
     $ARGUMENTS$
 
     response = client.$FUNCTIONNAME$_request($REQARGS$)
@@ -58,18 +58,18 @@ from CommonServerPython import *
 $CLIENT$
 
 $FUNCTIONS$
-def test_module(client):
+def test_module(client: Client) -> None:
     # Test functions here
     return_results('ok')
 
 
 def main():
 
-    params = demisto.params()
-    args = demisto.args()
+    params: Dict[str, Any] = demisto.params()
+    args: Dict[str, Any] = demisto.args()
     url = params.get('url')
-    verify_certificate = not params.get('insecure', False)
-    proxy = params.get('proxy', False)
+    verify_certificate: bool = not params.get('insecure', False)
+    proxy: bool = params.get('proxy', False)
     $BASEAUTHPARAMS$
     headers = {}
     $BEARERAUTHPARAMS$
@@ -79,7 +79,7 @@ def main():
 
     try:
         requests.packages.urllib3.disable_warnings()
-        client = Client(urljoin(url, '$BASEURL$'), verify_certificate, proxy, headers=headers, auth=$BASEAUTH$)
+        client: Client = Client(urljoin(url, '$BASEURL$'), verify_certificate, proxy, headers=headers, auth=$BASEAUTH$)
         $CLIENT_API_KEY$
         commands = {
     $COMMANDSLIST$

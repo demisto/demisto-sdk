@@ -561,7 +561,7 @@ def secrets(config, **kwargs):
     type=PathsParamType()
 )
 @click.option("-dt", "--docker-timeout", default=60,
-              help="The timeout (in seconds) for requests done by the docker client", type=int)
+              help="The timeout (in seconds) for requests done by the docker client.", type=int)
 def lint(**kwargs):
     """Lint command will perform:
         1. Package in host checks - flake8, bandit, mypy, vulture.

@@ -1911,20 +1911,24 @@ def get_release_note_entries(version='') -> list:
 
 
 def get_current_usecases() -> list:
-    """Gets approved list of usecases from current branch
+    """Gets approved list of usecases from current branch (only in content repo).
 
     Returns:
         List of approved usecases from current branch
     """
-    approved_usecases_json, _ = get_dict_from_file('Tests/Marketplace/approved_usecases.json', raises_error=False)
-    return approved_usecases_json.get('approved_list', [])
+    if not is_external_repository():
+        approved_usecases_json, _ = get_dict_from_file('Tests/Marketplace/approved_usecases.json')
+        return approved_usecases_json.get('approved_list', [])
+    return []
 
 
 def get_current_tags() -> list:
-    """Gets approved list of tags from current branch
+    """Gets approved list of tags from current branch (only in content repo).
 
     Returns:
         List of approved tags from current branch
     """
-    approved_tags_json, _ = get_dict_from_file('Tests/Marketplace/approved_tags.json', raises_error=False)
-    return approved_tags_json.get('approved_list', [])
+    if not is_external_repository():
+        approved_tags_json, _ = get_dict_from_file('Tests/Marketplace/approved_tags.json')
+        return approved_tags_json.get('approved_list', [])
+    return []

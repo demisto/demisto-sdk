@@ -1,5 +1,4 @@
 import argparse
-from demisto_sdk.commands.format.format_module import logger
 import glob
 import io
 import json

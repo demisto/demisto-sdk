@@ -1197,6 +1197,9 @@ INTEGRATION_ARGUMENT_TYPES = {
     '16': 'MultiSelect'
 }
 
+BUILD_IN_COMMANDS = ['getIncidents', 'DeleteContext', 'isWhitelisted', 'excludeIndicators',
+                     'deleteIndicators', 'extractIndicators']
+
 
 class ContentItems(Enum):
     # the format is defined in issue #19786, may change in the future

@@ -388,5 +388,5 @@ def main():
         return_error(f'Failed to execute {command} command.\nError:\n{str(e)}')
 
 
-if __name__ in ['__main__', 'builtin', 'builtins']:
+if __name__ in ('__main__', '__builtin__', 'builtins'):  # pragma: no cover
     main()

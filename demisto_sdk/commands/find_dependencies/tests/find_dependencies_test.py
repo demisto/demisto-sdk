@@ -192,6 +192,7 @@ def create_content_repo():
     create_a_pack_entity(common_scripts, FileType.SCRIPT, 'EmailAskUser')
     create_a_pack_entity(common_scripts, FileType.SCRIPT, 'ScheduleCommand')
     create_a_pack_entity(common_scripts, FileType.SCRIPT, 'DeleteContext')
+    create_a_pack_entity(common_scripts, FileType.SCRIPT, 'IsInCidrRanges')
 
     # Create a pack called 'CalculateTimeDifference' with 1 script.
     calculate_time_difference = repo.create_pack('CalculateTimeDifference')

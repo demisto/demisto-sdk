@@ -39,7 +39,6 @@ from demisto_sdk.tests.constants_test import (IGNORED_PNG,
                                               VALID_LAYOUT_PATH, VALID_MD,
                                               VALID_PLAYBOOK_ID_PATH,
                                               VALID_REPUTATION_FILE,
-                                              INVALID_REPUTATION_FILE,
                                               VALID_SCRIPT_PATH,
                                               VALID_WIDGET_PATH)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
@@ -80,7 +79,7 @@ class TestGenericFunctions:
         (VALID_SCRIPT_PATH, True, 'yml'),
         ('test', True, None),
         (None, True, None),
-        (INVALID_REPUTATION_FILE, False, None)
+        ('invalid-path.json', False, None)
     ]
 
     @pytest.mark.parametrize('path, raises_error, _type', data_test_get_dict_from_file)

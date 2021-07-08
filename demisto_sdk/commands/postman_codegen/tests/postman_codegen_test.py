@@ -142,7 +142,7 @@ class TestPostmanCodeGen:
 
         expected_config = json.load(self.autogen_config_stream)
 
-        assert expected_config == autogen_config.to_dict()
+        assert autogen_config.to_dict() == expected_config
 
     def test_command_prefix(self):
         """

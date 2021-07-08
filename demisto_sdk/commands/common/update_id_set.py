@@ -955,23 +955,29 @@ def process_indicator_types(file_path: str, print_logs: bool, all_integrations: 
     return res
 
 
-def process_object_fields(file_path: str, print_logs: bool, objects_types_list: list, objects_modules_list: list) -> list:
+def process_object_items(file_path: str, print_logs: bool, object_modules_list: list,
+                         objects_types_list: list = None) -> list:
     """
     Process an object field JSON file
     Args:
         file_path: The file path from pbject field folder
         print_logs: Whether to print logs to stdout.
         objects_types_list: List of all the object types in the system.
+        object_modules_list: List of all the object modules in the system.
 
     Returns:
-        a list of object field data.
+        a list of object items data: fields or types.
     """
     res = []
     try:
         if find_type(file_path) == FileType.OBJECT_FIELD:
             if print_logs:
                 print(f'adding {file_path} to id_set')
-            res.append(get_object_field_data(file_path, objects_types_list, objects_modules_list))
+            res.append(get_object_field_data(file_path, objects_types_list, object_modules_list))
+        elif find_type(file_path) == FileType.OBJECT_TYPE:
+            if print_logs:
+                print(f'adding {file_path} to id_set')
+            res.append(get_object_type_data(file_path, object_modules_list))
     except Exception as exp:  # noqa
         print_error(f'failed to process {file_path}, Error: {str(exp)}')
         raise
@@ -1157,11 +1163,13 @@ def get_object_type_data(path, objects_modules_list):
         data['module_id'] = module_id
     return {id_: data}
 
-def get_module_id_from_definition_id(definitionId: str, objects_modules_list: list):
+
+def get_module_id_from_definition_id(definition_id: str, objects_modules_list: list):
     for module in objects_modules_list:
         module_id = list(module.keys())[0]
-        if definitionId in module.get(module_id,{}).get('definitions',[]):
+        if definition_id in module.get(module_id, {}).get('definitions', {}):
             return module_id
+
 
 def get_object_field_data(path, objects_types_list, objects_modules_list):
     json_data = get_json(path)
@@ -1221,13 +1229,13 @@ def get_object_module_data(path):
     views = json_data.get('views', [])
     views = {view.get('name'): {
         'title': view.get('title'),
-        'dashboards': [tab.get('dashboardId', '') for tab in view.get('tabs', [])]} for view in views}
+        'dashboards': [tab.get('dashboard', {}).get('id') for tab in view.get('tabs', [])]} for view in views}
 
     data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
     if definitions:
-        data['definitions'] = list(definitions)
+        data['definitions'] = definitions
     if views:
-        data['views'] = list(views)
+        data['views'] = views
 
     return {id_: data}
 
@@ -1604,10 +1612,9 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
         if 'ObjectTypes' in objects_to_create:
             print_color("\nStarting iteration over Object Types", LOG_COLORS.GREEN)
             print_color(f"pack to create: {pack_to_create}", LOG_COLORS.YELLOW)
-            for arr in pool.map(partial(process_general_items,
+            for arr in pool.map(partial(process_object_items,
                                         print_logs=print_logs,
-                                        expected_file_types=(FileType.OBJECT_TYPE,),
-                                        data_extraction_func=get_object_type_data,
+                                        object_modules_list=object_modules_list
                                         ),
                                 get_object_entities_paths(OBJECT_TYPE_DIR, pack_to_create)):
                 object_types_list.extend(arr)
@@ -1617,7 +1624,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
         # Has to be called after 'ObjectTypes' is called
         if 'ObjectFields' in objects_to_create:
             print_color("\nStarting iteration over Objects Fields", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_object_fields,
+            for arr in pool.map(partial(process_object_items,
                                         print_logs=print_logs,
                                         objects_types_list=object_types_list,
                                         object_modules_list=object_modules_list

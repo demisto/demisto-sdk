@@ -70,11 +70,6 @@ class IDSetCreator:
                     command_name_to_implemented_integration_map[command] = [integration_name]
         return command_name_to_implemented_integration_map
 
-    def default_json_serialize(self, obj):
-        if isinstance(obj, set):
-            return list(obj)
-        raise TypeError
-
     def save_id_set(self):
         if self.output == "":
             self.output = DEFAULT_ID_SET_PATH
@@ -83,4 +78,4 @@ class IDSetCreator:
                 intermediate_dirs = os.path.dirname(os.path.abspath(self.output))
                 os.makedirs(intermediate_dirs, exist_ok=True)
             with open(self.output, 'w+') as id_set_file:
-                json.dump(self.id_set, id_set_file, indent=4, default=self.default_json_serialize)
+                json.dump(self.id_set, id_set_file, indent=4)

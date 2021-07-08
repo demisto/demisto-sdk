@@ -2020,31 +2020,41 @@ class TestObjectFields:
             "cliName": "operatigsystem",
             "id": "id",
             "name": "Operating System",
-            "definitionId": "assets",
+            "definitionId": "definitionid",
             "fromVersion": "6.5.0",
             "associatedTypes": ["Asset Type"]}
 
-        objects_types_list = {
+        objects_types_list = [{
             "Asset Type": {
                 "name": "Asset Type",
                 "file_path": "path/path",
                 "fromversion": "6.5.0",
                 "pack": "ObjectsExample",
-                "definitionId": "assets",
+                "definitionId": "definitionid",
                 "layout": "Workstation Layout"
             }
-        }
+        }]
+
+        objects_modules_list = [{"rbvm": {
+            "name": "Vulnerability Management",
+            "pack": "ObjectsExample",
+            "definitions": {
+                "definitionid": "Assets",
+                "assetGroups": "Asset Groups"}}}]
+
         object_type = pack.create_object_module('test-object-field')
         object_type.write_json(field_data)
         test_dir = object_type.path
 
-        result = get_object_field_data(test_dir, objects_types_list=objects_types_list)
+        result = get_object_field_data(test_dir, objects_types_list=objects_types_list,
+                                       objects_modules_list=objects_modules_list)
         result = result.get('id')
         assert 'name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'definitionId' in result.keys()
         assert 'object_types' in result.keys()
+        assert 'module_id' in result.keys()
 
 
 class TestObjectType:
@@ -2067,13 +2077,20 @@ class TestObjectType:
             {"id": "type-id", "name": "type-name", "fromVersion": "version", "definitionId": "definitionid",
              "layout": "layout"})
         test_dir = object_type.path
+        objects_modules_list = [{"rbvm": {
+            "name": "Vulnerability Management",
+            "pack": "ObjectsExample",
+            "definitions": {
+                "definitionid": "Assets",
+                "assetGroups": "Asset Groups"}}}]
 
-        result = get_object_type_data(test_dir)
+        result = get_object_type_data(test_dir, objects_modules_list)
         result = result.get('type-id')
         assert 'name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'layout' in result.keys()
+        assert 'module_id' in result.keys()
 
 
 class TestObjectModule:

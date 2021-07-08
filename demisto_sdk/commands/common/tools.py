@@ -942,26 +942,33 @@ def get_dev_requirements(py_version, envs_dirs_base):
     return requirements
 
 
-def get_dict_from_file(path: str, use_ryaml: bool = False) -> Tuple[Dict, Union[str, None]]:
+def get_dict_from_file(path: str, use_ryaml: bool = False,
+                       raises_error: bool = True) -> Tuple[Dict, Union[str, None]]:
     """
     Get a dict representing the file
 
     Arguments:
         path - a path to the file
         use_ryaml - Whether to use ryaml for file loading or not
+        raises_error - Whether to raise a FileNotFound error if `path` is not a valid file.
 
     Returns:
         dict representation of the file, and the file_type, either .yml ot .json
     """
-    if path:
-        if path.endswith('.yml'):
-            if use_ryaml:
-                return get_ryaml(path), 'yml'
-            return get_yaml(path), 'yml'
-        elif path.endswith('.json'):
-            return get_json(path), 'json'
-        elif path.endswith('.py'):
-            return {}, 'py'
+    try:
+        if path:
+            if path.endswith('.yml'):
+                if use_ryaml:
+                    return get_ryaml(path), 'yml'
+                return get_yaml(path), 'yml'
+            elif path.endswith('.json'):
+                return get_json(path), 'json'
+            elif path.endswith('.py'):
+                return {}, 'py'
+    except FileNotFoundError as e:
+        if raises_error:
+            raise e
+
     return {}, None
 
 
@@ -1909,7 +1916,7 @@ def get_current_usecases() -> list:
     Returns:
         List of approved usecases from current branch
     """
-    approved_usecases_json, _ = get_dict_from_file('Tests/Marketplace/approved_usecases.json')
+    approved_usecases_json, _ = get_dict_from_file('Tests/Marketplace/approved_usecases.json', raises_error=False)
     return approved_usecases_json.get('approved_list', [])
 
 
@@ -1919,5 +1926,5 @@ def get_current_tags() -> list:
     Returns:
         List of approved tags from current branch
     """
-    approved_tags_json, _ = get_dict_from_file('Tests/Marketplace/approved_tags.json')
+    approved_tags_json, _ = get_dict_from_file('Tests/Marketplace/approved_tags.json', raises_error=False)
     return approved_tags_json.get('approved_list', [])

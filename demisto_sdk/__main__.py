@@ -440,7 +440,7 @@ def validate(config, **kwargs):
               type=click.Path(file_okay=False, resolve_path=True), required=True)
 @click.option('--zip/--no-zip', help='Zip content artifacts folders', default=True)
 @click.option('--packs', help='Create only content_packs artifacts. '
-                              'Used for server version 5.5.0 and lower.', is_flag=True)
+                              'Used for server version 5.5.0 and earlier.', is_flag=True)
 @click.option('-v', '--content_version', help='The content version in CommonServerPython.', default='0.0.0')
 @click.option('-s', '--suffix', help='Suffix to add all yaml/json/yml files in the created artifacts.')
 @click.option('--cpus',

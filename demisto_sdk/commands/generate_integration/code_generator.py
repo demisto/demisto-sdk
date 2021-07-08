@@ -231,8 +231,7 @@ class IntegrationGeneratorConfig:
         for arg in command.arguments:
             arguments_found = True
             code_arg_name = arg.name
-            # ref_arg_name = arg.name.lower()
-            ref_arg_name = arg.name
+            ref_arg_name = arg.name #.lower()
             if arg.ref:
                 ref_arg_name = f'{arg.ref}_{ref_arg_name}'.lower()
                 code_arg_name = f'{arg.ref}_{code_arg_name}'.lower()
@@ -489,8 +488,7 @@ class IntegrationGeneratorConfig:
                     options = arg.predefined_values
 
                 args.append(XSOARIntegration.Script.Command.Argument(
-                    # name=arg.name.lower(),
-                    name=arg.name,
+                    name=arg.name, #.lower(),
                     description=arg.description or '',
                     required=required,
                     auto=auto,

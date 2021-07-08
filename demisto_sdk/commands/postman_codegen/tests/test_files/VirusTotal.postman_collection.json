@@ -12,7 +12,7 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{url}}/vtapi/v2/url/report?RESOURCE=https://www.cobaltstrike.com/",
+					"raw": "{{url}}/vtapi/v2/url/report?resource=https://www.cobaltstrike.com/",
 					"host": [
 						"{{url}}"
 					],
@@ -24,7 +24,7 @@
 					],
 					"query": [
 						{
-							"key": "RESOURCE",
+							"key": "resource",
 							"value": "https://www.cobaltstrike.com/"
 						}
 					]
@@ -38,7 +38,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{url}}/url/report?RESOURCE=https://www.cobaltstrike.com/",
+							"raw": "{{url}}/url/report?resource=https://www.cobaltstrike.com/",
 							"host": [
 								"{{url}}"
 							],
@@ -48,7 +48,7 @@
 							],
 							"query": [
 								{
-									"key": "RESOURCE",
+									"key": "resource",
 									"value": "https://www.cobaltstrike.com/"
 								}
 							]

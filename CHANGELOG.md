@@ -1,5 +1,6 @@
 # Changelog
 * Fixed an issue where **find-dependencies** command on packs with playbooks that use generic commands (**send-notification**, **send-mail**, etc.) returned incorrect dependencies
+* When formatting incident types with Auto-Extract rules and without mode field, the **format** command will now add the user selected mode.
 
 # 1.4.3
 * Fixed an issue where **json-to-outputs** command returned an incorrect output when json is a list.

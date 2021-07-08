@@ -1574,7 +1574,7 @@ def doc_review(**kwargs):
     '-o', '--old', type=str, help='The path to the old version of the integration', required=True)
 @click.option(
     '--docs-format', is_flag=True,
-    help='Whether output should be in the format for the version differences section in README')
+    help='Whether output should be in the format for the version differences section in README.')
 def integration_diff(**kwargs):
     """
     Checks for differences between two versions of an integration, and verified that the new version covered the old version.

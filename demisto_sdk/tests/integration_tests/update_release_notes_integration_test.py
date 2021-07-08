@@ -480,7 +480,7 @@ def test_force_update_release(demisto_client, mocker, repo):
 
     runner = CliRunner(mix_stderr=True)
     result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", join('Packs', 'ThinkCanary'), "--force"])
-    assert 'Changes were detected. Bumping ThinkCanary to version: 1.0.1' in result.stdout
+    assert 'Bumping ThinkCanary to version: 1.0.1' in result.stdout
     assert 'Finished updating release notes for ThinkCanary.' in result.stdout
 
     with open(rn_path, 'r') as f:

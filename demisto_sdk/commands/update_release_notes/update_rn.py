@@ -110,7 +110,8 @@ class UpdateRN:
             changed_files = {}
             for packfile in self.modified_files_in_pack:
                 file_name, file_type = self.get_changed_file_name_and_type(packfile)
-                if 'yml' in packfile and file_type in [FileType.INTEGRATION, FileType.SCRIPT] and packfile not in self.added_files:
+                if 'yml' in packfile and file_type in [FileType.INTEGRATION,
+                                                       FileType.SCRIPT] and packfile not in self.added_files:
                     docker_image_name = check_docker_image_changed(packfile)
                 else:
                     docker_image_name = None
@@ -180,8 +181,12 @@ class UpdateRN:
                 if self.update_type is None:
                     self.update_type = "revision"
                 new_version, new_metadata = self.bump_version_number(self.specific_version, self.pre_release)
-                print_color(f"Changes were detected. Bumping {self.pack} to version: {new_version}",
-                            LOG_COLORS.NATIVE)
+                if self.is_force:
+                    print_color(f"Bumping {self.pack} to version: {new_version}",
+                                LOG_COLORS.NATIVE)
+                else:
+                    print_color(f"Changes were detected. Bumping {self.pack} to version: {new_version}",
+                                LOG_COLORS.NATIVE)
             else:
                 new_metadata = self.get_pack_metadata()
                 new_version = new_metadata.get('currentVersion', '99.99.99')

@@ -2,6 +2,7 @@ import os
 import sys
 from typing import Optional, Tuple
 
+import click
 import git
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK, SKIP_RELEASE_NOTES_FOR_TYPES)
@@ -29,24 +30,22 @@ class UpdateReleaseNotesManager:
         # update release notes to every required pack if not specified.
         self.is_all = True if not self.given_pack else is_all
         self.text: str = '' if text is None else text
-        self.is_force = False if not is_force else is_force
+        self.is_force = is_force
         self.specific_version = specific_version
         self.id_set_path = id_set_path
         self.prev_ver = prev_ver
         self.packs_existing_rn: dict = {}
         self.total_updated_packs: set = set()
+        # When a user choose a specific pack to update rn, the -g flag should not be passed
+        if self.given_pack and self.is_all:
+            raise Exception('Please remove the -g flag when specifying only one pack.')
 
     def manage_rn_update(self):
         """
             Manages the entire update release notes process.
         """
         try:
-            # When a user choose a specific pack to update rn, the -g flag should not be passed
-            if self.given_pack and self.is_all:
-                print_error('Please remove the -g flag when specifying only one pack.')
-                sys.exit(0)
-
-            print('Starting to update release notes.')
+            click.echo('Starting to update release notes.')
             # The given_pack can be both path or pack name thus, we extract the pack name from the path if needed.
             if self.given_pack and '/' in self.given_pack:
                 self.given_pack = get_pack_name(self.given_pack)  # extract pack from path
@@ -63,10 +62,9 @@ class UpdateReleaseNotesManager:
             if len(self.total_updated_packs) > 1:
                 print_color('\nSuccessfully updated the following packs:\n' + '\n'.join(self.total_updated_packs),
                             LOG_COLORS.GREEN)
-            sys.exit(0)
         except Exception as e:
             print_error(f'An error occurred while updating the release notes: {str(e)}')
-            sys.exit(1)
+            raise Exception
 
     def get_git_changed_files(self) -> Tuple[set, set, set, set]:
         """ Get the changed files from git (added, modified, old format, metadata).
@@ -84,9 +82,9 @@ class UpdateReleaseNotesManager:
             validate_manager.setup_git_params()
             return validate_manager.get_changed_files_from_git()
         except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError):
-            print_error("You are not running `demisto-sdk update-release-notes` command in the content repository.\n"
-                        "Please run `cd content` from your terminal and run the command again")
-            sys.exit(1)
+            raise Exception(
+                "You are not running `demisto-sdk update-release-notes` command in the content repository.\n"
+                "Please run `cd content` from your terminal and run the command again")
 
     def check_existing_rn(self, added_files: set):
         """
@@ -139,7 +137,7 @@ class UpdateReleaseNotesManager:
                 self.create_pack_release_notes(pack, filtered_modified_files, filtered_added_files, old_format_files)
         else:
             print_warning('No changes that require release notes were detected. If such changes were made, '
-                          'please commit the changes and rerun the command')
+                          'please commit the changes and rerun the command.')
 
     def create_pack_release_notes(self, pack: str, filtered_modified_files: set, filtered_added_files: set,
                                   old_format_files: set):
@@ -153,7 +151,7 @@ class UpdateReleaseNotesManager:
         """
         existing_rn_version = self.get_existing_rn(pack)
         if existing_rn_version is None:  # New release notes file already found for the pack
-            sys.exit(0)
+            raise Exception('It seems that a new updated release note file exists for this pack')
         pack_modified = filter_files_on_pack(pack, filtered_modified_files)
         pack_added = filter_files_on_pack(pack, filtered_added_files)
         pack_old = filter_files_on_pack(pack, old_format_files)
@@ -170,7 +168,7 @@ class UpdateReleaseNotesManager:
             # If new release notes were created add it to the total number of packs that were updated.
             if updated:
                 self.total_updated_packs.add(pack)
-                # If previous release notes existed, remove previous
+                # If previous release notes exist, remove previous
                 if update_pack_rn.should_delete_existing_rn:
                     os.unlink(self.packs_existing_rn[pack])
         else:

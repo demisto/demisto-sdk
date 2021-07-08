@@ -5,12 +5,12 @@
 * The **format** command will now change UUIDs in .yml and .json files to their respective content entity name.
 * Added a playbook validation to check if a task sub playbook exists in the id set in the **validate** command.
 * Added the option to add new tags/usecases to the approved list and to the pack metadata on the same pull request.
-* Refactor **update-release-notes** command - new class manager.
-* Added a  *--force* flag to the **update-release-notes** command, so the update can take place even without a change in the pack.
-* In **update-release-notes** command changed the *--all* flag to *-g* and *--use-git* flag.
-* The **update-release-notes** command will now update all dependent integrations on ApiModule change, even if not specified.
-* If more than one pack has changed, the full list of updated packs will be printed at the end of **update-release-notes** command execution.
-* Fixed an issue where **update-release-notes** command did not add docker image release notes entry for release notes file if a script was changed.
+* Refactored the **update-release-notes** command:
+  - Replaced the *--all* flag with *-g*
+  - Added the *--force* flag to update the pack release notes without changes in the pack.
+  - The **update-release-notes** command will now update all dependent integrations on ApiModule change, even if not specified.
+  - If more than one pack has changed, the full list of updated packs will be printed at the end of **update-release-notes** command execution.
+  - Fixed an issue where **update-release-notes** command did not add docker image release notes entry for release notes file if a script was changed.
 
 # 1.4.2
 * Added to `pylint` summary an indication if a test was skipped.

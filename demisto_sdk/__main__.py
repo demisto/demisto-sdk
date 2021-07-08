@@ -1095,19 +1095,24 @@ def merge_id_sets(**kwargs):
 def update_release_notes(**kwargs):
     """Auto-increment pack version and generate release notes template."""
     check_configuration_file('update-release-notes', kwargs)
-    if not kwargs.get('input') and kwargs.get('force'):
+    if kwargs.get('force') and not kwargs.get('input'):
         print_error('Please add a specific pack in order to force a release notes update.')
         sys.exit(0)
 
     if not kwargs.get('use_git') and not kwargs.get('input'):
         click.confirm('No specific pack was given, do you want to update all changed packs?', abort=True)
 
-    rn_mng = UpdateReleaseNotesManager(user_input=kwargs.get('input'), update_type=kwargs.get('update_type'),
-                                       pre_release=kwargs.get('pre_release'), is_all=kwargs.get('use_git'),
-                                       text=kwargs.get('text'), specific_version=kwargs.get('version'),
-                                       id_set_path=kwargs.get('id_set_path'), prev_ver=kwargs.get('prev_ver'),
-                                       is_force=kwargs.get('force'))
-    rn_mng.manage_rn_update()
+    try:
+        rn_mng = UpdateReleaseNotesManager(user_input=kwargs.get('input'), update_type=kwargs.get('update_type'),
+                                           pre_release=kwargs.get('pre_release'), is_all=kwargs.get('use_git'),
+                                           text=kwargs.get('text'), specific_version=kwargs.get('version'),
+                                           id_set_path=kwargs.get('id_set_path'), prev_ver=kwargs.get('prev_ver'),
+                                           is_force=kwargs.get('force'))
+        rn_mng.manage_rn_update()
+        sys.exit(0)
+    except Exception as e:
+        print_error(f'An error occurred while updating the release notes: {str(e)}')
+        sys.exit(1)
 
 
 # ====================== find-dependencies ====================== #

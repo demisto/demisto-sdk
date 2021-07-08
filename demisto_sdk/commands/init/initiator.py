@@ -29,12 +29,13 @@ def extract_values_from_nested_dict_to_a_set(given_dictionary: dict, return_set:
     """A recursive function that extracts values (the values are of type list) from a nested dictionary to a set.
 
     Args:
-        given_dictionary: The nested dictionary to extract the values from there.
+        given_dictionary: The nested dictionary to extract the values from.
         return_set: the set with the return values.
 
     Returns:
         A set with the values from the dictionary.
 
+    {'a': {'b': ['secret1', 'secret2'], 'e': ['secret1']}, 'g': ['secret3']} -> (secret1, secret2, secret3)
     """
 
     for value in given_dictionary.values():
@@ -412,7 +413,6 @@ class Initiator:
         all_secrets = sv.search_potential_secrets(files)
         secrets: set = set()
 
-        # {'a': {'b': ['secret1', 'secret2'], 'e': ['secret1']}, 'g': ['secret3']} -> (secret1, secret2, secret3)
         extract_values_from_nested_dict_to_a_set(all_secrets, secrets)
 
         with open(f'Packs/{pack_dir}/.secrets-ignore', 'a') as f:
@@ -456,7 +456,8 @@ class Initiator:
         self.copy_demistotmock()
 
         if self.template != self.DEFAULT_INTEGRATION_TEMPLATE:  # DEFAULT_INTEGRATION_TEMPLATE there are no secrets
-            ignore_secrets = input("\nWould you like ignore the secrets automatically? Y/N ").lower()
+            ignore_secrets = input("\n Currently, there are some secrets in the pack. "
+                                   "Would you like ignore them automatically? Y/N ").lower()
             if ignore_secrets in ['y', 'yes']:
                 self.ignore_secrets_automatically()
 
@@ -499,7 +500,8 @@ class Initiator:
         self.copy_common_server_python()
         self.copy_demistotmock()
 
-        ignore_secrets = input("\nWould you like ignore the secrets automatically? Y/N ").lower()
+        ignore_secrets = input("\n Currently, there are some secrets in the pack. "
+                               "Would you like ignore them automatically? Y/N ").lower()
         if ignore_secrets in ['y', 'yes']:
             self.ignore_secrets_automatically()
 

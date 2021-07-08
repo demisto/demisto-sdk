@@ -244,7 +244,7 @@ class TestAddCommandToImplementingIntegrationsMapping:
     def test_do_not_modify_specific_brand(repo):
         """
         Given:
-            * playbook with a command using a specific brand
+            * playbook with a command not using a specific brand
             * playbook with a command using a specific brand
         When:
             updating the commands_to_integrations fields in playbooks
@@ -285,7 +285,7 @@ class TestAddCommandToImplementingIntegrationsMapping:
                     ('command_to_integration', {
                         'specific-command': "",
                         'generic-command': "",
-                        'send-notification': "Slack"
+                        'send-notification': ""
                     }),
                 ]),
             },
@@ -295,7 +295,7 @@ class TestAddCommandToImplementingIntegrationsMapping:
                     ('command_to_integration', {
                         'generic-command': 'MainInteg',
                         'no-integration': '',
-                        'send-notification': ""
+                        'send-notification': "Slack"
                     }),
                 ]),
             },
@@ -311,6 +311,6 @@ class TestAddCommandToImplementingIntegrationsMapping:
         playbook2 = id_set_creator.id_set['playbooks'][1]['Playbook2']
         assert playbook1['command_to_integration']['specific-command'] == ['SecondaryInteg']
         assert playbook1['command_to_integration']['generic-command'] == ['MainInteg', 'SecondaryInteg']
-        assert playbook1['command_to_integration']['send-notification'] == 'Slack'
+        assert playbook1['command_to_integration']['send-notification'] == ''
         assert playbook2['command_to_integration']['no-integration'] == ''
-        assert playbook2['command_to_integration']['no-integration'] == ''
+        assert playbook2['command_to_integration']['send-notification'] == 'Slack'

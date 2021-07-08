@@ -6,7 +6,6 @@ import errno
 import json
 import os
 import re
-import sys
 from distutils.version import LooseVersion
 from typing import Optional, Tuple, Union
 
@@ -82,7 +81,7 @@ class UpdateRN:
                 The content of the rn
         """
         if self.existing_rn_version_path:
-            self.should_delete_existing_rn = False if self.existing_rn_version_path == rn_path else True
+            self.should_delete_existing_rn = self.existing_rn_version_path != rn_path
             try:
                 with open(self.existing_rn_version_path, 'r') as f:
                     return f.read()
@@ -101,29 +100,28 @@ class UpdateRN:
             print_warning(f"Release notes are not required for the {self.pack} pack since this pack"
                           f" is not versioned.")
             return False
-        else:
-            new_version, new_metadata = self.get_new_version_and_metadata()
-            rn_path = self.get_release_notes_path(new_version)
-            self.check_rn_dir(rn_path)
-            self.find_added_pack_files()
-            docker_image_name: Optional[str] = None
-            changed_files = {}
-            for packfile in self.modified_files_in_pack:
-                file_name, file_type = self.get_changed_file_name_and_type(packfile)
-                if 'yml' in packfile and file_type in [FileType.INTEGRATION,
-                                                       FileType.SCRIPT] and packfile not in self.added_files:
-                    docker_image_name = check_docker_image_changed(packfile)
-                else:
-                    docker_image_name = None
-                changed_files[file_name] = {
-                    'type': file_type,
-                    'description': get_file_description(packfile, file_type),
-                    'is_new_file': True if packfile in self.added_files else False,
-                    'fromversion': get_from_version_at_update_rn(packfile),
-                    'dockerimage': docker_image_name
-                }
 
-            return self.create_pack_rn(rn_path, changed_files, new_metadata, docker_image_name)
+        new_version, new_metadata = self.get_new_version_and_metadata()
+        rn_path = self.get_release_notes_path(new_version)
+        self.check_rn_dir(rn_path)
+        self.find_added_pack_files()
+        docker_image_name: Optional[str] = None
+        changed_files = {}
+        for packfile in self.modified_files_in_pack:
+            file_name, file_type = self.get_changed_file_name_and_type(packfile)
+            if 'yml' in packfile and file_type in [FileType.INTEGRATION, FileType.BETA_INTEGRATION,
+                                                   FileType.SCRIPT] and packfile not in self.added_files:
+                docker_image_name = check_docker_image_changed(packfile)
+            else:
+                docker_image_name = None
+            changed_files[file_name] = {
+                'type': file_type,
+                'description': get_file_description(packfile, file_type),
+                'is_new_file': True if packfile in self.added_files else False,
+                'fromversion': get_from_version_at_update_rn(packfile),
+                'dockerimage': docker_image_name
+            }
+        return self.create_pack_rn(rn_path, changed_files, new_metadata, docker_image_name)
 
     def create_pack_rn(self, rn_path: str, changed_files: dict, new_metadata: dict,
                        docker_image_name: Optional[str]) -> bool:
@@ -152,20 +150,21 @@ class UpdateRN:
             except RuntimeError:
                 print_warning(f'Could not add the release note files to git: {rn_path}')
             if self.existing_rn_changed:
-                print_color(f"Finished updating release notes for {self.pack}."
-                            f"\nNext Steps:\n - Please review the "
-                            f"created release notes found at {rn_path} and document any changes you "
-                            f"made by replacing '%%UPDATE_RN%%'.\n - Commit "
-                            f"the new release notes to your branch.\nFor information regarding proper"
-                            f" format of the release notes, please refer to "
-                            f"https://xsoar.pan.dev/docs/integrations/changelog", LOG_COLORS.GREEN)
+                print_color(f"Finished updating release notes for {self.pack}.", LOG_COLORS.GREEN)
+                if not self.text:
+                    print_color(f"\nNext Steps:\n - Please review the "
+                                f"created release notes found at {rn_path} and document any changes you "
+                                f"made by replacing '%%UPDATE_RN%%'.\n - Commit "
+                                f"the new release notes to your branch.\nFor information regarding proper"
+                                f" format of the release notes, please refer to "
+                                f"https://xsoar.pan.dev/docs/integrations/changelog", LOG_COLORS.GREEN)
                 return True
             else:
-                click.secho(f"No changes to {self.pack} pack files were detected from the previous time "
+                print_color(f"No changes to {self.pack} pack files were detected from the previous time "
                             "this command was run. The release notes have not been "
-                            "changed.", fg='green')
+                            "changed.", LOG_COLORS.GREEN)
         else:
-            click.secho("No changes which would belong in release notes were detected.", fg='yellow')
+            print_color("No changes which would belong in release notes were detected.", LOG_COLORS.YELLOW)
         return False
 
     def get_new_version_and_metadata(self) -> Tuple[str, dict]:
@@ -191,9 +190,8 @@ class UpdateRN:
                 new_metadata = self.get_pack_metadata()
                 new_version = new_metadata.get('currentVersion', '99.99.99')
             return new_version, new_metadata
-        except ValueError as e:
-            click.secho(str(e), fg='red')
-            sys.exit(1)
+        except ValueError:
+            raise
 
     def _does_pack_metadata_exist(self) -> bool:
         """ Check if pack_metadata.json exists
@@ -245,10 +243,9 @@ class UpdateRN:
             if LooseVersion(self.master_version) >= LooseVersion(new_version):
                 return True
             return False
-        except RuntimeError:
-            print_error(f"Unable to locate a pack with the name {self.pack} in the git diff.\n"
-                        f"Please verify the pack exists and the pack name is correct.")
-            sys.exit(0)
+        except RuntimeError as e:
+            raise Exception(f"Unable to locate a pack with the name {self.pack} in the git diff.\n"
+                            f"Please verify the pack exists and the pack name is correct.") from e
 
     def only_docs_changed(self) -> bool:
         """
@@ -362,9 +359,8 @@ class UpdateRN:
         """
         try:
             data_dictionary = get_json(self.metadata_path)
-        except FileNotFoundError:
-            print_error(f"Pack {self.pack} was not found. Please verify the pack name is correct.")
-            sys.exit(1)
+        except FileNotFoundError as e:
+            raise Exception(f'Pack {self.pack} was not found. Please verify the pack name is correct.') from e
         return data_dictionary
 
     def bump_version_number(self, specific_version: str = None, pre_release: bool = False) -> Tuple[str, dict]:

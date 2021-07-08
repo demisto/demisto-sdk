@@ -24,12 +24,8 @@ class TestUpdateRNManager:
         """
         mng = UpdateReleaseNotesManager(update_type=update_type)
         mng.packs_existing_rn = packs_existing_rn
-        err = mocker.patch('demisto_sdk.commands.update_release_notes.update_rn_manager.print_error')
         res = mng.get_existing_rn(pack_name)
-
         assert res == expected_output
-        if err.call_args is not None:
-            assert 'New release notes file already found' in err.call_args[0][0]
 
     check_existing_rn_params = [({'Packs/test1/ReleaseNotes/1_0_2.md', 'Packs/test2/ReleaseNotes/1_0_4.md'},
                                  {'test2': 'Packs/test2/ReleaseNotes/1_0_4.md',
@@ -133,7 +129,7 @@ class TestUpdateRNManager:
         mng.create_pack_release_notes('test1', {'Packs/test2', 'Packs/test3'}, set(), set())
         assert 'Either no changes were found in test1' in err.call_args[0][0]
 
-    def test_manage_rn_update_fail(self, mocker):
+    def test_manage_rn_update_fail(self):
         """
         Given:
             - a specific pack is given and -g flag was given.
@@ -142,12 +138,9 @@ class TestUpdateRNManager:
         Then:
             - an error message to remove the -g flag should be printed.
         """
-        err = mocker.patch('demisto_sdk.commands.update_release_notes.update_rn_manager.print_error')
-        with pytest.raises(SystemExit) as pytest_wrapped_e:
-            mng = UpdateReleaseNotesManager(user_input='Packs/test1', is_all=True)
-            mng.manage_rn_update()
-        assert pytest_wrapped_e.type == SystemExit
-        assert 'Please remove the -g flag' in err.call_args[0][0]
+        with pytest.raises(Exception) as execinfo:
+            UpdateReleaseNotesManager(user_input='Packs/test1', is_all=True)
+        assert 'Please remove the -g flag' in execinfo.value.args[0]
 
     def test_manage_rn_update_success(self, mocker):
         """
@@ -156,7 +149,7 @@ class TestUpdateRNManager:
         When:
             - manage_rn_update is called.
         Then:
-            - The function manages the update and calls the create_release_notes function.
+            - The update is successfully executed and no error is raised.
         """
         from demisto_sdk.commands.update_release_notes.update_rn_manager import UpdateReleaseNotesManager
         mocker.patch.object(UpdateReleaseNotesManager, 'get_git_changed_files',
@@ -167,8 +160,6 @@ class TestUpdateRNManager:
         mocker.patch.object(UpdateReleaseNotesManager, 'check_existing_rn')
         mocker.patch.object(UpdateReleaseNotesManager, 'handle_api_module_change')
         func_mock = mocker.patch.object(UpdateReleaseNotesManager, 'create_release_notes')
-        with pytest.raises(SystemExit) as pytest_wrapped_e:
-            mng = UpdateReleaseNotesManager(user_input='Packs/test1')
-            mng.manage_rn_update()
-        assert pytest_wrapped_e.type == SystemExit
+        mng = UpdateReleaseNotesManager(user_input='Packs/test1')
+        mng.manage_rn_update()
         assert func_mock.called

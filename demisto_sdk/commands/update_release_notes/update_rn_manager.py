@@ -1,8 +1,6 @@
 import os
-import sys
 from typing import Optional, Tuple
 
-import click
 import git
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK, SKIP_RELEASE_NOTES_FOR_TYPES)
@@ -11,7 +9,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                filter_files_on_pack,
                                                get_pack_name,
                                                get_pack_names_from_files,
-                                               print_color, print_error,
+                                               print_color,
                                                print_warning)
 from demisto_sdk.commands.update_release_notes.update_rn import (
     UpdateRN, update_api_modules_dependents_rn)
@@ -20,9 +18,9 @@ from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
 class UpdateReleaseNotesManager:
     def __init__(self, user_input: Optional[str] = None, update_type: Optional[str] = None,
-                 pre_release: Optional[bool] = False, is_all: Optional[bool] = False, text: Optional[str] = None,
+                 pre_release: bool = False, is_all: Optional[bool] = False, text: Optional[str] = None,
                  specific_version: Optional[str] = None, id_set_path: Optional[str] = None,
-                 prev_ver: Optional[str] = None, is_force: Optional[bool] = False):
+                 prev_ver: Optional[str] = None, is_force: bool = False):
         self.given_pack = user_input
         self.changed_packs_from_git: set = set()
         self.update_type = update_type
@@ -45,7 +43,7 @@ class UpdateReleaseNotesManager:
             Manages the entire update release notes process.
         """
         try:
-            click.echo('Starting to update release notes.')
+            print_color('Starting to update release notes.', LOG_COLORS.NATIVE)
             # The given_pack can be both path or pack name thus, we extract the pack name from the path if needed.
             if self.given_pack and '/' in self.given_pack:
                 self.given_pack = get_pack_name(self.given_pack)  # extract pack from path
@@ -62,9 +60,8 @@ class UpdateReleaseNotesManager:
             if len(self.total_updated_packs) > 1:
                 print_color('\nSuccessfully updated the following packs:\n' + '\n'.join(self.total_updated_packs),
                             LOG_COLORS.GREEN)
-        except Exception as e:
-            print_error(f'An error occurred while updating the release notes: {str(e)}')
-            raise Exception
+        except Exception:
+            raise
 
     def get_git_changed_files(self) -> Tuple[set, set, set, set]:
         """ Get the changed files from git (added, modified, old format, metadata).
@@ -79,12 +76,14 @@ class UpdateReleaseNotesManager:
         try:
             validate_manager = ValidateManager(skip_pack_rn_validation=True, prev_ver=self.prev_ver,
                                                silence_init_prints=True, skip_conf_json=True, check_is_unskipped=False)
+            if not validate_manager.git_util:  # in case git utils can't be initialized.
+                raise git.InvalidGitRepositoryError
             validate_manager.setup_git_params()
             return validate_manager.get_changed_files_from_git()
-        except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError):
+        except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:
             raise Exception(
                 "You are not running `demisto-sdk update-release-notes` command in the content repository.\n"
-                "Please run `cd content` from your terminal and run the command again")
+                "Please run `cd content` from your terminal and run the command again") from e
 
     def check_existing_rn(self, added_files: set):
         """
@@ -151,7 +150,9 @@ class UpdateReleaseNotesManager:
         """
         existing_rn_version = self.get_existing_rn(pack)
         if existing_rn_version is None:  # New release notes file already found for the pack
-            raise Exception('It seems that a new updated release note file exists for this pack')
+            Exception(f"New release notes file already found for {pack}. "
+                      f"Please update manually or run `demisto-sdk update-release-notes "
+                      f"-i {pack}` without specifying the update_type.")
         pack_modified = filter_files_on_pack(pack, filtered_modified_files)
         pack_added = filter_files_on_pack(pack, filtered_added_files)
         pack_old = filter_files_on_pack(pack, old_format_files)
@@ -168,13 +169,14 @@ class UpdateReleaseNotesManager:
             # If new release notes were created add it to the total number of packs that were updated.
             if updated:
                 self.total_updated_packs.add(pack)
-                # If previous release notes exist, remove previous
+                # If there is an outdated previous release notes, remove it (for example: currentversion is 1.0.3 and
+                # 1_0_5 release note file exists, we want to update release note version to 1_0_4 and remove 1_0_5 file)
                 if update_pack_rn.should_delete_existing_rn:
                     os.unlink(self.packs_existing_rn[pack])
         else:
             print_warning(f'Either no changes were found in {pack} pack '
-                          f'or the changes found should not be documented in the release notes file '
-                          f'If relevant changes were made, please commit the changes and rerun the command')
+                          f'or the changes found should not be documented in the release notes file.\n'
+                          f'If relevant changes were made, please commit the changes and rerun the command.')
 
     def get_existing_rn(self, pack) -> Optional[str]:
         """ Gets the existing rn of the pack is exists.
@@ -191,7 +193,4 @@ class UpdateReleaseNotesManager:
         if self.update_type is None:
             return self.packs_existing_rn[pack]
         else:
-            print_error(f"New release notes file already found for {pack}. "
-                        f"Please update manually or run `demisto-sdk update-release-notes "
-                        f"-i {pack}` without specifying the update_type.")
             return None

@@ -478,7 +478,9 @@ class TestRNUpdate(unittest.TestCase):
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='major', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
         update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata_.json')
-        self.assertRaises(SystemExit, update_rn.bump_version_number)
+        with pytest.raises(Exception) as execinfo:
+            update_rn.bump_version_number()
+        assert 'Pack HelloWorld was not found. Please verify the pack name is correct.' in execinfo.value.args[0]
 
     @mock.patch.object(UpdateRN, 'get_master_version')
     def test_bump_version_no_version(self, mock_master):
@@ -495,7 +497,9 @@ class TestRNUpdate(unittest.TestCase):
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type=None, modified_files_in_pack={'HelloWorld'},
                              added_files=set())
         update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json')
-        self.assertRaises(ValueError, update_rn.bump_version_number)
+        with pytest.raises(ValueError) as execinfo:
+            update_rn.bump_version_number()
+        assert 'Received no update type when one was expected.' in execinfo.value.args[0]
 
     def test_build_rn_desc_new_file(self):
         """
@@ -573,12 +577,11 @@ class TestRNUpdate(unittest.TestCase):
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
         mock_bump_version_number.side_effect = ValueError('Test')
         mock_is_bump_required.return_value = True
-        with pytest.raises(SystemExit) as e:
+        with pytest.raises(ValueError) as e:
             client = UpdateRN(pack_path="Packs/Test", update_type='minor', modified_files_in_pack={
                 'Packs/Test/Integrations/Test.yml'}, added_files=set('Packs/Test/some_added_file.py'))
             client.execute_update()
-        assert e.type == SystemExit
-        assert e.value.code == 1
+        assert e.value.args[0] == 'Test'
 
     @mock.patch.object(UpdateRN, 'only_docs_changed')
     def test_only_docs_changed_bump_not_required(self, mock_master):

@@ -41,10 +41,13 @@ class TestIDSetCreator:
         Given
         - input - specific pack to create from it ID set
         - output - path to return the created ID set
+
         When
         - create ID set on this pack
+
         Then
         - ensure that the created ID set is in the path of the output
+
         """
         id_set_creator = IDSetCreator(self.file_path, input='Packs/AMP')
 
@@ -79,12 +82,15 @@ class TestIDSetCreator:
         """
         Given
         - two packs with integrations to create an ID set from
+
         When
         - create ID set on one of the packs
+
         Then
         - ensure there is only one integration in the ID set integrations list
         - ensure output id_set contains only the pack on which created the ID set on
         - ensure output id_set does not contain the second pack
+
         """
         packs = repo.packs
 
@@ -114,11 +120,14 @@ class TestIDSetCreator:
         """
         Given
         - an empty pack to create from it ID set
+
         When
         - create ID set on this pack
+
         Then
         - ensure that an ID set is created and no error is returned
         - ensure output id_set is empty
+
         """
         pack = repo.create_pack()
 
@@ -182,13 +191,17 @@ def setup_id_set():
 
 def test_create_command_to_implemented_integration_map(repo):
     """
+
     Given
         - a list of integrations
+
     When
         - create_command_to_implemented_integration_map is called
+
     Then
         - Validates that a dictionary between command name and list of all integration that implement this command
         was returned.
+
     """
     expected_output_map = {'test-command': ['Integration1', 'Integration2'],
                            'test-command_1': ['Integration1'],
@@ -203,13 +216,17 @@ class TestAddCommandToImplementingIntegrationsMapping:
     @staticmethod
     def test_add_command_to_implementing_integrations_mapping(repo):
         """
+
         Given
             - an id_set file includes integrations and playbooks
+
         When
             - modify_id_set_command_to_integration_of_playbook is called
+
         Then
             - Validates that each command_to_integration in playbook is a dictionary between command name and list of all
             integration that implement this command.
+
         """
         id_set_creator = setup_id_set()
 
@@ -233,6 +250,7 @@ class TestAddCommandToImplementingIntegrationsMapping:
             updating the commands_to_integrations fields in playbooks
         Then:
             only update commands that don't have a specific brand
+            only update non generic-commands
         """
         integrations = [
             {

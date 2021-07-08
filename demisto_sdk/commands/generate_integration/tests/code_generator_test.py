@@ -197,7 +197,6 @@ class TestCodeGenerator:
             actual_unified_yml = f.read()
             assert actual_unified_yml.find('class Client(BaseClient):')
             assert actual_unified_yml.find('- display: Trust any certificate')
-            assert not actual_unified_yml.find('name: RESOURCE')
 
     def test_query_response_root_object(self):
         """

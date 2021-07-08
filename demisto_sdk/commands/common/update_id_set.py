@@ -955,7 +955,7 @@ def process_indicator_types(file_path: str, print_logs: bool, all_integrations: 
     return res
 
 
-def process_object_fields(file_path: str, print_logs: bool, objects_types_list: list) -> list:
+def process_object_fields(file_path: str, print_logs: bool, objects_types_list: list, objects_modules_list: list) -> list:
     """
     Process an object field JSON file
     Args:
@@ -971,7 +971,7 @@ def process_object_fields(file_path: str, print_logs: bool, objects_types_list: 
         if find_type(file_path) == FileType.OBJECT_FIELD:
             if print_logs:
                 print(f'adding {file_path} to id_set')
-            res.append(get_object_field_data(file_path, objects_types_list))
+            res.append(get_object_field_data(file_path, objects_types_list, objects_modules_list))
     except Exception as exp:  # noqa
         print_error(f'failed to process {file_path}, Error: {str(exp)}')
         raise
@@ -1132,7 +1132,7 @@ def get_object_entities_paths(path, pack_to_create):
     return files
 
 
-def get_object_type_data(path):
+def get_object_type_data(path, objects_modules_list):
     json_data = get_json(path)
 
     id_ = json_data.get('id')
@@ -1144,6 +1144,7 @@ def get_object_type_data(path):
     definitionId = json_data.get('definitionId')
     layout = json_data.get('layout')
 
+    module_id = get_module_id_from_definition_id(definitionId, objects_modules_list)
     data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
     if playbook_id and playbook_id != '':
         data['playbooks'] = playbook_id
@@ -1152,10 +1153,17 @@ def get_object_type_data(path):
         data['definitionId'] = definitionId
     if layout:
         data['layout'] = layout
+    if module_id:
+        data['module_id'] = module_id
     return {id_: data}
 
+def get_module_id_from_definition_id(definitionId: str, objects_modules_list: list):
+    for module in objects_modules_list:
+        module_id = list(module.keys())[0]
+        if definitionId in module.get(module_id,{}).get('definitions',[]):
+            return module_id
 
-def get_object_field_data(path, objects_types_list):
+def get_object_field_data(path, objects_types_list, objects_modules_list):
     json_data = get_json(path)
 
     id_ = json_data.get('id')
@@ -1167,6 +1175,7 @@ def get_object_field_data(path, objects_types_list):
     all_scripts = set()
     definitionId = json_data.get('definitionId')
 
+    module_id = get_module_id_from_definition_id(definitionId, objects_modules_list)
     associated_types = json_data.get('associatedTypes')
     if associated_types:
         all_associated_types = set(associated_types)
@@ -1192,8 +1201,10 @@ def get_object_field_data(path, objects_types_list):
         data['object_types'] = list(all_associated_types)
     if all_scripts:
         data['scripts'] = list(all_scripts)
-    if object:
+    if definitionId:
         data['definitionId'] = definitionId
+    if module_id:
+        data['module_id'] = module_id
 
     return {id_: data}
 
@@ -1608,7 +1619,8 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
             print_color("\nStarting iteration over Objects Fields", LOG_COLORS.GREEN)
             for arr in pool.map(partial(process_object_fields,
                                         print_logs=print_logs,
-                                        objects_types_list=object_types_list
+                                        objects_types_list=object_types_list,
+                                        object_modules_list=object_modules_list
                                         ),
                                 get_object_entities_paths(OBJECT_FIELD_DIR, pack_to_create)):
                 object_fields_list.extend(arr)

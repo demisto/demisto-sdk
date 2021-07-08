@@ -169,71 +169,133 @@ def test_create_id_set_flow(repo, mocker):
             assert len(entity_content_in_id_set) == number_of_packs_to_create * 2
 
 
-integration1 = {
-    'Integration1': OrderedDict([('name', 'Integration1'), ('commands', ['test-command_1', 'test-command'])])}
-integration2 = {
-    'Integration2': OrderedDict([('name', 'Integration2'), ('commands', ['test-command', 'test-command_2'])])}
-expected_output_map = {'test-command': ['Integration1', 'Integration2'],
-                       'test-command_1': ['Integration1'],
-                       'test-command_2': ['Integration2']}
-playbook1 = {
-    'Playbook1': OrderedDict(
-        [('name', 'Playbook1'), ('command_to_integration', {'test-command': "", 'test-command_1': ""})])}
-playbook2 = {
-    'Playbook2': OrderedDict([('name', 'Playbook2'), ('command_to_integration', {'test-command': "",
-                                                                                 'test-command_2': ""})])}
+def setup_id_set():
+    integration1 = {
+        'Integration1': OrderedDict([('name', 'Integration1'), ('commands', ['test-command_1', 'test-command'])])}
+    integration2 = {
+        'Integration2': OrderedDict([('name', 'Integration2'), ('commands', ['test-command', 'test-command_2'])])}
+
+    playbook1 = {
+        'Playbook1': OrderedDict(
+            [('name', 'Playbook1'), ('command_to_integration', {'test-command': "", 'test-command_1': ""})])}
+    playbook2 = {
+        'Playbook2': OrderedDict([('name', 'Playbook2'), ('command_to_integration', {'test-command': "",
+                                                                                     'test-command_2': ""})])}
+
+    id_set_creator = IDSetCreator(print_logs=False)
+    id_set_creator.id_set["integrations"] = [integration1, integration2]
+    id_set_creator.id_set["playbooks"] = [playbook1, playbook2]
+
+    return id_set_creator
 
 
 def test_create_command_to_implemented_integration_map(repo):
     """
-
     Given
-        - a list of integrations
+    - a list of integrations
 
     When
-        - create_command_to_implemented_integration_map is called
+    - create_command_to_implemented_integration_map is called
 
     Then
-        - Validates that a dictionary between command name and list of all integration that implement this command
-        was returned.
+    - Validates that a dictionary between command name and list of all integration that implement this command
+      was returned.
 
     """
-    pack = repo.create_pack("Pack1")
-    integration_list = [integration1, integration2]
-
-    id_set_creator = IDSetCreator(pack.path, print_logs=False)
-    id_set_creator.id_set["integrations"] = integration_list
+    expected_output_map = {'test-command': ['Integration1', 'Integration2'],
+                           'test-command_1': ['Integration1'],
+                           'test-command_2': ['Integration2']}
+    id_set_creator = setup_id_set()
 
     command_to_implemented_integration_map = id_set_creator.create_command_to_implemented_integration_map()
     assert command_to_implemented_integration_map == expected_output_map
 
 
-def test_add_command_to_implementing_integrations_mapping(repo):
-    """
-
-    Given
+class TestAddCommandToImplementingIntegrationsMapping:
+    @staticmethod
+    def test_add_command_to_implementing_integrations_mapping(repo):
+        """
+        Given
         - an id_set file includes integrations and playbooks
 
-    When
+        When
         - modify_id_set_command_to_integration_of_playbook is called
 
-    Then
+        Then
         - Validates that each command_to_integration in playbook is a dictionary between command name and list of all
-        integration that implement this command.
+          integration that implement this command.
 
-    """
-    pack = repo.create_pack("Pack1")
-    integration_list = [integration1, integration2]
-    playbook_list = [playbook1, playbook2]
+        """
+        id_set_creator = setup_id_set()
 
-    id_set_creator = IDSetCreator(pack.path, print_logs=False)
-    id_set_creator.id_set["integrations"] = integration_list
-    id_set_creator.id_set["playbooks"] = playbook_list
+        id_set_creator.add_command_to_implementing_integrations_mapping()
 
-    id_set_creator.add_command_to_implementing_integrations_mapping()
+        playbook_set = id_set_creator.id_set["playbooks"]
+        assert playbook_set[0]["Playbook1"]['command_to_integration']['test-command'] == ['Integration1',
+                                                                                          'Integration2']
+        assert playbook_set[0]["Playbook1"]['command_to_integration']['test-command_1'] == ['Integration1']
+        assert playbook_set[1]["Playbook2"]['command_to_integration']['test-command'] == ['Integration1',
+                                                                                          'Integration2']
+        assert playbook_set[1]["Playbook2"]['command_to_integration']['test-command_2'] == ['Integration2']
 
-    playbook_set = id_set_creator.id_set["playbooks"]
-    assert playbook_set[0]["Playbook1"]['command_to_integration']['test-command'] == ['Integration1', 'Integration2']
-    assert playbook_set[0]["Playbook1"]['command_to_integration']['test-command_1'] == ['Integration1']
-    assert playbook_set[1]["Playbook2"]['command_to_integration']['test-command'] == ['Integration1', 'Integration2']
-    assert playbook_set[1]["Playbook2"]['command_to_integration']['test-command_2'] == ['Integration2']
+    @staticmethod
+    def test_do_not_modify_specific_brand(repo):
+        """
+        Given
+        - playbook with a command using a specific brand
+        - playbook with a command using a specific brand
+
+        When
+        - updating the commands_to_integrations fields in playbooks
+
+        Then
+        - only update commands that don't have a specific brand
+
+        """
+        integrations = [
+            {
+                'MainInteg': OrderedDict([
+                    ('name', 'MainInteg'),
+                    ('commands', ['generic-command']),
+                ])
+            },
+            {
+                'SecondaryInteg': OrderedDict([
+                    ('name', 'SecondaryInteg'),
+                    ('commands', ['generic-command', 'specific-command']),
+                ])
+            },
+        ]
+        playbooks = [
+            {
+                'Playbook1': OrderedDict([
+                    ('name', 'Playbook1'),
+                    ('command_to_integration', {
+                        'specific-command': "",
+                        'generic-command': "",
+                    }),
+                ]),
+            },
+            {
+                'Playbook2': OrderedDict([
+                    ('name', 'Playbook2'),
+                    ('command_to_integration', {
+                        'generic-command': 'MainInteg',
+                        'no-integration': '',
+                    }),
+                ]),
+            },
+        ]
+
+        id_set_creator = IDSetCreator(print_logs=False)
+        id_set_creator.id_set["integrations"] = integrations
+        id_set_creator.id_set["playbooks"] = playbooks
+
+        id_set_creator.add_command_to_implementing_integrations_mapping()
+
+        playbook1 = id_set_creator.id_set['playbooks'][0]['Playbook1']
+        playbook2 = id_set_creator.id_set['playbooks'][1]['Playbook2']
+        assert playbook1['command_to_integration']['specific-command'] == ['SecondaryInteg']
+        assert playbook1['command_to_integration']['generic-command'] == ['MainInteg', 'SecondaryInteg']
+        assert playbook2['command_to_integration']['generic-command'] == 'MainInteg'
+        assert playbook2['command_to_integration']['no-integration'] == ''

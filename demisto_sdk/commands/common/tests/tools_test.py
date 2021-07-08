@@ -23,9 +23,11 @@ from demisto_sdk.commands.common.tools import (
     get_file_displayed_name, get_file_version_suffix_if_exists,
     get_files_in_dir, get_ignore_pack_skipped_tests, get_last_release_version,
     get_last_remote_release_version, get_latest_release_notes_text,
-    get_pack_metadata, get_release_notes_file_path, get_ryaml, get_to_version,
-    has_remote_configured, is_origin_content_repo, is_pack_path,
-    retrieve_file_ending, run_command_os, server_version_compare)
+    get_pack_metadata, get_relative_path_from_packs_dir,
+    get_release_note_entries, get_release_notes_file_path, get_ryaml,
+    get_to_version, has_remote_configured, is_origin_content_repo,
+    is_pack_path, is_uuid, retrieve_file_ending, run_command_os,
+    server_version_compare)
 from demisto_sdk.tests.constants_test import (IGNORED_PNG,
                                               INDICATORFIELD_EXTRA_FIELDS,
                                               SOURCE_FORMAT_INTEGRATION_COPY,
@@ -641,7 +643,7 @@ def test_get_ignore_pack_tests__ignore_test(tmpdir, mocker):
     """
     fake_pack_name = 'FakeTestPack'
     fake_test_name = 'FakeTestPlaybook'
-    expected_id = 'sample playbook'
+    expected_id = 'SamplePlaybookTest'
 
     # prepare repo
     repo = Repo(tmpdir)
@@ -1033,3 +1035,71 @@ def test_is_pack_path(input_path: str, expected: bool):
 
     """
     assert is_pack_path(input_path) == expected
+
+
+@pytest.mark.parametrize('s, is_valid_uuid', [
+    ('', False),
+    ('ffc9fbb0-1a73-448c-89a8-fe979e0f0c3e', True),
+    ('somestring', False)
+])
+def test_is_uuid(s, is_valid_uuid):
+    """
+    Given:
+        - Case A: Empty string
+        - Case B: Valid UUID
+        - Case C: Invalid UUID
+
+    When:
+        - Checking if the string is a valid UUID
+
+    Then:
+        - Case A: False as it is an empty string
+        - Case B: True as it is a valid UUID
+        - Case C: False as it is a string which is not a valid UUID
+    """
+    if is_valid_uuid:
+        assert is_uuid(s)
+    else:
+        assert not is_uuid(s)
+
+
+def test_get_relative_path_from_packs_dir():
+    """
+    Given:
+        - 'input_path': Path to some file or directory
+
+    When:
+        - Running get_relative_path_from_packs_dir
+
+    Then:
+        - Ensure that:
+          - If it is an absolute path to a pack related object - it returns the relative path from Packs dir.
+          - If it is a relative path from Packs dir or an unrelated path - return the path unchanged.
+
+    """
+    abs_path = '/Users/who/dev/demisto/content/Packs/Accessdata/Integrations/Accessdata/Accessdata.yml'
+    rel_path = 'Packs/Accessdata/Integrations/Accessdata/Accessdata.yml'
+    unrelated_path = '/Users/who/dev/demisto'
+
+    assert get_relative_path_from_packs_dir(abs_path) == rel_path
+    assert get_relative_path_from_packs_dir(rel_path) == rel_path
+    assert get_relative_path_from_packs_dir(unrelated_path) == unrelated_path
+
+
+@pytest.mark.parametrize('version,expected_result', [
+    ('1.3.8', ['* Updated the **secrets** command to work on forked branches.']),
+    ('1.3', [])
+])
+def test_get_release_note_entries(version, expected_result):
+    """
+    Given:
+        - Version of the demisto-sdk.
+
+    When:
+        - Running get_release_note_entries.
+
+    Then:
+        - Ensure that the result as expected.
+    """
+
+    assert get_release_note_entries(version) == expected_result

@@ -2,7 +2,7 @@ import os
 import re
 from enum import Enum
 from functools import reduce
-from typing import Iterable, List, Optional
+from typing import Dict, Iterable, List, Optional
 
 import click
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -860,7 +860,6 @@ class GithubContentConfig:
 
 OFFICIAL_CONTENT_ID_SET_PATH = 'https://storage.googleapis.com/marketplace-dist/content/id_set.json'
 
-
 # Run all test signal
 RUN_ALL_TESTS_FORMAT = 'Run all tests'
 FILTER_CONF = './artifacts/filter_file.txt'
@@ -948,8 +947,21 @@ FILE_NOT_IN_CC_REASON = 'File does not exist in Demisto instance'
 ACCEPTED_FILE_EXTENSIONS = [
     '.yml', '.json', '.md', '.py', '.js', '.ps1', '.png', '', '.lock'
 ]
+ENDPOINT_COMMAND_NAME = 'endpoint'
 
-BANG_COMMAND_NAMES = {'file', 'email', 'domain', 'url', 'ip', 'cve'}
+BANG_COMMAND_NAMES = {'file', 'email', 'domain', 'url', 'ip', 'cve', 'endpoint'}
+
+BANG_COMMAND_ARGS_MAPPING_DICT: Dict[str, dict] = {
+    'file': {'default': ['file'], },
+    'email': {'default': ['email']},
+    'domain': {'default': ['domain']},
+    'url': {'default': ['url']},
+    'ip': {'default': ['ip']},
+    'cve': {'default': ['cve', 'cve_id']},
+    'endpoint': {'default': ['ip'], 'required': False}
+}
+
+ENDPOINT_FLEXIBLE_REQUIRED_ARGS = ["ip", "id", "hostname"]
 
 GENERIC_COMMANDS_NAMES = BANG_COMMAND_NAMES.union({'send-mail', 'send-notification', 'cve-latest', 'cve-search'})
 
@@ -964,13 +976,14 @@ IOC_OUTPUTS_DICT = {
     'domain': {'Domain.Name'},
     'file': {'File.MD5', 'File.SHA1', 'File.SHA256'},
     'ip': {'IP.Address'},
-    'url': {'URL.Data'}
+    'url': {'URL.Data'},
+    'endpoint': {'Endpoint.Hostname', 'Endpoint.IPAddress', 'Endpoint.ID'}
 }
 XSOAR_SUPPORT = "xsoar"
 XSOAR_AUTHOR = "Cortex XSOAR"
 PACK_INITIAL_VERSION = '1.0.0'
 PACK_SUPPORT_OPTIONS = ['xsoar', 'partner', 'developer', 'community']
-
+XSOAR_CONTEXT_STANDARD_URL = "https://xsoar.pan.dev/docs/integrations/context-standards"
 XSOAR_SUPPORT_URL = "https://www.paloaltonetworks.com/cortex"
 MARKETPLACE_LIVE_DISCUSSIONS = \
     'https://live.paloaltonetworks.com/t5/cortex-xsoar-discussions/bd-p/Cortex_XSOAR_Discussions'
@@ -1231,5 +1244,15 @@ CONTENT_ITEMS_DISPLAY_FOLDERS = {
 }
 
 
+class PathLevel(Enum):
+    PACK = 'Pack',
+    CONTENT_ENTITY_DIR = 'ContentDir',
+    PACKAGE = 'Package',
+    FILE = 'File'
+
+
 class DemistoException(Exception):
     pass
+
+
+UUID_REGEX = r'([\w]{8}-[\w]{4}-[\w]{4}-[\w]{4}-[\w]{8,12})'

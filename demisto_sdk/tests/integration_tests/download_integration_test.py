@@ -129,7 +129,6 @@ def test_integration_download_fail(demisto_client, tmp_path):
     pack_path = join(DEMISTO_SDK_PATH, env.PACK_INSTANCE_PATH)
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(main, [DOWNLOAD_COMMAND, "-o", pack_path, "-i", "TestScript", "-i", "DummyPlaybook1", "-f"])
-    assert "FILE NAME       REASON" in result.output[350:1050]
     assert "-----------  ---------------------------------------" in result.output
     assert 'DummyPlaybook1  File does not exist in Demisto instance' in result.output
     assert result.exit_code == 1

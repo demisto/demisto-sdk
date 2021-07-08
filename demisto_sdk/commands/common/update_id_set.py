@@ -207,12 +207,26 @@ def get_filters_and_transformers_from_playbook(data_dict: dict) -> Tuple[list, l
     all_filters = set()
     all_transformers = set()
 
+    # collect complex values from playbook inputs
+    inputs = data_dict.get('inputs', [])
+    complex_values = [_input.get('value', {}).get('complex', {}) for _input in inputs]
+
     # gets the playbook tasks
     tasks = data_dict.get('tasks', {})
 
+    # collect complex values from playbook tasks
     for task in tasks.values():
         # gets the task value
-        complex_value = task.get('scriptarguments', {}).get('value', {}).get('complex', {})
+        if task.get('type') == 'condition':
+            for condition in task.get('conditions', []):
+                for inner_condition in condition.get('condition', []):
+                    if inner_condition:
+                        complex_values.append(inner_condition[0].get('left', {}).get('value', {}).get('complex', {}))
+        else:
+            complex_values.append(task.get('scriptarguments', {}).get('value', {}).get('complex', {}))
+
+    # get transformers and filters from the values
+    for complex_value in complex_values:
         if complex_value:
             transformers, filters = get_filters_and_transformers_from_complex_value(complex_value)
             all_transformers.update(transformers)

@@ -166,6 +166,7 @@ class Client(BaseClient):
                 ret_cookie = response_cookies.get(cookie_key).get("/")
                 cookie = self.get_cookie(ret_cookie)
                 token = ret_cookie.get("KACE_CSRF_TOKEN").__dict__.get('value')
+        demisto.executeCommand('getIncidents')
         sleep(100)
         sleep(4)
         if not token:

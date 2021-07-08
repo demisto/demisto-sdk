@@ -1,5 +1,6 @@
 # Changelog
 * When formatting incident types with Auto-Extract rules and without mode field, the **format** command will now add the user selected mode.
+* Enhanced the **postman-codegen** command to name all generated arguments with lower case.
 
 # 1.4.3
 * Fixed an issue where **json-to-outputs** command returned an incorrect output when json is a list.

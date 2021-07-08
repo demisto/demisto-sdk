@@ -17,6 +17,7 @@ from demisto_sdk.commands.common.update_id_set import (get_classifier_data,
                                                        get_playbook_data,
                                                        get_script_data)
 from demisto_sdk.commands.unify.unifier import Unifier
+from demisto_sdk.commands.common.constants import GENERIC_COMMANDS_NAMES
 
 
 class IDSetValidations(BaseValidator):
@@ -361,6 +362,9 @@ class IDSetValidations(BaseValidator):
 
         for command in playbook_integration_commands:
             implemented_integrations_list = playbook_integration_commands[command]
+            # Ignore the error for PB with general commands that do not depend on specific integration
+            if command in GENERIC_COMMANDS_NAMES and not implemented_integrations_list:
+                continue
             integration_from_valid_version_found = False
             for integration in implemented_integrations_list:
                 integration_version = self.get_integration_version(integration)

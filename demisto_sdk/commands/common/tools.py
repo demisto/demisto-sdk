@@ -951,7 +951,7 @@ def get_dict_from_file(path: str, use_ryaml: bool = False) -> Tuple[Dict, Union[
         use_ryaml - Whether to use ryaml for file loading or not
 
     Returns:
-        dict representation of the file, and the file_type, either .yml ot .json
+        dict representation of the file, and the file_type, either .yml or .json
     """
     if path:
         if path.endswith('.yml'):
@@ -1080,6 +1080,14 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
                     return FileType.INCIDENT_FIELD
                 if _id.startswith('indicator'):
                     return FileType.INDICATOR_FIELD
+                else:  # not an incident or an indicator
+                    if 'definitionId' in _dict and 'genericModuleId' in _dict:
+                        if 'cliName' in _dict:
+                            return FileType.OBJECT_FIELD
+                        elif 'color' in _dict:
+                            return FileType.OBJECT_TYPE
+                    elif 'definitions' in _dict and 'views' in _dict:
+                        return FileType.OBJECT_MODULE
             else:
                 print(f'The file {path} could not be recognized, please update the "id" to be a string')
 

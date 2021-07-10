@@ -138,7 +138,7 @@ class TestUpdateRNManager:
         Then:
             - an error message to remove the -g flag should be printed.
         """
-        with pytest.raises(Exception) as execinfo:
+        with pytest.raises(ValueError) as execinfo:
             UpdateReleaseNotesManager(user_input='Packs/test1', is_all=True)
         assert 'Please remove the -g flag' in execinfo.value.args[0]
 

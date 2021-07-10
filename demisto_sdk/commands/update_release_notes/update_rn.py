@@ -9,7 +9,6 @@ import re
 from distutils.version import LooseVersion
 from typing import Optional, Tuple, Union
 
-import click
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, DEFAULT_ID_SET_PATH,
     IGNORED_PACK_NAMES, RN_HEADER_BY_FILE_TYPE, FileType)
@@ -175,23 +174,20 @@ class UpdateRN:
             :rtype: ``(str, dict)``
             :return: The new version and new metadata dictionary
         """
-        try:
-            if self.is_bump_required():
-                if self.update_type is None:
-                    self.update_type = "revision"
-                new_version, new_metadata = self.bump_version_number(self.specific_version, self.pre_release)
-                if self.is_force:
-                    print_color(f"Bumping {self.pack} to version: {new_version}",
-                                LOG_COLORS.NATIVE)
-                else:
-                    print_color(f"Changes were detected. Bumping {self.pack} to version: {new_version}",
-                                LOG_COLORS.NATIVE)
+        if self.is_bump_required():
+            if self.update_type is None:
+                self.update_type = "revision"
+            new_version, new_metadata = self.bump_version_number(self.specific_version, self.pre_release)
+            if self.is_force:
+                print_color(f"Bumping {self.pack} to version: {new_version}",
+                            LOG_COLORS.NATIVE)
             else:
-                new_metadata = self.get_pack_metadata()
-                new_version = new_metadata.get('currentVersion', '99.99.99')
-            return new_version, new_metadata
-        except ValueError:
-            raise
+                print_color(f"Changes were detected. Bumping {self.pack} to version: {new_version}",
+                            LOG_COLORS.NATIVE)
+        else:
+            new_metadata = self.get_pack_metadata()
+            new_version = new_metadata.get('currentVersion', '99.99.99')
+        return new_version, new_metadata
 
     def _does_pack_metadata_exist(self) -> bool:
         """ Check if pack_metadata.json exists
@@ -244,7 +240,7 @@ class UpdateRN:
                 return True
             return False
         except RuntimeError as e:
-            raise Exception(f"Unable to locate a pack with the name {self.pack} in the git diff.\n"
+            raise RuntimeError(f"Unable to locate a pack with the name {self.pack} in the git diff.\n"
                             f"Please verify the pack exists and the pack name is correct.") from e
 
     def only_docs_changed(self) -> bool:
@@ -360,7 +356,7 @@ class UpdateRN:
         try:
             data_dictionary = get_json(self.metadata_path)
         except FileNotFoundError as e:
-            raise Exception(f'Pack {self.pack} was not found. Please verify the pack name is correct.') from e
+            raise FileNotFoundError(f'Pack {self.pack} was not found. Please verify the pack name is correct.') from e
         return data_dictionary
 
     def bump_version_number(self, specific_version: str = None, pre_release: bool = False) -> Tuple[str, dict]:

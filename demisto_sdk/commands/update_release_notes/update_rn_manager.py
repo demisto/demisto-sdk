@@ -36,32 +36,29 @@ class UpdateReleaseNotesManager:
         self.total_updated_packs: set = set()
         # When a user choose a specific pack to update rn, the -g flag should not be passed
         if self.given_pack and self.is_all:
-            raise Exception('Please remove the -g flag when specifying only one pack.')
+            raise ValueError('Please remove the -g flag when specifying only one pack.')
 
     def manage_rn_update(self):
         """
             Manages the entire update release notes process.
         """
-        try:
-            print_color('Starting to update release notes.', LOG_COLORS.NATIVE)
-            # The given_pack can be both path or pack name thus, we extract the pack name from the path if needed.
-            if self.given_pack and '/' in self.given_pack:
-                self.given_pack = get_pack_name(self.given_pack)  # extract pack from path
+        print_color('Starting to update release notes.', LOG_COLORS.NATIVE)
+        # The given_pack can be both path or pack name thus, we extract the pack name from the path if needed.
+        if self.given_pack and '/' in self.given_pack:
+            self.given_pack = get_pack_name(self.given_pack)  # extract pack from path
 
-            # Find which files were changed from git
-            modified_files, added_files, _, old_format_files = self.get_git_changed_files()
-            self.changed_packs_from_git = get_pack_names_from_files(modified_files).union(
-                get_pack_names_from_files(added_files)).union(get_pack_names_from_files(old_format_files))
-            # Check whether the packs have some existing RNs already (created manually or by the command)
-            self.check_existing_rn(added_files)
+        # Find which files were changed from git
+        modified_files, added_files, _, old_format_files = self.get_git_changed_files()
+        self.changed_packs_from_git = get_pack_names_from_files(modified_files).union(
+            get_pack_names_from_files(added_files)).union(get_pack_names_from_files(old_format_files))
+        # Check whether the packs have some existing RNs already (created manually or by the command)
+        self.check_existing_rn(added_files)
 
-            self.handle_api_module_change(modified_files, added_files)
-            self.create_release_notes(modified_files, added_files, old_format_files)
-            if len(self.total_updated_packs) > 1:
-                print_color('\nSuccessfully updated the following packs:\n' + '\n'.join(self.total_updated_packs),
-                            LOG_COLORS.GREEN)
-        except Exception:
-            raise
+        self.handle_api_module_change(modified_files, added_files)
+        self.create_release_notes(modified_files, added_files, old_format_files)
+        if len(self.total_updated_packs) > 1:
+            print_color('\nSuccessfully updated the following packs:\n' + '\n'.join(self.total_updated_packs),
+                        LOG_COLORS.GREEN)
 
     def get_git_changed_files(self) -> Tuple[set, set, set, set]:
         """ Get the changed files from git (added, modified, old format, metadata).
@@ -77,11 +74,11 @@ class UpdateReleaseNotesManager:
             validate_manager = ValidateManager(skip_pack_rn_validation=True, prev_ver=self.prev_ver,
                                                silence_init_prints=True, skip_conf_json=True, check_is_unskipped=False)
             if not validate_manager.git_util:  # in case git utils can't be initialized.
-                raise git.InvalidGitRepositoryError
+                raise FileNotFoundError
             validate_manager.setup_git_params()
             return validate_manager.get_changed_files_from_git()
         except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:
-            raise Exception(
+            raise FileNotFoundError(
                 "You are not running `demisto-sdk update-release-notes` command in the content repository.\n"
                 "Please run `cd content` from your terminal and run the command again") from e
 
@@ -150,9 +147,9 @@ class UpdateReleaseNotesManager:
         """
         existing_rn_version = self.get_existing_rn(pack)
         if existing_rn_version is None:  # New release notes file already found for the pack
-            Exception(f"New release notes file already found for {pack}. "
-                      f"Please update manually or run `demisto-sdk update-release-notes "
-                      f"-i {pack}` without specifying the update_type.")
+            raise RuntimeError(f"New release notes file already found for {pack}. "
+                               f"Please update manually or run `demisto-sdk update-release-notes "
+                               f"-i {pack}` without specifying the update_type.")
         pack_modified = filter_files_on_pack(pack, filtered_modified_files)
         pack_added = filter_files_on_pack(pack, filtered_added_files)
         pack_old = filter_files_on_pack(pack, old_format_files)

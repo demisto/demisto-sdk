@@ -32,7 +32,6 @@ BASE_FUNCTION = """def $FUNCTIONNAME$_command(client: Client, args: Dict[str, An
 BASE_REQUEST_FUNCTION = """    def $FUNCTIONNAME$_request(self$REQARGS$):
         $PARAMETERS$
         $DATA$
-
         headers = self._headers
         $HEADERSOBJ$
 

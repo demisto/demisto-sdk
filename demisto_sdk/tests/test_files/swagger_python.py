@@ -8,7 +8,6 @@ class Client(BaseClient):
 
     def add_pet_request(self, pet_id, pet_category, pet_name, pet_photourls, pet_tags, pet_status):
         data = assign_params(id=pet_id, category=pet_category, name=pet_name, photoUrls=pet_photourls, tags=pet_tags, status=pet_status)
-
         headers = self._headers
 
         response = self._http_request('post', 'pet', json_data=data, headers=headers)
@@ -17,7 +16,6 @@ class Client(BaseClient):
 
     def create_user_request(self, user_id, user_username, user_firstname, user_lastname, user_email, user_password, user_phone, user_userstatus):
         data = assign_params(id=user_id, username=user_username, firstName=user_firstname, lastName=user_lastname, email=user_email, password=user_password, phone=user_phone, userStatus=user_userstatus)
-
         headers = self._headers
 
         response = self._http_request('post', 'user', json_data=data, headers=headers)
@@ -26,7 +24,6 @@ class Client(BaseClient):
 
     def create_users_with_array_input_request(self, user_id, user_username, user_firstname, user_lastname, user_email, user_password, user_phone, user_userstatus):
         data = assign_params(id=user_id, username=user_username, firstName=user_firstname, lastName=user_lastname, email=user_email, password=user_password, phone=user_phone, userStatus=user_userstatus)
-
         headers = self._headers
 
         response = self._http_request('post', 'user/createWithArray', json_data=data, headers=headers)
@@ -35,7 +32,6 @@ class Client(BaseClient):
 
     def create_users_with_list_input_request(self, user_id, user_username, user_firstname, user_lastname, user_email, user_password, user_phone, user_userstatus):
         data = assign_params(id=user_id, username=user_username, firstName=user_firstname, lastName=user_lastname, email=user_email, password=user_password, phone=user_phone, userStatus=user_userstatus)
-
         headers = self._headers
 
         response = self._http_request('post', 'user/createWithList', json_data=data, headers=headers)
@@ -65,7 +61,6 @@ class Client(BaseClient):
 
     def find_pets_by_status_request(self, status):
         params = assign_params(status=status)
-
         headers = self._headers
 
         response = self._http_request('get', 'pet/findByStatus', params=params, headers=headers)
@@ -74,7 +69,6 @@ class Client(BaseClient):
 
     def find_pets_by_tags_request(self, tags):
         params = assign_params(tags=tags)
-
         headers = self._headers
 
         response = self._http_request('get', 'pet/findByTags', params=params, headers=headers)
@@ -111,7 +105,6 @@ class Client(BaseClient):
 
     def login_user_request(self, username, password):
         params = assign_params(username=username, password=password)
-
         headers = self._headers
 
         response = self._http_request('get', 'user/login', params=params, headers=headers)
@@ -127,7 +120,6 @@ class Client(BaseClient):
 
     def place_order_request(self, order_id, order_petid, order_quantity, order_shipdate, order_status, order_complete):
         data = assign_params(id=order_id, petId=order_petid, quantity=order_quantity, shipDate=order_shipdate, status=order_status, complete=order_complete)
-
         headers = self._headers
 
         response = self._http_request('post', 'store/order', json_data=data, headers=headers)
@@ -136,7 +128,6 @@ class Client(BaseClient):
 
     def post_pet_upload_image_request(self, petId, additionalMetadata, file):
         data = assign_params(additionalMetadata=additionalMetadata, file=file)
-
         headers = self._headers
         headers['Content-Type'] = 'multipart/form-data'
 
@@ -146,7 +137,6 @@ class Client(BaseClient):
 
     def post_pet_upload_image_by_uploadimage_request(self, petId, additionalMetadata, file):
         data = assign_params(additionalMetadata=additionalMetadata, file=file)
-
         headers = self._headers
         headers['Content-Type'] = 'multipart/form-data'
 
@@ -156,7 +146,6 @@ class Client(BaseClient):
 
     def update_pet_request(self, pet_id, pet_category, pet_name, pet_photourls, pet_tags, pet_status):
         data = assign_params(id=pet_id, category=pet_category, name=pet_name, photoUrls=pet_photourls, tags=pet_tags, status=pet_status)
-
         headers = self._headers
 
         response = self._http_request('put', 'pet', json_data=data, headers=headers)
@@ -165,7 +154,6 @@ class Client(BaseClient):
 
     def update_pet_with_form_request(self, petId, name, status):
         data = assign_params(name=name, status=status)
-
         headers = self._headers
         headers['Content-Type'] = 'application/x-www-form-urlencoded'
 
@@ -175,7 +163,6 @@ class Client(BaseClient):
 
     def update_user_request(self, username, user_id, user_username, user_firstname, user_lastname, user_email, user_password, user_phone, user_userstatus):
         data = assign_params(id=user_id, username=user_username, firstName=user_firstname, lastName=user_lastname, email=user_email, password=user_password, phone=user_phone, userStatus=user_userstatus)
-
         headers = self._headers
 
         response = self._http_request('put', f'user/{username}', json_data=data, headers=headers)

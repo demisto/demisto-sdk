@@ -20,15 +20,12 @@ expected_command_function = '''def get_pet_by_id_command(client: Client, args: D
 
 '''
 
-expected_request_function = ('\n'
-                             '    def get_pet_by_id_request(self, petId):\n'
-                             '\n'
+expected_request_function = ('    def get_pet_by_id_request(self, petId):\n'
                              '        headers = self._headers\n'
                              '\n'
                              '        response = self._http_request(\'get\', f\'pet/{petId}\', headers=headers)\n'
                              '\n'
-                             '        return response\n'
-                             '\n')
+                             '        return response\n')
 
 
 class TestOpenAPICodeGen:

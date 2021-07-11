@@ -7,8 +7,7 @@ class Client(BaseClient):
         super().__init__(base_url=server_url, verify=verify, proxy=proxy, headers=headers, auth=auth)
 
     def add_pet_request(self, pet_id, pet_category, pet_name, pet_photourls, pet_tags, pet_status):
-        data = assign_params(id=pet_id, category=pet_category, name=pet_name, photoUrls=pet_photourls, tags=pet_tags,
-                             status=pet_status)
+        data = assign_params(id=pet_id, category=pet_category, name=pet_name, photoUrls=pet_photourls, tags=pet_tags, status=pet_status)
 
         headers = self._headers
 
@@ -16,10 +15,8 @@ class Client(BaseClient):
 
         return response
 
-    def create_user_request(self, user_id, user_username, user_firstname, user_lastname, user_email, user_password,
-                            user_phone, user_userstatus):
-        data = assign_params(id=user_id, username=user_username, firstName=user_firstname, lastName=user_lastname,
-                             email=user_email, password=user_password, phone=user_phone, userStatus=user_userstatus)
+    def create_user_request(self, user_id, user_username, user_firstname, user_lastname, user_email, user_password, user_phone, user_userstatus):
+        data = assign_params(id=user_id, username=user_username, firstName=user_firstname, lastName=user_lastname, email=user_email, password=user_password, phone=user_phone, userStatus=user_userstatus)
 
         headers = self._headers
 
@@ -27,10 +24,8 @@ class Client(BaseClient):
 
         return response
 
-    def create_users_with_array_input_request(self, user_id, user_username, user_firstname, user_lastname, user_email,
-                                              user_password, user_phone, user_userstatus):
-        data = assign_params(id=user_id, username=user_username, firstName=user_firstname, lastName=user_lastname,
-                             email=user_email, password=user_password, phone=user_phone, userStatus=user_userstatus)
+    def create_users_with_array_input_request(self, user_id, user_username, user_firstname, user_lastname, user_email, user_password, user_phone, user_userstatus):
+        data = assign_params(id=user_id, username=user_username, firstName=user_firstname, lastName=user_lastname, email=user_email, password=user_password, phone=user_phone, userStatus=user_userstatus)
 
         headers = self._headers
 
@@ -38,10 +33,8 @@ class Client(BaseClient):
 
         return response
 
-    def create_users_with_list_input_request(self, user_id, user_username, user_firstname, user_lastname, user_email,
-                                             user_password, user_phone, user_userstatus):
-        data = assign_params(id=user_id, username=user_username, firstName=user_firstname, lastName=user_lastname,
-                             email=user_email, password=user_password, phone=user_phone, userStatus=user_userstatus)
+    def create_users_with_list_input_request(self, user_id, user_username, user_firstname, user_lastname, user_email, user_password, user_phone, user_userstatus):
+        data = assign_params(id=user_id, username=user_username, firstName=user_firstname, lastName=user_lastname, email=user_email, password=user_password, phone=user_phone, userStatus=user_userstatus)
 
         headers = self._headers
 
@@ -133,8 +126,7 @@ class Client(BaseClient):
         return response
 
     def place_order_request(self, order_id, order_petid, order_quantity, order_shipdate, order_status, order_complete):
-        data = assign_params(id=order_id, petId=order_petid, quantity=order_quantity, shipDate=order_shipdate,
-                             status=order_status, complete=order_complete)
+        data = assign_params(id=order_id, petId=order_petid, quantity=order_quantity, shipDate=order_shipdate, status=order_status, complete=order_complete)
 
         headers = self._headers
 
@@ -163,8 +155,7 @@ class Client(BaseClient):
         return response
 
     def update_pet_request(self, pet_id, pet_category, pet_name, pet_photourls, pet_tags, pet_status):
-        data = assign_params(id=pet_id, category=pet_category, name=pet_name, photoUrls=pet_photourls, tags=pet_tags,
-                             status=pet_status)
+        data = assign_params(id=pet_id, category=pet_category, name=pet_name, photoUrls=pet_photourls, tags=pet_tags, status=pet_status)
 
         headers = self._headers
 
@@ -182,10 +173,8 @@ class Client(BaseClient):
 
         return response
 
-    def update_user_request(self, username, user_id, user_username, user_firstname, user_lastname, user_email,
-                            user_password, user_phone, user_userstatus):
-        data = assign_params(id=user_id, username=user_username, firstName=user_firstname, lastName=user_lastname,
-                             email=user_email, password=user_password, phone=user_phone, userStatus=user_userstatus)
+    def update_user_request(self, username, user_id, user_username, user_firstname, user_lastname, user_email, user_password, user_phone, user_userstatus):
+        data = assign_params(id=user_id, username=user_username, firstName=user_firstname, lastName=user_lastname, email=user_email, password=user_password, phone=user_phone, userStatus=user_userstatus)
 
         headers = self._headers
 
@@ -225,8 +214,7 @@ def create_user_command(client: Client, args: Dict[str, Any]) -> CommandResults:
     user_phone = str(args.get('user_phone', ''))
     user_userstatus = args.get('user_userstatus', None)
 
-    response = client.create_user_request(user_id, user_username, user_firstname, user_lastname, user_email,
-                                          user_password, user_phone, user_userstatus)
+    response = client.create_user_request(user_id, user_username, user_firstname, user_lastname, user_email, user_password, user_phone, user_userstatus)
     command_results = CommandResults(
         outputs_prefix='TestSwagger',
         outputs_key_field='',
@@ -247,8 +235,7 @@ def create_users_with_array_input_command(client: Client, args: Dict[str, Any]) 
     user_phone = str(args.get('user_phone', ''))
     user_userstatus = args.get('user_userstatus', None)
 
-    response = client.create_users_with_array_input_request(user_id, user_username, user_firstname, user_lastname,
-                                                            user_email, user_password, user_phone, user_userstatus)
+    response = client.create_users_with_array_input_request(user_id, user_username, user_firstname, user_lastname, user_email, user_password, user_phone, user_userstatus)
     command_results = CommandResults(
         outputs_prefix='TestSwagger',
         outputs_key_field='',
@@ -269,8 +256,7 @@ def create_users_with_list_input_command(client: Client, args: Dict[str, Any]) -
     user_phone = str(args.get('user_phone', ''))
     user_userstatus = args.get('user_userstatus', None)
 
-    response = client.create_users_with_list_input_request(user_id, user_username, user_firstname, user_lastname,
-                                                           user_email, user_password, user_phone, user_userstatus)
+    response = client.create_users_with_list_input_request(user_id, user_username, user_firstname, user_lastname, user_email, user_password, user_phone, user_userstatus)
     command_results = CommandResults(
         outputs_prefix='TestSwagger',
         outputs_key_field='',
@@ -441,8 +427,7 @@ def place_order_command(client: Client, args: Dict[str, Any]) -> CommandResults:
     order_status = str(args.get('order_status', ''))
     order_complete = argToBoolean(args.get('order_complete', False))
 
-    response = client.place_order_request(order_id, order_petid, order_quantity, order_shipdate, order_status,
-                                          order_complete)
+    response = client.place_order_request(order_id, order_petid, order_quantity, order_shipdate, order_status, order_complete)
     command_results = CommandResults(
         outputs_prefix='TestSwagger.Order',
         outputs_key_field='id',
@@ -533,8 +518,7 @@ def update_user_command(client: Client, args: Dict[str, Any]) -> CommandResults:
     user_phone = str(args.get('user_phone', ''))
     user_userstatus = args.get('user_userstatus', None)
 
-    response = client.update_user_request(username, user_id, user_username, user_firstname, user_lastname, user_email,
-                                          user_password, user_phone, user_userstatus)
+    response = client.update_user_request(username, user_id, user_username, user_firstname, user_lastname, user_email, user_password, user_phone, user_userstatus)
     command_results = CommandResults(
         outputs_prefix='TestSwagger',
         outputs_key_field='',

@@ -41,8 +41,7 @@ class TestOpenAPICodeGen:
                                          '-'.join(base_name.split(' ')).lower(),
                                          base_name.replace(' ', ''),
                                          unique_keys='id',
-                                         root_objects='Pet',
-                                         fix_code=True)
+                                         root_objects='Pet')
 
         integration.load_file()
         return integration

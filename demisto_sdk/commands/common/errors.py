@@ -1700,7 +1700,7 @@ class Errors:
     @staticmethod
     def suggest_fix_field_name(field_name, pack_prefix):
         return f"To fix the problem, add pack name prefix to the field name. " \
-               f"You can use the pack name or one of the prefixes found in the itemPrefix field in the packe.metadat. " \
+               f"You can use the pack name or one of the prefixes found in the itemPrefix field in the pack_metadata. " \
                f"Example: {pack_prefix} {field_name}.\n" \
                f"Also make sure to update the field id and cliName accordingly. " \
                f"Example: cliName: {pack_prefix.replace(' ', '')}{field_name.replace(' ', '')}, "

@@ -583,7 +583,7 @@ def main():
     try:
         requests.packages.urllib3.disable_warnings()
         client: Client = Client(urljoin(url, '/v2'), verify_certificate, proxy, headers=headers, auth=None)
-        
+
         commands = {
     		'testswagger-add-pet': add_pet_command,
 			'testswagger-create-user': create_user_command,

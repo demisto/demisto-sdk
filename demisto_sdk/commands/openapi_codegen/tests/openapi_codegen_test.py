@@ -116,7 +116,7 @@ class TestOpenAPICodeGen:
 
         py = integration.generate_python_code()
 
-        assert py == ''
+        assert py == expected_py
 
     def test_get_command_function(self):
         """

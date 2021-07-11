@@ -166,8 +166,9 @@ class UpdateReleaseNotesManager:
             # If new release notes were created add it to the total number of packs that were updated.
             if updated:
                 self.total_updated_packs.add(pack)
-                # If there is an outdated previous release notes, remove it (for example: currentversion is 1.0.3 and
-                # 1_0_5 release note file exists, we want to update release note version to 1_0_4 and remove 1_0_5 file)
+                # If there is an outdated previous release notes, remove it (for example: User updated his version to
+                # 1.0.4 and meanwhile the master version changed to 1.0.4, so we want to remove the user's 1_0_4 file
+                # and add a 1_0_5 file.)
                 if update_pack_rn.should_delete_existing_rn:
                     os.unlink(self.packs_existing_rn[pack])
         else:

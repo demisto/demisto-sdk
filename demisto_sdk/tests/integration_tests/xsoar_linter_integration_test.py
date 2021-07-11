@@ -20,9 +20,9 @@ from demisto_sdk.tests.constants_test import (
 files = [
 
     # ---------------------------------------- For Valid file -------------------------------------------------
-    (Path(f"{XSOAR_LINTER_PY3_VALID}"), 3.8, 'base', False, 0, [], []),
+    (Path(f"{XSOAR_LINTER_PY3_VALID}"), 3.8, 'base', False, 0, [], [], False),
     (Path(f"{XSOAR_LINTER_PY3_VALID}"), 3.8, 'base', True, 0, [],
-     ['test-module', 'kace-machines-list', 'kace-assets-list', 'kace-queues-list', 'kace-tickets-list']),
+     ['test-module', 'kace-machines-list', 'kace-assets-list', 'kace-queues-list', 'kace-tickets-list'], False),
 
 
     # -------------------------------------------- For Invalid file -------------------------------------------------
@@ -33,7 +33,12 @@ files = [
         "test-module command is not implemented in the python file, it is essential for every"
         " integration. Please add it to your code. For more information see: "
         "https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
-    ], []),
+    ], [], False),
+
+    # -------------------- For Invalid file with support level base and is a script -----------------------
+    (Path(f"{XSOAR_LINTER_PY3_INVALID}"), 3.8, 'base', False, 1, [
+        "Your script requires elevated permissions. Please add the `runas: DBotRole` to the yml file."
+    ], [], True),
 
     # -------------------- For Invalid file with support level base and long running False -----------------------
     (Path(f"{XSOAR_LINTER_PY3_INVALID}"), 3.8, 'base', False, 1, [
@@ -46,7 +51,7 @@ files = [
         "test-module command is not implemented in the python file, it is essential for every"
         " integration. Please add it to your code. For more information see: "
         "https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
-    ], ['kace-machines-list', 'kace-assets-list', 'kace-queues-list', 'kace-tickets-list', 'error']),
+    ], ['kace-machines-list', 'kace-assets-list', 'kace-queues-list', 'kace-tickets-list', 'error'], False),
 
     # ------------- For Invalid file with support level certified partner and long running False ------------------
     (Path(f"{XSOAR_LINTER_PY3_INVALID}"), 3.8, 'certified partner', False, 1,
@@ -55,7 +60,7 @@ files = [
       "test-module command is not implemented in the python file, it is essential for every"
       " integration. Please add it to your code. For more information see: "
       "https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
-      ], []),
+      ], [], False),
 
     # ------------- For Invalid file with support level certified partner and long running True ---------------------
     (Path(f"{XSOAR_LINTER_PY3_INVALID}"), 3.8, 'certified partner', True, 1,
@@ -63,7 +68,7 @@ files = [
       "test-module command is not implemented in the python file, it is essential for every"
       " integration. Please add it to your code. For more information see: "
       "https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
-      ], []),
+      ], [], False),
 
     # ------------- For Invalid file with support level community and long running False ------------------
     (Path(f"{XSOAR_LINTER_PY3_INVALID}"), 3.8, 'community', False, 1,
@@ -71,7 +76,7 @@ files = [
       "test-module command is not implemented in the python file, it is essential for every"
       " integration. Please add it to your code. For more information see: "
       "https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
-      ], []),
+      ], [], False),
 
     # ------------- For Invalid file with default support level and long running False ------------------
     (Path(f"{XSOAR_LINTER_PY3_INVALID}"), 3.8, '', False, 1,
@@ -79,7 +84,7 @@ files = [
       "test-module command is not implemented in the python file, it is essential for every"
       " integration. Please add it to your code. For more information see: "
       "https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
-      ], []),
+      ], [], False),
 
     # ------------- For Invalid file with xsoar support level and long running False ------------------
     (Path(f"{XSOAR_LINTER_PY3_INVALID}"), 3.8, 'xsoar', False, 1,
@@ -87,7 +92,7 @@ files = [
       "test-module command is not implemented in the python file, it is essential for every"
       " integration. Please add it to your code. For more information see: "
       "https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
-      ], []),
+      ], [], False),
 
 
     # -------------------------------- For Warning file which is relevant from partner level and bigger---------------
@@ -97,16 +102,16 @@ files = [
      ['try and except statements were not found in main function.',
       'return_error should be used in main function. Please add it.',
       'return_error used too many times, should be used only once in the code, in main function.'
-      ], []),
+      ], [], False),
 
     # -------------------------------- For Warning file with support level community-----------------------------------
     (Path(f"{XSOAR_LINTER_PY3_INVALID_WARNINGS_PARTNER}"), 3.8, 'community', False, 0,
-     [], []),
+     [], [], False),
 
     # -------------------------------- For Warning file with support level xsoar-----------------------------------
     (Path(f"{XSOAR_LINTER_PY3_INVALID_WARNINGS_PARTNER}"), 3.8, 'xsoar', False, 4,
      ['return_error should be used in main function. Please add it.',
-      'return_error used too many times, should be used only once in the code, in main function.'], []),
+      'return_error used too many times, should be used only once in the code, in main function.'], [], False),
 
 
     # --------------------------------------- For Warning file -------------------------------------------------------
@@ -119,18 +124,18 @@ files = [
       'Do not use demisto.results function.',
       'Initialize of params was found outside of main function. Please use demisto.params() only inside main',
       'Initialize of args was found outside of main function. Please use demisto.args() only inside main func'
-      ], []),
+      ], [], False),
     # --------------------- For Warning file with support level xsoar------------- -----------------------------------
 
     (Path(f"{XSOAR_LINTER_PY3_INVALID_WARNINGS}"), 3.8, 'xsoar', False, 4,
      ['Function arguments are missing type annotations. Please add type annotations',
-      'It is best practice to use .get when accessing the arg/params dict object rather then direct access.'], []),
+      'It is best practice to use .get when accessing the arg/params dict object rather then direct access.'], [], False),
 ]
 
 
-@pytest.mark.parametrize('file, python_version,support_level,long_running,exit_code,error_msgs,commands', files)
+@pytest.mark.parametrize('file, python_version,support_level,long_running,exit_code,error_msgs,commands,is_script', files)
 def test_xsoar_linter_errors(mocker, file, python_version, support_level, long_running, exit_code, error_msgs,
-                             commands):
+                             commands, is_script):
     """
     Given
     - file to run the linter on.
@@ -162,6 +167,7 @@ def test_xsoar_linter_errors(mocker, file, python_version, support_level, long_r
     runner._facts['support_level'] = support_level
     runner._facts['is_long_running'] = long_running
     runner._facts['commands'] = commands
+    runner._facts['is_script'] = is_script
     exit_code_actual, output = runner._run_xsoar_linter(python_version, [file])
     assert exit_code == exit_code_actual
     for msg in error_msgs:

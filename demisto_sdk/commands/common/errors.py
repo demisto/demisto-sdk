@@ -121,6 +121,7 @@ ERROR_CODE = {
     "include_field_in_dashboard": {'code': "DA101", 'ui_applicable': False, 'related_field': ''},
     "remove_field_from_widget": {'code': "WD100", 'ui_applicable': False, 'related_field': ''},
     "include_field_in_widget": {'code': "WD101", 'ui_applicable': False, 'related_field': ''},
+    "invalid_fromversion_for_type_metrics": {'code': "WD102", 'ui_applicable': False, 'related_field': ''},
     "no_image_given": {'code': "IM100", 'ui_applicable': True, 'related_field': 'image'},
     "image_too_large": {'code': "IM101", 'ui_applicable': True, 'related_field': 'image'},
     "image_in_package_and_yml": {'code': "IM102", 'ui_applicable': False, 'related_field': 'image'},
@@ -795,6 +796,11 @@ class Errors:
     @error_code_decorator
     def include_field_in_widget(field, widget_name):
         return f'The field {field} needs to be included in the widget: {widget_name}. Please add it.'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_fromversion_for_type_metrics():
+        return f'The minimal fromVersion for widget with data type \'metrics\' is \'6.2.0\'.\n'
 
     @staticmethod
     @error_code_decorator
@@ -1694,7 +1700,7 @@ class Errors:
     @staticmethod
     def suggest_fix_field_name(field_name, pack_prefix):
         return f"To fix the problem, add pack name prefix to the field name. " \
-               f"You can use the pack name or one of the prefixes found in the itemPrefix field in the packe.metadat. " \
+               f"You can use the pack name or one of the prefixes found in the itemPrefix field in the pack_metadata. " \
                f"Example: {pack_prefix} {field_name}.\n" \
                f"Also make sure to update the field id and cliName accordingly. " \
                f"Example: cliName: {pack_prefix.replace(' ', '')}{field_name.replace(' ', '')}, "

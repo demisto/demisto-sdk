@@ -311,5 +311,5 @@ def main():
         return_error(f'Failed to execute {command} command. Traceback: {traceback.format_exc()}')
 
 
-if __name__ in ('__main__', '__builtin__', 'builtins'):
+if __name__ in ('__main__', '__builtin__', 'builtins'):  # pragma: no cover
     main()

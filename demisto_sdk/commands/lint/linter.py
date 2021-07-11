@@ -33,8 +33,6 @@ from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, RERUN, RL,
                                                add_typing_module,
                                                coverage_report_editor,
                                                get_file_from_container,
-                                               get_linters_on_docker,
-                                               get_linters_on_local_os,
                                                get_python_version_from_image,
                                                pylint_plugin,
                                                split_warnings_errors,
@@ -45,6 +43,8 @@ from wcmatch.pathlib import NEGATE, Path
 
 logger = logging.getLogger('demisto-sdk')
 
+DEFAULT_LINTERS_IN_DOCKER = {"pylint", "mypy", "pytest", "pwsh_analyze", "pwsh_test"}
+DEFAULT_LINTERS_IN_OS = ["flake8", "XSOAR_linter", "bandit", "vulture"]
 
 class Linter:
     """ Linter used to activate lint command on single package
@@ -302,6 +302,7 @@ class Linter:
         Args:
             no_flake8(bool): Whether to skip flake8.
             no_bandit(bool): Whether to skip bandit.
+            no_mypy(bool): Whether to skip mypy.
             no_vulture(bool): Whether to skip Vulture.
         """
         warning = []
@@ -573,7 +574,7 @@ class Linter:
                             if check == "mypy" and not no_mypy and self._facts["lint_files"]:
                                 test_command = build_mypy_command(files=self._facts["lint_files"],
                                                                   version=self._facts["python_version"])
-                                exit_code, output = self._run_linters_in_docker(test_name=check.capitalize(),
+                                exit_code, output = self._run_linters_in_docker(test_name=check,
                                                                                 test_command=test_command,
                                                                                 test_image=image_id,
                                                                                 keep_container=keep_container)
@@ -582,7 +583,7 @@ class Linter:
                             elif check == "pylint" and not no_pylint and self._facts["lint_files"]:
                                 test_command = build_pylint_command(files=self._facts["lint_files"],
                                                                     docker_version=self._facts["python_version"])
-                                exit_code, output = self._run_linters_in_docker(test_name=check.capitalize(),
+                                exit_code, output = self._run_linters_in_docker(test_name=check,
                                                                                 test_command=test_command,
                                                                                 test_image=image_id,
                                                                                 keep_container=keep_container)
@@ -763,7 +764,7 @@ class Linter:
         """
         log_prompt = f'{self._pack_name} - {test_name} - Image {test_image}'
         logger.info(f"{log_prompt} - Start")
-        container_name = f"{self._pack_name}-{test_name.lower()}"
+        container_name = f"{self._pack_name}-{test_name}"
         # Check if previous run left container a live if it do, we remove it
         self._docker_remove_container(container_name)
 
@@ -776,8 +777,7 @@ class Linter:
                 image=test_image,
                 command=[test_command],
                 user=f"{os.getuid()}:4000",
-                detach=True,
-                environment={**self._facts["env_vars"]}  # quiet pip to avoid pip info when run by mypy
+                detach=True
             )
             stream_docker_container_output(container_obj.logs(stream=True))
             # wait for container to finish
@@ -814,7 +814,7 @@ class Linter:
                 except docker.errors.NotFound as e:
                     logger.critical(f"{log_prompt} - Unable to delete container - {e}")
         except Exception as e:
-            logger.exception(f"{log_prompt} - Unable to run {test_name.lower()}")
+            logger.exception(f"{log_prompt} - Unable to run {test_name}")
             exit_code = RERUN
             output = str(e)
         return exit_code, output
@@ -1050,3 +1050,15 @@ class Linter:
         except Exception:
             logger.debug("Failed getting the commands from the yml file")
         return commands_list
+
+
+def get_linters_on_local_os(python_version: float):
+    if python_version < 3:
+        return DEFAULT_LINTERS_IN_OS + ["mypy"]
+    return DEFAULT_LINTERS_IN_OS
+
+
+def get_linters_on_docker(python_version: float):
+    if python_version < 3:
+        return DEFAULT_LINTERS_IN_DOCKER - {"mypy"}
+    return DEFAULT_LINTERS_IN_DOCKER

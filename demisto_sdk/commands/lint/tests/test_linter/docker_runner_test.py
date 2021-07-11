@@ -101,26 +101,6 @@ class TestMypy(BaseLintTest):
     def get_lint_name(self):
         return 'Mypy'
 
-    def test_env_variable_passed_to_docker(self, mocker, linter_obj):
-        """
-        Given: -
-
-        When: - Run Mypy in docker container
-
-        Then: - Validate the environment passed to the run method of the docker container
-
-        """
-        # prepare
-        env_vars = dict(PIP_QUIET=3)
-        mocker.patch.object(linter_obj, '_docker_client')
-        linter_obj._facts["env_vars"] = env_vars
-        linter_obj._docker_client.containers.run().wait.return_value = {"StatusCode": 0}
-        linter_obj._run_linters_in_docker(test_name=self.get_lint_name(),
-                                          test_image='test-image',
-                                          test_command='test-command',
-                                          keep_container=False)
-        linter_obj._docker_client.containers.run.call_args[1]['environment'] == env_vars
-
     def test_command_passed_to_docker(self, mocker, linter_obj, lint_files):
         """
         Given: - Python file version >= 3

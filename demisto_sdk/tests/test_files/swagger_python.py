@@ -4,58 +4,70 @@ from CommonServerPython import *
 
 class Client(BaseClient):
     def __init__(self, server_url, verify, proxy, headers, auth):
-        super().__init__(base_url=server_url, verify=verify, proxy=proxy, headers=headers, auth=auth)
+        super().__init__(base_url=server_url, verify=verify,
+                         proxy=proxy, headers=headers, auth=auth)
 
     def add_pet_request(self, pet_id, pet_category, pet_name, pet_photourls, pet_tags, pet_status):
-        data = assign_params(id=pet_id, category=pet_category, name=pet_name, photoUrls=pet_photourls, tags=pet_tags, status=pet_status)
+        data = assign_params(id=pet_id, category=pet_category, name=pet_name,
+                             photoUrls=pet_photourls, tags=pet_tags, status=pet_status)
         headers = self._headers
 
-        response = self._http_request('post', 'pet', json_data=data, headers=headers)
+        response = self._http_request(
+            'post', 'pet', json_data=data, headers=headers)
 
         return response
 
     def create_user_request(self, user_id, user_username, user_firstname, user_lastname, user_email, user_password, user_phone, user_userstatus):
-        data = assign_params(id=user_id, username=user_username, firstName=user_firstname, lastName=user_lastname, email=user_email, password=user_password, phone=user_phone, userStatus=user_userstatus)
+        data = assign_params(id=user_id, username=user_username, firstName=user_firstname, lastName=user_lastname,
+                             email=user_email, password=user_password, phone=user_phone, userStatus=user_userstatus)
         headers = self._headers
 
-        response = self._http_request('post', 'user', json_data=data, headers=headers)
+        response = self._http_request(
+            'post', 'user', json_data=data, headers=headers)
 
         return response
 
     def create_users_with_array_input_request(self, user_id, user_username, user_firstname, user_lastname, user_email, user_password, user_phone, user_userstatus):
-        data = assign_params(id=user_id, username=user_username, firstName=user_firstname, lastName=user_lastname, email=user_email, password=user_password, phone=user_phone, userStatus=user_userstatus)
+        data = assign_params(id=user_id, username=user_username, firstName=user_firstname, lastName=user_lastname,
+                             email=user_email, password=user_password, phone=user_phone, userStatus=user_userstatus)
         headers = self._headers
 
-        response = self._http_request('post', 'user/createWithArray', json_data=data, headers=headers)
+        response = self._http_request(
+            'post', 'user/createWithArray', json_data=data, headers=headers)
 
         return response
 
     def create_users_with_list_input_request(self, user_id, user_username, user_firstname, user_lastname, user_email, user_password, user_phone, user_userstatus):
-        data = assign_params(id=user_id, username=user_username, firstName=user_firstname, lastName=user_lastname, email=user_email, password=user_password, phone=user_phone, userStatus=user_userstatus)
+        data = assign_params(id=user_id, username=user_username, firstName=user_firstname, lastName=user_lastname,
+                             email=user_email, password=user_password, phone=user_phone, userStatus=user_userstatus)
         headers = self._headers
 
-        response = self._http_request('post', 'user/createWithList', json_data=data, headers=headers)
+        response = self._http_request(
+            'post', 'user/createWithList', json_data=data, headers=headers)
 
         return response
 
     def delete_order_request(self, orderId):
         headers = self._headers
 
-        response = self._http_request('delete', f'store/order/{orderId}', headers=headers)
+        response = self._http_request(
+            'delete', f'store/order/{orderId}', headers=headers)
 
         return response
 
     def delete_pet_request(self, api_key, petId):
         headers = self._headers
 
-        response = self._http_request('delete', f'pet/{petId}', headers=headers)
+        response = self._http_request(
+            'delete', f'pet/{petId}', headers=headers)
 
         return response
 
     def delete_user_request(self, username):
         headers = self._headers
 
-        response = self._http_request('delete', f'user/{username}', headers=headers)
+        response = self._http_request(
+            'delete', f'user/{username}', headers=headers)
 
         return response
 
@@ -63,7 +75,8 @@ class Client(BaseClient):
         params = assign_params(status=status)
         headers = self._headers
 
-        response = self._http_request('get', 'pet/findByStatus', params=params, headers=headers)
+        response = self._http_request(
+            'get', 'pet/findByStatus', params=params, headers=headers)
 
         return response
 
@@ -71,21 +84,24 @@ class Client(BaseClient):
         params = assign_params(tags=tags)
         headers = self._headers
 
-        response = self._http_request('get', 'pet/findByTags', params=params, headers=headers)
+        response = self._http_request(
+            'get', 'pet/findByTags', params=params, headers=headers)
 
         return response
 
     def get_inventory_request(self):
         headers = self._headers
 
-        response = self._http_request('get', 'store/inventory', headers=headers)
+        response = self._http_request(
+            'get', 'store/inventory', headers=headers)
 
         return response
 
     def get_order_by_id_request(self, orderId):
         headers = self._headers
 
-        response = self._http_request('get', f'store/order/{orderId}', headers=headers)
+        response = self._http_request(
+            'get', f'store/order/{orderId}', headers=headers)
 
         return response
 
@@ -99,7 +115,8 @@ class Client(BaseClient):
     def get_user_by_name_request(self, username):
         headers = self._headers
 
-        response = self._http_request('get', f'user/{username}', headers=headers)
+        response = self._http_request(
+            'get', f'user/{username}', headers=headers)
 
         return response
 
@@ -107,7 +124,8 @@ class Client(BaseClient):
         params = assign_params(username=username, password=password)
         headers = self._headers
 
-        response = self._http_request('get', 'user/login', params=params, headers=headers)
+        response = self._http_request(
+            'get', 'user/login', params=params, headers=headers)
 
         return response
 
@@ -119,10 +137,12 @@ class Client(BaseClient):
         return response
 
     def place_order_request(self, order_id, order_petid, order_quantity, order_shipdate, order_status, order_complete):
-        data = assign_params(id=order_id, petId=order_petid, quantity=order_quantity, shipDate=order_shipdate, status=order_status, complete=order_complete)
+        data = assign_params(id=order_id, petId=order_petid, quantity=order_quantity,
+                             shipDate=order_shipdate, status=order_status, complete=order_complete)
         headers = self._headers
 
-        response = self._http_request('post', 'store/order', json_data=data, headers=headers)
+        response = self._http_request(
+            'post', 'store/order', json_data=data, headers=headers)
 
         return response
 
@@ -131,7 +151,8 @@ class Client(BaseClient):
         headers = self._headers
         headers['Content-Type'] = 'multipart/form-data'
 
-        response = self._http_request('post', f'pet/{petId}/uploadImage', json_data=data, headers=headers)
+        response = self._http_request(
+            'post', f'pet/{petId}/uploadImage', json_data=data, headers=headers)
 
         return response
 
@@ -140,15 +161,18 @@ class Client(BaseClient):
         headers = self._headers
         headers['Content-Type'] = 'multipart/form-data'
 
-        response = self._http_request('post', f'pet/{petId}/uploadImage/{uploadimage}', json_data=data, headers=headers)
+        response = self._http_request(
+            'post', f'pet/{petId}/uploadImage/{uploadimage}', json_data=data, headers=headers)
 
         return response
 
     def update_pet_request(self, pet_id, pet_category, pet_name, pet_photourls, pet_tags, pet_status):
-        data = assign_params(id=pet_id, category=pet_category, name=pet_name, photoUrls=pet_photourls, tags=pet_tags, status=pet_status)
+        data = assign_params(id=pet_id, category=pet_category, name=pet_name,
+                             photoUrls=pet_photourls, tags=pet_tags, status=pet_status)
         headers = self._headers
 
-        response = self._http_request('put', 'pet', json_data=data, headers=headers)
+        response = self._http_request(
+            'put', 'pet', json_data=data, headers=headers)
 
         return response
 
@@ -157,15 +181,18 @@ class Client(BaseClient):
         headers = self._headers
         headers['Content-Type'] = 'application/x-www-form-urlencoded'
 
-        response = self._http_request('post', f'pet/{petId}', json_data=data, headers=headers)
+        response = self._http_request(
+            'post', f'pet/{petId}', json_data=data, headers=headers)
 
         return response
 
     def update_user_request(self, username, user_id, user_username, user_firstname, user_lastname, user_email, user_password, user_phone, user_userstatus):
-        data = assign_params(id=user_id, username=user_username, firstName=user_firstname, lastName=user_lastname, email=user_email, password=user_password, phone=user_phone, userStatus=user_userstatus)
+        data = assign_params(id=user_id, username=user_username, firstName=user_firstname, lastName=user_lastname,
+                             email=user_email, password=user_password, phone=user_phone, userStatus=user_userstatus)
         headers = self._headers
 
-        response = self._http_request('put', f'user/{username}', json_data=data, headers=headers)
+        response = self._http_request(
+            'put', f'user/{username}', json_data=data, headers=headers)
 
         return response
 
@@ -180,7 +207,8 @@ def add_pet_command(client: Client, args: Dict[str, Any]) -> CommandResults:
     pet_tags = argToList(args.get('pet_tags', []))
     pet_status = str(args.get('pet_status', ''))
 
-    response = client.add_pet_request(pet_id, pet_category, pet_name, pet_photourls, pet_tags, pet_status)
+    response = client.add_pet_request(
+        pet_id, pet_category, pet_name, pet_photourls, pet_tags, pet_status)
     command_results = CommandResults(
         outputs_prefix='TestSwagger',
         outputs_key_field='',
@@ -201,7 +229,8 @@ def create_user_command(client: Client, args: Dict[str, Any]) -> CommandResults:
     user_phone = str(args.get('user_phone', ''))
     user_userstatus = args.get('user_userstatus', None)
 
-    response = client.create_user_request(user_id, user_username, user_firstname, user_lastname, user_email, user_password, user_phone, user_userstatus)
+    response = client.create_user_request(
+        user_id, user_username, user_firstname, user_lastname, user_email, user_password, user_phone, user_userstatus)
     command_results = CommandResults(
         outputs_prefix='TestSwagger',
         outputs_key_field='',
@@ -222,7 +251,8 @@ def create_users_with_array_input_command(client: Client, args: Dict[str, Any]) 
     user_phone = str(args.get('user_phone', ''))
     user_userstatus = args.get('user_userstatus', None)
 
-    response = client.create_users_with_array_input_request(user_id, user_username, user_firstname, user_lastname, user_email, user_password, user_phone, user_userstatus)
+    response = client.create_users_with_array_input_request(
+        user_id, user_username, user_firstname, user_lastname, user_email, user_password, user_phone, user_userstatus)
     command_results = CommandResults(
         outputs_prefix='TestSwagger',
         outputs_key_field='',
@@ -243,7 +273,8 @@ def create_users_with_list_input_command(client: Client, args: Dict[str, Any]) -
     user_phone = str(args.get('user_phone', ''))
     user_userstatus = args.get('user_userstatus', None)
 
-    response = client.create_users_with_list_input_request(user_id, user_username, user_firstname, user_lastname, user_email, user_password, user_phone, user_userstatus)
+    response = client.create_users_with_list_input_request(
+        user_id, user_username, user_firstname, user_lastname, user_email, user_password, user_phone, user_userstatus)
     command_results = CommandResults(
         outputs_prefix='TestSwagger',
         outputs_key_field='',
@@ -326,6 +357,7 @@ def find_pets_by_tags_command(client: Client, args: Dict[str, Any]) -> CommandRe
 
 
 def get_inventory_command(client: Client, args: Dict[str, Any]) -> CommandResults:
+
     response = client.get_inventory_request()
     command_results = CommandResults(
         outputs_prefix='TestSwagger',
@@ -395,6 +427,7 @@ def login_user_command(client: Client, args: Dict[str, Any]) -> CommandResults:
 
 
 def logout_user_command(client: Client, args: Dict[str, Any]) -> CommandResults:
+
     response = client.logout_user_request()
     command_results = CommandResults(
         outputs_prefix='TestSwagger',
@@ -414,7 +447,8 @@ def place_order_command(client: Client, args: Dict[str, Any]) -> CommandResults:
     order_status = str(args.get('order_status', ''))
     order_complete = argToBoolean(args.get('order_complete', False))
 
-    response = client.place_order_request(order_id, order_petid, order_quantity, order_shipdate, order_status, order_complete)
+    response = client.place_order_request(
+        order_id, order_petid, order_quantity, order_shipdate, order_status, order_complete)
     command_results = CommandResults(
         outputs_prefix='TestSwagger.Order',
         outputs_key_field='id',
@@ -430,7 +464,8 @@ def post_pet_upload_image_command(client: Client, args: Dict[str, Any]) -> Comma
     additionalMetadata = str(args.get('additionalMetadata', ''))
     file = str(args.get('file', ''))
 
-    response = client.post_pet_upload_image_request(petId, additionalMetadata, file)
+    response = client.post_pet_upload_image_request(
+        petId, additionalMetadata, file)
     command_results = CommandResults(
         outputs_prefix='TestSwagger.ApiResponse',
         outputs_key_field='',
@@ -446,7 +481,8 @@ def post_pet_upload_image_by_uploadimage_command(client: Client, args: Dict[str,
     additionalMetadata = str(args.get('additionalMetadata', ''))
     file = str(args.get('file', ''))
 
-    response = client.post_pet_upload_image_by_uploadimage_request(petId, additionalMetadata, file)
+    response = client.post_pet_upload_image_by_uploadimage_request(
+        petId, additionalMetadata, file)
     command_results = CommandResults(
         outputs_prefix='TestSwagger.ApiResponse',
         outputs_key_field='',
@@ -467,7 +503,8 @@ def update_pet_command(client: Client, args: Dict[str, Any]) -> CommandResults:
     pet_tags = argToList(args.get('pet_tags', []))
     pet_status = str(args.get('pet_status', ''))
 
-    response = client.update_pet_request(pet_id, pet_category, pet_name, pet_photourls, pet_tags, pet_status)
+    response = client.update_pet_request(
+        pet_id, pet_category, pet_name, pet_photourls, pet_tags, pet_status)
     command_results = CommandResults(
         outputs_prefix='TestSwagger',
         outputs_key_field='',
@@ -505,7 +542,8 @@ def update_user_command(client: Client, args: Dict[str, Any]) -> CommandResults:
     user_phone = str(args.get('user_phone', ''))
     user_userstatus = args.get('user_userstatus', None)
 
-    response = client.update_user_request(username, user_id, user_username, user_firstname, user_lastname, user_email, user_password, user_phone, user_userstatus)
+    response = client.update_user_request(username, user_id, user_username, user_firstname,
+                                          user_lastname, user_email, user_password, user_phone, user_userstatus)
     command_results = CommandResults(
         outputs_prefix='TestSwagger',
         outputs_key_field='',
@@ -522,6 +560,7 @@ def test_module(client: Client) -> None:
 
 
 def main():
+
     params: Dict[str, Any] = demisto.params()
     args: Dict[str, Any] = demisto.args()
     url = params.get('url')
@@ -535,7 +574,8 @@ def main():
 
     try:
         requests.packages.urllib3.disable_warnings()
-        client: Client = Client(urljoin(url, '/v2'), verify_certificate, proxy, headers=headers, auth=None)
+        client: Client = Client(
+            urljoin(url, '/v2'), verify_certificate, proxy, headers=headers, auth=None)
 
         commands = {
             'testswagger-add-pet': add_pet_command,

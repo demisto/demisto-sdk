@@ -1,9 +1,11 @@
+import ast
+import json
 from functools import partial
 
 from demisto_sdk.commands.common.constants import PB_Status
 from demisto_sdk.commands.test_content.Docker import Docker
 from demisto_sdk.commands.test_content.TestContentClasses import (
-    TestConfiguration, TestContext, TestPlaybook)
+    Integration, TestConfiguration, TestContext, TestPlaybook)
 from demisto_sdk.commands.test_content.tests.build_context_test import (
     generate_content_conf_json, generate_integration_configuration,
     generate_secret_conf_json, generate_test_configuration,
@@ -49,6 +51,7 @@ def test_second_playback_enforcement(mocker, tmp_path):
         - Ensure that it exists in the failed_playbooks set
         - Ensure that it does not exists in the succeeded_playbooks list
     """
+
     class RunIncidentTestMock:
         call_count = 0
         count_response_mapping = {
@@ -129,3 +132,133 @@ def test_docker_thresholds_for_pwsh_integrations(mocker):
     memory_threshold, pid_threshold = test_context.get_threshold_values()
     assert memory_threshold == Docker.DEFAULT_PWSH_CONTAINER_MEMORY_USAGE
     assert pid_threshold == Docker.DEFAULT_PWSH_CONTAINER_PIDS_USAGE
+
+
+class TestPrintContextToLog:
+
+    @staticmethod
+    def create_playbook_instance(mocker):
+        test_playbook_configuration = TestConfiguration(generate_test_configuration(
+            playbook_id='playbook_with_context',
+            integrations=['integration']
+        ),
+            default_test_timeout=30)
+        pb_instance = TestPlaybook(mocker.MagicMock(), test_playbook_configuration)
+        pb_instance.build_context.logging_module = mocker.MagicMock()
+        return pb_instance
+
+    def test_print_context_to_log__success(self, mocker):
+        """
+        Given:
+            - A test context with a context_print_dt value
+            - The context result is a string "{'foo': 'goo'}"
+        When:
+            - Running 'print_context_to_log' method
+        Then:
+            - Ensure that a proper json result is being printed to the context
+        """
+        dt_result = "{'foo': 'goo'}"
+        expected_result = json.dumps(ast.literal_eval(dt_result), indent=4)
+        playbook_instance = self.create_playbook_instance(mocker)
+        client = mocker.MagicMock()
+        client.api_client.call_api.return_value = (dt_result, 200)
+        playbook_instance.print_context_to_log(client, incident_id='1')
+        assert playbook_instance.build_context.logging_module.info.call_args[0][0] == expected_result
+
+    def test_print_context_to_log__empty(self, mocker):
+        """
+        Given:
+            - A test context with a context_print_dt value
+            - The context result is empty
+        When:
+            - Running 'print_context_to_log' method
+        Then:
+            - Ensure that an empty result is being printed to the context
+        """
+        expected_dt = '{}'
+        playbook_instance = self.create_playbook_instance(mocker)
+        client = mocker.MagicMock()
+        client.api_client.call_api.return_value = (expected_dt, 200)
+        playbook_instance.print_context_to_log(client, incident_id='1')
+        assert playbook_instance.build_context.logging_module.info.call_args[0][0] == expected_dt
+
+    def test_print_context_to_log__none(self, mocker):
+        """
+        Given:
+            - A test context with a context_print_dt value
+            - The context result is None
+        When:
+            - Running 'print_context_to_log' method
+        Then:
+            - Ensure that an exception is raised and handled via logging error
+        """
+        expected_dt = None
+        expected_error = 'unable to parse result for result with value: None'
+        playbook_instance = self.create_playbook_instance(mocker)
+        client = mocker.MagicMock()
+        client.api_client.call_api.return_value = (expected_dt, 200)
+        playbook_instance.print_context_to_log(client, incident_id='1')
+        assert playbook_instance.build_context.logging_module.error.call_args[0][0] == expected_error
+
+    def test_print_context_to_log__error(self, mocker):
+        """
+        Given:
+            - A test context with a context_print_dt value
+            - The context return with an HTTP error code
+        When:
+            - Running 'print_context_to_log' method
+        Then:
+            - Ensure that an exception is raised and handled via logging error messages
+        """
+        expected_dt = 'No Permission'
+        expected_first_error = 'incident context fetch failed with Status code 403'
+        expected_second_error = f"('{expected_dt}', 403)"
+        playbook_instance = self.create_playbook_instance(mocker)
+        client = mocker.MagicMock()
+        client.api_client.call_api.return_value = (expected_dt, 403)
+        playbook_instance.print_context_to_log(client, incident_id='1')
+        assert playbook_instance.build_context.logging_module.error.call_args_list[0][0][0] == expected_first_error
+        assert playbook_instance.build_context.logging_module.error.call_args_list[1][0][0] == expected_second_error
+
+
+def test_replacing_placeholders(mocker, tmp_path):
+    """
+    Given:
+        - Integration with placeholders, different servers
+    When:
+        - Calling _set_integration_params during creating integrations configurations
+    Then:
+        - Ensure that replacing placeholders happens not in place,
+        and next integration with same build_context, will able to replace '%%SERVER_HOST%%' placeholder.
+    """
+    # Setting up the build context
+    filtered_tests = ['playbook_integration',
+                      'playbook_second_integration']
+    # Setting up the content conf.json
+    tests = [generate_test_configuration(playbook_id='playbook_integration',
+                                         integrations=['integration_with_placeholders']),
+             generate_test_configuration(playbook_id='playbook_second_integration',
+                                         integrations=['integration_with_placeholders'])
+             ]
+    content_conf_json = generate_content_conf_json(tests=tests,
+                                                   unmockable_integrations={'FirstIntegration': 'reason'},
+                                                   skipped_tests={})
+    # Setting up the content-test-conf conf.json
+    integration_names = ['integration_with_placeholders']
+    integrations_configurations = [generate_integration_configuration(name=integration_name,
+                                                                      params={'url': '%%SERVER_HOST%%/server'})
+                                   for integration_name in integration_names]
+    secret_test_conf = generate_secret_conf_json(integrations_configurations)
+
+    # Setting up the build_context instance
+    build_context = get_mocked_build_context(mocker,
+                                             tmp_path,
+                                             content_conf_json=content_conf_json,
+                                             secret_conf_json=secret_test_conf,
+                                             filtered_tests_content=filtered_tests)
+
+    integration = Integration(build_context, 'integration_with_placeholders', ['instance'])
+    integration._set_integration_params(server_url='1.1.1.1', playbook_id='playbook_integration', is_mockable=False)
+    integration = Integration(build_context, 'integration_with_placeholders', ['instance'])
+    integration._set_integration_params(server_url='1.2.3.4', playbook_id='playbook_integration', is_mockable=False)
+    assert '%%SERVER_HOST%%' in build_context.secret_conf.integrations[0].params.get('url')

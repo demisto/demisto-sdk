@@ -276,6 +276,7 @@ ERROR_CODE = {
     "invalid_incident_field_in_layout": {'code': "LO104", 'ui_applicable': False, 'related_field': ''},
     "xsoar_config_file_is_not_json": {'code': "XC100", 'ui_applicable': False, 'related_field': ''},
     "xsoar_config_file_malformed": {'code': "XC101", 'ui_applicable': False, 'related_field': ''},
+    "invalid_readme_image_error": {'code': "RM108", 'ui_applicable': False, 'related_field': ''},
 }
 
 
@@ -1373,6 +1374,34 @@ class Errors:
     def image_path_error(path, alternative_path):
         return f'Detected following image url:\n{path}\n' \
                f'Which is not the raw link. You probably want to use the following raw image url:\n{alternative_path}'
+
+    @staticmethod
+    def pack_readme_image_relative_path_error(path):
+        return f'Detected the following image relative path: {path}.\nRelative paths are not supported in pack README files. See ' \
+               f'https://xsoar.pan.dev/docs/integrations/integration-docs#images for further info on how to ' \
+               f'add images to pack README files.'
+
+    @staticmethod
+    def invalid_readme_image_relative_path_error(path):
+        return f'The following image relative path is not valid, please recheck it:\n{path}.'
+
+    @staticmethod
+    def invalid_readme_image_absolute_path_error(path):
+        return f'The following image link seems to be broken, please repair it:\n{path}'
+
+    @staticmethod
+    def invalid_readme_insert_image_link_error(path):
+        return f'Image link was not found, either insert it or remove it:\n{path}'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_readme_image_error(path, error_type):
+        return 'Error in readme image:\n' + {
+            'pack_readme_relative_error': Errors.pack_readme_image_relative_path_error,
+            'general_readme_relative_error': Errors.invalid_readme_image_relative_path_error,
+            'general_readme_absolute_error': Errors.invalid_readme_image_absolute_path_error,
+            'insert_image_link_error': Errors.invalid_readme_insert_image_link_error
+        }.get(error_type, lambda x: f'Something went wrong when testing {x}')(path)
 
     @staticmethod
     @error_code_decorator

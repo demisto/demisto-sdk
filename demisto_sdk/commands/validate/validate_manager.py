@@ -838,7 +838,7 @@ class ValidateManager:
         Runs validations on the following pack files:
         * .secret-ignore: Validates that the file exist and that the file's secrets can be parsed as a list delimited by '\n'
         * .pack-ignore: Validates that the file exists and that all regexes in it can be compiled
-        * README.md file: Validates that the file exists
+        * README.md file: Validates that the file exists and image links are valid
         * 2.pack_metadata.json: Validates that the file exists and that it has a valid structure
         Runs validation on the pack dependencies
         Args:
@@ -1032,8 +1032,8 @@ class ValidateManager:
                 if not BaseValidator(ignored_errors=ignored_errors_list,
                                      print_as_warnings=self.print_ignored_errors,
                                      json_file_path=self.json_file_path).handle_error(
-                        error_message, error_code,
-                        file_path=os.path.join(os.getcwd(), PACKS_DIR, pack, PACKS_PACK_META_FILE_NAME)
+                    error_message, error_code,
+                    file_path=os.path.join(os.getcwd(), PACKS_DIR, pack, PACKS_PACK_META_FILE_NAME)
                 ):
                     is_valid.add(True)
 

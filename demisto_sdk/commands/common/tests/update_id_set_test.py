@@ -502,7 +502,7 @@ class TestPlaybooks:
         "file_path": TESTS_DIR + "/test_files/DummyPack/Playbooks/DummyPlaybook.yml",
         "fromversion": "4.5.0",
         "filters": ["isEqualString"],
-        "transformers": ["'uniq'"],
+        "transformers": ["uniq"],
         "implementing_scripts": [
             "XDRSyncScript",
             "StopScheduledTask",

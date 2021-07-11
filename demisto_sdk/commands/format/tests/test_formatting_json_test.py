@@ -794,6 +794,20 @@ class TestFormattingMapper:
         mapper_formatter.set_fromVersion('6.0.0')
         assert mapper_formatter.data.get('fromVersion') == '6.0.0'
 
+    def test_update_id(self, mapper_formatter):
+        """
+        Given
+            - A layoutscontainer file with non matching name and id.
+        When
+            - Run format on layout file
+        Then
+            - Ensure that name and id are  matching
+        """
+        mapper_formatter.data['name'] = "name"
+        mapper_formatter.data['id'] = "id"
+        mapper_formatter.update_id()
+        assert mapper_formatter.data['name'] == mapper_formatter.data['id']
+
 
 class TestFormattingWidget:
 

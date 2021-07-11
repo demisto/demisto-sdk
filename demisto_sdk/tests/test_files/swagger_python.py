@@ -8,7 +8,8 @@ class Client(BaseClient):
 
 
     def add_pet_request(self, pet_id, pet_category, pet_name, pet_photourls, pet_tags, pet_status):
-        data = assign_params(id=pet_id, category=pet_category, name=pet_name, photoUrls=pet_photourls, tags=pet_tags, status=pet_status)
+        data = assign_params(id=pet_id, category=pet_category, name=pet_name,
+                             photoUrls=pet_photourls, tags=pet_tags, status=pet_status)
 
         headers = self._headers
 
@@ -18,7 +19,8 @@ class Client(BaseClient):
 
 
     def create_user_request(self, user_id, user_username, user_firstname, user_lastname, user_email, user_password, user_phone, user_userstatus):
-        data = assign_params(id=user_id, username=user_username, firstName=user_firstname, lastName=user_lastname, email=user_email, password=user_password, phone=user_phone, userStatus=user_userstatus)
+        data = assign_params(id=user_id, username=user_username, firstName=user_firstname, lastName=user_lastname,
+                             email=user_email, password=user_password, phone=user_phone, userStatus=user_userstatus)
 
         headers = self._headers
 
@@ -28,7 +30,8 @@ class Client(BaseClient):
 
 
     def create_users_with_array_input_request(self, user_id, user_username, user_firstname, user_lastname, user_email, user_password, user_phone, user_userstatus):
-        data = assign_params(id=user_id, username=user_username, firstName=user_firstname, lastName=user_lastname, email=user_email, password=user_password, phone=user_phone, userStatus=user_userstatus)
+        data = assign_params(id=user_id, username=user_username, firstName=user_firstname, lastName=user_lastname,
+                             email=user_email, password=user_password, phone=user_phone, userStatus=user_userstatus)
 
         headers = self._headers
 
@@ -38,7 +41,8 @@ class Client(BaseClient):
 
 
     def create_users_with_list_input_request(self, user_id, user_username, user_firstname, user_lastname, user_email, user_password, user_phone, user_userstatus):
-        data = assign_params(id=user_id, username=user_username, firstName=user_firstname, lastName=user_lastname, email=user_email, password=user_password, phone=user_phone, userStatus=user_userstatus)
+        data = assign_params(id=user_id, username=user_username, firstName=user_firstname, lastName=user_lastname,
+                             email=user_email, password=user_password, phone=user_phone, userStatus=user_userstatus)
 
         headers = self._headers
 
@@ -150,7 +154,8 @@ class Client(BaseClient):
 
 
     def place_order_request(self, order_id, order_petid, order_quantity, order_shipdate, order_status, order_complete):
-        data = assign_params(id=order_id, petId=order_petid, quantity=order_quantity, shipDate=order_shipdate, status=order_status, complete=order_complete)
+        data = assign_params(id=order_id, petId=order_petid, quantity=order_quantity,
+                             shipDate=order_shipdate, status=order_status, complete=order_complete)
 
         headers = self._headers
 
@@ -182,7 +187,8 @@ class Client(BaseClient):
 
 
     def update_pet_request(self, pet_id, pet_category, pet_name, pet_photourls, pet_tags, pet_status):
-        data = assign_params(id=pet_id, category=pet_category, name=pet_name, photoUrls=pet_photourls, tags=pet_tags, status=pet_status)
+        data = assign_params(id=pet_id, category=pet_category, name=pet_name,
+                             photoUrls=pet_photourls, tags=pet_tags, status=pet_status)
 
         headers = self._headers
 
@@ -203,7 +209,8 @@ class Client(BaseClient):
 
 
     def update_user_request(self, username, user_id, user_username, user_firstname, user_lastname, user_email, user_password, user_phone, user_userstatus):
-        data = assign_params(id=user_id, username=user_username, firstName=user_firstname, lastName=user_lastname, email=user_email, password=user_password, phone=user_phone, userStatus=user_userstatus)
+        data = assign_params(id=user_id, username=user_username, firstName=user_firstname, lastName=user_lastname,
+                             email=user_email, password=user_password, phone=user_phone, userStatus=user_userstatus)
 
         headers = self._headers
 
@@ -245,7 +252,8 @@ def create_user_command(client: Client, args: Dict[str, Any]) -> CommandResults:
     user_phone = str(args.get('user_phone', ''))
     user_userstatus = args.get('user_userstatus', None)
 
-    response = client.create_user_request(user_id, user_username, user_firstname, user_lastname, user_email, user_password, user_phone, user_userstatus)
+    response = client.create_user_request(user_id, user_username, user_firstname, user_lastname,
+                                          user_email, user_password, user_phone, user_userstatus)
     command_results = CommandResults(
         outputs_prefix='TestSwagger',
         outputs_key_field='',
@@ -266,7 +274,8 @@ def create_users_with_array_input_command(client: Client, args: Dict[str, Any]) 
     user_phone = str(args.get('user_phone', ''))
     user_userstatus = args.get('user_userstatus', None)
 
-    response = client.create_users_with_array_input_request(user_id, user_username, user_firstname, user_lastname, user_email, user_password, user_phone, user_userstatus)
+    response = client.create_users_with_array_input_request(
+        user_id, user_username, user_firstname, user_lastname, user_email, user_password, user_phone, user_userstatus)
     command_results = CommandResults(
         outputs_prefix='TestSwagger',
         outputs_key_field='',
@@ -287,7 +296,8 @@ def create_users_with_list_input_command(client: Client, args: Dict[str, Any]) -
     user_phone = str(args.get('user_phone', ''))
     user_userstatus = args.get('user_userstatus', None)
 
-    response = client.create_users_with_list_input_request(user_id, user_username, user_firstname, user_lastname, user_email, user_password, user_phone, user_userstatus)
+    response = client.create_users_with_list_input_request(
+        user_id, user_username, user_firstname, user_lastname, user_email, user_password, user_phone, user_userstatus)
     command_results = CommandResults(
         outputs_prefix='TestSwagger',
         outputs_key_field='',
@@ -551,7 +561,8 @@ def update_user_command(client: Client, args: Dict[str, Any]) -> CommandResults:
     user_phone = str(args.get('user_phone', ''))
     user_userstatus = args.get('user_userstatus', None)
 
-    response = client.update_user_request(username, user_id, user_username, user_firstname, user_lastname, user_email, user_password, user_phone, user_userstatus)
+    response = client.update_user_request(username, user_id, user_username, user_firstname,
+                                          user_lastname, user_email, user_password, user_phone, user_userstatus)
     command_results = CommandResults(
         outputs_prefix='TestSwagger',
         outputs_key_field='',
@@ -575,6 +586,7 @@ def main():
     verify_certificate: bool = not params.get('insecure', False)
     proxy = params.get('proxy', False)
     headers = {}
+
     headers['Authorization'] = params['api_key']
 
     command = demisto.command()
@@ -583,29 +595,29 @@ def main():
     try:
         requests.packages.urllib3.disable_warnings()
         client: Client = Client(urljoin(url, '/v2'), verify_certificate, proxy, headers=headers, auth=None)
-        
+
         commands = {
-    		'testswagger-add-pet': add_pet_command,
-			'testswagger-create-user': create_user_command,
-			'testswagger-create-users-with-array-input': create_users_with_array_input_command,
-			'testswagger-create-users-with-list-input': create_users_with_list_input_command,
-			'testswagger-delete-order': delete_order_command,
-			'testswagger-delete-pet': delete_pet_command,
-			'testswagger-delete-user': delete_user_command,
-			'testswagger-find-pets-by-status': find_pets_by_status_command,
-			'testswagger-find-pets-by-tags': find_pets_by_tags_command,
-			'testswagger-get-inventory': get_inventory_command,
-			'testswagger-get-order-by-id': get_order_by_id_command,
-			'testswagger-get-pet-by-id': get_pet_by_id_command,
-			'testswagger-get-user-by-name': get_user_by_name_command,
-			'testswagger-login-user': login_user_command,
-			'testswagger-logout-user': logout_user_command,
-			'testswagger-place-order': place_order_command,
-			'testswagger-post-pet-upload-image': post_pet_upload_image_command,
-			'testswagger-post-pet-upload-image-by-uploadimage': post_pet_upload_image_by_uploadimage_command,
-			'testswagger-update-pet': update_pet_command,
-			'testswagger-update-pet-with-form': update_pet_with_form_command,
-			'testswagger-update-user': update_user_command,
+            'testswagger-add-pet': add_pet_command,
+            'testswagger-create-user': create_user_command,
+            'testswagger-create-users-with-array-input': create_users_with_array_input_command,
+            'testswagger-create-users-with-list-input': create_users_with_list_input_command,
+            'testswagger-delete-order': delete_order_command,
+            'testswagger-delete-pet': delete_pet_command,
+            'testswagger-delete-user': delete_user_command,
+            'testswagger-find-pets-by-status': find_pets_by_status_command,
+            'testswagger-find-pets-by-tags': find_pets_by_tags_command,
+            'testswagger-get-inventory': get_inventory_command,
+            'testswagger-get-order-by-id': get_order_by_id_command,
+            'testswagger-get-pet-by-id': get_pet_by_id_command,
+            'testswagger-get-user-by-name': get_user_by_name_command,
+            'testswagger-login-user': login_user_command,
+            'testswagger-logout-user': logout_user_command,
+            'testswagger-place-order': place_order_command,
+            'testswagger-post-pet-upload-image': post_pet_upload_image_command,
+            'testswagger-post-pet-upload-image-by-uploadimage': post_pet_upload_image_by_uploadimage_command,
+            'testswagger-update-pet': update_pet_command,
+            'testswagger-update-pet-with-form': update_pet_with_form_command,
+            'testswagger-update-user': update_user_command,
         }
 
         if command == 'test-module':

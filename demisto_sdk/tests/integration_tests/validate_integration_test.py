@@ -1,6 +1,7 @@
 from os.path import join
 
 from click.testing import CliRunner
+
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import DEFAULT_IMAGE_BASE64
@@ -27,9 +28,9 @@ from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.tests.constants_test import (CONTENT_REPO_EXAMPLE_ROOT,
                                               NOT_VALID_IMAGE_PATH)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
-    CONNECTION, DASHBOARD, INCIDENT_FIELD, INCIDENT_TYPE, INDICATOR_FIELD,
-    LAYOUT, LAYOUTS_CONTAINER, MAPPER, NEW_CLASSIFIER, OLD_CLASSIFIER, REPORT,
-    REPUTATION, WIDGET, GENERIC_FIELD, GENERIC_TYPE, GENERIC_MODULE)
+    CONNECTION, DASHBOARD, GENERIC_FIELD, GENERIC_MODULE, GENERIC_TYPE,
+    INCIDENT_FIELD, INCIDENT_TYPE, INDICATOR_FIELD, LAYOUT, LAYOUTS_CONTAINER,
+    MAPPER, NEW_CLASSIFIER, OLD_CLASSIFIER, REPORT, REPUTATION, WIDGET)
 from TestSuite.test_tools import ChangeCWD
 
 VALIDATE_CMD = "validate"

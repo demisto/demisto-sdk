@@ -3,6 +3,7 @@
 * Added new validation that DBotRole is set for scripts that requires elevated permissions to the `XSOAR-linter` in the **lint** command.
 * Added url escaping to markdown human readable section in generate docs to avoid autolinking.
 * Added a validation that mapper's id and name are matching. Updated the format of mapper to include update_id too.
+* Added a validation to ensure that image paths in the README files are valid.
 
 # 1.4.3
 * Fixed an issue where **json-to-outputs** command returned an incorrect output when json is a list.

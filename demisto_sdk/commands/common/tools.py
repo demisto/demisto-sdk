@@ -967,7 +967,7 @@ def get_dict_from_file(path: str, use_ryaml: bool = False,
                 return {}, 'py'
     except FileNotFoundError as e:
         if raises_error:
-            raise e
+            raise
 
     return {}, None
 

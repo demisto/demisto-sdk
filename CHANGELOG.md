@@ -1,12 +1,15 @@
 # Changelog
 * When formatting incident types with Auto-Extract rules and without mode field, the **format** command will now add the user selected mode.
 * Added new validation that DBotRole is set for scripts that requires elevated permissions to the `XSOAR-linter` in the **lint** command.
+* Added url escaping to markdown human readable section in generate docs to avoid autolinking.
+* Added a validation that mapper's id and name are matching. Updated the format of mapper to include update_id too.
 * Refactored the **update-release-notes** command:
   - Replaced the *--all* flag with *-g*
   - Added the *--force* flag to update the pack release notes without changes in the pack.
   - The **update-release-notes** command will now update all dependent integrations on ApiModule change, even if not specified.
   - If more than one pack has changed, the full list of updated packs will be printed at the end of **update-release-notes** command execution.
   - Fixed an issue where **update-release-notes** command did not add docker image release notes entry for release notes file if a script was changed.
+
 # 1.4.3
 * Fixed an issue where **json-to-outputs** command returned an incorrect output when json is a list.
 * Fixed an issue where if a pack README.md did not exist it could cause an error in the validation process.
@@ -21,7 +24,6 @@
 * Fixed an issue where a redundant print occurred on release notes validation.
 * Added new validation in the **validate** command to ensure that the minimal fromVersion in a widget of type metrics will be 6.2.0.
 * Added the *--release-notes* flag to demisto-sdk to get the current version release notes entries.
-
 
 # 1.4.2
 * Added to `pylint` summary an indication if a test was skipped.

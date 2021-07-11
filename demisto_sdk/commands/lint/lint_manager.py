@@ -418,12 +418,13 @@ class LintManager:
         self.report_failed_image_creation(return_exit_code=return_exit_code,
                                           pkgs_status=pkgs_status,
                                           lint_status=lint_status)
-        self.report_summary(pkg=self._pkgs, lint_status=lint_status, all_packs=self._all_packs)
         if not no_coverage:
             if coverage_report:
                 generate_coverage_report(html=True, xml=True, cov_dir=coverage_report)
             else:
                 generate_coverage_report()
+
+        self.report_summary(pkg=self._pkgs, lint_status=lint_status, all_packs=self._all_packs)
         self.create_json_output()
 
     @staticmethod
@@ -749,7 +750,6 @@ class LintManager:
                 self.vulture_error_formatter(check, json_contents)
             elif check.get('linter') == 'XSOAR_linter':
                 self.xsoar_linter_error_formatter(check, json_contents)
-
         with open(self.json_file_path, 'w+') as f:
             json.dump(json_contents, f, indent=4)
 
@@ -915,7 +915,7 @@ class LintManager:
                 self.add_to_json_outputs(output, file_path, json_contents)
 
     @staticmethod
-    def add_to_json_outputs(output: Dict, file_path: str, json_contents: List) -> None:
+    def add_to_json_outputs(output: Dict, file_path: str, json_contents: List):
         """Adds an error entry to the JSON file contents
 
         Args:
@@ -930,7 +930,7 @@ class LintManager:
             'fileType': os.path.splitext(file_path)[1].replace('.', ''),
             'entityType': file_type.value if file_type else '',
             'errorType': 'Code',
-            'name': get_file_displayed_name(yml_file_path),
+            'name': get_file_displayed_name(yml_file_path),  # type: ignore[arg-type]
             **output
         }
         json_contents.append(full_error_output)

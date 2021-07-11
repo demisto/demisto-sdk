@@ -22,8 +22,9 @@ from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.common.tools import (filter_files_by_type,
                                                filter_files_on_pack, find_type,
                                                get_last_remote_release_version,
-                                               get_pack_name, print_error,
-                                               print_warning)
+                                               get_pack_name,
+                                               get_release_note_entries,
+                                               print_error, print_warning)
 from demisto_sdk.commands.common.update_id_set import merge_id_sets_from_files
 from demisto_sdk.commands.convert.convert_manager import ConvertManager
 from demisto_sdk.commands.create_artifacts.content_artifacts_creator import \
@@ -31,6 +32,8 @@ from demisto_sdk.commands.create_artifacts.content_artifacts_creator import \
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from demisto_sdk.commands.doc_reviewer.doc_reviewer import DocReviewer
 from demisto_sdk.commands.download.downloader import Downloader
+from demisto_sdk.commands.error_code_info.error_code_info import \
+    generate_error_code_information
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
 from demisto_sdk.commands.format.format_module import format_manager
@@ -141,8 +144,12 @@ def check_configuration_file(command, args):
     '-v', '--version', help='Get the demisto-sdk version.',
     is_flag=True, default=False, show_default=True
 )
+@click.option(
+    '-rn', '--release-notes', help='Get the release notes of the current demisto-sdk version.',
+    is_flag=True, default=False, show_default=True
+)
 @pass_config
-def main(config, version):
+def main(config, version, release_notes):
     config.configuration = Configuration()
     if not os.getenv('DEMISTO_SDK_SKIP_VERSION_CHECK') or version:  # If the key exists/called to version
         cur_version = get_distribution('demisto-sdk').version
@@ -151,6 +158,16 @@ def main(config, version):
         if last_release and cur_version != last_release:
             print_warning(f'however version {last_release} is available.\n'
                           f'You should consider upgrading via "pip3 install --upgrade demisto-sdk" command.')
+        if release_notes:
+            rn_entries = get_release_note_entries(cur_version)
+
+            if not rn_entries:
+                print_warning('\nCould not get the release notes for this version.')
+            else:
+                click.echo('\nThe following are the release note entries for the current version:\n')
+                for rn in rn_entries:
+                    click.echo(rn)
+                click.echo('')
 
 
 # ====================== split-yml ====================== #
@@ -849,7 +866,7 @@ def generate_test_playbook(**kwargs):
     '-h', '--help'
 )
 @click.option(
-    "-n", "--name", help="The name of the directory and file you want to create", required=True)
+    "-n", "--name", help="The name of the directory and file you want to create")
 @click.option(
     "--id", help="The id used in the yml file of the integration or script"
 )
@@ -1605,7 +1622,29 @@ def convert(config, **kwargs):
     sys.exit(0)
 
 
-@main.resultcallback()
+@main.command(
+    name='error-code',
+    help='Quickly find relevant information regarding an error code.',
+    hidden=True,
+)
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    '-i', '--input', required=True,
+    help='The error code to search for.',
+)
+@pass_config
+def error_code(config, **kwargs):
+    check_configuration_file('error-code-info', kwargs)
+    sys.path.append(config.configuration.env_dir)
+
+    result = generate_error_code_information(kwargs.get('input'))
+
+    sys.exit(result)
+
+
+@main.result_callback()
 def exit_from_program(result=0, **kwargs):
     sys.exit(result)
 
@@ -1614,4 +1653,4 @@ def exit_from_program(result=0, **kwargs):
 
 
 if __name__ == '__main__':
-    sys.exit(main())
+    main()

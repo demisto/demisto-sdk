@@ -118,9 +118,9 @@ class Initiator:
         self.template = self.get_selected_template(template)
 
         self.full_output_path = ''
-
-        while ' ' in name:
-            name = str(input("The directory and file name cannot have spaces in it, Enter a different name: "))
+        if name:
+            while ' ' in name:
+                name = str(input("The directory and file name cannot have spaces in it, Enter a different name: "))
 
         self.dir_name = name
 
@@ -467,6 +467,10 @@ class Initiator:
             yml_dict = yaml.load(f, Loader=yamlordereddictloader.SafeLoader)
         yml_dict["commonfields"]["id"] = self.id
         yml_dict['name'] = self.id
+
+        from_version = input("\nThe fromversion value that will be used (optional): ")
+        if from_version:
+            yml_dict['fromversion'] = from_version
 
         if LooseVersion(yml_dict.get('fromversion', '0.0.0')) < LooseVersion(self.SUPPORTED_FROM_VERSION):
             yml_dict['fromversion'] = self.SUPPORTED_FROM_VERSION

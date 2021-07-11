@@ -1,6 +1,7 @@
 import json
 import os
 
+import click
 import pytest
 import requests_mock
 from click.testing import CliRunner
@@ -641,3 +642,40 @@ class TestPackUniqueFilesValidator:
             assert '"README.md" file does not exist, create one in the root of the pack' in self.validator.get_errors()
             assert 'README.md content is equal to pack description. ' \
                    'Please remove the duplicate description from README.md file' not in self.validator.get_errors()
+
+    def test_valid_is_pack_metadata_desc_too_long(self, repo):
+        """
+        Given:
+            - Valid description length
+
+        When:
+            - Validating pack description length
+
+        Then:
+            - Ensure validation passes as the description field length is valid.
+
+        """
+        pack_description = 'Hey there, just testing'
+        assert self.validator.is_pack_metadata_desc_too_long(pack_description) is True
+
+    def test_invalid_is_pack_metadata_desc_too_long(self, mocker, repo):
+        """
+        Given:
+            - Invalid description length - higher than 130
+
+        When:
+            - Validating pack description length
+
+        Then:
+            - Ensure validation passes although description field length is higher than 130
+            - Ensure warning will be printed.
+        """
+        pack_description = 'This is will fail cause the description here is too long.' \
+                           'test test test test test test test test test test test test test test test test test' \
+                           ' test test test test test'
+        error_desc = 'The description field of the pack_metadata.json file is longer than 130 characters.'
+
+        mocker.patch("click.secho")
+
+        assert self.validator.is_pack_metadata_desc_too_long(pack_description) is True
+        assert error_desc in click.secho.call_args_list[0][0][0]

@@ -36,6 +36,7 @@ CONTRIBUTORS_LIST = ['partner', 'developer', 'community']
 SUPPORTED_CONTRIBUTORS_LIST = ['partner', 'developer']
 ISO_TIMESTAMP_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 ALLOWED_CERTIFICATION_VALUES = ['certified', 'verified']
+MAXIMUM_DESCRIPTION_FIELD_LENGTH = 130
 SUPPORT_TYPES = ['community', 'xsoar'] + SUPPORTED_CONTRIBUTORS_LIST
 INCORRECT_PACK_NAME_PATTERN = '[^a-zA-Z]pack[^a-z]|^pack$|^pack[^a-z]|[^a-zA-Z]pack$|[^A-Z]PACK[^A-Z]|^PACK$|^PACK[' \
                               '^A-Z]|[^A-Z]PACK$|[^A-Z]Pack[^a-z]|^Pack$|^Pack[^a-z]|[^A-Z]Pack$|[^a-zA-Z]playbook[' \
@@ -79,7 +80,7 @@ class PackUniqueFilesValidator(BaseValidator):
         self.support = support
 
     # error handling
-    def _add_error(self, error: Tuple[str, str], file_path: str):
+    def _add_error(self, error: Tuple[str, str], file_path: str, warning=False):
         """Adds error entry to a list under pack's name
         Returns True if added and false otherwise"""
         error_message, error_code = error
@@ -87,7 +88,8 @@ class PackUniqueFilesValidator(BaseValidator):
         if self.pack_path not in file_path:
             file_path = os.path.join(self.pack_path, file_path)
 
-        formatted_error = self.handle_error(error_message, error_code, file_path=file_path, should_print=False)
+        formatted_error = self.handle_error(error_message, error_code, file_path=file_path, should_print=False,
+                                            warning=warning)
         if formatted_error:
             self._errors.append(formatted_error)
             return True
@@ -314,6 +316,9 @@ class PackUniqueFilesValidator(BaseValidator):
                 if self._add_error(Errors.pack_metadata_field_invalid(), self.pack_meta_file):
                     return False
 
+            if not self.is_pack_metadata_desc_too_long(description_name):
+                return False
+
             # check non mandatory dependency field
             dependencies_field = metadata.get(PACK_METADATA_DEPENDENCIES, {})
             if not isinstance(dependencies_field, dict):
@@ -353,6 +358,12 @@ class PackUniqueFilesValidator(BaseValidator):
             if self._add_error(Errors.pack_metadata_isnt_json(self.pack_meta_file), self.pack_meta_file):
                 return False
 
+        return True
+
+    def is_pack_metadata_desc_too_long(self, description_name):
+        if len(description_name) > MAXIMUM_DESCRIPTION_FIELD_LENGTH:
+            if self._add_error(Errors.pack_metadata_long_description(), self.pack_meta_file, warning=True):
+                return False
         return True
 
     def _is_valid_contributor_pack_support_details(self):

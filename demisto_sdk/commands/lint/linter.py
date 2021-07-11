@@ -144,7 +144,7 @@ class Linter:
                 if self._pkg_lint_status["pack_type"] == TYPE_PYTHON:
                     self._run_lint_in_host(no_flake8=no_flake8,
                                            no_bandit=no_bandit,
-                                           no_mypy=no_mypy or 3 <= py_version,
+                                           no_mypy=no_mypy or py_version >= 3,
                                            no_vulture=no_vulture,
                                            no_xsoar_linter=no_xsoar_linter)
 
@@ -560,13 +560,13 @@ class Linter:
 
             if image_id and not errors:
                 # Set image creation status
-                for check in get_linters_on_docker(self._facts["python_version"]):  # ["mypy", "pylint", "pytest", "pwsh_analyze", "pwsh_test"]:
+                for check in get_linters_on_docker(self._facts["python_version"]):
                     exit_code = SUCCESS
                     output = ""
                     for trial in range(2):
                         if self._pkg_lint_status["pack_type"] == TYPE_PYTHON:
                             # Perform mypy
-                            if not no_mypy and check == "mypy" and self._facts["lint_files"]:
+                            if check == "mypy" and not no_mypy and self._facts["lint_files"]:
                                 test_command = build_mypy_command(files=self._facts["lint_files"],
                                                                   version=self._facts["python_version"])
                                 exit_code, output = self._run_linters_in_docker(test_name=check.capitalize(),
@@ -575,7 +575,7 @@ class Linter:
                                                                                 keep_container=keep_container)
 
                             # Perform pylint
-                            if not no_pylint and check == "pylint" and self._facts["lint_files"]:
+                            elif check == "pylint" and not no_pylint and self._facts["lint_files"]:
                                 test_command = build_pylint_command(files=self._facts["lint_files"],
                                                                     docker_version=self._facts["python_version"])
                                 exit_code, output = self._run_linters_in_docker(test_name=check.capitalize(),
@@ -583,7 +583,7 @@ class Linter:
                                                                                 test_image=image_id,
                                                                                 keep_container=keep_container)
                             # Perform pytest
-                            elif not no_test and self._facts["test"] and check == "pytest":
+                            elif check == "pytest" and not no_test and self._facts["test"]:
                                 exit_code, output, test_json = self._docker_run_pytest(test_image=image_id,
                                                                                        keep_container=keep_container,
                                                                                        test_xml=test_xml,
@@ -773,7 +773,7 @@ class Linter:
                 command=[test_command],
                 user=f"{os.getuid()}:4000",
                 detach=True,
-                environment={**self._facts["env_vars"], "PIP_QUIET": 3}  # quiet pip to avoid pip info when run by mypy
+                environment={**self._facts["env_vars"]}  # quiet pip to avoid pip info when run by mypy
             )
             stream_docker_container_output(container_obj.logs(stream=True))
             # wait for container to finish

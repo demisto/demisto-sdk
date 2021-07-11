@@ -26,6 +26,8 @@ from demisto_sdk.commands.common.tools import print_warning, run_command_os
 from docker.models.containers import Container
 
 # Python2 requirements
+DEFAULT_LINTERS_IN_DOCKER = {"pylint", "mypy", "pytest", "pwsh_analyze", "pwsh_test"}
+DEFAULT_LINTERS_IN_OS = ["flake8", "XSOAR_linter", "bandit", "vulture"]
 PYTHON2_REQ = ["flake8", "vulture"]
 
 # Define check exit code if failed
@@ -542,14 +544,14 @@ def generate_coverage_report(html=False, xml=False, report=True, cov_dir='covera
 
 
 def get_linters_on_local_os(python_version: float):
-    result = ["flake8", "XSOAR_linter", "bandit", "vulture"]
+    result = DEFAULT_LINTERS_IN_OS
     if python_version < 3:
         result.append("mypy")
     return result
 
 
 def get_linters_on_docker(python_version: float):
-    result = {"pylint", "mypy", "pytest", "pwsh_analyze", "pwsh_test"}
+    result = DEFAULT_LINTERS_IN_DOCKER
     if python_version < 3:
         result.remove("mypy")
     return result

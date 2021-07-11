@@ -1,5 +1,6 @@
 import os
 import re
+from typing import Optional
 
 from demisto_sdk.commands.common.constants import (API_MODULES_PACK,
                                                    DEPRECATED_REGEXES,
@@ -9,10 +10,9 @@ from demisto_sdk.commands.common.hook_validations.content_entity_validator impor
     ContentEntityValidator
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
-from demisto_sdk.commands.common.tools import (get_core_pack_list,
-                                               get_files_in_dir, get_pack_name,
-                                               is_v2_file,
-                                               server_version_compare)
+from demisto_sdk.commands.common.tools import (
+    get_core_pack_list, get_file_version_suffix_if_exists, get_files_in_dir,
+    get_pack_name, server_version_compare)
 
 
 class ScriptValidator(ContentEntityValidator):
@@ -23,7 +23,8 @@ class ScriptValidator(ContentEntityValidator):
     def is_valid_version(self) -> bool:
         if self.current_file.get('commonfields', {}).get('version') != self.DEFAULT_VERSION:
             error_message, error_code = Errors.wrong_version()
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
+            if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                 suggested_fix=Errors.suggest_fix(self.file_path)):
                 return False
 
         return True
@@ -69,7 +70,8 @@ class ScriptValidator(ContentEntityValidator):
             self.is_docker_image_valid(),
             self.is_valid_pwsh(),
             self.is_valid_script_file_path(),
-            self.is_there_separators_in_names()
+            self.is_there_separators_in_names(),
+            self.name_not_contain_the_type()
         ])
         # check only on added files
         if not self.old_file:
@@ -226,13 +228,14 @@ class ScriptValidator(ContentEntityValidator):
 
     def is_valid_name(self):
         # type: () -> bool
-        if not is_v2_file(self.current_file):
+        version_number: Optional[str] = get_file_version_suffix_if_exists(self.current_file)
+        if not version_number:
             return True
         else:
             name = self.current_file.get('name')
-            correct_name = "V2"
+            correct_name = f'V{version_number}'
             if not name.endswith(correct_name):  # type: ignore
-                error_message, error_code = Errors.invalid_v2_script_name()
+                error_message, error_code = Errors.invalid_version_script_name(version_number)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
 
@@ -362,4 +365,18 @@ class ScriptValidator(ContentEntityValidator):
                 self.is_valid = False
                 return False
 
+        return True
+
+    def name_not_contain_the_type(self):
+        """
+        Check that the entity name does not contain the entity type
+        Returns: True if the name is valid
+        """
+
+        name = self.current_file.get('name', '')
+        if 'script' in name.lower():
+            error_message, error_code = Errors.field_contain_forbidden_word(field_names=['name'], word='script')
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                return False
         return True

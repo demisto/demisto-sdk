@@ -1,4 +1,4 @@
-exclude: demisto_sdk/tests/test_files/*|.circleci/config.yml|demisto_sdk/commands/.*/tests/test_files/.*
+exclude: demisto_sdk/tests/test_files/.*|.circleci/config.yml|demisto_sdk/commands/.*|/tests/test_files/.*
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v2.4.0
@@ -6,13 +6,13 @@ repos:
     -   id: trailing-whitespace
     -   id: end-of-file-fixer
     -   id: check-docstring-first
-        exclude: demisto_sdk/commands/init/templates/*
+        exclude: demisto_sdk/commands/init/templates/.*
     -   id: check-json
     -   id: check-yaml
     -   id: debug-statements
         language_version: python3
     -   id: name-tests-test
-        exclude: test_tools.py|demisto_sdk/commands/download/tests/tests_env/*|demisto_sdk/commands/create_artifacts/tests/data|demisto_sdk/commands/common/content/tests/objects/pack_objects/script/script_test/TestNotUnifiedScript|demisto_sdk/commands/common/content/tests/objects/pack_objects/integration/integration_test/TestNotUnifiedIntegration|demisto_sdk/commands/test_content/tests/DemistoClientMock
+        exclude: test_tools.py|demisto_sdk/commands/download/tests/tests_env/.*|demisto_sdk/commands/create_artifacts/tests/data|demisto_sdk/commands/common/content/tests/objects/pack_objects/script/script_test/TestNotUnifiedScript|demisto_sdk/commands/common/content/tests/objects/pack_objects/integration/integration_test/TestNotUnifiedIntegration|demisto_sdk/commands/test_content/tests/DemistoClientMock
     -   id: requirements-txt-fixer
     -   id: flake8
 -   repo: https://github.com/pre-commit/mirrors-autopep8
@@ -26,14 +26,14 @@ repos:
         args: [--atomic, --recursive]
         types: [python]
         verbose: true
-        exclude: demisto_sdk/commands/init/templates/*
+        exclude: demisto_sdk/commands/init/templates/.*
 -   repo: https://github.com/asottile/pyupgrade
     rev: v2.4.1
     hooks:
     -   id: pyupgrade
-        exclude: test_tools.py|demisto_sdk/commands/download/tests/tests_env/*
+        exclude: test_tools.py|demisto_sdk/commands/download/tests/tests_env/.*
 -   repo: https://github.com/pre-commit/mirrors-mypy
     rev: v0.782
     hooks:
     -   id: mypy
-        exclude: tests/*|demisto_sdk/commands/init/templates/*
+        exclude: tests/.*|demisto_sdk/commands/init/templates/.*

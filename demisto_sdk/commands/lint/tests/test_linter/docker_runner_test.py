@@ -98,7 +98,8 @@ class TestPytest:
 
         act_container_exit_code, act_output, act_test_json = linter_obj._docker_run_pytest(test_image='test-image',
                                                                                            keep_container=False,
-                                                                                           test_xml="")
+                                                                                           test_xml="",
+                                                                                           no_coverage=True)
 
         assert exp_exit_code == act_container_exit_code
         assert exp_test_json == act_test_json
@@ -139,7 +140,8 @@ class TestRunLintInContainer:
                                              no_pwsh_analyze=no_pwsh_analyze,
                                              no_pwsh_test=no_pwsh_test,
                                              test_xml="",
-                                             keep_container=False)
+                                             keep_container=False,
+                                             no_coverage=True)
         assert linter_obj._pkg_lint_status.get("exit_code") == 0b0
         if not no_test and pack_type == TYPE_PYTHON:
             linter_obj._docker_run_pytest.assert_called_once()

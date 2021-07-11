@@ -3,11 +3,13 @@ import os
 from typing import Dict, List, Optional
 
 import click
-from demisto_sdk.commands.common.constants import TEST_PLAYBOOKS_DIR, FileType
+from demisto_sdk.commands.common.constants import (INTEGRATION, PLAYBOOK,
+                                                   TEST_PLAYBOOKS_DIR,
+                                                   FileType)
 from demisto_sdk.commands.common.tools import (_get_file_id, find_type,
                                                get_entity_id_by_entity_type,
                                                get_not_registered_tests,
-                                               get_yaml)
+                                               get_yaml, is_uuid)
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 from ruamel.yaml import YAML
 
@@ -40,10 +42,12 @@ class BaseUpdateYML(BaseUpdate):
                  from_version: str = '',
                  no_validate: bool = False,
                  verbose: bool = False,
-                 assume_yes: bool = False):
+                 assume_yes: bool = False,
+                 deprecate: bool = False):
         super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
                          verbose=verbose, assume_yes=assume_yes)
         self.id_and_version_location = self.get_id_and_version_path_object()
+        self.deprecate = deprecate
 
     def _load_conf_file(self) -> Dict:
         """
@@ -63,14 +67,19 @@ class BaseUpdateYML(BaseUpdate):
         path = self.ID_AND_VERSION_PATH_BY_YML_TYPE[yml_type]
         return self.data.get(path, self.data)
 
-    def update_id_to_equal_name(self):
+    def update_id_to_equal_name(self) -> None:
         """Updates the id of the YML to be the same as it's name
             Only relevant for new files.
         """
+        updated_integration_id = {}
         if not self.old_file:
             if self.verbose:
                 click.echo('Updating YML ID to be the same as YML name')
+            if is_uuid(self.id_and_version_location['id']):
+                updated_integration_id[self.id_and_version_location['id']] = self.data['name']
             self.id_and_version_location['id'] = self.data['name']
+        if updated_integration_id:
+            self.updated_ids.update(updated_integration_id)
 
     def save_yml_to_destination_file(self):
         """Safely saves formatted YML data to destination file."""
@@ -86,7 +95,7 @@ class BaseUpdateYML(BaseUpdate):
             if not self.data.get('tests', '') and self.old_file.get('tests', ''):
                 self.data['tests'] = self.old_file['tests']
 
-    def update_yml(self, file_type: Optional[str] = None):
+    def update_yml(self, file_type: Optional[str] = None) -> None:
         """Manager function for the generic YML updates."""
 
         self.set_fromVersion(from_version=self.from_version, file_type=file_type)
@@ -95,6 +104,9 @@ class BaseUpdateYML(BaseUpdate):
         self.update_id_to_equal_name()
         self.set_version_to_default(self.id_and_version_location)
         self.copy_tests_from_old_file()
+
+        if self.deprecate:
+            self.update_deprecate(file_type=file_type)
 
     def update_tests(self) -> None:
         """
@@ -178,6 +190,39 @@ class BaseUpdateYML(BaseUpdate):
         """Save formatted JSON data to destination file."""
         with open(self.CONF_PATH, 'w') as file:
             json.dump(conf_json_content, file, indent=4)
+
+    def update_deprecate(self, file_type=None):
+        """
+        Update the yaml file as deprecated.
+
+        Args:
+            file_type: The type of the yml file.
+        """
+
+        self.data['deprecated'] = True
+        self.data['tests'] = 'No test'
+
+        if file_type in [INTEGRATION, PLAYBOOK]:
+
+            description_field = 'description'
+
+            if file_type == INTEGRATION:
+                if 'display' in self.data and not self.data['display'].endswith('(Deprecated)'):
+                    self.data['display'] = f'{self.data["display"]} (Deprecated)'
+
+                for command in self.data.get('script', {}).get('commands', []):
+                    command['deprecated'] = True
+
+        else:
+            description_field = 'comment'
+
+        user_response = input("\nPlease enter the replacement entity display name if any and press Enter if not.\n")
+
+        if user_response:
+            self.data[description_field] = f'Deprecated. Use {user_response} instead.'
+
+        else:
+            self.data[description_field] = 'Deprecated. No available replacement.'
 
     @staticmethod
     def get_test_playbooks_configuration(test_playbooks: List, content_item_id: str, file_type: str) -> List[Dict]:

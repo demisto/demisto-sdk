@@ -51,7 +51,7 @@ NEW_CLASSIFIER = {
 
 MAPPER = {
     "defaultIncidentType": "test",
-    "id": "testing",
+    "id": "test Mapper",
     "type": "mapping-incoming",
     "name": "test Mapper",
     "description": "Mapper test",

@@ -29,8 +29,7 @@ BASE_FUNCTION = """def $FUNCTIONNAME$_command(client: Client, args: Dict[str, An
     return command_results
 
 """
-BASE_REQUEST_FUNCTION = """
-    def $FUNCTIONNAME$_request(self$REQARGS$):
+BASE_REQUEST_FUNCTION = """    def $FUNCTIONNAME$_request(self$REQARGS$):
         $PARAMETERS$
         $DATA$
 
@@ -40,7 +39,6 @@ BASE_REQUEST_FUNCTION = """
         response = self._http_request('$METHOD$', $PATH$$NEWPARAMS$$NEWDATA$, headers=headers)
 
         return response
-
 """
 BASE_CLIENT = """class Client(BaseClient):
     def __init__(self, server_url, verify, proxy, headers, auth):
@@ -56,7 +54,6 @@ from CommonServerPython import *
 
 
 $CLIENT$
-
 $FUNCTIONS$
 def test_module(client: Client) -> None:
     # Test functions here

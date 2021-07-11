@@ -133,7 +133,7 @@ class TestMypy(BaseLintTest):
                                              keep_container=False, no_coverage=True)
 
         expected_command = build_mypy_command(lint_files, 3.7)
-        expected_command == linter_obj._docker_client.containers.run.call_args[1]['command'][0]
+        assert expected_command == linter_obj._docker_client.containers.run.call_args[1]['command'][0]
 
     def test_python2_files_not_run_in_docker(self, mocker, linter_obj, lint_files):
         """

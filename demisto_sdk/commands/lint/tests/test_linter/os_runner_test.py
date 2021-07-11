@@ -79,9 +79,11 @@ class TestBandit:
         assert output == expected_output, "Output should be empty"
 
 
-class TestMypy:
+class TestMypy27:
 
-    """ Mypy for python 2 files run in os """
+    """ Mypy for python 2 files runs in os.
+    for python 3 tests, see docker_runner_test.py.
+    """
 
     def test_run_mypy_success(self, linter_obj: Linter, lint_files: List[Path], mocker):
         """

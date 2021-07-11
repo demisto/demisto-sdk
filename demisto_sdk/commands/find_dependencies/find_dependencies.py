@@ -978,6 +978,68 @@ class PackDependencies:
         return dependencies_packs
 
     @staticmethod
+    def _collect_objects_types_dependencies(pack_objects_types: list, id_set: dict, verbose: bool,
+                                              exclude_ignored_dependencies: bool = True) -> set:
+        """
+        Collects object types dependencies.
+
+        Args:
+            pack_objects_types (list): collection of pack objects types data.
+            id_set (dict): id set json.
+            verbose (bool): Whether to log the dependencies to the console.
+            exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
+
+        Returns:
+            set: dependencies data that includes pack id and whether is mandatory or not.
+
+        """
+        dependencies_packs = set()
+        if verbose:
+            click.secho('### Incident Types', fg='white')
+
+        for object_type in pack_objects_types:
+            object_type_data = next(iter(object_type.values()))
+            object_type_dependencies = set()
+
+            related_playbooks = object_type_data.get('playbooks', [])
+            packs_found_from_playbooks = PackDependencies._search_packs_by_items_names(
+                related_playbooks, id_set['playbooks'], exclude_ignored_dependencies)
+
+            if packs_found_from_playbooks:
+                pack_dependencies_data = PackDependencies. \
+                    _label_as_mandatory(packs_found_from_playbooks)
+                object_type_dependencies.update(pack_dependencies_data)
+
+            related_scripts = object_type_data.get('scripts', [])
+            packs_found_from_scripts = PackDependencies._search_packs_by_items_names(
+                related_scripts, id_set['scripts'], exclude_ignored_dependencies)
+
+            if packs_found_from_scripts:
+                pack_dependencies_data = PackDependencies. \
+                    _label_as_mandatory(packs_found_from_scripts)
+                object_type_dependencies.update(pack_dependencies_data)
+
+            related_modules = object_type_data.get('definitionId')
+            packs_found_from_modules = PackDependencies._search_packs_by_items_names(
+                related_modules, id_set['ObjectModules'], exclude_ignored_dependencies)
+
+            if packs_found_from_modules:
+                pack_dependencies_data = PackDependencies. \
+                    _label_as_mandatory(packs_found_from_modules)
+                object_type_dependencies.update(pack_dependencies_data)
+
+            if object_type_dependencies:
+                # do not trim spaces from the end of the string, they are required for the MD structure.
+                if verbose:
+                    click.secho(
+                        f'{os.path.basename(object_type_data.get("file_path", ""))} depends on: {object_type_dependencies}',
+                        fg='white')
+            dependencies_packs.update(object_type_dependencies)
+
+        return dependencies_packs
+
+
+    @staticmethod
     def _collect_pack_items(pack_id: str, id_set: dict) -> dict:
         """
         Collects script and playbook content items inside specific pack.
@@ -1004,6 +1066,9 @@ class PackDependencies:
         pack_items['widgets'] = PackDependencies._search_for_pack_items(pack_id, id_set['Widgets'])
         pack_items['dashboards'] = PackDependencies._search_for_pack_items(pack_id, id_set['Dashboards'])
         pack_items['reports'] = PackDependencies._search_for_pack_items(pack_id, id_set['Reports'])
+        pack_items['objects_types'] = PackDependencies._search_for_pack_items(pack_id, id_set['ObjectTypes'])
+        pack_items['objects_fields'] = PackDependencies._search_for_pack_items(pack_id, id_set['ObjectModules'])
+        pack_items['objects_modules'] = PackDependencies._search_for_pack_items(pack_id, id_set['ObjectFields'])
 
         if not sum(pack_items.values(), []):
             click.secho(f"Couldn't find any items for pack '{pack_id}'. Please make sure:\n"

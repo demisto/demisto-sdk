@@ -530,7 +530,7 @@ class ContributionConverter:
         content_item_type_identifier = '#### '
         rn = list(filter(None, self.release_notes.splitlines()))
         rn_per_content_item = defaultdict(str)
-
+        entity_name = 'NonEntityRelated'
         for line in rn:
             if line.startswith(entity_identifier):
                 entity_name = line.lstrip(entity_identifier)

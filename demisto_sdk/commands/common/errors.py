@@ -1387,7 +1387,7 @@ class Errors:
             'general_readme_relative_error': Errors.invalid_readme_image_relative_path_error,
             'general_readme_absolute_error': Errors.invalid_readme_image_absolute_path_error,
             'insert_image_link_error': Errors.invalid_readme_insert_image_link_error
-        }[error_type](path)
+        }.get(error_type, lambda x: f'Something went wrong when testing {x}')(path)
 
     @staticmethod
     @error_code_decorator

@@ -244,41 +244,36 @@ class ReadMeValidator(BaseValidator):
         error_list = []
         error_code: str = ''
         error_message: str = ''
-        should_print_error = not is_pack_readme  # If error was found, print it only if its not pack readme.
+        # If error was found, print it only if its not a pack readme. For pack readme, the PackUniqueFilesValidator
+        # class handles the errors and printing.
+        should_print_error = not is_pack_readme
         relative_images = re.findall(r'(\!\[.*?\])\(((?!http).*?)\)$', self.readme_content, re.IGNORECASE | re.MULTILINE)
         relative_images += re.findall(  # HTML image tag
-            r'(src\s*=\s*\"((?!http).*?)\")', self.readme_content,
+            r'(src\s*=\s*"((?!http).*?)")', self.readme_content,
             re.IGNORECASE | re.MULTILINE)
 
-        if relative_images:
-            for img in relative_images:
-                try:
-                    # striping in case there are whitespaces at the beginning/ending of url.
-                    prefix = '' if 'src' in img[0] else img[0].strip()
-                    relative_path = img[1].strip()
-                except IndexError:
-                    continue
-                if 'insert URL to your image' in relative_path:
-                    # some old README files with HTML img tags contain this line but there are in a comment and
-                    # can be skipped
-                    continue
-                if 'Insert the link to your image here' in relative_path:
-                    # the line is generated automatically in playbooks readme, the user should replace it with
-                    # an image or remove the line.
+        for img in relative_images:
+            # striping in case there are whitespaces at the beginning/ending of url.
+            prefix = '' if 'src' in img[0] else img[0].strip()
+            relative_path = img[1].strip()
+
+            if 'Insert the link to your image here' in relative_path:
+                # the line is generated automatically in playbooks readme, the user should replace it with
+                # an image or remove the line.
+                error_message, error_code = Errors.invalid_readme_image_error(prefix + f'({relative_path})',
+                                                                              error_type='insert_image_link_error')
+            elif is_pack_readme:
+                error_message, error_code = Errors.invalid_readme_image_error(prefix + f'({relative_path})',
+                                                                              error_type='pack_readme_relative_error')
+            else:
+                # generates absolute path from relative and checks for the file existence.
+                if not os.path.isfile(os.path.join(self.file_path.parent, relative_path)):
                     error_message, error_code = Errors.invalid_readme_image_error(prefix + f'({relative_path})',
-                                                                                  error_type='insert_image_link_error')
-                elif is_pack_readme:
-                    error_message, error_code = Errors.invalid_readme_image_error(prefix + f'({relative_path})',
-                                                                                  error_type='pack_readme_relative_error')
-                else:
-                    # generated absolute path from relative and checked for the file existence.
-                    if not os.path.exists(os.path.join(self.file_path.parent, relative_path)):
-                        error_message, error_code = Errors.invalid_readme_image_error(prefix + f'({relative_path})',
-                                                                                      error_type='general_readme_relative_error')
-                if error_code and error_message:  # error was found
-                    formatted_error = self.handle_error(error_message, error_code, file_path=self.file_path,
-                                                        should_print=should_print_error)
-                    error_list.append(formatted_error)
+                                                                                  error_type='general_readme_relative_error')
+            if error_code and error_message:  # error was found
+                formatted_error = self.handle_error(error_message, error_code, file_path=self.file_path,
+                                                    should_print=should_print_error)
+                error_list.append(formatted_error)
 
         return error_list
 
@@ -298,25 +293,21 @@ class ReadMeValidator(BaseValidator):
             r'(!\[.*\])\((https://.*)\)$', self.readme_content, re.IGNORECASE | re.MULTILINE)
         absolute_links += re.findall(  # image tag
             r'(src\s*=\s*"(https://.*?)")', self.readme_content, re.IGNORECASE | re.MULTILINE)
-        if absolute_links:
-            for link in absolute_links:
-                try:
-                    prefix = '' if 'src' in link[0] else link[0].strip()
-                    img_url = link[1].strip()  # striping in case there are whitespaces at the beginning/ending of url.
-                except IndexError:
-                    continue
-                try:
-                    response = requests.get(img_url, verify=False, timeout=10)
-                except Exception as ex:
-                    click.secho(f"Could not validate the image link: {img_url}\n {ex}", fg='yellow')
-                    continue
-                if response.status_code != 200:
-                    error_message, error_code = Errors.invalid_readme_image_error(prefix + f'({img_url})',
-                                                                                  error_type='general_readme_absolute_error')
-                    formatted_error = \
-                        self.handle_error(error_message, error_code, file_path=self.file_path,
-                                          should_print=should_print_error)
-                    error_list.append(formatted_error)
+        for link in absolute_links:
+            prefix = '' if 'src' in link[0] else link[0].strip()
+            img_url = link[1].strip()  # striping in case there are whitespaces at the beginning/ending of url.
+            try:
+                response = requests.get(img_url, verify=False, timeout=10)
+            except Exception as ex:
+                click.secho(f"Could not validate the image link: {img_url}\n {ex}", fg='yellow')
+                continue
+            if response.status_code != 200:
+                error_message, error_code = Errors.invalid_readme_image_error(prefix + f'({img_url})',
+                                                                              error_type='general_readme_absolute_error')
+                formatted_error = \
+                    self.handle_error(error_message, error_code, file_path=self.file_path,
+                                      should_print=should_print_error)
+                error_list.append(formatted_error)
 
         return error_list
 

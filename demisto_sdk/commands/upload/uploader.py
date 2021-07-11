@@ -304,8 +304,8 @@ class Uploader:
             common_packs = installed_packs & set(self.pack_names)  # type: ignore
             if common_packs:
                 pack_names = '\n'.join(common_packs)
-                click.secho(f'This command will overwrite the following packs:\n{pack_names}\n'
-                            'Any changes made on XSOAR will be lost,\n'
+                click.secho(f'This command will overwrite the following packs:\n{pack_names}.\n'
+                            'Any changes made on XSOAR will be lost.\n'
                             'Are you sure you want to continue? Y/N', fg='bright_red')
                 answer = str(input())
                 return answer in ['y', 'Y', 'yes']
@@ -341,7 +341,7 @@ def parse_error_response(error: ApiException, file_type: str, file_name: str, pr
         click.secho(str(f'\nUpload {file_type}: {file_name} failed:'), fg='bright_red')
         click.secho(str(message), fg='bright_red')
     if isinstance(error, KeyboardInterrupt):
-        message = 'Aborted due to keyboard interrupt'
+        message = 'Aborted due to keyboard interrupt.'
     return message
 
 

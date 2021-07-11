@@ -30,7 +30,7 @@ from demisto_sdk.commands.common.content.objects_factory import \
 from demisto_sdk.commands.test_content import tools
 from wcmatch.pathlib import Path
 
-TURN_VERIFICATION_ERROR_MSG = "Can not turn on the pack verification,\nIn the server - go to Settings -> troubleshooting\
+TURN_VERIFICATION_ERROR_MSG = "Can not set the pack verification configuration key,\nIn the server - go to Settings -> troubleshooting\
  and manually {action}."
 DELETE_VERIFY_KEY_ACTION = f'delete the key "{PACK_VERIFY_KEY}"'
 SET_VERIFY_KEY_ACTION = f'set the key "{PACK_VERIFY_KEY}" to ' + '{}'

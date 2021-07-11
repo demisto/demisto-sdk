@@ -283,8 +283,7 @@ def unify(**kwargs):
     '-h', '--help'
 )
 @click.option('-i', '--input',
-              help=("The packs to create artifacts for. Optional values are: `all` or "
-                    "csv list of pack names. "),
+              help="The packs to be zipped as csv list of pack paths.",
               type=PathsParamType(exists=True, resolve_path=True),
               required=True)
 @click.option('-o', '--output', help='The destination directory to create the packs.',
@@ -693,11 +692,11 @@ def format(
 )
 @click.option(
     "-z", "--zip",
-    help="Compress the pack to zip before upload, this flag is relevant only for upload packs", is_flag=True
+    help="Compress the pack to zip before upload, this flag is relevant only for packs.", is_flag=True
 )
 @click.option(
     "--keep-zip-in", help="Directory where to store the zip after creation, this argument is relevant only for packs "
-                          "and in case -z is used", required=False, type=click.Path(exists=True))
+                          "and in case the --zip flag is used.", required=False, type=click.Path(exists=True))
 @click.option(
     "--insecure",
     help="Skip certificate validation", is_flag=True

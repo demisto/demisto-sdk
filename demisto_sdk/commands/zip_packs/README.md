@@ -1,6 +1,6 @@
 ## unify-packs
 
-zip content packs to uploadable zip file.
+Zip content packs to uploadable zip file.
 
 **Use Cases**:
 This command is used in order to create a zip file, able to be uploaded to Cortex XSOAR via the

@@ -52,5 +52,5 @@ mapping:
                   newButtonDefinitionId:
                     type: str
                   dashboard:
-                    type: map
+                    type: any
     required: true

@@ -407,6 +407,11 @@ class ValidateManager:
         if self.check_only_schema:
             return True
 
+        # Note: these file are not ignored but there are no additional validators for Generic Objects at the moment
+        if file_type == FileType.GENERIC_FIELD or file_type == FileType.GENERIC_TYPE or\
+                file_type == FileType.GENERIC_MODULE:
+            return True
+
         # id_set validation
         if self.id_set_validations and not self.id_set_validations.is_file_valid_in_set(file_path, file_type,
                                                                                         pack_error_ignore_list):

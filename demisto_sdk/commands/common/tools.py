@@ -1060,7 +1060,8 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
         if 'orientation' in _dict:
             return FileType.REPORT
 
-        if 'color' in _dict and 'cliName' not in _dict:  # check against another key to make it more robust
+        if 'color' in _dict and 'cliName' not in _dict and 'genericModuleId' not in _dict:
+            # check against another key to make it more robust
             return FileType.INCIDENT_TYPE
 
         # 'regex' key can be found in new reputations files while 'reputations' key is for the old reputations
@@ -1081,7 +1082,8 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
         if 'canvasContextConnections' in _dict:
             return FileType.CONNECTION
 
-        if 'layout' in _dict or 'kind' in _dict:
+        if ('layout' in _dict or 'kind' in _dict) and 'genericModuleId' not in _dict:
+            # it's a Layout or Dashboard but not a Generic Object
             if 'kind' in _dict or 'typeId' in _dict:
                 return FileType.LAYOUT
 
@@ -1101,11 +1103,11 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
                 else:  # not an incident or an indicator
                     if 'definitionId' in _dict and 'genericModuleId' in _dict:
                         if 'cliName' in _dict:
-                            return FileType.OBJECT_FIELD
+                            return FileType.GENERIC_FIELD
                         elif 'color' in _dict:
-                            return FileType.OBJECT_TYPE
+                            return FileType.GENERIC_TYPE
                     elif 'definitions' in _dict and 'views' in _dict:
-                        return FileType.OBJECT_MODULE
+                        return FileType.GENERIC_MODULE
             else:
                 print(f'The file {path} could not be recognized, please update the "id" to be a string')
 

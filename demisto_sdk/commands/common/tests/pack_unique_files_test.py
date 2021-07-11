@@ -275,6 +275,7 @@ class TestPackUniqueFilesValidator:
             PACK_METADATA_SUPPORT: XSOAR_SUPPORT,
             PACK_METADATA_TAGS: []
         })
+        mocker.patch.object(tools, 'is_external_repository', return_value=False)
         mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': branch_usecases}, 'json'))
         self.validator.pack_path = pack.path
 
@@ -319,6 +320,7 @@ class TestPackUniqueFilesValidator:
             PACK_METADATA_SUPPORT: XSOAR_SUPPORT,
             PACK_METADATA_TAGS: tags
         })
+        mocker.patch.object(tools, 'is_external_repository', return_value=False)
         mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': branch_tags}, 'json'))
         self.validator.pack_path = pack.path
 

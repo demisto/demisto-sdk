@@ -75,15 +75,16 @@ class TestGenericFunctions:
             assert not first_yml_path
 
     data_test_get_dict_from_file = [
-        (VALID_REPUTATION_FILE, 'json'),
-        (VALID_SCRIPT_PATH, 'yml'),
-        ('test', None),
-        (None, None)
+        (VALID_REPUTATION_FILE, True, 'json'),
+        (VALID_SCRIPT_PATH, True, 'yml'),
+        ('test', True, None),
+        (None, True, None),
+        ('invalid-path.json', False, None)
     ]
 
-    @pytest.mark.parametrize('path, _type', data_test_get_dict_from_file)
-    def test_get_dict_from_file(self, path, _type):
-        output = get_dict_from_file(str(path))[1]
+    @pytest.mark.parametrize('path, raises_error, _type', data_test_get_dict_from_file)
+    def test_get_dict_from_file(self, path, raises_error, _type):
+        output = get_dict_from_file(str(path), raises_error=raises_error)[1]
         assert output == _type, f'get_dict_from_file({path}) returns: {output} instead {_type}'
 
     data_test_find_type = [

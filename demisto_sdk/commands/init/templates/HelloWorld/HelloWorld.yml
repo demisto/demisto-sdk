@@ -614,4 +614,4 @@ script:
   type: python
 defaultmapperin: HelloWorld-mapper
 defaultclassifier: HelloWorld
-fromversion: 5.0.0
+fromversion: 5.5.0

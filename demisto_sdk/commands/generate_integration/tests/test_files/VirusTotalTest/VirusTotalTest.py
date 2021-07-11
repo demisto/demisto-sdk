@@ -8,7 +8,6 @@ class Client(BaseClient):
 
     def url_report_request(self, resource):
         params = assign_params(resource=resource, apikey=self.api_key)
-
         headers = self._headers
 
         response = self._http_request('GET', 'vtapi/v2/url/report', params=params, headers=headers)
@@ -17,7 +16,6 @@ class Client(BaseClient):
 
     def domain_report_request(self, domain):
         params = assign_params(domain=domain, apikey=self.api_key)
-
         headers = self._headers
         headers['Content-Type'] = 'application/json'
         headers['Accept'] = 'application/json'
@@ -28,7 +26,6 @@ class Client(BaseClient):
 
     def file_scan_request(self):
         params = assign_params(apikey=self.api_key)
-
         headers = self._headers
 
         response = self._http_request('POST', 'vtapi/v2/file/scan', params=params, headers=headers)
@@ -37,7 +34,6 @@ class Client(BaseClient):
 
     def file_download_request(self, hash):
         params = assign_params(hash=hash, apikey=self.api_key)
-
         headers = self._headers
 
         response = self._http_request('GET', 'vtapi/v2/file/download', params=params, headers=headers)

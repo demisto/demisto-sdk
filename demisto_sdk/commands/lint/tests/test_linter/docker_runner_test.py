@@ -111,7 +111,7 @@ class TestMypy(BaseLintTest):
 
         """
         # prepare
-        env_vars = dict(PIP_QUIET=3)
+        env_vars = dict(PIP_QUIET=1)
         mocker.patch.object(linter_obj, '_docker_client')
         linter_obj._facts["env_vars"] = env_vars
         linter_obj._docker_client.containers.run().wait.return_value = {"StatusCode": 0}

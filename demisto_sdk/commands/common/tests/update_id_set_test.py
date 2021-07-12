@@ -726,7 +726,7 @@ class TestPlaybooks:
         data = {'tasks': {'0': {'type': 'condition', 'conditions': [
             {'condition': [[{'left': {'value': {'complex': {'filters': [[{'operator': 'isEqualString'}]
                                                                         ]}}}}]]},
-            {'condition': [[{'left': {'value': {'complex': {'transformers': [{'operator': 'toUpperCase'}
+            {'condition': [[{'right': {'value': {'complex': {'transformers': [{'operator': 'toUpperCase'}
                                                                              ]}}}}]]}]}}}
 
         transformers, filters = get_filters_and_transformers_from_playbook(data)

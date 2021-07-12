@@ -222,6 +222,7 @@ def get_filters_and_transformers_from_playbook(data_dict: dict) -> Tuple[list, l
                 for inner_condition in condition.get('condition', []):
                     if inner_condition:
                         complex_values.append(inner_condition[0].get('left', {}).get('value', {}).get('complex', {}))
+                        complex_values.append(inner_condition[0].get('right', {}).get('value', {}).get('complex', {}))
         else:
             complex_values.append(task.get('scriptarguments', {}).get('value', {}).get('complex', {}))
 

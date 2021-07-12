@@ -326,7 +326,8 @@ class Errors:
     def file_type_not_supported():
         return "The file type is not supported in validate command\n " \
                "validate' command supports: Integrations, Scripts, Playbooks, " \
-               "Incident fields, Indicator fields, Images, Release notes, Layouts and Descriptions"
+               "Incident fields, Incident types, Indicator fields, Indicator types, Objects fields, Object types," \
+               " Object modules, Images, Release notes,Layouts and Descriptions"
 
     @staticmethod
     @error_code_decorator

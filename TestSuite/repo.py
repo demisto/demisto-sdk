@@ -66,9 +66,9 @@ class Repo:
             'Reports': [],
             'Widgets': [],
             'Mappers': [],
-            'ObjectTypes': [],
-            'ObjectFields': [],
-            'ObjectModules': []
+            'GenericTypes': [],
+            'GenericFields': [],
+            'GenericModules': []
         })
 
     def __del__(self):
@@ -175,21 +175,21 @@ class Repo:
         test_playbook.yml.update({'name': f'{name}_script_test_playbook'})
         script.yml.update({'tests': [f'{name}_script_test_playbook']})
 
-        object_type = pack.create_object_type(f'{name}_object-type')
-        object_type.write_json({'id': f'{name} - _object_type'})
-        object_type.update({'name': f'{name} - _object_type'})
-        object_type.update({'definitionId': 'definitionId'})
-        object_type.update({'color': 'test'})
+        generic_type = pack.create_generic_type(f'{name}_generic-type')
+        generic_type.write_json({'id': f'{name} - _generic_type'})
+        generic_type.update({'name': f'{name} - _generic_type'})
+        generic_type.update({'definitionId': 'definitionId'})
+        generic_type.update({'color': 'test'})
 
-        object_field = pack.create_object_field(f'{name}_object-field')
-        object_field.write_json({'id': f'object_{name} - object_field'})
-        object_field.update({'name': f'object_{name} - object_field'})
-        object_field.update({'definitionId': 'definitionId'})
+        generic_field = pack.create_generic_field(f'{name}_generic-field')
+        generic_field.write_json({'id': f'generic_{name} - generic_field'})
+        generic_field.update({'name': f'generic_{name} - generic_field'})
+        generic_field.update({'definitionId': 'definitionId'})
 
-        object_module = pack.create_object_module(f'{name}_object-module')
-        object_module.write_json({'id': f'object_{name} - object_module'})
-        object_module.update({'name': f'object_{name} - object_module'})
-        object_module.update({'definitions': [{'id': 'definitionId'}]})
+        generic_module = pack.create_generic_module(f'{name}_generic-module')
+        generic_module.write_json({'id': f'generic_{name} - generic_module'})
+        generic_module.update({'name': f'generic_{name} - generic_module'})
+        generic_module.update({'definitions': [{'id': 'definitionId'}]})
 
         return pack
 

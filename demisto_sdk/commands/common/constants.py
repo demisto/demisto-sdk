@@ -160,7 +160,10 @@ CONTENT_ENTITIES_DIRS = [
     INCIDENT_TYPES_DIR,
     LAYOUTS_DIR,
     CLASSIFIERS_DIR,
-    CONNECTIONS_DIR
+    CONNECTIONS_DIR,
+    GENERIC_FIELDS_DIR,
+    GENERIC_TYPES_DIR,
+    GENERIC_MODULES_DIR
 ]
 
 CONTENT_ENTITY_UPLOAD_ORDER = [
@@ -1283,6 +1286,7 @@ class PathLevel(Enum):
     CONTENT_ENTITY_DIR = 'ContentDir',
     PACKAGE = 'Package',
     FILE = 'File'
+    CONTENT_GENERIC_ENTITY_DIR = 'ContentGenericDir'
 
 
 class DemistoException(Exception):

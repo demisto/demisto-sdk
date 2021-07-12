@@ -113,8 +113,7 @@ class UpdateRN:
                 docker_image_name = check_docker_image_changed(packfile)
             else:
                 docker_image_name = None
-            changed_files[file_name] = {
-                'type': file_type,
+            changed_files[(file_name, file_type)] = {
                 'description': get_file_description(packfile, file_type),
                 'is_new_file': True if packfile in self.added_files else False,
                 'fromversion': get_from_version_at_update_rn(packfile),
@@ -458,12 +457,11 @@ class UpdateRN:
         rn_template_as_dict: dict = {}
         if self.is_force:
             rn_string = self.build_rn_desc(content_name=self.pack)
-        for content_name, data in sorted(changed_items.items(),
-                                         key=lambda x: RN_HEADER_BY_FILE_TYPE[x[1].get('type', '')] if x[1].get('type')
+        for (content_name, _type), data in sorted(changed_items.items(),
+                                         key=lambda x: RN_HEADER_BY_FILE_TYPE[x[0][1]] if x[0] and x[0][1]
                                          else ''):  # Sort RN by header
             desc = data.get('description', '')
             is_new_file = data.get('is_new_file', False)
-            _type = data.get('type', '')
             from_version = data.get('fromversion', '')
             docker_image = data.get('dockerimage')
             # Skipping the invalid files
@@ -532,10 +530,10 @@ class UpdateRN:
         # Deleting old entry for docker images, will re-write later, this allows easier generating of updated rn.
         current_rn_without_docker_images = re.sub(update_docker_image_regex, '', current_rn)
         new_rn = current_rn_without_docker_images
-        for content_name, data in sorted(changed_files.items(), reverse=True):
+        for (content_name, _type), data in sorted(changed_files.items(),
+                                                  key=lambda x: x[0][0] if x[0][0] else '', reverse=True):
             is_new_file = data.get('is_new_file')
             desc = data.get('description', '')
-            _type = data.get('type', '')
             docker_image = data.get('dockerimage')
 
             if _type is None:

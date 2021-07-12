@@ -74,7 +74,7 @@ class UpdateReleaseNotesManager:
             validate_manager = ValidateManager(skip_pack_rn_validation=True, prev_ver=self.prev_ver,
                                                silence_init_prints=True, skip_conf_json=True, check_is_unskipped=False)
             if not validate_manager.git_util:  # in case git utils can't be initialized.
-                raise git.InvalidGitRepositoryError('git_utils is not initialized.')
+                raise git.InvalidGitRepositoryError('unable to connect to git.')
             validate_manager.setup_git_params()
             return validate_manager.get_changed_files_from_git()
         except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:

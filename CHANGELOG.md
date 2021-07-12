@@ -4,7 +4,7 @@
 * Added url escaping to markdown human readable section in generate docs to avoid autolinking.
 * Added a validation that mapper's id and name are matching. Updated the format of mapper to include update_id too.
 * Refactored the **update-release-notes** command:
-  - Replaced the *--all* flag with *-g*
+  - Replaced the *--all* flag with *--use-git* or *-g*.
   - Added the *--force* flag to update the pack release notes without changes in the pack.
   - The **update-release-notes** command will now update all dependent integrations on ApiModule change, even if not specified.
   - If more than one pack has changed, the full list of updated packs will be printed at the end of **update-release-notes** command execution.

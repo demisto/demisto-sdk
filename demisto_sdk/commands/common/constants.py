@@ -99,7 +99,7 @@ class FileType(Enum):
     XSOAR_CONFIG = 'xsoar_config'
     GENERIC_TYPE = 'genericType'
     GENERIC_FIELD = 'genericField'
-    GENERIC_MODULE = 'genericModules'
+    GENERIC_MODULE = 'genericModule'
 
 
 RN_HEADER_BY_FILE_TYPE = {

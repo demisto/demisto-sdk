@@ -109,13 +109,13 @@ class Pack:
 
         self.pack_metadata = JSONBased(self._pack_path, 'pack_metadata', '')
 
-        self._generic_types_path = self._pack_path / 'ObjectTypes'
+        self._generic_types_path = self._pack_path / 'GenericTypes'
         self._generic_types_path.mkdir()
 
-        self._generic_fields_path = self._pack_path / 'ObjectFields'
+        self._generic_fields_path = self._pack_path / 'GenericFields'
         self._generic_fields_path.mkdir()
 
-        self._generic_module_path = self._pack_path / 'ObjectModules'
+        self._generic_module_path = self._pack_path / 'GenericModules'
         self._generic_module_path.mkdir()
 
     def create_integration(

@@ -189,6 +189,7 @@ class Repo:
         generic_module = pack.create_generic_module(f'{name}_generic-module')
         generic_module.write_json({'id': f'generic_{name} - generic_module'})
         generic_module.update({'name': f'generic_{name} - generic_module'})
+        generic_module.update({'views': [{'name': 'name'}]})
         generic_module.update({'definitions': [{'id': 'definitionId'}]})
 
         return pack

@@ -15,7 +15,7 @@ This command is used in order to create a zip file, able to be uploaded to Corte
   The content version in CommonServerPython.
 * **-u, --upload**
   Upload the unified packs to the marketplace.
-* **---zip_all**
+* **---zip-all**
   Zip all the packs in one zip file.
 
 **Examples**:

@@ -44,7 +44,7 @@ class PacksZipper:
 
 
 class PacksManager(ArtifactsManager):
-    """Managed the work with packs in zip-packs command.
+    """Manages the work with packs in zip-packs command.
 
     Attributes:
         zip_all (bool): Flag indicating whether to zip all the packs in one zip or not.
@@ -90,22 +90,10 @@ class PacksManager(ArtifactsManager):
 
         Returns:
             Path: The relative path.
-
-
         """
         for part in content_object.path.parts:
             if part in self.packs:
                 return content_object.path.relative_to(self.packs[part].path.parent)
-
-    def get_base_path(self):
-        """Override the method from ``ArtifactsManager`` class to return None,
-            as packs may come outside from Content directory.
-
-        Returns:
-            None.
-
-        """
-        return None
 
     def get_dir_to_delete(self):
         """Get list of directories to delete after the unify process finished.
@@ -134,7 +122,7 @@ class PacksManager(ArtifactsManager):
         if not self.quiet_mode:
             logger = logging.getLogger('demisto-sdk')
             for report in reports:
-                logger.info(report.to_str(self.get_base_path()))
+                logger.info(report.to_str(src_relative_to=None))
 
             created_zip_path = self.output_path if self.zip_all \
                 else '\n'.join([f'{self.output_path}/{pack_name}.zip' for pack_name in self.pack_names])

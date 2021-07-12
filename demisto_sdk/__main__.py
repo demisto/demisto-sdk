@@ -303,13 +303,11 @@ def unify(**kwargs):
               required=True)
 @click.option('-o', '--output', help='The destination directory to create the packs.',
               type=click.Path(file_okay=False, resolve_path=True), required=True)
-@click.option('-v', '--content_version', help='The content version in CommonServerPython.', default='0.0.0')
+@click.option('-v', '--content-version', help='The content version in CommonServerPython.', default='0.0.0')
 @click.option('-u', '--upload', is_flag=True, help='Upload the unified packs to the marketplace.', default=False)
-@click.option('--zip_all', is_flag=True, help='Zip all the packs in one zip file.', default=False)
+@click.option('--zip-all', is_flag=True, help='Zip all the packs in one zip file.', default=False)
 def zip_packs(**kwargs) -> int:
-    """Generating the following artifacts:
-       1. uploadable_packs - Contains zipped packs that are ready to be uploaded to Cortex XSOAR machine.
-    """
+    """Generating zipped packs that are ready to be uploaded to Cortex XSOAR machine."""
     logging_setup(3)
     check_configuration_file('zip-packs', kwargs)
 
@@ -710,8 +708,8 @@ def format(
     help="Compress the pack to zip before upload, this flag is relevant only for packs.", is_flag=True
 )
 @click.option(
-    "--keep-zip-in", help="Directory where to store the zip after creation, this argument is relevant only for packs "
-                          "and in case the --zip flag is used.", required=False, type=click.Path(exists=True))
+    "--keep-zip", help="Directory where to store the zip after creation, this argument is relevant only for packs "
+                       "and in case the --zip flag is used.", required=False, type=click.Path(exists=True))
 @click.option(
     "--insecure",
     help="Skip certificate validation", is_flag=True
@@ -721,14 +719,14 @@ def format(
     help="Verbose output", is_flag=True
 )
 def upload(**kwargs):
-    """"Upload integration or pack to Demisto instance.
+    """Upload integration or pack to Demisto instance.
     DEMISTO_BASE_URL environment variable should contain the Demisto server base URL.
     DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
     * Note: Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up. *
     """
     if kwargs.pop('zip', False):
         pack_path = kwargs['input']
-        output_zip_path = kwargs.pop('keep_zip_in') or tempfile.gettempdir()
+        output_zip_path = kwargs.pop('keep_zip') or tempfile.gettempdir()
         packs_unifier = PacksZipper(pack_paths=pack_path, output=output_zip_path,
                                     content_version='0.0.0', zip_all=True, quiet_mode=True)
         packs_zip_path, pack_names = packs_unifier.zip_packs()
@@ -738,7 +736,7 @@ def upload(**kwargs):
         kwargs['input'] = packs_zip_path
         kwargs['pack_names'] = pack_names
     else:
-        kwargs.pop('keep_zip_in')
+        kwargs.pop('keep_zip')
 
     check_configuration_file('upload', kwargs)
     return Uploader(**kwargs).upload()

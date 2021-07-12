@@ -229,8 +229,8 @@ class ValidateManager:
         if dir_name in CONTENT_ENTITIES_DIRS:
             return PathLevel.CONTENT_ENTITY_DIR
 
-        path_without_last_dir = file_path.rstrip(f'{dir_name}').rstrip('/')
-        if path_without_last_dir.endswith(GENERIC_TYPES_DIR) or path_without_last_dir.endswith(GENERIC_FIELDS_DIR):
+        if str(os.path.dirname(file_path)).endswith(GENERIC_TYPES_DIR) or \
+                str(os.path.dirname(file_path)).endswith(GENERIC_FIELDS_DIR):
             return PathLevel.CONTENT_GENERIC_ENTITY_DIR
 
         if os.path.basename(os.path.dirname(file_path)) == PACKS_DIR:

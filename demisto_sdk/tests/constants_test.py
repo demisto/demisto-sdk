@@ -214,9 +214,9 @@ XSOAR_LINTER_PY3_INVALID_WARNINGS_PARTNER = f"{GIT_ROOT}/demisto_sdk/tests/test_
 DESTINATION_FORMAT_INTEGRATION = "Integrations/integration.yml"
 INTEGRATION_PATH = "Integrations"
 CONNECTION_SCHEMA_PATH = f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/canvas-context-connections.yml"
-VALID_OBJECT_TYPE_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/object-type-valid.json"
-VALID_OBJECT_FIELD_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/object-field-valid.json"
-VALID_OBJECT_MODULE_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/object-module-valid.json"
+VALID_GENERIC_TYPE_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/generic-type-valid.json"
+VALID_GENERIC_FIELD_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/generic-field-valid.json"
+VALID_GENERIC_MODULE_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/generic-module-valid.json"
 
 DIR_LIST = [
     f'{PACK_TARGET}/{constants.INTEGRATIONS_DIR}',

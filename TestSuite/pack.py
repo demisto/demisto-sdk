@@ -48,9 +48,9 @@ class Pack:
         self.playbooks: List[Playbook] = list()
         self.test_playbooks: List[Playbook] = list()
         self.release_notes: List[TextBased] = list()
-        self.object_types: List[JSONBased] = list()
-        self.object_modules: List[JSONBased] = list()
-        self.object_fields: List[JSONBased] = list()
+        self.generic_types: List[JSONBased] = list()
+        self.generic_modules: List[JSONBased] = list()
+        self.generic_fields: List[JSONBased] = list()
         # Create base pack
         self._pack_path = packs_dir / name
         self._pack_path.mkdir()
@@ -109,14 +109,14 @@ class Pack:
 
         self.pack_metadata = JSONBased(self._pack_path, 'pack_metadata', '')
 
-        self._object_types_path = self._pack_path / 'ObjectTypes'
-        self._object_types_path.mkdir()
+        self._generic_types_path = self._pack_path / 'ObjectTypes'
+        self._generic_types_path.mkdir()
 
-        self._object_fields_path = self._pack_path / 'ObjectFields'
-        self._object_fields_path.mkdir()
+        self._generic_fields_path = self._pack_path / 'ObjectFields'
+        self._generic_fields_path.mkdir()
 
-        self._object_module_path = self._pack_path / 'ObjectModules'
-        self._object_module_path.mkdir()
+        self._generic_module_path = self._pack_path / 'ObjectModules'
+        self._generic_module_path.mkdir()
 
     def create_integration(
             self,
@@ -366,24 +366,24 @@ class Pack:
         doc_file_dir.mkdir()
         return File(doc_file_dir / f'{name}.png', self._repo.path)
 
-    def create_object_type(self, name, content: dict = None) -> JSONBased:
-        prefix = 'objecttype'
-        dir_path = self._object_types_path / name
+    def create_generic_type(self, name, content: dict = None) -> JSONBased:
+        prefix = 'genericttype'
+        dir_path = self._generic_types_path / name
         dir_path.mkdir()
-        object_type = self._create_json_based(name, prefix, content, dir_path=dir_path)
-        self.object_types.append(object_type)
-        return object_type
+        generic_type = self._create_json_based(name, prefix, content, dir_path=dir_path)
+        self.generic_types.append(generic_type)
+        return generic_type
 
-    def create_object_field(self, name, content: dict = None) -> JSONBased:
-        prefix = 'objectfield'
-        dir_path = self._object_fields_path / name
+    def create_generic_field(self, name, content: dict = None) -> JSONBased:
+        prefix = 'genericfield'
+        dir_path = self._generic_fields_path / name
         dir_path.mkdir()
-        object_field = self._create_json_based(name, prefix, content, dir_path=dir_path)
-        self.object_fields.append(object_field)
-        return object_field
+        generic_field = self._create_json_based(name, prefix, content, dir_path=dir_path)
+        self.generic_fields.append(generic_field)
+        return generic_field
 
-    def create_object_module(self, name, content: dict = None) -> JSONBased:
-        prefix = 'objectmodule'
-        object_module = self._create_json_based(name, prefix, content, dir_path=self._object_module_path)
-        self.object_modules.append(object_module)
-        return object_module
+    def create_generic_module(self, name, content: dict = None) -> JSONBased:
+        prefix = 'genericmodule'
+        generic_module = self._create_json_based(name, prefix, content, dir_path=self._generic_module_path)
+        self.generic_modules.append(generic_module)
+        return generic_module

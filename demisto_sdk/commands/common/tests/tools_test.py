@@ -41,9 +41,9 @@ from demisto_sdk.tests.constants_test import (IGNORED_PNG,
                                               VALID_REPUTATION_FILE,
                                               VALID_SCRIPT_PATH,
                                               VALID_WIDGET_PATH,
-                                              VALID_OBJECT_TYPE_PATH,
-                                              VALID_OBJECT_FIELD_PATH,
-                                              VALID_OBJECT_MODULE_PATH)
+                                              VALID_GENERIC_TYPE_PATH,
+                                              VALID_GENERIC_FIELD_PATH,
+                                              VALID_GENERIC_MODULE_PATH)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     LAYOUT, MAPPER, OLD_CLASSIFIER, REPUTATION)
 from TestSuite.pack import Pack
@@ -100,9 +100,9 @@ class TestGenericFunctions:
         (VALID_REPUTATION_FILE, FileType.REPUTATION),
         (VALID_SCRIPT_PATH, FileType.SCRIPT),
         (VALID_WIDGET_PATH, FileType.WIDGET),
-        (VALID_OBJECT_TYPE_PATH, FileType.OBJECT_TYPE),
-        (VALID_OBJECT_FIELD_PATH, FileType.OBJECT_FIELD),
-        (VALID_OBJECT_MODULE_PATH, FileType.OBJECT_MODULE),
+        (VALID_GENERIC_TYPE_PATH, FileType.GENERIC_TYPE),
+        (VALID_GENERIC_FIELD_PATH, FileType.GENERIC_FIELD),
+        (VALID_GENERIC_MODULE_PATH, FileType.GENERIC_MODULE),
         (IGNORED_PNG, None),
         ('', None),
         ('Author_image.png', None),

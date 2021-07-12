@@ -17,7 +17,7 @@ from demisto_sdk.commands.common.update_id_set import (
     get_report_data, get_script_data, get_values_for_keys_recursively,
     get_widget_data, has_duplicate, merge_id_sets, process_general_items,
     process_incident_fields, process_integration, process_script,
-    re_create_id_set, get_object_module_data, get_object_type_data, get_object_field_data)
+    re_create_id_set, get_generic_module_data, get_generic_type_data, get_generic_field_data)
 from TestSuite.utils import IsEqualFunctions
 
 TESTS_DIR = f'{git_path()}/demisto_sdk/tests'
@@ -1913,8 +1913,8 @@ class TestObjectFields:
         object_type.write_json(field_data)
         test_dir = object_type.path
 
-        result = get_object_field_data(test_dir, objects_types_list=objects_types_list,
-                                       objects_modules_list=objects_modules_list)
+        result = get_generic_field_data(test_dir, generic_types_list=objects_types_list,
+                                        generic_modules_list=objects_modules_list)
         result = result.get('id')
         assert 'name' in result.keys()
         assert 'file_path' in result.keys()
@@ -1951,7 +1951,7 @@ class TestObjectType:
                 "definitionid": "Assets",
                 "assetGroups": "Asset Groups"}}}]
 
-        result = get_object_type_data(test_dir, objects_modules_list)
+        result = get_generic_type_data(test_dir, objects_modules_list)
         result = result.get('type-id')
         assert 'name' in result.keys()
         assert 'file_path' in result.keys()
@@ -2001,7 +2001,7 @@ class TestObjectModule:
         object_module.write_json(module_data)
         test_dir = object_module.path
 
-        result = get_object_module_data(test_dir)
+        result = get_generic_module_data(test_dir)
         result = result.get('id')
         assert 'name' in result.keys()
         assert 'file_path' in result.keys()

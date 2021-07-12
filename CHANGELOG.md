@@ -2,6 +2,9 @@
 * When formatting incident types with Auto-Extract rules and without mode field, the **format** command will now add the user selected mode.
 * Added new validation that DBotRole is set for scripts that requires elevated permissions to the `XSOAR-linter` in the **lint** command.
 * Added url escaping to markdown human readable section in generate docs to avoid autolinking.
+* Added a validation that mapper's id and name are matching. Updated the format of mapper to include update_id too.
+* Added a validation to ensure that image paths in the README files are valid.
+* Fixed **find_type** function to correctly find test files, such as, test script and test playbook.
 
 # 1.4.3
 * Fixed an issue where **json-to-outputs** command returned an incorrect output when json is a list.

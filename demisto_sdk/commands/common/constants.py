@@ -484,6 +484,7 @@ ID_IN_ROOT = [  # entities in which 'id' key is in the root
     'dashboard',
     'incident_type',
     'layoutscontainer',
+    'mapper',
 ]
 
 INTEGRATION_PREFIX = 'integration'

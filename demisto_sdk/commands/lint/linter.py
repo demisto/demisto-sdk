@@ -777,7 +777,8 @@ class Linter:
                 image=test_image,
                 command=[test_command],
                 user=f"{os.getuid()}:4000",
-                detach=True
+                detach=True,
+                environment=self._facts["env_vars"]
             )
             stream_docker_container_output(container_obj.logs(stream=True))
             # wait for container to finish

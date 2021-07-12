@@ -35,6 +35,8 @@ from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, PWSH_CHECKS,
 from demisto_sdk.commands.lint.linter import Linter
 from wcmatch.pathlib import Path
 
+CHECKS = ["flake8", "XSOAR_linter", "bandit", "mypy", "vulture", "pylint", "pwsh_analyze", "pwsh_test"]
+
 logger = logging.getLogger('demisto-sdk')
 
 
@@ -461,7 +463,7 @@ class LintManager:
             pkgs_status(dict): All pkgs status dict
             return_exit_code(int): exit code will indicate which lint or test failed
         """
-        for check in ["flake8", "XSOAR_linter", "bandit", "mypy", "vulture", "pylint", "pwsh_analyze", "pwsh_test"]:
+        for check in CHECKS:
             if EXIT_CODES[check] & return_exit_code:
                 sentence = f" {check.capitalize().replace('_', ' ')} errors "
                 print(f"\n{Colors.Fg.red}{'#' * len(sentence)}{Colors.reset}")

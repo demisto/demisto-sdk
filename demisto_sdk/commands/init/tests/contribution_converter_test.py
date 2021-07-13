@@ -16,9 +16,9 @@ from TestSuite.contribution import Contribution
 from TestSuite.repo import Repo
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
-RELEASE_NOTES_COPY = "RN/1_0_1-formatted.md"
-SOURCE_RELEASE_NOTES_FILE = "RN/1_0_1.md"
-EXPECTED_RELEASE_NOTES = "RN/1_0_1_expected.md"
+RELEASE_NOTES_COPY = "demisto_sdk/commands/init/tests/RN/1_0_1-formatted.md"
+SOURCE_RELEASE_NOTES_FILE = "demisto_sdk/commands/init/tests/RN/1_0_1.md"
+EXPECTED_RELEASE_NOTES = "demisto_sdk/commands/init/tests/RN/1_0_1_expected.md"
 
 name_reformatting_test_examples = [
     ('PACKYAYOK', 'PACKYAYOK'),

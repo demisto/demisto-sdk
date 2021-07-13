@@ -224,7 +224,7 @@ class TestGenericDefinitionValidation:
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
         generic_def_copy = GENERIC_DEFINITION.copy()
-        genefic_def = pack.create_generic_definition("generic-module", generic_def_copy)
+        genefic_def = pack.create_generic_definition("generic-definition", generic_def_copy)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', genefic_def.path], catch_exceptions=False)
@@ -247,7 +247,7 @@ class TestGenericDefinitionValidation:
         pack = repo.create_pack('PackName')
         generic_def_copy = GENERIC_DEFINITION.copy()
         generic_def_copy['anotherField'] = False
-        genefic_def = pack.create_generic_definition("generic-module", generic_def_copy)
+        genefic_def = pack.create_generic_definition("generic-definition", generic_def_copy)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', genefic_def.path], catch_exceptions=False)

@@ -24,9 +24,9 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    INDICATOR_FIELDS_DIR,
                                                    INDICATOR_TYPES_DIR,
                                                    LAYOUTS_DIR, MAPPERS_DIR,
-                                                   GENERIC_FIELD_DIR,
-                                                   GENERIC_MODULE_DIR,
-                                                   GENERIC_TYPE_DIR,
+                                                   GENERIC_FIELDS_DIR,
+                                                   GENERIC_MODULES_DIR,
+                                                   GENERIC_TYPES_DIR,
                                                    REPORTS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
                                                    WIDGETS_DIR, FileType)
@@ -1606,7 +1606,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         expected_file_types=(FileType.GENERIC_MODULE,),
                                         data_extraction_func=get_generic_module_data,
                                         ),
-                                get_general_paths(GENERIC_MODULE_DIR, pack_to_create)):
+                                get_general_paths(GENERIC_MODULES_DIR, pack_to_create)):
                 generic_modules_list.extend(arr)
 
         progress_bar.update(1)
@@ -1618,7 +1618,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         print_logs=print_logs,
                                         generic_modules_list=generic_modules_list
                                         ),
-                                get_generic_entities_paths(GENERIC_TYPE_DIR, pack_to_create)):
+                                get_generic_entities_paths(GENERIC_TYPES_DIR, pack_to_create)):
                 generic_types_list.extend(arr)
 
         progress_bar.update(1)
@@ -1631,7 +1631,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         generic_types_list=generic_types_list,
                                         generic_modules_list=generic_modules_list
                                         ),
-                                get_generic_entities_paths(GENERIC_FIELD_DIR, pack_to_create)):
+                                get_generic_entities_paths(GENERIC_FIELDS_DIR, pack_to_create)):
                 generic_fields_list.extend(arr)
 
         progress_bar.update(1)

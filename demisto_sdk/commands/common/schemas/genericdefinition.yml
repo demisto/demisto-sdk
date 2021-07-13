@@ -2,12 +2,15 @@ type: map
 mapping:
   id:
     type: str
+    required: true
   name:
     type: str
+    required: true
   partitioned:
     type: bool
   auditable:
     type: bool
+    required: true
   rbacSupport:
     type: bool
   version:
@@ -18,3 +21,4 @@ mapping:
     type: bool
   fromVersion:
     type: str
+    required: true

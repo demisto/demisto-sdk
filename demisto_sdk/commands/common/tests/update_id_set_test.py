@@ -1887,7 +1887,7 @@ class TestGenericFields:
             "cliName": "operatigsystem",
             "id": "id",
             "name": "Operating System",
-            "definitionId": "definitionid",
+            "definitionId": "assets",
             "fromVersion": "6.5.0",
             "associatedTypes": ["Asset Type"]}
 
@@ -1897,25 +1897,25 @@ class TestGenericFields:
                 "file_path": "path/path",
                 "fromversion": "6.5.0",
                 "pack": "ObjectsExample",
-                "definitionId": "definitionid",
+                "definitionId": "assets",
                 "layout": "Workstation Layout"
             }
         }]
-
-        generics_modules_list = [{"rbvm": {
+        generic_modules_list = [{"rbvm": {
             "name": "Vulnerability Management",
             "pack": "ObjectsExample",
-            "definitions": {
-                "definitionid": "Assets",
-                "assetGroups": "Asset Groups"}}}]
+            "definitionIds": [
+                "assets",
+                "asset Groups"]}}]
 
-        generic_type = pack.create_generic_module('test-generic-field')
-        generic_type.write_json(field_data)
-        test_dir = generic_type.path
+        generic_field = pack.create_generic_field('test-generic-field')
+        generic_field.write_json(field_data)
+        test_dir = generic_field.path
 
         result = get_generic_field_data(test_dir, generic_types_list=generic_types_list,
-                                        generic_modules_list=generics_modules_list)
+                                        generic_modules_list=generic_modules_list)
         result = result.get('id')
+        print(result)
         assert 'name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
@@ -1941,15 +1941,15 @@ class TestGenericType:
 
         object_type = pack.create_generic_module('test-object-type')
         object_type.write_json(
-            {"id": "type-id", "name": "type-name", "fromVersion": "version", "definitionId": "definitionid",
+            {"id": "type-id", "name": "type-name", "fromVersion": "version", "definitionId": "Assets",
              "layout": "layout"})
         test_dir = object_type.path
         objects_modules_list = [{"rbvm": {
             "name": "Vulnerability Management",
             "pack": "ObjectsExample",
-            "definitions": {
-                "definitionid": "Assets",
-                "assetGroups": "Asset Groups"}}}]
+            "definitionIds": [
+                "Assets",
+                "Asset Groups"]}}]
 
         result = get_generic_type_data(test_dir, objects_modules_list)
         result = result.get('type-id')
@@ -1990,7 +1990,7 @@ class TestGenericDefinition:
 
 class TestGenericModule:
     @staticmethod
-    def test_get_object_module_data(repo):
+    def test_get_generic_module_data(repo):
         """
         Given
             - A generic module file

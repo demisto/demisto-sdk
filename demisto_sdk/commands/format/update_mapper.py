@@ -34,8 +34,9 @@ class MapperJSONFormat(BaseUpdateJSON):
             self.update_json()
             self.set_description()
             self.set_mapping()
-            self.save_json_to_destination_file()
             self.update_id()
+
+            self.save_json_to_destination_file()
             return SUCCESS_RETURN_CODE
 
         except Exception as err:

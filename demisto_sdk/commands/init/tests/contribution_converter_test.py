@@ -639,7 +639,7 @@ class TestReleaseNotes:
         - Ensure the RN file template text was modified with the user's input
         """
         contrib_converter.release_notes = "#### Integrations\n##### CrowdStrikeMalquery\n- release note entry number " \
-                                          "#1\n- release note entry number #1\n\n#### Playbooks\n##### " \
+                                          "#1\n- release note entry number #2\n\n#### Playbooks\n##### " \
                                           "CrowdStrikeMalquery - Multidownload and Fetch\n- changed this playbook\n- " \
                                           "Updated another thing\n\n"
         contrib_converter.detected_content_items = [
@@ -670,7 +670,7 @@ class TestReleaseNotes:
         - Ensure the dictionary being built contains the relevant data with the content item display name if exists.
         """
         contrib_converter.release_notes = "#### Integrations\n##### CrowdStrikeMalquery\n- release note entry number " \
-                                          "#1\n- release note entry number #1\n\n#### Playbooks\n##### " \
+                                          "#1\n- release note entry number #2\n\n#### Playbooks\n##### " \
                                           "CrowdStrikeMalquery - Multidownload and Fetch\n- changed this playbook\n- " \
                                           "Updated another thing\n\n"
         contrib_converter.detected_content_items = [
@@ -686,7 +686,7 @@ class TestReleaseNotes:
              "source_name": "CrowdStrikeMalquery",
              "source_file_name": "Packs/CrowdStrikeMalquery/Integrations/CrowdStrikeMalquery/CrowdStrikeMalquery.yml"}]
         expected_rn_per_content_item = {'CrowdStrike Malquery':
-                                            '- release note entry number #1\n- release note entry number #1\n',
+                                            '- release note entry number #1\n- release note entry number #2\n',
                                         'CrowdStrikeMalquery - Multidownload and Fetch':
                                             '- changed this playbook\n- Updated another thing\n'}
         mocker.patch.object(

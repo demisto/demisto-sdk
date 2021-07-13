@@ -499,7 +499,7 @@ class ContributionConverter:
         """
         rn_mng = UpdateReleaseNotesManager(user_input=self.dir_name, update_type=self.update_type, )
         rn_mng.manage_rn_update()
-        self.replace_RN_template_with_value(rn_mng.rn_path)
+        self.replace_RN_template_with_value(rn_mng.rn_path[0])
 
     def format_user_input(self) -> Dict[str, str]:
         """
@@ -514,15 +514,17 @@ class ContributionConverter:
         """
         entity_identifier = '##### '
         content_item_type_identifier = '#### '
-        rn = list(filter(None, self.release_notes.splitlines()))
         rn_per_content_item = defaultdict(str)
         entity_name = 'NonEntityRelated'
-        for line in rn:
+
+        items_path = {content_item.get('source_id'): content_item.get('source_file_name')
+                      for content_item in self.detected_content_items}
+
+        for line in list(filter(None, self.release_notes.splitlines())):
             if line.startswith(entity_identifier):
                 entity_name = line.lstrip(entity_identifier)
-                entity_path = [content_item.get('source_file_name') for content_item in self.detected_content_items if
-                               content_item.get('source_id') == entity_name]
-                entity_name = UpdateRN.get_display_name(entity_path[0]) if entity_path else entity_name
+                if items_path.get(entity_name):
+                    entity_name = UpdateRN.get_display_name(items_path.get(entity_name))
             elif not line.startswith(content_item_type_identifier):
                 rn_per_content_item[entity_name] = rn_per_content_item[entity_name] + line + '\n'
         return rn_per_content_item
@@ -531,7 +533,8 @@ class ContributionConverter:
         """
         Replace the release notes template for a given release-note file path
         with the contributor's text.
-        Modify the template not overwrite it.
+        Will only affect the detected content items template text.
+        New items rn entries and updated docker image entries for the detected items won't get changed.
 
         Args:
             rn_path: path to the rn file created.

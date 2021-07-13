@@ -57,7 +57,7 @@ def generate_integration_doc(
         insecure: bool = False,
         verbose: bool = False,
         command: Optional[str] = None,
-        input_old_version: str = '',
+        old_version: str = '',
         skip_breaking_changes: bool = False):
     """ Generate integration documentation.
 
@@ -142,7 +142,7 @@ def generate_integration_doc(
             docs.extend(command_section)
             # breaking changes
             if integration_version and not skip_breaking_changes:
-                docs.extend(generate_versions_differences_section(input_path, input_old_version,
+                docs.extend(generate_versions_differences_section(input_path, old_version,
                                                                   yml_data.get("display", "")))
 
             errors.extend(command_errors)
@@ -326,7 +326,7 @@ def generate_single_command_section(cmd: dict, example_dict: dict, command_permi
     return section, errors
 
 
-def generate_versions_differences_section(input_path, input_old_version, display_name) -> list:
+def generate_versions_differences_section(input_path, old_version, display_name) -> list:
     """
     Generate the version differences section to the README.md file.
 
@@ -344,14 +344,14 @@ def generate_versions_differences_section(input_path, input_old_version, display
         ''
     ]
 
-    if not input_old_version:
+    if not old_version:
         user_response = str(input('Enter the path of the previous integration version file if any. Press Enter to skip.\n'))
 
         if user_response:
-            input_old_version = user_response
+            old_version = user_response
 
-    if input_old_version:
-        differences = get_previous_version_differences(input_path, input_old_version)
+    if old_version:
+        differences = get_previous_version_differences(input_path, old_version)
 
         if differences[0] != '':
             differences_section.extend(differences)

@@ -19,7 +19,6 @@
 import os
 
 import astroid
-from demisto_sdk.commands.common.constants import BUILD_IN_COMMANDS
 from pylint.checkers import BaseChecker
 from pylint.interfaces import IAstroidChecker
 
@@ -58,6 +57,8 @@ base_msg = {
 }
 
 TEST_MODULE = "test-module"
+BUILD_IN_COMMANDS = ['getIncidents', 'DeleteContext', 'isWhitelisted', 'excludeIndicators',
+                     'deleteIndicators', 'extractIndicators']
 
 
 class CustomBaseChecker(BaseChecker):

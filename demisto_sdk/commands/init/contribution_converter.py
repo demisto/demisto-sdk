@@ -339,11 +339,7 @@ class ContributionConverter:
 
             if self.create_new:
                 self.generate_readmes_for_new_content_pack()
-            # todo: uncomment 3 following lines
-            # else:
-            #     # Creating a release notes file according to the user input and
-            #     # bump the version using the update_type chosen by the user.
-            #     self.execute_update_rn()
+
             # format
             self.format_converted_pack()
         except Exception as e:
@@ -464,7 +460,7 @@ class ContributionConverter:
             json.dump(metadata_dict, pack_metadata_file, indent=4)
 
     @staticmethod
-    def create_pack_metadata(data: Dict = {}) -> Dict:
+    def create_pack_metadata(data: Dict = None) -> Dict:
         """Builds pack metadata JSON content.
 
         Args:
@@ -493,19 +489,7 @@ class ContributionConverter:
 
         return pack_metadata
 
-    # def execute_update_rn(self):
-    #     """
-    #     Bump the pack version in the pack metadata according to the update type
-    #     and create a release-note file using the release-notes text.
-    #
-    #     """
-    #     modified_files = set([content_item.get('source_file_name') for content_item in self.detected_content_items])
-    #     update_rn = UpdateRN(pack_path=self.pack_dir_path, update_type=self.update_type,
-    #                          modified_files_in_pack=modified_files, added_files=set(), pack=self.pack_dir_path)
-    #     update_rn.execute_update()
-    #     self.replace_RN_template_with_value(update_rn.rn_path)
-
-    def execute_update_rn_after_refactor(self):
+    def execute_update_rn(self):
         """
         Bump the pack version in the pack metadata according to the update type
         and create a release-note file using the release-notes text.

@@ -68,7 +68,8 @@ class Repo:
             'Mappers': [],
             'GenericTypes': [],
             'GenericFields': [],
-            'GenericModules': []
+            'GenericModules': [],
+            'GenericDefinitions': []
         })
 
     def __del__(self):
@@ -192,7 +193,7 @@ class Repo:
         generic_module.update({'views': [{'name': 'name'}]})
         generic_module.update({'definitionIds': ['definitionId']})
 
-        generic_definition = pack.create_generic_definitions(f'{name}_generic-definition')
+        generic_definition = pack.create_generic_definition(f'{name}_generic-definition')
         generic_definition.write_json({'id': f'generic_{name} - generic_definition'})
         generic_definition.update({'name': f'generic_{name} - generic_definition'})
         generic_definition.update({'auditable': False})

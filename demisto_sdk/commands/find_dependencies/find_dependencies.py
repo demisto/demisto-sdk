@@ -978,6 +978,107 @@ class PackDependencies:
         return dependencies_packs
 
     @staticmethod
+    def _collect_generic_types_dependencies(pack_generic_types: list, id_set: dict, verbose: bool,
+                                            exclude_ignored_dependencies: bool = True) -> set:
+        """
+        Collects generic types dependencies.
+        Args:
+            pack_generic_types (list): collection of pack generics types data.
+            id_set (dict): id set json.
+            verbose (bool): Whether to log the dependencies to the console.
+            exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
+        Returns:
+            set: dependencies data that includes pack id and whether is mandatory or not.
+        """
+        dependencies_packs = set()
+        if verbose:
+            click.secho('### Generic Types', fg='white')
+
+        for generic_type in pack_generic_types:
+            generic_type_data = next(iter(generic_type.values()))
+            generic_type_dependencies = set()
+
+            related_playbooks = generic_type_data.get('playbooks', [])
+            packs_found_from_playbooks = PackDependencies._search_packs_by_items_names(
+                related_playbooks, id_set['playbooks'], exclude_ignored_dependencies)
+
+            if packs_found_from_playbooks:
+                pack_dependencies_data = PackDependencies. \
+                    _label_as_mandatory(packs_found_from_playbooks)
+                generic_type_dependencies.update(pack_dependencies_data)
+
+            related_scripts = generic_type_data.get('scripts', [])
+            packs_found_from_scripts = PackDependencies._search_packs_by_items_names(
+                related_scripts, id_set['scripts'], exclude_ignored_dependencies)
+
+            if packs_found_from_scripts:
+                pack_dependencies_data = PackDependencies. \
+                    _label_as_mandatory(packs_found_from_scripts)
+                generic_type_dependencies.update(pack_dependencies_data)
+
+            related_modules = generic_type_data.get('module_id')
+            packs_found_from_modules = PackDependencies._search_packs_by_items_names(
+                related_modules, id_set['module_id'], exclude_ignored_dependencies)
+
+            if packs_found_from_modules:
+                pack_dependencies_data = PackDependencies. \
+                    _label_as_mandatory(packs_found_from_modules)
+                generic_type_dependencies.update(pack_dependencies_data)
+
+            if generic_type_dependencies:
+                # do not trim spaces from the end of the string, they are required for the MD structure.
+                if verbose:
+                    click.secho(
+                        f'{os.path.basename(generic_type_data.get("file_path", ""))} depends on: {generic_type_dependencies}',
+                        fg='white')
+            dependencies_packs.update(generic_type_dependencies)
+
+        return dependencies_packs
+
+    @staticmethod
+    def _collect_generic_fields_dependencies(pack_generic_fields: list, id_set: dict, verbose: bool,
+                                               exclude_ignored_dependencies: bool = True) -> set:
+        """
+        Collects in generic fields dependencies.
+
+        Args:
+            pack_generic_fields (list): collection of pack incidents fields data.
+            id_set (dict): id set json.
+            verbose (bool): Whether to log the dependencies to the console.
+            exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
+
+        Returns:
+            set: dependencies data that includes pack id and whether is mandatory or not.
+
+        """
+        dependencies_packs = set()
+        if verbose:
+            click.secho('### Incident Fields', fg='white')
+
+        for generic_field in pack_generic_fields:
+            generic_field_data = next(iter(generic_field.values()))
+            generic_field_dependencies = set()
+
+            related_scripts = generic_field_data.get('scripts', [])
+            packs_found_from_scripts = PackDependencies._search_packs_by_items_names(
+                related_scripts, id_set['scripts'], exclude_ignored_dependencies)
+
+            if packs_found_from_scripts:
+                pack_dependencies_data = PackDependencies. \
+                    _label_as_mandatory(packs_found_from_scripts)
+                generic_field_dependencies.update(pack_dependencies_data)
+
+            if generic_field_dependencies:
+                # do not trim spaces from the end of the string, they are required for the MD structure.
+                if verbose:
+                    click.secho(
+                        f'{os.path.basename(generic_field_data.get("file_path", ""))} '
+                        f'depends on: {generic_field_dependencies}', fg='white')
+            dependencies_packs.update(generic_field_dependencies)
+
+        return dependencies_packs
+
+    @staticmethod
     def _collect_pack_items(pack_id: str, id_set: dict) -> dict:
         """
         Collects script and playbook content items inside specific pack.
@@ -1004,6 +1105,9 @@ class PackDependencies:
         pack_items['widgets'] = PackDependencies._search_for_pack_items(pack_id, id_set['Widgets'])
         pack_items['dashboards'] = PackDependencies._search_for_pack_items(pack_id, id_set['Dashboards'])
         pack_items['reports'] = PackDependencies._search_for_pack_items(pack_id, id_set['Reports'])
+        pack_items['generic_types'] = PackDependencies._search_for_pack_items(pack_id, id_set['GenericTypes'])
+        pack_items['generic_fields'] = PackDependencies._search_for_pack_items(pack_id, id_set['GenericModules'])
+        pack_items['generic_modules'] = PackDependencies._search_for_pack_items(pack_id, id_set['GenericFields'])
 
         if not sum(pack_items.values(), []):
             click.secho(f"Couldn't find any items for pack '{pack_id}'. Please make sure:\n"
@@ -1106,6 +1210,7 @@ class PackDependencies:
             exclude_ignored_dependencies,
             header='Reports'
         )
+
 
         pack_dependencies = (
             scripts_dependencies | playbooks_dependencies | layouts_dependencies | incidents_fields_dependencies |

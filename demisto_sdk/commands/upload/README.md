@@ -20,15 +20,19 @@ Supported content entities:
 - Dashboards
 - Incident Types
 - Incident Fields
+- Indicator Fields
+- Indicator Types
 - Layouts
+- Layouts Container
 - Classifiers
 - Packs
+- Reports
 
 #### Limitation
 Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up.
 
 ### Arguments
-* **-i <PATH_IN_CONTENT>, --<PATH_IN_CONTENT>**
+* **-i <PATH_IN_CONTENT>, --input --<PATH_IN_CONTENT>**
 
     Where PATH_IN_CONTENT is one of the following:
     1. Pack

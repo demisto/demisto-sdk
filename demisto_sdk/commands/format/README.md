@@ -31,9 +31,17 @@ When done formatting, the **validate** command will run, to let you know of thin
 
    Set if you want to update the docker image of the integration/script to the newest available tag.
 
+* **-v, --verbose**
+    
+   Verbose output
+
 * **-y, --assume-yes**
 
   Automatic yes to prompts; assume 'yes' as answer to all prompts and run non-interactively
+
+* **-d, --deprecate**
+    
+  Set if you want to deprecate the integration/script/playbook
 
 ### Examples
 ```

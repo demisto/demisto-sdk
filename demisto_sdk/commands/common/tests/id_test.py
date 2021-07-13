@@ -969,11 +969,14 @@ class TestPlaybookEntitiesVersionsValid:
 
     def test_playbook_sub_playbook_exist(self, repo, mocker):
         """
+
         Given
         - A playbook with sub playbook
         - An id_set file.
+
         When
         - validating playbook - sub playbook exists in id_set
+
         Then
         - In case sub playbook names does not exist in id_set , prints a warning.
         """
@@ -989,11 +992,14 @@ class TestPlaybookEntitiesVersionsValid:
 
     def test_playbook_sub_playbook_not_exist(self, repo, mocker):
         """
+
         Given
         - A playbook with sub playbook names
         - An id_set file.
+
         When
         - validating playbook - sub playbook does not exist in id_set
+
         Then
         - In case playbook name does not exist in id_set , prints a warning.
         """

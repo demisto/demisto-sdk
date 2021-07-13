@@ -190,8 +190,12 @@ class Repo:
         generic_module.write_json({'id': f'generic_{name} - generic_module'})
         generic_module.update({'name': f'generic_{name} - generic_module'})
         generic_module.update({'views': [{'name': 'name'}]})
-        generic_module.update({'definitions': [{'id': 'definitionId'}]})
+        generic_module.update({'definitionIds': ['definitionId']})
 
+        generic_definition = pack.create_generic_definitions(f'{name}_generic-definition')
+        generic_definition.write_json({'id': f'generic_{name} - generic_definition'})
+        generic_definition.update({'name': f'generic_{name} - generic_definition'})
+        generic_definition.update({'auditable': False})
         return pack
 
     def setup_content_repo(self, number_of_packs):

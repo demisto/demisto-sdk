@@ -1,7 +1,9 @@
 import json
 import os
 
+import click
 import pytest
+import requests_mock
 from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
@@ -83,6 +85,7 @@ class TestPackUniqueFilesValidator:
     def test_validate_pack_unique_files(self, mocker):
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_readme_and_pack_description', return_value=True)
+        mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_readme_images', return_value=True)
         mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
         assert not self.validator.are_valid_files(id_set_validations=False)
         fake_validator = PackUniqueFilesValidator('fake')
@@ -91,6 +94,7 @@ class TestPackUniqueFilesValidator:
     def test_validate_pack_metadata(self, mocker):
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_readme_and_pack_description', return_value=True)
+        mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_readme_images', return_value=True)
         mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
         assert not self.validator.are_valid_files(id_set_validations=False)
         fake_validator = PackUniqueFilesValidator('fake')
@@ -274,6 +278,7 @@ class TestPackUniqueFilesValidator:
             PACK_METADATA_SUPPORT: XSOAR_SUPPORT,
             PACK_METADATA_TAGS: []
         })
+        mocker.patch.object(tools, 'is_external_repository', return_value=False)
         mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': branch_usecases}, 'json'))
         self.validator.pack_path = pack.path
 
@@ -318,6 +323,7 @@ class TestPackUniqueFilesValidator:
             PACK_METADATA_SUPPORT: XSOAR_SUPPORT,
             PACK_METADATA_TAGS: tags
         })
+        mocker.patch.object(tools, 'is_external_repository', return_value=False)
         mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': branch_tags}, 'json'))
         self.validator.pack_path = pack.path
 
@@ -515,6 +521,73 @@ class TestPackUniqueFilesValidator:
         self.validator = PackUniqueFilesValidator(os.path.join(self.FILES_PATH, 'DummyPack'))
         assert self.validator._is_pack_file_exists(self.validator.readme_file) is False
 
+    def test_validate_pack_readme_valid_images(self, mocker):
+        """
+            Given
+                - A pack README file with valid absolute image paths in it.
+            When
+                - Run validate on pack README file
+            Then
+                - Ensure:
+                    - Validation succeed
+                    - Valid absolute image paths were not caught
+        """
+        from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
+
+        self.validator = PackUniqueFilesValidator(os.path.join(self.FILES_PATH, 'DummyPack2'))
+        mocker.patch.object(ReadMeValidator, 'check_readme_relative_image_paths', return_value=[])  # Test only absolute paths
+
+        with requests_mock.Mocker() as m:
+            # Mock get requests
+            m.get('https://github.com/demisto/content/raw/test1.png',
+                  status_code=200, text="Test1")
+            m.get('https://raw.githubusercontent.com/demisto/content/raw/test1.png',
+                  status_code=200, text="Test1")
+            m.get('https://raw.githubusercontent.com/demisto/content/raw/test1.jpg',
+                  status_code=200, text="Test1")
+
+            result = self.validator.validate_pack_readme_images()
+            errors = self.validator.get_errors()
+        assert result
+        assert 'please repair it:\n![Identity with High Risk Score](https://github.com/demisto/content/raw/test1.png)' not in errors
+        assert 'please repair it:\n![Identity with High Risk Score](https://raw.githubusercontent.com/demisto/content/raw/test1.png)' not in errors
+        assert 'please repair it:\n(https://raw.githubusercontent.com/demisto/content/raw/test1.jpg)' not in errors
+
+    def test_validate_pack_readme_invalid_images(self):
+        """
+            Given
+                - A pack README file with invalid absolute and relative image paths in it.
+            When
+                - Run validate on pack README file
+            Then
+                - Ensure:
+                    - Validation fails
+                    - Invalid relative image paths were caught correctly
+                    - Invalid absolute image paths were caught correctly
+        """
+        self.validator = PackUniqueFilesValidator(os.path.join(self.FILES_PATH, 'DummyPack2'))
+
+        with requests_mock.Mocker() as m:
+            # Mock get requests
+            m.get('https://github.com/demisto/content/raw/test1.png',
+                  status_code=404, text="Test1")
+            m.get('https://raw.githubusercontent.com/demisto/content/raw/test1.png',
+                  status_code=404, text="Test1")
+            m.get('https://raw.githubusercontent.com/demisto/content/raw/test1.jpg',
+                  status_code=404, text="Test1")
+
+            result = self.validator.validate_pack_readme_images()
+            errors = self.validator.get_errors()
+        assert not result
+        assert 'Detected the following image relative path: ![Identity with High Risk Score](doc_files/High_Risk_User.png)' in errors
+        assert 'Detected the following image relative path: ![Identity with High Risk Score](home/test1/test2/doc_files/High_Risk_User.png)' in errors
+        assert 'Detected the following image relative path: (../../doc_files/Access_investigation_-_Generic_4_5.png)' in errors
+        assert 'Image link was not found, either insert it or remove it:\n![Account Enrichment](Insert the link to your image here)' in errors
+
+        assert 'please repair it:\n![Identity with High Risk Score](https://github.com/demisto/content/raw/test1.png)' in errors
+        assert 'please repair it:\n![Identity with High Risk Score](https://raw.githubusercontent.com/demisto/content/raw/test1.png)' in errors
+        assert 'please repair it:\n(https://raw.githubusercontent.com/demisto/content/raw/test1.jpg)' in errors
+
     @pytest.mark.parametrize('readme_content, is_valid', [
         ('Hey there, just testing', True),
         ('This is a test. All good!', False),
@@ -571,3 +644,40 @@ class TestPackUniqueFilesValidator:
             assert '"README.md" file does not exist, create one in the root of the pack' in self.validator.get_errors()
             assert 'README.md content is equal to pack description. ' \
                    'Please remove the duplicate description from README.md file' not in self.validator.get_errors()
+
+    def test_valid_is_pack_metadata_desc_too_long(self, repo):
+        """
+        Given:
+            - Valid description length
+
+        When:
+            - Validating pack description length
+
+        Then:
+            - Ensure validation passes as the description field length is valid.
+
+        """
+        pack_description = 'Hey there, just testing'
+        assert self.validator.is_pack_metadata_desc_too_long(pack_description) is True
+
+    def test_invalid_is_pack_metadata_desc_too_long(self, mocker, repo):
+        """
+        Given:
+            - Invalid description length - higher than 130
+
+        When:
+            - Validating pack description length
+
+        Then:
+            - Ensure validation passes although description field length is higher than 130
+            - Ensure warning will be printed.
+        """
+        pack_description = 'This is will fail cause the description here is too long.' \
+                           'test test test test test test test test test test test test test test test test test' \
+                           ' test test test test test'
+        error_desc = 'The description field of the pack_metadata.json file is longer than 130 characters.'
+
+        mocker.patch("click.secho")
+
+        assert self.validator.is_pack_metadata_desc_too_long(pack_description) is True
+        assert error_desc in click.secho.call_args_list[0][0][0]

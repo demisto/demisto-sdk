@@ -9,6 +9,8 @@ from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (API_MODULES_PACK,
                                                    CONTENT_ENTITIES_DIRS,
                                                    DEFAULT_ID_SET_PATH,
+                                                   GENERIC_FIELDS_DIR,
+                                                   GENERIC_TYPES_DIR,
                                                    IGNORED_PACK_NAMES,
                                                    OLDEST_SUPPORTED_VERSION,
                                                    PACKS_DIR,
@@ -210,13 +212,14 @@ class ValidateManager:
     @staticmethod
     def detect_file_level(file_path: str) -> PathLevel:
         """
-        Detect the whether the path points to a file, a content entity dir, a pack dir or package dir
+        Detect the whether the path points to a file, a content entity dir, a content generic entity dir
+        (i.e GenericFields or GenericTypes), a pack dir or package dir
 
         Args:
              file_path(str): the path to check.
 
         Returns:
-            PathLevel. File, ContentDir, Pack or Package - depending on the file path level.
+            PathLevel. File, ContentDir, ContentGenericDir, Pack or Package - depending on the file path level.
         """
         if os.path.isfile(file_path):
             return PathLevel.FILE
@@ -225,6 +228,10 @@ class ValidateManager:
         dir_name = os.path.basename(file_path)
         if dir_name in CONTENT_ENTITIES_DIRS:
             return PathLevel.CONTENT_ENTITY_DIR
+
+        if str(os.path.dirname(file_path)).endswith(GENERIC_TYPES_DIR) or \
+                str(os.path.dirname(file_path)).endswith(GENERIC_FIELDS_DIR):
+            return PathLevel.CONTENT_GENERIC_ENTITY_DIR
 
         if os.path.basename(os.path.dirname(file_path)) == PACKS_DIR:
             return PathLevel.PACK
@@ -249,6 +256,11 @@ class ValidateManager:
                 click.secho(f'\n================= Validating content directory {path} =================',
                             fg="bright_cyan")
                 files_validation_result.add(self.run_validation_on_content_entities(path, error_ignore_list))
+
+            elif file_level == PathLevel.CONTENT_GENERIC_ENTITY_DIR:
+                click.secho(f'\n================= Validating content directory {path} =================',
+                            fg="bright_cyan")
+                files_validation_result.add(self.run_validation_on_generic_entities(path, error_ignore_list))
 
             elif file_level == PathLevel.PACK:
                 click.secho(f'\n================= Validating pack {path} =================',
@@ -318,18 +330,28 @@ class ValidateManager:
             bool. true if all files in directory are valid, false otherwise.
         """
         content_entities_validation_results = set()
-        for file_name in os.listdir(content_entity_dir_path):
-            file_path = os.path.join(content_entity_dir_path, file_name)
-            if os.path.isfile(file_path):
-                if file_path.endswith('.json') or file_path.endswith('.yml') or file_path.endswith('.md'):
-                    content_entities_validation_results.add(self.run_validations_on_file(file_path,
-                                                                                         pack_error_ignore_list))
+        if content_entity_dir_path.endswith(GENERIC_FIELDS_DIR) or content_entity_dir_path.endswith(GENERIC_TYPES_DIR):
+            for dir_name in os.listdir(content_entity_dir_path):
+                dir_path = os.path.join(content_entity_dir_path, dir_name)
+                if not os.path.isfile(dir_path):
+                    # should be only directories (not files) in generic types/fields directory
+                    content_entities_validation_results.add(
+                        self.run_validation_on_generic_entities(dir_path, pack_error_ignore_list))
                 else:
-                    self.ignored_files.add(file_path)
+                    self.ignored_files.add(dir_path)
+        else:
+            for file_name in os.listdir(content_entity_dir_path):
+                file_path = os.path.join(content_entity_dir_path, file_name)
+                if os.path.isfile(file_path):
+                    if file_path.endswith('.json') or file_path.endswith('.yml') or file_path.endswith('.md'):
+                        content_entities_validation_results.add(self.run_validations_on_file(file_path,
+                                                                                             pack_error_ignore_list))
+                    else:
+                        self.ignored_files.add(file_path)
 
-            else:
-                content_entities_validation_results.add(self.run_validation_on_package(file_path,
-                                                                                       pack_error_ignore_list))
+                else:
+                    content_entities_validation_results.add(self.run_validation_on_package(file_path,
+                                                                                           pack_error_ignore_list))
 
         return all(content_entities_validation_results)
 
@@ -341,6 +363,25 @@ class ValidateManager:
             if file_path.endswith('.yml') or file_path.endswith('.md'):
                 package_entities_validation_results.add(self.run_validations_on_file(file_path, pack_error_ignore_list))
 
+            else:
+                self.ignored_files.add(file_path)
+
+        return all(package_entities_validation_results)
+
+    def run_validation_on_generic_entities(self, dir_path, pack_error_ignore_list):
+        """
+        Gets a generic content entity directory (i.e a sub-directory of GenericTypes or GenericFields)
+        and runs validation within it.
+
+        Returns:
+            bool. true if all files in directory are valid, false otherwise.
+        """
+        package_entities_validation_results = set()
+
+        for file_name in os.listdir(dir_path):
+            file_path = os.path.join(dir_path, file_name)
+            if file_path.endswith('.json'):  # generic types/fields are jsons
+                package_entities_validation_results.add(self.run_validations_on_file(file_path, pack_error_ignore_list))
             else:
                 self.ignored_files.add(file_path)
 
@@ -405,6 +446,11 @@ class ValidateManager:
         # Passed schema validation
         # if only schema validation is required - stop check here
         if self.check_only_schema:
+            return True
+
+        # Note: these file are not ignored but there are no additional validators for Generic Objects at the moment
+        if file_type == FileType.GENERIC_FIELD or file_type == FileType.GENERIC_TYPE or\
+                file_type == FileType.GENERIC_MODULE:
             return True
 
         # id_set validation
@@ -839,7 +885,7 @@ class ValidateManager:
         Runs validations on the following pack files:
         * .secret-ignore: Validates that the file exist and that the file's secrets can be parsed as a list delimited by '\n'
         * .pack-ignore: Validates that the file exists and that all regexes in it can be compiled
-        * README.md file: Validates that the file exists
+        * README.md file: Validates that the file exists and image links are valid
         * 2.pack_metadata.json: Validates that the file exists and that it has a valid structure
         Runs validation on the pack dependencies
         Args:
@@ -1033,8 +1079,8 @@ class ValidateManager:
                 if not BaseValidator(ignored_errors=ignored_errors_list,
                                      print_as_warnings=self.print_ignored_errors,
                                      json_file_path=self.json_file_path).handle_error(
-                        error_message, error_code,
-                        file_path=os.path.join(os.getcwd(), PACKS_DIR, pack, PACKS_PACK_META_FILE_NAME)
+                    error_message, error_code,
+                    file_path=os.path.join(os.getcwd(), PACKS_DIR, pack, PACKS_PACK_META_FILE_NAME)
                 ):
                     is_valid.add(True)
 

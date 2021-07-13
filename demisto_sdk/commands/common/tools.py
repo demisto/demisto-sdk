@@ -9,7 +9,7 @@ import sys
 from configparser import ConfigParser, MissingSectionHeaderError
 from distutils.version import LooseVersion
 from enum import Enum
-from functools import partial
+from functools import lru_cache, partial
 from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from typing import Callable, Dict, List, Match, Optional, Tuple, Type, Union
@@ -942,52 +942,59 @@ def get_dev_requirements(py_version, envs_dirs_base):
     return requirements
 
 
-def get_dict_from_file(path: str, use_ryaml: bool = False) -> Tuple[Dict, Union[str, None]]:
+def get_dict_from_file(path: str, use_ryaml: bool = False,
+                       raises_error: bool = True) -> Tuple[Dict, Union[str, None]]:
     """
     Get a dict representing the file
 
     Arguments:
         path - a path to the file
         use_ryaml - Whether to use ryaml for file loading or not
+        raises_error - Whether to raise a FileNotFound error if `path` is not a valid file.
 
     Returns:
-        dict representation of the file, and the file_type, either .yml ot .json
+        dict representation of the file, and the file_type, either .yml or .json
     """
-    if path:
-        if path.endswith('.yml'):
-            if use_ryaml:
-                return get_ryaml(path), 'yml'
-            return get_yaml(path), 'yml'
-        elif path.endswith('.json'):
-            return get_json(path), 'json'
-        elif path.endswith('.py'):
-            return {}, 'py'
+    try:
+        if path:
+            if path.endswith('.yml'):
+                if use_ryaml:
+                    return get_ryaml(path), 'yml'
+                return get_yaml(path), 'yml'
+            elif path.endswith('.json'):
+                return get_json(path), 'json'
+            elif path.endswith('.py'):
+                return {}, 'py'
+    except FileNotFoundError as e:
+        if raises_error:
+            raise
+
     return {}, None
 
 
-# flake8: noqa: C901
-def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignore_sub_categories: bool = False):
-    """
-    returns the content file type
+@lru_cache()
+def find_type_by_path(path: str = '') -> Optional[FileType]:
+    """Find docstring by file path only
+    This function is here as we want to implement lru_cache and we can do it on `find_type`
+    as dict is not hashable.
 
-    Arguments:
-        path - a path to the file
+    Args:
+        path: Path to find its file type. Defaults to ''.
 
     Returns:
-        string representing the content file type
+        FileType: The file type if found. else None;
     """
     if path.endswith('.md'):
         if 'README' in path:
             return FileType.README
 
-        if RELEASE_NOTES_DIR in path:
+        if RELEASE_NOTES_DIR in path:  # [-2] is the file's dir name
             return FileType.RELEASE_NOTES
 
         if 'description' in path:
             return FileType.DESCRIPTION
 
         return FileType.CHANGELOG
-
     # integration image
     if path.endswith('_image.png') and not path.endswith("Author_image.png"):
         return FileType.IMAGE
@@ -1008,6 +1015,24 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
     if path.endswith(XSOAR_CONFIG_FILE):
         return FileType.XSOAR_CONFIG
 
+    return None
+
+# flake8: noqa: C901
+
+
+def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignore_sub_categories: bool = False):
+    """
+    returns the content file type
+
+    Arguments:
+        path - a path to the file
+
+    Returns:
+        string representing the content file type
+    """
+    type_by_path = find_type_by_path(path)
+    if type_by_path:
+        return type_by_path
     try:
         if not _dict and not file_type:
             _dict, file_type = get_dict_from_file(path)
@@ -1024,13 +1049,13 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
             return FileType.INTEGRATION
 
         if 'script' in _dict:
-            if TEST_PLAYBOOKS_DIR in path and not ignore_sub_categories:
+            if TEST_PLAYBOOKS_DIR in Path(path).parts and not ignore_sub_categories:
                 return FileType.TEST_SCRIPT
 
             return FileType.SCRIPT
 
         if 'tasks' in _dict:
-            if TEST_PLAYBOOKS_DIR in path:
+            if TEST_PLAYBOOKS_DIR in Path(path).parts:
                 return FileType.TEST_PLAYBOOK
 
             return FileType.PLAYBOOK
@@ -1043,6 +1068,8 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
             return FileType.REPORT
 
         if 'color' in _dict and 'cliName' not in _dict:  # check against another key to make it more robust
+            if 'definitionId' in _dict and _dict['definitionId'] not in [None, 'incident', 'indicator']:
+                return FileType.GENERIC_TYPE
             return FileType.INCIDENT_TYPE
 
         # 'regex' key can be found in new reputations files while 'reputations' key is for the old reputations
@@ -1072,9 +1099,14 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
         if 'group' in _dict and LAYOUT_CONTAINER_FIELDS.intersection(_dict):
             return FileType.LAYOUTS_CONTAINER
 
+        if 'definitions' in _dict and 'views' in _dict:
+            return FileType.GENERIC_MODULE
+
         # When using it for all files validation- sometimes 'id' can be integer
         if 'id' in _dict:
             if isinstance(_dict['id'], str):
+                if 'definitionId' in _dict and _dict['definitionId'].lower() not in [None, 'incident', 'indicator']:
+                    return FileType.GENERIC_FIELD
                 _id = _dict['id'].lower()
                 if _id.startswith('incident'):
                     return FileType.INCIDENT_FIELD
@@ -1639,6 +1671,7 @@ def find_file(root_path, file_name):
     return ''
 
 
+@lru_cache()
 def get_file_displayed_name(file_path):
     """Gets the file name that is displayed in the UI by the file's path.
     If there is no displayed name - returns the file name"""
@@ -1857,21 +1890,52 @@ def is_uuid(s: str) -> Optional[Match]:
     return re.match(UUID_REGEX, s)
 
 
+def get_release_note_entries(version='') -> list:
+    """
+    Gets the release notes entries for the current version.
+
+    Args:
+        version: The current demisto-sdk version.
+
+    Return:
+        list: A list of the release notes given from the CHANGELOG file.
+    """
+
+    changelog_file_content = get_remote_file(full_file_path='CHANGELOG.md',
+                                             return_content=True,
+                                             github_repo='demisto/demisto-sdk').decode('utf-8').split('\n')
+
+    if not version or 'dev' in version:
+        version = 'Changelog'
+
+    if f'# {version}' not in changelog_file_content:
+        return []
+
+    result = changelog_file_content[changelog_file_content.index(f'# {version}') + 1:]
+    result = result[:result.index('')]
+
+    return result
+
+
 def get_current_usecases() -> list:
-    """Gets approved list of usecases from current branch
+    """Gets approved list of usecases from current branch (only in content repo).
 
     Returns:
         List of approved usecases from current branch
     """
-    approved_usecases_json, _ = get_dict_from_file('Tests/Marketplace/approved_usecases.json')
-    return approved_usecases_json.get('approved_list', [])
+    if not is_external_repository():
+        approved_usecases_json, _ = get_dict_from_file('Tests/Marketplace/approved_usecases.json')
+        return approved_usecases_json.get('approved_list', [])
+    return []
 
 
 def get_current_tags() -> list:
-    """Gets approved list of tags from current branch
+    """Gets approved list of tags from current branch (only in content repo).
 
     Returns:
         List of approved tags from current branch
     """
-    approved_tags_json, _ = get_dict_from_file('Tests/Marketplace/approved_tags.json')
-    return approved_tags_json.get('approved_list', [])
+    if not is_external_repository():
+        approved_tags_json, _ = get_dict_from_file('Tests/Marketplace/approved_tags.json')
+        return approved_tags_json.get('approved_list', [])
+    return []

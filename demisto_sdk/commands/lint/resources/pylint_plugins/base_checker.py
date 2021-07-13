@@ -24,6 +24,8 @@ from pylint.interfaces import IAstroidChecker
 
 TEST_MODULE = "test-module"
 SCRIPT_TEMPLATE_NAMES = ['BaseScript', 'HelloWorldScript']
+BUILD_IN_COMMANDS = ['getIncidents', 'DeleteContext', 'isWhitelisted', 'excludeIndicators',
+                     'deleteIndicators', 'extractIndicators']
 
 # -------------------------------------------- Messages for all linters ------------------------------------------------
 
@@ -55,7 +57,10 @@ base_msg = {
               "unimplemented-test-module",
               "test-module command is not implemented in the python file, it is essential for every"
               " integration. Please add it to your code. For more information see: "
-              "https://xsoar.pan.dev/docs/integrations/code-conventions#test-module")
+              "https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"),
+    "E9012": ("Your script requires elevated permissions. Please add the `runas: DBotRole` to the yml file.",
+              "missing-permission",
+              "Your script requires elevated permissions. Please add the `runas: DBotRole` to the yml file.")
 }
 
 
@@ -69,6 +74,7 @@ class CustomBaseChecker(BaseChecker):
         super(CustomBaseChecker, self).__init__(linter)
         self.commands = os.getenv('commands', '').split(',') if os.getenv('commands') else []
         self.is_script = True if os.getenv('is_script') == 'True' else False
+        self.runas = os.getenv('runas')
         # we treat scripts as they already implement the test-module
         self.test_module_implemented = False if not self.is_script else True
 
@@ -87,6 +93,7 @@ class CustomBaseChecker(BaseChecker):
         self._quit_checker(node)
         self._exit_checker(node)
         self._commandresults_indicator_check(node)
+        self._execute_command_checker(node)
         self._script_template_name_exists(node)
 
     def visit_importfrom(self, node):
@@ -199,6 +206,40 @@ class CustomBaseChecker(BaseChecker):
         try:
             if node.func.name == 'quit':
                 self.add_message("quit-exists", node=node)
+        except Exception:
+            pass
+
+    def _execute_command_checker(self, node):
+        """
+        Args: node which is a Call Node.
+        Check:
+        - if executeCommand() statement with a given build-in command as an argument exists in the current node.
+
+        Adds the relevant error message using `add_message` function if one of the above exists.
+        """
+        # If it's not a script or 'runas' is already set to 'DBotRole' simply return.
+        if not self.is_script or self.runas == 'DBotRole':
+            return
+
+        try:
+            if node.func.expr.name == 'demisto' and node.func.attrname == 'executeCommand':
+
+                # Check whether a built-in command was passed as an argument in the executeCommand.
+                if node.args[0].value in BUILD_IN_COMMANDS:
+                    self.add_message("missing-permission", node=node)
+
+                # If 'setIncident' was passed in the executeCommand,
+                # we would like to check if an incident id has also been passed.
+                elif node.args[0].value == 'setIncident':
+                    # Trying to infer if the args contains an incident id.
+                    inferred_args = node.args[1].inferred()
+
+                    if inferred_args and isinstance(inferred_args[0], astroid.Dict):
+                        inferred_args = inferred_args[0]
+
+                        for item in inferred_args.items:
+                            if item[0].value == 'id':
+                                self.add_message("missing-permission", node=node)
         except Exception:
             pass
 

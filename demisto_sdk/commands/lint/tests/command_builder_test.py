@@ -32,7 +32,7 @@ def test_build_xsoar_linter_py3_command(files):
     files = [str(file) for file in files]
     expected = f"python3 -m pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py," \
                "conftest.py,venv -E --disable=all --msg-template='{abspath}:{line}:{column}: {msg_id} {obj}: {msg}'" \
-               " --enable=E9002,E9003,E9004,E9005,E9006,E9007,E9008,E9010,E9011, --load-plugins " \
+               " --enable=E9002,E9003,E9004,E9005,E9006,E9007,E9008,E9010,E9011,E9012, --load-plugins " \
                f"base_checker, {' '.join(files)}"
     assert output == expected
 
@@ -45,7 +45,7 @@ def test_build_xsoar_linter_py2_command(files):
     files = [str(file) for file in files]
     expected = f"python2 -m pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py," \
                "conftest.py,venv -E --disable=all --msg-template='{abspath}:{line}:{column}: {msg_id} {obj}: {msg}' " \
-               "--enable=E9002,E9003,E9004,E9005,E9006,E9007,E9008,E9010,E9011, --load-plugins " \
+               "--enable=E9002,E9003,E9004,E9005,E9006,E9007,E9008,E9010,E9011,E9012, --load-plugins " \
                f"base_checker, {' '.join(files)}"
     assert output == expected
 

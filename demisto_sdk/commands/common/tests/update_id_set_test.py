@@ -1960,6 +1960,34 @@ class TestGenericType:
         assert 'module_id' in result.keys()
 
 
+class TestGenericDefinition:
+
+    @staticmethod
+    def test_get_generic_definition_data(pack):
+        """
+        Given
+            - A generic definition file
+
+        When
+            - parsing definition type files
+
+        Then
+            - parsing all the data from file successfully
+        """
+
+        object_type = pack.create_generic_definition('test-generic-definition')
+        object_type.write_json(
+            {"id": "type-id", "name": "type-name", "fromVersion": "version", "auditable": False})
+        test_dir = object_type.path
+
+        result = get_general_data(test_dir)
+        result = result.get('type-id')
+        assert 'name' in result.keys()
+        assert 'file_path' in result.keys()
+        assert 'fromversion' in result.keys()
+        assert 'pack' in result.keys()
+
+
 class TestGenericModule:
     @staticmethod
     def test_get_object_module_data(repo):
@@ -1978,10 +2006,7 @@ class TestGenericModule:
                        "version": -1,
                        "name": "Vulnerability Management",
                        "fromVersion": "6.5.0",
-                       "definitions": [{
-                           "id": "assets",
-                           "name": "Assets"
-                       }, ],
+                       "definitionIds": ["assets"],
                        "views": [{
                            "name": "Vulnerability Management",
                            "title": "Risk Base Vulnerability Management",
@@ -2006,7 +2031,7 @@ class TestGenericModule:
         assert 'name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
-        assert 'definitions' in result.keys()
+        assert 'definitionIds' in result.keys()
         assert 'views' in result.keys()
         assert 'pack' in result.keys()
 

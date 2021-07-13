@@ -22,6 +22,9 @@ INCIDENT_FIELDS_DIR = 'IncidentFields'
 INCIDENT_TYPES_DIR = 'IncidentTypes'
 INDICATOR_FIELDS_DIR = 'IndicatorFields'
 INDICATOR_TYPES_DIR = 'IndicatorTypes'
+GENERIC_FIELDS_DIR = 'GenericFields'
+GENERIC_TYPES_DIR = 'GenericTypes'
+GENERIC_MODULES_DIR = 'GenericModules'
 LAYOUTS_DIR = 'Layouts'
 CLASSIFIERS_DIR = 'Classifiers'
 MAPPERS_DIR = 'Classifiers'
@@ -94,6 +97,9 @@ class FileType(Enum):
     LANDING_PAGE_SECTIONS_JSON = 'landingPage_sections.json'
     CONTRIBUTORS = 'contributors'
     XSOAR_CONFIG = 'xsoar_config'
+    GENERIC_MODULE = 'genericmodule'
+    GENERIC_FIELD = 'genericfield'
+    GENERIC_TYPE = 'generictype'
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -154,7 +160,10 @@ CONTENT_ENTITIES_DIRS = [
     INCIDENT_TYPES_DIR,
     LAYOUTS_DIR,
     CLASSIFIERS_DIR,
-    CONNECTIONS_DIR
+    CONNECTIONS_DIR,
+    GENERIC_FIELDS_DIR,
+    GENERIC_TYPES_DIR,
+    GENERIC_MODULES_DIR
 ]
 
 CONTENT_ENTITY_UPLOAD_ORDER = [
@@ -393,6 +402,15 @@ PACKS_INDICATOR_TYPE_JSON_REGEX = fr'{PACKS_INDICATOR_TYPES_DIR_REGEX}\/([^/]+)\
 PACKS_INDICATOR_FIELDS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{INDICATOR_FIELDS_DIR}'
 PACKS_INDICATOR_FIELD_JSON_REGEX = fr'{PACKS_INDICATOR_FIELDS_DIR_REGEX}\/([^/]+)\.json'
 
+PACKS_GENERIC_TYPES_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{GENERIC_TYPES_DIR}'
+PACKS_GENERIC_TYPE_JSON_REGEX = fr'{PACKS_GENERIC_TYPES_DIR_REGEX}\/([^/]+)\.json'
+
+PACKS_GENERIC_FIELDS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{GENERIC_FIELDS_DIR}'
+PACKS_GENERIC_FIELD_JSON_REGEX = fr'{PACKS_GENERIC_FIELDS_DIR_REGEX}\/([^/]+)\.json'
+
+PACKS_GENERIC_MODULES_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{GENERIC_MODULES_DIR}'
+PACKS_GENERIC_MODULE_JSON_REGEX = fr'{PACKS_GENERIC_MODULES_DIR_REGEX}\/([^/]+)\.json'
+
 PACKS_CLASSIFIERS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{CLASSIFIERS_DIR}'
 
 _PACKS_CLASSIFIER_BASE_REGEX = fr'{PACKS_CLASSIFIERS_DIR_REGEX}\/*classifier-(?!mapper).*(?<!5_9_9)'
@@ -482,6 +500,7 @@ ID_IN_ROOT = [  # entities in which 'id' key is in the root
     'dashboard',
     'incident_type',
     'layoutscontainer',
+    'mapper',
 ]
 
 INTEGRATION_PREFIX = 'integration'
@@ -618,6 +637,18 @@ JSON_ALL_INDICATOR_FIELDS_REGEXES = [
 
 JSON_ALL_INDICATOR_TYPES_REGEXES = [
     PACKS_INDICATOR_TYPE_JSON_REGEX
+]
+
+JSON_ALL_GENERIC_FIELDS_REGEXES = [
+    PACKS_GENERIC_FIELD_JSON_REGEX,
+]
+
+JSON_ALL_GENERIC_TYPES_REGEXES = [
+    PACKS_GENERIC_TYPE_JSON_REGEX,
+]
+
+JSON_ALL_GENERIC_MODULES_REGEXES = [
+    PACKS_GENERIC_MODULE_JSON_REGEX,
 ]
 
 JSON_ALL_REPUTATIONS_INDICATOR_TYPES_REGEXES = [
@@ -917,7 +948,10 @@ SCHEMA_TO_REGEX = {
                ],
 
     'report': [PACKS_REPORT_JSON_REGEX],
-    'release-notes': [PACKS_RELEASE_NOTES_REGEX]
+    'release-notes': [PACKS_RELEASE_NOTES_REGEX],
+    'genericfield': JSON_ALL_GENERIC_FIELDS_REGEXES,
+    'generictype': JSON_ALL_GENERIC_TYPES_REGEXES,
+    'genericmodule': JSON_ALL_GENERIC_MODULES_REGEXES
 }
 
 EXTERNAL_PR_REGEX = r'^pull/(\d+)$'
@@ -1191,6 +1225,9 @@ INTEGRATION_ARGUMENT_TYPES = {
     '16': 'MultiSelect'
 }
 
+BUILD_IN_COMMANDS = ['getIncidents', 'DeleteContext', 'isWhitelisted', 'excludeIndicators',
+                     'deleteIndicators', 'extractIndicators']
+
 
 class ContentItems(Enum):
     # the format is defined in issue #19786, may change in the future
@@ -1249,6 +1286,7 @@ class PathLevel(Enum):
     CONTENT_ENTITY_DIR = 'ContentDir',
     PACKAGE = 'Package',
     FILE = 'File'
+    CONTENT_GENERIC_ENTITY_DIR = 'ContentGenericDir'
 
 
 class DemistoException(Exception):

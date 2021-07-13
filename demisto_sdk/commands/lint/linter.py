@@ -18,7 +18,8 @@ import requests.exceptions
 import urllib3.exceptions
 from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    PACKS_PACK_META_FILE_NAME,
-                                                   TYPE_PWSH, TYPE_PYTHON)
+                                                   SCRIPTS_DIR, TYPE_PWSH,
+                                                   TYPE_PYTHON)
 # Local packages
 from demisto_sdk.commands.common.tools import (get_all_docker_images,
                                                run_command_os)
@@ -78,7 +79,8 @@ class Linter:
             "additional_requirements": [],
             "docker_engine": docker_engine,
             "is_script": False,
-            "commands": None
+            "commands": None,
+            "runas": ''
         }
         # Pack lint status object - visualize it
         self._pkg_lint_status: Dict = {
@@ -197,6 +199,7 @@ class Linter:
             self._facts['is_script'] = True if 'Scripts' in yml_file.parts else False
             self._facts['is_long_running'] = script_obj.get('longRunning')
             self._facts['commands'] = self._get_commands_list(script_obj)
+            self._facts['runas'] = script_obj.get('runas', '')
             self._pkg_lint_status["pack_type"] = script_obj.get('type')
         except (FileNotFoundError, IOError, KeyError):
             self._pkg_lint_status["errors"].append('Unable to parse package yml')
@@ -402,6 +405,7 @@ class Linter:
             # as a result we can use the env vars as a getway.
             myenv['commands'] = ','.join([str(elem) for elem in self._facts['commands']]) \
                 if self._facts['commands'] else ''
+            myenv['runas'] = self._facts['runas']
             stdout, stderr, exit_code = run_command_os(
                 command=build_xsoar_linter_command(lint_files, py_num, self._facts.get('support_level', 'base')),
                 cwd=self._pack_abs_dir, env=myenv)
@@ -415,6 +419,8 @@ class Linter:
         # if pylint did not run and failure exit code has been returned from run commnad
         elif exit_code & FAIL:
             status = FAIL
+            logger.debug(f"{log_prompt} - Actual XSOAR linter error -")
+            logger.debug(f"{log_prompt} - Full format stdout: {RL if stdout else ''}{stdout}")
             # for contrib prs which are not merged from master and do not have pylint in dev-requirements-py2.
             if os.environ.get('CI'):
                 stdout = "Xsoar linter could not run, Please merge from master"
@@ -956,7 +962,7 @@ class Linter:
         return exit_code, output
 
     def _update_support_level(self):
-        pack_dir = self._pack_abs_dir.parent if self._pack_abs_dir.parts[-1] == INTEGRATIONS_DIR else \
+        pack_dir = self._pack_abs_dir.parent if self._pack_abs_dir.parts[-1] in [INTEGRATIONS_DIR, SCRIPTS_DIR] else \
             self._pack_abs_dir.parent.parent
         pack_meta_content: Dict = json.load((pack_dir / PACKS_PACK_META_FILE_NAME).open())
         self._facts['support_level'] = pack_meta_content.get('support')

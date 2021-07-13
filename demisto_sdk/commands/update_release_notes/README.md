@@ -5,19 +5,6 @@
 ### Use Cases
 This command is used in order to create or update release notes for a new pack version. The command will also automatically bump the `currentVersion` found in the `pack_metadata.json` file.
 
-Supported content entities:
-- Integrations
-- Playbooks
-- Scripts
-- Widgets
-- Dashboards
-- Incident Types
-- Incident Fields
-- Layouts
-- Classifiers
-- Connections
-- Indicator Types
-
 In case of a private repo and an un-configured 'DEMISTO_SDK_GITHUB_TOKEN' remote files will be fetched from the remote branch of the local repo.
 
 ### Arguments
@@ -25,7 +12,7 @@ In case of a private repo and an un-configured 'DEMISTO_SDK_GITHUB_TOKEN' remote
 
     The path of the content pack you wish to generate release notes for.
 
-* **-u, --update_type**
+* **-u, --update-type**
 
     Optional. If no update_type is defined, the `currentVersion` will be bumped as a revision.
 
@@ -40,6 +27,10 @@ In case of a private repo and an un-configured 'DEMISTO_SDK_GITHUB_TOKEN' remote
 
     Update all release notes in every pack which has been changed. Please note that the `-u` argument will be applied to **all** changed packs.
 
+* **--text**
+    
+    Text to add to all of the release notes files.
+
 * **--pre_release**
 
     Indicates that this update is for a pre-release version. The `currentVersion` will change to reflect the pre-release version number.
@@ -51,6 +42,10 @@ In case of a private repo and an un-configured 'DEMISTO_SDK_GITHUB_TOKEN' remote
 * **-v, --version <DESIRED_VERSION>**
 
     Bump to a specific version. Cannot be used with `-u, --update_type` flags.
+    
+* **-idp, --id-set-path**
+    
+    The path of the id-set.json used for APIModule updates.
 
 ### Examples
 ```

@@ -380,6 +380,7 @@ class Pack:
         dir_path.mkdir()
         generic_field = self._create_json_based(name, prefix, content, dir_path=dir_path)
         self.generic_fields.append(generic_field)
+        print('**********************', generic_field.path)
         return generic_field
 
     def create_generic_module(self, name, content: dict = None) -> JSONBased:

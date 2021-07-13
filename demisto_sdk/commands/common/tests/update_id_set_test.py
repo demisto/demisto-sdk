@@ -1869,15 +1869,15 @@ class TestFlow(unittest.TestCase):
             assert any('incident_account_field_dup_check' in i for i in dup_data)
 
 
-class TestObjectFields:
+class TestGenericFields:
     @staticmethod
-    def test_process_object_fields(pack):
+    def test_process_generic_fields(pack):
         """
         Given
-            - An object field file
+            - A generic field file
 
         When
-            - parsing incident field files
+            - parsing generic field files
 
         Then
             - parsing all the data from file successfully
@@ -1891,7 +1891,7 @@ class TestObjectFields:
             "fromVersion": "6.5.0",
             "associatedTypes": ["Asset Type"]}
 
-        objects_types_list = [{
+        generic_types_list = [{
             "Asset Type": {
                 "name": "Asset Type",
                 "file_path": "path/path",
@@ -1902,35 +1902,35 @@ class TestObjectFields:
             }
         }]
 
-        objects_modules_list = [{"rbvm": {
+        generics_modules_list = [{"rbvm": {
             "name": "Vulnerability Management",
             "pack": "ObjectsExample",
             "definitions": {
                 "definitionid": "Assets",
                 "assetGroups": "Asset Groups"}}}]
 
-        object_type = pack.create_object_module('test-object-field')
-        object_type.write_json(field_data)
-        test_dir = object_type.path
+        generic_type = pack.create_generic_module('test-generic-field')
+        generic_type.write_json(field_data)
+        test_dir = generic_type.path
 
-        result = get_generic_field_data(test_dir, generic_types_list=objects_types_list,
-                                        generic_modules_list=objects_modules_list)
+        result = get_generic_field_data(test_dir, generic_types_list=generic_types_list,
+                                        generic_modules_list=generics_modules_list)
         result = result.get('id')
         assert 'name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'definitionId' in result.keys()
-        assert 'object_types' in result.keys()
+        assert 'generic_types' in result.keys()
         assert 'module_id' in result.keys()
 
 
-class TestObjectType:
+class TestGenericType:
 
     @staticmethod
-    def test_get_object_type_data(pack):
+    def test_get_generic_type_data(pack):
         """
         Given
-            - An object type file
+            - A generic type file
 
         When
             - parsing object type files
@@ -1939,7 +1939,7 @@ class TestObjectType:
             - parsing all the data from file successfully
         """
 
-        object_type = pack.create_object_module('test-object-type')
+        object_type = pack.create_generic_module('test-object-type')
         object_type.write_json(
             {"id": "type-id", "name": "type-name", "fromVersion": "version", "definitionId": "definitionid",
              "layout": "layout"})
@@ -1960,15 +1960,15 @@ class TestObjectType:
         assert 'module_id' in result.keys()
 
 
-class TestObjectModule:
+class TestGenericModule:
     @staticmethod
     def test_get_object_module_data(repo):
         """
         Given
-            - An object module file
+            - A generic module file
 
         When
-            - parsing generic object module files
+            - parsing generic generic module files
 
         Then
             - parsing all the data from file successfully
@@ -1997,9 +1997,9 @@ class TestObjectModule:
                                    "prevName": "Assets Dashboard", }}]}]}
 
         pack = repo.create_pack('pack')
-        object_module = pack.create_object_module('test-object-module')
-        object_module.write_json(module_data)
-        test_dir = object_module.path
+        generic_module = pack.create_generic_module('test-generic-module')
+        generic_module.write_json(module_data)
+        test_dir = generic_module.path
 
         result = get_generic_module_data(test_dir)
         result = result.get('id')

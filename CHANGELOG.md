@@ -10,9 +10,10 @@
   - Added the *--force* flag to update the pack release notes without changes in the pack.
   - The **update-release-notes** command will now update all dependent integrations on ApiModule change, even if not specified.
   - If more than one pack has changed, the full list of updated packs will be printed at the end of **update-release-notes** command execution.
-  - Fixed an issue where **update-release-notes** command did not add docker image release notes entry for release notes file if a script was changed.
-  - Fixed an issue where **update-release-notes** command did not detect changed files which had the same name.
-  - Fixed an issue where **update-release-notes** command did not support fromVersion field in JSON files.
+  - Fixed an issue where the **update-release-notes** command did not add docker image release notes entry for release notes file if a script was changed.
+  - Fixed an issue where the **update-release-notes** command did not detect changed files that had the same name.
+  - Fixed an issue in the **update-release-notes** command where the version support of JSON files was mishandled.
+
 # 1.4.3
 * Fixed an issue where **json-to-outputs** command returned an incorrect output when json is a list.
 * Fixed an issue where if a pack README.md did not exist it could cause an error in the validation process.

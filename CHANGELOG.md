@@ -5,6 +5,8 @@
 * Added a validation that mapper's id and name are matching. Updated the format of mapper to include update_id too.
 * Added a validation to ensure that image paths in the README files are valid.
 * Fixed **find_type** function to correctly find test files, such as, test script and test playbook.
+* Added scheme validations for the new Generic Object Types, Fields, and Modules.
+* Renamed the flag *--input-old-version* to *--old-version* in the **generate-docs** command.
 * Refactored the **update-release-notes** command:
   - Replaced the *--all* flag with *--use-git* or *-g*.
   - Added the *--force* flag to update the pack release notes without changes in the pack.

@@ -27,9 +27,9 @@ from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.tests.constants_test import (CONTENT_REPO_EXAMPLE_ROOT,
                                               NOT_VALID_IMAGE_PATH)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
-    CONNECTION, DASHBOARD, INCIDENT_FIELD, INCIDENT_TYPE, INDICATOR_FIELD,
-    LAYOUT, LAYOUTS_CONTAINER, MAPPER, NEW_CLASSIFIER, OLD_CLASSIFIER, REPORT,
-    REPUTATION, WIDGET)
+    CONNECTION, DASHBOARD, GENERIC_FIELD, GENERIC_MODULE, GENERIC_TYPE,
+    INCIDENT_FIELD, INCIDENT_TYPE, INDICATOR_FIELD, LAYOUT, LAYOUTS_CONTAINER,
+    MAPPER, NEW_CLASSIFIER, OLD_CLASSIFIER, REPORT, REPUTATION, WIDGET)
 from TestSuite.test_tools import ChangeCWD
 
 VALIDATE_CMD = "validate"
@@ -55,6 +55,156 @@ CONF_JSON_MOCK = {
         }
     ]
 }
+
+
+class TestGenericFieldValidation:
+    def test_valid_generic_field(self, mocker, repo):
+        """
+        Given
+        - Valid generic field.
+
+        When
+        - Running validation on it.
+
+        Then
+        - Ensure validation passes.
+        - Ensure success validation message is printed.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        pack.create_generic_field("generic-field", GENERIC_FIELD)
+        generic_field_path = pack.generic_fields[0].path
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', generic_field_path], catch_exceptions=False)
+        assert f'Validating {generic_field_path} as genericfield' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
+    def test_invalid_generic_field(self, mocker, repo):
+        """
+        Given
+        - invalid generic field - adding a new field named 'test' which doesn't exist in scheme.
+
+        When
+        - Running validation on it.
+
+        Then
+        - Ensure validation fails on ST108 - a field which doesn't defined in the scheme.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        generic_field_copy = GENERIC_FIELD.copy()
+        generic_field_copy['test'] = True
+        pack.create_generic_field("generic-field", generic_field_copy)
+        generic_field_path = pack.generic_fields[0].path
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', generic_field_path], catch_exceptions=False)
+        assert result.exit_code == 1
+        assert f"Validating {generic_field_path} as genericfield" in result.stdout
+        assert 'ST108' in result.stdout
+        assert "The files were found as invalid" in result.stdout
+
+
+class TestGenericTypeValidation:
+    def test_valid_generic_type(self, mocker, repo):
+        """
+        Given
+        - Valid generic type.
+
+        When
+        - Running validation on it.
+
+        Then
+        - Ensure validation passes.
+        - Ensure success validation message is printed.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        pack.create_generic_type("generic-type", GENERIC_TYPE)
+        generic_type_path = pack.generic_types[0].path
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', generic_type_path], catch_exceptions=False)
+        assert f'Validating {generic_type_path} as generictype' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
+    def test_invalid_generic_type(self, mocker, repo):
+        """
+        Given
+        - invalid generic type - adding a new field named 'test' which doesn't exist in scheme.
+
+        When
+        - Running validation on it.
+
+        Then
+        - Ensure validation fails on ST108 - a field which doesn't defined in the scheme.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        generic_type_copy = GENERIC_TYPE.copy()
+        generic_type_copy['test'] = True
+        pack.create_generic_type("generic-type", generic_type_copy)
+        generic_type_path = pack.generic_types[0].path
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', generic_type_path], catch_exceptions=False)
+        assert result.exit_code == 1
+        assert f"Validating {generic_type_path} as generictype" in result.stdout
+        assert 'ST108' in result.stdout
+        assert "The files were found as invalid" in result.stdout
+
+
+class TestGenericModuleValidation:
+    def test_valid_generic_module(self, mocker, repo):
+        """
+        Given
+        - Valid generic module.
+
+        When
+        - Running validation on it.
+
+        Then
+        - Ensure validation passes.
+        - Ensure success validation message is printed.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        pack.create_generic_module("generic-module", GENERIC_MODULE)
+        generic_module_path = pack.generic_modules[0].path
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', generic_module_path], catch_exceptions=False)
+        assert f'Validating {generic_module_path} as genericmodule' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
+    def test_invalid_generic_module(self, mocker, repo):
+        """
+        Given
+        - invalid generic module - adding a new field named 'test' which doesn't exist in scheme.
+
+        When
+        - Running validation on it.
+
+        Then
+        - Ensure validation fails on ST108 - a field which doesn't defined in the scheme.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        generic_module_copy = GENERIC_MODULE.copy()
+        generic_module_copy['test'] = True
+        pack.create_generic_module("generic-module", generic_module_copy)
+        generic_module_path = pack.generic_modules[0].path
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', generic_module_path], catch_exceptions=False)
+        assert result.exit_code == 1
+        assert f"Validating {generic_module_path} as genericmodule" in result.stdout
+        assert 'ST108' in result.stdout
+        assert "The files were found as invalid" in result.stdout
 
 
 class TestIncidentFieldValidation:

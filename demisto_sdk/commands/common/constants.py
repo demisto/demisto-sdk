@@ -25,6 +25,7 @@ INDICATOR_TYPES_DIR = 'IndicatorTypes'
 GENERIC_FIELDS_DIR = 'GenericFields'
 GENERIC_TYPES_DIR = 'GenericTypes'
 GENERIC_MODULES_DIR = 'GenericModules'
+GENERIC_DEFINITIONS_DIR = 'GenericDefinitions'
 LAYOUTS_DIR = 'Layouts'
 CLASSIFIERS_DIR = 'Classifiers'
 MAPPERS_DIR = 'Classifiers'
@@ -100,6 +101,7 @@ class FileType(Enum):
     GENERIC_MODULE = 'genericmodule'
     GENERIC_FIELD = 'genericfield'
     GENERIC_TYPE = 'generictype'
+    GENERIC_DEFINITION = 'genericdefinition'
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -163,7 +165,8 @@ CONTENT_ENTITIES_DIRS = [
     CONNECTIONS_DIR,
     GENERIC_FIELDS_DIR,
     GENERIC_TYPES_DIR,
-    GENERIC_MODULES_DIR
+    GENERIC_MODULES_DIR,
+    GENERIC_DEFINITIONS_DIR
 ]
 
 CONTENT_ENTITY_UPLOAD_ORDER = [

@@ -1,0 +1,12 @@
+type: map
+mapping:
+  id:
+    type: str
+  name:
+    type: str
+  partitioned:
+    type: bool
+  auditable:
+    type: bool
+  rbacSupport:
+    type: bool

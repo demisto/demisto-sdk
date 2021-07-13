@@ -1647,7 +1647,7 @@ def error_code(config, **kwargs):
     sys.exit(result)
 
 
-@main.result_callback()
+@main.resultcallback()
 def exit_from_program(result=0, **kwargs):
     sys.exit(result)
 

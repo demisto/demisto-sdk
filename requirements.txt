@@ -3,7 +3,7 @@ autopep8>=1.4.4
 bandit>=1.6.2
 bs4>=0.0.1
 chardet==3.0.2
-click>=8.0.1
+click>=7.1.0, <8.0.0
 colorama>=0.4.1
 coloredlogs>=15.0
 configparser>=5.0.0

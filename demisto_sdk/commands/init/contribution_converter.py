@@ -54,7 +54,8 @@ class ContributionConverter:
         readme_files (List[str]): The readme files paths that is generated for new content items.
         update_type (str): The type of update being done. For exiting pack only.
         release_notes (str): The release note text. For exiting pack only.
-        detected_content_items (list):
+        detected_content_items (List[str]):
+            List of the detected content items objects in the contribution. For exiting pack only.
     """
     DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 
@@ -290,8 +291,8 @@ class ContributionConverter:
                     for file in files:
                         file_name = os.path.basename(file)
                         if file_name.startswith('integration-') \
-                           or file_name.startswith('script-') \
-                           or file_name.startswith('automation-'):
+                                or file_name.startswith('script-') \
+                                or file_name.startswith('automation-'):
                             unified_file = file
                             self.generate_readme_for_pack_content_item(unified_file)
                             os.remove(unified_file)
@@ -318,7 +319,8 @@ class ContributionConverter:
                     # create pack metadata file
                     with zipfile.ZipFile(self.contribution) as zipped_contrib:
                         with zipped_contrib.open('metadata.json') as metadata_file:
-                            click.echo(f'Pulling relevant information from {metadata_file.name}', color=LOG_COLORS.NATIVE)
+                            click.echo(f'Pulling relevant information from {metadata_file.name}',
+                                       color=LOG_COLORS.NATIVE)
                             metadata = json.loads(metadata_file.read())
                             self.create_metadata_file(metadata)
                 # create base files
@@ -495,7 +497,7 @@ class ContributionConverter:
         and create a release-note file using the release-notes text.
 
         """
-        rn_mng = UpdateReleaseNotesManager(user_input=self.dir_name, update_type=self.update_type,)
+        rn_mng = UpdateReleaseNotesManager(user_input=self.dir_name, update_type=self.update_type, )
         rn_mng.manage_rn_update()
         self.replace_RN_template_with_value(rn_mng.rn_path)
 
@@ -551,4 +553,3 @@ class ContributionConverter:
             rn_file.seek(0)
             rn_file.writelines(lines)
             rn_file.truncate()
-

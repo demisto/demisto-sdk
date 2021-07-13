@@ -44,6 +44,7 @@ class Pack:
         self.generic_fields: List[JSONBased] = list()
         self.generic_types: List[JSONBased] = list()
         self.generic_modules: List[JSONBased] = list()
+        self.generic_definitions: List[JSONBased] = list()
         self.layouts: List[JSONBased] = list()
         self.layoutcontainers: List[JSONBased] = list()
         self.reports: List[JSONBased] = list()
@@ -98,6 +99,9 @@ class Pack:
 
         self._generic_modules_path = self._pack_path / 'GenericModules'
         self._generic_modules_path.mkdir()
+
+        self._generic_definitions_path = self._pack_path / 'GenericDefinitions'
+        self._generic_definitions_path.mkdir()
 
         self._layout_path = self._pack_path / 'Layouts'
         self._layout_path.mkdir()
@@ -306,6 +310,15 @@ class Pack:
         generic_module = self._create_json_based(name, prefix, content, dir_path=self._generic_modules_path)
         self.generic_modules.append(generic_module)
         return generic_module
+
+    def create_generic_definition(
+            self,
+            name,
+            content: dict = None) -> JSONBased:
+        prefix = 'genericdefinition'
+        generic_definition = self._create_json_based(name, prefix, content, dir_path=self._generic_definitions_path)
+        self.generic_definitions.append(generic_definition)
+        return generic_definition
 
     def create_layout(
             self,

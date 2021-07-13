@@ -29,7 +29,7 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    GENERIC_TYPES_DIR,
                                                    REPORTS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
-                                                   WIDGETS_DIR, FileType)
+                                                   WIDGETS_DIR, FileType, GENERIC_DEFINITIONS_DIR)
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type, get_json,
                                                get_pack_name, get_yaml,
                                                print_color, print_error,
@@ -39,11 +39,12 @@ from demisto_sdk.commands.unify.unifier import Unifier
 CONTENT_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
                     'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
                     'Layouts', 'Reports', 'Widgets', 'Mappers', 'Packs', 'GenericTypes',
-                    'GenericFields', 'GenericModules']
+                    'GenericFields', 'GenericModules', 'GenericDefinitions']
 
 ID_SET_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Classifiers',
                    'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
-                   'Layouts', 'Reports', 'Widgets', 'Mappers', 'GenericTypes', 'GenericFields', 'GenericModules']
+                   'Layouts', 'Reports', 'Widgets', 'Mappers', 'GenericTypes', 'GenericFields', 'GenericModules',
+                   'GenericDefinitions']
 
 BUILT_IN_FIELDS = [
     "name",
@@ -1167,7 +1168,7 @@ def get_generic_type_data(path, generic_modules_list):
 def get_module_id_from_definition_id(definition_id: str, generic_modules_list: list):
     for module in generic_modules_list:
         module_id = list(module.keys())[0]
-        if definition_id in module.get(module_id, {}).get('definitions', {}):
+        if definition_id in module.get(module_id, {}).get('definitionIds', []):
             return module_id
 
 
@@ -1224,16 +1225,15 @@ def get_generic_module_data(path):
     pack = get_pack_name(path)
     fromversion = json_data.get('fromVersion')
     toversion = json_data.get('toVersion')
-    definitions = json_data.get('definitions', [])
-    definitions = {definition.get('id'): definition.get('name') for definition in definitions}
+    definitionIds = json_data.get('definitionIds', [])
     views = json_data.get('views', [])
     views = {view.get('name'): {
         'title': view.get('title'),
         'dashboards': [tab.get('dashboard', {}).get('id') for tab in view.get('tabs', [])]} for view in views}
 
     data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
-    if definitions:
-        data['definitions'] = definitions
+    if definitionIds:
+        data['definitionIds'] = definitionIds
     if views:
         data['views'] = views
 
@@ -1409,6 +1409,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     generic_types_list = []
     generic_fields_list = []
     generic_modules_list = []
+    generic_definitions_list = []
     packs_dict: Dict[str, Dict] = {}
 
     pool = Pool(processes=int(cpu_count()))
@@ -1599,6 +1600,19 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
 
         progress_bar.update(1)
 
+        if 'GenericDefinitions' in objects_to_create:
+            print_color("\nStarting iteration over Generic Definitions", LOG_COLORS.GREEN)
+            print_color(f"pack to create: {pack_to_create}", LOG_COLORS.YELLOW)
+            for arr in pool.map(partial(process_general_items,
+                                        expected_file_types=(FileType.GENERIC_DEFINITION,),
+                                        data_extraction_func=get_general_data,
+                                        print_logs=print_logs,
+                                        ),
+                                get_general_paths(GENERIC_DEFINITIONS_DIR, pack_to_create)):
+                generic_definitions_list.extend(arr)
+
+        progress_bar.update(1)
+
         if 'GenericModules' in objects_to_create:
             print_color("\nStarting iteration over Generic Modules", LOG_COLORS.GREEN)
             for arr in pool.map(partial(process_general_items,
@@ -1659,6 +1673,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     new_ids_dict['GenericTypes'] = sort(generic_types_list)
     new_ids_dict['GenericFields'] = sort(generic_fields_list)
     new_ids_dict['GenericModules'] = sort(generic_modules_list)
+    new_ids_dict['GenericDefinitions'] = sort(generic_definitions_list)
 
     exec_time = time.time() - start_time
     print_color("Finished the creation of the id_set. Total time: {} seconds".format(exec_time), LOG_COLORS.GREEN)

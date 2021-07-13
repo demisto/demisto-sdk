@@ -51,9 +51,6 @@ class Pack:
         self.playbooks: List[Playbook] = list()
         self.test_playbooks: List[Playbook] = list()
         self.release_notes: List[TextBased] = list()
-        self.generic_types: List[JSONBased] = list()
-        self.generic_modules: List[JSONBased] = list()
-        self.generic_fields: List[JSONBased] = list()
         # Create base pack
         self._pack_path = packs_dir / name
         self._pack_path.mkdir()
@@ -91,15 +88,6 @@ class Pack:
 
         self._indicator_types = self._pack_path / 'IndicatorTypes'
         self._indicator_types.mkdir()
-
-        self._generic_fields_path = self._pack_path / 'GenericFields'
-        self._generic_fields_path.mkdir()
-
-        self._generic_types_path = self._pack_path / 'GenericTypes'
-        self._generic_types_path.mkdir()
-
-        self._generic_modules_path = self._pack_path / 'GenericModules'
-        self._generic_modules_path.mkdir()
 
         self._layout_path = self._pack_path / 'Layouts'
         self._layout_path.mkdir()
@@ -290,33 +278,6 @@ class Pack:
         indicator_type = self._create_json_based(name, prefix, content, dir_path=self._indicator_types)
         self.indicator_types.append(indicator_type)
         return indicator_type
-
-    def create_generic_field(
-            self,
-            name,
-            content: dict = None) -> JSONBased:
-        prefix = 'genericfield'
-        generic_field = self._create_json_based(name, prefix, content, dir_path=self._generic_fields_path)
-        self.generic_fields.append(generic_field)
-        return generic_field
-
-    def create_generic_type(
-            self,
-            name,
-            content: dict = None) -> JSONBased:
-        prefix = 'generictype'
-        generic_type = self._create_json_based(name, prefix, content, dir_path=self._generic_types_path)
-        self.generic_types.append(generic_type)
-        return generic_type
-
-    def create_generic_module(
-            self,
-            name,
-            content: dict = None) -> JSONBased:
-        prefix = 'genericmodule'
-        generic_module = self._create_json_based(name, prefix, content, dir_path=self._generic_modules_path)
-        self.generic_modules.append(generic_module)
-        return generic_module
 
     def create_layout(
             self,

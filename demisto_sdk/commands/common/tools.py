@@ -953,7 +953,7 @@ def get_dict_from_file(path: str, use_ryaml: bool = False,
         raises_error - Whether to raise a FileNotFound error if `path` is not a valid file.
 
     Returns:
-        dict representation of the file, and the file_type, either .yml ot .json
+        dict representation of the file, and the file_type, either .yml or .json
     """
     try:
         if path:
@@ -1068,6 +1068,8 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
             return FileType.REPORT
 
         if 'color' in _dict and 'cliName' not in _dict:  # check against another key to make it more robust
+            if 'definitionId' in _dict and _dict['definitionId'] not in [None, 'incident', 'indicator']:
+                return FileType.GENERIC_TYPE
             return FileType.INCIDENT_TYPE
 
         # 'regex' key can be found in new reputations files while 'reputations' key is for the old reputations
@@ -1097,9 +1099,14 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
         if 'group' in _dict and LAYOUT_CONTAINER_FIELDS.intersection(_dict):
             return FileType.LAYOUTS_CONTAINER
 
+        if 'definitions' in _dict and 'views' in _dict:
+            return FileType.GENERIC_MODULE
+
         # When using it for all files validation- sometimes 'id' can be integer
         if 'id' in _dict:
             if isinstance(_dict['id'], str):
+                if 'definitionId' in _dict and _dict['definitionId'].lower() not in [None, 'incident', 'indicator']:
+                    return FileType.GENERIC_FIELD
                 _id = _dict['id'].lower()
                 if _id.startswith('incident'):
                     return FileType.INCIDENT_FIELD

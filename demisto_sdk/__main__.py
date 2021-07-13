@@ -296,7 +296,7 @@ def unify(**kwargs):
 )
 @click.option(
     '--no-conf-json', is_flag=True,
-    default=False, show_default=True, help='Skip conf.json validation')
+    default=False, show_default=True, help='Skip conf.json validation.')
 @click.option(
     '-s', '--id-set', is_flag=True,
     default=False, show_default=True, help='Perform validations using the id_set file.')
@@ -317,13 +317,13 @@ def unify(**kwargs):
          'If the --post-commit flag is not supplied: validation will run on all changed files in the current branch, '
          'both committed and not committed. ')
 @click.option(
-    '--post-commit',
+    '-pc', '--post-commit',
     is_flag=True,
     help='Whether the validation should run only on the current branch\'s committed changed files. '
          'This applies only when the -g flag is supplied.'
 )
 @click.option(
-    '--staged',
+    '-st', '--staged',
     is_flag=True,
     help='Whether the validation should ignore unstaged files.'
          'This applies only when the -g flag is supplied.'
@@ -331,7 +331,8 @@ def unify(**kwargs):
 @click.option(
     '-iu', '--include-untracked',
     is_flag=True,
-    help='Whether to include untracked files in the validation.'
+    help='Whether to include untracked files in the validation. '
+         'This applies only when the -g flag is supplied.'
 )
 @click.option(
     '-a', '--validate-all', is_flag=True, show_default=True, default=False,
@@ -375,11 +376,11 @@ def unify(**kwargs):
     help='Whether to print the pykwalify log errors.')
 @click.option(
     "--quite-bc-validation",
-    help="Set backwards compatibility validation's errors as warnings",
+    help="Set backwards compatibility validation's errors as warnings.",
     is_flag=True)
 @click.option(
     "--allow-skipped",
-    help="Don't fail on skipped integrations or when all test playbooks are skipped",
+    help="Don't fail on skipped integrations or when all test playbooks are skipped.",
     is_flag=True)
 @pass_config
 def validate(config, **kwargs):
@@ -438,7 +439,8 @@ def validate(config, **kwargs):
 @click.option('-a', '--artifacts_path', help='Destination directory to create the artifacts.',
               type=click.Path(file_okay=False, resolve_path=True), required=True)
 @click.option('--zip/--no-zip', help='Zip content artifacts folders', default=True)
-@click.option('--packs', help='Create only content_packs artifacts.', is_flag=True)
+@click.option('--packs', help='Create only content_packs artifacts. '
+                              'Used for server version 5.5.0 and earlier.', is_flag=True)
 @click.option('-v', '--content_version', help='The content version in CommonServerPython.', default='0.0.0')
 @click.option('-s', '--suffix', help='Suffix to add all yaml/json/yml files in the created artifacts.')
 @click.option('--cpus',
@@ -490,7 +492,7 @@ def create_content_artifacts(**kwargs) -> int:
 @click.option(
     '-ie', '--ignore-entropy',
     is_flag=True,
-    help='Ignore entropy algorithm that finds secret strings (passwords/api keys)'
+    help='Ignore entropy algorithm that finds secret strings (passwords/api keys).'
 )
 @click.option(
     '-wl', '--whitelist',
@@ -500,7 +502,7 @@ def create_content_artifacts(**kwargs) -> int:
 )
 @click.option(
     '--prev-ver',
-    help='The branch against which to run secrets validation'
+    help='The branch against which to run secrets validation.'
 )
 @pass_config
 def secrets(config, **kwargs):
@@ -558,8 +560,8 @@ def secrets(config, **kwargs):
     "--coverage-report", help="Specify directory for the coverage report files",
     type=PathsParamType()
 )
-@click.option("-dt", "--docker-timeout", default=60, help="The timeout (in seconds) for requests done by the docker client",
-              type=int)
+@click.option("-dt", "--docker-timeout", default=60,
+              help="The timeout (in seconds) for requests done by the docker client.", type=int)
 def lint(**kwargs):
     """Lint command will perform:
         1. Package in host checks - flake8, bandit, mypy, vulture.
@@ -596,7 +598,7 @@ def lint(**kwargs):
         keep_container=kwargs.get('keep_container'),  # type: ignore[arg-type]
         test_xml=kwargs.get('test_xml'),  # type: ignore[arg-type]
         failure_report=kwargs.get('failure_report'),  # type: ignore[arg-type]
-        no_coverage=kwargs.get('no_coverage'),     # type: ignore[arg-type]
+        no_coverage=kwargs.get('no_coverage'),  # type: ignore[arg-type]
         coverage_report=kwargs.get('coverage_report'),  # type: ignore[arg-type]
         docker_timeout=kwargs.get('docker_timeout'),  # type: ignore[arg-type]
     )
@@ -783,7 +785,7 @@ def run(**kwargs):
     help="Timeout for the command. The playbook will continue to run in Demisto"
 )
 @click.option(
-    "--insecure", help="Skip certificate validation", is_flag=True)
+    "--insecure", help="Skip certificate validation.", is_flag=True)
 def run_playbook(**kwargs):
     """Run a playbook in Demisto.
     DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
@@ -815,8 +817,8 @@ def run_playbook(**kwargs):
 @click.option(
     "-v", "--verbose", is_flag=True, help="Verbose output - mainly for debugging purposes")
 @click.option(
-    "--interactive", help="If passed, then for each output field will ask user interactively to enter the "
-                          "description. By default is interactive mode is disabled", is_flag=True)
+    "-int", "--interactive", help="If passed, then for each output field will ask user interactively to enter the "
+                                  "description.", is_flag=True, default=False)
 def json_to_outputs_command(**kwargs):
     """Demisto integrations/scripts have a YAML file that defines them.
     Creating the YAML file is a tedious and error-prone task of manually copying outputs from the API result to the
@@ -887,7 +889,7 @@ def generate_test_playbook(**kwargs):
     '--demisto_mock', is_flag=True,
     help="Copy the demistomock. Relevant for initialization of Scripts and Integrations within a Pack.")
 @click.option(
-    '--common_server', is_flag=True,
+    '--common-server', is_flag=True,
     help="Copy the CommonServerPython. Relevant for initialization of Scripts and Integrations within a Pack.")
 def init(**kwargs):
     """Initialize a new Pack, Integration or Script.
@@ -916,7 +918,7 @@ def init(**kwargs):
     required=False)
 @click.option(
     "-c", "--command", help="A comma-separated command names to generate doc for, will ignore the rest of the commands."
-                            "e.g (xdr-get-incidents,xdr-update-incident",
+                            "e.g xdr-get-incidents,xdr-update-incident",
     required=False
 )
 @click.option(
@@ -928,7 +930,7 @@ def init(**kwargs):
     "-p", "--permissions", type=click.Choice(["none", "general", "per-command"]), help="Permissions needed.",
     required=True, default='none')
 @click.option(
-    "-cp", "--command_permissions", help="Path for file containing commands permissions"
+    "-cp", "--command-permissions", help="Path for file containing commands permissions"
                                          " Each command permissions should be in a separate line."
                                          " (i.e. '<command-name> Administrator READ-WRITE')", required=False)
 @click.option(
@@ -939,7 +941,7 @@ def init(**kwargs):
 @click.option(
     "-v", "--verbose", is_flag=True, help="Verbose output - mainly for debugging purposes.")
 @click.option(
-    "--input-old-version", help="Path of the old integration version yml file.")
+    "--old-version", help="Path of the old integration version yml file.")
 @click.option(
     "--skip-breaking-changes", is_flag=True, help="Skip generating of breaking changes section.")
 def generate_docs(**kwargs):
@@ -953,7 +955,7 @@ def generate_docs(**kwargs):
     limitations = kwargs.get('limitations')
     insecure: bool = kwargs.get('insecure', False)
     verbose: bool = kwargs.get('verbose', False)
-    input_old_version: str = kwargs.get('input_old_version', '')
+    old_version: str = kwargs.get('old_version', '')
     skip_breaking_changes: bool = kwargs.get('skip_breaking_changes', False)
 
     # validate inputs
@@ -981,12 +983,12 @@ def generate_docs(**kwargs):
         print_error('File is not an Integration, Script or a Playbook.')
         return 1
 
-    if input_old_version and not os.path.isfile(input_old_version):
-        print_error(F'Input old version file {input_old_version} was not found.')
+    if old_version and not os.path.isfile(old_version):
+        print_error(F'Input old version file {old_version} was not found.')
         return 1
 
-    if input_old_version and not input_old_version.lower().endswith('.yml'):
-        print_error(F'Input old version {input_old_version} is not a valid yml file.')
+    if old_version and not old_version.lower().endswith('.yml'):
+        print_error(F'Input old version {old_version} is not a valid yml file.')
         return 1
 
     print(f'Start generating {file_type.value} documentation...')
@@ -997,7 +999,8 @@ def generate_docs(**kwargs):
                                         examples=examples, permissions=permissions,
                                         command_permissions=command_permissions, limitations=limitations,
                                         insecure=insecure, verbose=verbose, command=command,
-                                        input_old_version=input_old_version, skip_breaking_changes=skip_breaking_changes)
+                                        old_version=old_version,
+                                        skip_breaking_changes=skip_breaking_changes)
     elif file_type == FileType.SCRIPT:
         return generate_script_doc(input_path=input_path, output=output_path, examples=examples,
                                    permissions=permissions,
@@ -1085,17 +1088,17 @@ def merge_id_sets(**kwargs):
     "-i", "--input", help="The relative path of the content pack. For example Packs/Pack_Name"
 )
 @click.option(
-    '-u', '--update_type', help="The type of update being done. [major, minor, revision, maintenance, documentation]",
+    '-u', '--update-type', help="The type of update being done. [major, minor, revision, maintenance, documentation]",
     type=click.Choice(['major', 'minor', 'revision', 'maintenance', 'documentation'])
 )
 @click.option(
     '-v', '--version', help="Bump to a specific version."
 )
 @click.option(
-    '--all', help="Update all changed packs", is_flag=True
+    '--all', help="Update all changed packs.", is_flag=True
 )
 @click.option(
-    '--text', help="Text to add to all of the release notes files",
+    '--text', help="Text to add to all of the release notes files.",
 )
 @click.option(
     '--prev-ver', help='Previous branch or SHA1 commit to run checks against.'
@@ -1571,7 +1574,7 @@ def doc_review(**kwargs):
     '-o', '--old', type=str, help='The path to the old version of the integration', required=True)
 @click.option(
     '--docs-format', is_flag=True,
-    help='will return the output in docs format for the version differences section in readme')
+    help='Whether output should be in the format for the version differences section in README.')
 def integration_diff(**kwargs):
     """
     Checks for differences between two versions of an integration, and verified that the new version covered the old version.

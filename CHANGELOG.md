@@ -5,6 +5,8 @@
 * Added a validation that mapper's id and name are matching. Updated the format of mapper to include update_id too.
 * Added a validation to ensure that image paths in the README files are valid.
 * Fixed **find_type** function to correctly find test files, such as, test script and test playbook.
+* Added scheme validations for the new Generic Object Types, Fields, and Modules.
+* Renamed the flag *--input-old-version* to *--old-version* in the **generate-docs** command.
 
 # 1.4.3
 * Fixed an issue where **json-to-outputs** command returned an incorrect output when json is a list.

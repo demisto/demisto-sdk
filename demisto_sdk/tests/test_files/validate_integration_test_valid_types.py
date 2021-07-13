@@ -548,3 +548,153 @@ INCIDENT_FIELD = {
     "version": -1,
     "fromVersion": "5.0.0"
 }
+
+GENERIC_FIELD = {
+    "associatedToAll": False,
+    "associatedTypes": [
+        "Workstation"
+    ],
+    "caseInsensitive": True,
+    "cliName": "operatingsystem",
+    "id": "asset_operatingsystem",
+    "name": "Operating System",
+    "closeForm": False,
+    "content": True,
+    "editForm": True,
+    "group": 0,
+    "definitionId": "asset",
+    "genericModuleId": "rbvm",
+    "hidden": False,
+    "isReadOnly": False,
+    "locked": False,
+    "neverSetAsRequired": False,
+    "ownerOnly": False,
+    "required": False,
+    "sla": 0,
+    "system": False,
+    "threshold": 72,
+    "type": "shortText",
+    "unmapped": False,
+    "unsearchable": False,
+    "useAsKpi": False,
+    "version": -1,
+    "fromVersion": "6.5.0"
+}
+
+GENERIC_TYPE = {
+    "id": "Workstation",
+    "layout": "Workstation Layout",
+    "locked": False,
+    "name": "Workstation",
+    "color": "#8052f4",
+    "definitionId": "asset",
+    "genericModuleId": "rbvm",
+    "system": False,
+    "version": -1,
+    "fromVersion": "6.5.0"
+}
+
+GENERIC_MODULE = {
+    "id": "rbvm",
+    "version": -1,
+    "name": "Risk Based Vulnerability Management",
+    "fromVersion": "6.5.0",
+    "definitions": [
+        {
+            "id": "asset",
+            "name": "Asset"
+        }
+    ],
+    "views": [{
+        "icon": "icon-widget-infinity-24-s",
+        "name": "RBVM",
+        "title": "Risk Base Vulnerability Management",
+        "tabs": [
+            {
+                "name": "Assets",
+                "newButtonDefinitionId": "asset",
+                "dashboard": {
+                    "id": "asset_dashboard",
+                    "version": -1,
+                    "fromDate": "0001-01-01T00:00:00Z",
+                    "toDate": "0001-01-01T00:00:00Z",
+                    "period": {
+                        "by": "",
+                        "byTo": "",
+                        "byFrom": "days",
+                        "toValue": None,
+                        "fromValue": 7,
+                        "field": ""
+                    },
+                    "name": "Assets Dashboard",
+                    "prevName": "Assets Dashboard",
+                    "layout": [
+                        {
+                            "id": "3a352fc0-dca9-11eb-999f-35f993b96a7c",
+                            "forceRange": False,
+                            "x": 0,
+                            "y": 0,
+                            "i": "3a352fc0-dca9-11eb-999f-35f993b96a7c",
+                            "w": 12,
+                            "h": 3,
+                            "widget": {
+                                "id": "f5833f22-7357-40c9-8d5b-c02ee1f0c53b",
+                                "version": 2,
+                                "modified": "2021-03-20T23:03:11.86024+02:00",
+                                "sortValues": None,
+                                "packID": "",
+                                "itemVersion": "",
+                                "fromServerVersion": "",
+                                "toServerVersion": "",
+                                "propagationLabels": [
+                                    "all"
+                                ],
+                                "vcShouldIgnore": False,
+                                "vcShouldKeepItemLegacyProdMachine": False,
+                                "commitMessage": "",
+                                "shouldCommit": False,
+                                "name": "A Widget v2",
+                                "prevName": "A Widget v2",
+                                "dataType": "incidents",
+                                "widgetType": "pie",
+                                "query": "",
+                                "sort": None,
+                                "isPredefined": False,
+                                "dateRange": {
+                                    "fromDate": "0001-01-01T00:00:00Z",
+                                    "toDate": "0001-01-01T00:00:00Z",
+                                    "period": {
+                                        "by": "",
+                                        "byTo": "",
+                                        "byFrom": "days",
+                                        "toValue": None,
+                                        "fromValue": 7,
+                                        "field": ""
+                                    },
+                                    "fromDateLicense": "0001-01-01T00:00:00Z"
+                                },
+                                "params": {
+                                    "groupBy": [
+                                        "type"
+                                    ],
+                                    "tableColumns": [
+                                        {
+                                            "isDefault": True,
+                                            "key": "id",
+                                            "position": 0,
+                                            "width": 110
+                                        }
+                                    ]
+                                },
+                                "size": 0,
+                                "category": ""
+                            },
+                            "reflectDimensions": True
+                        }
+                    ],
+                    "system": True,
+                    "isCommon": True
+                }
+            }]
+    }]
+}

@@ -457,9 +457,11 @@ class UpdateRN:
         rn_template_as_dict: dict = {}
         if self.is_force:
             rn_string = self.build_rn_desc(content_name=self.pack)
+        # changed_items.items() looks like that: [((name, type), {...}), (name, type), {...}] and we want to sort
+        # them by type (x[0][1])
         for (content_name, _type), data in sorted(changed_items.items(),
-                                         key=lambda x: RN_HEADER_BY_FILE_TYPE[x[0][1]] if x[0] and x[0][1]
-                                         else ''):  # Sort RN by header
+                                                  key=lambda x: RN_HEADER_BY_FILE_TYPE[x[0][1]] if x[0] and x[0][1]
+                                                  else ''):  # Sort RN by header
             desc = data.get('description', '')
             is_new_file = data.get('is_new_file', False)
             from_version = data.get('fromversion', '')
@@ -530,6 +532,8 @@ class UpdateRN:
         # Deleting old entry for docker images, will re-write later, this allows easier generating of updated rn.
         current_rn_without_docker_images = re.sub(update_docker_image_regex, '', current_rn)
         new_rn = current_rn_without_docker_images
+        # changed_files.items() looks like that: [((name, type), {...}), (name, type), {...}] and we want to sort
+        # them by name (x[0][0])
         for (content_name, _type), data in sorted(changed_files.items(),
                                                   key=lambda x: x[0][0] if x[0][0] else '', reverse=True):
             is_new_file = data.get('is_new_file')

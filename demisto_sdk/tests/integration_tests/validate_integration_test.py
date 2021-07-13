@@ -27,9 +27,10 @@ from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.tests.constants_test import (CONTENT_REPO_EXAMPLE_ROOT,
                                               NOT_VALID_IMAGE_PATH)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
-    CONNECTION, DASHBOARD, GENERIC_FIELD, GENERIC_MODULE, GENERIC_TYPE,
-    INCIDENT_FIELD, INCIDENT_TYPE, INDICATOR_FIELD, LAYOUT, LAYOUTS_CONTAINER,
-    MAPPER, NEW_CLASSIFIER, OLD_CLASSIFIER, REPORT, REPUTATION, WIDGET)
+    CONNECTION, DASHBOARD, GENERIC_DEFINITION, GENERIC_FIELD, GENERIC_MODULE,
+    GENERIC_TYPE, INCIDENT_FIELD, INCIDENT_TYPE, INDICATOR_FIELD, LAYOUT,
+    LAYOUTS_CONTAINER, MAPPER, NEW_CLASSIFIER, OLD_CLASSIFIER, REPORT,
+    REPUTATION, WIDGET)
 from TestSuite.test_tools import ChangeCWD
 
 VALIDATE_CMD = "validate"
@@ -203,6 +204,55 @@ class TestGenericModuleValidation:
             result = runner.invoke(main, [VALIDATE_CMD, '-i', generic_module_path], catch_exceptions=False)
         assert result.exit_code == 1
         assert f"Validating {generic_module_path} as genericmodule" in result.stdout
+        assert 'ST108' in result.stdout
+        assert "The files were found as invalid" in result.stdout
+
+
+class TestGenericDefinitionValidation:
+    def test_valid_generic_definition(self, mocker, repo):
+        """
+        Given
+        - Valid generic definition.
+
+        When
+        - Running validation on it.
+
+        Then
+        - Ensure validation passes.
+        - Ensure success validation message is printed.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        generic_def_copy = GENERIC_DEFINITION.copy()
+        genefic_def = pack.create_generic_definition("generic-module", generic_def_copy)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', genefic_def.path], catch_exceptions=False)
+        assert f"Validating {genefic_def.path} as genericdefinition" in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
+    def test_invalid_generic_definition(self, mocker, repo):
+        """
+        Given
+        - Invalid generic definition.
+
+        When
+        - Running validation on it.
+
+        Then
+        - Ensure validation fails.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        generic_def_copy = GENERIC_DEFINITION.copy()
+        generic_def_copy['anotherField'] = False
+        genefic_def = pack.create_generic_definition("generic-module", generic_def_copy)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', genefic_def.path], catch_exceptions=False)
+        assert result.exit_code == 1
+        assert f"Validating {genefic_def.path} as genericdefinition" in result.stdout
         assert 'ST108' in result.stdout
         assert "The files were found as invalid" in result.stdout
 

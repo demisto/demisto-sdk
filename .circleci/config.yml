@@ -202,29 +202,26 @@ jobs:
               cd ~/project
               export SDK_LINT_FILES_CHANGED=$(git diff master... --name-only -- demisto_sdk/commands/lint)
 
-              if [[ -n "${SDK_LINT_FILES_CHANGED}" ]]; then
-                cd content
-                if [ ! -e "venv" ]; then
-                  echo "installing venv"
-                  NO_HOOKS=1 SETUP_PY2=yes .hooks/bootstrap >> /tmp/lint_env_installation.log
-                  source ./venv/bin/activate
-                  pip3 install -r .circleci/build-requirements.txt >> /tmp/lint_env_installation.log
-                else
-                  echo "venv exists (from cache). activating"
-                  source ./venv/bin/activate
-                fi
-                
-                pip3 install ~/project >> /tmp/lint_env_installation.log
-                echo ""
-                echo "lint files changed running lint"
-                # python file (CommonServerPython lint is runnit over python 3 and 2)
-                demisto-sdk lint -i ./Packs/Base/Scripts/CommonServerPython
-                
-                # ps file
-                demisto-sdk lint -i ./Packs/Base/Scripts/CommonServerPowerShell
-              else
-                echo "files under demisto_sdk/commands/lint did not changed."
+              if [[ -z "${SDK_LINT_FILES_CHANGED}" ]]; then
+                  echo "files under demisto_sdk/commands/lint did not change - Skipping lint runs."
+                  exit 0
               fi
+              cd content
+              echo "installing venv"
+              NO_HOOKS=1 SETUP_PY2=yes .hooks/bootstrap >> /tmp/lint_env_installation.log
+              source ./venv/bin/activate
+              pip3 install -r .circleci/build-requirements.txt >> /tmp/lint_env_installation.log
+              
+              # installing local sdk inside venv
+              pip3 install ~/project >> /tmp/lint_env_installation.log
+              echo ""
+              echo "lint files changed running lint"
+              # python file (CommonServerPython lint is running over python 3 and 2)
+              demisto-sdk lint -i ./Packs/Base/Scripts/CommonServerPython
+              
+              # ps file
+              demisto-sdk lint -i ./Packs/Base/Scripts/CommonServerPowerShell
+              
         - store_artifacts:
             path: /tmp/lint_env_installation.log
   create-content-artifacts:

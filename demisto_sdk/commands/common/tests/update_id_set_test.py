@@ -1901,12 +1901,6 @@ class TestGenericFields:
                 "layout": "Workstation Layout"
             }
         }]
-        generic_modules_list = [{"rbvm": {
-            "name": "Vulnerability Management",
-            "pack": "ObjectsExample",
-            "definitionIds": [
-                "assets",
-                "asset Groups"]}}]
 
         generic_field = pack.create_generic_field('test-generic-field')
         generic_field.write_json(field_data)
@@ -1921,7 +1915,6 @@ class TestGenericFields:
         assert 'fromversion' in result.keys()
         assert 'definitionId' in result.keys()
         assert 'generic_types' in result.keys()
-        assert 'module_id' in result.keys()
 
 
 class TestGenericType:
@@ -1944,20 +1937,15 @@ class TestGenericType:
             {"id": "type-id", "name": "type-name", "fromVersion": "version", "definitionId": "Assets",
              "layout": "layout"})
         test_dir = object_type.path
-        objects_modules_list = [{"rbvm": {
-            "name": "Vulnerability Management",
-            "pack": "ObjectsExample",
-            "definitionIds": [
-                "Assets",
-                "Asset Groups"]}}]
 
-        result = get_generic_type_data(test_dir, objects_modules_list)
+        result = get_generic_type_data(test_dir)
         result = result.get('type-id')
         assert 'name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'layout' in result.keys()
-        assert 'module_id' in result.keys()
+        assert 'definitionId' in result.keys()
+
 
 
 class TestGenericDefinition:

@@ -1947,7 +1947,6 @@ class TestGenericType:
         assert 'definitionId' in result.keys()
 
 
-
 class TestGenericDefinition:
 
     @staticmethod

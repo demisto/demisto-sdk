@@ -32,6 +32,10 @@ from demisto_sdk.commands.format.update_script import ScriptYMLFormat
 from demisto_sdk.commands.format.update_widget import WidgetJSONFormat
 from demisto_sdk.commands.lint.commands_builder import excluded_files
 
+from demisto_sdk.commands.common.constants import (
+                                                   TESTS_AND_DOC_DIRECTORIES,
+                                                  )
+
 FILE_TYPE_AND_LINKED_CLASS = {
     'integration': IntegrationYMLFormat,
     'script': ScriptYMLFormat,
@@ -114,7 +118,7 @@ def format_manager(input: str = None,
                 current_excluded_files.remove('CommonServerPython.py')
             if os.path.basename(file_path) in current_excluded_files:
                 continue
-            if dirname.lower().endswith('test_data') or dirname.lower().endswith('testdata') or dirname.lower().endswith('doc_imgs'):
+            if any(test_dir in str(dirname) for test_dir in TESTS_AND_DOC_DIRECTORIES):
                 continue
 
             if file_type and file_type.value not in UNFORMATTED_FILES:

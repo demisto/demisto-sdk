@@ -16,6 +16,7 @@
   - Fixed an issue where the **update-release-notes** command did not detect changed files that had the same name.
   - Fixed an issue in the **update-release-notes** command where the version support of JSON files was mishandled.
 * Fixed **format** to skip files in `TESTS_AND_DOC_DIRECTORIES`
+* Updated the **create-id-set** command to support generic modules, definitions, fields and types.
 
 # 1.4.3
 * Fixed an issue where **json-to-outputs** command returned an incorrect output when json is a list.

@@ -218,8 +218,8 @@ def get_filters_and_transformers_from_playbook(data_dict: dict) -> Tuple[list, l
     for task in tasks.values():
         # gets the task value
         if task.get('type') == 'condition':
-            for condition in task.get('conditions', []):
-                for inner_condition in condition.get('condition', []):
+            for condition_entry in task.get('conditions', []):
+                for inner_condition in condition_entry.get('condition', []):
                     if inner_condition:
                         for condition in inner_condition:
                             complex_values.append(condition.get('left', {}).get('value', {}).get('complex', {}))

@@ -1068,7 +1068,7 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
         if 'orientation' in _dict:
             return FileType.REPORT
 
-        if 'color' in _dict and 'cliName' not in _dict:  # check against another key to make it more robust
+        if 'color' in _dict and 'cliName' not in _dict:
             if 'definitionId' in _dict and _dict['definitionId'] not in [None, 'incident', 'indicator']:
                 return FileType.GENERIC_TYPE
             return FileType.INCIDENT_TYPE
@@ -1091,7 +1091,7 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
         if 'canvasContextConnections' in _dict:
             return FileType.CONNECTION
 
-        if 'layout' in _dict or 'kind' in _dict:
+        if 'layout' in _dict or 'kind' in _dict:  # it's a Layout or Dashboard but not a Generic Object
             if 'kind' in _dict or 'typeId' in _dict:
                 return FileType.LAYOUT
 

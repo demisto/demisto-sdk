@@ -24,6 +24,10 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    INDICATOR_FIELDS_DIR,
                                                    INDICATOR_TYPES_DIR,
                                                    LAYOUTS_DIR, MAPPERS_DIR,
+                                                   GENERIC_DEFINITIONS_DIR,
+                                                   GENERIC_FIELDS_DIR,
+                                                   GENERIC_MODULES_DIR,
+                                                   GENERIC_TYPES_DIR,
                                                    REPORTS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
                                                    WIDGETS_DIR, FileType)
@@ -35,11 +39,13 @@ from demisto_sdk.commands.unify.unifier import Unifier
 
 CONTENT_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
                     'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
-                    'Layouts', 'Reports', 'Widgets', 'Mappers', 'Packs']
+                    'Layouts', 'Reports', 'Widgets', 'Mappers', 'Packs', 'GenericTypes',
+                    'GenericFields', 'GenericModules', 'GenericDefinitions']
 
 ID_SET_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Classifiers',
                    'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
-                   'Layouts', 'Reports', 'Widgets', 'Mappers']
+                   'Layouts', 'Reports', 'Widgets', 'Mappers', 'GenericTypes', 'GenericFields', 'GenericModules',
+                   'GenericDefinitions']
 
 BUILT_IN_FIELDS = [
     "name",
@@ -951,6 +957,35 @@ def process_indicator_types(file_path: str, print_logs: bool, all_integrations: 
     return res
 
 
+def process_generic_items(file_path: str, print_logs: bool,
+                          generic_types_list: list = None) -> list:
+    """
+    Process a generic field JSON file
+    Args:
+        file_path: The file path from pbject field folder
+        print_logs: Whether to print logs to stdout.
+        generic_types_list: List of all the generic types in the system.
+        generic_modules_list: List of all the generic modules in the system.
+
+    Returns:
+        a list of generic items data: fields or types.
+    """
+    res = []
+    try:
+        if find_type(file_path) == FileType.GENERIC_FIELD:
+            if print_logs:
+                print(f'adding {file_path} to id_set')
+            res.append(get_generic_field_data(file_path, generic_types_list))
+        elif find_type(file_path) == FileType.GENERIC_TYPE:
+            if print_logs:
+                print(f'adding {file_path} to id_set')
+            res.append(get_generic_type_data(file_path))
+    except Exception as exp:  # noqa
+        print_error(f'failed to process {file_path}, Error: {str(exp)}')
+        raise
+    return res
+
+
 def process_general_items(file_path: str, print_logs: bool, expected_file_types: Tuple[FileType],
                           data_extraction_func: Callable) -> list:
     """
@@ -1076,8 +1111,127 @@ def get_general_paths(path, pack_to_create):
     files = list()
     for path in path_list:
         files.extend(glob.glob(os.path.join(*path)))
+    print_color(f"files: {files}", LOG_COLORS.WHITE)
 
     return files
+
+
+def get_generic_entities_paths(path, pack_to_create):
+    """
+    get paths of genericTypes, genericFields
+
+    """
+    if pack_to_create:
+        path_list = [
+            [pack_to_create, path, '*', '*.json']
+        ]
+
+    else:
+        path_list = [
+            [path, '*'],
+            ['Packs', '*', path, '*', '*.json']
+        ]
+
+    files = list()
+    for path in path_list:
+        files.extend(glob.glob(os.path.join(*path)))
+    print_color(f"files: {files}", LOG_COLORS.WHITE)
+
+    return files
+
+
+def get_generic_type_data(path):
+    json_data = get_json(path)
+
+    id_ = json_data.get('id')
+    name = json_data.get('name', '')
+    fromversion = json_data.get('fromVersion')
+    toversion = json_data.get('toVersion')
+    playbook_id = json_data.get('playbookId')
+    pack = get_pack_name(path)
+    definitionId = json_data.get('definitionId')
+    layout = json_data.get('layout')
+
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
+    if playbook_id and playbook_id != '':
+        data['playbooks'] = playbook_id
+    if definitionId:
+        data['definitionId'] = definitionId
+    if layout:
+        data['layout'] = layout
+    return {id_: data}
+
+
+def get_module_id_from_definition_id(definition_id: str, generic_modules_list: list):
+    for module in generic_modules_list:
+        module_id = list(module.keys())[0]
+        if definition_id in module.get(module_id, {}).get('definitionIds', []):
+            return module_id
+
+
+def get_generic_field_data(path, generic_types_list):
+    json_data = get_json(path)
+
+    id_ = json_data.get('id')
+    name = json_data.get('name', '')
+    fromversion = json_data.get('fromVersion')
+    toversion = json_data.get('toVersion')
+    pack = get_pack_name(path)
+    all_associated_types: set = set()
+    all_scripts = set()
+    definitionId = json_data.get('definitionId')
+
+    associated_types = json_data.get('associatedTypes')
+    if associated_types:
+        all_associated_types = set(associated_types)
+
+    system_associated_types = json_data.get('systemAssociatedTypes')
+    if system_associated_types:
+        all_associated_types = all_associated_types.union(set(system_associated_types))
+
+    if 'all' in all_associated_types:
+        all_associated_types = {list(generic_type.keys())[0] for generic_type in generic_types_list}
+
+    scripts = json_data.get('script')
+    if scripts:
+        all_scripts = {scripts}
+
+    field_calculations_scripts = json_data.get('fieldCalcScript')
+    if field_calculations_scripts:
+        all_scripts = all_scripts.union({field_calculations_scripts})
+
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
+
+    if all_associated_types:
+        data['generic_types'] = list(all_associated_types)
+    if all_scripts:
+        data['scripts'] = list(all_scripts)
+    if definitionId:
+        data['definitionId'] = definitionId
+
+    return {id_: data}
+
+
+def get_generic_module_data(path):
+    json_data = get_json(path)
+    id_ = json_data.get('id')
+    name = json_data.get('name', '')
+    pack = get_pack_name(path)
+    fromversion = json_data.get('fromVersion')
+    toversion = json_data.get('toVersion')
+    definitionIds = json_data.get('definitionIds', [])
+    views = json_data.get('views', [])
+    views = {view.get('name'): {
+        'title': view.get('title'),
+        'dashboards': [tab.get('dashboard', {}).get('id') for tab in view.get('tabs', [])]} for view in views}
+
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
+    if definitionIds:
+        data['definitionIds'] = definitionIds
+    if views:
+        data['views'] = views
+
+    return {id_: data}
 
 
 class IDSetType(Enum):
@@ -1096,6 +1250,9 @@ class IDSetType(Enum):
     INDICATOR_TYPE = 'IndicatorTypes'
     LAYOUTS = 'Layouts'
     PACKS = 'Packs'
+    GENERIC_TYPE = 'GenericTypes'
+    GENERIC_FIELD = 'GenericFields'
+    GENERIC_MODULE = 'GenericModules'
 
     @classmethod
     def has_value(cls, value):
@@ -1243,6 +1400,10 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     reports_list = []
     widgets_list = []
     mappers_list = []
+    generic_types_list = []
+    generic_fields_list = []
+    generic_modules_list = []
+    generic_definitions_list = []
     packs_dict: Dict[str, Dict] = {}
 
     pool = Pool(processes=int(cpu_count()))
@@ -1433,6 +1594,54 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
 
         progress_bar.update(1)
 
+        if 'GenericDefinitions' in objects_to_create:
+            print_color("\nStarting iteration over Generic Definitions", LOG_COLORS.GREEN)
+            print_color(f"pack to create: {pack_to_create}", LOG_COLORS.YELLOW)
+            for arr in pool.map(partial(process_general_items,
+                                        expected_file_types=(FileType.GENERIC_DEFINITION,),
+                                        data_extraction_func=get_general_data,
+                                        print_logs=print_logs,
+                                        ),
+                                get_general_paths(GENERIC_DEFINITIONS_DIR, pack_to_create)):
+                generic_definitions_list.extend(arr)
+
+        progress_bar.update(1)
+
+        if 'GenericModules' in objects_to_create:
+            print_color("\nStarting iteration over Generic Modules", LOG_COLORS.GREEN)
+            for arr in pool.map(partial(process_general_items,
+                                        print_logs=print_logs,
+                                        expected_file_types=(FileType.GENERIC_MODULE,),
+                                        data_extraction_func=get_generic_module_data,
+                                        ),
+                                get_general_paths(GENERIC_MODULES_DIR, pack_to_create)):
+                generic_modules_list.extend(arr)
+
+        progress_bar.update(1)
+
+        if 'GenericTypes' in objects_to_create:
+            print_color("\nStarting iteration over Generic Types", LOG_COLORS.GREEN)
+            print_color(f"pack to create: {pack_to_create}", LOG_COLORS.YELLOW)
+            for arr in pool.map(partial(process_generic_items,
+                                        print_logs=print_logs,
+                                        ),
+                                get_generic_entities_paths(GENERIC_TYPES_DIR, pack_to_create)):
+                generic_types_list.extend(arr)
+
+        progress_bar.update(1)
+
+        # Has to be called after 'GenericTypes' is called
+        if 'GenericFields' in objects_to_create:
+            print_color("\nStarting iteration over Generic Fields", LOG_COLORS.GREEN)
+            for arr in pool.map(partial(process_generic_items,
+                                        print_logs=print_logs,
+                                        generic_types_list=generic_types_list,
+                                        ),
+                                get_generic_entities_paths(GENERIC_FIELDS_DIR, pack_to_create)):
+                generic_fields_list.extend(arr)
+
+        progress_bar.update(1)
+
     new_ids_dict = OrderedDict()
     # we sort each time the whole set in case someone manually changed something
     # it shouldn't take too much time
@@ -1451,6 +1660,10 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     new_ids_dict['Widgets'] = sort(widgets_list)
     new_ids_dict['Mappers'] = sort(mappers_list)
     new_ids_dict['Packs'] = packs_dict
+    new_ids_dict['GenericTypes'] = sort(generic_types_list)
+    new_ids_dict['GenericFields'] = sort(generic_fields_list)
+    new_ids_dict['GenericModules'] = sort(generic_modules_list)
+    new_ids_dict['GenericDefinitions'] = sort(generic_definitions_list)
 
     exec_time = time.time() - start_time
     print_color("Finished the creation of the id_set. Total time: {} seconds".format(exec_time), LOG_COLORS.GREEN)

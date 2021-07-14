@@ -52,7 +52,6 @@ class Pack:
         self.playbooks: List[Playbook] = list()
         self.test_playbooks: List[Playbook] = list()
         self.release_notes: List[TextBased] = list()
-
         # Create base pack
         self._pack_path = packs_dir / name
         self._pack_path.mkdir()
@@ -288,8 +287,10 @@ class Pack:
             self,
             name,
             content: dict = None) -> JSONBased:
+        dir_path = self._generic_fields_path / name
+        dir_path.mkdir()
         prefix = 'genericfield'
-        generic_field = self._create_json_based(name, prefix, content, dir_path=self._generic_fields_path)
+        generic_field = self._create_json_based(name, prefix, content, dir_path=dir_path)
         self.generic_fields.append(generic_field)
         return generic_field
 
@@ -297,8 +298,10 @@ class Pack:
             self,
             name,
             content: dict = None) -> JSONBased:
+        dir_path = self._generic_types_path / name
+        dir_path.mkdir()
         prefix = 'generictype'
-        generic_type = self._create_json_based(name, prefix, content, dir_path=self._generic_types_path)
+        generic_type = self._create_json_based(name, prefix, content, dir_path=dir_path)
         self.generic_types.append(generic_type)
         return generic_type
 

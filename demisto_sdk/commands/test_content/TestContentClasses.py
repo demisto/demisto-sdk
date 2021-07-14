@@ -1387,7 +1387,7 @@ class TestContext:
             Empty string or
         """
         try:
-            self.build_context.logging_module.info(f'ssh tunnel command: {self.tunnel_command}')
+            self.build_context.logging_module.info(f'ssh tunnel command:\n{self.tunnel_command}')
 
             if not self.playbook.configure_integrations(self.client, self.server_context):
                 return PB_Status.FAILED

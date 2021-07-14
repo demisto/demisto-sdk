@@ -5,19 +5,7 @@
     "system": false,
     "name": "Vulnerability Management",
     "fromVersion": "6.5.0",
-    "definitions": [{
-        "id": "assets",
-        "name": "Assets",
-        "partitioned": true,
-        "auditable": false,
-        "rbacSupport": true
-    }, {
-        "id": "assetGroups",
-        "name": "Asset Groups",
-        "partitioned": false,
-        "auditable": true,
-        "rbacSupport": false
-    }],
+    "definitionIds": ["assets", "assetGroups"],
     "views": [{
         "icon": "icon-widget-infinity-24-s",
         "name": "Vulnerability Management",

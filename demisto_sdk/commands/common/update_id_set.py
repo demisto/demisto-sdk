@@ -24,12 +24,13 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    INDICATOR_FIELDS_DIR,
                                                    INDICATOR_TYPES_DIR,
                                                    LAYOUTS_DIR, MAPPERS_DIR,
+                                                   GENERIC_DEFINITIONS_DIR,
                                                    GENERIC_FIELDS_DIR,
                                                    GENERIC_MODULES_DIR,
                                                    GENERIC_TYPES_DIR,
                                                    REPORTS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
-                                                   WIDGETS_DIR, FileType, GENERIC_DEFINITIONS_DIR)
+                                                   WIDGETS_DIR, FileType)
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type, get_json,
                                                get_pack_name, get_yaml,
                                                print_color, print_error,
@@ -956,7 +957,7 @@ def process_indicator_types(file_path: str, print_logs: bool, all_integrations: 
     return res
 
 
-def process_generic_items(file_path: str, print_logs: bool, generic_modules_list: list,
+def process_generic_items(file_path: str, print_logs: bool,
                           generic_types_list: list = None) -> list:
     """
     Process a generic field JSON file
@@ -974,11 +975,11 @@ def process_generic_items(file_path: str, print_logs: bool, generic_modules_list
         if find_type(file_path) == FileType.GENERIC_FIELD:
             if print_logs:
                 print(f'adding {file_path} to id_set')
-            res.append(get_generic_field_data(file_path, generic_types_list, generic_modules_list))
+            res.append(get_generic_field_data(file_path, generic_types_list))
         elif find_type(file_path) == FileType.GENERIC_TYPE:
             if print_logs:
                 print(f'adding {file_path} to id_set')
-            res.append(get_generic_type_data(file_path, generic_modules_list))
+            res.append(get_generic_type_data(file_path))
     except Exception as exp:  # noqa
         print_error(f'failed to process {file_path}, Error: {str(exp)}')
         raise
@@ -1139,7 +1140,7 @@ def get_generic_entities_paths(path, pack_to_create):
     return files
 
 
-def get_generic_type_data(path, generic_modules_list):
+def get_generic_type_data(path):
     json_data = get_json(path)
 
     id_ = json_data.get('id')
@@ -1151,17 +1152,13 @@ def get_generic_type_data(path, generic_modules_list):
     definitionId = json_data.get('definitionId')
     layout = json_data.get('layout')
 
-    module_id = get_module_id_from_definition_id(definitionId, generic_modules_list)
     data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
     if playbook_id and playbook_id != '':
         data['playbooks'] = playbook_id
-
     if definitionId:
         data['definitionId'] = definitionId
     if layout:
         data['layout'] = layout
-    if module_id:
-        data['module_id'] = module_id
     return {id_: data}
 
 
@@ -1172,7 +1169,7 @@ def get_module_id_from_definition_id(definition_id: str, generic_modules_list: l
             return module_id
 
 
-def get_generic_field_data(path, generic_types_list, generic_modules_list):
+def get_generic_field_data(path, generic_types_list):
     json_data = get_json(path)
 
     id_ = json_data.get('id')
@@ -1184,7 +1181,6 @@ def get_generic_field_data(path, generic_types_list, generic_modules_list):
     all_scripts = set()
     definitionId = json_data.get('definitionId')
 
-    module_id = get_module_id_from_definition_id(definitionId, generic_modules_list)
     associated_types = json_data.get('associatedTypes')
     if associated_types:
         all_associated_types = set(associated_types)
@@ -1212,8 +1208,6 @@ def get_generic_field_data(path, generic_types_list, generic_modules_list):
         data['scripts'] = list(all_scripts)
     if definitionId:
         data['definitionId'] = definitionId
-    if module_id:
-        data['module_id'] = module_id
 
     return {id_: data}
 
@@ -1630,7 +1624,6 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
             print_color(f"pack to create: {pack_to_create}", LOG_COLORS.YELLOW)
             for arr in pool.map(partial(process_generic_items,
                                         print_logs=print_logs,
-                                        generic_modules_list=generic_modules_list
                                         ),
                                 get_generic_entities_paths(GENERIC_TYPES_DIR, pack_to_create)):
                 generic_types_list.extend(arr)
@@ -1643,14 +1636,11 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
             for arr in pool.map(partial(process_generic_items,
                                         print_logs=print_logs,
                                         generic_types_list=generic_types_list,
-                                        generic_modules_list=generic_modules_list
                                         ),
                                 get_generic_entities_paths(GENERIC_FIELDS_DIR, pack_to_create)):
                 generic_fields_list.extend(arr)
 
         progress_bar.update(1)
-
-
 
     new_ids_dict = OrderedDict()
     # we sort each time the whole set in case someone manually changed something

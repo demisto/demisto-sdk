@@ -44,6 +44,7 @@ class Pack:
         self.generic_fields: List[JSONBased] = list()
         self.generic_types: List[JSONBased] = list()
         self.generic_modules: List[JSONBased] = list()
+        self.generic_definitions: List[JSONBased] = list()
         self.layouts: List[JSONBased] = list()
         self.layoutcontainers: List[JSONBased] = list()
         self.reports: List[JSONBased] = list()
@@ -88,6 +89,18 @@ class Pack:
 
         self._indicator_types = self._pack_path / 'IndicatorTypes'
         self._indicator_types.mkdir()
+
+        self._generic_fields_path = self._pack_path / 'GenericFields'
+        self._generic_fields_path.mkdir()
+
+        self._generic_types_path = self._pack_path / 'GenericTypes'
+        self._generic_types_path.mkdir()
+
+        self._generic_modules_path = self._pack_path / 'GenericModules'
+        self._generic_modules_path.mkdir()
+
+        self._generic_definitions_path = self._pack_path / 'GenericDefinitions'
+        self._generic_definitions_path.mkdir()
 
         self._layout_path = self._pack_path / 'Layouts'
         self._layout_path.mkdir()
@@ -279,6 +292,46 @@ class Pack:
         self.indicator_types.append(indicator_type)
         return indicator_type
 
+    def create_generic_field(
+            self,
+            name,
+            content: dict = None) -> JSONBased:
+        dir_path = self._generic_fields_path / name
+        dir_path.mkdir()
+        prefix = 'genericfield'
+        generic_field = self._create_json_based(name, prefix, content, dir_path=dir_path)
+        self.generic_fields.append(generic_field)
+        return generic_field
+
+    def create_generic_type(
+            self,
+            name,
+            content: dict = None) -> JSONBased:
+        dir_path = self._generic_types_path / name
+        dir_path.mkdir()
+        prefix = 'generictype'
+        generic_type = self._create_json_based(name, prefix, content, dir_path=dir_path)
+        self.generic_types.append(generic_type)
+        return generic_type
+
+    def create_generic_module(
+            self,
+            name,
+            content: dict = None) -> JSONBased:
+        prefix = 'genericmodule'
+        generic_module = self._create_json_based(name, prefix, content, dir_path=self._generic_modules_path)
+        self.generic_modules.append(generic_module)
+        return generic_module
+
+    def create_generic_definition(
+            self,
+            name,
+            content: dict = None) -> JSONBased:
+        prefix = 'genericdefinition'
+        generic_definition = self._create_json_based(name, prefix, content, dir_path=self._generic_definitions_path)
+        self.generic_definitions.append(generic_definition)
+        return generic_definition
+
     def create_layout(
             self,
             name,
@@ -365,25 +418,3 @@ class Pack:
         doc_file_dir = self._pack_path / 'doc_files'
         doc_file_dir.mkdir()
         return File(doc_file_dir / f'{name}.png', self._repo.path)
-
-    def create_generic_type(self, name, content: dict = None) -> JSONBased:
-        prefix = 'genericttype'
-        dir_path = self._generic_types_path / name
-        dir_path.mkdir()
-        generic_type = self._create_json_based(name, prefix, content, dir_path=dir_path)
-        self.generic_types.append(generic_type)
-        return generic_type
-
-    def create_generic_field(self, name, content: dict = None) -> JSONBased:
-        prefix = 'genericfield'
-        dir_path = self._generic_fields_path / name
-        dir_path.mkdir()
-        generic_field = self._create_json_based(name, prefix, content, dir_path=dir_path)
-        self.generic_fields.append(generic_field)
-        return generic_field
-
-    def create_generic_module(self, name, content: dict = None) -> JSONBased:
-        prefix = 'genericmodule'
-        generic_module = self._create_json_based(name, prefix, content, dir_path=self._generic_module_path)
-        self.generic_modules.append(generic_module)
-        return generic_module

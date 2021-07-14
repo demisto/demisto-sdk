@@ -538,10 +538,11 @@ def collect_ids(file_path):
 
 
 def get_from_version(file_path):
-    data_dictionary = get_yaml(file_path)
+    data_dictionary = get_yaml(file_path) or get_json(file_path)
 
     if data_dictionary:
-        from_version = data_dictionary.get('fromversion', '0.0.0')
+        from_version = data_dictionary.get('fromversion') if 'fromversion' in data_dictionary\
+            else data_dictionary.get('fromVersion', '0.0.0')
         if from_version == "":
             return "0.0.0"
 

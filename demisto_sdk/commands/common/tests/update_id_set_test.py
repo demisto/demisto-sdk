@@ -1887,7 +1887,7 @@ class TestGenericFields:
             "cliName": "operatigsystem",
             "id": "id",
             "name": "Operating System",
-            "definitionId": "definitionid",
+            "definitionId": "assets",
             "fromVersion": "6.5.0",
             "associatedTypes": ["Asset Type"]}
 
@@ -1897,31 +1897,23 @@ class TestGenericFields:
                 "file_path": "path/path",
                 "fromversion": "6.5.0",
                 "pack": "ObjectsExample",
-                "definitionId": "definitionid",
+                "definitionId": "assets",
                 "layout": "Workstation Layout"
             }
         }]
 
-        generics_modules_list = [{"rbvm": {
-            "name": "Vulnerability Management",
-            "pack": "ObjectsExample",
-            "definitions": {
-                "definitionid": "Assets",
-                "assetGroups": "Asset Groups"}}}]
+        generic_field = pack.create_generic_field('test-generic-field')
+        generic_field.write_json(field_data)
+        test_dir = generic_field.path
 
-        generic_type = pack.create_generic_module('test-generic-field')
-        generic_type.write_json(field_data)
-        test_dir = generic_type.path
-
-        result = get_generic_field_data(test_dir, generic_types_list=generic_types_list,
-                                        generic_modules_list=generics_modules_list)
+        result = get_generic_field_data(test_dir, generic_types_list=generic_types_list)
         result = result.get('id')
+        print(result)
         assert 'name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'definitionId' in result.keys()
         assert 'generic_types' in result.keys()
-        assert 'module_id' in result.keys()
 
 
 class TestGenericType:
@@ -1941,28 +1933,50 @@ class TestGenericType:
 
         object_type = pack.create_generic_module('test-object-type')
         object_type.write_json(
-            {"id": "type-id", "name": "type-name", "fromVersion": "version", "definitionId": "definitionid",
+            {"id": "type-id", "name": "type-name", "fromVersion": "version", "definitionId": "Assets",
              "layout": "layout"})
         test_dir = object_type.path
-        objects_modules_list = [{"rbvm": {
-            "name": "Vulnerability Management",
-            "pack": "ObjectsExample",
-            "definitions": {
-                "definitionid": "Assets",
-                "assetGroups": "Asset Groups"}}}]
 
-        result = get_generic_type_data(test_dir, objects_modules_list)
+        result = get_generic_type_data(test_dir)
         result = result.get('type-id')
         assert 'name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'layout' in result.keys()
-        assert 'module_id' in result.keys()
+        assert 'definitionId' in result.keys()
+
+
+class TestGenericDefinition:
+
+    @staticmethod
+    def test_get_generic_definition_data(pack):
+        """
+        Given
+            - A generic definition file
+
+        When
+            - parsing definition type files
+
+        Then
+            - parsing all the data from file successfully
+        """
+
+        object_type = pack.create_generic_definition('test-generic-definition')
+        object_type.write_json(
+            {"id": "type-id", "name": "type-name", "fromVersion": "version", "auditable": False})
+        test_dir = object_type.path
+
+        result = get_general_data(test_dir)
+        result = result.get('type-id')
+        assert 'name' in result.keys()
+        assert 'file_path' in result.keys()
+        assert 'fromversion' in result.keys()
+        assert 'pack' in result.keys()
 
 
 class TestGenericModule:
     @staticmethod
-    def test_get_object_module_data(repo):
+    def test_get_generic_module_data(repo):
         """
         Given
             - A generic module file
@@ -1978,10 +1992,7 @@ class TestGenericModule:
                        "version": -1,
                        "name": "Vulnerability Management",
                        "fromVersion": "6.5.0",
-                       "definitions": [{
-                           "id": "assets",
-                           "name": "Assets"
-                       }, ],
+                       "definitionIds": ["assets"],
                        "views": [{
                            "name": "Vulnerability Management",
                            "title": "Risk Base Vulnerability Management",
@@ -2006,7 +2017,7 @@ class TestGenericModule:
         assert 'name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
-        assert 'definitions' in result.keys()
+        assert 'definitionIds' in result.keys()
         assert 'views' in result.keys()
         assert 'pack' in result.keys()
 

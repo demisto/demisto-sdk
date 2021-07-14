@@ -520,7 +520,7 @@ class ContributionConverter:
         items_path = {content_item.get('source_id'): content_item.get('source_file_name')
                       for content_item in self.detected_content_items}
 
-        for line in list(filter(None, self.release_notes.splitlines())):
+        for line in filter(None, self.release_notes.splitlines()):
             if line.startswith(entity_identifier):
                 entity_name = line.lstrip(entity_identifier)
                 if items_path.get(entity_name):

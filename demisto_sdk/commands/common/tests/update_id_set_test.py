@@ -1906,8 +1906,7 @@ class TestGenericFields:
         generic_field.write_json(field_data)
         test_dir = generic_field.path
 
-        result = get_generic_field_data(test_dir, generic_types_list=generic_types_list,
-                                        generic_modules_list=generic_modules_list)
+        result = get_generic_field_data(test_dir, generic_types_list=generic_types_list)
         result = result.get('id')
         print(result)
         assert 'name' in result.keys()

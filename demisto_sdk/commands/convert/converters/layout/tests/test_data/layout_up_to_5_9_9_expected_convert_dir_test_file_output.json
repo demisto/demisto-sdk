@@ -41,7 +41,7 @@
   },
   "toVersion": "5.9.9",
   "version": -1,
-  "fromVersion": "4.1.0"
+  "fromVersion": "5.0.0"
  },
  "detailsV2": {
   "kind": "detailsV2",
@@ -370,7 +370,7 @@
   "typeId": "ExtraHop Detection",
   "toVersion": "5.9.9",
   "version": -1,
-  "fromVersion": "4.1.0"
+  "fromVersion": "5.0.0"
  },
  "edit": {
   "typeId": "ExtraHop Detection",
@@ -547,7 +547,7 @@
   },
   "toVersion": "5.9.9",
   "version": -1,
-  "fromVersion": "4.1.0"
+  "fromVersion": "5.0.0"
  },
  "mobile": {
   "kind": "mobile",
@@ -808,7 +808,7 @@
   "typeId": "ExtraHop Detection",
   "toVersion": "5.9.9",
   "version": -1,
-  "fromVersion": "4.1.0"
+  "fromVersion": "5.0.0"
  },
  "quickView": {
   "kind": "quickView",
@@ -1090,6 +1090,6 @@
   "typeId": "ExtraHop Detection",
   "toVersion": "5.9.9",
   "version": -1,
-  "fromVersion": "4.1.0"
+  "fromVersion": "5.0.0"
  }
 }

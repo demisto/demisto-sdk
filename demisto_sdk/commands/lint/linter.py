@@ -419,6 +419,8 @@ class Linter:
         # if pylint did not run and failure exit code has been returned from run commnad
         elif exit_code & FAIL:
             status = FAIL
+            logger.debug(f"{log_prompt} - Actual XSOAR linter error -")
+            logger.debug(f"{log_prompt} - Full format stdout: {RL if stdout else ''}{stdout}")
             # for contrib prs which are not merged from master and do not have pylint in dev-requirements-py2.
             if os.environ.get('CI'):
                 stdout = "Xsoar linter could not run, Please merge from master"

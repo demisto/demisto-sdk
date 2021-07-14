@@ -538,10 +538,11 @@ def collect_ids(file_path):
 
 
 def get_from_version(file_path):
-    data_dictionary = get_yaml(file_path)
+    data_dictionary = get_yaml(file_path) or get_json(file_path)
 
     if data_dictionary:
-        from_version = data_dictionary.get('fromversion', '0.0.0')
+        from_version = data_dictionary.get('fromversion') if 'fromversion' in data_dictionary\
+            else data_dictionary.get('fromVersion', '0.0.0')
         if from_version == "":
             return "0.0.0"
 
@@ -953,7 +954,7 @@ def get_dict_from_file(path: str, use_ryaml: bool = False,
         raises_error - Whether to raise a FileNotFound error if `path` is not a valid file.
 
     Returns:
-        dict representation of the file, and the file_type, either .yml ot .json
+        dict representation of the file, and the file_type, either .yml or .json
     """
     try:
         if path:
@@ -988,7 +989,7 @@ def find_type_by_path(path: str = '') -> Optional[FileType]:
         if 'README' in path:
             return FileType.README
 
-        if RELEASE_NOTES_DIR in path:
+        if RELEASE_NOTES_DIR in path:  # [-2] is the file's dir name
             return FileType.RELEASE_NOTES
 
         if 'description' in path:
@@ -1049,13 +1050,13 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
             return FileType.INTEGRATION
 
         if 'script' in _dict:
-            if TEST_PLAYBOOKS_DIR in path and not ignore_sub_categories:
+            if TEST_PLAYBOOKS_DIR in Path(path).parts and not ignore_sub_categories:
                 return FileType.TEST_SCRIPT
 
             return FileType.SCRIPT
 
         if 'tasks' in _dict:
-            if TEST_PLAYBOOKS_DIR in path:
+            if TEST_PLAYBOOKS_DIR in Path(path).parts:
                 return FileType.TEST_PLAYBOOK
 
             return FileType.PLAYBOOK
@@ -1067,7 +1068,9 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
         if 'orientation' in _dict:
             return FileType.REPORT
 
-        if 'color' in _dict and 'cliName' not in _dict:  # check against another key to make it more robust
+        if 'color' in _dict and 'cliName' not in _dict:
+            if 'definitionId' in _dict and _dict['definitionId'] not in [None, 'incident', 'indicator']:
+                return FileType.GENERIC_TYPE
             return FileType.INCIDENT_TYPE
 
         # 'regex' key can be found in new reputations files while 'reputations' key is for the old reputations
@@ -1088,7 +1091,7 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
         if 'canvasContextConnections' in _dict:
             return FileType.CONNECTION
 
-        if 'layout' in _dict or 'kind' in _dict:
+        if 'layout' in _dict or 'kind' in _dict:  # it's a Layout or Dashboard but not a Generic Object
             if 'kind' in _dict or 'typeId' in _dict:
                 return FileType.LAYOUT
 
@@ -1097,9 +1100,17 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
         if 'group' in _dict and LAYOUT_CONTAINER_FIELDS.intersection(_dict):
             return FileType.LAYOUTS_CONTAINER
 
+        if 'definitionIds' in _dict and 'views' in _dict:
+            return FileType.GENERIC_MODULE
+
+        if 'auditable' in _dict:
+            return FileType.GENERIC_DEFINITION
+
         # When using it for all files validation- sometimes 'id' can be integer
         if 'id' in _dict:
             if isinstance(_dict['id'], str):
+                if 'definitionId' in _dict and _dict['definitionId'].lower() not in [None, 'incident', 'indicator']:
+                    return FileType.GENERIC_FIELD
                 _id = _dict['id'].lower()
                 if _id.startswith('incident'):
                     return FileType.INCIDENT_FIELD

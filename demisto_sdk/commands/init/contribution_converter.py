@@ -5,6 +5,7 @@ import shutil
 import textwrap
 import traceback
 import zipfile
+from collections import defaultdict
 from datetime import datetime
 from string import punctuation
 from typing import Dict, List, Union
@@ -28,6 +29,8 @@ from demisto_sdk.commands.generate_docs.generate_playbook_doc import \
 from demisto_sdk.commands.generate_docs.generate_script_doc import \
     generate_script_doc
 from demisto_sdk.commands.split_yml.extractor import Extractor
+from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+from demisto_sdk.commands.update_release_notes.update_rn_manager import UpdateReleaseNotesManager
 
 
 class ContributionConverter:
@@ -49,12 +52,17 @@ class ContributionConverter:
         create_new (bool): True if creating a new pack (default), False if updating an existing pack
         gh_user (str): The github username of the person contributing the pack
         readme_files (List[str]): The readme files paths that is generated for new content items.
+        update_type (str): The type of update being done. For exiting pack only.
+        release_notes (str): The release note text. For exiting pack only.
+        detected_content_items (List[str]):
+            List of the detected content items objects in the contribution. For exiting pack only.
     """
     DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 
     def __init__(self, name: str = '', contribution: Union[str] = None, description: str = '', author: str = '',
-                 gh_user: str = '', create_new: bool = True, pack_dir_name: Union[str] = None,
-                 base_dir: Union[str] = None, no_pipenv: bool = False):
+                 gh_user: str = '', create_new: bool = True, pack_dir_name: Union[str] = None, update_type: str = '',
+                 release_notes: str = '', detected_content_items: list = None, base_dir: Union[str] = None,
+                 no_pipenv: bool = False):
         """Initializes a ContributionConverter instance
 
         Note that when recieving a contribution that is an update to an existing pack that the values of 'name',
@@ -80,6 +88,9 @@ class ContributionConverter:
         self.contribution = contribution
         self.description = description
         self.author = author
+        self.update_type = update_type or 'revision'
+        self.release_notes = release_notes
+        self.detected_content_items = detected_content_items or []
         self.gh_user = gh_user
         self.contrib_conversion_errs: List[str] = []
         self.create_new = create_new
@@ -280,8 +291,8 @@ class ContributionConverter:
                     for file in files:
                         file_name = os.path.basename(file)
                         if file_name.startswith('integration-') \
-                           or file_name.startswith('script-') \
-                           or file_name.startswith('automation-'):
+                                or file_name.startswith('script-') \
+                                or file_name.startswith('automation-'):
                             unified_file = file
                             self.generate_readme_for_pack_content_item(unified_file)
                             os.remove(unified_file)
@@ -308,7 +319,8 @@ class ContributionConverter:
                     # create pack metadata file
                     with zipfile.ZipFile(self.contribution) as zipped_contrib:
                         with zipped_contrib.open('metadata.json') as metadata_file:
-                            click.echo(f'Pulling relevant information from {metadata_file.name}', color=LOG_COLORS.NATIVE)
+                            click.echo(f'Pulling relevant information from {metadata_file.name}',
+                                       color=LOG_COLORS.NATIVE)
                             metadata = json.loads(metadata_file.read())
                             self.create_metadata_file(metadata)
                 # create base files
@@ -364,7 +376,6 @@ class ContributionConverter:
                 what already exists in the repo.
         """
         child_files = get_child_files(content_item_dir)
-        content_item_file_path = ''
         for child_file in child_files:
             cf_name_lower = os.path.basename(child_file).lower()
             if cf_name_lower.startswith((SCRIPT, AUTOMATION, INTEGRATION)) and cf_name_lower.endswith('yml'):
@@ -451,7 +462,7 @@ class ContributionConverter:
             json.dump(metadata_dict, pack_metadata_file, indent=4)
 
     @staticmethod
-    def create_pack_metadata(data: Dict = {}) -> Dict:
+    def create_pack_metadata(data: Dict = None) -> Dict:
         """Builds pack metadata JSON content.
 
         Args:
@@ -479,3 +490,69 @@ class ContributionConverter:
             pack_metadata.update(data)
 
         return pack_metadata
+
+    def execute_update_rn(self):
+        """
+        Bump the pack version in the pack metadata according to the update type
+        and create a release-note file using the release-notes text.
+
+        """
+        rn_mng = UpdateReleaseNotesManager(user_input=self.dir_name, update_type=self.update_type, )
+        rn_mng.manage_rn_update()
+        self.replace_RN_template_with_value(rn_mng.rn_path[0])
+
+    def format_user_input(self) -> Dict[str, str]:
+        """
+        Replace the content item name with the content item display name if exists
+        to match the template that being generated by the UpdateRN class by calling
+        UpdateRN class function get_display_name(file_path)
+
+        Build a dictionary with the release notes text per content item detected.
+
+        Returns:
+            Dict: Key is content item name, value is release note entry
+        """
+        entity_identifier = '##### '
+        content_item_type_identifier = '#### '
+        rn_per_content_item = defaultdict(str)
+        entity_name = 'NonEntityRelated'
+
+        items_path = {content_item.get('source_id'): content_item.get('source_file_name')
+                      for content_item in self.detected_content_items}
+
+        for line in filter(None, self.release_notes.splitlines()):
+            if line.startswith(entity_identifier):
+                entity_name = line.lstrip(entity_identifier)
+                if items_path.get(entity_name):
+                    entity_name = UpdateRN.get_display_name(items_path.get(entity_name))
+            elif not line.startswith(content_item_type_identifier):
+                rn_per_content_item[entity_name] = rn_per_content_item[entity_name] + line + '\n'
+        return rn_per_content_item
+
+    def replace_RN_template_with_value(self, rn_path: str):
+        """
+        Replace the release notes template for a given release-note file path
+        with the contributor's text.
+        Will only affect the detected content items template text.
+        New items rn entries and updated docker image entries for the detected items won't get changed.
+
+        Args:
+            rn_path: path to the rn file created.
+        """
+        entity_identifier = '##### '
+        template_text = '%%UPDATE_RN%%'
+
+        rn_per_content_item = self.format_user_input()
+
+        with open(rn_path, 'r+') as rn_file:
+            lines = rn_file.readlines()
+            for index in range(len(lines)):
+                if template_text in lines[index]:
+                    template_entity = lines[index - 1].lstrip(entity_identifier).rstrip('\n')
+                    curr_content_items = rn_per_content_item.get(template_entity)
+                    if curr_content_items:
+                        lines[index] = curr_content_items
+
+            rn_file.seek(0)
+            rn_file.writelines(lines)
+            rn_file.truncate()

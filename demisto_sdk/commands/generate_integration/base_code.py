@@ -59,7 +59,7 @@ def test_module(client: Client) -> None:
     return_results('ok')
 
 
-def main():
+def main() -> None:
 
     params: Dict[str, Any] = demisto.params()
     args: Dict[str, Any] = demisto.args()

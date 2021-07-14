@@ -17,8 +17,7 @@ from demisto_sdk.commands.common.update_id_set import (
     get_report_data, get_script_data, get_values_for_keys_recursively,
     get_widget_data, has_duplicate, merge_id_sets, process_general_items,
     process_incident_fields, process_integration, process_script,
-    re_create_id_set)
-
+    re_create_id_set, get_generic_module_data, get_generic_type_data, get_generic_field_data)
 from TestSuite.utils import IsEqualFunctions
 
 TESTS_DIR = f'{git_path()}/demisto_sdk/tests'
@@ -1868,6 +1867,159 @@ class TestFlow(unittest.TestCase):
             assert any('dup-check-dashbaord' in i for i in dup_data)
             assert any('layout-dup-check-id' in i for i in dup_data)
             assert any('incident_account_field_dup_check' in i for i in dup_data)
+
+
+class TestGenericFields:
+    @staticmethod
+    def test_process_generic_fields(pack):
+        """
+        Given
+            - A generic field file
+
+        When
+            - parsing generic field files
+
+        Then
+            - parsing all the data from file successfully
+        """
+
+        field_data = {
+            "cliName": "operatigsystem",
+            "id": "id",
+            "name": "Operating System",
+            "definitionId": "assets",
+            "fromVersion": "6.5.0",
+            "associatedTypes": ["Asset Type"]}
+
+        generic_types_list = [{
+            "Asset Type": {
+                "name": "Asset Type",
+                "file_path": "path/path",
+                "fromversion": "6.5.0",
+                "pack": "ObjectsExample",
+                "definitionId": "assets",
+                "layout": "Workstation Layout"
+            }
+        }]
+
+        generic_field = pack.create_generic_field('test-generic-field')
+        generic_field.write_json(field_data)
+        test_dir = generic_field.path
+
+        result = get_generic_field_data(test_dir, generic_types_list=generic_types_list)
+        result = result.get('id')
+        print(result)
+        assert 'name' in result.keys()
+        assert 'file_path' in result.keys()
+        assert 'fromversion' in result.keys()
+        assert 'definitionId' in result.keys()
+        assert 'generic_types' in result.keys()
+
+
+class TestGenericType:
+
+    @staticmethod
+    def test_get_generic_type_data(pack):
+        """
+        Given
+            - A generic type file
+
+        When
+            - parsing object type files
+
+        Then
+            - parsing all the data from file successfully
+        """
+
+        object_type = pack.create_generic_module('test-object-type')
+        object_type.write_json(
+            {"id": "type-id", "name": "type-name", "fromVersion": "version", "definitionId": "Assets",
+             "layout": "layout"})
+        test_dir = object_type.path
+
+        result = get_generic_type_data(test_dir)
+        result = result.get('type-id')
+        assert 'name' in result.keys()
+        assert 'file_path' in result.keys()
+        assert 'fromversion' in result.keys()
+        assert 'layout' in result.keys()
+        assert 'definitionId' in result.keys()
+
+
+class TestGenericDefinition:
+
+    @staticmethod
+    def test_get_generic_definition_data(pack):
+        """
+        Given
+            - A generic definition file
+
+        When
+            - parsing definition type files
+
+        Then
+            - parsing all the data from file successfully
+        """
+
+        object_type = pack.create_generic_definition('test-generic-definition')
+        object_type.write_json(
+            {"id": "type-id", "name": "type-name", "fromVersion": "version", "auditable": False})
+        test_dir = object_type.path
+
+        result = get_general_data(test_dir)
+        result = result.get('type-id')
+        assert 'name' in result.keys()
+        assert 'file_path' in result.keys()
+        assert 'fromversion' in result.keys()
+        assert 'pack' in result.keys()
+
+
+class TestGenericModule:
+    @staticmethod
+    def test_get_generic_module_data(repo):
+        """
+        Given
+            - A generic module file
+
+        When
+            - parsing generic generic module files
+
+        Then
+            - parsing all the data from file successfully
+        """
+
+        module_data = {"id": "id",
+                       "version": -1,
+                       "name": "Vulnerability Management",
+                       "fromVersion": "6.5.0",
+                       "definitionIds": ["assets"],
+                       "views": [{
+                           "name": "Vulnerability Management",
+                           "title": "Risk Base Vulnerability Management",
+                           "tabs": [{
+                               "name": "Assets",
+                               "newButtonDefinitionId": "assets",
+                               "dashboard": {
+                                   "id": "assets_dashboard",
+                                   "version": -1,
+                                   "fromDate": "0001-01-01T00:00:00Z",
+                                   "toDate": "0001-01-01T00:00:00Z",
+                                   "name": "Assets Dashboard",
+                                   "prevName": "Assets Dashboard", }}]}]}
+
+        pack = repo.create_pack('pack')
+        generic_module = pack.create_generic_module('test-generic-module')
+        generic_module.write_json(module_data)
+        test_dir = generic_module.path
+
+        result = get_generic_module_data(test_dir)
+        result = result.get('id')
+        assert 'name' in result.keys()
+        assert 'file_path' in result.keys()
+        assert 'fromversion' in result.keys()
+        assert 'definitionIds' in result.keys()
+        assert 'views' in result.keys()
+        assert 'pack' in result.keys()
 
 
 def test_merge_id_sets(tmp_path):

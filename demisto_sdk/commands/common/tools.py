@@ -1070,7 +1070,7 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
 
         if 'color' in _dict and 'cliName' not in _dict:
             if 'definitionId' in _dict and _dict['definitionId'] and \
-                    _dict['definitionId'].lower() not in [None, 'incident', 'indicator']:
+                    _dict['definitionId'].lower() not in ['incident', 'indicator']:
                 return FileType.GENERIC_TYPE
             return FileType.INCIDENT_TYPE
 
@@ -1111,7 +1111,7 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
         if 'id' in _dict:
             if isinstance(_dict['id'], str):
                 if 'definitionId' in _dict and _dict['definitionId'] and \
-                        _dict['definitionId'].lower() not in [None, 'incident', 'indicator']:
+                        _dict['definitionId'].lower() not in ['incident', 'indicator']:
                     return FileType.GENERIC_FIELD
                 _id = _dict['id'].lower()
                 if _id.startswith('incident'):

@@ -1054,7 +1054,7 @@ class PackDependencies:
 
             if packs_found_from_definitions:
                 pack_dependencies_data = PackDependencies. \
-                    _label_as_mandatory(packs_found_from_scripts)
+                    _label_as_mandatory(packs_found_from_definitions)
                 generic_type_dependencies.update(pack_dependencies_data)
 
             if generic_type_dependencies:
@@ -1100,6 +1100,15 @@ class PackDependencies:
                     _label_as_mandatory(packs_found_from_scripts)
                 generic_field_dependencies.update(pack_dependencies_data)
 
+            related_definitions = generic_field_data.get('definitionId')
+            packs_found_from_definitions = PackDependencies._search_packs_by_items_names_or_ids(
+                related_definitions, id_set['GenericDefinitions'], exclude_ignored_dependencies)
+
+            if packs_found_from_definitions:
+                pack_dependencies_data = PackDependencies. \
+                    _label_as_mandatory(packs_found_from_definitions)
+                generic_field_dependencies.update(pack_dependencies_data)
+
             if generic_field_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
                 if verbose:
@@ -1107,6 +1116,56 @@ class PackDependencies:
                         f'{os.path.basename(generic_field_data.get("file_path", ""))} '
                         f'depends on: {generic_field_dependencies}', fg='white')
             dependencies_packs.update(generic_field_dependencies)
+
+        return dependencies_packs
+    @staticmethod
+    def _collect_generic_modules_dependencies(pack_generic_modules: list, id_set: dict, verbose: bool,
+                                            exclude_ignored_dependencies: bool = True) -> set:
+        """
+        Collects generic types dependencies.
+        Args:
+            pack_generic_types (list): collection of pack generics types data.
+            id_set (dict): id set json.
+            verbose (bool): Whether to log the dependencies to the console.
+            exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
+        Returns:
+            set: dependencies data that includes pack id and whether is mandatory or not.
+        """
+        dependencies_packs = set()
+        if verbose:
+            click.secho('### Generic Types', fg='white')
+
+        for generic_module in pack_generic_modules:
+            generic_module_data = next(iter(generic_module.values()))
+            generic_module_dependencies = set()
+
+            related_definitions = generic_module_data.get('definitionId')
+            packs_found_from_definitions = PackDependencies._search_packs_by_items_names_or_ids(
+                related_definitions, id_set['GenericDefinitions'], exclude_ignored_dependencies)
+
+            if packs_found_from_definitions:
+                pack_dependencies_data = PackDependencies. \
+                    _label_as_mandatory(packs_found_from_definitions)
+                generic_module_dependencies.update(pack_dependencies_data)
+
+            related_views = generic_module_data.get('views', {})
+            for view in related_views:
+                related_dashboards = related_views.get(view, {}).get('dashboards', [])
+                packs_found_from_dashboards = PackDependencies._search_packs_by_items_names_or_ids(
+                    related_dashboards, id_set['Dashboards'], exclude_ignored_dependencies)
+
+                if packs_found_from_dashboards:
+                    pack_dependencies_data = PackDependencies. \
+                        _label_as_mandatory(packs_found_from_dashboards)
+                    generic_module_dependencies.update(pack_dependencies_data)
+
+            if generic_module_dependencies:
+                # do not trim spaces from the end of the string, they are required for the MD structure.
+                if verbose:
+                    click.secho(
+                        f'{os.path.basename(generic_module_data.get("file_path", ""))} depends on: {generic_module_dependencies}',
+                        fg='white')
+            dependencies_packs.update(generic_module_dependencies)
 
         return dependencies_packs
 
@@ -1138,8 +1197,8 @@ class PackDependencies:
         pack_items['dashboards'] = PackDependencies._search_for_pack_items(pack_id, id_set['Dashboards'])
         pack_items['reports'] = PackDependencies._search_for_pack_items(pack_id, id_set['Reports'])
         pack_items['generic_types'] = PackDependencies._search_for_pack_items(pack_id, id_set['GenericTypes'])
-        pack_items['generic_fields'] = PackDependencies._search_for_pack_items(pack_id, id_set['GenericModules'])
-        pack_items['generic_modules'] = PackDependencies._search_for_pack_items(pack_id, id_set['GenericFields'])
+        pack_items['generic_fields'] = PackDependencies._search_for_pack_items(pack_id, id_set['GenericFields'])
+        pack_items['generic_modules'] = PackDependencies._search_for_pack_items(pack_id, id_set['GenericModules'])
         pack_items['generic_definitions'] = PackDependencies._search_for_pack_items(pack_id, id_set['GenericDefinitions'])
 
         if not sum(pack_items.values(), []):
@@ -1249,12 +1308,24 @@ class PackDependencies:
             verbose,
             exclude_ignored_dependencies,
         )
+        generic_fields_dependencies = PackDependencies._collect_generic_fields_dependencies(
+            pack_items['generic_fields'],
+            id_set,
+            verbose,
+            exclude_ignored_dependencies,
+        )
+        generic_modules_dependencies = PackDependencies._collect_generic_modules_dependencies(
+            pack_items['generic_modules'],
+            id_set,
+            verbose,
+            exclude_ignored_dependencies,
+        )
 
         pack_dependencies = (
-            scripts_dependencies | playbooks_dependencies | layouts_dependencies | incidents_fields_dependencies |
-            indicators_types_dependencies | integrations_dependencies | incidents_types_dependencies |
-            classifiers_dependencies | mappers_dependencies | widget_dependencies | dashboards_dependencies |
-            reports_dependencies | generic_types_dependencies
+                scripts_dependencies | playbooks_dependencies | layouts_dependencies | incidents_fields_dependencies |
+                indicators_types_dependencies | integrations_dependencies | incidents_types_dependencies |
+                classifiers_dependencies | mappers_dependencies | widget_dependencies | dashboards_dependencies |
+                reports_dependencies | generic_types_dependencies | generic_modules_dependencies | generic_fields_dependencies
         )
 
         return pack_dependencies

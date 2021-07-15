@@ -11,10 +11,11 @@ from distutils.version import LooseVersion
 from enum import Enum
 from functools import partial
 from multiprocessing import Pool, cpu_count
-from typing import Callable, Dict, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 import click
 import networkx
+
 from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    COMMON_TYPES_PACK,
                                                    DASHBOARDS_DIR,
@@ -185,6 +186,61 @@ def get_commands_from_playbook(data_dict: dict) -> tuple:
                     command_to_integration_skippable.add(splitted_cmd[-1])
 
     return command_to_integration, list(command_to_integration_skippable)
+
+
+def get_filters_and_transformers_from_complex_value(complex_value: dict) -> Tuple[list, list]:
+    all_filters = set()
+    all_transformers = set()
+
+    # add the filters to all_filters set
+    filters = complex_value.get('filters', [])
+    for tmp_filter in filters:
+        if tmp_filter:
+            operator = tmp_filter[0].get('operator')
+            all_filters.add(operator)
+
+    # add the transformers to all_transformers set
+    transformers = complex_value.get('transformers', [])
+    for tmp_transformer in transformers:
+        if tmp_transformer:
+            operator = tmp_transformer.get('operator')
+            all_transformers.add(operator)
+
+    return list(all_transformers), list(all_filters)
+
+
+def get_filters_and_transformers_from_playbook(data_dict: dict) -> Tuple[list, list]:
+    all_filters = set()
+    all_transformers = set()
+
+    # collect complex values from playbook inputs
+    inputs = data_dict.get('inputs', [])
+    complex_values = [_input.get('value', {}).get('complex', {}) for _input in inputs]
+
+    # gets the playbook tasks
+    tasks = data_dict.get('tasks', {})
+
+    # collect complex values from playbook tasks
+    for task in tasks.values():
+        # gets the task value
+        if task.get('type') == 'condition':
+            for condition_entry in task.get('conditions', []):
+                for inner_condition in condition_entry.get('condition', []):
+                    if inner_condition:
+                        for condition in inner_condition:
+                            complex_values.append(condition.get('left', {}).get('value', {}).get('complex', {}))
+                            complex_values.append(condition.get('right', {}).get('value', {}).get('complex', {}))
+        else:
+            complex_values.append(task.get('scriptarguments', {}).get('value', {}).get('complex', {}))
+
+    # get transformers and filters from the values
+    for complex_value in complex_values:
+        if complex_value:
+            transformers, filters = get_filters_and_transformers_from_complex_value(complex_value)
+            all_transformers.update(transformers)
+            all_filters.update(filters)
+
+    return list(all_transformers), list(all_filters)
 
 
 def get_integration_api_modules(file_path, data_dictionary, is_unified_integration):
@@ -401,6 +457,9 @@ def get_playbook_data(file_path: str) -> dict:
 
     playbook_data = create_common_entity_data(path=file_path, name=name, to_version=toversion,
                                               from_version=fromversion, pack=pack)
+
+    transformers, filters = get_filters_and_transformers_from_playbook(data_dictionary)
+
     if implementing_scripts:
         playbook_data['implementing_scripts'] = implementing_scripts
     if implementing_playbooks:
@@ -417,6 +476,10 @@ def get_playbook_data(file_path: str) -> dict:
         playbook_data['incident_fields'] = list(dependent_incident_fields)
     if dependent_indicator_fields:
         playbook_data['indicator_fields'] = list(dependent_indicator_fields)
+    if filters:
+        playbook_data['filters'] = filters
+    if transformers:
+        playbook_data['transformers'] = transformers
     return {id_: playbook_data}
 
 
@@ -675,6 +738,8 @@ def get_classifier_data(path):
     toversion = json_data.get('toVersion')
     pack = get_pack_name(path)
     incidents_types = set()
+    transformers: List[str] = []
+    filters: List[str] = []
     definition_id = json_data.get('definitionId')
 
     default_incident_type = json_data.get('defaultIncidentType')
@@ -684,9 +749,19 @@ def get_classifier_data(path):
     for key, value in key_type_map.items():
         incidents_types.add(value)
 
+    transformer = json_data.get('transformer', {})
+    if transformer is dict:
+        complex_value = transformer.get('complex', {})
+        if complex_value:
+            transformers, filters = get_filters_and_transformers_from_complex_value(complex_value)
+
     data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
     if incidents_types:
         data['incident_types'] = list(incidents_types)
+    if filters:
+        data['filters'] = filters
+    if transformers:
+        data['transformers'] = transformers
     if definition_id:
         data['definitionId'] = definition_id
 
@@ -742,6 +817,8 @@ def get_mapper_data(path):
     pack = get_pack_name(path)
     incidents_types = set()
     incidents_fields: set = set()
+    all_transformers = set()
+    all_filters = set()
     definition_id = json_data.get('definitionId')
 
     default_incident_type = json_data.get('defaultIncidentType')
@@ -769,12 +846,24 @@ def get_mapper_data(path):
             # all the incident fields are the keys of the mapping
             incidents_fields = incidents_fields.union(set(internal_mapping.keys()))
 
+        # get_filters_and_transformers_from_complex_value(list(value.get('internalMapping', {}).values())[0]['complex'])
+        for internal_mapping in internal_mapping.values():
+            incident_field_complex = internal_mapping.get('complex', {})
+            if incident_field_complex:
+                transformers, filters = get_filters_and_transformers_from_complex_value(incident_field_complex)
+                all_transformers.update(transformers)
+                all_filters.update(filters)
+
     incidents_fields = {incident_field for incident_field in incidents_fields if incident_field not in BUILT_IN_FIELDS}
     data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
     if incidents_types:
         data['incident_types'] = list(incidents_types)
     if incidents_fields:
         data['incident_fields'] = list(incidents_fields)
+    if all_filters:
+        data['filters'] = list(all_filters)
+    if all_transformers:
+        data['transformers'] = list(all_transformers)
     if definition_id:
         data['definitionId'] = definition_id
 

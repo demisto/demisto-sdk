@@ -526,9 +526,13 @@ class PackDependencies:
                             packs_found_from_integration)
                     playbook_dependencies.update(pack_dependencies_data)
 
+            implementing_scripts = playbook_data.get('implementing_scripts', []) + \
+                playbook_data.get('filters', []) + \
+                playbook_data.get('transformers', [])
+
             # searching for packs of implementing scripts
             playbook_dependencies.update(PackDependencies._differentiate_playbook_implementing_objects(
-                playbook_data.get('implementing_scripts', []),
+                implementing_scripts,
                 skippable_tasks,
                 id_set['scripts'],
                 exclude_ignored_dependencies
@@ -900,6 +904,15 @@ class PackDependencies:
                     packs_found_from_incident_types)
                 classifier_dependencies.update(pack_dependencies_data)
 
+            # collect pack dependencies from transformers and filters
+            related_scripts = classifier_data.get('filters', []) + classifier_data.get('transformers', [])
+            packs_found_from_scripts = PackDependencies._search_packs_by_items_names_or_ids(
+                related_scripts, id_set['scripts'], exclude_ignored_dependencies)
+
+            if packs_found_from_scripts:
+                pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_scripts)
+                classifier_dependencies.update(pack_dependencies_data)
+
             if classifier_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
                 if verbose:
@@ -954,6 +967,15 @@ class PackDependencies:
             if packs_found_from_incident_fields:
                 pack_dependencies_data = PackDependencies._update_optional_commontypes_pack_dependencies(
                     packs_found_from_incident_fields)
+                mapper_dependencies.update(pack_dependencies_data)
+
+            # collect pack dependencies from transformers and filters
+            related_scripts = mapper_data.get('filters', []) + mapper_data.get('transformers', [])
+            packs_found_from_scripts = PackDependencies._search_packs_by_items_names_or_ids(
+                related_scripts, id_set['scripts'], exclude_ignored_dependencies)
+
+            if packs_found_from_scripts:
+                pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_scripts)
                 mapper_dependencies.update(pack_dependencies_data)
 
             if mapper_dependencies:

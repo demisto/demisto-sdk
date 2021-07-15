@@ -13,7 +13,7 @@ from demisto_sdk.commands.convert.converters.layout.layout_base_converter import
 
 
 class LayoutBelowSixConverter(LayoutBaseConverter):
-    MINIMAL_FROM_VERSION = '4.1.0'
+    MINIMAL_FROM_VERSION = '5.0.0'
 
     def __init__(self, pack: Pack):
         super().__init__(pack)

@@ -5,6 +5,19 @@
 * Added a validation that mapper's id and name are matching. Updated the format of mapper to include update_id too.
 * Added a validation to ensure that image paths in the README files are valid.
 * Fixed **find_type** function to correctly find test files, such as, test script and test playbook.
+* Added scheme validations for the new Generic Object Types, Fields, and Modules.
+* Renamed the flag *--input-old-version* to *--old-version* in the **generate-docs** command.
+* Refactored the **update-release-notes** command:
+  - Replaced the *--all* flag with *--use-git* or *-g*.
+  - Added the *--force* flag to update the pack release notes without changes in the pack.
+  - The **update-release-notes** command will now update all dependent integrations on ApiModule change, even if not specified.
+  - If more than one pack has changed, the full list of updated packs will be printed at the end of **update-release-notes** command execution.
+  - Fixed an issue where the **update-release-notes** command did not add docker image release notes entry for release notes file if a script was changed.
+  - Fixed an issue where the **update-release-notes** command did not detect changed files that had the same name.
+  - Fixed an issue in the **update-release-notes** command where the version support of JSON files was mishandled.
+* Updated the **create-id-set** command to support generic modules, definitions, fields and types.
+* Changed the **convert** command to generate old layout fromversion to 5.0.0 instead of 4.1.0
+* Enhanced the command **postman-codegen** with type hints for templates.
 
 # 1.4.3
 * Fixed an issue where **json-to-outputs** command returned an incorrect output when json is a list.

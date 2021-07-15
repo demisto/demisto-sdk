@@ -20,16 +20,20 @@ Supported content entities:
 - Dashboards
 - Incident Types
 - Incident Fields
+- Indicator Fields
+- Indicator Types
 - Layouts
+- Layouts Container
 - Classifiers
 - Packs
 - Zipped packs
+- Reports
 
 #### Limitation
 Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up.
 
 ### Arguments
-* **-i <PATH_IN_CONTENT>, --<PATH_IN_CONTENT>**
+* **-i <PATH_IN_CONTENT>, --input --<PATH_IN_CONTENT>**
 
     Where PATH_IN_CONTENT is one of the following:
     1. Pack
@@ -66,11 +70,13 @@ demisto-sdk upload -i Packs/HelloWorld/Scripts/HelloWorldScript
 ```
 This will create a temporary unified file of the `HelloWorldScript` **script** which will be uploaded to the Cortex XSOAR instance.
 <br/><br/>
+
 ```
 demisto-sdk upload -i Packs/HelloWorld/Scripts
 ```
 This will iterate over the **scripts** folder under the `HelloWorld` pack and in turn will create a temporary unified file for each script and upload it to the Cortex XSOAR instance.
 <br/><br/>
+
 ```
 demisto-sdk upload -i Packs/HelloWorld
 ```

@@ -1,0 +1,81 @@
+type: map
+mapping:
+  id:
+    type: str
+    required: true
+  version:
+    type: int
+    required: true
+  vcShouldIgnore:
+    type: bool
+  sortValues:
+    type: any
+  locked:
+    type: bool
+  name:
+    type: str
+    required: true
+  prevName:
+    type: str
+  color:
+    type: str
+    required: true
+  sla:
+    type: int
+  slaReminder:
+    type: int
+  playbookId:
+    type: str
+  hours:
+    type: int
+  days:
+    type: int
+  weeks:
+    type: int
+  hoursR:
+    type: int
+  daysR:
+    type: int
+  weeksR:
+    type: int
+  system:
+    type: bool
+  readonly:
+    type: bool
+  default:
+    type: bool
+  autorun:
+    type: bool
+  preProcessingScript:
+    type: str
+  closureScript:
+    type: str
+  disabled:
+    type: bool
+  reputationCalc:
+    type: int
+    enum: [0, 1, 2]
+  onChangeRepAlg:
+    type: int
+    enum: [0, 1, 2]
+  detached:
+    type: bool
+  fromVersion:
+    type: str
+  toVersion:
+    type: str
+  layout:
+    type: str
+  extractSettings:
+    type: map
+    mapping:
+      fieldCliNameToExtractSettings:
+        type: any
+      mode:
+        type: str
+  definitionId:
+    type: str
+    required: true
+  genericModuleId:
+    type: str
+    required: true

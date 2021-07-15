@@ -1,4 +1,5 @@
 # Changelog
+* Updated the **upload** command to support uploading zipped packs to the marketplace.
 * When formatting incident types with Auto-Extract rules and without mode field, the **format** command will now add the user selected mode.
 * Added new validation that DBotRole is set for scripts that requires elevated permissions to the `XSOAR-linter` in the **lint** command.
 * Added url escaping to markdown human readable section in generate docs to avoid autolinking.

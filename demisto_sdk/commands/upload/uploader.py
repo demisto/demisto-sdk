@@ -306,7 +306,7 @@ class Uploader:
                 pack_names = '\n'.join(common_packs)
                 click.secho(f'This command will overwrite the following packs:\n{pack_names}.\n'
                             'Any changes made on XSOAR will be lost.\n'
-                            'Are you sure you want to continue? Y/N', fg='bright_red')
+                            'Are you sure you want to continue? Y/[N]', fg='bright_red')
                 answer = str(input())
                 return answer in ['y', 'Y', 'yes']
 

@@ -804,7 +804,8 @@ TESTS_AND_DOC_DIRECTORIES = [
     'test_data',
     'data_test',
     'tests_data',
-    'doc_files'
+    'doc_files',
+    'doc_imgs',
 ]
 
 FILE_TYPES_FOR_TESTING = [

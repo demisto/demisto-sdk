@@ -260,6 +260,38 @@ class PackDependencies:
         return packs
 
     @staticmethod
+    def _search_packs_by_items_ids(items_names: Union[str, list],
+                                            items_list: list,
+                                            exclude_ignored_dependencies: bool = True,) -> set:
+        """
+        Searches for implemented packs of the given items.
+
+        Args:
+            items_names (str or list): items names to search.
+            items_list (list): specific section of id set.
+            exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
+        Returns:
+            set: found pack ids.
+
+        """
+        packs = set()
+        if not isinstance(items_names, list):
+            items_names = [items_names]
+
+        for item_name in items_names:
+
+            for item_from_id_set in items_list:
+                machine_name = list(item_from_id_set.keys())[0]
+                item_details = list(item_from_id_set.values())[0]
+                if (machine_name in item_possible_ids or item_name == item_details.get('name')) \
+                        and item_details.get('pack') \
+                        and LooseVersion(item_details.get('toversion', '99.99.99')) >= MINIMUM_DEPENDENCY_VERSION \
+                        and (item_details['pack'] not in constants.IGNORED_DEPENDENCY_CALCULATION or
+                             not exclude_ignored_dependencies):
+                    packs.add(item_details.get('pack'))
+        return packs
+
+    @staticmethod
     def _search_packs_by_integration_command(command: str,
                                              id_set: dict,
                                              exclude_ignored_dependencies: bool = True) -> set:
@@ -1016,13 +1048,13 @@ class PackDependencies:
                     _label_as_mandatory(packs_found_from_scripts)
                 generic_type_dependencies.update(pack_dependencies_data)
 
-            related_modules = generic_type_data.get('module_id')
-            packs_found_from_modules = PackDependencies._search_packs_by_items_names(
-                related_modules, id_set['module_id'], exclude_ignored_dependencies)
+            related_definitions = generic_type_data.get('definitionId')
+            packs_found_from_definitions = PackDependencies._search_packs_by_items_names_or_ids(
+                related_definitions, id_set['GenericDefinitions'], exclude_ignored_dependencies)
 
-            if packs_found_from_modules:
+            if packs_found_from_definitions:
                 pack_dependencies_data = PackDependencies. \
-                    _label_as_mandatory(packs_found_from_modules)
+                    _label_as_mandatory(packs_found_from_scripts)
                 generic_type_dependencies.update(pack_dependencies_data)
 
             if generic_type_dependencies:
@@ -1108,6 +1140,7 @@ class PackDependencies:
         pack_items['generic_types'] = PackDependencies._search_for_pack_items(pack_id, id_set['GenericTypes'])
         pack_items['generic_fields'] = PackDependencies._search_for_pack_items(pack_id, id_set['GenericModules'])
         pack_items['generic_modules'] = PackDependencies._search_for_pack_items(pack_id, id_set['GenericFields'])
+        pack_items['generic_definitions'] = PackDependencies._search_for_pack_items(pack_id, id_set['GenericDefinitions'])
 
         if not sum(pack_items.values(), []):
             click.secho(f"Couldn't find any items for pack '{pack_id}'. Please make sure:\n"
@@ -1210,13 +1243,18 @@ class PackDependencies:
             exclude_ignored_dependencies,
             header='Reports'
         )
-
+        generic_types_dependencies = PackDependencies._collect_generic_types_dependencies(
+            pack_items['generic_types'],
+            id_set,
+            verbose,
+            exclude_ignored_dependencies,
+        )
 
         pack_dependencies = (
             scripts_dependencies | playbooks_dependencies | layouts_dependencies | incidents_fields_dependencies |
             indicators_types_dependencies | integrations_dependencies | incidents_types_dependencies |
             classifiers_dependencies | mappers_dependencies | widget_dependencies | dashboards_dependencies |
-            reports_dependencies
+            reports_dependencies | generic_types_dependencies
         )
 
         return pack_dependencies

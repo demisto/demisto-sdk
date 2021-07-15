@@ -6,11 +6,14 @@ import tempfile
 import unittest
 
 import pytest
+
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.update_id_set import (
     find_duplicates, get_classifier_data, get_dashboard_data,
-    get_fields_by_script_argument, get_general_data,
+    get_fields_by_script_argument,
+    get_filters_and_transformers_from_complex_value,
+    get_filters_and_transformers_from_playbook, get_general_data,
     get_incident_fields_by_playbook_input, get_incident_type_data,
     get_indicator_type_data, get_layout_data, get_layoutscontainer_data,
     get_mapper_data, get_pack_metadata_data, get_playbook_data,
@@ -497,6 +500,8 @@ class TestPlaybooks:
         "name": "Dummy Playbook",
         "file_path": TESTS_DIR + "/test_files/DummyPack/Playbooks/DummyPlaybook.yml",
         "fromversion": "4.5.0",
+        "filters": ["isEqualString"],
+        "transformers": ["uniq"],
         "implementing_scripts": [
             "XDRSyncScript",
             "StopScheduledTask",
@@ -636,6 +641,118 @@ class TestPlaybooks:
         # domain task is marked as skippable so it will be included regardless to the graph.
         assert 'domain' in playbook_data.get('skippable_tasks', [])
         assert len(playbook_data.get('skippable_tasks', [])) == 1
+
+    @staticmethod
+    def test_get_filters_from_playbook_tasks():
+        """
+        Given
+        - playbook with one task and 3 filters: isEqualString, isEqualString and StringContainsArray
+
+        When
+        - parsing filters from the playbook
+
+        Then
+        - parsing 2 filters successfully
+        - isEqualString filter shows once
+
+        """
+        data = {'tasks': {'0': {'scriptarguments': {'value': {'complex': {'filters': [[{'operator': 'isEqualString'}],
+                                                                                      [{'operator': 'isEqualString'}],
+                                                                                      [{'operator': 'StringContainsArray'}]
+                                                                                      ]}}}}}}
+        _, filters = get_filters_and_transformers_from_playbook(data)
+        assert len(filters) == 2
+        assert 'isEqualString' in filters
+        assert 'StringContainsArray' in filters
+
+    @staticmethod
+    def test_get_transformers_from_playbook_tasks():
+        """
+        Given
+        - playbook with one task and 3 transformers: Length, Length and toUpperCase
+
+        When
+        - parsing transformers from the playbook
+
+        Then
+        - parsing 2 transformers successfully
+        - Length transformer shows once
+
+        """
+        data = {'tasks': {'0': {'scriptarguments': {'value': {'complex': {'transformers': [{'operator': 'toUpperCase'},
+                                                                                           {'operator': 'Length'},
+                                                                                           {'operator': 'Length'}
+                                                                                           ]}}}}}}
+        transformers, _ = get_filters_and_transformers_from_playbook(data)
+        assert len(transformers) == 2
+        assert 'toUpperCase' in transformers
+        assert 'Length' in transformers
+
+    @staticmethod
+    def test_get_transformers_from_playbook_condition_task():
+        """
+        Given
+        - playbook with one condition task with toUpperCase transformer
+
+        When
+        - parsing transformers from the playbook
+
+        Then
+        - parsing toUpperCase transformer successfully
+
+        """
+        data = {'tasks': {'0': {'type': 'condition', 'conditions': [
+            {'condition': [[{'left': {'value': {'complex': {'transformers': [{'operator': 'toUpperCase'}
+                                                                             ]}}}}]]}]}}}
+        transformers, _ = get_filters_and_transformers_from_playbook(data)
+        assert transformers == ['toUpperCase']
+
+    @staticmethod
+    def test_get_transformers_and_filters_from_playbook_two_conditions_task():
+        """
+        Given
+        - playbook with one task that contains 2 conditions: one with filter and one with transformer
+
+        When
+        - parsing transformers and filters from the playbook
+
+        Then
+        - parsing toUpperCase transformer successfully
+        - parsing isEqualString filter successfully
+
+
+        """
+        data = {'tasks': {'0': {'type': 'condition', 'conditions': [
+            {'condition': [[{'left': {'value': {'complex': {'filters': [[{'operator': 'isEqualString'}]
+                                                                        ]}}}}]]},
+            {'condition': [[{'right': {'value': {'complex': {'transformers': [{'operator': 'toUpperCase'}
+                                                                             ]}}}}]]}]}}}
+
+        transformers, filters = get_filters_and_transformers_from_playbook(data)
+        assert transformers == ['toUpperCase']
+        assert filters == ['isEqualString']
+
+    @staticmethod
+    def test_get_transformers_from_playbook_inputs():
+        """
+        Given
+        - playbook with 2 inputs that using Length and toUpperCase transformers
+
+        When
+        - parsing transformers from the playbook inputs
+
+        Then
+        - parsing 2 transformers successfully
+
+        """
+        data = {'inputs': [{'value': {'complex': {'transformers': [{'operator': 'toUpperCase'}
+                                                                   ]}}},
+                           {'value': {'complex': {'transformers': [{'operator': 'Length'}
+                                                                   ]}}}]}
+        transformers, _ = get_filters_and_transformers_from_playbook(data)
+        assert len(transformers) == 2
+        assert 'toUpperCase' in transformers
+        assert 'Length' in transformers
 
 
 class TestLayouts:
@@ -1251,6 +1368,30 @@ class TestMappers:
             'closed', 'servicenowescalation', 'servicenowurgency', 'subcategory', 'servicenownotify',
             'servicenowcategory', 'remediationsla.dueDate', 'servicenowstate', 'timetoassignment.startDate',
             'servicenowimpact', 'servicenowpriority'}
+
+    @staticmethod
+    def test_process_mappers__complex_value():
+        """
+        Given
+            - An mapper file called classifier-mapper-to-test-complex-value.json with one transformer and one filter
+
+        When
+            - parsing mapper files
+
+        Then
+            - parsing one filter and one transformer from file successfully
+        """
+        test_file = os.path.join(git_path(), 'demisto_sdk', 'commands', 'create_id_set', 'tests',
+                                 'test_data', 'classifier-mapper-to-test-complex-value.json')
+
+        res = get_mapper_data(test_file)
+        result = res.get('dummy mapper')
+        transformers = result.get('transformers')
+        filters = result.get('filters')
+        assert len(transformers) == 1
+        assert 'toUpperCase' in transformers
+        assert len(filters) == 1
+        assert 'isEqualString' in filters
 
 
 class TestWidget:
@@ -2253,3 +2394,35 @@ def test_merged_id_sets_with_legal_duplicates(caplog):
     }
 
     assert not duplicates
+
+
+def test_get_filters_and_transformers_from_complex_value():
+    """
+    Given
+    - complex value with 3 transformers: Length, Length and toUpperCase
+      and 3 filters: isEqualString, isEqualString and StringContainsArray
+
+    When
+    - parsing transformers and filters from the value
+
+    Then
+    - parsing 2 transformers successfully
+    - Length transformer shows once
+    - parsing 2 filters successfully
+    - isEqualString filter shows once
+
+    """
+
+    data = {'transformers': [{'operator': 'toUpperCase'},
+                             {'operator': 'Length'},
+                             {'operator': 'Length'}],
+            'filters': [[{'operator': 'isEqualString'}],
+                        [{'operator': 'isEqualString'}],
+                        [{'operator': 'StringContainsArray'}]]}
+    transformers, filters = get_filters_and_transformers_from_complex_value(data)
+    assert len(transformers) == 2
+    assert len(filters) == 2
+    assert 'toUpperCase' in transformers
+    assert 'Length' in transformers
+    assert 'isEqualString' in filters
+    assert 'StringContainsArray' in filters

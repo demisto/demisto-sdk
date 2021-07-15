@@ -122,6 +122,10 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.DASHBOARD: 'Dashboards',
     FileType.CONNECTION: 'Connections',
     FileType.MAPPER: 'Mappers',
+    FileType.GENERIC_DEFINITION: 'Objects',
+    FileType.GENERIC_MODULE: 'Modules',
+    FileType.GENERIC_TYPE: 'Object Types',
+    FileType.GENERIC_FIELD: 'Object Fields'
 }
 
 ENTITY_TYPE_TO_DIR = {

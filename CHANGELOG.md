@@ -15,6 +15,9 @@
   - Fixed an issue where the **update-release-notes** command did not add docker image release notes entry for release notes file if a script was changed.
   - Fixed an issue where the **update-release-notes** command did not detect changed files that had the same name.
   - Fixed an issue in the **update-release-notes** command where the version support of JSON files was mishandled.
+* Updated the **create-id-set** command to support generic modules, definitions, fields and types.
+* Changed the **convert** command to generate old layout fromversion to 5.0.0 instead of 4.1.0
+* Enhanced the command **postman-codegen** with type hints for templates.
 
 # 1.4.3
 * Fixed an issue where **json-to-outputs** command returned an incorrect output when json is a list.

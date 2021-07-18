@@ -60,7 +60,8 @@ from demisto_sdk.commands.secrets.secrets import SecretsValidator
 from demisto_sdk.commands.split_yml.extractor import Extractor
 from demisto_sdk.commands.test_content.execute_test_content import \
     execute_test_content
-from demisto_sdk.commands.unify.unifier import Unifier
+from demisto_sdk.commands.unify.generic_module_unifier import GenericModuleUnifier
+from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
 from demisto_sdk.commands.update_release_notes.update_rn_manager import \
     UpdateReleaseNotesManager
 from demisto_sdk.commands.upload.uploader import Uploader
@@ -273,15 +274,25 @@ def extract_code(config, **kwargs):
     show_default=False
 )
 def unify(**kwargs):
-    """Unify code, image, description and yml files to a single Demisto yml file. Note that
+    """Unify code, image, description and yml files to a single Demisto yml file, Note that
        this should be used on a single integration/script and not a pack
        not multiple scripts/integrations
+
+       Another use of unify is for unifying a GenericModule object (json) with it's dashboards (also jsons).
+       To use this option - set as input a path to a GenericModule file and not a directory.
     """
     check_configuration_file('unify', kwargs)
     # Input is of type Path.
     kwargs['input'] = str(kwargs['input'])
-    unifier = Unifier(**kwargs)
-    unifier.merge_script_package_to_yml()
+    file_type = find_type(kwargs['input'])
+    if file_type == FileType.GENERIC_MODULE:
+        # pass arguments to GenericModule unifier and call the command
+        unifier = GenericModuleUnifier(**kwargs)
+        unifier.merge_generic_module_with_its_dashboards()
+
+    else:
+        unifier = YmlUnifier(**kwargs)
+        unifier.merge_script_package_to_yml()
     return 0
 
 

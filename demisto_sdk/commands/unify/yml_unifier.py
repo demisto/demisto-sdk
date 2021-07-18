@@ -44,7 +44,7 @@ COMMUNITY_CONTRIBUTOR = 'community'
 INTEGRATIONS_DOCS_REFERENCE = 'https://xsoar.pan.dev/docs/reference/integrations/'
 
 
-class Unifier:
+class YmlUnifier:
 
     def __init__(self, input: str, dir_name=INTEGRATIONS_DIR, output: str = '',
                  image_prefix=DEFAULT_IMAGE_PREFIX, force: bool = False):
@@ -324,7 +324,7 @@ class Unifier:
             code_type = get_yaml(yml_path).get('type')
         else:
             code_type = get_yaml(yml_path).get('script', {}).get('type')
-        unifier = Unifier(self.package_path)
+        unifier = YmlUnifier(self.package_path)
         code_path = unifier.get_code_file(TYPE_TO_EXTENSION[code_type])
         with io.open(code_path, 'r', encoding='utf-8') as code_file:
             code = code_file.read()
@@ -359,7 +359,7 @@ class Unifier:
         """
 
         module_path = os.path.join('./Packs', 'ApiModules', 'Scripts', module_name, module_name + '.py')
-        module_code = Unifier._get_api_module_code(module_name, module_path)
+        module_code = YmlUnifier._get_api_module_code(module_name, module_path)
 
         module_code = '\n### GENERATED CODE ###\n# This code was inserted in place of an API module.{}\n' \
             .format(module_code)

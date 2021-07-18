@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import List, Optional
 
 import yaml
-from demisto_sdk.commands.unify.unifier import Unifier
+from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
 from TestSuite.file import File
 from TestSuite.test_tools import suite_join_path
 from TestSuite.yml import YAML
@@ -90,6 +90,6 @@ class Integration:
         )
 
         if self.create_unified:
-            unifier = Unifier(input=self.path, output=os.path.dirname(self._tmpdir_integration_path))
+            unifier = YmlUnifier(input=self.path, output=os.path.dirname(self._tmpdir_integration_path))
             unifier.merge_script_package_to_yml()
             shutil.rmtree(self._tmpdir_integration_path)

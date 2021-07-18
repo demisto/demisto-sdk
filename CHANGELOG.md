@@ -1,4 +1,5 @@
 # Changelog
+* Added a new code validation that check if script template names exist in the `return_error` function to the `XSOAR-linter` in the **lint** command.
 
 # 1.4.4
 * When formatting incident types with Auto-Extract rules and without mode field, the **format** command will now add the user selected mode.

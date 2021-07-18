@@ -194,7 +194,7 @@ class TestPostmanCodeGen:
         Given
         - postman collection
         - with request Test Report which has variable {{foo}} in the url like:
-        {{url}}/vtapi/v2/:Virus_name/test/{{foo}}?resource=https://www.cobaltstrike.com/
+        {{url}}/vtapi/v2/:virus_name/test/{{foo}}?resource=https://www.cobaltstrike.com/
 
         When
         - generating config file
@@ -211,19 +211,20 @@ class TestPostmanCodeGen:
                 "method": "GET",
                 "header": [],
                 "url": {
-                    "raw": "{{url}}/vtapi/v2/:Virus_name:/test/{{foo}}?resource=https://www.cobaltstrike.com/",
+                    "raw": "{{url}}/vtapi/v2/:virus_name/test/{{foo}}?resource=https://www.cobaltstrike.com/",
                     "host": [
                         "{{url}}"
                     ],
                     "path": [
                         "vtapi",
                         "v2",
+                        ":virus_name",
                         "test",
                         "{{foo}}"
                     ],
                     "variable": [
                         {
-                            "key": "Virus_name",
+                            "key": "virus_name",
                             "value": ""
                         }
                     ],

@@ -328,17 +328,17 @@ def convert_request_to_command(item: dict):
             )
             args.append(arg)
 
-    # for url_path_variable in request_url_object.get('variable', []):
-    #     variable_name = url_path_variable.get('key')
-    #     if not variable_name:
-    #         continue
-    #     arg = IntegrationGeneratorArg(
-    #         name=variable_name,
-    #         description='',
-    #         in_='url'
-    #     )
-    #     args.append(arg)
-    #     url_path = url_path.replace(f'/:{variable_name}', f'/{{{variable_name}}}')
+    for url_path_variable in request_url_object.get('variable', []):
+        variable_name = url_path_variable.get('key')
+        if not variable_name:
+            continue
+        arg = IntegrationGeneratorArg(
+            name=variable_name,
+            description='',
+            in_='url'
+        )
+        args.append(arg)
+        url_path = url_path.replace(f'/:{variable_name}', f'/{{{variable_name}}}')
 
 
     logger.debug(f'creating query arguments of request: {name}')

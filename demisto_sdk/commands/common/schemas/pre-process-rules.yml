@@ -1,0 +1,42 @@
+type: map
+mapping:
+  id:
+    type: str
+    required: True
+  version:
+    type: number
+    required: True
+  action:
+    type: str
+    required: True
+  enabled:
+    type: str
+    required: True
+  existingEventsFilters:
+    type: seq
+    sequence:
+    - include: existingEventsFilters_schema
+  newEventFilters:
+    type: seq
+    sequence:
+    - include: newEventFilters_schema
+  readyExistingEventsFilters:
+    type: seq
+    sequence:
+    - include: readyExistingEventsFilters_schema
+  newEventFilters:
+    type: seq
+    sequence:
+    - include: readyNewEventFilters_schema
+
+schema;existingEventsFilters_schema:
+  type: any
+
+schema;newEventFilters_schema:
+  type: any
+
+schema;readyExistingEventsFilters_schema:
+  type: any
+
+schema;readyNewEventFilters_schema:
+  type: any

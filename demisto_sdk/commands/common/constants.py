@@ -36,6 +36,7 @@ RELEASE_NOTES_DIR = 'ReleaseNotes'
 TESTS_DIR = 'Tests'
 DOC_FILES_DIR = 'doc_files'
 DOCUMENTATION_DIR = 'Documentation'
+PRE_PROCESS_RULES_DIR = 'PreProcessRules'
 
 SCRIPT = 'script'
 AUTOMATION = 'automation'
@@ -102,6 +103,7 @@ class FileType(Enum):
     GENERIC_FIELD = 'genericfield'
     GENERIC_TYPE = 'generictype'
     GENERIC_DEFINITION = 'genericdefinition'
+    PRE_PROCESS_RULES = 'pre_process_rules'
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -122,6 +124,7 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.DASHBOARD: 'Dashboards',
     FileType.CONNECTION: 'Connections',
     FileType.MAPPER: 'Mappers',
+    FileType.PRE_PROCESS_RULES: 'PreProcess Rules',
 }
 
 ENTITY_TYPE_TO_DIR = {
@@ -141,7 +144,8 @@ ENTITY_TYPE_TO_DIR = {
     FileType.REPORT.value: REPORTS_DIR,
     FileType.WIDGET.value: WIDGETS_DIR,
     FileType.BETA_INTEGRATION.value: INTEGRATIONS_DIR,
-    FileType.MAPPER.value: CLASSIFIERS_DIR
+    FileType.MAPPER.value: CLASSIFIERS_DIR,
+    FileType.PRE_PROCESS_RULES.value: PRE_PROCESS_RULES_DIR,
 }
 
 CONTENT_FILE_ENDINGS = ['py', 'yml', 'png', 'json', 'md']
@@ -167,6 +171,7 @@ CONTENT_ENTITIES_DIRS = [
     GENERIC_TYPES_DIR,
     GENERIC_MODULES_DIR,
     GENERIC_DEFINITIONS_DIR,
+    PRE_PROCESS_RULES_DIR,
 ]
 
 CONTENT_ENTITY_UPLOAD_ORDER = [
@@ -181,7 +186,8 @@ CONTENT_ENTITY_UPLOAD_ORDER = [
     CLASSIFIERS_DIR,
     WIDGETS_DIR,
     LAYOUTS_DIR,
-    DASHBOARDS_DIR
+    DASHBOARDS_DIR,
+    PRE_PROCESS_RULES_DIR,
 ]
 
 DEFAULT_IMAGE_PREFIX = 'data:image/png;base64,'
@@ -384,6 +390,9 @@ PACKS_LAYOUT_JSON_REGEX = fr'{PACKS_LAYOUTS_DIR_REGEX}\/(?!layoutscontainer)([^/
 
 PACKS_LAYOUTS_CONTAINER_JSON_REGEX = fr'{PACKS_LAYOUTS_DIR_REGEX}\/layoutscontainer([^/]+)\.json'
 
+PACKS_PRE_PROCESS_RULES_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{PRE_PROCESS_RULES_DIR}'
+PACKS_PRE_PROCESS_RULES_JSON_REGEX = fr'{PACKS_PRE_PROCESS_RULES_DIR_REGEX}\/([^/]+)\.json'
+
 PACKS_WIDGETS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{WIDGETS_DIR}'
 PACKS_WIDGET_JSON_REGEX = fr'{PACKS_WIDGETS_DIR_REGEX}\/([^/]+)\.json'
 
@@ -504,6 +513,8 @@ ID_IN_ROOT = [  # entities in which 'id' key is in the root
     'incident_type',
     'layoutscontainer',
     'mapper',
+    # TODO Correct?
+    'pre_process_rule',
 ]
 
 INTEGRATION_PREFIX = 'integration'
@@ -626,6 +637,10 @@ JSON_ALL_LAYOUTS_CONTAINER_REGEXES = [
     PACKS_LAYOUTS_CONTAINER_JSON_REGEX,
 ]
 
+JSON_ALL_PRE_PROCESS_RULES_REGEXES = [
+    PACKS_PRE_PROCESS_RULES_JSON_REGEX,
+]
+
 JSON_ALL_INCIDENT_FIELD_REGEXES = [
     PACKS_INCIDENT_FIELD_JSON_REGEX,
 ]
@@ -699,6 +714,7 @@ CHECKED_TYPES_REGEXES = [
     PACKS_INDICATOR_TYPE_JSON_REGEX,
     PACKS_LAYOUT_JSON_REGEX,
     PACKS_LAYOUTS_CONTAINER_JSON_REGEX,
+    PACKS_PRE_PROCESS_RULES_JSON_REGEX,
     PACKS_WIDGET_JSON_REGEX,
     PACKS_REPORT_JSON_REGEX,
     PACKS_RELEASE_NOTES_REGEX,
@@ -743,6 +759,7 @@ DIR_LIST_FOR_REGULAR_ENTETIES = [
     INCIDENT_TYPES_DIR,
     INCIDENT_FIELDS_DIR,
     LAYOUTS_DIR,
+    PRE_PROCESS_RULES_DIR,
     CLASSIFIERS_DIR,
     INDICATOR_TYPES_DIR,
     CONNECTIONS_DIR,
@@ -938,6 +955,7 @@ SCHEMA_TO_REGEX = {
     'mapper': JSON_ALL_MAPPER_REGEXES,
     'layoutscontainer': JSON_ALL_LAYOUTS_CONTAINER_REGEXES,
     'layout': JSON_ALL_LAYOUT_REGEXES,
+    'pre_process_rules': JSON_ALL_PRE_PROCESS_RULES_REGEXES,
     'incidentfield': JSON_ALL_INCIDENT_FIELD_REGEXES + JSON_ALL_INDICATOR_FIELDS_REGEXES,
     'incidenttype': JSON_ALL_INCIDENT_TYPES_REGEXES,
     'image': [IMAGE_REGEX],
@@ -1190,7 +1208,8 @@ VALIDATED_PACK_ITEM_TYPES = [
     'IncidentFields',
     'IncidentTypes',
     'Classifiers',
-    'Layouts'
+    'Layouts',
+    'PreProcessRules',
 ]
 
 FIRST_FETCH = 'first_fetch'
@@ -1207,6 +1226,9 @@ SKIP_RELEASE_NOTES_FOR_TYPES = (FileType.RELEASE_NOTES, FileType.README, FileTyp
 LAYOUT_AND_MAPPER_BUILT_IN_FIELDS = ['indicatortype', 'source', 'comment', 'aggregatedreliability', 'detectedips',
                                      'detectedhosts', 'modified', 'expiration', 'timestamp', 'shortdesc',
                                      'short_description', 'description', 'Tags', 'blocked']
+
+# TODO Should this list contain all specific fields?
+PRE_PROCESS_RULES_BUILT_IN_FIELDS = ['scriptName', 'existingEventsFilters', 'readyExistingEventsFilters', 'newEventFilters',]
 
 UUID_REGEX = r'[0-9a-f]{8}\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\b[0-9a-f]{12}'
 
@@ -1246,6 +1268,7 @@ class ContentItems(Enum):
     LAYOUTS = 'layoutscontainer'
     CLASSIFIERS = 'classifier'
     WIDGETS = 'widget'
+    PRE_PROCESS_RULES = 'pre_process_rules'
 
 
 YML_SUPPORTED_FOLDERS = {
@@ -1263,6 +1286,7 @@ JSON_SUPPORTED_FOLDERS = {
     INCIDENT_TYPES_DIR,
     INDICATOR_FIELDS_DIR,
     LAYOUTS_DIR,
+    PRE_PROCESS_RULES_DIR,
     INDICATOR_TYPES_DIR,
     REPORTS_DIR,
     WIDGETS_DIR
@@ -1279,6 +1303,8 @@ CONTENT_ITEMS_DISPLAY_FOLDERS = {
     REPORTS_DIR,
     INDICATOR_TYPES_DIR,
     LAYOUTS_DIR,
+    # TODO Correct?
+    PRE_PROCESS_RULES_DIR,
     CLASSIFIERS_DIR,
     WIDGETS_DIR
 }

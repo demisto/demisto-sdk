@@ -26,11 +26,11 @@ from demisto_sdk.commands.common.constants import (
     CONTEXT_OUTPUT_README_TABLE_HEADER, DASHBOARDS_DIR, DEF_DOCKER,
     DEF_DOCKER_PWSH, DOC_FILES_DIR, ID_IN_COMMONFIELDS, ID_IN_ROOT,
     INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
-    INTEGRATIONS_DIR, LAYOUTS_DIR, OFFICIAL_CONTENT_ID_SET_PATH,
+    INTEGRATIONS_DIR, LAYOUTS_DIR, PRE_PROCESS_RULES_DIR, OFFICIAL_CONTENT_ID_SET_PATH,
     PACK_IGNORE_TEST_FLAG, PACKAGE_SUPPORTING_DIRECTORIES,
     PACKAGE_YML_FILE_REGEX, PACKS_DIR, PACKS_DIR_REGEX,
     PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
-    PACKS_README_FILE_NAME, PLAYBOOKS_DIR, RELEASE_NOTES_DIR,
+    PACKS_README_FILE_NAME, PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR, RELEASE_NOTES_DIR,
     RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR,
     TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, XSOAR_CONFIG_FILE,
     FileType, GithubContentConfig, urljoin)
@@ -1031,6 +1031,7 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
     Returns:
         string representing the content file type
     """
+    print('find_type, path: ' + str(path))
     type_by_path = find_type_by_path(path)
     if type_by_path:
         return type_by_path
@@ -1099,6 +1100,9 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
 
         if 'group' in _dict and LAYOUT_CONTAINER_FIELDS.intersection(_dict):
             return FileType.LAYOUTS_CONTAINER
+
+        if 'scriptName' in _dict and 'existingEventsFilters' in _dict and 'readyExistingEventsFilters' in _dict and 'newEventFilters' in _dict and 'readyNewEventFilters' in _dict:
+            return FileType.PRE_PROCESS_RULES
 
         if 'definitionIds' in _dict and 'views' in _dict:
             return FileType.GENERIC_MODULE
@@ -1469,6 +1473,12 @@ def is_path_of_layout_directory(path: str) -> bool:
     return os.path.basename(path) == LAYOUTS_DIR
 
 
+def is_path_of_pre_process_rules_directory(path: str) -> bool:
+    """Returns true if directory is integration directory false if not.
+    """
+    return os.path.basename(path) == PRE_PROCESS_RULES_DIR
+
+
 def is_path_of_classifier_directory(path: str) -> bool:
     """Returns true if directory is integration directory false if not.
     """
@@ -1685,7 +1695,7 @@ def get_file_displayed_name(file_path):
     elif file_type in [FileType.SCRIPT, FileType.TEST_SCRIPT, FileType.PLAYBOOK, FileType.TEST_PLAYBOOK]:
         return get_yaml(file_path).get('name')
     elif file_type in [FileType.MAPPER, FileType.CLASSIFIER, FileType.INCIDENT_FIELD, FileType.INCIDENT_TYPE,
-                       FileType.INDICATOR_FIELD, FileType.LAYOUTS_CONTAINER, FileType.DASHBOARD, FileType.WIDGET,
+                       FileType.INDICATOR_FIELD, FileType.LAYOUTS_CONTAINER, FileType.PRE_PROCESS_RULES, FileType.DASHBOARD, FileType.WIDGET,
                        FileType.REPORT]:
         return get_json(file_path).get('name')
     elif file_type == FileType.OLD_CLASSIFIER:

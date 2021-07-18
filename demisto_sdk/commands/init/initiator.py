@@ -42,8 +42,8 @@ def extract_values_from_nested_dict_to_a_set(given_dictionary: dict, return_set:
         if isinstance(value, dict):  # value can be a dictionary
             extract_values_from_nested_dict_to_a_set(value, return_set)
         else:
-            for i in value:  # value is a list
-                return_set.add(i)
+            for secret in value:  # value is a list
+                return_set.add(secret)
 
 
 class Initiator:

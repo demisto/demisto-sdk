@@ -103,7 +103,7 @@ class FileType(Enum):
     GENERIC_FIELD = 'genericfield'
     GENERIC_TYPE = 'generictype'
     GENERIC_DEFINITION = 'genericdefinition'
-    PRE_PROCESS_RULES = 'pre_process_rules'
+    PRE_PROCESS_RULES = 'pre-process-rules'
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -955,7 +955,7 @@ SCHEMA_TO_REGEX = {
     'mapper': JSON_ALL_MAPPER_REGEXES,
     'layoutscontainer': JSON_ALL_LAYOUTS_CONTAINER_REGEXES,
     'layout': JSON_ALL_LAYOUT_REGEXES,
-    'pre_process_rules': JSON_ALL_PRE_PROCESS_RULES_REGEXES,
+    'pre-process-rules': JSON_ALL_PRE_PROCESS_RULES_REGEXES,
     'incidentfield': JSON_ALL_INCIDENT_FIELD_REGEXES + JSON_ALL_INDICATOR_FIELDS_REGEXES,
     'incidenttype': JSON_ALL_INCIDENT_TYPES_REGEXES,
     'image': [IMAGE_REGEX],
@@ -1268,7 +1268,7 @@ class ContentItems(Enum):
     LAYOUTS = 'layoutscontainer'
     CLASSIFIERS = 'classifier'
     WIDGETS = 'widget'
-    PRE_PROCESS_RULES = 'pre_process_rules'
+    PRE_PROCESS_RULES = 'pre-process-rules'
 
 
 YML_SUPPORTED_FOLDERS = {

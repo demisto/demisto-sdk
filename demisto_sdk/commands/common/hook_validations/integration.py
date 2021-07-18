@@ -3,6 +3,7 @@ import re
 from typing import Dict, Optional
 
 import yaml
+
 from demisto_sdk.commands.common.constants import (
     BANG_COMMAND_ARGS_MAPPING_DICT, BANG_COMMAND_NAMES, DBOT_SCORES_DICT,
     DEPRECATED_REGEXES, ENDPOINT_COMMAND_NAME, ENDPOINT_FLEXIBLE_REQUIRED_ARGS,
@@ -961,8 +962,7 @@ class IntegrationValidator(ContentEntityValidator):
             (bool).
         """
         display_name = self.current_file.get('display')
-        return self.is_valid_versioned_display_name()
-        # return all([self.is_valid_versioned_display_name(), not self.name_contains_contributor_type_name(display_name)])
+        return all([self.is_valid_versioned_display_name(), not self.name_contains_contributor_type_name(display_name)])
 
     def is_valid_versioned_display_name(self) -> bool:
         version_number: Optional[str] = get_file_version_suffix_if_exists(self.current_file,

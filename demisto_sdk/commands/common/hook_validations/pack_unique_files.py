@@ -12,6 +12,8 @@ from typing import Tuple, Dict
 
 import click
 from dateutil import parser
+from git import GitCommandError, Repo
+
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
     API_MODULES_PACK, PACK_METADATA_CATEGORIES, PACK_METADATA_CERTIFICATION,
@@ -30,7 +32,6 @@ from demisto_sdk.commands.common.tools import (get_core_pack_list, get_json,
                                                pack_name_to_path)
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
-from git import GitCommandError, Repo
 
 CONTRIBUTORS_LIST = ['partner', 'developer', 'community']
 SUPPORTED_CONTRIBUTORS_LIST = ['partner', 'developer']
@@ -298,10 +299,10 @@ class PackUniqueFilesValidator(BaseValidator):
         if re.findall(INCORRECT_PACK_NAME_PATTERN, pack_name):
             if self._add_error(Errors.pack_name_is_not_in_xsoar_standards("wrong_word"), self.pack_meta_file):
                 return False
-        # if self.name_contains_contributor_type_name(pack_name):
-        #     if self._add_error(Errors.pack_name_contains_support_name(pack_name, CONTRIBUTORS_LIST),
-        #                        self.pack_meta_file):
-        #         return False
+        if self.name_contains_contributor_type_name(pack_name):
+            if self._add_error(Errors.pack_name_contains_support_name(pack_name, CONTRIBUTORS_LIST),
+                               self.pack_meta_file):
+                return False
         return True
 
     def _is_pack_meta_file_structure_valid(self):

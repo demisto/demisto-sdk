@@ -4,6 +4,7 @@ import os
 from typing import Optional
 
 import click
+
 from demisto_sdk.commands.common.constants import (PACK_METADATA_SUPPORT,
                                                    PACKS_DIR,
                                                    PACKS_PACK_META_FILE_NAME,
@@ -223,6 +224,5 @@ class BaseValidator:
         Returns:
 
         """
-        pack_or_integration_name = pack_or_integration_name.lower()
-        return any(
-            contributor_name in pack_or_integration_name for contributor_name in ['partner', 'developer', 'community'])
+        lowercase_name = pack_or_integration_name.lower()
+        return any(contributor_name in lowercase_name for contributor_name in ['partner', 'developer', 'community'])

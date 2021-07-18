@@ -193,7 +193,8 @@ class TestPostmanCodeGen:
         """
         Given
         - postman collection
-        - with request Test Report which has variable {{foo}} in the url like: {{url}}/vtapi/v2/test/{{foo}}?resource=https://www.cobaltstrike.com/
+        - with request Test Report which has variable {{foo}} in the url like:
+        {{url}}/vtapi/v2/:Virus_name/test/{{foo}}?resource=https://www.cobaltstrike.com/
 
         When
         - generating config file
@@ -201,6 +202,7 @@ class TestPostmanCodeGen:
         Then
         - integration code, the command test-report will contain foo argument passed to the url
         - integration yml, the command test-report will contain foo arg
+        - integration yml, the command test-report will contain virus_name arg.
         """
         path = tmp_path / 'test-collection.json'
         _testutil_create_postman_collection(dest_path=path, with_request={
@@ -209,7 +211,7 @@ class TestPostmanCodeGen:
                 "method": "GET",
                 "header": [],
                 "url": {
-                    "raw": "{{url}}/vtapi/v2/test/{{foo}}?resource=https://www.cobaltstrike.com/",
+                    "raw": "{{url}}/vtapi/v2/:Virus_name:/test/{{foo}}?resource=https://www.cobaltstrike.com/",
                     "host": [
                         "{{url}}"
                     ],
@@ -218,6 +220,12 @@ class TestPostmanCodeGen:
                         "v2",
                         "test",
                         "{{foo}}"
+                    ],
+                    "variable": [
+                        {
+                            "key": "Virus_name",
+                            "value": ""
+                        }
                     ],
                     "query": [
                         {
@@ -242,10 +250,12 @@ class TestPostmanCodeGen:
         integration_yml = yaml.dump(integration_obj.to_dict())
 
         assert "foo = args.get('foo')" in integration_code
-        assert "def test_report_request(self, foo, resource):" in integration_code
-        assert "'GET', f'vtapi/v2/test/{foo}', params=params, headers=headers)" in integration_code
+        assert "virus_name = args.get('virus_name')" in integration_code
+        assert "def test_report_request(self, foo, virus_name, resource):" in integration_code
+        assert "'GET', f'vtapi/v2/{virus_name}/test/{foo}', params=params, headers=headers)" in integration_code
 
         assert 'name: foo' in integration_yml
+        assert 'name: virus_name' in integration_yml
 
     def test_apikey_passed_as_header(self, tmpdir):
         """

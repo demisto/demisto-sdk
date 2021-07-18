@@ -45,6 +45,11 @@ README_INPUT_RESULTS_LIST = [
     ('Text', True),
 ]
 
+    AUTHOR_IMAGE_INPUT = [
+    ('demisto_sdk/tests/test_files/artifacts/content/content_packs/AuthorImageTest/BadSize/Author_image.png', False),
+    ('demisto_sdk/tests/test_files/artifacts/content/content_packs/AuthorImageTest/SanityCheck/Author_image.png', True)
+]
+
 
 class TestPackUniqueFilesValidator:
     FILES_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
@@ -205,7 +210,7 @@ class TestPackUniqueFilesValidator:
 
         assert not self.validator.validate_core_pack_dependencies(dependencies_packs)
         assert Errors.invalid_core_pack_dependencies('fake_pack', ['dependency_pack_1', 'dependency_pack_3'])[0] \
-            in self.validator.get_errors()
+               in self.validator.get_errors()
 
     def test_validate_pack_dependencies_skip_id_set_creation(self, capsys):
         """
@@ -442,8 +447,7 @@ class TestPackUniqueFilesValidator:
         assert "Unable to find previous pack_metadata.json file - skipping price change validation" in \
                capsys.readouterr().out
 
-    @pytest.mark.parametrize('text, result', README_INPUT_RESULTS_LIST)
-    def test_validate_pack_readme_file_is_not_empty_partner(self, mocker, text, result):
+    def test_validate_pack_readme_file_is_not_empty_partner(self, mocker, result):
         """
        Given:
             - partner pack
@@ -456,7 +460,7 @@ class TestPackUniqueFilesValidator:
         """
         self.validator = PackUniqueFilesValidator(os.path.join(self.FILES_PATH, 'fake_pack'))
         self.validator.support = 'partner'
-        mocker.patch.object(PackUniqueFilesValidator, '_read_file_content', return_value=text)
+        mocker.patch.object(PackUniqueFilesValidator, '_read_file_content', return_value='')
         assert self.validator.validate_pack_readme_file_is_not_empty() == result
 
     @pytest.mark.parametrize('text, result', README_INPUT_RESULTS_LIST)
@@ -512,9 +516,8 @@ class TestPackUniqueFilesValidator:
                 assert 'README.md content is equal to pack description. ' \
                        'Please remove the duplicate description from README.md file' in self.validator.get_errors()
 
-    # TODO: Waiting for an answer from Yaakovi. USE @pytest.mark.parametrize in order to mock test fixture,
-    #  put demo png corrupt files somewhere and complete tests
-    def test_validate_author_image_file(self, mocker, text, result):
+    @pytest.mark.parametrize('filepath, result', AUTHOR_IMAGE_INPUT)
+    def test_validate_author_image_file(self, filepath, result):
         """
        Given:
             - partner pack
@@ -529,6 +532,4 @@ class TestPackUniqueFilesValidator:
                 - Dimensions of 120*50
         """
         self.validator = PackUniqueFilesValidator(os.path.join(self.FILES_PATH, 'fake_pack'))
-        self.validator.support = 'partner'
-        # mocker.patch.object(PackUniqueFilesValidator, '_read_file_content', return_value=text)
-        # assert self.validator.validate_author_image_file() == result
+        assert self.validator.validate_author_image_file() == result

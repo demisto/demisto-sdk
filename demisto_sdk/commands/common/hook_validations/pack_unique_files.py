@@ -13,7 +13,7 @@ from pathlib import Path
 import click
 from dateutil import parser
 from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
+from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK, PACK_METADATA_CATEGORIES, PACK_METADATA_CERTIFICATION,
     PACK_METADATA_CREATED, PACK_METADATA_DEPENDENCIES, PACK_METADATA_DESC,
     PACK_METADATA_EMAIL, PACK_METADATA_FIELDS, PACK_METADATA_KEYWORDS,
@@ -279,7 +279,7 @@ class PackUniqueFilesValidator(BaseValidator):
 
     def _is_author_image_dimensions_valid(self) -> bool:
         author_image = Image.open(self.pack_author_image_file)
-        if not author_image.size == AUTHOR_IMAGE_SIZE:
+        if not author_image.size == AUTHOR_IMAGE_DIMENSIONS:
             self._add_error(Errors.author_image_fie_invalid_dimensions, self.pack_meta_file)
             return False
         return True

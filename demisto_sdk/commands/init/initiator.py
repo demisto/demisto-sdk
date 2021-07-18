@@ -26,16 +26,12 @@ from demisto_sdk.commands.secrets.secrets import SecretsValidator
 
 
 def extract_values_from_nested_dict_to_a_set(given_dictionary: dict, return_set: set):
-    """A recursive function that extracts values (the values are of type list) from a nested dictionary to a set.
+    """Recursively extracts values from a nested dictionary to a set.
 
     Args:
         given_dictionary: The nested dictionary to extract the values from.
-        return_set: the set with the return values.
+        return_set: the set with the extracted values.
 
-    Returns:
-        A set with the values from the dictionary.
-
-    {'a': {'b': ['secret1', 'secret2'], 'e': ['secret1']}, 'g': ['secret3']} -> (secret1, secret2, secret3)
     """
 
     for value in given_dictionary.values():
@@ -408,7 +404,7 @@ class Initiator:
         sv = SecretsValidator(white_list_path='./Tests/secrets_white_list.json')
         # remove directories and irrelevant files
         files = [file for file in files_and_directories if os.path.isfile(file) and sv.is_text_file(file)]
-        # The search_potential_secrets method returns a nested dict with values of type list the values are the secrets
+        # The search_potential_secrets method returns a nested dict with values of type list. The values are the secrets
         # {'a': {'b': ['secret1', 'secret2'], 'e': ['secret1']}, 'g': ['secret3']}
         all_secrets = sv.search_potential_secrets(files)
         secrets: set = set()

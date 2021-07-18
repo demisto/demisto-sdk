@@ -265,6 +265,18 @@ class TestAddCommandToImplementingIntegrationsMapping:
                     ('commands', ['generic-command', 'specific-command']),
                 ])
             },
+            {
+                'Syslog': OrderedDict([
+                    ('name', 'Syslog'),
+                    ('commands', ['send-notification']),
+                ])
+            },
+            {
+                'Slack': OrderedDict([
+                    ('name', 'Slack'),
+                    ('commands', ['send-notification']),
+                ])
+            },
         ]
         playbooks = [
             {
@@ -273,6 +285,7 @@ class TestAddCommandToImplementingIntegrationsMapping:
                     ('command_to_integration', {
                         'specific-command': "",
                         'generic-command': "",
+                        'send-notification': ""
                     }),
                 ]),
             },
@@ -282,6 +295,7 @@ class TestAddCommandToImplementingIntegrationsMapping:
                     ('command_to_integration', {
                         'generic-command': 'MainInteg',
                         'no-integration': '',
+                        'send-notification': "Slack"
                     }),
                 ]),
             },
@@ -297,5 +311,6 @@ class TestAddCommandToImplementingIntegrationsMapping:
         playbook2 = id_set_creator.id_set['playbooks'][1]['Playbook2']
         assert playbook1['command_to_integration']['specific-command'] == ['SecondaryInteg']
         assert playbook1['command_to_integration']['generic-command'] == ['MainInteg', 'SecondaryInteg']
-        assert playbook2['command_to_integration']['generic-command'] == 'MainInteg'
+        assert playbook1['command_to_integration']['send-notification'] == ''
         assert playbook2['command_to_integration']['no-integration'] == ''
+        assert playbook2['command_to_integration']['send-notification'] == 'Slack'

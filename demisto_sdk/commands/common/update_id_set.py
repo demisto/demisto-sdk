@@ -266,6 +266,7 @@ def get_integration_data(file_path):
     tests = data_dictionary.get('tests')
     toversion = data_dictionary.get('toversion')
     fromversion = data_dictionary.get('fromversion')
+    docker_image = data_dictionary.get('script', {}).get('dockerimage')
     commands = data_dictionary.get('script', {}).get('commands', [])
     cmd_list = [command.get('name') for command in commands]
     pack = get_pack_name(file_path)
@@ -290,6 +291,8 @@ def get_integration_data(file_path):
         integration_data['toversion'] = toversion
     if fromversion:
         integration_data['fromversion'] = fromversion
+    if docker_image:
+        integration_data['docker_image'] = docker_image
     if cmd_list:
         integration_data['commands'] = cmd_list
     if tests:
@@ -495,6 +498,7 @@ def get_script_data(file_path, script_code=None):
     toversion = data_dictionary.get('toversion')
     deprecated = data_dictionary.get('deprecated', False)
     fromversion = data_dictionary.get('fromversion')
+    docker_image = data_dictionary.get('dockerimage')
     depends_on, command_to_integration = get_depends_on(data_dictionary)
     script_executions = sorted(list(set(re.findall(r"demisto.executeCommand\(['\"](\w+)['\"].*", script_code))))
     pack = get_pack_name(file_path)
@@ -509,6 +513,8 @@ def get_script_data(file_path, script_code=None):
         script_data['script_executions'] = script_executions
     if command_to_integration:
         script_data['command_to_integration'] = command_to_integration
+    if docker_image:
+        script_data['docker_image'] = docker_image
     if tests:
         script_data['tests'] = tests
 

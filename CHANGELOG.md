@@ -1,4 +1,6 @@
 # Changelog
+
+# 1.4.4
 * Updated the **find-dependencies** command to support generic modules, definitions, fields and types.
 * When formatting incident types with Auto-Extract rules and without mode field, the **format** command will now add the user selected mode.
 * Added new validation that DBotRole is set for scripts that requires elevated permissions to the `XSOAR-linter` in the **lint** command.

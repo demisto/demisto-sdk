@@ -315,7 +315,7 @@ class LintManager:
             return_warning_code: int = 0
             results = []
             # Executing lint checks in different threads
-            for pack in self._pkgs:
+            for pack in sorted(self._pkgs):
                 linter: Linter = Linter(pack_dir=pack,
                                         content_repo="" if not self._facts["content_repo"] else
                                         Path(self._facts["content_repo"].working_dir),

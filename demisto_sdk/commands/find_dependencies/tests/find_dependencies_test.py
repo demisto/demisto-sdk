@@ -389,6 +389,7 @@ class TestIdSetFilters:
                     "name": "PrismaCloudComputeParseAuditAlert",
                     "file_path": "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseAuditAlert/PrismaCloudComputeParseAuditAlert.yml",
                     "fromversion": '5.0.0',
+                    "docker_image": "demisto/python3:3.8.3.8715",
                     "pack": "PrismaCloudCompute"
                 }
             },
@@ -397,6 +398,7 @@ class TestIdSetFilters:
                     "name": "PrismaCloudComputeParseCloudDiscoveryAlert",
                     "file_path": "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseCloudDiscoveryAlert/PrismaCloudComputeParseCloudDiscoveryAlert.yml",
                     "fromversion": '5.0.0',
+                    "docker_image": "demisto/python3:3.8.3.8715",
                     "pack": "PrismaCloudCompute"
                 }
             },
@@ -405,6 +407,7 @@ class TestIdSetFilters:
                     "name": "PrismaCloudComputeParseComplianceAlert",
                     "file_path": "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseComplianceAlert/PrismaCloudComputeParseComplianceAlert.yml",
                     "fromversion": '5.0.0',
+                    "docker_image": "demisto/python3:3.8.3.8715",
                     "pack": "PrismaCloudCompute"
                 }
             },
@@ -413,6 +416,7 @@ class TestIdSetFilters:
                     "name": "PrismaCloudComputeParseVulnerabilityAlert",
                     "file_path": "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseVulnerabilityAlert/PrismaCloudComputeParseVulnerabilityAlert.yml",
                     "fromversion": '5.0.0',
+                    "docker_image": "demisto/python3:3.8.3.8715",
                     "pack": "PrismaCloudCompute"
                 }
             }
@@ -476,6 +480,7 @@ class TestDependsOnScriptAndIntegration:
                 "DummyScript": {
                     "name": "DummyScript",
                     "file_path": "dummy_path",
+                    "docker_image": "demisto/python3:3.8.3.8715",
                     "depends_on": [
                         dependency_script
                     ],

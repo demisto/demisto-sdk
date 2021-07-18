@@ -122,7 +122,6 @@ class Pack:
 
         self.pack_metadata = JSONBased(self._pack_path, 'pack_metadata', '')
 
-
     def create_integration(
             self,
             name: Optional[str] = None,

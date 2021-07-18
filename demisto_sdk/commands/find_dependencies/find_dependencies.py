@@ -572,16 +572,18 @@ class PackDependencies:
         for layout in pack_layouts:
             layout_data = next(iter(layout.values()))
             layout_dependencies = set()
-            if layout_data.get('definitionId'):
+            if layout_data.get('definitionId') not in [None, 'incident', 'indicator']:
                 layout_type = "Generic"
+
             elif layout_data.get('group') == 'indicator' or layout_data.get('kind') == 'indicatorsDetails':
                 layout_type = 'Indicator'
+
             else:
                 layout_type = 'Incident'
 
-            related_incident_or_indicator_types = layout_data.get('incident_and_indicator_types', [])
+            related_types = layout_data.get('incident_and_indicator_types', [])
             packs_found_from_incident_indicator_types = PackDependencies._search_packs_by_items_names(
-                related_incident_or_indicator_types, id_set[f'{layout_type}Types'],
+                related_types, id_set[f'{layout_type}Types'],
                 exclude_ignored_dependencies)
 
             if packs_found_from_incident_indicator_types:
@@ -589,9 +591,9 @@ class PackDependencies:
                     _label_as_mandatory(packs_found_from_incident_indicator_types)
                 layout_dependencies.update(pack_dependencies_data)
 
-            related_incident_or_indicator_fields = layout_data.get('incident_and_indicator_fields', [])
+            related_fields = layout_data.get('incident_and_indicator_fields', [])
             packs_found_from_incident_indicator_fields = PackDependencies._search_packs_by_items_names_or_ids(
-                related_incident_or_indicator_fields, id_set[f'{layout_type}Fields'],
+                related_fields, id_set[f'{layout_type}Fields'],
                 exclude_ignored_dependencies, layout_type)
 
             if packs_found_from_incident_indicator_fields:
@@ -864,23 +866,24 @@ class PackDependencies:
             classifier_dependencies = set()
 
             related_types = classifier_data.get('incident_types', [])
-            packs_found_from_incident_types = PackDependencies._search_packs_by_items_names(
-                related_types, id_set['IncidentTypes'], exclude_ignored_dependencies)
 
-            # classifiers dependencies from incident types should be marked as optional unless CommonTypes pack,
-            # as customers do not have to use the OOTB mapping.
-            if packs_found_from_incident_types:
-                pack_dependencies_data = PackDependencies._update_optional_commontypes_pack_dependencies(
-                    packs_found_from_incident_types)
-                classifier_dependencies.update(pack_dependencies_data)
-
-            if classifier_data.get('definitionId'):
+            if classifier_data.get('definitionId') not in [None, 'incident', 'indicator']:
                 packs_found_from_generic_types = PackDependencies._search_packs_by_items_names(
                     related_types, id_set['GenericTypes'], exclude_ignored_dependencies)
 
                 if packs_found_from_generic_types:
                     pack_dependencies_data = PackDependencies._label_as_mandatory(
                         packs_found_from_generic_types)
+                    classifier_dependencies.update(pack_dependencies_data)
+            else:
+                packs_found_from_incident_types = PackDependencies._search_packs_by_items_names(
+                    related_types, id_set['IncidentTypes'], exclude_ignored_dependencies)
+
+                # classifiers dependencies from incident types should be marked as optional unless CommonTypes pack,
+                # as customers do not have to use the OOTB mapping.
+                if packs_found_from_incident_types:
+                    pack_dependencies_data = PackDependencies._update_optional_commontypes_pack_dependencies(
+                        packs_found_from_incident_types)
                     classifier_dependencies.update(pack_dependencies_data)
 
             # collect pack dependencies from transformers and filters
@@ -927,28 +930,8 @@ class PackDependencies:
             mapper_dependencies = set()
 
             related_types = mapper_data.get('incident_types', [])
-            packs_found_from_incident_types = PackDependencies._search_packs_by_items_names(
-                related_types, id_set['IncidentTypes'], exclude_ignored_dependencies)
 
-            # mappers dependencies from incident types should be marked as optional unless CommonTypes Pack,
-            # as customers do not have to use the OOTB mapping.
-            if packs_found_from_incident_types:
-                pack_dependencies_data = PackDependencies._update_optional_commontypes_pack_dependencies(
-                    packs_found_from_incident_types)
-                mapper_dependencies.update(pack_dependencies_data)
-
-            related_fields = mapper_data.get('incident_fields', [])
-            packs_found_from_incident_fields = PackDependencies._search_packs_by_items_names_or_ids(
-                related_fields, id_set['IncidentFields'], exclude_ignored_dependencies)
-
-            # mappers dependencies from incident fields should be marked as optional unless CommonTypes pack,
-            # as customers do not have to use the OOTB mapping.
-            if packs_found_from_incident_fields:
-                pack_dependencies_data = PackDependencies._update_optional_commontypes_pack_dependencies(
-                    packs_found_from_incident_fields)
-                mapper_dependencies.update(pack_dependencies_data)
-
-            if mapper_data.get('definitionId'):
+            if mapper_data.get('definitionId') not in [None, 'incident', 'indicator']:
                 packs_found_from_generic_types = PackDependencies._search_packs_by_items_names(
                     related_types, id_set['GenericTypes'], exclude_ignored_dependencies)
 
@@ -963,6 +946,28 @@ class PackDependencies:
                 if packs_found_from_generic_fields:
                     pack_dependencies_data = PackDependencies._label_as_mandatory(
                         packs_found_from_generic_fields)
+                    mapper_dependencies.update(pack_dependencies_data)
+
+            else:
+                packs_found_from_incident_types = PackDependencies._search_packs_by_items_names(
+                    related_types, id_set['IncidentTypes'], exclude_ignored_dependencies)
+
+                # mappers dependencies from incident types should be marked as optional unless CommonTypes Pack,
+                # as customers do not have to use the OOTB mapping.
+                if packs_found_from_incident_types:
+                    pack_dependencies_data = PackDependencies._update_optional_commontypes_pack_dependencies(
+                        packs_found_from_incident_types)
+                    mapper_dependencies.update(pack_dependencies_data)
+
+                related_fields = mapper_data.get('incident_fields', [])
+                packs_found_from_incident_fields = PackDependencies._search_packs_by_items_names_or_ids(
+                    related_fields, id_set['IncidentFields'], exclude_ignored_dependencies)
+
+                # mappers dependencies from incident fields should be marked as optional unless CommonTypes pack,
+                # as customers do not have to use the OOTB mapping.
+                if packs_found_from_incident_fields:
+                    pack_dependencies_data = PackDependencies._update_optional_commontypes_pack_dependencies(
+                        packs_found_from_incident_fields)
                     mapper_dependencies.update(pack_dependencies_data)
 
             # collect pack dependencies from transformers and filters
@@ -1048,15 +1053,6 @@ class PackDependencies:
             generic_type_data = next(iter(generic_type.values()))
             generic_type_dependencies = set()
 
-            related_playbooks = generic_type_data.get('playbooks', [])
-            packs_found_from_playbooks = PackDependencies._search_packs_by_items_names(
-                related_playbooks, id_set['playbooks'], exclude_ignored_dependencies)
-
-            if packs_found_from_playbooks:
-                pack_dependencies_data = PackDependencies. \
-                    _label_as_mandatory(packs_found_from_playbooks)
-                generic_type_dependencies.update(pack_dependencies_data)
-
             related_scripts = generic_type_data.get('scripts', [])
             packs_found_from_scripts = PackDependencies._search_packs_by_items_names(
                 related_scripts, id_set['scripts'], exclude_ignored_dependencies)
@@ -1112,7 +1108,7 @@ class PackDependencies:
         """
         dependencies_packs = set()
         if verbose:
-            click.secho('### Incident Fields', fg='white')
+            click.secho('### Generic Fields', fg='white')
 
         for generic_field in pack_generic_fields:
             generic_field_data = next(iter(generic_field.values()))
@@ -1154,6 +1150,7 @@ class PackDependencies:
             dependencies_packs.update(generic_field_dependencies)
 
         return dependencies_packs
+
     @staticmethod
     def _collect_generic_modules_dependencies(pack_generic_modules: list, id_set: dict, verbose: bool,
                                             exclude_ignored_dependencies: bool = True) -> set:
@@ -1169,7 +1166,7 @@ class PackDependencies:
         """
         dependencies_packs = set()
         if verbose:
-            click.secho('### Generic Types', fg='white')
+            click.secho('### Generic Modules', fg='white')
 
         for generic_module in pack_generic_modules:
             generic_module_data = next(iter(generic_module.values()))

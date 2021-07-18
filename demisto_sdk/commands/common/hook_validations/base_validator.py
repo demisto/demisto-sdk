@@ -21,6 +21,7 @@ from demisto_sdk.commands.common.tools import (find_type,
 
 
 class BaseValidator:
+    CONTRIBUTOR_TYPE_LIST = ['partner', 'developer', 'community']
 
     def __init__(self, ignored_errors=None, print_as_warnings=False, suppress_print: bool = False,
                  json_file_path: Optional[str] = None):
@@ -209,3 +210,19 @@ class BaseValidator:
         json_contents.append(formatted_error_output)
         with open(self.json_file_path, 'w') as f:
             json.dump(json_contents, f, indent=4)
+
+    @staticmethod
+    def name_contains_contributor_type_name(pack_or_integration_name: str) -> bool:
+        """
+        Checks whether pack or integration name is contributor supported and has contributor name. This validation is
+        needed because the label of contributor is automatically added to the name, so this validation will prevent it
+        from being added twice.
+        Args:
+            pack_or_integration_name (Dict): Metadata content.
+
+        Returns:
+
+        """
+        pack_or_integration_name = pack_or_integration_name.lower()
+        return any(
+            contributor_name in pack_or_integration_name for contributor_name in ['partner', 'developer', 'community'])

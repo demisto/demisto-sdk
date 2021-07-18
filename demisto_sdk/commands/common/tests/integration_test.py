@@ -643,7 +643,8 @@ class TestIntegrationValidator:
         (V2_VALID, True),
         (V2_WRONG_DISPLAY_1, False),
         (V2_WRONG_DISPLAY_2, False),
-        (V2_WRONG_DISPLAY_3, False)
+        (V2_WRONG_DISPLAY_3, False),
+        ({'display': 'BitcoinAbuse Community'}, False)
     ]
 
     @pytest.mark.parametrize("current, answer", V2_NAME_INPUTS)

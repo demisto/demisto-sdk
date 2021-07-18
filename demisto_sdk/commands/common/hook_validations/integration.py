@@ -954,8 +954,17 @@ class IntegrationValidator(ContentEntityValidator):
 
         return params_exist
 
-    def is_valid_display_name(self):
-        # type: () -> bool
+    def is_valid_display_name(self) -> bool:
+        """
+        Checks whether given display name of YML is valid or not.
+        Returns:
+            (bool).
+        """
+        display_name = self.current_file.get('display')
+        return self.is_valid_versioned_display_name()
+        # return all([self.is_valid_versioned_display_name(), not self.name_contains_contributor_type_name(display_name)])
+
+    def is_valid_versioned_display_name(self) -> bool:
         version_number: Optional[str] = get_file_version_suffix_if_exists(self.current_file,
                                                                           check_in_display=True)
         if not version_number:
@@ -1274,7 +1283,7 @@ class IntegrationValidator(ContentEntityValidator):
         # extracting the specific command from commands.
         endpoint_command = [arg for arg in commands if arg.get('name') == 'endpoint'][0]
         return self._is_valid_endpoint_inputs(endpoint_command, required_arguments=ENDPOINT_FLEXIBLE_REQUIRED_ARGS) \
-            and self._is_valid_endpoint_outputs(endpoint_command)
+               and self._is_valid_endpoint_outputs(endpoint_command)
 
     def _is_valid_endpoint_inputs(self, command_data, required_arguments):
         """

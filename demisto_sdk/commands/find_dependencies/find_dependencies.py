@@ -260,38 +260,6 @@ class PackDependencies:
         return packs
 
     @staticmethod
-    def _search_packs_by_items_ids(items_names: Union[str, list],
-                                            items_list: list,
-                                            exclude_ignored_dependencies: bool = True,) -> set:
-        """
-        Searches for implemented packs of the given items.
-
-        Args:
-            items_names (str or list): items names to search.
-            items_list (list): specific section of id set.
-            exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
-        Returns:
-            set: found pack ids.
-
-        """
-        packs = set()
-        if not isinstance(items_names, list):
-            items_names = [items_names]
-
-        for item_name in items_names:
-
-            for item_from_id_set in items_list:
-                machine_name = list(item_from_id_set.keys())[0]
-                item_details = list(item_from_id_set.values())[0]
-                if (machine_name in item_possible_ids or item_name == item_details.get('name')) \
-                        and item_details.get('pack') \
-                        and LooseVersion(item_details.get('toversion', '99.99.99')) >= MINIMUM_DEPENDENCY_VERSION \
-                        and (item_details['pack'] not in constants.IGNORED_DEPENDENCY_CALCULATION or
-                             not exclude_ignored_dependencies):
-                    packs.add(item_details.get('pack'))
-        return packs
-
-    @staticmethod
     def _search_packs_by_integration_command(command: str,
                                              id_set: dict,
                                              exclude_ignored_dependencies: bool = True) -> set:

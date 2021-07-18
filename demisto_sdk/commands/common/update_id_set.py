@@ -575,7 +575,6 @@ def get_values_for_keys_recursively(json_object: dict, keys_to_search: list) -> 
 
 
 def get_layout_data(path):
-    print("get layout data")
     json_data = get_json(path)
 
     layout = json_data.get('layout', {})

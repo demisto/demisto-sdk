@@ -11,6 +11,8 @@ This command is used in order to create a unified yml file, able to be uploaded 
   The path to the directory in which the files reside
 * **-o, --output**
   The path to the directory into which to write the unified yml file
+* **--force**
+  Forcefully overwrites the preexisting yml if one exists
 
 **Examples**:
 `demisto-sdk unify -i Integrations/MyInt -o Integrations`

@@ -198,9 +198,9 @@ class TestLayoutBelowSixConverter:
             assert util_load_json(expected_new_layout_path) == layout_data
             os.remove(expected_new_layout_path)
 
-    CALCULATE_FROM_VERSION_INPUTS = [('ExtraHop Detection', 'close', '5.0.0'),
-                                     ('ExtraHop Detection2', 'close', '4.1.0'),
-                                     ('ExtraHop Detection', 'mobile', '4.1.0')]
+    CALCULATE_FROM_VERSION_INPUTS = [('ExtraHop Detection', 'close', '5.5.0'),
+                                     ('ExtraHop Detection2', 'close', '5.0.0'),
+                                     ('ExtraHop Detection', 'mobile', '5.0.0')]
 
     @pytest.mark.parametrize('layout_id, layout_kind, expected', CALCULATE_FROM_VERSION_INPUTS)
     def test_calculate_from_version(self, tmpdir, layout_id: str, layout_kind: str, expected: str):

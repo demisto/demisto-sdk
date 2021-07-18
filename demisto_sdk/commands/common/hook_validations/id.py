@@ -362,7 +362,7 @@ class IDSetValidations(BaseValidator):
 
         for command in playbook_integration_commands:
             implemented_integrations_list = playbook_integration_commands[command]
-            # Ignore the error for PB with general commands that do not depend on specific integration
+            # Ignore the error for PB with generic commands that do not depend on specific integration
             if command in GENERIC_COMMANDS_NAMES and not implemented_integrations_list:
                 continue
             integration_from_valid_version_found = False

@@ -1,5 +1,5 @@
 # Changelog
-* Fixed an issue where **find-dependencies** command on packs with playbooks that use generic commands (**send-notification**, **send-mail**, etc.) returned incorrect dependencies
+* Fixed an issue where the **find-dependencies** command miscalculated the dependencies for playbooks that use generic commands.
 
 # 1.4.4
 * When formatting incident types with Auto-Extract rules and without mode field, the **format** command will now add the user selected mode.

@@ -242,14 +242,14 @@ class TestAddCommandToImplementingIntegrationsMapping:
     def test_do_not_modify_specific_brand(repo):
         """
         Given
-        - playbook with a command using a specific brand
-        - playbook with a command using a specific brand
+        - playbook with commands not using a specific brand
 
         When
         - updating the commands_to_integrations fields in playbooks
 
         Then
-        - only update commands that don't have a specific brand
+        - update commands (that don't have a specific brand)
+        - do not update generic commands
 
         """
         integrations = [
@@ -280,8 +280,8 @@ class TestAddCommandToImplementingIntegrationsMapping:
         ]
         playbooks = [
             {
-                'Playbook1': OrderedDict([
-                    ('name', 'Playbook1'),
+                'Playbook': OrderedDict([
+                    ('name', 'Playbook'),
                     ('command_to_integration', {
                         'specific-command': "",
                         'generic-command': "",
@@ -289,16 +289,69 @@ class TestAddCommandToImplementingIntegrationsMapping:
                     }),
                 ]),
             },
+         ]
+
+        id_set_creator = IDSetCreator(print_logs=False)
+        id_set_creator.id_set["integrations"] = integrations
+        id_set_creator.id_set["playbooks"] = playbooks
+
+        id_set_creator.add_command_to_implementing_integrations_mapping()
+
+        playbook = id_set_creator.id_set['playbooks'][0]['Playbook']
+        assert playbook['command_to_integration']['specific-command'] == ['SecondaryInteg']
+        assert playbook['command_to_integration']['generic-command'] == ['MainInteg', 'SecondaryInteg']
+        assert playbook['command_to_integration']['send-notification'] == ''
+
+    @staticmethod
+    def test_modify_specific_brand(repo):
+        """
+        Given
+        - playbook with commands using a specific brand
+
+        When
+        - updating the commands_to_integrations fields in playbooks
+
+        Then
+        - do not update any command
+
+        """
+        integrations = [
             {
-                'Playbook2': OrderedDict([
-                    ('name', 'Playbook2'),
+                'MainInteg': OrderedDict([
+                    ('name', 'MainInteg'),
+                    ('commands', ['generic-command']),
+                ])
+            },
+            {
+                'SecondaryInteg': OrderedDict([
+                    ('name', 'SecondaryInteg'),
+                    ('commands', ['generic-command', 'specific-command']),
+                ])
+            },
+            {
+                'Syslog': OrderedDict([
+                    ('name', 'Syslog'),
+                    ('commands', ['send-notification']),
+                ])
+            },
+            {
+                'Slack': OrderedDict([
+                    ('name', 'Slack'),
+                    ('commands', ['send-notification']),
+                ])
+            },
+        ]
+        playbooks = [
+            {
+                'Playbook': OrderedDict([
+                    ('name', 'Playbook'),
                     ('command_to_integration', {
                         'generic-command': 'MainInteg',
                         'no-integration': '',
                         'send-notification': "Slack"
                     }),
                 ]),
-            },
+            }
         ]
 
         id_set_creator = IDSetCreator(print_logs=False)
@@ -307,10 +360,7 @@ class TestAddCommandToImplementingIntegrationsMapping:
 
         id_set_creator.add_command_to_implementing_integrations_mapping()
 
-        playbook1 = id_set_creator.id_set['playbooks'][0]['Playbook1']
-        playbook2 = id_set_creator.id_set['playbooks'][1]['Playbook2']
-        assert playbook1['command_to_integration']['specific-command'] == ['SecondaryInteg']
-        assert playbook1['command_to_integration']['generic-command'] == ['MainInteg', 'SecondaryInteg']
-        assert playbook1['command_to_integration']['send-notification'] == ''
-        assert playbook2['command_to_integration']['no-integration'] == ''
-        assert playbook2['command_to_integration']['send-notification'] == 'Slack'
+        playbook = id_set_creator.id_set['playbooks'][0]['Playbook']
+        assert playbook['command_to_integration']['generic-command'] == 'MainInteg'
+        assert playbook['command_to_integration']['no-integration'] == ''
+        assert playbook['command_to_integration']['send-notification'] == 'Slack'

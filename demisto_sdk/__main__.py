@@ -15,14 +15,10 @@ import git
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 # Common tools
-from demisto_sdk.commands.common.constants import (
-    API_MODULES_PACK, SKIP_RELEASE_NOTES_FOR_TYPES, FileType)
-from demisto_sdk.commands.common.legacy_git_tools import get_packs
+from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.logger import logging_setup
-from demisto_sdk.commands.common.tools import (filter_files_by_type,
-                                               filter_files_on_pack, find_type,
+from demisto_sdk.commands.common.tools import (find_type,
                                                get_last_remote_release_version,
-                                               get_pack_name,
                                                get_release_note_entries,
                                                print_error, print_warning)
 from demisto_sdk.commands.common.update_id_set import merge_id_sets_from_files
@@ -65,8 +61,8 @@ from demisto_sdk.commands.split_yml.extractor import Extractor
 from demisto_sdk.commands.test_content.execute_test_content import \
     execute_test_content
 from demisto_sdk.commands.unify.unifier import Unifier
-from demisto_sdk.commands.update_release_notes.update_rn import (
-    UpdateRN, update_api_modules_dependents_rn)
+from demisto_sdk.commands.update_release_notes.update_rn_manager import \
+    UpdateReleaseNotesManager
 from demisto_sdk.commands.upload.uploader import Uploader
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
@@ -296,7 +292,7 @@ def unify(**kwargs):
 )
 @click.option(
     '--no-conf-json', is_flag=True,
-    default=False, show_default=True, help='Skip conf.json validation')
+    default=False, show_default=True, help='Skip conf.json validation.')
 @click.option(
     '-s', '--id-set', is_flag=True,
     default=False, show_default=True, help='Perform validations using the id_set file.')
@@ -317,13 +313,13 @@ def unify(**kwargs):
          'If the --post-commit flag is not supplied: validation will run on all changed files in the current branch, '
          'both committed and not committed. ')
 @click.option(
-    '--post-commit',
+    '-pc', '--post-commit',
     is_flag=True,
     help='Whether the validation should run only on the current branch\'s committed changed files. '
          'This applies only when the -g flag is supplied.'
 )
 @click.option(
-    '--staged',
+    '-st', '--staged',
     is_flag=True,
     help='Whether the validation should ignore unstaged files.'
          'This applies only when the -g flag is supplied.'
@@ -331,7 +327,8 @@ def unify(**kwargs):
 @click.option(
     '-iu', '--include-untracked',
     is_flag=True,
-    help='Whether to include untracked files in the validation.'
+    help='Whether to include untracked files in the validation. '
+         'This applies only when the -g flag is supplied.'
 )
 @click.option(
     '-a', '--validate-all', is_flag=True, show_default=True, default=False,
@@ -375,11 +372,11 @@ def unify(**kwargs):
     help='Whether to print the pykwalify log errors.')
 @click.option(
     "--quite-bc-validation",
-    help="Set backwards compatibility validation's errors as warnings",
+    help="Set backwards compatibility validation's errors as warnings.",
     is_flag=True)
 @click.option(
     "--allow-skipped",
-    help="Don't fail on skipped integrations or when all test playbooks are skipped",
+    help="Don't fail on skipped integrations or when all test playbooks are skipped.",
     is_flag=True)
 @pass_config
 def validate(config, **kwargs):
@@ -438,7 +435,8 @@ def validate(config, **kwargs):
 @click.option('-a', '--artifacts_path', help='Destination directory to create the artifacts.',
               type=click.Path(file_okay=False, resolve_path=True), required=True)
 @click.option('--zip/--no-zip', help='Zip content artifacts folders', default=True)
-@click.option('--packs', help='Create only content_packs artifacts.', is_flag=True)
+@click.option('--packs', help='Create only content_packs artifacts. '
+                              'Used for server version 5.5.0 and earlier.', is_flag=True)
 @click.option('-v', '--content_version', help='The content version in CommonServerPython.', default='0.0.0')
 @click.option('-s', '--suffix', help='Suffix to add all yaml/json/yml files in the created artifacts.')
 @click.option('--cpus',
@@ -490,7 +488,7 @@ def create_content_artifacts(**kwargs) -> int:
 @click.option(
     '-ie', '--ignore-entropy',
     is_flag=True,
-    help='Ignore entropy algorithm that finds secret strings (passwords/api keys)'
+    help='Ignore entropy algorithm that finds secret strings (passwords/api keys).'
 )
 @click.option(
     '-wl', '--whitelist',
@@ -500,7 +498,7 @@ def create_content_artifacts(**kwargs) -> int:
 )
 @click.option(
     '--prev-ver',
-    help='The branch against which to run secrets validation'
+    help='The branch against which to run secrets validation.'
 )
 @pass_config
 def secrets(config, **kwargs):
@@ -558,8 +556,8 @@ def secrets(config, **kwargs):
     "--coverage-report", help="Specify directory for the coverage report files",
     type=PathsParamType()
 )
-@click.option("-dt", "--docker-timeout", default=60, help="The timeout (in seconds) for requests done by the docker client",
-              type=int)
+@click.option("-dt", "--docker-timeout", default=60,
+              help="The timeout (in seconds) for requests done by the docker client.", type=int)
 def lint(**kwargs):
     """Lint command will perform:
         1. Package in host checks - flake8, bandit, mypy, vulture.
@@ -596,7 +594,7 @@ def lint(**kwargs):
         keep_container=kwargs.get('keep_container'),  # type: ignore[arg-type]
         test_xml=kwargs.get('test_xml'),  # type: ignore[arg-type]
         failure_report=kwargs.get('failure_report'),  # type: ignore[arg-type]
-        no_coverage=kwargs.get('no_coverage'),     # type: ignore[arg-type]
+        no_coverage=kwargs.get('no_coverage'),  # type: ignore[arg-type]
         coverage_report=kwargs.get('coverage_report'),  # type: ignore[arg-type]
         docker_timeout=kwargs.get('docker_timeout'),  # type: ignore[arg-type]
     )
@@ -783,7 +781,7 @@ def run(**kwargs):
     help="Timeout for the command. The playbook will continue to run in Demisto"
 )
 @click.option(
-    "--insecure", help="Skip certificate validation", is_flag=True)
+    "--insecure", help="Skip certificate validation.", is_flag=True)
 def run_playbook(**kwargs):
     """Run a playbook in Demisto.
     DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
@@ -815,8 +813,8 @@ def run_playbook(**kwargs):
 @click.option(
     "-v", "--verbose", is_flag=True, help="Verbose output - mainly for debugging purposes")
 @click.option(
-    "--interactive", help="If passed, then for each output field will ask user interactively to enter the "
-                          "description. By default is interactive mode is disabled", is_flag=True)
+    "-int", "--interactive", help="If passed, then for each output field will ask user interactively to enter the "
+                                  "description.", is_flag=True, default=False)
 def json_to_outputs_command(**kwargs):
     """Demisto integrations/scripts have a YAML file that defines them.
     Creating the YAML file is a tedious and error-prone task of manually copying outputs from the API result to the
@@ -887,7 +885,7 @@ def generate_test_playbook(**kwargs):
     '--demisto_mock', is_flag=True,
     help="Copy the demistomock. Relevant for initialization of Scripts and Integrations within a Pack.")
 @click.option(
-    '--common_server', is_flag=True,
+    '--common-server', is_flag=True,
     help="Copy the CommonServerPython. Relevant for initialization of Scripts and Integrations within a Pack.")
 def init(**kwargs):
     """Initialize a new Pack, Integration or Script.
@@ -916,7 +914,7 @@ def init(**kwargs):
     required=False)
 @click.option(
     "-c", "--command", help="A comma-separated command names to generate doc for, will ignore the rest of the commands."
-                            "e.g (xdr-get-incidents,xdr-update-incident",
+                            "e.g xdr-get-incidents,xdr-update-incident",
     required=False
 )
 @click.option(
@@ -928,7 +926,7 @@ def init(**kwargs):
     "-p", "--permissions", type=click.Choice(["none", "general", "per-command"]), help="Permissions needed.",
     required=True, default='none')
 @click.option(
-    "-cp", "--command_permissions", help="Path for file containing commands permissions"
+    "-cp", "--command-permissions", help="Path for file containing commands permissions"
                                          " Each command permissions should be in a separate line."
                                          " (i.e. '<command-name> Administrator READ-WRITE')", required=False)
 @click.option(
@@ -939,7 +937,7 @@ def init(**kwargs):
 @click.option(
     "-v", "--verbose", is_flag=True, help="Verbose output - mainly for debugging purposes.")
 @click.option(
-    "--input-old-version", help="Path of the old integration version yml file.")
+    "--old-version", help="Path of the old integration version yml file.")
 @click.option(
     "--skip-breaking-changes", is_flag=True, help="Skip generating of breaking changes section.")
 def generate_docs(**kwargs):
@@ -953,7 +951,7 @@ def generate_docs(**kwargs):
     limitations = kwargs.get('limitations')
     insecure: bool = kwargs.get('insecure', False)
     verbose: bool = kwargs.get('verbose', False)
-    input_old_version: str = kwargs.get('input_old_version', '')
+    old_version: str = kwargs.get('old_version', '')
     skip_breaking_changes: bool = kwargs.get('skip_breaking_changes', False)
 
     # validate inputs
@@ -981,12 +979,12 @@ def generate_docs(**kwargs):
         print_error('File is not an Integration, Script or a Playbook.')
         return 1
 
-    if input_old_version and not os.path.isfile(input_old_version):
-        print_error(F'Input old version file {input_old_version} was not found.')
+    if old_version and not os.path.isfile(old_version):
+        print_error(F'Input old version file {old_version} was not found.')
         return 1
 
-    if input_old_version and not input_old_version.lower().endswith('.yml'):
-        print_error(F'Input old version {input_old_version} is not a valid yml file.')
+    if old_version and not old_version.lower().endswith('.yml'):
+        print_error(F'Input old version {old_version} is not a valid yml file.')
         return 1
 
     print(f'Start generating {file_type.value} documentation...')
@@ -997,7 +995,8 @@ def generate_docs(**kwargs):
                                         examples=examples, permissions=permissions,
                                         command_permissions=command_permissions, limitations=limitations,
                                         insecure=insecure, verbose=verbose, command=command,
-                                        input_old_version=input_old_version, skip_breaking_changes=skip_breaking_changes)
+                                        old_version=old_version,
+                                        skip_breaking_changes=skip_breaking_changes)
     elif file_type == FileType.SCRIPT:
         return generate_script_doc(input_path=input_path, output=output_path, examples=examples,
                                    permissions=permissions,
@@ -1085,17 +1084,22 @@ def merge_id_sets(**kwargs):
     "-i", "--input", help="The relative path of the content pack. For example Packs/Pack_Name"
 )
 @click.option(
-    '-u', '--update_type', help="The type of update being done. [major, minor, revision, maintenance, documentation]",
+    '-u', '--update-type', help="The type of update being done. [major, minor, revision, maintenance, documentation]",
     type=click.Choice(['major', 'minor', 'revision', 'maintenance', 'documentation'])
 )
 @click.option(
     '-v', '--version', help="Bump to a specific version."
 )
 @click.option(
-    '--all', help="Update all changed packs", is_flag=True
+    '-g', '--use-git',
+    help="Use git to identify the relevant changed files, will be used by default if '-i' is not set",
+    is_flag=True
 )
 @click.option(
-    '--text', help="Text to add to all of the release notes files",
+    '-f', '--force', help="Force update release notes for a pack (even if not required).", is_flag=True
+)
+@click.option(
+    '--text', help="Text to add to all of the release notes files.",
 )
 @click.option(
     '--prev-ver', help='Previous branch or SHA1 commit to run checks against.'
@@ -1109,90 +1113,24 @@ def merge_id_sets(**kwargs):
 def update_release_notes(**kwargs):
     """Auto-increment pack version and generate release notes template."""
     check_configuration_file('update-release-notes', kwargs)
-    _pack = kwargs.get('input')
-    update_type = kwargs.get('update_type')
-    pre_release: bool = kwargs.get('pre_release', False)
-    is_all = kwargs.get('all')
-    text: str = kwargs.get('text', '')
-    specific_version = kwargs.get('version')
-    id_set_path = kwargs.get('id_set_path')
-    prev_ver = kwargs.get('prev_ver')
-    existing_rn_version = ''
-    # _pack can be both path or pack name thus, we extract the pack name from the path if beeded.
-    if _pack and is_all:
-        print_error("Please remove the --all flag when specifying only one pack.")
+    if kwargs.get('force') and not kwargs.get('input'):
+        print_error('Please add a specific pack in order to force a release notes update.')
         sys.exit(0)
-    print("Starting to update release notes.")
-    if _pack and '/' in _pack:
-        _pack = get_pack_name(_pack)
+
+    if not kwargs.get('use_git') and not kwargs.get('input'):
+        click.confirm('No specific pack was given, do you want to update all changed packs?', abort=True)
+
     try:
-        validate_manager = ValidateManager(skip_pack_rn_validation=True, prev_ver=prev_ver, silence_init_prints=True,
-                                           skip_conf_json=True, check_is_unskipped=False)
-        validate_manager.setup_git_params()
-        modified, added, changed_meta_files, old = validate_manager.get_changed_files_from_git()
-        _packs = get_packs(modified).union(get_packs(old)).union(
-            get_packs(added))
-    except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError):
-        print_error("You are not running `demisto-sdk update-release-notes` command in the content repository.\n"
-                    "Please run `cd content` from your terminal and run the command again")
-        sys.exit(1)
-
-    packs_existing_rn = {}
-    for file_path in added:
-        if 'ReleaseNotes' in file_path:
-            packs_existing_rn[get_pack_name(file_path)] = file_path
-
-    filtered_modified = filter_files_by_type(modified, skip_file_types=SKIP_RELEASE_NOTES_FOR_TYPES)
-    filtered_added = filter_files_by_type(added, skip_file_types=SKIP_RELEASE_NOTES_FOR_TYPES)
-
-    if _pack and API_MODULES_PACK in _pack:
-        # case: ApiModules
-        update_api_modules_dependents_rn(_pack, pre_release, update_type, added, modified,
-                                         id_set_path=id_set_path, text=text)
-
-    # create release notes:
-    if _pack:
-        _packs = {_pack}
-    elif not is_all and len(_packs) > 1:
-        # case: multiple packs
-        pack_list = ' ,'.join(_packs)
-        print_error(f"Detected changes in the following packs: {pack_list.rstrip(', ')}\n"
-                    f"To update release notes in a specific pack, please use the -i parameter "
-                    f"along with the pack name.")
+        rn_mng = UpdateReleaseNotesManager(user_input=kwargs.get('input'), update_type=kwargs.get('update_type'),
+                                           pre_release=kwargs.get('pre_release', False), is_all=kwargs.get('use_git'),
+                                           text=kwargs.get('text'), specific_version=kwargs.get('version'),
+                                           id_set_path=kwargs.get('id_set_path'), prev_ver=kwargs.get('prev_ver'),
+                                           is_force=kwargs.get('force', False))
+        rn_mng.manage_rn_update()
         sys.exit(0)
-    if _packs:
-        for pack in _packs:
-            if pack in packs_existing_rn and update_type is None:
-                existing_rn_version = packs_existing_rn[pack]
-            elif pack in packs_existing_rn and update_type is not None:
-                print_error(f"New release notes file already found for {pack}. "
-                            f"Please update manually or run `demisto-sdk update-release-notes "
-                            f"-i {pack}` without specifying the update_type.")
-                continue
-
-            pack_modified = filter_files_on_pack(pack, filtered_modified)
-            pack_added = filter_files_on_pack(pack, filtered_added)
-            pack_old = filter_files_on_pack(pack, old)
-
-            # default case:
-            if pack_modified or pack_added or pack_old:
-                update_pack_rn = UpdateRN(pack_path=f'Packs/{pack}', update_type=update_type,
-                                          modified_files_in_pack=pack_modified.union(pack_old), pre_release=pre_release,
-                                          added_files=pack_added, specific_version=specific_version, text=text,
-                                          existing_rn_version_path=existing_rn_version)
-                updated = update_pack_rn.execute_update()
-                # if new release notes were created and if previous release notes existed, remove previous
-                if updated and update_pack_rn.should_delete_existing_rn:
-                    os.unlink(packs_existing_rn[pack])
-
-            else:
-                print_warning(f'Either no changes were found in {pack} pack '
-                              f'or the changes found should not be documented in the release notes file '
-                              f'If relevant changes were made, please commit the changes and rerun the command')
-    else:
-        print_warning('No changes that require release notes were detected. If such changes were made, '
-                      'please commit the changes and rerun the command')
-    sys.exit(0)
+    except Exception as e:
+        print_error(f'An error occurred while updating the release notes: {str(e)}')
+        sys.exit(1)
 
 
 # ====================== find-dependencies ====================== #
@@ -1574,7 +1512,7 @@ def doc_review(**kwargs):
     '-o', '--old', type=str, help='The path to the old version of the integration', required=True)
 @click.option(
     '--docs-format', is_flag=True,
-    help='will return the output in docs format for the version differences section in readme')
+    help='Whether output should be in the format for the version differences section in README.')
 def integration_diff(**kwargs):
     """
     Checks for differences between two versions of an integration, and verified that the new version covered the old version.
@@ -1647,7 +1585,7 @@ def error_code(config, **kwargs):
     sys.exit(result)
 
 
-@main.result_callback()
+@main.resultcallback()
 def exit_from_program(result=0, **kwargs):
     sys.exit(result)
 

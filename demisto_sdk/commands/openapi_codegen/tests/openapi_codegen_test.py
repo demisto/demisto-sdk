@@ -5,7 +5,7 @@ from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.openapi_codegen.openapi_codegen import \
     OpenAPIIntegration
 
-expected_command_function = '''def get_pet_by_id_command(client, args):
+expected_command_function = '''def get_pet_by_id_command(client: Client, args: Dict[str, Any]) -> CommandResults:
     petId = args.get('petId', None)
 
     response = client.get_pet_by_id_request(petId)
@@ -20,15 +20,12 @@ expected_command_function = '''def get_pet_by_id_command(client, args):
 
 '''
 
-expected_request_function = ('\n'
-                             '    def get_pet_by_id_request(self, petId):\n'
-                             '\n'
+expected_request_function = ('    def get_pet_by_id_request(self, petId):\n'
                              '        headers = self._headers\n'
                              '\n'
                              '        response = self._http_request(\'get\', f\'pet/{petId}\', headers=headers)\n'
                              '\n'
-                             '        return response\n'
-                             '\n')
+                             '        return response\n')
 
 
 class TestOpenAPICodeGen:
@@ -41,7 +38,8 @@ class TestOpenAPICodeGen:
                                          '-'.join(base_name.split(' ')).lower(),
                                          base_name.replace(' ', ''),
                                          unique_keys='id',
-                                         root_objects='Pet')
+                                         root_objects='Pet',
+                                         fix_code=True)
 
         integration.load_file()
         return integration
@@ -115,7 +113,6 @@ class TestOpenAPICodeGen:
             expected_py = py_file.read()
 
         py = integration.generate_python_code()
-
         assert py == expected_py
 
     def test_get_command_function(self):

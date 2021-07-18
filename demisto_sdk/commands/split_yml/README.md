@@ -14,12 +14,14 @@ The yml file to extract from
 The output dir to write the extracted code/description/image to
 * **---no-demisto-mock**
 Don't add an import for demisto mock
-**--no-common-server**
+* **--no-common-server**
 Don't add an import for CommonServerPython or CommonServerPowerShell
-**--no-auto-create-dir**
+* **--no-auto-create-dir**
 Don't auto create the directory if the target directory ends with
 *Integrations/*Scripts. The auto directory created will be named according to the
 Integration/Script name.
+* **--no-pipenv**
+Don't auto create pipenv for requirements installation.
 
 **Examples**
 1. `demisto-sdk split-yml -i Integrations/integration-MyInt.yml -o Integrations/MyInt`

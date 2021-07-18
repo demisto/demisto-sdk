@@ -449,8 +449,8 @@ class ValidateManager:
             return True
 
         # Note: these file are not ignored but there are no additional validators for Generic Objects at the moment
-        if file_type == FileType.GENERIC_FIELD or file_type == FileType.GENERIC_TYPE or\
-                file_type == FileType.GENERIC_MODULE:
+        if file_type in [FileType.GENERIC_FIELD, FileType.GENERIC_TYPE,
+                         FileType.GENERIC_MODULE, FileType.GENERIC_DEFINITION]:
             return True
 
         # id_set validation

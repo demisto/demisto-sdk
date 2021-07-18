@@ -124,6 +124,10 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.DASHBOARD: 'Dashboards',
     FileType.CONNECTION: 'Connections',
     FileType.MAPPER: 'Mappers',
+    FileType.GENERIC_DEFINITION: 'Objects',
+    FileType.GENERIC_MODULE: 'Modules',
+    FileType.GENERIC_TYPE: 'Object Types',
+    FileType.GENERIC_FIELD: 'Object Fields'
 }
 
 ENTITY_TYPE_TO_DIR = {
@@ -143,7 +147,11 @@ ENTITY_TYPE_TO_DIR = {
     FileType.REPORT.value: REPORTS_DIR,
     FileType.WIDGET.value: WIDGETS_DIR,
     FileType.BETA_INTEGRATION.value: INTEGRATIONS_DIR,
-    FileType.MAPPER.value: CLASSIFIERS_DIR
+    FileType.MAPPER.value: CLASSIFIERS_DIR,
+    FileType.GENERIC_DEFINITION.value: GENERIC_DEFINITIONS_DIR,
+    FileType.GENERIC_MODULE.value: GENERIC_MODULES_DIR,
+    FileType.GENERIC_FIELD.value: GENERIC_FIELDS_DIR,
+    FileType.GENERIC_TYPE.value: GENERIC_TYPES_DIR
 }
 
 CONTENT_FILE_ENDINGS = ['py', 'yml', 'png', 'json', 'md']
@@ -806,7 +814,8 @@ TESTS_AND_DOC_DIRECTORIES = [
     'test_data',
     'data_test',
     'tests_data',
-    'doc_files'
+    'doc_files',
+    'doc_imgs',
 ]
 
 FILE_TYPES_FOR_TESTING = [

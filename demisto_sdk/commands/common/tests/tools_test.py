@@ -1112,3 +1112,27 @@ def test_get_release_note_entries(version, expected_result):
     """
 
     assert get_release_note_entries(version) == expected_result
+
+
+def test_suppress_stdout(capsys):
+    print('You can see this')
+    captured = capsys.readouterr()
+    assert captured.out == 'You can see this\n'
+    with tools.suppress_stdout():
+        print('You cannot see this')
+        captured = capsys.readouterr()
+    assert captured.out == ''
+    print('And you can see this again')
+    captured = capsys.readouterr()
+    assert captured.out == 'And you can see this again\n'
+
+
+def test_suppress_stdout_exception(capsys):
+    with pytest.raises(Exception) as excinfo:
+        with tools.suppress_stdout():
+            x = 2 / 0
+    assert str(excinfo.value) == 'division by zero'
+    print('After error prints are enabled again.')
+    captured = capsys.readouterr()
+    assert captured.out == 'After error prints are enabled again.\n'
+

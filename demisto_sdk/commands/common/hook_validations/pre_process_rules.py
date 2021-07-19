@@ -114,7 +114,7 @@ class PreProcessRulesValidator(PreprocessRulesBaseValidator):
     def is_valid_file_path(self) -> bool:
         output_basename = os.path.basename(self.file_path)
         # TODO Is this a good name? Maybe pre_process_rules? See Errors.invalid_file_path_pre_process_rules
-        if not output_basename.startswith('preprocessrules-'):
+        if not output_basename.startswith('preprocessrule-'):
             error_message, error_code = Errors.invalid_file_path_pre_process_rules(output_basename)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False

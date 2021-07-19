@@ -7,6 +7,10 @@ This command is primarily intended for internal use. During our CI/CD build proc
 **Arguments**:
 * **-o OUTPUT, --output OUTPUT**
 The path of the file in which you want to save the created id set.
+* **-i, --input**
+Input file path, the default is the content repo.
+* **-fd, --fail-duplicates**
+Fails the process if any duplicates are found.
 
 **Examples**:
 `demisto-sdk create-id-set -o Tests/id_set.json`

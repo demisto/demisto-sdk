@@ -32,7 +32,7 @@
             "name": "url-report",
             "url_path": "vtapi/v2/url/report",
             "http_method": "GET",
-            "description": "URL Report description",
+            "description": "",
             "context_path": "UrlReport",
             "root_object": "",
             "headers": null,

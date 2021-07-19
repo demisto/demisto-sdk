@@ -219,7 +219,7 @@ class OpenAPIIntegration:
 
         code = code.replace('$FUNCTIONS$', '\n'.join(functions))
         code = code.replace('$BASEURL$', self.base_path)
-        client = BASE_CLIENT.replace('$REQUESTFUNCS$', ''.join(req_functions))
+        client = BASE_CLIENT.replace('$REQUESTFUNCS$', '\n'.join(req_functions))
         code = code.replace('$CLIENT$', client).replace('$CLIENT_API_KEY$', '')
 
         if BEARER_AUTH_TYPE in self.configuration['auth']:

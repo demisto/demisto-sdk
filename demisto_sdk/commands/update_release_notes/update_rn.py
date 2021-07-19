@@ -50,6 +50,7 @@ class UpdateRN:
         self.is_force = is_force
         self.metadata_path = os.path.join(self.pack_path, 'pack_metadata.json')
         self.master_version = self.get_master_version()
+        self.rn_path = None
 
     @staticmethod
     def change_image_or_desc_file_path(file_path: str) -> str:
@@ -103,6 +104,7 @@ class UpdateRN:
         new_version, new_metadata = self.get_new_version_and_metadata()
         rn_path = self.get_release_notes_path(new_version)
         self.check_rn_dir(rn_path)
+        self.rn_path = rn_path
         self.find_added_pack_files()
         docker_image_name: Optional[str] = None
         changed_files = {}

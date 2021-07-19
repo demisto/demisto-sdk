@@ -37,6 +37,7 @@ class UpdateReleaseNotesManager:
         # When a user choose a specific pack to update rn, the -g flag should not be passed
         if self.given_pack and self.is_all:
             raise ValueError('Please remove the -g flag when specifying only one pack.')
+        self.rn_path = list()
 
     def manage_rn_update(self):
         """
@@ -163,6 +164,8 @@ class UpdateReleaseNotesManager:
                                       text=self.text, is_force=self.is_force,
                                       existing_rn_version_path=existing_rn_version)
             updated = update_pack_rn.execute_update()
+            self.rn_path.append(update_pack_rn.rn_path)
+
             # If new release notes were created add it to the total number of packs that were updated.
             if updated:
                 self.total_updated_packs.add(pack)

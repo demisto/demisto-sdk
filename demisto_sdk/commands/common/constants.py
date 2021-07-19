@@ -391,7 +391,7 @@ PACKS_LAYOUT_JSON_REGEX = fr'{PACKS_LAYOUTS_DIR_REGEX}\/(?!layoutscontainer)([^/
 PACKS_LAYOUTS_CONTAINER_JSON_REGEX = fr'{PACKS_LAYOUTS_DIR_REGEX}\/layoutscontainer([^/]+)\.json'
 
 PACKS_PRE_PROCESS_RULES_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{PRE_PROCESS_RULES_DIR}'
-PACKS_PRE_PROCESS_RULES_JSON_REGEX = fr'{PACKS_PRE_PROCESS_RULES_DIR_REGEX}\/([^/]+)\.json'
+PACKS_PRE_PROCESS_RULES_JSON_REGEX = fr'{PACKS_PRE_PROCESS_RULES_DIR_REGEX}/preprocessrule-([^/]+)\.json'
 
 PACKS_WIDGETS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{WIDGETS_DIR}'
 PACKS_WIDGET_JSON_REGEX = fr'{PACKS_WIDGETS_DIR_REGEX}\/([^/]+)\.json'
@@ -1228,7 +1228,28 @@ LAYOUT_AND_MAPPER_BUILT_IN_FIELDS = ['indicatortype', 'source', 'comment', 'aggr
                                      'short_description', 'description', 'Tags', 'blocked']
 
 # TODO Should this list contain all specific fields?
-PRE_PROCESS_RULES_BUILT_IN_FIELDS = ['scriptName', 'existingEventsFilters', 'readyExistingEventsFilters', 'newEventFilters',]
+PRE_PROCESS_RULES_BUILT_IN_FIELDS = [
+    'action',
+    'enabled',
+    'existingEventsFilters',
+    'fromServerVersion',
+    'id',
+    'index',
+    'itemVersion',
+    'linkTo',
+    'locked',
+    'name',
+    'newEventFilters',
+    'packID',
+    'period',
+    'readyExistingEventsFilters',
+    'readyNewEventFilters',
+    'scriptName',
+    'searchClosed',
+    'system',
+    'toServerVersion',
+    'version',
+]
 
 UUID_REGEX = r'[0-9a-f]{8}\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\b[0-9a-f]{12}'
 

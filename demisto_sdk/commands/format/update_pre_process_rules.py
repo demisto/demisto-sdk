@@ -24,7 +24,7 @@ from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
 #                            'mobile']
 PRE_PROCESS_RULES_KIND = 'preprocessrules'
 # LAYOUTS_CONTAINER_PREFIX = 'layoutscontainer-'
-PRE_PROCESS_RULES_PREFIX = 'preprocessrules-'
+PRE_PROCESS_RULES_PREFIX = 'preprocessrule-'
 
 
 class PreProcessRulesBaseFormat(BaseUpdateJSON, ABC):
@@ -49,16 +49,20 @@ class PreProcessRulesBaseFormat(BaseUpdateJSON, ABC):
             return format_res, self.initiate_file_validator(PreProcessRulesValidator)
 
     def run_format(self) -> int:
-        print('*** PreProcessRulesBaseFormat')
         try:
             click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
             self.pre_process_rules__run_format()
-            self.update_json()
-            self.set_description()
+            # self.update_json()
+            # FYI, self.update_json() is
+            self.set_version_to_default()
+            # self.remove_null_fields()
+            self.remove_unnecessary_keys()
+            # self.set_fromVersion(from_version=self.from_version)
+
+            # self.set_description()
             self.save_json_to_destination_file()
             return SUCCESS_RETURN_CODE
         except Exception as err:
-            print('*** Failed to update file ' + str(self.source_file) + ', err: ' + str(err))
             print(''.join(traceback.format_exception(etype=type(exc), value=exc, tb=exc.__traceback__)))
             if self.verbose:
                 click.secho(f'\nFailed to update file {self.source_file}. Error: {err}', fg='red')
@@ -80,7 +84,7 @@ class PreProcessRulesBaseFormat(BaseUpdateJSON, ABC):
         # version is both in pre_process_rules key and in base dict
         # self.set_version_to_default(self.data['version'])
         self.set_version_to_default()
-        self.set_toVersion()
+        # self.set_toVersion()
         self.pre_process_rules__set_output_path()
 
     def pre_process_rules__set_output_path(self):
@@ -131,8 +135,6 @@ class PreProcessRulesBaseFormat(BaseUpdateJSON, ABC):
                 self.data[kind].pop(field, None)
 
     def set_pre_process_rules_key(self):
-        print('*** set_pre_process_rules_key, self.data.keys: ' + str(self.data.keys()))
-        print('*** set_pre_process_rules_key, self.data: ' + str(self.data))
         # TODO Needed?
         # if "pre_process_rules" not in self.data.keys():
         #     # kind = self.data['kind']
@@ -146,6 +148,7 @@ class PreProcessRulesBaseFormat(BaseUpdateJSON, ABC):
         #         # "fromVersion": NEW_FILE_DEFAULT_5_FROMVERSION,
         #         # "layout": self.data
         #     }
+        pass
 
     def set_group_field(self):
         if self.data['group'] != 'incident' and self.data['group'] != 'indicator':
@@ -177,10 +180,7 @@ class PreProcessRulesBaseFormat(BaseUpdateJSON, ABC):
         with open(self.schema_path, 'r') as file_obj:
             a = yaml.safe_load(file_obj)
         schema_fields = a.get('mapping').keys()
-        print('*** pre_process_rules__arguments_to_remove, self.data.keys: ' + str(self.data.keys()))
-        print('*** pre_process_rules__arguments_to_remove, schema_fields: ' + str(schema_fields))
         first_level_args = set(self.data.keys()) - set(schema_fields)
-        print('*** pre_process_rules__arguments_to_remove, first_level_args: ' + str(first_level_args))
 
         # TODO Needed?
         # second_level_args = {}

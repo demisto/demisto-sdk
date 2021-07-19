@@ -38,7 +38,7 @@ class PreprocessRulesBaseValidator(ContentEntityValidator, ABC):
                     self.is_valid_to_version(),
                     self.is_to_version_higher_than_from_version(),
                     self.is_valid_file_path(),
-                    self.is_incident_field_exist(id_set_file, is_circle),
+                    # self.is_incident_field_exist(id_set_file, is_circle),
                     ])
 
     def is_valid_version(self) -> bool:

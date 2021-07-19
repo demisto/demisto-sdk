@@ -498,11 +498,11 @@ class Initiator:
         """
 
         with open(os.path.join(self.full_output_path, f"{current_suffix}.py"), "r+") as f:
-            python_file_lines = f.read()
-            for word in self.SCRIPT_TEMPLATE_OPTIONS:
-                python_file_lines = python_file_lines.replace(word, self.id)
+            py_file_data = f.read()
+            for script_template_name in self.SCRIPT_TEMPLATE_OPTIONS:
+                py_file_data = py_file_data.replace(script_template_name, self.id)
             f.seek(0)
-            f.write(python_file_lines)
+            f.write(py_file_data)
             f.truncate()
 
     def rename(self, current_suffix: str):

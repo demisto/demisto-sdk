@@ -7,7 +7,7 @@ from typing import Dict, Optional
 
 import click
 
-from demisto_sdk.commands.common.constants import PACKS_DIR, FileType
+from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.tools import get_pack_name, print_error, find_type
 
 

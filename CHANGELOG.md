@@ -1,4 +1,5 @@
 # Changelog
+* Enhanced the **postman-codegen** command to name all generated arguments with lower case.
 * Fixed an issue where the **find-dependencies** command miscalculated the dependencies for playbooks that use generic commands.
 
 # 1.4.4

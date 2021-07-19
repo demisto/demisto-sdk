@@ -1,4 +1,5 @@
 # Changelog
+* Enhanced the **postman-codegen** command to name all generated arguments with lower case.
 * Added to the **postman-codegen** command support of path variables.
 
 # 1.4.4

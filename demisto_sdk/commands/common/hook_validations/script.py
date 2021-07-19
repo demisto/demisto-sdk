@@ -226,8 +226,22 @@ class ScriptValidator(ContentEntityValidator):
             return True
         return False
 
-    def is_valid_name(self):
-        # type: () -> bool
+    def is_valid_name(self) -> bool:
+        """
+        Checks whether script name is valid.
+        Returns:
+            (bool) True if script name is valid, false otherwise.
+        """
+        name = self.current_file.get('name')
+        return all([self.is_valid_versioned_name(),
+                    self.name_does_not_contain_contributor_type_name(name)])
+
+    def is_valid_versioned_name(self) -> bool:
+        """
+        If script is a versioned script, checks whether script name is valid versioned name.
+        Returns:
+            (bool): True if valid or script name is not versioned, false otherwise.
+        """
         version_number: Optional[str] = get_file_version_suffix_if_exists(self.current_file)
         if not version_number:
             return True

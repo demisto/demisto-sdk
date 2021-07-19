@@ -14,6 +14,7 @@ from demisto_sdk.commands.common.tools import get_yaml
 from TestSuite.test_tools import ChangeCWD
 from typing import Dict
 import pytest
+
 DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST = BaseValidator.create_reverse_ignored_errors_list(
     PRESET_ERROR_TO_CHECK['deprecated'])
 
@@ -418,14 +419,14 @@ class TestJsonOutput:
 
             assert json_output.sort() == expected_json_1.sort()
 
-    VALIDATE_PACK_NAME_INPUTS = [({'name': 'fill mandatory field'}, False),
-                                 ({'name': 'A'}, False),
-                                 ({'name': 'notCapitalized'}, False),
-                                 ({'name': 'BitcoinAbuse (Community)', PACK_METADATA_SUPPORT: 'community'}, False),
-                                 ({'name': 'BitcoinAbuse'}, True)]
+    VALIDATE_PACK_NAME_INPUTS = [({'name': 'fill mandatory field'}, True),
+                                 ({'name': 'A'}, True),
+                                 ({'name': 'notCapitalized'}, True),
+                                 ({'name': 'BitcoinAbuse (Community)', PACK_METADATA_SUPPORT: 'community'}, True),
+                                 ({'name': 'BitcoinAbuse'}, False)]
 
     @pytest.mark.parametrize('metadata_content, expected', VALIDATE_PACK_NAME_INPUTS)
-    def test_validate_pack_name(self, metadata_content: Dict, expected: bool, mocker):
+    def test_validate_pack_name(self, metadata_content: Dict, expected: bool):
         """
         Given:
         - Pack or integration name
@@ -437,5 +438,6 @@ class TestJsonOutput:
         - Ensure expected result is returned.
         """
         for contributor_type_name in BaseValidator.CONTRIBUTOR_TYPE_LIST:
-            assert BaseValidator.name_contains_contributor_type_name(f'BitcoinAbuse ({contributor_type_name})')
-        assert not BaseValidator.name_contains_contributor_type_name('BitcoinAbuse')
+            assert not BaseValidator.name_does_not_contain_contributor_type_name(
+                f'BitcoinAbuse ({contributor_type_name})')
+        assert BaseValidator.name_does_not_contain_contributor_type_name('BitcoinAbuse')

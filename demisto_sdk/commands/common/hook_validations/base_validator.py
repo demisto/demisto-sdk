@@ -4,7 +4,6 @@ import os
 from typing import Optional
 
 import click
-
 from demisto_sdk.commands.common.constants import (PACK_METADATA_SUPPORT,
                                                    PACKS_DIR,
                                                    PACKS_PACK_META_FILE_NAME,
@@ -213,16 +212,16 @@ class BaseValidator:
             json.dump(json_contents, f, indent=4)
 
     @staticmethod
-    def name_contains_contributor_type_name(pack_or_integration_name: str) -> bool:
+    def name_does_not_contain_contributor_type_name(name: str) -> bool:
         """
-        Checks whether pack or integration name is contributor supported and has contributor name. This validation is
-        needed because the label of contributor is automatically added to the name, so this validation will prevent it
-        from being added twice.
+        Checks whether pack or integration or script name is contributor supported and has contributor name.
+        This validation is needed because the label of contributor is automatically added to the name, so this
+        validation will prevent it from being added twice.
         Args:
-            pack_or_integration_name (Dict): Metadata content.
+            name (Dict): Metadata content.
 
         Returns:
-
+            (bool) True if name contains contributor type name, false otherwise.
         """
-        lowercase_name = pack_or_integration_name.lower()
-        return any(contributor_name in lowercase_name for contributor_name in ['partner', 'developer', 'community'])
+        lowercase_name = name.lower()
+        return not any(contributor_name in lowercase_name for contributor_name in ['partner', 'developer', 'community'])

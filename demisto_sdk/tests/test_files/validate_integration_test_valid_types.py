@@ -622,11 +622,8 @@ UNIFIED_GENERIC_MODULE = {
     "version": -1,
     "name": "Risk Based Vulnerability Management",
     "fromVersion": "6.5.0",
-    "definitions": [
-        {
-            "id": "asset",
-            "name": "Asset"
-        }
+    "definitionIds": [
+        "asset"
     ],
     "views": [{
         "icon": "icon-widget-infinity-24-s",

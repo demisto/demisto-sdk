@@ -516,7 +516,7 @@ final test: hi
         - Ensure Unify command works with default output given relative path to current directory.
         """
         from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
-        abs_path_mock = mocker.patch('demisto_sdk.commands.unify.unifier.os.path.abspath')
+        abs_path_mock = mocker.patch('demisto_sdk.commands.unify.yml_unifier.os.path.abspath')
         abs_path_mock.return_value = TESTS_DIR + '/test_files/Packs/DummyPack/Integrations/UploadTest'
         input_path_integration = '.'
         unifier = YmlUnifier(input_path_integration)

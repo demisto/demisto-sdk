@@ -1761,7 +1761,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def pack_name_contains_contribution_type_name(pack_name: str, support_names: List[str]):
-        return f'Pack name {pack_name} should not contain one of {support_names} in its name. Please remove.'
+        return f'Pack {pack_name} should not contain one of {support_names} in its name. Please remove.'
 
     @staticmethod
     @error_code_decorator

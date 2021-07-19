@@ -13,8 +13,7 @@ from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
                                                 PRESET_ERROR_TO_CHECK,
                                                 PRESET_ERROR_TO_IGNORE,
                                                 get_all_error_codes,
-                                                get_error_object,
-                                                Errors)
+                                                get_error_object)
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_file_displayed_name,
                                                get_json, get_pack_name,

@@ -1299,7 +1299,7 @@ class IntegrationValidator(ContentEntityValidator):
         # extracting the specific command from commands.
         endpoint_command = [arg for arg in commands if arg.get('name') == 'endpoint'][0]
         return self._is_valid_endpoint_inputs(endpoint_command, required_arguments=ENDPOINT_FLEXIBLE_REQUIRED_ARGS) \
-               and self._is_valid_endpoint_outputs(endpoint_command)
+            and self._is_valid_endpoint_outputs(endpoint_command)
 
     def _is_valid_endpoint_inputs(self, command_data, required_arguments):
         """

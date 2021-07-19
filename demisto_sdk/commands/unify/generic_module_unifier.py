@@ -7,7 +7,7 @@ from typing import Dict, Optional
 
 import click
 
-from demisto_sdk.commands.common.constants import PACKS_DIR_REGEX, FileType
+from demisto_sdk.commands.common.constants import PACKS_DIR, FileType
 from demisto_sdk.commands.common.tools import get_pack_name, print_error, find_type
 
 
@@ -32,11 +32,12 @@ class GenericModuleUnifier:
                         'should be to a directory of a GenericModule file.')
 
         self.pack_name = get_pack_name(file_path=self.input_path)
-        self.pack_path = os.path.join(PACKS_DIR_REGEX, self.pack_name)
+        self.pack_path = os.path.dirname(os.path.dirname(self.input_path))
+
         self.input_file_name = os.path.basename(self.input_path).rstrip('.json')
         self.use_force = force
 
-        if output != '':
+        if output:
             if not os.path.isdir(output):
                 print_error('You have failed to provide a legal dir path')
                 sys.exit(1)
@@ -88,7 +89,7 @@ class GenericModuleUnifier:
                                 # search dashboard in the GenericModule's pack
                                 dashboard_content = self.find_dashboard_by_id(dashboard_id=dashboard_id)
                                 if dashboard_content:
-                                    tab['dashboard'] = dashboard_content  # TODO: need to check its working
+                                    tab['dashboard'] = dashboard_content
                                 else:
                                     click.secho(f'Dashboard {dashboard_id} was not found in pack: {self.pack_name} '
                                                 f'and therefore was not unified', fg="bright_red")

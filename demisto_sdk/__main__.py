@@ -60,7 +60,8 @@ from demisto_sdk.commands.secrets.secrets import SecretsValidator
 from demisto_sdk.commands.split_yml.extractor import Extractor
 from demisto_sdk.commands.test_content.execute_test_content import \
     execute_test_content
-from demisto_sdk.commands.unify.generic_module_unifier import GenericModuleUnifier
+from demisto_sdk.commands.unify.generic_module_unifier import \
+    GenericModuleUnifier
 from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
 from demisto_sdk.commands.update_release_notes.update_rn_manager import \
     UpdateReleaseNotesManager
@@ -287,12 +288,12 @@ def unify(**kwargs):
     file_type = find_type(kwargs['input'])
     if file_type == FileType.GENERIC_MODULE:
         # pass arguments to GenericModule unifier and call the command
-        unifier = GenericModuleUnifier(**kwargs)
-        unifier.merge_generic_module_with_its_dashboards()
+        generic_module_unifier = GenericModuleUnifier(**kwargs)
+        generic_module_unifier.merge_generic_module_with_its_dashboards()
 
     else:
-        unifier = YmlUnifier(**kwargs)
-        unifier.merge_script_package_to_yml()
+        yml_unifier = YmlUnifier(**kwargs)
+        yml_unifier.merge_script_package_to_yml()
     return 0
 
 

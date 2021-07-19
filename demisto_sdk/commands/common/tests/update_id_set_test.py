@@ -306,6 +306,7 @@ class TestIntegrations:
             "name": "Dummy Integration",
             "file_path": TESTS_DIR + "/test_files/DummyPack/Integrations/DummyIntegration/DummyIntegration.yml",
             "fromversion": "4.1.0",
+            "docker_image": "demisto/python3:3.7.4.977",
             "commands": ['xdr-get-incidents',
                          'xdr-get-incident-extra-data',
                          'xdr-update-incident',
@@ -424,6 +425,7 @@ class TestScripts:
             "name": "DummyScript",
             "file_path": TESTS_DIR + "/test_files/DummyPack/Scripts/DummyScript.yml",
             "fromversion": "5.0.0",
+            "docker_image": "demisto/python3:3.7.3.286",
             "tests": [
                 "No test - no need to test widget"
             ]
@@ -433,6 +435,7 @@ class TestScripts:
     PACK_SCRIPT_DATA = {
         "DummyScript": {
             "name": "DummyScript",
+            "docker_image": "demisto/python3:3.8.2.6981",
             "pack": "DummyPack",
             "file_path": TESTS_DIR + "/test_files/Packs/DummyPack/Scripts/DummyScript/DummyScript.yml",
         }

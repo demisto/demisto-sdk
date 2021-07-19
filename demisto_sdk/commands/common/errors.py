@@ -93,12 +93,14 @@ ERROR_CODE = {
                                          'related_field': 'script.commands.name'},
     "integration_is_skipped": {'code': "IN140", 'ui_applicable': False, 'related_field': ''},
     "reputation_missing_argument": {'code': "IN141", 'ui_applicable': True, 'related_field': '<argument-name>.default'},
+    'integration_contains_contribution_type_name': {'code': 'IN142', 'ui_applicable': False, 'related_field': ''},
     "invalid_version_script_name": {'code': "SC100", 'ui_applicable': True, 'related_field': 'name'},
     "invalid_deprecated_script": {'code': "SC101", 'ui_applicable': False, 'related_field': 'comment'},
     "invalid_command_name_in_script": {'code': "SC102", 'ui_applicable': False, 'related_field': ''},
     "is_valid_script_file_path_in_folder": {'code': "SC103", 'ui_applicable': False, 'related_field': ''},
     "is_valid_script_file_path_in_scripts_folder": {'code': "SC104", 'ui_applicable': False, 'related_field': ''},
     "incident_in_script_arg": {'code': "SC105", 'ui_applicable': True, 'related_field': 'args.name'},
+    'script_contains_contribution_type_name': {'code': 'SC106', 'ui_applicable': False, 'related_field': ''},
     "dbot_invalid_output": {'code': "DB100", 'ui_applicable': True, 'related_field': 'contextPath'},
     "dbot_invalid_description": {'code': "DB101", 'ui_applicable': True, 'related_field': 'description'},
     "breaking_backwards_subtype": {'code': "BC100", 'ui_applicable': False, 'related_field': 'subtype'},
@@ -223,7 +225,7 @@ ERROR_CODE = {
     "invalid_core_pack_dependencies": {'code': "PA124", 'ui_applicable': True, 'related_field': ''},
     "pack_name_is_not_in_xsoar_standards": {'code': "PA125", 'ui_applicable': False, 'related_field': ''},
     "pack_metadata_long_description": {'code': "PA126", 'ui_applicable': False, 'related_field': ''},
-    'pack_name_contains_support_name': {'code': 'PA127', 'ui_applicable': False, 'related_field': ''},
+    'pack_name_contains_contribution_type_name': {'code': 'PA127', 'ui_applicable': False, 'related_field': ''},
     "readme_error": {'code': "RM100", 'ui_applicable': False, 'related_field': ''},
     "image_path_error": {'code': "RM101", 'ui_applicable': False, 'related_field': ''},
     "readme_missing_output_context": {'code': "RM102", 'ui_applicable': False, 'related_field': ''},
@@ -1756,8 +1758,17 @@ class Errors:
                f"Also make sure to update the field id and cliName accordingly. " \
                f"Example: cliName: {pack_prefix.replace(' ', '')}{field_name.replace(' ', '')}, "
 
+    @staticmethod
+    @error_code_decorator
+    def pack_name_contains_contribution_type_name(pack_name: str, support_names: List[str]):
+        return f'Pack name {pack_name} should not contain one of {support_names}.'
 
     @staticmethod
     @error_code_decorator
-    def pack_name_contains_support_name(pack_name: str, support_names: List[str]):
-        return f'Pack name {pack_name} should not contain one of {support_names}.'
+    def integration_contains_contribution_type_name(integration_name: str, support_names: List[str]):
+        return f'Integration {integration_name} should not contain one of {support_names}.'
+
+    @staticmethod
+    @error_code_decorator
+    def script_contains_contribution_type_name(script_name: str, support_names: List[str]):
+        return f'Script {script_name} should not contain one of {support_names}.'

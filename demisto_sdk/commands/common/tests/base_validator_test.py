@@ -437,7 +437,11 @@ class TestJsonOutput:
         Then:
         - Ensure expected result is returned.
         """
+        base_validator = BaseValidator()
         for contributor_type_name in BaseValidator.CONTRIBUTOR_TYPE_LIST:
-            assert not BaseValidator.name_does_not_contain_contributor_type_name(
-                f'BitcoinAbuse ({contributor_type_name})')
-        assert BaseValidator.name_does_not_contain_contributor_type_name('BitcoinAbuse')
+            assert not base_validator.name_does_not_contain_contributor_type_name(
+                f'BitcoinAbuse ({contributor_type_name})', Errors.pack_name_contains_contribution_type_name,
+                'fake/path')
+        assert base_validator.name_does_not_contain_contributor_type_name('BitcoinAbuse',
+                                                                          Errors.pack_name_contains_contribution_type_name,
+                                                                          'fake/path')

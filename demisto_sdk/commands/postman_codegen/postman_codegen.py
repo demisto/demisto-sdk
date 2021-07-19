@@ -388,7 +388,7 @@ def convert_request_to_command(item: dict):
         url_path=url_path,
         http_method=request.get('method'),
         headers=headers,
-        description=request.get('description'),
+        description=request.get('description') or '',
         arguments=args,
         outputs=outputs,
         context_path=context_prefix,

@@ -1,4 +1,5 @@
 # Changelog
+* Enhanced the **postman-codegen** command to name all generated arguments with lower case.
 * Added to **validate** command validation of integration/script/pack name not containing contributor type name
 
 # 1.4.4

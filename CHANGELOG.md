@@ -1,5 +1,6 @@
 # Changelog
 * Enhanced the **postman-codegen** command to name all generated arguments with lower case.
+* Added a function which gives the ability to temporarily suppress console output.
 
 # 1.4.4
 * When formatting incident types with Auto-Extract rules and without mode field, the **format** command will now add the user selected mode.

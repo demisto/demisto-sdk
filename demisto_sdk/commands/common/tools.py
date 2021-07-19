@@ -1952,6 +1952,11 @@ def get_current_tags() -> list:
 def suppress_stdout():
     """
         Temporarily suppress console output without effecting error outputs.
+        Example of use:
+
+            with suppress_stdout():
+                print('This message will not be printed')
+            print('This message will be printed')
     """
     with open(os.devnull, "w") as devnull:
         old_stdout = sys.stdout

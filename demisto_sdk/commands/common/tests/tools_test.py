@@ -66,6 +66,16 @@ class TestGenericFunctions:
         assert func(file_path)
 
     def test_get_file_exception(self):
+        """
+        Given
+        - A non supported file.
+
+        When
+        - Running get_file.
+
+        Then
+        - Ensure the function raise an error.
+        """
         path_to_here = f'{git_path()}/demisto_sdk/tests/test_files/'
         with raises(ValueError) as e:
             result = get_file(json.load, os.path.join(path_to_here, 'fake_integration.yml'), ('yml', 'yaml'))

@@ -57,7 +57,7 @@ def generate_integration_doc(
         insecure: bool = False,
         verbose: bool = False,
         command: Optional[str] = None,
-        input_old_version: str = '',
+        old_version: str = '',
         skip_breaking_changes: bool = False):
     """ Generate integration documentation.
 
@@ -142,7 +142,7 @@ def generate_integration_doc(
             docs.extend(command_section)
             # breaking changes
             if integration_version and not skip_breaking_changes:
-                docs.extend(generate_versions_differences_section(input_path, input_old_version,
+                docs.extend(generate_versions_differences_section(input_path, old_version,
                                                                   yml_data.get("display", "")))
 
             errors.extend(command_errors)
@@ -326,7 +326,7 @@ def generate_single_command_section(cmd: dict, example_dict: dict, command_permi
     return section, errors
 
 
-def generate_versions_differences_section(input_path, input_old_version, display_name) -> list:
+def generate_versions_differences_section(input_path, old_version, display_name) -> list:
     """
     Generate the version differences section to the README.md file.
 
@@ -344,14 +344,14 @@ def generate_versions_differences_section(input_path, input_old_version, display
         ''
     ]
 
-    if not input_old_version:
+    if not old_version:
         user_response = str(input('Enter the path of the previous integration version file if any. Press Enter to skip.\n'))
 
         if user_response:
-            input_old_version = user_response
+            old_version = user_response
 
-    if input_old_version:
-        differences = get_previous_version_differences(input_path, input_old_version)
+    if old_version:
+        differences = get_previous_version_differences(input_path, old_version)
 
         if differences[0] != '':
             differences_section.extend(differences)
@@ -419,6 +419,25 @@ def get_previous_version_differences(new_integration_path, previous_integration_
     return differences_section
 
 
+def disable_md_autolinks(markdown: str) -> str:
+    """Disable auto links that markdown clients (such as xosar.pan.dev) auto create. This behaviour is more
+    consistent with how the Server works were links are only created for explicitly defined links.
+    We take: https//lgtm.com/rules/9980089 and change to: https:<span>//</span>lgtm.com/rules/9980089
+    Note that we don't want to change legitimate md links of the form: (link)[http://test.com]. We avoid
+    legitimate md links by using a negative lookbehind in the regex to make sure before the http match
+    we don't have ")[".
+
+    Args:
+        markdown (str): markdown to process
+
+    Returns:
+        str: processed markdown
+    """
+    if not markdown:
+        return markdown
+    return re.sub(r'\b(?<!\)\[)(https?)://([\w\d]+?\.[\w\d]+?)\b', r'\1:<span>//</span>\2', markdown, flags=re.IGNORECASE)
+
+
 def generate_command_example(cmd, cmd_example=None):
     errors = []
     context_example = None
@@ -445,7 +464,7 @@ def generate_command_example(cmd, cmd_example=None):
         ])
     example.extend([
         '#### Human Readable Output',
-        '{}'.format('>'.join(f'\n{md_example}'.splitlines(True))),  # prefix human readable with quote
+        '{}'.format('>'.join(f'\n{disable_md_autolinks(md_example)}'.splitlines(True))),  # prefix human readable with quote
         '',
     ])
 

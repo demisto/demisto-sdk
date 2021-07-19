@@ -21,7 +21,7 @@ from demisto_sdk.commands.common.tools import (find_type,
 
 
 class BaseValidator:
-    CONTRIBUTOR_TYPE_LIST = ['partner', 'developer', 'community']
+    CONTRIBUTOR_TYPE_LIST = ['partner', 'community']
 
     def __init__(self, ignored_errors=None, print_as_warnings=False, suppress_print: bool = False,
                  json_file_path: Optional[str] = None):

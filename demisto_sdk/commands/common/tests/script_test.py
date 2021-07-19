@@ -352,6 +352,8 @@ class TestScriptValidator:
     V2_NAME_INPUTS = [
         (V2_VALID, True),
         (V2_WRONG_DISPLAY, False),
+         ({'name': 'BitcoinAbuse Community'}, False),
+         ({'name': 'BitcoinAbuse Partner'}, False),
     ]
 
     IS_SKIPPING_DOCKER_CHECK = [("Packs/ApiModules", False, True),

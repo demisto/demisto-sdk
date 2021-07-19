@@ -445,6 +445,7 @@ class Initiator:
 
         if self.id != self.template:
             # note rename does not work on the yml file - that is done in the yml_reformatting function.
+            self.change_template_name_script_py(current_suffix=self.template)
             self.rename(current_suffix=self.template)
             self.yml_reformatting(current_suffix=self.template)
             self.fix_test_file_import(name_to_change=self.template)
@@ -488,6 +489,21 @@ class Initiator:
                 default_flow_style=False)
 
         os.remove(os.path.join(self.full_output_path, f"{current_suffix}.yml"))
+
+    def change_template_name_script_py(self, current_suffix: str):
+        """Change all script template name appearances with the real script name in the script python file.
+
+        Args:
+            current_suffix (str): The py file name
+        """
+
+        with open(os.path.join(self.full_output_path, f"{current_suffix}.py"), "r+") as f:
+            python_file_lines = f.read()
+            for word in self.SCRIPT_TEMPLATE_OPTIONS:
+                python_file_lines = python_file_lines.replace(word, self.id)
+            f.seek(0)
+            f.write(python_file_lines)
+            f.truncate()
 
     def rename(self, current_suffix: str):
         """Renames the python, description, test and image file in the path to fit the newly created integration/script

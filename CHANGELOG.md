@@ -1,4 +1,5 @@
 # Changelog
+* Enhanced the **init** command with changing the script template name in the code with the real script name.
 
 # 1.4.4
 * When formatting incident types with Auto-Extract rules and without mode field, the **format** command will now add the user selected mode.

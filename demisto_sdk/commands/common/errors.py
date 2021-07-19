@@ -1761,14 +1761,14 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def pack_name_contains_contribution_type_name(pack_name: str, support_names: List[str]):
-        return f'Pack name {pack_name} should not contain one of {support_names}.'
+        return f'Pack name {pack_name} should not contain one of {support_names} in its name. Please remove.'
 
     @staticmethod
     @error_code_decorator
     def integration_contains_contribution_type_name(integration_name: str, support_names: List[str]):
-        return f'Integration {integration_name} should not contain one of {support_names}.'
+        return f'Integration {integration_name} should not contain one of {support_names} in its name. Please remove.'
 
     @staticmethod
     @error_code_decorator
     def script_contains_contribution_type_name(script_name: str, support_names: List[str]):
-        return f'Script {script_name} should not contain one of {support_names}.'
+        return f'Script {script_name} should not contain one of {support_names} in its name. Please remove.'

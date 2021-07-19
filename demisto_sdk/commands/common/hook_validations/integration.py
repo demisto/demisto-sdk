@@ -961,10 +961,24 @@ class IntegrationValidator(ContentEntityValidator):
             (bool).
         """
         display_name = self.current_file.get('display')
-        return all([self.is_valid_versioned_display_name(),
-                    self.name_does_not_contain_contributor_type_name(display_name,
-                                                                     Errors.integration_contains_contribution_type_name,
-                                                                     self.file_path)])
+        return all(
+            [self.is_valid_versioned_display_name(), self.name_does_not_contain_contributor_type_name(display_name)])
+
+    def name_does_not_contain_contributor_type_name(self, name: str) -> bool:
+        """
+        Checks if integration name does not contain contributor type name.
+        Args:
+            name (str): Integration name.
+
+        Returns:
+            (bool): Whether integration name is valid or not.
+        """
+        if not super().name_does_not_contain_contributor_type_name(name):
+            error_message, error_code = Errors.integration_contains_contribution_type_name(name,
+                                                                                           self.CONTRIBUTOR_TYPE_LIST)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+        return True
 
     def is_valid_versioned_display_name(self) -> bool:
         version_number: Optional[str] = get_file_version_suffix_if_exists(self.current_file,

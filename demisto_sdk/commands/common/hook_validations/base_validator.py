@@ -212,23 +212,16 @@ class BaseValidator:
         with open(self.json_file_path, 'w') as f:
             json.dump(json_contents, f, indent=4)
 
-    def name_does_not_contain_contributor_type_name(self, name: str, error_func, file_path: str) -> bool:
+    def name_does_not_contain_contributor_type_name(self, name: str) -> bool:
         """
         Checks whether pack or integration or script name is contributor supported and has contributor name.
         This validation is needed because the label of contributor is automatically added to the name, so this
         validation will prevent it from being added twice.
         Args:
-            name (Dict): Metadata content.
-            error_func
-            file_path
-
+            name (Dict): Name of the pack/integration/script.
         Returns:
             (bool) True if name contains contributor type name, false otherwise.
         """
         lowercase_name = name.lower()
-        if any(contributor_name in lowercase_name for contributor_name in self.CONTRIBUTOR_TYPE_LIST):
-            error_message, error_code = error_func(name, self.CONTRIBUTOR_TYPE_LIST)
-            if self.handle_error(error_message, error_code, file_path=file_path):
-                return False
-        return True
+        return not any(contributor_name in lowercase_name for contributor_name in self.CONTRIBUTOR_TYPE_LIST)
 

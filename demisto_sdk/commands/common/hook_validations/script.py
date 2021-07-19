@@ -236,6 +236,21 @@ class ScriptValidator(ContentEntityValidator):
         return all([self.is_valid_versioned_name(),
                     self.name_does_not_contain_contributor_type_name(name)])
 
+    def name_does_not_contain_contributor_type_name(self, name: str) -> bool:
+        """
+        Checks if script name does not contain contributor type name.
+        Args:
+            name (str): Script name.
+
+        Returns:
+            (bool): Whether script name is valid or not.
+        """
+        if not super().name_does_not_contain_contributor_type_name(name):
+            error_message, error_code = Errors.script_contains_contribution_type_name(name, self.CONTRIBUTOR_TYPE_LIST)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+        return True
+
     def is_valid_versioned_name(self) -> bool:
         """
         If script is a versioned script, checks whether script name is valid versioned name.

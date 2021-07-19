@@ -308,7 +308,7 @@ class IntegrationValidator(ContentEntityValidator):
     def is_valid_default_argument_in_reputation_command(self):
         # type: () -> bool
         """Check if a reputation command (domain/email/file/ip/url/cve)
-            has a default non required argument.
+            has a default non required argument which support array.
 
         Returns:
             bool. Whether a reputation command hold a valid argument
@@ -329,6 +329,12 @@ class IntegrationValidator(ContentEntityValidator):
                         if arg.get('default') is False:
                             error_message, error_code = Errors.wrong_default_argument(arg_name,
                                                                                       command_name)
+                            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                                self.is_valid = False
+                                flag = False
+                        if arg.get('isArray') is False:
+                            error_message, error_code = Errors.wrong_is_array_argument(arg_name,
+                                                                                       command_name)
                             if self.handle_error(error_message, error_code, file_path=self.file_path):
                                 self.is_valid = False
                                 flag = False
@@ -1274,7 +1280,7 @@ class IntegrationValidator(ContentEntityValidator):
         # extracting the specific command from commands.
         endpoint_command = [arg for arg in commands if arg.get('name') == 'endpoint'][0]
         return self._is_valid_endpoint_inputs(endpoint_command, required_arguments=ENDPOINT_FLEXIBLE_REQUIRED_ARGS) \
-            and self._is_valid_endpoint_outputs(endpoint_command)
+               and self._is_valid_endpoint_outputs(endpoint_command)
 
     def _is_valid_endpoint_inputs(self, command_data, required_arguments):
         """

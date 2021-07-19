@@ -93,6 +93,7 @@ ERROR_CODE = {
                                          'related_field': 'script.commands.name'},
     "integration_is_skipped": {'code': "IN140", 'ui_applicable': False, 'related_field': ''},
     "reputation_missing_argument": {'code': "IN141", 'ui_applicable': True, 'related_field': '<argument-name>.default'},
+    "wrong_is_array_argument": {'code': "IN141", 'ui_applicable': True, 'related_field': '<argument-name>.default'},
     "invalid_version_script_name": {'code': "SC100", 'ui_applicable': True, 'related_field': 'name'},
     "invalid_deprecated_script": {'code': "SC101", 'ui_applicable': False, 'related_field': 'comment'},
     "invalid_command_name_in_script": {'code': "SC102", 'ui_applicable': False, 'related_field': ''},
@@ -431,6 +432,12 @@ class Errors:
     @error_code_decorator
     def wrong_default_argument(arg_name, command_name):
         return "The argument '{}' of the command '{}' is not configured as default" \
+            .format(arg_name, command_name)
+
+    @staticmethod
+    @error_code_decorator
+    def wrong_is_array_argument(arg_name, command_name):
+        return "The argument '{}' of the command '{}' is not configured as array input." \
             .format(arg_name, command_name)
 
     @staticmethod

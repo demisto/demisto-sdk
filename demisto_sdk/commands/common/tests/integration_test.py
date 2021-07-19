@@ -315,6 +315,9 @@ class TestIntegrationValidator:
     DEFAULT_ARGS_INVALID_COMMAND = [{"name": "file", "required": True, "default": False}, {"name": "verbose"}]
     DEFAULT_ARGS_MISSING_DEFAULT_PARAM_WHEN_NOT_ALLOWED = [
         {"name": "email", "arguments": [{"name": "verbose", "required": False, "default": False}]}]
+    DEFAULT_ARGS_NOT_ARRAY = [
+        {"name": "email", "arguments": [{"name": "email", "required": False, "default": True, "isArray": False},
+                                        {"name": "verbose"}]}]
     DEFAULT_ARGS_INPUTS = [
         (DEFAULT_ARGS_DIFFERENT_ARG_NAME, True),
         (DEFAULT_ARGS_MISSING_UNREQUIRED_DEFAULT_FIELD, True),
@@ -322,7 +325,8 @@ class TestIntegrationValidator:
         (DEFAULT_ARGS_INVALID_PARMA_MISSING_DEFAULT, False),
         (DEFAULT_ARGS_INVALID_NOT_DEFAULT, False),
         (DEFAULT_ARGS_INVALID_COMMAND, False),
-        (DEFAULT_ARGS_MISSING_DEFAULT_PARAM_WHEN_NOT_ALLOWED, False)
+        (DEFAULT_ARGS_MISSING_DEFAULT_PARAM_WHEN_NOT_ALLOWED, False),
+        (DEFAULT_ARGS_NOT_ARRAY, False)
     ]
 
     @pytest.mark.parametrize("current, answer", DEFAULT_ARGS_INPUTS)
@@ -349,6 +353,7 @@ class TestIntegrationValidator:
     MULTIPLE_DEFAULT_ARGS_INVALID_1 = [
         {"name": "msgraph-list-users",
          "arguments": [{"name": "users", "required": False, "default": True}, {"name": "verbose", "default": True}]}]
+
     DEFAULT_ARGS_INPUTS = [
         (MULTIPLE_DEFAULT_ARGS_1, True),
         (MULTIPLE_DEFAULT_ARGS_2, True),

@@ -1,4 +1,5 @@
 # Changelog
+* Added a validation to ensure reputation command's default argument is set as an array input.
 
 # 1.4.4
 * When formatting incident types with Auto-Extract rules and without mode field, the **format** command will now add the user selected mode.

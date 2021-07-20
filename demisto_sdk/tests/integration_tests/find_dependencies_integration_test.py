@@ -83,7 +83,11 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
         assert secho.call_args_list[10][0][0] == '### Widgets'
         assert secho.call_args_list[11][0][0] == '### Dashboards'
         assert secho.call_args_list[12][0][0] == '### Reports'
-        assert secho.call_args_list[13][0][0] == 'All level dependencies are: []'  # last log is regarding all the deps
+        assert secho.call_args_list[13][0][0] == '### Generic Types'
+        assert secho.call_args_list[14][0][0] == '### Generic Fields'
+        assert secho.call_args_list[15][0][0] == '### Generic Modules'
+        assert secho.call_args_list[16][0][0] == '### Generic Definitions'
+        assert secho.call_args_list[17][0][0] == 'All level dependencies are: []'  # last log is regarding all the deps
         assert result.exit_code == 0
         assert result.stderr == ""
 

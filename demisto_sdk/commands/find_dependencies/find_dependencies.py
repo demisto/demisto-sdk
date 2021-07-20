@@ -244,6 +244,8 @@ class PackDependencies:
                 item_possible_ids = [item_name, f'incident_{item_name}', f'{item_name}-mapper']
             elif incident_or_indicator == 'Indicator':
                 item_possible_ids = [item_name, f'indicator_{item_name}', f'{item_name}-mapper']
+            elif incident_or_indicator == 'Generic':
+                item_possible_ids = [item_name, f'generic_{item_name}', f'{item_name}-mapper']
             elif incident_or_indicator == 'Both':
                 item_possible_ids = [item_name, f'incident_{item_name}', f'indicator_{item_name}',
                                      f'{item_name}-mapper']
@@ -495,8 +497,8 @@ class PackDependencies:
                     playbook_dependencies.update(pack_dependencies_data)
 
             implementing_scripts = playbook_data.get('implementing_scripts', []) + \
-                playbook_data.get('filters', []) + \
-                playbook_data.get('transformers', [])
+                                   playbook_data.get('filters', []) + \
+                                   playbook_data.get('transformers', [])
 
             # searching for packs of implementing scripts
             playbook_dependencies.update(PackDependencies._differentiate_playbook_implementing_objects(
@@ -572,7 +574,7 @@ class PackDependencies:
         for layout in pack_layouts:
             layout_data = next(iter(layout.values()))
             layout_dependencies = set()
-            if layout_data.get('definitionId') not in [None, 'incident', 'indicator']:
+            if layout_data.get('definitionId') and layout_data.get('definitionId') not in ['incident', 'indicator']:
                 layout_type = "Generic"
 
             elif layout_data.get('group') == 'indicator' or layout_data.get('kind') == 'indicatorsDetails':
@@ -581,15 +583,16 @@ class PackDependencies:
             else:
                 layout_type = 'Incident'
 
-            related_types = layout_data.get('incident_and_indicator_types', [])
-            packs_found_from_incident_indicator_types = PackDependencies._search_packs_by_items_names(
-                related_types, id_set[f'{layout_type}Types'],
-                exclude_ignored_dependencies)
+            if layout_type in ["Indicator", "Indicator"]:
+                related_types = layout_data.get('incident_and_indicator_types', [])
+                packs_found_from_incident_indicator_types = PackDependencies._search_packs_by_items_names(
+                    related_types, id_set[f'{layout_type}Types'],
+                    exclude_ignored_dependencies)
 
-            if packs_found_from_incident_indicator_types:
-                pack_dependencies_data = PackDependencies. \
-                    _label_as_mandatory(packs_found_from_incident_indicator_types)
-                layout_dependencies.update(pack_dependencies_data)
+                if packs_found_from_incident_indicator_types:
+                    pack_dependencies_data = PackDependencies. \
+                        _label_as_mandatory(packs_found_from_incident_indicator_types)
+                    layout_dependencies.update(pack_dependencies_data)
 
             related_fields = layout_data.get('incident_and_indicator_fields', [])
             packs_found_from_incident_indicator_fields = PackDependencies._search_packs_by_items_names_or_ids(
@@ -867,9 +870,10 @@ class PackDependencies:
 
             related_types = classifier_data.get('incident_types', [])
 
-            if classifier_data.get('definitionId') not in [None, 'incident', 'indicator']:
-                packs_found_from_generic_types = PackDependencies._search_packs_by_items_names(
-                    related_types, id_set['GenericTypes'], exclude_ignored_dependencies)
+            if classifier_data.get('definitionId') and classifier_data.get('definitionId') not in ['incident',
+                                                                                                   'indicator']:
+                packs_found_from_generic_types = PackDependencies._search_packs_by_items_names_or_ids(
+                    related_types, id_set['GenericTypes'], exclude_ignored_dependencies, "Generic")
 
                 if packs_found_from_generic_types:
                     pack_dependencies_data = PackDependencies._label_as_mandatory(
@@ -931,7 +935,7 @@ class PackDependencies:
 
             related_types = mapper_data.get('incident_types', [])
 
-            if mapper_data.get('definitionId') not in [None, 'incident', 'indicator']:
+            if mapper_data.get('definitionId') and mapper_data.get('definitionId') not in ['incident', 'indicator']:
                 packs_found_from_generic_types = PackDependencies._search_packs_by_items_names(
                     related_types, id_set['GenericTypes'], exclude_ignored_dependencies)
 
@@ -1092,7 +1096,7 @@ class PackDependencies:
 
     @staticmethod
     def _collect_generic_fields_dependencies(pack_generic_fields: list, id_set: dict, verbose: bool,
-                                               exclude_ignored_dependencies: bool = True) -> set:
+                                             exclude_ignored_dependencies: bool = True) -> set:
         """
         Collects in generic fields dependencies.
 
@@ -1153,7 +1157,7 @@ class PackDependencies:
 
     @staticmethod
     def _collect_generic_modules_dependencies(pack_generic_modules: list, id_set: dict, verbose: bool,
-                                            exclude_ignored_dependencies: bool = True) -> set:
+                                              exclude_ignored_dependencies: bool = True) -> set:
         """
         Collects generic types dependencies.
         Args:
@@ -1172,7 +1176,7 @@ class PackDependencies:
             generic_module_data = next(iter(generic_module.values()))
             generic_module_dependencies = set()
 
-            related_definitions = generic_module_data.get('definitionId')
+            related_definitions = generic_module_data.get('definitionIds')
             packs_found_from_definitions = PackDependencies._search_packs_by_items_names_or_ids(
                 related_definitions, id_set['GenericDefinitions'], exclude_ignored_dependencies)
 
@@ -1232,7 +1236,8 @@ class PackDependencies:
         pack_items['generic_types'] = PackDependencies._search_for_pack_items(pack_id, id_set['GenericTypes'])
         pack_items['generic_fields'] = PackDependencies._search_for_pack_items(pack_id, id_set['GenericFields'])
         pack_items['generic_modules'] = PackDependencies._search_for_pack_items(pack_id, id_set['GenericModules'])
-        pack_items['generic_definitions'] = PackDependencies._search_for_pack_items(pack_id, id_set['GenericDefinitions'])
+        pack_items['generic_definitions'] = PackDependencies._search_for_pack_items(pack_id,
+                                                                                    id_set['GenericDefinitions'])
 
         if not sum(pack_items.values(), []):
             click.secho(f"Couldn't find any items for pack '{pack_id}'. Please make sure:\n"

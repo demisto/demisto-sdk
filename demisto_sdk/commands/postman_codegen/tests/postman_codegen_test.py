@@ -247,6 +247,73 @@ class TestPostmanCodeGen:
 
         assert 'name: foo' in integration_yml
 
+    def test_args_lowercase(self, tmp_path):
+        """
+        Given
+        - Postman collection.
+        - Test report request which has variables with upper case.
+
+        When
+        - Generating config file.
+
+        Then
+        - Integration code has arguments as lowercase, but sends the arguments to requests as given.
+        - Integration yml, the arguments are lower case.
+        """
+        path = tmp_path / 'test-collection.json'
+        _testutil_create_postman_collection(dest_path=path, with_request={
+            "name": "Test Report",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"A\": 2,\n    \"B\": 3,\n    \"c\": 4\n}"
+                },
+                "url": {
+                    "raw": "{{url}}/vtapi/v2/test/{{FOO_A}}?RESOURCE_B=https://www.cobaltstrike.com/",
+                    "host": [
+                        "{{url}}"
+                    ],
+                    "path": [
+                        "vtapi",
+                        "v2",
+                        "test",
+                        "{{FOO_A}}"
+                    ],
+                    "query": [
+                        {
+                            "key": "RESOURCE_B",
+                            "value": "https://www.cobaltstrike.com/"
+                        }
+                    ]
+                },
+                "description": "Test Report description"
+            }
+        })
+
+        config = postman_to_autogen_configuration(
+            collection=json.load(open(path)),
+            name='VirusTotal',
+            context_path_prefix=None,
+            command_prefix=None
+        )
+
+        integration_code = config.generate_integration_python_code()
+        integration_obj = config.generate_integration_yml()
+        integration_yml = yaml.dump(integration_obj.to_dict())
+
+        assert "foo_a = args.get('foo_a')" in integration_code
+        assert "def test_report_request(self, foo_a, resource_b, a, b, c)" in integration_code
+        assert 'assign_params(RESOURCE_B=resource_b' in integration_code
+        assert "('GET', f'vtapi/v2/test/{foo_a}', params=params, json_data=data, headers=headers)" in integration_code
+
+        assert 'name: foo_a' in integration_yml
+        assert 'name: resource_b' in integration_yml
+        assert 'name: a\n' in integration_yml
+        assert 'name: b\n' in integration_yml
+        assert 'name: c\n' in integration_yml
+
     def test_apikey_passed_as_header(self, tmpdir):
         """
         Scenario: sometimes the auth method will not be defined under auth section, but as plain header Authorization

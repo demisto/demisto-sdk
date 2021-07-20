@@ -1426,7 +1426,7 @@ def openapi_codegen(**kwargs):
         integration.save_config(integration.configuration, output_dir)
         tools.print_success(f'Created configuration file in {output_dir}')
         if not kwargs.get('use_default', False):
-            config_path = os.path.join(output_dir, f'{base_name}.json')
+            config_path = os.path.join(output_dir, f'{base_name}_config.json')
             command_to_run = f'demisto-sdk openapi-codegen -i "{input_file}" -cf "{config_path}" -n "{base_name}" ' \
                              f'-o "{output_dir}" -pr "{command_prefix}" -c "{context_path}"'
             if unique_keys:

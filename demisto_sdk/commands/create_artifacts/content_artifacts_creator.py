@@ -952,13 +952,6 @@ def zip_packs(artifact_manager: ArtifactsManager):
             pool.schedule(make_archive, args=(zip_path, 'zip', dumped_pack_dir))
 
 
-def zip_pack_zips(artifact_manager: ArtifactsManager):
-    """Zip the zipped packs directory"""
-    with ProcessPoolHandler(artifact_manager) as pool:
-        pack_zips_dir = artifact_manager.content_uploadable_zips_path
-        pool.schedule(make_archive, args=(pack_zips_dir, 'zip', pack_zips_dir))
-
-
 def report_artifacts_paths(artifact_manager: ArtifactsManager):
     """Report artifacts results destination"""
     global logger

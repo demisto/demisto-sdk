@@ -11,7 +11,7 @@ This command is used in order to create a zip file, able to be uploaded to Corte
   The packs to create artifacts for. Optional values are: `all` or csv list of pack names.
 * **-o, --output**
   The path to the directory into which to write the zip files
-* **-v RELEASE_VERSION, --content_version RELEASE_VERSION**
+* **-v RELEASE_VERSION, --content-version RELEASE_VERSION**
   The content version in CommonServerPython.
 * **-u, --upload**
   Upload the unified packs to the marketplace.

@@ -3,6 +3,7 @@ import os
 import sys
 from contextlib import contextmanager
 from pathlib import Path
+from shutil import make_archive
 
 import click
 from demisto_sdk.commands.common.constants import PACKS_DIR
@@ -10,7 +11,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.tools import arg_to_list
 from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
     IGNORED_PACKS, ArtifactsManager, ContentObject, create_dirs, delete_dirs,
-    dump_pack, zip_pack_zips, zip_packs)
+    dump_pack, zip_packs)
 
 EX_SUCCESS = 0
 EX_FAIL = 1
@@ -156,6 +157,13 @@ class QuietModeController:
         self.logger.setLevel(self.prev_logger_level)
 
 
+def zip_uploadable_packs(artifact_manager: ArtifactsManager):
+    """Zip the zipped packs directory"""
+    pack_zips_dir = artifact_manager.content_uploadable_zips_path
+    make_archive(pack_zips_dir, 'zip', pack_zips_dir)
+
+
+
 @contextmanager
 def PacksDirsHandler(artifact_manager: PacksManager):
     """ Artifacts Directories handler.
@@ -183,7 +191,7 @@ def PacksDirsHandler(artifact_manager: PacksManager):
     else:
         if artifact_manager.zip_all:
             zip_packs(artifact_manager)
-            zip_pack_zips(artifact_manager)
+            zip_uploadable_packs(artifact_manager)
         else:
             zip_packs(artifact_manager)
 

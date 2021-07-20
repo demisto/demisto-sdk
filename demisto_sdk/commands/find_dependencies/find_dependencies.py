@@ -583,7 +583,7 @@ class PackDependencies:
             else:
                 layout_type = 'Incident'
 
-            if layout_type in ["Indicator", "Indicator"]:
+            if layout_type in ["Incident", "Indicator"]:
                 related_types = layout_data.get('incident_and_indicator_types', [])
                 packs_found_from_incident_indicator_types = PackDependencies._search_packs_by_items_names(
                     related_types, id_set[f'{layout_type}Types'],

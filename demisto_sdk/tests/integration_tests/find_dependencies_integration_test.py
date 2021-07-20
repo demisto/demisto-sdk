@@ -21,6 +21,10 @@ EMPTY_ID_SET = {
     'Reports': [],
     'Widgets': [],
     'Mappers': [],
+    'GenericTypes': [],
+    'GenericFields': [],
+    'GenericModules': [],
+    'GenericDefinitions': []
 }
 
 

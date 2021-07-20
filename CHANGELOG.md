@@ -1,4 +1,5 @@
 # Changelog
+* Enhanced the **postman-codegen** command to name all generated arguments with lower case.
 * Updated the **find-dependencies** command to support generic modules, definitions, fields and types.
 
 # 1.4.4

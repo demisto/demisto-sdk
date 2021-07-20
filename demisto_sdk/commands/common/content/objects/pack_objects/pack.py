@@ -39,6 +39,7 @@ SET_VERIFY_KEY_ACTION = f'set the key "{PACK_VERIFY_KEY}" to ' + '{}'
 class Pack:
     def __init__(self, path: Union[str, Path]):
         self._path = Path(path)
+        # in case the given path are a Pack and not zipped pack - we init the metadata from the pack
         if not str(path).endswith('.zip'):
             self._metadata = PackMetaData(self._path.joinpath('metadata.json'))
 
@@ -258,9 +259,7 @@ class Pack:
             The result of the upload command from demisto_client
         """
 
-        # turn off the sign check
-        # upload
-        # turn on the check
+        # the flow are - turn off the sign check -> upload -> turn back the check to be as previously
         logger.info('Turn off the server verification for signed packs')
         _, _, prev_conf = tools.update_server_configuration(client=client,
                                                             server_configuration={PACK_VERIFY_KEY: 'false'},

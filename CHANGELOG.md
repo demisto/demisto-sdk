@@ -1,4 +1,6 @@
 # Changelog
+* Enhanced the **postman-codegen** command to name all generated arguments with lower case.
+* Fixed an issue where the **validate** command failed in external repositories in case the DEMISTO_SDK_GITHUB_TOKEN was not set.
 * Enhanced the **init** command with changing the script template name in the code with the real script name.
 
 # 1.4.4

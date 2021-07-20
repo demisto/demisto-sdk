@@ -836,8 +836,7 @@ class OpenAPIIntegration:
             config_file: The path to the configuration file.
         """
         self.print_with_verbose('Creating configuration file...')
-        # config_file = os.path.join(directory, f'{self.base_name}_config.json')
-        config_file = os.path.join(directory, f'{self.base_name}.json')
+        config_file = os.path.join(directory, f'{self.base_name}_config.json')
         try:
             with open(config_file, 'w') as fp:
                 json.dump(config, fp, indent=4)

@@ -217,4 +217,4 @@ class TestOpenAPICodeGen:
         with open(self.swagger_path, 'r') as f:
             file_data_after_config_save = json.loads(f.read())
         assert file_data_after_config_save == file_data_before_config_save
-        # os.remove(os.path.join(self.test_files_path, f'{integration.base_name}_config.json'))
+        os.remove(os.path.join(self.test_files_path, f'{integration.base_name}_config.json'))

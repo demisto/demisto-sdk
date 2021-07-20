@@ -438,6 +438,7 @@ class Initiator:
         if not self.create_new_directory():
             return False
 
+        used_template = self.template
         script_template_files = self.get_template_files()
         if not self.get_remote_templates(script_template_files, dir=SCRIPTS_DIR):
             local_template_path = os.path.normpath(os.path.join(__file__, "..", 'templates', self.template))
@@ -445,7 +446,7 @@ class Initiator:
 
         if self.id != self.template:
             # note rename does not work on the yml file - that is done in the yml_reformatting function.
-            self.change_template_name_script_py(current_suffix=self.template)
+            self.change_template_name_script_py(current_suffix=self.template, current_template=used_template)
             self.rename(current_suffix=self.template)
             self.yml_reformatting(current_suffix=self.template)
             self.fix_test_file_import(name_to_change=self.template)
@@ -490,17 +491,16 @@ class Initiator:
 
         os.remove(os.path.join(self.full_output_path, f"{current_suffix}.yml"))
 
-    def change_template_name_script_py(self, current_suffix: str):
+    def change_template_name_script_py(self, current_suffix: str, current_template: str):
         """Change all script template name appearances with the real script name in the script python file.
 
         Args:
             current_suffix (str): The py file name
+            current_template (str): The script template being used.
         """
-
         with open(os.path.join(self.full_output_path, f"{current_suffix}.py"), "r+") as f:
             py_file_data = f.read()
-            for script_template_name in self.SCRIPT_TEMPLATE_OPTIONS:
-                py_file_data = py_file_data.replace(script_template_name, self.id)
+            py_file_data = py_file_data.replace(current_template, self.id)
             f.seek(0)
             f.write(py_file_data)
             f.truncate()

@@ -1789,7 +1789,6 @@ class TestDependsOnClassifiers:
             id_set=id_set,
             verbose=False,
         )
-        print(found_result)
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
 

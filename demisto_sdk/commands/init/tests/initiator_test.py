@@ -347,7 +347,7 @@ SCRIPT_TEMPLATE_DATA = """
         return_results(say_hello_command(demisto.args()))
     except Exception as ex:
         demisto.error(traceback.format_exc())  # print the traceback
-        return_error(f'Failed to execute HelloWorldScript. Error: {str(ex)}')
+        return_error(f'Failed to execute BaseScript. Error: {str(ex)}')
     """
 SCRIPT_EXPECTED_DATA = """
     def main():
@@ -382,7 +382,7 @@ def test_change_template_name_script_py(monkeypatch, tmp_path, initiator):
         f.write(SCRIPT_TEMPLATE_DATA)
     dir_name = 'MyTest'
     initiator.dir_name = dir_name
-    initiator.change_template_name_script_py(current_suffix=dir_name)
+    initiator.change_template_name_script_py(current_suffix=dir_name, current_template='BaseScript')
 
     with open(full_output_path / f'{dir_name}.py', 'r') as f:
         new_data = f.read()

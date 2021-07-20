@@ -9,6 +9,7 @@ from PIL import Image
 from datetime import datetime
 from distutils.version import LooseVersion
 from pathlib import Path
+from typing import Tuple
 
 import click
 from dateutil import parser
@@ -24,6 +25,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
+from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.tools import (get_core_pack_list, get_json,
                                                get_remote_file,
                                                pack_name_to_path)
@@ -35,6 +37,7 @@ CONTRIBUTORS_LIST = ['partner', 'developer', 'community']
 SUPPORTED_CONTRIBUTORS_LIST = ['partner', 'developer']
 ISO_TIMESTAMP_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 ALLOWED_CERTIFICATION_VALUES = ['certified', 'verified']
+MAXIMUM_DESCRIPTION_FIELD_LENGTH = 130
 SUPPORT_TYPES = ['community', 'xsoar'] + SUPPORTED_CONTRIBUTORS_LIST
 INCORRECT_PACK_NAME_PATTERN = '[^a-zA-Z]pack[^a-z]|^pack$|^pack[^a-z]|[^a-zA-Z]pack$|[^A-Z]PACK[^A-Z]|^PACK$|^PACK[' \
                               '^A-Z]|[^A-Z]PACK$|[^A-Z]Pack[^a-z]|^Pack$|^Pack[^a-z]|[^A-Z]Pack$|[^a-zA-Z]playbook[' \
@@ -78,7 +81,7 @@ class PackUniqueFilesValidator(BaseValidator):
         self.support = support
 
     # error handling
-    def _add_error(self, error, file_path):
+    def _add_error(self, error: Tuple[str, str], file_path: str, warning=False):
         """Adds error entry to a list under pack's name
         Returns True if added and false otherwise"""
         error_message, error_code = error
@@ -86,7 +89,8 @@ class PackUniqueFilesValidator(BaseValidator):
         if self.pack_path not in file_path:
             file_path = os.path.join(self.pack_path, file_path)
 
-        formatted_error = self.handle_error(error_message, error_code, file_path=file_path, should_print=False)
+        formatted_error = self.handle_error(error_message, error_code, file_path=file_path, should_print=False,
+                                            warning=warning)
         if formatted_error:
             self._errors.append(formatted_error)
             return True
@@ -171,6 +175,16 @@ class PackUniqueFilesValidator(BaseValidator):
 
         return False
 
+    def validate_pack_readme_images(self):
+        readme_file_path = os.path.join(self.pack_path, self.readme_file)
+        readme_validator = ReadMeValidator(readme_file_path)
+        errors = readme_validator.check_readme_relative_image_paths(is_pack_readme=True) + \
+            readme_validator.check_readme_absolute_image_paths(is_pack_readme=True)
+        if errors:
+            self._errors.extend(errors)
+            return False
+        return True
+
     def validate_pack_readme_file_is_not_empty(self):
         """
         Validates that README.md file is not empty for partner packs and packs with use cases
@@ -189,9 +203,9 @@ class PackUniqueFilesValidator(BaseValidator):
         pack_meta_file_content = self._read_file_content(self.pack_meta_file)
         metadata = json.loads(pack_meta_file_content)
         metadata_description = metadata.get(PACK_METADATA_DESC, '').lower().strip()
-        if not self._check_if_file_is_empty(self.readme_file):
-            readme = self._read_file_content(self.readme_file)
-            readme_content = readme.lower().strip()
+        if self._is_pack_file_exists(self.readme_file) and not self._check_if_file_is_empty(self.readme_file):
+            pack_readme = self._read_file_content(self.readme_file)
+            readme_content = pack_readme.lower().strip()
             if metadata_description == readme_content:
                 self._add_error(Errors.readme_equal_description_error(), self.readme_file)
                 return False
@@ -333,6 +347,9 @@ class PackUniqueFilesValidator(BaseValidator):
                 if self._add_error(Errors.pack_metadata_field_invalid(), self.pack_meta_file):
                     return False
 
+            if not self.is_pack_metadata_desc_too_long(description_name):
+                return False
+
             # check non mandatory dependency field
             dependencies_field = metadata.get(PACK_METADATA_DEPENDENCIES, {})
             if not isinstance(dependencies_field, dict):
@@ -372,6 +389,12 @@ class PackUniqueFilesValidator(BaseValidator):
             if self._add_error(Errors.pack_metadata_isnt_json(self.pack_meta_file), self.pack_meta_file):
                 return False
 
+        return True
+
+    def is_pack_metadata_desc_too_long(self, description_name):
+        if len(description_name) > MAXIMUM_DESCRIPTION_FIELD_LENGTH:
+            if self._add_error(Errors.pack_metadata_long_description(), self.pack_meta_file, warning=True):
+                return False
         return True
 
     def _is_valid_contributor_pack_support_details(self):
@@ -418,7 +441,9 @@ class PackUniqueFilesValidator(BaseValidator):
         try:
             approved_usecases = tools.get_approved_usecases()
             pack_meta_file_content = json.loads(self._read_file_content(self.pack_meta_file))
-            non_approved_usecases = set(pack_meta_file_content[PACK_METADATA_USE_CASES]) - set(approved_usecases)
+            current_usecases = tools.get_current_usecases()
+            non_approved_usecases = set(pack_meta_file_content[PACK_METADATA_USE_CASES]) - set(
+                approved_usecases + current_usecases)
             if non_approved_usecases:
                 if self._add_error(
                         Errors.pack_metadata_non_approved_usecases(non_approved_usecases), self.pack_meta_file):
@@ -438,7 +463,8 @@ class PackUniqueFilesValidator(BaseValidator):
         try:
             approved_tags = tools.get_approved_tags()
             pack_meta_file_content = json.loads(self._read_file_content(self.pack_meta_file))
-            non_approved_tags = set(pack_meta_file_content[PACK_METADATA_TAGS]) - set(approved_tags)
+            current_tags = tools.get_current_tags()
+            non_approved_tags = set(pack_meta_file_content[PACK_METADATA_TAGS]) - set(approved_tags + current_tags)
             if non_approved_tags:
                 if self._add_error(Errors.pack_metadata_non_approved_tags(non_approved_tags), self.pack_meta_file):
                     return False
@@ -540,6 +566,7 @@ class PackUniqueFilesValidator(BaseValidator):
 
         self.validate_pack_readme_file_is_not_empty()
         self.validate_pack_readme_and_pack_description()
+        self.validate_pack_readme_images()
 
         # We only check pack dependencies for -g flag
         if self.validate_dependencies:

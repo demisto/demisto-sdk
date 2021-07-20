@@ -7,6 +7,7 @@ from typing import Any, Type, Union
 
 import demisto_sdk.commands.validate.validate_manager
 import pytest
+from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (CONF_PATH, TEST_PLAYBOOK,
                                                    FileType)
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -446,12 +447,13 @@ class TestValidators:
             assert not validate_manager.run_validations_on_file(file_path=integration.yml.path,
                                                                 pack_error_ignore_list=[], is_modified=True)
 
-    def test_files_validator_validate_pack_unique_files(self):
+    def test_files_validator_validate_pack_unique_files(self, mocker):
+        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
         validate_manager = ValidateManager(skip_conf_json=True)
         result = validate_manager.validate_pack_unique_files(VALID_PACK, pack_error_ignore_list={})
         assert result
 
-    def test_validate_pack_dependencies(self):
+    def test_validate_pack_dependencies(self, mocker):
         """
             Given:
                 - A file path with valid pack dependencies
@@ -462,6 +464,7 @@ class TestValidators:
         """
         id_set_path = os.path.normpath(
             os.path.join(__file__, git_path(), 'demisto_sdk', 'tests', 'test_files', 'id_set', 'id_set.json'))
+        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
         validate_manager = ValidateManager(skip_conf_json=True, id_set_path=id_set_path)
         result = validate_manager.validate_pack_unique_files(VALID_PACK, pack_error_ignore_list={})
         assert result
@@ -479,6 +482,7 @@ class TestValidators:
             os.path.join(__file__, git_path(), 'demisto_sdk', 'tests', 'test_files', 'id_set', 'id_set.json'))
         validate_manager = ValidateManager(skip_conf_json=True, id_set_path=id_set_path)
         mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_readme_and_pack_description', return_value=True)
+        mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_readme_images', return_value=True)
         result = validate_manager.validate_pack_unique_files('QRadar', pack_error_ignore_list={})
         assert not result
 
@@ -616,7 +620,7 @@ class TestValidators:
     def test_create_ignored_errors_list(self):
         validate_manager = ValidateManager()
         errors_to_check = ["IN", "SC", "CJ", "DA", "DB", "DO", "ID", "DS", "IM", "IF", "IT", "RN", "RM", "PA", "PB",
-                           "WD", "RP", "BA100", "BC100", "ST", "CL", "MP", "LO"]
+                           "WD", "RP", "BA100", "BC100", "ST", "CL", "MP", "LO", "XC"]
         ignored_list = validate_manager.create_ignored_errors_list(errors_to_check)
         assert ignored_list == ["BA101", "BA102", "BA103", "BA104", "BA105", "BA106", "BA107", "BA108", "BA109",
                                 "BA110", "BC101", "BC102", "BC103", "BC104"]
@@ -959,7 +963,7 @@ class TestValidators:
                           'Packs/Malware/IncidentTypes/incidenttype-Malware.json',
                           'Packs/Claroty/Layouts/layoutscontainer-Claroty_Integrity_Incident.json'}
         packs = {'CortexXDR', 'Claroty', 'McAfee_ESM', 'Malware'}
-        validate_manager = ValidateManager(skip_conf_json=True)
+        validate_manager = ValidateManager(skip_conf_json=True, check_is_unskipped=False)
         packs_found = validate_manager.get_packs(modified_files)
         assert packs_found == packs
 
@@ -1013,7 +1017,7 @@ def test_should_raise_pack_version(pack_name, expected):
     Then
         - validate should_raise_pack_version runs as expected.
     """
-    validate_manager = ValidateManager()
+    validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
     res = validate_manager.should_raise_pack_version(pack_name)
     assert res == expected
 
@@ -1030,8 +1034,9 @@ def test_run_validation_using_git_on_only_metadata_changed(mocker):
     mocker.patch.object(ValidateManager, 'setup_git_params')
     mocker.patch.object(ValidateManager, 'get_changed_files_from_git',
                         return_value=(set(), set(), {'/Packs/ForTesting/pack_metadata.json'}, set()))
+    mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
 
-    validate_manager = ValidateManager()
+    validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
     res = validate_manager.run_validation_using_git()
     assert res
 
@@ -1120,7 +1125,7 @@ def test_get_packs_that_should_have_version_raised(repo):
     moodified_test_playbook = existing_pack4.create_test_playbook('TestBook')
     moodified_test_playbook.create_default_test_playbook()
 
-    validate_manager = ValidateManager()
+    validate_manager = ValidateManager(check_is_unskipped=False)
     validate_manager.new_packs = {'NewPack'}
 
     modified_files = {moodified_integration.yml.rel_path, moodified_test_playbook.yml.rel_path}

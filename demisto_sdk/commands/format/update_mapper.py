@@ -34,6 +34,8 @@ class MapperJSONFormat(BaseUpdateJSON):
             self.update_json()
             self.set_description()
             self.set_mapping()
+            self.update_id()
+
             self.save_json_to_destination_file()
             return SUCCESS_RETURN_CODE
 
@@ -44,8 +46,8 @@ class MapperJSONFormat(BaseUpdateJSON):
 
     def format_file(self) -> Tuple[int, int]:
         """Manager function for the mapper JSON updater."""
-        format = self.run_format()
-        return format, SKIP_RETURN_CODE
+        format_res = self.run_format()
+        return format_res, SKIP_RETURN_CODE
 
     def set_mapping(self):
         """

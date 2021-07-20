@@ -1,9 +1,11 @@
 from __future__ import print_function
 
 import itertools
+import os
 import re
 
-from demisto_sdk.commands.common.constants import (RN_HEADER_BY_FILE_TYPE,
+from demisto_sdk.commands.common.constants import (PACKS_DIR,
+                                                   RN_HEADER_BY_FILE_TYPE,
                                                    FileType)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
@@ -31,6 +33,7 @@ class ReleaseNotesValidator(BaseValidator):
         self.modified_files = modified_files
         self.added_files = added_files
         self.pack_name = pack_name
+        self.pack_path = os.path.join(PACKS_DIR, self.pack_name)
         self.release_notes_path = get_release_notes_file_path(self.release_notes_file_path)
         self.latest_release_notes = get_latest_release_notes_text(self.release_notes_path)
         self.file_types_that_should_not_appear_in_rn = {FileType.TEST_SCRIPT, FileType.TEST_PLAYBOOK, FileType.README,
@@ -49,10 +52,10 @@ class ReleaseNotesValidator(BaseValidator):
                     continue
                 elif self.pack_name + '/' in file:
                     # Refer image and description file paths to the corresponding yml files
-                    file = UpdateRN.check_for_release_notes_valid_file_path(file)
-                    update_rn_util = UpdateRN(pack_path=self.release_notes_file_path, modified_files_in_pack=set(),
+                    file = UpdateRN.change_image_or_desc_file_path(file)
+                    update_rn_util = UpdateRN(pack_path=self.pack_path, modified_files_in_pack=set(),
                                               update_type=None, added_files=set(), pack=self.pack_name)
-                    file_name, file_type = update_rn_util.identify_changed_file_type(file)
+                    file_name, file_type = update_rn_util.get_changed_file_name_and_type(file)
                     if file_name and file_type:
                         if (RN_HEADER_BY_FILE_TYPE[file_type] not in self.latest_release_notes) or \
                                 (file_name not in self.latest_release_notes):

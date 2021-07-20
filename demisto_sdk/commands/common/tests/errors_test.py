@@ -97,7 +97,8 @@ class TestErrors(unittest.TestCase):
         """
         error_statement = "The file type is not supported in validate command\n " \
                           "validate' command supports: Integrations, Scripts, Playbooks, " \
-                          "Incident fields, Indicator fields, Images, Release notes, Layouts and Descriptions"
+                          "Incident fields, Incident types, Indicator fields, Indicator types, Objects fields," \
+                          " Object types, Object modules, Images, Release notes,Layouts and Descriptions"
         expected_result = (error_statement, "BA102")
         result = Errors.file_type_not_supported()
         assert result == expected_result

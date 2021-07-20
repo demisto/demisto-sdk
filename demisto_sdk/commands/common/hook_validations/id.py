@@ -246,6 +246,32 @@ class IDSetValidations(BaseValidator):
 
         return True
 
+    def is_subplaybook_name_valid(self, playbook_data, file_path):
+        """Checks whether a sub playbook name is valid (i.e id exists in set_id)
+        Args:
+            playbook_data (dict): Dictionary that holds the extracted details from the given playbook.
+             {playbook name: playbook data (dict)}
+            file_path (string): Path to the file (current playbook).
+
+        Return:
+            bool. if all sub playbooks names of this playbook are valid.
+        """
+        # Get a dict with all playbook fields from the playbook data dict.
+        playbook_data_2nd_level = playbook_data.get(list(playbook_data.keys())[0])
+        main_playbook_name = playbook_data_2nd_level.get("name")
+        sub_playbooks_list = playbook_data_2nd_level.get("implementing_playbooks", [])
+        for playbook_dict in self.playbook_set:
+            playbook_name = list(playbook_dict.values())[0].get('name')
+            if playbook_name in sub_playbooks_list:
+                sub_playbooks_list.remove(playbook_name)
+
+        if sub_playbooks_list:
+            error_message, error_code = Errors.invalid_subplaybook_name(sub_playbooks_list, main_playbook_name)
+            if self.handle_error(error_message, error_code, file_path):
+                return False
+
+        return True
+
     def get_commands_to_integration(self, file_name, file_path):
         """ gets playbook's 'command_to_integration' dict from playbook set in id_set file.
 
@@ -397,8 +423,9 @@ class IDSetValidations(BaseValidator):
                 is_valid = self._is_mapper_incident_types_found(mapper_data)
             elif file_type == constants.FileType.PLAYBOOK:
                 playbook_data = get_playbook_data(file_path)
-                is_valid = self._are_playbook_entities_versions_valid(playbook_data, file_path)
-
+                playbook_answers = [self._are_playbook_entities_versions_valid(playbook_data, file_path),
+                                    self.is_subplaybook_name_valid(playbook_data, file_path)]
+                is_valid = all(playbook_answers)
         return is_valid
 
     def _is_pack_display_name_already_exist(self, pack_metadata_data):

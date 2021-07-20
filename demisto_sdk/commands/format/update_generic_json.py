@@ -3,7 +3,7 @@ from distutils.version import LooseVersion
 import click
 import ujson
 import yaml
-from demisto_sdk.commands.common.tools import print_error
+from demisto_sdk.commands.common.tools import is_uuid, print_error
 from demisto_sdk.commands.format.format_constants import (
     ARGUMENTS_DEFAULT_VALUES, TO_VERSION_5_9_9)
 from demisto_sdk.commands.format.update_generic import BaseUpdate
@@ -14,7 +14,7 @@ class BaseUpdateJSON(BaseUpdate):
         Attributes:
             input (str): the path to the file we are updating at the moment.
             output (str): the desired file name to save the updated version of the YML to.
-            data (Dict): JSON file data arranged in a Dict.
+            data (dict): JSON file data arranged in a Dict.
     """
 
     def __init__(self,
@@ -79,12 +79,18 @@ class BaseUpdateJSON(BaseUpdate):
                     not schema_data.get('mapping', {}).get(field, {}).get('required'):
                 self.data.pop(field)
 
-    def update_id(self, field='name'):
+    def update_id(self, field='name') -> None:
         """Updates the id to be the same as the provided field ."""
+        updated_integration_id_dict = {}
 
         if self.verbose:
             click.echo('Updating ID')
         if field not in self.data:
             print_error(f'Missing {field} field in file {self.source_file} - add this field manually')
-            return
+            return None
+        if is_uuid(self.data['id']):
+            updated_integration_id_dict[self.data['id']] = self.data[field]
         self.data['id'] = self.data[field]
+
+        if updated_integration_id_dict:
+            self.updated_ids.update(updated_integration_id_dict)

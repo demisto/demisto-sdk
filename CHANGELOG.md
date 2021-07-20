@@ -1,4 +1,5 @@
 # Changelog
+* Enhanced the **postman-codegen** command to name all generated arguments with lower case.
 * Updated the **upload** command to support uploading zipped packs to the marketplace.
 
 # 1.4.4

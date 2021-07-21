@@ -1,5 +1,4 @@
 import os
-from abc import ABC, abstractmethod
 from distutils.version import LooseVersion
 
 import click
@@ -14,7 +13,7 @@ from demisto_sdk.commands.common.update_id_set import BUILT_IN_FIELDS
 FROM_VERSION_PRE_PROCESS_RULES = '6.5.0'
 
 
-class PreprocessRulesBaseValidator(ContentEntityValidator, ABC):
+class PreprocessRulesBaseValidator(ContentEntityValidator):
     def __init__(self, structure_validator=True, ignored_errors=False, print_as_warnings=False,
                  json_file_path=None, **kwargs):
         super().__init__(structure_validator, ignored_errors, print_as_warnings,
@@ -44,7 +43,6 @@ class PreprocessRulesBaseValidator(ContentEntityValidator, ABC):
         """
         return self._is_valid_version()
 
-    @abstractmethod
     def is_valid_from_server_version(self) -> bool:
         """Checks if from version field is valid.
 
@@ -58,7 +56,6 @@ class PreprocessRulesBaseValidator(ContentEntityValidator, ABC):
                     return False
         return True
 
-    @abstractmethod
     def is_valid_file_path(self) -> bool:
         output_basename = os.path.basename(self.file_path)
         if not output_basename.startswith('preprocessrule-'):

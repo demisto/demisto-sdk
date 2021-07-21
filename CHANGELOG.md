@@ -1,6 +1,7 @@
 # Changelog
 * Enhanced the **postman-codegen** command to name all generated arguments with lower case.
 * Fixed an issue where the **validate** command failed in external repositories in case the DEMISTO_SDK_GITHUB_TOKEN was not set.
+* Added format in **format** command for widget with data type 'metrics' to have minimal fromVersion 6.2.0.
 
 # 1.4.4
 * When formatting incident types with Auto-Extract rules and without mode field, the **format** command will now add the user selected mode.

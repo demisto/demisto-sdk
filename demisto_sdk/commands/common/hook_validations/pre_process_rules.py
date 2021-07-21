@@ -29,10 +29,10 @@ class PreProcessRulesValidator(ContentEntityValidator):
         """
         # PreProcessRules files have fromServerVersion instead of fromVersion
         return all([
-                    super().is_valid_version(),
                     self.is_valid_version(),
                     self.is_valid_from_server_version(),
                     self.is_valid_file_path(),
+                    # self.is_incident_field_exist(),
                     ])
 
     def is_valid_version(self) -> bool:

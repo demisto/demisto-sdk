@@ -276,6 +276,8 @@ ERROR_CODE = {
     "invalid_file_path_layout": {'code': "LO102", 'ui_applicable': False, 'related_field': ''},
     "invalid_file_path_layoutscontainer": {'code': "LO103", 'ui_applicable': False, 'related_field': ''},
     "invalid_incident_field_in_layout": {'code': "LO104", 'ui_applicable': False, 'related_field': ''},
+    "invalid_file_path_pre_process_rules": {'code': "PP100", 'ui_applicable': False, 'related_field': ''},
+    "invalid_incident_field_in_pre_process_rules": {'code': "PP101", 'ui_applicable': False, 'related_field': ''},
     "xsoar_config_file_is_not_json": {'code': "XC100", 'ui_applicable': False, 'related_field': ''},
     "xsoar_config_file_malformed": {'code': "XC101", 'ui_applicable': False, 'related_field': ''},
     "invalid_readme_image_error": {'code': "RM108", 'ui_applicable': False, 'related_field': ''},
@@ -1535,8 +1537,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_file_path_pre_process_rules(file_name):
-        # TODO Is this a good name? Maybe pre_process_rules? See pre_process_rules.is_valid_file_path
-        return f'Invalid file name - {file_name}. Pre Process Rules file name should start with "preprocessrules-" prefix.'
+        return f'Invalid file name - {file_name}. Pre Process Rules file name should start with "preprocessrule-" prefix.'
 
     @staticmethod
     @error_code_decorator
@@ -1547,7 +1548,6 @@ class Errors:
                "2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
                " rerun the command."
 
-    # TODO Needed?
     @staticmethod
     @error_code_decorator
     def invalid_incident_field_in_pre_process_rules(invalid_inc_fields_list):

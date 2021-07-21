@@ -1,6 +1,9 @@
 # Changelog
 * Enhanced the **postman-codegen** command to name all generated arguments with lower case.
 * Fixed an issue where the **validate** command failed in external repositories in case the DEMISTO_SDK_GITHUB_TOKEN was not set.
+* Fixed an issue where **openapi-codegen** corrupted the swagger file by overwriting configuration to swagger file.
+* Updated the **upload** command to support uploading zipped packs to the marketplace.
+* Added to the **postman-codegen** command support of path variables.
 * Added format in **format** command for widget with data type 'metrics' to have minimal fromVersion 6.2.0.
 
 # 1.4.4

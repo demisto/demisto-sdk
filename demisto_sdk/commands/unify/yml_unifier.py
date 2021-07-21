@@ -43,7 +43,7 @@ CONTRIBUTORS_LIST = ['partner', 'developer', 'community']
 COMMUNITY_CONTRIBUTOR = 'community'
 INTEGRATIONS_DOCS_REFERENCE = 'https://xsoar.pan.dev/docs/reference/integrations/'
 UNSUPPORTED_INPUT_ERR_MSG = 'Unsupported input. Please provide either: ' \
-                            '1. a directory of an integration or a script.' \
+                            '1. a directory of an integration or a script. ' \
                             '2. a path of a GenericModule file.'
 
 

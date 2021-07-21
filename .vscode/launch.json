@@ -1,13 +1,14 @@
 {
     "version": "0.2.0",
     "configurations": [
+        // Dont forget to add the CONTENT variable to your environment.
         {
             "name": "Python: Upload AbuseDB",
             "type": "python",
             "request": "launch",
             "module": "demisto_sdk",
-            "cwd": "${env:CONTENT}",
-            "args": [
+            "cwd": "${env:CONTENT}", // Content working directory
+            "args": [ // Run upload with AbuseDB
                 "upload",
                 "-i",
                 "${env:CONTENT}/Packs/AbuseDB/Integrations/AbuseDB"
@@ -18,13 +19,13 @@
             "type": "python",
             "request": "launch",
             "module": "demisto_sdk",
-            "cwd": "${env:CONTENT}",
+            "cwd": "${env:CONTENT}", // Content working directory
             "args": [
-                "lint",
+                "lint", // Lint AbuseDB
                 "-i",
                 "${env:CONTENT}/Packs/AbuseDB/Integrations/AbuseDB",
                 "-j",
-                "${env:CONTENT}/.demisto-sdk-report"
+                "${env:CONTENT}/.demisto-sdk-report" // Write reports
             ]
         }
     ]

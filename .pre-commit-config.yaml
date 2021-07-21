@@ -8,6 +8,7 @@ repos:
     -   id: check-docstring-first
         exclude: demisto_sdk/commands/init/templates/.*
     -   id: check-json
+        exclude: .vscode/.*
     -   id: check-yaml
     -   id: debug-statements
         language_version: python3

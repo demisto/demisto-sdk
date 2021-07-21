@@ -25,12 +25,7 @@ class GenericModuleUnifier:
             force: if True - Forcefully overwrites the preexisting unified GenericModule file if one exists.
         """
 
-        if find_type(input) == FileType.GENERIC_MODULE:
-            self.input_path = input
-        else:
-            print_error('You have failed to provide a legal file path, a legal file path '
-                        'should be to a directory of a GenericModule file.')
-
+        self.input_path = input
         self.pack_name = get_pack_name(file_path=self.input_path)
         self.pack_path = os.path.dirname(os.path.dirname(self.input_path))
 
@@ -39,12 +34,15 @@ class GenericModuleUnifier:
 
         if output:
             if not os.path.isdir(output):
-                print_error('You have failed to provide a legal dir path')
+                click.secho('You have failed to provide a legal dir path', fg='bright_red')
                 sys.exit(1)
+
             self.dest_dir = output
+
         else:
             # an output wasn't given, save the unified file in the input's file dir
             self.dest_dir = os.path.dirname(self.input_path)
+
         self.dest_path = os.path.join(self.dest_dir, f'{self.input_file_name}_unified.json')
 
     def find_dashboard_by_id(self, dashboard_id: str) -> Optional[Dict]:
@@ -58,7 +56,7 @@ class GenericModuleUnifier:
         dashboards_dir_path = f'{self.pack_path}/Dashboards/'
         for file_name in os.listdir(dashboards_dir_path):
             file_path = os.path.join(dashboards_dir_path, file_name)
-            if file_path.endswith('.json') and file_name.startswith('dashboard'):
+            if find_type(file_path) == FileType.DASHBOARD:
                 # it's a dashboard
                 with open(file_path) as f:
                     dashboard = json.load(f)
@@ -76,23 +74,20 @@ class GenericModuleUnifier:
         with open(self.input_path) as f:
             generic_module = json.load(f)
 
-        views = generic_module.get('views')
-        if views:
-            for view in views:
-                tabs = view.get('tabs')
-                if tabs:
-                    for tab in tabs:
-                        dashboard = tab.get('dashboard')
-                        if dashboard:
-                            dashboard_id = dashboard.get('id')
-                            if dashboard_id:
-                                # search dashboard in the GenericModule's pack
-                                dashboard_content = self.find_dashboard_by_id(dashboard_id=dashboard_id)
-                                if dashboard_content:
-                                    tab['dashboard'] = dashboard_content
-                                else:
-                                    click.secho(f'Dashboard {dashboard_id} was not found in pack: {self.pack_name} '
-                                                f'and therefore was not unified', fg="bright_red")
+        views = generic_module.get('views', [])
+        for view in views:
+            tabs = view.get('tabs', [])
+            for tab in tabs:
+                dashboard_id = tab.get('dashboard', {}).get('id')
+                if dashboard_id:
+                    # search dashboard in the GenericModule's pack
+                    dashboard_content = self.find_dashboard_by_id(dashboard_id=dashboard_id)
+                    if dashboard_content:
+                        tab['dashboard'] = dashboard_content
+
+                    else:
+                        click.secho(f'Dashboard {dashboard_id} was not found in pack: {self.pack_name} '
+                                    f'and therefore was not unified', fg="bright_red")
 
         self.save_unified_generic_module(generic_module)
 
@@ -109,7 +104,8 @@ class GenericModuleUnifier:
 
         if os.path.isfile(self.dest_path) and self.use_force is False:
             raise ValueError(f'Output file already exists: {self.dest_path}.'
-                             ' Make sure to remove this file from source control or set a different output dir.')
+                             ' Make sure to remove this file from source control, set a different output dir or set the'
+                             '-f argument to True in order to overwrite the preexisting file.')
 
         with open(self.dest_path, mode='w') as file:
             json.dump(unified_generic_module_json, file, indent=4)

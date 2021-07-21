@@ -125,6 +125,7 @@ def test_save_unified_generic_module(repo):
     with open(saving_path) as f:
         saved_generic_module = json.load(f)
     assert saved_generic_module == UNIFIED_GENERIC_MODULE
+    os.remove(saving_path)
 
 
 def test_save_unified_generic_module_without_saving_path(repo):
@@ -149,6 +150,7 @@ def test_save_unified_generic_module_without_saving_path(repo):
     with open(saving_path) as f:
         saved_generic_module = json.load(f)
     assert saved_generic_module == UNIFIED_GENERIC_MODULE
+    os.remove(saving_path)
 
 
 def test_save_unified_generic_module_file_is_already_exist(repo, capsys):
@@ -176,6 +178,7 @@ def test_save_unified_generic_module_file_is_already_exist(repo, capsys):
     with open(saving_path) as f:
         saved_generic_module = json.load(f)
     assert saved_generic_module == UNIFIED_GENERIC_MODULE
+    os.remove(saving_path)
 
 
 def test_save_unified_generic_module_file_is_already_exist_force(repo, capsys):
@@ -201,6 +204,7 @@ def test_save_unified_generic_module_file_is_already_exist_force(repo, capsys):
     with open(saving_path) as f:
         saved_generic_module = json.load(f)
     assert saved_generic_module == GENERIC_MODULE
+    os.remove(saving_path)
 
 
 

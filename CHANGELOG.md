@@ -1,6 +1,6 @@
 # Changelog
 * Enhanced the **postman-codegen** command to name all generated arguments with lower case.
-* Added a unifier for GenericModule objects.
+* Expanded unify command to support GenericModules - Unifies a GenericModule object with it's Dashboards.
 
 # 1.4.4
 * When formatting incident types with Auto-Extract rules and without mode field, the **format** command will now add the user selected mode.

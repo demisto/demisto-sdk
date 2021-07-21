@@ -275,13 +275,16 @@ def extract_code(config, **kwargs):
     show_default=False
 )
 def unify(**kwargs):
-    """Unify code, image, description and yml files to a single Demisto yml file, Note that
-       this should be used on a single integration/script and not a pack
-       not multiple scripts/integrations
-
-       Another use of unify is for unifying a GenericModule object (json) with it's dashboards (also jsons).
-       To use this option - set as input a path to a GenericModule file and not a directory.
     """
+    This command has two main functions:
+    1. YML Unifier - Unifies code, image, description and yml files to a single Demisto yml file, Note that
+       this should be used on a single integration/script and not a pack, not multiple scripts/integrations.
+       To use this function - set as input a path to the directory of the integration/script to unify.
+
+    2. GenericModule Unifier - unifies a GenericModule object (json) with it's dashboards (also jsons).
+       To use this function - set as input a path to a GenericModule file and not a directory.
+    """
+
     check_configuration_file('unify', kwargs)
     # Input is of type Path.
     kwargs['input'] = str(kwargs['input'])
@@ -292,8 +295,10 @@ def unify(**kwargs):
         generic_module_unifier.merge_generic_module_with_its_dashboards()
 
     else:
+        # pass arguments to YML unifier and call the command
         yml_unifier = YmlUnifier(**kwargs)
         yml_unifier.merge_script_package_to_yml()
+
     return 0
 
 

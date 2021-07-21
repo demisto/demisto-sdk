@@ -54,16 +54,18 @@ class YmlUnifier:
         if input == '.':
             input = os.path.abspath(input)
         if not os.path.isdir(input):
-            print_error('You have failed to provide a legal file path, a legal file path '
-                        'should be to a directory of an integration or a script.')
+            print_error('Unsupported input. Please provide either:'
+                        '1. a directory of an integration or a script.'
+                        '2. a path of a GenericModule file.')
             sys.exit(1)
         for optional_dir_name in DIR_TO_PREFIX:
             if optional_dir_name in input:
                 directory_name = optional_dir_name
 
         if not directory_name:
-            print_error('You have failed to provide a legal file path, a legal file path '
-                        'should contain either Integrations or Scripts directories')
+            print_error('Unsupported input. Please provide either:'
+                        '1. a directory of an integration or a script.'
+                        '2. a path of a GenericModule file.')
 
         self.image_prefix = image_prefix
         self.package_path = input

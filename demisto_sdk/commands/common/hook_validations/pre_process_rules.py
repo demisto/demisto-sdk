@@ -11,8 +11,7 @@ from demisto_sdk.commands.common.hook_validations.content_entity_validator impor
 from demisto_sdk.commands.common.tools import (get_all_incident_and_indicator_fields_from_id_set)
 from demisto_sdk.commands.common.update_id_set import BUILT_IN_FIELDS
 
-# TODO Correct??
-FROM_VERSION_PRE_PROCESS_RULES = '6.0.0'
+FROM_VERSION_PRE_PROCESS_RULES = '6.5.0'
 
 
 class PreprocessRulesBaseValidator(ContentEntityValidator, ABC):
@@ -20,8 +19,8 @@ class PreprocessRulesBaseValidator(ContentEntityValidator, ABC):
                  json_file_path=None, **kwargs):
         super().__init__(structure_validator, ignored_errors, print_as_warnings,
                          json_file_path=json_file_path, **kwargs)
-        self.from_version = self.current_file.get('fromVersion')
-        self.to_version = self.current_file.get('toVersion')
+        self.from_version = self.current_file.get('fromServerVersion')
+        self.to_version = self.current_file.get('toServerVersion')
 
     def is_valid_pre_process_rules(self, validate_rn=True, id_set_file=None, is_circle=False) -> bool:
         """Check whether the pre_process_rules is valid or not.
@@ -31,14 +30,10 @@ class PreprocessRulesBaseValidator(ContentEntityValidator, ABC):
         """
         # PreProcessRules files have fromServerVersion instead of fromVersion
         return all([
-                    # super().is_valid_file(validate_rn),
                     super().is_valid_version(),
                     self.is_valid_version(),
-                    self.is_valid_from_version(),
-                    self.is_valid_to_version(),
-                    self.is_to_version_higher_than_from_version(),
+                    self.is_valid_from_server_version(),
                     self.is_valid_file_path(),
-                    # self.is_incident_field_exist(id_set_file, is_circle),
                     ])
 
     def is_valid_version(self) -> bool:
@@ -49,80 +44,33 @@ class PreprocessRulesBaseValidator(ContentEntityValidator, ABC):
         """
         return self._is_valid_version()
 
-    # TODO Needed?
-    def is_to_version_higher_than_from_version(self) -> bool:
-        """Checks if to version field is higher than from version field.
-
-        Returns:
-            bool. True if to version field is higher than from version field, else False.
-        """
-        # if self.to_version and self.from_version:
-        #     if LooseVersion(self.to_version) <= LooseVersion(self.from_version):
-        #         error_message, error_code = Errors.from_version_higher_to_version()
-        #         if self.handle_error(error_message, error_code, file_path=self.file_path):
-        #             return False
-        return True
-
     @abstractmethod
-    def is_valid_from_version(self) -> bool:
-        pass
-
-    @abstractmethod
-    def is_valid_to_version(self) -> bool:
-        pass
-
-    @abstractmethod
-    def is_valid_file_path(self) -> bool:
-        pass
-
-    @abstractmethod
-    def is_incident_field_exist(self, id_set_file, is_circle) -> bool:
-        pass
-
-
-
-
-class PreProcessRulesValidator(PreprocessRulesBaseValidator):
-
-    # TODO Needed?
-    def is_valid_from_version(self) -> bool:
+    def is_valid_from_server_version(self) -> bool:
         """Checks if from version field is valid.
 
         Returns:
             bool. True if from version field is valid, else False.
         """
-        # if self.from_version:
-        #     if LooseVersion(self.from_version) >= LooseVersion(FROM_VERSION_PRE_PROCESS_RULES):
-        #         error_message, error_code = Errors.invalid_version_in_pre_process_rules('fromVersion')
-        #         if self.handle_error(error_message, error_code, file_path=self.file_path):
-        #             return False
+        if self.from_version:
+            if LooseVersion(self.from_version) >= LooseVersion(FROM_VERSION_PRE_PROCESS_RULES):
+                error_message, error_code = Errors.invalid_version_in_pre_process_rules('fromServerVersion')
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    return False
         return True
 
-    # TODO Needed?
-    def is_valid_to_version(self) -> bool:
-        """Checks if to version field is valid.
-
-        Returns:
-            bool. True if to version field is valid, else False.
-        """
-        # if not self.to_version or LooseVersion(self.to_version) >= LooseVersion(FROM_VERSION_PRE_PROCESS_RULES):
-        #     error_message, error_code = Errors.invalid_version_in_pre_process_rules('toVersion')
-        #     if self.handle_error(error_message, error_code, file_path=self.file_path):
-        #         return False
-        return True
-
+    @abstractmethod
     def is_valid_file_path(self) -> bool:
         output_basename = os.path.basename(self.file_path)
-        # TODO Is this a good name? Maybe pre_process_rules? See Errors.invalid_file_path_pre_process_rules
         if not output_basename.startswith('preprocessrule-'):
             error_message, error_code = Errors.invalid_file_path_pre_process_rules(output_basename)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True
 
-    # TODO Needed?
+    # TODO Needed! Check that scripts and incident_fields exists
+    # Needed incident_fields: description
+    # If the key "scriptName" is not empty - Check that the script exists
     def is_incident_field_exist(self, id_set_file, is_circle) -> bool:
-        # TODO Fix if needed
         """Checks if incident field is valid - exist in the content.
 
         Returns:

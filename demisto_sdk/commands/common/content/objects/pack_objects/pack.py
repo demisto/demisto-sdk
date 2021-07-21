@@ -18,13 +18,14 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    RELEASE_NOTES_DIR,
                                                    REPORTS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
-                                                   TOOLS_DIR, WIDGETS_DIR)
+                                                   TOOLS_DIR, WIDGETS_DIR, GENERIC_MODULES_DIR, GENERIC_DEFINITIONS_DIR,
+                                                   GENERIC_TYPES_DIR, GENERIC_FIELDS_DIR)
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     AgentTool, AuthorImage, Classifier, ClassifierMapper, Connection,
     Contributors, Dashboard, DocFile, IncidentField, IncidentType,
     IndicatorField, IndicatorType, Integration, LayoutObject, OldClassifier,
     PackIgnore, PackMetaData, Playbook, Readme, ReleaseNote, Report, Script,
-    SecretIgnore, Widget)
+    SecretIgnore, Widget, GenericField, GenericModule, GenericDefinition, GenericType)
 from demisto_sdk.commands.common.content.objects_factory import \
     path_to_pack_object
 from demisto_sdk.commands.test_content import tools
@@ -154,22 +155,22 @@ class Pack:
                                                           suffix="md")
 
     @property
-    def generic_definitions(self) -> Iterator[Generic]:
+    def generic_definitions(self) -> Iterator[GenericDefinition]:
         return self._content_files_list_generator_factory(dir_name=INDICATOR_TYPES_DIR,
                                                           suffix="json")
 
     @property
-    def indicator_types(self) -> Iterator[IndicatorType]:
+    def generic_modules(self) -> Iterator[GenericModule]:
         return self._content_files_list_generator_factory(dir_name=INDICATOR_TYPES_DIR,
                                                           suffix="json")
 
     @property
-    def indicator_types(self) -> Iterator[IndicatorType]:
+    def generic_types(self) -> Iterator[GenericType]:
         return self._content_files_list_generator_factory(dir_name=INDICATOR_TYPES_DIR,
                                                           suffix="json")
 
     @property
-    def indicator_types(self) -> Iterator[IndicatorType]:
+    def generic_fields(self) -> Iterator[GenericField]:
         return self._content_files_list_generator_factory(dir_name=INDICATOR_TYPES_DIR,
                                                           suffix="json")
 

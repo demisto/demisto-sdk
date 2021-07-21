@@ -29,6 +29,10 @@ from .script.script import *  # lgtm [py/polluting-import]
 from .secret_ignore.secret_ignore import *  # lgtm [py/polluting-import]
 from .tool.agent_tool import *  # lgtm [py/polluting-import]
 from .widget.widget import *  # lgtm [py/polluting-import]
+from .generic_module.generic_module import *  # lgtm [py/polluting-import]
+from .generic_field.generic_field import *  # lgtm [py/polluting-import]
+from .generic_type.generic_type import *  # lgtm [py/polluting-import]
+from .generic_definition.generic_definition import *  # lgtm [py/polluting-import]
 
 __all__ = [name for name, obj in locals().items()
            if not (name.startswith('_') or inspect.ismodule(obj))]

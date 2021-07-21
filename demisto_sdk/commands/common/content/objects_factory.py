@@ -6,7 +6,8 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     Connection, Contributors, Dashboard, DocFile, IncidentField, IncidentType,
     IndicatorField, IndicatorType, Integration, Layout, LayoutsContainer,
     OldClassifier, OldIndicatorType, PackIgnore, PackMetaData, Playbook,
-    Readme, ReleaseNote, Report, Script, SecretIgnore, Widget)
+    Readme, ReleaseNote, Report, Script, SecretIgnore, Widget, GenericField, GenericModule, GenericDefinition,
+    GenericType)
 from demisto_sdk.commands.common.content.objects.root_objects import \
     Documentation
 from demisto_sdk.commands.common.tools import find_type
@@ -43,6 +44,10 @@ TYPE_CONVERSION_BY_FileType = {
     FileType.POWERSHELL_FILE: '',
     FileType.PYTHON_FILE: '',
     FileType.CONTRIBUTORS: Contributors,
+    FileType.GENERIC_TYPE: GenericType,
+    FileType.GENERIC_FIELD: GenericField,
+    FileType.GENERIC_MODULE: GenericModule,
+    FileType.GENERIC_DEFINITION: GenericDefinition
 }
 
 TYPE_CONVERSION_BY_FILE_NAME = {

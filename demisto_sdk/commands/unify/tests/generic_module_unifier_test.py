@@ -206,5 +206,3 @@ def test_save_unified_generic_module_file_is_already_exist_force(repo, capsys):
     assert saved_generic_module == GENERIC_MODULE
     os.remove(saving_path)
 
-
-

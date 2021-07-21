@@ -950,5 +950,6 @@ def test_invalid_path_to_unifier(repo):
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [UNIFY_CMD, '-i', f'{integration.path}/integration.yml'])
-    assert 'You have failed to provide a legal file path, a legal file path should be to a directory of an ' \
-           'integration or a script.' in result.stdout
+    assert 'Unsupported input. Please provide either: ' \
+           '1. a directory of an integration or a script. ' \
+           '2. a path of a GenericModule file.' in result.stdout

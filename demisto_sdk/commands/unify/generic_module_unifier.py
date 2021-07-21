@@ -8,7 +8,7 @@ from typing import Dict, Optional
 import click
 
 from demisto_sdk.commands.common.constants import FileType
-from demisto_sdk.commands.common.tools import get_pack_name, print_error, find_type
+from demisto_sdk.commands.common.tools import get_pack_name, find_type
 
 
 class GenericModuleUnifier:

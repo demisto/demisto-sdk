@@ -50,8 +50,8 @@ class PreProcessRulesValidator(ContentEntityValidator):
             bool. True if from version field is valid, else False.
         """
         if self.from_version:
-            if LooseVersion(self.from_version) >= LooseVersion(FROM_VERSION_PRE_PROCESS_RULES):
-                error_message, error_code = Errors.invalid_version_in_pre_process_rules('fromServerVersion')
+            if LooseVersion(self.from_version) < LooseVersion(FROM_VERSION_PRE_PROCESS_RULES):
+                error_message, error_code = Errors.invalid_from_server_version_in_pre_process_rules('fromServerVersion')
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
         return True

@@ -277,7 +277,8 @@ ERROR_CODE = {
     "invalid_file_path_layoutscontainer": {'code': "LO103", 'ui_applicable': False, 'related_field': ''},
     "invalid_incident_field_in_layout": {'code': "LO104", 'ui_applicable': False, 'related_field': ''},
     "invalid_file_path_pre_process_rules": {'code': "PP100", 'ui_applicable': False, 'related_field': ''},
-    "invalid_incident_field_in_pre_process_rules": {'code': "PP101", 'ui_applicable': False, 'related_field': ''},
+    "invalid_from_server_version_in_pre_process_rules": {'code': "PP101", 'ui_applicable': False, 'related_field': 'fromServerVersion'},
+    "invalid_incident_field_in_pre_process_rules": {'code': "PP102", 'ui_applicable': False, 'related_field': ''},
     "xsoar_config_file_is_not_json": {'code': "XC100", 'ui_applicable': False, 'related_field': ''},
     "xsoar_config_file_malformed": {'code': "XC101", 'ui_applicable': False, 'related_field': ''},
     "invalid_readme_image_error": {'code': "RM108", 'ui_applicable': False, 'related_field': ''},
@@ -1538,6 +1539,11 @@ class Errors:
     @error_code_decorator
     def invalid_file_path_pre_process_rules(file_name):
         return f'Invalid file name - {file_name}. Pre Process Rules file name should start with "preprocessrule-" prefix.'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_from_server_version_in_pre_process_rules(version_field):
+        return f'{version_field} field in Pre Process Rule needs to be at least 6.5.0'
 
     @staticmethod
     @error_code_decorator

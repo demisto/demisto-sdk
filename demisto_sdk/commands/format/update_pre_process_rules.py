@@ -46,12 +46,13 @@ class PreProcessRulesBaseFormat(BaseUpdateJSON):
             self.remove_unnecessary_keys()
 
             self.pre_process_rules__set_output_path()
-            self.set_from_server_version_to_default(from_version=self.from_version)
+            # self.set_from_server_version_to_default(from_version=self.from_version)
+            self.set_from_server_version_to_default()
 
             self.save_json_to_destination_file()
             return SUCCESS_RETURN_CODE
         except Exception as err:
-            print(''.join(traceback.format_exception(etype=type(exc), value=exc, tb=exc.__traceback__)))
+            print(''.join(traceback.format_exception(etype=type(err), value=err, tb=err.__traceback__)))
             if self.verbose:
                 click.secho(f'\nFailed to update file {self.source_file}. Error: {err}', fg='red')
             return ERROR_RETURN_CODE

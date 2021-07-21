@@ -9,9 +9,9 @@ from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_obje
 from wcmatch.pathlib import Path
 
 
-class IncidentType(JSONContentObject):
+class GenericDefinition(JSONContentObject):
     def __init__(self, path: Union[Path, str]):
-        super().__init__(path, INCIDENT_TYPE)
+        super().__init__(path, GenericDefinition)
 
     def upload(self, client: demisto_client):
         """

@@ -620,6 +620,9 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
     for release_note in pack.release_notes:
         pack_report += ObjectReport(release_note, content_packs=True)
         release_note.dump(artifact_manager.content_packs_path / pack.id / RELEASE_NOTES_DIR)
+    for generic_definition in pack.generic_definitions:
+        content_items_handler.handle_content_item(generic_definition)
+        pack_report += dump_pack_conditionally(artifact_manager, generic_definition)
     for tool in pack.tools:
         object_report = ObjectReport(tool, content_packs=True)
         created_files = tool.dump(artifact_manager.content_packs_path / pack.id / TOOLS_DIR)

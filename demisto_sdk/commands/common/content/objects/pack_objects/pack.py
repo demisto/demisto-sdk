@@ -154,6 +154,26 @@ class Pack:
                                                           suffix="md")
 
     @property
+    def generic_definitions(self) -> Iterator[Generic]:
+        return self._content_files_list_generator_factory(dir_name=INDICATOR_TYPES_DIR,
+                                                          suffix="json")
+
+    @property
+    def indicator_types(self) -> Iterator[IndicatorType]:
+        return self._content_files_list_generator_factory(dir_name=INDICATOR_TYPES_DIR,
+                                                          suffix="json")
+
+    @property
+    def indicator_types(self) -> Iterator[IndicatorType]:
+        return self._content_files_list_generator_factory(dir_name=INDICATOR_TYPES_DIR,
+                                                          suffix="json")
+
+    @property
+    def indicator_types(self) -> Iterator[IndicatorType]:
+        return self._content_files_list_generator_factory(dir_name=INDICATOR_TYPES_DIR,
+                                                          suffix="json")
+
+    @property
     def tools(self) -> Iterator[AgentTool]:
         return self._content_dirs_list_generator_factory(dir_name=TOOLS_DIR)
 

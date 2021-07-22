@@ -1,16 +1,10 @@
 import os
-import re
 from typing import Tuple
 
 import click
 import traceback
-import yaml
 from demisto_sdk.commands.common.hook_validations.pre_process_rules import PreProcessRulesValidator
-from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
-                                               print_error)
-from demisto_sdk.commands.format.format_constants import (
-    DEFAULT_VERSION, ERROR_RETURN_CODE, NEW_FILE_DEFAULT_5_FROMVERSION,
-    SKIP_RETURN_CODE, SUCCESS_RETURN_CODE, VERSION_6_0_0)
+from demisto_sdk.commands.format.format_constants import (SKIP_RETURN_CODE, SUCCESS_RETURN_CODE)
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
 
 PRE_PROCESS_RULES_PREFIX = 'preprocessrule-'

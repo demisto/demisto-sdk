@@ -1,7 +1,7 @@
 from demisto_sdk.commands.common.content.objects.pack_objects.pre_preocess_rules.pre_process_rules import PreProcessRules
 from typing import Union
 
-from demisto_sdk.commands.common.constants import OLD_INDICATOR_TYPE, FileType, PRE_PROCESS_RULES
+from demisto_sdk.commands.common.constants import OLD_INDICATOR_TYPE, FileType
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     AgentTool, AuthorImage, ChangeLog, Classifier, ClassifierMapper,
     Connection, Contributors, Dashboard, DocFile, IncidentField, IncidentType,

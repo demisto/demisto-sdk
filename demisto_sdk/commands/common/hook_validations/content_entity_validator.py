@@ -7,6 +7,7 @@ from typing import Optional
 import yaml
 from demisto_sdk.commands.common.constants import (ENTITY_NAME_SEPARATORS,
                                                    FEATURE_BRANCHES,
+                                                   GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION,
                                                    OLDEST_SUPPORTED_VERSION)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
@@ -40,6 +41,12 @@ class ContentEntityValidator(BaseValidator):
         tests = [
             self.is_valid_version(),
             self.is_valid_fromversion()
+        ]
+        return all(tests)
+
+    def is_valid_generic_object_file(self):
+        tests = [
+            self.is_valid_fromversion_for_generic_objects()
         ]
         return all(tests)
 
@@ -225,6 +232,24 @@ class ContentEntityValidator(BaseValidator):
                 if self.handle_error(error_message, error_code, file_path=self.file_path,
                                      suggested_fix=Errors.suggest_fix(self.file_path)):
                     return False
+
+        return True
+
+    def is_valid_fromversion_for_generic_objects(self):
+        """
+            Check if the file has a fromversion 6.5.0 or higher
+            This is not checked if checking on or against a feature branch.
+        """
+        if not self.should_run_fromversion_validation():
+            return True
+
+        if LooseVersion(self.current_file.get('fromVersion', '0.0.0')) < \
+                LooseVersion(GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION):
+            error_message, error_code = Errors.no_minimal_fromversion_in_file('fromVersion',
+                                                                              GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION)
+            if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                 suggested_fix=Errors.suggest_fix(self.file_path)):
+                return False
 
         return True
 

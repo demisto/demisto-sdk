@@ -279,6 +279,8 @@ ERROR_CODE = {
     "xsoar_config_file_is_not_json": {'code': "XC100", 'ui_applicable': False, 'related_field': ''},
     "xsoar_config_file_malformed": {'code': "XC101", 'ui_applicable': False, 'related_field': ''},
     "invalid_readme_image_error": {'code': "RM108", 'ui_applicable': False, 'related_field': ''},
+    "invalid_generic_field_group_value": {'code': "IF114", 'ui_applicable': False, 'related_field': 'group'},
+    "invalid_generic_field_id": {'code': "IF115", 'ui_applicable': False, 'related_field': 'id'}
 }
 
 
@@ -1204,6 +1206,16 @@ class Errors:
                f"1 - The right playbook name is set and the spelling is correct.\n" \
                f"2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
                f" rerun the command."
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_generic_field_group_value(group):
+        return f"Group {group} is not a valid generic field group."
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_generic_field_id(generic_id, generic_id_prefix):
+        return f"ID {generic_id} is not a valid generic field ID - it should start with the prefix {generic_id_prefix}."
 
     @staticmethod
     @error_code_decorator

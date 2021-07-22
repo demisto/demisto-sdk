@@ -187,8 +187,12 @@ class BaseValidator:
         }
 
         json_contents = []
+        existing_json = ''
         if os.path.exists(self.json_file_path):
-            existing_json = get_json(self.json_file_path)
+            try:
+                existing_json = get_json(self.json_file_path)
+            except ValueError:
+                pass
             if isinstance(existing_json, list):
                 json_contents = existing_json
 

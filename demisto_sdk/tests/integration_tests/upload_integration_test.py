@@ -66,16 +66,16 @@ def test_integration_upload_path_does_not_exist(demisto_client):
 
     Then
     - Ensure upload fails.
-    - Ensure failure upload message is printed.
+    - Ensure failure upload message is printed to the stderr as the failure caused by click.Path.convert check.
     """
     invalid_dir_path = join(
         DEMISTO_SDK_PATH, "tests/test_files/content_repo_example/DoesNotExist"
     )
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(main, [UPLOAD_CMD, "-i", invalid_dir_path, "--insecure"])
-    assert result.exit_code == 1
-    assert f"Error: Given input path: {invalid_dir_path} does not exist" in click.secho.call_args_list[1][0][0]
-    assert not result.stderr
+    assert result.exit_code == 2
+    assert isinstance(result.exception, SystemExit)
+    assert f"Invalid value for '-i' / '--input': Path '{invalid_dir_path}' does not exist" in result.stderr
 
 
 def test_integration_upload_script_invalid_path(demisto_client, tmp_path):

@@ -13,7 +13,8 @@ from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
                                                 PRESET_ERROR_TO_CHECK,
                                                 PRESET_ERROR_TO_IGNORE,
                                                 get_all_error_codes,
-                                                get_error_object)
+                                                get_error_object,
+                                                Errors)
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_file_displayed_name,
                                                get_json, get_pack_name,
@@ -211,16 +212,21 @@ class BaseValidator:
         with open(self.json_file_path, 'w') as f:
             json.dump(json_contents, f, indent=4)
 
-    def name_does_not_contain_contributor_type_name(self, name: str) -> bool:
+    def name_does_not_contain_contributor_type_name(self, file_path: str) -> bool:
         """
-        Checks whether pack or integration or script name is contributor supported and has contributor name.
+        Checks whether given object has contributor name type.
         This validation is needed because the label of contributor is automatically added to the name, so this
         validation will prevent it from being added twice.
         Args:
-            name (Dict): Name of the pack/integration/script.
+            file_path (Dict): File path of the given pack/integration/script.
         Returns:
-            (bool) True if name contains contributor type name, false otherwise.
+            (bool) True if name corresponding to file path contains contributor type name, false otherwise.
         """
+        name = get_file_displayed_name(file_path)
         lowercase_name = name.lower()
-        return not any(contributor_name in lowercase_name for contributor_name in self.CONTRIBUTOR_TYPE_LIST)
-
+        if any(contributor_name in lowercase_name for contributor_name in self.CONTRIBUTOR_TYPE_LIST):
+            error_message, error_code = Errors.entity_name_contains_contribution_type_name(name,
+                                                                                           self.CONTRIBUTOR_TYPE_LIST)
+            if self.handle_error(error_message, error_code, file_path=file_path):
+                return False
+        return True

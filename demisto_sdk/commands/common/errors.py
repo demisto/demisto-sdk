@@ -43,6 +43,7 @@ ERROR_CODE = {
     "folder_name_has_separators": {'code': "BA108", 'ui_applicable': False, 'related_field': ''},
     "file_name_has_separators": {'code': "BA109", 'ui_applicable': False, 'related_field': ''},
     "field_contain_forbidden_word": {'code': "BA110", 'ui_applicable': False, 'related_field': ''},
+    'entity_name_contains_contribution_type_name': {'code': 'BA111', 'ui_applicable': False, 'related_field': ''},
     "wrong_display_name": {'code': "IN100", 'ui_applicable': True, 'related_field': '<parameter-name>.display'},
     "wrong_default_parameter_not_empty": {'code': "IN101", 'ui_applicable': True,
                                           'related_field': '<parameter-name>.default'},
@@ -93,7 +94,6 @@ ERROR_CODE = {
                                          'related_field': 'script.commands.name'},
     "integration_is_skipped": {'code': "IN140", 'ui_applicable': False, 'related_field': ''},
     "reputation_missing_argument": {'code': "IN141", 'ui_applicable': True, 'related_field': '<argument-name>.default'},
-    'integration_contains_contribution_type_name': {'code': 'IN142', 'ui_applicable': False, 'related_field': ''},
     "invalid_version_script_name": {'code': "SC100", 'ui_applicable': True, 'related_field': 'name'},
     "invalid_deprecated_script": {'code': "SC101", 'ui_applicable': False, 'related_field': 'comment'},
     "invalid_command_name_in_script": {'code': "SC102", 'ui_applicable': False, 'related_field': ''},
@@ -1765,10 +1765,5 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def integration_contains_contribution_type_name(integration_name: str, support_names: List[str]):
-        return f'Integration {integration_name} should not contain one of {support_names} in its name. Please remove.'
-
-    @staticmethod
-    @error_code_decorator
-    def script_contains_contribution_type_name(script_name: str, support_names: List[str]):
-        return f'Script {script_name} should not contain one of {support_names} in its name. Please remove.'
+    def entity_name_contains_contribution_type_name(entity_name: str, support_names: List[str]):
+        return f'Entity {entity_name} should not contain one of {support_names} in its name. Please remove.'

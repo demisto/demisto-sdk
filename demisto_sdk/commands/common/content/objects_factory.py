@@ -50,7 +50,7 @@ TYPE_CONVERSION_BY_FILE_NAME = {
     '.secrets-ignore': SecretIgnore,
     '.pack-ignore': PackIgnore,
     f'{OLD_INDICATOR_TYPE}.json': OldIndicatorType,
-    'Author_image.png': AuthorImage,
+    'valid_author_image.png': AuthorImage,
 }
 
 

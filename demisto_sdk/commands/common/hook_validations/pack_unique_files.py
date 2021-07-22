@@ -27,6 +27,7 @@ from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
+from demisto_sdk.commands.common.hook_validations.author_image import AuthorImageValidator
 from demisto_sdk.commands.common.tools import (get_core_pack_list, get_json,
                                                get_remote_file,
                                                pack_name_to_path)
@@ -575,7 +576,18 @@ class PackUniqueFilesValidator(BaseValidator):
             if not is_valid:
                 self._add_error(error, self.pack_path)
 
+        self.validate_author_image()
+
         return self.get_errors()
+
+    def validate_author_image(self):
+        pack_meta_file_content = self._read_metadata_content()
+        support_level: str = pack_meta_file_content[PACK_METADATA_SUPPORT]
+        author_image_validator: AuthorImageValidator = AuthorImageValidator(self.pack_path, support_level,
+                                                                            ignored_errors=self.ignored_errors,
+                                                                            print_as_warnings=self.print_as_warnings,
+                                                                            suppress_print=self.suppress_print)
+        return author_image_validator.is_valid()
 
     # pack dependencies validation
     def validate_pack_dependencies(self):

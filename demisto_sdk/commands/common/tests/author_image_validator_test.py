@@ -1,0 +1,101 @@
+import json
+import os
+
+import click
+import pytest
+import requests_mock
+from click.testing import CliRunner
+from demisto_sdk.__main__ import main
+from demisto_sdk.commands.common import tools
+from demisto_sdk.commands.common.constants import (PACK_METADATA_DESC,
+                                                   PACK_METADATA_SUPPORT,
+                                                   PACK_METADATA_TAGS,
+                                                   PACK_METADATA_USE_CASES,
+                                                   PACKS_README_FILE_NAME,
+                                                   XSOAR_SUPPORT)
+from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    BaseValidator
+from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
+    PackUniqueFilesValidator
+from demisto_sdk.commands.common.hook_validations.author_image import AuthorImageValidator
+from demisto_sdk.commands.common.legacy_git_tools import git_path
+from git import GitCommandError
+from TestSuite.test_tools import ChangeCWD
+
+VALIDATE_CMD = "validate"
+PACK_METADATA_PARTNER = {
+    "name": "test",
+    "description": "test",
+    "support": "partner",
+    "currentVersion": "1.0.1",
+    "author": "bar",
+    "categories": [
+        "Data Enrichment & Threat Intelligence"
+    ],
+    "tags": [],
+    "useCases": [],
+    "keywords": [],
+    "price": 2,
+    "email": "some@mail.com",
+    "url": "https://www.paloaltonetworks.com/cortex"
+}
+
+README_INPUT_RESULTS_LIST = [
+    ('', False),
+    (' ', False),
+    ('\t\t\n ', False),
+    ('Text', True),
+]
+
+
+class TestAuthorImageValidator:
+    AUTHOR_IMAGE_FILES_PATH = os.path.normpath(os.path.join(f'{git_path()}/demisto_sdk/tests', 'test_files',
+                                                            'AuthorImageValidator'))
+    VALID_AUTHOR_IMAGE = os.path.join(AUTHOR_IMAGE_FILES_PATH, 'valid_author_image.png')
+    EMPTY_AUTHOR_IMAGE = os.path.join(AUTHOR_IMAGE_FILES_PATH, 'empty_author_image.png')
+
+    IS_VALID_INPUTS = [('path_does_not_exist', 'xsoar', AuthorImageValidator.IMAGE_MAX_SIZE, True),
+                       ('path_does_not_exist', 'partner', AuthorImageValidator.IMAGE_MAX_SIZE, False),
+                       (VALID_AUTHOR_IMAGE, 'xsoar', AuthorImageValidator.IMAGE_MAX_SIZE, True),
+                       (EMPTY_AUTHOR_IMAGE, 'xsoar', AuthorImageValidator.IMAGE_MAX_SIZE, False),
+                       (VALID_AUTHOR_IMAGE, 'partner', AuthorImageValidator.IMAGE_MAX_SIZE, True),
+                       (EMPTY_AUTHOR_IMAGE, 'partner', AuthorImageValidator.IMAGE_MAX_SIZE, False),
+                       (VALID_AUTHOR_IMAGE, 'xsoar', 100, False),
+                       (VALID_AUTHOR_IMAGE, 'partner', 100, False),
+                       ]
+
+    @pytest.mark.parametrize('author_image_path, support_level, max_image_size, expected', IS_VALID_INPUTS)
+    def test_is_valid(self, mocker, author_image_path: str, support_level: str, max_image_size: int, expected: bool):
+        """
+        Given:
+        - 'author_image_path': path to where author image should be found.
+
+        When:
+        - Performing validations of author image if needed
+        Case a: XSOAR pack, image does not exist.
+        Case b: Partner pack, image does not exist.
+        Case c: XSOAR pack, valid image exists.
+        Case d: XSOAR pack, empty image exists.
+        Case e: Partner pack, valid image exists.
+        Case f: Partner pack, empty image exists.
+        Case g: XSOAR pack, image exists and is bigger than maximum size.
+        Case h: Partner pack, image exists and is bigger than maximum size.
+
+        Then:
+        - Ensure expected validation staus is made
+        Case a: Ensure true is returned.
+        Case b: Ensure false is returned.
+        Case c: Ensure true is returned.
+        Case d: Ensure false is returned.
+        Case e: Ensure true is returned.
+        Case f: Ensure false is returned.
+        Case g: Ensure false is returned.
+        Case h: Ensure false is returned.
+
+        """
+        author_image_validator: AuthorImageValidator = AuthorImageValidator('', '', maximum_image_size=max_image_size)
+        mocker.patch.object(author_image_validator, 'handle_error')
+        author_image_validator.file_path = author_image_path
+        author_image_validator.support_level = support_level
+        assert author_image_validator.is_valid() == expected

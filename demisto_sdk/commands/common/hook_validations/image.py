@@ -1,6 +1,5 @@
 import base64
 import glob
-
 from demisto_sdk.commands.common.constants import (
     DEFAULT_DBOT_IMAGE_BASE64, DEFAULT_IMAGE_BASE64, IMAGE_REGEX,
     PACKS_INTEGRATION_NON_SPLIT_YML_REGEX)
@@ -51,7 +50,7 @@ class ImageValidator(BaseValidator):
             return self._is_valid
 
         is_existing_image = False
-        self.oversize_image()
+        self.has_valid_size(allow_empty_image_file=True)
         if '.png' not in self.file_path:
             is_existing_image = self.is_existing_image()
         if is_existing_image or '.png' in self.file_path:
@@ -61,10 +60,20 @@ class ImageValidator(BaseValidator):
 
         return self._is_valid
 
-    def oversize_image(self):
-        """Check if the image if over sized, bigger than IMAGE_MAX_SIZE"""
+    def has_valid_size(self, allow_empty_image_file: bool, maximum_size: int = IMAGE_MAX_SIZE):
+        """
+        Checks if image has a valid size.
+        if 'allow_empty_image_file' is true, checks that the image file is not empty.
+        Args:
+            allow_empty_image_file:
+            maximum_size:
+
+        Returns:
+
+        """
         if re.match(IMAGE_REGEX, self.file_path, re.IGNORECASE):
-            if os.path.getsize(self.file_path) > self.IMAGE_MAX_SIZE:  # disable-secrets-detection
+            image_size = os.path.getsize(self.file_path)
+            if image_size > maximum_size:  # disable-secrets-detection
                 error_message, error_code = Errors.image_too_large()
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self._is_valid = False
@@ -76,11 +85,28 @@ class ImageValidator(BaseValidator):
                 return
 
             image = data_dictionary.get('image', '')
-
-            if ((len(image) - 22) / 4.0) * 3 > self.IMAGE_MAX_SIZE:  # disable-secrets-detection
+            image_size = ((len(image) - 22) / 4.0) * 3
+            if image_size > self.IMAGE_MAX_SIZE:  # disable-secrets-detection
                 error_message, error_code = Errors.image_too_large()
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self._is_valid = False
+
+        self.check_for_valid_empty_image(allow_empty_image_file, image_size)
+
+    def check_for_valid_empty_image(self, allow_empty_image_file: bool, image_size: int):
+        """
+
+        Args:
+            allow_empty_image_file:
+            image_size:
+
+        Returns:
+
+        """
+        if not allow_empty_image_file and image_size == 0:
+            error_message, error_code = Errors.image_is_empty(self.file_path)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self._is_valid = False
 
     def is_existing_image(self):
         """Check if the integration has an image."""

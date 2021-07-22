@@ -419,14 +419,7 @@ class TestJsonOutput:
 
             assert json_output.sort() == expected_json_1.sort()
 
-    VALIDATE_PACK_NAME_INPUTS = [({'name': 'fill mandatory field'}, True),
-                                 ({'name': 'A'}, True),
-                                 ({'name': 'notCapitalized'}, True),
-                                 ({'name': 'BitcoinAbuse (Community)', PACK_METADATA_SUPPORT: 'community'}, True),
-                                 ({'name': 'BitcoinAbuse'}, False)]
-
-    @pytest.mark.parametrize('metadata_content, expected', VALIDATE_PACK_NAME_INPUTS)
-    def test_validate_pack_name(self, metadata_content: Dict, expected: bool):
+    def test_validate_pack_name(self, integration):
         """
         Given:
         - Pack or integration name
@@ -437,7 +430,8 @@ class TestJsonOutput:
         Then:
         - Ensure expected result is returned.
         """
+        integration.name = 'BitcoinAbuse Community'
         base_validator = BaseValidator()
         for contributor_type_name in BaseValidator.CONTRIBUTOR_TYPE_LIST:
-            assert not base_validator.name_does_not_contain_contributor_type_name(f'Bitcoin ({contributor_type_name})')
+            assert not base_validator.name_does_not_contain_contributor_type_name(integration.yml.path)
         assert base_validator.name_does_not_contain_contributor_type_name('BitcoinAbuse')

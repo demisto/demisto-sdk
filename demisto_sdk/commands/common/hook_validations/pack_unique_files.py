@@ -299,7 +299,7 @@ class PackUniqueFilesValidator(BaseValidator):
         if re.findall(INCORRECT_PACK_NAME_PATTERN, pack_name):
             if self._add_error(Errors.pack_name_is_not_in_xsoar_standards("wrong_word"), self.pack_meta_file):
                 return False
-        if not self.name_does_not_contain_contributor_type_name(pack_name):
+        if not self.name_does_not_contain_contributor_type_name(pack_name, handle_error=False):
             if self._add_error(Errors.pack_name_contains_contribution_type_name(pack_name, CONTRIBUTORS_LIST),
                                self.pack_meta_file):
                 return False

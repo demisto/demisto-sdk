@@ -100,7 +100,6 @@ ERROR_CODE = {
     "is_valid_script_file_path_in_folder": {'code': "SC103", 'ui_applicable': False, 'related_field': ''},
     "is_valid_script_file_path_in_scripts_folder": {'code': "SC104", 'ui_applicable': False, 'related_field': ''},
     "incident_in_script_arg": {'code': "SC105", 'ui_applicable': True, 'related_field': 'args.name'},
-    'script_contains_contribution_type_name': {'code': 'SC106', 'ui_applicable': False, 'related_field': ''},
     "dbot_invalid_output": {'code': "DB100", 'ui_applicable': True, 'related_field': 'contextPath'},
     "dbot_invalid_description": {'code': "DB101", 'ui_applicable': True, 'related_field': 'description'},
     "breaking_backwards_subtype": {'code': "BC100", 'ui_applicable': False, 'related_field': 'subtype'},

@@ -8,11 +8,11 @@ from configparser import ConfigParser, MissingSectionHeaderError
 from pathlib import Path
 from typing import IO
 
-from pkg_resources import get_distribution
-
 # Third party packages
 import click
 import git
+from pkg_resources import get_distribution
+
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 # Common tools

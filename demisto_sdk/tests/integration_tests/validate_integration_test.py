@@ -1,6 +1,7 @@
 from os.path import join
 
 from click.testing import CliRunner
+
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import DEFAULT_IMAGE_BASE64

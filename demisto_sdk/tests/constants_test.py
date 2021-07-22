@@ -1,5 +1,6 @@
-import demisto_sdk.commands.common.constants as constants
 import pytest
+
+import demisto_sdk.commands.common.constants as constants
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 
 GIT_ROOT = "{}".format(git_path())

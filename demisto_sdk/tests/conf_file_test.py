@@ -1,4 +1,5 @@
 from click.testing import CliRunner
+
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
 from TestSuite.test_tools import ChangeCWD

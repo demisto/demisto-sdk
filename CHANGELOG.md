@@ -4,6 +4,7 @@
 * Fixed an issue where **openapi-codegen** corrupted the swagger file by overwriting configuration to swagger file.
 * Updated the **upload** command to support uploading zipped packs to the marketplace.
 * Added to the **postman-codegen** command support of path variables.
+* Added support for PreProcessRules in **format**, **validate**, and **create-content-artifacts**
 
 # 1.4.4
 * When formatting incident types with Auto-Extract rules and without mode field, the **format** command will now add the user selected mode.

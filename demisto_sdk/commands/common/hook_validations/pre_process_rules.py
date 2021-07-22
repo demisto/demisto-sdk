@@ -21,6 +21,9 @@ class PreProcessRulesValidator(ContentEntityValidator):
         self.from_version = self.current_file.get('fromServerVersion')
         self.to_version = self.current_file.get('toServerVersion')
 
+    def is_valid_file(self, validate_rn=True):
+        return self.is_valid_pre_process_rules()
+
     def is_valid_pre_process_rules(self, validate_rn=True, id_set_file=None, is_circle=False) -> bool:
         """Check whether the pre_process_rules is valid or not.
 
@@ -32,7 +35,6 @@ class PreProcessRulesValidator(ContentEntityValidator):
                     self.is_valid_version(),
                     self.is_valid_from_server_version(),
                     self.is_valid_file_path(),
-                    # self.is_incident_field_exist(),
                     ])
 
     def is_valid_version(self) -> bool:

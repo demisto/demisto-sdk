@@ -10,8 +10,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                get_pack_name,
                                                get_pack_names_from_files,
                                                print_color,
-                                               print_warning,
-                                               suppress_stdout)
+                                               print_warning)
 from demisto_sdk.commands.update_release_notes.update_rn import (
     UpdateRN, update_api_modules_dependents_rn)
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
@@ -78,8 +77,7 @@ class UpdateReleaseNotesManager:
             if not validate_manager.git_util:  # in case git utils can't be initialized.
                 raise git.InvalidGitRepositoryError('unable to connect to git.')
             validate_manager.setup_git_params()
-            with suppress_stdout():
-                return validate_manager.get_changed_files_from_git()
+            return validate_manager.get_changed_files_from_git()
         except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:
             raise FileNotFoundError(
                 "You are not running `demisto-sdk update-release-notes` command in the content repository.\n"

@@ -236,28 +236,29 @@ def get_remote_file(
                 # And maybe it's just not defined. 😢
                 if not res.ok:
                     if not suppress_print:
-                        print_warning(
+                        click.secho(
                             f'You are working in a private repository: "{githhub_config.CURRENT_REPOSITORY}".\n'
                             f'The github token in your environment is undefined.\n'
                             f'Getting file from local repository instead. \n'
                             f'If you wish to get the file from the remote repository, \n'
                             f'Please define your github token in your environment.\n'
-                            f'`export {githhub_config.Credentials.ENV_TOKEN_NAME}=<TOKEN>`'
+                            f'`export {githhub_config.Credentials.ENV_TOKEN_NAME}=<TOKEN>`\n', fg='yellow'
                         )
+                        click.echo("Getting file from local environment")
                     # Get from local git origin/master instead
                     repo = git.Repo(os.path.dirname(full_file_path), search_parent_directories=True)
                     repo_git_util = GitUtil(repo)
-                    github_path = repo_git_util.get_local_remote_file_path(full_file_path, tag)
+                    github_path = repo_git_util.get_local_remote_file_path(full_file_path, github_tag)
                     local_content = repo_git_util.get_local_remote_file_content(github_path)
         else:
             res = requests.get(github_path, verify=False, timeout=10)
             res.raise_for_status()
     except Exception as exc:
         if not suppress_print:
-            print_warning(
+            click.secho(
                 f'Could not find the old entity file under "{github_path}".\n'
                 'please make sure that you did not break backward compatibility.\n'
-                f'Reason: {exc}'
+                f'Reason: {exc}', fg='yellow'
             )
         return {}
     file_content = res.content if res.ok else local_content
@@ -432,9 +433,8 @@ def get_file(method, file_path, type_of_file):
             try:
                 data_dictionary = method(stream)
             except Exception as e:
-                print_error(
+                raise ValueError(
                     "{} has a structure issue of file type {}. Error was: {}".format(file_path, type_of_file, str(e)))
-                return {}
     if isinstance(data_dictionary, (dict, list)):
         return data_dictionary
     return {}

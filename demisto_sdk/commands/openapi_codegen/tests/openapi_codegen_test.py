@@ -32,8 +32,7 @@ class TestOpenAPICodeGen:
     test_files_path = os.path.join(git_path(), 'demisto_sdk', 'tests', 'test_files')
     swagger_path = os.path.join(test_files_path, 'swagger_pets.json')
 
-    def init_integration(self):
-        base_name = 'TestSwagger'
+    def init_integration(self, base_name: str = 'TestSwagger'):
         integration = OpenAPIIntegration(self.swagger_path, base_name,
                                          '-'.join(base_name.split(' ')).lower(),
                                          base_name.replace(' ', ''),
@@ -199,3 +198,23 @@ class TestOpenAPICodeGen:
         assert [c for c in integration.configuration['commands'] if c['name'] == 'post-pet-upload-image'][0]
         assert [c for c in integration.configuration['commands'] if c['name'] ==
                 'post-pet-upload-image-by-uploadimage'][0]
+
+    def test_file_not_overwritten(self):
+        """
+        Given:
+        - Configurations
+
+        When:
+        - Saving configuration file
+
+        Then:
+        - Ensure file does not overwrite given JSON file for open API code gen command.
+        """
+        integration = self.init_integration(base_name='swagger_pets')
+        with open(self.swagger_path, 'r') as f:
+            file_data_before_config_save = json.loads(f.read())
+        integration.save_config(integration.configuration, self.test_files_path)
+        with open(self.swagger_path, 'r') as f:
+            file_data_after_config_save = json.loads(f.read())
+        assert file_data_after_config_save == file_data_before_config_save
+        os.remove(os.path.join(self.test_files_path, f'{integration.base_name}_config.json'))

@@ -2,6 +2,7 @@ import json
 import os
 from os.path import join
 
+from TestSuite.test_tools import ChangeCWD
 from demisto_sdk.commands.common.constants import PACK_METADATA_SUPPORT
 from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
@@ -11,9 +12,6 @@ from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml
-from TestSuite.test_tools import ChangeCWD
-from typing import Dict
-import pytest
 
 DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST = BaseValidator.create_reverse_ignored_errors_list(
     PRESET_ERROR_TO_CHECK['deprecated'])
@@ -419,7 +417,7 @@ class TestJsonOutput:
 
             assert json_output.sort() == expected_json_1.sort()
 
-    def test_validate_pack_name(self, integration):
+    def test_entity_valid_name(self, repo, mocker):
         """
         Given:
         - Pack or integration name
@@ -430,8 +428,23 @@ class TestJsonOutput:
         Then:
         - Ensure expected result is returned.
         """
-        integration.name = 'BitcoinAbuse Community'
+        pack = repo.create_pack('TestPack')
+        integration = pack.create_integration(name='BitcoinAbuse')
+        integration.create_default_integration(name='BitcoinAbuse')
+        script = pack.create_script(name='QRadar')
+        script.create_default_script(name='QRadar')
+        integration.yml.update({'display': 'BitcoinAbuse'})
+        script.yml.update({'name': 'QRadar'})
         base_validator = BaseValidator()
+        mocker.patch.object(base_validator, 'handle_error')
+        assert base_validator.name_does_not_contain_contributor_type_name(integration.yml.path)
+        assert base_validator.name_does_not_contain_contributor_type_name(script.yml.path)
         for contributor_type_name in BaseValidator.CONTRIBUTOR_TYPE_LIST:
+            integration_name_with_contributor_type = f'{integration.name} ({contributor_type_name})'
+            script_name_with_contributor_type = f'{script.name} ({contributor_type_name})'
+            integration = pack.create_integration(integration_name_with_contributor_type)
+            script = pack.create_script(script_name_with_contributor_type)
+            integration.yml.update({'display': integration_name_with_contributor_type})
+            script.yml.update({'name': script_name_with_contributor_type})
             assert not base_validator.name_does_not_contain_contributor_type_name(integration.yml.path)
-        assert base_validator.name_does_not_contain_contributor_type_name('BitcoinAbuse')
+            assert not base_validator.name_does_not_contain_contributor_type_name(script.yml.path)

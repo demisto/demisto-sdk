@@ -232,8 +232,6 @@ class TestOpenAPICodeGen:
 
         Then:
         - Ensure extract outputs does not stop on 'str' object has no attribute 'items' error.
-        Returns:
-
         """
         base_name = 'TestSwagger'
         integration = OpenAPIIntegration(self.swagger_path, base_name,

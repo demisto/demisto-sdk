@@ -2,6 +2,7 @@ import logging
 import subprocess
 from typing import Any, Iterator, Optional, Union
 
+import demisto_client
 from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    CONNECTIONS_DIR,
                                                    DASHBOARDS_DIR,
@@ -13,6 +14,9 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    INTEGRATIONS_DIR,
                                                    LAYOUTS_DIR, PLAYBOOKS_DIR,
                                                    PRE_PROCESS_RULES_DIR,
+                                                   LAYOUTS_DIR,
+                                                   PACK_VERIFY_KEY,
+                                                   PLAYBOOKS_DIR,
                                                    RELEASE_NOTES_DIR,
                                                    REPORTS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
@@ -25,13 +29,21 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     SecretIgnore, Widget)
 from demisto_sdk.commands.common.content.objects_factory import \
     path_to_pack_object
+from demisto_sdk.commands.test_content import tools
 from wcmatch.pathlib import Path
+
+TURN_VERIFICATION_ERROR_MSG = "Can not set the pack verification configuration key,\nIn the server - go to Settings -> troubleshooting\
+ and manually {action}."
+DELETE_VERIFY_KEY_ACTION = f'delete the key "{PACK_VERIFY_KEY}"'
+SET_VERIFY_KEY_ACTION = f'set the key "{PACK_VERIFY_KEY}" to ' + '{}'
 
 
 class Pack:
     def __init__(self, path: Union[str, Path]):
         self._path = Path(path)
-        self._metadata = PackMetaData(self._path.joinpath('metadata.json'))
+        # in case the given path are a Pack and not zipped pack - we init the metadata from the pack
+        if not str(path).endswith('.zip'):
+            self._metadata = PackMetaData(self._path.joinpath('metadata.json'))
 
     def _content_files_list_generator_factory(self, dir_name: str, suffix: str) -> Iterator[Any]:
         """Generic content objects iterable generator
@@ -242,3 +254,41 @@ class Pack:
             logger.info(f'Signed {self.path.name} pack successfully')
         except Exception as error:
             logger.error(f'Error while trying to sign pack {self.path.name}.\n {error}')
+
+    def upload(self, logger: logging.Logger, client: demisto_client):
+        """
+        Upload the pack zip to demisto_client
+        Args:
+            logger (logging.Logger): System logger already initialized.
+            client: The demisto_client object of the desired XSOAR machine to upload to.
+
+        Returns:
+            The result of the upload command from demisto_client
+        """
+
+        # the flow are - turn off the sign check -> upload -> turn back the check to be as previously
+        logger.info('Turn off the server verification for signed packs')
+        _, _, prev_conf = tools.update_server_configuration(client=client,
+                                                            server_configuration={PACK_VERIFY_KEY: 'false'},
+                                                            error_msg='Can not turn off the pack verification')
+        try:
+            logger.info('Uploading...')
+            return client.upload_content_packs(file=self.path)  # type: ignore
+        finally:
+            config_keys_to_update = None
+            config_keys_to_delete = None
+            try:
+                prev_key_val = prev_conf.get(PACK_VERIFY_KEY, None)
+                if prev_key_val is not None:
+                    config_keys_to_update = {PACK_VERIFY_KEY: prev_key_val}
+                else:
+                    config_keys_to_delete = {PACK_VERIFY_KEY}
+                logger.info('Setting the server verification to be as previously')
+                tools.update_server_configuration(client=client,
+                                                  server_configuration=config_keys_to_update,
+                                                  config_keys_to_delete=config_keys_to_delete,
+                                                  error_msg='Can not turn on the pack verification')
+            except (Exception, KeyboardInterrupt):
+                action = DELETE_VERIFY_KEY_ACTION if prev_key_val is None \
+                    else SET_VERIFY_KEY_ACTION.format(prev_key_val)
+                raise Exception(TURN_VERIFICATION_ERROR_MSG.format(action=action))

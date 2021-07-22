@@ -89,6 +89,8 @@ class ArtifactsManager:
         # inits
         self.content = Content.from_cwd()
         self.execution_start = time.time()
+
+        self.packs = self.content.packs
         self.exit_code = EX_SUCCESS
 
     def create_content_artifacts(self) -> int:
@@ -113,6 +115,34 @@ class ArtifactsManager:
         logger.info(f"\nExecution time: {time.time() - self.execution_start} seconds")
 
         return self.exit_code
+
+    def get_relative_pack_path(self, content_object: ContentObject):
+        """
+
+        Args:
+            content_object: the object to get the relative path for
+
+        Returns:
+            the path of the given object relative from the pack directory, for example HelloWorld/Scripts/some_script
+
+        """
+        return content_object.path.relative_to(self.content.path / PACKS_DIR)
+
+    def get_base_path(self) -> Path:
+        """
+
+        Returns:
+            the path that all artifacts are relative to
+        """
+        return self.content.path
+
+    def get_dir_to_delete(self):
+        """
+
+        Returns:
+            list of directories to delete after artifacts was created
+        """
+        return [self.content_test_path, self.content_new_path, self.content_packs_path, self.content_all_path]
 
 
 class ContentItemsHandler:
@@ -324,7 +354,7 @@ def wait_futures_complete(futures: List[ProcessFuture], artifact_manager: Artifa
         try:
             result = future.result()
             if isinstance(result, ArtifactsReport):
-                logger.info(result.to_str(artifact_manager.content.path))
+                logger.info(result.to_str(artifact_manager.get_base_path()))
         except (ContentError, DuplicateFiles, ContentFactoryError) as e:
             logger.error(e.msg)
             raise
@@ -511,15 +541,15 @@ def dump_packs(artifact_manager: ArtifactsManager, pool: ProcessPool) -> List[Pr
     """
     futures = []
     if 'all' in artifact_manager.pack_names:
-        for pack_name, pack in artifact_manager.content.packs.items():
+        for pack_name, pack in artifact_manager.packs.items():
             if pack_name not in IGNORED_PACKS:
                 futures.append(pool.schedule(dump_pack, args=(artifact_manager, pack)))
 
     else:
         for pack_name in artifact_manager.pack_names:
-            if pack_name not in IGNORED_PACKS and pack_name in artifact_manager.content.packs:
+            if pack_name not in IGNORED_PACKS and pack_name in artifact_manager.packs:
                 futures.append(pool.schedule(dump_pack,
-                                             args=(artifact_manager, artifact_manager.content.packs[pack_name])
+                                             args=(artifact_manager, artifact_manager.packs[pack_name])
                                              ))
 
     return futures
@@ -548,7 +578,6 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
         ArtifactsReport: ArtifactsReport object.
     """
     global logger
-
     pack_report = ArtifactsReport(f"Pack {pack.id}:")
 
     pack.metadata.load_user_metadata(pack.id, pack.path.name, pack.path, logger)
@@ -842,7 +871,7 @@ def dump_link_files(artifact_manager: ArtifactsManager, content_object: ContentO
 
 
 def calc_relative_packs_dir(artifact_manager: ArtifactsManager, content_object: ContentObject) -> Path:
-    relative_pack_path = content_object.path.relative_to(artifact_manager.content.path / PACKS_DIR)
+    relative_pack_path = artifact_manager.get_relative_pack_path(content_object)
     if ((INTEGRATIONS_DIR in relative_pack_path.parts and relative_pack_path.parts[-2] != INTEGRATIONS_DIR) or
             (SCRIPTS_DIR in relative_pack_path.parts and relative_pack_path.parts[-2] != SCRIPTS_DIR)):
         relative_pack_path = relative_pack_path.parent.parent
@@ -899,8 +928,7 @@ def ArtifactsDirsHandler(artifact_manager: ArtifactsManager):
 
 def delete_dirs(artifact_manager: ArtifactsManager):
     """Delete artifacts directories"""
-    for artifact_dir in [artifact_manager.content_test_path, artifact_manager.content_new_path,
-                         artifact_manager.content_packs_path, artifact_manager.content_all_path]:
+    for artifact_dir in artifact_manager.get_dir_to_delete():
         if artifact_dir.exists():
             rmtree(artifact_dir)
 
@@ -929,7 +957,7 @@ def zip_dirs(artifact_manager: ArtifactsManager):
 def zip_packs(artifact_manager: ArtifactsManager):
     """Zip packs directories"""
     with ProcessPoolHandler(artifact_manager) as pool:
-        for pack_name, pack in artifact_manager.content.packs.items():
+        for pack_name, pack in artifact_manager.packs.items():
             dumped_pack_dir = os.path.join(artifact_manager.content_packs_path, pack.id)
             zip_path = os.path.join(artifact_manager.content_uploadable_zips_path, pack.id)
 
@@ -968,15 +996,15 @@ def sign_packs(artifact_manager: ArtifactsManager):
 
             futures: List[ProcessFuture] = []
             if 'all' in artifact_manager.pack_names:
-                for pack_name, pack in artifact_manager.content.packs.items():
+                for pack_name, pack in artifact_manager.packs.items():
                     dumped_pack_dir = os.path.join(artifact_manager.content_packs_path, pack.id)
                     futures.append(pool.schedule(pack.sign_pack, args=(logger, dumped_pack_dir,
                                                                        artifact_manager.signDirectory,
                                                                        )))
             else:
                 for pack_name in artifact_manager.pack_names:
-                    if pack_name in artifact_manager.content.packs:
-                        pack = artifact_manager.content.packs[pack_name]
+                    if pack_name in artifact_manager.packs:
+                        pack = artifact_manager.packs[pack_name]
                         dumped_pack_dir = os.path.join(artifact_manager.content_packs_path, pack.id)
                         futures.append(pool.schedule(pack.sign_pack, args=(logger, dumped_pack_dir,
                                                                            artifact_manager.signDirectory,

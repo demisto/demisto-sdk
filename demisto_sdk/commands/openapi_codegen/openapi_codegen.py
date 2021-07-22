@@ -670,6 +670,7 @@ class OpenAPIIntegration:
                     for ref in refs:
                         ref = ref.split('/')[-1]
                         ref_props = self.extract_values(self.reference.get(ref, {}), 'properties')
+                        # ref_props = [ref_prop for ref_prop in ref_props if isinstance(ref_prop, dict)]
                         if ref_props:
                             for k, prop in ref_props[0].items():
                                 if k in self.root_objects:

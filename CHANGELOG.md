@@ -1,6 +1,6 @@
 # Changelog
 * Enhanced the **postman-codegen** command to name all generated arguments with lower case.
-* Fixed an issue where **openapi-codegen** entered an infinite loop on mutual references in swagger file.
+* Fixed an issue where **openapi-codegen** entered into an infinite loop on circular references in the swagger file.
 
 # 1.4.4
 * When formatting incident types with Auto-Extract rules and without mode field, the **format** command will now add the user selected mode.

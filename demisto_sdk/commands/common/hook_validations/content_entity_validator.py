@@ -15,7 +15,8 @@ from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.tools import (_get_file_id,
                                                is_test_config_match,
-                                               run_command)
+                                               run_command,
+                                               get_file_displayed_name)
 
 
 class ContentEntityValidator(BaseValidator):
@@ -39,7 +40,8 @@ class ContentEntityValidator(BaseValidator):
     def is_valid_file(self, validate_rn=True):
         tests = [
             self.is_valid_version(),
-            self.is_valid_fromversion()
+            self.is_valid_fromversion(),
+            self.name_does_not_contain_contributor_type_name()
         ]
         return all(tests)
 
@@ -60,6 +62,23 @@ class ContentEntityValidator(BaseValidator):
             if self.handle_error(error_message, error_code, file_path=self.file_path,
                                  suggested_fix=Errors.suggest_fix(self.file_path)):
                 self.is_valid = False
+                return False
+        return True
+
+    def name_does_not_contain_contributor_type_name(self) -> bool:
+        """
+        Checks whether given object has contributor name type.
+        This validation is needed because the label of contributor is automatically added to the name, so this
+        validation will prevent it from being added twice.
+        Returns:
+            (bool) False if name corresponding to file path contains contributor type name, true otherwise.
+        """
+        name = get_file_displayed_name(self.file_path)
+        lowercase_name = name.lower()
+        if any(contributor_name in lowercase_name for contributor_name in self.CONTRIBUTOR_TYPE_LIST):
+            error_message, error_code = Errors.entity_name_contains_contribution_type_name(name,
+                                                                                           self.CONTRIBUTOR_TYPE_LIST)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True
 

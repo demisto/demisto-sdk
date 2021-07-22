@@ -13,8 +13,7 @@ from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
                                                 PRESET_ERROR_TO_CHECK,
                                                 PRESET_ERROR_TO_IGNORE,
                                                 get_all_error_codes,
-                                                get_error_object,
-                                                Errors)
+                                                get_error_object)
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_file_displayed_name,
                                                get_json, get_pack_name,
@@ -215,26 +214,3 @@ class BaseValidator:
         json_contents.append(formatted_error_output)
         with open(self.json_file_path, 'w') as f:
             json.dump(json_contents, f, indent=4)
-
-    def name_does_not_contain_contributor_type_name(self, file_path: str, handle_error: bool = True) -> bool:
-        """
-        Checks whether given object has contributor name type.
-        This validation is needed because the label of contributor is automatically added to the name, so this
-        validation will prevent it from being added twice.
-        Args:
-            file_path (Dict): File path of the given pack/integration/script.
-            handle_error (bool): Whether handle error should be called or not.
-        Returns:
-            (bool) True if name corresponding to file path contains contributor type name, false otherwise.
-        """
-        name = get_file_displayed_name(file_path)
-        lowercase_name = name.lower()
-        if any(contributor_name in lowercase_name for contributor_name in self.CONTRIBUTOR_TYPE_LIST):
-            if handle_error:
-                error_message, error_code = Errors.entity_name_contains_contribution_type_name(name,
-                                                                                               self.CONTRIBUTOR_TYPE_LIST)
-                if self.handle_error(error_message, error_code, file_path=file_path):
-                    return False
-            else:
-                return False
-        return True

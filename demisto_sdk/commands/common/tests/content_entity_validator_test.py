@@ -145,3 +145,44 @@ def test_get_not_registered_tests(file_path, schema, conf_json_data, content_ite
     structure_validator = StructureValidator(file_path, predefined_scheme=schema)
     tests = structure_validator.current_file.get('tests')
     assert get_not_registered_tests(conf_json_data, content_item_id, schema, tests) == expected
+
+
+def test_entity_valid_name(repo, mocker):
+    """
+    Given:
+    - Entity name.
+
+    When:
+    - Checking whether entity name contains contributor type name.
+
+    Then:
+    - Ensure expected result is returned.
+    """
+    pack = repo.create_pack('TestPack')
+    integration = pack.create_integration(name='BitcoinAbuse')
+    integration.create_default_integration(name='BitcoinAbuse')
+    script = pack.create_script(name='QRadar')
+    script.create_default_script(name='QRadar')
+    integration.yml.update({'display': 'BitcoinAbuse'})
+    script.yml.update({'name': 'QRadar'})
+    integration_structure_validator = StructureValidator(integration.yml.path)
+    script_structure_validator = StructureValidator(script.yml.path)
+    integration_content_entity_validator = ContentEntityValidator(integration_structure_validator)
+    script_content_entity_validator = ContentEntityValidator(script_structure_validator)
+    assert integration_content_entity_validator.name_does_not_contain_contributor_type_name()
+    assert script_content_entity_validator.name_does_not_contain_contributor_type_name()
+    for contributor_type_name in ContentEntityValidator.CONTRIBUTOR_TYPE_LIST:
+        integration_name_with_contributor_type = f'{integration.name} ({contributor_type_name})'
+        script_name_with_contributor_type = f'{script.name} ({contributor_type_name})'
+        integration = pack.create_integration(integration_name_with_contributor_type)
+        script = pack.create_script(script_name_with_contributor_type)
+        integration.yml.update({'display': integration_name_with_contributor_type})
+        script.yml.update({'name': script_name_with_contributor_type})
+        integration_structure_validator = StructureValidator(integration.yml.path)
+        script_structure_validator = StructureValidator(script.yml.path)
+        integration_content_entity_validator = ContentEntityValidator(integration_structure_validator)
+        script_content_entity_validator = ContentEntityValidator(script_structure_validator)
+        mocker.patch.object(integration_content_entity_validator, 'handle_error')
+        mocker.patch.object(script_content_entity_validator, 'handle_error')
+        assert not integration_content_entity_validator.name_does_not_contain_contributor_type_name()
+        assert not script_content_entity_validator.name_does_not_contain_contributor_type_name()

@@ -954,16 +954,8 @@ class IntegrationValidator(ContentEntityValidator):
 
         return params_exist
 
-    def is_valid_display_name(self) -> bool:
-        """
-        Checks whether given display name of YML is valid or not.
-        Returns:
-            (bool).
-        """
-        return all(
-            [self.is_valid_versioned_display_name(), self.name_does_not_contain_contributor_type_name(self.file_path)])
-
-    def is_valid_versioned_display_name(self) -> bool:
+    def is_valid_display_name(self):
+        # type: () -> bool
         version_number: Optional[str] = get_file_version_suffix_if_exists(self.current_file,
                                                                           check_in_display=True)
         if not version_number:

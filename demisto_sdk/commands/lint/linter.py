@@ -831,10 +831,12 @@ class Linter:
         try:
             # Running pytest container
             cov = '' if no_coverage else self._pack_abs_dir.stem
+            uid = os.getuid() or 4000
+            logger.debug(f'{log_prompt} - user uid for running lint/test: {uid}')
             container_obj: docker.models.containers.Container = self._docker_client.containers.run(
                 name=container_name, image=test_image, command=[build_pytest_command(test_xml=test_xml, json=True,
                                                                                      cov=cov)],
-                user=f"{os.getuid()}:4000", detach=True, environment=self._facts["env_vars"])
+                user=f"{uid}:4000", detach=True, environment=self._facts["env_vars"])
             stream_docker_container_output(container_obj.logs(stream=True))
             # Waiting for container to be finished
             container_status: dict = container_obj.wait(condition="exited")

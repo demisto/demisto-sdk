@@ -27,3 +27,6 @@ mapping:
     type: str
   feed:
     type: bool
+  definitionId:
+    type: str
+

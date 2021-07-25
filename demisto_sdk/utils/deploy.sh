@@ -6,6 +6,7 @@ set -e
 function deploy_to_pypi () {
     pip install twine
     python setup.py sdist
+    pipfile2req > requirements.txt
     TWINE_USERNAME=__token__ twine upload dist/*
 }
 

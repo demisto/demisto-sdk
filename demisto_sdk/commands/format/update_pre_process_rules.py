@@ -3,7 +3,12 @@ from typing import Tuple
 
 import click
 import traceback
-from demisto_sdk.commands.common.hook_validations.pre_process_rules import PreProcessRuleValidator
+
+from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
+                                                          SKIP_RETURN_CODE,
+                                                          SUCCESS_RETURN_CODE)
+
+from demisto_sdk.commands.common.hook_validations.pre_process_rule import PreProcessRuleValidator
 from demisto_sdk.commands.format.format_constants import (SKIP_RETURN_CODE, SUCCESS_RETURN_CODE)
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
 
@@ -39,7 +44,6 @@ class PreProcessRulesBaseFormat(BaseUpdateJSON):
             self.remove_unnecessary_keys()
 
             self.pre_process_rules__set_output_path()
-            # self.set_from_server_version_to_default(from_version=self.from_version)
             self.set_from_server_version_to_default()
 
             self.save_json_to_destination_file()

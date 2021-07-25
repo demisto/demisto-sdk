@@ -90,6 +90,33 @@ outputs:
 '''
 
 
+def test_json_to_outputs__a_list_of_dict():
+    """
+    Given
+        - A list of dictionaries
+    When
+        - Passed to json_to_outputs
+    Then
+        - ensure the returned type is correct
+    """
+    yaml_output = parse_json(
+        data='[{"a": "b", "c": "d"}, {"a": 1}]',
+        command_name='jira-ticket',
+        prefix='Jira.Ticket'
+    )
+
+    assert yaml_output == '''arguments: []
+name: jira-ticket
+outputs:
+- contextPath: Jira.Ticket.a
+  description: ''
+  type: Number
+- contextPath: Jira.Ticket.c
+  description: ''
+  type: String
+'''
+
+
 INPUT = [(True, 'Boolean'),
          (0, 'Number'),
          (1, 'Number'),

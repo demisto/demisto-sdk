@@ -77,32 +77,22 @@ class TestSecrets:
         secret_to_location = self.validator.search_potential_secrets([self.TEST_YML_FILE])
         assert not secret_to_location
 
-    def test_search_potential_secrets__secrets_found(self):
+    def test_search_potential_secrets__secrets_found(self, repo):
         create_empty_whitelist_secrets_file(os.path.join(TestSecrets.TEMP_DIR, TestSecrets.WHITE_LIST_FILE_NAME))
 
         validator = SecretsValidator(is_circle=True, white_list_path=os.path.join(TestSecrets.TEMP_DIR,
                                                                                   TestSecrets.WHITE_LIST_FILE_NAME))
 
-        with io.open(self.TEST_FILE_WITH_SECRETS, 'w') as f:
-            f.write('''
-print('This is our dummy code')
-a = 100
-b = 300
-c = a + b
+        pack = repo.create_pack('pack')
+        integration = pack.create_integration('integration')
+        integration.yml.write_dict({'deprecated': "print('This is our dummy code') a = 100 b = 300 c = a + b "
+                                                  "API_KEY = OIifdsnsjkgnj3254nkdfsjKNJD0345 # this is our secret "
+                                                  "some_dict = { 'some_foo': 100docker  print(some_dict.some_foo)"})
 
-API_KEY = OIifdsnsjkgnj3254nkdfsjKNJD0345 # this is our secret
+        secrets_found = validator.search_potential_secrets([integration.yml.path])
+        assert secrets_found[integration.yml.path][2] == ['OIifdsnsjkgnj3254nkdfsjKNJD0345']
 
-some_dict = {
-    'some_foo': 100
-}
-
-print(some_dict.some_foo)
-            ''')
-
-        secrets_found = validator.search_potential_secrets([self.TEST_FILE_WITH_SECRETS])
-        assert secrets_found[self.TEST_FILE_WITH_SECRETS] == {7: ['OIifdsnsjkgnj3254nkdfsjKNJD0345']}
-
-    def test_ignore_entropy(self):
+    def test_ignore_entropy(self, repo):
         """
         - no items in the whitelist
         - file contains 2 secrets:
@@ -121,22 +111,14 @@ print(some_dict.some_foo)
                                      white_list_path=os.path.join(TestSecrets.TEMP_DIR,
                                                                   TestSecrets.WHITE_LIST_FILE_NAME))
 
-        with io.open(self.TEST_FILE_WITH_SECRETS, 'w') as f:
-            f.write('''
-print('This is our dummy code')
+        pack = repo.create_pack('pack')
+        integration = pack.create_integration('integration')
+        integration.yml.write_dict({'deprecated': "print('This is our dummy code') my_email = 'fooo@someorg.com' "
+                                                  "API_KEY = OIifdsnsjkgnj3254nkdfsjKNJD0345 # this is our secret "
+                                                  "some_dict = { 'some_foo': 100 }"})
 
-my_email = "fooo@someorg.com"
-
-API_KEY = OIifdsnsjkgnj3254nkdfsjKNJD0345 # this is our secret
-
-some_dict = {
-    'some_foo': 100
-}
-
-            ''')
-
-        secrets_found = validator.search_potential_secrets([self.TEST_FILE_WITH_SECRETS], True)
-        assert secrets_found[self.TEST_FILE_WITH_SECRETS] == {4: ['fooo@someorg.com']}
+        secrets_found = validator.search_potential_secrets([integration.yml.path], True)
+        assert secrets_found[integration.yml.path][1] == ['fooo@someorg.com']
 
     def test_two_files_with_same_name(self):
         """

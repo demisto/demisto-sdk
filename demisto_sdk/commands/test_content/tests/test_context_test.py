@@ -5,7 +5,7 @@ from functools import partial
 from demisto_sdk.commands.common.constants import PB_Status
 from demisto_sdk.commands.test_content.Docker import Docker
 from demisto_sdk.commands.test_content.TestContentClasses import (
-    TestConfiguration, TestContext, TestPlaybook)
+    Integration, TestConfiguration, TestContext, TestPlaybook)
 from demisto_sdk.commands.test_content.tests.build_context_test import (
     generate_content_conf_json, generate_integration_configuration,
     generate_secret_conf_json, generate_test_configuration,
@@ -219,3 +219,46 @@ class TestPrintContextToLog:
         playbook_instance.print_context_to_log(client, incident_id='1')
         assert playbook_instance.build_context.logging_module.error.call_args_list[0][0][0] == expected_first_error
         assert playbook_instance.build_context.logging_module.error.call_args_list[1][0][0] == expected_second_error
+
+
+def test_replacing_placeholders(mocker, tmp_path):
+    """
+    Given:
+        - Integration with placeholders, different servers
+    When:
+        - Calling _set_integration_params during creating integrations configurations
+    Then:
+        - Ensure that replacing placeholders happens not in place,
+        and next integration with same build_context, will able to replace '%%SERVER_HOST%%' placeholder.
+    """
+    # Setting up the build context
+    filtered_tests = ['playbook_integration',
+                      'playbook_second_integration']
+    # Setting up the content conf.json
+    tests = [generate_test_configuration(playbook_id='playbook_integration',
+                                         integrations=['integration_with_placeholders']),
+             generate_test_configuration(playbook_id='playbook_second_integration',
+                                         integrations=['integration_with_placeholders'])
+             ]
+    content_conf_json = generate_content_conf_json(tests=tests,
+                                                   unmockable_integrations={'FirstIntegration': 'reason'},
+                                                   skipped_tests={})
+    # Setting up the content-test-conf conf.json
+    integration_names = ['integration_with_placeholders']
+    integrations_configurations = [generate_integration_configuration(name=integration_name,
+                                                                      params={'url': '%%SERVER_HOST%%/server'})
+                                   for integration_name in integration_names]
+    secret_test_conf = generate_secret_conf_json(integrations_configurations)
+
+    # Setting up the build_context instance
+    build_context = get_mocked_build_context(mocker,
+                                             tmp_path,
+                                             content_conf_json=content_conf_json,
+                                             secret_conf_json=secret_test_conf,
+                                             filtered_tests_content=filtered_tests)
+
+    integration = Integration(build_context, 'integration_with_placeholders', ['instance'])
+    integration._set_integration_params(server_url='1.1.1.1', playbook_id='playbook_integration', is_mockable=False)
+    integration = Integration(build_context, 'integration_with_placeholders', ['instance'])
+    integration._set_integration_params(server_url='1.2.3.4', playbook_id='playbook_integration', is_mockable=False)
+    assert '%%SERVER_HOST%%' in build_context.secret_conf.integrations[0].params.get('url')

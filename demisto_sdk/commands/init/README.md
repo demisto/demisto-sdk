@@ -5,13 +5,26 @@ Create a pack, integration or script template.
 * This command is used to ease the initial creation of a pack, integration or a script.
 
 **Arguments**:
-* **-n, --name** The name given to the files and directories of new pack/integration/script being created
-* **--id** The id used for the yml file of the integration/script
-* **-o, --output** The output directory to which the created object will be saved
-* **--integration** Create an integration
-* **--script** Create a script
-* **--pack** Create a pack
-* **-t, --template** Create an Integration/Script based on a specific template.
+* **-n, --name** 
+The name given to the files and directories of new pack/integration/script being created
+* **--id** 
+The id used for the yml file of the integration/script
+* **-o, --output** 
+The output directory to which the created object will be saved
+* **--integration** 
+Create an integration
+* **--script** 
+Create a script
+* **--pack** 
+Create a pack
+* **-t, --template** 
+Create an Integration/Script based on a specific template.</br>
+Integration template options: HelloWorld, HelloIAMWorld, FeedHelloWorld.</br>
+Script template options: HelloWorldScript
+* **--demisto_mock**
+Copy the demistomock. Relevant for initialization of Scripts and Integrations within a Pack.
+* **--common-server**
+Copy the CommonServerPython. Relevant for initialization of Scripts and Integrations within a Pack.
 
 **Notes**
 * If `integration` or `script` not set - the command will automatically create a pack, even if `pack` was not set.

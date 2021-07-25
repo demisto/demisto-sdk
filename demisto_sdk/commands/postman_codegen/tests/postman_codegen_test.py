@@ -193,7 +193,8 @@ class TestPostmanCodeGen:
         """
         Given
         - postman collection
-        - with request Test Report which has variable {{foo}} in the url like: {{url}}/vtapi/v2/test/{{foo}}?resource=https://www.cobaltstrike.com/
+        - with request Test Report which has variable {{foo}} in the url like:
+        {{url}}/vtapi/v2/:Virus_name/test/{{foo}}?resource=https://www.cobaltstrike.com/
 
         When
         - generating config file
@@ -201,6 +202,7 @@ class TestPostmanCodeGen:
         Then
         - integration code, the command test-report will contain foo argument passed to the url
         - integration yml, the command test-report will contain foo arg
+        - integration yml, the command test-report will contain virus_name arg.
         """
         path = tmp_path / 'test-collection.json'
         _testutil_create_postman_collection(dest_path=path, with_request={
@@ -209,15 +211,22 @@ class TestPostmanCodeGen:
                 "method": "GET",
                 "header": [],
                 "url": {
-                    "raw": "{{url}}/vtapi/v2/test/{{foo}}?resource=https://www.cobaltstrike.com/",
+                    "raw": "{{url}}/vtapi/v2/:Virus_name/test/{{foo}}?resource=https://www.cobaltstrike.com/",
                     "host": [
                         "{{url}}"
                     ],
                     "path": [
                         "vtapi",
                         "v2",
+                        ":Virus_name",
                         "test",
                         "{{foo}}"
+                    ],
+                    "variable": [
+                        {
+                            "key": "Virus_name",
+                            "value": ""
+                        }
                     ],
                     "query": [
                         {
@@ -242,10 +251,79 @@ class TestPostmanCodeGen:
         integration_yml = yaml.dump(integration_obj.to_dict())
 
         assert "foo = args.get('foo')" in integration_code
-        assert "def test_report_request(self, foo, resource):" in integration_code
-        assert "'GET', f'vtapi/v2/test/{foo}', params=params, headers=headers)" in integration_code
+        assert "virus_name = args.get('virus_name')" in integration_code
+        assert "def test_report_request(self, foo, virus_name, resource):" in integration_code
+        assert "'GET', f'vtapi/v2/{virus_name}/test/{foo}', params=params, headers=headers)" in integration_code
 
         assert 'name: foo' in integration_yml
+        assert 'name: virus_name' in integration_yml
+
+    def test_args_lowercase(self, tmp_path):
+        """
+        Given
+        - Postman collection.
+        - Test report request which has variables with upper case.
+
+        When
+        - Generating config file.
+
+        Then
+        - Integration code has arguments as lowercase, but sends the arguments to requests as given.
+        - Integration yml, the arguments are lower case.
+        """
+        path = tmp_path / 'test-collection.json'
+        _testutil_create_postman_collection(dest_path=path, with_request={
+            "name": "Test Report",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"A\": 2,\n    \"B\": 3,\n    \"c\": 4\n}"
+                },
+                "url": {
+                    "raw": "{{url}}/vtapi/v2/test/{{FOO_A}}?RESOURCE_B=https://www.cobaltstrike.com/",
+                    "host": [
+                        "{{url}}"
+                    ],
+                    "path": [
+                        "vtapi",
+                        "v2",
+                        "test",
+                        "{{FOO_A}}"
+                    ],
+                    "query": [
+                        {
+                            "key": "RESOURCE_B",
+                            "value": "https://www.cobaltstrike.com/"
+                        }
+                    ]
+                },
+                "description": "Test Report description"
+            }
+        })
+
+        config = postman_to_autogen_configuration(
+            collection=json.load(open(path)),
+            name='VirusTotal',
+            context_path_prefix=None,
+            command_prefix=None
+        )
+
+        integration_code = config.generate_integration_python_code()
+        integration_obj = config.generate_integration_yml()
+        integration_yml = yaml.dump(integration_obj.to_dict())
+
+        assert "foo_a = args.get('foo_a')" in integration_code
+        assert "def test_report_request(self, foo_a, resource_b, a, b, c)" in integration_code
+        assert 'assign_params(RESOURCE_B=resource_b' in integration_code
+        assert "('GET', f'vtapi/v2/test/{foo_a}', params=params, json_data=data, headers=headers)" in integration_code
+
+        assert 'name: foo_a' in integration_yml
+        assert 'name: resource_b' in integration_yml
+        assert 'name: a\n' in integration_yml
+        assert 'name: b\n' in integration_yml
+        assert 'name: c\n' in integration_yml
 
     def test_apikey_passed_as_header(self, tmpdir):
         """

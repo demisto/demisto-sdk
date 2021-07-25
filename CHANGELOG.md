@@ -7,7 +7,7 @@
 * Fixed an issue where **openapi-codegen** entered into an infinite loop on circular references in the swagger file.
 * The **format** command will now set `fromVersion: 6.2.0` for widgets with 'metrics' data type.
 * Updated the **find-dependencies** command to support generic modules, definitions, fields and types.
-* Fixed an issue where **validate** suggests, with no reason, running **format** on missing mandatory keys in yml file. 
+* Fixed an issue where **validate** suggests, with no reason, running **format** on missing mandatory keys in yml file.
 
 # 1.4.4
 * When formatting incident types with Auto-Extract rules and without mode field, the **format** command will now add the user selected mode.

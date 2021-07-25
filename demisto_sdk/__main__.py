@@ -280,12 +280,13 @@ def extract_code(config, **kwargs):
 def unify(**kwargs):
     """
     This command has two main functions:
-    1. YML Unifier - Unifies code, image, description and yml files to a single Demisto yml file, Note that
-       this should be used on a single integration/script and not a pack, not multiple scripts/integrations.
-       To use this function - set as input a path to the directory of the integration/script to unify.
 
-    2. GenericModule Unifier - unifies a GenericModule object (json) with it's dashboards (also jsons).
-       To use this function - set as input a path to a GenericModule file and not a directory.
+    1. YML Unifier - Unifies integration/script code, image, description and yml files to a single XSOAR yml file.
+     * Note that this should be used on a single integration/script and not a pack, not multiple scripts/integrations.
+     * To use this function - set as input a path to the *directory* of the integration/script to unify.
+
+    2. GenericModule Unifier - Unifies a GenericModule with its Dashboards to a single JSON object.
+     * To use this function - set as input a path to a GenericModule *file*.
     """
 
     check_configuration_file('unify', kwargs)

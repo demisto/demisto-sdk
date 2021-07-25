@@ -7,7 +7,7 @@
 * Fixed an issue where **openapi-codegen** entered into an infinite loop on circular references in the swagger file.
 * The **format** command will now set `fromVersion: 6.2.0` for widgets with 'metrics' data type.
 * Updated the **find-dependencies** command to support generic modules, definitions, fields and types.
-* Expanded unify command to support GenericModules - Unifies a GenericModule object with it's Dashboards.
+* Expanded unify command to support GenericModules - Unifies a GenericModule object with its Dashboards.
 
 # 1.4.4
 * When formatting incident types with Auto-Extract rules and without mode field, the **format** command will now add the user selected mode.

@@ -99,9 +99,7 @@ class GenericModuleUnifier:
         Args:
             unified_generic_module_json: unified GenericModule
 
-        Returns: None
         """
-
         if os.path.isfile(self.dest_path) and self.use_force is False:
             raise ValueError(f'Output file already exists: {self.dest_path}.'
                              ' Make sure to remove this file from source control, set a different output dir or set the'

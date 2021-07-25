@@ -1,5 +1,6 @@
 # Changelog
 * Enhanced the **postman-codegen** command to name all generated arguments with lower case.
+* Fixed an issue where the **find-dependencies** command miscalculated the dependencies for playbooks that use generic commands.
 * Fixed an issue where the **validate** command failed in external repositories in case the DEMISTO_SDK_GITHUB_TOKEN was not set.
 * Fixed an issue where **openapi-codegen** corrupted the swagger file by overwriting configuration to swagger file.
 * Updated the **upload** command to support uploading zipped packs to the marketplace.
@@ -9,6 +10,7 @@
 * Updated the **find-dependencies** command to support generic modules, definitions, fields and types.
 * Fixed an issue where **openapi-codegen** tried to extract reference example outputs, leading to an exception.
 * Added an option to ignore secrets automatically when using the **init** command to create a pack.
+* Added a tool that gives the ability to temporarily suppress console output.
 
 # 1.4.4
 * When formatting incident types with Auto-Extract rules and without mode field, the **format** command will now add the user selected mode.

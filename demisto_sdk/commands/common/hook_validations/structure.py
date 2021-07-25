@@ -406,7 +406,9 @@ class StructureValidator(BaseValidator):
         if error_path:
             error_path_str = self.translate_error_path(error_path)
             error_message, error_code = Errors.pykwalify_missing_parameter(str(error_key), error_path_str)
-            return error_message, error_code, True
+            # for now, format does not support adding mandatory fields, for example 'description'.
+            # Showing a suggestion to run format is useless in such cases
+            return error_message, error_code, False
 
         # if no path found this is an error in root
         else:

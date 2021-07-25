@@ -60,6 +60,7 @@ DOCUMENTATION = 'doc'
 MAPPER = 'classifier-mapper'
 CANVAS = 'canvas'
 OLD_REPUTATION = 'reputations.json'
+PACK_VERIFY_KEY = 'content.pack.verify'
 XSOAR_CONFIG_FILE = 'xsoar_config.json'
 
 
@@ -97,6 +98,7 @@ class FileType(Enum):
     WHITE_LIST = 'whitelist'
     LANDING_PAGE_SECTIONS_JSON = 'landingPage_sections.json'
     CONTRIBUTORS = 'contributors'
+    PACK = 'pack'
     XSOAR_CONFIG = 'xsoar_config'
     GENERIC_MODULE = 'genericmodule'
     GENERIC_FIELD = 'genericfield'

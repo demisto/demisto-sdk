@@ -2052,7 +2052,6 @@ class TestGenericFields:
 
         result = get_generic_field_data(test_dir, generic_types_list=generic_types_list)
         result = result.get('id')
-        print(result)
         assert 'name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()

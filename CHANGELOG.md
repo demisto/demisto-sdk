@@ -1,6 +1,15 @@
 # Changelog
 * Enhanced the **postman-codegen** command to name all generated arguments with lower case.
+* Fixed an issue where the **find-dependencies** command miscalculated the dependencies for playbooks that use generic commands.
 * Fixed an issue where the **validate** command failed in external repositories in case the DEMISTO_SDK_GITHUB_TOKEN was not set.
+* Fixed an issue where **openapi-codegen** corrupted the swagger file by overwriting configuration to swagger file.
+* Updated the **upload** command to support uploading zipped packs to the marketplace.
+* Added to the **postman-codegen** command support of path variables.
+* Fixed an issue where **openapi-codegen** entered into an infinite loop on circular references in the swagger file.
+* The **format** command will now set `fromVersion: 6.2.0` for widgets with 'metrics' data type.
+* Updated the **find-dependencies** command to support generic modules, definitions, fields and types.
+* Fixed an issue where **openapi-codegen** tried to extract reference example outputs, leading to an exception.
+* Added a tool that gives the ability to temporarily suppress console output.
 * Enhanced the **init** command with changing the script template name in the code with the real script name.
 
 # 1.4.4

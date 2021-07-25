@@ -1475,7 +1475,7 @@ def is_path_of_layout_directory(path: str) -> bool:
 
 
 def is_path_of_pre_process_rules_directory(path: str) -> bool:
-    """Returns true if directory is integration directory false if not.
+    """Returns true if directory is pre-processing rules directory, false if not.
     """
     return os.path.basename(path) == PRE_PROCESS_RULES_DIR
 

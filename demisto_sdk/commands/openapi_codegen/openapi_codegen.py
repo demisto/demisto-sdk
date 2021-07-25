@@ -720,6 +720,9 @@ class OpenAPIIntegration:
                 for ref in refs:
                     ref = ref.split('/')[-1]
                     ref_args = self.extract_values(self.reference.get(ref, {}), 'properties')
+                    # Addition of filtering dicts only was added because some swaggers contain example files
+                    # Which are written in string and caused errors on ref_props[0].items()
+                    ref_args = [ref_arg for ref_arg in ref_args if isinstance(ref_arg, dict)]
                     for ref_arg in ref_args:
                         for k, v in ref_arg.items():
                             new_ref_arg = {'name': k, 'in': arg.get('in'),

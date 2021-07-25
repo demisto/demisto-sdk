@@ -601,10 +601,11 @@ def test_script_init_with_ignore_secrets(initiator, tmpdir, monkeypatch, mocker)
     with ChangeCWD(tmpdir):
         res = initiator.script_init()
 
-    script_dir_files = {file for file in listdir(script_path)}
+    script_dir_files = set(listdir(script_path))
+    expected_files = {f"{SCRIPT_NAME}.py", f"{SCRIPT_NAME}.yml", f"{SCRIPT_NAME}_test.py", "README.md", "test_data"}
+    diff = expected_files.difference(script_dir_files)
 
     assert res
     assert os.path.isdir(script_path)
-    assert {f"{SCRIPT_NAME}.py", f"{SCRIPT_NAME}.yml", f"{SCRIPT_NAME}_test.py",
-            "README.md", "test_data"} == script_dir_files
+    assert not diff, f'There are missing file\'s in the files you expected to create, The missing file\'s are {diff}'
     assert os.stat(secrets_ignore_path).st_size > 0

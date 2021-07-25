@@ -24,7 +24,7 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     AgentTool, AuthorImage, Classifier, ClassifierMapper, Connection,
     Contributors, Dashboard, DocFile, IncidentField, IncidentType,
-    IndicatorField, IndicatorType, Integration, LayoutObject, PreProcessRules,OldClassifier,
+    IndicatorField, IndicatorType, Integration, LayoutObject, PreProcessRules, OldClassifier,
     PackIgnore, PackMetaData, Playbook, Readme, ReleaseNote, Report, Script,
     SecretIgnore, Widget)
 from demisto_sdk.commands.common.content.objects_factory import \

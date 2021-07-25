@@ -1209,6 +1209,9 @@ def update_release_notes(**kwargs):
 
 # ====================== find-dependencies ====================== #
 @main.command()
+@click.help_option(
+    '-h', '--help'
+)
 @click.option(
     "-i", "--input", help="Pack path to find dependencies. For example: Pack/HelloWorld", required=True,
     type=click.Path(exists=True, dir_okay=True))

@@ -31,7 +31,10 @@ mapping:
   name:
     type: str
     required: True
-  newEventFilters:
+  description:
+    type: str
+    required: false
+    newEventFilters:
     type: seq
     sequence:
     - include: newEventFilters_schema

@@ -6,7 +6,7 @@ from typing import Optional
 
 
 class AuthorImageValidator(ImageValidator):
-    author_image_suffix: str = 'author_image.png'
+    author_image_suffix: str = 'Author_image.png'
 
     def __init__(self, pack_path: str, support_level: str, ignored_errors=None, print_as_warnings=False,
                  suppress_print=False, json_file_path=None, maximum_image_size: Optional[int] = None):

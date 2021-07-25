@@ -524,7 +524,6 @@ ID_IN_ROOT = [  # entities in which 'id' key is in the root
     'incident_type',
     'layoutscontainer',
     'mapper',
-    # TODO Correct?
     'pre_process_rule',
 ]
 

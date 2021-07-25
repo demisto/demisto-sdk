@@ -7,6 +7,7 @@
 * Fixed an issue where **openapi-codegen** entered into an infinite loop on circular references in the swagger file.
 * The **format** command will now set `fromVersion: 6.2.0` for widgets with 'metrics' data type.
 * Updated the **find-dependencies** command to support generic modules, definitions, fields and types.
+* Fixed an issue where **openapi-codegen** tried to extract reference example outputs, leading to an exception.
 * Added a tool that gives the ability to temporarily suppress console output.
 
 # 1.4.4

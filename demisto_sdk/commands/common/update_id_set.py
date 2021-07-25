@@ -594,6 +594,7 @@ def get_layout_data(path):
     pack = get_pack_name(path)
     incident_indicator_types_dependency = {id_}
     incident_indicator_fields_dependency = get_values_for_keys_recursively(json_data, ['fieldId'])
+    definition_id = json_data.get('definitionId')
 
     data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
     if type_:
@@ -606,7 +607,8 @@ def get_layout_data(path):
     data['incident_and_indicator_types'] = list(incident_indicator_types_dependency)
     if incident_indicator_fields_dependency['fieldId']:
         data['incident_and_indicator_fields'] = incident_indicator_fields_dependency['fieldId']
-
+    if definition_id:
+        data['definitionId'] = definition_id
     return {id_: data}
 
 
@@ -744,6 +746,7 @@ def get_classifier_data(path):
     incidents_types = set()
     transformers: List[str] = []
     filters: List[str] = []
+    definition_id = json_data.get('definitionId')
 
     default_incident_type = json_data.get('defaultIncidentType')
     if default_incident_type and default_incident_type != '':
@@ -765,6 +768,9 @@ def get_classifier_data(path):
         data['filters'] = filters
     if transformers:
         data['transformers'] = transformers
+    if definition_id:
+        data['definitionId'] = definition_id
+
     return {id_: data}
 
 
@@ -819,6 +825,7 @@ def get_mapper_data(path):
     incidents_fields: set = set()
     all_transformers = set()
     all_filters = set()
+    definition_id = json_data.get('definitionId')
 
     default_incident_type = json_data.get('defaultIncidentType')
     if default_incident_type and default_incident_type != '':
@@ -863,6 +870,9 @@ def get_mapper_data(path):
         data['filters'] = list(all_filters)
     if all_transformers:
         data['transformers'] = list(all_transformers)
+    if definition_id:
+        data['definitionId'] = definition_id
+
 
     return {id_: data}
 

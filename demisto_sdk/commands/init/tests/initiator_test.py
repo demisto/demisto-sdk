@@ -480,7 +480,7 @@ def test_integration_init_with_ignore_secrets(initiator, tmpdir, monkeypatch, mo
     """
     Tests `integration_init` function with a given script template name.
     Given
-        - An Integration template - HelloWorld.
+        - Two Integration templates - HelloWorld, FeedHelloWorld.
     When
         - Running the init command with secrets ignore.
     Then

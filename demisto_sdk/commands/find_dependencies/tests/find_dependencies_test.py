@@ -58,6 +58,18 @@ def create_a_pack_entity(pack, entity_type: FileType = None, entity_id: str = No
     elif entity_type == FileType.REPUTATION:
         content = {'id': entity_id, 'details': entity_name, 'regex': ''}
         pack.create_indicator_type(entity_id, content)
+    elif entity_type == FileType.GENERIC_DEFINITION:
+        content = {'id': entity_id, 'details': entity_name, "auditable": True}
+        pack.create_generic_definition(entity_id, content)
+    elif entity_type == FileType.GENERIC_TYPE:
+        content = {'id': entity_id, 'details': entity_name, "color": "#8052f4", "definitionId": "assets"}
+        pack.create_generic_type(entity_id, content)
+    elif entity_type == FileType.GENERIC_MODULE:
+        content = {'id': entity_id, 'details': entity_name, "views": [], "definitionId": "assets"}
+        pack.create_generic_module(entity_id, content)
+    elif entity_type == FileType.GENERIC_FIELD:
+        content = {'id': entity_id, 'details': entity_name, "definitionId": "assets"}
+        pack.create_generic_field(entity_id, content)
 
 
 @pytest.fixture(scope="module")
@@ -284,6 +296,22 @@ def create_content_repo():
     create_a_pack_entity(impossible_traveler, FileType.INCIDENT_FIELD, 'travelmaplink' 'Travel Map Link')
     create_a_pack_entity(impossible_traveler, FileType.INCIDENT_TYPE, 'impossibletraveler' 'Impossible Traveler')
 
+    # Create a pack called 'pack_with_definition' with 1 generic definition.
+    definition_pack = repo.create_pack('pack_with_definition')
+    create_a_pack_entity(definition_pack, FileType.GENERIC_DEFINITION, 'assets', 'assets')
+
+    # Create a pack called 'pack_with_module' with 1 generic module.
+    pack_with_module = repo.create_pack('pack_with_module')
+    create_a_pack_entity(pack_with_module, FileType.GENERIC_MODULE, 'module_id', 'module_id')
+
+    # Create a pack called 'pack_with_generic_field' with 1 generic field.
+    pack_with_generic_field = repo.create_pack('pack_with_generic_field')
+    create_a_pack_entity(pack_with_generic_field, FileType.GENERIC_FIELD, 'generic_field_id', 'generic_field_id')
+
+    # Create a pack called 'pack_with_generic_type' with 1 generic type.
+    pack_with_generic_type = repo.create_pack('pack_with_generic_type')
+    create_a_pack_entity(pack_with_generic_type, FileType.GENERIC_TYPE, 'generic_type_id', 'generic_type_id')
+
     incident_layout = {
         "detailsV2": {
             "tabs": [
@@ -347,6 +375,40 @@ def create_content_repo():
         "version": -1,
         "fromVersion": "6.0.0",
     }
+    generic_layout = {
+        "detailsV2": {
+            "tabs": [
+                {
+                    "id": "caseinfoid",
+                    "name": "Incident Info",
+                    "sections": [
+                        {
+                            "items": [
+                                {
+                                    "endCol": 2,
+                                    "fieldId": "incident_example",
+                                    "height": 22,
+                                    "id": "example",
+                                    "index": 0,
+                                    "sectionItemType": "field",
+                                    "startCol": 0
+                                }
+                            ]
+                        }
+                    ],
+                    "type": "custom"
+                },
+            ]
+        },
+        "group": "generic",
+        "id": "generic_layout_id",
+        "name": "generic_layout_id",
+        "system": "false",
+        "version": -1,
+        "fromVersion": "6.0.0",
+        "description": "",
+        "definitionId": "assets"
+    }
 
     pack1 = repo.create_pack('pack1')
     create_a_pack_entity(pack1, FileType.INCIDENT_FIELD, 'example', 'example')
@@ -356,6 +418,8 @@ def create_content_repo():
     pack3.create_layoutcontainer('example', incident_layout)
     pack4 = repo.create_pack('pack4')
     pack4.create_layoutcontainer('example', indicator_layout)
+    pack5 = repo.create_pack('pack5')
+    pack5.create_layout(pack5, generic_layout)
 
     with ChangeCWD(repo.path):
         ids = cis.IDSetCreator()
@@ -1314,7 +1378,6 @@ class TestDependsOnLayout:
                                                                       id_set=id_set,
                                                                       verbose=False,
                                                                       )
-
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
     def test_collect_indicator_layouts_dependencies(self, id_set):
@@ -1395,6 +1458,44 @@ class TestDependsOnLayout:
                                                                       exclude_ignored_dependencies=False,
                                                                       )
 
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
+    def test_collect_generic_layouts_dependencies(self, id_set):
+        """
+        Given
+            - A layout entry in the id_set that is related to generic definition
+
+        When
+            - Building dependency graph for pack.
+
+        Then
+            - Extracting the packs that the layout depends on.
+        """
+        expected_result = {("pack_with_generic_field", True)}
+
+        test_input = [
+            {
+                "Dummy Layout": {
+                    "typeID": "dummy_layout",
+                    "name": "Dummy Layout",
+                    "pack": "dummy_pack",
+                    "kind": "indicatorsDetails",
+                    "path": "dummy_path",
+                    "definitionId": "assets",
+                    "incident_and_indicator_types": [
+                        "generic_type_id"
+                    ],
+                    "incident_and_indicator_fields": [
+                        "generic_field_id"
+                    ]
+                }
+            }
+        ]
+
+        found_result = PackDependencies._collect_layouts_dependencies(pack_layouts=test_input,
+                                                                      id_set=id_set,
+                                                                      verbose=False,
+                                                                      )
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
 
@@ -1659,6 +1760,36 @@ class TestDependsOnClassifiers:
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
+    def test_collect_generic_classifier_dependencies(self, id_set):
+        """
+        Given
+            - A classifier entry in the id_set that has generic definition
+        When
+            - Building dependency graph for pack.
+        Then
+            - Extracting the packs that the classifier depends on as optional dependencies.
+        """
+        expected_result = {("pack_with_generic_type", True)}
+
+        test_input = [
+            {
+                "Dummy Classifier": {
+                    "name": "Dummy Classifier",
+                    "fromversion": "5.0.0",
+                    "definitionId": "assets",
+                    "pack": "dummy_pack",
+                    "incident_types": ["generic_type_id"],
+                }
+            }
+        ]
+
+        found_result = PackDependencies._collect_classifiers_dependencies(
+            pack_classifiers=test_input,
+            id_set=id_set,
+            verbose=False,
+        )
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
 
 class TestDependsOnMappers:
     def test_collect_mapper_dependencies(self, id_set):
@@ -1696,7 +1827,7 @@ class TestDependsOnMappers:
             id_set=id_set,
             verbose=False,
         )
-
+        print(found_result)
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
     def test_collect_mapper_dependencies__commontypes_pack(self, id_set):
@@ -2039,3 +2170,113 @@ class TestDependencyGraph:
         assert root_of_graph == pack_name
         assert len(pack_dependencies) > 0
         assert 'NonSupported' not in pack_dependencies
+
+
+class TestDependsOnGenericField:
+    def test_collect_generic_field_dependencies(self, id_set):
+        """
+        Given
+            - a generic field entry in the id_set.
+
+        When
+            - Building dependency graph for pack.
+
+        Then
+            - Extracting the packs that the generic field depends on.
+        """
+        expected_result = {
+            ("Volatility", True), ("pack_with_definition", True), ("pack_with_generic_type", True)
+        }
+
+        test_input = [
+            {
+                "Dummy Generic Field": {
+                    "name": "Dummy Generic Field",
+                    "fromversion": "5.0.0",
+                    "pack": "dummy_pack",
+                    "definitionId": "assets",
+                    "generic_types": ["generic_type_id"],
+                    "scripts": ["AnalyzeMemImage"],
+                }
+            }
+        ]
+
+        found_result = PackDependencies._collect_generic_fields_dependencies(
+            pack_generic_fields=test_input,
+            id_set=id_set,
+            verbose=False,
+        )
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
+
+class TestDependsOnGenericType:
+    def test_collect_generic_type_dependencies(self, id_set):
+        """
+        Given
+            - A generic type entry in the id_set.
+        When
+            - Building dependency graph for pack.
+        Then
+            - Extracting the packs that the generic type depends on.
+        """
+        expected_result = {("pack_with_definition", True), ("Volatility", True), ("pack5", True)}
+
+        test_input = [
+            {
+                "Dummy Generic Type": {
+                    "name": "Dummy Generic Type",
+                    "fromversion": "5.0.0",
+                    "pack": "dummy_pack",
+                    "scripts": "AnalyzeMemImage",
+                    "definitionId": "assets",
+                    "layout": "generic_layout_id"
+                }
+            }
+        ]
+
+        found_result = PackDependencies._collect_generic_types_dependencies(
+            pack_generic_types=test_input,
+            id_set=id_set,
+            verbose=False,
+
+        )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
+
+class TestDependsOnGenericModules:
+    def test_collect_generic_module_dependencies(self, id_set):
+        """
+        Given
+            - A generic module entry in the id_set.
+        When
+            - Building dependency graph for pack.
+        Then
+            - Extracting the packs that the generic module depends on.
+        """
+        expected_result = {("pack_with_definition", True), ("pack_4", True)}
+
+        test_input = [
+            {
+                "dummy generic module": {
+                    "name": "dummy generic module",
+                    "file_path": "path.json",
+                    "fromversion": "6.5.0",
+                    "pack": "dummy pack",
+                    "definitionIds": ["assets"],
+                    "views": {
+                        "Vulnerability Management": {
+                            "title": "Risk Base Vulnerability Management",
+                            "dashboards": ["pack_4 - dashboard"]
+                        }
+                    }
+                }
+            }
+        ]
+
+        found_result = PackDependencies._collect_generic_modules_dependencies(
+            pack_generic_modules=test_input,
+            id_set=id_set,
+            verbose=False,
+        )
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)

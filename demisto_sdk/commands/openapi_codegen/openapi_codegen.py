@@ -623,14 +623,16 @@ class OpenAPIIntegration:
                                          'description': extracted_object.get('description', '')})
                 elif extracted_object.get('type') and type(extracted_object.get('type')) == dict:
                     for k, v in extracted_object.items():
-                        current_context.append(k)
-                        prop_arr = extract(v, prop_arr, current_context)
-                        current_context.pop()
+                        if k not in current_context:
+                            current_context.append(k)
+                            prop_arr = extract(v, prop_arr, current_context)
+                            current_context.pop()
                 else:
                     for k, v in extracted_object.items():
-                        current_context.append(k)
-                        prop_arr = extract(v, prop_arr, current_context)
-                        current_context.pop()
+                        if k not in current_context:
+                            current_context.append(k)
+                            prop_arr = extract(v, prop_arr, current_context)
+                            current_context.pop()
 
             return prop_arr
 
@@ -947,7 +949,6 @@ class OpenAPIIntegration:
                 for item in extracted_object:
                     extract(item, values, key_to_extract)
             return values
-
         results = extract(obj, arr, key)
         return results
 

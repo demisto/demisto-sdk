@@ -36,7 +36,6 @@ class PreProcessRulesBaseFormat(BaseUpdateJSON):
         try:
             click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
             self.set_version_to_default()
-            self.set_version_to_default()
             self.remove_unnecessary_keys()
 
             self.pre_process_rules__set_output_path()

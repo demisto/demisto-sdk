@@ -289,7 +289,6 @@ class ContentItemsHandler:
     def add_pre_process_rules_as_content_item(self, content_object: ContentObject):
         self.content_items[ContentItems.PRE_PROCESS_RULES].append({
             'name': content_object.get('name') or content_object.get('id', ''),
-            'description': content_object.get('description', '')
         })
 
     def add_classifier_as_content_item(self, content_object: ContentObject):

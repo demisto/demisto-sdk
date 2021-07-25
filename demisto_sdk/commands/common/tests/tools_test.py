@@ -1130,11 +1130,11 @@ def test_get_release_note_entries(version, expected_result):
 def test_suppress_stdout(capsys):
     """
         Given:
-            - None
+            - Messages to print.
 
         When:
-            - Printing something inside the suppress_stdout context manager.
-            - Printing something after the suppress_stdout context manager is used.
+            - Printing a message inside the suppress_stdout context manager.
+            - Printing message after the suppress_stdout context manager is used.
         Then:
             - Ensure that messages are not printed to console while suppress_stdout is enabled.
             - Ensure that messages are printed to console when suppress_stdout is disabled.
@@ -1154,7 +1154,7 @@ def test_suppress_stdout(capsys):
 def test_suppress_stdout_exception(capsys):
     """
         Given:
-            - None
+            - Messages to print.
 
         When:
             - Performing an operation which throws an exception inside the suppress_stdout context manager.

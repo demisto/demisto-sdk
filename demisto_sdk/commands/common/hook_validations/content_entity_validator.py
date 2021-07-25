@@ -74,6 +74,8 @@ class ContentEntityValidator(BaseValidator):
             (bool) False if name corresponding to file path contains contributor type name, true otherwise.
         """
         name = get_file_displayed_name(self.file_path)
+        if not name:
+            return True
         lowercase_name = name.lower()
         if any(contributor_name in lowercase_name for contributor_name in self.CONTRIBUTOR_TYPE_LIST):
             error_message, error_code = Errors.entity_name_contains_contribution_type_name(name,

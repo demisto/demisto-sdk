@@ -582,7 +582,7 @@ class PackUniqueFilesValidator(BaseValidator):
 
     def validate_author_image(self):
         pack_meta_file_content = self._read_metadata_content()
-        support_level: str = pack_meta_file_content[PACK_METADATA_SUPPORT]
+        support_level: str = pack_meta_file_content.get(PACK_METADATA_SUPPORT, '')
         author_image_validator: AuthorImageValidator = AuthorImageValidator(self.pack_path, support_level,
                                                                             ignored_errors=self.ignored_errors,
                                                                             print_as_warnings=self.print_as_warnings,

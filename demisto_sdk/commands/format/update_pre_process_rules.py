@@ -3,7 +3,7 @@ from typing import Tuple
 
 import click
 import traceback
-from demisto_sdk.commands.common.hook_validations.pre_process_rules import PreProcessRulesValidator
+from demisto_sdk.commands.common.hook_validations.pre_process_rules import PreProcessRuleValidator
 from demisto_sdk.commands.format.format_constants import (SKIP_RETURN_CODE, SUCCESS_RETURN_CODE)
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
 
@@ -30,7 +30,7 @@ class PreProcessRulesBaseFormat(BaseUpdateJSON):
         if format_res:
             return format_res, SKIP_RETURN_CODE
         else:
-            return format_res, self.initiate_file_validator(PreProcessRulesValidator)
+            return format_res, self.initiate_file_validator(PreProcessRuleValidator)
 
     def run_format(self) -> int:
         try:

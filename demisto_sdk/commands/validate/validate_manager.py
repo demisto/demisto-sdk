@@ -45,8 +45,8 @@ from demisto_sdk.commands.common.hook_validations.integration import \
     IntegrationValidator
 from demisto_sdk.commands.common.hook_validations.layout import (
     LayoutsContainerValidator, LayoutValidator)
-from demisto_sdk.commands.common.hook_validations.pre_process_rules import (
-    PreProcessRulesValidator)
+from demisto_sdk.commands.common.hook_validations.pre_process_rule import (
+    PreProcessRuleValidator)
 from demisto_sdk.commands.common.hook_validations.mapper import MapperValidator
 from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
     PackUniqueFilesValidator
@@ -522,7 +522,7 @@ class ValidateManager:
             return self.validate_layoutscontainer(structure_validator, pack_error_ignore_list)
 
         elif file_type == FileType.PRE_PROCESS_RULES:
-            return self.validate_pre_process_rules(structure_validator, pack_error_ignore_list)
+            return self.validate_pre_process_rule(structure_validator, pack_error_ignore_list)
 
         elif file_type == FileType.DASHBOARD:
             return self.validate_dashboard(structure_validator, pack_error_ignore_list)
@@ -835,8 +835,8 @@ class ValidateManager:
         return layout_validator.is_valid_layout(validate_rn=False, id_set_file=self.id_set_file,
                                                 is_circle=self.is_circle)
 
-    def validate_pre_process_rules(self, structure_validator, pack_error_ignore_list):
-        pre_process_rules_validator = PreProcessRulesValidator(structure_validator, ignored_errors=pack_error_ignore_list,
+    def validate_pre_process_rule(self, structure_validator, pack_error_ignore_list):
+        pre_process_rules_validator = PreProcessRuleValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                            print_as_warnings=self.print_ignored_errors,
                                            json_file_path=self.json_file_path)
         return pre_process_rules_validator.is_valid_pre_process_rules(validate_rn=False, id_set_file=self.id_set_file,

@@ -13,7 +13,7 @@ from demisto_sdk.commands.common.update_id_set import BUILT_IN_FIELDS
 FROM_VERSION_PRE_PROCESS_RULES = '6.5.0'
 
 
-class PreProcessRulesValidator(ContentEntityValidator):
+class PreProcessRuleValidator(ContentEntityValidator):
     def __init__(self, structure_validator=True, ignored_errors=False, print_as_warnings=False,
                  json_file_path=None, **kwargs):
         super().__init__(structure_validator, ignored_errors, print_as_warnings,

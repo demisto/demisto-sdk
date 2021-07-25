@@ -1959,9 +1959,9 @@ def suppress_stdout():
             print('This message will be printed')
     """
     with open(os.devnull, "w") as devnull:
-        old_stdout = sys.stdout
-        sys.stdout = devnull
         try:
+            old_stdout = sys.stdout
+            sys.stdout = devnull
             yield
         finally:
             sys.stdout = old_stdout

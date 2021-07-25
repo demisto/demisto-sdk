@@ -8,7 +8,8 @@ from demisto_sdk.commands.common.constants import (
     DELETED_JSON_FIELDS_BY_DEMISTO, DELETED_YML_FIELDS_BY_DEMISTO,
     INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
     INDICATOR_TYPES_DIR, INTEGRATIONS_DIR, LAYOUTS_DIR, PLAYBOOKS_DIR,
-    REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR)
+    REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR, GENERIC_TYPES_DIR, GENERIC_FIELDS_DIR,
+    GENERIC_MODULES_DIR, GENERIC_DEFINITIONS_DIR)
 from demisto_sdk.commands.common.tools import (get_child_files, get_json,
                                                get_yaml)
 from demisto_sdk.commands.download.downloader import Downloader
@@ -123,7 +124,8 @@ class Environment:
             LAYOUTS_DIR: [self.LAYOUT_PACK_OBJECT],
             TEST_PLAYBOOKS_DIR: [], REPORTS_DIR: [], DASHBOARDS_DIR: [], WIDGETS_DIR: [], INCIDENT_FIELDS_DIR: [],
             INDICATOR_FIELDS_DIR: [], INCIDENT_TYPES_DIR: [], CLASSIFIERS_DIR: [], CONNECTIONS_DIR: [],
-            INDICATOR_TYPES_DIR: []
+            INDICATOR_TYPES_DIR: [], GENERIC_TYPES_DIR: [], GENERIC_FIELDS_DIR: [], GENERIC_MODULES_DIR: [],
+            GENERIC_DEFINITIONS_DIR: []
         }
 
         self.INTEGRATION_CUSTOM_CONTENT_OBJECT = {'id': 'Test Integration', 'name': 'Test Integration',

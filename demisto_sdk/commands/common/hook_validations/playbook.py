@@ -1,6 +1,8 @@
+import re
 from typing import Dict
 
 import click
+from demisto_sdk.commands.common.constants import DEPRECATED_REGEXES
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
@@ -10,12 +12,11 @@ from demisto_sdk.commands.common.tools import LOG_COLORS, is_string_uuid
 class PlaybookValidator(ContentEntityValidator):
     """PlaybookValidator is designed to validate the correctness of the file structure we enter to content repo."""
 
-    def is_valid_playbook(self, is_new_playbook: bool = True, validate_rn: bool = True, id_set_file=None) -> bool:
+    def is_valid_playbook(self, validate_rn: bool = True, id_set_file=None) -> bool:
         """Check whether the playbook is valid or not.
 
          Args:
             this will also determine whether a new id_set can be created by validate.
-            is_new_playbook (bool): whether the playbook is new or modified
             validate_rn (bool):  whether we need to validate release notes or not
             id_set_file (dict): id_set.json file if exists, None otherwise
 
@@ -25,39 +26,24 @@ class PlaybookValidator(ContentEntityValidator):
         if 'TestPlaybooks' in self.file_path:
             click.echo(f'Skipping validation for Test Playbook {self.file_path}', color=LOG_COLORS.YELLOW)
             return True
-        if is_new_playbook:
-            new_playbook_checks = [
-                super().is_valid_file(validate_rn),
-                self.is_valid_version(),
-                self.is_id_equals_name(),
-                self.is_no_rolename(),
-                self.is_root_connected_to_all_tasks(),
-                self.is_using_instance(),
-                self.is_condition_branches_handled(),
-                self.is_delete_context_all_in_playbook(),
-                self.are_tests_configured(),
-                self.is_valid_as_deprecated(),
-                self.is_script_id_valid(id_set_file),
-                self._is_id_uuid(),
-                self._is_taskid_equals_id(),
-            ]
-            answers = all(new_playbook_checks)
-        else:
-            # for new playbooks - run all playbook checks.
-            # for modified playbooks - id may not be equal to name.
-            modified_playbook_checks = [
-                self.is_valid_version(),
-                self.is_no_rolename(),
-                self.is_root_connected_to_all_tasks(),
-                self.is_using_instance(),
-                self.is_condition_branches_handled(),
-                self.is_delete_context_all_in_playbook(),
-                self.are_tests_configured(),
-                self.is_script_id_valid(id_set_file),
-                self._is_id_uuid(),
-                self._is_taskid_equals_id(),
-            ]
-            answers = all(modified_playbook_checks)
+        playbook_checks = [
+            super().is_valid_file(validate_rn),
+            self.is_valid_version(),
+            self.is_id_equals_name(),
+            self.is_no_rolename(),
+            self.is_root_connected_to_all_tasks(),
+            self.is_using_instance(),
+            self.is_condition_branches_handled(),
+            self.is_delete_context_all_in_playbook(),
+            self.are_tests_configured(),
+            self.is_script_id_valid(id_set_file),
+            self._is_id_uuid(),
+            self._is_taskid_equals_id(),
+            self.verify_condition_tasks_has_else_path(),
+            self.name_not_contain_the_type(),
+            self.is_valid_with_indicators_input(),
+        ]
+        answers = all(playbook_checks)
 
         return answers
 
@@ -257,10 +243,14 @@ class PlaybookValidator(ContentEntityValidator):
 
     def is_valid_as_deprecated(self) -> bool:
         is_valid = True
-        is_hidden = self.current_file.get('hidden', False)
+        is_deprecated = self.current_file.get('deprecated', False)
         description = self.current_file.get('description', '')
-        if is_hidden:
-            if not description.startswith('Deprecated.'):
+        deprecated_v2_regex = DEPRECATED_REGEXES[0]
+        deprecated_no_replace_regex = DEPRECATED_REGEXES[1]
+        if is_deprecated:
+            if re.search(deprecated_v2_regex, description) or re.search(deprecated_no_replace_regex, description):
+                pass
+            else:
                 error_message, error_code = Errors.invalid_deprecated_playbook()
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     is_valid = False
@@ -361,6 +351,31 @@ class PlaybookValidator(ContentEntityValidator):
             [pb_script_name == id_set_dict[key].get('name') for id_set_dict in id_set_scripts
              for key in id_set_dict])
 
+    def _is_else_path_in_condition_task(self, task):
+        next_tasks: Dict = task.get('nexttasks', {})
+        return '#default#' in next_tasks
+
+    def verify_condition_tasks_has_else_path(self):  # type: () -> bool
+        """Check whether the playbook conditional tasks has else path
+
+        Return:
+            bool. if the Playbook has else path to all condition task
+        """
+        all_conditions_has_else_path: bool = True
+        tasks: Dict = self.current_file.get('tasks', {})
+        error_tasks_ids = []
+        for task in tasks.values():
+            if task.get('type') == 'condition':
+                if not self._is_else_path_in_condition_task(task):
+                    error_tasks_ids.append(task.get('id'))
+
+        if error_tasks_ids:
+            error_message, error_code = Errors.playbook_condition_has_no_else_path(error_tasks_ids)
+            if self.handle_error(error_message, error_code, file_path=self.file_path, warning=True):
+                all_conditions_has_else_path = False
+
+        return all_conditions_has_else_path
+
     def _is_id_uuid(self):
         """
         Check that the taskid field and the id field under the task field are both on from uuid format
@@ -401,3 +416,61 @@ class PlaybookValidator(ContentEntityValidator):
                 # invalid task in order to raise error for all the invalid tasks at the file
 
         return is_valid
+
+    def name_not_contain_the_type(self):
+        """
+        Check that the entity name does not contain the entity type
+        Returns: True if the name is valid
+        """
+
+        name = self.current_file.get('name', '')
+        if 'playbook' in name.lower():
+            error_message, error_code = Errors.field_contain_forbidden_word(field_names=['name'], word='playbook')
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                return False
+        return True
+
+    def is_valid_with_indicators_input(self):
+        input_data = self.current_file.get('inputs', [])
+        for item in input_data:
+            entity = item['playbookInputQuery'].get('queryEntity', '') if item.get('playbookInputQuery', None) else None
+            if entity == 'indicators':
+                answer = [
+                    self.is_playbook_quiet_mode(),
+                    self.is_tasks_quiet_mode(),
+                    self.is_stopping_on_error(),
+                ]
+                return all(answer)
+        return True
+
+    def is_playbook_quiet_mode(self):
+        if not self.current_file.get('quiet', False):
+            error_message, error_code = Errors.playbook_not_quiet_mode()
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+        return True
+
+    def is_tasks_quiet_mode(self):
+        not_quiet = []
+        tasks: dict = self.current_file.get('tasks', {})
+        for task_key, task in tasks.items():
+            if task.get('quietmode', 0) == 2:
+                not_quiet.append(task_key)
+        if not_quiet:
+            error_message, error_code = Errors.playbook_tasks_not_quiet_mode(not_quiet)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+        return True
+
+    def is_stopping_on_error(self):
+        continue_tasks = []
+        tasks: dict = self.current_file.get('tasks', {})
+        for task_key, task in tasks.items():
+            if task.get('continueonerror', False):
+                continue_tasks.append(task_key)
+        if continue_tasks:
+            error_message, error_code = Errors.playbook_tasks_continue_on_error(continue_tasks)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+        return True

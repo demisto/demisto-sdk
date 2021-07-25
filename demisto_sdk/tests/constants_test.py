@@ -85,6 +85,7 @@ INTEGRATION_TARGET = f"{PACK_TARGET}/Integrations/integration-test.yml"
 INCIDENT_FIELD_TARGET = f"{PACK_TARGET}/IncidentFields/incidentfield-test.json"
 INCIDENT_TYPE_TARGET = f"{PACK_TARGET}/IncidentTypes/incidenttype-valid.json"
 PLAYBOOK_PACK_TARGET = "Packs/Int/Playbooks/playbook-test.yml"
+CONTENT_REPO_EXAMPLE_ROOT = f'{GIT_ROOT}/demisto_sdk/tests/test_files/content_repo_example/'
 INVALID_TEST_PLAYBOOK_UNHANDLED_CONDITION = f'{GIT_ROOT}/demisto_sdk/tests/test_files/content_repo_example/Packs/' \
                                             f'FeedAzure/TestPlaybooks/playbook-FeedAzure_test_copy_no_prefix.yml'
 INVALID_PLAYBOOK_UNHANDLED_CONDITION = f'{GIT_ROOT}/demisto_sdk/tests/test_files/content_repo_example/Packs/' \
@@ -213,6 +214,11 @@ XSOAR_LINTER_PY3_INVALID_WARNINGS_PARTNER = f"{GIT_ROOT}/demisto_sdk/tests/test_
 DESTINATION_FORMAT_INTEGRATION = "Integrations/integration.yml"
 INTEGRATION_PATH = "Integrations"
 CONNECTION_SCHEMA_PATH = f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/canvas-context-connections.yml"
+VALID_GENERIC_TYPE_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/generic-type-valid.json"
+VALID_GENERIC_FIELD_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/generic-field-valid.json"
+VALID_GENERIC_MODULE_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/generic-module-valid.json"
+VALID_GENERIC_DEFINITION_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/generic-definitions-valid.json"
+
 DIR_LIST = [
     f'{PACK_TARGET}/{constants.INTEGRATIONS_DIR}',
     f'{PACK_TARGET}/{constants.SCRIPTS_DIR}',
@@ -232,12 +238,15 @@ DIR_LIST = [
 
 
 class TestGithubContentConfig:
-    @pytest.mark.parametrize('url',
-                             [
-                                 'ssh://git@github.com/demisto/content.git',
-                                 'git@github.com:demisto/content.git',  # clone using github ssh example
-                                 'https://github.com/demisto/content.git',  # clone using github https example
-                             ])
+    @pytest.mark.parametrize(
+        'url',
+        [
+            'ssh://git@github.com/demisto/content-dist.git',
+            'git@github.com:demisto/content-dist.git',  # clone using github ssh example
+            'https://github.com/demisto/content-dist.git',  # clone using github https example
+            'https://github.com/demisto/content-dist'
+        ]
+    )
     def test_get_repo_name(self, url: str):
         """
         Given:
@@ -248,7 +257,7 @@ class TestGithubContentConfig:
             Validate the correct repo got back (demisto/content)
         """
         github_config = constants.GithubContentConfig()
-        assert github_config._get_repository_name([url]) == 'demisto/content'
+        assert github_config._get_repository_name([url]) == 'demisto/content-dist'
 
     def test_get_repo_name_empty_case(self):
         """
@@ -257,7 +266,7 @@ class TestGithubContentConfig:
         When:
             Searching for repository name
         Then:
-            Validate the correct repo got back
+            Validate the correct repo got back - demisto/content
         """
         github_config = constants.GithubContentConfig()
-        assert github_config._get_repository_name([]) == ''
+        assert github_config._get_repository_name([]) == github_config.OFFICIAL_CONTENT_REPO_NAME

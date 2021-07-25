@@ -1,21 +1,25 @@
 import os
 import re
 from copy import deepcopy
-from typing import Set, Union
+from distutils.version import LooseVersion
+from typing import Dict, Optional, Set, Union
 
 import click
 import yaml
-from demisto_sdk.commands.common.constants import FileType
+from demisto_sdk.commands.common.constants import (INTEGRATION, PLAYBOOK,
+                                                   FileType)
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                get_dict_from_file,
+                                               get_pack_metadata,
                                                get_remote_file,
                                                is_file_from_content_repo,
                                                print_color)
 from demisto_sdk.commands.format.format_constants import (
-    DEFAULT_VERSION, ERROR_RETURN_CODE, NEW_FILE_DEFAULT_5_FROMVERSION,
-    OLD_FILE_DEFAULT_1_FROMVERSION, SKIP_RETURN_CODE, SUCCESS_RETURN_CODE)
+    DEFAULT_VERSION, ERROR_RETURN_CODE, NEW_FILE_DEFAULT_5_5_0_FROMVERSION,
+    OLD_FILE_DEFAULT_1_FROMVERSION, SKIP_RETURN_CODE, SUCCESS_RETURN_CODE,
+    VERSION_6_0_0)
 from ruamel.yaml import YAML
 
 ryaml = YAML()
@@ -46,7 +50,8 @@ class BaseUpdate:
                  from_version: str = '',
                  no_validate: bool = False,
                  verbose: bool = False,
-                 assume_yes: bool = False):
+                 assume_yes: bool = False,
+                 deprecate: bool = False):
         self.source_file = input
         self.output_file = self.set_output_file_path(output)
         self.verbose = verbose
@@ -57,6 +62,7 @@ class BaseUpdate:
         self.from_version = from_version
         self.no_validate = no_validate
         self.assume_yes = assume_yes
+        self.updated_ids: Dict = {}
 
         if not self.source_file:
             raise Exception('Please provide <source path>, <optional - destination path>.')
@@ -204,29 +210,51 @@ class BaseUpdate:
                 return reg
         return None
 
-    def set_fromVersion(self, from_version=None):
+    def set_fromVersion(self, from_version=None, file_type: Optional[str] = None):
         """Sets fromversion key in file:
         Args:
             from_version: The specific from_version value.
+            file_type: what is the file type: for now only integration type passed
         """
+        metadata = get_pack_metadata(self.source_file)
+        # if it is new contributed pack = setting version to 6.0.0
+        should_set_from_version = ((metadata.get('currentVersion', '') == '1.0.0') and (metadata.get('support', '') != 'xsoar'))
+
         # If there is no existing file in content repo
         if not self.old_file:
             if self.verbose:
                 click.echo('Setting fromVersion field')
             # If current file does not have fromversion key
             if self.from_version_key not in self.data:
-
                 # If user entered specific from version key to be set
                 if from_version:
                     self.data[self.from_version_key] = from_version
-
-                # Otherwise add fromversion key to current file and set to default 5.0.0
+                # if it is new contributed pack = setting version to 6.0.0
+                elif should_set_from_version:
+                    self.data[self.from_version_key] = VERSION_6_0_0
+                # Otherwise add fromversion key to current file and set to default 5.5.0
                 else:
-                    self.data[self.from_version_key] = NEW_FILE_DEFAULT_5_FROMVERSION
-
+                    self.data[self.from_version_key] = NEW_FILE_DEFAULT_5_5_0_FROMVERSION
             # If user wants to modify fromversion key and the key already existed
             elif from_version:
                 self.data[self.from_version_key] = from_version
+            # if it is new contributed pack, this is integration, and its version is 5.5.0 do not change it
+            # if it is new contributed pack = setting version to 6.0.0
+            elif should_set_from_version:
+                if self.data.get(self.from_version_key) != '5.5.0' or file_type != INTEGRATION:
+                    self.data[self.from_version_key] = VERSION_6_0_0
+            # If it is new pack, and it has from version lower than 5.5.0, ask to set it to 5.5.0
+            # Playbook has its own validation in update_fromversion_by_user() function in update_playbook.py
+            elif LooseVersion(self.data.get(self.from_version_key, '0.0.0')) < \
+                    LooseVersion(NEW_FILE_DEFAULT_5_5_0_FROMVERSION) and file_type != PLAYBOOK:
+                if self.assume_yes:
+                    self.data[self.from_version_key] = NEW_FILE_DEFAULT_5_5_0_FROMVERSION
+                else:
+                    set_from_version = str(
+                        input(f"\nYour current fromversion is: '{self.data.get(self.from_version_key)}'. Do you want "
+                              f"to set it to '5.5.0'? Y/N ")).lower()
+                    if set_from_version in ['y', 'yes']:
+                        self.data[self.from_version_key] = NEW_FILE_DEFAULT_5_5_0_FROMVERSION
 
         # If there is an existing file in content repo
         else:
@@ -288,7 +316,7 @@ class BaseUpdate:
         if self.data.get('id'):
             self.data['id'] = self.data.get('id', '').replace('_copy', '').replace('_dev', '')
 
-    def initiate_file_validator(self, validator_type):
+    def initiate_file_validator(self, validator_type) -> int:
         """ Run schema validate and file validate of file
         Returns:
             int 0 in case of success

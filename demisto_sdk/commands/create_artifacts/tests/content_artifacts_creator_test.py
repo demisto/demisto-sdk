@@ -173,7 +173,8 @@ def test_dump_pack(mock_git):
 
 
 def test_create_content_artifacts(mock_git):
-    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (ArtifactsManager)
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import \
+        ArtifactsManager
     with temp_dir() as temp:
         config = ArtifactsManager(artifacts_path=temp,
                                   content_version='6.0.0',
@@ -189,7 +190,8 @@ def test_create_content_artifacts(mock_git):
 
 def test_create_private_content_artifacts(private_repo):
     from demisto_sdk.commands.common.content import Content
-    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (ArtifactsManager)
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import \
+        ArtifactsManager
 
     with temp_dir() as temp:
         config = ArtifactsManager(artifacts_path=temp,
@@ -199,6 +201,7 @@ def test_create_private_content_artifacts(private_repo):
                                   cpus=1,
                                   packs=False)
         config.content = Content(private_repo)
+        config.packs = config.content.packs
         exit_code = config.create_content_artifacts()
 
         assert same_folders(temp, ARTIFACTS_EXPECTED_RESULTS / 'private')
@@ -207,7 +210,8 @@ def test_create_private_content_artifacts(private_repo):
 
 @pytest.mark.parametrize(argnames="suffix", argvalues=["yml", "json"])
 def test_malformed_file_failure(suffix: str, mock_git):
-    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (ArtifactsManager)
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import \
+        ArtifactsManager
     with temp_dir() as temp:
         config = ArtifactsManager(artifacts_path=temp,
                                   content_version='6.0.0',
@@ -223,7 +227,8 @@ def test_malformed_file_failure(suffix: str, mock_git):
 
 
 def test_duplicate_file_failure(mock_git):
-    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (ArtifactsManager)
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import \
+        ArtifactsManager
     with temp_dir() as temp:
         config = ArtifactsManager(artifacts_path=temp,
                                   content_version='6.0.0',
@@ -278,4 +283,4 @@ def test_sign_packs_failure(repo, capsys, key, tool):
 
     captured = capsys.readouterr()
     assert 'Failed to sign packs. In order to do so, you need to provide both signature_key and ' \
-           'sign_directory arguments.' in captured.err
+           'sign_directory arguments.' in captured.out

@@ -5,7 +5,8 @@ from distutils.version import LooseVersion
 from typing import Optional
 
 import yaml
-from demisto_sdk.commands.common.constants import (FEATURE_BRANCHES,
+from demisto_sdk.commands.common.constants import (ENTITY_NAME_SEPARATORS,
+                                                   FEATURE_BRANCHES,
                                                    OLDEST_SUPPORTED_VERSION)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
@@ -214,13 +215,34 @@ class ContentEntityValidator(BaseValidator):
             if LooseVersion(self.current_file.get('fromVersion', '0.0.0')) < LooseVersion(OLDEST_SUPPORTED_VERSION):
                 error_message, error_code = Errors.no_minimal_fromversion_in_file('fromVersion',
                                                                                   OLDEST_SUPPORTED_VERSION)
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                     suggested_fix=Errors.suggest_fix(self.file_path)):
                     return False
         elif self.file_path.endswith('.yml'):
             if LooseVersion(self.current_file.get('fromversion', '0.0.0')) < LooseVersion(OLDEST_SUPPORTED_VERSION):
                 error_message, error_code = Errors.no_minimal_fromversion_in_file('fromversion',
                                                                                   OLDEST_SUPPORTED_VERSION)
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                     suggested_fix=Errors.suggest_fix(self.file_path)):
                     return False
 
         return True
+
+    @staticmethod
+    def remove_separators_from_name(base_name) -> str:
+        """
+        Removes separators from a given name of folder or file.
+
+        Args:
+            base_name: The base name of the folder/file.
+
+        Return:
+            The base name without separators.
+        """
+
+        for separator in ENTITY_NAME_SEPARATORS:
+
+            if separator in base_name:
+                base_name = base_name.replace(separator, '')
+
+        return base_name

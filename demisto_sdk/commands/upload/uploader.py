@@ -1,5 +1,6 @@
 import glob
 import json
+import logging
 import os
 from typing import List, Tuple, Union
 
@@ -15,12 +16,14 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    INDICATOR_TYPES_DIR,
                                                    INTEGRATIONS_DIR,
                                                    LAYOUTS_DIR, PACKS_DIR,
-                                                   PLAYBOOKS_DIR, SCRIPTS_DIR,
+                                                   PLAYBOOKS_DIR, REPORTS_DIR,
+                                                   SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
                                                    WIDGETS_DIR, FileType)
 from demisto_sdk.commands.common.content.errors import ContentFactoryError
 from demisto_sdk.commands.common.content.objects.abstract_objects import (
     JSONObject, YAMLObject)
+from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.content.objects_factory import \
     path_to_pack_object
 from demisto_sdk.commands.common.tools import (find_type,
@@ -51,7 +54,7 @@ UPLOAD_SUPPORTED_ENTITIES = [
     FileType.INDICATOR_FIELD,
 
     FileType.WIDGET,
-    # FileType.REPORT,  currently not supported by demisto-py
+    FileType.REPORT,
     FileType.DASHBOARD,
     FileType.LAYOUT,
     FileType.LAYOUTS_CONTAINER,
@@ -72,8 +75,12 @@ CONTENT_ENTITY_UPLOAD_ORDER = [
     CLASSIFIERS_DIR,
     WIDGETS_DIR,
     LAYOUTS_DIR,
-    DASHBOARDS_DIR
+    DASHBOARDS_DIR,
+    REPORTS_DIR
 ]
+SUCCESS_RETURN_CODE = 0
+ERROR_RETURN_CODE = 1
+ABORTED_RETURN_CODE = 2
 
 
 class Uploader:
@@ -84,7 +91,7 @@ class Uploader:
             client (DefaultApi): Demisto-SDK client object.
         """
 
-    def __init__(self, input: str, insecure: bool = False, verbose: bool = False):
+    def __init__(self, input: str, insecure: bool = False, verbose: bool = False, pack_names: list = None):
         self.path = input
         self.log_verbose = verbose
         verify = (not insecure) if insecure else None  # set to None so demisto_client will use env var DEMISTO_VERIFY_SSL
@@ -93,6 +100,7 @@ class Uploader:
         self.failed_uploaded_files: List[Tuple[str, str, str]] = []
         self.unuploaded_due_to_version: List[Tuple[str, str, Version, Version, Version]] = []
         self.demisto_version = get_demisto_version(self.client)
+        self.pack_names = pack_names
 
     def upload(self):
         """Upload the pack / directory / file to the remote Cortex XSOAR instance.
@@ -100,13 +108,17 @@ class Uploader:
         if self.demisto_version == "0":
             click.secho("Could not connect to XSOAR server. Try checking your connection configurations.",
                         fg="bright_red")
-            return 1
+            return ERROR_RETURN_CODE
 
-        status_code = 0
+        status_code = SUCCESS_RETURN_CODE
         click.secho(f"Uploading {self.path} ...")
-        if not os.path.exists(self.path):
+        if self.path is None or not os.path.exists(self.path):
             click.secho(f'Error: Given input path: {self.path} does not exist', fg='bright_red')
-            return 1
+            return ERROR_RETURN_CODE
+
+        # uploading a pack zip
+        elif self.path.endswith('.zip'):
+            status_code = self.zipped_pack_uploader(path=self.path)
 
         # Uploading a file
         elif os.path.isfile(self.path):
@@ -122,8 +134,12 @@ class Uploader:
             elif parent_dir_name == PACKS_DIR:
                 status_code = self.pack_uploader(self.path) or status_code
 
-        if not self.successfully_uploaded_files and not self.failed_uploaded_files and \
-                not self.unuploaded_due_to_version:
+        if status_code == ABORTED_RETURN_CODE:
+            return status_code
+
+        if not self.successfully_uploaded_files \
+                and not self.failed_uploaded_files \
+                and not self.unuploaded_due_to_version:
             # if not uploaded any file
             click.secho(
                 f'\nError: Given input path: {self.path} is not uploadable. '
@@ -135,7 +151,7 @@ class Uploader:
                 f'For example a playbook: helloWorld.yml',
                 fg='bright_red'
             )
-            return 1
+            return ERROR_RETURN_CODE
 
         print_summary(self.successfully_uploaded_files, self.unuploaded_due_to_version, self.failed_uploaded_files)
         return status_code
@@ -157,11 +173,11 @@ class Uploader:
             if self.log_verbose:
                 click.secho(message, fg='bright_red')
             self.failed_uploaded_files.append((file_name, "Unknown", message))
-            return 1
+            return ERROR_RETURN_CODE
 
         file_name = upload_object.path.name  # type: ignore
-        entity_type = find_type(str(upload_object.path))
 
+        entity_type = find_type(str(upload_object.path))
         if entity_type in UPLOAD_SUPPORTED_ENTITIES:
             if upload_object.from_version <= self.demisto_version <= upload_object.to_version:  # type: ignore
                 try:
@@ -170,11 +186,11 @@ class Uploader:
                         print_v(f'Result:\n{result.to_str()}', self.log_verbose)
                         click.secho(f'Uploaded {entity_type} - \'{os.path.basename(path)}\': successfully', fg='green')
                     self.successfully_uploaded_files.append((file_name, entity_type.value))
-                    return 0
+                    return SUCCESS_RETURN_CODE
                 except Exception as err:
                     message = parse_error_response(err, entity_type, file_name, self.log_verbose)
                     self.failed_uploaded_files.append((file_name, entity_type.value, message))
-                    return 1
+                    return ERROR_RETURN_CODE
             else:
                 if self.log_verbose:
                     click.secho(f"Input path {path} is not uploading due to version mismatch.\n"
@@ -182,7 +198,7 @@ class Uploader:
                                 f"{upload_object.from_version} - {upload_object.to_version}", fg='bright_red')
                 self.unuploaded_due_to_version.append((file_name, entity_type.value, self.demisto_version,
                                                        upload_object.from_version, upload_object.to_version))
-                return 1
+                return ERROR_RETURN_CODE
         else:
             if self.log_verbose:
                 click.secho(
@@ -196,7 +212,7 @@ class Uploader:
                     fg='bright_red'
                 )
             self.failed_uploaded_files.append((file_name, entity_type.value, 'Unsuported file path/type'))
-            return 1
+            return ERROR_RETURN_CODE
 
     def unified_entity_uploader(self, path) -> int:
         """
@@ -209,7 +225,7 @@ class Uploader:
             status code
         """
         if get_parent_directory_name(path) not in UNIFIED_ENTITIES_DIR:
-            return 1
+            return ERROR_RETURN_CODE
         yml_files = []
         for file in glob.glob(f"{path}/*.yml"):
             if not file.endswith('_unified.yml'):
@@ -218,10 +234,10 @@ class Uploader:
             self.failed_uploaded_files.append((path, "Entity Folder",
                                                "The folder contains more than one `.yml` file "
                                                "(not including `_unified.yml`)"))
-            return 1
+            return ERROR_RETURN_CODE
         if not yml_files:
             self.failed_uploaded_files.append((path, "Entity Folder", "The folder does not contain a `.yml` file"))
-            return 1
+            return ERROR_RETURN_CODE
         return self.file_uploader(yml_files[0])
 
     def entity_dir_uploader(self, path: str) -> int:
@@ -234,7 +250,7 @@ class Uploader:
             The status code of the operation.
 
         """
-        status_code = 0
+        status_code = SUCCESS_RETURN_CODE
         dir_name = os.path.basename(path.rstrip('/'))
         if dir_name in UNIFIED_ENTITIES_DIR:
             for entity_folder in glob.glob(f"{path}/*/"):
@@ -248,12 +264,53 @@ class Uploader:
         return status_code
 
     def pack_uploader(self, path: str) -> int:
-        status_code = 0
+        status_code = SUCCESS_RETURN_CODE
         sorted_directories = sort_directories_based_on_dependencies(get_child_directories(path))
         for entity_folder in sorted_directories:
             if os.path.basename(entity_folder.rstrip('/')) in CONTENT_ENTITIES_DIRS:
                 status_code = self.entity_dir_uploader(entity_folder) or status_code
         return status_code
+
+    def zipped_pack_uploader(self, path: str) -> int:
+
+        zipped_pack = Pack(path)
+
+        try:
+            logger = logging.getLogger('demisto-sdk')
+
+            if not self.pack_names:
+                self.pack_names = [zipped_pack.path.stem]
+
+            if self.notify_user_should_override_packs():
+                zipped_pack.upload(logger, self.client)
+                self.successfully_uploaded_files.extend([(pack_name, FileType.PACK.value) for pack_name in self.pack_names])
+                return SUCCESS_RETURN_CODE
+
+            return ABORTED_RETURN_CODE
+
+        except (Exception, KeyboardInterrupt) as err:
+            file_name = zipped_pack.path.name  # type: ignore
+            message = parse_error_response(err, FileType.PACK.value, file_name, self.log_verbose)
+            self.failed_uploaded_files.append((file_name, FileType.PACK.value, message))
+            return ERROR_RETURN_CODE
+
+    def notify_user_should_override_packs(self):
+        """Notify the user about possible overridden packs"""
+
+        response = self.client.generic_request('/contentpacks/metadata/installed', "GET")
+        installed_packs = eval(response[0])
+        if installed_packs:
+            installed_packs = {pack['name'] for pack in installed_packs}
+            common_packs = installed_packs & set(self.pack_names)  # type: ignore
+            if common_packs:
+                pack_names = '\n'.join(common_packs)
+                click.secho(f'This command will overwrite the following packs:\n{pack_names}.\n'
+                            'Any changes made on XSOAR will be lost.\n'
+                            'Are you sure you want to continue? Y/[N]', fg='bright_red')
+                answer = str(input())
+                return answer in ['y', 'Y', 'yes']
+
+        return True
 
 
 def parse_error_response(error: ApiException, file_type: str, file_name: str, print_error: bool = False):
@@ -283,6 +340,8 @@ def parse_error_response(error: ApiException, file_type: str, file_name: str, pr
     if print_error:
         click.secho(str(f'\nUpload {file_type}: {file_name} failed:'), fg='bright_red')
         click.secho(str(message), fg='bright_red')
+    if isinstance(error, KeyboardInterrupt):
+        message = 'Aborted due to keyboard interrupt.'
     return message
 
 

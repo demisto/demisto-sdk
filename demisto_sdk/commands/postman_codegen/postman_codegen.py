@@ -1,10 +1,10 @@
 import json
 import logging
 import re
-from pathlib import Path
 from typing import Union
 
 import demisto_sdk.commands.common.tools as tools
+from demisto_sdk.commands.common.constants import DemistoException
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.generate_integration.code_generator import (
@@ -107,29 +107,47 @@ def create_body_format(body: Union[dict, list]):
     return None
 
 
-def postman_to_autogen_configuration(collection_path: Union[Path, str], name, command_prefix, context_path_prefix,
-                                     category=None) -> IntegrationGeneratorConfig:
-    with open(collection_path, mode='rb') as f:
-        postman_collection = json.load(f)
+def flatten_collections(items: list) -> list:
+    """When creating nested collections, will flatten all the requests to a list of dicts."""
+    lst = list()
+    for item in items:
+        if isinstance(item, list):  # A list of collections
+            lst += flatten_collections(item)
+        elif isinstance(item, dict) and 'item' in item:  # Get requests from collection
+            lst += flatten_collections(item['item'])
+        else:  # Request itself is a dict.
+            lst.append(item)
+    return lst
 
-    info = postman_collection.get('info', {})
-    items = postman_collection.get('item', [])
-    postman_auth = postman_collection.get('auth', {})
-    variable = postman_collection.get('variable', [])
+
+def postman_to_autogen_configuration(
+        collection: dict,
+        name,
+        command_prefix,
+        context_path_prefix,
+        category=None
+) -> IntegrationGeneratorConfig:
+    info = collection.get('info', {})
+    items = collection.get('item', [])
+    postman_auth = collection.get('auth', {})
+    variable = collection.get('variable', [])
 
     logger.debug('trying to find the default base url')
-    host = ''
     for v in variable:
         if v['key'] in ('url', 'server'):
             host = v['value']
             logger.debug(f'base url found: {host}')
             break
+    else:
+        host = ''
 
     docker_image = get_docker_image()
 
     description = ''
 
     commands = []
+    items = flatten_collections(items)  # in case of nested collections
+
     for item in items:
         command = convert_request_to_command(item)
 
@@ -274,26 +292,29 @@ def get_docker_image():
     return docker_image
 
 
-def convert_request_to_command(item):
+def convert_request_to_command(item: dict):
     logger.debug(f'converting request to command: {item.get("name")}')
-    command_name = tools.to_kebab_case(item.get('name'))
-    context_prefix = tools.to_pascal_case(item.get('name'))
+    name = item.get('name')
+    assert isinstance(name, str), 'Could not find name. Is this a valid postman 2.1 collection?'
+    command_name = tools.to_kebab_case(name)
+    context_prefix = tools.to_pascal_case(name)
 
-    request = item.get('request', {})
+    request = item.get('request')
+    if request is None:
+        raise DemistoException('Could not find request in the collection. Is it a valid postman collection?')
 
-    logger.debug(f'converting postman headers of request: {item.get("name")}')
+    logger.debug(f'converting postman headers of request: {name}')
     headers = postman_headers_to_conf_headers(request.get('header'), skip_authorization_header=True)
 
-    url_path = ''
     args = []
     outputs = []
     returns_file = False
 
-    logger.debug(f'creating url arguments of request: {item.get("name")}')
-    request_url_object = item.get('request').get('url')
+    logger.debug(f'creating url arguments of request: {name}')
+    request_url_object = request.get('url')
 
     if not request_url_object:
-        logger.error(f'failed to get item.request.url.path object of request {item.get("name")}. '
+        logger.error(f'failed to get item.request.url.path object of request {name}. '
                      f'Go to Postman, Save the request and try again with the updated collection.')
         return None
 
@@ -307,7 +328,20 @@ def convert_request_to_command(item):
             )
             args.append(arg)
 
-    logger.debug(f'creating query arguments of request: {item.get("name")}')
+    for url_path_variable in request_url_object.get('variable', []):
+        variable_name = url_path_variable.get('key')
+        if not variable_name:
+            continue
+        arg = IntegrationGeneratorArg(
+            name=variable_name,
+            description='',
+            in_='url'
+        )
+        args.append(arg)
+        url_path = url_path.replace(f'/:{variable_name}', f'/{{{variable_name}}}')
+
+
+    logger.debug(f'creating query arguments of request: {name}')
     for q in request_url_object.get('query', []):
         arg = IntegrationGeneratorArg(
             name=q.get('key'),
@@ -316,7 +350,7 @@ def convert_request_to_command(item):
         )
         args.append(arg)
 
-    logger.debug(f'creating arguments which will be passed to the request body of request: {item.get("name")}')
+    logger.debug(f'creating arguments which will be passed to the request body of request: {name}')
     request_body = request.get('body')
     body_format = None
     if request_body:
@@ -338,14 +372,14 @@ def convert_request_to_command(item):
                     args.append(arg)
 
             except Exception:
-                logger.exception(f'Failed to parse {item.get("name")} request body as JSON.')
+                logger.exception(f'Failed to parse {name} request body as JSON.')
 
     if not item.get('response') or item.get('response') == 0:
-        logger.error(f'[{item.get("name")}] request is missing response. Make sure to save at least one successful '
+        logger.error(f'[{name}] request is missing response. Make sure to save at least one successful '
                      f'response in Postman')
     else:
-        response = item.get('response')[0]
         try:
+            response = item.get('response')[0]  # type: ignore[index]  # It will be catched in the except
             if response.get('_postman_previewlanguage') == 'json':
                 body = json.loads(response.get('body'))
                 for key, value in flatten_json(body).items():
@@ -358,15 +392,15 @@ def convert_request_to_command(item):
             elif response.get('_postman_previewlanguage') == 'raw':
                 returns_file = True
 
-        except ValueError:
-            logger.exception(f'Failed to parse to JSON response body of {item.get("name")} request.')
+        except (ValueError, IndexError, TypeError):
+            logger.exception(f'Failed to parse to JSON response body of {name} request.')
 
     command = IntegrationGeneratorCommand(
         name=command_name,
         url_path=url_path,
         http_method=request.get('method'),
         headers=headers,
-        description=request.get('description'),
+        description=request.get('description') or '',
         arguments=args,
         outputs=outputs,
         context_path=context_prefix,

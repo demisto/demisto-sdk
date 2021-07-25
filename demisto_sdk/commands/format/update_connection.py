@@ -38,7 +38,7 @@ class ConnectionJSONFormat(BaseUpdateJSON):
                          path=path,
                          from_version=from_version,
                          no_validate=no_validate,
-                         verbose=verbose)
+                         verbose=verbose, **kwargs)
 
     def run_format(self) -> int:
         try:

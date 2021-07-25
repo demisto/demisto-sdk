@@ -32,7 +32,7 @@ def test_build_xsoar_linter_py3_command(files):
     files = [str(file) for file in files]
     expected = f"python3 -m pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py," \
                "conftest.py,venv -E --disable=all --msg-template='{abspath}:{line}:{column}: {msg_id} {obj}: {msg}'" \
-               " --enable=E9002,E9003,E9004,E9005,E9006,E9007,E9010, --load-plugins " \
+               " --enable=E9002,E9003,E9004,E9005,E9006,E9007,E9010,E9011,E9012, --load-plugins " \
                f"base_checker, {' '.join(files)}"
     assert output == expected
 
@@ -45,7 +45,7 @@ def test_build_xsoar_linter_py2_command(files):
     files = [str(file) for file in files]
     expected = f"python2 -m pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py," \
                "conftest.py,venv -E --disable=all --msg-template='{abspath}:{line}:{column}: {msg_id} {obj}: {msg}' " \
-               "--enable=E9002,E9003,E9004,E9005,E9006,E9007,E9010, --load-plugins " \
+               "--enable=E9002,E9003,E9004,E9005,E9006,E9007,E9010,E9011,E9012, --load-plugins " \
                f"base_checker, {' '.join(files)}"
     assert output == expected
 
@@ -128,16 +128,23 @@ def test_build_pylint_command_3_9_docker():
 def test_build_pytest_command_1():
     """Build Pytest command without json"""
     from demisto_sdk.commands.lint.commands_builder import build_pytest_command
-    command = "python -m pytest --junitxml=/devwork/report_pytest.xml"
+    command = "python -m pytest -ra --junitxml=/devwork/report_pytest.xml"
     assert command == build_pytest_command(test_xml="test")
 
 
 def test_build_pytest_command_2():
     """Build Pytest command with json"""
     from demisto_sdk.commands.lint.commands_builder import build_pytest_command
-    command = "python -m pytest --junitxml=/devwork/report_pytest.xml --json=/devwork/report_pytest.json"
+    command = "python -m pytest -ra --junitxml=/devwork/report_pytest.xml --json=/devwork/report_pytest.json"
     assert command == build_pytest_command(test_xml="test",
                                            json=True)
+
+
+def test_build_pytest_command_3():
+    """Build Pytest command with cov"""
+    from demisto_sdk.commands.lint.commands_builder import build_pytest_command
+    command = "python -m pytest -ra --junitxml=/devwork/report_pytest.xml --cov-report= --cov=test"
+    assert command == build_pytest_command(test_xml="test", cov="test")
 
 
 def test_build_pwsh_analyze():

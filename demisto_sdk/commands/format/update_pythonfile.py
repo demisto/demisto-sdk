@@ -30,7 +30,7 @@ class PythonFileFormat(BaseUpdate):
                  verbose: bool = False,
                  **kwargs):
         super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
-                         verbose=verbose)
+                         verbose=verbose, **kwargs)
 
     @staticmethod
     def format_py_using_autopep(py_file_path, verbose: bool = False):
@@ -69,5 +69,5 @@ class PythonFileFormat(BaseUpdate):
 
     def format_file(self) -> Tuple[int, int]:
         """Manager function for the integration python updater."""
-        format = self.run_format()
-        return format, SKIP_VALIDATE_PY_RETURN_CODE
+        format_res = self.run_format()
+        return format_res, SKIP_VALIDATE_PY_RETURN_CODE

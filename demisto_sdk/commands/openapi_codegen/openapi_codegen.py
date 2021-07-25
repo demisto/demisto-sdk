@@ -219,7 +219,7 @@ class OpenAPIIntegration:
 
         code = code.replace('$FUNCTIONS$', '\n'.join(functions))
         code = code.replace('$BASEURL$', self.base_path)
-        client = BASE_CLIENT.replace('$REQUESTFUNCS$', ''.join(req_functions))
+        client = BASE_CLIENT.replace('$REQUESTFUNCS$', '\n'.join(req_functions))
         code = code.replace('$CLIENT$', client).replace('$CLIENT_API_KEY$', '')
 
         if BEARER_AUTH_TYPE in self.configuration['auth']:
@@ -623,14 +623,16 @@ class OpenAPIIntegration:
                                          'description': extracted_object.get('description', '')})
                 elif extracted_object.get('type') and type(extracted_object.get('type')) == dict:
                     for k, v in extracted_object.items():
-                        current_context.append(k)
-                        prop_arr = extract(v, prop_arr, current_context)
-                        current_context.pop()
+                        if k not in current_context:
+                            current_context.append(k)
+                            prop_arr = extract(v, prop_arr, current_context)
+                            current_context.pop()
                 else:
                     for k, v in extracted_object.items():
-                        current_context.append(k)
-                        prop_arr = extract(v, prop_arr, current_context)
-                        current_context.pop()
+                        if k not in current_context:
+                            current_context.append(k)
+                            prop_arr = extract(v, prop_arr, current_context)
+                            current_context.pop()
 
             return prop_arr
 
@@ -836,7 +838,7 @@ class OpenAPIIntegration:
             config_file: The path to the configuration file.
         """
         self.print_with_verbose('Creating configuration file...')
-        config_file = os.path.join(directory, f'{self.base_name}.json')
+        config_file = os.path.join(directory, f'{self.base_name}_config.json')
         try:
             with open(config_file, 'w') as fp:
                 json.dump(config, fp, indent=4)
@@ -941,7 +943,6 @@ class OpenAPIIntegration:
                 for item in extracted_object:
                     extract(item, values, key_to_extract)
             return values
-
         results = extract(obj, arr, key)
         return results
 

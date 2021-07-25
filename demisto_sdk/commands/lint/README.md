@@ -12,10 +12,8 @@
   folder.
 
 Options:
-*  **-h, --help**
-    Show this message and exit.
 *  **-i, --input PATH**
-    Specify directory of integration/script
+    Specify directory(s) of integration/script
 *  **-g, --git**
     Will run only on changed packages
 *  **-a, --all-packs**
@@ -30,6 +28,8 @@ Options:
     Do NOT run flake8 linter
 *  **--no-bandit**
     Do NOT run bandit linter
+*  ** --no-xsoar-linter**
+    Do NOT run XSOAR linter
 *  **--no-mypy**
     Do NOT run mypy static type checking
 *  **--no-vulture**
@@ -44,23 +44,40 @@ Options:
     Do NOT run powershell test
 *  **-kc, --keep-container**
     Keep the test container
+*  **--prev-ver**
+    Previous branch or SHA1 commit to run checks against
 *  **--test-xml PATH**
     Path to store pytest xml results
-*  **--json-report PATH**
-    Path to store json results
+*  **--failure-report PATH**
+    Path to store failed packs report
 *  **-lp, --log-path PATH**
     Path to store all levels of logs
+*  **-j, --json-file**
+    The JSON file path to which to output the command results
+*  **--no-coverage**
+    Do NOT report coverage
+*  **--coverage-report**
+    Specify directory for the coverage report files
+*  **-dt, --docker-timeout**
+    The timeout (in seconds) for requests done by the docker client
 
 
 **Examples**:
 ---
-`demisto-sdk lint -i Integrations/PaloAltoNetworks_XDR,Scripts/HellowWorldScript --no-mypy `
+`demisto-sdk lint -i Integrations/PaloAltoNetworks_XDR,Scripts/HellowWorldScript --no-mypy`
 Details:
 1. lint and test check will execute on Packages `Integrations/PaloAltoNetworks_XDR,Scripts/HellowWorldScript`
 2. Mypy check will not be execute.
-3.
+3. coverage report will be printed.
 ---
 `demisto-sdk lint -g -p 2`
 1. lint and test check will execute on all Packages which are changed from `origin/master` and from in staging.
 2. 2 Threads will be used inorder to preform the lint.
+3. coverage report will be printed.
+---
+`demisto-sdk lint -i Integrations/PaloAltoNetworks_XDR,Scripts/HellowWorldScript --coverage-report coverage_report`
+Details:
+1. lint and test check will execute on Packages `Integrations/PaloAltoNetworks_XDR,Scripts/HellowWorldScript`
+2. coverage report will be printed.
+3. coverage report files will be exported to coverage_report dir.
 ---

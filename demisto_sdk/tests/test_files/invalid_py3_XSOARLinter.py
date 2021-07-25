@@ -166,6 +166,7 @@ class Client(BaseClient):
                 ret_cookie = response_cookies.get(cookie_key).get("/")
                 cookie = self.get_cookie(ret_cookie)
                 token = ret_cookie.get("KACE_CSRF_TOKEN").__dict__.get('value')
+        demisto.executeCommand('getIncidents')
         sleep(100)
         sleep(4)
         if not token:
@@ -897,7 +898,6 @@ def main():
         LOG(f'Command being called is {command}')
         # Commands dict
         commands: Dict[str, Callable[[Client, Dict[str, str]], Tuple[str, dict, dict]]] = {
-            'test-module': test_module,
             'kace-machines-list': get_machines_list_command,
             'kace-assets-list': get_assets_list_command,
             'kace-queues-list': get_queues_list_command,

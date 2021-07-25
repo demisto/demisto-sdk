@@ -2,8 +2,9 @@ import os
 import re
 from enum import Enum
 from functools import reduce
-from typing import Iterable, List, Optional
+from typing import Dict, Iterable, List, Optional
 
+import click
 from demisto_sdk.commands.common.git_util import GitUtil
 # dirs
 from git import InvalidGitRepositoryError
@@ -21,6 +22,10 @@ INCIDENT_FIELDS_DIR = 'IncidentFields'
 INCIDENT_TYPES_DIR = 'IncidentTypes'
 INDICATOR_FIELDS_DIR = 'IndicatorFields'
 INDICATOR_TYPES_DIR = 'IndicatorTypes'
+GENERIC_FIELDS_DIR = 'GenericFields'
+GENERIC_TYPES_DIR = 'GenericTypes'
+GENERIC_MODULES_DIR = 'GenericModules'
+GENERIC_DEFINITIONS_DIR = 'GenericDefinitions'
 LAYOUTS_DIR = 'Layouts'
 CLASSIFIERS_DIR = 'Classifiers'
 MAPPERS_DIR = 'Classifiers'
@@ -55,6 +60,8 @@ DOCUMENTATION = 'doc'
 MAPPER = 'classifier-mapper'
 CANVAS = 'canvas'
 OLD_REPUTATION = 'reputations.json'
+PACK_VERIFY_KEY = 'content.pack.verify'
+XSOAR_CONFIG_FILE = 'xsoar_config.json'
 
 
 class FileType(Enum):
@@ -90,6 +97,13 @@ class FileType(Enum):
     METADATA = 'metadata'
     WHITE_LIST = 'whitelist'
     LANDING_PAGE_SECTIONS_JSON = 'landingPage_sections.json'
+    CONTRIBUTORS = 'contributors'
+    PACK = 'pack'
+    XSOAR_CONFIG = 'xsoar_config'
+    GENERIC_MODULE = 'genericmodule'
+    GENERIC_FIELD = 'genericfield'
+    GENERIC_TYPE = 'generictype'
+    GENERIC_DEFINITION = 'genericdefinition'
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -110,6 +124,10 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.DASHBOARD: 'Dashboards',
     FileType.CONNECTION: 'Connections',
     FileType.MAPPER: 'Mappers',
+    FileType.GENERIC_DEFINITION: 'Objects',
+    FileType.GENERIC_MODULE: 'Modules',
+    FileType.GENERIC_TYPE: 'Object Types',
+    FileType.GENERIC_FIELD: 'Object Fields'
 }
 
 ENTITY_TYPE_TO_DIR = {
@@ -129,7 +147,11 @@ ENTITY_TYPE_TO_DIR = {
     FileType.REPORT.value: REPORTS_DIR,
     FileType.WIDGET.value: WIDGETS_DIR,
     FileType.BETA_INTEGRATION.value: INTEGRATIONS_DIR,
-    FileType.MAPPER.value: CLASSIFIERS_DIR
+    FileType.MAPPER.value: CLASSIFIERS_DIR,
+    FileType.GENERIC_DEFINITION.value: GENERIC_DEFINITIONS_DIR,
+    FileType.GENERIC_MODULE.value: GENERIC_MODULES_DIR,
+    FileType.GENERIC_FIELD.value: GENERIC_FIELDS_DIR,
+    FileType.GENERIC_TYPE.value: GENERIC_TYPES_DIR
 }
 
 CONTENT_FILE_ENDINGS = ['py', 'yml', 'png', 'json', 'md']
@@ -150,7 +172,11 @@ CONTENT_ENTITIES_DIRS = [
     INCIDENT_TYPES_DIR,
     LAYOUTS_DIR,
     CLASSIFIERS_DIR,
-    CONNECTIONS_DIR
+    CONNECTIONS_DIR,
+    GENERIC_FIELDS_DIR,
+    GENERIC_TYPES_DIR,
+    GENERIC_MODULES_DIR,
+    GENERIC_DEFINITIONS_DIR,
 ]
 
 CONTENT_ENTITY_UPLOAD_ORDER = [
@@ -389,6 +415,15 @@ PACKS_INDICATOR_TYPE_JSON_REGEX = fr'{PACKS_INDICATOR_TYPES_DIR_REGEX}\/([^/]+)\
 PACKS_INDICATOR_FIELDS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{INDICATOR_FIELDS_DIR}'
 PACKS_INDICATOR_FIELD_JSON_REGEX = fr'{PACKS_INDICATOR_FIELDS_DIR_REGEX}\/([^/]+)\.json'
 
+PACKS_GENERIC_TYPES_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{GENERIC_TYPES_DIR}'
+PACKS_GENERIC_TYPE_JSON_REGEX = fr'{PACKS_GENERIC_TYPES_DIR_REGEX}\/([^/]+)\.json'
+
+PACKS_GENERIC_FIELDS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{GENERIC_FIELDS_DIR}'
+PACKS_GENERIC_FIELD_JSON_REGEX = fr'{PACKS_GENERIC_FIELDS_DIR_REGEX}\/([^/]+)\.json'
+
+PACKS_GENERIC_MODULES_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{GENERIC_MODULES_DIR}'
+PACKS_GENERIC_MODULE_JSON_REGEX = fr'{PACKS_GENERIC_MODULES_DIR_REGEX}\/([^/]+)\.json'
+
 PACKS_CLASSIFIERS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{CLASSIFIERS_DIR}'
 
 _PACKS_CLASSIFIER_BASE_REGEX = fr'{PACKS_CLASSIFIERS_DIR_REGEX}\/*classifier-(?!mapper).*(?<!5_9_9)'
@@ -430,6 +465,15 @@ CONNECTIONS_REGEX = r'{}{}.*canvas-context-connections.*\.json$'.format(CAN_STAR
 
 INDICATOR_TYPES_REPUTATIONS_REGEX = r'{}{}.reputations\.json$'.format(CAN_START_WITH_DOT_SLASH, INDICATOR_TYPES_DIR)
 
+# deprecated regex
+DEPRECATED_DESC_REGEX = r"Deprecated\.\s*(.*?Use .*? instead\.*?)"
+DEPRECATED_NO_REPLACE_DESC_REGEX = r"Deprecated\.\s*(.*?No available replacement\.*?)"
+
+DEPRECATED_REGEXES: List[str] = [
+    DEPRECATED_DESC_REGEX,
+    DEPRECATED_NO_REPLACE_DESC_REGEX
+]
+
 PACK_METADATA_NAME = 'name'
 PACK_METADATA_DESC = 'description'
 PACK_METADATA_SUPPORT = 'support'
@@ -469,6 +513,7 @@ ID_IN_ROOT = [  # entities in which 'id' key is in the root
     'dashboard',
     'incident_type',
     'layoutscontainer',
+    'mapper',
 ]
 
 INTEGRATION_PREFIX = 'integration'
@@ -479,6 +524,7 @@ PACKS_WHITELIST_FILE_NAME = '.secrets-ignore'
 PACKS_PACK_IGNORE_FILE_NAME = '.pack-ignore'
 PACKS_PACK_META_FILE_NAME = 'pack_metadata.json'
 PACKS_README_FILE_NAME = 'README.md'
+PACKS_CONTRIBUTORS_FILE_NAME = 'CONTRIBUTORS.md'
 
 PYTHON_TEST_REGEXES = [
     PACKS_SCRIPT_TEST_PY_REGEX,
@@ -604,6 +650,18 @@ JSON_ALL_INDICATOR_FIELDS_REGEXES = [
 
 JSON_ALL_INDICATOR_TYPES_REGEXES = [
     PACKS_INDICATOR_TYPE_JSON_REGEX
+]
+
+JSON_ALL_GENERIC_FIELDS_REGEXES = [
+    PACKS_GENERIC_FIELD_JSON_REGEX,
+]
+
+JSON_ALL_GENERIC_TYPES_REGEXES = [
+    PACKS_GENERIC_TYPE_JSON_REGEX,
+]
+
+JSON_ALL_GENERIC_MODULES_REGEXES = [
+    PACKS_GENERIC_MODULE_JSON_REGEX,
 ]
 
 JSON_ALL_REPUTATIONS_INDICATOR_TYPES_REGEXES = [
@@ -756,7 +814,8 @@ TESTS_AND_DOC_DIRECTORIES = [
     'test_data',
     'data_test',
     'tests_data',
-    'doc_files'
+    'doc_files',
+    'doc_imgs',
 ]
 
 FILE_TYPES_FOR_TESTING = [
@@ -787,7 +846,7 @@ def urljoin(*args: str):
 
 
 class GithubCredentials:
-    ENV_TOKEN_NAME = 'GITHUB_TOKEN'
+    ENV_TOKEN_NAME = 'DEMISTO_SDK_GITHUB_TOKEN'
     TOKEN: Optional[str]
 
     def __init__(self):
@@ -816,10 +875,10 @@ class GithubContentConfig:
     def __init__(self, repo_name: Optional[str] = None):
         if not repo_name:
             try:
-                urls = GitUtil().repo.remote().urls
+                urls = list(GitUtil().repo.remote().urls)
                 self.CURRENT_REPOSITORY = self._get_repository_name(urls)
             except (InvalidGitRepositoryError, AttributeError):  # No repository
-                self.CURRENT_REPOSITORY = ''
+                self.CURRENT_REPOSITORY = self.OFFICIAL_CONTENT_REPO_NAME
         else:
             self.CURRENT_REPOSITORY = repo_name
         # DO NOT USE os.path.join on URLs, it may cause errors
@@ -834,16 +893,21 @@ class GithubContentConfig:
         """
         try:
             for url in urls:
-                repo = re.findall(r'.com[/:](.*)\.', url)[0].replace('//github.com/', '')
+                repo = re.findall(r'.com[/:](.*)', url)[0].replace('.git', '')
                 return repo
-        except (AttributeError, InvalidGitRepositoryError, IndexError):
+        except (AttributeError, IndexError):
             pass
-        return ''
 
+        # default to content repo if the repo is not found
+        click.secho('Could not find the repository name - defaulting to demisto/content', fg='yellow')
+        return GithubContentConfig.OFFICIAL_CONTENT_REPO_NAME
+
+
+OFFICIAL_CONTENT_ID_SET_PATH = 'https://storage.googleapis.com/marketplace-dist/content/id_set.json'
 
 # Run all test signal
 RUN_ALL_TESTS_FORMAT = 'Run all tests'
-FILTER_CONF = './Tests/filter_file.txt'
+FILTER_CONF = './artifacts/filter_file.txt'
 
 
 class PB_Status:
@@ -898,7 +962,10 @@ SCHEMA_TO_REGEX = {
                ],
 
     'report': [PACKS_REPORT_JSON_REGEX],
-    'release-notes': [PACKS_RELEASE_NOTES_REGEX]
+    'release-notes': [PACKS_RELEASE_NOTES_REGEX],
+    'genericfield': JSON_ALL_GENERIC_FIELDS_REGEXES,
+    'generictype': JSON_ALL_GENERIC_TYPES_REGEXES,
+    'genericmodule': JSON_ALL_GENERIC_MODULES_REGEXES
 }
 
 EXTERNAL_PR_REGEX = r'^pull/(\d+)$'
@@ -928,8 +995,21 @@ FILE_NOT_IN_CC_REASON = 'File does not exist in Demisto instance'
 ACCEPTED_FILE_EXTENSIONS = [
     '.yml', '.json', '.md', '.py', '.js', '.ps1', '.png', '', '.lock'
 ]
+ENDPOINT_COMMAND_NAME = 'endpoint'
 
-BANG_COMMAND_NAMES = {'file', 'email', 'domain', 'url', 'ip', 'cve'}
+BANG_COMMAND_NAMES = {'file', 'email', 'domain', 'url', 'ip', 'cve', 'endpoint'}
+
+BANG_COMMAND_ARGS_MAPPING_DICT: Dict[str, dict] = {
+    'file': {'default': ['file'], },
+    'email': {'default': ['email']},
+    'domain': {'default': ['domain']},
+    'url': {'default': ['url']},
+    'ip': {'default': ['ip']},
+    'cve': {'default': ['cve', 'cve_id']},
+    'endpoint': {'default': ['ip'], 'required': False}
+}
+
+ENDPOINT_FLEXIBLE_REQUIRED_ARGS = ["ip", "id", "hostname"]
 
 GENERIC_COMMANDS_NAMES = BANG_COMMAND_NAMES.union({'send-mail', 'send-notification', 'cve-latest', 'cve-search'})
 
@@ -944,13 +1024,14 @@ IOC_OUTPUTS_DICT = {
     'domain': {'Domain.Name'},
     'file': {'File.MD5', 'File.SHA1', 'File.SHA256'},
     'ip': {'IP.Address'},
-    'url': {'URL.Data'}
+    'url': {'URL.Data'},
+    'endpoint': {'Endpoint.Hostname', 'Endpoint.IPAddress', 'Endpoint.ID'}
 }
 XSOAR_SUPPORT = "xsoar"
 XSOAR_AUTHOR = "Cortex XSOAR"
 PACK_INITIAL_VERSION = '1.0.0'
 PACK_SUPPORT_OPTIONS = ['xsoar', 'partner', 'developer', 'community']
-
+XSOAR_CONTEXT_STANDARD_URL = "https://xsoar.pan.dev/docs/integrations/context-standards"
 XSOAR_SUPPORT_URL = "https://www.paloaltonetworks.com/cortex"
 MARKETPLACE_LIVE_DISCUSSIONS = \
     'https://live.paloaltonetworks.com/t5/cortex-xsoar-discussions/bd-p/Cortex_XSOAR_Discussions'
@@ -1144,6 +1225,23 @@ DEFAULT_ID_SET_PATH = "./Tests/id_set.json"
 
 CONTEXT_OUTPUT_README_TABLE_HEADER = '| **Path** | **Type** | **Description** |'
 
+ARGUMENT_FIELDS_TO_CHECK = ['defaultValue', 'required', 'isArray']
+
+PARAM_FIELDS_TO_CHECK = ['defaultvalue', 'type', 'required']
+
+INTEGRATION_ARGUMENT_TYPES = {
+    '0': 'ShortText',
+    '4': 'Encrypted',
+    '8': 'Boolean',
+    '9': 'Authentication',
+    '12': 'LongText',
+    '15': 'SingleSelect',
+    '16': 'MultiSelect'
+}
+
+BUILD_IN_COMMANDS = ['getIncidents', 'DeleteContext', 'isWhitelisted', 'excludeIndicators',
+                     'deleteIndicators', 'extractIndicators']
+
 
 class ContentItems(Enum):
     # the format is defined in issue #19786, may change in the future
@@ -1197,5 +1295,16 @@ CONTENT_ITEMS_DISPLAY_FOLDERS = {
 }
 
 
+class PathLevel(Enum):
+    PACK = 'Pack',
+    CONTENT_ENTITY_DIR = 'ContentDir',
+    PACKAGE = 'Package',
+    FILE = 'File'
+    CONTENT_GENERIC_ENTITY_DIR = 'ContentGenericDir'
+
+
 class DemistoException(Exception):
     pass
+
+
+UUID_REGEX = r'([\w]{8}-[\w]{4}-[\w]{4}-[\w]{4}-[\w]{8,12})'

@@ -18,7 +18,8 @@ import requests.exceptions
 import urllib3.exceptions
 from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    PACKS_PACK_META_FILE_NAME,
-                                                   TYPE_PWSH, TYPE_PYTHON)
+                                                   SCRIPTS_DIR, TYPE_PWSH,
+                                                   TYPE_PYTHON)
 # Local packages
 from demisto_sdk.commands.common.tools import (get_all_docker_images,
                                                run_command_os)
@@ -30,6 +31,7 @@ from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, RERUN, RL,
                                                SUCCESS, WARNING,
                                                add_tmp_lint_files,
                                                add_typing_module,
+                                               coverage_report_editor,
                                                get_file_from_container,
                                                get_python_version_from_image,
                                                pylint_plugin,
@@ -53,7 +55,8 @@ class Linter:
             docker_engine(bool):  Whether docker engine detected by docker-sdk.
     """
 
-    def __init__(self, pack_dir: Path, content_repo: Path, req_3: list, req_2: list, docker_engine: bool):
+    def __init__(self, pack_dir: Path, content_repo: Path, req_3: list, req_2: list, docker_engine: bool,
+                 docker_timeout: int):
         self._req_3 = req_3
         self._req_2 = req_2
         self._content_repo = content_repo
@@ -61,7 +64,7 @@ class Linter:
         self._pack_name = None
         # Docker client init
         if docker_engine:
-            self._docker_client: docker.DockerClient = docker.from_env()
+            self._docker_client: docker.DockerClient = docker.from_env(timeout=docker_timeout)
             self._docker_hub_login = self._docker_login()
         # Facts gathered regarding pack lint and test
         self._facts: Dict[str, Any] = {
@@ -76,7 +79,8 @@ class Linter:
             "additional_requirements": [],
             "docker_engine": docker_engine,
             "is_script": False,
-            "commands": None
+            "commands": None,
+            "runas": ''
         }
         # Pack lint status object - visualize it
         self._pkg_lint_status: Dict = {
@@ -101,7 +105,7 @@ class Linter:
 
     def run_dev_packages(self, no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool, no_vulture: bool,
                          no_xsoar_linter: bool, no_pwsh_analyze: bool, no_pwsh_test: bool, no_test: bool, modules: dict,
-                         keep_container: bool, test_xml: str) -> dict:
+                         keep_container: bool, test_xml: str, no_coverage: bool) -> dict:
         """ Run lint and tests on single package
         Performing the follow:
             1. Run the lint on OS - flake8, bandit, mypy.
@@ -119,6 +123,7 @@ class Linter:
             modules(dict): Mandatory modules to locate in pack path (CommonServerPython.py etc)
             keep_container(bool): Whether to keep the test container
             test_xml(str): Path for saving pytest xml results
+            no_coverage(bool): Run pytest without coverage report
 
         Returns:
             dict: lint and test all status, pkg status)
@@ -150,7 +155,8 @@ class Linter:
                                                    no_pwsh_analyze=no_pwsh_analyze,
                                                    no_pwsh_test=no_pwsh_test,
                                                    keep_container=keep_container,
-                                                   test_xml=test_xml)
+                                                   test_xml=test_xml,
+                                                   no_coverage=no_coverage)
         except Exception as ex:
             err = f'{self._pack_abs_dir}: Unexpected fatal exception: {str(ex)}'
             logger.error(f"{err}. Traceback: {traceback.format_exc()}")
@@ -193,6 +199,7 @@ class Linter:
             self._facts['is_script'] = True if 'Scripts' in yml_file.parts else False
             self._facts['is_long_running'] = script_obj.get('longRunning')
             self._facts['commands'] = self._get_commands_list(script_obj)
+            self._facts['runas'] = script_obj.get('runas', '')
             self._pkg_lint_status["pack_type"] = script_obj.get('type')
         except (FileNotFoundError, IOError, KeyError):
             self._pkg_lint_status["errors"].append('Unable to parse package yml')
@@ -398,6 +405,7 @@ class Linter:
             # as a result we can use the env vars as a getway.
             myenv['commands'] = ','.join([str(elem) for elem in self._facts['commands']]) \
                 if self._facts['commands'] else ''
+            myenv['runas'] = self._facts['runas']
             stdout, stderr, exit_code = run_command_os(
                 command=build_xsoar_linter_command(lint_files, py_num, self._facts.get('support_level', 'base')),
                 cwd=self._pack_abs_dir, env=myenv)
@@ -411,6 +419,8 @@ class Linter:
         # if pylint did not run and failure exit code has been returned from run commnad
         elif exit_code & FAIL:
             status = FAIL
+            logger.debug(f"{log_prompt} - Actual XSOAR linter error -")
+            logger.debug(f"{log_prompt} - Full format stdout: {RL if stdout else ''}{stdout}")
             # for contrib prs which are not merged from master and do not have pylint in dev-requirements-py2.
             if os.environ.get('CI'):
                 stdout = "Xsoar linter could not run, Please merge from master"
@@ -518,7 +528,7 @@ class Linter:
         return SUCCESS, ""
 
     def _run_lint_on_docker_image(self, no_pylint: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
-                                  keep_container: bool, test_xml: str):
+                                  keep_container: bool, test_xml: str, no_coverage: bool):
         """ Run lint check on docker image
 
         Args:
@@ -528,6 +538,8 @@ class Linter:
             no_pwsh_test(bool): whether to skip powershell tests
             keep_container(bool): Whether to keep the test container
             test_xml(str): Path for saving pytest xml results
+            no_coverage(bool): Run pytest without coverage report
+
         """
         for image in self._facts["images"]:
             # Docker image status - visualize
@@ -563,7 +575,8 @@ class Linter:
                             elif not no_test and self._facts["test"] and check == "pytest":
                                 exit_code, output, test_json = self._docker_run_pytest(test_image=image_id,
                                                                                        keep_container=keep_container,
-                                                                                       test_xml=test_xml)
+                                                                                       test_xml=test_xml,
+                                                                                       no_coverage=no_coverage)
                                 status["pytest_json"] = test_json
                         elif self._pkg_lint_status["pack_type"] == TYPE_PWSH:
                             # Perform powershell analyze
@@ -794,14 +807,14 @@ class Linter:
             output = str(e)
         return exit_code, output
 
-    def _docker_run_pytest(self, test_image: str, keep_container: bool, test_xml: str) -> Tuple[int, str, dict]:
+    def _docker_run_pytest(self, test_image: str, keep_container: bool, test_xml: str, no_coverage: bool = False) -> Tuple[int, str, dict]:
         """ Run Pytest in created test image
 
         Args:
             test_image(str): Test image id/name
             keep_container(bool): True if to keep container after execution finished
             test_xml(str): Xml saving path
-
+            no_coverage(bool): Run pytest without coverage report
         Returns:
             int: 0 on successful, errors 1, need to retry 2
             str: Unit test json report
@@ -817,8 +830,10 @@ class Linter:
         test_json = {}
         try:
             # Running pytest container
+            cov = '' if no_coverage else self._pack_abs_dir.stem
             container_obj: docker.models.containers.Container = self._docker_client.containers.run(
-                name=container_name, image=test_image, command=[build_pytest_command(test_xml=test_xml, json=True)],
+                name=container_name, image=test_image, command=[build_pytest_command(test_xml=test_xml, json=True,
+                                                                                     cov=cov)],
                 user=f"{os.getuid()}:4000", detach=True, environment=self._facts["env_vars"])
             stream_docker_container_output(container_obj.logs(stream=True))
             # Waiting for container to be finished
@@ -838,6 +853,15 @@ class Linter:
                     xml_apth = Path(test_xml) / f'{self._pack_name}_pytest.xml'
                     with open(file=xml_apth, mode='bw') as f:
                         f.write(test_data_xml)  # type: ignore
+
+                if not no_coverage:
+                    cov_file_path = os.path.join(self._pack_abs_dir, '.coverage')
+                    cov_data = get_file_from_container(container_obj=container_obj,
+                                                       container_path="/devwork/.coverage")
+                    cov_data = cov_data if isinstance(cov_data, bytes) else cov_data.encode()
+                    with open(cov_file_path, 'wb') as coverage_file:
+                        coverage_file.write(cov_data)
+                    coverage_report_editor(cov_file_path, os.path.join(self._pack_abs_dir, f'{self._pack_abs_dir.stem}.py'))
 
                 test_json = json.loads(get_file_from_container(container_obj=container_obj,
                                                                container_path="/devwork/report_pytest.json",
@@ -938,7 +962,7 @@ class Linter:
         return exit_code, output
 
     def _update_support_level(self):
-        pack_dir = self._pack_abs_dir.parent if self._pack_abs_dir.parts[-1] == INTEGRATIONS_DIR else \
+        pack_dir = self._pack_abs_dir.parent if self._pack_abs_dir.parts[-1] in [INTEGRATIONS_DIR, SCRIPTS_DIR] else \
             self._pack_abs_dir.parent.parent
         pack_meta_content: Dict = json.load((pack_dir / PACKS_PACK_META_FILE_NAME).open())
         self._facts['support_level'] = pack_meta_content.get('support')

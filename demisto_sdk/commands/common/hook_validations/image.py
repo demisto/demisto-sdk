@@ -56,6 +56,8 @@ class ImageValidator(BaseValidator):
             is_existing_image = self.is_existing_image()
         if is_existing_image or '.png' in self.file_path:
             self.is_not_default_image()
+        if '.png' in self.file_path:
+            self.is_valid_image_name()
 
         return self._is_valid
 
@@ -157,4 +159,17 @@ class ImageValidator(BaseValidator):
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False
                 return False
+        return True
+
+    def is_valid_image_name(self):
+        """Check if the image name is valid"""
+        image_path = self.file_path
+
+        if not image_path.endswith("_image.png"):
+            error_message, error_code = Errors.invalid_image_name()
+
+            if self.handle_error(error_message, error_code, file_path=image_path):
+                self._is_valid = False
+                return False
+
         return True

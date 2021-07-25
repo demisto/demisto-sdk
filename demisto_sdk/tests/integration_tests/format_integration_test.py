@@ -9,12 +9,11 @@ import yaml
 from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.common.constants import OLDEST_SUPPORTED_VERSION
 from demisto_sdk.commands.common.hook_validations.playbook import \
     PlaybookValidator
 from demisto_sdk.commands.common.tools import (get_dict_from_file,
                                                is_test_config_match)
-from demisto_sdk.commands.format import update_generic
+from demisto_sdk.commands.format import format_module, update_generic
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 from demisto_sdk.commands.format.update_integration import IntegrationYMLFormat
 from demisto_sdk.commands.format.update_playbook import PlaybookYMLFormat
@@ -465,7 +464,7 @@ def test_format_on_invalid_py_long_dict_no_verbose(mocker, repo):
     assert invalid_py != integration.code.read()
 
 
-def test_format_on_relative_path_playbook(mocker, repo):
+def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
     """
     Given
     - playbook to validate on with a relative path
@@ -484,13 +483,19 @@ def test_format_on_relative_path_playbook(mocker, repo):
     mocker.patch.object(update_generic, 'is_file_from_content_repo',
                         return_value=(True, f'{playbook.path}/playbook.yml'))
     mocker.patch.object(PlaybookValidator, 'is_script_id_valid', return_value=True)
+    mocker.patch.object(PlaybookValidator, 'name_not_contain_the_type', return_value=True)
+
     mocker.patch.object(tools, 'is_external_repository', return_value=True)
+    monkeypatch.setattr('builtins.input', lambda _: 'N')
     success_reg = re.compile("Format Status .+?- Success\n")
     with ChangeCWD(playbook.path):
         runner = CliRunner(mix_stderr=False)
         result_format = runner.invoke(main, [FORMAT_CMD, '-i', 'playbook.yml', '-v'], catch_exceptions=False)
-        result_validate = runner.invoke(main, ['validate', '-i', 'playbook.yml', '--no-docker-checks'],
-                                        catch_exceptions=False)
+
+        with ChangeCWD(repo.path):
+            result_validate = runner.invoke(main, ['validate', '-i', 'Packs/PackName/Playbooks/playbook.yml',
+                                                   '--no-docker-checks', '--no-conf-json', '--allow-skipped'],
+                                            catch_exceptions=False)
 
     assert '======= Updating file:' in result_format.stdout
     assert success_reg.search(result_format.stdout)
@@ -515,7 +520,7 @@ def test_format_integration_skipped_files(repo):
     pack.create_doc_file()
 
     runner = CliRunner(mix_stderr=False)
-    format_result = runner.invoke(main, [FORMAT_CMD, '-i', str(pack.path), '-v'], catch_exceptions=False)
+    format_result = runner.invoke(main, [FORMAT_CMD, '-i', str(pack.path)], catch_exceptions=False)
 
     assert '======= Updating file:' in format_result.stdout
     assert 'Success' in format_result.stdout
@@ -574,7 +579,7 @@ def test_format_playbook_without_fromversion_no_preset_flag(repo):
     runner = CliRunner(mix_stderr=False)
     format_result = runner.invoke(main, [FORMAT_CMD, '-i', str(playbook.yml.path), '--assume-yes', '-v'])
     assert 'Success' in format_result.stdout
-    assert playbook.yml.read_dict().get('fromversion') == OLDEST_SUPPORTED_VERSION
+    assert playbook.yml.read_dict().get('fromversion') == '5.5.0'
 
 
 def test_format_playbook_without_fromversion_with_preset_flag(repo):
@@ -720,3 +725,102 @@ def test_format_playbook_copy_removed_from_name_and_id(repo):
     assert 'Success' in format_result.stdout
     assert playbook.yml.read_dict().get('id') == playbook_id
     assert playbook.yml.read_dict().get('name') == playbook_name
+
+
+def test_format_playbook_no_input_specified(mocker, repo):
+    """
+    Given:
+        - A playbook with name and id ending in `_copy`
+
+    When:
+        - Running format on the pack
+        - The path of the playbook was not provided
+
+    Then:
+        - The command will find the changed playbook
+        - Ensure format runs successfully
+        - Ensure format removes `_copy` from both name and id.
+    """
+    pack = repo.create_pack('Temp')
+    playbook = pack.create_playbook('my_temp_playbook')
+    playbook.create_default_playbook()
+    playbook_content = playbook.yml.read_dict()
+    playbook_id = playbook_content['id']
+    playbook_name = playbook_content['name']
+    playbook_content['id'] = playbook_id + '_copy'
+    playbook_content['name'] = playbook_name + '_copy'
+    playbook.yml.write_dict(playbook_content)
+    playbook_file = {'name': str(playbook.yml.path)}
+    mocker.patch.object(format_module, 'get_changed_files', return_value=[playbook_file])
+    runner = CliRunner(mix_stderr=False)
+    format_result = runner.invoke(main, [FORMAT_CMD, '-v'], input='y\n5.5.0')
+    assert 'Success' in format_result.stdout
+    assert playbook.yml.read_dict().get('id') == playbook_id
+    assert playbook.yml.read_dict().get('name') == playbook_name
+
+
+def test_format_incident_type_layout_id(repo):
+    """
+    Given:
+        - Content pack with incident type and layout
+        - Layout with ID which is a UUID string
+        - Incident type which is linked to the above layout
+
+    When:
+        - Running format on the content pack
+
+    Then:
+        - Verify layout ID is updated
+        - Verify the updated layout ID is also updated in the incident type
+    """
+    pack = repo.create_pack('PackName')
+    layout = pack.create_layoutcontainer(
+        name='layout',
+        content={
+            'id': '8f503eb3-883d-4626-8a45-16f56995bd43',
+            'name': 'IncidentLayout',
+            'group': 'incident',
+            'detailsV2': {"tabs": []}
+        }
+    )
+    incident_type = pack.create_incident_type(
+        name='incidentype',
+        content={
+            'layout': '8f503eb3-883d-4626-8a45-16f56995bd43',
+            'color': '',
+            'playbookId': '9f503eb3-333d-2226-7b45-16f56885bd45'
+        }
+    )
+    playbook = pack.create_playbook(
+        name='playbook',
+        yml={
+            'id': '9f503eb3-333d-2226-7b45-16f56885bd45',
+            'name': 'PlaybookName',
+            'tasks': {},
+            'fromversion': '5.0.0',
+            'description': ''
+        }
+    )
+
+    runner = CliRunner(mix_stderr=False)
+    format_result = runner.invoke(main, [FORMAT_CMD, '-i', str(pack.path), '-v', '-y'], catch_exceptions=False)
+
+    assert format_result.exit_code == 0
+    assert 'Success' in format_result.stdout
+    assert f'======= Updating file: {pack.path}' in format_result.stdout
+    assert f'======= Updating file: {layout.path}' in format_result.stdout
+    assert f'======= Updating file: {incident_type.path}' in format_result.stdout
+    assert f'======= Updating file: {playbook.yml.path}' in format_result.stdout
+
+    with open(layout.path) as layout_file:
+        layout_content = json.loads(layout_file.read())
+        assert layout_content['name'] == layout_content['id']
+
+    with open(playbook.yml.path) as playbook_file:
+        playbook_content = yaml.load(playbook_file.read())
+        assert playbook_content['name'] == playbook_content['id']
+
+    with open(incident_type.path) as incident_type_file:
+        incident_type_content = json.loads(incident_type_file.read())
+        assert incident_type_content['layout'] == 'IncidentLayout'
+        assert incident_type_content['playbookId'] == 'PlaybookName'

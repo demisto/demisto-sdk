@@ -160,8 +160,7 @@ jobs:
               export PYTHONPATH=".:${PYTHONPATH}"
               demisto-sdk -v
 
-              export CIRCLE_ARTIFACTS="/home/circleci/project/artifacts"
-              CIRCLE_BRANCH="master" demisto-sdk create-id-set -o ./Tests/id_set.json
+              CI_COMMIT_BRANCH="master" demisto-sdk create-id-set -o ./Tests/id_set.json --fail-duplicates
         - run:
             name: Merge Id Set
             when: always
@@ -174,7 +173,7 @@ jobs:
               export CIRCLE_ARTIFACTS="/home/circleci/project/artifacts"
 
               gsutil cp gs://marketplace-dist/content/private_id_set.json $CIRCLE_ARTIFACTS/unified_id_set.json
-              CIRCLE_BRANCH="master" demisto-sdk merge-id-sets -i1 ./Tests/id_set.json -i2 $CIRCLE_ARTIFACTS/unified_id_set.json -o $CIRCLE_ARTIFACTS/unified_id_set.json
+              CI_COMMIT_BRANCH="master" demisto-sdk merge-id-sets -i1 ./Tests/id_set.json -i2 $CIRCLE_ARTIFACTS/unified_id_set.json -o $CIRCLE_ARTIFACTS/unified_id_set.json
         - run:
             name: Test validate files and yaml
             when: always
@@ -184,10 +183,47 @@ jobs:
 
               export PYTHONPATH=".:${PYTHONPATH}"
               demisto-sdk -v
-              export CIRCLE_ARTIFACTS="/home/circleci/project/artifacts"
+              export ARTIFACTS_FOLDER="/home/circleci/project/artifacts"
 
-              CIRCLE_BRANCH="master" python3 ./Tests/scripts/update_conf_json.py
-              CIRCLE_BRANCH="master" ./Tests/scripts/validate.sh
+              CI_COMMIT_BRANCH="master" python3 ./Tests/scripts/update_conf_json.py
+              CI_COMMIT_BRANCH="master" ./Tests/scripts/validate.sh
+  test-lint:
+      docker:
+        - image: devdemisto/content-build:3.0.0.12681
+      steps:
+        - checkout
+        - setup_remote_docker
+        - attach_workspace:
+            at: ~/project
+        - run:
+            name: Test lint on python and ps files
+            when: always
+            command: |
+              cd ~/project
+              export SDK_LINT_FILES_CHANGED=$(git diff master... --name-only -- demisto_sdk/commands/lint)
+
+              if [[ -z "${SDK_LINT_FILES_CHANGED}" ]]; then
+                  echo "files under demisto_sdk/commands/lint did not change - Skipping lint runs."
+                  exit 0
+              fi
+              cd content
+              echo "installing venv"
+              NO_HOOKS=1 SETUP_PY2=yes .hooks/bootstrap >> /tmp/lint_env_installation.log
+              source ./venv/bin/activate
+              pip3 install -r .circleci/build-requirements.txt >> /tmp/lint_env_installation.log
+              
+              # installing local sdk inside venv
+              pip3 install ~/project >> /tmp/lint_env_installation.log
+              echo ""
+              echo "lint files changed running lint"
+              # python file (CommonServerPython lint is running over python 3 and 2)
+              demisto-sdk lint -i ./Packs/Base/Scripts/CommonServerPython
+              
+              # ps file
+              demisto-sdk lint -i ./Packs/Base/Scripts/CommonServerPowerShell
+              
+        - store_artifacts:
+            path: /tmp/lint_env_installation.log
   create-content-artifacts:
       docker:
         - image: circleci/python:3.8.3-buster-node
@@ -236,6 +272,8 @@ workflows:
       - validate-files:
           <<: *tag_filter
           <<: *reqs_content_checkout
+      - test-lint:
+          <<: *reqs_content_checkout
       - create-content-artifacts:
           <<: *tag_filter
           <<: *reqs_content_checkout
@@ -247,3 +285,4 @@ workflows:
             - precommit-checks
             - validate-files
             - create-content-artifacts
+            - test-lint

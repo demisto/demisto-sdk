@@ -1,0 +1,120 @@
+{
+    "title": "Configuration File",
+    "type": "object",
+    "properties": {
+        "custom_packs": {
+            "type": "array",
+            "items": {"$ref": "#/definitions/custom_pack"}
+        },
+        "marketplace_packs": {
+            "type": "array",
+            "items": {"$ref": "#/definitions/marketplace_pack"}
+        },
+        "lists": {
+            "type": "array",
+            "items": {"$ref": "#/definitions/list"}
+        },
+        "jobs": {
+            "type": "array",
+            "items": {"$ref": "#/definitions/job"}
+        }
+    },
+    "additionalProperties": false,
+    "definitions": {
+        "custom_pack": {
+            "type": "object",
+            "required": ["id", "url"],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "The name of the pack to install."
+                },
+                "url": {
+                    "type": "string",
+                    "description": "The url of the pack to install."
+                }
+            },
+            "additionalProperties": false
+        },
+        "marketplace_pack": {
+            "type": "object",
+            "required": ["id", "version"],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "The name of the pack to install."
+                },
+                "version": {
+                    "type": "string",
+                    "description": "The version of the pack to install."
+                }
+            },
+            "additionalProperties": false
+        },
+        "list": {
+            "type": "object",
+            "required": ["name", "value"],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "The name of the list to configure."
+                },
+                "value": {
+                    "type": "string",
+                    "description": "The value of the list to configure."
+                }
+            },
+            "additionalProperties": false
+        },
+        "job": {
+            "type": "object",
+            "required": ["type", "name", "playbookId"],
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "description": "The type of incident to be created."
+                },
+                "name": {
+                    "type": "string",
+                    "description": "The name of the job to configure."
+                },
+                "playbookId": {
+                    "type": "string",
+                    "description": "The ID of the playbook to be configured in the job."
+                },
+                "scheduled": {
+                    "type": "boolean",
+                    "description": "Whether to configure as a scheduled job or not."
+                },
+                "recurrent": {
+                    "type": "boolean",
+                    "description": "Whether to configure as a recurrent job or not."
+                },
+                "cronView": {
+                    "type": "boolean",
+                    "description": "Whether to configure the recurrent time as a cron string."
+                },
+                "cron": {
+                    "type": "string",
+                    "description": "Cron string to represent the recurrence of the job."
+                },
+                "startDate": {
+                    "type": "string",
+                    "description": "ISO format start datetime string (YYYY-mm-ddTHH:MM:SS.fffZ)."
+                },
+                "endingDate": {
+                    "type": "string",
+                    "description": "ISO format end datetime string (YYYY-mm-ddTHH:MM:SS.fffZ)."
+                },
+                "shouldTriggerNew": {
+                    "type": "boolean",
+                    "description": "Whether to trigger new job instance when a previous job instance is still active."
+                },
+                "closePrevRun": {
+                    "type": "boolean",
+                    "description": "Whether to cancel the previous job run when one is still active."
+                }
+            }
+        }
+    }
+}

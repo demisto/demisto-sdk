@@ -34,7 +34,7 @@ from demisto_sdk.commands.test_content.tools import (
     is_redhat_instance, update_server_configuration)
 from slack import WebClient as SlackClient
 
-ENV_RESULTS_PATH = './env_results.json'
+ENV_RESULTS_PATH = './artifacts/env_results.json'
 FAILED_MATCH_INSTANCE_MSG = "{} Failed to run.\n There are {} instances of {}, please select one of them by using " \
                             "the instance_name argument in conf.json. The options are:\n{}"
 ENTRY_TYPE_ERROR = 4
@@ -101,6 +101,7 @@ class TestConfiguration:
         self.pid_threshold = test_configuration.get('pid_threshold', Docker.DEFAULT_CONTAINER_PIDS_USAGE)
         self.runnable_on_docker_only: bool = test_configuration.get('runnable_on_docker_only', False)
         self.is_mockable = test_configuration.get('is_mockable')
+        self.context_print_dt = test_configuration.get('context_print_dt')
         self.test_integrations: List[str] = self._parse_integrations_conf(test_configuration)
         self.test_instance_names: List[str] = self._parse_instance_names_conf(test_configuration)
 
@@ -246,11 +247,12 @@ class TestPlaybook:
                 return False
         return True
 
-    def configure_integrations(self, client: DefaultApi) -> bool:
+    def configure_integrations(self, client: DefaultApi, server_context: 'ServerContext') -> bool:
         """
         Configures all integrations that the playbook uses and return a boolean indicating the result
         Args:
             client: The demisto_client to use
+            server_context (ServerContext): The ServerContext instance in which the TestContext instance is created in
 
         Returns:
             True if all integrations was configured else False
@@ -259,7 +261,9 @@ class TestPlaybook:
         for integration in self.integrations:
             instance_created = integration.create_integration_instance(client,
                                                                        self.configuration.playbook_id,
-                                                                       self.is_mockable)
+                                                                       self.is_mockable,
+                                                                       server_context,
+                                                                       )
             if not instance_created:
                 self.build_context.logging_module.error(
                     f'Cannot run playbook {self}, integration {integration} failed to configure')
@@ -270,14 +274,51 @@ class TestPlaybook:
             configured_integrations.append(integration)
         return True
 
-    def disable_integrations(self, client: DefaultApi) -> None:
+    def disable_integrations(self, client: DefaultApi, server_context: 'ServerContext') -> None:
         """
         Disables all integrations that the playbook uses
+        Clears server configurations set for the integration if there are such
+        Reset containers if server configurations were cleared
+
         Args:
             client: The demisto_client to use
+            server_context (ServerContext): The ServerContext instance in which the TestContext instance is created in
         """
         for integration in self.integrations:
             integration.disable_integration_instance(client)
+        updated_keys = self._set_prev_server_keys(client, server_context)
+        if updated_keys:
+            server_context._reset_containers()
+
+    def _set_prev_server_keys(self, client: DefaultApi, server_context: 'ServerContext') -> bool:
+        """Sets previous stored system (server) config, if existed
+
+        Args:
+            client (DefaultApi): The demisto_client to use
+            server_context (ServerContext): The ServerContext instance in which the TestContext instance is created in
+
+        Returns:
+             bool: Whether server configurations were updated to indicate if reset containers is required
+        """
+        updated = False
+        for integration in self.integrations:
+            if integration.configuration and 'server_keys' not in integration.configuration.params:
+                continue
+            if server_context.prev_system_conf:
+                update_server_configuration(
+                    client=client,
+                    server_configuration=server_context.prev_system_conf,
+                    error_msg='Failed to set server keys',
+                    logging_manager=integration.build_context.logging_module,
+                )
+                server_context.prev_system_conf = {}
+                updated = True
+            else:
+                integration.build_context.logging_module.error(
+                    f'Failed clearing system conf. Found server_keys for integration {integration.name} but could not'
+                    'find previous system conf stored'
+                )
+        return updated
 
     def delete_integration_instances(self, client: DefaultApi):
         """
@@ -379,6 +420,25 @@ class TestPlaybook:
             return False
 
         return True
+
+    def print_context_to_log(self, client: DefaultApi, incident_id: str) -> None:
+        try:
+            body = {
+                "query": f"${{{self.configuration.context_print_dt}}}"
+            }
+            res = demisto_client.generic_request_func(self=client, method='POST',
+                                                      path=f'/investigation/{incident_id}/context', body=body)
+            if int(res[1]) != 200:
+                self.build_context.logging_module.error(f'incident context fetch failed with Status code {res[1]}')
+                self.build_context.logging_module.error(pformat(res))
+                return
+            try:
+                self.build_context.logging_module.info(json.dumps(ast.literal_eval(res[0]), indent=4))
+            except ValueError:
+                self.build_context.logging_module.error(f"unable to parse result for result with value: {res[0]}")
+        except ApiException:
+            self.build_context.logging_module.exception(
+                'Failed to get context, error trying to communicate with demisto server')
 
 
 class BuildContext:
@@ -496,7 +556,7 @@ class BuildContext:
     @staticmethod
     def _extract_filtered_tests() -> list:
         """
-        Reads the content from ./Tests/filter_file.txt and parses it into a list of test playbook IDs that should be run
+        Reads the content from ./artifacts/filter_file.txt and parses it into a list of test playbook IDs that should be run
         in the current build
         Returns:
             A list of playbook IDs that should be run in the current build
@@ -673,7 +733,10 @@ class BuildContext:
         """
         Gets the user id of the circle user who triggered the current build
         """
-        circle_user_name = self._get_user_name_from_circle()
+        if os.environ.get('GITLAB_USER_LOGIN'):
+            user_name = os.environ['GITLAB_USER_LOGIN']
+        else:
+            user_name = self._get_user_name_from_circle()
         user_id = ''
         res = self.slack_client.api_call('users.list')
 
@@ -681,7 +744,7 @@ class BuildContext:
         for user in user_list:
             profile = user.get('profile', {})
             name = profile.get('real_name_normalized', '')
-            if name == circle_user_name:
+            if name == user_name:
                 user_id = user.get('id', '')
 
         return user_id
@@ -839,9 +902,11 @@ class Integration:
         self.build_context.logging_module.debug(f'Searching integration configuration for {self}')
 
         # Finding possible configuration matches
-        integration_params: List[IntegrationConfiguration] = [conf for conf in
-                                                              self.build_context.secret_conf.integrations if
-                                                              conf.name == self.name]
+        integration_params: List[IntegrationConfiguration] = [
+            deepcopy(conf) for conf in
+            self.build_context.secret_conf.integrations if
+            conf.name == self.name
+        ]
         # Modifying placeholders if exists
         integration_params: List[IntegrationConfiguration] = [
             self._change_placeholders_to_values(server_url, conf) for conf in integration_params]
@@ -939,15 +1004,19 @@ class Integration:
                     f'Deleting integration instance {instance_name} since it is defined by name')
                 self.delete_integration_instance(client, instance.get('id'))
 
-    def _set_server_keys(self, client: DefaultApi) -> None:
+    def _set_server_keys(self, client: DefaultApi, server_context: 'ServerContext') -> None:
         """In case the the params of the test in the content-test-conf repo has 'server_keys' key:
+            Resets containers
             Adds server configuration keys using the demisto_client.
 
         Args:
             client (demisto_client): The configured client to use.
+            server_context (ServerContext): The ServerContext instance in which the TestContext instance is created in
         """
         if 'server_keys' not in self.configuration.params:  # type: ignore
             return
+
+        server_context._reset_containers()
 
         self.build_context.logging_module.debug(f'Setting server keys for integration: {self}')
 
@@ -959,20 +1028,27 @@ class Integration:
         for key, value in self.configuration.params.get('server_keys').items():  # type: ignore
             data['data'][key] = value  # type: ignore
 
-        update_server_configuration(
+        _, _, prev_system_conf = update_server_configuration(
             client=client,
             server_configuration=self.configuration.params.get('server_keys'),  # type: ignore
             error_msg='Failed to set server keys',
             logging_manager=self.build_context.logging_module
         )
+        server_context.prev_system_conf = prev_system_conf
 
-    def create_integration_instance(self, client: DefaultApi, playbook_id: str, is_mockable: bool) -> bool:
+    def create_integration_instance(self,
+                                    client: DefaultApi,
+                                    playbook_id: str,
+                                    is_mockable: bool,
+                                    server_context: 'ServerContext',
+                                    ) -> bool:
         """
         Create an instance of the integration in the server specified in the demisto client instance.
         Args:
             client: The demisto_client instance to use
             playbook_id: The playbook id for which the instance should be created
             is_mockable: Indicates whether the integration should be configured with proxy=True or not
+            server_context (ServerContext): The ServerContext instance in which the TestContext instance is created in
 
         Returns:
             The integration configuration as it exists on the server after it was configured
@@ -1014,7 +1090,7 @@ class Integration:
         }
 
         # set server keys
-        self._set_server_keys(client)
+        self._set_server_keys(client, server_context)
 
         # set module params
         for param_conf in module_configuration:
@@ -1311,14 +1387,14 @@ class TestContext:
             Empty string or
         """
         try:
-            self.build_context.logging_module.info(f'ssh tunnel command: {self.tunnel_command}')
+            self.build_context.logging_module.info(f'ssh tunnel command:\n{self.tunnel_command}')
 
-            if not self.playbook.configure_integrations(self.client):
+            if not self.playbook.configure_integrations(self.client, self.server_context):
                 return PB_Status.FAILED
 
             test_module_result = self.playbook.run_test_module_on_integrations(self.client)
             if not test_module_result:
-                self.playbook.disable_integrations(self.client)
+                self.playbook.disable_integrations(self.client, self.server_context)
                 return PB_Status.FAILED
 
             incident = self.playbook.create_incident(self.client)
@@ -1335,7 +1411,9 @@ class TestContext:
             self.build_context.logging_module.info(f'Investigation URL: {server_url}/#/WorkPlan/{investigation_id}')
             playbook_state = self._poll_for_playbook_state()
 
-            self.playbook.disable_integrations(self.client)
+            if self.playbook.configuration.context_print_dt:
+                self.playbook.print_context_to_log(self.client, investigation_id)
+            self.playbook.disable_integrations(self.client, self.server_context)
             self._clean_incident_if_successful(playbook_state)
             return playbook_state
         except Exception:
@@ -1656,6 +1734,7 @@ class ServerContext:
         self.is_instance_using_docker = not is_redhat_instance(self.server_ip)
         self.executed_tests: Set[str] = set()
         self.executed_in_current_round: Set[str] = set()
+        self.prev_system_conf: dict = {}
 
     def _execute_unmockable_tests(self):
         """

@@ -49,23 +49,49 @@ from mock import patch
 
 class TestFormattingJson:
     FORMAT_FILES = [
-        (SOURCE_FORMAT_INCIDENTFIELD_COPY, DESTINATION_FORMAT_INCIDENTFIELD_COPY, INCIDENTFIELD_PATH, 0),
-        (SOURCE_FORMAT_INCIDENTTYPE_COPY, DESTINATION_FORMAT_INCIDENTTYPE_COPY, INCIDENTTYPE_PATH, 0),
-        (SOURCE_FORMAT_INDICATORFIELD_COPY, DESTINATION_FORMAT_INDICATORFIELD_COPY, INDICATORFIELD_PATH, 0),
         (SOURCE_FORMAT_INDICATORTYPE_COPY, DESTINATION_FORMAT_INDICATORTYPE_COPY, INDICATORTYPE_PATH, 0),
         (SOURCE_FORMAT_LAYOUT_COPY, DESTINATION_FORMAT_LAYOUT_COPY, LAYOUT_PATH, 0),
         (SOURCE_FORMAT_LAYOUTS_CONTAINER_COPY, DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY, LAYOUTS_CONTAINER_PATH, 0),
-        (SOURCE_FORMAT_DASHBOARD_COPY, DESTINATION_FORMAT_DASHBOARD_COPY, DASHBOARD_PATH, 0),
         (SOURCE_FORMAT_MAPPER, DESTINATION_FORMAT_MAPPER, MAPPER_PATH, 0),
         (SOURCE_FORMAT_CLASSIFIER, DESTINATION_FORMAT_CLASSIFIER, CLASSIFIER_PATH, 0),
-        (SOURCE_FORMAT_CLASSIFIER_5_9_9, DESTINATION_FORMAT_CLASSIFIER_5_9_9, CLASSIFIER_PATH, 0),
         (SOURCE_FORMAT_WIDGET, DESTINATION_FORMAT_WIDGET, WIDGET_PATH, 0)
+    ]
+    FORMAT_FILES_OLD_FROMVERSION = [
+        (SOURCE_FORMAT_INCIDENTFIELD_COPY, DESTINATION_FORMAT_INCIDENTFIELD_COPY, INCIDENTFIELD_PATH, 0),
+        (SOURCE_FORMAT_INCIDENTTYPE_COPY, DESTINATION_FORMAT_INCIDENTTYPE_COPY, INCIDENTTYPE_PATH, 0),
+        (SOURCE_FORMAT_INDICATORFIELD_COPY, DESTINATION_FORMAT_INDICATORFIELD_COPY, INDICATORFIELD_PATH, 0),
+        (SOURCE_FORMAT_CLASSIFIER_5_9_9, DESTINATION_FORMAT_CLASSIFIER_5_9_9, CLASSIFIER_PATH, 0),
+        (SOURCE_FORMAT_DASHBOARD_COPY, DESTINATION_FORMAT_DASHBOARD_COPY, DASHBOARD_PATH, 0),
     ]
 
     @pytest.mark.parametrize('source, target, path, answer', FORMAT_FILES)
     def test_format_file(self, source, target, path, answer):
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
+        res = format_manager(input=target, output=target, verbose=True)
+        shutil.rmtree(target, ignore_errors=True)
+        shutil.rmtree(path, ignore_errors=True)
+
+        assert res is answer
+
+    @pytest.mark.parametrize('source, target, path, answer', FORMAT_FILES_OLD_FROMVERSION)
+    def test_format_file_old_fromversion(self, source, target, path, answer, monkeypatch):
+        """
+        Given
+            - Incident field json file, Incident type json file, Indicator type json and classifier
+        When
+            - Run format_manager on files
+        Then
+            - Ensure that format finished without errors
+        """
+        os.makedirs(path, exist_ok=True)
+        shutil.copyfile(source, target)
+
+        monkeypatch.setattr(
+            'builtins.input',
+            lambda _: 'N'
+        )
+
         res = format_manager(input=target, output=target, verbose=True)
         shutil.rmtree(target, ignore_errors=True)
         shutil.rmtree(path, ignore_errors=True)
@@ -82,7 +108,155 @@ class TestFormattingJson:
                              "  Please specify a correct output."
 
 
-def test_update_connection_removes_unnecessary_keys(tmpdir):
+class TestFormattingIncidentTypes:
+    EXTRACTION_MODE_VARIATIONS = [
+        ('All', '', 'All'),
+        ('Specific', '', 'Specific'),
+        ('', 'Specific', 'Specific'),
+        ('specific', 'Specific', 'Specific')
+    ]
+
+    @pytest.mark.parametrize("existing_extract_mode, user_answer, expected", EXTRACTION_MODE_VARIATIONS)
+    def test_format_autoextract_mode(self, mocker, existing_extract_mode, user_answer, expected):
+        """
+        Given
+        - An incident type without auto extract mode or with a valid/invalid auto extract mode.
+
+        When
+        - Running format_auto_extract_mode on it.
+
+        Then
+        - If the auto extract mode is valid, then no format is needed.
+        - If the auto extract mode is invalid or doesn't exist, the user will choose between the two options.
+        """
+        mock_dict = {
+            'extractSettings': {
+                'mode': existing_extract_mode,
+                'fieldCliNameToExtractSettings': {
+                    "incident_field": {
+                        "extractAsIsIndicatorTypeId": "",
+                        "isExtractingAllIndicatorTypes": False,
+                        "extractIndicatorTypesIDs": []
+                    }
+                }
+            }
+        }
+        mocker.patch('demisto_sdk.commands.format.update_generic.get_dict_from_file', return_value=(mock_dict, 'mock_type'))
+        mocker.patch('demisto_sdk.commands.format.update_incidenttype.click.prompt', return_value=user_answer)
+        formatter = IncidentTypesJSONFormat("test")
+        formatter.format_auto_extract_mode()
+        current_mode = formatter.data.get('extractSettings', {}).get('mode')
+        assert current_mode == expected
+
+    def test_format_autoextract_mode_bad_user_input(self, mocker):
+        """
+        Given
+        - An incident type without auto extract mode.
+
+        When
+        - Running format_auto_extract_mode on it.
+
+        Then
+        - If user's input is invalid, prompt will keep on asking for a valid input.
+        """
+        mock_dict = {
+            'extractSettings': {
+                'fieldCliNameToExtractSettings': {
+                    "incident_field": {
+                        "extractAsIsIndicatorTypeId": "",
+                        "isExtractingAllIndicatorTypes": False,
+                        "extractIndicatorTypesIDs": []
+                    }
+                }
+            }
+        }
+        mocker.patch('demisto_sdk.commands.format.update_generic.get_dict_from_file',
+                     return_value=(mock_dict, 'mock_type'))
+        mock_func = mocker.patch('demisto_sdk.commands.format.update_incidenttype.click.prompt')
+        mock_func.side_effect = ['all', 'a', 'g', 'Specific']
+
+        formatter = IncidentTypesJSONFormat("test")
+        formatter.format_auto_extract_mode()
+        current_mode = formatter.data.get('extractSettings', {}).get('mode')
+        assert mock_func.call_count == 4
+        assert current_mode == 'Specific'
+
+    EXTRACTION_MODE_ALL_CONFLICT = [
+        ('All', None),
+        ('Specific', 'Specific'),
+    ]
+
+    @pytest.mark.parametrize("user_answer, expected", EXTRACTION_MODE_ALL_CONFLICT)
+    def test_format_autoextract_all_mode_conflict(self, mocker, user_answer, expected, capsys):
+        """
+        Given
+        - An incident type without auto extract mode with specific types under fieldCliNameToExtractSettings.
+
+        When
+        - Running format_auto_extract_mode on it.
+
+        Then
+        - If the user selected 'All', he will get an warning message and the mode will not be changed.
+        - If the user selected 'Specific', the mode will be changed.
+        """
+        mock_dict = {
+            'extractSettings': {
+                'mode': None,
+                'fieldCliNameToExtractSettings': {
+                    "incident_field": {
+                        "extractAsIsIndicatorTypeId": "",
+                        "isExtractingAllIndicatorTypes": False,
+                        "extractIndicatorTypesIDs": []
+                    }
+                }
+            }
+        }
+        mocker.patch('demisto_sdk.commands.format.update_generic.get_dict_from_file', return_value=(mock_dict, 'mock_type'))
+        mocker.patch('demisto_sdk.commands.format.update_incidenttype.click.prompt', return_value=user_answer)
+        formatter = IncidentTypesJSONFormat("test")
+        formatter.format_auto_extract_mode()
+        stdout, _ = capsys.readouterr()
+        current_mode = formatter.data.get('extractSettings', {}).get('mode')
+        assert current_mode == expected
+        if user_answer == 'All':
+            assert 'Cannot set mode to "All" since there are specific types' in stdout
+
+    EXTRACTION_MODE_SPECIFIC_CONFLICT = [
+        ('All', 'All'),
+        ('Specific', 'Specific'),
+    ]
+
+    @pytest.mark.parametrize("user_answer, expected", EXTRACTION_MODE_SPECIFIC_CONFLICT)
+    def test_format_autoextract_specific_mode_conflict(self, mocker, user_answer, expected, capsys):
+        """
+        Given
+        - An incident type without auto extract mode and without specific types under fieldCliNameToExtractSettings.
+
+        When
+        - Running format_auto_extract_mode on it.
+
+        Then
+        - If the user selected 'Specific', the mode will be changed but he will get a warning that no specific types were found.
+        - If the user selected 'All', the mode will be changed.
+        """
+        mock_dict = {
+            'extractSettings': {
+                'mode': None,
+                'fieldCliNameToExtractSettings': {}
+            }
+        }
+        mocker.patch('demisto_sdk.commands.format.update_generic.get_dict_from_file', return_value=(mock_dict, 'mock_type'))
+        mocker.patch('demisto_sdk.commands.format.update_incidenttype.click.prompt', return_value=user_answer)
+        formatter = IncidentTypesJSONFormat("test")
+        formatter.format_auto_extract_mode()
+        stdout, _ = capsys.readouterr()
+        current_mode = formatter.data.get('extractSettings', {}).get('mode')
+        assert current_mode == expected
+        if user_answer == 'Specific':
+            assert 'Please notice that mode was set to "Specific" but there are no specific types' in stdout
+
+
+def test_update_connection_removes_unnecessary_keys(tmpdir, monkeypatch):
     """
     Given
         - A connection json file with a key that's not exist in the schema
@@ -109,6 +283,10 @@ def test_update_connection_removes_unnecessary_keys(tmpdir):
         input=connection_file_path,
         output=connection_file_path,
         path=CONNECTION_SCHEMA_PATH,
+    )
+    monkeypatch.setattr(
+        'builtins.input',
+        lambda _: 'N'
     )
     connection_formatter.format_file()
     with open(connection_file_path, 'r') as file:
@@ -616,6 +794,20 @@ class TestFormattingMapper:
         mapper_formatter.set_fromVersion('6.0.0')
         assert mapper_formatter.data.get('fromVersion') == '6.0.0'
 
+    def test_update_id(self, mapper_formatter):
+        """
+        Given
+            - A layoutscontainer file with non matching name and id.
+        When
+            - Run format on layout file
+        Then
+            - Ensure that name and id are  matching
+        """
+        mapper_formatter.data['name'] = "name"
+        mapper_formatter.data['id'] = "id"
+        mapper_formatter.update_id()
+        assert mapper_formatter.data['name'] == mapper_formatter.data['id']
+
 
 class TestFormattingWidget:
 
@@ -755,3 +947,41 @@ class TestFormattingReport:
         formatter.run_format()
         stdout, _ = capsys.readouterr()
         assert 'Failed to update file my_file_path. Error: MY ERROR' in stdout
+
+    def test_set_fromversion_six_new_contributor_pack_no_fromversion(self, pack):
+        """
+        Given
+            - A new contributed pack with no fromversion key at incident_type json
+        When
+            - Run format command
+        Then
+            - Ensure that the integration fromversion is set to 6.0.0
+        """
+        pack.pack_metadata.update({'support': 'partner', 'currentVersion': '1.0.0'})
+        incident_type = pack.create_incident_type(name='TestType', content={})
+        bs = BaseUpdateJSON(input=incident_type.path)
+        bs.set_fromVersion()
+        assert bs.data['fromVersion'] == '6.0.0'
+
+    def test_set_fromversion_six_new_contributor_pack(self, pack):
+        """
+        Given
+            - A new contributed pack with - incident types, incident field, indicator field, indicator type,
+            classifier and layout s
+        When
+            - Run format command
+        Then
+            - Ensure that the integration fromversion is set to 6.0.0
+        """
+        pack.pack_metadata.update({'support': 'partner', 'currentVersion': '1.0.0'})
+        incident_type = pack.create_incident_type(name='TestType', content={'fromVersion': '5.5.0'})
+        incident_field = pack.create_incident_field(name='TestField', content={'fromVersion': '5.5.0'})
+        indicator_field = pack.create_indicator_field(name='TestFeild', content={'fromVersion': '5.5.0'})
+        indicator_type = pack.create_indicator_type(name='TestType', content={'fromVersion': '5.5.0'})
+        classifier = pack.create_classifier(name='TestClassifier', content={'fromVersion': '5.5.0'})
+        layout = pack.create_layout(name='TestLayout', content={'fromVersion': '5.5.0'})
+        for path in [incident_type.path, incident_field.path, indicator_field.path, indicator_type.path,
+                     classifier.path, layout.path]:
+            bs = BaseUpdateJSON(input=path)
+            bs.set_fromVersion()
+            assert bs.data['fromVersion'] == '6.0.0'

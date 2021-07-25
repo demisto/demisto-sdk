@@ -98,7 +98,8 @@ class Initiator:
                 INDICATOR_TYPES_DIR, REPORTS_DIR, WIDGETS_DIR, DOC_FILES_DIR]
 
     def __init__(self, output: str, name: str = '', id: str = '', integration: bool = False, template: str = '',
-                 script: bool = False, pack: bool = False, demisto_mock: bool = False, common_server: bool = False):
+                 category: str = '', script: bool = False, pack: bool = False, demisto_mock: bool = False,
+                 common_server: bool = False):
         self.output = output if output else ''
         self.id = id
 
@@ -107,6 +108,7 @@ class Initiator:
         self.is_pack = pack
         self.demisto_mock = demisto_mock
         self.common_server = common_server
+        self.category = category
         self.configuration = Configuration()
 
         # if no flag given automatically create a pack.
@@ -116,9 +118,9 @@ class Initiator:
         self.template = self.get_selected_template(template)
 
         self.full_output_path = ''
-
-        while ' ' in name:
-            name = str(input("The directory and file name cannot have spaces in it, Enter a different name: "))
+        if name:
+            while ' ' in name:
+                name = str(input("The directory and file name cannot have spaces in it, Enter a different name: "))
 
         self.dir_name = name
 
@@ -236,19 +238,25 @@ class Initiator:
 
         metadata_path = os.path.join(self.full_output_path, 'pack_metadata.json')
         with open(metadata_path, 'a') as fp:
-            user_response = input("\nWould you like fill pack's metadata file? Y/N ").lower()
+            user_response = str(input("\nWould you like fill pack's metadata file? Y/N ")).lower()
             fill_manually = user_response in ['y', 'yes']
 
             pack_metadata = Initiator.create_metadata(fill_manually)
+            self.category = pack_metadata['categories'][0] if pack_metadata['categories'] else 'Utilities'
             json.dump(pack_metadata, fp, indent=4)
 
             click.echo(f"Created pack metadata at path : {metadata_path}", color=LOG_COLORS.GREEN)
 
         create_integration = str(input("\nDo you want to create an integration in the pack? Y/N ")).lower()
         if create_integration in ['y', 'yes']:
+            is_same_category = str(input("\nDo you want to set the integration category as you defined in the pack "
+                                         "metadata? Y/N ")).lower()
+
+            integration_category = self.category if is_same_category in ['y', 'yes'] else ''
             integration_init = Initiator(output=os.path.join(self.full_output_path, 'Integrations'),
                                          integration=True, common_server=self.common_server,
-                                         demisto_mock=self.demisto_mock, template=self.template)
+                                         demisto_mock=self.demisto_mock, template=self.template,
+                                         category=integration_category)
             return integration_init.init()
 
         return True
@@ -460,11 +468,17 @@ class Initiator:
         yml_dict["commonfields"]["id"] = self.id
         yml_dict['name'] = self.id
 
+        from_version = input("\nThe fromversion value that will be used (optional): ")
+        if from_version:
+            yml_dict['fromversion'] = from_version
+
         if LooseVersion(yml_dict.get('fromversion', '0.0.0')) < LooseVersion(self.SUPPORTED_FROM_VERSION):
             yml_dict['fromversion'] = self.SUPPORTED_FROM_VERSION
 
         if integration:
             yml_dict["display"] = self.id
+            yml_dict["category"] = self.category if self.category else Initiator.get_valid_user_input(
+                options_list=INTEGRATION_CATEGORIES, option_message="\nIntegration category options: \n")
 
         with open(os.path.join(self.full_output_path, f"{self.dir_name}.yml"), 'w') as f:
             yaml.dump(

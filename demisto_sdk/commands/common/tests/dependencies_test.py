@@ -884,11 +884,19 @@ def create_inputs_for_method(repo, current_pack, inputs_arguments):
                 pack_to_take_entity_from = random.choice(range(1, number_of_packs))
                 input_argument.append(get_entity_by_pack_number_and_entity_type(repo, pack_to_take_entity_from,
                                                                                 LIST_ARGUMENTS_TO_METHODS[arg_type]))
+
+                # The pack is not depend on packs with indicator_field because the Layout is of type incident
+                if arg_type == 'indicators_fields':
+                    continue
                 dependencies.add(f'pack_{pack_to_take_entity_from}')
 
         else:
             pack_to_take_entity_from = random.choice(range(1, number_of_packs))
             input_argument = get_entity_by_pack_number_and_entity_type(repo, pack_to_take_entity_from, arg_type)
+
+            # The pack is not depend on packs with indicator_type because the Layout is of type incident
+            if arg_type == 'indicator_type':
+                continue
             dependencies.add(f'pack_{pack_to_take_entity_from}')
 
         inputs_values[arg] = input_argument
@@ -953,6 +961,7 @@ def test_dependencies(mocker, repo, test_number):
         - Update packs dependencies in pack metadata
     """
     # Note: if DEMISTO_SDK_ID_SET_REFRESH_INTERVAL is set it can fail the test
+    mock_is_external_repo(mocker, False)
     mocker.patch.dict(os.environ, {'DEMISTO_SDK_ID_SET_REFRESH_INTERVAL': '-1'})
     assert os.getenv('DEMISTO_SDK_ID_SET_REFRESH_INTERVAL') == '-1'
     number_of_packs = 10
@@ -987,6 +996,7 @@ def test_specific_entity(mocker, repo, entity_class):
         Then
         - Update packs dependencies in pack metadata
     """
+    mock_is_external_repo(mocker, False)
     # Note: if DEMISTO_SDK_ID_SET_REFRESH_INTERVAL is set it can fail the test
     mocker.patch.dict(os.environ, {'DEMISTO_SDK_ID_SET_REFRESH_INTERVAL': '-1'})
     assert os.getenv('DEMISTO_SDK_ID_SET_REFRESH_INTERVAL') == '-1'
@@ -1008,6 +1018,13 @@ def test_specific_entity(mocker, repo, entity_class):
         dependencies.remove('pack_0')
 
     assert IsEqualFunctions.is_lists_equal(list(dependencies), list(dependencies_from_pack_metadata))
+
+
+def mock_is_external_repo(mocker, is_external_repo_return):
+    return mocker.patch(
+        'demisto_sdk.commands.find_dependencies.find_dependencies.is_external_repository',
+        return_value=is_external_repo_return
+    )
 
 
 def test_dependencies_case_1(mocker, repo):
@@ -1036,6 +1053,7 @@ def test_dependencies_case_1(mocker, repo):
           - CommonTypes
 
     """
+    mock_is_external_repo(mocker, False)
     # setup the packs
     pack_foo = repo.create_pack('foo')
     pack_bar = repo.create_pack('bar')
@@ -1096,6 +1114,7 @@ def test_dependencies_case_2(mocker, repo):
           - CommonTypes
 
     """
+    mock_is_external_repo(mocker, False)
     # setup the packs
     pack_foo = repo.create_pack('foo')
     pack_bar = repo.create_pack('bar')

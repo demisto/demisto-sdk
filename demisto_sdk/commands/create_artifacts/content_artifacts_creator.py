@@ -307,36 +307,22 @@ class ContentItemsHandler:
 
     def add_generic_field_as_content_item(self, content_object: ContentObject):
         self.content_items[ContentItems.GENERIC_FIELD].append({
-            'name': content_object.get('name', ''),
-            'type': content_object.get('type', ''),
-            'description': content_object.get('description', '')
+            'name': content_object.get('name', '')
         })
 
     def add_generic_type_as_content_item(self, content_object: ContentObject):
-        self.content_items[ContentItems.INCIDENT_TYPES].append({
-            'name': content_object.get('name', ''),
-            'playbook': content_object.get('playbookId', ''),
-            'closureScript': content_object.get('closureScript', ''),
-            'hours': int(content_object.get('hours', 0)),
-            'days': int(content_object.get('days', 0)),
-            'weeks': int(content_object.get('weeks', 0))
+        self.content_items[ContentItems.GENERIC_TYPES].append({
+            'name': content_object.get('name', '')
         })
 
     def add_generic_definition_as_content_item(self, content_object: ContentObject):
-        self.content_items[ContentItems.INCIDENT_FIELDS].append({
-            'name': content_object.get('name', ''),
-            'type': content_object.get('type', ''),
-            'description': content_object.get('description', '')
+        self.content_items[ContentItems.GENERIC_DEFINITIONS].append({
+            'name': content_object.get('name', '')
         })
 
     def add_generic_module_as_content_item(self, content_object: ContentObject):
-        self.content_items[ContentItems.INCIDENT_TYPES].append({
-            'name': content_object.get('name', ''),
-            'playbook': content_object.get('playbookId', ''),
-            'closureScript': content_object.get('closureScript', ''),
-            'hours': int(content_object.get('hours', 0)),
-            'days': int(content_object.get('days', 0)),
-            'weeks': int(content_object.get('weeks', 0))
+        self.content_items[ContentItems.GENERIC_MODULES].append({
+            'name': content_object.get('name', '')
         })
 
 

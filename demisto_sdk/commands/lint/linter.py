@@ -832,7 +832,7 @@ class Linter:
             # Running pytest container
             cov = '' if no_coverage else self._pack_abs_dir.stem
             uid = os.getuid() or 4000
-            logger.debug(f'{log_prompt} - user uid for running lint/test: {uid}')
+            logger.debug(f'{log_prompt} - user uid for running lint/test: {uid}')  # lgtm[py/clear-text-logging-sensitive-data]
             container_obj: docker.models.containers.Container = self._docker_client.containers.run(
                 name=container_name, image=test_image, command=[build_pytest_command(test_xml=test_xml, json=True,
                                                                                      cov=cov)],

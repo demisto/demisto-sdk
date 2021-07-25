@@ -209,7 +209,7 @@ class Pack:
     @property
     def author_image(self) -> Optional[AuthorImage]:
         obj = None
-        file = self._path / "valid_author_image.png"
+        file = self._path / "Author_image.png"
         if file.exists():
             obj = AuthorImage(file)
 

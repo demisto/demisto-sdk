@@ -1,27 +1,9 @@
-import json
 import os
 
-import click
 import pytest
-import requests_mock
-from click.testing import CliRunner
-from demisto_sdk.__main__ import main
-from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.common.constants import (PACK_METADATA_DESC,
-                                                   PACK_METADATA_SUPPORT,
-                                                   PACK_METADATA_TAGS,
-                                                   PACK_METADATA_USE_CASES,
-                                                   PACKS_README_FILE_NAME,
-                                                   XSOAR_SUPPORT)
-from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator
-from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
-    PackUniqueFilesValidator
+
 from demisto_sdk.commands.common.hook_validations.author_image import AuthorImageValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from git import GitCommandError
-from TestSuite.test_tools import ChangeCWD
 
 VALIDATE_CMD = "validate"
 PACK_METADATA_PARTNER = {
@@ -72,7 +54,7 @@ class TestAuthorImageValidator:
         - 'author_image_path': path to where author image should be found.
 
         When:
-        - Performing validations of author image if needed
+        - Performing validations of author image if needed.
         Case a: XSOAR pack, image does not exist.
         Case b: Partner pack, image does not exist.
         Case c: XSOAR pack, valid image exists.
@@ -83,7 +65,7 @@ class TestAuthorImageValidator:
         Case h: Partner pack, image exists and is bigger than maximum size.
 
         Then:
-        - Ensure expected validation staus is made
+        - Ensure expected validation status is made.
         Case a: Ensure true is returned.
         Case b: Ensure false is returned.
         Case c: Ensure true is returned.

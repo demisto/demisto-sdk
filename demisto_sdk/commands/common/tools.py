@@ -997,7 +997,7 @@ def find_type_by_path(path: str = '') -> Optional[FileType]:
 
         return FileType.CHANGELOG
     # integration image
-    if path.endswith('_image.png') and not path.endswith("valid_author_image.png"):
+    if path.endswith('_image.png') and not path.endswith("Author_image.png"):
         return FileType.IMAGE
 
     # doc files images

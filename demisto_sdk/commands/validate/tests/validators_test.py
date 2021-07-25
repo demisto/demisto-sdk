@@ -483,6 +483,7 @@ class TestValidators:
         validate_manager = ValidateManager(skip_conf_json=True, id_set_path=id_set_path)
         mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_readme_and_pack_description', return_value=True)
         mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_readme_images', return_value=True)
+        mocker.patch.object(PackUniqueFilesValidator, '_read_metadata_content', return_value=dict())
         result = validate_manager.validate_pack_unique_files('QRadar', pack_error_ignore_list={})
         assert not result
 
@@ -623,7 +624,7 @@ class TestValidators:
                            "WD", "RP", "BA100", "BC100", "ST", "CL", "MP", "LO", "XC"]
         ignored_list = validate_manager.create_ignored_errors_list(errors_to_check)
         assert ignored_list == ["BA101", "BA102", "BA103", "BA104", "BA105", "BA106", "BA107", "BA108", "BA109",
-                                "BA110", "BC101", "BC102", "BC103", "BC104"]
+                                "BA110", 'BA111', "BC101", "BC102", "BC103", "BC104"]
 
     def test_added_files_type_using_function(self, repo, mocker):
         """

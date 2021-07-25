@@ -60,7 +60,7 @@ class ImageValidator(BaseValidator):
 
         return self._is_valid
 
-    def has_valid_size(self, allow_empty_image_file: bool, maximum_size: int = IMAGE_MAX_SIZE):
+    def has_valid_size(self, allow_empty_image_file: bool, maximum_size: int = IMAGE_MAX_SIZE) -> bool:
         """
         Checks if image has a valid size.
         if 'allow_empty_image_file' is true, checks that the image file is not empty.
@@ -69,7 +69,7 @@ class ImageValidator(BaseValidator):
             maximum_size:
 
         Returns:
-
+            (bool): True if size is valid, false otherwise.
         """
         if re.match(IMAGE_REGEX, self.file_path, re.IGNORECASE):
             image_size = os.path.getsize(self.file_path)
@@ -82,7 +82,7 @@ class ImageValidator(BaseValidator):
             data_dictionary = get_yaml(self.file_path)
 
             if not data_dictionary:
-                return
+                return True
 
             image = data_dictionary.get('image', '')
             image_size = ((len(image) - 22) / 4.0) * 3
@@ -93,15 +93,16 @@ class ImageValidator(BaseValidator):
 
         self.check_for_valid_empty_image(allow_empty_image_file, image_size)
 
-    def check_for_valid_empty_image(self, allow_empty_image_file: bool, image_size: int):
+    def check_for_valid_empty_image(self, allow_empty_image_file: bool, image_size: int) -> None:
         """
-
+        Checks if image is empty and allowed to be empty.
+        If image is empty and not allowed to be empty, adds an error to the validation.
         Args:
-            allow_empty_image_file:
-            image_size:
+            allow_empty_image_file (bool): Whether to allow image be empty.
+            image_size (int): Size of the image.
 
         Returns:
-
+            (None): Adds error and modifies '_is_valid' field if validation fails.
         """
         if not allow_empty_image_file and image_size == 0:
             error_message, error_code = Errors.image_is_empty(self.file_path)

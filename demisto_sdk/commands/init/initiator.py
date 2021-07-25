@@ -406,13 +406,13 @@ class Initiator:
         files = [file for file in files_and_directories if os.path.isfile(file) and sv.is_text_file(file)]
         # The search_potential_secrets method returns a nested dict with values of type list. The values are the secrets
         # {'a': {'b': ['secret1', 'secret2'], 'e': ['secret1']}, 'g': ['secret3']}
-        all_secrets = sv.search_potential_secrets(files)
-        secrets: set = set()
+        nested_dict_of_secrets = sv.search_potential_secrets(files)
+        set_of_secrets: set = set()
 
-        extract_values_from_nested_dict_to_a_set(all_secrets, secrets)
+        extract_values_from_nested_dict_to_a_set(nested_dict_of_secrets, set_of_secrets)
 
         with open(f'Packs/{pack_dir}/.secrets-ignore', 'a') as f:
-            for line in secrets:
+            for line in set_of_secrets:
                 f.write(line)
                 f.write('\n')
 

@@ -17,8 +17,8 @@ NAME = "demisto-sdk"
 # http://pypi.python.org/pypi/setuptools
 
 if __name__ == "__main__":
-    with open('requirements.txt') as f:
-        requirements = f.read().splitlines()
+    # with open('requirements.txt') as f:
+    #     requirements = f.read().splitlines()
 
     with open('README.md', 'r') as f:
         readme = f.read()
@@ -33,7 +33,7 @@ if __name__ == "__main__":
         author_email="",
         url="https://github.com/demisto/demisto-sdk",
         keywords=["Demisto"],
-        install_requires=requirements,
+        # install_requires=requirements,
         packages=find_packages(),
         include_package_data=True,
         entry_points={

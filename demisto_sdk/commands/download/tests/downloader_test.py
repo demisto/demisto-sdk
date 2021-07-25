@@ -76,7 +76,7 @@ class Environment:
         self.SCRIPT_INSTANCE_PATH = f'{self.PACK_INSTANCE_PATH}/Scripts/TestScript'
         self.PLAYBOOK_INSTANCE_PATH = f'{self.PACK_INSTANCE_PATH}/Playbooks/playbook-DummyPlaybook.yml'
         self.LAYOUT_INSTANCE_PATH = f'{self.PACK_INSTANCE_PATH}/Layouts/layout-details-TestLayout.json'
-        self.PRE_PROCESS_RULES_INSTANCE_PATH = f'{self.PACK_INSTANCE_PATH}/PreProcessRules/preprocessrule-dummy.yml'
+        self.PRE_PROCESS_RULES_INSTANCE_PATH = f'{self.PACK_INSTANCE_PATH}/PreProcessRules/preprocessrule-dummy.json'
 
         self.CUSTOM_CONTENT_SCRIPT_PATH = f'{self.CUSTOM_CONTENT_BASE_PATH}/automation-TestScript.yml'
         self.CUSTOM_CONTENT_INTEGRATION_PATH = f'{self.CUSTOM_CONTENT_BASE_PATH}/integration-Test_Integration.yml'

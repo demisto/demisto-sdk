@@ -475,7 +475,8 @@ def test_template_integration_init(monkeypatch, initiator, tmpdir, template):
     assert not diff, f'There\'s a missing file in the copied files, diff is {diff}'
 
 
-def test_integration_init_with_ignore_secrets(initiator, tmpdir, monkeypatch, mocker):
+@pytest.mark.parametrize('template', ['HelloWorld', 'FeedHelloWorld'])
+def test_integration_init_with_ignore_secrets(initiator, tmpdir, monkeypatch, mocker, template):
     """
     Tests `integration_init` function with a given script template name.
     Given
@@ -506,7 +507,7 @@ def test_integration_init_with_ignore_secrets(initiator, tmpdir, monkeypatch, mo
     initiator.output = temp_pack_dir
     initiator.dir_name = INTEGRATION_NAME
     initiator.is_integration = True
-    initiator.template = 'HelloWorld'
+    initiator.template = template
     initiator.category = 'Utilities'
     mocker.patch('demisto_sdk.commands.init.initiator.get_pack_name', return_value='PackName')
 
@@ -526,7 +527,7 @@ def test_integration_init_with_ignore_secrets(initiator, tmpdir, monkeypatch, mo
     assert os.path.isdir(integration_path)
     diff = expected_files.difference(integration_dir_files)
     assert not diff, f'There are missing file\'s in the files you expected to create, The missing file\'s are {diff}'
-    assert os.stat(secrets_ignore_path).st_size > 0
+    assert os.stat(secrets_ignore_path).st_size > 1
 
 
 def test_script_init(monkeypatch, initiator, tmpdir):

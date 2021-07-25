@@ -25,8 +25,8 @@ jobs:
         - image: circleci/python:3.8.3-buster-node
       steps:
         - checkout
-        - restore_cache:
-            key: tox-37-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
+#        - restore_cache:
+#            key: tox-37-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
         - run:
             # install npm modules so readme tests run with mdx verification
             name: npm install
@@ -43,18 +43,18 @@ jobs:
             no_output_timeout: 15m
             command: |
               tox -e py37 -v
-        - save_cache:
-            key: tox-37-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
-            paths:
-              - .tox/py37
+#        - save_cache:
+#            key: tox-37-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
+#            paths:
+#              - .tox/py37
 
   tox3-8-unit-tests:
       docker:
         - image: circleci/python:3.8.3-buster-node
       steps:
         - checkout
-        - restore_cache:
-            key: tox-38-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
+#        - restore_cache:
+#            key: tox-38-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
         - run:
             # install npm modules so readme tests run with mdx verification
             name: npm install
@@ -88,8 +88,8 @@ jobs:
       - image: circleci/python:3.8.3-buster-node
     steps:
       - checkout
-      - restore_cache:
-          key: tox-37-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
+#      - restore_cache:
+#          key: tox-37-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
       - run:
           # install npm modules so readme tests run with mdx verification
           name: npm install
@@ -103,10 +103,10 @@ jobs:
           name: Tox build
           command: |
             tox -e py37 --notest
-      - save_cache:
-          key: tox-37-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
-          paths:
-            - .tox/py37
+#      - save_cache:
+#          key: tox-37-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
+#          paths:
+#            - .tox/py37
       - persist_to_workspace:
           root: ~/project
           paths:

@@ -7,7 +7,7 @@ from typing import Dict, Optional
 
 import click
 
-from demisto_sdk.commands.common.constants import FileType
+from demisto_sdk.commands.common.constants import FileType, PACKS_DIR
 from demisto_sdk.commands.common.tools import get_pack_name, find_type
 
 
@@ -27,7 +27,7 @@ class GenericModuleUnifier:
 
         self.input_path = input
         self.pack_name = get_pack_name(file_path=self.input_path)
-        self.pack_path = os.path.dirname(os.path.dirname(self.input_path))
+        self.pack_path = os.path.join(PACKS_DIR, self.pack_name)
 
         self.input_file_name = os.path.basename(self.input_path).rstrip('.json')
         self.use_force = force

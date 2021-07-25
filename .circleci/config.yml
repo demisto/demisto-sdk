@@ -162,9 +162,9 @@ jobs:
               npm update
               npm ci
               export PYTHONPATH=".:${PYTHONPATH}"
-              demisto-sdk -v
+              python -m demisto_sdk -v
 
-              CI_COMMIT_BRANCH="master" demisto-sdk create-id-set -o ./Tests/id_set.json --fail-duplicates
+              CI_COMMIT_BRANCH="master" python -m demisto_sdk create-id-set -o ./Tests/id_set.json --fail-duplicates
         - run:
             name: Merge Id Set
             when: always
@@ -173,11 +173,11 @@ jobs:
               cd content
 
               export PYTHONPATH=".:${PYTHONPATH}"
-              demisto-sdk -v
+              python -m demisto_sdk -v
               export CIRCLE_ARTIFACTS="/home/circleci/project/artifacts"
 
               gsutil cp gs://marketplace-dist/content/private_id_set.json $CIRCLE_ARTIFACTS/unified_id_set.json
-              CI_COMMIT_BRANCH="master" demisto-sdk merge-id-sets -i1 ./Tests/id_set.json -i2 $CIRCLE_ARTIFACTS/unified_id_set.json -o $CIRCLE_ARTIFACTS/unified_id_set.json
+              CI_COMMIT_BRANCH="master" python -m demisto_sdk merge-id-sets -i1 ./Tests/id_set.json -i2 $CIRCLE_ARTIFACTS/unified_id_set.json -o $CIRCLE_ARTIFACTS/unified_id_set.json
         - run:
             name: Test validate files and yaml
             when: always
@@ -186,7 +186,7 @@ jobs:
               cd content
 
               export PYTHONPATH=".:${PYTHONPATH}"
-              demisto-sdk -v
+              python -m demisto_sdk -v
               export ARTIFACTS_FOLDER="/home/circleci/project/artifacts"
 
               CI_COMMIT_BRANCH="master" python3 ./Tests/scripts/update_conf_json.py
@@ -221,10 +221,10 @@ jobs:
               echo ""
               echo "lint files changed running lint"
               # python file (CommonServerPython lint is running over python 3 and 2)
-              demisto-sdk lint -i ./Packs/Base/Scripts/CommonServerPython
+              python -m demisto_sdk lint -i ./Packs/Base/Scripts/CommonServerPython
               
               # ps file
-              demisto-sdk lint -i ./Packs/Base/Scripts/CommonServerPowerShell
+              python -m demisto_sdk lint -i ./Packs/Base/Scripts/CommonServerPowerShell
               
         - store_artifacts:
             path: /tmp/lint_env_installation.log
@@ -242,10 +242,10 @@ jobs:
               . .tox/py37/bin/activate
 
               cd content
-              demisto-sdk -v
+              python -m demisto_sdk -v
               mkdir ./tmp
 
-              CIRCLE_BRANCH="master" demisto-sdk create-content-artifacts -a ./tmp
+              CIRCLE_BRANCH="master" python -m demisto_sdk create-content-artifacts -a ./tmp
         - store_artifacts:
             path: content/tmp
   deploy:

@@ -452,7 +452,7 @@ class Initiator:
         self.copy_demistotmock()
 
         if self.template != self.DEFAULT_INTEGRATION_TEMPLATE:  # DEFAULT_INTEGRATION_TEMPLATE there are no secrets
-            ignore_secrets = input("\n Currently, there are some secrets in the pack. "
+            ignore_secrets = input("\nCurrently, there are some secrets in the pack. "
                                    "Would you like ignore them automatically? Y/N ").lower()
             if ignore_secrets in ['y', 'yes']:
                 self.ignore_secrets_automatically()
@@ -496,7 +496,7 @@ class Initiator:
         self.copy_common_server_python()
         self.copy_demistotmock()
 
-        ignore_secrets = input("\n Currently, there are some secrets in the pack. "
+        ignore_secrets = input("\nCurrently, there are some secrets in the pack. "
                                "Would you like ignore them automatically? Y/N ").lower()
         if ignore_secrets in ['y', 'yes']:
             self.ignore_secrets_automatically()

@@ -527,7 +527,7 @@ def test_integration_init_with_ignore_secrets(initiator, tmpdir, monkeypatch, mo
     assert os.path.isdir(integration_path)
     diff = expected_files.difference(integration_dir_files)
     assert not diff, f'There are missing file\'s in the files you expected to create, The missing file\'s are {diff}'
-    assert os.stat(secrets_ignore_path).st_size > 1
+    assert os.stat(secrets_ignore_path).st_size > 0
 
 
 def test_script_init(monkeypatch, initiator, tmpdir):

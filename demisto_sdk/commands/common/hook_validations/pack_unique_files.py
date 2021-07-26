@@ -379,6 +379,7 @@ class PackUniqueFilesValidator(BaseValidator):
         metadata_url = pack_meta_file_content[PACK_METADATA_URL]
         metadata_url = metadata_url.lower().strip()
         if len(re.findall("github.com", metadata_url)) > 0:
+            # GitHub URLs that lead to a /issues page are also acceptable as a support URL.
             if not metadata_url.endswith('/issues'):
                 self._add_error(Errors.metadata_url_invalid(), self.pack_meta_file)
                 return False

@@ -1367,8 +1367,11 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def metadata_url_invalid():
-        return 'The metadata url leads to a GitHub repo instead of a support page. ' \
-               'Please provide a url for a support page.'
+        return 'The metadata URL leads to a GitHub repo instead of a support page. ' \
+               'Please provide a URL for a support page as detailed in:\n ' \
+               'https://xsoar.pan.dev/docs/packs/packs-format#pack_metadatajson\n ' \
+               'Note that GitHub URLs that lead to a /issues page are also acceptable. ' \
+               '(e.g. https://github.com/some_monitored_repo/issues)'
 
     @staticmethod
     @error_code_decorator

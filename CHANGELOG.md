@@ -1,4 +1,6 @@
 # Changelog
+
+# 1.4.5
 * Enhanced the **postman-codegen** command to name all generated arguments with lower case.
 * Fixed an issue where the **find-dependencies** command miscalculated the dependencies for playbooks that use generic commands.
 * Fixed an issue where the **validate** command failed in external repositories in case the DEMISTO_SDK_GITHUB_TOKEN was not set.

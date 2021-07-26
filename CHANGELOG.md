@@ -10,6 +10,7 @@
 * Updated the **find-dependencies** command to support generic modules, definitions, fields and types.
 * Fixed an issue where **openapi-codegen** tried to extract reference example outputs, leading to an exception.
 * Added a tool that gives the ability to temporarily suppress console output.
+* Fixed an issue where **validate** suggests, with no reason, running **format** on missing mandatory keys in yml file.
 
 # 1.4.4
 * When formatting incident types with Auto-Extract rules and without mode field, the **format** command will now add the user selected mode.

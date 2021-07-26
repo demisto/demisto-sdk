@@ -1365,6 +1365,12 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def metadata_url_invalid():
+        return 'The metadata url leads to a GitHub repo instead of a support page. ' \
+               'Please provide a url for a support page.'
+
+    @staticmethod
+    @error_code_decorator
     def readme_contains_demisto_word(line_nums):
         return f'Found the word \'Demisto\' in the readme content in lines: {line_nums}.'
 

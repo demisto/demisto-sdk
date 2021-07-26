@@ -23,8 +23,8 @@ ALLOWED_IGNORE_ERRORS = [
 ]
 
 PRESET_ERROR_TO_IGNORE = {
-    'community': ['BC', 'CJ', 'DS100', 'DS101', 'DS102', 'DS103', 'DS104', 'IN125', 'IN126'],
-    'partner': ['CJ']
+    'community': ['BC', 'CJ', 'DS100', 'DS101', 'DS102', 'DS103', 'DS104', 'IN125', 'IN126', 'IN140'],
+    'partner': ['CJ', 'IN140']
 }
 
 PRESET_ERROR_TO_CHECK = {

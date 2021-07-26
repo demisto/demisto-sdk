@@ -67,7 +67,6 @@ class BaseValidator:
 
         if drop_line:
             formatted_error = "\n" + formatted_error
-
         if file_path:
             if not isinstance(file_path, str):
                 file_path = str(file_path)
@@ -90,6 +89,11 @@ class BaseValidator:
                 click.secho(formatted_error[:-1], fg="bright_red")
                 if error_code == 'ST109':
                     click.secho("Please add to the root of the yml.\n", fg="bright_red")
+                elif error_code == 'ST107':
+                    missing_field = error_message.split(" ")[3]
+                    path_to_add = error_message.split(":")[1]
+                    click.secho(f"Please add the field {missing_field} to the path: {path_to_add} in the yml.\n",
+                                fg="bright_red")
                 else:
                     click.secho(suggested_fix + "\n", fg="bright_red")
 

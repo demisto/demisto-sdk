@@ -67,7 +67,7 @@ class PreProcessRulesBaseFormat(BaseUpdateJSON):
     def pre_process_rules__set_output_path(self):
         output_basename = os.path.basename(self.output_file)
         if not output_basename.startswith(PRE_PROCESS_RULES_PREFIX):
-            new_output_basename = PRE_PROCESS_RULES_PREFIX
+            new_output_basename = PRE_PROCESS_RULES_PREFIX + output_basename
             new_output_path = self.output_file.replace(output_basename, new_output_basename)
 
             # rename file if source and output are the same

@@ -6,6 +6,7 @@ from typing import Optional
 
 from demisto_sdk.commands.common.constants import DEFAULT_ID_SET_PATH
 from demisto_sdk.commands.common.update_id_set import re_create_id_set
+from demisto_sdk.commands.common.constants import GENERIC_COMMANDS_NAMES
 
 
 class IDSetCreator:
@@ -57,7 +58,7 @@ class IDSetCreator:
                     # only apply this logic when there is no specific brand
                     continue
                 is_command_implemented_in_integration = command in command_name_to_implemented_integration_map
-                if is_command_implemented_in_integration:
+                if is_command_implemented_in_integration and command not in GENERIC_COMMANDS_NAMES:
                     implemented_integration = command_name_to_implemented_integration_map[command]
                     commands_to_integration[command] = implemented_integration
 

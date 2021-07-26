@@ -1,5 +1,6 @@
 # Changelog
 * Fixed an issue where **validate** suggests, with no reason, running **format** on missing mandatory keys in yml file.
+* Added validation that partner contribution pack's metadata url does not lead to a github repo.
 
 # 1.4.5
 * Enhanced the **postman-codegen** command to name all generated arguments with lower case.

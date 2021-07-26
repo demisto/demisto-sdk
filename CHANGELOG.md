@@ -1,5 +1,7 @@
 # Changelog
 * Fixed an issue where **validate** suggests, with no reason, running **format** on missing mandatory keys in yml file.
+* Added option to enter a dictionary or json of format `[{field_name:description}]` in the **json-to-outputs** command,
+  with the `-d` flag.
 
 # 1.4.5
 * Enhanced the **postman-codegen** command to name all generated arguments with lower case.
@@ -73,8 +75,6 @@
 * Added the *--docs-format* flag in the **integration-diff** command to get the output in README format.
 * Added the *--input-old-version* and *--skip-breaking-changes* flags in the **generate-docs** command to get the
   details for the breaking section and to skip the breaking changes section.
-* Added option to enter a dictionary or json of format `[{field_name:description}]` in the **json-to-outputs** command,
-  with the `-d` flag.
 
 # 1.4.0
 * Enable passing a comma-separated list of paths for the `--input` option of the **lint** command.

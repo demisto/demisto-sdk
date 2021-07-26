@@ -798,8 +798,8 @@ def run_playbook(**kwargs):
     "--interactive", help="If passed, then for each output field will ask user interactively to enter the "
                           "description. By default is interactive mode is disabled", is_flag=True)
 @click.option(
-    "-d", "--description_json",
-    help="If passed, user is prompted to input a JSON mapping field names to their descriptions. False by default.",
+    "-d", "--description-json",
+    help="If passed, the user is prompted to input a JSON mapping field names to their descriptions.",
     is_flag=True)
 def json_to_outputs_command(**kwargs):
     """Demisto integrations/scripts have a YAML file that defines them.

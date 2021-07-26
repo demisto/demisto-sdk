@@ -160,7 +160,7 @@ class TestPackUniqueFilesValidator:
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', pack.path], catch_exceptions=False)
 
-        error_text = 'The metadata url leads to a GitHub repo instead of a support page.'
+        error_text = 'The metadata URL leads to a GitHub repo instead of a support page.'
         if is_valid:
             assert error_text not in result.stdout
         else:

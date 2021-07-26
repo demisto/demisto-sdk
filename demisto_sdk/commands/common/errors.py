@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import decorator
 from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
@@ -43,7 +43,7 @@ ERROR_CODE = {
     "folder_name_has_separators": {'code': "BA108", 'ui_applicable': False, 'related_field': ''},
     "file_name_has_separators": {'code': "BA109", 'ui_applicable': False, 'related_field': ''},
     "field_contain_forbidden_word": {'code': "BA110", 'ui_applicable': False, 'related_field': ''},
-    'entity_name_contains_contribution_type_name': {'code': 'BA111', 'ui_applicable': False, 'related_field': ''},
+    'entity_name_contains_excluded_word': {'code': 'BA111', 'ui_applicable': False, 'related_field': ''},
     "wrong_display_name": {'code': "IN100", 'ui_applicable': True, 'related_field': '<parameter-name>.display'},
     "wrong_default_parameter_not_empty": {'code': "IN101", 'ui_applicable': True,
                                           'related_field': '<parameter-name>.default'},
@@ -224,7 +224,6 @@ ERROR_CODE = {
     "invalid_core_pack_dependencies": {'code': "PA124", 'ui_applicable': True, 'related_field': ''},
     "pack_name_is_not_in_xsoar_standards": {'code': "PA125", 'ui_applicable': False, 'related_field': ''},
     "pack_metadata_long_description": {'code': "PA126", 'ui_applicable': False, 'related_field': ''},
-    'pack_name_contains_contribution_type_name': {'code': 'PA127', 'ui_applicable': False, 'related_field': ''},
     "readme_error": {'code': "RM100", 'ui_applicable': False, 'related_field': ''},
     "image_path_error": {'code': "RM101", 'ui_applicable': False, 'related_field': ''},
     "readme_missing_output_context": {'code': "RM102", 'ui_applicable': False, 'related_field': ''},
@@ -1326,7 +1325,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def pack_name_is_not_in_xsoar_standards(reason):
+    def pack_name_is_not_in_xsoar_standards(reason, excluded_words: Optional[List[str]] = None):
         if reason == "short":
             return f'Pack metadata {PACK_METADATA_NAME} field is not valid. The pack name must be at least 3' \
                    f' characters long.'
@@ -1336,6 +1335,9 @@ class Errors:
         if reason == "wrong_word":
             return f'Pack metadata {PACK_METADATA_NAME} field is not valid. The pack name must not contain the words:' \
                    f' ["Pack", "Playbook", "Integration", "Script"]'
+        if reason == 'excluded_word':
+            return f'Pack metadata {PACK_METADATA_NAME} field is not valid. The pack name must not contain the words:' \
+                   f' {excluded_words}'
 
     @staticmethod
     @error_code_decorator
@@ -1759,10 +1761,5 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def pack_name_contains_contribution_type_name(pack_name: str, support_names: List[str]):
-        return f'Pack {pack_name} should not contain one of {support_names} in its name. Please remove.'
-
-    @staticmethod
-    @error_code_decorator
-    def entity_name_contains_contribution_type_name(entity_name: str, support_names: List[str]):
-        return f'Entity {entity_name} should not contain one of {support_names} in its name. Please remove.'
+    def entity_name_contains_excluded_word(entity_name: str, excluded_words: List[str]):
+        return f'Entity {entity_name} should not contain one of {excluded_words} in its name. Please remove.'

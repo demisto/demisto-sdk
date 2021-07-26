@@ -41,7 +41,7 @@ class ContentEntityValidator(BaseValidator):
         tests = [
             self.is_valid_version(),
             self.is_valid_fromversion(),
-            self.name_does_not_contain_contributor_type_name()
+            self.name_does_not_contain_excluded_word()
         ]
         return all(tests)
 
@@ -65,19 +65,17 @@ class ContentEntityValidator(BaseValidator):
                 return False
         return True
 
-    def name_does_not_contain_contributor_type_name(self) -> bool:
+    def name_does_not_contain_excluded_word(self) -> bool:
         """
-        Checks whether given object has contributor name type.
-        This validation is needed because the label of contributor is automatically added to the name, so this
-        validation will prevent it from being added twice.
+        Checks whether given object contains excluded word.
         Returns:
-            (bool) False if name corresponding to file path contains contributor type name, true otherwise.
+            (bool) False if display name corresponding to file path contains excluded word, true otherwise.
         """
         name = get_file_displayed_name(self.file_path)
         lowercase_name = name.lower()
-        if any(contributor_name in lowercase_name for contributor_name in self.CONTRIBUTOR_TYPE_LIST):
-            error_message, error_code = Errors.entity_name_contains_contribution_type_name(name,
-                                                                                           self.CONTRIBUTOR_TYPE_LIST)
+        if any(excluded_word in lowercase_name for excluded_word in self.EXCLUDED_DISPLAY_NAME_WORDS):
+            error_message, error_code = Errors.entity_name_contains_excluded_word(name,
+                                                                                  self.EXCLUDED_DISPLAY_NAME_WORDS)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True

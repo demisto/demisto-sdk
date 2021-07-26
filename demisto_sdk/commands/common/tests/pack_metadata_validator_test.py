@@ -73,23 +73,23 @@ class TestPackMetadataValidator:
         mocker.patch.object(validator, '_add_error', return_value=True)
         assert validator.validate_pack_name(metadata_content) == expected
 
-    def test_name_does_not_contain_contributor_type_name(self):
+    def test_name_does_not_contain_excluded_word(self):
         """
         Given:
-        - Pack name
+        - Pack name.
 
         When:
-        - Validating pack name does not contain contribution type name.
+        - Validating pack name does not contain excluded word.
 
         Then:
         - Ensure expected result is returned.
         """
         pack_name: str = 'Bitcoin Abuse'
         validator = PackUniqueFilesValidator('fake')
-        assert validator.name_does_not_contain_contributor_type_name(pack_name)
-        for contrib_type_name in validator.CONTRIBUTOR_TYPE_LIST:
-            invalid_pack_name: str = f'{pack_name} ({contrib_type_name})'
-            assert not validator.name_does_not_contain_contributor_type_name(invalid_pack_name)
+        assert validator.name_does_not_contain_excluded_word(pack_name)
+        for excluded_word in validator.EXCLUDED_DISPLAY_NAME_WORDS:
+            invalid_pack_name: str = f'{pack_name} ({excluded_word})'
+            assert not validator.name_does_not_contain_excluded_word(invalid_pack_name)
 
     @staticmethod
     def read_file(file_):

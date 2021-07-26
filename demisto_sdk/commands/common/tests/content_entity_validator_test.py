@@ -153,7 +153,7 @@ def test_entity_valid_name(repo, mocker):
     - Entity name.
 
     When:
-    - Checking whether entity name contains contributor type name.
+    - Checking whether entity name contains excluded word.
 
     Then:
     - Ensure expected result is returned.
@@ -169,20 +169,20 @@ def test_entity_valid_name(repo, mocker):
     script_structure_validator = StructureValidator(script.yml.path)
     integration_content_entity_validator = ContentEntityValidator(integration_structure_validator)
     script_content_entity_validator = ContentEntityValidator(script_structure_validator)
-    assert integration_content_entity_validator.name_does_not_contain_contributor_type_name()
-    assert script_content_entity_validator.name_does_not_contain_contributor_type_name()
-    for contributor_type_name in ContentEntityValidator.CONTRIBUTOR_TYPE_LIST:
-        integration_name_with_contributor_type = f'{integration.name} ({contributor_type_name})'
-        script_name_with_contributor_type = f'{script.name} ({contributor_type_name})'
-        integration = pack.create_integration(integration_name_with_contributor_type)
-        script = pack.create_script(script_name_with_contributor_type)
-        integration.yml.update({'display': integration_name_with_contributor_type})
-        script.yml.update({'name': script_name_with_contributor_type})
+    assert integration_content_entity_validator.name_does_not_contain_excluded_word()
+    assert script_content_entity_validator.name_does_not_contain_excluded_word()
+    for excluded_word in ContentEntityValidator.EXCLUDED_DISPLAY_NAME_WORDS:
+        integration_name_with_excluded_word = f'{integration.name} ({excluded_word})'
+        script_name_with_excluded_word = f'{script.name} ({excluded_word})'
+        integration = pack.create_integration(integration_name_with_excluded_word)
+        script = pack.create_script(script_name_with_excluded_word)
+        integration.yml.update({'display': integration_name_with_excluded_word})
+        script.yml.update({'name': script_name_with_excluded_word})
         integration_structure_validator = StructureValidator(integration.yml.path)
         script_structure_validator = StructureValidator(script.yml.path)
         integration_content_entity_validator = ContentEntityValidator(integration_structure_validator)
         script_content_entity_validator = ContentEntityValidator(script_structure_validator)
         mocker.patch.object(integration_content_entity_validator, 'handle_error')
         mocker.patch.object(script_content_entity_validator, 'handle_error')
-        assert not integration_content_entity_validator.name_does_not_contain_contributor_type_name()
-        assert not script_content_entity_validator.name_does_not_contain_contributor_type_name()
+        assert not integration_content_entity_validator.name_does_not_contain_excluded_word()
+        assert not script_content_entity_validator.name_does_not_contain_excluded_word()

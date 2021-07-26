@@ -10,7 +10,8 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                get_pack_name,
                                                get_pack_names_from_files,
                                                print_color,
-                                               print_warning)
+                                               print_warning,
+                                               suppress_stdout)
 from demisto_sdk.commands.update_release_notes.update_rn import (
     UpdateRN, update_api_modules_dependents_rn)
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
@@ -77,6 +78,12 @@ class UpdateReleaseNotesManager:
             if not validate_manager.git_util:  # in case git utils can't be initialized.
                 raise git.InvalidGitRepositoryError('unable to connect to git.')
             validate_manager.setup_git_params()
+            if self.given_pack:
+                # The Validator prints errors which are related to all changed files that were changed against prev
+                # version. When the user is giving a specific pack to update, we want to suppress the error messages
+                # which are related to other packs.
+                with suppress_stdout():
+                    return validate_manager.get_changed_files_from_git()
             return validate_manager.get_changed_files_from_git()
         except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:
             raise FileNotFoundError(

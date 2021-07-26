@@ -400,7 +400,7 @@ class Initiator:
     def find_secrets(self):
         files_and_directories = glob.glob(f'{self.full_output_path}/**/*', recursive=True)
 
-        sv = SecretsValidator(white_list_path='./Tests/secrets_white_list.json')
+        sv = SecretsValidator(white_list_path='./Tests/secrets_white_list.json', ignore_entropy=True)
         # remove directories and irrelevant files
         files = [file for file in files_and_directories if os.path.isfile(file) and sv.is_text_file(file)]
         # The search_potential_secrets method returns a nested dict with values of type list. The values are the secrets

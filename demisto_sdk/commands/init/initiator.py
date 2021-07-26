@@ -397,8 +397,7 @@ class Initiator:
             except ValueError:
                 user_input = input("\nThe option must be number, please enter valid choice: ")
 
-    def ignore_secrets_automatically(self):
-        pack_dir = get_pack_name(self.full_output_path)
+    def find_secrets(self):
         files_and_directories = glob.glob(f'{self.full_output_path}/**/*', recursive=True)
 
         sv = SecretsValidator(white_list_path='./Tests/secrets_white_list.json')
@@ -411,9 +410,13 @@ class Initiator:
 
         extract_values_from_nested_dict_to_a_set(nested_dict_of_secrets, set_of_secrets)
 
+        return set_of_secrets
+
+    def ignore_secrets(self, secrets):
+        pack_dir = get_pack_name(self.full_output_path)
         with open(f'Packs/{pack_dir}/.secrets-ignore', 'a') as f:
-            for line in set_of_secrets:
-                f.write(line)
+            for secret in secrets:
+                f.write(secret)
                 f.write('\n')
 
     def integration_init(self) -> bool:
@@ -452,10 +455,14 @@ class Initiator:
         self.copy_demistotmock()
 
         if self.template != self.DEFAULT_INTEGRATION_TEMPLATE:  # DEFAULT_INTEGRATION_TEMPLATE there are no secrets
-            ignore_secrets = input("\nCurrently, there are some secrets in the pack. "
-                                   "Would you like ignore them automatically? Y/N ").lower()
+            secrets = self.find_secrets()
+            new_line = '\n'
+            click.echo(f"\nThe following secrets were detected:\n"
+                       f"{new_line.join(secret for secret in secrets)}", color=LOG_COLORS.GREEN)
+
+            ignore_secrets = input("\nWould you like ignore them automatically? Y/N ").lower()
             if ignore_secrets in ['y', 'yes']:
-                self.ignore_secrets_automatically()
+                self.ignore_secrets(secrets)
 
         click.echo(f"Finished creating integration: {self.full_output_path}.", color=LOG_COLORS.GREEN)
 
@@ -496,10 +503,14 @@ class Initiator:
         self.copy_common_server_python()
         self.copy_demistotmock()
 
-        ignore_secrets = input("\nCurrently, there are some secrets in the pack. "
-                               "Would you like ignore them automatically? Y/N ").lower()
+        secrets = self.find_secrets()
+        new_line = '\n'
+        click.echo(f"\nThe following secrets were detected in the pack:\n"
+                   f"{new_line.join(secret for secret in secrets)}", color=LOG_COLORS.GREEN)
+
+        ignore_secrets = input("\nWould you like ignore them automatically? Y/N ").lower()
         if ignore_secrets in ['y', 'yes']:
-            self.ignore_secrets_automatically()
+            self.ignore_secrets(secrets)
 
         click.echo(f"Finished creating script: {self.full_output_path}", color=LOG_COLORS.GREEN)
 

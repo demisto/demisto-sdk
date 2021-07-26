@@ -1,12 +1,11 @@
 {
-    "id": "rbvm",
-    "version": -1,
-    "name": "Vulnerability Management",
-    "fromVersion": "6.5.0",
-    "definitionIds": ["assets", "assetGroups"],
-    "views": [{
-        "icon": "icon-widget-infinity-24-s",
-        "name": "Vulnerability Management",
-        "title": "Risk Base Vulnerability Management",
-        }]
+  "id": "rbvm",
+  "version": -1,
+  "name": "Vulnerability Management",
+  "fromVersion": "6.5.0",
+  "definitionIds": [
+    "assets",
+    "assetGroups"
+  ],
+  "views": []
 }

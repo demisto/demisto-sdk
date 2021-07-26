@@ -921,6 +921,29 @@ class TestFormattingWidget:
         widget_formatter.set_isPredefined()
         assert widget_formatter.data.get('isPredefined') is True
 
+    @pytest.mark.parametrize('widget_data', [{'dataType': 'metrics', 'fromVersion': '6.2.0'},
+                                             {'dataType': 'metrics', 'fromVersion': '5.5.0'},
+                                             {'dataType': 'incidents', 'fromVersion': '5.5.0'},
+                                             {'dataType': 'incidents', 'fromVersion': '6.2.0'}])
+    def test_set_from_version_for_type_metrics(self, widget_formatter, widget_data):
+        """
+        Given
+            - A widget file with dataType and fromVersion fields.
+        When
+            - Run format on widget file.
+        Then
+            - Ensure that fromVersion field was updated to minimum 6.2.0 if dataType is 'metrics'.
+        """
+
+        widget_formatter.data = widget_data
+        widget_formatter.set_from_version_for_type_metrics()
+
+        if widget_formatter.data.get('dataType') == 'metrics':
+            assert widget_formatter.data.get('fromVersion') == widget_formatter.WIDGET_TYPE_METRICS_MIN_VERSION
+
+        else:
+            assert widget_formatter.data.get('fromVersion') == widget_data.get('fromVersion')
+
 
 class TestFormattingReport:
     @pytest.fixture(autouse=True)

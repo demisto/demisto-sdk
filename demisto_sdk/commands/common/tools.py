@@ -16,6 +16,7 @@ from typing import Callable, Dict, List, Match, Optional, Tuple, Type, Union
 
 import click
 import colorama
+from contextlib import contextmanager
 import demisto_client
 import git
 import requests
@@ -1954,3 +1955,23 @@ def get_current_tags() -> list:
         approved_tags_json, _ = get_dict_from_file('Tests/Marketplace/approved_tags.json')
         return approved_tags_json.get('approved_list', [])
     return []
+
+
+@contextmanager
+def suppress_stdout():
+    """
+        Temporarily suppress console output without effecting error outputs.
+        Example of use:
+
+            with suppress_stdout():
+                print('This message will not be printed')
+            print('This message will be printed')
+    """
+    with open(os.devnull, "w") as devnull:
+        try:
+            old_stdout = sys.stdout
+            sys.stdout = devnull
+            yield
+        finally:
+            sys.stdout = old_stdout
+

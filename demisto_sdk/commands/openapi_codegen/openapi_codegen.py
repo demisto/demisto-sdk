@@ -623,14 +623,16 @@ class OpenAPIIntegration:
                                          'description': extracted_object.get('description', '')})
                 elif extracted_object.get('type') and type(extracted_object.get('type')) == dict:
                     for k, v in extracted_object.items():
-                        current_context.append(k)
-                        prop_arr = extract(v, prop_arr, current_context)
-                        current_context.pop()
+                        if k not in current_context:
+                            current_context.append(k)
+                            prop_arr = extract(v, prop_arr, current_context)
+                            current_context.pop()
                 else:
                     for k, v in extracted_object.items():
-                        current_context.append(k)
-                        prop_arr = extract(v, prop_arr, current_context)
-                        current_context.pop()
+                        if k not in current_context:
+                            current_context.append(k)
+                            prop_arr = extract(v, prop_arr, current_context)
+                            current_context.pop()
 
             return prop_arr
 
@@ -670,6 +672,9 @@ class OpenAPIIntegration:
                     for ref in refs:
                         ref = ref.split('/')[-1]
                         ref_props = self.extract_values(self.reference.get(ref, {}), 'properties')
+                        # Addition of filtering dicts only was added because some swaggers contain example files
+                        # Which are written in string and caused errors on ref_props[0].items()
+                        ref_props = [ref_prop for ref_prop in ref_props if isinstance(ref_prop, dict)]
                         if ref_props:
                             for k, prop in ref_props[0].items():
                                 if k in self.root_objects:
@@ -717,6 +722,9 @@ class OpenAPIIntegration:
                 for ref in refs:
                     ref = ref.split('/')[-1]
                     ref_args = self.extract_values(self.reference.get(ref, {}), 'properties')
+                    # Addition of filtering dicts only was added because some swaggers contain example files
+                    # Which are written in string and caused errors on ref_props[0].items()
+                    ref_args = [ref_arg for ref_arg in ref_args if isinstance(ref_arg, dict)]
                     for ref_arg in ref_args:
                         for k, v in ref_arg.items():
                             new_ref_arg = {'name': k, 'in': arg.get('in'),
@@ -941,7 +949,6 @@ class OpenAPIIntegration:
                 for item in extracted_object:
                     extract(item, values, key_to_extract)
             return values
-
         results = extract(obj, arr, key)
         return results
 

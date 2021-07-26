@@ -13,7 +13,7 @@
 * Updated the **find-dependencies** command to support generic modules, definitions, fields and types.
 * Fixed an issue where **openapi-codegen** tried to extract reference example outputs, leading to an exception.
 * Added a tool that gives the ability to temporarily suppress console output.
-* Added to **validate** command validation of integration/script/pack name not containing contributor type name
+* Added to **validate** command a validation that a content entity or a pack name does not contain the words "partner" and "community".
 
 # 1.4.4
 * When formatting incident types with Auto-Extract rules and without mode field, the **format** command will now add the user selected mode.

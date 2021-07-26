@@ -1,5 +1,6 @@
 # Changelog
 * Fixed an issue where **validate** suggests, with no reason, running **format** on missing mandatory keys in yml file.
+* Improved the error messages in **generate-docs** for scripts if the example was not provided 
 
 # 1.4.5
 * Enhanced the **postman-codegen** command to name all generated arguments with lower case.

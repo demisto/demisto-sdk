@@ -72,6 +72,8 @@ class ContentEntityValidator(BaseValidator):
             (bool) False if display name corresponding to file path contains excluded word, true otherwise.
         """
         name = get_file_displayed_name(self.file_path)
+        if not name:
+            return True
         lowercase_name = name.lower()
         if any(excluded_word in lowercase_name for excluded_word in self.EXCLUDED_DISPLAY_NAME_WORDS):
             error_message, error_code = Errors.entity_name_contains_excluded_word(name,

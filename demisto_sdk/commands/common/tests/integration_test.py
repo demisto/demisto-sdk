@@ -228,9 +228,14 @@ class TestIntegrationValidator:
 
     WITHOUT_DUP_ARGS = [{"name": "testing", "arguments": [{"name": "test1"}, {"name": "test2"}]}]
     WITH_DUP_ARGS = [{"name": "testing", "arguments": [{"name": "test1"}, {"name": "test1"}]}]
+    WITH_DUP_ARGS_NON_IDENTICAL = [
+        {"name": "testing", "arguments": [{"name": "test1", "desc": "hello"}, {"name": "test1", "desc": "hello1"}]},
+    ]
+
     DUPLICATE_ARGS_INPUTS = [
         (WITHOUT_DUP_ARGS, True),
-        (WITH_DUP_ARGS, False)
+        (WITH_DUP_ARGS, False),
+        (WITH_DUP_ARGS_NON_IDENTICAL, False),
     ]
 
     @pytest.mark.parametrize("current, answer", DUPLICATE_ARGS_INPUTS)

@@ -156,22 +156,22 @@ class Pack:
 
     @property
     def generic_definitions(self) -> Iterator[GenericDefinition]:
-        return self._content_files_list_generator_factory(dir_name=INDICATOR_TYPES_DIR,
+        return self._content_files_list_generator_factory(dir_name=GENERIC_DEFINITIONS_DIR,
                                                           suffix="json")
 
     @property
     def generic_modules(self) -> Iterator[GenericModule]:
-        return self._content_files_list_generator_factory(dir_name=INDICATOR_TYPES_DIR,
+        return self._content_files_list_generator_factory(dir_name=GENERIC_MODULES_DIR,
                                                           suffix="json")
 
     @property
     def generic_types(self) -> Iterator[GenericType]:
-        return self._content_files_list_generator_factory(dir_name=INDICATOR_TYPES_DIR,
+        return self._content_files_list_generator_factory(dir_name=GENERIC_TYPES_DIR,
                                                           suffix="json")
 
     @property
     def generic_fields(self) -> Iterator[GenericField]:
-        return self._content_files_list_generator_factory(dir_name=INDICATOR_TYPES_DIR,
+        return self._content_files_list_generator_factory(dir_name=GENERIC_FIELDS_DIR,
                                                           suffix="json")
 
     @property

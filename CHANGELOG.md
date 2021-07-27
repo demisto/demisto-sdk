@@ -2,6 +2,7 @@
 * Fixed an issue where **validate** suggests, with no reason, running **format** on missing mandatory keys in yml file.
 * Skipped existence of TestPlaybook check on community and contribution integrations.
 * Fixed an issue where pre-commit didn't run on the demisto_sdk/commands folder.
+* The **init** command will now change the script template name in the code to the given script name.
 
 # 1.4.5
 * Enhanced the **postman-codegen** command to name all generated arguments with lower case.
@@ -15,7 +16,6 @@
 * Updated the **find-dependencies** command to support generic modules, definitions, fields and types.
 * Fixed an issue where **openapi-codegen** tried to extract reference example outputs, leading to an exception.
 * Added a tool that gives the ability to temporarily suppress console output.
-* Enhanced the **init** command with changing the script template name in the code with the real script name.
 
 # 1.4.4
 * When formatting incident types with Auto-Extract rules and without mode field, the **format** command will now add the user selected mode.

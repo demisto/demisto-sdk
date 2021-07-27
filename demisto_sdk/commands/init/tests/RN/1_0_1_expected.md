@@ -13,7 +13,7 @@
 #### Playbooks
 ##### New: CrowdStrikeMalquery - Search
 - This playbook does things:
-    three-step process: 
+    three-step process:
       1. Schedule the download with samples-multidownload
       2. do something.
       3. do something else.

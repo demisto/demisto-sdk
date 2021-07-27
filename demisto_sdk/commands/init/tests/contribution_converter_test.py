@@ -11,10 +11,10 @@ from _pytest.tmpdir import TempPathFactory, _mk_tmp
 from demisto_sdk.commands.common.constants import LAYOUT, LAYOUTS_CONTAINER
 from demisto_sdk.commands.init.contribution_converter import \
     ContributionConverter
+from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 from mock import patch
 from TestSuite.contribution import Contribution
 from TestSuite.repo import Repo
-from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
 RELEASE_NOTES_COPY = "demisto_sdk/commands/init/tests/RN/1_0_1-formatted.md"
 SOURCE_RELEASE_NOTES_FILE = "demisto_sdk/commands/init/tests/RN/1_0_1.md"
@@ -686,7 +686,7 @@ class TestReleaseNotes:
              "source_name": "CrowdStrikeMalquery",
              "source_file_name": "Packs/CrowdStrikeMalquery/Integrations/CrowdStrikeMalquery/CrowdStrikeMalquery.yml"}]
         expected_rn_per_content_item = {'CrowdStrike Malquery':
-                                            '- release note entry number #1\n- release note entry number #2\n',
+                                        '- release note entry number #1\n- release note entry number #2\n',
                                         'CrowdStrikeMalquery - Multidownload and Fetch':
                                             '- changed this playbook\n- Updated another thing\n'}
         mocker.patch.object(
@@ -694,4 +694,3 @@ class TestReleaseNotes:
             side_effect=['CrowdStrike Malquery', 'CrowdStrikeMalquery - Multidownload and Fetch'])
         rn_per_content_item = contrib_converter.format_user_input()
         assert expected_rn_per_content_item == rn_per_content_item
-

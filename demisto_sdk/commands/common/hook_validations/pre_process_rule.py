@@ -19,7 +19,7 @@ class PreProcessRuleValidator(ContentEntityValidator):
     def is_valid_file(self, validate_rn=True):
         return self.is_valid_pre_process_rules()
 
-    def is_valid_pre_process_rules(self, validate_rn=True, id_set_file=None, is_circle=False) -> bool:
+    def is_valid_pre_process_rules(self, validate_rn=True, id_set_file=None, is_ci=False) -> bool:
         """Check whether the pre_process_rules is valid or not.
 
         Returns:
@@ -64,13 +64,13 @@ class PreProcessRuleValidator(ContentEntityValidator):
     # # TODO Needed! Check that scripts and incident_fields exists
     # # Needed incident_fields: description
     # # If the key "scriptName" is not empty - Check that the script exists
-    # def is_incident_field_exist(self, id_set_file, is_circle) -> bool:
+    # def is_incident_field_exist(self, id_set_file, is_ci) -> bool:
     #     """Checks if incident field is valid - exist in the content.
 
     #     Returns:
     #         bool. True if incident field is valid, else False.
     #     """
-    #     if not is_circle:
+    #     if not is_ci:
     #         return True
 
     #     if not id_set_file:
@@ -110,3 +110,9 @@ class PreProcessRuleValidator(ContentEntityValidator):
     #         if self.handle_error(error_message, error_code, file_path=self.file_path):
     #             return False
     #     return True
+
+    # TODO Check playbook.py for an example
+    # # TODO Needed! Check that scripts and incident_fields exists
+    # # Needed incident_fields: description
+    # # If the key "scriptName" is not empty - Check that the script exists
+    # def is_script_exist(self, id_set_file, is_ci) -> bool:

@@ -29,4 +29,3 @@ mapping:
     type: bool
   definitionId:
     type: str
-

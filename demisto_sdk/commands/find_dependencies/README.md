@@ -1,4 +1,4 @@
-## Find Dependencies 
+## Find Dependencies
 
 Find pack dependencies and update pack metadata.
 

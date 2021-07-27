@@ -30,7 +30,8 @@ from demisto_sdk.commands.generate_docs.generate_script_doc import \
     generate_script_doc
 from demisto_sdk.commands.split_yml.extractor import Extractor
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
-from demisto_sdk.commands.update_release_notes.update_rn_manager import UpdateReleaseNotesManager
+from demisto_sdk.commands.update_release_notes.update_rn_manager import \
+    UpdateReleaseNotesManager
 
 
 class ContributionConverter:
@@ -514,7 +515,7 @@ class ContributionConverter:
         """
         entity_identifier = '##### '
         content_item_type_identifier = '#### '
-        rn_per_content_item = defaultdict(str)
+        rn_per_content_item: dict = defaultdict(str)
         entity_name = 'NonEntityRelated'
 
         items_path = {content_item.get('source_id'): content_item.get('source_file_name')

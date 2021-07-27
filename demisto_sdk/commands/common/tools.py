@@ -7,6 +7,7 @@ import re
 import shlex
 import sys
 from configparser import ConfigParser, MissingSectionHeaderError
+from contextlib import contextmanager
 from distutils.version import LooseVersion
 from enum import Enum
 from functools import lru_cache, partial
@@ -16,7 +17,6 @@ from typing import Callable, Dict, List, Match, Optional, Tuple, Type, Union
 
 import click
 import colorama
-from contextlib import contextmanager
 import demisto_client
 import git
 import requests
@@ -1965,4 +1965,3 @@ def suppress_stdout():
             yield
         finally:
             sys.stdout = old_stdout
-

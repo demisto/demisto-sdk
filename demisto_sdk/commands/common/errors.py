@@ -805,7 +805,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_fromversion_for_type_metrics():
-        return f'The minimal fromVersion for widget with data type \'metrics\' is \'6.2.0\'.\n'
+        return 'The minimal fromVersion for widget with data type \'metrics\' is \'6.2.0\'.\n'
 
     @staticmethod
     @error_code_decorator

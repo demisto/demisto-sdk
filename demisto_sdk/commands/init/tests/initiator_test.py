@@ -552,4 +552,3 @@ def test_script_init(monkeypatch, initiator, tmpdir):
     assert os.path.isdir(script_path)
     assert {f"{SCRIPT_NAME}.py", f"{SCRIPT_NAME}.yml", f"{SCRIPT_NAME}_test.py",
             "README.md", "test_data"} == script_dir_files
-

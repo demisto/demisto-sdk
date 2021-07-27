@@ -1,8 +1,8 @@
+from typing import Optional
+
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.tools import os
-
-from typing import Optional
 
 
 class AuthorImageValidator(ImageValidator):

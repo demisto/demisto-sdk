@@ -6,18 +6,18 @@ from typing import Optional
 
 import yaml
 from demisto_sdk.commands.common.constants import (ENTITY_NAME_SEPARATORS,
+                                                   EXCLUDED_DISPLAY_NAME_WORDS,
                                                    FEATURE_BRANCHES,
-                                                   OLDEST_SUPPORTED_VERSION,
-                                                   EXCLUDED_DISPLAY_NAME_WORDS)
+                                                   OLDEST_SUPPORTED_VERSION)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.tools import (_get_file_id,
+                                               get_file_displayed_name,
                                                is_test_config_match,
-                                               run_command,
-                                               get_file_displayed_name)
+                                               run_command)
 
 
 class ContentEntityValidator(BaseValidator):

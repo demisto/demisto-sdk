@@ -8,31 +8,32 @@ import re
 from datetime import datetime
 from distutils.version import LooseVersion
 from pathlib import Path
-from typing import Tuple, Dict
+from typing import Dict, Tuple
 
 import click
 from dateutil import parser
-from git import GitCommandError, Repo
-
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
-    API_MODULES_PACK, PACK_METADATA_CATEGORIES, PACK_METADATA_CERTIFICATION,
-    PACK_METADATA_CREATED, PACK_METADATA_DEPENDENCIES, PACK_METADATA_DESC,
-    PACK_METADATA_EMAIL, PACK_METADATA_FIELDS, PACK_METADATA_KEYWORDS,
-    PACK_METADATA_NAME, PACK_METADATA_SUPPORT, PACK_METADATA_TAGS,
-    PACK_METADATA_URL, PACK_METADATA_USE_CASES, PACKS_PACK_IGNORE_FILE_NAME,
+    API_MODULES_PACK, EXCLUDED_DISPLAY_NAME_WORDS, PACK_METADATA_CATEGORIES,
+    PACK_METADATA_CERTIFICATION, PACK_METADATA_CREATED,
+    PACK_METADATA_DEPENDENCIES, PACK_METADATA_DESC, PACK_METADATA_EMAIL,
+    PACK_METADATA_FIELDS, PACK_METADATA_KEYWORDS, PACK_METADATA_NAME,
+    PACK_METADATA_SUPPORT, PACK_METADATA_TAGS, PACK_METADATA_URL,
+    PACK_METADATA_USE_CASES, PACKS_PACK_IGNORE_FILE_NAME,
     PACKS_PACK_META_FILE_NAME, PACKS_README_FILE_NAME,
-    PACKS_WHITELIST_FILE_NAME, EXCLUDED_DISPLAY_NAME_WORDS)
+    PACKS_WHITELIST_FILE_NAME)
 from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.hook_validations.author_image import \
+    AuthorImageValidator
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
-from demisto_sdk.commands.common.hook_validations.author_image import AuthorImageValidator
 from demisto_sdk.commands.common.tools import (get_core_pack_list, get_json,
                                                get_remote_file,
                                                pack_name_to_path)
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
+from git import GitCommandError, Repo
 
 CONTRIBUTORS_LIST = ['partner', 'developer', 'community']
 SUPPORTED_CONTRIBUTORS_LIST = ['partner', 'developer']
@@ -191,8 +192,8 @@ class PackUniqueFilesValidator(BaseValidator):
     def validate_pack_readme_images(self):
         readme_file_path = os.path.join(self.pack_path, self.readme_file)
         readme_validator = ReadMeValidator(readme_file_path)
-        errors = readme_validator.check_readme_relative_image_paths(is_pack_readme=True) + \
-                 readme_validator.check_readme_absolute_image_paths(is_pack_readme=True)
+        errors = readme_validator.check_readme_relative_image_paths(is_pack_readme=True)
+        readme_validator.check_readme_absolute_image_paths(is_pack_readme=True)
         if errors:
             self._errors.extend(errors)
             return False

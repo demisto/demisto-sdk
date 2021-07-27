@@ -2,6 +2,7 @@ import pytest
 from demisto_sdk.commands.json_to_outputs.json_to_outputs import (
     determine_type, parse_json)
 
+DUMMY_FIELD_DESCRIPTION = "dummy field description"
 
 def test_json_to_outputs__json_from_file():
     """
@@ -104,14 +105,14 @@ def test_json_to_outputs__a_list_of_dict():
         data='[{"a": "b", "c": "d"}, {"a": 1}]',
         command_name='jira-ticket',
         prefix='Jira.Ticket',
-        description_dictionary={"a": "dummy field called a"}
+        description_dictionary={"a": DUMMY_FIELD_DESCRIPTION}
     )
 
-    assert yaml_output == '''arguments: []
+    assert yaml_output == f'''arguments: []
 name: jira-ticket
 outputs:
 - contextPath: Jira.Ticket.a
-  description: A dummy field called a
+  description: {DUMMY_FIELD_DESCRIPTION}
   type: Number
 - contextPath: Jira.Ticket.c
   description: ''

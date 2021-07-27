@@ -219,7 +219,7 @@ class IntegrationValidator(ContentEntityValidator):
                     if formatted_message:
                         err_msgs.append(formatted_message)
 
-                if configuration_param.get('defaultvalue', '') not in ('false', ''):
+                if configuration_param.get('defaultvalue', '') not in (False, 'false', ''):
                     error_message, error_code = Errors.wrong_default_parameter_not_empty(param_name, "''")
                     formatted_message = self.handle_error(error_message, error_code, file_path=self.file_path,
                                                           should_print=False)
@@ -525,16 +525,17 @@ class IntegrationValidator(ContentEntityValidator):
         commands = self.current_file.get('script', {}).get('commands', [])
         does_not_have_duplicate_args = True
         for command in commands:
-            arg_list = []  # type: list
+            arg_names = []  # type: list
             for arg in command.get('arguments', []):
-                if arg in arg_list:
-                    error_message, error_code = Errors.duplicate_arg_in_file(arg['name'], command['name'])
+                arg_name = arg.get('name')
+                if arg_name in arg_names:
+                    error_message, error_code = Errors.duplicate_arg_in_file(arg_name, command['name'])
                     if self.handle_error(error_message, error_code, file_path=self.file_path):
                         self.is_valid = False
                         does_not_have_duplicate_args = False
 
                 else:
-                    arg_list.append(arg)
+                    arg_names.append(arg_name)
 
         return does_not_have_duplicate_args
 

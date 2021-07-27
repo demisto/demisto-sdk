@@ -6,6 +6,7 @@ from distutils.version import LooseVersion
 import click
 import demisto_sdk.commands.common.constants as constants
 from demisto_sdk.commands.common.configuration import Configuration
+from demisto_sdk.commands.common.constants import GENERIC_COMMANDS_NAMES
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
@@ -361,6 +362,9 @@ class IDSetValidations(BaseValidator):
 
         for command in playbook_integration_commands:
             implemented_integrations_list = playbook_integration_commands[command]
+            # Ignore the error for PB with generic commands that do not depend on specific integration
+            if command in GENERIC_COMMANDS_NAMES and not implemented_integrations_list:
+                continue
             integration_from_valid_version_found = False
             for integration in implemented_integrations_list:
                 integration_version = self.get_integration_version(integration)

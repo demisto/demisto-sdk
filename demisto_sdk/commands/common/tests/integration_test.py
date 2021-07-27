@@ -396,12 +396,18 @@ class TestIntegrationValidator:
         {"contextPath": "DBotScore.Vendor", "description": "Vendor used to calculate the score.", "type": "string"},
         {"contextPath": "DBotScore.Score", "description": "The actual score.", "type": "int"},
         {"contextPath": "IP.Address", "description": "IP address", "type": "string"}]
+    MOCK_REPUTATIONS_VALID_ENDPOINT = [
+        {"contextPath": 'Endpoint.Hostname', "description": "The endpoint's hostname.", "type": "string"},
+        {"contextPath": 'Endpoint.IPAddress', "description": "The endpoint's IP address.", "type": "string"},
+        {"contextPath": 'Endpoint.ID', "description": "The endpoint's ID.", "type": "string"}]
+
     IS_OUTPUT_FOR_REPUTATION_INPUTS = [
         (MOCK_REPUTATIONS_1, "not bang", True),
         (MOCK_REPUTATIONS_2, "not bang", True),
         (MOCK_REPUTATIONS_INVALID_EMAIL, "email", False),
         (MOCK_REPUTATIONS_INVALID_FILE, "file", False),
-        (MOCK_REPUTATIONS_VALID_IP, "ip", True)
+        (MOCK_REPUTATIONS_VALID_IP, "ip", True),
+        (MOCK_REPUTATIONS_VALID_ENDPOINT, "endpoint", True)
     ]
 
     @pytest.mark.parametrize("current, name, answer", IS_OUTPUT_FOR_REPUTATION_INPUTS)
@@ -434,8 +440,7 @@ class TestIntegrationValidator:
         (CASE_EXISTS_WITH_DEFAULT_TRUE, True),
         (CASE_REQUIRED_ARG_WITH_DEFAULT_FALSE, True),
         (CASE_INVALID_MISSING_REQUIRED_ARGS, False),
-        (CASE_INVALID_NON_DEFAULT_ARG_WITH_DEFAULT_TRUE, False),
-        (CASE_INVALID_MISSING_OUTPUT, False)
+        (CASE_INVALID_NON_DEFAULT_ARG_WITH_DEFAULT_TRUE, False)
     ]
 
     @pytest.mark.parametrize("current, answer", ENDPOINT_CASES)

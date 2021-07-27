@@ -1238,30 +1238,6 @@ LAYOUT_AND_MAPPER_BUILT_IN_FIELDS = ['indicatortype', 'source', 'comment', 'aggr
                                      'detectedhosts', 'modified', 'expiration', 'timestamp', 'shortdesc',
                                      'short_description', 'description', 'Tags', 'blocked']
 
-# TODO Should this list contain all specific fields?
-PRE_PROCESS_RULES_BUILT_IN_FIELDS = [
-    'action',
-    'enabled',
-    'existingEventsFilters',
-    'fromServerVersion',
-    'id',
-    'index',
-    'itemVersion',
-    'linkTo',
-    'locked',
-    'name',
-    'newEventFilters',
-    'packID',
-    'period',
-    'readyExistingEventsFilters',
-    'readyNewEventFilters',
-    'scriptName',
-    'searchClosed',
-    'system',
-    'toServerVersion',
-    'version',
-]
-
 UUID_REGEX = r'[0-9a-f]{8}\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\b[0-9a-f]{12}'
 
 DEFAULT_ID_SET_PATH = "./Tests/id_set.json"

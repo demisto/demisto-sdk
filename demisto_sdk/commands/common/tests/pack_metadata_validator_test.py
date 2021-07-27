@@ -3,6 +3,7 @@ import os
 
 import pytest
 from demisto_sdk.commands.common import tools
+from demisto_sdk.commands.common.constants import EXCLUDED_DISPLAY_NAME_WORDS
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
@@ -87,7 +88,7 @@ class TestPackMetadataValidator:
         pack_name: str = 'Bitcoin Abuse'
         validator = PackUniqueFilesValidator('fake')
         assert validator.name_does_not_contain_excluded_word(pack_name)
-        for excluded_word in validator.EXCLUDED_DISPLAY_NAME_WORDS:
+        for excluded_word in EXCLUDED_DISPLAY_NAME_WORDS:
             invalid_pack_name: str = f'{pack_name} ({excluded_word})'
             assert not validator.name_does_not_contain_excluded_word(invalid_pack_name)
 

@@ -22,7 +22,7 @@ from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
     PACK_METADATA_NAME, PACK_METADATA_SUPPORT, PACK_METADATA_TAGS,
     PACK_METADATA_URL, PACK_METADATA_USE_CASES, PACKS_PACK_IGNORE_FILE_NAME,
     PACKS_PACK_META_FILE_NAME, PACKS_README_FILE_NAME,
-    PACKS_WHITELIST_FILE_NAME)
+    PACKS_WHITELIST_FILE_NAME, EXCLUDED_DISPLAY_NAME_WORDS)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
@@ -300,24 +300,23 @@ class PackUniqueFilesValidator(BaseValidator):
         if re.findall(INCORRECT_PACK_NAME_PATTERN, pack_name):
             if self._add_error(Errors.pack_name_is_not_in_xsoar_standards("wrong_word"), self.pack_meta_file):
                 return False
-        if not self.name_does_not_contain_contributor_type_name(pack_name):
-            if self._add_error(Errors.pack_name_contains_contribution_type_name(pack_name, CONTRIBUTORS_LIST),
-                               self.pack_meta_file):
+        if not self.name_does_not_contain_excluded_word(pack_name):
+            if self._add_error(
+                    Errors.pack_name_is_not_in_xsoar_standards('excluded_word', EXCLUDED_DISPLAY_NAME_WORDS),
+                    self.pack_meta_file):
                 return False
         return True
 
-    def name_does_not_contain_contributor_type_name(self, pack_name: str) -> bool:
+    def name_does_not_contain_excluded_word(self, pack_name: str) -> bool:
         """
-        Checks whether given object has contributor name type.
-        This validation is needed because the label of contributor is automatically added to the name, so this
-        validation will prevent it from being added twice.
+        Checks whether given object has excluded name.
         Args:
             pack_name (str): Name of the pack.
         Returns:
-            (bool) False if name corresponding pack name contains contributor type name, true otherwise.
+            (bool) False if name corresponding pack name contains excluded name, true otherwise.
         """
         lowercase_name = pack_name.lower()
-        return not any(contributor_name in lowercase_name for contributor_name in self.CONTRIBUTOR_TYPE_LIST)
+        return not any(excluded_word in lowercase_name for excluded_word in EXCLUDED_DISPLAY_NAME_WORDS)
 
     def _is_pack_meta_file_structure_valid(self):
         """Check if pack_metadata.json structure is json parse-able and valid"""

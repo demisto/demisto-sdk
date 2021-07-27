@@ -624,7 +624,11 @@ class TestValidators:
                            "WD", "RP", "BA100", "BC100", "ST", "CL", "MP", "LO", "XC"]
         ignored_list = validate_manager.create_ignored_errors_list(errors_to_check)
         assert ignored_list == ["BA101", "BA102", "BA103", "BA104", "BA105", "BA106", "BA107", "BA108", "BA109",
+<<<<<<< HEAD
                                 "BA110", 'BA111', "BC101", "BC102", "BC103", "BC104"]
+=======
+                                "BA110",'BA111', "BC101", "BC102", "BC103", "BC104"]
+>>>>>>> Validate-Community-Partner-Display
 
     def test_added_files_type_using_function(self, repo, mocker):
         """

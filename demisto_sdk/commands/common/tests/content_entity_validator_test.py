@@ -5,6 +5,7 @@ from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.tools import (get_not_registered_tests,
                                                is_test_config_match)
+from demisto_sdk.commands.common.constants import EXCLUDED_DISPLAY_NAME_WORDS
 from demisto_sdk.tests.constants_test import (
     INVALID_INTEGRATION_WITH_NO_TEST_PLAYBOOK, VALID_INTEGRATION_TEST_PATH,
     VALID_TEST_PLAYBOOK_PATH)
@@ -147,42 +148,43 @@ def test_get_not_registered_tests(file_path, schema, conf_json_data, content_ite
     assert get_not_registered_tests(conf_json_data, content_item_id, schema, tests) == expected
 
 
-def test_entity_valid_name(repo, mocker):
+def test_entity_valid_name_valid(repo, mocker):
     """
     Given:
-    - Entity name.
+    - Entity name that does not contain excluded words.
 
     When:
-    - Checking whether entity name contains contributor type name.
+    - Checking whether entity name contains excluded word.
 
     Then:
-    - Ensure expected result is returned.
+    - Ensure true is returned.
     """
     pack = repo.create_pack('TestPack')
     integration = pack.create_integration(name='BitcoinAbuse')
     integration.create_default_integration(name='BitcoinAbuse')
+    integration.yml.update({'display': 'BitcoinAbuse'})
+    integration_structure_validator = StructureValidator(integration.yml.path)
+    integration_content_entity_validator = ContentEntityValidator(integration_structure_validator)
+    assert integration_content_entity_validator.name_does_not_contain_excluded_word()
+
+
+def test_entity_valid_name_invalid(repo, mocker):
+    """
+    Given:
+    - Entity name with excluded word.
+
+    When:
+    - Checking whether entity name contains excluded word.
+
+    Then:
+    - Ensure false is returned.
+    """
+    pack = repo.create_pack('TestPack')
     script = pack.create_script(name='QRadar')
     script.create_default_script(name='QRadar')
-    integration.yml.update({'display': 'BitcoinAbuse'})
-    script.yml.update({'name': 'QRadar'})
-    integration_structure_validator = StructureValidator(integration.yml.path)
+    excluded_word = EXCLUDED_DISPLAY_NAME_WORDS[0]
+    script.yml.update({'name': f'QRadar ({excluded_word})'})
     script_structure_validator = StructureValidator(script.yml.path)
-    integration_content_entity_validator = ContentEntityValidator(integration_structure_validator)
     script_content_entity_validator = ContentEntityValidator(script_structure_validator)
-    assert integration_content_entity_validator.name_does_not_contain_contributor_type_name()
-    assert script_content_entity_validator.name_does_not_contain_contributor_type_name()
-    for contributor_type_name in ContentEntityValidator.CONTRIBUTOR_TYPE_LIST:
-        integration_name_with_contributor_type = f'{integration.name} ({contributor_type_name})'
-        script_name_with_contributor_type = f'{script.name} ({contributor_type_name})'
-        integration = pack.create_integration(integration_name_with_contributor_type)
-        script = pack.create_script(script_name_with_contributor_type)
-        integration.yml.update({'display': integration_name_with_contributor_type})
-        script.yml.update({'name': script_name_with_contributor_type})
-        integration_structure_validator = StructureValidator(integration.yml.path)
-        script_structure_validator = StructureValidator(script.yml.path)
-        integration_content_entity_validator = ContentEntityValidator(integration_structure_validator)
-        script_content_entity_validator = ContentEntityValidator(script_structure_validator)
-        mocker.patch.object(integration_content_entity_validator, 'handle_error')
-        mocker.patch.object(script_content_entity_validator, 'handle_error')
-        assert not integration_content_entity_validator.name_does_not_contain_contributor_type_name()
-        assert not script_content_entity_validator.name_does_not_contain_contributor_type_name()
+    mocker.patch.object(script_content_entity_validator, 'handle_error')
+    assert not script_content_entity_validator.name_does_not_contain_excluded_word()

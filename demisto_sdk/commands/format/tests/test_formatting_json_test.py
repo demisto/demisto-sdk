@@ -691,7 +691,6 @@ class TestFormattingPreProcessRule:
         """
         expected_path = 'PreProcessRules/preprocessrule-preprocessrules-invalid.json'
         invalid_output_path = invalid_path_pre_process_rules_formatter.output_file
-        invalid_path_pre_process_rules_formatter.pre_process_rules__set_output_path()
         assert invalid_output_path != invalid_path_pre_process_rules_formatter.output_file
         assert expected_path == invalid_path_pre_process_rules_formatter.output_file
 

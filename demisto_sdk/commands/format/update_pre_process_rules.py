@@ -43,7 +43,6 @@ class PreProcessRulesBaseFormat(BaseUpdateJSON):
             self.set_version_to_default()
             self.remove_unnecessary_keys()
 
-            self.pre_process_rules__set_output_path()
             self.set_from_server_version_to_default()
 
             self.save_json_to_destination_file()
@@ -63,16 +62,3 @@ class PreProcessRulesBaseFormat(BaseUpdateJSON):
         else:
             if not self.data['fromServerVersion']:
                 self.data['fromServerVersion'] = FROM_VERSION_PRE_PROCESS_RULES
-
-    def pre_process_rules__set_output_path(self):
-        output_basename = os.path.basename(self.output_file)
-        if not output_basename.startswith(PRE_PROCESS_RULES_PREFIX):
-            new_output_basename = PRE_PROCESS_RULES_PREFIX + output_basename
-            new_output_path = self.output_file.replace(output_basename, new_output_basename)
-
-            # rename file if source and output are the same
-            if self.output_file == self.source_file:
-                os.rename(self.source_file, new_output_path)
-                self.source_file = new_output_path
-
-            self.output_file = new_output_path

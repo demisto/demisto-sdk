@@ -16,7 +16,7 @@ ALLOWED_IGNORE_ERRORS = [
     'IN109', 'IN110', 'IN122', 'IN126', 'IN128', 'IN135', 'IN136', 'IN139',
     'MP106',
     'PA113', 'PA116', 'PA124', 'PA125',
-    'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112',
+    'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112', 'PB114', 'PB115', 'PB116',
     'RM100', 'RM102', 'RM104', 'RM106',
     'RP102', 'RP104',
     'SC100', 'SC101', 'SC105',
@@ -121,6 +121,7 @@ ERROR_CODE = {
     "include_field_in_dashboard": {'code': "DA101", 'ui_applicable': False, 'related_field': ''},
     "remove_field_from_widget": {'code': "WD100", 'ui_applicable': False, 'related_field': ''},
     "include_field_in_widget": {'code': "WD101", 'ui_applicable': False, 'related_field': ''},
+    "invalid_fromversion_for_type_metrics": {'code': "WD102", 'ui_applicable': False, 'related_field': ''},
     "no_image_given": {'code': "IM100", 'ui_applicable': True, 'related_field': 'image'},
     "image_too_large": {'code': "IM101", 'ui_applicable': True, 'related_field': 'image'},
     "image_in_package_and_yml": {'code': "IM102", 'ui_applicable': False, 'related_field': 'image'},
@@ -161,6 +162,9 @@ ERROR_CODE = {
                                                        'related_field': 'toVersion'},
     "playbook_condition_has_no_else_path": {'code': "PB112", 'ui_applicable': False, 'related_field': 'nexttasks'},
     "invalid_subplaybook_name": {'code': "PB113", 'ui_applicable': False, 'related_field': 'tasks'},
+    "playbook_not_quiet_mode": {'code': "PB114", 'ui_applicable': False, 'related_field': ''},
+    "playbook_tasks_not_quiet_mode": {'code': "PB115", 'ui_applicable': False, 'related_field': 'tasks'},
+    "playbook_tasks_continue_on_error": {'code': "PB116", 'ui_applicable': False, 'related_field': 'tasks'},
     "description_missing_in_beta_integration": {'code': "DS100", 'ui_applicable': False, 'related_field': ''},
     "no_beta_disclaimer_in_description": {'code': "DS101", 'ui_applicable': False, 'related_field': ''},
     "no_beta_disclaimer_in_yml": {'code': "DS102", 'ui_applicable': False, 'related_field': ''},
@@ -218,6 +222,7 @@ ERROR_CODE = {
     "is_wrong_usage_of_usecase_tag": {'code': "PA123", 'ui_applicable': False, 'related_field': ''},
     "invalid_core_pack_dependencies": {'code': "PA124", 'ui_applicable': True, 'related_field': ''},
     "pack_name_is_not_in_xsoar_standards": {'code': "PA125", 'ui_applicable': False, 'related_field': ''},
+    "pack_metadata_long_description": {'code': "PA126", 'ui_applicable': False, 'related_field': ''},
     "readme_error": {'code': "RM100", 'ui_applicable': False, 'related_field': ''},
     "image_path_error": {'code': "RM101", 'ui_applicable': False, 'related_field': ''},
     "readme_missing_output_context": {'code': "RM102", 'ui_applicable': False, 'related_field': ''},
@@ -273,6 +278,7 @@ ERROR_CODE = {
     "invalid_incident_field_in_layout": {'code': "LO104", 'ui_applicable': False, 'related_field': ''},
     "xsoar_config_file_is_not_json": {'code': "XC100", 'ui_applicable': False, 'related_field': ''},
     "xsoar_config_file_malformed": {'code': "XC101", 'ui_applicable': False, 'related_field': ''},
+    "invalid_readme_image_error": {'code': "RM108", 'ui_applicable': False, 'related_field': ''},
 }
 
 
@@ -320,7 +326,8 @@ class Errors:
     def file_type_not_supported():
         return "The file type is not supported in validate command\n " \
                "validate' command supports: Integrations, Scripts, Playbooks, " \
-               "Incident fields, Indicator fields, Images, Release notes, Layouts and Descriptions"
+               "Incident fields, Incident types, Indicator fields, Indicator types, Objects fields, Object types," \
+               " Object modules, Images, Release notes,Layouts and Descriptions"
 
     @staticmethod
     @error_code_decorator
@@ -797,6 +804,11 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def invalid_fromversion_for_type_metrics():
+        return f'The minimal fromVersion for widget with data type \'metrics\' is \'6.2.0\'.\n'
+
+    @staticmethod
+    @error_code_decorator
     def no_image_given():
         return "You've created/modified a yml or package but failed to provide an image as " \
                "a .png file for it, please add an image in order to proceed."
@@ -918,7 +930,7 @@ class Errors:
     @error_code_decorator
     def missing_release_notes_for_pack(pack):
         return f"Release notes were not found. Please run `demisto-sdk " \
-               f"update-release-notes -i Packs/{pack} -u (major|minor|revision)` to " \
+               f"update-release-notes -i Packs/{pack} -u (major|minor|revision|documentation)` to " \
                f"generate release notes according to the new standard. You can refer to the documentation " \
                f"found here: https://xsoar.pan.dev/docs/integrations/changelog for more information."
 
@@ -941,7 +953,7 @@ class Errors:
     def modified_existing_release_notes(pack_name):
         return f"Modified existing release notes for \"{pack_name}\" - revert the change and add new release notes " \
                f"if needed by running:\n`demisto-sdk update-release-notes -i Packs/{pack_name} -u " \
-               f"(major|minor|revision)`\n" \
+               f"(major|minor|revision|documentation)`\n" \
                f"You can refer to the documentation found here: " \
                f"https://xsoar.pan.dev/docs/integrations/changelog for more information."
 
@@ -1280,7 +1292,8 @@ class Errors:
                f"make sure you are merged from master and " \
                f"update the \"currentVersion\" field in the " \
                f"pack_metadata.json or in case release notes are required run:\n" \
-               f"`demisto-sdk update-release-notes -i Packs/{pack} -u (major|minor|revision)` to " \
+               f"`demisto-sdk update-release-notes -i Packs/{pack} -u " \
+               f"(major|minor|revision|documentation)` to " \
                f"generate them according to the new standard."
 
     @staticmethod
@@ -1324,6 +1337,12 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def pack_metadata_long_description():
+        return "The description field of the pack_metadata.json file is longer than 130 characters." \
+               " Consider modifying it."
+
+    @staticmethod
+    @error_code_decorator
     def pack_timestamp_field_not_in_iso_format(field_name, value, changed_value):
         return f"The field \"{field_name}\" should be in the following format: YYYY-MM-DDThh:mm:ssZ, found {value}.\n" \
                f"Suggested change: {changed_value}"
@@ -1359,6 +1378,34 @@ class Errors:
     def image_path_error(path, alternative_path):
         return f'Detected following image url:\n{path}\n' \
                f'Which is not the raw link. You probably want to use the following raw image url:\n{alternative_path}'
+
+    @staticmethod
+    def pack_readme_image_relative_path_error(path):
+        return f'Detected the following image relative path: {path}.\nRelative paths are not supported in pack README files. See ' \
+               f'https://xsoar.pan.dev/docs/integrations/integration-docs#images for further info on how to ' \
+               f'add images to pack README files.'
+
+    @staticmethod
+    def invalid_readme_image_relative_path_error(path):
+        return f'The following image relative path is not valid, please recheck it:\n{path}.'
+
+    @staticmethod
+    def invalid_readme_image_absolute_path_error(path):
+        return f'The following image link seems to be broken, please repair it:\n{path}'
+
+    @staticmethod
+    def invalid_readme_insert_image_link_error(path):
+        return f'Image link was not found, either insert it or remove it:\n{path}'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_readme_image_error(path, error_type):
+        return 'Error in readme image:\n' + {
+            'pack_readme_relative_error': Errors.pack_readme_image_relative_path_error,
+            'general_readme_relative_error': Errors.invalid_readme_image_relative_path_error,
+            'general_readme_absolute_error': Errors.invalid_readme_image_absolute_path_error,
+            'insert_image_link_error': Errors.invalid_readme_insert_image_link_error
+        }.get(error_type, lambda x: f'Something went wrong when testing {x}')(path)
 
     @staticmethod
     @error_code_decorator
@@ -1681,13 +1728,29 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def playbook_not_quiet_mode():
+        return "The playbook's quiet mode is off, it should be on, if it's done on purpose, then add this error to " \
+               "the pack's 'pack ignore' file"
+
+    @staticmethod
+    @error_code_decorator
+    def playbook_tasks_not_quiet_mode(tasks):
+        return f"The following tasks of the playbook have the quiet mode turned off:\n{tasks}\n"
+
+    @staticmethod
+    @error_code_decorator
+    def playbook_tasks_continue_on_error(tasks):
+        return f"The following tasks of the playbook do not stop on error:\n{tasks}"
+
+    @staticmethod
+    @error_code_decorator
     def invalid_incident_field_prefix(field_name):
         return f"Field name: {field_name} is invalid. Field name must start with the relevant pack name."
 
     @staticmethod
     def suggest_fix_field_name(field_name, pack_prefix):
         return f"To fix the problem, add pack name prefix to the field name. " \
-               f"You can use the pack name or one of the prefixes found in the itemPrefix field in the packe.metadat. " \
+               f"You can use the pack name or one of the prefixes found in the itemPrefix field in the pack_metadata. " \
                f"Example: {pack_prefix} {field_name}.\n" \
                f"Also make sure to update the field id and cliName accordingly. " \
                f"Example: cliName: {pack_prefix.replace(' ', '')}{field_name.replace(' ', '')}, "

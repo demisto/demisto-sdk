@@ -1,4 +1,42 @@
 # Changelog
+* Fixed an issue where **validate** suggests, with no reason, running **format** on missing mandatory keys in yml file.
+
+# 1.4.5
+* Enhanced the **postman-codegen** command to name all generated arguments with lower case.
+* Fixed an issue where the **find-dependencies** command miscalculated the dependencies for playbooks that use generic commands.
+* Fixed an issue where the **validate** command failed in external repositories in case the DEMISTO_SDK_GITHUB_TOKEN was not set.
+* Fixed an issue where **openapi-codegen** corrupted the swagger file by overwriting configuration to swagger file.
+* Updated the **upload** command to support uploading zipped packs to the marketplace.
+* Added to the **postman-codegen** command support of path variables.
+* Fixed an issue where **openapi-codegen** entered into an infinite loop on circular references in the swagger file.
+* The **format** command will now set `fromVersion: 6.2.0` for widgets with 'metrics' data type.
+* Updated the **find-dependencies** command to support generic modules, definitions, fields and types.
+* Fixed an issue where **openapi-codegen** tried to extract reference example outputs, leading to an exception.
+* Added a tool that gives the ability to temporarily suppress console output.
+
+# 1.4.4
+* When formatting incident types with Auto-Extract rules and without mode field, the **format** command will now add the user selected mode.
+* Added new validation that DBotRole is set for scripts that requires elevated permissions to the `XSOAR-linter` in the **lint** command.
+* Added url escaping to markdown human readable section in generate docs to avoid autolinking.
+* Added a validation that mapper's id and name are matching. Updated the format of mapper to include update_id too.
+* Added a validation to ensure that image paths in the README files are valid.
+* Fixed **find_type** function to correctly find test files, such as, test script and test playbook.
+* Added scheme validations for the new Generic Object Types, Fields, and Modules.
+* Renamed the flag *--input-old-version* to *--old-version* in the **generate-docs** command.
+* Refactored the **update-release-notes** command:
+  - Replaced the *--all* flag with *--use-git* or *-g*.
+  - Added the *--force* flag to update the pack release notes without changes in the pack.
+  - The **update-release-notes** command will now update all dependent integrations on ApiModule change, even if not specified.
+  - If more than one pack has changed, the full list of updated packs will be printed at the end of **update-release-notes** command execution.
+  - Fixed an issue where the **update-release-notes** command did not add docker image release notes entry for release notes file if a script was changed.
+  - Fixed an issue where the **update-release-notes** command did not detect changed files that had the same name.
+  - Fixed an issue in the **update-release-notes** command where the version support of JSON files was mishandled.
+* Fixed an issue where **format** did not skip files in test and documentation directories.
+* Updated the **create-id-set** command to support generic modules, definitions, fields and types.
+* Changed the **convert** command to generate old layout fromversion to 5.0.0 instead of 4.1.0
+* Enhanced the command **postman-codegen** with type hints for templates.
+
+# 1.4.3
 * Fixed an issue where **json-to-outputs** command returned an incorrect output when json is a list.
 * Fixed an issue where if a pack README.md did not exist it could cause an error in the validation process.
 * Fixed an issue where the *--name* was incorrectly required in the **init** command.
@@ -8,6 +46,10 @@
 * Added the option to add new tags/usecases to the approved list and to the pack metadata on the same pull request.
 * Fixed an issue in **test_content** where when different servers ran tests for the same integration, the server URL parameters were not set correctly.
 * Added a validation in the **validate** command to ensure that the ***endpoint*** command is configured correctly in yml file.
+* Added a warning when pack_metadata's description field is longer than 130 characters.
+* Fixed an issue where a redundant print occurred on release notes validation.
+* Added new validation in the **validate** command to ensure that the minimal fromVersion in a widget of type metrics will be 6.2.0.
+* Added the *--release-notes* flag to demisto-sdk to get the current version release notes entries.
 
 # 1.4.2
 * Added to `pylint` summary an indication if a test was skipped.
@@ -788,35 +830,28 @@ reate-id-set* flag in the *validate* command did not work while not using git.
 * Added **json-to-outputs** command which generates the yaml section for outputs from an API raw response.
 
 # 0.2.6
-
 * Fixed an issue with locating release notes for beta integrations in **validate**.
 
 # 0.2.5
-
 * Fixed an issue with locating release notes for beta integrations in **validate**.
 
 # 0.2.4
-
 * Adding image validation to Beta_Integration and Packs in **validate**.
 
 # 0.2.3
-
 * Adding Beta_Integration to the structure validation process.
 * Fixing bug where **validate** did checks on TestPlaybooks.
 * Added requirements parameter to **lint**.
 
 # 0.2.2
-
 * Fixing bug where **lint** did not return exit code 1 on failure.
 * Fixing bug where **validate** did not print error message in case no release notes were give.
 
 # 0.2.1
-
 * **Validate** now checks that the id and name fields are identical in yml files.
 * Fixed a bug where sdk did not return any exit code.
 
 # 0.2.0
-
 * Added Release Notes Validator.
 * Fixed the Unifier selection of your python file to use as the code.
 * **Validate** now supports Indicator fields.
@@ -824,7 +859,6 @@ reate-id-set* flag in the *validate* command did not work while not using git.
 * **Validate** now runs on newly added scripts.
 
 # 0.1.8
-
 * Added support for `--version`.
 * Fixed an issue in file_validator when calling `checked_type` method with script regex.
 
@@ -835,13 +869,11 @@ reate-id-set* flag in the *validate* command did not work while not using git.
 * Added lint and unit test run.
 
 # 0.1.1
-
 * Added new logic to the unifier.
 * Added detailed README.
 * Some small adjustments and fixes.
 
 # 0.1.0
-
 Capabilities:
 * **Extract** components(code, image, description etc.) from a Demisto YAML file into a directory.
 * **Unify** components(code, image, description etc.) to a single Demisto YAML file.

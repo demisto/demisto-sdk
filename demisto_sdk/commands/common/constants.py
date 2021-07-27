@@ -22,6 +22,10 @@ INCIDENT_FIELDS_DIR = 'IncidentFields'
 INCIDENT_TYPES_DIR = 'IncidentTypes'
 INDICATOR_FIELDS_DIR = 'IndicatorFields'
 INDICATOR_TYPES_DIR = 'IndicatorTypes'
+GENERIC_FIELDS_DIR = 'GenericFields'
+GENERIC_TYPES_DIR = 'GenericTypes'
+GENERIC_MODULES_DIR = 'GenericModules'
+GENERIC_DEFINITIONS_DIR = 'GenericDefinitions'
 LAYOUTS_DIR = 'Layouts'
 CLASSIFIERS_DIR = 'Classifiers'
 MAPPERS_DIR = 'Classifiers'
@@ -56,6 +60,7 @@ DOCUMENTATION = 'doc'
 MAPPER = 'classifier-mapper'
 CANVAS = 'canvas'
 OLD_REPUTATION = 'reputations.json'
+PACK_VERIFY_KEY = 'content.pack.verify'
 XSOAR_CONFIG_FILE = 'xsoar_config.json'
 
 
@@ -93,7 +98,12 @@ class FileType(Enum):
     WHITE_LIST = 'whitelist'
     LANDING_PAGE_SECTIONS_JSON = 'landingPage_sections.json'
     CONTRIBUTORS = 'contributors'
+    PACK = 'pack'
     XSOAR_CONFIG = 'xsoar_config'
+    GENERIC_MODULE = 'genericmodule'
+    GENERIC_FIELD = 'genericfield'
+    GENERIC_TYPE = 'generictype'
+    GENERIC_DEFINITION = 'genericdefinition'
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -114,6 +124,10 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.DASHBOARD: 'Dashboards',
     FileType.CONNECTION: 'Connections',
     FileType.MAPPER: 'Mappers',
+    FileType.GENERIC_DEFINITION: 'Objects',
+    FileType.GENERIC_MODULE: 'Modules',
+    FileType.GENERIC_TYPE: 'Object Types',
+    FileType.GENERIC_FIELD: 'Object Fields'
 }
 
 ENTITY_TYPE_TO_DIR = {
@@ -133,7 +147,11 @@ ENTITY_TYPE_TO_DIR = {
     FileType.REPORT.value: REPORTS_DIR,
     FileType.WIDGET.value: WIDGETS_DIR,
     FileType.BETA_INTEGRATION.value: INTEGRATIONS_DIR,
-    FileType.MAPPER.value: CLASSIFIERS_DIR
+    FileType.MAPPER.value: CLASSIFIERS_DIR,
+    FileType.GENERIC_DEFINITION.value: GENERIC_DEFINITIONS_DIR,
+    FileType.GENERIC_MODULE.value: GENERIC_MODULES_DIR,
+    FileType.GENERIC_FIELD.value: GENERIC_FIELDS_DIR,
+    FileType.GENERIC_TYPE.value: GENERIC_TYPES_DIR
 }
 
 CONTENT_FILE_ENDINGS = ['py', 'yml', 'png', 'json', 'md']
@@ -154,7 +172,11 @@ CONTENT_ENTITIES_DIRS = [
     INCIDENT_TYPES_DIR,
     LAYOUTS_DIR,
     CLASSIFIERS_DIR,
-    CONNECTIONS_DIR
+    CONNECTIONS_DIR,
+    GENERIC_FIELDS_DIR,
+    GENERIC_TYPES_DIR,
+    GENERIC_MODULES_DIR,
+    GENERIC_DEFINITIONS_DIR,
 ]
 
 CONTENT_ENTITY_UPLOAD_ORDER = [
@@ -393,6 +415,15 @@ PACKS_INDICATOR_TYPE_JSON_REGEX = fr'{PACKS_INDICATOR_TYPES_DIR_REGEX}\/([^/]+)\
 PACKS_INDICATOR_FIELDS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{INDICATOR_FIELDS_DIR}'
 PACKS_INDICATOR_FIELD_JSON_REGEX = fr'{PACKS_INDICATOR_FIELDS_DIR_REGEX}\/([^/]+)\.json'
 
+PACKS_GENERIC_TYPES_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{GENERIC_TYPES_DIR}'
+PACKS_GENERIC_TYPE_JSON_REGEX = fr'{PACKS_GENERIC_TYPES_DIR_REGEX}\/([^/]+)\.json'
+
+PACKS_GENERIC_FIELDS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{GENERIC_FIELDS_DIR}'
+PACKS_GENERIC_FIELD_JSON_REGEX = fr'{PACKS_GENERIC_FIELDS_DIR_REGEX}\/([^/]+)\.json'
+
+PACKS_GENERIC_MODULES_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{GENERIC_MODULES_DIR}'
+PACKS_GENERIC_MODULE_JSON_REGEX = fr'{PACKS_GENERIC_MODULES_DIR_REGEX}\/([^/]+)\.json'
+
 PACKS_CLASSIFIERS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{CLASSIFIERS_DIR}'
 
 _PACKS_CLASSIFIER_BASE_REGEX = fr'{PACKS_CLASSIFIERS_DIR_REGEX}\/*classifier-(?!mapper).*(?<!5_9_9)'
@@ -482,6 +513,7 @@ ID_IN_ROOT = [  # entities in which 'id' key is in the root
     'dashboard',
     'incident_type',
     'layoutscontainer',
+    'mapper',
 ]
 
 INTEGRATION_PREFIX = 'integration'
@@ -618,6 +650,18 @@ JSON_ALL_INDICATOR_FIELDS_REGEXES = [
 
 JSON_ALL_INDICATOR_TYPES_REGEXES = [
     PACKS_INDICATOR_TYPE_JSON_REGEX
+]
+
+JSON_ALL_GENERIC_FIELDS_REGEXES = [
+    PACKS_GENERIC_FIELD_JSON_REGEX,
+]
+
+JSON_ALL_GENERIC_TYPES_REGEXES = [
+    PACKS_GENERIC_TYPE_JSON_REGEX,
+]
+
+JSON_ALL_GENERIC_MODULES_REGEXES = [
+    PACKS_GENERIC_MODULE_JSON_REGEX,
 ]
 
 JSON_ALL_REPUTATIONS_INDICATOR_TYPES_REGEXES = [
@@ -770,7 +814,8 @@ TESTS_AND_DOC_DIRECTORIES = [
     'test_data',
     'data_test',
     'tests_data',
-    'doc_files'
+    'doc_files',
+    'doc_imgs',
 ]
 
 FILE_TYPES_FOR_TESTING = [
@@ -917,7 +962,10 @@ SCHEMA_TO_REGEX = {
                ],
 
     'report': [PACKS_REPORT_JSON_REGEX],
-    'release-notes': [PACKS_RELEASE_NOTES_REGEX]
+    'release-notes': [PACKS_RELEASE_NOTES_REGEX],
+    'genericfield': JSON_ALL_GENERIC_FIELDS_REGEXES,
+    'generictype': JSON_ALL_GENERIC_TYPES_REGEXES,
+    'genericmodule': JSON_ALL_GENERIC_MODULES_REGEXES
 }
 
 EXTERNAL_PR_REGEX = r'^pull/(\d+)$'
@@ -1191,6 +1239,9 @@ INTEGRATION_ARGUMENT_TYPES = {
     '16': 'MultiSelect'
 }
 
+BUILD_IN_COMMANDS = ['getIncidents', 'DeleteContext', 'isWhitelisted', 'excludeIndicators',
+                     'deleteIndicators', 'extractIndicators']
+
 
 class ContentItems(Enum):
     # the format is defined in issue #19786, may change in the future
@@ -1249,6 +1300,7 @@ class PathLevel(Enum):
     CONTENT_ENTITY_DIR = 'ContentDir',
     PACKAGE = 'Package',
     FILE = 'File'
+    CONTENT_GENERIC_ENTITY_DIR = 'ContentGenericDir'
 
 
 class DemistoException(Exception):

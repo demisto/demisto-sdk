@@ -1,3 +1,4 @@
+import glob
 import json
 import os
 import shutil
@@ -19,8 +20,26 @@ from demisto_sdk.commands.common.constants import (
     XSOAR_AUTHOR, XSOAR_SUPPORT, XSOAR_SUPPORT_URL, GithubContentConfig)
 from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                get_common_server_path,
-                                               print_error, print_v,
-                                               print_warning)
+                                               get_pack_name, print_error,
+                                               print_v, print_warning)
+from demisto_sdk.commands.secrets.secrets import SecretsValidator
+
+
+def extract_values_from_nested_dict_to_a_set(given_dictionary: dict, return_set: set):
+    """Recursively extracts values from a nested dictionary to a set.
+
+    Args:
+        given_dictionary: The nested dictionary to extract the values from.
+        return_set: the set with the extracted values.
+
+    """
+
+    for value in given_dictionary.values():
+        if isinstance(value, dict):  # value can be a dictionary
+            extract_values_from_nested_dict_to_a_set(value, return_set)
+        else:
+            for secret in value:  # value is a list
+                return_set.add(secret)
 
 
 class Initiator:
@@ -378,6 +397,28 @@ class Initiator:
             except ValueError:
                 user_input = input("\nThe option must be number, please enter valid choice: ")
 
+    def find_secrets(self):
+        files_and_directories = glob.glob(f'{self.full_output_path}/**/*', recursive=True)
+
+        sv = SecretsValidator(white_list_path='./Tests/secrets_white_list.json', ignore_entropy=True)
+        # remove directories and irrelevant files
+        files = [file for file in files_and_directories if os.path.isfile(file) and sv.is_text_file(file)]
+        # The search_potential_secrets method returns a nested dict with values of type list. The values are the secrets
+        # {'a': {'b': ['secret1', 'secret2'], 'e': ['secret1']}, 'g': ['secret3']}
+        nested_dict_of_secrets = sv.search_potential_secrets(files)
+        set_of_secrets: set = set()
+
+        extract_values_from_nested_dict_to_a_set(nested_dict_of_secrets, set_of_secrets)
+
+        return set_of_secrets
+
+    def ignore_secrets(self, secrets):
+        pack_dir = get_pack_name(self.full_output_path)
+        with open(f'Packs/{pack_dir}/.secrets-ignore', 'a') as f:
+            for secret in secrets:
+                f.write(secret)
+                f.write('\n')
+
     def integration_init(self) -> bool:
         """Creates a new integration according to a template.
 
@@ -412,6 +453,16 @@ class Initiator:
 
         self.copy_common_server_python()
         self.copy_demistotmock()
+
+        if self.template != self.DEFAULT_INTEGRATION_TEMPLATE:  # DEFAULT_INTEGRATION_TEMPLATE there are no secrets
+            secrets = self.find_secrets()
+            new_line = '\n'
+            click.echo(f"\nThe following secrets were detected:\n"
+                       f"{new_line.join(secret for secret in secrets)}", color=LOG_COLORS.GREEN)
+
+            ignore_secrets = input("\nWould you like ignore them automatically? Y/N ").lower()
+            if ignore_secrets in ['y', 'yes']:
+                self.ignore_secrets(secrets)
 
         click.echo(f"Finished creating integration: {self.full_output_path}.", color=LOG_COLORS.GREEN)
 
@@ -451,6 +502,15 @@ class Initiator:
 
         self.copy_common_server_python()
         self.copy_demistotmock()
+
+        secrets = self.find_secrets()
+        new_line = '\n'
+        click.echo(f"\nThe following secrets were detected in the pack:\n"
+                   f"{new_line.join(secret for secret in secrets)}", color=LOG_COLORS.GREEN)
+
+        ignore_secrets = input("\nWould you like ignore them automatically? Y/N ").lower()
+        if ignore_secrets in ['y', 'yes']:
+            self.ignore_secrets(secrets)
 
         click.echo(f"Finished creating script: {self.full_output_path}", color=LOG_COLORS.GREEN)
 

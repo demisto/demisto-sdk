@@ -7,7 +7,8 @@ from typing import Optional
 import yaml
 from demisto_sdk.commands.common.constants import (ENTITY_NAME_SEPARATORS,
                                                    FEATURE_BRANCHES,
-                                                   OLDEST_SUPPORTED_VERSION)
+                                                   OLDEST_SUPPORTED_VERSION,
+                                                   EXCLUDED_DISPLAY_NAME_WORDS)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
@@ -75,9 +76,9 @@ class ContentEntityValidator(BaseValidator):
         if not name:
             return True
         lowercase_name = name.lower()
-        if any(excluded_word in lowercase_name for excluded_word in self.EXCLUDED_DISPLAY_NAME_WORDS):
+        if any(excluded_word in lowercase_name for excluded_word in EXCLUDED_DISPLAY_NAME_WORDS):
             error_message, error_code = Errors.entity_name_contains_excluded_word(name,
-                                                                                  self.EXCLUDED_DISPLAY_NAME_WORDS)
+                                                                                  EXCLUDED_DISPLAY_NAME_WORDS)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True

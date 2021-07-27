@@ -33,7 +33,7 @@ In case of a private repo and an un-configured 'DEMISTO_SDK_GITHUB_TOKEN' remote
     Update the release notes of a pack even if no changes that require update were made.
 
 * **--text**
-    
+
     Text to add to all of the release notes files.
 
 * **--pre_release**
@@ -47,9 +47,9 @@ In case of a private repo and an un-configured 'DEMISTO_SDK_GITHUB_TOKEN' remote
 * **-v, --version <DESIRED_VERSION>**
 
     Bump to a specific version. Cannot be used with `-u, --update_type` flags.
-    
+
 * **-idp, --id-set-path**
-    
+
     The path of the id-set.json used for APIModule updates.
 
 ### Examples

@@ -497,8 +497,8 @@ class PackDependencies:
                     playbook_dependencies.update(pack_dependencies_data)
 
             implementing_scripts = playbook_data.get('implementing_scripts', []) + \
-                                   playbook_data.get('filters', []) + \
-                                   playbook_data.get('transformers', [])
+                playbook_data.get('filters', []) + \
+                playbook_data.get('transformers', [])
 
             # searching for packs of implementing scripts
             playbook_dependencies.update(PackDependencies._differentiate_playbook_implementing_objects(
@@ -1360,10 +1360,10 @@ class PackDependencies:
         )
 
         pack_dependencies = (
-                scripts_dependencies | playbooks_dependencies | layouts_dependencies | incidents_fields_dependencies |
-                indicators_types_dependencies | integrations_dependencies | incidents_types_dependencies |
-                classifiers_dependencies | mappers_dependencies | widget_dependencies | dashboards_dependencies |
-                reports_dependencies | generic_types_dependencies | generic_modules_dependencies | generic_fields_dependencies
+            scripts_dependencies | playbooks_dependencies | layouts_dependencies | incidents_fields_dependencies |
+            indicators_types_dependencies | integrations_dependencies | incidents_types_dependencies |
+            classifiers_dependencies | mappers_dependencies | widget_dependencies | dashboards_dependencies |
+            reports_dependencies | generic_types_dependencies | generic_modules_dependencies | generic_fields_dependencies
         )
 
         return pack_dependencies

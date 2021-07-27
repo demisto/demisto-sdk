@@ -1,5 +1,6 @@
 # Changelog
 * Fixed an issue where **validate** suggests, with no reason, running **format** on missing mandatory keys in yml file.
+* Skipped existence of TestPlaybook check on community and contribution integrations.
 * Fixed an issue where pre-commit didn't run on the demisto_sdk/commands folder.
 * Added option to enter a dictionary or json of format `[{field_name:description}]` in the **json-to-outputs** command,
   with the `-d` flag.

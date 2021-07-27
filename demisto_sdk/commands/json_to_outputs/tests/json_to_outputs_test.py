@@ -78,14 +78,15 @@ def test_json_to_outputs__detect_date():
     yaml_output = parse_json(
         data='{"created_at": "2019-10-10T00:00:00"}',
         command_name='jira-ticket',
-        prefix='Jira.Ticket'
+        prefix='Jira.Ticket',
+        description_dictionary={'created_at': 'time when the ticket was created.'}
     )
 
     assert yaml_output == '''arguments: []
 name: jira-ticket
 outputs:
 - contextPath: Jira.Ticket.created_at
-  description: ''
+  description: time when the ticket was created.
   type: Date
 '''
 
@@ -102,14 +103,51 @@ def test_json_to_outputs__a_list_of_dict():
     yaml_output = parse_json(
         data='[{"a": "b", "c": "d"}, {"a": 1}]',
         command_name='jira-ticket',
-        prefix='Jira.Ticket'
+        prefix='Jira.Ticket',
+        description_dictionary={"a": "dummy field called a"}
     )
 
     assert yaml_output == '''arguments: []
 name: jira-ticket
 outputs:
 - contextPath: Jira.Ticket.a
+  description: A dummy field called a
+  type: Number
+- contextPath: Jira.Ticket.c
   description: ''
+  type: String
+'''
+
+
+@pytest.mark.parametrize('description_dictionary, expected_a_description',
+                         [
+                             ({}, "''"),
+                             ({'nonexistent_field': 'foo'}, "''"),
+                             (None, "''"),
+                             ("", "''"),
+                             ({"q": "this should not show as q is not in the data"}, "''")
+                         ])
+def test_json_to_outputs__empty_description_dictionary(description_dictionary, expected_a_description):
+    """
+    Given
+        - A list of dictionaries
+    When
+        - Passed to json_to_outputs
+    Then
+        - ensure the returned type is correct
+    """
+    yaml_output = parse_json(
+        data='[{"a": "b", "c": "d"}, {"a": 1}]',
+        command_name='jira-ticket',
+        prefix='Jira.Ticket',
+        description_dictionary=description_dictionary
+    )
+
+    assert yaml_output == f'''arguments: []
+name: jira-ticket
+outputs:
+- contextPath: Jira.Ticket.a
+  description: {expected_a_description}
   type: Number
 - contextPath: Jira.Ticket.c
   description: ''

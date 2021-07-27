@@ -29,7 +29,6 @@ class PreProcessRuleValidator(ContentEntityValidator):
         return all([
                     self.is_valid_version(),
                     self.is_valid_from_server_version(),
-                    self.is_valid_file_path(),
                     ])
 
     def is_valid_version(self) -> bool:
@@ -51,14 +50,6 @@ class PreProcessRuleValidator(ContentEntityValidator):
                 error_message, error_code = Errors.invalid_from_server_version_in_pre_process_rules('fromServerVersion')
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
-        return True
-
-    def is_valid_file_path(self) -> bool:
-        output_basename = os.path.basename(self.file_path)
-        if not output_basename.startswith('preprocessrule-'):
-            error_message, error_code = Errors.invalid_file_path_pre_process_rules(output_basename)
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
-                return False
         return True
 
     # # TODO Needed! Check that scripts and incident_fields exists

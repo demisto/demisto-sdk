@@ -1537,11 +1537,6 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_file_path_pre_process_rules(file_name):
-        return f'Invalid file name - {file_name}. Pre Process Rules file name should start with "preprocessrule-" prefix.'
-
-    @staticmethod
-    @error_code_decorator
     def invalid_from_server_version_in_pre_process_rules(version_field):
         return f'{version_field} field in Pre Process Rule needs to be at least 6.5.0'
 

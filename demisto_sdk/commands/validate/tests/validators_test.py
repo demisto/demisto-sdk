@@ -203,7 +203,7 @@ class TestValidators:
 
     @pytest.mark.parametrize('source, target, answer, validator', INPUTS_IS_VALID_VERSION)
     def test_is_file_valid(self, source, target, answer, validator, mocker):
-        # type: (str, str, Any, Type[ContentEntityValidator]) -> None
+        # type: (str, str, str, Any, Type[ContentEntityValidator]) -> None
         try:
             copyfile(source, target)
             structure = StructureValidator(source)

@@ -9,8 +9,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                filter_files_on_pack,
                                                get_pack_name,
                                                get_pack_names_from_files,
-                                               print_color,
-                                               print_warning,
+                                               print_color, print_warning,
                                                suppress_stdout)
 from demisto_sdk.commands.update_release_notes.update_rn import (
     UpdateRN, update_api_modules_dependents_rn)
@@ -38,7 +37,7 @@ class UpdateReleaseNotesManager:
         # When a user choose a specific pack to update rn, the -g flag should not be passed
         if self.given_pack and self.is_all:
             raise ValueError('Please remove the -g flag when specifying only one pack.')
-        self.rn_path = list()
+        self.rn_path: list = list()
 
     def manage_rn_update(self):
         """

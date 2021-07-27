@@ -2,6 +2,7 @@
 * Fixed an issue where **validate** suggests, with no reason, running **format** on missing mandatory keys in yml file.
 * Skipped existence of TestPlaybook check on community and contribution integrations.
 * Fixed an issue where pre-commit didn't run on the demisto_sdk/commands folder.
+* The **init** command will now change the script template name in the code to the given script name.
 * Enhanced the **generate-test-playbook** command to use only integration tested on commands, rather than (possibly) other integrations implementing them.
 
 # 1.4.5
@@ -15,6 +16,7 @@
 * The **format** command will now set `fromVersion: 6.2.0` for widgets with 'metrics' data type.
 * Updated the **find-dependencies** command to support generic modules, definitions, fields and types.
 * Fixed an issue where **openapi-codegen** tried to extract reference example outputs, leading to an exception.
+* Added an option to ignore secrets automatically when using the **init** command to create a pack.
 * Added a tool that gives the ability to temporarily suppress console output.
 
 # 1.4.4

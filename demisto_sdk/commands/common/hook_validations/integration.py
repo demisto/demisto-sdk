@@ -87,6 +87,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_display_name(),
             self.is_valid_pwsh(),
             self.is_valid_image(),
+            self.is_valid_max_fetch_and_first_fetch(),
             self.is_valid_as_deprecated(),
             self.is_valid_parameters_display_name(),
             self.is_mapping_fields_command_exist(),
@@ -109,7 +110,7 @@ class IntegrationValidator(ContentEntityValidator):
                 validate_rn (bool): Whether to validate release notes (changelog) or not.
                 skip_test_conf (bool): If true then will skip test playbook configuration validation
                 check_is_unskipped (bool): Whether to check if the integration is unskipped.
-                conf_json_data (dict): conf json file data
+                conf_file (dict):
 
             Returns:
                 bool: True if integration is valid, False otherwise.
@@ -120,7 +121,6 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_hidden_params(),
             self.is_valid_description(beta_integration=False),
             self.is_context_correct_in_readme(),
-            self.is_valid_max_fetch_and_first_fetch(),
         ]
 
         if check_is_unskipped:

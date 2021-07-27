@@ -16,7 +16,7 @@ exist in the new version. Running this command will give you a detailed report a
     The path to the old integration yml file.
 
 * **--docs-format**
-    
+
     Whether output should be in the format for the version differences section in README
 
 ### Examples

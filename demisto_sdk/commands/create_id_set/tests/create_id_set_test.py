@@ -1,5 +1,5 @@
-import os
 import json
+import os
 import shutil
 from collections import OrderedDict
 from tempfile import mkdtemp
@@ -9,7 +9,6 @@ from demisto_sdk.commands.common.update_id_set import ID_SET_ENTITIES
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from TestSuite.test_tools import ChangeCWD
 from TestSuite.utils import IsEqualFunctions
-
 
 TESTS_DIR = f'{git_path()}/demisto_sdk/tests'
 
@@ -336,7 +335,7 @@ class TestAddCommandToImplementingIntegrationsMapping:
                     }),
                 ]),
             }
-         ]
+        ]
 
         id_set_creator = IDSetCreator(print_logs=False)
         id_set_creator.id_set["integrations"] = integrations
@@ -383,7 +382,7 @@ class TestAddCommandToImplementingIntegrationsMapping:
                     }),
                 ]),
             }
-         ]
+        ]
 
         id_set_creator = IDSetCreator(print_logs=False)
         id_set_creator.id_set["integrations"] = integrations

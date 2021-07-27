@@ -163,7 +163,6 @@ def zip_uploadable_packs(artifact_manager: ArtifactsManager):
     make_archive(pack_zips_dir, 'zip', pack_zips_dir)
 
 
-
 @contextmanager
 def PacksDirsHandler(artifact_manager: PacksManager):
     """ Artifacts Directories handler.

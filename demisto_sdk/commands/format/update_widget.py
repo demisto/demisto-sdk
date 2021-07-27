@@ -1,5 +1,5 @@
-from typing import Tuple
 from distutils.version import LooseVersion
+from typing import Tuple
 
 import click
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,

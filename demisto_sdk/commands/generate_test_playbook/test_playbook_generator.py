@@ -112,7 +112,7 @@ def create_end_task(id):
     }
 
 
-def create_automation_task(_id, automation_name, item_type: str, args=None):
+def create_automation_task(_id, automation_name, item_type: str, args=None, integration_id: str = ""):
     script_args = {}  # type:Dict
     if args and len(args) > 0:
         script_args['all'] = {}
@@ -121,7 +121,7 @@ def create_automation_task(_id, automation_name, item_type: str, args=None):
             script_args['all']['simple'] = val
 
     if item_type == ContentItemType.INTEGRATION:
-        script_name = f"|||{automation_name}"
+        script_name = f"{integration_id}|||{automation_name}"
     elif item_type == ContentItemType.SCRIPT:
         script_name = automation_name
 
@@ -230,7 +230,8 @@ def outputs_to_condition(outputs):
     return condition
 
 
-def create_automation_task_and_verify_outputs_task(test_playbook, command, item_type, no_outputs):
+def create_automation_task_and_verify_outputs_task(test_playbook, command, item_type, no_outputs,
+                                                   integration_id: str = ""):
     """
     create automation task from command and verify outputs task from automation(script/integration command) outputs.
     both tasks added to test playbook. both of this tasks linked to each other
@@ -240,6 +241,8 @@ def create_automation_task_and_verify_outputs_task(test_playbook, command, item_
         command: command/script object - they are similar as they both contain name and outputs
         item_type: content item type - either integration or script
         no_outputs: if True then created empty verify outputs task without all the outputs
+        integration_id: if provided, commands will be executed specifically by this integration
+                                  (and not by other integration implementing them, like VirusTotal and IPinfo for `!ip`)
 
     Returns:
         test_playbook is updated
@@ -248,7 +251,10 @@ def create_automation_task_and_verify_outputs_task(test_playbook, command, item_
     outputs = command.get('outputs', [])
     conditions = outputs_to_condition(outputs)
 
-    task_command = create_automation_task(test_playbook.task_counter, command_name, item_type=item_type)
+    task_command = create_automation_task(test_playbook.task_counter,
+                                          command_name,
+                                          item_type,
+                                          integration_id)
     test_playbook.add_task(task_command)
 
     if len(outputs) > 0:
@@ -323,7 +329,8 @@ class PlaybookTestsGenerator:
                     test_playbook=test_playbook,
                     command=command,
                     item_type=ContentItemType.INTEGRATION,
-                    no_outputs=self.no_outputs
+                    no_outputs=self.no_outputs,
+                    integration_id=yaml_obj.get('id')
                 )
 
         elif self.file_type == ContentItemType.SCRIPT:

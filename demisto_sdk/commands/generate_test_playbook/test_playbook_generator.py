@@ -330,7 +330,7 @@ class PlaybookTestsGenerator:
             create_automation_task_and_verify_outputs_task(
                 test_playbook=test_playbook,
                 command=yaml_obj,
-                item_type=ContentItemType.INTEGRATION,
+                item_type=ContentItemType.SCRIPT,
                 no_outputs=self.no_outputs
             )
 

@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Dict
+from typing import Dict, Optional
 
 from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
                                                print_error)
@@ -112,16 +112,21 @@ def create_end_task(id):
     }
 
 
-def create_automation_task(_id, automation_name, item_type: str, args=None, integration_id: str = ""):
+def create_automation_task(_id, automation_name, item_type: str, args: Optional[Dict] = None,
+                           integration_brand: str = ""):
     script_args = {}  # type:Dict
     if args and len(args) > 0:
         script_args['all'] = {}
-
         for arg, val in args.items():
             script_args['all']['simple'] = val
 
     if item_type == ContentItemType.INTEGRATION:
-        script_name = f"{integration_id}|||{automation_name}"
+        """
+        when integration_brand is used as prefix, only instances of this brand execute the command.
+        to use with more than one integration, pass integration_brand = ""
+        """
+        script_name = f'{integration_brand}|||{automation_name}'
+
     elif item_type == ContentItemType.SCRIPT:
         script_name = automation_name
 
@@ -241,8 +246,7 @@ def create_automation_task_and_verify_outputs_task(test_playbook, command, item_
         command: command/script object - they are similar as they both contain name and outputs
         item_type: content item type - either integration or script
         no_outputs: if True then created empty verify outputs task without all the outputs
-        integration_id: if provided, commands will be executed specifically by this integration
-                                  (and not by other integration implementing them, like VirusTotal and IPinfo for `!ip`)
+        integration_id: if provided, commands will only be run by instances of the provided integration
 
     Returns:
         test_playbook is updated
@@ -254,7 +258,7 @@ def create_automation_task_and_verify_outputs_task(test_playbook, command, item_
     task_command = create_automation_task(test_playbook.task_counter,
                                           command_name,
                                           item_type,
-                                          integration_id)
+                                          integration_brand=integration_id)
     test_playbook.add_task(task_command)
 
     if len(outputs) > 0:
@@ -269,7 +273,7 @@ def create_automation_task_and_verify_outputs_task(test_playbook, command, item_
 
 class PlaybookTestsGenerator:
     def __init__(self, input: str, output: str, name: str, file_type: str, no_outputs: bool = False,
-                 verbose: bool = False):
+                 verbose: bool = False, run_command_on_all_instances: bool = False):
         self.integration_yml_path = input
         self.output = output
         if output:
@@ -281,6 +285,7 @@ class PlaybookTestsGenerator:
         self.name = name
         self.no_outputs = no_outputs
         self.verbose = verbose
+        self.run_command_on_all_instances = run_command_on_all_instances
 
     def run(self):
         """
@@ -330,7 +335,7 @@ class PlaybookTestsGenerator:
                     command=command,
                     item_type=ContentItemType.INTEGRATION,
                     no_outputs=self.no_outputs,
-                    integration_id=yaml_obj.get('id')
+                    integration_id=yaml_obj.get('commonfields', {}).get('id')
                 )
 
         elif self.file_type == ContentItemType.SCRIPT:

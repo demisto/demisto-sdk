@@ -458,7 +458,7 @@ class UpdateRN:
             return rn_string
         rn_template_as_dict: dict = {}
         if self.is_force:
-            rn_string = self.build_rn_desc(content_name=self.pack)
+            rn_string = self.build_rn_desc(content_name=self.pack, text=self.text)
         # changed_items.items() looks like that: [((name, type), {...}), (name, type), {...}] and we want to sort
         # them by type (x[0][1])
         for (content_name, _type), data in sorted(changed_items.items(),

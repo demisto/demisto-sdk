@@ -30,16 +30,16 @@ class TestGenerateTestPlaybook:
         if os.path.exists(TestGenerateTestPlaybook.TEMP_DIR):
             shutil.rmtree(TestGenerateTestPlaybook.TEMP_DIR, ignore_errors=False, onerror=None)
 
-    @pytest.mark.parametrize("all_brands,expected_yml",
+    @pytest.mark.parametrize("use_all_brands,expected_yml",
                              [(False, 'fake_integration_expected_test_playbook.yml'),
                               (True, 'fake_integration_expected_test_playbook__all_brands.yml')])
-    def test_generate_test_playbook(self, all_brands, expected_yml):
+    def test_generate_test_playbook(self, use_all_brands, expected_yml):
         generator = PlaybookTestsGenerator(
             input=f'{git_path()}/demisto_sdk/tests/test_files/fake_integration.yml',
             file_type='integration',
             output=TestGenerateTestPlaybook.TEMP_DIR,
             name='TestPlaybook',
-            all_brands=all_brands
+            use_all_brands=use_all_brands
         )
 
         generator.run()

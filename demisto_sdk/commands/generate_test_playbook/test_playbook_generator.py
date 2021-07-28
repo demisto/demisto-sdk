@@ -272,7 +272,7 @@ def create_automation_task_and_verify_outputs_task(test_playbook, command, item_
 
 class PlaybookTestsGenerator:
     def __init__(self, input: str, output: str, name: str, file_type: str, no_outputs: bool = False,
-                 verbose: bool = False, all_brands: bool = False):
+                 verbose: bool = False, use_all_brands: bool = False):
         self.integration_yml_path = input
         self.output = output
         if output:
@@ -284,7 +284,7 @@ class PlaybookTestsGenerator:
         self.name = name
         self.no_outputs = no_outputs
         self.verbose = verbose
-        self.all_brands = all_brands
+        self.use_all_brands = use_all_brands
 
     def run(self):
         """
@@ -328,7 +328,7 @@ class PlaybookTestsGenerator:
         )
 
         if self.file_type == ContentItemType.INTEGRATION:
-            brand = '' if self.all_brands else yaml_obj.get('commonfields', {}).get('id', '')
+            brand = '' if self.use_all_brands else yaml_obj.get('commonfields', {}).get('id', '')
 
             for command in yaml_obj.get('script').get('commands'):
                 create_automation_task_and_verify_outputs_task(

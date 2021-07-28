@@ -3,6 +3,7 @@ from os import listdir
 from pathlib import Path
 
 from click.testing import CliRunner
+
 from demisto_sdk.__main__ import main
 
 INIT_CMD = "init"

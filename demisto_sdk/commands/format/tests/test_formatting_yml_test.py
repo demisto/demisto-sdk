@@ -5,6 +5,9 @@ import sys
 import click
 import pytest
 import yaml
+from mock import Mock, patch
+from ruamel.yaml import YAML
+
 from demisto_sdk.commands.common.constants import (FEED_REQUIRED_PARAMS,
                                                    FETCH_REQUIRED_PARAMS,
                                                    INTEGRATION)
@@ -30,8 +33,6 @@ from demisto_sdk.tests.constants_test import (
     SOURCE_FORMAT_INTEGRATION_INVALID, SOURCE_FORMAT_INTEGRATION_VALID,
     SOURCE_FORMAT_PLAYBOOK, SOURCE_FORMAT_PLAYBOOK_COPY,
     SOURCE_FORMAT_SCRIPT_COPY, SOURCE_FORMAT_TEST_PLAYBOOK, TEST_PLAYBOOK_PATH)
-from mock import Mock, patch
-from ruamel.yaml import YAML
 from TestSuite.test_tools import ChangeCWD
 
 ryaml = YAML()

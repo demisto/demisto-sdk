@@ -3,6 +3,8 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 
 import click
+
+from demisto_sdk.commands.common.constants import TESTS_AND_DOC_DIRECTORIES
 from demisto_sdk.commands.common.legacy_git_tools import get_changed_files
 from demisto_sdk.commands.common.tools import (find_type, get_files_in_dir,
                                                print_error, print_success,
@@ -31,10 +33,6 @@ from demisto_sdk.commands.format.update_report import ReportJSONFormat
 from demisto_sdk.commands.format.update_script import ScriptYMLFormat
 from demisto_sdk.commands.format.update_widget import WidgetJSONFormat
 from demisto_sdk.commands.lint.commands_builder import excluded_files
-
-from demisto_sdk.commands.common.constants import (
-                                                   TESTS_AND_DOC_DIRECTORIES,
-                                                  )
 
 FILE_TYPE_AND_LINKED_CLASS = {
     'integration': IntegrationYMLFormat,

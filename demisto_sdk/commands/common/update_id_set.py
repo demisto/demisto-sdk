@@ -20,15 +20,15 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    COMMON_TYPES_PACK,
                                                    DASHBOARDS_DIR,
                                                    DEFAULT_ID_SET_PATH,
+                                                   GENERIC_DEFINITIONS_DIR,
+                                                   GENERIC_FIELDS_DIR,
+                                                   GENERIC_MODULES_DIR,
+                                                   GENERIC_TYPES_DIR,
                                                    INCIDENT_FIELDS_DIR,
                                                    INCIDENT_TYPES_DIR,
                                                    INDICATOR_FIELDS_DIR,
                                                    INDICATOR_TYPES_DIR,
                                                    LAYOUTS_DIR, MAPPERS_DIR,
-                                                   GENERIC_DEFINITIONS_DIR,
-                                                   GENERIC_FIELDS_DIR,
-                                                   GENERIC_MODULES_DIR,
-                                                   GENERIC_TYPES_DIR,
                                                    REPORTS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
                                                    WIDGETS_DIR, FileType)
@@ -36,7 +36,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type, get_json,
                                                get_pack_name, get_yaml,
                                                print_color, print_error,
                                                print_warning)
-from demisto_sdk.commands.unify.unifier import Unifier
+from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
 
 CONTENT_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
                     'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
@@ -244,7 +244,7 @@ def get_filters_and_transformers_from_playbook(data_dict: dict) -> Tuple[list, l
 
 
 def get_integration_api_modules(file_path, data_dictionary, is_unified_integration):
-    unifier = Unifier(os.path.dirname(file_path))
+    unifier = YmlUnifier(os.path.dirname(file_path))
     if is_unified_integration:
         integration_script_code = data_dictionary.get('script', {}).get('script', '')
     else:
@@ -873,7 +873,6 @@ def get_mapper_data(path):
     if definition_id:
         data['definitionId'] = definition_id
 
-
     return {id_: data}
 
 
@@ -1001,7 +1000,7 @@ def process_script(file_path: str, print_logs: bool) -> list:
                 res.append(get_script_data(file_path))
         else:
             # package script
-            unifier = Unifier(file_path)
+            unifier = YmlUnifier(file_path)
             yml_path, code = unifier.get_script_or_integration_package_data()
             if print_logs:
                 print(f'adding {file_path} to id_set')

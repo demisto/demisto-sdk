@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Dict
 
 import pytest
+
 from demisto_sdk.commands.common.content.objects.pack_objects.layout.layout import \
     Layout
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack

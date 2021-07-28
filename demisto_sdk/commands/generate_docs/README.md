@@ -7,24 +7,24 @@ This command is used to create a documentation file for Cortex XSOAR content fil
 **Arguments**:
 * **-i, --input**
 Path of the yml file.
-* **-o, --output** 
+* **-o, --output**
 The output dir to write the documentation file into, documentation file name is README.md. If not specified, will be in the yml dir.
-* **-uc, --use_cases** 
+* **-uc, --use_cases**
 For integration - Top use-cases. Number the steps by '*' (i.e. '\* foo. * bar.').
 * **-c, --command**
 A comma-separated command names to generate doc for, will ignore the rest of the commands. e.g xdr-get-incidents,xdr-update-incident
-* **-e, --examples** 
+* **-e, --examples**
 Integrations: path for file containing command examples. Each command should be in a separate line.
   Scripts: the script example surrounded by quotes. For example: `-e '!ConvertFile entry_id=<entry_id>'`
-* **-p, --permissions** 
+* **-p, --permissions**
 Permissions in the documentation.
-* **-cp, --command-permissions** 
+* **-cp, --command-permissions**
 Path for file containing commands permissions. Each command permissions should be in a separate line (i.e. 'command-name Administrator READ-WRITE').
-* **-l, --limitations** 
+* **-l, --limitations**
 Known limitations. Number the steps by '*' (i.e. '\* foo. * bar.').
-* **--insecure** 
+* **--insecure**
 Skip certificate validation.
-* **-v, --verbose** 
+* **-v, --verbose**
 Verbose output - mainly for debugging purposes.
 * **--old-version**
 Path of the old integration version yml file.

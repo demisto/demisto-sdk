@@ -3,6 +3,7 @@ import sys
 from threading import Thread
 
 import requests
+
 from demisto_sdk.commands.test_content.ParallelLoggingManager import \
     ParallelLoggingManager
 from demisto_sdk.commands.test_content.TestContentClasses import (

@@ -4,6 +4,7 @@ import re
 import tempfile
 
 import demisto_client
+
 from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
                                                print_error, print_v,
                                                print_warning)

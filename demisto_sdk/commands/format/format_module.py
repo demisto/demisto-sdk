@@ -13,6 +13,10 @@ from demisto_sdk.commands.format.update_classifier import (
 from demisto_sdk.commands.format.update_connection import ConnectionJSONFormat
 from demisto_sdk.commands.format.update_dashboard import DashboardJSONFormat
 from demisto_sdk.commands.format.update_description import DescriptionFormat
+from demisto_sdk.commands.format.update_genericdefinition import GenericDefinitionJSONFormat
+from demisto_sdk.commands.format.update_genericfield import GenericFieldJSONFormat
+from demisto_sdk.commands.format.update_genericmodule import GenericModuleJSONFormat
+from demisto_sdk.commands.format.update_generictype import GenericTypeJSONFormat
 from demisto_sdk.commands.format.update_incidentfields import \
     IncidentFieldJSONFormat
 from demisto_sdk.commands.format.update_incidenttype import \
@@ -56,8 +60,13 @@ FILE_TYPE_AND_LINKED_CLASS = {
     'report': ReportJSONFormat,
     'testscript': ScriptYMLFormat,
     'canvas-context-connections': ConnectionJSONFormat,
-    'description': DescriptionFormat
+    'description': DescriptionFormat,
+    'genericfield': GenericFieldJSONFormat,
+    'generictype': GenericTypeJSONFormat,
+    'genericmodule': GenericModuleJSONFormat,
+    'genericdefinition': GenericDefinitionJSONFormat
 }
+
 UNFORMATTED_FILES = ['readme',
                      'releasenotes',
                      'changelog',

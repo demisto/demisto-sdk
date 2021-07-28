@@ -23,6 +23,7 @@ from demisto_sdk.tests.constants_test import (
     INTEGRATION_WITH_TEST_PLAYBOOKS, PLAYBOOK_WITH_TEST_PLAYBOOKS,
     SOURCE_FORMAT_INTEGRATION_COPY, SOURCE_FORMAT_PLAYBOOK_COPY)
 from TestSuite.test_tools import ChangeCWD
+from demisto_sdk.tests.test_files.validate_integration_test_valid_types import GENERIC_TYPE
 
 BASIC_YML_TEST_PACKS = [
     (SOURCE_FORMAT_INTEGRATION_COPY, DESTINATION_FORMAT_INTEGRATION_COPY, IntegrationYMLFormat, 'New Integration_copy',
@@ -824,3 +825,27 @@ def test_format_incident_type_layout_id(repo):
         incident_type_content = json.loads(incident_type_file.read())
         assert incident_type_content['layout'] == 'IncidentLayout'
         assert incident_type_content['playbookId'] == 'PlaybookName'
+
+
+def test_format_generic_type_wrong_from_version(repo):
+    """
+        Given
+        - Invalid generic type  - fromVersion field is below 6.5.0
+
+        When
+        - Running format on it.
+
+        Then
+        - Ensure Format fixed the invalid values of the given generic type.
+        - Ensure success message is printed.
+    """
+    pack = repo.create_pack('PackName')
+    generic_type = GENERIC_TYPE.copy()
+    generic_type['fromVersion'] = '6.0.0'
+    pack.create_generic_type("generic-type", generic_type)
+    generic_type_path = pack.generic_types[0].path
+    runner = CliRunner(mix_stderr=False)
+    result = runner.invoke(main, [FORMAT_CMD, '-i', generic_type_path, '-v'], catch_exceptions=False)
+    assert f'Setting fromVersion field' in result.stdout
+    assert 'The files are valid' in result.stdout
+    assert result.exit_code == 0

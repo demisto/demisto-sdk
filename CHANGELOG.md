@@ -11,11 +11,10 @@
 * Fixed an issue where **openapi-codegen** tried to extract reference example outputs, leading to an exception.
 * Added a tool that gives the ability to temporarily suppress console output.
 * Added validators for generic objects:
-  - Generic field validator - verify that the 'fromVersion' field is above 6.5.0, 'group' field equals 4 and 'id' field starts with the prefix
-    '_generics'.
-  - Generic type validator - verify that the 'fromVersion' field is above 6.5.0
-  - Generic module validator - verify that the 'fromVersion' field is above 6.5.0
-  - Generic definition validator - verify that the 'fromVersion' field is above 6.5.0
+  - Generic Field validator - verify that the 'fromVersion' field is above 6.5.0, 'group' field equals 4 and 'id' field starts with the prefix 'generic_'.
+  - Generic Type validator - verify that the 'fromVersion' field is above 6.5.0
+  - Generic Module validator - verify that the 'fromVersion' field is above 6.5.0
+  - Generic Definition validator - verify that the 'fromVersion' field is above 6.5.0
 
 # 1.4.4
 * When formatting incident types with Auto-Extract rules and without mode field, the **format** command will now add the user selected mode.

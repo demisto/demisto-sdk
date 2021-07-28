@@ -279,8 +279,8 @@ ERROR_CODE = {
     "xsoar_config_file_is_not_json": {'code': "XC100", 'ui_applicable': False, 'related_field': ''},
     "xsoar_config_file_malformed": {'code': "XC101", 'ui_applicable': False, 'related_field': ''},
     "invalid_readme_image_error": {'code': "RM108", 'ui_applicable': False, 'related_field': ''},
-    "invalid_generic_field_group_value": {'code': "IF114", 'ui_applicable': False, 'related_field': 'group'},
-    "invalid_generic_field_id": {'code': "IF115", 'ui_applicable': False, 'related_field': 'id'}
+    "invalid_generic_field_group_value": {'code': "GF100", 'ui_applicable': False, 'related_field': 'group'},
+    "invalid_generic_field_id": {'code': "GF101", 'ui_applicable': False, 'related_field': 'id'}
 }
 
 
@@ -1209,8 +1209,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_generic_field_group_value(group):
-        return f"Group {group} is not a valid generic field group."
+    def invalid_generic_field_group_value(group, generic_field_group):
+        return f"Group {group} is not a valid generic field group. Please set group = {generic_field_group} instead."
 
     @staticmethod
     @error_code_decorator

@@ -1,10 +1,12 @@
 """
 This module is designed to validate the correctness of generic field entities in content.
 """
-from demisto_sdk.commands.common.constants import GENERIC_FIELD_GROUP, GENERIC_FIELD_ID_PREFIX
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
+
+GENERIC_FIELD_GROUP = 4
+GENERIC_FIELD_ID_PREFIX = 'generic_'
 
 
 class GenericFieldValidator(ContentEntityValidator):
@@ -33,7 +35,7 @@ class GenericFieldValidator(ContentEntityValidator):
         if group == GENERIC_FIELD_GROUP:
             return True
 
-        error_message, error_code = Errors.invalid_generic_field_group_value(group)
+        error_message, error_code = Errors.invalid_generic_field_group_value(group, GENERIC_FIELD_GROUP)
         if self.handle_error(error_message, error_code, file_path=self.file_path):
             return False
 

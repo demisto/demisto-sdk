@@ -110,8 +110,8 @@ class TestGenericFieldValidation:
 
     @pytest.mark.parametrize('field_to_test, invalid_value, expected_error_code', [
         ('fromVersion', '6.0.0', 'BA106'),
-        ('group', 0, 'IF114'),
-        ('id', 'asset_operatingsystem', 'IF115')
+        ('group', 0, 'GF100'),
+        ('id', 'asset_operatingsystem', 'GF101')
     ])
     def test_invalid_generic_field(self, mocker, repo, field_to_test, invalid_value, expected_error_code):
         """

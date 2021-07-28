@@ -9,6 +9,10 @@ import sys
 from typing import Dict, List, Tuple, Union
 
 import click
+from inflection import dasherize, underscore
+from ruamel.yaml import YAML
+from ruamel.yaml.scalarstring import FoldedScalarString
+
 from demisto_sdk.commands.common.constants import (DEFAULT_IMAGE_PREFIX,
                                                    DIR_TO_PREFIX,
                                                    INTEGRATIONS_DIR,
@@ -21,9 +25,6 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, arg_to_list,
                                                print_color, print_error,
                                                print_warning,
                                                server_version_compare)
-from inflection import dasherize, underscore
-from ruamel.yaml import YAML
-from ruamel.yaml.scalarstring import FoldedScalarString
 
 PACK_METADATA_PATH = 'pack_metadata.json'
 CONTRIBUTOR_DISPLAY_NAME = ' ({} Contribution)'

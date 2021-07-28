@@ -20,15 +20,15 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    COMMON_TYPES_PACK,
                                                    DASHBOARDS_DIR,
                                                    DEFAULT_ID_SET_PATH,
+                                                   GENERIC_DEFINITIONS_DIR,
+                                                   GENERIC_FIELDS_DIR,
+                                                   GENERIC_MODULES_DIR,
+                                                   GENERIC_TYPES_DIR,
                                                    INCIDENT_FIELDS_DIR,
                                                    INCIDENT_TYPES_DIR,
                                                    INDICATOR_FIELDS_DIR,
                                                    INDICATOR_TYPES_DIR,
                                                    LAYOUTS_DIR, MAPPERS_DIR,
-                                                   GENERIC_DEFINITIONS_DIR,
-                                                   GENERIC_FIELDS_DIR,
-                                                   GENERIC_MODULES_DIR,
-                                                   GENERIC_TYPES_DIR,
                                                    REPORTS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
                                                    WIDGETS_DIR, FileType)
@@ -872,7 +872,6 @@ def get_mapper_data(path):
         data['transformers'] = list(all_transformers)
     if definition_id:
         data['definitionId'] = definition_id
-
 
     return {id_: data}
 

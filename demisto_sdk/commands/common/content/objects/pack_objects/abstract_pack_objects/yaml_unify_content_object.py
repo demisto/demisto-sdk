@@ -1,11 +1,12 @@
 import copy
 from typing import List, Optional, Union
 
+from wcmatch.pathlib import EXTMATCH, Path
+
 import demisto_sdk.commands.common.content.errors as exc
 from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    SCRIPTS_DIR, FileType)
 from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
-from wcmatch.pathlib import EXTMATCH, Path
 
 from .yaml_content_object import YAMLContentObject
 

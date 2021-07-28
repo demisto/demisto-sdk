@@ -5,8 +5,10 @@ from io import StringIO
 from shutil import copyfile
 from typing import Any, Type, Union
 
-import demisto_sdk.commands.validate.validate_manager
 import pytest
+from mock import patch
+
+import demisto_sdk.commands.validate.validate_manager
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (CONF_PATH, TEST_PLAYBOOK,
                                                    FileType)
@@ -69,7 +71,6 @@ from demisto_sdk.tests.constants_test import (
     WIDGET_TARGET)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import \
     INCIDENT_FIELD
-from mock import patch
 from TestSuite.test_tools import ChangeCWD
 
 
@@ -203,7 +204,7 @@ class TestValidators:
 
     @pytest.mark.parametrize('source, target, answer, validator', INPUTS_IS_VALID_VERSION)
     def test_is_file_valid(self, source, target, answer, validator, mocker):
-        # type: (str, str, Any, Type[ContentEntityValidator]) -> None
+        # type: (str, str, str, Any, Type[ContentEntityValidator]) -> None
         try:
             copyfile(source, target)
             structure = StructureValidator(source)
@@ -385,6 +386,7 @@ class TestValidators:
         mocker.patch.object(ScriptValidator, 'is_there_separators_in_names', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_valid_integration_file_path', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_there_separators_in_names', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'is_docker_image_valid', return_value=True)
         validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
         assert validate_manager.run_validation_on_specific_files()
 
@@ -623,7 +625,7 @@ class TestValidators:
                            "WD", "RP", "BA100", "BC100", "ST", "CL", "MP", "LO", "XC"]
         ignored_list = validate_manager.create_ignored_errors_list(errors_to_check)
         assert ignored_list == ["BA101", "BA102", "BA103", "BA104", "BA105", "BA106", "BA107", "BA108", "BA109",
-                                "BA110", "BC101", "BC102", "BC103", "BC104"]
+                                "BA110", 'BA111', "BC101", "BC102", "BC103", "BC104"]
 
     def test_added_files_type_using_function(self, repo, mocker):
         """

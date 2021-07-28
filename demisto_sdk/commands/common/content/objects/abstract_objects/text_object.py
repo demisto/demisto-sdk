@@ -1,7 +1,8 @@
 from typing import Union
 
-import demisto_sdk.commands.common.content.errors as exc
 from wcmatch.pathlib import Path
+
+import demisto_sdk.commands.common.content.errors as exc
 
 from .general_object import GeneralObject
 

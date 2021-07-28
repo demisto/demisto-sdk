@@ -12,6 +12,7 @@ For a new checker, add the invalid statement in the relevant file and add it to 
 from pathlib import Path
 
 import pytest
+
 from demisto_sdk.commands.lint import linter
 from demisto_sdk.tests.constants_test import (
     GIT_ROOT, XSOAR_LINTER_PY3_INVALID, XSOAR_LINTER_PY3_INVALID_WARNINGS,

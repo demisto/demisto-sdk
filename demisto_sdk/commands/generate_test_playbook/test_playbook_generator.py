@@ -328,7 +328,7 @@ class PlaybookTestsGenerator:
         )
 
         if self.file_type == ContentItemType.INTEGRATION:
-            brand = '' if self.all_brands else yaml_obj.get('commonfields', {}).get('id')
+            brand = '' if self.all_brands else yaml_obj.get('commonfields', {}).get('id', '')
 
             for command in yaml_obj.get('script').get('commands'):
                 create_automation_task_and_verify_outputs_task(

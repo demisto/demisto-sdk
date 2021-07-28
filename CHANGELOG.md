@@ -4,6 +4,7 @@
 * Fixed an issue where pre-commit didn't run on the demisto_sdk/commands folder.
 * The **init** command will now change the script template name in the code to the given script name.
 * Expanded the validations performed on beta integrations.
+* Improved the error messages in **generate-docs**, if an example was not provided.
 * Fixed an issue where **update-release-notes** ignores *--text* flag while using *-f*
 
 # 1.4.5

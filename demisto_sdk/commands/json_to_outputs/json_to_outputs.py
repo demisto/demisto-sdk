@@ -72,8 +72,8 @@ outputs:
   type: String
 """
 import json
-import sys
 import os
+import sys
 from typing import Dict, Optional, Union
 
 import dateparser
@@ -249,7 +249,7 @@ def json_to_outputs(command, input, prefix, output=None, verbose=False, interact
             sys.exit(1)
 
 
-def _parse_description_argument(descriptions: Union[str, Dict]) -> Optional[dict]:
+def _parse_description_argument(descriptions: Union[str, Dict]) -> Optional[dict]:  # type: ignore
     """ parses the description argument, be it a path to JSON, a JSON given as argument, or via standard input """
 
     def _load_json_to_dict(_json_str: str):
@@ -271,7 +271,7 @@ def _parse_description_argument(descriptions: Union[str, Dict]) -> Optional[dict
             # non-JSON inputs raise exception so the JSON can be pasted
             _load_json_to_dict(descriptions)
 
-        except (json.JSONDecodeError, TypeError) as _:
+        except (json.JSONDecodeError, TypeError):
             # JSON as raw input
             print("Enter a mapping between (some, or all) field names and their descriptions.\n "
                   "As an example, If one of the fields is `geolocation`, "
@@ -281,6 +281,6 @@ def _parse_description_argument(descriptions: Union[str, Dict]) -> Optional[dict
     try:
         return _load_json_to_dict(json_as_str)
 
-
     except (json.JSONDecodeError, TypeError):
         print("Error decoding JSON descriptions, ignoring them.")
+        return None

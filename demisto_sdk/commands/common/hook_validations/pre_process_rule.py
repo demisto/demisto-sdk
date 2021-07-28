@@ -27,10 +27,10 @@ class PreProcessRuleValidator(ContentEntityValidator):
         """
         # PreProcessRules files have fromServerVersion instead of fromVersion
         return all([
-                    self.is_valid_version(),
-                    self.is_valid_from_server_version(),
-                    self.is_script_exist(),
-                    ])
+            self.is_valid_version(),
+            self.is_valid_from_server_version(),
+            self.is_script_exist(),
+        ])
 
     def is_valid_version(self) -> bool:
         """Checks if version field is valid. uses default method.

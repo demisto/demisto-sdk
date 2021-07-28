@@ -133,7 +133,7 @@ outputs:
                              ("", "''"),
                              ({"q": "this should not show as q is not in the data"}, "''")
                          ])
-def test_json_to_outputs__empty_description_dictionary(description_dictionary, expected_a_description):
+def test_json_to_outputs__invalid_description_dictionary(description_dictionary, expected_a_description):
     """
     Given
         - A list of dictionaries

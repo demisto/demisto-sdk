@@ -3,6 +3,7 @@
 * Skipped existence of TestPlaybook check on community and contribution integrations.
 * Fixed an issue where pre-commit didn't run on the demisto_sdk/commands folder.
 * The **init** command will now change the script template name in the code to the given script name.
+* Expanded the validations performed on beta integrations.
 
 # 1.4.5
 * Enhanced the **postman-codegen** command to name all generated arguments with lower case.

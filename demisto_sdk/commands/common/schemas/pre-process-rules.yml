@@ -34,7 +34,7 @@ mapping:
   description:
     type: str
     required: false
-    newEventFilters:
+  newEventFilters:
     type: seq
     sequence:
     - include: newEventFilters_schema

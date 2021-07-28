@@ -3,6 +3,8 @@ from copy import deepcopy
 from typing import Optional
 
 import pytest
+from mock import mock_open, patch
+
 from demisto_sdk.commands.common.constants import (FEED_REQUIRED_PARAMS,
                                                    FETCH_REQUIRED_PARAMS,
                                                    FIRST_FETCH_PARAM,
@@ -12,7 +14,6 @@ from demisto_sdk.commands.common.hook_validations.integration import \
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from mock import mock_open, patch
 from TestSuite.test_tools import ChangeCWD
 
 FEED_REQUIRED_PARAMS_STRUCTURE = [dict(required_param.get('must_equal'), **required_param.get('must_contain'),
@@ -1265,7 +1266,7 @@ class TestisContextChanged:
     ]
 
     @pytest.mark.parametrize('readme, current_yml, expected', TEST_CASE)
-    def test_is_context_change_in_readme(self, readme, current_yml, expected):
+    def test_is_context_correct_in_readme(self, readme, current_yml, expected):
         """
         Given: a changed YML file
         When: running validate on integration with at least one command
@@ -1279,6 +1280,6 @@ class TestisContextChanged:
             structure = mock_structure("Pack/Test", current)
             validator = IntegrationValidator(structure)
             validator.current_file = current_yml
-            res = validator.is_context_change_in_readme()
+            res = validator.is_context_correct_in_readme()
             assert res == expected
         patcher.stop()

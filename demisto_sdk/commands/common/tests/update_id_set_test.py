@@ -6,6 +6,7 @@ import tempfile
 import unittest
 
 import pytest
+
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.update_id_set import (

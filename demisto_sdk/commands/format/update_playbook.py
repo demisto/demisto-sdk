@@ -5,6 +5,8 @@ from distutils.version import LooseVersion
 from typing import Tuple
 
 import click
+from git import InvalidGitRepositoryError
+
 from demisto_sdk.commands.common.constants import PLAYBOOK, FileType
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.playbook import \
@@ -15,7 +17,6 @@ from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE, NEW_FILE_DEFAULT_5_5_0_FROMVERSION, SCHEMAS_PATH,
     SKIP_RETURN_CODE, SUCCESS_RETURN_CODE)
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
-from git import InvalidGitRepositoryError
 
 
 class BasePlaybookYMLFormat(BaseUpdateYML):

@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Optional
 
 import yaml
+
 from TestSuite.file import File
 from TestSuite.test_tools import suite_join_path
 from TestSuite.yml import YAML

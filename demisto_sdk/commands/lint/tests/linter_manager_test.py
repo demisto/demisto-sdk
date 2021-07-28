@@ -3,6 +3,7 @@ from pathlib import PosixPath
 from unittest.mock import MagicMock, patch
 
 import pytest
+
 from demisto_sdk.commands.common.constants import (TYPE_PWSH, TYPE_PYTHON,
                                                    FileType)
 from demisto_sdk.commands.common.legacy_git_tools import git_path

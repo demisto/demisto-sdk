@@ -5,31 +5,6 @@ from demisto_sdk.commands.common.hook_validations.author_image import \
     AuthorImageValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 
-VALIDATE_CMD = "validate"
-PACK_METADATA_PARTNER = {
-    "name": "test",
-    "description": "test",
-    "support": "partner",
-    "currentVersion": "1.0.1",
-    "author": "bar",
-    "categories": [
-        "Data Enrichment & Threat Intelligence"
-    ],
-    "tags": [],
-    "useCases": [],
-    "keywords": [],
-    "price": 2,
-    "email": "some@mail.com",
-    "url": "https://www.paloaltonetworks.com/cortex"
-}
-
-README_INPUT_RESULTS_LIST = [
-    ('', False),
-    (' ', False),
-    ('\t\t\n ', False),
-    ('Text', True),
-]
-
 
 class TestAuthorImageValidator:
     AUTHOR_IMAGE_FILES_PATH = os.path.normpath(os.path.join(f'{git_path()}/demisto_sdk/tests', 'test_files',

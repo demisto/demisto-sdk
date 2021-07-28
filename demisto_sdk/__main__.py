@@ -1002,7 +1002,7 @@ def generate_docs(**kwargs):
     input_path: str = kwargs.get('input', '')
     output_path = kwargs.get('output')
     command = kwargs.get('command')
-    examples = str(kwargs.get('examples', ''))
+    examples: str = kwargs.get('examples', '')
     permissions = kwargs.get('permissions')
     limitations = kwargs.get('limitations')
     insecure: bool = kwargs.get('insecure', False)

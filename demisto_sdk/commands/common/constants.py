@@ -1037,6 +1037,7 @@ XSOAR_SUPPORT_URL = "https://www.paloaltonetworks.com/cortex"
 MARKETPLACE_LIVE_DISCUSSIONS = \
     'https://live.paloaltonetworks.com/t5/cortex-xsoar-discussions/bd-p/Cortex_XSOAR_Discussions'
 MARKETPLACE_MIN_VERSION = '6.0.0'
+EXCLUDED_DISPLAY_NAME_WORDS = ['partner', 'community']
 
 BASE_PACK = "Base"
 NON_SUPPORTED_PACK = "NonSupported"

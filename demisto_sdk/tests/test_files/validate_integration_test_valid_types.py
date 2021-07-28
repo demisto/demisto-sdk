@@ -611,86 +611,84 @@ GENERIC_MODULE = {
                 "name": "Assets",
                 "newButtonDefinitionId": "asset",
                 "dashboard": {
+                    "id": "asset_dashboard"
+                }
+            }]
+    }]
+}
+
+UNIFIED_GENERIC_MODULE = {
+    "id": "rbvm",
+    "version": -1,
+    "name": "Risk Based Vulnerability Management",
+    "fromVersion": "6.5.0",
+    "definitionIds": [
+        "asset"
+    ],
+    "views": [{
+        "icon": "icon-widget-infinity-24-s",
+        "name": "RBVM",
+        "title": "Risk Base Vulnerability Management",
+        "tabs": [
+            {
+                "name": "Assets",
+                "newButtonDefinitionId": "asset",
+                "dashboard": {
                     "id": "asset_dashboard",
                     "version": -1,
-                    "fromDate": "0001-01-01T00:00:00Z",
-                    "toDate": "0001-01-01T00:00:00Z",
+                    "fromVersion": "5.0.0",
+                    "description": "",
                     "period": {
-                        "by": "",
                         "byTo": "",
                         "byFrom": "days",
                         "toValue": None,
                         "fromValue": 7,
                         "field": ""
                     },
-                    "name": "Assets Dashboard",
-                    "prevName": "Assets Dashboard",
-                    "layout": [
-                        {
-                            "id": "3a352fc0-dca9-11eb-999f-35f993b96a7c",
-                            "forceRange": False,
-                            "x": 0,
-                            "y": 0,
-                            "i": "3a352fc0-dca9-11eb-999f-35f993b96a7c",
-                            "w": 12,
-                            "h": 3,
-                            "widget": {
-                                "id": "f5833f22-7357-40c9-8d5b-c02ee1f0c53b",
-                                "version": 2,
-                                "modified": "2021-03-20T23:03:11.86024+02:00",
-                                "sortValues": None,
-                                "packID": "",
-                                "itemVersion": "",
-                                "fromServerVersion": "",
-                                "toServerVersion": "",
-                                "propagationLabels": [
-                                    "all"
-                                ],
-                                "vcShouldIgnore": False,
-                                "vcShouldKeepItemLegacyProdMachine": False,
-                                "commitMessage": "",
-                                "shouldCommit": False,
-                                "name": "A Widget v2",
-                                "prevName": "A Widget v2",
-                                "dataType": "incidents",
-                                "widgetType": "pie",
-                                "query": "",
-                                "sort": None,
-                                "isPredefined": False,
-                                "dateRange": {
-                                    "fromDate": "0001-01-01T00:00:00Z",
-                                    "toDate": "0001-01-01T00:00:00Z",
-                                    "period": {
-                                        "by": "",
-                                        "byTo": "",
-                                        "byFrom": "days",
-                                        "toValue": None,
-                                        "fromValue": 7,
-                                        "field": ""
-                                    },
-                                    "fromDateLicense": "0001-01-01T00:00:00Z"
+                    "fromDateLicense": "0001-01-01T00:00:00Z",
+                    "name": "my-dashboard",
+                    "layout": [{
+                        "id": "a0e381e0-1c86-11e8-8581-45a91cd24d8e",
+                        "forceRange": True,
+                        "x": 8,
+                        "y": 0,
+                        "i": "a0e381e0-1c86-11e8-8581-45a91cd24d8e",
+                        "w": 4,
+                        "h": 4,
+                        "widget": {
+                            "id": "my-tasks",
+                            "version": 1,
+                            "modified": "2018-02-28T14:55:09.423998+02:00",
+                            "name": "My Tasks",
+                            "dataType": "tasks",
+                            "widgetType": "list",
+                            "query": "assignee:\"{me}\" and (state:Waiting or state:inprogress or state:error)",
+                            "sort": [
+                                {
+                                    "field": "dueDate",
+                                    "asc": True
+                                }
+                            ],
+                            "isPredefined": True,
+                            "dateRange": {
+                                "fromDate": "0001-01-01T00:00:00Z",
+                                "toDate": "0001-01-01T00:00:00Z",
+                                "period": {
+                                    "byTo": "",
+                                    "byFrom": "days",
+                                    "toValue": None,
+                                    "fromValue": None,
+                                    "field": ""
                                 },
-                                "params": {
-                                    "groupBy": [
-                                        "type"
-                                    ],
-                                    "tableColumns": [
-                                        {
-                                            "isDefault": True,
-                                            "key": "id",
-                                            "position": 0,
-                                            "width": 110
-                                        }
-                                    ]
-                                },
-                                "size": 0,
-                                "category": ""
+                                "fromDateLicense": "0001-01-01T00:00:00Z"
                             },
-                            "reflectDimensions": True
+                            "params": None,
+                            "size": 10,
+                            "category": ""
                         }
+                    },
                     ],
-                    "system": True,
-                    "isCommon": True
+                    "isPredefined": True
                 }
             }]
     }]

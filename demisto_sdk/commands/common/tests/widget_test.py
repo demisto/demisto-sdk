@@ -1,3 +1,5 @@
+from typing import Optional
+
 import pytest
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator

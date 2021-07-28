@@ -276,18 +276,19 @@ class TestDockerImage:
         assert docker_image_validator.is_latest_tag is False
         assert docker_image_validator.is_docker_image_valid() is False
 
-    def test_no_dockerimage_in_yml_file(self):
+    @pytest.mark.parametrize('code_type, expected', [('javascript', True), ('python', False)])
+    def test_no_dockerimage_in_yml_file(self, code_type, expected):
         docker_image_validator = mock_docker_image_validator()
 
         docker_image_validator.is_valid = True
         docker_image_validator.is_latest_tag = True
         docker_image_validator.yml_docker_image = False
-        docker_image_validator.code_type = 'python'
+        docker_image_validator.code_type = code_type
         docker_image_validator.docker_image_latest_tag = '1.1.1'
         docker_image_validator.docker_image_name = 'emisto/python'
         docker_image_validator.docker_image_tag = '1.1.1'
 
-        assert not docker_image_validator.is_docker_image_valid()
+        assert docker_image_validator.is_docker_image_valid() is expected
 
     def test_non_existing_docker(self, integration, capsys, requests_mock, mocker):
         docker_image = 'demisto/nonexistingdocker:1.4.0'

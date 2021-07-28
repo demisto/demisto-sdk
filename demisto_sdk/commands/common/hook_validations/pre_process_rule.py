@@ -29,6 +29,7 @@ class PreProcessRuleValidator(ContentEntityValidator):
         return all([
                     self.is_valid_version(),
                     self.is_valid_from_server_version(),
+                    self.is_script_exist(),
                     ])
 
     def is_valid_version(self) -> bool:
@@ -102,8 +103,9 @@ class PreProcessRuleValidator(ContentEntityValidator):
     #             return False
     #     return True
 
-    # TODO Check playbook.py for an example
-    # # TODO Needed! Check that scripts and incident_fields exists
-    # # Needed incident_fields: description
-    # # If the key "scriptName" is not empty - Check that the script exists
-    # def is_script_exist(self, id_set_file, is_ci) -> bool:
+    def is_script_exist(self) -> bool:
+        """Check if the file exists"""
+        if not os.path.isfile(self.file_path):
+            return False
+
+        return True

@@ -4,6 +4,7 @@
 * Fixed an issue where pre-commit didn't run on the demisto_sdk/commands folder.
 * The **init** command will now change the script template name in the code to the given script name.
 * Expanded the validations performed on beta integrations.
+* Added support for PreProcessRules in the **format**, **validate**, **download**, and **create-content-artifacts** commands.
 
 # 1.4.5
 * Enhanced the **postman-codegen** command to name all generated arguments with lower case.
@@ -12,7 +13,6 @@
 * Fixed an issue where **openapi-codegen** corrupted the swagger file by overwriting configuration to swagger file.
 * Updated the **upload** command to support uploading zipped packs to the marketplace.
 * Added to the **postman-codegen** command support of path variables.
-* Added support for PreProcessRules in the **format**, **validate**, **download**, and **create-content-artifacts** commands.
 * Fixed an issue where **openapi-codegen** entered into an infinite loop on circular references in the swagger file.
 * The **format** command will now set `fromVersion: 6.2.0` for widgets with 'metrics' data type.
 * Updated the **find-dependencies** command to support generic modules, definitions, fields and types.

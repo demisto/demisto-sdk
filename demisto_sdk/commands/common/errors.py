@@ -1,6 +1,7 @@
 from typing import Any, Dict, List, Optional
 
 import decorator
+
 from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
                                                    CONF_PATH,
                                                    INTEGRATION_CATEGORIES,

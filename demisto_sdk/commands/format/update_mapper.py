@@ -1,6 +1,7 @@
 from typing import Tuple
 
 import click
+
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE,

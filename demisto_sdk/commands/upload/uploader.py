@@ -7,6 +7,9 @@ from typing import List, Tuple, Union
 import click
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
+from packaging.version import Version
+from tabulate import tabulate
+
 from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    CONTENT_ENTITIES_DIRS,
                                                    DASHBOARDS_DIR,
@@ -31,8 +34,6 @@ from demisto_sdk.commands.common.tools import (find_type,
                                                get_demisto_version,
                                                get_parent_directory_name,
                                                print_v)
-from packaging.version import Version
-from tabulate import tabulate
 
 # These are the class names of the objects in demisto_sdk.commands.common.content.objects
 UPLOAD_SUPPORTED_ENTITIES = [
@@ -366,7 +367,7 @@ def print_summary(successfully_uploaded_files, unuploaded_due_to_version, failed
                              tablefmt="fancy_grid") + '\n', fg='bright_red')
 
 
-def sort_directories_based_on_dependencies(dir_list: List) -> List:
+def sort_directories_based_on_dependencies(dir_list: list) -> list:
     """
     Sorts given list of directories based on logic order of content entities that depend on each other.
     If a given directory does not appear in the CONTENT_ENTITY_UPLOAD_ORDER list it will be ignored
@@ -382,5 +383,7 @@ def sort_directories_based_on_dependencies(dir_list: List) -> List:
     for dir_path in dir_list_copy:
         if os.path.basename(dir_path) not in CONTENT_ENTITY_UPLOAD_ORDER:
             dir_list.remove(dir_path)
-    dir_list.sort(key=lambda item: srt.get(os.path.basename(item)))
+    dir_list.sort(
+        key=lambda item: srt.get(os.path.basename(item))  # type: ignore[arg-type, return-value]
+    )
     return dir_list

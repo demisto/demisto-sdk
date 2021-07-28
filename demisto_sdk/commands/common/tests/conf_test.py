@@ -1,4 +1,5 @@
 import pytest
+
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.hook_validations.conf_json import \
     ConfJsonValidator

@@ -12,6 +12,8 @@ from typing import Dict, Tuple
 
 import click
 from dateutil import parser
+from git import GitCommandError, Repo
+
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
     API_MODULES_PACK, EXCLUDED_DISPLAY_NAME_WORDS, PACK_METADATA_CATEGORIES,
@@ -31,7 +33,6 @@ from demisto_sdk.commands.common.tools import (get_core_pack_list, get_json,
                                                pack_name_to_path)
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
-from git import GitCommandError, Repo
 
 CONTRIBUTORS_LIST = ['partner', 'developer', 'community']
 SUPPORTED_CONTRIBUTORS_LIST = ['partner', 'developer']

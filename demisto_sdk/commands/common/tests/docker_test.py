@@ -169,6 +169,7 @@ class TestDockerImage:
         docker_image_validator.is_modified_file = False
         docker_image_validator.docker_image_tag = '1.3-alpine'
         docker_image_validator.is_valid = True
+        docker_image_validator.yml_docker_image = True
 
         assert docker_image_validator.is_docker_image_latest_tag() is False
         assert docker_image_validator.is_latest_tag is False
@@ -193,6 +194,7 @@ class TestDockerImage:
         docker_image_validator.is_latest_tag = True
         docker_image_validator.is_valid = True
         docker_image_validator.docker_image_tag = 'latest'
+        docker_image_validator.yml_docker_image = True
 
         assert docker_image_validator.is_docker_image_latest_tag() is False
         assert docker_image_validator.is_latest_tag is False
@@ -217,6 +219,7 @@ class TestDockerImage:
         docker_image_validator.is_latest_tag = True
         docker_image_validator.is_valid = True
         docker_image_validator.docker_image_tag = '1.0.3'
+        docker_image_validator.yml_docker_image = True
 
         assert docker_image_validator.is_docker_image_latest_tag() is True
         assert docker_image_validator.is_latest_tag is True
@@ -242,6 +245,7 @@ class TestDockerImage:
         docker_image_validator.is_latest_tag = True
         docker_image_validator.docker_image_tag = '1.0.2'
         docker_image_validator.is_valid = True
+        docker_image_validator.yml_docker_image = True
 
         assert docker_image_validator.is_docker_image_latest_tag() is False
         assert docker_image_validator.is_latest_tag is False
@@ -266,6 +270,7 @@ class TestDockerImage:
         docker_image_validator.is_latest_tag = True
         docker_image_validator.docker_image_tag = '1.0.2'
         docker_image_validator.is_valid = True
+        docker_image_validator.yml_docker_image = True
 
         assert docker_image_validator.is_docker_image_latest_tag() is False
         assert docker_image_validator.is_latest_tag is False
@@ -295,3 +300,16 @@ class TestDockerImage:
             assert validator.is_valid is False
             assert error in captured.out
             assert code in captured.out
+
+    def test_no_dockerimage_in_yml_file(self):
+        docker_image_validator = mock_docker_image_validator()
+
+        docker_image_validator.is_valid = True
+        docker_image_validator.is_latest_tag = True
+        docker_image_validator.yml_docker_image = False
+        docker_image_validator.code_type = 'python'
+        docker_image_validator.docker_image_latest_tag = '1.1.1'
+        docker_image_validator.docker_image_name = 'emisto/python'
+        docker_image_validator.docker_image_tag = '1.1.1'
+
+        assert not docker_image_validator.is_docker_image_valid()

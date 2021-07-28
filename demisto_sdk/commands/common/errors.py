@@ -747,8 +747,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def dockerimage_not_in_yml_file(file_path):
-        return f'The key dockerimage is missing in the file {file_path}' \
-               f'Please add the key "dockerimage" to the file: {file_path}.'
+        return f'The key dockerimage is missing in file {file_path} Please add it.'
 
     @staticmethod
     @error_code_decorator

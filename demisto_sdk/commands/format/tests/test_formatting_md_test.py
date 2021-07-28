@@ -3,6 +3,7 @@ import os
 import shutil
 
 import pytest
+
 from demisto_sdk.commands.format.update_description import DescriptionFormat
 from demisto_sdk.tests.constants_test import (
     DESCRIPTION_PATH, DESTINATION_FORMAT_DESCRIPTION_COPY,

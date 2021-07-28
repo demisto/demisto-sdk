@@ -10,6 +10,13 @@ from typing import Dict, List
 
 import demisto_client.demisto_api
 from demisto_client.demisto_api.rest import ApiException
+from dictor import dictor
+from flatten_dict import unflatten
+from mergedeep import merge
+from ruamel.yaml import YAML
+from tabulate import tabulate
+from urllib3.exceptions import MaxRetryError
+
 from demisto_sdk.commands.common.constants import (
     CONTENT_ENTITIES_DIRS, CONTENT_FILE_ENDINGS,
     DELETED_JSON_FIELDS_BY_DEMISTO, DELETED_YML_FIELDS_BY_DEMISTO,
@@ -28,12 +35,6 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                retrieve_file_ending)
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.split_yml.extractor import Extractor
-from dictor import dictor
-from flatten_dict import unflatten
-from mergedeep import merge
-from ruamel.yaml import YAML
-from tabulate import tabulate
-from urllib3.exceptions import MaxRetryError
 
 
 class Downloader:

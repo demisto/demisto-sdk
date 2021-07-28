@@ -2,6 +2,7 @@ from os.path import join
 
 import pytest
 from click.testing import CliRunner
+
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import DEFAULT_IMAGE_BASE64
@@ -819,6 +820,32 @@ class TestIntegrationValidation:
         assert '''The parameter 'feedTags' of the file is duplicated''' in result.stdout
         assert f'''The argument '{first_command_args[0]['name']}' is duplicated''' in result.stdout
 
+    def test_missing_mandatory_field_in_yml(self, mocker, repo):
+        """
+        Given
+        - An invalid Integration - argument description is missing
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate fails on ST107 - pykwalify_missing_parameter.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
+        pack = repo.create_pack('PackName')
+        pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
+        invalid_integration_yml = get_yaml(pack_integration_path)
+        first_argument = invalid_integration_yml['script']['commands'][0]['arguments'][0]
+        first_argument.pop('description')
+        integration = pack.create_integration(yml=invalid_integration_yml)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml.rel_path, '--no-docker-checks'],
+                                   catch_exceptions=False)
+        assert 'ST107' in result.stdout
+        assert 'Please add the field "description" to the path'
+
 
 class TestPackValidation:
     def test_integration_validate_pack_positive(self, mocker):
@@ -865,7 +892,8 @@ class TestPackValidation:
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         mocker.patch('demisto_sdk.commands.common.hook_validations.pack_unique_files.tools.get_current_usecases',
                      return_value=[])
-        mocker.patch('demisto_sdk.commands.common.hook_validations.pack_unique_files.tools.get_current_tags', return_value=[])
+        mocker.patch('demisto_sdk.commands.common.hook_validations.pack_unique_files.tools.get_current_tags',
+                     return_value=[])
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [VALIDATE_CMD, "-i", AZURE_FEED_PACK_PATH, "--no-conf-json",
                                       "--allow-skipped"])
@@ -1052,7 +1080,7 @@ class TestClassifierValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', classifier.path], catch_exceptions=False)
-        assert 'The file type is not supported in validate command' in result.stdout
+        assert 'The file type is not supported in the validate command.' in result.stdout
         assert result.exit_code == 1
 
     def test_valid_old_classifier(self, mocker, repo):
@@ -1305,7 +1333,7 @@ class TestMapperValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', mapper.path], catch_exceptions=False)
-        assert 'The file type is not supported in validate command' in result.stdout
+        assert 'The file type is not supported in the validate command.' in result.stdout
         assert result.exit_code == 1
 
 
@@ -2497,7 +2525,7 @@ class TestImageValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', NOT_VALID_IMAGE_PATH], catch_exceptions=False)
-        assert 'The file type is not supported in validate command' in result.stdout
+        assert 'The file type is not supported in the validate command.' in result.stdout
         assert result.exit_code == 1
 
 

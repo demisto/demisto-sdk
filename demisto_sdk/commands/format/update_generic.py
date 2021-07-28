@@ -6,6 +6,8 @@ from typing import Dict, Optional, Set, Union
 
 import click
 import yaml
+from ruamel.yaml import YAML
+
 from demisto_sdk.commands.common.constants import (INTEGRATION, PLAYBOOK,
                                                    FileType)
 from demisto_sdk.commands.common.hook_validations.structure import \
@@ -20,7 +22,6 @@ from demisto_sdk.commands.format.format_constants import (
     DEFAULT_VERSION, ERROR_RETURN_CODE, GENERIC_OBJECTS_DEFAULT_FROMVERSION, GENERIC_OBJECTS_FILE_TYPES,
     NEW_FILE_DEFAULT_5_5_0_FROMVERSION, OLD_FILE_DEFAULT_1_FROMVERSION, SKIP_RETURN_CODE, SUCCESS_RETURN_CODE,
     VERSION_6_0_0)
-from ruamel.yaml import YAML
 
 ryaml = YAML()
 ryaml.allow_duplicate_keys = True

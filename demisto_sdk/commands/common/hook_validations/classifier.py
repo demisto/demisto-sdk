@@ -1,6 +1,7 @@
 from distutils.version import LooseVersion
 
 import click
+
 from demisto_sdk.commands.common.constants import \
     LAYOUT_AND_MAPPER_BUILT_IN_FIELDS
 from demisto_sdk.commands.common.errors import Errors

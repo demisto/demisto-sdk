@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import List, Optional
 
 import yaml
+
 from demisto_sdk.commands.unify.unifier import Unifier
 from TestSuite.file import File
 from TestSuite.test_tools import suite_join_path

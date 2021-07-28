@@ -2,6 +2,7 @@ import platform
 import uuid
 
 import pytest
+
 from demisto_sdk.commands.common.docker_util import *
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 

@@ -8,6 +8,8 @@ from typing import List, Union
 import git
 import pytest
 import requests
+from pytest import raises
+
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    LAYOUTS_DIR, PACKS_DIR,
@@ -33,6 +35,10 @@ from demisto_sdk.tests.constants_test import (IGNORED_PNG,
                                               SOURCE_FORMAT_INTEGRATION_COPY,
                                               VALID_BETA_INTEGRATION_PATH,
                                               VALID_DASHBOARD_PATH,
+                                              VALID_GENERIC_DEFINITION_PATH,
+                                              VALID_GENERIC_FIELD_PATH,
+                                              VALID_GENERIC_MODULE_PATH,
+                                              VALID_GENERIC_TYPE_PATH,
                                               VALID_INCIDENT_FIELD_PATH,
                                               VALID_INCIDENT_TYPE_PATH,
                                               VALID_INTEGRATION_TEST_PATH,
@@ -40,14 +46,9 @@ from demisto_sdk.tests.constants_test import (IGNORED_PNG,
                                               VALID_PLAYBOOK_ID_PATH,
                                               VALID_REPUTATION_FILE,
                                               VALID_SCRIPT_PATH,
-                                              VALID_WIDGET_PATH,
-                                              VALID_GENERIC_TYPE_PATH,
-                                              VALID_GENERIC_FIELD_PATH,
-                                              VALID_GENERIC_MODULE_PATH,
-                                              VALID_GENERIC_DEFINITION_PATH)
+                                              VALID_WIDGET_PATH)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     LAYOUT, MAPPER, OLD_CLASSIFIER, REPUTATION)
-from pytest import raises
 from TestSuite.pack import Pack
 from TestSuite.playbook import Playbook
 from TestSuite.repo import Repo
@@ -1166,9 +1167,8 @@ def test_suppress_stdout_exception(capsys):
     """
     with pytest.raises(Exception) as excinfo:
         with tools.suppress_stdout():
-            x = 2 / 0
+            2 / 0
     assert str(excinfo.value) == 'division by zero'
     print('After error prints are enabled again.')
     captured = capsys.readouterr()
     assert captured.out == 'After error prints are enabled again.\n'
-

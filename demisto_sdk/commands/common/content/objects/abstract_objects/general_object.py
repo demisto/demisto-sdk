@@ -2,8 +2,9 @@ from abc import abstractmethod
 from shutil import copyfile
 from typing import List, Optional, Union
 
-import demisto_sdk.commands.common.content.errors as exc
 from wcmatch.pathlib import Path
+
+import demisto_sdk.commands.common.content.errors as exc
 
 
 class GeneralObject(object):

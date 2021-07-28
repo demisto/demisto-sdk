@@ -1,4 +1,5 @@
 import pytest
+
 from demisto_sdk.commands.json_to_outputs.json_to_outputs import (
     determine_type, parse_json)
 

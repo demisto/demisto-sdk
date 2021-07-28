@@ -2,6 +2,8 @@
 * Fixed an issue where **validate** suggests, with no reason, running **format** on missing mandatory keys in yml file.
 * Skipped existence of TestPlaybook check on community and contribution integrations.
 * Fixed an issue where pre-commit didn't run on the demisto_sdk/commands folder.
+* The **init** command will now change the script template name in the code to the given script name.
+* Expanded the validations performed on beta integrations.
 * Added to **validate** command a validation that a content entity or a pack name does not contain the words "partner" and "community".
 
 # 1.4.5

@@ -343,6 +343,54 @@ def test_yml_reformatting(monkeypatch, tmp_path, initiator):
         })
 
 
+SCRIPT_TEMPLATE_DATA = """
+    def main():
+    try:
+        return_results(say_hello_command(demisto.args()))
+    except Exception as ex:
+        demisto.error(traceback.format_exc())  # print the traceback
+        return_error(f'Failed to execute BaseScript. Error: {str(ex)}')
+    """
+SCRIPT_EXPECTED_DATA = """
+    def main():
+    try:
+        return_results(say_hello_command(demisto.args()))
+    except Exception as ex:
+        demisto.error(traceback.format_exc())  # print the traceback
+        return_error(f'Failed to execute MyTest. Error: {str(ex)}')
+    """
+
+
+def test_change_template_name_script_py(monkeypatch, tmp_path, initiator):
+    """
+    Tests change_template_name_script_py function.
+    Given
+        - Script template file
+    When
+        - Initiating an script
+    Then
+        - Ensure all template names appearances will change to the real script name.
+    """
+    monkeypatch.setattr('builtins.input', generate_multiple_inputs(deque(['6.0.0'])))
+    script_id = 'MyTest'
+    initiator.id = script_id
+    initiator.category = 'Utilities'
+    d = tmp_path / script_id
+    d.mkdir()
+    full_output_path = Path(d)
+    initiator.full_output_path = full_output_path
+    p = d / f'{script_id}.py'
+    with p.open(mode='w') as f:
+        f.write(SCRIPT_TEMPLATE_DATA)
+    dir_name = 'MyTest'
+    initiator.dir_name = dir_name
+    initiator.change_template_name_script_py(current_suffix=dir_name, current_template='BaseScript')
+
+    with open(full_output_path / f'{dir_name}.py', 'r') as f:
+        new_data = f.read()
+        assert new_data == SCRIPT_EXPECTED_DATA
+
+
 def test_get_remote_templates__valid(mocker, initiator):
     """
     Tests get_remote_template function.

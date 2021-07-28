@@ -203,7 +203,7 @@ class TestValidators:
 
     @pytest.mark.parametrize('source, target, answer, validator', INPUTS_IS_VALID_VERSION)
     def test_is_file_valid(self, source, target, answer, validator, mocker):
-        # type: (str, str, Any, Type[ContentEntityValidator]) -> None
+        # type: (str, str, str, Any, Type[ContentEntityValidator]) -> None
         try:
             copyfile(source, target)
             structure = StructureValidator(source)
@@ -385,6 +385,7 @@ class TestValidators:
         mocker.patch.object(ScriptValidator, 'is_there_separators_in_names', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_valid_integration_file_path', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_there_separators_in_names', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'is_docker_image_valid', return_value=True)
         validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
         assert validate_manager.run_validation_on_specific_files()
 

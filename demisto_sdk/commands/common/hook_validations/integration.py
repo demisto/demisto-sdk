@@ -65,6 +65,42 @@ class IntegrationValidator(ContentEntityValidator):
         ]
         return not any(answers)
 
+    def core_integration_validations(self, validate_rn: bool = True):
+        """Perform the core integration validations (common to both beta and regular integrations)
+        Args:
+            validate_rn (bool): Whether to validate release notes (changelog) or not.
+        """
+        answers = [
+            super().is_valid_file(validate_rn),
+            self.is_valid_subtype(),
+            self.is_valid_default_argument_in_reputation_command(),
+            self.is_valid_default_argument(),
+            self.is_proxy_configured_correctly(),
+            self.is_insecure_configured_correctly(),
+            self.is_checkbox_param_configured_correctly(),
+            self.is_valid_category(),
+            self.is_id_equals_name(),
+            self.is_docker_image_valid(),
+            self.is_valid_feed(),
+            self.is_valid_fetch(),
+            self.is_there_a_runnable(),
+            self.is_valid_display_name(),
+            self.is_valid_pwsh(),
+            self.is_valid_image(),
+            self.is_valid_max_fetch_and_first_fetch(),
+            self.is_valid_as_deprecated(),
+            self.is_valid_parameters_display_name(),
+            self.is_mapping_fields_command_exist(),
+            self.is_valid_integration_file_path(),
+            self.has_no_duplicate_params(),
+            self.has_no_duplicate_args(),
+            self.is_there_separators_in_names(),
+            self.name_not_contain_the_type(),
+            self.is_valid_endpoint_command(),
+        ]
+
+        return all(answers)
+
     def is_valid_file(self, validate_rn: bool = True, skip_test_conf: bool = False,
                       check_is_unskipped: bool = True, conf_json_data: dict = {}) -> bool:
         """Check whether the Integration is valid or not according to the LEVEL SUPPORT OPTIONS
@@ -81,36 +117,10 @@ class IntegrationValidator(ContentEntityValidator):
         """
 
         answers = [
-            super().is_valid_file(validate_rn),
-            self.is_valid_subtype(),
-            self.is_valid_default_argument_in_reputation_command(),
-            self.is_valid_default_argument(),
-            self.is_proxy_configured_correctly(),
-            self.is_insecure_configured_correctly(),
-            self.is_checkbox_param_configured_correctly(),
-            self.is_valid_category(),
-            self.is_id_equals_name(),
-            self.is_docker_image_valid(),
-            self.is_valid_feed(),
-            self.is_valid_fetch(),
-            self.is_there_a_runnable(),
-            self.is_valid_display_name(),
+            self.core_integration_validations(validate_rn),
             self.is_valid_hidden_params(),
-            self.is_valid_pwsh(),
-            self.is_valid_image(),
             self.is_valid_description(beta_integration=False),
-            self.is_valid_max_fetch_and_first_fetch(),
-            self.is_valid_as_deprecated(),
-            self.is_valid_parameters_display_name(),
-            self.is_mapping_fields_command_exist(),
-            self.is_context_change_in_readme(),
-            self.is_valid_integration_file_path(),
-            self.has_no_duplicate_params(),
-            self.has_no_duplicate_args(),
-            self.is_there_separators_in_names(),
-            self.name_not_contain_the_type(),
-            self.is_valid_endpoint_command(),
-
+            self.is_context_correct_in_readme(),
         ]
 
         if check_is_unskipped:
@@ -137,17 +147,9 @@ class IntegrationValidator(ContentEntityValidator):
                 bool: True if integration is valid, False otherwise.
         """
         answers = [
-            super().is_valid_file(validate_rn),
-            self.is_valid_default_argument_in_reputation_command(),
-            self.is_valid_subtype(),
-            self.is_valid_category(),
+            self.core_integration_validations(validate_rn),
             self.is_valid_beta(),
-            self.is_valid_image(),
             self.is_valid_description(beta_integration=True),
-            self.is_valid_as_deprecated(),
-            self.is_there_separators_in_names(),
-            self.name_not_contain_the_type()
-
         ]
         return all(answers)
 
@@ -1106,7 +1108,7 @@ class IntegrationValidator(ContentEntityValidator):
                     return False
         return True
 
-    def is_context_change_in_readme(self) -> bool:
+    def is_context_correct_in_readme(self) -> bool:
         """
         Checks if there has been a corresponding change to the integration's README
         when changing the context paths of an integration.

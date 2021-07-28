@@ -1265,7 +1265,7 @@ class TestisContextChanged:
     ]
 
     @pytest.mark.parametrize('readme, current_yml, expected', TEST_CASE)
-    def test_is_context_change_in_readme(self, readme, current_yml, expected):
+    def test_is_context_correct_in_readme(self, readme, current_yml, expected):
         """
         Given: a changed YML file
         When: running validate on integration with at least one command
@@ -1279,6 +1279,6 @@ class TestisContextChanged:
             structure = mock_structure("Pack/Test", current)
             validator = IntegrationValidator(structure)
             validator.current_file = current_yml
-            res = validator.is_context_change_in_readme()
+            res = validator.is_context_correct_in_readme()
             assert res == expected
         patcher.stop()

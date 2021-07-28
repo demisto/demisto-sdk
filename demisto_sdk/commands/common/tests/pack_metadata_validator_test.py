@@ -1,15 +1,15 @@
 import io
 import os
+from typing import Dict
 
 import pytest
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import EXCLUDED_DISPLAY_NAME_WORDS
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
-from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
-    PackUniqueFilesValidator, PACK_METADATA_NAME, PACK_METADATA_SUPPORT
+from demisto_sdk.commands.common.hook_validations.pack_unique_files import (
+    PACK_METADATA_NAME, PACK_METADATA_SUPPORT, PackUniqueFilesValidator)
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from typing import Dict
 
 
 class TestPackMetadataValidator:

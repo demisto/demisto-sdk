@@ -1,6 +1,7 @@
 import io
 import os
 import shutil
+
 import pytest
 
 from demisto_sdk.commands.common.legacy_git_tools import git_path

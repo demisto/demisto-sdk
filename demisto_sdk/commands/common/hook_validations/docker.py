@@ -49,6 +49,11 @@ class DockerImageValidator(BaseValidator):
         if self.code_type == 'javascript':
             return True
 
+        if not self.yml_docker_image:
+            error_message, error_code = Errors.dockerimage_not_in_yml_file(self.file_path)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+
         if not self.docker_image_latest_tag:
             error_message, error_code = Errors.non_existing_docker(self.yml_docker_image)
             if self.handle_error(error_message, error_code, file_path=self.file_path):

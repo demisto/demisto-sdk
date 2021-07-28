@@ -67,7 +67,6 @@ mapping:
         required: true
       dockerimage:
         type: str
-        required: True
       dockerimage45:
         type: str
       alt_dockerimages:

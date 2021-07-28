@@ -962,15 +962,15 @@ class TestRNUpdateUnit:
         modified = {'/Packs/ApiModules/Scripts/ApiModules_script/ApiModules_script.yml'}
         added = {}
         id_set_content = {'integrations':
-                          [
-                              {'FeedTAXII_integration':
-                               {'name': 'FeedTAXII_integration',
-                                'file_path': '/FeedTAXII_integration.yml',
-                                'pack': 'FeedTAXII',
-                                'api_modules': 'ApiModules_script'
-                                }
-                               }
-                          ]}
+            [
+                {'FeedTAXII_integration':
+                     {'name': 'FeedTAXII_integration',
+                      'file_path': '/FeedTAXII_integration.yml',
+                      'pack': 'FeedTAXII',
+                      'api_modules': 'ApiModules_script'
+                      }
+                 }
+            ]}
         id_set_f = tmpdir / "id_set.json"
         id_set_f.write(json.dumps(id_set_content))
 
@@ -1105,7 +1105,7 @@ class TestRNUpdateUnit:
         mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
         client = UpdateRN(pack_path="demisto_sdk/commands/update_release_notes/tests_data/Packs/Test",
                           update_type='minor', modified_files_in_pack={
-                              'Packs/Test/Integrations/Test.yml'}, added_files=set('Packs/Test/some_added_file.py'))
+                'Packs/Test/Integrations/Test.yml'}, added_files=set('Packs/Test/some_added_file.py'))
         client.execute_update()
         with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md', 'r') as file:
             RN = file.read()
@@ -1282,3 +1282,24 @@ def test_handle_existing_rn_with_docker_image(new_rn: str, header_by_type: str, 
     """
     assert UpdateRN.handle_existing_rn_with_docker_image(new_rn, header_by_type, docker_image,
                                                          content_name) == expected
+
+
+@pytest.mark.parametrize('text, expected_rn_string',
+                         [('Testing the upload', '##### PackName\n- Testing the upload\n')])
+def test_force_and_text_update_rn(repo, text, expected_rn_string):
+    """
+    Given:
+    - New release note
+
+    When:
+    - Updating release notes with *--force* and *--text* flags
+
+    Then:
+    - Ensure the release note includes the given text
+    """
+    pack = repo.create_pack('PackName')
+    client = UpdateRN(pack_path=str(pack.path), update_type=None, modified_files_in_pack=set(), added_files=set(),
+                      is_force=True, text=text)
+
+    rn_string = client.build_rn_template({})
+    assert rn_string == expected_rn_string

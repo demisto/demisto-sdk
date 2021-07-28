@@ -680,20 +680,6 @@ class TestFormattingPreProcessRule:
         pre_process_rules_formatter.set_toVersion()
         assert pre_process_rules_formatter.data.get('toVersion') == '5.9.9'
 
-    def test_set_output_path(self, invalid_path_pre_process_rules_formatter):
-        """
-        Given
-            - A pre_process_rule file without an invalid output path
-        When
-            - Run format on pre_process_rule file
-        Then
-            - Ensure that the output file path was updated with the correct path
-        """
-        expected_path = 'PreProcessRules/preprocessrule-preprocessrules-invalid.json'
-        invalid_output_path = invalid_path_pre_process_rules_formatter.output_file
-        assert invalid_output_path != invalid_path_pre_process_rules_formatter.output_file
-        assert expected_path == invalid_path_pre_process_rules_formatter.output_file
-
 
 class TestFormattingClassifier:
 

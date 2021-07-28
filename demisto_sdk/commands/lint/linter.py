@@ -1019,7 +1019,7 @@ class Linter:
                     container_obj.remove(force=True)
                 except docker.errors.NotFound as e:
                     logger.critical(f"{log_prompt} - Unable to delete container - {e}")
-        except (docker.errors.ImageNotFound, docker.errors.APIError) as e:
+        except (docker.errors.ImageNotFound, docker.errors.APIError, requests.exceptions.ReadTimeout) as e:
             logger.critical(f"{log_prompt} - Unable to run powershell test - {e}")
             exit_code = RERUN
 

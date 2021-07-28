@@ -254,12 +254,16 @@ def _parse_description_argument(descriptions: Union[str, Dict]) -> Optional[dict
 
     def _load_json_to_dict(_json_str: str):
         loaded_json = json.loads(_json_str)
-        if not isinstance(loaded_json, dict):
+        if not isinstance(loaded_json, Dict):
             # non-JSON inputs raise exception so the JSON can be pasted
             raise TypeError("Expected a dictionary")
+        return loaded_json
 
-    if descriptions is None or isinstance(descriptions, Dict):
+    if not descriptions:  # None or empty
         return None
+
+    if isinstance(descriptions, Dict):
+        return descriptions
 
     if os.path.exists(descriptions):
         # file input
@@ -269,7 +273,7 @@ def _parse_description_argument(descriptions: Union[str, Dict]) -> Optional[dict
     else:
         try:
             # non-JSON inputs raise exception so the JSON can be pasted
-            _load_json_to_dict(descriptions)
+            return _load_json_to_dict(descriptions)
 
         except (json.JSONDecodeError, TypeError):
             # JSON as raw input
@@ -278,9 +282,11 @@ def _parse_description_argument(descriptions: Union[str, Dict]) -> Optional[dict
                   "enter {\"geolocation\": \"coordinates of the location\"}")
             json_as_str = input_multiline()
 
+    result = None
     try:
-        return _load_json_to_dict(json_as_str)
+        result = _load_json_to_dict(json_as_str)
 
     except (json.JSONDecodeError, TypeError):
         print("Error decoding JSON descriptions, ignoring them.")
-        return None
+
+    return result

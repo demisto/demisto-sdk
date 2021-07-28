@@ -1,6 +1,9 @@
+import json
+from typing import Optional
+
 import pytest
 from demisto_sdk.commands.json_to_outputs.json_to_outputs import (
-    determine_type, parse_json)
+    determine_type, json_to_outputs, parse_json)
 
 DUMMY_FIELD_DESCRIPTION = "dummy field description"
 
@@ -155,6 +158,43 @@ outputs:
   description: ''
   type: String
 '''
+
+
+# this is the content of `dummy_description_dictionary.json`
+dummy_description_dictionary = {"day": "day of the week",
+                                "color": "assigned color",
+                                "surprise": "a value that should not appear in the result."}
+
+
+@pytest.mark.parametrize('description_argument,dictionary',
+                         [(None, dict()),
+                          ("true", dict()),  # takes descriptions from mock input
+                          (json.dumps(dummy_description_dictionary), dummy_description_dictionary),  # basic test
+                          ('dummy_description_dictionary.json', dummy_description_dictionary)  # JSON file path
+                          ])
+def test_json_to_outputs__description(mocker, tmpdir, description_argument: Optional[str], dictionary: dict):
+    output = tmpdir.join("test_json_to_outputs__file_input.yml")
+
+    mocker.patch('demisto_sdk.commands.json_to_outputs.json_to_outputs.input_multiline',
+                 return_value=dummy_description_dictionary)
+
+    json_to_outputs(command='jsonToOutputs',
+                    input='dummy_integration_output.json',
+                    prefix='Test',
+                    output=output,
+                    descriptions=description_argument)
+
+    with open(output) as f:
+        assert f.read() == f"""arguments: []
+name: jsonToOutputs
+outputs:
+- contextPath: Test.day
+  description: {dictionary.get('day', "''")}
+  type: String
+- contextPath: Test.color
+  description: {dictionary.get('color', "''")}
+  type: String
+"""
 
 
 INPUT = [(True, 'Boolean'),

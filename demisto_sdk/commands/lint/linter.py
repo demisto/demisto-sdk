@@ -686,7 +686,8 @@ class Linter:
                                 self._docker_client.images.push(test_image_name)
                                 logger.info(f"{log_prompt} - Image {test_image_name} pushed to repository")
                                 break
-                            except (requests.exceptions.ConnectionError, urllib3.exceptions.ReadTimeoutError):
+                            except (requests.exceptions.ConnectionError, urllib3.exceptions.ReadTimeoutError,
+                                    requests.exceptions.ReadTimeout):
                                 logger.info(f"{log_prompt} - Unable to push image {test_image_name} to repository")
 
             except (docker.errors.BuildError, docker.errors.APIError, Exception) as e:

@@ -1324,3 +1324,24 @@ def test_handle_existing_rn_with_docker_image(new_rn: str, header_by_type: str, 
     """
     assert UpdateRN.handle_existing_rn_with_docker_image(new_rn, header_by_type, docker_image,
                                                          content_name) == expected
+
+
+@pytest.mark.parametrize('text, expected_rn_string',
+                         [('Testing the upload', '##### PackName\n- Testing the upload\n')])
+def test_force_and_text_update_rn(repo, text, expected_rn_string):
+    """
+    Given:
+    - New release note
+
+    When:
+    - Updating release notes with *--force* and *--text* flags
+
+    Then:
+    - Ensure the release note includes the given text
+    """
+    pack = repo.create_pack('PackName')
+    client = UpdateRN(pack_path=str(pack.path), update_type=None, modified_files_in_pack=set(), added_files=set(),
+                      is_force=True, text=text)
+
+    rn_string = client.build_rn_template({})
+    assert rn_string == expected_rn_string

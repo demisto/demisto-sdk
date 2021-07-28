@@ -50,5 +50,5 @@ This command has two main functions:
     <br/><br/>
 
     `demisto-sdk unify -i Packs/RBVM/GenericModules/genericmodule-RBVM.json -o Packs/RBVM/`
-    This will grab the GenericModule input file "genericmodule-RBVM.json", unify it with its dashboards and save
+    This will take the GenericModule input file "genericmodule-RBVM.json", unify it with its dashboards and save
     the unified file in the given output directory ("Packs/RBVM/").

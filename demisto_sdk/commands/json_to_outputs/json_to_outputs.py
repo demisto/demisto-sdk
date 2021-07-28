@@ -250,7 +250,7 @@ def json_to_outputs(command, input, prefix, output=None, verbose=False, interact
 
 
 def _parse_description_argument(descriptions: Union[str, Dict]) -> Optional[dict]:  # type: ignore
-    """ parses the description argument, be it a path to JSON, a JSON given as argument, or via standard input """
+    """Parses the descriptions argument, be it a path to JSON, a JSON given as argument, or via standard input """
 
     def _load_json_to_dict(_json_str: str):
         loaded_json = json.loads(_json_str)

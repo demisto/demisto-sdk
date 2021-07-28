@@ -1,6 +1,6 @@
 ## Unify
 
-This command has to main functions:
+This command has two main functions:
 
 1. #### YML Unifier:
 

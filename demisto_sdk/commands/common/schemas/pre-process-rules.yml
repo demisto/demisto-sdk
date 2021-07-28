@@ -45,9 +45,6 @@ mapping:
     type: seq
     sequence:
     - include: period_schema
-  period:
-    type: Any
-    required: True
   readyExistingEventsFilters:
     type: seq
     sequence:

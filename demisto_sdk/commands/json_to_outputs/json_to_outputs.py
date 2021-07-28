@@ -258,7 +258,7 @@ def _parse_description_argument(descriptions: Union[str, Dict]) -> Optional[dict
             # non-JSON inputs raise exception so the JSON can be pasted
             raise TypeError("Expected a dictionary")
 
-    if descriptions is None:
+    if descriptions is None or isinstance(descriptions, Dict):
         return None
 
     if os.path.exists(descriptions):

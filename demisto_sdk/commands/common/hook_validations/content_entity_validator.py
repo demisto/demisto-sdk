@@ -6,6 +6,7 @@ from typing import Optional
 
 import yaml
 from demisto_sdk.commands.common.constants import (ENTITY_NAME_SEPARATORS,
+                                                   EXCLUDED_DISPLAY_NAME_WORDS,
                                                    FEATURE_BRANCHES,
                                                    OLDEST_SUPPORTED_VERSION)
 from demisto_sdk.commands.common.errors import Errors
@@ -14,6 +15,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import \
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.tools import (_get_file_id,
+                                               get_file_displayed_name,
                                                is_test_config_match,
                                                run_command)
 
@@ -39,7 +41,8 @@ class ContentEntityValidator(BaseValidator):
     def is_valid_file(self, validate_rn=True):
         tests = [
             self.is_valid_version(),
-            self.is_valid_fromversion()
+            self.is_valid_fromversion(),
+            self.name_does_not_contain_excluded_word()
         ]
         return all(tests)
 
@@ -60,6 +63,23 @@ class ContentEntityValidator(BaseValidator):
             if self.handle_error(error_message, error_code, file_path=self.file_path,
                                  suggested_fix=Errors.suggest_fix(self.file_path)):
                 self.is_valid = False
+                return False
+        return True
+
+    def name_does_not_contain_excluded_word(self) -> bool:
+        """
+        Checks whether given object contains excluded word.
+        Returns:
+            (bool) False if display name corresponding to file path contains excluded word, true otherwise.
+        """
+        name = get_file_displayed_name(self.file_path)
+        if not name:
+            return True
+        lowercase_name = name.lower()
+        if any(excluded_word in lowercase_name for excluded_word in EXCLUDED_DISPLAY_NAME_WORDS):
+            error_message, error_code = Errors.entity_name_contains_excluded_word(name,
+                                                                                  EXCLUDED_DISPLAY_NAME_WORDS)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True
 

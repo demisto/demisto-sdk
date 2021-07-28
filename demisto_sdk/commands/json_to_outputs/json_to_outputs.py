@@ -73,6 +73,8 @@ outputs:
 """
 import json
 import sys
+import os
+from typing import Dict, Optional, Union
 
 import dateparser
 import yaml
@@ -152,7 +154,8 @@ def determine_type(val):
     return 'Unknown'
 
 
-def parse_json(data, command_name, prefix, verbose=False, interactive=False, description_dictionary=None):
+def parse_json(data, command_name, prefix, verbose=False, interactive=False,
+               description_dictionary: Optional[Dict] = None):
     if data == '':
         raise ValueError('Invalid input JSON - got empty string')
 
@@ -201,7 +204,7 @@ def parse_json(data, command_name, prefix, verbose=False, interactive=False, des
     return yaml_output
 
 
-def json_to_outputs(command, input, prefix, output=None, verbose=False, interactive=False, description_json=None):
+def json_to_outputs(command, input, prefix, output=None, verbose=False, interactive=False, descriptions=None):
     """
     This script parses JSON to Demisto Outputs YAML format
 
@@ -214,7 +217,7 @@ def json_to_outputs(command, input, prefix, output=None, verbose=False, interact
         verbose: This used for debugging purposes - more logs
         interactive: by default all the output descriptions are empty, but if user sets this to True then the script
             will ask user input for each description
-        description_json: JSON mapping between field names and their descriptions. (Optional)
+        descriptions: JSON mapping between field names and their descriptions. (Optional)
     Returns:
     """
     try:
@@ -226,16 +229,7 @@ def json_to_outputs(command, input, prefix, output=None, verbose=False, interact
                   "As an example, If one of the command's output is `item_id`,\n enter {\"item_id\": 1234}")
             input_json = input_multiline()
 
-        descriptions = None
-        if description_json:
-            print("Enter a mapping between (some, or all) field names and their descriptions.\n "
-                  "As an example, If one of the fields is `geolocation`, "
-                  "enter {\"geolocation\": \"coordinates of the location\"}")
-            try:
-                descriptions = json.loads(input_multiline())
-            except json.decoder.JSONDecodeError:
-                print("Error decoding the JSON descriptions, ignoring them.")
-
+        descriptions = _parse_description_argument(descriptions)
         yaml_output = parse_json(input_json, command, prefix, verbose, interactive, descriptions)
 
         if output:
@@ -253,3 +247,40 @@ def json_to_outputs(command, input, prefix, output=None, verbose=False, interact
         else:
             print_error(f'Error: {str(ex)}')
             sys.exit(1)
+
+
+def _parse_description_argument(descriptions: Union[str, Dict]) -> Optional[dict]:
+    """ parses the description argument, be it a path to JSON, a JSON given as argument, or via standard input """
+
+    def _load_json_to_dict(_json_str: str):
+        loaded_json = json.loads(_json_str)
+        if not isinstance(loaded_json, dict):
+            # non-JSON inputs raise exception so the JSON can be pasted
+            raise TypeError("Expected a dictionary")
+
+    if descriptions is None:
+        return None
+
+    if os.path.exists(descriptions):
+        # file input
+        with open(descriptions) as f:
+            json_as_str = f.read()  # not json.loads() on purpose, to catch JSONDecodeErrors
+
+    else:
+        try:
+            # non-JSON inputs raise exception so the JSON can be pasted
+            _load_json_to_dict(descriptions)
+
+        except (json.JSONDecodeError, TypeError) as _:
+            # JSON as raw input
+            print("Enter a mapping between (some, or all) field names and their descriptions.\n "
+                  "As an example, If one of the fields is `geolocation`, "
+                  "enter {\"geolocation\": \"coordinates of the location\"}")
+            json_as_str = input_multiline()
+
+    try:
+        return _load_json_to_dict(json_as_str)
+
+
+    except (json.JSONDecodeError, TypeError):
+        print("Error decoding JSON descriptions, ignoring them.")

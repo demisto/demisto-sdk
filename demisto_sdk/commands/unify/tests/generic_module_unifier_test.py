@@ -3,10 +3,11 @@ import os
 
 import pytest
 
+from demisto_sdk.commands.unify.generic_module_unifier import \
+    GenericModuleUnifier
+from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
+    DASHBOARD, GENERIC_MODULE, UNIFIED_GENERIC_MODULE)
 from TestSuite.test_tools import ChangeCWD
-from demisto_sdk.commands.unify.generic_module_unifier import GenericModuleUnifier
-from demisto_sdk.tests.test_files.validate_integration_test_valid_types import DASHBOARD, GENERIC_MODULE, \
-    UNIFIED_GENERIC_MODULE
 
 
 def test_find_dashboard_by_id_positive(repo):
@@ -211,4 +212,3 @@ def test_save_unified_generic_module_file_is_already_exist_force(repo, capsys):
         with open(saving_path) as f:
             saved_generic_module = json.load(f)
         assert saved_generic_module == GENERIC_MODULE
-

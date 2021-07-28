@@ -1,14 +1,12 @@
-
 import json
 import os
 import sys
-from argparse import FileType
 from typing import Dict, Optional
 
 import click
 
-from demisto_sdk.commands.common.constants import FileType, PACKS_DIR
-from demisto_sdk.commands.common.tools import get_pack_name, find_type
+from demisto_sdk.commands.common.constants import PACKS_DIR, FileType
+from demisto_sdk.commands.common.tools import find_type, get_pack_name
 
 
 class GenericModuleUnifier:

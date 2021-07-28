@@ -3,6 +3,7 @@ import shutil
 from pathlib import Path
 
 import yaml
+
 from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
 from TestSuite.integration import Integration
 from TestSuite.test_tools import suite_join_path

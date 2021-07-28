@@ -58,14 +58,14 @@ class YmlUnifier:
         if input == '.':
             input = os.path.abspath(input)
         if not os.path.isdir(input):
-            print_error(UNSUPPORTED_INPUT_ERR_MSG )
+            print_error(UNSUPPORTED_INPUT_ERR_MSG)
             sys.exit(1)
         for optional_dir_name in DIR_TO_PREFIX:
             if optional_dir_name in input:
                 directory_name = optional_dir_name
 
         if not directory_name:
-            print_error(UNSUPPORTED_INPUT_ERR_MSG )
+            print_error(UNSUPPORTED_INPUT_ERR_MSG)
 
         self.image_prefix = image_prefix
         self.package_path = input

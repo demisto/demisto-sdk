@@ -18,7 +18,6 @@ from demisto_sdk.commands.common.update_id_set import (get_classifier_data,
                                                        get_pack_metadata_data,
                                                        get_playbook_data,
                                                        get_script_data)
-from demisto_sdk.commands.common.constants import GENERIC_COMMANDS_NAMES
 from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
 
 

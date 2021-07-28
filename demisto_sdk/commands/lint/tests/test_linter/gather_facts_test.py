@@ -1,7 +1,8 @@
 from typing import Callable
 
-from demisto_sdk.commands.lint import linter
 from wcmatch.pathlib import Path
+
+from demisto_sdk.commands.lint import linter
 
 
 def initiate_linter(demisto_content, integration_path, docker_engine=False):

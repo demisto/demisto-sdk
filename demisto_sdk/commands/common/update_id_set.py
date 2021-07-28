@@ -15,6 +15,7 @@ from typing import Callable, Dict, List, Optional, Tuple
 
 import click
 import networkx
+
 from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    COMMON_TYPES_PACK,
                                                    DASHBOARDS_DIR,

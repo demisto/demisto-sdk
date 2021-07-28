@@ -3,6 +3,7 @@ import re
 from typing import Callable, List
 
 import click
+
 from demisto_sdk.commands.common.constants import (KNOWN_FILE_STATUSES,
                                                    PACKS_PACK_META_FILE_NAME,
                                                    TESTS_AND_DOC_DIRECTORIES,

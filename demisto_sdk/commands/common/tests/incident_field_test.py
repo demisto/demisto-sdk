@@ -1,9 +1,10 @@
 import pytest
+from mock import patch
+
 from demisto_sdk.commands.common.hook_validations.incident_field import (
     GroupFieldTypes, IncidentFieldValidator)
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
-from mock import patch
 
 
 class TestIncidentFieldsValidator:

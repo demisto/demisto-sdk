@@ -8,6 +8,9 @@ import pytest
 from click.testing import CliRunner
 from demisto_client.demisto_api import DefaultApi
 from demisto_client.demisto_api.rest import ApiException
+from packaging.version import parse
+from pipenv.patched.piptools import click
+
 from demisto_sdk.__main__ import main, upload
 from demisto_sdk.commands.common import constants
 from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
@@ -24,8 +27,6 @@ from demisto_sdk.commands.upload import uploader
 from demisto_sdk.commands.upload.uploader import (
     Uploader, parse_error_response, print_summary,
     sort_directories_based_on_dependencies)
-from packaging.version import parse
-from pipenv.patched.piptools import click
 from TestSuite.test_tools import ChangeCWD
 
 DATA = ''

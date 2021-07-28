@@ -1,5 +1,6 @@
 import astroid
 import pylint.testutils
+
 from demisto_sdk.commands.lint.resources.pylint_plugins import \
     xsoar_level_checker
 

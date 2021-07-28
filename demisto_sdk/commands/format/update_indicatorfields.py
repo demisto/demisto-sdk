@@ -1,6 +1,7 @@
 from typing import Tuple
 
 import click
+
 from demisto_sdk.commands.common.hook_validations.incident_field import \
     IncidentFieldValidator
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,

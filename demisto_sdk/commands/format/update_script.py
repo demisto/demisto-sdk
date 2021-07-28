@@ -1,6 +1,7 @@
 from typing import Optional, Tuple
 
 import click
+
 from demisto_sdk.commands.common.constants import TYPE_JS, TYPE_PWSH
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator

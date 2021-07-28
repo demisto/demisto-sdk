@@ -1,8 +1,9 @@
 import pytest
+from mock import patch
+
 from demisto_sdk.commands.common.hook_validations.mapper import MapperValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
-from mock import patch
 
 
 def mock_structure(file_path=None, current_file=None, old_file=None):

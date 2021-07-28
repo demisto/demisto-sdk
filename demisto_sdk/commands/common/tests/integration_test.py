@@ -3,6 +3,8 @@ from copy import deepcopy
 from typing import Optional
 
 import pytest
+from mock import mock_open, patch
+
 from demisto_sdk.commands.common.constants import (FEED_REQUIRED_PARAMS,
                                                    FETCH_REQUIRED_PARAMS,
                                                    FIRST_FETCH_PARAM,
@@ -12,7 +14,6 @@ from demisto_sdk.commands.common.hook_validations.integration import \
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from mock import mock_open, patch
 from TestSuite.test_tools import ChangeCWD
 
 FEED_REQUIRED_PARAMS_STRUCTURE = [dict(required_param.get('must_equal'), **required_param.get('must_contain'),

@@ -3,6 +3,7 @@ import os
 from typing import Dict, List
 
 import pytest
+
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_json, get_yaml
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
@@ -672,7 +673,8 @@ def test_generate_table_section_numbered_section():
             - Validate that the generated table has \t at the beginning of each line.
     """
 
-    from demisto_sdk.commands.generate_docs.common import generate_table_section
+    from demisto_sdk.commands.generate_docs.common import \
+        generate_table_section
 
     expected_section = ['', '    | **Type** | **Docker Image** |', '    | --- | --- |',
                         '    | python2 | demisto/python2 |', '']
@@ -876,7 +878,8 @@ def test_add_access_data_of_type_credentials(access_data: List[Dict], credential
     Case b: 'Password' is added as default for display password name missing.
     Case c: Both display name and display password name are added.
     """
-    from demisto_sdk.commands.generate_docs.generate_integration_doc import add_access_data_of_type_credentials
+    from demisto_sdk.commands.generate_docs.generate_integration_doc import \
+        add_access_data_of_type_credentials
     add_access_data_of_type_credentials(access_data, credentials_conf)
     assert access_data == expected
 
@@ -891,7 +894,8 @@ def test_generate_versions_differences_section(monkeypatch):
             - Add a section of differences between versions in README.
     """
 
-    from demisto_sdk.commands.generate_docs.generate_integration_doc import generate_versions_differences_section
+    from demisto_sdk.commands.generate_docs.generate_integration_doc import \
+        generate_versions_differences_section
     monkeypatch.setattr(
         'builtins.input',
         lambda _: ''

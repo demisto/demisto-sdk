@@ -5,6 +5,7 @@ from pprint import pformat
 from subprocess import STDOUT, CalledProcessError, check_output
 
 import demisto_client
+
 from demisto_sdk.commands.test_content.constants import SSH_USER
 
 

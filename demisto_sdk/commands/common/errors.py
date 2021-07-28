@@ -23,8 +23,8 @@ ALLOWED_IGNORE_ERRORS = [
 ]
 
 PRESET_ERROR_TO_IGNORE = {
-    'community': ['BC', 'CJ', 'DS100', 'DS101', 'DS102', 'DS103', 'DS104', 'IN125', 'IN126'],
-    'partner': ['CJ']
+    'community': ['BC', 'CJ', 'DS100', 'DS101', 'DS102', 'DS103', 'DS104', 'IN125', 'IN126', 'IN140'],
+    'partner': ['CJ', 'IN140']
 }
 
 PRESET_ERROR_TO_CHECK = {
@@ -327,10 +327,10 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def file_type_not_supported():
-        return "The file type is not supported in validate command\n " \
-               "validate' command supports: Integrations, Scripts, Playbooks, " \
+        return "The file type is not supported in the validate command.\n" \
+               "The validate command supports: Integrations, Scripts, Playbooks, " \
                "Incident fields, Incident types, Indicator fields, Indicator types, Objects fields, Object types," \
-               " Object modules, Images, Release notes,Layouts and Descriptions"
+               " Object modules, Images, Release notes, Layouts and Descriptions."
 
     @staticmethod
     @error_code_decorator
@@ -808,7 +808,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_fromversion_for_type_metrics():
-        return f'The minimal fromVersion for widget with data type \'metrics\' is \'6.2.0\'.\n'
+        return 'The minimal fromVersion for widget with data type \'metrics\' is \'6.2.0\'.\n'
 
     @staticmethod
     @error_code_decorator

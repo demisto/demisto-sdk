@@ -50,7 +50,7 @@ class UpdateRN:
         self.is_force = is_force
         self.metadata_path = os.path.join(self.pack_path, 'pack_metadata.json')
         self.master_version = self.get_master_version()
-        self.rn_path = None
+        self.rn_path = ''
 
     @staticmethod
     def change_image_or_desc_file_path(file_path: str) -> str:
@@ -242,7 +242,7 @@ class UpdateRN:
             return False
         except RuntimeError as e:
             raise RuntimeError(f"Unable to locate a pack with the name {self.pack} in the git diff.\n"
-                            f"Please verify the pack exists and the pack name is correct.") from e
+                               f"Please verify the pack exists and the pack name is correct.") from e
 
     def only_docs_changed(self) -> bool:
         """

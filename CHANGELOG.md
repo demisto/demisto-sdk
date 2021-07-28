@@ -4,8 +4,7 @@
 * Fixed an issue where pre-commit didn't run on the demisto_sdk/commands folder.
 * The **init** command will now change the script template name in the code to the given script name.
 * Expanded the validations performed on beta integrations.
-* Improved the error messages in **generate-docs** for scripts if the example was not provided 
-
+* Improved the error messages in **generate-docs**, if an example was not provided.
 # 1.4.5
 * Enhanced the **postman-codegen** command to name all generated arguments with lower case.
 * Fixed an issue where the **find-dependencies** command miscalculated the dependencies for playbooks that use generic commands.

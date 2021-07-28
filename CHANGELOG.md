@@ -4,6 +4,9 @@
 * Fixed an issue where pre-commit didn't run on the demisto_sdk/commands folder.
 * The **init** command will now change the script template name in the code to the given script name.
 * Expanded the validations performed on beta integrations.
+* Improved the error messages in **generate-docs**, if an example was not provided.
+* Added to **validate** command a validation that a content entity or a pack name does not contain the words "partner" and "community".
+* Fixed an issue where **update-release-notes** ignores *--text* flag while using *-f*
 * Added option to enter a dictionary or json of format `[{field_name:description}]` in the **json-to-outputs** command,
   with the `-d` flag.
 
@@ -20,6 +23,7 @@
 * Fixed an issue where **openapi-codegen** tried to extract reference example outputs, leading to an exception.
 * Added an option to ignore secrets automatically when using the **init** command to create a pack.
 * Added a tool that gives the ability to temporarily suppress console output.
+* Expanded unify command to support GenericModules - Unifies a GenericModule object with its Dashboards.
 
 # 1.4.4
 * When formatting incident types with Auto-Extract rules and without mode field, the **format** command will now add the user selected mode.

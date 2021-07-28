@@ -8,6 +8,7 @@ from typing import Callable
 import pytest
 import yaml
 import yamlordereddictloader
+
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
     INTEGRATION_CATEGORIES, MARKETPLACE_LIVE_DISCUSSIONS, PACK_INITIAL_VERSION,

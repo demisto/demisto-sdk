@@ -78,6 +78,7 @@ from typing import Dict, Optional, Union
 
 import dateparser
 import yaml
+
 from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
                                                print_error)
 

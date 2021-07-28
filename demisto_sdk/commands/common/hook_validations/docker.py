@@ -3,9 +3,9 @@ from datetime import datetime, timedelta
 from functools import lru_cache
 from typing import Optional
 
+import requests
 from pkg_resources import parse_version
 
-import requests
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator

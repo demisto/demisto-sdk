@@ -3,6 +3,7 @@ import re
 from typing import Dict, Optional
 
 import yaml
+
 from demisto_sdk.commands.common.constants import (
     BANG_COMMAND_ARGS_MAPPING_DICT, BANG_COMMAND_NAMES, DBOT_SCORES_DICT,
     DEPRECATED_REGEXES, ENDPOINT_COMMAND_NAME, ENDPOINT_FLEXIBLE_REQUIRED_ARGS,

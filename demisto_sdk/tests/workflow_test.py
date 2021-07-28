@@ -9,8 +9,9 @@ from typing import Callable, Generator, Optional, Tuple
 import pytest
 from _pytest.monkeypatch import MonkeyPatch
 from click.testing import CliRunner
-from demisto_sdk.__main__ import main
 from ruamel import yaml
+
+from demisto_sdk.__main__ import main
 from TestSuite.test_tools import ChangeCWD
 
 

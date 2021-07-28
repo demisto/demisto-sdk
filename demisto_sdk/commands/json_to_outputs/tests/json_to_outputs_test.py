@@ -2,6 +2,7 @@ import json
 from typing import Optional
 
 import pytest
+
 from demisto_sdk.commands.json_to_outputs.json_to_outputs import (
     determine_type, json_to_outputs, parse_json)
 

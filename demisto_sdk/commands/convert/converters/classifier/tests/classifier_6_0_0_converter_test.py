@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 
 import pytest
+
 from demisto_sdk.commands.common.content.objects.pack_objects.classifier.classifier import \
     Classifier
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack

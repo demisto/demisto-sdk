@@ -2,10 +2,12 @@ import os
 import re
 from copy import deepcopy
 from distutils.version import LooseVersion
-from typing import Optional, Set, Union
+from typing import Dict, Optional, Set, Union
 
 import click
 import yaml
+from ruamel.yaml import YAML
+
 from demisto_sdk.commands.common.constants import (INTEGRATION, PLAYBOOK,
                                                    FileType)
 from demisto_sdk.commands.common.hook_validations.structure import \
@@ -20,7 +22,6 @@ from demisto_sdk.commands.format.format_constants import (
     DEFAULT_VERSION, ERROR_RETURN_CODE, NEW_FILE_DEFAULT_5_5_0_FROMVERSION,
     OLD_FILE_DEFAULT_1_FROMVERSION, SKIP_RETURN_CODE, SUCCESS_RETURN_CODE,
     VERSION_6_0_0)
-from ruamel.yaml import YAML
 
 ryaml = YAML()
 ryaml.allow_duplicate_keys = True
@@ -62,6 +63,7 @@ class BaseUpdate:
         self.from_version = from_version
         self.no_validate = no_validate
         self.assume_yes = assume_yes
+        self.updated_ids: Dict = {}
 
         if not self.source_file:
             raise Exception('Please provide <source path>, <optional - destination path>.')
@@ -315,7 +317,7 @@ class BaseUpdate:
         if self.data.get('id'):
             self.data['id'] = self.data.get('id', '').replace('_copy', '').replace('_dev', '')
 
-    def initiate_file_validator(self, validator_type):
+    def initiate_file_validator(self, validator_type) -> int:
         """ Run schema validate and file validate of file
         Returns:
             int 0 in case of success

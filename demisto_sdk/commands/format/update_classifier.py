@@ -2,6 +2,7 @@ from abc import ABC
 from typing import Tuple
 
 import click
+
 from demisto_sdk.commands.common.tools import LOG_COLORS, print_color
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
@@ -22,13 +23,14 @@ class BaseClassifierJSONFormat(BaseUpdateJSON, ABC):
         super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
                          verbose=verbose, **kwargs)
 
-    def run_format(self):
+    def run_format(self) -> int:
         super().update_json()
+        return SUCCESS_RETURN_CODE
 
     def format_file(self) -> Tuple[int, int]:
         """Manager function for the Classifier JSON updater."""
-        format = self.run_format()
-        return format, SKIP_RETURN_CODE
+        format_res = self.run_format()
+        return format_res, SKIP_RETURN_CODE
 
 
 class OldClassifierJSONFormat(BaseClassifierJSONFormat):

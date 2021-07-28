@@ -1379,7 +1379,6 @@ script:
     - contextPath: PaloAltoNetworksXDR.AuditAgentReports.DESCRIPTION
       description: Agent report description.
       type: String
-  dockerimage: demisto/python3:3.7.4.977
   isfetch: true
   longRunning: false
   longRunningPort: false

@@ -23,6 +23,10 @@ export DEMISTO_API_KEY=<YOUR_DEMISTO_API_KEY>
 * **-t, --timeout**
                         Timeout for the command in seconds. The playbook will continue to run in Demisto.
                         (default: 90)
+* **--insecure**
+                        Skip certificate validation.
+* **-w, --wait**
+                        Wait until the playbook run is finished and get a response.
 
 
 ### Examples

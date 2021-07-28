@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
+
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 

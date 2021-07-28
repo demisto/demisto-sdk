@@ -7,12 +7,13 @@ import re
 import shlex
 import sys
 from configparser import ConfigParser, MissingSectionHeaderError
+from contextlib import contextmanager
 from distutils.version import LooseVersion
 from enum import Enum
-from functools import partial
+from functools import lru_cache, partial
 from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen, check_output
-from typing import Callable, Dict, List, Optional, Tuple, Type, Union
+from typing import Callable, Dict, List, Match, Optional, Tuple, Type, Union
 
 import click
 import colorama
@@ -21,6 +22,9 @@ import git
 import requests
 import urllib3
 import yaml
+from packaging.version import parse
+from ruamel.yaml import YAML
+
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK, CLASSIFIERS_DIR,
     CONTEXT_OUTPUT_README_TABLE_HEADER, DASHBOARDS_DIR, DEF_DOCKER,
@@ -35,8 +39,6 @@ from demisto_sdk.commands.common.constants import (
     TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, XSOAR_CONFIG_FILE,
     FileType, GithubContentConfig, urljoin)
 from demisto_sdk.commands.common.git_util import GitUtil
-from packaging.version import parse
-from ruamel.yaml import YAML
 
 urllib3.disable_warnings()
 
@@ -235,28 +237,29 @@ def get_remote_file(
                 # And maybe it's just not defined. 😢
                 if not res.ok:
                     if not suppress_print:
-                        print_warning(
+                        click.secho(
                             f'You are working in a private repository: "{githhub_config.CURRENT_REPOSITORY}".\n'
                             f'The github token in your environment is undefined.\n'
                             f'Getting file from local repository instead. \n'
                             f'If you wish to get the file from the remote repository, \n'
                             f'Please define your github token in your environment.\n'
-                            f'`export {githhub_config.Credentials.ENV_TOKEN_NAME}=<TOKEN>`'
+                            f'`export {githhub_config.Credentials.ENV_TOKEN_NAME}=<TOKEN>`\n', fg='yellow'
                         )
+                        click.echo("Getting file from local environment")
                     # Get from local git origin/master instead
                     repo = git.Repo(os.path.dirname(full_file_path), search_parent_directories=True)
                     repo_git_util = GitUtil(repo)
-                    github_path = repo_git_util.get_local_remote_file_path(full_file_path, tag)
+                    github_path = repo_git_util.get_local_remote_file_path(full_file_path, github_tag)
                     local_content = repo_git_util.get_local_remote_file_content(github_path)
         else:
             res = requests.get(github_path, verify=False, timeout=10)
             res.raise_for_status()
     except Exception as exc:
         if not suppress_print:
-            print_warning(
+            click.secho(
                 f'Could not find the old entity file under "{github_path}".\n'
                 'please make sure that you did not break backward compatibility.\n'
-                f'Reason: {exc}'
+                f'Reason: {exc}', fg='yellow'
             )
         return {}
     file_content = res.content if res.ok else local_content
@@ -402,7 +405,8 @@ def get_last_remote_release_version():
 
     :return: tag
     """
-    if not os.environ.get('CI'):  # Check only when no on CI. If you want to disable it - use `DEMISTO_SDK_SKIP_VERSION_CHECK` environment variable
+    if not os.environ.get(
+            'CI'):  # Check only when no on CI. If you want to disable it - use `DEMISTO_SDK_SKIP_VERSION_CHECK` environment variable
         try:
             pypi_request = requests.get(SDK_PYPI_VERSION, verify=False, timeout=5)
             pypi_request.raise_for_status()
@@ -430,9 +434,8 @@ def get_file(method, file_path, type_of_file):
             try:
                 data_dictionary = method(stream)
             except Exception as e:
-                print_error(
+                raise ValueError(
                     "{} has a structure issue of file type {}. Error was: {}".format(file_path, type_of_file, str(e)))
-                return {}
     if isinstance(data_dictionary, (dict, list)):
         return data_dictionary
     return {}
@@ -537,10 +540,11 @@ def collect_ids(file_path):
 
 
 def get_from_version(file_path):
-    data_dictionary = get_yaml(file_path)
+    data_dictionary = get_yaml(file_path) or get_json(file_path)
 
     if data_dictionary:
-        from_version = data_dictionary.get('fromversion', '0.0.0')
+        from_version = data_dictionary.get('fromversion') if 'fromversion' in data_dictionary\
+            else data_dictionary.get('fromVersion', '0.0.0')
         if from_version == "":
             return "0.0.0"
 
@@ -941,52 +945,59 @@ def get_dev_requirements(py_version, envs_dirs_base):
     return requirements
 
 
-def get_dict_from_file(path: str, use_ryaml: bool = False) -> Tuple[Dict, Union[str, None]]:
+def get_dict_from_file(path: str, use_ryaml: bool = False,
+                       raises_error: bool = True) -> Tuple[Dict, Union[str, None]]:
     """
     Get a dict representing the file
 
     Arguments:
         path - a path to the file
         use_ryaml - Whether to use ryaml for file loading or not
+        raises_error - Whether to raise a FileNotFound error if `path` is not a valid file.
 
     Returns:
-        dict representation of the file, and the file_type, either .yml ot .json
+        dict representation of the file, and the file_type, either .yml or .json
     """
-    if path:
-        if path.endswith('.yml'):
-            if use_ryaml:
-                return get_ryaml(path), 'yml'
-            return get_yaml(path), 'yml'
-        elif path.endswith('.json'):
-            return get_json(path), 'json'
-        elif path.endswith('.py'):
-            return {}, 'py'
+    try:
+        if path:
+            if path.endswith('.yml'):
+                if use_ryaml:
+                    return get_ryaml(path), 'yml'
+                return get_yaml(path), 'yml'
+            elif path.endswith('.json'):
+                return get_json(path), 'json'
+            elif path.endswith('.py'):
+                return {}, 'py'
+    except FileNotFoundError as e:
+        if raises_error:
+            raise
+
     return {}, None
 
 
-# flake8: noqa: C901
-def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignore_sub_categories: bool = False):
-    """
-    returns the content file type
+@lru_cache()
+def find_type_by_path(path: str = '') -> Optional[FileType]:
+    """Find docstring by file path only
+    This function is here as we want to implement lru_cache and we can do it on `find_type`
+    as dict is not hashable.
 
-    Arguments:
-        path - a path to the file
+    Args:
+        path: Path to find its file type. Defaults to ''.
 
     Returns:
-        string representing the content file type
+        FileType: The file type if found. else None;
     """
     if path.endswith('.md'):
         if 'README' in path:
             return FileType.README
 
-        if RELEASE_NOTES_DIR in path:
+        if RELEASE_NOTES_DIR in path:  # [-2] is the file's dir name
             return FileType.RELEASE_NOTES
 
         if 'description' in path:
             return FileType.DESCRIPTION
 
         return FileType.CHANGELOG
-
     # integration image
     if path.endswith('_image.png') and not path.endswith("Author_image.png"):
         return FileType.IMAGE
@@ -1007,6 +1018,24 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
     if path.endswith(XSOAR_CONFIG_FILE):
         return FileType.XSOAR_CONFIG
 
+    return None
+
+# flake8: noqa: C901
+
+
+def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignore_sub_categories: bool = False):
+    """
+    returns the content file type
+
+    Arguments:
+        path - a path to the file
+
+    Returns:
+        string representing the content file type
+    """
+    type_by_path = find_type_by_path(path)
+    if type_by_path:
+        return type_by_path
     try:
         if not _dict and not file_type:
             _dict, file_type = get_dict_from_file(path)
@@ -1023,13 +1052,13 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
             return FileType.INTEGRATION
 
         if 'script' in _dict:
-            if TEST_PLAYBOOKS_DIR in path and not ignore_sub_categories:
+            if TEST_PLAYBOOKS_DIR in Path(path).parts and not ignore_sub_categories:
                 return FileType.TEST_SCRIPT
 
             return FileType.SCRIPT
 
         if 'tasks' in _dict:
-            if TEST_PLAYBOOKS_DIR in path:
+            if TEST_PLAYBOOKS_DIR in Path(path).parts:
                 return FileType.TEST_PLAYBOOK
 
             return FileType.PLAYBOOK
@@ -1041,7 +1070,10 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
         if 'orientation' in _dict:
             return FileType.REPORT
 
-        if 'color' in _dict and 'cliName' not in _dict:  # check against another key to make it more robust
+        if 'color' in _dict and 'cliName' not in _dict:
+            if 'definitionId' in _dict and _dict['definitionId'] and \
+                    _dict['definitionId'].lower() not in ['incident', 'indicator']:
+                return FileType.GENERIC_TYPE
             return FileType.INCIDENT_TYPE
 
         # 'regex' key can be found in new reputations files while 'reputations' key is for the old reputations
@@ -1062,7 +1094,7 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
         if 'canvasContextConnections' in _dict:
             return FileType.CONNECTION
 
-        if 'layout' in _dict or 'kind' in _dict:
+        if 'layout' in _dict or 'kind' in _dict:  # it's a Layout or Dashboard but not a Generic Object
             if 'kind' in _dict or 'typeId' in _dict:
                 return FileType.LAYOUT
 
@@ -1071,9 +1103,18 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
         if 'group' in _dict and LAYOUT_CONTAINER_FIELDS.intersection(_dict):
             return FileType.LAYOUTS_CONTAINER
 
+        if 'definitionIds' in _dict and 'views' in _dict:
+            return FileType.GENERIC_MODULE
+
+        if 'auditable' in _dict:
+            return FileType.GENERIC_DEFINITION
+
         # When using it for all files validation- sometimes 'id' can be integer
         if 'id' in _dict:
             if isinstance(_dict['id'], str):
+                if 'definitionId' in _dict and _dict['definitionId'] and \
+                        _dict['definitionId'].lower() not in ['incident', 'indicator']:
+                    return FileType.GENERIC_FIELD
                 _id = _dict['id'].lower()
                 if _id.startswith('incident'):
                     return FileType.INCIDENT_FIELD
@@ -1638,6 +1679,7 @@ def find_file(root_path, file_name):
     return ''
 
 
+@lru_cache()
 def get_file_displayed_name(file_path):
     """Gets the file name that is displayed in the UI by the file's path.
     If there is no displayed name - returns the file name"""
@@ -1834,3 +1876,93 @@ def is_pack_path(input_path: str) -> bool:
         - False if the input path is not for a given pack.
     """
     return os.path.basename(os.path.dirname(input_path)) == PACKS_DIR
+
+
+def get_relative_path_from_packs_dir(file_path: str) -> str:
+    """Get the relative path for a given file_path starting in the Packs directory"""
+    if PACKS_DIR not in file_path or file_path.startswith(PACKS_DIR):
+        return file_path
+
+    return file_path[file_path.find(PACKS_DIR):]
+
+
+def is_uuid(s: str) -> Optional[Match]:
+    """Checks whether given string is a UUID
+
+    Args:
+         s (str): The string to check if it is a UUID
+
+    Returns:
+        Match: Returns the match if given string is a UUID, otherwise None
+    """
+    return re.match(UUID_REGEX, s)
+
+
+def get_release_note_entries(version='') -> list:
+    """
+    Gets the release notes entries for the current version.
+
+    Args:
+        version: The current demisto-sdk version.
+
+    Return:
+        list: A list of the release notes given from the CHANGELOG file.
+    """
+
+    changelog_file_content = get_remote_file(full_file_path='CHANGELOG.md',
+                                             return_content=True,
+                                             github_repo='demisto/demisto-sdk').decode('utf-8').split('\n')
+
+    if not version or 'dev' in version:
+        version = 'Changelog'
+
+    if f'# {version}' not in changelog_file_content:
+        return []
+
+    result = changelog_file_content[changelog_file_content.index(f'# {version}') + 1:]
+    result = result[:result.index('')]
+
+    return result
+
+
+def get_current_usecases() -> list:
+    """Gets approved list of usecases from current branch (only in content repo).
+
+    Returns:
+        List of approved usecases from current branch
+    """
+    if not is_external_repository():
+        approved_usecases_json, _ = get_dict_from_file('Tests/Marketplace/approved_usecases.json')
+        return approved_usecases_json.get('approved_list', [])
+    return []
+
+
+def get_current_tags() -> list:
+    """Gets approved list of tags from current branch (only in content repo).
+
+    Returns:
+        List of approved tags from current branch
+    """
+    if not is_external_repository():
+        approved_tags_json, _ = get_dict_from_file('Tests/Marketplace/approved_tags.json')
+        return approved_tags_json.get('approved_list', [])
+    return []
+
+
+@contextmanager
+def suppress_stdout():
+    """
+        Temporarily suppress console output without effecting error outputs.
+        Example of use:
+
+            with suppress_stdout():
+                print('This message will not be printed')
+            print('This message will be printed')
+    """
+    with open(os.devnull, "w") as devnull:
+        try:
+            old_stdout = sys.stdout
+            sys.stdout = devnull
+            yield
+        finally:
+            sys.stdout = old_stdout

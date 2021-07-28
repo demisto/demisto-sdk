@@ -1,6 +1,7 @@
 import os
 
 import pytest
+
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.hook_validations.release_notes import \
     ReleaseNotesValidator
@@ -23,6 +24,7 @@ def get_validator(file_path='', modified_files=None, added_files=None):
     release_notes_validator.ignored_errors = {}
     release_notes_validator.checked_files = set()
     release_notes_validator.json_file_path = ''
+    release_notes_validator.pack_path = 'Path/CortexXDR'
     return release_notes_validator
 
 
@@ -73,7 +75,7 @@ def test_init():
     - Ensure init returns valid file path and release notes contents.
     """
     filepath = os.path.join(FILES_PATH, 'ReleaseNotes', '1_1_1.md')
-    release_notes_validator = ReleaseNotesValidator(filepath)
+    release_notes_validator = ReleaseNotesValidator(filepath, pack_name='test')
     release_notes_validator.release_notes_file_path = 'demisto_sdk/tests/test_files/ReleaseNotes/1_1_1.md'
     assert release_notes_validator.release_notes_path == filepath
     assert release_notes_validator.latest_release_notes == '### Test'

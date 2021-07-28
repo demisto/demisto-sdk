@@ -3,17 +3,13 @@ import re
 from typing import Dict, Optional
 
 import yaml
-from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
-                                                   DBOT_SCORES_DICT,
-                                                   DEPRECATED_REGEXES,
-                                                   FEED_REQUIRED_PARAMS,
-                                                   FETCH_REQUIRED_PARAMS,
-                                                   FIRST_FETCH,
-                                                   FIRST_FETCH_PARAM,
-                                                   INTEGRATION_CATEGORIES,
-                                                   IOC_OUTPUTS_DICT, MAX_FETCH,
-                                                   MAX_FETCH_PARAM,
-                                                   PYTHON_SUBTYPES, TYPE_PWSH)
+
+from demisto_sdk.commands.common.constants import (
+    BANG_COMMAND_ARGS_MAPPING_DICT, BANG_COMMAND_NAMES, DBOT_SCORES_DICT,
+    DEPRECATED_REGEXES, ENDPOINT_COMMAND_NAME, ENDPOINT_FLEXIBLE_REQUIRED_ARGS,
+    FEED_REQUIRED_PARAMS, FETCH_REQUIRED_PARAMS, FIRST_FETCH,
+    FIRST_FETCH_PARAM, INTEGRATION_CATEGORIES, IOC_OUTPUTS_DICT, MAX_FETCH,
+    MAX_FETCH_PARAM, PYTHON_SUBTYPES, TYPE_PWSH, XSOAR_CONTEXT_STANDARD_URL)
 from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
                                                 Errors)
@@ -44,7 +40,8 @@ class IntegrationValidator(ContentEntityValidator):
             return True
 
         error_message, error_code = Errors.wrong_version()
-        if self.handle_error(error_message, error_code, file_path=self.file_path):
+        if self.handle_error(error_message, error_code, file_path=self.file_path,
+                             suggested_fix=Errors.suggest_fix(self.file_path)):
             self.is_valid = False
             return False
 
@@ -69,6 +66,42 @@ class IntegrationValidator(ContentEntityValidator):
         ]
         return not any(answers)
 
+    def core_integration_validations(self, validate_rn: bool = True):
+        """Perform the core integration validations (common to both beta and regular integrations)
+        Args:
+            validate_rn (bool): Whether to validate release notes (changelog) or not.
+        """
+        answers = [
+            super().is_valid_file(validate_rn),
+            self.is_valid_subtype(),
+            self.is_valid_default_argument_in_reputation_command(),
+            self.is_valid_default_argument(),
+            self.is_proxy_configured_correctly(),
+            self.is_insecure_configured_correctly(),
+            self.is_checkbox_param_configured_correctly(),
+            self.is_valid_category(),
+            self.is_id_equals_name(),
+            self.is_docker_image_valid(),
+            self.is_valid_feed(),
+            self.is_valid_fetch(),
+            self.is_there_a_runnable(),
+            self.is_valid_display_name(),
+            self.is_valid_pwsh(),
+            self.is_valid_image(),
+            self.is_valid_max_fetch_and_first_fetch(),
+            self.is_valid_as_deprecated(),
+            self.is_valid_parameters_display_name(),
+            self.is_mapping_fields_command_exist(),
+            self.is_valid_integration_file_path(),
+            self.has_no_duplicate_params(),
+            self.has_no_duplicate_args(),
+            self.is_there_separators_in_names(),
+            self.name_not_contain_the_type(),
+            self.is_valid_endpoint_command(),
+        ]
+
+        return all(answers)
+
     def is_valid_file(self, validate_rn: bool = True, skip_test_conf: bool = False,
                       check_is_unskipped: bool = True, conf_json_data: dict = {}) -> bool:
         """Check whether the Integration is valid or not according to the LEVEL SUPPORT OPTIONS
@@ -85,35 +118,10 @@ class IntegrationValidator(ContentEntityValidator):
         """
 
         answers = [
-            super().is_valid_file(validate_rn),
-            self.is_valid_subtype(),
-            self.is_valid_default_argument_in_reputation_command(),
-            self.is_valid_default_argument(),
-            self.is_proxy_configured_correctly(),
-            self.is_insecure_configured_correctly(),
-            self.is_checkbox_param_configured_correctly(),
-            self.is_valid_category(),
-            self.is_id_equals_name(),
-            self.is_docker_image_valid(),
-            self.is_valid_feed(),
-            self.is_valid_fetch(),
-            self.is_there_a_runnable(),
-            self.is_valid_display_name(),
+            self.core_integration_validations(validate_rn),
             self.is_valid_hidden_params(),
-            self.is_valid_pwsh(),
-            self.is_valid_image(),
             self.is_valid_description(beta_integration=False),
-            self.is_valid_max_fetch_and_first_fetch(),
-            self.is_valid_as_deprecated(),
-            self.is_valid_parameters_display_name(),
-            self.is_mapping_fields_command_exist(),
-            self.is_context_change_in_readme(),
-            self.is_valid_integration_file_path(),
-            self.has_no_duplicate_params(),
-            self.has_no_duplicate_args(),
-            self.is_there_separators_in_names(),
-            self.name_not_contain_the_type()
-
+            self.is_context_correct_in_readme(),
         ]
 
         if check_is_unskipped:
@@ -140,17 +148,9 @@ class IntegrationValidator(ContentEntityValidator):
                 bool: True if integration is valid, False otherwise.
         """
         answers = [
-            super().is_valid_file(validate_rn),
-            self.is_valid_default_argument_in_reputation_command(),
-            self.is_valid_subtype(),
-            self.is_valid_category(),
+            self.core_integration_validations(validate_rn),
             self.is_valid_beta(),
-            self.is_valid_image(),
             self.is_valid_description(beta_integration=True),
-            self.is_valid_as_deprecated(),
-            self.is_there_separators_in_names(),
-            self.name_not_contain_the_type()
-
         ]
         return all(answers)
 
@@ -222,7 +222,7 @@ class IntegrationValidator(ContentEntityValidator):
                     if formatted_message:
                         err_msgs.append(formatted_message)
 
-                if configuration_param.get('defaultvalue', '') not in ('false', ''):
+                if configuration_param.get('defaultvalue', '') not in (False, 'false', ''):
                     error_message, error_code = Errors.wrong_default_parameter_not_empty(param_name, "''")
                     formatted_message = self.handle_error(error_message, error_code, file_path=self.file_path,
                                                           should_print=False)
@@ -244,8 +244,9 @@ class IntegrationValidator(ContentEntityValidator):
                         err_msgs.append(formatted_message)
 
         if err_msgs:
-            print_error('{} Received the following error for {} validation:\n{}'
-                        .format(self.file_path, param_name, '\n'.join(err_msgs)))
+            print_error('{} Received the following error for {} validation:\n{}\n {}\n'
+                        .format(self.file_path, param_name, '\n'.join(err_msgs),
+                                Errors.suggest_fix(file_path=self.file_path)))
             self.is_valid = False
             return False
         return True
@@ -310,7 +311,7 @@ class IntegrationValidator(ContentEntityValidator):
     def is_valid_default_argument_in_reputation_command(self):
         # type: () -> bool
         """Check if a reputation command (domain/email/file/ip/url/cve)
-            has a default non required argument with the same name
+            has a default non required argument.
 
         Returns:
             bool. Whether a reputation command hold a valid argument
@@ -320,12 +321,13 @@ class IntegrationValidator(ContentEntityValidator):
             commands = []
         flag = True
         for command in commands:
-            command_name = command.get('name')
+            command_name = command.get('name', '')
             if command_name in BANG_COMMAND_NAMES:
+                command_mapping = BANG_COMMAND_ARGS_MAPPING_DICT[command_name]
                 flag_found_arg = False
                 for arg in command.get('arguments', []):
                     arg_name = arg.get('name')
-                    if arg_name == command_name or (command_name == 'cve' and arg_name == 'cve_id'):
+                    if arg_name in command_mapping['default']:
                         flag_found_arg = True
                         if arg.get('default') is False:
                             error_message, error_code = Errors.wrong_default_argument(arg_name,
@@ -334,7 +336,8 @@ class IntegrationValidator(ContentEntityValidator):
                                 self.is_valid = False
                                 flag = False
 
-                if not flag_found_arg:
+                flag_found_required = command_mapping.get('required', True)
+                if not flag_found_arg and flag_found_required:
                     error_message, error_code = Errors.no_default_arg(command_name)
                     if self.handle_error(error_message, error_code, file_path=self.file_path):
                         flag = False
@@ -376,7 +379,7 @@ class IntegrationValidator(ContentEntityValidator):
         Returns:
             bool. Whether a reputation command holds valid outputs
         """
-        context_standard = "https://xsoar.pan.dev/docs/integrations/context-standards"
+        context_standard = XSOAR_CONTEXT_STANDARD_URL
         commands = self.current_file.get('script', {}).get('commands', [])
         output_for_reputation_valid = True
         for command in commands:
@@ -525,16 +528,17 @@ class IntegrationValidator(ContentEntityValidator):
         commands = self.current_file.get('script', {}).get('commands', [])
         does_not_have_duplicate_args = True
         for command in commands:
-            arg_list = []  # type: list
+            arg_names = []  # type: list
             for arg in command.get('arguments', []):
-                if arg in arg_list:
-                    error_message, error_code = Errors.duplicate_arg_in_file(arg['name'], command['name'])
+                arg_name = arg.get('name')
+                if arg_name in arg_names:
+                    error_message, error_code = Errors.duplicate_arg_in_file(arg_name, command['name'])
                     if self.handle_error(error_message, error_code, file_path=self.file_path):
                         self.is_valid = False
                         does_not_have_duplicate_args = False
 
                 else:
-                    arg_list.append(arg)
+                    arg_names.append(arg_name)
 
         return does_not_have_duplicate_args
 
@@ -873,7 +877,8 @@ class IntegrationValidator(ContentEntityValidator):
                 if param not in params:
                     error_message, error_code = Errors.parameter_missing_from_yml(param.get('name'),
                                                                                   yaml.dump(param))
-                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                         suggested_fix=Errors.suggest_fix(self.file_path)):
                         fetch_params_exist = False
 
         return fetch_params_exist
@@ -947,7 +952,8 @@ class IntegrationValidator(ContentEntityValidator):
                 param_structure = dict(equal_key_values, **contained_key_values, name=required_param.get('name'))
                 error_message, error_code = Errors.parameter_missing_for_feed(required_param.get('name'),
                                                                               yaml.dump(param_structure))
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                     suggested_fix=Errors.suggest_fix(self.file_path)):
                     params_exist = False
 
         return params_exist
@@ -1103,7 +1109,7 @@ class IntegrationValidator(ContentEntityValidator):
                     return False
         return True
 
-    def is_context_change_in_readme(self) -> bool:
+    def is_context_correct_in_readme(self) -> bool:
         """
         Checks if there has been a corresponding change to the integration's README
         when changing the context paths of an integration.
@@ -1255,3 +1261,71 @@ class IntegrationValidator(ContentEntityValidator):
                 return False
 
         return True
+
+    def is_valid_endpoint_command(self):
+        """
+        Check if the endpoint command in yml is valid by standard.
+        This command is separated than other reputation command as the inputs are different standard.
+
+        Returns:
+            true if the inputs and outputs are valid.
+        """
+        commands = self.current_file.get('script', {}).get('commands', [])
+
+        if 'endpoint' not in [x.get('name') for x in commands]:
+            return True
+
+        # extracting the specific command from commands.
+        endpoint_command = [arg for arg in commands if arg.get('name') == 'endpoint'][0]
+        return self._is_valid_endpoint_inputs(endpoint_command, required_arguments=ENDPOINT_FLEXIBLE_REQUIRED_ARGS) \
+            and self._is_valid_endpoint_outputs(endpoint_command)
+
+    def _is_valid_endpoint_inputs(self, command_data, required_arguments):
+        """
+        Check if the input for endpoint commands includes at least one required_arguments,
+        and that only ip is the default argument.
+        Returns:
+            true if the inputs are valid.
+        """
+        endpoint_command_inputs = command_data.get('arguments', [])
+        existing_arguments = {arg['name'] for arg in endpoint_command_inputs}
+
+        # checking at least one of the required argument is found as argument
+        if not set(required_arguments).intersection(existing_arguments):
+            error_message, error_code = Errors.reputation_missing_argument(list(required_arguments),
+                                                                           command_data.get('name'),
+                                                                           all=False)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                return False
+
+        # checking no other arguments are default argument:
+        default_args_found = [(arg.get('name'), arg.get('default', False)) for arg in endpoint_command_inputs]
+        command_default_arg_map = BANG_COMMAND_ARGS_MAPPING_DICT[ENDPOINT_COMMAND_NAME]
+        default_arg_name = command_default_arg_map['default']
+        other_default_args_found = list(filter(
+            lambda x: x[1] is True and x[0] not in default_arg_name, default_args_found))
+        if other_default_args_found:
+            error_message, error_code = Errors.wrong_default_argument(default_arg_name, ENDPOINT_COMMAND_NAME)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                return False
+        return True
+
+    def _is_valid_endpoint_outputs(self, command_data):
+        context_standard = XSOAR_CONTEXT_STANDARD_URL
+        output_for_reputation_valid = True
+        context_outputs_paths = set()
+        for output in command_data.get('outputs', []):
+            context_outputs_paths.add(output.get('contextPath'))
+
+        # validate the reputation command outputs
+        reputation_output = IOC_OUTPUTS_DICT.get(ENDPOINT_COMMAND_NAME)
+        if reputation_output and (reputation_output - context_outputs_paths):
+            error_message, error_code = Errors.missing_reputation(ENDPOINT_COMMAND_NAME, reputation_output,
+                                                                  context_standard)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                output_for_reputation_valid = False
+
+        return output_for_reputation_valid

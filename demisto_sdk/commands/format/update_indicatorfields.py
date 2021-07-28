@@ -1,6 +1,7 @@
 from typing import Tuple
 
 import click
+
 from demisto_sdk.commands.common.hook_validations.incident_field import \
     IncidentFieldValidator
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
@@ -42,8 +43,8 @@ class IndicatorFieldJSONFormat(BaseUpdateJSON):
 
     def format_file(self) -> Tuple[int, int]:
         """Manager function for the indicator fields JSON updater."""
-        format = self.run_format()
-        if format:
-            return format, SKIP_RETURN_CODE
+        format_rs = self.run_format()
+        if format_rs:
+            return format_rs, SKIP_RETURN_CODE
         else:
-            return format, self.initiate_file_validator(IncidentFieldValidator)
+            return format_rs, self.initiate_file_validator(IncidentFieldValidator)

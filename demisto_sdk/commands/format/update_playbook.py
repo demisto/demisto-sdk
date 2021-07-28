@@ -5,6 +5,8 @@ from distutils.version import LooseVersion
 from typing import Tuple
 
 import click
+from git import InvalidGitRepositoryError
+
 from demisto_sdk.commands.common.constants import PLAYBOOK, FileType
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.playbook import \
@@ -15,7 +17,6 @@ from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE, NEW_FILE_DEFAULT_5_5_0_FROMVERSION, SCHEMAS_PATH,
     SKIP_RETURN_CODE, SUCCESS_RETURN_CODE)
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
-from git import InvalidGitRepositoryError
 
 
 class BasePlaybookYMLFormat(BaseUpdateYML):
@@ -118,20 +119,21 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
                 task['taskid'] = generated_uuid
                 task['task']['id'] = generated_uuid
 
-    def run_format(self):
+    def run_format(self) -> int:
         self.update_fromversion_by_user()
         super().update_yml(file_type=PLAYBOOK)
         self.add_description()
         self.update_task_uuid()
         self.save_yml_to_destination_file()
+        return SUCCESS_RETURN_CODE
 
     def format_file(self) -> Tuple[int, int]:
         """Manager function for the playbook YML updater."""
-        format = self.run_format()
-        if format:
-            return format, SKIP_RETURN_CODE
+        format_res = self.run_format()
+        if format_res:
+            return format_res, SKIP_RETURN_CODE
         else:
-            return format, self.initiate_file_validator(PlaybookValidator)
+            return format_res, self.initiate_file_validator(PlaybookValidator)
 
 
 class PlaybookYMLFormat(BasePlaybookYMLFormat):
@@ -275,8 +277,7 @@ class TestPlaybookYMLFormat(BasePlaybookYMLFormat):
     def run_format(self) -> int:
         try:
             click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
-            super().run_format()
-            return SUCCESS_RETURN_CODE
+            return super().run_format()
         except Exception as err:
             if self.verbose:
                 click.secho(f'\nFailed to update file {self.source_file}. Error: {err}', fg='red')

@@ -76,6 +76,7 @@ import sys
 
 import dateparser
 import yaml
+
 from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
                                                print_error)
 
@@ -163,6 +164,12 @@ def parse_json(data, command_name, prefix, verbose=False, interactive=False):
             print_error(str(ex))
 
         raise ValueError('Invalid input JSON')
+
+    # If data is a list of dictionaries [{'a': 'b', 'c': 'd'}, {'e': 'f'}] -> {'a': 'b', 'c': 'd', 'e': 'f'}.
+    # In case there are two identical keys (in two different dictionaries) with values of different types,
+    # the type will be determined by the last dictionary [{'a': 'b'}, {'a': 1}] -> {'a': 1} -> type of 'a' = Number.
+    if isinstance(data, list):
+        data = {k: v for d in data for k, v in d.items()}
 
     flattened_data = flatten_json(data)
     if prefix:

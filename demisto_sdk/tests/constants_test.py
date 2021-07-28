@@ -1,5 +1,6 @@
-import demisto_sdk.commands.common.constants as constants
 import pytest
+
+import demisto_sdk.commands.common.constants as constants
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 
 GIT_ROOT = "{}".format(git_path())
@@ -214,6 +215,11 @@ XSOAR_LINTER_PY3_INVALID_WARNINGS_PARTNER = f"{GIT_ROOT}/demisto_sdk/tests/test_
 DESTINATION_FORMAT_INTEGRATION = "Integrations/integration.yml"
 INTEGRATION_PATH = "Integrations"
 CONNECTION_SCHEMA_PATH = f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/canvas-context-connections.yml"
+VALID_GENERIC_TYPE_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/generic-type-valid.json"
+VALID_GENERIC_FIELD_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/generic-field-valid.json"
+VALID_GENERIC_MODULE_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/generic-module-valid.json"
+VALID_GENERIC_DEFINITION_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/generic-definitions-valid.json"
+
 DIR_LIST = [
     f'{PACK_TARGET}/{constants.INTEGRATIONS_DIR}',
     f'{PACK_TARGET}/{constants.SCRIPTS_DIR}',

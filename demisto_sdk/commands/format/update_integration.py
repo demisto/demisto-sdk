@@ -2,6 +2,7 @@ import json
 from typing import Tuple
 
 import click
+
 from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
                                                    FEED_REQUIRED_PARAMS,
                                                    FETCH_REQUIRED_PARAMS,
@@ -52,6 +53,9 @@ class IntegrationYMLFormat(BaseUpdateYML):
 
             if argument_name in self.ARGUMENTS_DESCRIPTION:
                 integration_argument['display'] = self.ARGUMENTS_DESCRIPTION[argument_name]
+                if integration_argument.get('required', False):
+                    integration_argument['required'] = False
+                integration_argument['type'] = 8
 
     def set_reputation_commands_basic_argument_as_needed(self):
         """Sets basic arguments of reputation commands to be default, isArray and required."""
@@ -151,8 +155,8 @@ class IntegrationYMLFormat(BaseUpdateYML):
 
     def format_file(self) -> Tuple[int, int]:
         """Manager function for the integration YML updater."""
-        format = self.run_format()
-        if format:
-            return format, SKIP_RETURN_CODE
+        format_res = self.run_format()
+        if format_res:
+            return format_res, SKIP_RETURN_CODE
         else:
-            return format, self.initiate_file_validator(IntegrationValidator)
+            return format_res, self.initiate_file_validator(IntegrationValidator)

@@ -20,6 +20,8 @@ import requests
 import urllib3
 from demisto_client.demisto_api import DefaultApi, Incident
 from demisto_client.demisto_api.rest import ApiException
+from slack import WebClient as SlackClient
+
 from demisto_sdk.commands.common.constants import FILTER_CONF, PB_Status
 from demisto_sdk.commands.test_content.constants import (
     CONTENT_BUILD_SSH_USER, LOAD_BALANCER_DNS)
@@ -32,7 +34,6 @@ from demisto_sdk.commands.test_content.ParallelLoggingManager import \
     ParallelLoggingManager
 from demisto_sdk.commands.test_content.tools import (
     is_redhat_instance, update_server_configuration)
-from slack import WebClient as SlackClient
 
 ENV_RESULTS_PATH = './artifacts/env_results.json'
 FAILED_MATCH_INSTANCE_MSG = "{} Failed to run.\n There are {} instances of {}, please select one of them by using " \
@@ -902,9 +903,11 @@ class Integration:
         self.build_context.logging_module.debug(f'Searching integration configuration for {self}')
 
         # Finding possible configuration matches
-        integration_params: List[IntegrationConfiguration] = [conf for conf in
-                                                              self.build_context.secret_conf.integrations if
-                                                              conf.name == self.name]
+        integration_params: List[IntegrationConfiguration] = [
+            deepcopy(conf) for conf in
+            self.build_context.secret_conf.integrations if
+            conf.name == self.name
+        ]
         # Modifying placeholders if exists
         integration_params: List[IntegrationConfiguration] = [
             self._change_placeholders_to_values(server_url, conf) for conf in integration_params]
@@ -1385,7 +1388,7 @@ class TestContext:
             Empty string or
         """
         try:
-            self.build_context.logging_module.info(f'ssh tunnel command: {self.tunnel_command}')
+            self.build_context.logging_module.info(f'ssh tunnel command:\n{self.tunnel_command}')
 
             if not self.playbook.configure_integrations(self.client, self.server_context):
                 return PB_Status.FAILED

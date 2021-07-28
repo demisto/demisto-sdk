@@ -1,8 +1,12 @@
 import json
 import os
 
+import click
 import pytest
+import requests_mock
 from click.testing import CliRunner
+from git import GitCommandError
+
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (PACK_METADATA_DESC,
@@ -17,7 +21,6 @@ from demisto_sdk.commands.common.hook_validations.base_validator import \
 from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
     PackUniqueFilesValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from git import GitCommandError
 from TestSuite.test_tools import ChangeCWD
 
 VALIDATE_CMD = "validate"
@@ -53,6 +56,11 @@ class TestPackUniqueFilesValidator:
     validator = PackUniqueFilesValidator(FAKE_PATH_NAME)
     validator.pack_path = FAKE_PACK_PATH
 
+    def restart_validator(self):
+        self.validator.pack_path = ''
+        self.validator = PackUniqueFilesValidator(self.FAKE_PATH_NAME)
+        self.validator.pack_path = self.FAKE_PACK_PATH
+
     def test_is_error_added_name_only(self):
         self.validator._add_error(('boop', '101'), 'file_name')
         assert f'{self.validator.pack_path}/file_name: [101] - boop\n' in self.validator.get_errors(True)
@@ -78,6 +86,8 @@ class TestPackUniqueFilesValidator:
     def test_validate_pack_unique_files(self, mocker):
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_readme_and_pack_description', return_value=True)
+        mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_readme_images', return_value=True)
+        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
         assert not self.validator.are_valid_files(id_set_validations=False)
         fake_validator = PackUniqueFilesValidator('fake')
         assert fake_validator.are_valid_files(id_set_validations=False)
@@ -85,6 +95,8 @@ class TestPackUniqueFilesValidator:
     def test_validate_pack_metadata(self, mocker):
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_readme_and_pack_description', return_value=True)
+        mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_readme_images', return_value=True)
+        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
         assert not self.validator.are_valid_files(id_set_validations=False)
         fake_validator = PackUniqueFilesValidator('fake')
         assert fake_validator.are_valid_files(id_set_validations=False)
@@ -109,6 +121,7 @@ class TestPackUniqueFilesValidator:
         mocker.patch.object(PackUniqueFilesValidator, '_read_file_content',
                             return_value=json.dumps(pack_metadata_no_email_and_url))
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value=None)
+        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
         pack = repo.create_pack('PackName')
         pack.pack_metadata.write_json(pack_metadata_no_email_and_url)
         with ChangeCWD(repo.path):
@@ -136,6 +149,7 @@ class TestPackUniqueFilesValidator:
         mocker.patch.object(PackUniqueFilesValidator, '_read_file_content',
                             return_value=json.dumps(pack_metadata_price_changed))
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value=None)
+        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
         pack = repo.create_pack('PackName')
         pack.pack_metadata.write_json(pack_metadata_price_changed)
         with ChangeCWD(repo.path):
@@ -177,6 +191,7 @@ class TestPackUniqueFilesValidator:
         Then
         - Ensure that the validation fails and that the invalid id set error is printed.
         """
+        self.restart_validator()
 
         def error_raising_function(*args, **kwargs):
             raise ValueError("Couldn't find any items for pack 'PackID'. make sure your spelling is correct.")
@@ -199,6 +214,7 @@ class TestPackUniqueFilesValidator:
         Then
         - Ensure that the validation fails and that the invalid core pack dependencies error is printed.
         """
+        self.restart_validator()
         dependencies_packs = {'dependency_pack_1': {'mandatory': True, 'display_name': 'dependency pack 1'},
                               'dependency_pack_2': {'mandatory': False, 'display_name': 'dependency pack 2'},
                               'dependency_pack_3': {'mandatory': True, 'display_name': 'dependency pack 3'}}
@@ -219,23 +235,29 @@ class TestPackUniqueFilesValidator:
         Then
         - Ensure that the validation passes and that the skipping message is printed.
         """
+        self.restart_validator()
         self.validator.skip_id_set_creation = True
         res = self.validator.validate_pack_dependencies()
         self.validator.skip_id_set_creation = False  # reverting to default for next tests
         assert res
         assert "No first level dependencies found" in capsys.readouterr().out
 
-    @pytest.mark.parametrize('usecases, is_valid', [
-        ([], True),
-        (['Phishing', 'Malware'], True),
-        (['NonApprovedUsecase', 'Case Management'], False)
+    @pytest.mark.parametrize('usecases, is_valid, branch_usecases', [
+        ([], True, []),
+        (['Phishing', 'Malware'], True, []),
+        (['NonApprovedUsecase', 'Case Management'], False, []),
+        (['NewUseCase'], True, ['NewUseCase']),
+        (['NewUseCase1, NewUseCase2'], False, ['NewUseCase1'])
     ])
-    def test_is_approved_usecases(self, repo, usecases, is_valid):
+    def test_is_approved_usecases(self, repo, usecases, is_valid, branch_usecases, mocker):
         """
         Given:
             - Case A: Pack without usecases
             - Case B: Pack with approved usecases (Phishing and Malware)
             - Case C: Pack with non-approved usecase (NonApprovedUsecase) and approved usecase (Case Management)
+            - Case D: Pack with approved usecase (NewUseCase) located in my branch only
+            - Case E: Pack with non-approved usecase (NewUseCase2) and approved usecase (NewUseCase1)
+            located in my branch only
 
         When:
             - Validating approved usecases
@@ -245,7 +267,11 @@ class TestPackUniqueFilesValidator:
             - Case B: Ensure validation passes as both usecases are approved
             - Case C: Ensure validation fails as it contains a non-approved usecase (NonApprovedUsecase)
                       Verify expected error is printed
+            - Case D: Ensure validation passes as usecase is approved on the same branch
+            - Case E: Ensure validation fails as it contains a non-approved usecase (NewUseCase2)
+                      Verify expected error is printed
         """
+        self.restart_validator()
         pack_name = 'PackName'
         pack = repo.create_pack(pack_name)
         pack.pack_metadata.write_json({
@@ -253,34 +279,44 @@ class TestPackUniqueFilesValidator:
             PACK_METADATA_SUPPORT: XSOAR_SUPPORT,
             PACK_METADATA_TAGS: []
         })
+        mocker.patch.object(tools, 'is_external_repository', return_value=False)
+        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': branch_usecases}, 'json'))
         self.validator.pack_path = pack.path
 
         with ChangeCWD(repo.path):
             assert self.validator._is_approved_usecases() == is_valid
             if not is_valid:
-                assert 'The pack metadata contains non approved usecases: NonApprovedUsecase' in self.validator.get_errors()
+                assert 'The pack metadata contains non approved usecases:' in self.validator.get_errors()
 
-    @pytest.mark.parametrize('tags, is_valid', [
-        ([], True),
-        (['Machine Learning', 'Spam'], True),
-        (['NonApprovedTag', 'GDPR'], False)
+    @pytest.mark.parametrize('tags, is_valid, branch_tags', [
+        ([], True, []),
+        (['Machine Learning', 'Spam'], True, []),
+        (['NonApprovedTag', 'GDPR'], False, []),
+        (['NewTag'], True, ['NewTag']),
+        (['NewTag1, NewTag2'], False, ['NewTag1'])
     ])
-    def test_is_approved_tags(self, repo, tags, is_valid):
+    def test_is_approved_tags(self, repo, tags, is_valid, branch_tags, mocker):
         """
         Given:
             - Case A: Pack without tags
             - Case B: Pack with approved tags (Machine Learning and Spam)
-            - Case C: Pack with non-approved usecase (NonApprovedTag) and approved usecase (GDPR)
-
+            - Case C: Pack with non-approved tags (NonApprovedTag) and approved tags (GDPR)
+            - Case D: Pack with approved tags (NewTag) located in my branch only
+            - Case E: Pack with non-approved tags (NewTag) and approved tags (NewTag)
+            located in my branch only
         When:
-            - Validating approved usecases
+            - Validating approved tags
 
         Then:
-            - Case A: Ensure validation passes as there are no usecases to verify
-            - Case B: Ensure validation passes as both usecases are approved
-            - Case C: Ensure validation fails as it contains a non-approved usecase (NonApprovedTag)
+            - Case A: Ensure validation passes as there are no tags to verify
+            - Case B: Ensure validation passes as both tags are approved
+            - Case C: Ensure validation fails as it contains a non-approved tags (NonApprovedTag)
+                      Verify expected error is printed
+            - Case D: Ensure validation passes as tags is approved on the same branch
+            - Case E: Ensure validation fails as it contains a non-approved tag (NewTag2)
                       Verify expected error is printed
         """
+        self.restart_validator()
         pack_name = 'PackName'
         pack = repo.create_pack(pack_name)
         pack.pack_metadata.write_json({
@@ -288,12 +324,14 @@ class TestPackUniqueFilesValidator:
             PACK_METADATA_SUPPORT: XSOAR_SUPPORT,
             PACK_METADATA_TAGS: tags
         })
+        mocker.patch.object(tools, 'is_external_repository', return_value=False)
+        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': branch_tags}, 'json'))
         self.validator.pack_path = pack.path
 
         with ChangeCWD(repo.path):
             assert self.validator._is_approved_tags() == is_valid
             if not is_valid:
-                assert 'The pack metadata contains non approved tags: NonApprovedTag' in self.validator.get_errors()
+                assert 'The pack metadata contains non approved tags:' in self.validator.get_errors()
 
     @pytest.mark.parametrize('pack_content, tags, is_valid', [
         ("none", [], True),
@@ -304,6 +342,7 @@ class TestPackUniqueFilesValidator:
         ("playbook", [], True),
     ])
     def test_is_right_usage_of_usecase_tag(self, repo, pack_content, tags, is_valid):
+        self.restart_validator()
         pack_name = 'PackName'
         pack = repo.create_pack(pack_name)
         pack.pack_metadata.write_json({
@@ -343,6 +382,7 @@ class TestPackUniqueFilesValidator:
         Then:
             - Ensure True when the support types are valid, else False with the right error message.
         """
+        self.restart_validator()
         pack_name = 'PackName'
         pack = repo.create_pack(pack_name)
         pack.pack_metadata.write_json({
@@ -369,6 +409,7 @@ class TestPackUniqueFilesValidator:
         Then:
             - Ensure result is None and the appropriate skipping message is printed.
         """
+        self.restart_validator()
         pack_name = 'PackName'
         pack = repo.create_pack(pack_name)
         pack.pack_metadata.write_json(PACK_METADATA_PARTNER)
@@ -393,6 +434,7 @@ class TestPackUniqueFilesValidator:
         Then:
             - Ensure result is None and the appropriate skipping message is printed.
         """
+        self.restart_validator()
         pack_name = 'PackName'
         pack = repo.create_pack(pack_name)
         pack.pack_metadata.write_json(PACK_METADATA_PARTNER)
@@ -423,6 +465,7 @@ class TestPackUniqueFilesValidator:
         Then:
             - Ensure result is None and the appropriate skipping message is printed.
         """
+        self.restart_validator()
         pack_name = 'PackName'
         pack = repo.create_pack(pack_name)
         pack.pack_metadata.write_json(PACK_METADATA_PARTNER)
@@ -479,6 +522,74 @@ class TestPackUniqueFilesValidator:
         self.validator = PackUniqueFilesValidator(os.path.join(self.FILES_PATH, 'DummyPack'))
         assert self.validator._is_pack_file_exists(self.validator.readme_file) is False
 
+    def test_validate_pack_readme_valid_images(self, mocker):
+        """
+            Given
+                - A pack README file with valid absolute image paths in it.
+            When
+                - Run validate on pack README file
+            Then
+                - Ensure:
+                    - Validation succeed
+                    - Valid absolute image paths were not caught
+        """
+        from demisto_sdk.commands.common.hook_validations.readme import \
+            ReadMeValidator
+
+        self.validator = PackUniqueFilesValidator(os.path.join(self.FILES_PATH, 'DummyPack2'))
+        mocker.patch.object(ReadMeValidator, 'check_readme_relative_image_paths', return_value=[])  # Test only absolute paths
+
+        with requests_mock.Mocker() as m:
+            # Mock get requests
+            m.get('https://github.com/demisto/content/raw/test1.png',
+                  status_code=200, text="Test1")
+            m.get('https://raw.githubusercontent.com/demisto/content/raw/test1.png',
+                  status_code=200, text="Test1")
+            m.get('https://raw.githubusercontent.com/demisto/content/raw/test1.jpg',
+                  status_code=200, text="Test1")
+
+            result = self.validator.validate_pack_readme_images()
+            errors = self.validator.get_errors()
+        assert result
+        assert 'please repair it:\n![Identity with High Risk Score](https://github.com/demisto/content/raw/test1.png)' not in errors
+        assert 'please repair it:\n![Identity with High Risk Score](https://raw.githubusercontent.com/demisto/content/raw/test1.png)' not in errors
+        assert 'please repair it:\n(https://raw.githubusercontent.com/demisto/content/raw/test1.jpg)' not in errors
+
+    def test_validate_pack_readme_invalid_images(self):
+        """
+            Given
+                - A pack README file with invalid absolute and relative image paths in it.
+            When
+                - Run validate on pack README file
+            Then
+                - Ensure:
+                    - Validation fails
+                    - Invalid relative image paths were caught correctly
+                    - Invalid absolute image paths were caught correctly
+        """
+        self.validator = PackUniqueFilesValidator(os.path.join(self.FILES_PATH, 'DummyPack2'))
+
+        with requests_mock.Mocker() as m:
+            # Mock get requests
+            m.get('https://github.com/demisto/content/raw/test1.png',
+                  status_code=404, text="Test1")
+            m.get('https://raw.githubusercontent.com/demisto/content/raw/test1.png',
+                  status_code=404, text="Test1")
+            m.get('https://raw.githubusercontent.com/demisto/content/raw/test1.jpg',
+                  status_code=404, text="Test1")
+
+            result = self.validator.validate_pack_readme_images()
+            errors = self.validator.get_errors()
+        assert not result
+        assert 'Detected the following image relative path: ![Identity with High Risk Score](doc_files/High_Risk_User.png)' in errors
+        assert 'Detected the following image relative path: ![Identity with High Risk Score](home/test1/test2/doc_files/High_Risk_User.png)' in errors
+        assert 'Detected the following image relative path: (../../doc_files/Access_investigation_-_Generic_4_5.png)' in errors
+        assert 'Image link was not found, either insert it or remove it:\n![Account Enrichment](Insert the link to your image here)' in errors
+
+        assert 'please repair it:\n![Identity with High Risk Score](https://github.com/demisto/content/raw/test1.png)' in errors
+        assert 'please repair it:\n![Identity with High Risk Score](https://raw.githubusercontent.com/demisto/content/raw/test1.png)' in errors
+        assert 'please repair it:\n(https://raw.githubusercontent.com/demisto/content/raw/test1.jpg)' in errors
+
     @pytest.mark.parametrize('readme_content, is_valid', [
         ('Hey there, just testing', True),
         ('This is a test. All good!', False),
@@ -497,6 +608,7 @@ class TestPackUniqueFilesValidator:
             - Case B: Ensure validation fails as the pack readme is the same as the pack description.
                       Verify expected error is printed
         """
+        self.restart_validator()
         pack_name = 'PackName'
         pack = repo.create_pack(pack_name)
         pack.readme.write_text(readme_content)
@@ -511,3 +623,63 @@ class TestPackUniqueFilesValidator:
             if not is_valid:
                 assert 'README.md content is equal to pack description. ' \
                        'Please remove the duplicate description from README.md file' in self.validator.get_errors()
+
+    def test_validate_pack_readme_and_pack_description_no_readme_file(self, repo):
+        """
+        Given:
+            - A pack with no readme.
+
+        When:
+            - Validating pack readme vs pack description
+
+        Then:
+            - Fail on no README file and not on descrption error.
+        """
+        self.restart_validator()
+        pack_name = 'PackName'
+        pack = repo.create_pack(pack_name)
+        self.validator.pack_path = pack.path
+
+        with ChangeCWD(repo.path):
+            os.remove(pack.readme.path)
+            assert self.validator.validate_pack_readme_and_pack_description()
+            assert '"README.md" file does not exist, create one in the root of the pack' in self.validator.get_errors()
+            assert 'README.md content is equal to pack description. ' \
+                   'Please remove the duplicate description from README.md file' not in self.validator.get_errors()
+
+    def test_valid_is_pack_metadata_desc_too_long(self, repo):
+        """
+        Given:
+            - Valid description length
+
+        When:
+            - Validating pack description length
+
+        Then:
+            - Ensure validation passes as the description field length is valid.
+
+        """
+        pack_description = 'Hey there, just testing'
+        assert self.validator.is_pack_metadata_desc_too_long(pack_description) is True
+
+    def test_invalid_is_pack_metadata_desc_too_long(self, mocker, repo):
+        """
+        Given:
+            - Invalid description length - higher than 130
+
+        When:
+            - Validating pack description length
+
+        Then:
+            - Ensure validation passes although description field length is higher than 130
+            - Ensure warning will be printed.
+        """
+        pack_description = 'This is will fail cause the description here is too long.' \
+                           'test test test test test test test test test test test test test test test test test' \
+                           ' test test test test test'
+        error_desc = 'The description field of the pack_metadata.json file is longer than 130 characters.'
+
+        mocker.patch("click.secho")
+
+        assert self.validator.is_pack_metadata_desc_too_long(pack_description) is True
+        assert error_desc in click.secho.call_args_list[0][0][0]

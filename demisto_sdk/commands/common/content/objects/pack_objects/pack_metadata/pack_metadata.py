@@ -4,6 +4,9 @@ import os
 from datetime import datetime
 from typing import Dict, List, Union
 
+from packaging.version import Version, parse
+from wcmatch.pathlib import Path
+
 from demisto_sdk.commands.common.constants import (PACKS_PACK_META_FILE_NAME,
                                                    XSOAR_AUTHOR, XSOAR_SUPPORT,
                                                    XSOAR_SUPPORT_URL,
@@ -13,8 +16,6 @@ from demisto_sdk.commands.common.content.objects.abstract_objects import \
 from demisto_sdk.commands.common.tools import get_core_pack_list
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
-from packaging.version import Version, parse
-from wcmatch.pathlib import Path
 
 DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 PARTNER_SUPPORT = 'partner'

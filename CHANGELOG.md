@@ -8,6 +8,7 @@
 * Added to **validate** command a validation that a content entity or a pack name does not contain the words "partner" and "community".
 * Fixed an issue where **update-release-notes** ignores *--text* flag while using *-f*
 * Fixed the outputs validations in **validate** so enrichment commands will not be checked to have DBotScore outputs.
+* Added a new validation to require the dockerimage key to exist in an integration and script yml files.
 * Enhanced the **generate-test-playbook** command to use only integration tested on commands, rather than (possibly) other integrations implementing them.
 * Expanded unify command to support GenericModules - Unifies a GenericModule object with its Dashboards.
 * Added validators for generic objects:

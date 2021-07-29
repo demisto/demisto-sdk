@@ -43,9 +43,12 @@ CONTRIBUTOR_COMMUNITY_DETAILED_DESC = '### Community Contributed Integration\n '
 CONTRIBUTORS_LIST = ['partner', 'developer', 'community']
 COMMUNITY_CONTRIBUTOR = 'community'
 INTEGRATIONS_DOCS_REFERENCE = 'https://xsoar.pan.dev/docs/reference/integrations/'
+UNSUPPORTED_INPUT_ERR_MSG = 'Unsupported input. Please provide either: ' \
+                            '1. a directory of an integration or a script. ' \
+                            '2. a path of a GenericModule file.'
 
 
-class Unifier:
+class YmlUnifier:
 
     def __init__(self, input: str, dir_name=INTEGRATIONS_DIR, output: str = '',
                  image_prefix=DEFAULT_IMAGE_PREFIX, force: bool = False):
@@ -55,16 +58,14 @@ class Unifier:
         if input == '.':
             input = os.path.abspath(input)
         if not os.path.isdir(input):
-            print_error('You have failed to provide a legal file path, a legal file path '
-                        'should be to a directory of an integration or a script.')
+            print_error(UNSUPPORTED_INPUT_ERR_MSG)
             sys.exit(1)
         for optional_dir_name in DIR_TO_PREFIX:
             if optional_dir_name in input:
                 directory_name = optional_dir_name
 
         if not directory_name:
-            print_error('You have failed to provide a legal file path, a legal file path '
-                        'should contain either Integrations or Scripts directories')
+            print_error(UNSUPPORTED_INPUT_ERR_MSG)
 
         self.image_prefix = image_prefix
         self.package_path = input
@@ -325,7 +326,7 @@ class Unifier:
             code_type = get_yaml(yml_path).get('type')
         else:
             code_type = get_yaml(yml_path).get('script', {}).get('type')
-        unifier = Unifier(self.package_path)
+        unifier = YmlUnifier(self.package_path)
         code_path = unifier.get_code_file(TYPE_TO_EXTENSION[code_type])
         with io.open(code_path, 'r', encoding='utf-8') as code_file:
             code = code_file.read()
@@ -360,7 +361,7 @@ class Unifier:
         """
 
         module_path = os.path.join('./Packs', 'ApiModules', 'Scripts', module_name, module_name + '.py')
-        module_code = Unifier._get_api_module_code(module_name, module_path)
+        module_code = YmlUnifier._get_api_module_code(module_name, module_path)
 
         module_code = '\n### GENERATED CODE ###\n# This code was inserted in place of an API module.{}\n' \
             .format(module_code)

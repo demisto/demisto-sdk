@@ -1002,6 +1002,8 @@ ACCEPTED_FILE_EXTENSIONS = [
 ]
 ENDPOINT_COMMAND_NAME = 'endpoint'
 
+REPUTATION_COMMAND_NAMES = {'file', 'email', 'domain', 'url', 'ip', 'cve'}
+
 BANG_COMMAND_NAMES = {'file', 'email', 'domain', 'url', 'ip', 'cve', 'endpoint'}
 
 BANG_COMMAND_ARGS_MAPPING_DICT: Dict[str, dict] = {

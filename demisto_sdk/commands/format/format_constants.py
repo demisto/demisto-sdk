@@ -19,7 +19,7 @@ GENERIC_FIELD_DEFAULT_ID_PREFIX = 'generic_'
 ARGUMENTS_DEFAULT_VALUES = {
     'content': (True, ['IncidentFieldJSONFormat', 'IndicatorFieldJSONFormat', 'GenericFieldJSONFormat']),
     'system': (False, ['IncidentFieldJSONFormat', 'IncidentTypesJSONFormat', 'IndicatorFieldJSONFormat',
-                       'IndicatorTypeJSONFormat', 'GenericFieldJSONFormat', 'GenericTypeJSONFormat'
+                       'IndicatorTypeJSONFormat', 'GenericFieldJSONFormat', 'GenericTypeJSONFormat',
                        'GenericTypeJSONFormat', 'GenericDefinitionJSONFormat']),
     'required': (False, ['IncidentFieldJSONFormat', 'IndicatorFieldJSONFormat', 'GenericFieldJSONFormat']),
 }

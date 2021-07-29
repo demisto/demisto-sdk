@@ -13,9 +13,9 @@ from demisto_sdk.commands.common.constants import (
     BASE_PACK, CLASSIFIERS_DIR, CONTENT_ITEMS_DISPLAY_FOLDERS, DASHBOARDS_DIR,
     DOCUMENTATION_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
     INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, INTEGRATIONS_DIR, LAYOUTS_DIR,
-    PRE_PROCESS_RULES_DIR,
-    PACKS_DIR, PLAYBOOKS_DIR, RELEASE_NOTES_DIR, REPORTS_DIR, SCRIPTS_DIR,
-    TEST_PLAYBOOKS_DIR, TOOLS_DIR, WIDGETS_DIR, ContentItems)
+    PACKS_DIR, PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR, RELEASE_NOTES_DIR,
+    REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, TOOLS_DIR, WIDGETS_DIR,
+    ContentItems)
 from demisto_sdk.commands.common.content import (Content, ContentError,
                                                  ContentFactoryError, Pack)
 from demisto_sdk.commands.common.content.objects.pack_objects import (

@@ -45,13 +45,13 @@ from demisto_sdk.commands.common.hook_validations.integration import \
     IntegrationValidator
 from demisto_sdk.commands.common.hook_validations.layout import (
     LayoutsContainerValidator, LayoutValidator)
-from demisto_sdk.commands.common.hook_validations.pre_process_rule import (
-    PreProcessRuleValidator)
 from demisto_sdk.commands.common.hook_validations.mapper import MapperValidator
 from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
     PackUniqueFilesValidator
 from demisto_sdk.commands.common.hook_validations.playbook import \
     PlaybookValidator
+from demisto_sdk.commands.common.hook_validations.pre_process_rule import \
+    PreProcessRuleValidator
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.hook_validations.release_notes import \
     ReleaseNotesValidator
@@ -837,10 +837,10 @@ class ValidateManager:
 
     def validate_pre_process_rule(self, structure_validator, pack_error_ignore_list):
         pre_process_rules_validator = PreProcessRuleValidator(structure_validator, ignored_errors=pack_error_ignore_list,
-                                           print_as_warnings=self.print_ignored_errors,
-                                           json_file_path=self.json_file_path)
+                                                              print_as_warnings=self.print_ignored_errors,
+                                                              json_file_path=self.json_file_path)
         return pre_process_rules_validator.is_valid_pre_process_rules(validate_rn=False, id_set_file=self.id_set_file,
-                                                is_ci=self.is_circle)
+                                                                      is_ci=self.is_circle)
 
     def validate_dashboard(self, structure_validator, pack_error_ignore_list):
         dashboard_validator = DashboardValidator(structure_validator, ignored_errors=pack_error_ignore_list,

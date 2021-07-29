@@ -1,13 +1,12 @@
+import traceback
 from typing import Tuple
 
 import click
-import traceback
-
+from demisto_sdk.commands.common.hook_validations.pre_process_rule import \
+    PreProcessRuleValidator
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
-
-from demisto_sdk.commands.common.hook_validations.pre_process_rule import PreProcessRuleValidator
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
 
 PRE_PROCESS_RULES_PREFIX = 'preprocessrule-'

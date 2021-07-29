@@ -8,6 +8,7 @@
 * Added to **validate** command a validation that a content entity or a pack name does not contain the words "partner" and "community".
 * Fixed an issue where **update-release-notes** ignores *--text* flag while using *-f*
 * Fixed the outputs validations in **validate** so enrichment commands will not be checked to have DBotScore outputs.
+* Enhanced the **generate-test-playbook** command to use only integration tested on commands, rather than (possibly) other integrations implementing them.
 * Added option to enter a dictionary or json of format `[{field_name:description}]` in the **json-to-outputs** command,
   with the `-d` flag.
 

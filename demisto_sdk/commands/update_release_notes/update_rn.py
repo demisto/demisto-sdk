@@ -728,7 +728,7 @@ def update_api_modules_dependents_rn(pre_release: bool, update_type: Union[str, 
     for integration in integrations:
         integration_path = integration.get('file_path')
         integration_pack = integration.get('pack')
-        update_pack_rn = UpdateRN(pack_path=integration_pack, update_type=update_type,
+        update_pack_rn = UpdateRN(pack_path=f'Packs/{integration_pack}', update_type=update_type,
                                   modified_files_in_pack={integration_path}, pre_release=pre_release,
                                   added_files=set(), pack=integration_pack, text=text)
         updated = update_pack_rn.execute_update()

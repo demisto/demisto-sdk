@@ -57,7 +57,7 @@ tasks:
       version: -1
       name: zoom-create-user
       description: ''
-      script: Zoom|||zoom-create-user
+      script: '|||zoom-create-user'
       type: regular
       iscommand: true
       brand: ''
@@ -134,7 +134,7 @@ tasks:
       version: -1
       name: zoom-create-meeting
       description: ''
-      script: Zoom|||zoom-create-meeting
+      script: '|||zoom-create-meeting'
       type: regular
       iscommand: true
       brand: ''
@@ -196,7 +196,7 @@ tasks:
       version: -1
       name: zoom-fetch-recording
       description: ''
-      script: Zoom|||zoom-fetch-recording
+      script: '|||zoom-fetch-recording'
       type: regular
       iscommand: true
       brand: ''
@@ -293,7 +293,7 @@ tasks:
       version: -1
       name: zoom-list-users
       description: ''
-      script: Zoom|||zoom-list-users
+      script: '|||zoom-list-users'
       type: regular
       iscommand: true
       brand: ''
@@ -420,7 +420,7 @@ tasks:
       version: -1
       name: zoom-delete-user
       description: ''
-      script: Zoom|||zoom-delete-user
+      script: '|||zoom-delete-user'
       type: regular
       iscommand: true
       brand: ''

@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Iterator, Optional, Union
+from typing import Any, Iterator
+
+from git import InvalidGitRepositoryError, Repo
+from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import (DOCUMENTATION,
                                                    DOCUMENTATION_DIR,
@@ -15,12 +18,10 @@ from demisto_sdk.commands.common.content.objects.root_objects import (
     ContentDescriptor, Documentation)
 from demisto_sdk.commands.common.content.objects_factory import \
     path_to_pack_object
-from git import InvalidGitRepositoryError, Repo
-from wcmatch.pathlib import Path
 
 
 class Content:
-    def __init__(self, path: Union[str, Path]):
+    def __init__(self, path: str | Path):
         """ Content object.
 
         Args:
@@ -54,7 +55,7 @@ class Content:
         return content
 
     @staticmethod
-    def git() -> Optional[Repo]:
+    def git() -> Repo | None:
         """ Git repository object.
 
         Returns:
@@ -94,7 +95,7 @@ class Content:
             yield path_to_pack_object(object_path)
 
     @property
-    def packs(self) -> Dict[str, Pack]:
+    def packs(self) -> dict[str, Pack]:
         """Packs dictionary as follow:
             1. Key - Name.
             2. Value - Pack object.
@@ -107,7 +108,7 @@ class Content:
         return {path.name: Pack(path) for path in (self._path / PACKS_DIR).glob("*/")}
 
     @property
-    def test_playbooks(self) -> Iterator[Union[Playbook, Script]]:
+    def test_playbooks(self) -> Iterator[Playbook | Script]:
         """<content>/TestPlaybooks directory"""
         return self._content_files_list_generator_factory(dir_name=TEST_PLAYBOOKS_DIR,
                                                           suffix='yml')
@@ -120,7 +121,7 @@ class Content:
                                                           suffix="json")
 
     @property
-    def content_descriptor(self) -> Optional[ContentDescriptor]:
+    def content_descriptor(self) -> ContentDescriptor | None:
         """<content>/content-descriptor.json file"""
         descriptor_object = None
         path = self._path / 'content-descriptor.json'

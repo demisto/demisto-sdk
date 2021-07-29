@@ -4,6 +4,8 @@ from shutil import copyfile
 from typing import List, Tuple
 
 import pytest
+from ruamel.yaml import YAML
+
 from demisto_sdk.commands.common.constants import (
     CODE_FILES_REGEX, PACKAGE_YML_FILE_REGEX,
     PACKS_CLASSIFIER_JSON_5_9_9_REGEX, PACKS_CLASSIFIER_JSON_REGEX,
@@ -36,7 +38,6 @@ from demisto_sdk.tests.constants_test import (
     VALID_PLAYBOOK_ARCSIGHT_ADD_DOMAIN_PATH, VALID_PLAYBOOK_ID_PATH,
     VALID_REPUTATION_FILE, VALID_TEST_PLAYBOOK_PATH, VALID_WIDGET_PATH,
     WIDGET_TARGET)
-from ruamel.yaml import YAML
 
 
 class TestStructureValidator:

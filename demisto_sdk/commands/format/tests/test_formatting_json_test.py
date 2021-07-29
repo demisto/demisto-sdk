@@ -3,6 +3,8 @@ import os
 import shutil
 
 import pytest
+from mock import patch
+
 from demisto_sdk.commands.format import (update_dashboard, update_incidenttype,
                                          update_indicatortype)
 from demisto_sdk.commands.format.format_module import format_manager
@@ -49,7 +51,6 @@ from demisto_sdk.tests.constants_test import (
     SOURCE_FORMAT_LAYOUTS_CONTAINER, SOURCE_FORMAT_LAYOUTS_CONTAINER_COPY,
     SOURCE_FORMAT_MAPPER, SOURCE_FORMAT_PRE_PROCESS_RULES_COPY,
     SOURCE_FORMAT_REPORT, SOURCE_FORMAT_WIDGET, WIDGET_PATH)
-from mock import patch
 
 
 class TestFormattingJson:

@@ -3,6 +3,8 @@ import subprocess
 from typing import Any, Iterator, Optional, Union
 
 import demisto_client
+from wcmatch.pathlib import Path
+
 from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    CONNECTIONS_DIR,
                                                    DASHBOARDS_DIR,
@@ -29,7 +31,6 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
 from demisto_sdk.commands.common.content.objects_factory import \
     path_to_pack_object
 from demisto_sdk.commands.test_content import tools
-from wcmatch.pathlib import Path
 
 TURN_VERIFICATION_ERROR_MSG = "Can not set the pack verification configuration key,\nIn the server - go to Settings -> troubleshooting\
  and manually {action}."

@@ -1,11 +1,12 @@
 import copy
 from typing import List, Optional, Union
 
+from wcmatch.pathlib import EXTMATCH, Path
+
 import demisto_sdk.commands.common.content.errors as exc
 from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    SCRIPTS_DIR, FileType)
-from demisto_sdk.commands.unify.unifier import Unifier
-from wcmatch.pathlib import EXTMATCH, Path
+from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
 
 from .yaml_content_object import YAMLContentObject
 
@@ -106,7 +107,7 @@ class YAMLContentUnifiedObject(YAMLContentObject):
         # Directory configuration - Integrations or Scripts
         unify_dir = SCRIPTS_DIR if self._content_type == FileType.SCRIPT else INTEGRATIONS_DIR
         # Unify step
-        unifier = Unifier(input=str(self.path.parent), dir_name=unify_dir, output=dest_dir, force=True)
+        unifier = YmlUnifier(input=str(self.path.parent), dir_name=unify_dir, output=dest_dir, force=True)
         created_files: List[str] = unifier.merge_script_package_to_yml()
         # Validate that unify succeed - there is not exception raised in unify module.
         if not created_files:
@@ -135,8 +136,8 @@ class YAMLContentUnifiedObject(YAMLContentObject):
         # Directory configuration - Integrations or Scripts
         unify_dir = SCRIPTS_DIR if self._content_type == FileType.SCRIPT else INTEGRATIONS_DIR
         # Split step
-        unifier = Unifier(input=str(self.path.parent), dir_name=unify_dir, output=str(dest_dir / self.path.name),
-                          force=True)
+        unifier = YmlUnifier(input=str(self.path.parent), dir_name=unify_dir, output=str(dest_dir / self.path.name),
+                             force=True)
         yaml_dict = self.to_dict()
         yaml_dict_copy = copy.deepcopy(yaml_dict)
         script_object = self.script

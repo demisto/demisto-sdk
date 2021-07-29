@@ -2,6 +2,7 @@ import os
 
 import mock
 import pytest
+
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator

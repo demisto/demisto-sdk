@@ -8,6 +8,8 @@ from typing import List, Union
 import git
 import pytest
 import requests
+from pytest import raises
+
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    LAYOUTS_DIR, PACKS_DIR,
@@ -47,7 +49,6 @@ from demisto_sdk.tests.constants_test import (IGNORED_PNG,
                                               VALID_WIDGET_PATH)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     LAYOUT, MAPPER, OLD_CLASSIFIER, REPUTATION)
-from pytest import raises
 from TestSuite.pack import Pack
 from TestSuite.playbook import Playbook
 from TestSuite.repo import Repo

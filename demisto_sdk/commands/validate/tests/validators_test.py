@@ -5,8 +5,10 @@ from io import StringIO
 from shutil import copyfile
 from typing import Any, Type, Union
 
-import demisto_sdk.commands.validate.validate_manager
 import pytest
+from mock import patch
+
+import demisto_sdk.commands.validate.validate_manager
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (CONF_PATH, TEST_PLAYBOOK,
                                                    FileType)
@@ -39,7 +41,7 @@ from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.unify.unifier import Unifier
+from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.tests.constants_test import (
     CONF_JSON_MOCK_PATH, DASHBOARD_TARGET, DIR_LIST, IGNORED_PNG,
@@ -69,7 +71,6 @@ from demisto_sdk.tests.constants_test import (
     WIDGET_TARGET)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import \
     INCIDENT_FIELD
-from mock import patch
 from TestSuite.test_tools import ChangeCWD
 
 
@@ -492,9 +493,9 @@ class TestValidators:
         def get_script_or_integration_package_data_mock(*args, **kwargs):
             return VALID_SCRIPT_PATH, ''
 
-        with patch.object(Unifier, '__init__', lambda a, b: None):
-            Unifier.get_script_or_integration_package_data = get_script_or_integration_package_data_mock
-            return Unifier('')
+        with patch.object(YmlUnifier, '__init__', lambda a, b: None):
+            YmlUnifier.get_script_or_integration_package_data = get_script_or_integration_package_data_mock
+            return YmlUnifier('')
 
     def test_script_valid_rn(self, mocker):
         """
@@ -624,7 +625,7 @@ class TestValidators:
                            "WD", "RP", "BA100", "BC100", "ST", "CL", "MP", "LO", "XC", "PP"]
         ignored_list = validate_manager.create_ignored_errors_list(errors_to_check)
         assert ignored_list == ["BA101", "BA102", "BA103", "BA104", "BA105", "BA106", "BA107", "BA108", "BA109",
-                                "BA110", "BC101", "BC102", "BC103", "BC104"]
+                                "BA110", 'BA111', "BC101", "BC102", "BC103", "BC104"]
 
     def test_added_files_type_using_function(self, repo, mocker):
         """

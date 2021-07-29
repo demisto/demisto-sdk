@@ -4,6 +4,9 @@ from typing import Optional, Set, Tuple
 
 import click
 from colorama import Fore
+from git import InvalidGitRepositoryError
+from packaging import version
+
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (API_MODULES_PACK,
@@ -71,8 +74,6 @@ from demisto_sdk.commands.common.tools import (
     get_pack_ignore_file_path, get_pack_name, get_pack_names_from_files,
     get_relative_path_from_packs_dir, get_yaml, open_id_set_file)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
-from git import InvalidGitRepositoryError
-from packaging import version
 
 
 class ValidateManager:

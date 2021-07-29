@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 
 import click
+
 from demisto_sdk.commands.common.constants import TESTS_AND_DOC_DIRECTORIES
 from demisto_sdk.commands.common.legacy_git_tools import get_changed_files
 from demisto_sdk.commands.common.tools import (find_type, get_files_in_dir,

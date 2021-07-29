@@ -8,6 +8,7 @@ repos:
     -   id: check-docstring-first
         exclude: demisto_sdk/commands/init/templates/.*
     -   id: check-json
+        exclude: .vscode/.*
     -   id: check-yaml
     -   id: debug-statements
         language_version: python3
@@ -16,24 +17,35 @@ repos:
     -   id: requirements-txt-fixer
     -   id: flake8
 -   repo: https://github.com/pre-commit/mirrors-autopep8
-    rev: v1.5
+    rev: v1.5.7
     hooks:
     -   id: autopep8
 -   repo: https://github.com/timothycrosley/isort
-    rev: 4.3.21-2
+    rev: 5.9.2
     hooks:
     -   id: isort
-        args: [--atomic, --recursive]
+        args: [--atomic]
         types: [python]
         verbose: true
         exclude: demisto_sdk/commands/init/templates/.*
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v2.4.1
+    rev: v2.21.2
     hooks:
     -   id: pyupgrade
         exclude: test_tools.py|demisto_sdk/commands/download/tests/tests_env/.*
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.782
+    rev: v0.910
     hooks:
     -   id: mypy
         exclude: tests/.*|demisto_sdk/commands/init/templates/.*
+        additional_dependencies: [
+            types-PyYAML==5.4.3,
+            types-setuptools==57.0.0,
+            types-ujson==0.1.1,
+            types-pytz==2021.1.0,
+            types-requests==2.25,
+            types-decorator==0.1.5,
+            types-dateparser==0.1.3,
+            types-tabulate==0.1.1,
+            types-python-dateutil==0.1.4
+            ]

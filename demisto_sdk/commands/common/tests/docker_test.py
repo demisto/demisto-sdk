@@ -169,7 +169,7 @@ class TestDockerImage:
         docker_image_validator.is_modified_file = False
         docker_image_validator.docker_image_tag = '1.3-alpine'
         docker_image_validator.is_valid = True
-        docker_image_validator.yml_docker_image = True
+        docker_image_validator.yml_docker_image = 'demisto/python:1.3-alpine'
 
         assert docker_image_validator.is_docker_image_latest_tag() is False
         assert docker_image_validator.is_latest_tag is False
@@ -194,7 +194,7 @@ class TestDockerImage:
         docker_image_validator.is_latest_tag = True
         docker_image_validator.is_valid = True
         docker_image_validator.docker_image_tag = 'latest'
-        docker_image_validator.yml_docker_image = True
+        docker_image_validator.yml_docker_image = 'demisto/python:latest'
 
         assert docker_image_validator.is_docker_image_latest_tag() is False
         assert docker_image_validator.is_latest_tag is False
@@ -219,7 +219,7 @@ class TestDockerImage:
         docker_image_validator.is_latest_tag = True
         docker_image_validator.is_valid = True
         docker_image_validator.docker_image_tag = '1.0.3'
-        docker_image_validator.yml_docker_image = True
+        docker_image_validator.yml_docker_image = 'demisto/python:1.0.3'
 
         assert docker_image_validator.is_docker_image_latest_tag() is True
         assert docker_image_validator.is_latest_tag is True
@@ -245,7 +245,7 @@ class TestDockerImage:
         docker_image_validator.is_latest_tag = True
         docker_image_validator.docker_image_tag = '1.0.2'
         docker_image_validator.is_valid = True
-        docker_image_validator.yml_docker_image = True
+        docker_image_validator.yml_docker_image = 'demisto/python:1.0.2'
 
         assert docker_image_validator.is_docker_image_latest_tag() is False
         assert docker_image_validator.is_latest_tag is False
@@ -270,7 +270,7 @@ class TestDockerImage:
         docker_image_validator.is_latest_tag = True
         docker_image_validator.docker_image_tag = '1.0.2'
         docker_image_validator.is_valid = True
-        docker_image_validator.yml_docker_image = True
+        docker_image_validator.yml_docker_image = 'demisto/python:1.0.2'
 
         assert docker_image_validator.is_docker_image_latest_tag() is False
         assert docker_image_validator.is_latest_tag is False
@@ -278,17 +278,53 @@ class TestDockerImage:
 
     @pytest.mark.parametrize('code_type, expected', [('javascript', True), ('python', False)])
     def test_no_dockerimage_in_yml_file(self, code_type, expected):
+        """
+        Given
+        - A yml file (integration/script) written in [javascript, python] with no dockerimage.
+
+        When
+        - Running DockerImageValidator
+
+        Then
+        -  If the integration / script is written in javascript, it is valid
+        -  If the integration / script is written in python, it is invalid
+        """
         docker_image_validator = mock_docker_image_validator()
 
         docker_image_validator.is_valid = True
         docker_image_validator.is_latest_tag = True
-        docker_image_validator.yml_docker_image = False
+        docker_image_validator.yml_docker_image = None
+        docker_image_validator.docker_image_latest_tag = None
+        docker_image_validator.docker_image_name = None
+        docker_image_validator.docker_image_tag = None
         docker_image_validator.code_type = code_type
-        docker_image_validator.docker_image_latest_tag = '1.1.1'
-        docker_image_validator.docker_image_name = 'emisto/python'
-        docker_image_validator.docker_image_tag = '1.1.1'
 
         assert docker_image_validator.is_docker_image_valid() is expected
+
+    @pytest.mark.parametrize('code_type', ['javascript', 'python'])
+    def test_dockerimage_in_yml_file(self, code_type):
+        """
+        Given
+        - A yml file (integration/script) written in [javascript, python] with correct dockerimage.
+
+        When
+        - Running DockerImageValidator
+
+        Then
+        -  If the integration / script is written in javascript, it is valid
+        -  If the integration / script is written in python, it is valid
+        """
+        docker_image_validator = mock_docker_image_validator()
+
+        docker_image_validator.is_valid = True
+        docker_image_validator.is_latest_tag = True
+        docker_image_validator.yml_docker_image = 'demisto/python:1.0.2'
+        docker_image_validator.docker_image_latest_tag = '1.0.2'
+        docker_image_validator.docker_image_name = 'demisto/python'
+        docker_image_validator.docker_image_tag = '1.0.2'
+        docker_image_validator.code_type = code_type
+
+        assert docker_image_validator.is_docker_image_valid() is True
 
     def test_non_existing_docker(self, integration, capsys, requests_mock, mocker):
         docker_image = 'demisto/nonexistingdocker:1.4.0'

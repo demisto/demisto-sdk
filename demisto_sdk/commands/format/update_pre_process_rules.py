@@ -2,6 +2,7 @@ import traceback
 from typing import Tuple
 
 import click
+
 from demisto_sdk.commands.common.hook_validations.pre_process_rule import \
     PreProcessRuleValidator
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,

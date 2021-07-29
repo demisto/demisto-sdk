@@ -6,11 +6,9 @@ from typing import Optional
 
 import yaml
 
-from demisto_sdk.commands.common.constants import (ENTITY_NAME_SEPARATORS,
-                                                   EXCLUDED_DISPLAY_NAME_WORDS,
-                                                   FEATURE_BRANCHES,
-                                                   GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION,
-                                                   OLDEST_SUPPORTED_VERSION)
+from demisto_sdk.commands.common.constants import (
+    ENTITY_NAME_SEPARATORS, EXCLUDED_DISPLAY_NAME_WORDS, FEATURE_BRANCHES,
+    GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION, OLDEST_SUPPORTED_VERSION)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator

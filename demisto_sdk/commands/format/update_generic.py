@@ -19,8 +19,9 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                is_file_from_content_repo,
                                                print_color)
 from demisto_sdk.commands.format.format_constants import (
-    DEFAULT_VERSION, ERROR_RETURN_CODE, GENERIC_OBJECTS_DEFAULT_FROMVERSION, GENERIC_OBJECTS_FILE_TYPES,
-    NEW_FILE_DEFAULT_5_5_0_FROMVERSION, OLD_FILE_DEFAULT_1_FROMVERSION, SKIP_RETURN_CODE, SUCCESS_RETURN_CODE,
+    DEFAULT_VERSION, ERROR_RETURN_CODE, GENERIC_OBJECTS_DEFAULT_FROMVERSION,
+    GENERIC_OBJECTS_FILE_TYPES, NEW_FILE_DEFAULT_5_5_0_FROMVERSION,
+    OLD_FILE_DEFAULT_1_FROMVERSION, SKIP_RETURN_CODE, SUCCESS_RETURN_CODE,
     VERSION_6_0_0)
 
 ryaml = YAML()
@@ -219,7 +220,8 @@ class BaseUpdate:
         """
         metadata = get_pack_metadata(self.source_file)
         # if it is new contributed pack = setting version to 6.0.0
-        should_set_from_version = ((metadata.get('currentVersion', '') == '1.0.0') and (metadata.get('support', '') != 'xsoar'))
+        should_set_from_version = ((metadata.get('currentVersion', '') == '1.0.0') and
+                                   (metadata.get('support', '') != 'xsoar'))
 
         # If there is no existing file in content repo
         if not self.old_file:

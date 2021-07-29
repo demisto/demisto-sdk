@@ -23,8 +23,9 @@ from demisto_sdk.tests.constants_test import (
     DESTINATION_FORMAT_INTEGRATION_COPY, DESTINATION_FORMAT_PLAYBOOK_COPY,
     INTEGRATION_WITH_TEST_PLAYBOOKS, PLAYBOOK_WITH_TEST_PLAYBOOKS,
     SOURCE_FORMAT_INTEGRATION_COPY, SOURCE_FORMAT_PLAYBOOK_COPY)
+from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
+    GENERIC_DEFINITION, GENERIC_FIELD, GENERIC_MODULE, GENERIC_TYPE)
 from TestSuite.test_tools import ChangeCWD
-from demisto_sdk.tests.test_files.validate_integration_test_valid_types import GENERIC_TYPE
 
 BASIC_YML_TEST_PACKS = [
     (SOURCE_FORMAT_INTEGRATION_COPY, DESTINATION_FORMAT_INTEGRATION_COPY, IntegrationYMLFormat, 'New Integration_copy',
@@ -828,7 +829,82 @@ def test_format_incident_type_layout_id(repo):
         assert incident_type_content['playbookId'] == 'PlaybookName'
 
 
-def test_format_generic_type_wrong_from_version(repo):
+@pytest.mark.parametrize('field_to_test, invalid_value, expected_value_after_format', [
+    ('fromVersion', '6.0.0', '6.5.0'),
+    ('group', 0, 4),
+    ('id', 'asset_operatingsystem', 'generic_asset_operatingsystem')
+])
+def test_format_generic_field_wrong_from_version(mocker, repo, field_to_test, invalid_value,
+                                                 expected_value_after_format):
+    """
+        Given
+        - Invalid generic field.
+
+        When
+        - Running format on it.
+
+        Then
+        - Ensure Format fixed the invalid value of the given generic field.
+        - Ensure success message is printed.
+    """
+    mocker.patch.object(update_generic, 'is_file_from_content_repo', return_value=(False, ''))
+    pack = repo.create_pack('PackName')
+    generic_field = GENERIC_FIELD.copy()
+    generic_field[field_to_test] = invalid_value
+    pack.create_generic_field("generic-field", generic_field)
+    generic_field_path = pack.generic_fields[0].path
+    with ChangeCWD(pack.repo_path):
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [FORMAT_CMD, '-i', generic_field_path, '-v', '-y'], catch_exceptions=False)
+        assert 'Setting fromVersion field' in result.stdout
+        assert 'Success' in result.stdout
+        assert f'======= Updating file: {generic_field_path}' in result.stdout
+        assert result.exit_code == 0
+
+        # check that sdk format did change the wrong fromVersion to '6.5.0':
+        with open(generic_field_path) as f:
+            updated_generic_field = json.load(f)
+        assert updated_generic_field[field_to_test] == expected_value_after_format
+
+
+@pytest.mark.parametrize('field_to_test, expected_value_after_format', [
+    ('fromVersion', '6.5.0'),
+    ('group', 4)
+])
+def test_format_generic_field_missing_from_version_key(mocker, repo, field_to_test, expected_value_after_format):
+    """
+        Given
+        - Invalid generic field  - a default value field is missing.
+
+        When
+        - Running format on it.
+
+        Then
+        - Ensure Format fixed the given generic field - mising field was added with it's default value.
+        - Ensure success message is printed.
+    """
+    mocker.patch.object(update_generic, 'is_file_from_content_repo', return_value=(False, ''))
+    pack = repo.create_pack('PackName')
+    generic_field = GENERIC_FIELD.copy()
+    if generic_field[field_to_test]:
+        generic_field.pop(field_to_test)
+    pack.create_generic_field("generic-field", generic_field)
+    generic_field_path = pack.generic_fields[0].path
+    with ChangeCWD(pack.repo_path):
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [FORMAT_CMD, '-i', generic_field_path, '-v', '-y'], catch_exceptions=False)
+        assert 'Setting fromVersion field' in result.stdout
+        assert 'Success' in result.stdout
+        assert f'======= Updating file: {generic_field_path}' in result.stdout
+        assert result.exit_code == 0
+
+        # check that sdk format did add a fromVersion key with '6.5.0' as a value:
+        with open(generic_field_path) as f:
+            updated_generic_field = json.load(f)
+        assert updated_generic_field[field_to_test] == expected_value_after_format
+
+
+def test_format_generic_type_wrong_from_version(mocker, repo):
     """
         Given
         - Invalid generic type  - fromVersion field is below 6.5.0
@@ -837,16 +913,187 @@ def test_format_generic_type_wrong_from_version(repo):
         - Running format on it.
 
         Then
-        - Ensure Format fixed the invalid values of the given generic type.
+        - Ensure Format fixed the invalid value of the given generic type.
         - Ensure success message is printed.
     """
+    mocker.patch.object(update_generic, 'is_file_from_content_repo', return_value=(False, ''))
     pack = repo.create_pack('PackName')
     generic_type = GENERIC_TYPE.copy()
     generic_type['fromVersion'] = '6.0.0'
     pack.create_generic_type("generic-type", generic_type)
     generic_type_path = pack.generic_types[0].path
-    runner = CliRunner(mix_stderr=False)
-    result = runner.invoke(main, [FORMAT_CMD, '-i', generic_type_path, '-v'], catch_exceptions=False)
-    assert f'Setting fromVersion field' in result.stdout
-    assert 'The files are valid' in result.stdout
-    assert result.exit_code == 0
+    with ChangeCWD(pack.repo_path):
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [FORMAT_CMD, '-i', generic_type_path, '-v', '-y'], catch_exceptions=False)
+        assert 'Setting fromVersion field' in result.stdout
+        assert 'Success' in result.stdout
+        assert f'======= Updating file: {generic_type_path}' in result.stdout
+        assert result.exit_code == 0
+
+        # check that sdk format did change the wrong fromVersion to '6.5.0':
+        with open(generic_type_path) as f:
+            updated_generic_type = json.load(f)
+        assert updated_generic_type['fromVersion'] == GENERIC_TYPE['fromVersion']
+
+
+def test_format_generic_type_missing_from_version_key(mocker, repo):
+    """
+        Given
+        - Invalid generic type  - fromVersion field is missing
+
+        When
+        - Running format on it.
+
+        Then
+        - Ensure Format fixed the given generic type - fromVersion field was added and it's value is 6.5.0
+        - Ensure success message is printed.
+    """
+    mocker.patch.object(update_generic, 'is_file_from_content_repo', return_value=(False, ''))
+    pack = repo.create_pack('PackName')
+    generic_type = GENERIC_TYPE.copy()
+    if generic_type['fromVersion']:
+        generic_type.pop('fromVersion')
+    pack.create_generic_type("generic-type", generic_type)
+    generic_type_path = pack.generic_types[0].path
+    with ChangeCWD(pack.repo_path):
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [FORMAT_CMD, '-i', generic_type_path, '-v', '-y'], catch_exceptions=False)
+        assert 'Setting fromVersion field' in result.stdout
+        assert 'Success' in result.stdout
+        assert f'======= Updating file: {generic_type_path}' in result.stdout
+        assert result.exit_code == 0
+
+        # check that sdk format did add a fromVersion key with '6.5.0' as a value:
+        with open(generic_type_path) as f:
+            updated_generic_type = json.load(f)
+        assert updated_generic_type['fromVersion'] == GENERIC_TYPE['fromVersion']
+
+
+def test_format_generic_module_wrong_from_version(mocker, repo):
+    """
+        Given
+        - Invalid generic module  - fromVersion field is below 6.5.0
+
+        When
+        - Running format on it.
+
+        Then
+        - Ensure Format fixed the invalid value of the given generic module.
+        - Ensure success message is printed.
+    """
+    mocker.patch.object(update_generic, 'is_file_from_content_repo', return_value=(False, ''))
+    pack = repo.create_pack('PackName')
+    generic_module = GENERIC_MODULE.copy()
+    generic_module['fromVersion'] = '6.0.0'
+    pack.create_generic_module("generic-module", generic_module)
+    generic_module_path = pack.generic_modules[0].path
+    with ChangeCWD(pack.repo_path):
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [FORMAT_CMD, '-i', generic_module_path, '-v', '-y'], catch_exceptions=False)
+        assert 'Setting fromVersion field' in result.stdout
+        assert 'Success' in result.stdout
+        assert f'======= Updating file: {generic_module_path}' in result.stdout
+        assert result.exit_code == 0
+
+        # check that sdk format did change the wrong fromVersion to '6.5.0':
+        with open(generic_module_path) as f:
+            updated_generic_module = json.load(f)
+        assert updated_generic_module['fromVersion'] == GENERIC_MODULE['fromVersion']
+
+
+def test_format_generic_module_missing_from_version_key(mocker, repo):
+    """
+        Given
+        - Invalid generic module  - fromVersion field is missing
+
+        When
+        - Running format on it.
+
+        Then
+        - Ensure Format fixed the given generic module - fromVersion field was added and it's value is 6.5.0
+        - Ensure success message is printed.
+    """
+    mocker.patch.object(update_generic, 'is_file_from_content_repo', return_value=(False, ''))
+    pack = repo.create_pack('PackName')
+    generic_module = GENERIC_MODULE.copy()
+    if generic_module['fromVersion']:
+        generic_module.pop('fromVersion')
+    pack.create_generic_module("generic-module", generic_module)
+    generic_module_path = pack.generic_modules[0].path
+    with ChangeCWD(pack.repo_path):
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [FORMAT_CMD, '-i', generic_module_path, '-v', '-y'], catch_exceptions=False)
+        assert 'Setting fromVersion field' in result.stdout
+        assert 'Success' in result.stdout
+        assert f'======= Updating file: {generic_module_path}' in result.stdout
+        assert result.exit_code == 0
+
+        # check that sdk format did add a fromVersion key with '6.5.0' as a value:
+        with open(generic_module_path) as f:
+            updated_generic_module = json.load(f)
+        assert updated_generic_module['fromVersion'] == GENERIC_MODULE['fromVersion']
+
+
+def test_format_generic_definition_wrong_from_version(mocker, repo):
+    """
+        Given
+        - Invalid generic definition  - fromVersion field is below 6.5.0
+
+        When
+        - Running format on it.
+
+        Then
+        - Ensure Format fixed the invalid value of the given generic definition.
+        - Ensure success message is printed.
+    """
+    mocker.patch.object(update_generic, 'is_file_from_content_repo', return_value=(False, ''))
+    pack = repo.create_pack('PackName')
+    generic_definition = GENERIC_DEFINITION.copy()
+    generic_definition['fromVersion'] = '6.0.0'
+    pack.create_generic_definition("generic-definition", generic_definition)
+    generic_definition_path = pack.generic_definitions[0].path
+    with ChangeCWD(pack.repo_path):
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [FORMAT_CMD, '-i', generic_definition_path, '-v', '-y'], catch_exceptions=False)
+        assert 'Setting fromVersion field' in result.stdout
+        assert 'Success' in result.stdout
+        assert f'======= Updating file: {generic_definition_path}' in result.stdout
+        assert result.exit_code == 0
+
+        # check that sdk format did change the wrong fromVersion to '6.5.0':
+        with open(generic_definition_path) as f:
+            updated_generic_definition = json.load(f)
+        assert updated_generic_definition['fromVersion'] == GENERIC_DEFINITION['fromVersion']
+
+
+def test_format_generic_definition_missing_from_version_key(mocker, repo):
+    """
+        Given
+        - Invalid generic definition  - fromVersion field is missing
+
+        When
+        - Running format on it.
+
+        Then
+        - Ensure Format fixed the given generic definition - fromVersion field was added and it's value is 6.5.0
+        - Ensure success message is printed.
+    """
+    mocker.patch.object(update_generic, 'is_file_from_content_repo', return_value=(False, ''))
+    pack = repo.create_pack('PackName')
+    generic_definition = GENERIC_DEFINITION.copy()
+    if generic_definition['fromVersion']:
+        generic_definition.pop('fromVersion')
+    pack.create_generic_definition("generic-definition", generic_definition)
+    generic_definition_path = pack.generic_definitions[0].path
+    with ChangeCWD(pack.repo_path):
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [FORMAT_CMD, '-i', generic_definition_path, '-v', '-y'], catch_exceptions=False)
+        assert 'Setting fromVersion field' in result.stdout
+        assert 'Success' in result.stdout
+        assert f'======= Updating file: {generic_definition_path}' in result.stdout
+        assert result.exit_code == 0
+
+        # check that sdk format did add a fromVersion key with '6.5.0' as a value:
+        with open(generic_definition_path) as f:
+            updated_generic_definition = json.load(f)
+        assert updated_generic_definition['fromVersion'] == GENERIC_DEFINITION['fromVersion']

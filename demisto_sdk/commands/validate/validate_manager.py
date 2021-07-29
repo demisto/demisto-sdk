@@ -38,10 +38,14 @@ from demisto_sdk.commands.common.hook_validations.dashboard import \
     DashboardValidator
 from demisto_sdk.commands.common.hook_validations.description import \
     DescriptionValidator
-from demisto_sdk.commands.common.hook_validations.generic_definition import GenericDefinitionValidator
-from demisto_sdk.commands.common.hook_validations.generic_field import GenericFieldValidator
-from demisto_sdk.commands.common.hook_validations.generic_module import GenericModuleValidator
-from demisto_sdk.commands.common.hook_validations.generic_type import GenericTypeValidator
+from demisto_sdk.commands.common.hook_validations.generic_definition import \
+    GenericDefinitionValidator
+from demisto_sdk.commands.common.hook_validations.generic_field import \
+    GenericFieldValidator
+from demisto_sdk.commands.common.hook_validations.generic_module import \
+    GenericModuleValidator
+from demisto_sdk.commands.common.hook_validations.generic_type import \
+    GenericTypeValidator
 from demisto_sdk.commands.common.hook_validations.id import IDSetValidations
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.hook_validations.incident_field import \

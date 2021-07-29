@@ -46,13 +46,12 @@ class GenericFieldValidator(ContentEntityValidator):
         """
         Validate that the field 'id' starts with the generic field id's prefix
         """
-        id = self.current_file.get("id")
-        if id.startswith(GENERIC_FIELD_ID_PREFIX):
+        generic_field_id = str(self.current_file.get("id"))
+        if generic_field_id.startswith(GENERIC_FIELD_ID_PREFIX):
             return True
 
-        error_message, error_code = Errors.invalid_generic_field_id(id, GENERIC_FIELD_ID_PREFIX)
+        error_message, error_code = Errors.invalid_generic_field_id(generic_field_id, GENERIC_FIELD_ID_PREFIX)
         if self.handle_error(error_message, error_code, file_path=self.file_path):
             return False
 
         return True
-

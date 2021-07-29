@@ -1,4 +1,5 @@
-from demisto_sdk.commands.common.constants import GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION, FileType
+from demisto_sdk.commands.common.constants import (
+    GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION, FileType)
 
 DEFAULT_VERSION = -1
 NEW_FILE_DEFAULT_5_FROMVERSION = '5.0.0'

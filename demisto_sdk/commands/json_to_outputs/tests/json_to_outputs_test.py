@@ -10,6 +10,7 @@ from demisto_sdk.commands.json_to_outputs.json_to_outputs import (
 DUMMY_FIELD_DESCRIPTION = "dummy field description"
 TEST_PATH = Path('demisto_sdk/commands/json_to_outputs/tests')
 
+
 def test_json_to_outputs__json_from_file():
     """
     Given

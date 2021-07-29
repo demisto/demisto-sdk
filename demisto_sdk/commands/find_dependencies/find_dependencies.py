@@ -8,6 +8,8 @@ from typing import Optional, Union
 
 import click
 import networkx as nx
+from requests import RequestException
+
 from demisto_sdk.commands.common import constants
 from demisto_sdk.commands.common.constants import GENERIC_COMMANDS_NAMES
 from demisto_sdk.commands.common.tools import (get_content_id_set,
@@ -15,7 +17,6 @@ from demisto_sdk.commands.common.tools import (get_content_id_set,
                                                print_error, print_warning)
 from demisto_sdk.commands.common.update_id_set import merge_id_sets
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
-from requests import RequestException
 
 MINIMUM_DEPENDENCY_VERSION = LooseVersion('6.0.0')
 COMMON_TYPES_PACK = 'CommonTypes'
@@ -497,8 +498,8 @@ class PackDependencies:
                     playbook_dependencies.update(pack_dependencies_data)
 
             implementing_scripts = playbook_data.get('implementing_scripts', []) + \
-                                   playbook_data.get('filters', []) + \
-                                   playbook_data.get('transformers', [])
+                playbook_data.get('filters', []) + \
+                playbook_data.get('transformers', [])
 
             # searching for packs of implementing scripts
             playbook_dependencies.update(PackDependencies._differentiate_playbook_implementing_objects(
@@ -1360,10 +1361,10 @@ class PackDependencies:
         )
 
         pack_dependencies = (
-                scripts_dependencies | playbooks_dependencies | layouts_dependencies | incidents_fields_dependencies |
-                indicators_types_dependencies | integrations_dependencies | incidents_types_dependencies |
-                classifiers_dependencies | mappers_dependencies | widget_dependencies | dashboards_dependencies |
-                reports_dependencies | generic_types_dependencies | generic_modules_dependencies | generic_fields_dependencies
+            scripts_dependencies | playbooks_dependencies | layouts_dependencies | incidents_fields_dependencies |
+            indicators_types_dependencies | integrations_dependencies | incidents_types_dependencies |
+            classifiers_dependencies | mappers_dependencies | widget_dependencies | dashboards_dependencies |
+            reports_dependencies | generic_types_dependencies | generic_modules_dependencies | generic_fields_dependencies
         )
 
         return pack_dependencies

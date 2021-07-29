@@ -2,6 +2,8 @@ import io
 import os
 import shutil
 
+import pytest
+
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.generate_test_playbook.test_playbook_generator import \
     PlaybookTestsGenerator
@@ -29,18 +31,21 @@ class TestGenerateTestPlaybook:
         if os.path.exists(TestGenerateTestPlaybook.TEMP_DIR):
             shutil.rmtree(TestGenerateTestPlaybook.TEMP_DIR, ignore_errors=False, onerror=None)
 
-    def test_generate_test_playbook(self):
+    @pytest.mark.parametrize("use_all_brands,expected_yml",
+                             [(False, 'fake_integration_expected_test_playbook.yml'),
+                              (True, 'fake_integration_expected_test_playbook__all_brands.yml')])
+    def test_generate_test_playbook(self, use_all_brands, expected_yml):
         generator = PlaybookTestsGenerator(
             input=f'{git_path()}/demisto_sdk/tests/test_files/fake_integration.yml',
             file_type='integration',
             output=TestGenerateTestPlaybook.TEMP_DIR,
-            name='TestPlaybook'
+            name='TestPlaybook',
+            use_all_brands=use_all_brands
         )
 
         generator.run()
 
-        with io.open(os.path.join(f'{git_path()}/demisto_sdk/tests', 'test_files',
-                                  'fake_integration_expected_test_playbook.yml'), mode='r',
+        with io.open(os.path.join(f'{git_path()}/demisto_sdk/tests', 'test_files', expected_yml), mode='r',
                      encoding='utf-8') as f:
             expected_test_playbook_yml = f.read()
 

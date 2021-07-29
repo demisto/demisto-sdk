@@ -340,7 +340,6 @@ def convert_request_to_command(item: dict):
         args.append(arg)
         url_path = url_path.replace(f'/:{variable_name}', f'/{{{variable_name}}}')
 
-
     logger.debug(f'creating query arguments of request: {name}')
     for q in request_url_object.get('query', []):
         arg = IntegrationGeneratorArg(

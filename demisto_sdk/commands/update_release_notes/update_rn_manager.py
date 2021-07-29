@@ -2,6 +2,7 @@ import os
 from typing import Optional, Tuple
 
 import git
+
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK, SKIP_RELEASE_NOTES_FOR_TYPES)
 from demisto_sdk.commands.common.tools import (LOG_COLORS,
@@ -9,8 +10,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                filter_files_on_pack,
                                                get_pack_name,
                                                get_pack_names_from_files,
-                                               print_color,
-                                               print_warning,
+                                               print_color, print_warning,
                                                suppress_stdout)
 from demisto_sdk.commands.update_release_notes.update_rn import (
     UpdateRN, update_api_modules_dependents_rn)
@@ -38,7 +38,7 @@ class UpdateReleaseNotesManager:
         # When a user choose a specific pack to update rn, the -g flag should not be passed
         if self.given_pack and self.is_all:
             raise ValueError('Please remove the -g flag when specifying only one pack.')
-        self.rn_path = list()
+        self.rn_path: list = list()
 
     def manage_rn_update(self):
         """
@@ -109,13 +109,12 @@ class UpdateReleaseNotesManager:
                 added_files: A set of new added files
                 modified_files: A set of modified files
         """
-        # We want to update all api modules when:
-        # (1) The user gave a path to the api module which was changed.
-        # (2) The user did not give any specific path (is_all is True) the path but some api modules have changed.
+        # The user gave a path to the api module which was changed or he didn't give a path but some api modules
+        # have changed.
         api_module_was_given = self.given_pack and API_MODULES_PACK in self.given_pack
         api_module_changed_in_git = self.changed_packs_from_git and API_MODULES_PACK in self.changed_packs_from_git
 
-        if api_module_was_given or (api_module_changed_in_git and self.is_all):
+        if api_module_was_given or api_module_changed_in_git:
             updated_packs = update_api_modules_dependents_rn(self.pre_release, self.update_type, added_files,
                                                              modified_files, self.id_set_path, self.text)
             self.total_updated_packs = self.total_updated_packs.union(updated_packs)

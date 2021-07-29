@@ -2,6 +2,7 @@ from inspect import signature
 
 import click
 from colorama import Fore
+
 from demisto_sdk.commands.common import errors
 
 TEMPLATE = '''

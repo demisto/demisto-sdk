@@ -15,11 +15,12 @@ from wcmatch.pathlib import BRACE, EXTMATCH, NEGATE, NODIR, SPLIT, Path
 
 from demisto_sdk.commands.common.constants import (
     BASE_PACK, CLASSIFIERS_DIR, CONTENT_ITEMS_DISPLAY_FOLDERS, DASHBOARDS_DIR,
-    DOCUMENTATION_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
-    INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, INTEGRATIONS_DIR, LAYOUTS_DIR,
-    PACKS_DIR, PLAYBOOKS_DIR, RELEASE_NOTES_DIR, REPORTS_DIR, SCRIPTS_DIR,
-    TEST_PLAYBOOKS_DIR, TOOLS_DIR, WIDGETS_DIR, ContentItems, GENERIC_TYPES_DIR, GENERIC_FIELDS_DIR,
-    GENERIC_MODULES_DIR, GENERIC_DEFINITIONS_DIR)
+    DOCUMENTATION_DIR, GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR,
+    GENERIC_MODULES_DIR, GENERIC_TYPES_DIR, INCIDENT_FIELDS_DIR,
+    INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR,
+    INTEGRATIONS_DIR, LAYOUTS_DIR, PACKS_DIR, PLAYBOOKS_DIR, RELEASE_NOTES_DIR,
+    REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, TOOLS_DIR, WIDGETS_DIR,
+    ContentItems)
 from demisto_sdk.commands.common.content import (Content, ContentError,
                                                  ContentFactoryError, Pack)
 from demisto_sdk.commands.common.content.objects.pack_objects import (
@@ -307,23 +308,28 @@ class ContentItemsHandler:
         })
 
     def add_generic_field_as_content_item(self, content_object: ContentObject):
-        self.content_items[ContentItems.GENERIC_FIELD].append({
-            'name': content_object.get('name', '')
+        self.content_items[ContentItems.GENERIC_FIELDS].append({
+            'name': content_object.get('name', ''),
+            'type': content_object.get('type', ''),
+            'description': content_object.get('description', '')
         })
 
     def add_generic_type_as_content_item(self, content_object: ContentObject):
         self.content_items[ContentItems.GENERIC_TYPES].append({
-            'name': content_object.get('name', '')
+            'name': content_object.get('name', ''),
+            'details': content_object.get('details', ''),
         })
 
     def add_generic_definition_as_content_item(self, content_object: ContentObject):
         self.content_items[ContentItems.GENERIC_DEFINITIONS].append({
-            'name': content_object.get('name', '')
+            'name': content_object.get('name', ''),
+            'description': content_object.get('description', '')
         })
 
     def add_generic_module_as_content_item(self, content_object: ContentObject):
         self.content_items[ContentItems.GENERIC_MODULES].append({
-            'name': content_object.get('name', '')
+            'name': content_object.get('name', ''),
+            'description': content_object.get('description', '')
         })
 
 

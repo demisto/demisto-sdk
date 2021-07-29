@@ -7,6 +7,7 @@
 * Improved the error messages in **generate-docs**, if an example was not provided.
 * Added to **validate** command a validation that a content entity or a pack name does not contain the words "partner" and "community".
 * Fixed an issue where **update-release-notes** ignores *--text* flag while using *-f*
+* Updated the **create-content-artifacts** command to support generic modules, definitions, fields and types.
 
 # 1.4.5
 * Enhanced the **postman-codegen** command to name all generated arguments with lower case.

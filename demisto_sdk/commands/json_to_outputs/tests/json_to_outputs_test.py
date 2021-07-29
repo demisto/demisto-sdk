@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 from typing import Optional
 
 import pytest
@@ -7,7 +8,7 @@ from demisto_sdk.commands.json_to_outputs.json_to_outputs import (
     determine_type, json_to_outputs, parse_json)
 
 DUMMY_FIELD_DESCRIPTION = "dummy field description"
-
+TEST_PATH = Path('demisto_sdk/commands/json_to_outputs/tests')
 
 def test_json_to_outputs__json_from_file():
     """
@@ -171,7 +172,8 @@ dummy_description_dictionary = {"day": "day of the week",
                          [(None, dict()),
                           ("true", dict()),  # takes descriptions from mock input
                           (json.dumps(dummy_description_dictionary), dummy_description_dictionary),  # basic test
-                          ('dummy_description_dictionary.json', dummy_description_dictionary)  # JSON file path
+                          (str(TEST_PATH / 'dummy_description_dictionary.json'), dummy_description_dictionary)
+                          # JSON file path
                           ])
 def test_json_to_outputs__description(mocker, tmpdir, description_argument: Optional[str], dictionary: dict):
     output = tmpdir.join("test_json_to_outputs__file_input.yml")
@@ -180,7 +182,7 @@ def test_json_to_outputs__description(mocker, tmpdir, description_argument: Opti
                  return_value=dummy_description_dictionary)
 
     json_to_outputs(command='jsonToOutputs',
-                    input='dummy_integration_output.json',
+                    input=str(TEST_PATH / 'dummy_integration_output.json'),
                     prefix='Test',
                     output=output,
                     descriptions=description_argument)

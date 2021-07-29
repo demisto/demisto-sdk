@@ -643,6 +643,7 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
         content_items_handler.handle_content_item(indicator_field)
         pack_report += dump_pack_conditionally(artifact_manager, indicator_field)
     for indicator_type in pack.indicator_types:
+        print('indicator type: ', indicator_type.path)
         content_items_handler.handle_content_item(indicator_type)
         pack_report += dump_pack_conditionally(artifact_manager, indicator_type)
     for connection in pack.connections:
@@ -662,6 +663,7 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
         content_items_handler.handle_content_item(generic_module)
         pack_report += dump_pack_conditionally(artifact_manager, generic_module)
     for generic_type in pack.generic_types:
+        print('generic type: ', generic_type.path)
         content_items_handler.handle_content_item(generic_type)
         pack_report += dump_pack_conditionally(artifact_manager, generic_type)
     for generic_field in pack.generic_fields:

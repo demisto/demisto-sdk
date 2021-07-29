@@ -921,6 +921,12 @@ def json_to_outputs_command(**kwargs):
          'outputs to verify and which not')
 @click.option(
     "-v", "--verbose", help="Verbose output for debug purposes - shows full exception stack trace", is_flag=True)
+@click.option(
+    "-ab", "--all-brands",
+    help="Generate a test-playbook which calls commands using integrations of all available brands. "
+         "When not used, the generated playbook calls commands using instances of the provided integration brand.",
+    is_flag=True
+)
 def generate_test_playbook(**kwargs):
     """Generate test playbook from integration or script"""
     check_configuration_file('generate-test-playbook', kwargs)

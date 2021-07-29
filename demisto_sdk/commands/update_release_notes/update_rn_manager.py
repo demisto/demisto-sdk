@@ -2,6 +2,7 @@ import os
 from typing import Optional, Tuple
 
 import git
+
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK, SKIP_RELEASE_NOTES_FOR_TYPES)
 from demisto_sdk.commands.common.tools import (LOG_COLORS,

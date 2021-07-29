@@ -2,9 +2,10 @@ import json
 import os
 from typing import Dict, Optional
 
+from ruamel.yaml import YAML
+
 from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
                                                print_error)
-from ruamel.yaml import YAML
 
 
 class ContentItemType:

@@ -1,4 +1,6 @@
 import pytest
+from wcmatch.pathlib import Path
+
 from demisto_sdk.commands.common.constants import PACKS_DIR, PLAYBOOKS_DIR
 from demisto_sdk.commands.common.content.objects.pack_objects import Readme
 from demisto_sdk.commands.common.content.objects.pack_objects.contributors.contributors import \
@@ -6,7 +8,6 @@ from demisto_sdk.commands.common.content.objects.pack_objects.contributors.contr
 from demisto_sdk.commands.common.content.objects_factory import \
     path_to_pack_object
 from demisto_sdk.commands.common.tools import src_root
-from wcmatch.pathlib import Path
 
 TEST_DATA = src_root() / 'tests' / 'test_files'
 TEST_CONTENT_REPO = TEST_DATA / 'content_slim'

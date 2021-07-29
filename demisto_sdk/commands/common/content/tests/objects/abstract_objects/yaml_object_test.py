@@ -1,11 +1,12 @@
 import pytest
+from ruamel.yaml import YAML
+
 from demisto_sdk.commands.common.constants import PACKS_DIR, PLAYBOOKS_DIR
 from demisto_sdk.commands.common.content.errors import (ContentInitializeError,
                                                         ContentSerializeError)
 from demisto_sdk.commands.common.content.objects.abstract_objects import \
     YAMLObject
 from demisto_sdk.commands.common.tools import src_root
-from ruamel.yaml import YAML
 
 TEST_DATA = src_root() / 'tests' / 'test_files'
 TEST_CONTENT_REPO = TEST_DATA / 'content_slim'

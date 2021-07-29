@@ -7,6 +7,9 @@ from typing import Dict, Set
 
 import click
 import nltk
+from nltk.corpus import brown, webtext
+from spellchecker import SpellChecker
+
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.content import (Integration, Playbook,
                                                  ReleaseNote, Script,
@@ -19,8 +22,6 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.tools import find_type
 from demisto_sdk.commands.doc_reviewer.known_words import KNOWN_WORDS
 from demisto_sdk.commands.doc_reviewer.rn_checker import ReleaseNotesChecker
-from nltk.corpus import brown, webtext
-from spellchecker import SpellChecker
 
 
 class DocReviewer:

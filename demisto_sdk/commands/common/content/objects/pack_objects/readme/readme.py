@@ -1,9 +1,10 @@
 from typing import List, Optional, Union
 
+from wcmatch.pathlib import Path
+
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.content.objects.abstract_objects import \
     TextObject
-from wcmatch.pathlib import Path
 
 
 class Readme(TextObject):

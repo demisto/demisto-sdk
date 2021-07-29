@@ -2,6 +2,7 @@ import json
 from typing import Tuple
 
 import click
+
 from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
                                                    FEED_REQUIRED_PARAMS,
                                                    FETCH_REQUIRED_PARAMS,

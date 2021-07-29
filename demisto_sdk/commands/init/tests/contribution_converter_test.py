@@ -8,11 +8,12 @@ from zipfile import ZipFile
 import pytest
 from _pytest.fixtures import FixtureRequest
 from _pytest.tmpdir import TempPathFactory, _mk_tmp
+from mock import patch
+
 from demisto_sdk.commands.common.constants import LAYOUT, LAYOUTS_CONTAINER
 from demisto_sdk.commands.init.contribution_converter import \
     ContributionConverter
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
-from mock import patch
 from TestSuite.contribution import Contribution
 from TestSuite.repo import Repo
 

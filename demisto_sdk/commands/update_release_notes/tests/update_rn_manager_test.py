@@ -1,4 +1,5 @@
 import pytest
+
 from demisto_sdk.commands.update_release_notes.update_rn_manager import \
     UpdateReleaseNotesManager
 
@@ -108,7 +109,8 @@ class TestUpdateRNManager:
         Then:
             - execute_update in UpdateRN should be called.
         """
-        from demisto_sdk.commands.update_release_notes.update_rn_manager import UpdateRN
+        from demisto_sdk.commands.update_release_notes.update_rn_manager import \
+            UpdateRN
 
         mng = UpdateReleaseNotesManager()
         mock_func = mocker.patch.object(UpdateRN, 'execute_update', return_result=True)
@@ -151,7 +153,8 @@ class TestUpdateRNManager:
         Then:
             - The update is successfully executed and no error is raised.
         """
-        from demisto_sdk.commands.update_release_notes.update_rn_manager import UpdateReleaseNotesManager
+        from demisto_sdk.commands.update_release_notes.update_rn_manager import \
+            UpdateReleaseNotesManager
         mocker.patch.object(UpdateReleaseNotesManager, 'get_git_changed_files',
                             return_value=({'Packs/test1', 'Packs/test2'},
                                           set(),

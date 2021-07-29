@@ -6,6 +6,7 @@ from unittest import mock
 import pytest
 from _pytest.fixtures import FixtureRequest
 from _pytest.tmpdir import TempPathFactory, _mk_tmp
+
 from TestSuite.integration import Integration
 from TestSuite.pack import Pack
 from TestSuite.playbook import Playbook

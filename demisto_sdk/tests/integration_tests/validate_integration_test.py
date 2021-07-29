@@ -1,6 +1,7 @@
 from os.path import join
 
 from click.testing import CliRunner
+
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import DEFAULT_IMAGE_BASE64
@@ -974,7 +975,7 @@ class TestClassifierValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', classifier.path], catch_exceptions=False)
-        assert 'The file type is not supported in validate command' in result.stdout
+        assert 'The file type is not supported in the validate command.' in result.stdout
         assert result.exit_code == 1
 
     def test_valid_old_classifier(self, mocker, repo):
@@ -1227,7 +1228,7 @@ class TestMapperValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', mapper.path], catch_exceptions=False)
-        assert 'The file type is not supported in validate command' in result.stdout
+        assert 'The file type is not supported in the validate command.' in result.stdout
         assert result.exit_code == 1
 
 
@@ -2419,7 +2420,7 @@ class TestImageValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', NOT_VALID_IMAGE_PATH], catch_exceptions=False)
-        assert 'The file type is not supported in validate command' in result.stdout
+        assert 'The file type is not supported in the validate command.' in result.stdout
         assert result.exit_code == 1
 
 

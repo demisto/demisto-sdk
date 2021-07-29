@@ -8,6 +8,7 @@ from typing import Any, List, Optional, Union
 
 import autopep8
 import yaml
+
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.tools import camel_to_snake, print_error

@@ -1,6 +1,7 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import decorator
+
 from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
                                                    CONF_PATH,
                                                    INTEGRATION_CATEGORIES,
@@ -10,7 +11,7 @@ from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
 FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
 ALLOWED_IGNORE_ERRORS = [
-    'BA101', 'BA106', 'BA108', 'BA109', 'BA110',
+    'BA101', 'BA106', 'BA108', 'BA109', 'BA110', 'BA111',
     'DS107',
     'IF100', 'IF106',
     'IN109', 'IN110', 'IN122', 'IN126', 'IN128', 'IN135', 'IN136', 'IN139',
@@ -43,6 +44,7 @@ ERROR_CODE = {
     "folder_name_has_separators": {'code': "BA108", 'ui_applicable': False, 'related_field': ''},
     "file_name_has_separators": {'code': "BA109", 'ui_applicable': False, 'related_field': ''},
     "field_contain_forbidden_word": {'code': "BA110", 'ui_applicable': False, 'related_field': ''},
+    'entity_name_contains_excluded_word': {'code': 'BA111', 'ui_applicable': False, 'related_field': ''},
     "wrong_display_name": {'code': "IN100", 'ui_applicable': True, 'related_field': '<parameter-name>.display'},
     "wrong_default_parameter_not_empty": {'code': "IN101", 'ui_applicable': True,
                                           'related_field': '<parameter-name>.default'},
@@ -324,10 +326,10 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def file_type_not_supported():
-        return "The file type is not supported in validate command\n " \
-               "validate' command supports: Integrations, Scripts, Playbooks, " \
+        return "The file type is not supported in the validate command.\n" \
+               "The validate command supports: Integrations, Scripts, Playbooks, " \
                "Incident fields, Incident types, Indicator fields, Indicator types, Objects fields, Object types," \
-               " Object modules, Images, Release notes,Layouts and Descriptions"
+               " Object modules, Images, Release notes, Layouts and Descriptions."
 
     @staticmethod
     @error_code_decorator
@@ -1324,7 +1326,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def pack_name_is_not_in_xsoar_standards(reason):
+    def pack_name_is_not_in_xsoar_standards(reason, excluded_words: Optional[List[str]] = None):
         if reason == "short":
             return f'Pack metadata {PACK_METADATA_NAME} field is not valid. The pack name must be at least 3' \
                    f' characters long.'
@@ -1334,6 +1336,9 @@ class Errors:
         if reason == "wrong_word":
             return f'Pack metadata {PACK_METADATA_NAME} field is not valid. The pack name must not contain the words:' \
                    f' ["Pack", "Playbook", "Integration", "Script"]'
+        if reason == 'excluded_word':
+            return f'Pack metadata {PACK_METADATA_NAME} field is not valid. The pack name must not contain the words:' \
+                   f' {excluded_words}'
 
     @staticmethod
     @error_code_decorator
@@ -1754,3 +1759,8 @@ class Errors:
                f"Example: {pack_prefix} {field_name}.\n" \
                f"Also make sure to update the field id and cliName accordingly. " \
                f"Example: cliName: {pack_prefix.replace(' ', '')}{field_name.replace(' ', '')}, "
+
+    @staticmethod
+    @error_code_decorator
+    def entity_name_contains_excluded_word(entity_name: str, excluded_words: List[str]):
+        return f'Entity {entity_name} should not contain one of {excluded_words} in its name. Please remove.'

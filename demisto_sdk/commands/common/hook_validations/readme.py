@@ -11,6 +11,9 @@ from typing import Callable, List, Optional
 
 import click
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util import Retry
+
 from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
                                                 Errors)
@@ -19,8 +22,6 @@ from demisto_sdk.commands.common.hook_validations.base_validator import \
 from demisto_sdk.commands.common.tools import (
     compare_context_path_in_yml_and_readme, get_content_path, get_yaml,
     get_yml_paths_in_dir, print_warning, run_command_os)
-from requests.adapters import HTTPAdapter
-from urllib3.util import Retry
 
 NO_HTML = '<!-- NOT_HTML_DOC -->'
 YES_HTML = '<!-- HTML_DOC -->'

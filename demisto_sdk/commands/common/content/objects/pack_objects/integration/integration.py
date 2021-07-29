@@ -2,12 +2,13 @@ import tempfile
 from typing import Optional, Union
 
 import demisto_client
+from packaging.version import parse
+from wcmatch.pathlib import Path
+
 from demisto_sdk.commands.common.constants import INTEGRATION, FileType
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_unify_content_object import \
     YAMLContentUnifiedObject
 from demisto_sdk.commands.common.tools import get_demisto_version
-from packaging.version import parse
-from wcmatch.pathlib import Path
 
 
 class Integration(YAMLContentUnifiedObject):

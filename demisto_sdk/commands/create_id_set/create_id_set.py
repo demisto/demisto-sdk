@@ -1,8 +1,9 @@
 import json
 import os
 from collections import OrderedDict
-from genericpath import exists
 from typing import Optional
+
+from genericpath import exists
 
 from demisto_sdk.commands.common.constants import (DEFAULT_ID_SET_PATH,
                                                    GENERIC_COMMANDS_NAMES)

@@ -1,6 +1,7 @@
 import os
 
 import click
+
 from demisto_sdk.commands.common.constants import (ARGUMENT_FIELDS_TO_CHECK,
                                                    INTEGRATION_ARGUMENT_TYPES,
                                                    PARAM_FIELDS_TO_CHECK)

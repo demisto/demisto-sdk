@@ -1,6 +1,8 @@
 from typing import Optional
 
 import pytest
+from mock import patch
+
 from demisto_sdk.commands.common.hook_validations.playbook import \
     PlaybookValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
@@ -8,7 +10,6 @@ from demisto_sdk.commands.common.hook_validations.structure import \
 from demisto_sdk.tests.constants_test import (
     CONTENT_REPO_EXAMPLE_ROOT, INVALID_PLAYBOOK_UNHANDLED_CONDITION,
     INVALID_TEST_PLAYBOOK_UNHANDLED_CONDITION)
-from mock import patch
 from TestSuite.test_tools import ChangeCWD
 
 

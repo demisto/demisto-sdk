@@ -5,11 +5,17 @@ from typing import Optional
 
 import pytest
 
+from demisto_sdk.commands.common.tools import run_command
 from demisto_sdk.commands.json_to_outputs.json_to_outputs import (
     determine_type, json_to_outputs, parse_json)
 
 DUMMY_FIELD_DESCRIPTION = "dummy field description"
 TEST_PATH = Path('demisto_sdk/commands/json_to_outputs/tests')
+
+
+def git_path() -> str:
+    path = run_command('git rev-parse --show-toplevel')
+    return path.replace('\n', '')
 
 
 def test_json_to_outputs__json_from_file():
@@ -179,7 +185,7 @@ dummy_description_dictionary = {"day": "day of the week",
                              # description dictionary from argument
                              (json.dumps(dummy_description_dictionary), dummy_description_dictionary),
                              # description dictionary from file
-                             (os.path.join(TEST_PATH, 'dummy_description_dictionary.json'),
+                             (os.path.join(git_path(), TEST_PATH, 'dummy_description_dictionary.json'),
                               dummy_description_dictionary)
                          ])
 def test_json_to_outputs__description(mocker, tmpdir, description_argument: Optional[str], dictionary: dict):
@@ -189,7 +195,7 @@ def test_json_to_outputs__description(mocker, tmpdir, description_argument: Opti
                  return_value=dummy_description_dictionary)
 
     json_to_outputs(command='jsonToOutputs',
-                    input=os.path.join(TEST_PATH, 'dummy_integration_output.json'),
+                    input=os.path.join(git_path(), TEST_PATH, 'dummy_integration_output.json'),
                     prefix='Test',
                     output=output,
                     descriptions=description_argument)

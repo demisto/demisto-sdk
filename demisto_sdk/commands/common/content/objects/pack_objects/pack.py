@@ -9,6 +9,10 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    CONNECTIONS_DIR,
                                                    DASHBOARDS_DIR,
                                                    DOC_FILES_DIR,
+                                                   GENERIC_DEFINITIONS_DIR,
+                                                   GENERIC_FIELDS_DIR,
+                                                   GENERIC_MODULES_DIR,
+                                                   GENERIC_TYPES_DIR,
                                                    INCIDENT_FIELDS_DIR,
                                                    INCIDENT_TYPES_DIR,
                                                    INDICATOR_FIELDS_DIR,
@@ -20,14 +24,14 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    RELEASE_NOTES_DIR,
                                                    REPORTS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
-                                                   TOOLS_DIR, WIDGETS_DIR, GENERIC_MODULES_DIR, GENERIC_DEFINITIONS_DIR,
-                                                   GENERIC_TYPES_DIR, GENERIC_FIELDS_DIR)
+                                                   TOOLS_DIR, WIDGETS_DIR)
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     AgentTool, AuthorImage, Classifier, ClassifierMapper, Connection,
-    Contributors, Dashboard, DocFile, IncidentField, IncidentType,
-    IndicatorField, IndicatorType, Integration, LayoutObject, OldClassifier,
-    PackIgnore, PackMetaData, Playbook, Readme, ReleaseNote, Report, Script,
-    SecretIgnore, Widget, GenericField, GenericModule, GenericDefinition, GenericType)
+    Contributors, Dashboard, DocFile, GenericDefinition, GenericField,
+    GenericModule, GenericType, IncidentField, IncidentType, IndicatorField,
+    IndicatorType, Integration, LayoutObject, OldClassifier, PackIgnore,
+    PackMetaData, Playbook, Readme, ReleaseNote, Report, Script, SecretIgnore,
+    Widget)
 from demisto_sdk.commands.common.content.objects_factory import \
     path_to_pack_object
 from demisto_sdk.commands.test_content import tools

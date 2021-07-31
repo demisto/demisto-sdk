@@ -14,6 +14,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import docker
 import docker.errors
 import docker.models.containers
+import git
 import requests.exceptions
 import urllib3.exceptions
 from jinja2 import Environment, FileSystemLoader, exceptions
@@ -275,10 +276,19 @@ class Linter:
             lint_files = lint_files.difference(test_modules)
             self._facts["lint_files"] = list(lint_files)
         if self._facts["lint_files"]:
+            try:
+                # Remove files that are in gitignore
+                files_to_ignore = git.Repo(self._content_repo).ignored(self._facts['lint_files'])
+                self._facts["lint_files"] = [path for path in self._facts['lint_files'] if path not in files_to_ignore]
+            except (git.InvalidGitRepositoryError, git.NoSuchPathError):
+                logger.debug("No gitignore files is available, run lint on all given files")
+
             for lint_file in self._facts["lint_files"]:
                 logger.info(f"{log_prompt} - Lint file {lint_file}")
         else:
             logger.info(f"{log_prompt} - Lint files not found")
+
+        # Remove files that are in gitignore
 
         self._split_lint_files()
         return False

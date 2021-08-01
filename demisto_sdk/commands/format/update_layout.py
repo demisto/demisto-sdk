@@ -6,7 +6,6 @@ from typing import Tuple
 import click
 import yaml
 
-from demisto_sdk.commands.common.hook_validations.layout import LayoutValidator
 from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
                                                print_error)
 from demisto_sdk.commands.format.format_constants import (
@@ -49,11 +48,11 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         if format_res:
             return format_res, SKIP_RETURN_CODE
         else:
-            return format_res, self.initiate_file_validator(LayoutValidator)
+            return format_res, self.initiate_file_validator()
 
     def run_format(self) -> int:
         try:
-            click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
+            click.secho(f'\n================= Updating file {self.source_file} =================', fg='bright_blue')
             if self.is_container:
                 self.layoutscontainer__run_format()
             else:

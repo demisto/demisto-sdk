@@ -1,6 +1,7 @@
 import os
 
 import pytest
+
 from demisto_sdk.commands.common.hook_validations.author_image import \
     AuthorImageValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path

@@ -517,8 +517,10 @@ script:
       required: false
     description: Updated user
     name: testswagger-update-user
-  dockerimage: demisto/python3:3.8.6.12176
+  dockerimage: demisto/python3:3.9.6.22912
   isfetch: false
   script: ''
   subtype: python3
   type: python
+tests:
+- No tests (auto formatted)

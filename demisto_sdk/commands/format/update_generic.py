@@ -12,8 +12,7 @@ from demisto_sdk.commands.common.constants import INTEGRATION, PLAYBOOK
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_dict_from_file,
                                                get_pack_metadata,
                                                get_remote_file,
-                                               is_file_from_content_repo,
-                                               print_color)
+                                               is_file_from_content_repo)
 from demisto_sdk.commands.format.format_constants import (
     DEFAULT_VERSION, ERROR_RETURN_CODE, NEW_FILE_DEFAULT_5_5_0_FROMVERSION,
     OLD_FILE_DEFAULT_1_FROMVERSION, SKIP_RETURN_CODE, SUCCESS_RETURN_CODE,
@@ -64,7 +63,7 @@ class BaseUpdate:
         if not self.no_validate:
             self.validate_manager = ValidateManager(silence_init_prints=True, skip_conf_json=True,
                                                     skip_dependencies=True, skip_pack_rn_validation=True,
-                                                    file_path=self.output_file)
+                                                    check_is_unskipped=False)
 
         if not self.source_file:
             raise Exception('Please provide <source path>, <optional - destination path>.')
@@ -331,9 +330,7 @@ class BaseUpdate:
                 click.secho(f'Validator Skipped on file: {self.output_file} , no-validate flag was set.', fg='yellow')
             return SKIP_RETURN_CODE
         else:
-            if self.verbose:
-                print_color('Starting validating files', LOG_COLORS.GREEN)
-
+            self.validate_manager.file_path = self.output_file
             validation_result = self.validate_manager.run_validation_on_specific_files()
 
             if not validation_result:

@@ -112,6 +112,9 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
             new_output_basename = LAYOUTS_CONTAINER_PREFIX + output_basename.split(LAYOUT_PREFIX)[-1]
             new_output_path = self.output_file.replace(output_basename, new_output_basename)
 
+            if self.verbose:
+                click.echo(f"Renaming output file: {new_output_path}")
+
             # rename file if source and output are the same
             if self.output_file == self.source_file:
                 os.rename(self.source_file, new_output_path)

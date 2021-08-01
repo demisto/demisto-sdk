@@ -150,7 +150,8 @@ LAYOUT_SCHEMA_PATH = f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/layout.yml
 
 SOURCE_FORMAT_LAYOUTS_CONTAINER = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_layoutscontainer-for-class-test.json"
 SOURCE_FORMAT_LAYOUTS_CONTAINER_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_layoutscontainer-test.json"
-DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY = "Layouts/formatted_layoutscontainer-test.json"
+DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY = \
+    f"{GIT_ROOT}/demisto_sdk/tests/test_files/formatted_layoutscontainer-test.json"
 LAYOUTS_CONTAINER_PATH = "Layouts"
 LAYOUTS_CONTAINER_SCHEMA_PATH = f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/layoutscontainer.yml"
 

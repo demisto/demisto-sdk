@@ -1,10 +1,11 @@
 import json
 import os
-from typing import Dict
+from typing import Dict, Optional
+
+from ruamel.yaml import YAML
 
 from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
                                                print_error)
-from ruamel.yaml import YAML
 
 
 class ContentItemType:
@@ -112,16 +113,20 @@ def create_end_task(id):
     }
 
 
-def create_automation_task(_id, automation_name, item_type: str, args=None):
+def create_automation_task(_id, automation_name, item_type: str, args: Optional[Dict] = None, brand: str = ""):
     script_args = {}  # type:Dict
     if args and len(args) > 0:
         script_args['all'] = {}
-
         for arg, val in args.items():
             script_args['all']['simple'] = val
 
     if item_type == ContentItemType.INTEGRATION:
-        script_name = f"|||{automation_name}"
+        """
+        when integration_brand is used as prefix, only instances of this brand execute the command.
+        to use with more than one integration, pass integration_brand = ""
+        """
+        script_name = f'{brand}|||{automation_name}'
+
     elif item_type == ContentItemType.SCRIPT:
         script_name = automation_name
 
@@ -230,7 +235,8 @@ def outputs_to_condition(outputs):
     return condition
 
 
-def create_automation_task_and_verify_outputs_task(test_playbook, command, item_type, no_outputs):
+def create_automation_task_and_verify_outputs_task(test_playbook, command, item_type, no_outputs,
+                                                   brand: str = ""):
     """
     create automation task from command and verify outputs task from automation(script/integration command) outputs.
     both tasks added to test playbook. both of this tasks linked to each other
@@ -240,6 +246,7 @@ def create_automation_task_and_verify_outputs_task(test_playbook, command, item_
         command: command/script object - they are similar as they both contain name and outputs
         item_type: content item type - either integration or script
         no_outputs: if True then created empty verify outputs task without all the outputs
+        brand: if provided, commands will only be run by instances of the provided brand
 
     Returns:
         test_playbook is updated
@@ -248,7 +255,10 @@ def create_automation_task_and_verify_outputs_task(test_playbook, command, item_
     outputs = command.get('outputs', [])
     conditions = outputs_to_condition(outputs)
 
-    task_command = create_automation_task(test_playbook.task_counter, command_name, item_type=item_type)
+    task_command = create_automation_task(test_playbook.task_counter,
+                                          command_name,
+                                          item_type,
+                                          brand=brand)
     test_playbook.add_task(task_command)
 
     if len(outputs) > 0:
@@ -263,7 +273,7 @@ def create_automation_task_and_verify_outputs_task(test_playbook, command, item_
 
 class PlaybookTestsGenerator:
     def __init__(self, input: str, output: str, name: str, file_type: str, no_outputs: bool = False,
-                 verbose: bool = False):
+                 verbose: bool = False, use_all_brands: bool = False):
         self.integration_yml_path = input
         self.output = output
         if output:
@@ -275,6 +285,7 @@ class PlaybookTestsGenerator:
         self.name = name
         self.no_outputs = no_outputs
         self.verbose = verbose
+        self.use_all_brands = use_all_brands
 
     def run(self):
         """
@@ -318,12 +329,15 @@ class PlaybookTestsGenerator:
         )
 
         if self.file_type == ContentItemType.INTEGRATION:
+            brand = '' if self.use_all_brands else yaml_obj.get('commonfields', {}).get('id', '')
+
             for command in yaml_obj.get('script').get('commands'):
                 create_automation_task_and_verify_outputs_task(
                     test_playbook=test_playbook,
                     command=command,
                     item_type=ContentItemType.INTEGRATION,
-                    no_outputs=self.no_outputs
+                    no_outputs=self.no_outputs,
+                    brand=brand
                 )
 
         elif self.file_type == ContentItemType.SCRIPT:

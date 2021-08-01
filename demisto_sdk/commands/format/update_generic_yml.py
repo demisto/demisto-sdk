@@ -3,6 +3,8 @@ import os
 from typing import Dict, List, Optional
 
 import click
+from ruamel.yaml import YAML
+
 from demisto_sdk.commands.common.constants import (INTEGRATION, PLAYBOOK,
                                                    TEST_PLAYBOOKS_DIR,
                                                    FileType)
@@ -11,7 +13,6 @@ from demisto_sdk.commands.common.tools import (_get_file_id, find_type,
                                                get_not_registered_tests,
                                                get_yaml, is_uuid)
 from demisto_sdk.commands.format.update_generic import BaseUpdate
-from ruamel.yaml import YAML
 
 ryaml = YAML()
 ryaml.allow_duplicate_keys = True

@@ -3,6 +3,8 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 
 import click
+
+from demisto_sdk.commands.common.constants import TESTS_AND_DOC_DIRECTORIES
 from demisto_sdk.commands.common.legacy_git_tools import get_changed_files
 from demisto_sdk.commands.common.tools import (find_type, get_files_in_dir,
                                                print_error, print_success,
@@ -114,7 +116,7 @@ def format_manager(input: str = None,
                 current_excluded_files.remove('CommonServerPython.py')
             if os.path.basename(file_path) in current_excluded_files:
                 continue
-            if dirname.endswith('test_data') or dirname.endswith('doc_imgs'):
+            if any(test_dir in str(dirname) for test_dir in TESTS_AND_DOC_DIRECTORIES):
                 continue
 
             if file_type and file_type.value not in UNFORMATTED_FILES:

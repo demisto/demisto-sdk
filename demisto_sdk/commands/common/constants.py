@@ -5,9 +5,10 @@ from functools import reduce
 from typing import Dict, Iterable, List, Optional
 
 import click
-from demisto_sdk.commands.common.git_util import GitUtil
 # dirs
 from git import InvalidGitRepositoryError
+
+from demisto_sdk.commands.common.git_util import GitUtil
 
 CAN_START_WITH_DOT_SLASH = '(?:./)?'
 NOT_TEST = '(?!Test)'
@@ -60,6 +61,7 @@ DOCUMENTATION = 'doc'
 MAPPER = 'classifier-mapper'
 CANVAS = 'canvas'
 OLD_REPUTATION = 'reputations.json'
+PACK_VERIFY_KEY = 'content.pack.verify'
 XSOAR_CONFIG_FILE = 'xsoar_config.json'
 
 
@@ -97,6 +99,7 @@ class FileType(Enum):
     WHITE_LIST = 'whitelist'
     LANDING_PAGE_SECTIONS_JSON = 'landingPage_sections.json'
     CONTRIBUTORS = 'contributors'
+    PACK = 'pack'
     XSOAR_CONFIG = 'xsoar_config'
     GENERIC_MODULE = 'genericmodule'
     GENERIC_FIELD = 'genericfield'
@@ -122,6 +125,10 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.DASHBOARD: 'Dashboards',
     FileType.CONNECTION: 'Connections',
     FileType.MAPPER: 'Mappers',
+    FileType.GENERIC_DEFINITION: 'Objects',
+    FileType.GENERIC_MODULE: 'Modules',
+    FileType.GENERIC_TYPE: 'Object Types',
+    FileType.GENERIC_FIELD: 'Object Fields'
 }
 
 ENTITY_TYPE_TO_DIR = {
@@ -141,7 +148,11 @@ ENTITY_TYPE_TO_DIR = {
     FileType.REPORT.value: REPORTS_DIR,
     FileType.WIDGET.value: WIDGETS_DIR,
     FileType.BETA_INTEGRATION.value: INTEGRATIONS_DIR,
-    FileType.MAPPER.value: CLASSIFIERS_DIR
+    FileType.MAPPER.value: CLASSIFIERS_DIR,
+    FileType.GENERIC_DEFINITION.value: GENERIC_DEFINITIONS_DIR,
+    FileType.GENERIC_MODULE.value: GENERIC_MODULES_DIR,
+    FileType.GENERIC_FIELD.value: GENERIC_FIELDS_DIR,
+    FileType.GENERIC_TYPE.value: GENERIC_TYPES_DIR
 }
 
 CONTENT_FILE_ENDINGS = ['py', 'yml', 'png', 'json', 'md']
@@ -804,7 +815,8 @@ TESTS_AND_DOC_DIRECTORIES = [
     'test_data',
     'data_test',
     'tests_data',
-    'doc_files'
+    'doc_files',
+    'doc_imgs',
 ]
 
 FILE_TYPES_FOR_TESTING = [
@@ -986,6 +998,8 @@ ACCEPTED_FILE_EXTENSIONS = [
 ]
 ENDPOINT_COMMAND_NAME = 'endpoint'
 
+REPUTATION_COMMAND_NAMES = {'file', 'email', 'domain', 'url', 'ip', 'cve'}
+
 BANG_COMMAND_NAMES = {'file', 'email', 'domain', 'url', 'ip', 'cve', 'endpoint'}
 
 BANG_COMMAND_ARGS_MAPPING_DICT: Dict[str, dict] = {
@@ -1025,6 +1039,7 @@ XSOAR_SUPPORT_URL = "https://www.paloaltonetworks.com/cortex"
 MARKETPLACE_LIVE_DISCUSSIONS = \
     'https://live.paloaltonetworks.com/t5/cortex-xsoar-discussions/bd-p/Cortex_XSOAR_Discussions'
 MARKETPLACE_MIN_VERSION = '6.0.0'
+EXCLUDED_DISPLAY_NAME_WORDS = ['partner', 'community']
 
 BASE_PACK = "Base"
 NON_SUPPORTED_PACK = "NonSupported"

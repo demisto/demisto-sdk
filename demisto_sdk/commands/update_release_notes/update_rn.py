@@ -50,6 +50,7 @@ class UpdateRN:
         self.is_force = is_force
         self.metadata_path = os.path.join(self.pack_path, 'pack_metadata.json')
         self.master_version = self.get_master_version()
+        self.rn_path = ''
 
     @staticmethod
     def change_image_or_desc_file_path(file_path: str) -> str:
@@ -103,6 +104,7 @@ class UpdateRN:
         new_version, new_metadata = self.get_new_version_and_metadata()
         rn_path = self.get_release_notes_path(new_version)
         self.check_rn_dir(rn_path)
+        self.rn_path = rn_path
         self.find_added_pack_files()
         docker_image_name: Optional[str] = None
         changed_files = {}
@@ -240,7 +242,7 @@ class UpdateRN:
             return False
         except RuntimeError as e:
             raise RuntimeError(f"Unable to locate a pack with the name {self.pack} in the git diff.\n"
-                            f"Please verify the pack exists and the pack name is correct.") from e
+                               f"Please verify the pack exists and the pack name is correct.") from e
 
     def only_docs_changed(self) -> bool:
         """
@@ -456,7 +458,7 @@ class UpdateRN:
             return rn_string
         rn_template_as_dict: dict = {}
         if self.is_force:
-            rn_string = self.build_rn_desc(content_name=self.pack)
+            rn_string = self.build_rn_desc(content_name=self.pack, text=self.text)
         # changed_items.items() looks like that: [((name, type), {...}), (name, type), {...}] and we want to sort
         # them by type (x[0][1])
         for (content_name, _type), data in sorted(changed_items.items(),

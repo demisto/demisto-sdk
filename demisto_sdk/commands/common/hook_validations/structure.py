@@ -11,6 +11,8 @@ from typing import List, Optional, Tuple
 
 import click
 import yaml
+from pykwalify.core import Core
+
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     ACCEPTED_FILE_EXTENSIONS, CHECKED_TYPES_REGEXES,
@@ -22,7 +24,6 @@ from demisto_sdk.commands.common.tools import (get_remote_file,
                                                is_file_path_in_pack)
 from demisto_sdk.commands.format.format_constants import \
     OLD_FILE_DEFAULT_1_FROMVERSION
-from pykwalify.core import Core
 
 
 class StructureValidator(BaseValidator):

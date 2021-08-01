@@ -1,4 +1,32 @@
 # Changelog
+* Fixed an issue where **validate** suggests, with no reason, running **format** on missing mandatory keys in yml file.
+* Skipped existence of TestPlaybook check on community and contribution integrations.
+* Fixed an issue where pre-commit didn't run on the demisto_sdk/commands folder.
+* The **init** command will now change the script template name in the code to the given script name.
+* Expanded the validations performed on beta integrations.
+* Improved the error messages in **generate-docs**, if an example was not provided.
+* Added to **validate** command a validation that a content entity or a pack name does not contain the words "partner" and "community".
+* Fixed an issue where **update-release-notes** ignores *--text* flag while using *-f*
+* Fixed the outputs validations in **validate** so enrichment commands will not be checked to have DBotScore outputs.
+* Added a new validation to require the dockerimage key to exist in an integration and script yml files.
+* Enhanced the **generate-test-playbook** command to use only integration tested on commands, rather than (possibly) other integrations implementing them.
+
+# 1.4.5
+* Enhanced the **postman-codegen** command to name all generated arguments with lower case.
+* Fixed an issue where the **find-dependencies** command miscalculated the dependencies for playbooks that use generic commands.
+* Fixed an issue where the **validate** command failed in external repositories in case the DEMISTO_SDK_GITHUB_TOKEN was not set.
+* Fixed an issue where **openapi-codegen** corrupted the swagger file by overwriting configuration to swagger file.
+* Updated the **upload** command to support uploading zipped packs to the marketplace.
+* Added to the **postman-codegen** command support of path variables.
+* Fixed an issue where **openapi-codegen** entered into an infinite loop on circular references in the swagger file.
+* The **format** command will now set `fromVersion: 6.2.0` for widgets with 'metrics' data type.
+* Updated the **find-dependencies** command to support generic modules, definitions, fields and types.
+* Fixed an issue where **openapi-codegen** tried to extract reference example outputs, leading to an exception.
+* Added an option to ignore secrets automatically when using the **init** command to create a pack.
+* Added a tool that gives the ability to temporarily suppress console output.
+* Expanded unify command to support GenericModules - Unifies a GenericModule object with its Dashboards.
+
+# 1.4.4
 * When formatting incident types with Auto-Extract rules and without mode field, the **format** command will now add the user selected mode.
 * Added new validation that DBotRole is set for scripts that requires elevated permissions to the `XSOAR-linter` in the **lint** command.
 * Added url escaping to markdown human readable section in generate docs to avoid autolinking.
@@ -15,6 +43,10 @@
   - Fixed an issue where the **update-release-notes** command did not add docker image release notes entry for release notes file if a script was changed.
   - Fixed an issue where the **update-release-notes** command did not detect changed files that had the same name.
   - Fixed an issue in the **update-release-notes** command where the version support of JSON files was mishandled.
+* Fixed an issue where **format** did not skip files in test and documentation directories.
+* Updated the **create-id-set** command to support generic modules, definitions, fields and types.
+* Changed the **convert** command to generate old layout fromversion to 5.0.0 instead of 4.1.0
+* Enhanced the command **postman-codegen** with type hints for templates.
 
 # 1.4.3
 * Fixed an issue where **json-to-outputs** command returned an incorrect output when json is a list.

@@ -7,6 +7,7 @@ import re
 import shlex
 import sys
 from configparser import ConfigParser, MissingSectionHeaderError
+from contextlib import contextmanager
 from distutils.version import LooseVersion
 from enum import Enum
 from functools import lru_cache, partial
@@ -21,6 +22,9 @@ import git
 import requests
 import urllib3
 import yaml
+from packaging.version import parse
+from ruamel.yaml import YAML
+
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK, CLASSIFIERS_DIR,
     CONTEXT_OUTPUT_README_TABLE_HEADER, DASHBOARDS_DIR, DEF_DOCKER,
@@ -35,8 +39,6 @@ from demisto_sdk.commands.common.constants import (
     TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, XSOAR_CONFIG_FILE,
     FileType, GithubContentConfig, urljoin)
 from demisto_sdk.commands.common.git_util import GitUtil
-from packaging.version import parse
-from ruamel.yaml import YAML
 
 urllib3.disable_warnings()
 
@@ -235,28 +237,29 @@ def get_remote_file(
                 # And maybe it's just not defined. 😢
                 if not res.ok:
                     if not suppress_print:
-                        print_warning(
+                        click.secho(
                             f'You are working in a private repository: "{githhub_config.CURRENT_REPOSITORY}".\n'
                             f'The github token in your environment is undefined.\n'
                             f'Getting file from local repository instead. \n'
                             f'If you wish to get the file from the remote repository, \n'
                             f'Please define your github token in your environment.\n'
-                            f'`export {githhub_config.Credentials.ENV_TOKEN_NAME}=<TOKEN>`'
+                            f'`export {githhub_config.Credentials.ENV_TOKEN_NAME}=<TOKEN>`\n', fg='yellow'
                         )
+                        click.echo("Getting file from local environment")
                     # Get from local git origin/master instead
                     repo = git.Repo(os.path.dirname(full_file_path), search_parent_directories=True)
                     repo_git_util = GitUtil(repo)
-                    github_path = repo_git_util.get_local_remote_file_path(full_file_path, tag)
+                    github_path = repo_git_util.get_local_remote_file_path(full_file_path, github_tag)
                     local_content = repo_git_util.get_local_remote_file_content(github_path)
         else:
             res = requests.get(github_path, verify=False, timeout=10)
             res.raise_for_status()
     except Exception as exc:
         if not suppress_print:
-            print_warning(
+            click.secho(
                 f'Could not find the old entity file under "{github_path}".\n'
                 'please make sure that you did not break backward compatibility.\n'
-                f'Reason: {exc}'
+                f'Reason: {exc}', fg='yellow'
             )
         return {}
     file_content = res.content if res.ok else local_content
@@ -431,9 +434,8 @@ def get_file(method, file_path, type_of_file):
             try:
                 data_dictionary = method(stream)
             except Exception as e:
-                print_error(
+                raise ValueError(
                     "{} has a structure issue of file type {}. Error was: {}".format(file_path, type_of_file, str(e)))
-                return {}
     if isinstance(data_dictionary, (dict, list)):
         return data_dictionary
     return {}
@@ -1068,8 +1070,9 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
         if 'orientation' in _dict:
             return FileType.REPORT
 
-        if 'color' in _dict and 'cliName' not in _dict:  # check against another key to make it more robust
-            if 'definitionId' in _dict and _dict['definitionId'] not in [None, 'incident', 'indicator']:
+        if 'color' in _dict and 'cliName' not in _dict:
+            if 'definitionId' in _dict and _dict['definitionId'] and \
+                    _dict['definitionId'].lower() not in ['incident', 'indicator']:
                 return FileType.GENERIC_TYPE
             return FileType.INCIDENT_TYPE
 
@@ -1091,7 +1094,7 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
         if 'canvasContextConnections' in _dict:
             return FileType.CONNECTION
 
-        if 'layout' in _dict or 'kind' in _dict:
+        if 'layout' in _dict or 'kind' in _dict:  # it's a Layout or Dashboard but not a Generic Object
             if 'kind' in _dict or 'typeId' in _dict:
                 return FileType.LAYOUT
 
@@ -1109,7 +1112,8 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
         # When using it for all files validation- sometimes 'id' can be integer
         if 'id' in _dict:
             if isinstance(_dict['id'], str):
-                if 'definitionId' in _dict and _dict['definitionId'].lower() not in [None, 'incident', 'indicator']:
+                if 'definitionId' in _dict and _dict['definitionId'] and \
+                        _dict['definitionId'].lower() not in ['incident', 'indicator']:
                     return FileType.GENERIC_FIELD
                 _id = _dict['id'].lower()
                 if _id.startswith('incident'):
@@ -1943,3 +1947,22 @@ def get_current_tags() -> list:
         approved_tags_json, _ = get_dict_from_file('Tests/Marketplace/approved_tags.json')
         return approved_tags_json.get('approved_list', [])
     return []
+
+
+@contextmanager
+def suppress_stdout():
+    """
+        Temporarily suppress console output without effecting error outputs.
+        Example of use:
+
+            with suppress_stdout():
+                print('This message will not be printed')
+            print('This message will be printed')
+    """
+    with open(os.devnull, "w") as devnull:
+        try:
+            old_stdout = sys.stdout
+            sys.stdout = devnull
+            yield
+        finally:
+            sys.stdout = old_stdout

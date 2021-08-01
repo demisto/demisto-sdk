@@ -298,7 +298,8 @@ class Linter:
 
         """
         try:
-            files_to_ignore = git.Repo(self._content_repo).ignored(self._facts['lint_files'])
+            repo = git.Repo(self._content_repo)
+            files_to_ignore = repo.ignored(self._facts['lint_files'])
             for file in files_to_ignore:
                 logger.info(f"{log_prompt} - Skipping gitignore file {file}")
             self._facts["lint_files"] = [path for path in self._facts['lint_files'] if path not in files_to_ignore]

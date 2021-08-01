@@ -1,5 +1,6 @@
 from typing import Callable
 
+import git
 from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.lint import linter
@@ -170,3 +171,33 @@ class TestTestRequirementsCollection:
         runner = initiate_linter(demisto_content, integration_path, True)
         runner._gather_facts(modules={})
         assert not runner._facts["additional_requirements"]
+
+
+files_strings = ['/Users/user/dev/demisto/content/Packs/EDL/Integrations/EDL/EDL_test.py',
+                 '/Users/user/dev/demisto/content/Packs/EDL/Integrations/EDL/EDL.py',
+                 '/Users/user/dev/demisto/content/Packs/EDL/Integrations/EDL/NGINXApiModule.py']
+files_paths = [Path(i) for i in files_strings]
+
+
+def test_remove_gitignore_files(mocker, demisto_content):
+    """
+    Given:
+    - Linter module with files to ignore.
+
+    When:
+    - Calling _remove_gitignore_files method.
+
+    Then:
+    - Remove the ignored files from self._facts['lint_files'].
+
+    """
+    class GitMock:
+        def ignored(self, files):
+            return files[-1:]
+
+    mocker.patch("git.Repo", return_value=GitMock())
+    runner = initiate_linter(demisto_content, "")
+    runner._facts['lint_files'] = files_paths
+    assert files_paths[-1] in runner._facts['lint_files']
+    runner._remove_gitignore_files("prompt")
+    assert files_paths[-1] not in runner._facts['lint_files']

@@ -222,20 +222,16 @@ class BaseUpdate:
         # If user entered specific from version key to be set
         if from_version:
             if LooseVersion(from_version) < LooseVersion(GENERIC_OBJECTS_DEFAULT_FROMVERSION):
-                click.echo(f'The given fromVersion value {from_version} is invalid for generic objects.\n'
+                click.echo(f'The given fromVersion value for generic entities should be'
+                           f' {GENERIC_OBJECTS_DEFAULT_FROMVERSION} or above , given: {from_version}.\n'
                            f'Setting fromVersion field to {GENERIC_OBJECTS_DEFAULT_FROMVERSION}')
                 self.data[self.from_version_key] = GENERIC_OBJECTS_DEFAULT_FROMVERSION
             else:
                 self.data[self.from_version_key] = from_version
         else:
-            # If current file does not have fromVersion key
-            if self.from_version_key not in self.data:
+            if LooseVersion(self.data.get(self.from_version_key, '0.0.0')) < \
+                    LooseVersion(GENERIC_OBJECTS_DEFAULT_FROMVERSION):
                 self.data[self.from_version_key] = GENERIC_OBJECTS_DEFAULT_FROMVERSION
-            # Current file has a fromVersion key
-            else:
-                if LooseVersion(self.data.get(self.from_version_key, '0.0.0')) < \
-                        LooseVersion(GENERIC_OBJECTS_DEFAULT_FROMVERSION):
-                    self.data[self.from_version_key] = GENERIC_OBJECTS_DEFAULT_FROMVERSION
 
     def set_fromVersion(self, from_version=None, file_type: Optional[str] = None):
         """Sets fromVersion key in file:

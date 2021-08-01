@@ -834,8 +834,8 @@ def test_format_incident_type_layout_id(repo):
     ('group', 0, 4),
     ('id', 'asset_operatingsystem', 'generic_asset_operatingsystem')
 ])
-def test_format_generic_field_wrong_from_version(mocker, repo, field_to_test, invalid_value,
-                                                 expected_value_after_format):
+def test_format_generic_field_wrong_values(mocker, repo, field_to_test, invalid_value,
+                                           expected_value_after_format):
     """
         Given
         - Invalid generic field.
@@ -867,27 +867,23 @@ def test_format_generic_field_wrong_from_version(mocker, repo, field_to_test, in
         assert updated_generic_field[field_to_test] == expected_value_after_format
 
 
-@pytest.mark.parametrize('field_to_test, expected_value_after_format', [
-    ('fromVersion', '6.5.0'),
-    ('group', 4)
-])
-def test_format_generic_field_missing_from_version_key(mocker, repo, field_to_test, expected_value_after_format):
+def test_format_generic_field_missing_from_version_key(mocker, repo):
     """
         Given
-        - Invalid generic field  - a default value field is missing.
+        - Invalid generic field  - fromVersion field is missing
 
         When
         - Running format on it.
 
         Then
-        - Ensure Format fixed the given generic field - mising field was added with it's default value.
+        - Ensure Format fixed the given generic field - fromVersion field was added and it's value is 6.5.0
         - Ensure success message is printed.
     """
     mocker.patch.object(update_generic, 'is_file_from_content_repo', return_value=(False, ''))
     pack = repo.create_pack('PackName')
     generic_field = GENERIC_FIELD.copy()
-    if generic_field[field_to_test]:
-        generic_field.pop(field_to_test)
+    if generic_field['fromVersion']:
+        generic_field.pop('fromVersion')
     pack.create_generic_field("generic-field", generic_field)
     generic_field_path = pack.generic_fields[0].path
     with ChangeCWD(pack.repo_path):
@@ -901,7 +897,7 @@ def test_format_generic_field_missing_from_version_key(mocker, repo, field_to_te
         # check that sdk format did add a fromVersion key with '6.5.0' as a value:
         with open(generic_field_path) as f:
             updated_generic_field = json.load(f)
-        assert updated_generic_field[field_to_test] == expected_value_after_format
+        assert updated_generic_field['fromVersion'] == GENERIC_FIELD['fromVersion']
 
 
 def test_format_generic_type_wrong_from_version(mocker, repo):

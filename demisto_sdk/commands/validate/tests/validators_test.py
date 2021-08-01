@@ -5,8 +5,10 @@ from io import StringIO
 from shutil import copyfile
 from typing import Any, Type, Union
 
-import demisto_sdk.commands.validate.validate_manager
 import pytest
+from mock import patch
+
+import demisto_sdk.commands.validate.validate_manager
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (CONF_PATH, TEST_PLAYBOOK,
                                                    FileType)
@@ -39,7 +41,7 @@ from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.unify.unifier import Unifier
+from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.tests.constants_test import (
     CONF_JSON_MOCK_PATH, DASHBOARD_TARGET, DIR_LIST, IGNORED_PNG,
@@ -69,7 +71,6 @@ from demisto_sdk.tests.constants_test import (
     WIDGET_TARGET)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import \
     INCIDENT_FIELD
-from mock import patch
 from TestSuite.test_tools import ChangeCWD
 
 
@@ -210,6 +211,7 @@ class TestValidators:
             res_validator = validator(structure)
             mocker.patch.object(ScriptValidator, 'is_valid_script_file_path', return_value=True)
             mocker.patch.object(ScriptValidator, 'is_there_separators_in_names', return_value=True)
+            mocker.patch.object(ScriptValidator, 'is_docker_image_valid', return_value=True)
             assert res_validator.is_valid_file(validate_rn=False) is answer
         finally:
             os.remove(target)
@@ -383,6 +385,7 @@ class TestValidators:
         mocker.patch.object(PlaybookValidator, 'is_script_id_valid', return_value=True)
         mocker.patch.object(ScriptValidator, 'is_valid_script_file_path', return_value=True)
         mocker.patch.object(ScriptValidator, 'is_there_separators_in_names', return_value=True)
+        mocker.patch.object(ScriptValidator, 'is_docker_image_valid', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_valid_integration_file_path', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_there_separators_in_names', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_docker_image_valid', return_value=True)
@@ -493,9 +496,9 @@ class TestValidators:
         def get_script_or_integration_package_data_mock(*args, **kwargs):
             return VALID_SCRIPT_PATH, ''
 
-        with patch.object(Unifier, '__init__', lambda a, b: None):
-            Unifier.get_script_or_integration_package_data = get_script_or_integration_package_data_mock
-            return Unifier('')
+        with patch.object(YmlUnifier, '__init__', lambda a, b: None):
+            YmlUnifier.get_script_or_integration_package_data = get_script_or_integration_package_data_mock
+            return YmlUnifier('')
 
     def test_script_valid_rn(self, mocker):
         """
@@ -509,6 +512,7 @@ class TestValidators:
         mocker.patch.object(ScriptValidator, 'is_valid_name', return_value=True)
         mocker.patch.object(ScriptValidator, 'is_valid_script_file_path', return_value=True)
         mocker.patch.object(ScriptValidator, 'is_there_separators_in_names', return_value=True)
+        mocker.patch.object(ScriptValidator, 'is_docker_image_valid', return_value=True)
         self.mock_unifier()
         validate_manager = ValidateManager(skip_conf_json=True)
         is_valid = validate_manager.validate_added_files([VALID_SCRIPT_PATH], None)

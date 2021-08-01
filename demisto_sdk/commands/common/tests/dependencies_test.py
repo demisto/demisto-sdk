@@ -4,6 +4,7 @@ import random
 from typing import List
 
 import pytest
+
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
@@ -64,7 +65,7 @@ def get_new_task_number(playbook: Playbook):
         playbook_tasks = list(playbook.yml.read_dict().get('tasks').keys())
 
         if playbook_tasks:
-            return max([int(task_num) for task_num in playbook_tasks]) + 1
+            return max(int(task_num) for task_num in playbook_tasks) + 1
 
         playbook.yml.update({'starttaskid': '0'})
         return 0

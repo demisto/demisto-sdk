@@ -6,6 +6,10 @@
 * Expanded the validations performed on beta integrations.
 * Improved the error messages in **generate-docs**, if an example was not provided.
 * Added to **validate** command a validation that a content entity or a pack name does not contain the words "partner" and "community".
+* Fixed an issue where **update-release-notes** ignores *--text* flag while using *-f*
+* Fixed the outputs validations in **validate** so enrichment commands will not be checked to have DBotScore outputs.
+* Added a new validation to require the dockerimage key to exist in an integration and script yml files.
+* Enhanced the **generate-test-playbook** command to use only integration tested on commands, rather than (possibly) other integrations implementing them.
 * Added to the **validate** command a validation for the author image.
 
 # 1.4.5
@@ -21,6 +25,7 @@
 * Fixed an issue where **openapi-codegen** tried to extract reference example outputs, leading to an exception.
 * Added an option to ignore secrets automatically when using the **init** command to create a pack.
 * Added a tool that gives the ability to temporarily suppress console output.
+* Expanded unify command to support GenericModules - Unifies a GenericModule object with its Dashboards.
 
 # 1.4.4
 * When formatting incident types with Auto-Extract rules and without mode field, the **format** command will now add the user selected mode.

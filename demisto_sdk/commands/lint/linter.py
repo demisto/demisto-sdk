@@ -14,8 +14,13 @@ from typing import Any, Dict, List, Optional, Tuple
 import docker
 import docker.errors
 import docker.models.containers
+import git
 import requests.exceptions
 import urllib3.exceptions
+from jinja2 import Environment, FileSystemLoader, exceptions
+from ruamel.yaml import YAML
+from wcmatch.pathlib import NEGATE, Path
+
 from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    PACKS_PACK_META_FILE_NAME,
                                                    SCRIPTS_DIR, TYPE_PWSH,
@@ -37,9 +42,6 @@ from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, RERUN, RL,
                                                pylint_plugin,
                                                split_warnings_errors,
                                                stream_docker_container_output)
-from jinja2 import Environment, FileSystemLoader, exceptions
-from ruamel.yaml import YAML
-from wcmatch.pathlib import NEGATE, Path
 
 logger = logging.getLogger('demisto-sdk')
 
@@ -273,14 +275,37 @@ class Linter:
             test_modules = {self._pack_abs_dir / module.name for module in modules.keys()}
             lint_files = lint_files.difference(test_modules)
             self._facts["lint_files"] = list(lint_files)
+
         if self._facts["lint_files"]:
+            self._remove_gitignore_files(log_prompt)
             for lint_file in self._facts["lint_files"]:
                 logger.info(f"{log_prompt} - Lint file {lint_file}")
         else:
             logger.info(f"{log_prompt} - Lint files not found")
 
+        # Remove files that are in gitignore
+
         self._split_lint_files()
         return False
+
+    def _remove_gitignore_files(self, log_prompt: str) -> None:
+        """
+        Skipping files that matches gitignore patterns.
+        Args:
+            log_prompt(str): log prompt string
+
+        Returns:
+
+        """
+        try:
+            repo = git.Repo(self._content_repo)
+            files_to_ignore = repo.ignored(self._facts['lint_files'])
+            for file in files_to_ignore:
+                logger.info(f"{log_prompt} - Skipping gitignore file {file}")
+            self._facts["lint_files"] = [path for path in self._facts['lint_files'] if path not in files_to_ignore]
+
+        except (git.InvalidGitRepositoryError, git.NoSuchPathError):
+            logger.debug("No gitignore files is available")
 
     def _split_lint_files(self):
         """ Remove unit test files from _facts['lint_files'] and put into their own list _facts['lint_unittest_files']

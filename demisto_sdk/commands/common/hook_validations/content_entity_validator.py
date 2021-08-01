@@ -5,6 +5,7 @@ from distutils.version import LooseVersion
 from typing import Optional
 
 import yaml
+
 from demisto_sdk.commands.common.constants import (ENTITY_NAME_SEPARATORS,
                                                    EXCLUDED_DISPLAY_NAME_WORDS,
                                                    FEATURE_BRANCHES,

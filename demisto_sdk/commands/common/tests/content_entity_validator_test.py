@@ -1,4 +1,5 @@
 import pytest
+
 from demisto_sdk.commands.common.constants import EXCLUDED_DISPLAY_NAME_WORDS
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator

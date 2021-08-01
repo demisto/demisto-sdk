@@ -5,9 +5,10 @@ from functools import reduce
 from typing import Dict, Iterable, List, Optional
 
 import click
-from demisto_sdk.commands.common.git_util import GitUtil
 # dirs
 from git import InvalidGitRepositoryError
+
+from demisto_sdk.commands.common.git_util import GitUtil
 
 CAN_START_WITH_DOT_SLASH = '(?:./)?'
 NOT_TEST = '(?!Test)'
@@ -996,6 +997,8 @@ ACCEPTED_FILE_EXTENSIONS = [
     '.yml', '.json', '.md', '.py', '.js', '.ps1', '.png', '', '.lock'
 ]
 ENDPOINT_COMMAND_NAME = 'endpoint'
+
+REPUTATION_COMMAND_NAMES = {'file', 'email', 'domain', 'url', 'ip', 'cve'}
 
 BANG_COMMAND_NAMES = {'file', 'email', 'domain', 'url', 'ip', 'cve', 'endpoint'}
 

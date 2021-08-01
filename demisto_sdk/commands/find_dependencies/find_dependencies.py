@@ -8,6 +8,8 @@ from typing import Optional, Union
 
 import click
 import networkx as nx
+from requests import RequestException
+
 from demisto_sdk.commands.common import constants
 from demisto_sdk.commands.common.constants import GENERIC_COMMANDS_NAMES
 from demisto_sdk.commands.common.tools import (get_content_id_set,
@@ -15,7 +17,6 @@ from demisto_sdk.commands.common.tools import (get_content_id_set,
                                                print_error, print_warning)
 from demisto_sdk.commands.common.update_id_set import merge_id_sets
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
-from requests import RequestException
 
 MINIMUM_DEPENDENCY_VERSION = LooseVersion('6.0.0')
 COMMON_TYPES_PACK = 'CommonTypes'

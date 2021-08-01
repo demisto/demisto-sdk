@@ -1,6 +1,7 @@
 from typing import Any, Dict, List, Optional
 
 import decorator
+
 from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
                                                    CONF_PATH,
                                                    INTEGRATION_CATEGORIES,
@@ -115,6 +116,7 @@ ERROR_CODE = {
     "docker_not_formatted_correctly": {'code': "DO105", 'ui_applicable': True, 'related_field': 'dockerimage'},
     "docker_not_on_the_latest_tag": {'code': "DO106", 'ui_applicable': True, 'related_field': 'dockerimage'},
     "non_existing_docker": {'code': "DO107", 'ui_applicable': True, 'related_field': 'dockerimage'},
+    "dockerimage_not_in_yml_file": {'code': "DO108", 'ui_applicable': True, 'related_field': 'dockerimage'},
     "id_set_conflicts": {'code': "ID100", 'ui_applicable': False, 'related_field': ''},
     "duplicated_id": {'code': "ID102", 'ui_applicable': False, 'related_field': ''},
     "no_id_set_file": {'code': "ID103", 'ui_applicable': False, 'related_field': ''},
@@ -743,6 +745,13 @@ class Errors:
     def no_docker_tag(docker_image):
         return f'{docker_image} - The docker image in your integration/script does not have a tag.' \
                f' Please create or update to an updated versioned image.'
+
+    @staticmethod
+    @error_code_decorator
+    def dockerimage_not_in_yml_file(file_path):
+        return f'There is no docker image provided in file {file_path}.\nYou can choose one from ' \
+               'DockerHub: https://hub.docker.com/u/demisto/, or create your own in the repo: ' \
+               ' https://github.com/demisto/dockerfiles'
 
     @staticmethod
     @error_code_decorator

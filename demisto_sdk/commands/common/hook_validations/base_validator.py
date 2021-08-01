@@ -4,6 +4,7 @@ import os
 from typing import Optional
 
 import click
+
 from demisto_sdk.commands.common.constants import (PACK_METADATA_SUPPORT,
                                                    PACKS_DIR,
                                                    PACKS_PACK_META_FILE_NAME,

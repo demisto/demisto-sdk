@@ -9,6 +9,7 @@ from typing import Dict, List
 import click
 import yaml
 import yamlordereddictloader
+
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (

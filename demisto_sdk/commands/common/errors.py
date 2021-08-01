@@ -856,14 +856,13 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def image_is_empty(image_path: str):
-        return f'Image corresponding to image path {image_path} should not be empty for partner support level. ' \
+        return f'The author image in path {image_path} should not be empty. ' \
                'Please provide a relevant image.'
 
     @staticmethod
     @error_code_decorator
     def author_image_is_missing(image_path: str):
-        return f'Image corresponding to image path {image_path} should exist for partner support level. Please ' \
-               'provide a relevant image'
+        return f'Partners must provide a non-empty author image under the path {image_path}. '
 
     @staticmethod
     @error_code_decorator

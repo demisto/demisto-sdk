@@ -23,7 +23,7 @@ class AuthorImageValidator(ImageValidator):
             (bool): Whether author image is valid.
         """
         if os.path.exists(self.file_path):
-            self.has_valid_size(allow_empty_image_file=False, maximum_size=self.maximum_image_size)
+            self.validate_size(allow_empty_image_file=False, maximum_size=self.maximum_image_size)
         else:
             if self.support_level == 'partner':
                 error_message, error_code = Errors.author_image_is_missing(self.file_path)

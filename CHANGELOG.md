@@ -6,7 +6,7 @@
 * Expanded the validations performed on beta integrations.
 * Improved the error messages in **generate-docs**, if an example was not provided.
 * Added to **validate** command a validation that a content entity or a pack name does not contain the words "partner" and "community".
-* Added to the **validate** command validation for author image.
+* Added to the **validate** command a validation for the author image.
 
 # 1.4.5
 * Enhanced the **postman-codegen** command to name all generated arguments with lower case.

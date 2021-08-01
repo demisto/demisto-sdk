@@ -51,7 +51,7 @@ class ImageValidator(BaseValidator):
             return self._is_valid
 
         is_existing_image = False
-        self.has_valid_size(allow_empty_image_file=True)
+        self.validate_size(allow_empty_image_file=True)
         if '.png' not in self.file_path:
             is_existing_image = self.is_existing_image()
         if is_existing_image or '.png' in self.file_path:
@@ -61,16 +61,13 @@ class ImageValidator(BaseValidator):
 
         return self._is_valid
 
-    def has_valid_size(self, allow_empty_image_file: bool, maximum_size: int = IMAGE_MAX_SIZE) -> None:
+    def validate_size(self, allow_empty_image_file: bool, maximum_size: int = IMAGE_MAX_SIZE) -> None:
         """
         Checks if image has a valid size.
         if 'allow_empty_image_file' is true, checks that the image file is not empty.
         Args:
             allow_empty_image_file (bool): Whether empty image file is an error.
             maximum_size (int): Maximum allowed size.
-
-        Returns:
-            (bool): True if size is valid, false otherwise.
         """
         if re.match(IMAGE_REGEX, self.file_path, re.IGNORECASE):
             image_size = os.path.getsize(self.file_path)

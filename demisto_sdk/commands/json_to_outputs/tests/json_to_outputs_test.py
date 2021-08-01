@@ -189,6 +189,15 @@ dummy_description_dictionary = {"day": "day of the week",
                               dummy_description_dictionary)
                          ])
 def test_json_to_outputs__description(mocker, tmpdir, description_argument: Optional[str], dictionary: dict):
+    """
+    Given
+        - a (possibly-empty) description dictionary
+    When
+        - Passed to json_to_outputs
+    Then
+        - ensure the returned values are correct
+    """
+
     output = tmpdir.join("test_json_to_outputs__file_input.yml")
 
     mocker.patch('demisto_sdk.commands.json_to_outputs.json_to_outputs.input_multiline',

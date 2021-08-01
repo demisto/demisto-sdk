@@ -3,7 +3,8 @@ from __future__ import print_function
 import itertools
 import os
 import re
-
+from typing import Dict
+from functools import lru_cache
 from demisto_sdk.commands.common.constants import (PACKS_DIR,
                                                    RN_HEADER_BY_FILE_TYPE,
                                                    FileType)
@@ -38,6 +39,7 @@ class ReleaseNotesValidator(BaseValidator):
         self.latest_release_notes = get_latest_release_notes_text(self.release_notes_path)
         self.file_types_that_should_not_appear_in_rn = {FileType.TEST_SCRIPT, FileType.TEST_PLAYBOOK, FileType.README,
                                                         FileType.RELEASE_NOTES, None}
+        self.metadata_content = self.get_metadata_file_content(self.pack_path)
 
     def are_release_notes_complete(self):
         is_valid = True
@@ -88,6 +90,19 @@ class ReleaseNotesValidator(BaseValidator):
         """
         return re.sub(r'<\!--.*?-->', '', release_notes_comments, flags=re.DOTALL)
 
+    def contains_bc_entry_if_needed(self) -> bool:
+        """
+        If RN version is BC, checks if it contains BC entry filled.
+        Returns:
+            (bool): True if version is not BC, or is BC and contains BC entry not filled by template.
+        """
+        rn_version: str = os.path.splitext(os.path.basename(self.release_notes_file_path))[0]
+        rn_version_in_pack_metadata: str = rn_version.replace('_', '.')
+        metadata_content: Dict = self.get_cached_pack_metadata_content(self.pack_path)
+        if rn_version_in_pack_metadata in metadata_content.get('breakingChangesVersions', []) and not self.rn_contains_bc_entry:
+            a = 2 # TODO error
+        return True
+
     def is_file_valid(self):
         """Checks if given file is valid.
 
@@ -96,7 +111,21 @@ class ReleaseNotesValidator(BaseValidator):
         """
         validations = [
             self.has_release_notes_been_filled_out(),
-            self.are_release_notes_complete()
+            self.are_release_notes_complete(),
+            self.contains_bc_entry_if_needed()
         ]
 
         return all(validations)
+
+    @staticmethod
+    @lru_cache(256)
+    def get_cached_pack_metadata_content(pack_path: str) -> Dict:
+        """
+        Gets pack metadata. Because many RN might have same pack metadata, using LRU cache to avoid many file openings.
+        Args:
+            pack_path (str): Pack path.
+
+        Returns:
+            (Dict): Metadata content
+        """
+        return BaseValidator.get_metadata_file_content(f'{pack_path}/pack_metadata.json')

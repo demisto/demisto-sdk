@@ -66,7 +66,7 @@ jobs:
             name: Tox build
             no_output_timeout: 15m
             command: |
-              tox -e py38 -v -- --cov=demisto_sdk --cov-report=html
+              tox -e py38 -v -- --cov=demisto_sdk --cov-report=html demisto_sdk/commands/json_to_outputs/tests/json_to_outputs_test.py::test_json_to_outputs__description
         - store_artifacts:
             path: coverage_html_report
         - run:

@@ -146,13 +146,14 @@ class Client(BaseClient):
 
         return response
 
-    def post_pet_upload_image_request(self, petId, additionalMetadata, file):
+    def post_pet_upload_image_request(self, petId, filter_, additionalMetadata, file):
+        params = assign_params(filter=filter_)
         data = assign_params(additionalMetadata=additionalMetadata, file=file)
         headers = self._headers
         headers['Content-Type'] = 'multipart/form-data'
 
         response = self._http_request(
-            'post', f'pet/{petId}/uploadImage', json_data=data, headers=headers)
+            'post', f'pet/{petId}/uploadImage', params=params, json_data=data, headers=headers)
 
         return response
 
@@ -461,11 +462,12 @@ def place_order_command(client: Client, args: Dict[str, Any]) -> CommandResults:
 
 def post_pet_upload_image_command(client: Client, args: Dict[str, Any]) -> CommandResults:
     petId = args.get('petId', None)
+    filter_ = str(args.get('filter_', ''))
     additionalMetadata = str(args.get('additionalMetadata', ''))
     file = str(args.get('file', ''))
 
     response = client.post_pet_upload_image_request(
-        petId, additionalMetadata, file)
+        petId, filter_, additionalMetadata, file)
     command_results = CommandResults(
         outputs_prefix='TestSwagger.ApiResponse',
         outputs_key_field='',

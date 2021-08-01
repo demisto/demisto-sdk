@@ -925,6 +925,17 @@
                     "properties": {}
                 },
                 {
+                    "name": "filter",
+                    "description": "Pet filter",
+                    "required": false,
+                    "default": "",
+                    "in": "query",
+                    "ref": "",
+                    "type": "string",
+                    "options": null,
+                    "properties": {}
+                },
+                {
                     "name": "additionalMetadata",
                     "description": "Additional data to pass to server",
                     "required": false,

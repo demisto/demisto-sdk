@@ -93,6 +93,30 @@ class TestPackMetadataValidator:
             invalid_pack_name: str = f'{pack_name} ({excluded_word})'
             assert not validator.name_does_not_contain_excluded_word(invalid_pack_name)
 
+    BC_VERSIONS_ARE_VALID_INPUTS = [(dict(), True),
+                                    ({'breakingChangesVersions': []}, True),
+                                    ({'breakingChangesVersions': ['1.2.3', '5.21.22', '1.12.18']}, True),
+                                    ({'breakingChangesVersions': ['1.2.3', '5.21.22', 'bas']}, False),
+                                    ({'breakingChangesVersions': ['1.2.3', '5.21.22', '1_12_18']}, False),
+                                    ({'breakingChangesVersions': ['1.2.3', '5.21.22', '1_12_18.md']}, False)]
+
+    @pytest.mark.parametrize('mocked_metadata, expected', BC_VERSIONS_ARE_VALID_INPUTS)
+    def test_bc_versions_are_valid(self, mocker, mocked_metadata: Dict, expected: bool):
+        """
+        Given:
+        - Pack metadata.
+
+        When:
+        - Validating pack metadata 'breakingChangesVersions' contains only versions according to standards.
+
+        Then:
+        - Ensure expected bool is returned.
+        """
+        validator = PackUniqueFilesValidator('fake')
+        mocker.patch.object(PackUniqueFilesValidator, '_read_metadata_content', return_value=mocked_metadata)
+        mocker.patch.object(validator, '_add_error', return_value=True)
+        assert validator.bc_versions_are_valid() == expected
+
     @staticmethod
     def read_file(file_):
         with io.open(file_, mode="r", encoding="utf-8") as data:

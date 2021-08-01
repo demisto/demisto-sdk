@@ -8,7 +8,7 @@ import re
 from datetime import datetime
 from distutils.version import LooseVersion
 from pathlib import Path
-from typing import Dict, Tuple
+from typing import Dict, Tuple, List
 
 import click
 from dateutil import parser
@@ -262,6 +262,7 @@ class PackUniqueFilesValidator(BaseValidator):
             self._is_approved_tags(),
             self._is_valid_support_type(),
             self.is_right_usage_of_usecase_tag(),
+            self.bc_versions_are_valid()
         ]):
             if self.should_version_raise:
                 return self.validate_version_bump()
@@ -636,5 +637,20 @@ class PackUniqueFilesValidator(BaseValidator):
         if found_dependencies:
             error_message, error_code = Errors.invalid_core_pack_dependencies(self.pack, str(found_dependencies))
             if self._add_error((error_message, error_code), file_path=self.pack_path):
+                return False
+        return True
+
+    def bc_versions_are_valid(self) -> bool:
+        """
+        Validates that every item in the 'breakingChangesVersions' list is valid.
+        A valid version structure would be x.x.x
+        Returns:
+            (bool) True of all versions in 'breakingChangesVersions' match the x.x.x format, false otherwise
+        """
+        version_regex = re.compile(r'\d+(\.\d+){2}$')
+        pack_meta_file_content = self._read_metadata_content()
+        bc_versions: List[str] = pack_meta_file_content.get('breakingChangesVersions', [])
+        if not all([version_regex.search(bc_version) for bc_version in bc_versions]):
+            if self._add_error(Errors.pack_metadata_invalid_support_type(), self.pack_meta_file):
                 return False
         return True

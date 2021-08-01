@@ -222,12 +222,6 @@ outputs:
 """
 
 
-def test_json_to_outputs__path_sanity():
-    path = os.path.join(TEST_PATH, 'dummy_integration_output.json')
-    print(path)
-    assert path
-
-
 INPUT = [(True, 'Boolean'),
          (0, 'Number'),
          (1, 'Number'),

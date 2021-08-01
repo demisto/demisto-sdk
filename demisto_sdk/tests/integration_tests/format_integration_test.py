@@ -323,7 +323,7 @@ def test_integration_format_remove_playbook_sourceplaybookid(tmp_path):
     prompt = f'The file {source_playbook_path} has no test playbooks configured. Do you want to configure it with "No tests"'
     assert result.exit_code == 0
     assert prompt in result.output
-    assert '======= Updating file: ' in result.stdout
+    assert '======= Updating file ' in result.stdout
     assert f'Format Status   on file: {source_playbook_path} - Success' in result.stdout
     with open(playbook_path) as f:
         yaml_content = yaml.safe_load(f)
@@ -352,7 +352,7 @@ def test_format_on_valid_py(mocker, repo):
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path, '-v'], catch_exceptions=True)
-    assert '======= Updating file:' in result.stdout
+    assert '======= Updating file' in result.stdout
     assert 'Running autopep8 on file' in result.stdout
     assert 'Success' in result.stdout
     assert valid_py == integration.code.read()
@@ -378,7 +378,7 @@ def test_format_on_invalid_py_empty_lines(mocker, repo):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path, '-v'], catch_exceptions=False)
 
-    assert '======= Updating file:' in result.stdout
+    assert '======= Updating file' in result.stdout
     assert 'Running autopep8 on file' in result.stdout
     assert 'Success' in result.stdout
     assert invalid_py != integration.code.read()
@@ -404,7 +404,7 @@ def test_format_on_invalid_py_dict(mocker, repo):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path, '-v'], catch_exceptions=False)
 
-    assert '======= Updating file:' in result.stdout
+    assert '======= Updating file' in result.stdout
     assert 'Running autopep8 on file' in result.stdout
     assert 'Success' in result.stdout
     assert invalid_py != integration.code.read()
@@ -431,7 +431,7 @@ def test_format_on_invalid_py_long_dict(mocker, repo):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path, '-v'], catch_exceptions=False)
 
-    assert '======= Updating file:' in result.stdout
+    assert '======= Updating file' in result.stdout
     assert 'Running autopep8 on file' in result.stdout
     assert 'Success' in result.stdout
     assert invalid_py != integration.code.read()
@@ -459,7 +459,7 @@ def test_format_on_invalid_py_long_dict_no_verbose(mocker, repo):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path], catch_exceptions=False)
 
-    assert '======= Updating file:' in result.stdout
+    assert '======= Updating file' in result.stdout
     assert 'Running autopep8 on file' not in result.stdout
     assert 'Success' in result.stdout
     assert invalid_py != integration.code.read()
@@ -498,7 +498,7 @@ def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
                                                    '--no-docker-checks', '--no-conf-json', '--allow-skipped'],
                                             catch_exceptions=False)
 
-    assert '======= Updating file:' in result_format.stdout
+    assert '======= Updating file' in result_format.stdout
     assert success_reg.search(result_format.stdout)
     assert 'The files are valid' in result_validate.stdout
 
@@ -523,7 +523,7 @@ def test_format_integration_skipped_files(repo):
     runner = CliRunner(mix_stderr=False)
     format_result = runner.invoke(main, [FORMAT_CMD, '-i', str(pack.path)], catch_exceptions=False)
 
-    assert '======= Updating file:' in format_result.stdout
+    assert '======= Updating file' in format_result.stdout
     assert 'Success' in format_result.stdout
     for excluded_file in excluded_files + ['pack_metadata.json']:
         assert excluded_file not in format_result.stdout
@@ -808,10 +808,10 @@ def test_format_incident_type_layout_id(repo):
 
     assert format_result.exit_code == 0
     assert 'Success' in format_result.stdout
-    assert f'======= Updating file: {pack.path}' in format_result.stdout
-    assert f'======= Updating file: {layout.path}' in format_result.stdout
-    assert f'======= Updating file: {incident_type.path}' in format_result.stdout
-    assert f'======= Updating file: {playbook.yml.path}' in format_result.stdout
+    assert f'======= Updating file {pack.path}' in format_result.stdout
+    assert f'======= Updating file {layout.path}' in format_result.stdout
+    assert f'======= Updating file {incident_type.path}' in format_result.stdout
+    assert f'======= Updating file {playbook.yml.path}' in format_result.stdout
 
     with open(layout.path) as layout_file:
         layout_content = json.loads(layout_file.read())

@@ -1,6 +1,5 @@
 from typing import Callable
 
-import git
 from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.lint import linter

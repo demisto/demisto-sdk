@@ -420,6 +420,9 @@ class OpenAPIIntegration:
                 else:
                     this_argument = this_argument.replace('$ARGTYPE$', '')
 
+            this_argument = this_argument.replace('$SARGNAME$', code_arg_name)
+            argument_names.append(code_arg_name)
+            arguments.append(this_argument)
             if 'query' in arg['in']:
                 params_data.append({
                     arg['name']: ref_arg_name
@@ -428,13 +431,6 @@ class OpenAPIIntegration:
                 body_data.append({
                     arg['name']: ref_arg_name
                 })
-            elif 'header' in arg['in']:
-                # currently don't support args to be passed in the request headers
-                continue
-
-            this_argument = this_argument.replace('$SARGNAME$', code_arg_name)
-            argument_names.append(code_arg_name)
-            arguments.append(this_argument)
 
         return argument_names, arguments, arguments_found, body_data, params_data
 

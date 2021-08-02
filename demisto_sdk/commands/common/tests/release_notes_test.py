@@ -345,7 +345,7 @@ CONTAINS_BC_ENTRY_IF_NEEDED_INPUTS = [
     ('- url command changed to return multiple entries', {'breakingChangesVersions': ['1.0.0']}, True),
     ('- url command changed to return multiple entries', {'breakingChangesVersions': ['1.0.1']}, False),
     ('- **Breaking Change:** url command changed to return multiple entries', {'breakingChangesVersions': ['1.0.0']},
-     True),
+     False),
     ('- **Breaking Change:** url command changed to return multiple entries', {'breakingChangesVersions': ['1.0.1']},
      True)]
 
@@ -367,7 +367,7 @@ def test_contains_bc_entry_if_needed(mocker, tmpdir, rn_data: str, metadata: Dic
     - Ensure expected bool is returned.
         Case a: True is returned.
         Case b: False is returned.
-        Case c: True is returned.
+        Case c: False is returned.
         Case d: True is returned.
     """
     tmp_rn_path = f'{tmpdir}/1_0_1.md'

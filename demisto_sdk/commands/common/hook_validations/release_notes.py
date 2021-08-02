@@ -28,7 +28,8 @@ class ReleaseNotesValidator(BaseValidator):
     """
     BC_ENTRY_STR: str = '- **Breaking Change:**'
 
-    def __init__(self, release_notes_file_path, modified_files=None, pack_name=None, added_files=None, ignored_errors=None,
+    def __init__(self, release_notes_file_path, modified_files=None, pack_name=None, added_files=None,
+                 ignored_errors=None,
                  print_as_warnings=False, suppress_print=False, json_file_path=None):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          suppress_print=suppress_print, json_file_path=json_file_path)
@@ -102,9 +103,19 @@ class ReleaseNotesValidator(BaseValidator):
         dot_version = rn_version.replace('_', '.')
         metadata_content: Dict = self.get_cached_pack_metadata_content(self.pack_path)
         breaking_changes_versions: List[str] = metadata_content.get('breakingChangesVersions', [])
+
+        # RN does not contain BC entry although it was defined as BC in pack metadata.
         if dot_version in breaking_changes_versions and self.BC_ENTRY_STR not in self.latest_release_notes:
             error_message, error_code = Errors.release_notes_missing_bc_entry(self.release_notes_file_path,
                                                                               self.pack_name, rn_version)
+            if self.handle_error(error_message, error_code, file_path=self.release_notes_file_path):
+                return False
+
+        # RN contains BC entry although it was not defined as BC in pack metadata.
+        if dot_version not in breaking_changes_versions and self.BC_ENTRY_STR in self.latest_release_notes:
+            error_message, error_code = Errors.release_notes_contains_bc_for_non_bc_version(
+                self.release_notes_file_path,
+                self.pack_name, rn_version)
             if self.handle_error(error_message, error_code, file_path=self.release_notes_file_path):
                 return False
         return True

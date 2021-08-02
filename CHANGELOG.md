@@ -10,6 +10,13 @@
 * Fixed the outputs validations in **validate** so enrichment commands will not be checked to have DBotScore outputs.
 * Added a new validation to require the dockerimage key to exist in an integration and script yml files.
 * Enhanced the **generate-test-playbook** command to use only integration tested on commands, rather than (possibly) other integrations implementing them.
+* Expanded unify command to support GenericModules - Unifies a GenericModule object with its Dashboards.
+* Added validators for generic objects:
+  - Generic Field validator - verify that the 'fromVersion' field is above 6.5.0, 'group' field equals 4 and 'id' field starts with the prefix 'generic_'.
+  - Generic Type validator - verify that the 'fromVersion' field is above 6.5.0
+  - Generic Module validator - verify that the 'fromVersion' field is above 6.5.0
+  - Generic Definition validator - verify that the 'fromVersion' field is above 6.5.0
+ * Expanded Format command to support Generic Objects - Fixes generic objects according to their validations.
 * Updated the **create-content-artifacts** command to support generic modules, definitions, fields and types.
 
 # 1.4.5

@@ -995,15 +995,15 @@ class TestRNUpdateUnit:
         modified = {'/Packs/ApiModules/Scripts/ApiModules_script/ApiModules_script.yml'}
         added = {}
         id_set_content = {'integrations':
-                          [
-                              {'FeedTAXII_integration':
-                               {'name': 'FeedTAXII_integration',
-                                'file_path': '/FeedTAXII_integration.yml',
-                                'pack': 'FeedTAXII',
-                                'api_modules': 'ApiModules_script'
-                                }
-                               }
-                          ]}
+            [
+                {'FeedTAXII_integration':
+                     {'name': 'FeedTAXII_integration',
+                      'file_path': '/FeedTAXII_integration.yml',
+                      'pack': 'FeedTAXII',
+                      'api_modules': 'ApiModules_script'
+                      }
+                 }
+            ]}
         id_set_f = tmpdir / "id_set.json"
         id_set_f.write(json.dumps(id_set_content))
 
@@ -1144,7 +1144,7 @@ class TestRNUpdateUnit:
         mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
         client = UpdateRN(pack_path="demisto_sdk/commands/update_release_notes/tests_data/Packs/Test",
                           update_type='minor', modified_files_in_pack={
-                              'Packs/Test/Integrations/Test.yml'}, added_files=set('Packs/Test/some_added_file.py'))
+                'Packs/Test/Integrations/Test.yml'}, added_files=set('Packs/Test/some_added_file.py'))
         client.execute_update()
         with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md', 'r') as file:
             RN = file.read()
@@ -1199,6 +1199,38 @@ class TestRNUpdateUnit:
          '#### Integrations\n##### BitcoinAbuse Feed\n- %%UPDATE_RN%%\n- Updated the Docker image '
          'to: *demisto/python3:3.9.1.149616*.\n', True)
     ]
+
+    ADD_BC_ENTRY_IF_NEEDED_INPUTS = [(False, '#### Integrations\n##### BitcoinAbuse Feed\n- %%UPDATE_RN%%\n',
+                                      '#### Integrations\n##### BitcoinAbuse Feed\n- %%UPDATE_RN%%\n'),
+                                     (True, '#### Integrations\n##### BitcoinAbuse Feed\n- %%UPDATE_RN%%\n',
+                                      '#### Integrations\n##### BitcoinAbuse Feed\n- %%UPDATE_RN%%\n'
+                                      f'{UpdateRN.BREAKING_CHANGES_ENTRY_TEMPLATE}'),
+                                     (True, '#### Integrations\n##### BitcoinAbuse Feed\n- %%UPDATE_RN%%\n'
+                                      '\n#### Breaking Changes\n- **Breaking changes:** Stopped support for command x',
+                                      '#### Integrations\n##### BitcoinAbuse Feed\n- %%UPDATE_RN%%\n'
+                                      '\n#### Breaking Changes\n- **Breaking changes:** Stopped support for command x')
+                                     ]
+
+    @pytest.mark.parametrize('is_bc, rn_string, expected_rn_string', ADD_BC_ENTRY_IF_NEEDED_INPUTS)
+    def test_add_bc_entry_if_needed(self, is_bc: bool, rn_string: str, expected_rn_string: str):
+        """
+        Given
+            - RN string.
+        When
+            - Adding BC entry to given RN string if needed
+            Case a: Version is not BC, and does not contain BC entry.
+            Case a: Version is BC, and does not contain BC entry.
+            Case a: Version is BC, and contains BC entry.
+
+        Then
+            - Ensure BC entry is added when needed
+            Case a: Ensure same RN is returned.
+            Case b: Ensure RN with BC entry is returned.
+            Case c: Ensure same RN is returned.
+        """
+        update_rn: UpdateRN = UpdateRN(pack_path='', update_type=None, modified_files_in_pack=set(), added_files=set(),
+                                       is_bc=is_bc)
+        assert update_rn.add_bc_entry_if_needed(rn_string) == expected_rn_string
 
 
 def test_get_from_version_at_update_rn(integration):

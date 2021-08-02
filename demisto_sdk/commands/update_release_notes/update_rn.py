@@ -26,7 +26,8 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
 
 
 class UpdateRN:
-    BREAKING_CHANGES_ENTRY_TEMPLATE = '\n#### Breaking Changes\n- **Breaking changes:** %%UPDATE_BC_CHANGES%%'
+    BREAKING_CHANGES_ENTRY = '\n#### Breaking Changes\n- **Breaking changes:**'
+    BREAKING_CHANGES_ENTRY_TEMPLATE = f'{BREAKING_CHANGES_ENTRY} %%UPDATE_BC_CHANGES%%'
 
     def __init__(self, pack_path: str, update_type: Union[str, None], modified_files_in_pack: set, added_files: set,
                  specific_version: str = None, pre_release: bool = False, pack: str = None,
@@ -483,6 +484,8 @@ class UpdateRN:
         for key, val in rn_template_as_dict.items():
             rn_string = f"{rn_string}{key}{val}"
 
+        self.add_bc_entry_if_needed(rn_string)
+
         return rn_string
 
     def build_rn_desc(self, _type: FileType = None, content_name: str = '', desc: str = '', is_new_file: bool = False,
@@ -589,14 +592,15 @@ class UpdateRN:
 
     def add_bc_entry_if_needed(self, rn_string: str) -> str:
         """
-        Adds BC entry to 'rn_string' if such entry does not exist
+        Adds BC entry to 'rn_string' if such entry does not exist. Handles both cases of newly created RN and
+        existing RN being updated.
         Args:
             rn_string (str): RN string.
 
         Returns:
             (str): RN string, with BC entry if it is needed and no such entry exists.
         """
-        if self.is_bc and self.BREAKING_CHANGES_ENTRY_TEMPLATE not in rn_string:
+        if self.is_bc and self.BREAKING_CHANGES_ENTRY not in rn_string:
             rn_string += self.BREAKING_CHANGES_ENTRY_TEMPLATE
         return rn_string
 

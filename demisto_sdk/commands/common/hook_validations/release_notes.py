@@ -3,8 +3,9 @@ from __future__ import print_function
 import itertools
 import os
 import re
-from typing import Dict
 from functools import lru_cache
+from typing import Dict, List
+
 from demisto_sdk.commands.common.constants import (PACKS_DIR,
                                                    RN_HEADER_BY_FILE_TYPE,
                                                    FileType)
@@ -25,6 +26,7 @@ class ReleaseNotesValidator(BaseValidator):
         release_notes_path (str): the path to the changelog file of the examined file.
         latest_release_notes (str): the text of the UNRELEASED section in the changelog file.
     """
+    BC_ENTRY_STR: str = '- **Breaking Change**:'
 
     def __init__(self, release_notes_file_path, modified_files=None, pack_name=None, added_files=None, ignored_errors=None,
                  print_as_warnings=False, suppress_print=False, json_file_path=None):
@@ -39,7 +41,7 @@ class ReleaseNotesValidator(BaseValidator):
         self.latest_release_notes = get_latest_release_notes_text(self.release_notes_path)
         self.file_types_that_should_not_appear_in_rn = {FileType.TEST_SCRIPT, FileType.TEST_PLAYBOOK, FileType.README,
                                                         FileType.RELEASE_NOTES, None}
-        self.metadata_content = self.get_metadata_file_content(self.pack_path)
+        self.metadata_content = self.get_cached_pack_metadata_content(self.pack_path)
 
     def are_release_notes_complete(self):
         is_valid = True
@@ -74,7 +76,7 @@ class ReleaseNotesValidator(BaseValidator):
             error_message, error_code = Errors.release_notes_file_empty()
             if self.handle_error(error_message, error_code, file_path=self.release_notes_file_path):
                 return False
-        elif '%%UPDATE_RN%%' in release_notes_comments:
+        elif '%%UPDATE_RN%%' in release_notes_comments or '%%UPDATE_BC_CHANGES%%' in release_notes_comments:
             error_message, error_code = Errors.release_notes_not_finished()
             if self.handle_error(error_message, error_code, file_path=self.release_notes_file_path):
                 return False
@@ -97,10 +99,14 @@ class ReleaseNotesValidator(BaseValidator):
             (bool): True if version is not BC, or is BC and contains BC entry not filled by template.
         """
         rn_version: str = os.path.splitext(os.path.basename(self.release_notes_file_path))[0]
-        rn_version_in_pack_metadata: str = rn_version.replace('_', '.')
+        dot_version = rn_version.replace('_', '.')
         metadata_content: Dict = self.get_cached_pack_metadata_content(self.pack_path)
-        if rn_version_in_pack_metadata in metadata_content.get('breakingChangesVersions', []) and not self.rn_contains_bc_entry:
-            a = 2 # TODO error
+        breaking_changes_versions: List[str] = metadata_content.get('breakingChangesVersions', [])
+        if dot_version in breaking_changes_versions and self.BC_ENTRY_STR not in self.latest_release_notes:
+            error_message, error_code = Errors.release_notes_missing_bc_entry(self.release_notes_file_path,
+                                                                              self.pack_name, rn_version)
+            if self.handle_error(error_message, error_code, file_path=self.release_notes_file_path):
+                return False
         return True
 
     def is_file_valid(self):

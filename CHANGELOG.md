@@ -11,6 +11,7 @@
 * Added a new validation to require the dockerimage key to exist in an integration and script yml files.
 * Enhanced the **generate-test-playbook** command to use only integration tested on commands, rather than (possibly) other integrations implementing them.
 
+
 # 1.4.5
 * Enhanced the **postman-codegen** command to name all generated arguments with lower case.
 * Fixed an issue where the **find-dependencies** command miscalculated the dependencies for playbooks that use generic commands.

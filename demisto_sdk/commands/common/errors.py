@@ -149,6 +149,7 @@ ERROR_CODE = {
     "missing_release_notes_entry": {'code': "RN107", 'ui_applicable': False, 'related_field': ''},
     "added_release_notes_for_new_pack": {'code': "RN108", 'ui_applicable': False, 'related_field': ''},
     "modified_existing_release_notes": {'code': "RN109", 'ui_applicable': False, 'related_field': ''},
+    "release_notes_missing_bc_entry": {'code': "RN110", 'ui_applicable': False, 'related_field': ''},
     "playbook_cant_have_rolename": {'code': "PB100", 'ui_applicable': True, 'related_field': 'rolename'},
     "playbook_unreachable_condition": {'code': "PB101", 'ui_applicable': True, 'related_field': 'tasks'},
     "playbook_unhandled_condition": {'code': "PB102", 'ui_applicable': True, 'related_field': 'conditions'},
@@ -1772,3 +1773,10 @@ class Errors:
     @error_code_decorator
     def entity_name_contains_excluded_word(entity_name: str, excluded_words: List[str]):
         return f'Entity {entity_name} should not contain one of {excluded_words} in its name. Please remove.'
+
+    @staticmethod
+    @error_code_decorator
+    def release_notes_missing_bc_entry(file_path: str, pack_name: str, version: str):
+        return f'Release notes {file_path} are missing breaking changes entry for version {version} that was defined' \
+               f'as a breaking changes version for {pack_name} pack. Please rerun the update-release-notes command' \
+               'without -u and with -bc flag to generate an updated template.'

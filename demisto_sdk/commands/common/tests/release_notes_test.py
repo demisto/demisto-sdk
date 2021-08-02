@@ -1,4 +1,5 @@
 import os
+from typing import Dict
 
 import pytest
 
@@ -131,7 +132,6 @@ FILLED_OUT_RN = '''
 #### Cortex XDR Incident Handling
 - test
 '''
-
 
 TEST_RELEASE_NOTES_TEST_BANK_1 = [
     ('', False),  # Completely Empty
@@ -337,3 +337,41 @@ def test_has_release_notes_been_filled_out(release_notes, filled_expected_result
     validator = get_validator(release_notes, MODIFIED_FILES)
     validator.suppress_print = False
     assert validator.has_release_notes_been_filled_out() == filled_expected_result
+
+
+CONTAINS_BC_ENTRY_IF_NEEDED_INPUTS = [
+    ('- url command changed to return multiple entries', {'breakingChangesVersions': ['1.0.0']}, True),
+    ('- url command changed to return multiple entries', {'breakingChangesVersions': ['1.0.1']},
+     False),
+    ('- **Breaking Change**: url command changed to return multiple entries', {'breakingChangesVersions': ['1.0.0']}, True),
+    ('- **Breaking Change**: url command changed to return multiple entries', {'breakingChangesVersions': ['1.0.1']},
+     True)]
+
+
+@pytest.mark.parametrize('rn_data, metadata, expected', CONTAINS_BC_ENTRY_IF_NEEDED_INPUTS)
+def test_contains_bc_entry_if_needed(mocker, tmpdir, rn_data: str, metadata: Dict, expected: bool):
+    """
+    Given
+    - Release notes.
+
+    When
+    - Checking whether BC entry exists in case it should exist.
+        Case a: RN does not contain BC entry, version is not BC.
+        Case b: RN does not contain BC entry, version BC.
+        Case c: RN contains BC entry, version is not BC.
+        Case d: RN contains BC entry, version is BC.
+
+    Then
+    - Ensure expected bool is returned.
+        Case a: True is returned.
+        Case b: False is returned.
+        Case c: True is returned.
+        Case d: True is returned.
+    """
+    tmp_rn_path = f'{tmpdir}/1_0_1.md'
+    with open(tmp_rn_path, 'w') as f:
+        f.write(rn_data)
+    mocker.patch.object(ReleaseNotesValidator, 'get_cached_pack_metadata_content', return_value=metadata)
+    rn_validator: ReleaseNotesValidator = ReleaseNotesValidator(tmp_rn_path, pack_name='BitcoinAbuse')
+    mocker.patch.object(rn_validator, 'handle_error', return_value=True)
+    assert rn_validator.contains_bc_entry_if_needed() == expected

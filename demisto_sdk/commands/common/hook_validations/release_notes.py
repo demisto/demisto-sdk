@@ -106,16 +106,13 @@ class ReleaseNotesValidator(BaseValidator):
 
         # RN does not contain BC entry although it was defined as BC in pack metadata.
         if dot_version in breaking_changes_versions and self.BC_ENTRY_STR not in self.latest_release_notes:
-            error_message, error_code = Errors.release_notes_missing_bc_entry(self.release_notes_file_path,
-                                                                              self.pack_name, rn_version)
+            error_message, error_code = Errors.release_notes_missing_bc_entry(self.pack_name, rn_version)
             if self.handle_error(error_message, error_code, file_path=self.release_notes_file_path):
                 return False
 
         # RN contains BC entry although it was not defined as BC in pack metadata.
-        if dot_version not in breaking_changes_versions and self.BC_ENTRY_STR in self.latest_release_notes:
-            error_message, error_code = Errors.release_notes_contains_bc_for_non_bc_version(
-                self.release_notes_file_path,
-                self.pack_name, rn_version)
+        if dot_version not in breaking_changes_versions and '#### Breaking Changes' in self.latest_release_notes:
+            error_message, error_code = Errors.release_notes_contains_bc_for_non_bc_version(self.pack_name, rn_version)
             if self.handle_error(error_message, error_code, file_path=self.release_notes_file_path):
                 return False
         return True

@@ -1796,15 +1796,15 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def release_notes_missing_bc_entry(file_path: str, pack_name: str, version: str):
-        return f'Release notes {file_path} are missing breaking changes entry for version {version} that was defined' \
+    def release_notes_missing_bc_entry(pack_name: str, version: str):
+        return f'Release notes are missing breaking changes entry for version {version} that was defined' \
                f'as a breaking changes version for {pack_name} pack. Please rerun the update-release-notes command' \
                'without -u and with -bc flag to generate an updated template.'
 
     @staticmethod
     @error_code_decorator
-    def release_notes_contains_bc_for_non_bc_version(file_path: str, pack_name: str, version: str):
-        return f'Release notes {file_path} have breaking changes entry for version {version} that was not defined' \
-               f'as a breaking changes version for {pack_name} pack. Remove if version is not breaking changes.' \
-               f'If version is breaking changes, Please rerun the update-release-notes command' \
-               'without -u and with -bc flag to generate an updated template.'
+    def release_notes_contains_bc_for_non_bc_version(pack_name: str, version: str):
+        return f'Release notes have breaking changes entry for version {version} that was not defined ' \
+               f'as a breaking change version for {pack_name} pack. Please remove entry if version is not breaking' \
+               f' changes. If version is breaking changes, Please rerun the update-release-notes command' \
+               ' without -u and with -bc flag to generate an updated template.'

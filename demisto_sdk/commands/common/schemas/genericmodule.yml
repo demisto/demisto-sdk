@@ -31,6 +31,8 @@ mapping:
             type: str
           title:
             type: str
+          id:
+            type: str
           tabs:
             type: seq
             sequence:

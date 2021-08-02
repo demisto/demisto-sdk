@@ -25,8 +25,6 @@ references:
           pip install pipfile-requirements
           pipfile2req > requirements.txt
           pipfile2req -d > requirements-dev.txt
-          cp requirements.txt $ARTIFACTS_FOLDER
-          cp requirements-dev.txt $ARTIFACTS_FOLDER
 
 jobs:
   tox3-7-unit-tests:

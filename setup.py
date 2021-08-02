@@ -16,8 +16,8 @@ NAME = "demisto-sdk"
 # prerequisite: setuptools
 # http://pypi.python.org/pypi/setuptools
 
-with open('requirements.txt') as f:
-    requirements = f.read().splitlines()
+# with open('requirements.txt') as f:
+#     requirements = f.read().splitlines()
 
 with open('README.md', 'r') as f:
     readme = f.read()

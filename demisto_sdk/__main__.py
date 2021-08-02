@@ -1192,7 +1192,7 @@ def merge_id_sets(**kwargs):
     "-idp", "--id-set-path", help="The path of the id-set.json used for APIModule updates.",
     type=click.Path(resolve_path=True))
 @click.option(
-    '-b', '--breaking-changes', help='Indicates that this version is breaking changes.', is_flag=True)
+    '-bc', '--breaking-changes', help='Indicates that this version is breaking changes.', is_flag=True)
 def update_release_notes(**kwargs):
     """Auto-increment pack version and generate release notes template."""
     check_configuration_file('update-release-notes', kwargs)

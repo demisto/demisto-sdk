@@ -19,12 +19,12 @@ references:
         - prepare-tox3-7
 
     create_requirement_files: &create_requirement_files
-    run:
-      name: Create requirement files
-      command: |
-        pip install pipfile-requirements
-        pipfile2req > requirements.txt
-        pipfile2req -d > requirements-dev.txt
+      run:
+        name: Create requirement files
+        command: |
+          pip install pipfile-requirements
+          pipfile2req > requirements.txt
+          pipfile2req -d > requirements-dev.txt
 
 jobs:
   tox3-7-unit-tests:

@@ -606,6 +606,7 @@ GENERIC_MODULE = {
         "icon": "icon-widget-infinity-24-s",
         "name": "RBVM",
         "title": "Risk Base Vulnerability Management",
+        "id": "RBVM",
         "tabs": [
             {
                 "name": "Assets",

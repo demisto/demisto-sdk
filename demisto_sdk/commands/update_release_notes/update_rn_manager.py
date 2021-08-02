@@ -10,8 +10,8 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                filter_files_on_pack,
                                                get_pack_name,
                                                get_pack_names_from_files,
-                                               print_color, print_warning,
-                                               suppress_stdout)
+                                               pack_name_to_path, print_color,
+                                               print_warning, suppress_stdout)
 from demisto_sdk.commands.update_release_notes.update_rn import (
     UpdateRN, update_api_modules_dependents_rn)
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
@@ -165,7 +165,8 @@ class UpdateReleaseNotesManager:
 
         # Checks if update is required
         if pack_modified or pack_added or pack_old or self.is_force:
-            update_pack_rn = UpdateRN(pack_path=f'Packs/{pack}', update_type=self.update_type,
+            pack_path = pack_name_to_path(pack)
+            update_pack_rn = UpdateRN(pack_path=pack_path, update_type=self.update_type,
                                       modified_files_in_pack=pack_modified.union(pack_old),
                                       pre_release=self.pre_release,
                                       added_files=pack_added, specific_version=self.specific_version,

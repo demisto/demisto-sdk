@@ -18,6 +18,14 @@ references:
         - checkout-content
         - prepare-tox3-7
 
+    create_requirement_files: &create_requirement_files
+      run:
+        name: Create requirement files
+        command: |
+          pip install pipfile-requirements
+          pipfile2req > requirements.txt
+          pipfile2req -d > requirements-dev.txt
+
 jobs:
   tox3-7-unit-tests:
       # docker image circleci/python:3.8.3-buster-node also contains python 3.7
@@ -25,14 +33,9 @@ jobs:
         - image: circleci/python:3.8.3-buster-node
       steps:
         - checkout
-        - run:
-            name: Create requirement files
-            command: |
-              pip install pipfile-requirements
-              pipfile2req > requirements.txt
-              pipfile2req -d > requirements-dev.txt
+        - *create_requirement_files
         - restore_cache:
-            key: tox-37-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
+            key: tox-37-cache-{{ checksum "Pipfile" }}-{{ checksum "Pipfile.lock" }}
         - run:
             # install npm modules so readme tests run with mdx verification
             name: npm install
@@ -48,7 +51,7 @@ jobs:
             command: |
               tox -e py37 -v
         - save_cache:
-            key: tox-37-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
+            key: tox-37-cache-{{ checksum "Pipfile" }}-{{ checksum "Pipfile.lock" }}
             paths:
               - .tox/py37
 
@@ -57,12 +60,7 @@ jobs:
         - image: circleci/python:3.8.3-buster-node
       steps:
         - checkout
-        - run:
-            name: Create requirement files
-            command: |
-              pip install pipfile-requirements
-              pipfile2req > requirements.txt
-              pipfile2req -d > requirements-dev.txt
+        - *create_requirement_files
         - restore_cache:
             key: tox-38-cache-{{ checksum "Pipfile" }}-{{ checksum "Pipfile.lock" }}
         - run:
@@ -74,6 +72,7 @@ jobs:
             name: Setup Tox
             command: |
               pip install tox
+              pip install tox-pipenv
         - run:
             name: Tox build
             no_output_timeout: 15m
@@ -96,14 +95,9 @@ jobs:
       - image: circleci/python:3.8.3-buster-node
     steps:
       - checkout
-      - run:
-          name: Create requirement files
-          command: |
-            pip install pipfile-requirements
-            pipfile2req > requirements.txt
-            pipfile2req -d > requirements-dev.txt
+      - *create_requirement_files
       - restore_cache:
-          key: tox-37-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
+          key: tox-37-cache-{{ checksum "Pipfile" }}-{{ checksum "Pipfile.lock" }}
       - run:
           # install npm modules so readme tests run with mdx verification
           name: npm install
@@ -118,7 +112,7 @@ jobs:
           command: |
             tox -e py37 --notest
       - save_cache:
-          key: tox-37-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
+          key: tox-37-cache-{{ checksum "Pipfile" }}-{{ checksum "Pipfile.lock" }}
           paths:
             - .tox/py37
       - persist_to_workspace:

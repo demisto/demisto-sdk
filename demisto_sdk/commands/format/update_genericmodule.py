@@ -29,7 +29,7 @@ class GenericModuleJSONFormat(BaseUpdateJSON):
 
     def run_format(self) -> int:
         try:
-            click.secho(f'\n================= Updating file: {self.source_file} =================', fg='bright_blue')
+            click.secho(f'\n================= Updating file {self.source_file} =================', fg='bright_blue')
             super().update_json()
             self.set_default_values_as_needed()
             self.save_json_to_destination_file()

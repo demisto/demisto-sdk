@@ -14,7 +14,7 @@ from demisto_sdk.commands.common.tools import (_get_file_id, find_type,
                                                get_yaml, is_uuid)
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 
-ryaml = YAML(typ='safe', pure=True)
+ryaml = YAML()
 ryaml.allow_duplicate_keys = True
 ryaml.preserve_quotes = True  # type: ignore
 

@@ -119,6 +119,9 @@ class BaseValidator:
 
     @staticmethod
     def get_metadata_file_content(meta_file_path):
+        if not os.path.exists(meta_file_path):
+            return {}
+
         with io.open(meta_file_path, encoding="utf-8") as file:
             metadata_file_content = file.read()
 

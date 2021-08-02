@@ -63,7 +63,7 @@ class BaseUpdate:
         if not self.no_validate:
             self.validate_manager = ValidateManager(silence_init_prints=True, skip_conf_json=True,
                                                     skip_dependencies=True, skip_pack_rn_validation=True,
-                                                    check_is_unskipped=False)
+                                                    check_is_unskipped=False, validate_id_set=False)
 
         if not self.source_file:
             raise Exception('Please provide <source path>, <optional - destination path>.')

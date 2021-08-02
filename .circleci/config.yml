@@ -26,11 +26,11 @@ jobs:
       steps:
         - checkout
         - run:
-          name: Setup Tox
-          command: |
-            pip install pipfile-requirements
-            pipfile2req > requirements.txt
-            pipfile2req -d > requirements-dev.txt
+            name: Create requirement files
+            command: |
+              pip install pipfile-requirements
+              pipfile2req > requirements.txt
+              pipfile2req -d > requirements-dev.txt
         - restore_cache:
             key: tox-37-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
         - run:

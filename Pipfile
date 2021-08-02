@@ -4,7 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-astroid = "<2.5.4,>=2.4.2"
+astroid = ">=2.4.2,<2.5.4"
 autopep8 = ">=1.4.4"
 bandit = ">=1.6.2"
 bs4 = ">=0.0.1"
@@ -65,4 +65,4 @@ tox-pyenv = "*"
 Deprecated = "*"
 
 [requires]
-python_version = "3"
+python_version = "3.9"

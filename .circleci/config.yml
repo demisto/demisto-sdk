@@ -64,7 +64,7 @@ jobs:
               pipfile2req > requirements.txt
               pipfile2req -d > requirements-dev.txt
         - restore_cache:
-            key: tox-38-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
+            key: tox-38-cache-{{ checksum "Pipfile" }}-{{ checksum "Pipfile.lock" }}
         - run:
             # install npm modules so readme tests run with mdx verification
             name: npm install

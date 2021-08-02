@@ -37,7 +37,6 @@ jobs:
             command: |
               pip install tox
               pip install tox-pipenv
-              pip install pipfile-requirements
         - run:
             name: Tox build
             no_output_timeout: 15m
@@ -65,7 +64,6 @@ jobs:
             command: |
               pip install tox
               pip install tox-pipenv
-              pip install pipfile-requirements
         - run:
             name: Tox build
             no_output_timeout: 15m

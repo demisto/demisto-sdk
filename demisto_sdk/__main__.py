@@ -690,7 +690,8 @@ def format(
         deprecate: bool
 ):
     """Run formatter on a given script/playbook/integration/incidentfield/indicatorfield/
-    incidenttype/indicatortype/layout/dashboard/classifier/mapper/widget/report file.
+    incidenttype/indicatortype/layout/dashboard/classifier/mapper/widget/report file/genericfield/generictype/
+    genericmodule/genericdefinition.
     """
     return format_manager(
         str(input) if input else None,

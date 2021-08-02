@@ -116,6 +116,7 @@ ERROR_CODE = {
     "docker_not_formatted_correctly": {'code': "DO105", 'ui_applicable': True, 'related_field': 'dockerimage'},
     "docker_not_on_the_latest_tag": {'code': "DO106", 'ui_applicable': True, 'related_field': 'dockerimage'},
     "non_existing_docker": {'code': "DO107", 'ui_applicable': True, 'related_field': 'dockerimage'},
+    "dockerimage_not_in_yml_file": {'code': "DO108", 'ui_applicable': True, 'related_field': 'dockerimage'},
     "id_set_conflicts": {'code': "ID100", 'ui_applicable': False, 'related_field': ''},
     "duplicated_id": {'code': "ID102", 'ui_applicable': False, 'related_field': ''},
     "no_id_set_file": {'code': "ID103", 'ui_applicable': False, 'related_field': ''},
@@ -281,6 +282,8 @@ ERROR_CODE = {
     "xsoar_config_file_is_not_json": {'code': "XC100", 'ui_applicable': False, 'related_field': ''},
     "xsoar_config_file_malformed": {'code': "XC101", 'ui_applicable': False, 'related_field': ''},
     "invalid_readme_image_error": {'code': "RM108", 'ui_applicable': False, 'related_field': ''},
+    "invalid_generic_field_group_value": {'code': "GF100", 'ui_applicable': False, 'related_field': 'group'},
+    "invalid_generic_field_id": {'code': "GF101", 'ui_applicable': False, 'related_field': 'id'}
 }
 
 
@@ -745,6 +748,13 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def dockerimage_not_in_yml_file(file_path):
+        return f'There is no docker image provided in file {file_path}.\nYou can choose one from ' \
+               'DockerHub: https://hub.docker.com/u/demisto/, or create your own in the repo: ' \
+               ' https://github.com/demisto/dockerfiles'
+
+    @staticmethod
+    @error_code_decorator
     def non_existing_docker(docker_image):
         return f'{docker_image} - Could not find the docker image. Check if it exists in ' \
                f'DockerHub: https://hub.docker.com/u/demisto/.'
@@ -1206,6 +1216,16 @@ class Errors:
                f"1 - The right playbook name is set and the spelling is correct.\n" \
                f"2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
                f" rerun the command."
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_generic_field_group_value(group, generic_field_group):
+        return f"Group {group} is not a valid generic field group. Please set group = {generic_field_group} instead."
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_generic_field_id(generic_id, generic_id_prefix):
+        return f"ID {generic_id} is not a valid generic field ID - it should start with the prefix {generic_id_prefix}."
 
     @staticmethod
     @error_code_decorator

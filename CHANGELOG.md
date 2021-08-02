@@ -17,6 +17,7 @@
   - Generic Module validator - verify that the 'fromVersion' field is above 6.5.0
   - Generic Definition validator - verify that the 'fromVersion' field is above 6.5.0
  * Expanded Format command to support Generic Objects - Fixes generic objects according to their validations.
+* Fixed an issue where the **update-release-notes** command did not handle ApiModules properly.
 * Updated the **create-content-artifacts** command to support generic modules, definitions, fields and types.
 
 # 1.4.5
@@ -32,7 +33,6 @@
 * Fixed an issue where **openapi-codegen** tried to extract reference example outputs, leading to an exception.
 * Added an option to ignore secrets automatically when using the **init** command to create a pack.
 * Added a tool that gives the ability to temporarily suppress console output.
-* Expanded unify command to support GenericModules - Unifies a GenericModule object with its Dashboards.
 
 # 1.4.4
 * When formatting incident types with Auto-Extract rules and without mode field, the **format** command will now add the user selected mode.

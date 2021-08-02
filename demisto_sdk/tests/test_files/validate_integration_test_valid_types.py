@@ -556,12 +556,12 @@ GENERIC_FIELD = {
     ],
     "caseInsensitive": True,
     "cliName": "operatingsystem",
-    "id": "asset_operatingsystem",
+    "id": "generic_asset_operatingsystem",
     "name": "Operating System",
     "closeForm": False,
     "content": True,
     "editForm": True,
-    "group": 0,
+    "group": 4,
     "definitionId": "asset",
     "genericModuleId": "rbvm",
     "hidden": False,
@@ -606,6 +606,7 @@ GENERIC_MODULE = {
         "icon": "icon-widget-infinity-24-s",
         "name": "RBVM",
         "title": "Risk Base Vulnerability Management",
+        "id": "RBVM",
         "tabs": [
             {
                 "name": "Assets",
@@ -629,6 +630,7 @@ UNIFIED_GENERIC_MODULE = {
         "icon": "icon-widget-infinity-24-s",
         "name": "RBVM",
         "title": "Risk Base Vulnerability Management",
+        "id": "RBVM",
         "tabs": [
             {
                 "name": "Assets",

@@ -1206,9 +1206,9 @@ class TestRNUpdateUnit:
                                       '#### Integrations\n##### BitcoinAbuse Feed\n- %%UPDATE_RN%%\n'
                                       f'{UpdateRN.BREAKING_CHANGES_ENTRY_TEMPLATE}'),
                                      (True, '#### Integrations\n##### BitcoinAbuse Feed\n- %%UPDATE_RN%%\n'
-                                      '\n#### Breaking Changes\n- **Breaking changes:** Stopped support for command x',
+                                      '\n#### Breaking Changes\n- **Breaking Change:** Stopped support for command x',
                                       '#### Integrations\n##### BitcoinAbuse Feed\n- %%UPDATE_RN%%\n'
-                                      '\n#### Breaking Changes\n- **Breaking changes:** Stopped support for command x')
+                                      '\n#### Breaking Changes\n- **Breaking Change:** Stopped support for command x')
                                      ]
 
     @pytest.mark.parametrize('is_bc, rn_string, expected_rn_string', ADD_BC_ENTRY_IF_NEEDED_INPUTS)

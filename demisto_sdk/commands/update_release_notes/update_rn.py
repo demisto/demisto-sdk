@@ -26,7 +26,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
 
 
 class UpdateRN:
-    BREAKING_CHANGES_ENTRY = '\n#### Breaking Changes\n- **Breaking changes:**'
+    BREAKING_CHANGES_ENTRY = '\n#### Breaking Changes\n- **Breaking Change:**'
     BREAKING_CHANGES_ENTRY_TEMPLATE = f'{BREAKING_CHANGES_ENTRY} %%UPDATE_BC_CHANGES%%'
 
     def __init__(self, pack_path: str, update_type: Union[str, None], modified_files_in_pack: set, added_files: set,

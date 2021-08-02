@@ -753,7 +753,7 @@
                 "sha256:f0e59430ee953184a703a324b8ec52f571c6c4259d496a19d1cabcdc19dabc62",
                 "sha256:ffea251f5cd3c0b9b43c7a7a912777e0bc86263436a87c2555242a348817221b"
             ],
-            "version": "==3.17.3"
+            "version": "==3.11.3"
         },
         "pyasn1": {
             "hashes": [
@@ -1736,7 +1736,7 @@
                 "sha256:f0e59430ee953184a703a324b8ec52f571c6c4259d496a19d1cabcdc19dabc62",
                 "sha256:ffea251f5cd3c0b9b43c7a7a912777e0bc86263436a87c2555242a348817221b"
             ],
-            "version": "==3.17.3"
+            "version": "==3.11.3"
         },
         "publicsuffix2": {
             "hashes": [

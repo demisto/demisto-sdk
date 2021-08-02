@@ -74,7 +74,7 @@ outputs:
 import json
 import os
 import sys
-from typing import Dict, Optional, Union
+from typing import Dict, Optional
 
 import dateparser
 import yaml
@@ -249,7 +249,7 @@ def json_to_outputs(command, input, prefix, output=None, verbose=False, interact
             sys.exit(1)
 
 
-def _parse_description_argument(descriptions: str) -> Optional[dict]:  # type: ignore
+def _parse_description_argument(descriptions: Optional[str]) -> Optional[dict]:  # type: ignore
     """Parses the descriptions argument, be it a path to JSON or a JSON body given as argument """
 
     if not descriptions:  # None or empty

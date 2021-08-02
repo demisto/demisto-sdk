@@ -6,6 +6,8 @@ from typing import Dict, Optional, Set, Union
 
 import click
 import yaml
+from ruamel.yaml import YAML
+
 from demisto_sdk.commands.common.constants import (INTEGRATION, PLAYBOOK,
                                                    FileType)
 from demisto_sdk.commands.common.hook_validations.structure import \
@@ -17,10 +19,10 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                is_file_from_content_repo,
                                                print_color)
 from demisto_sdk.commands.format.format_constants import (
-    DEFAULT_VERSION, ERROR_RETURN_CODE, NEW_FILE_DEFAULT_5_5_0_FROMVERSION,
+    DEFAULT_VERSION, ERROR_RETURN_CODE, GENERIC_OBJECTS_DEFAULT_FROMVERSION,
+    GENERIC_OBJECTS_FILE_TYPES, NEW_FILE_DEFAULT_5_5_0_FROMVERSION,
     OLD_FILE_DEFAULT_1_FROMVERSION, SKIP_RETURN_CODE, SUCCESS_RETURN_CODE,
     VERSION_6_0_0)
-from ruamel.yaml import YAML
 
 ryaml = YAML()
 ryaml.allow_duplicate_keys = True
@@ -210,15 +212,41 @@ class BaseUpdate:
                 return reg
         return None
 
+    def set_fromVersion_of_generic_object(self, from_version=None):
+        """Sets fromVersion key in a generic object file:
+        Args:
+            from_version: The specific from_version value.
+        """
+        if self.verbose:
+            click.echo('Setting fromVersion field of a generic object')
+        # If user entered specific from version key to be set
+        if from_version:
+            if LooseVersion(from_version) < LooseVersion(GENERIC_OBJECTS_DEFAULT_FROMVERSION):
+                click.echo(f'The given fromVersion value for generic entities should be'
+                           f' {GENERIC_OBJECTS_DEFAULT_FROMVERSION} or above , given: {from_version}.\n'
+                           f'Setting fromVersion field to {GENERIC_OBJECTS_DEFAULT_FROMVERSION}')
+                self.data[self.from_version_key] = GENERIC_OBJECTS_DEFAULT_FROMVERSION
+            else:
+                self.data[self.from_version_key] = from_version
+        else:
+            if LooseVersion(self.data.get(self.from_version_key, '0.0.0')) < \
+                    LooseVersion(GENERIC_OBJECTS_DEFAULT_FROMVERSION):
+                self.data[self.from_version_key] = GENERIC_OBJECTS_DEFAULT_FROMVERSION
+
     def set_fromVersion(self, from_version=None, file_type: Optional[str] = None):
-        """Sets fromversion key in file:
+        """Sets fromVersion key in file:
         Args:
             from_version: The specific from_version value.
             file_type: what is the file type: for now only integration type passed
         """
         metadata = get_pack_metadata(self.source_file)
         # if it is new contributed pack = setting version to 6.0.0
-        should_set_from_version = ((metadata.get('currentVersion', '') == '1.0.0') and (metadata.get('support', '') != 'xsoar'))
+        should_set_from_version = ((metadata.get('currentVersion', '') == '1.0.0') and
+                                   (metadata.get('support', '') != 'xsoar'))
+
+        # If file type is a generic object (generic field/type/module/definition) - fromVersion should be at least 6.5.0
+        if file_type in GENERIC_OBJECTS_FILE_TYPES:
+            self.set_fromVersion_of_generic_object(from_version)
 
         # If there is no existing file in content repo
         if not self.old_file:
@@ -243,6 +271,7 @@ class BaseUpdate:
             elif should_set_from_version:
                 if self.data.get(self.from_version_key) != '5.5.0' or file_type != INTEGRATION:
                     self.data[self.from_version_key] = VERSION_6_0_0
+
             # If it is new pack, and it has from version lower than 5.5.0, ask to set it to 5.5.0
             # Playbook has its own validation in update_fromversion_by_user() function in update_playbook.py
             elif LooseVersion(self.data.get(self.from_version_key, '0.0.0')) < \

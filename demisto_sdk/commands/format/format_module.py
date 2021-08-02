@@ -3,6 +3,8 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 
 import click
+
+from demisto_sdk.commands.common.constants import TESTS_AND_DOC_DIRECTORIES
 from demisto_sdk.commands.common.legacy_git_tools import get_changed_files
 from demisto_sdk.commands.common.tools import (find_type, get_files_in_dir,
                                                print_error, print_success,
@@ -13,6 +15,14 @@ from demisto_sdk.commands.format.update_classifier import (
 from demisto_sdk.commands.format.update_connection import ConnectionJSONFormat
 from demisto_sdk.commands.format.update_dashboard import DashboardJSONFormat
 from demisto_sdk.commands.format.update_description import DescriptionFormat
+from demisto_sdk.commands.format.update_genericdefinition import \
+    GenericDefinitionJSONFormat
+from demisto_sdk.commands.format.update_genericfield import \
+    GenericFieldJSONFormat
+from demisto_sdk.commands.format.update_genericmodule import \
+    GenericModuleJSONFormat
+from demisto_sdk.commands.format.update_generictype import \
+    GenericTypeJSONFormat
 from demisto_sdk.commands.format.update_incidentfields import \
     IncidentFieldJSONFormat
 from demisto_sdk.commands.format.update_incidenttype import \
@@ -31,10 +41,6 @@ from demisto_sdk.commands.format.update_report import ReportJSONFormat
 from demisto_sdk.commands.format.update_script import ScriptYMLFormat
 from demisto_sdk.commands.format.update_widget import WidgetJSONFormat
 from demisto_sdk.commands.lint.commands_builder import excluded_files
-
-from demisto_sdk.commands.common.constants import (
-                                                   TESTS_AND_DOC_DIRECTORIES,
-                                                  )
 
 FILE_TYPE_AND_LINKED_CLASS = {
     'integration': IntegrationYMLFormat,
@@ -56,8 +62,13 @@ FILE_TYPE_AND_LINKED_CLASS = {
     'report': ReportJSONFormat,
     'testscript': ScriptYMLFormat,
     'canvas-context-connections': ConnectionJSONFormat,
-    'description': DescriptionFormat
+    'description': DescriptionFormat,
+    'genericfield': GenericFieldJSONFormat,
+    'generictype': GenericTypeJSONFormat,
+    'genericmodule': GenericModuleJSONFormat,
+    'genericdefinition': GenericDefinitionJSONFormat
 }
+
 UNFORMATTED_FILES = ['readme',
                      'releasenotes',
                      'changelog',

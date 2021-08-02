@@ -8,6 +8,7 @@ from typing import DefaultDict
 
 import PyPDF2
 from bs4 import BeautifulSoup
+
 # secrets settings
 # Entropy score is determined by shanon's entropy algorithm, most English words will score between 1.5 and 3.5
 from demisto_sdk.commands.common.configuration import Configuration
@@ -251,7 +252,7 @@ class SecretsValidator(object):
             except re.error as err:
                 error_string = f"Could not use secrets with item: {item}"
                 print_error(error_string)
-                raise re.error(error_string, err)
+                raise re.error(error_string, str(err))
         return file_content
 
     @staticmethod

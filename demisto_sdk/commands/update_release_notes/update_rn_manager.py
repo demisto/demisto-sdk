@@ -21,7 +21,7 @@ class UpdateReleaseNotesManager:
     def __init__(self, user_input: Optional[str] = None, update_type: Optional[str] = None,
                  pre_release: bool = False, is_all: Optional[bool] = False, text: Optional[str] = None,
                  specific_version: Optional[str] = None, id_set_path: Optional[str] = None,
-                 prev_ver: Optional[str] = None, is_force: bool = False):
+                 prev_ver: Optional[str] = None, is_force: bool = False, is_bc: bool = False):
         self.given_pack = user_input
         self.changed_packs_from_git: set = set()
         self.update_type = update_type
@@ -39,6 +39,7 @@ class UpdateReleaseNotesManager:
         if self.given_pack and self.is_all:
             raise ValueError('Please remove the -g flag when specifying only one pack.')
         self.rn_path: list = list()
+        self.is_bc = is_bc
 
     def manage_rn_update(self):
         """
@@ -169,7 +170,7 @@ class UpdateReleaseNotesManager:
                                       pre_release=self.pre_release,
                                       added_files=pack_added, specific_version=self.specific_version,
                                       text=self.text, is_force=self.is_force,
-                                      existing_rn_version_path=existing_rn_version)
+                                      existing_rn_version_path=existing_rn_version, is_bc=self.is_bc)
             updated = update_pack_rn.execute_update()
             self.rn_path.append(update_pack_rn.rn_path)
 

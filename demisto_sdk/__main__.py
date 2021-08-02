@@ -1191,6 +1191,8 @@ def merge_id_sets(**kwargs):
 @click.option(
     "-idp", "--id-set-path", help="The path of the id-set.json used for APIModule updates.",
     type=click.Path(resolve_path=True))
+@click.option(
+    '-b', '--breaking-changes', help='Indicates that this version is breaking changes.', is_flag=True)
 def update_release_notes(**kwargs):
     """Auto-increment pack version and generate release notes template."""
     check_configuration_file('update-release-notes', kwargs)
@@ -1206,7 +1208,7 @@ def update_release_notes(**kwargs):
                                            pre_release=kwargs.get('pre_release', False), is_all=kwargs.get('use_git'),
                                            text=kwargs.get('text'), specific_version=kwargs.get('version'),
                                            id_set_path=kwargs.get('id_set_path'), prev_ver=kwargs.get('prev_ver'),
-                                           is_force=kwargs.get('force', False))
+                                           is_force=kwargs.get('force', False), is_bc=kwargs.get('breaking_changes'))
         rn_mng.manage_rn_update()
         sys.exit(0)
     except Exception as e:

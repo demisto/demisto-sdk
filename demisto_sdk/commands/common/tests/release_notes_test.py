@@ -344,9 +344,11 @@ def test_has_release_notes_been_filled_out(release_notes, filled_expected_result
 CONTAINS_BC_ENTRY_IF_NEEDED_INPUTS = [
     ('- url command changed to return multiple entries', {'breakingChangesVersions': ['1.0.0']}, True),
     ('- url command changed to return multiple entries', {'breakingChangesVersions': ['1.0.1']}, False),
-    ('- **Breaking Change:** url command changed to return multiple entries', {'breakingChangesVersions': ['1.0.0']},
+    ('#### Breaking Changes\n- **Breaking Change:** url command changed to return multiple entries',
+     {'breakingChangesVersions': ['1.0.0']},
      False),
-    ('- **Breaking Change:** url command changed to return multiple entries', {'breakingChangesVersions': ['1.0.1']},
+    ('#### Breaking Changes\n- **Breaking Change:** url command changed to return multiple entries',
+     {'breakingChangesVersions': ['1.0.1']},
      True)]
 
 

@@ -33,6 +33,7 @@ mapping:
             type: str
           id:
             type: str
+            required: true
           tabs:
             type: seq
             sequence:

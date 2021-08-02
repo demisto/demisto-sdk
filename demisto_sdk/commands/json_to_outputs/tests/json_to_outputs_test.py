@@ -174,6 +174,7 @@ outputs:
 dummy_description_dictionary = {"day": "day of the week",
                                 "color": "assigned color",
                                 "surprise": "a value that should not appear in the result."}
+dummy_integration_output = {"day": "Sunday", "color": "Blue"}
 
 
 @pytest.mark.parametrize('description_argument,dictionary',
@@ -199,15 +200,16 @@ def test_json_to_outputs__description(tmpdir, description_argument: Optional[str
     """
 
     output = tmpdir.join("test_json_to_outputs__file_input.yml")
+    temp_json_input_path = tmpdir.join("dummy_integration_output.json")
+    temp_json_input_path.write(json.dumps(dummy_integration_output))
 
     json_to_outputs(command='jsonToOutputs',
-                    input=os.path.join(git_path(), TEST_PATH, 'dummy_integration_output.json'),
+                    input=str(temp_json_input_path),
                     prefix='Test',
                     output=output,
                     descriptions=description_argument)
 
-    with open(output) as f:
-        assert f.read() == f"""arguments: []
+    assert output.read() == f"""arguments: []
 name: jsonToOutputs
 outputs:
 - contextPath: Test.day

@@ -17,6 +17,8 @@
   - Generic Module validator - verify that the 'fromVersion' field is above 6.5.0
   - Generic Definition validator - verify that the 'fromVersion' field is above 6.5.0
  * Expanded Format command to support Generic Objects - Fixes generic objects according to their validations.
+ * Improving the outputs for the **format** command.
+ * Fixed an issue where the validations performed after the **format** command were inconsistent with **validate**.
 
 # 1.4.5
 * Enhanced the **postman-codegen** command to name all generated arguments with lower case.

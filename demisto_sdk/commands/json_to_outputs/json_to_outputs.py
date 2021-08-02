@@ -255,7 +255,7 @@ def _parse_description_argument(descriptions: Union[str, Dict]) -> Optional[dict
     if not descriptions:  # None or empty
         return None
 
-    if os.path.exists(descriptions):  # file input
+    if isinstance(descriptions, str) and os.path.exists(descriptions):  # file input
         with open(descriptions) as f:
             json_as_str = f.read()  # not json.loads() on purpose, to catch JSONDecodeErrors
     else:

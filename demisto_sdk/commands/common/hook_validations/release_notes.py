@@ -26,7 +26,7 @@ class ReleaseNotesValidator(BaseValidator):
         release_notes_path (str): the path to the changelog file of the examined file.
         latest_release_notes (str): the text of the UNRELEASED section in the changelog file.
     """
-    BC_ENTRY_STR: str = '- **Breaking Change**:'
+    BC_ENTRY_STR: str = '- **Breaking Change:**'
 
     def __init__(self, release_notes_file_path, modified_files=None, pack_name=None, added_files=None, ignored_errors=None,
                  print_as_warnings=False, suppress_print=False, json_file_path=None):

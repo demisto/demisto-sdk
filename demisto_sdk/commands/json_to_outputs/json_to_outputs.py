@@ -249,23 +249,22 @@ def json_to_outputs(command, input, prefix, output=None, verbose=False, interact
             sys.exit(1)
 
 
-def _parse_description_argument(descriptions: Union[str, Dict]) -> Optional[dict]:  # type: ignore
+def _parse_description_argument(descriptions: str) -> Optional[dict]:  # type: ignore
     """Parses the descriptions argument, be it a path to JSON or a JSON body given as argument """
 
     if not descriptions:  # None or empty
         return None
 
-    if isinstance(descriptions, str) and os.path.exists(descriptions):  # file input
-        with open(descriptions) as f:
-            json_as_str = f.read()  # not json.loads() on purpose, to catch JSONDecodeErrors
-    else:
-        json_as_str = descriptions
-
     try:
-        parsed = json.loads(json_as_str)
-        if not isinstance(parsed, Dict):
-            raise TypeError("Expected a dictionary")
-        return parsed
+        if os.path.exists(descriptions):  # file input
+            with open(descriptions, encoding='utf8') as f:
+                return json.load(f)
+
+        else:
+            parsed = json.loads(descriptions)  # argument input
+            if not isinstance(parsed, Dict):
+                raise TypeError("Expected a dictionary")
+            return parsed
 
     except (json.JSONDecodeError, TypeError):
         print("Error decoding JSON descriptions, ignoring them.")

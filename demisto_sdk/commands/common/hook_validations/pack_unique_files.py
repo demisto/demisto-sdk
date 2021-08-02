@@ -655,6 +655,8 @@ class PackUniqueFilesValidator(BaseValidator):
         except (json.decoder.JSONDecodeError, AttributeError):
             return True
         if not all([version_regex.search(bc_version) for bc_version in bc_versions]):
-            if self._add_error(Errors.pack_metadata_invalid_support_type(), self.pack_meta_file):
+            if self._add_error(
+                    Errors.pack_metadata_invalid_bc_version(metadata.get(PACK_METADATA_NAME, ''), bc_versions),
+                    self.pack_meta_file):
                 return False
         return True

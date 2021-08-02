@@ -484,7 +484,7 @@ class UpdateRN:
         for key, val in rn_template_as_dict.items():
             rn_string = f"{rn_string}{key}{val}"
 
-        self.add_bc_entry_if_needed(rn_string)
+        rn_string = self.add_bc_entry_if_needed(rn_string)
 
         return rn_string
 

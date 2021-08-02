@@ -170,7 +170,6 @@ outputs:
 '''
 
 
-# this is the content of `dummy_description_dictionary.json`
 dummy_description_dictionary = {"day": "day of the week",
                                 "color": "assigned color",
                                 "surprise": "a value that should not appear in the result."}
@@ -182,17 +181,14 @@ dummy_integration_output = {"day": "Sunday", "color": "Blue"}
                              # no description_dictionary
                              (None, dict()),
                              # description_dictionary from mock input
-                             ("not_a_json", dict()),
+                             ("not_a_json_string", dict()),
                              # description dictionary from argument
                              (json.dumps(dummy_description_dictionary), dummy_description_dictionary),
-                             # description dictionary from file
-                             (os.path.join(git_path(), TEST_PATH, 'dummy_description_dictionary.json'),
-                              dummy_description_dictionary)
                          ])
-def test_json_to_outputs__description(tmpdir, description_argument: Optional[str], dictionary: dict):
+def test_json_to_outputs__description_dictionary(tmpdir, description_argument: Optional[str], dictionary: dict):
     """
     Given
-        - a (possibly-empty) description dictionary
+        - a (possibly-empty) JSON description dictionary
     When
         - Passed to json_to_outputs
     Then
@@ -201,6 +197,7 @@ def test_json_to_outputs__description(tmpdir, description_argument: Optional[str
 
     output = tmpdir.join("test_json_to_outputs__file_input.yml")
     temp_json_input_path = tmpdir.join("dummy_integration_output.json")
+
     temp_json_input_path.write(json.dumps(dummy_integration_output))
 
     json_to_outputs(command='jsonToOutputs',
@@ -208,6 +205,45 @@ def test_json_to_outputs__description(tmpdir, description_argument: Optional[str
                     prefix='Test',
                     output=output,
                     descriptions=description_argument)
+
+    assert output.read() == f"""arguments: []
+name: jsonToOutputs
+outputs:
+- contextPath: Test.day
+  description: {dictionary.get('day', "''")}
+  type: String
+- contextPath: Test.color
+  description: {dictionary.get('color', "''")}
+  type: String
+"""
+
+
+def test_json_to_outputs__description_file(tmpdir):
+    """
+    Given
+        - A path to a integration output JSON
+        - A path to a dictionary-description JSON
+    When
+        - Passed to json_to_outputs
+    Then
+        - ensure the returned values are correct
+    """
+
+    output = tmpdir.join("test_json_to_outputs__file_input.yml")
+
+    temp_json_input_path = tmpdir.join("dummy_integration_output.json")
+    temp_json_input_path.write(json.dumps(dummy_integration_output))
+
+    dictionary = dummy_description_dictionary
+
+    temp_description_file = tmpdir.join("description_file.json")
+    temp_description_file.write(json.dumps(dummy_description_dictionary))
+
+    json_to_outputs(command='jsonToOutputs',
+                    input=str(temp_json_input_path),
+                    prefix='Test',
+                    output=output,
+                    descriptions=temp_description_file)
 
     assert output.read() == f"""arguments: []
 name: jsonToOutputs

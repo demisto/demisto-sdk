@@ -14,6 +14,8 @@ Convert JSON format to demisto entry context yaml format.
     Verbose output - mainly for debugging purposes
 * *-int, --interactive*
     If passed, then for each output field will ask user interactively to enter the description. By default is interactive mode is disabled
+* *-d, --description-json*
+    A JSON or a path to a JSON file, mapping field names to their descriptions.
 
 **Examples**:
 <br/>`demisto-sdk json-to-outputs -c jira-get-ticket -p Jira.Ticket -i path/to/valid.json`

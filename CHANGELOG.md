@@ -17,6 +17,7 @@
   - Generic Module validator - verify that the 'fromVersion' field is above 6.5.0
   - Generic Definition validator - verify that the 'fromVersion' field is above 6.5.0
  * Expanded Format command to support Generic Objects - Fixes generic objects according to their validations.
+* Fixed an issue where the **update-release-notes** command did not handle ApiModules properly.
 * Added option to enter a dictionary or json of format `[{field_name:description}]` in the **json-to-outputs** command,
   with the `-d` flag.
 

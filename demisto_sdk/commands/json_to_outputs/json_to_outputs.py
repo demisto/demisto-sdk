@@ -155,8 +155,7 @@ def determine_type(val):
     return 'Unknown'
 
 
-def parse_json(data, command_name, prefix, verbose=False, interactive=False,
-               description_dictionary: Optional[Dict] = None):
+def parse_json(data, command_name, prefix, verbose=False, interactive=False, descriptions: Optional[Dict] = None):
     if data == '':
         raise ValueError('Invalid input JSON - got empty string')
 
@@ -177,14 +176,14 @@ def parse_json(data, command_name, prefix, verbose=False, interactive=False,
     flattened_data = flatten_json(data)
     if prefix:
         flattened_data = {f'{prefix}.{key}': value for key, value in flattened_data.items()}
-        if description_dictionary:
-            description_dictionary = {f'{prefix}.{key}': value for key, value in description_dictionary.items()}
+        if descriptions:
+            descriptions = {f'{prefix}.{key}': value for key, value in descriptions.items()}
 
     arg_json = []
     for key, value in flattened_data.items():
         description = ''
-        if description_dictionary and key in description_dictionary:
-            description = description_dictionary[key]
+        if descriptions and key in descriptions:
+            description = descriptions[key]
         elif interactive:
             print(f'Enter description for: [{key}]')
             description = input_multiline()
@@ -218,7 +217,7 @@ def json_to_outputs(command, input, prefix, output=None, verbose=False, interact
         verbose: This used for debugging purposes - more logs
         interactive: by default all the output descriptions are empty, but if user sets this to True then the script
             will ask user input for each description
-        descriptions: JSON mapping between field names and their descriptions. (Optional)
+        descriptions: JSON or path to JSON file mapping field names to their context descriptions. (Optional)
     Returns:
     """
     try:
@@ -251,43 +250,22 @@ def json_to_outputs(command, input, prefix, output=None, verbose=False, interact
 
 
 def _parse_description_argument(descriptions: Union[str, Dict]) -> Optional[dict]:  # type: ignore
-    """Parses the descriptions argument, be it a path to JSON, a JSON given as argument, or via standard input """
-
-    def _load_json_to_dict(_json_str: str):
-        loaded_json = json.loads(_json_str)
-        if not isinstance(loaded_json, Dict):
-            # non-JSON inputs raise exception so the JSON can be pasted
-            raise TypeError("Expected a dictionary")
-        return loaded_json
+    """Parses the descriptions argument, be it a path to JSON or a JSON body given as argument """
 
     if not descriptions:  # None or empty
         return None
 
-    if isinstance(descriptions, Dict):
-        return descriptions
-
-    if os.path.exists(descriptions):
-        # file input
+    if os.path.exists(descriptions):  # file input
         with open(descriptions) as f:
             json_as_str = f.read()  # not json.loads() on purpose, to catch JSONDecodeErrors
-
     else:
-        try:
-            # non-JSON inputs raise exception so the JSON can be pasted
-            return _load_json_to_dict(descriptions)
+        json_as_str = descriptions
 
-        except (json.JSONDecodeError, TypeError):
-            # JSON as raw input
-            print("Enter a mapping between (some, or all) field names and their descriptions.\n "
-                  "As an example, If one of the fields is `geolocation`, "
-                  "enter {\"geolocation\": \"coordinates of the location\"}")
-            json_as_str = input_multiline()
-
-    result = None
     try:
-        result = _load_json_to_dict(json_as_str)
+        parsed = json.loads(json_as_str)
+        if not isinstance(parsed, Dict):
+            raise TypeError("Expected a dictionary")
+        return parsed
 
     except (json.JSONDecodeError, TypeError):
         print("Error decoding JSON descriptions, ignoring them.")
-
-    return result

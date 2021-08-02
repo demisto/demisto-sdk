@@ -94,7 +94,7 @@ def test_json_to_outputs__detect_date():
         data='{"created_at": "2019-10-10T00:00:00"}',
         command_name='jira-ticket',
         prefix='Jira.Ticket',
-        description_dictionary={'created_at': 'time when the ticket was created.'}
+        descriptions={'created_at': 'time when the ticket was created.'}
     )
 
     assert yaml_output == '''arguments: []
@@ -119,7 +119,7 @@ def test_json_to_outputs__a_list_of_dict():
         data='[{"a": "b", "c": "d"}, {"a": 1}]',
         command_name='jira-ticket',
         prefix='Jira.Ticket',
-        description_dictionary={"a": DUMMY_FIELD_DESCRIPTION}
+        descriptions={"a": DUMMY_FIELD_DESCRIPTION}
     )
 
     assert yaml_output == f'''arguments: []
@@ -155,7 +155,7 @@ def test_json_to_outputs__invalid_description_dictionary(description_dictionary,
         data='[{"a": "b", "c": "d"}, {"a": 1}]',
         command_name='jira-ticket',
         prefix='Jira.Ticket',
-        description_dictionary=description_dictionary
+        descriptions=description_dictionary
     )
 
     assert yaml_output == f'''arguments: []
@@ -181,14 +181,14 @@ dummy_description_dictionary = {"day": "day of the week",
                              # no description_dictionary
                              (None, dict()),
                              # description_dictionary from mock input
-                             ("t", dict()),
+                             ("not_a_json", dict()),
                              # description dictionary from argument
                              (json.dumps(dummy_description_dictionary), dummy_description_dictionary),
                              # description dictionary from file
                              (os.path.join(git_path(), TEST_PATH, 'dummy_description_dictionary.json'),
                               dummy_description_dictionary)
                          ])
-def test_json_to_outputs__description(mocker, tmpdir, description_argument: Optional[str], dictionary: dict):
+def test_json_to_outputs__description(tmpdir, description_argument: Optional[str], dictionary: dict):
     """
     Given
         - a (possibly-empty) description dictionary
@@ -199,9 +199,6 @@ def test_json_to_outputs__description(mocker, tmpdir, description_argument: Opti
     """
 
     output = tmpdir.join("test_json_to_outputs__file_input.yml")
-
-    mocker.patch('demisto_sdk.commands.json_to_outputs.json_to_outputs.input_multiline',
-                 return_value=dummy_description_dictionary)
 
     json_to_outputs(command='jsonToOutputs',
                     input=os.path.join(git_path(), TEST_PATH, 'dummy_integration_output.json'),

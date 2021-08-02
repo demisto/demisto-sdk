@@ -858,7 +858,7 @@ def test_format_generic_field_wrong_values(mocker, repo, field_to_test, invalid_
         result = runner.invoke(main, [FORMAT_CMD, '-i', generic_field_path, '-v', '-y'], catch_exceptions=False)
         assert 'Setting fromVersion field' in result.stdout
         assert 'Success' in result.stdout
-        assert f'======= Updating file: {generic_field_path}' in result.stdout
+        assert f'======= Updating file {generic_field_path}' in result.stdout
         assert result.exit_code == 0
 
         # check that sdk format did change the wrong fromVersion to '6.5.0':
@@ -891,7 +891,7 @@ def test_format_generic_field_missing_from_version_key(mocker, repo):
         result = runner.invoke(main, [FORMAT_CMD, '-i', generic_field_path, '-v', '-y'], catch_exceptions=False)
         assert 'Setting fromVersion field' in result.stdout
         assert 'Success' in result.stdout
-        assert f'======= Updating file: {generic_field_path}' in result.stdout
+        assert f'======= Updating file {generic_field_path}' in result.stdout
         assert result.exit_code == 0
 
         # check that sdk format did add a fromVersion key with '6.5.0' as a value:
@@ -923,7 +923,7 @@ def test_format_generic_type_wrong_from_version(mocker, repo):
         result = runner.invoke(main, [FORMAT_CMD, '-i', generic_type_path, '-v', '-y'], catch_exceptions=False)
         assert 'Setting fromVersion field' in result.stdout
         assert 'Success' in result.stdout
-        assert f'======= Updating file: {generic_type_path}' in result.stdout
+        assert f'======= Updating file {generic_type_path}' in result.stdout
         assert result.exit_code == 0
 
         # check that sdk format did change the wrong fromVersion to '6.5.0':
@@ -956,7 +956,7 @@ def test_format_generic_type_missing_from_version_key(mocker, repo):
         result = runner.invoke(main, [FORMAT_CMD, '-i', generic_type_path, '-v', '-y'], catch_exceptions=False)
         assert 'Setting fromVersion field' in result.stdout
         assert 'Success' in result.stdout
-        assert f'======= Updating file: {generic_type_path}' in result.stdout
+        assert f'======= Updating file {generic_type_path}' in result.stdout
         assert result.exit_code == 0
 
         # check that sdk format did add a fromVersion key with '6.5.0' as a value:
@@ -988,7 +988,7 @@ def test_format_generic_module_wrong_from_version(mocker, repo):
         result = runner.invoke(main, [FORMAT_CMD, '-i', generic_module_path, '-v', '-y'], catch_exceptions=False)
         assert 'Setting fromVersion field' in result.stdout
         assert 'Success' in result.stdout
-        assert f'======= Updating file: {generic_module_path}' in result.stdout
+        assert f'======= Updating file {generic_module_path}' in result.stdout
         assert result.exit_code == 0
 
         # check that sdk format did change the wrong fromVersion to '6.5.0':
@@ -1021,7 +1021,7 @@ def test_format_generic_module_missing_from_version_key(mocker, repo):
         result = runner.invoke(main, [FORMAT_CMD, '-i', generic_module_path, '-v', '-y'], catch_exceptions=False)
         assert 'Setting fromVersion field' in result.stdout
         assert 'Success' in result.stdout
-        assert f'======= Updating file: {generic_module_path}' in result.stdout
+        assert f'======= Updating file {generic_module_path}' in result.stdout
         assert result.exit_code == 0
 
         # check that sdk format did add a fromVersion key with '6.5.0' as a value:
@@ -1053,7 +1053,7 @@ def test_format_generic_definition_wrong_from_version(mocker, repo):
         result = runner.invoke(main, [FORMAT_CMD, '-i', generic_definition_path, '-v', '-y'], catch_exceptions=False)
         assert 'Setting fromVersion field' in result.stdout
         assert 'Success' in result.stdout
-        assert f'======= Updating file: {generic_definition_path}' in result.stdout
+        assert f'======= Updating file {generic_definition_path}' in result.stdout
         assert result.exit_code == 0
 
         # check that sdk format did change the wrong fromVersion to '6.5.0':
@@ -1086,7 +1086,7 @@ def test_format_generic_definition_missing_from_version_key(mocker, repo):
         result = runner.invoke(main, [FORMAT_CMD, '-i', generic_definition_path, '-v', '-y'], catch_exceptions=False)
         assert 'Setting fromVersion field' in result.stdout
         assert 'Success' in result.stdout
-        assert f'======= Updating file: {generic_definition_path}' in result.stdout
+        assert f'======= Updating file {generic_definition_path}' in result.stdout
         assert result.exit_code == 0
 
         # check that sdk format did add a fromVersion key with '6.5.0' as a value:

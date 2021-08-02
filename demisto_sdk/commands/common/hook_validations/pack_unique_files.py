@@ -648,8 +648,12 @@ class PackUniqueFilesValidator(BaseValidator):
             (bool) True of all versions in 'breakingChangesVersions' match the x.x.x format, false otherwise
         """
         version_regex = re.compile(r'\d+(\.\d+){2}$')
-        pack_meta_file_content = self._read_metadata_content()
-        bc_versions: List[str] = pack_meta_file_content.get('breakingChangesVersions', [])
+        try:
+            metadata = self._read_metadata_content()
+            bc_versions: List[str] = metadata.get('breakingChangesVersions', [])
+        # For cases where metadata is not JSON. Passing this error quietly as this is validated in other functions.
+        except (json.decoder.JSONDecodeError, AttributeError):
+            return True
         if not all([version_regex.search(bc_version) for bc_version in bc_versions]):
             if self._add_error(Errors.pack_metadata_invalid_support_type(), self.pack_meta_file):
                 return False

@@ -58,13 +58,14 @@ def test_rn_master_diff(release_notes, expected_result, mocker):
     - Case 3: Should print nothing and return True
     """
     mocker.patch.object(ReleaseNotesValidator, '__init__', lambda a, b: None)
+    mocker.patch.object(ReleaseNotesValidator, 'get_cached_pack_metadata_content', return_value=dict())
     ReleaseNotesValidator.ignored_errors = []
     validator = get_validator(release_notes)
     validator.suppress_print = False
     assert validator.is_file_valid() == expected_result
 
 
-def test_init():
+def test_init(mocker):
     """
     Given
     - Release notes file path
@@ -75,6 +76,7 @@ def test_init():
     Then
     - Ensure init returns valid file path and release notes contents.
     """
+    mocker.patch.object(ReleaseNotesValidator, 'get_cached_pack_metadata_content', return_value=dict())
     filepath = os.path.join(FILES_PATH, 'ReleaseNotes', '1_1_1.md')
     release_notes_validator = ReleaseNotesValidator(filepath, pack_name='test')
     release_notes_validator.release_notes_file_path = 'demisto_sdk/tests/test_files/ReleaseNotes/1_1_1.md'

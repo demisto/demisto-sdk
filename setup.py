@@ -16,6 +16,8 @@ NAME = "demisto-sdk"
 # prerequisite: setuptools
 # http://pypi.python.org/pypi/setuptools
 
+with open('requirements.txt') as f:
+    requirements = f.read().splitlines()
 
 with open('README.md', 'r') as f:
     readme = f.read()
@@ -30,6 +32,7 @@ setup(
     author_email="",
     url="https://github.com/demisto/demisto-sdk",
     keywords=["Demisto"],
+    install_requires=requirements,
     packages=find_packages(),
     include_package_data=True,
     entry_points={

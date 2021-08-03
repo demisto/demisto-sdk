@@ -80,8 +80,7 @@ class BaseValidator:
             file_name = 'No-Name'
             rel_file_path = 'No-Name'
 
-        ignored_errors = self.ignored_errors.get(file_name) if self.ignored_errors.get(file_name) \
-            else self.ignored_errors.get(rel_file_path)
+        ignored_errors = self.ignored_errors.get(file_name) or self.ignored_errors.get(rel_file_path)
 
         if self.should_ignore_error(error_code, ignored_errors) or warning:
             if self.print_as_warnings or warning:

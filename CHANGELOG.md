@@ -23,6 +23,7 @@
 * Improved the outputs for the **format** command.
 * Fixed an issue where the validations performed after the **format** command were inconsistent with **validate**.
 * Added to the **validate** command a validation for the author image.
+* Updated the **create-content-artifacts** command to support generic modules, definitions, fields and types.
 
 # 1.4.5
 * Enhanced the **postman-codegen** command to name all generated arguments with lower case.
@@ -162,8 +163,7 @@
 * Fixed the error message of the **validate** command to not always suggest adding the *description* field.
 * Fixed an issue where running **format** on feed integration generated invalid parameter structure.
 * Fixed an issue where the **generate-docs** command did not add all the used scripts in a playbook to the README file.
-* Fixed an issue where contrib/partner details might be added twice to the same file, when using unify
-and create-content-artifacts commands
+* Fixed an issue where contrib/partner details might be added twice to the same file, when using unify and create-content-artifacts commands
 * Fixed issue where running **validate** command on image-related integration did not return the correct outputs to json file.
 * When formatting playbooks, the **format** command will now remove empty fields from SetIncident, SetIndicator, CreateNewIncident, CreateNewIndicator script arguments.
 * Added an option to fill in the developer email when running the **init** command.

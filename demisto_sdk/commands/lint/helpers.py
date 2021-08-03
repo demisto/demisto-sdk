@@ -294,7 +294,8 @@ def get_python_version_from_image(image: str, timeout: int) -> float:
 
     excluded_images = {'demisto/powershell', 'demisto/powershell-ubuntu', 'demisto/pwsh-exchange',
                        'demisto/pwsh-infocyte', 'demisto/powershell-teams'}
-    if image in excluded_images:
+    is_pwsh_image = any([image_name in image for image_name in excluded_images])
+    if is_pwsh_image:
         return 3.8
 
     docker_user = os.getenv('DOCKERHUB_USER')

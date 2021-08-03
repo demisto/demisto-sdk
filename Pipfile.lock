@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "ae22bed9e0dec65986bcb0a4e5cabf3c75cbaec6fb9ee956d9fb6f222d84be25"
+            "sha256": "158d5886e2a2867721ed781ce6a14af0a8aa14be92beb1687893924bb4f6c88e"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -706,6 +706,14 @@
             "index": "pypi",
             "version": "==2021.5.29"
         },
+        "pipfile-requirements": {
+            "hashes": [
+                "sha256:d47591d46d8bfecf9257967992feae31fa83aff7ab6417373c7de5ea92ab849f",
+                "sha256:dc2ff7515ce35f8b37a500e87e7b9cd39f0f5c18eb6024543366eb6d4226869b"
+            ],
+            "index": "pypi",
+            "version": "==0.3.0"
+        },
         "platformdirs": {
             "hashes": [
                 "sha256:4666d822218db6a262bdfdc9c39d21f23b4cfdb08af331a81e92751daf6c866c",
@@ -753,7 +761,7 @@
                 "sha256:f0e59430ee953184a703a324b8ec52f571c6c4259d496a19d1cabcdc19dabc62",
                 "sha256:ffea251f5cd3c0b9b43c7a7a912777e0bc86263436a87c2555242a348817221b"
             ],
-            "version": "==3.11.3"
+            "version": "==3.17.3"
         },
         "pyasn1": {
             "hashes": [
@@ -1736,7 +1744,7 @@
                 "sha256:f0e59430ee953184a703a324b8ec52f571c6c4259d496a19d1cabcdc19dabc62",
                 "sha256:ffea251f5cd3c0b9b43c7a7a912777e0bc86263436a87c2555242a348817221b"
             ],
-            "version": "==3.11.3"
+            "version": "==3.17.3"
         },
         "publicsuffix2": {
             "hashes": [

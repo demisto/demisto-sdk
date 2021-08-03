@@ -63,6 +63,7 @@ pytest-subprocess = "*"
 requests-mock = "*"
 tox-pyenv = "*"
 Deprecated = "*"
+pipfile-requirements = "*"
 
 [requires]
 python_version = "3.9"

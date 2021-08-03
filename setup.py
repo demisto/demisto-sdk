@@ -4,17 +4,24 @@
 """
     Demisto SDK
 """
-
+import os
 from setuptools import find_packages, setup  # noqa: H301
-
+import pipfile2req
 NAME = "demisto-sdk"
-
+REQUIREMENTS_NAME = 'requirements.txt'
 # To install the library, run the following
 #
 # python setup.py install
 #
 # prerequisite: setuptools
 # http://pypi.python.org/pypi/setuptools
+
+# Converting Pipfile to requirements because PyPi expects requirements.txt file
+if not os.path.exists(REQUIREMENTS_NAME):
+    pipfile2req.convert_pipfile_or_lock('.')
+with open(REQUIREMENTS_NAME) as f:
+    requirements = f.read().splitlines()
+os.remove(REQUIREMENTS_NAME)
 
 with open('README.md', 'r') as f:
     readme = f.read()

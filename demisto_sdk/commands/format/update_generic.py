@@ -8,21 +8,17 @@ import click
 import yaml
 from ruamel.yaml import YAML
 
-from demisto_sdk.commands.common.constants import (INTEGRATION, PLAYBOOK,
-                                                   FileType)
-from demisto_sdk.commands.common.hook_validations.structure import \
-    StructureValidator
-from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
-                                               get_dict_from_file,
+from demisto_sdk.commands.common.constants import INTEGRATION, PLAYBOOK
+from demisto_sdk.commands.common.tools import (LOG_COLORS, get_dict_from_file,
                                                get_pack_metadata,
                                                get_remote_file,
-                                               is_file_from_content_repo,
-                                               print_color)
+                                               is_file_from_content_repo)
 from demisto_sdk.commands.format.format_constants import (
     DEFAULT_VERSION, ERROR_RETURN_CODE, GENERIC_OBJECTS_DEFAULT_FROMVERSION,
     GENERIC_OBJECTS_FILE_TYPES, NEW_FILE_DEFAULT_5_5_0_FROMVERSION,
     OLD_FILE_DEFAULT_1_FROMVERSION, SKIP_RETURN_CODE, SUCCESS_RETURN_CODE,
     VERSION_6_0_0)
+from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
 ryaml = YAML()
 ryaml.allow_duplicate_keys = True
@@ -65,6 +61,10 @@ class BaseUpdate:
         self.no_validate = no_validate
         self.assume_yes = assume_yes
         self.updated_ids: Dict = {}
+        if not self.no_validate:
+            self.validate_manager = ValidateManager(silence_init_prints=True, skip_conf_json=True,
+                                                    skip_dependencies=True, skip_pack_rn_validation=True,
+                                                    check_is_unskipped=False, validate_id_set=False)
 
         if not self.source_file:
             raise Exception('Please provide <source path>, <optional - destination path>.')
@@ -345,7 +345,7 @@ class BaseUpdate:
         if self.data.get('id'):
             self.data['id'] = self.data.get('id', '').replace('_copy', '').replace('_dev', '')
 
-    def initiate_file_validator(self, validator_type) -> int:
+    def initiate_file_validator(self) -> int:
         """ Run schema validate and file validate of file
         Returns:
             int 0 in case of success
@@ -357,33 +357,11 @@ class BaseUpdate:
                 click.secho(f'Validator Skipped on file: {self.output_file} , no-validate flag was set.', fg='yellow')
             return SKIP_RETURN_CODE
         else:
-            if self.verbose:
-                print_color('Starting validating files structure', LOG_COLORS.GREEN)
-            # validates only on files in content repo
-            if self.relative_content_path:
-                file_type = find_type(self.output_file)
+            self.validate_manager.file_path = self.output_file
+            validation_result = self.validate_manager.run_validation_on_specific_files()
 
-                # validates on the output file generated from the format
-                structure_validator = StructureValidator(
-                    self.output_file,
-                    predefined_scheme=file_type,
-                    suppress_print=not self.verbose
-                )
-                validator = validator_type(structure_validator, suppress_print=not self.verbose)
+            if not validation_result:
+                return ERROR_RETURN_CODE
 
-                # TODO: remove the connection condition if we implement a specific validator for connections.
-                if structure_validator.is_valid_file() and \
-                        (file_type in [FileType.CONNECTION, file_type == FileType.DESCRIPTION] or
-                         validator.is_valid_file()):
-                    if self.verbose:
-                        click.secho('The files are valid', fg='green')
-                    return SUCCESS_RETURN_CODE
-                else:
-                    if self.verbose:
-                        click.secho('The files are invalid', fg='red')
-                    return ERROR_RETURN_CODE
             else:
-                if self.verbose:
-                    click.secho(f'The file {self.output_file} are not part of content repo, Validator Skipped',
-                                fg='yellow')
-                return SKIP_RETURN_CODE
+                return SUCCESS_RETURN_CODE

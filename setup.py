@@ -18,10 +18,7 @@ REQUIREMENTS_NAME = 'requirements.txt'
 
 # Converting Pipfile to requirements because PyPi expects requirements.txt file
 if not os.path.exists(REQUIREMENTS_NAME):
-    pipfile2req.convert_pipfile_or_lock('.')
-    with open(REQUIREMENTS_NAME) as f:
-        requirements = f.read().splitlines()
-    os.remove(REQUIREMENTS_NAME)
+    requirements = pipfile2req.convert_pipfile_or_lock('.')
 else:
     with open(REQUIREMENTS_NAME) as f:
         requirements = f.read().splitlines()

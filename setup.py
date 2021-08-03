@@ -32,6 +32,7 @@ setup(
     author_email="",
     url="https://github.com/demisto/demisto-sdk",
     keywords=["Demisto"],
+    install_requires=requirements,
     packages=find_packages(),
     include_package_data=True,
     entry_points={

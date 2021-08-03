@@ -55,6 +55,34 @@ def test_handle_error():
     assert 'path/to/file_name - [ST109]' in FOUND_FILES_AND_ERRORS
 
 
+def test_handle_error_file_with_path():
+    """
+    Given
+    - An ignore errors list associated with a file_path.
+    - An error, message, code and file paths.
+
+    When
+    - Running handle_error method.
+
+    Then
+    - Ensure the resulting error messages are correctly formatted.
+    - Ensure ignored error codes return None.
+    - Ensure non ignored errors are in FOUND_FILES_AND_ERRORS list.
+    - Ensure ignored error are not in FOUND_FILES_AND_ERRORS and in FOUND_FILES_AND_IGNORED_ERRORS
+    """
+    base_validator = BaseValidator(ignored_errors={"file_name": ["BA101"], "path/to/file_name_with_path": ["ST109"]},
+                                   print_as_warnings=True)
+
+    formatted_error = base_validator.handle_error("Error-message", "BA101", "path/to/file_name_with_path")
+    assert formatted_error == 'path/to/file_name_with_path: [BA101] - Error-message\n'
+    assert 'path/to/file_name_with_path - [BA101]' in FOUND_FILES_AND_ERRORS
+
+    formatted_error = base_validator.handle_error("Error-message", "ST109", "path/to/file_name_with_path")
+    assert formatted_error is None
+    assert 'path/to/file_name_with_path - [ST109]' not in FOUND_FILES_AND_ERRORS
+    assert 'path/to/file_name_with_path - [ST109]' in FOUND_FILES_AND_IGNORED_ERRORS
+
+
 def test_check_deprecated_where_ignored_list_exists(repo):
     """
     Given

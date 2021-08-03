@@ -17,11 +17,7 @@ REQUIREMENTS_NAME = 'requirements.txt'
 # http://pypi.python.org/pypi/setuptools
 
 # Converting Pipfile to requirements because PyPi expects requirements.txt file
-if not os.path.exists(REQUIREMENTS_NAME):
-    requirements = pipfile2req.convert_pipfile_or_lock('.')
-else:
-    with open(REQUIREMENTS_NAME) as f:
-        requirements = f.read().splitlines()
+requirements = pipfile2req.convert_pipfile_or_lock('.')
 
 with open('README.md', 'r') as f:
     readme = f.read()

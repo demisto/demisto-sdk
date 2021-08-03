@@ -280,18 +280,25 @@ def add_tmp_lint_files(content_repo: git.Repo, pack_path: Path, lint_files: List
 
 
 @lru_cache(maxsize=100)
-def get_python_version_from_image(image: str) -> float:
+def get_python_version_from_image(image: str, timeout: int) -> float:
     """ Get python version from docker image
 
     Args:
         image(str): Docker image id or name
+        timeout(int): Docker client request timeout
 
     Returns:
         float: Python version X.Y (3.7, 3.6, ..)
     """
+
+    excluded_images = {'demisto/powershell', 'demisto/powershell-ubuntu', 'demisto/pwsh-exchange',
+                       'demisto/pwsh-infocyte', 'demisto/powershell-teams'}
+    if image in excluded_images:
+        return 3.8
+
     docker_user = os.getenv('DOCKERHUB_USER')
     docker_pass = os.getenv('DOCKERHUB_PASSWORD')
-    docker_client = docker.from_env()
+    docker_client = docker.from_env(timeout=timeout)
     docker_client.login(username=docker_user,
                         password=docker_pass,
                         registry="https://index.docker.io/v1")

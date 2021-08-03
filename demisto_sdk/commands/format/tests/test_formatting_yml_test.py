@@ -26,8 +26,7 @@ from demisto_sdk.tests.constants_test import (
     DESTINATION_FORMAT_INTEGRATION, DESTINATION_FORMAT_INTEGRATION_COPY,
     DESTINATION_FORMAT_PLAYBOOK, DESTINATION_FORMAT_PLAYBOOK_COPY,
     DESTINATION_FORMAT_SCRIPT_COPY, DESTINATION_FORMAT_TEST_PLAYBOOK,
-    EQUAL_VAL_FORMAT_PLAYBOOK_DESTINATION, EQUAL_VAL_FORMAT_PLAYBOOK_SOURCE,
-    EQUAL_VAL_PATH, FEED_INTEGRATION_EMPTY_VALID, FEED_INTEGRATION_INVALID,
+    FEED_INTEGRATION_EMPTY_VALID, FEED_INTEGRATION_INVALID,
     FEED_INTEGRATION_VALID, GIT_ROOT, INTEGRATION_PATH, PLAYBOOK_PATH,
     PLAYBOOK_WITH_INCIDENT_INDICATOR_SCRIPTS, SOURCE_FORMAT_INTEGRATION_COPY,
     SOURCE_FORMAT_INTEGRATION_INVALID, SOURCE_FORMAT_INTEGRATION_VALID,
@@ -235,25 +234,6 @@ class TestFormatting:
         base_yml.delete_sourceplaybookid()
 
         assert 'sourceplaybookid' not in base_yml.data
-
-    EQUAL_TEST = [
-        (EQUAL_VAL_FORMAT_PLAYBOOK_SOURCE, EQUAL_VAL_FORMAT_PLAYBOOK_DESTINATION, EQUAL_VAL_PATH),
-    ]
-
-    @pytest.mark.parametrize('input, output, path', EQUAL_TEST)
-    @patch('builtins.input', lambda *args: '5.0.0')
-    def test_equal_value_in_file(self, input, output, path):
-        os.makedirs(path, exist_ok=True)
-        shutil.copyfile(input, output)
-        format_ = format_manager(input=output)
-        check = True
-        with open(output, 'r') as f:
-            if 'simple: =' in f:
-                check = False
-        os.remove(output)
-        os.rmdir(path)
-        assert check
-        assert not format_
 
     @pytest.mark.parametrize('yml_file, yml_type', [
         ('format_pwsh_script.yml', 'script'),

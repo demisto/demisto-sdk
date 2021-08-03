@@ -5,7 +5,6 @@ import click
 from demisto_sdk.commands.common.constants import TYPE_JS, TYPE_PWSH
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
-from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
 from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
                                                server_version_compare)
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
@@ -78,7 +77,7 @@ class ScriptYMLFormat(BaseUpdateYML):
 
     def run_format(self) -> int:
         try:
-            click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
+            click.secho(f'\n================= Updating file {self.source_file} =================', fg='bright_blue')
             super().update_yml()
             self.update_tests()
             self.update_docker_image()
@@ -95,4 +94,4 @@ class ScriptYMLFormat(BaseUpdateYML):
         if format_res:
             return format_res, SKIP_RETURN_CODE
         else:
-            return format_res, self.initiate_file_validator(ScriptValidator)
+            return format_res, self.initiate_file_validator()

@@ -8,8 +8,9 @@ from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
 
 
-class DashboardJSONFormat(BaseUpdateJSON):
-    """DashboardJSONFormat class is designed to update dashboard JSON file according to Demisto's convention.
+class GenericDefinitionJSONFormat(BaseUpdateJSON):
+    """GenericDefinitionJSONFormat class is designed to update generic definition JSON file according to Demisto's
+     convention.
 
        Attributes:
             input (str): the path to the file we are updating at the moment.
@@ -31,8 +32,7 @@ class DashboardJSONFormat(BaseUpdateJSON):
         try:
             click.secho(f'\n================= Updating file {self.source_file} =================', fg='bright_blue')
             super().update_json()
-            self.default_description()
-            self.update_id()
+            self.set_default_values_as_needed()
             self.save_json_to_destination_file()
             return SUCCESS_RETURN_CODE
         except Exception as err:
@@ -40,14 +40,8 @@ class DashboardJSONFormat(BaseUpdateJSON):
                 click.secho(f'\nFailed to update file {self.source_file}. Error: {err}', fg='red')
             return ERROR_RETURN_CODE
 
-    def default_description(self):
-        if not self.data.get("description", ""):
-            self.data["description"] = ""
-        if not self.data.get("isPredefined", ""):
-            self.data["isPredefined"] = True
-
     def format_file(self) -> Tuple[int, int]:
-        """Manager function for the Dashboard JSON updater."""
+        """Manager function for the generic definition JSON updater."""
         format_res = self.run_format()
         if format_res:
             return format_res, SKIP_RETURN_CODE

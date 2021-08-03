@@ -55,7 +55,7 @@ def test_handle_error():
     assert 'path/to/file_name - [ST109]' in FOUND_FILES_AND_ERRORS
 
 
-def test_handle_error_file_with_path():
+def test_handle_error_file_with_path(pack):
     """
     Given
     - An ignore errors list associated with a file_path.
@@ -70,17 +70,27 @@ def test_handle_error_file_with_path():
     - Ensure non ignored errors are in FOUND_FILES_AND_ERRORS list.
     - Ensure ignored error are not in FOUND_FILES_AND_ERRORS and in FOUND_FILES_AND_IGNORED_ERRORS
     """
-    base_validator = BaseValidator(ignored_errors={"file_name": ["BA101"], "path/to/file_name_with_path": ["ST109"]},
+    integration = pack.create_integration("TestIntegration")
+    pack_ignore_text = f"""[file:{integration.yml.path}]
+    ignore=ST109
+
+    [file:{pack.readme.path}]
+    ignore=BA101"""
+    pack.pack_ignore.write_text(pack_ignore_text)
+    rel_path = integration.yml.path[integration.yml.path.find("Packs"):]
+
+    base_validator = BaseValidator(ignored_errors={"file_name": ["BA101"],
+                                                   rel_path: ["ST109"]},
                                    print_as_warnings=True)
 
-    formatted_error = base_validator.handle_error("Error-message", "BA101", "path/to/file_name_with_path")
-    assert formatted_error == 'path/to/file_name_with_path: [BA101] - Error-message\n'
-    assert 'path/to/file_name_with_path - [BA101]' in FOUND_FILES_AND_ERRORS
+    formatted_error = base_validator.handle_error("Error-message", "BA101", integration.yml.path)
+    assert formatted_error == f'{integration.yml.path}: [BA101] - Error-message\n'
+    assert f'{integration.yml.path} - [BA101]' in FOUND_FILES_AND_ERRORS
 
-    formatted_error = base_validator.handle_error("Error-message", "ST109", "path/to/file_name_with_path")
+    formatted_error = base_validator.handle_error("Error-message", "ST109", integration.yml.path)
     assert formatted_error is None
-    assert 'path/to/file_name_with_path - [ST109]' not in FOUND_FILES_AND_ERRORS
-    assert 'path/to/file_name_with_path - [ST109]' in FOUND_FILES_AND_IGNORED_ERRORS
+    assert f'{integration.yml.path} - [ST109]' not in FOUND_FILES_AND_ERRORS
+    assert f'{integration.yml.path} - [ST109]' in FOUND_FILES_AND_IGNORED_ERRORS
 
 
 def test_check_deprecated_where_ignored_list_exists(repo):

@@ -3,9 +3,9 @@ from datetime import datetime, timedelta
 from functools import lru_cache
 from typing import Optional
 
+import requests
 from pkg_resources import parse_version
 
-import requests
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
@@ -43,18 +43,21 @@ class DockerImageValidator(BaseValidator):
         self.docker_image_name, self.docker_image_tag = self.parse_docker_image(self.yml_docker_image)
         self.is_latest_tag = True
         self.docker_image_latest_tag = self.get_docker_image_latest_tag(self.docker_image_name, self.yml_docker_image)
-        if not self.docker_image_latest_tag:
-            error_message, error_code = Errors.non_existing_docker(self.yml_docker_image)
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
-                self.is_valid = False
 
     def is_docker_image_valid(self):
         # javascript code should not check docker
         if self.code_type == 'javascript':
             return True
 
+        if not self.yml_docker_image:
+            error_message, error_code = Errors.dockerimage_not_in_yml_file(self.file_path)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+
         if not self.docker_image_latest_tag:
-            self.is_valid = False
+            error_message, error_code = Errors.non_existing_docker(self.yml_docker_image)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
 
         elif not self.is_docker_image_latest_tag():
             self.is_valid = False

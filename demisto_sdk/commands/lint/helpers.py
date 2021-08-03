@@ -19,11 +19,12 @@ import docker
 import docker.errors
 import git
 import requests
+from docker.models.containers import Container
+
 # Local packages
 from demisto_sdk.commands.common.constants import (TYPE_PWSH, TYPE_PYTHON,
                                                    DemistoException)
 from demisto_sdk.commands.common.tools import print_warning, run_command_os
-from docker.models.containers import Container
 
 # Python2 requirements
 PYTHON2_REQ = ["flake8", "vulture"]

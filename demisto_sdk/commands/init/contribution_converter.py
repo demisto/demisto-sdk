@@ -11,6 +11,7 @@ from string import punctuation
 from typing import Dict, List, Union
 
 import click
+
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     AUTOMATION, ENTITY_TYPE_TO_DIR, INTEGRATION, INTEGRATIONS_DIR,

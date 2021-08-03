@@ -1,9 +1,10 @@
 from typing import Iterator, List
 
 import pytest
+from jsonschema import ValidationError
+
 from demisto_sdk.commands.common.hook_validations.xsoar_config_json import \
     XSOARConfigJsonValidator
-from jsonschema import ValidationError
 
 
 def test_schema_file_correct_path():

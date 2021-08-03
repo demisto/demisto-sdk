@@ -3,6 +3,9 @@ import shutil
 from pathlib import Path
 
 import pytest
+from mock import patch
+from ruamel.yaml import YAML
+
 from demisto_sdk.commands.common.constants import (
     CLASSIFIERS_DIR, CONNECTIONS_DIR, CONTENT_ENTITIES_DIRS, DASHBOARDS_DIR,
     DELETED_JSON_FIELDS_BY_DEMISTO, DELETED_YML_FIELDS_BY_DEMISTO,
@@ -13,8 +16,6 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.tools import (get_child_files, get_json,
                                                get_yaml)
 from demisto_sdk.commands.download.downloader import Downloader
-from mock import patch
-from ruamel.yaml import YAML
 
 
 def ordered(obj):

@@ -2,6 +2,7 @@ import os
 from typing import Optional, Tuple
 
 import git
+
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK, SKIP_RELEASE_NOTES_FOR_TYPES)
 from demisto_sdk.commands.common.tools import (LOG_COLORS,
@@ -9,8 +10,8 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                filter_files_on_pack,
                                                get_pack_name,
                                                get_pack_names_from_files,
-                                               print_color, print_warning,
-                                               suppress_stdout)
+                                               pack_name_to_path, print_color,
+                                               print_warning, suppress_stdout)
 from demisto_sdk.commands.update_release_notes.update_rn import (
     UpdateRN, update_api_modules_dependents_rn)
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
@@ -108,12 +109,13 @@ class UpdateReleaseNotesManager:
                 added_files: A set of new added files
                 modified_files: A set of modified files
         """
-        # The user gave a path to the api module which was changed or he didn't give a path but some api modules
-        # have changed.
+        # We want to handle ApiModules changes when:
+        # (1) The user gave a path to the api module which was changed.
+        # (2) The user did not give a specific path at all (is_all = True) but some ApiModules were changed.
         api_module_was_given = self.given_pack and API_MODULES_PACK in self.given_pack
         api_module_changed_in_git = self.changed_packs_from_git and API_MODULES_PACK in self.changed_packs_from_git
 
-        if api_module_was_given or api_module_changed_in_git:
+        if api_module_was_given or (api_module_changed_in_git and self.is_all):
             updated_packs = update_api_modules_dependents_rn(self.pre_release, self.update_type, added_files,
                                                              modified_files, self.id_set_path, self.text)
             self.total_updated_packs = self.total_updated_packs.union(updated_packs)
@@ -163,7 +165,8 @@ class UpdateReleaseNotesManager:
 
         # Checks if update is required
         if pack_modified or pack_added or pack_old or self.is_force:
-            update_pack_rn = UpdateRN(pack_path=f'Packs/{pack}', update_type=self.update_type,
+            pack_path = pack_name_to_path(pack)
+            update_pack_rn = UpdateRN(pack_path=pack_path, update_type=self.update_type,
                                       modified_files_in_pack=pack_modified.union(pack_old),
                                       pre_release=self.pre_release,
                                       added_files=pack_added, specific_version=self.specific_version,

@@ -22,6 +22,9 @@ import git
 import requests
 import urllib3
 import yaml
+from packaging.version import parse
+from ruamel.yaml import YAML
+
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK, CLASSIFIERS_DIR,
     CONTEXT_OUTPUT_README_TABLE_HEADER, DASHBOARDS_DIR, DEF_DOCKER,
@@ -36,8 +39,6 @@ from demisto_sdk.commands.common.constants import (
     TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, XSOAR_CONFIG_FILE,
     FileType, GithubContentConfig, urljoin)
 from demisto_sdk.commands.common.git_util import GitUtil
-from packaging.version import parse
-from ruamel.yaml import YAML
 
 urllib3.disable_warnings()
 
@@ -1267,20 +1268,25 @@ def is_file_from_content_repo(file_path: str) -> Tuple[bool, str]:
         bool: if file is part of content repo.
         str: relative path of file in content repo.
     """
-    git_repo = git.Repo(os.getcwd(),
-                        search_parent_directories=True)
-    remote_url = git_repo.remote().urls.__next__()
-    is_fork_repo = 'content' in remote_url
-    is_external_repo = is_external_repository()
+    try:
+        git_repo = git.Repo(os.getcwd(),
+                            search_parent_directories=True)
+        remote_url = git_repo.remote().urls.__next__()
+        is_fork_repo = 'content' in remote_url
+        is_external_repo = is_external_repository()
 
-    if not is_fork_repo and not is_external_repo:
-        return False, ''
-    content_path_parts = Path(git_repo.working_dir).parts
-    input_path_parts = Path(file_path).parts
-    input_path_parts_prefix = input_path_parts[:len(content_path_parts)]
-    if content_path_parts == input_path_parts_prefix:
-        return True, '/'.join(input_path_parts[len(content_path_parts):])
-    else:
+        if not is_fork_repo and not is_external_repo:
+            return False, ''
+        content_path_parts = Path(git_repo.working_dir).parts
+        input_path_parts = Path(file_path).parts
+        input_path_parts_prefix = input_path_parts[:len(content_path_parts)]
+        if content_path_parts == input_path_parts_prefix:
+            return True, '/'.join(input_path_parts[len(content_path_parts):])
+        else:
+            return False, ''
+
+    except Exception as e:
+        click.secho(f"Unable to identify the repository: {e}")
         return False, ''
 
 

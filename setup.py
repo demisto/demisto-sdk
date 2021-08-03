@@ -4,9 +4,9 @@
 """
     Demisto SDK
 """
-import os
-from setuptools import find_packages, setup  # noqa: H301
 import pipfile2req
+from setuptools import find_packages, setup  # noqa: H301
+
 NAME = "demisto-sdk"
 REQUIREMENTS_NAME = 'requirements.txt'
 # To install the library, run the following

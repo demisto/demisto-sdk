@@ -20,6 +20,8 @@
 * Fixed an issue where the **update-release-notes** command did not handle ApiModules properly.
 * Added option to enter a dictionary or json of format `[{field_name:description}]` in the **json-to-outputs** command,
   with the `-d` flag.
+* Improved the outputs for the **format** command.
+* Fixed an issue where the validations performed after the **format** command were inconsistent with **validate**.
 * Added an option to ignore errors for file paths and not only file name in .pack-ignore file.
 
 # 1.4.5

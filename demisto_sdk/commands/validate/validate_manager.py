@@ -258,7 +258,7 @@ class ValidateManager:
             file_level = self.detect_file_level(path)
 
             if file_level == PathLevel.FILE:
-                click.secho('\n================= Validating file =================', fg="bright_cyan")
+                click.secho(f'\n================= Validating file {path} =================', fg="bright_cyan")
                 files_validation_result.add(self.run_validations_on_file(path, error_ignore_list))
 
             elif file_level == PathLevel.CONTENT_ENTITY_DIR:

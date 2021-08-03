@@ -19,9 +19,12 @@ REQUIREMENTS_NAME = 'requirements.txt'
 # Converting Pipfile to requirements because PyPi expects requirements.txt file
 if not os.path.exists(REQUIREMENTS_NAME):
     pipfile2req.convert_pipfile_or_lock('.')
-with open(REQUIREMENTS_NAME) as f:
-    requirements = f.read().splitlines()
-os.remove(REQUIREMENTS_NAME)
+    with open(REQUIREMENTS_NAME) as f:
+        requirements = f.read().splitlines()
+    os.remove(REQUIREMENTS_NAME)
+else:
+    with open(REQUIREMENTS_NAME) as f:
+        requirements = f.read().splitlines()
 
 with open('README.md', 'r') as f:
     readme = f.read()

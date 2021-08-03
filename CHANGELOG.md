@@ -22,6 +22,7 @@
   with the `-d` flag.
 * Improved the outputs for the **format** command.
 * Fixed an issue where the validations performed after the **format** command were inconsistent with **validate**.
+* Added to the **validate** command a validation for the author image.
 
 # 1.4.5
 * Enhanced the **postman-codegen** command to name all generated arguments with lower case.

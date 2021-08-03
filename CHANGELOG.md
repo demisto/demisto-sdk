@@ -20,6 +20,7 @@
 * Fixed an issue where the **update-release-notes** command did not handle ApiModules properly.
 * Added option to enter a dictionary or json of format `[{field_name:description}]` in the **json-to-outputs** command,
   with the `-d` flag.
+* Added an option to ignore errors for file paths and not only file name in .pack-ignore file.
 
 # 1.4.5
 * Enhanced the **postman-codegen** command to name all generated arguments with lower case.

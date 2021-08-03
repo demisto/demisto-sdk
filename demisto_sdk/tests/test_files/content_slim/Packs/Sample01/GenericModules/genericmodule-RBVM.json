@@ -1,0 +1,11 @@
+{
+  "id": "rbvm",
+  "version": -1,
+  "name": "Vulnerability Management",
+  "fromVersion": "6.5.0",
+  "definitionIds": [
+    "assets",
+    "assetGroups"
+  ],
+  "views": []
+}

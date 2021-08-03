@@ -27,11 +27,11 @@ references:
           pipfile2req -d > requirements-dev.txt
 
     restore_tox_37_cache: &restore_tox_37_cache
-      restore_tox_37_cache:
+      restore_cache:
         key: tox-37-cache-{{ checksum "Pipfile" }}-{{ checksum "Pipfile.lock" }}
 
     save_tox_37_cache: &save_tox_37_cache
-      save_tox_37_cache:
+      save_cache:
         key: tox-37-cache-{{ checksum "Pipfile" }}-{{ checksum "Pipfile.lock" }}
         paths:
           - .tox/py37

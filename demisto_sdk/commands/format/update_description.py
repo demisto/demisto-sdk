@@ -3,8 +3,6 @@ from typing import Tuple
 
 import click
 
-from demisto_sdk.commands.common.hook_validations.description import \
-    DescriptionValidator
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
@@ -45,7 +43,7 @@ class DescriptionFormat(BaseUpdate):
 
     def run_format(self) -> int:
         try:
-            click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
+            click.secho(f'\n================= Updating file {self.source_file} ================= ', fg='bright_blue')
             self.remove_community_partner_details()
             return SUCCESS_RETURN_CODE
         except Exception as err:
@@ -60,4 +58,4 @@ class DescriptionFormat(BaseUpdate):
         if format:
             return format, SKIP_RETURN_CODE
         else:
-            return format, self.initiate_file_validator(DescriptionValidator)
+            return format, self.initiate_file_validator()

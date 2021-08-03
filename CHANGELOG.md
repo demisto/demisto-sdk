@@ -20,6 +20,9 @@
 * Fixed an issue where the **update-release-notes** command did not handle ApiModules properly.
 * Added option to enter a dictionary or json of format `[{field_name:description}]` in the **json-to-outputs** command,
   with the `-d` flag.
+* Improved the outputs for the **format** command.
+* Fixed an issue where the validations performed after the **format** command were inconsistent with **validate**.
+* Added to the **validate** command a validation for the author image.
 * Updated the **create-content-artifacts** command to support generic modules, definitions, fields and types.
 
 # 1.4.5

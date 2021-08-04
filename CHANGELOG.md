@@ -1,4 +1,6 @@
 # Changelog
+
+# 1.4.6
 * Fixed an issue where **validate** suggests, with no reason, running **format** on missing mandatory keys in yml file.
 * Skipped existence of TestPlaybook check on community and contribution integrations.
 * Fixed an issue where pre-commit didn't run on the demisto_sdk/commands folder.
@@ -24,8 +26,7 @@
 * Fixed an issue where the validations performed after the **format** command were inconsistent with **validate**.
 * Added to the **validate** command a validation for the author image.
 * Updated the **create-content-artifacts** command to support generic modules, definitions, fields and types.
-* Fixed an issue when `View Integration Documentation` button was added twice during the download and re-upload.
-* Fixed an issue when `(Partner Contridution)` was added twice to the display name during the download and re-upload.
+* Added an option to ignore errors for file paths and not only file name in .pack-ignore file.
 
 # 1.4.5
 * Enhanced the **postman-codegen** command to name all generated arguments with lower case.

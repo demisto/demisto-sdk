@@ -15,10 +15,9 @@ from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
                                                 PRESET_ERROR_TO_IGNORE,
                                                 get_all_error_codes,
                                                 get_error_object)
-from demisto_sdk.commands.common.tools import (find_type,
-                                               get_file_displayed_name,
-                                               get_json, get_pack_name,
-                                               get_yaml)
+from demisto_sdk.commands.common.tools import (
+    find_type, get_file_displayed_name, get_json, get_pack_name,
+    get_relative_path_from_packs_dir, get_yaml)
 
 
 class BaseValidator:
@@ -75,10 +74,15 @@ class BaseValidator:
             file_name = os.path.basename(file_path)
             self.check_file_flags(file_name, file_path)
 
+            rel_file_path = get_relative_path_from_packs_dir(file_path)
+
         else:
             file_name = 'No-Name'
+            rel_file_path = 'No-Name'
 
-        if self.should_ignore_error(error_code, self.ignored_errors.get(file_name)) or warning:
+        ignored_errors = self.ignored_errors.get(file_name) or self.ignored_errors.get(rel_file_path)
+
+        if self.should_ignore_error(error_code, ignored_errors) or warning:
             if self.print_as_warnings or warning:
                 click.secho(formatted_error, fg="yellow")
                 self.json_output(file_path, error_code, error_message, warning)

@@ -26,6 +26,7 @@
 * Fixed an issue where the validations performed after the **format** command were inconsistent with **validate**.
 * Added to the **validate** command a validation for the author image.
 * Updated the **create-content-artifacts** command to support generic modules, definitions, fields and types.
+* Added an option to ignore errors for file paths and not only file name in .pack-ignore file.
 
 # 1.4.5
 * Enhanced the **postman-codegen** command to name all generated arguments with lower case.

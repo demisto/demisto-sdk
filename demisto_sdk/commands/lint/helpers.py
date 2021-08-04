@@ -281,7 +281,7 @@ def add_tmp_lint_files(content_repo: git.Repo, pack_path: Path, lint_files: List
 
 
 @lru_cache(maxsize=100)
-def get_python_version_from_image(image: str, timeout: int = 60) -> float:
+def get_python_version_from_image(image: str, timeout: int = 60, log_prompt: str = "") -> float:
     """ Get python version from docker image
 
     Args:
@@ -324,12 +324,13 @@ def get_python_version_from_image(image: str, timeout: int = 60) -> float:
                         container_obj.remove(force=True)
                         break
                     except docker.errors.APIError:
-                        logger.warning(f'Could not remove the image {image}')
+                        logger.warning(f'{log_prompt} - Could not remove the image {image}')
                 return py_num
             else:
                 raise docker.errors.ContainerError
+
         except Exception:
-            logger.exception(f'Failed detecting Python version (in attempt {attempt})')
+            logger.exception(f'{log_prompt} - Failed detecting Python version (in attempt {attempt}) for image {image}')
             continue
 
     return py_num

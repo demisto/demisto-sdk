@@ -96,7 +96,7 @@ def format_manager(input: str = None,
                    deprecate: bool = False,
                    use_git: bool = False,
                    prev_ver: str = None,
-                   include_untracked: bool = False
+                   include_untracked: bool = False,
                    ):
     """
     Format_manager is a function that activated format command on different type of files.

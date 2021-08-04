@@ -200,7 +200,7 @@ def get_files_to_format_from_git(supported_file_types, prev_ver, include_untrack
 
     if filtered_files:
         detected_files_string = "\n".join(filtered_files)
-        click.secho(f'Found the following files:\n{detected_files_string}', fg='bright_cyan')
+        click.secho(f'Found the following files to format:\n{detected_files_string}', fg='bright_cyan')
 
     else:
         click.secho('Did not find any files to format', fg='bright_red')

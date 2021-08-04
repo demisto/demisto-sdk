@@ -235,7 +235,7 @@ def test_get_integration_doc_link_negative(tmp_path):
     assert integration_doc_link == ''
 
 
-def test_get_integration_doc_link_exsist_in_readme(tmp_path):
+def test_get_integration_doc_link_exist_in_readme(tmp_path):
     """
     Given:
         - integration which have README in the integration dir, with "View Integration Documentation" doc link
@@ -979,13 +979,13 @@ def test_invalid_path_to_unifier(repo):
 def test_add_contributors_support(tmp_path):
     """
     Given:
-        - integration which have README in the integration dir, with "View Integration Documentation" doc link
+        - partner integration which have (Partner Contribution) in the integration display name
 
     When:
-        - Getting integration doc link
+        - Adding contribution support to display name
 
     Then:
-        - Verify an empty string is returned
+        - Verify CONTRIBUTOR_DISPLAY_NAME is not added twice
     """
     unifier = YmlUnifier(str(tmp_path))
     unified_yml = {

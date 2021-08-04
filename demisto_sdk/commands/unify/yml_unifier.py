@@ -445,7 +445,8 @@ class YmlUnifier:
         Returns:
             The unified yaml file (dict).
         """
-        unified_yml['display'] += CONTRIBUTOR_DISPLAY_NAME.format(contributor_type.capitalize())
+        if ' Contribution)' not in unified_yml['display']:
+            unified_yml['display'] += CONTRIBUTOR_DISPLAY_NAME.format(contributor_type.capitalize())
         existing_detailed_description = unified_yml.get('detaileddescription', '')
         if contributor_type == COMMUNITY_CONTRIBUTOR:
             contributor_description = CONTRIBUTOR_COMMUNITY_DETAILED_DESC.format(author)
@@ -480,7 +481,11 @@ class YmlUnifier:
         readme_path = os.path.join(self.package_path, 'README.md')
         if os.path.isfile(readme_path) and os.stat(readme_path).st_size != 0:
             # verify README file exists and is not empty
-            return f'[View Integration Documentation]({integration_doc_link})'
+            with open(readme_path) as readme:
+                if '[View Integration Documentation]' not in readme.read():
+                    return f'[View Integration Documentation]({integration_doc_link})'
+                else:
+                    return ''
         else:
             click.secho(
                 f'Did not find README in {self.package_path}, not adding integration doc link',

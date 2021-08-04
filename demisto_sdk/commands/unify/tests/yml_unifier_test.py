@@ -235,6 +235,26 @@ def test_get_integration_doc_link_negative(tmp_path):
     assert integration_doc_link == ''
 
 
+def test_get_integration_doc_link_exsist_in_readme(tmp_path):
+    """
+    Given:
+        - integration which have README in the integration dir, with "View Integration Documentation" doc link
+
+    When:
+        - Getting integration doc link
+
+    Then:
+        - Verify an empty string is returned
+    """
+    unifier = YmlUnifier(str(tmp_path))
+
+    readme = tmp_path / 'README.md'
+    readme.write_text('\n\n---\n[View Integration Documentation]'
+                      '(https://xsoar.pan.dev/docs/reference/integrations/integration-readme-with-link)')
+    integration_doc_link = unifier.get_integration_doc_link({'commonfields': {'id': 'Integration README with link'}})
+    assert integration_doc_link == ''
+
+
 def test_insert_image_to_yml():
     with patch.object(YmlUnifier, "__init__", lambda a, b, c, d, e: None):
         unifier = YmlUnifier('', None, None, None)
@@ -954,3 +974,29 @@ def test_invalid_path_to_unifier(repo):
     assert 'Unsupported input. Please provide either: ' \
            '1. a directory of an integration or a script. ' \
            '2. a path of a GenericModule file.' in result.stdout
+
+
+def test_add_contributors_support(tmp_path):
+    """
+    Given:
+        - integration which have README in the integration dir, with "View Integration Documentation" doc link
+
+    When:
+        - Getting integration doc link
+
+    Then:
+        - Verify an empty string is returned
+    """
+    unifier = YmlUnifier(str(tmp_path))
+    unified_yml = {
+        'display': 'Test Integration (Partner Contribution)',
+        'commonfields': {'id': 'Test Integration'}
+    }
+
+    unifier.add_contributors_support(
+        unified_yml=unified_yml,
+        contributor_type='partner',
+        contributor_email='',
+        contributor_url='',
+    )
+    assert unified_yml["display"] == 'Test Integration (Partner Contribution)'

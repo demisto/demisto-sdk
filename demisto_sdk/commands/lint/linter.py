@@ -953,11 +953,13 @@ class Linter:
         exit_code = SUCCESS
         output = ""
         try:
+            uid = os.getuid() or 4000
+            logger.debug(f'{log_prompt} - user uid for running lint/test: {uid}')  # lgtm[py/clear-text-logging-sensitive-data]
             container_obj = self._docker_client.containers.run(name=container_name,
                                                                image=test_image,
                                                                command=build_pwsh_analyze_command(
                                                                    self._facts["lint_files"][0]),
-                                                               user=f"{os.getuid()}:4000",
+                                                               user=f"{uid}:4000",
                                                                detach=True,
                                                                environment=self._facts["env_vars"])
             stream_docker_container_output(container_obj.logs(stream=True))
@@ -1019,9 +1021,11 @@ class Linter:
         exit_code = SUCCESS
         output = ""
         try:
+            uid = os.getuid() or 4000
+            logger.debug(f'{log_prompt} - user uid for running lint/test: {uid}')  # lgtm[py/clear-text-logging-sensitive-data]
             container_obj: docker.models.containers.Container = self._docker_client.containers.run(
                 name=container_name, image=test_image, command=build_pwsh_test_command(),
-                user=f"{os.getuid()}:4000", detach=True, environment=self._facts["env_vars"])
+                user=f"{uid}:4000", detach=True, environment=self._facts["env_vars"])
             stream_docker_container_output(container_obj.logs(stream=True))
             # wait for container to finish
             container_status = container_obj.wait(condition="exited")

@@ -4,6 +4,7 @@ import os
 from typing import Optional
 
 import click
+
 from demisto_sdk.commands.common.constants import (PACK_METADATA_SUPPORT,
                                                    PACKS_DIR,
                                                    PACKS_PACK_META_FILE_NAME,
@@ -67,7 +68,6 @@ class BaseValidator:
 
         if drop_line:
             formatted_error = "\n" + formatted_error
-
         if file_path:
             if not isinstance(file_path, str):
                 file_path = str(file_path)
@@ -90,6 +90,11 @@ class BaseValidator:
                 click.secho(formatted_error[:-1], fg="bright_red")
                 if error_code == 'ST109':
                     click.secho("Please add to the root of the yml.\n", fg="bright_red")
+                elif error_code == 'ST107':
+                    missing_field = error_message.split(" ")[3]
+                    path_to_add = error_message.split(":")[1]
+                    click.secho(f"Please add the field {missing_field} to the path: {path_to_add} in the yml.\n",
+                                fg="bright_red")
                 else:
                     click.secho(suggested_fix + "\n", fg="bright_red")
 
@@ -114,6 +119,9 @@ class BaseValidator:
 
     @staticmethod
     def get_metadata_file_content(meta_file_path):
+        if not os.path.exists(meta_file_path):
+            return {}
+
         with io.open(meta_file_path, encoding="utf-8") as file:
             metadata_file_content = file.read()
 
@@ -185,8 +193,12 @@ class BaseValidator:
         }
 
         json_contents = []
+        existing_json = ''
         if os.path.exists(self.json_file_path):
-            existing_json = get_json(self.json_file_path)
+            try:
+                existing_json = get_json(self.json_file_path)
+            except ValueError:
+                pass
             if isinstance(existing_json, list):
                 json_contents = existing_json
 

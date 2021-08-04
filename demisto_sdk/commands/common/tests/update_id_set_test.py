@@ -1,18 +1,20 @@
 import json
 import logging
 import os
-import shutil
 import sys
 import tempfile
 import unittest
-from tempfile import mkdtemp
 
 import pytest
+
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.update_id_set import (
     find_duplicates, get_classifier_data, get_dashboard_data,
-    get_fields_by_script_argument, get_general_data,
+    get_fields_by_script_argument,
+    get_filters_and_transformers_from_complex_value,
+    get_filters_and_transformers_from_playbook, get_general_data,
+    get_generic_field_data, get_generic_module_data, get_generic_type_data,
     get_incident_fields_by_playbook_input, get_incident_type_data,
     get_indicator_type_data, get_layout_data, get_layoutscontainer_data,
     get_mapper_data, get_pack_metadata_data, get_playbook_data,
@@ -20,140 +22,9 @@ from demisto_sdk.commands.common.update_id_set import (
     get_widget_data, has_duplicate, merge_id_sets, process_general_items,
     process_incident_fields, process_integration, process_script,
     re_create_id_set)
-from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from TestSuite.utils import IsEqualFunctions
 
 TESTS_DIR = f'{git_path()}/demisto_sdk/tests'
-
-
-class TestIDSetCreator:
-    def setup(self):
-        self.id_set_full_path = os.path.join(TESTS_DIR, 'test_files', 'content_repo_example', 'id_set.json')
-        self._test_dir = mkdtemp()
-        self.file_path = os.path.join(self._test_dir, 'id_set.json')
-
-    def teardown(self):
-        # delete the id set file
-        try:
-            if os.path.isfile(self.file_path) or os.path.islink(self.file_path):
-                os.unlink(self.file_path)
-            elif os.path.isdir(self.file_path):
-                shutil.rmtree(self.file_path)
-        except Exception as err:
-            print(f'Failed to delete {self.file_path}. Reason: {err}')
-
-    def test_create_id_set_output(self):
-        id_set_creator = IDSetCreator(self.file_path)
-
-        id_set_creator.create_id_set()
-        assert os.path.exists(self.file_path)
-
-    def test_create_id_set_on_specific_pack_output(self):
-        """
-        Given
-        - input - specific pack to create from it ID set
-        - output - path to return the created ID set
-
-        When
-        - create ID set on this pack
-
-        Then
-        - ensure that the created ID set is in the path of the output
-
-        """
-        id_set_creator = IDSetCreator(self.file_path, input='Packs/AMP')
-
-        id_set_creator.create_id_set()
-        assert os.path.exists(self.file_path)
-
-    def test_create_id_set_no_output(self, mocker):
-        import demisto_sdk.commands.common.update_id_set as uis
-        mocker.patch.object(uis, 'cpu_count', return_value=1)
-        id_set_creator = IDSetCreator(output=None)
-
-        id_set = id_set_creator.create_id_set()
-        assert not os.path.exists(self.file_path)
-        assert id_set is not None
-        assert 'scripts' in id_set.keys()
-        assert 'integrations' in id_set.keys()
-        assert 'playbooks' in id_set.keys()
-        assert 'TestPlaybooks' in id_set.keys()
-        assert 'Classifiers' in id_set.keys()
-        assert 'Dashboards' in id_set.keys()
-        assert 'IncidentFields' in id_set.keys()
-        assert 'IncidentTypes' in id_set.keys()
-        assert 'IndicatorFields' in id_set.keys()
-        assert 'IndicatorTypes' in id_set.keys()
-        assert 'Layouts' in id_set.keys()
-        assert 'Reports' in id_set.keys()
-        assert 'Widgets' in id_set.keys()
-        assert 'Mappers' in id_set.keys()
-        assert 'Packs' in id_set.keys()
-
-    def test_create_id_set_on_specific_pack(self, repo):
-        """
-        Given
-        - two packs with integrations to create an ID set from
-
-        When
-        - create ID set on one of the packs
-
-        Then
-        - ensure there is only one integration in the ID set integrations list
-        - ensure output id_set contains only the pack on which created the ID set on
-        - ensure output id_set does not contain the second pack
-
-        """
-        packs = repo.packs
-
-        pack_to_create_id_set_on = repo.create_pack('pack_to_create_id_set_on')
-        pack_to_create_id_set_on.create_integration(yml={'commonfields': {'id': 'id1'}, 'category': '', 'name':
-                                                         'integration to create id set', 'script': {'type': 'python'}},
-                                                    name='integration1')
-        packs.append(pack_to_create_id_set_on)
-
-        pack_to_not_create_id_set_on = repo.create_pack('pack_to_not_create_id_set_on')
-        pack_to_not_create_id_set_on.create_integration(yml={'commonfields': {'id2': 'id'}, 'category': '', 'name':
-                                                             'integration to not create id set'}, name='integration2')
-        packs.append(pack_to_not_create_id_set_on)
-
-        id_set_creator = IDSetCreator(self.file_path, pack_to_create_id_set_on.path)
-
-        id_set_creator.create_id_set()
-
-        with open(self.file_path, 'r') as id_set_file:
-            private_id_set = json.load(id_set_file)
-
-        assert len(private_id_set['integrations']) == 1
-        assert private_id_set['integrations'][0].get('id1', {}).get('name', '') == 'integration to create id set'
-        assert private_id_set['integrations'][0].get('id2', {}).get('name', '') == ''
-
-    def test_create_id_set_on_specific_empty_pack(self, repo):
-        """
-        Given
-        - an empty pack to create from it ID set
-
-        When
-        - create ID set on this pack
-
-        Then
-        - ensure that an ID set is created and no error is returned
-        - ensure output id_set is empty
-
-        """
-        pack = repo.create_pack()
-
-        id_set_creator = IDSetCreator(self.file_path, pack.path)
-
-        id_set_creator.create_id_set()
-
-        with open(self.file_path, 'r') as id_set_file:
-            private_id_set = json.load(id_set_file)
-        for content_entity, content_entity_value_list in private_id_set.items():
-            if content_entity != 'Packs':
-                assert len(content_entity_value_list) == 0
-            else:
-                assert len(content_entity_value_list) == 1
 
 
 class TestPacksMetadata:
@@ -436,6 +307,7 @@ class TestIntegrations:
             "name": "Dummy Integration",
             "file_path": TESTS_DIR + "/test_files/DummyPack/Integrations/DummyIntegration/DummyIntegration.yml",
             "fromversion": "4.1.0",
+            "docker_image": "demisto/python3:3.7.4.977",
             "commands": ['xdr-get-incidents',
                          'xdr-get-incident-extra-data',
                          'xdr-update-incident',
@@ -554,6 +426,7 @@ class TestScripts:
             "name": "DummyScript",
             "file_path": TESTS_DIR + "/test_files/DummyPack/Scripts/DummyScript.yml",
             "fromversion": "5.0.0",
+            "docker_image": "demisto/python3:3.7.3.286",
             "tests": [
                 "No test - no need to test widget"
             ]
@@ -563,6 +436,7 @@ class TestScripts:
     PACK_SCRIPT_DATA = {
         "DummyScript": {
             "name": "DummyScript",
+            "docker_image": "demisto/python3:3.8.2.6981",
             "pack": "DummyPack",
             "file_path": TESTS_DIR + "/test_files/Packs/DummyPack/Scripts/DummyScript/DummyScript.yml",
         }
@@ -630,6 +504,8 @@ class TestPlaybooks:
         "name": "Dummy Playbook",
         "file_path": TESTS_DIR + "/test_files/DummyPack/Playbooks/DummyPlaybook.yml",
         "fromversion": "4.5.0",
+        "filters": ["isEqualString"],
+        "transformers": ["uniq"],
         "implementing_scripts": [
             "XDRSyncScript",
             "StopScheduledTask",
@@ -769,6 +645,118 @@ class TestPlaybooks:
         # domain task is marked as skippable so it will be included regardless to the graph.
         assert 'domain' in playbook_data.get('skippable_tasks', [])
         assert len(playbook_data.get('skippable_tasks', [])) == 1
+
+    @staticmethod
+    def test_get_filters_from_playbook_tasks():
+        """
+        Given
+        - playbook with one task and 3 filters: isEqualString, isEqualString and StringContainsArray
+
+        When
+        - parsing filters from the playbook
+
+        Then
+        - parsing 2 filters successfully
+        - isEqualString filter shows once
+
+        """
+        data = {'tasks': {'0': {'scriptarguments': {'value': {'complex': {'filters': [[{'operator': 'isEqualString'}],
+                                                                                      [{'operator': 'isEqualString'}],
+                                                                                      [{'operator': 'StringContainsArray'}]
+                                                                                      ]}}}}}}
+        _, filters = get_filters_and_transformers_from_playbook(data)
+        assert len(filters) == 2
+        assert 'isEqualString' in filters
+        assert 'StringContainsArray' in filters
+
+    @staticmethod
+    def test_get_transformers_from_playbook_tasks():
+        """
+        Given
+        - playbook with one task and 3 transformers: Length, Length and toUpperCase
+
+        When
+        - parsing transformers from the playbook
+
+        Then
+        - parsing 2 transformers successfully
+        - Length transformer shows once
+
+        """
+        data = {'tasks': {'0': {'scriptarguments': {'value': {'complex': {'transformers': [{'operator': 'toUpperCase'},
+                                                                                           {'operator': 'Length'},
+                                                                                           {'operator': 'Length'}
+                                                                                           ]}}}}}}
+        transformers, _ = get_filters_and_transformers_from_playbook(data)
+        assert len(transformers) == 2
+        assert 'toUpperCase' in transformers
+        assert 'Length' in transformers
+
+    @staticmethod
+    def test_get_transformers_from_playbook_condition_task():
+        """
+        Given
+        - playbook with one condition task with toUpperCase transformer
+
+        When
+        - parsing transformers from the playbook
+
+        Then
+        - parsing toUpperCase transformer successfully
+
+        """
+        data = {'tasks': {'0': {'type': 'condition', 'conditions': [
+            {'condition': [[{'left': {'value': {'complex': {'transformers': [{'operator': 'toUpperCase'}
+                                                                             ]}}}}]]}]}}}
+        transformers, _ = get_filters_and_transformers_from_playbook(data)
+        assert transformers == ['toUpperCase']
+
+    @staticmethod
+    def test_get_transformers_and_filters_from_playbook_two_conditions_task():
+        """
+        Given
+        - playbook with one task that contains 2 conditions: one with filter and one with transformer
+
+        When
+        - parsing transformers and filters from the playbook
+
+        Then
+        - parsing toUpperCase transformer successfully
+        - parsing isEqualString filter successfully
+
+
+        """
+        data = {'tasks': {'0': {'type': 'condition', 'conditions': [
+            {'condition': [[{'left': {'value': {'complex': {'filters': [[{'operator': 'isEqualString'}]
+                                                                        ]}}}}]]},
+            {'condition': [[{'right': {'value': {'complex': {'transformers': [{'operator': 'toUpperCase'}
+                                                                              ]}}}}]]}]}}}
+
+        transformers, filters = get_filters_and_transformers_from_playbook(data)
+        assert transformers == ['toUpperCase']
+        assert filters == ['isEqualString']
+
+    @staticmethod
+    def test_get_transformers_from_playbook_inputs():
+        """
+        Given
+        - playbook with 2 inputs that using Length and toUpperCase transformers
+
+        When
+        - parsing transformers from the playbook inputs
+
+        Then
+        - parsing 2 transformers successfully
+
+        """
+        data = {'inputs': [{'value': {'complex': {'transformers': [{'operator': 'toUpperCase'}
+                                                                   ]}}},
+                           {'value': {'complex': {'transformers': [{'operator': 'Length'}
+                                                                   ]}}}]}
+        transformers, _ = get_filters_and_transformers_from_playbook(data)
+        assert len(transformers) == 2
+        assert 'toUpperCase' in transformers
+        assert 'Length' in transformers
 
 
 class TestLayouts:
@@ -1384,6 +1372,30 @@ class TestMappers:
             'closed', 'servicenowescalation', 'servicenowurgency', 'subcategory', 'servicenownotify',
             'servicenowcategory', 'remediationsla.dueDate', 'servicenowstate', 'timetoassignment.startDate',
             'servicenowimpact', 'servicenowpriority'}
+
+    @staticmethod
+    def test_process_mappers__complex_value():
+        """
+        Given
+            - An mapper file called classifier-mapper-to-test-complex-value.json with one transformer and one filter
+
+        When
+            - parsing mapper files
+
+        Then
+            - parsing one filter and one transformer from file successfully
+        """
+        test_file = os.path.join(git_path(), 'demisto_sdk', 'commands', 'create_id_set', 'tests',
+                                 'test_data', 'classifier-mapper-to-test-complex-value.json')
+
+        res = get_mapper_data(test_file)
+        result = res.get('dummy mapper')
+        transformers = result.get('transformers')
+        filters = result.get('filters')
+        assert len(transformers) == 1
+        assert 'toUpperCase' in transformers
+        assert len(filters) == 1
+        assert 'isEqualString' in filters
 
 
 class TestWidget:
@@ -2002,6 +2014,158 @@ class TestFlow(unittest.TestCase):
             assert any('incident_account_field_dup_check' in i for i in dup_data)
 
 
+class TestGenericFields:
+    @staticmethod
+    def test_process_generic_fields(pack):
+        """
+        Given
+            - A generic field file
+
+        When
+            - parsing generic field files
+
+        Then
+            - parsing all the data from file successfully
+        """
+
+        field_data = {
+            "cliName": "operatigsystem",
+            "id": "id",
+            "name": "Operating System",
+            "definitionId": "assets",
+            "fromVersion": "6.5.0",
+            "associatedTypes": ["Asset Type"]}
+
+        generic_types_list = [{
+            "Asset Type": {
+                "name": "Asset Type",
+                "file_path": "path/path",
+                "fromversion": "6.5.0",
+                "pack": "ObjectsExample",
+                "definitionId": "assets",
+                "layout": "Workstation Layout"
+            }
+        }]
+
+        generic_field = pack.create_generic_field('test-generic-field')
+        generic_field.write_json(field_data)
+        test_dir = generic_field.path
+
+        result = get_generic_field_data(test_dir, generic_types_list=generic_types_list)
+        result = result.get('id')
+        assert 'name' in result.keys()
+        assert 'file_path' in result.keys()
+        assert 'fromversion' in result.keys()
+        assert 'definitionId' in result.keys()
+        assert 'generic_types' in result.keys()
+
+
+class TestGenericType:
+
+    @staticmethod
+    def test_get_generic_type_data(pack):
+        """
+        Given
+            - A generic type file
+
+        When
+            - parsing object type files
+
+        Then
+            - parsing all the data from file successfully
+        """
+
+        object_type = pack.create_generic_module('test-object-type')
+        object_type.write_json(
+            {"id": "type-id", "name": "type-name", "fromVersion": "version", "definitionId": "Assets",
+             "layout": "layout"})
+        test_dir = object_type.path
+
+        result = get_generic_type_data(test_dir)
+        result = result.get('type-id')
+        assert 'name' in result.keys()
+        assert 'file_path' in result.keys()
+        assert 'fromversion' in result.keys()
+        assert 'layout' in result.keys()
+        assert 'definitionId' in result.keys()
+
+
+class TestGenericDefinition:
+
+    @staticmethod
+    def test_get_generic_definition_data(pack):
+        """
+        Given
+            - A generic definition file
+
+        When
+            - parsing definition type files
+
+        Then
+            - parsing all the data from file successfully
+        """
+
+        object_type = pack.create_generic_definition('test-generic-definition')
+        object_type.write_json(
+            {"id": "type-id", "name": "type-name", "fromVersion": "version", "auditable": False})
+        test_dir = object_type.path
+
+        result = get_general_data(test_dir)
+        result = result.get('type-id')
+        assert 'name' in result.keys()
+        assert 'file_path' in result.keys()
+        assert 'fromversion' in result.keys()
+        assert 'pack' in result.keys()
+
+
+class TestGenericModule:
+    @staticmethod
+    def test_get_generic_module_data(repo):
+        """
+        Given
+            - A generic module file
+
+        When
+            - parsing generic generic module files
+
+        Then
+            - parsing all the data from file successfully
+        """
+
+        module_data = {"id": "id",
+                       "version": -1,
+                       "name": "Vulnerability Management",
+                       "fromVersion": "6.5.0",
+                       "definitionIds": ["assets"],
+                       "views": [{
+                           "name": "Vulnerability Management",
+                           "title": "Risk Base Vulnerability Management",
+                           "tabs": [{
+                               "name": "Assets",
+                               "newButtonDefinitionId": "assets",
+                               "dashboard": {
+                                   "id": "assets_dashboard",
+                                   "version": -1,
+                                   "fromDate": "0001-01-01T00:00:00Z",
+                                   "toDate": "0001-01-01T00:00:00Z",
+                                   "name": "Assets Dashboard",
+                                   "prevName": "Assets Dashboard", }}]}]}
+
+        pack = repo.create_pack('pack')
+        generic_module = pack.create_generic_module('test-generic-module')
+        generic_module.write_json(module_data)
+        test_dir = generic_module.path
+
+        result = get_generic_module_data(test_dir)
+        result = result.get('id')
+        assert 'name' in result.keys()
+        assert 'file_path' in result.keys()
+        assert 'fromversion' in result.keys()
+        assert 'definitionIds' in result.keys()
+        assert 'views' in result.keys()
+        assert 'pack' in result.keys()
+
+
 def test_merge_id_sets(tmp_path):
     """
     Given
@@ -2233,3 +2397,35 @@ def test_merged_id_sets_with_legal_duplicates(caplog):
     }
 
     assert not duplicates
+
+
+def test_get_filters_and_transformers_from_complex_value():
+    """
+    Given
+    - complex value with 3 transformers: Length, Length and toUpperCase
+      and 3 filters: isEqualString, isEqualString and StringContainsArray
+
+    When
+    - parsing transformers and filters from the value
+
+    Then
+    - parsing 2 transformers successfully
+    - Length transformer shows once
+    - parsing 2 filters successfully
+    - isEqualString filter shows once
+
+    """
+
+    data = {'transformers': [{'operator': 'toUpperCase'},
+                             {'operator': 'Length'},
+                             {'operator': 'Length'}],
+            'filters': [[{'operator': 'isEqualString'}],
+                        [{'operator': 'isEqualString'}],
+                        [{'operator': 'StringContainsArray'}]]}
+    transformers, filters = get_filters_and_transformers_from_complex_value(data)
+    assert len(transformers) == 2
+    assert len(filters) == 2
+    assert 'toUpperCase' in transformers
+    assert 'Length' in transformers
+    assert 'isEqualString' in filters
+    assert 'StringContainsArray' in filters

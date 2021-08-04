@@ -1,8 +1,7 @@
 from typing import Tuple
 
 import click
-from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
-    ContentEntityValidator
+
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
@@ -42,7 +41,7 @@ class ConnectionJSONFormat(BaseUpdateJSON):
 
     def run_format(self) -> int:
         try:
-            click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
+            click.secho(f'\n================= Updating file {self.source_file} =================', fg='bright_blue')
             self.remove_unnecessary_keys()
             self.set_fromVersion(from_version=self.from_version)
             self.save_json_to_destination_file()
@@ -58,4 +57,4 @@ class ConnectionJSONFormat(BaseUpdateJSON):
         if format_:
             return format_, SKIP_RETURN_CODE
         else:
-            return format_, self.initiate_file_validator(ContentEntityValidator)
+            return format_, self.initiate_file_validator()

@@ -1,6 +1,7 @@
 from distutils.version import LooseVersion
 
 import click
+
 from demisto_sdk.commands.common.constants import \
     LAYOUT_AND_MAPPER_BUILT_IN_FIELDS
 from demisto_sdk.commands.common.errors import Errors
@@ -36,7 +37,8 @@ class MapperValidator(ContentEntityValidator):
             self.is_valid_to_version(),
             self.is_to_version_higher_from_version(),
             self.is_valid_type(),
-            self.is_incident_field_exist(id_set_file, is_circle)
+            self.is_incident_field_exist(id_set_file, is_circle),
+            self.is_id_equals_name(),
         ])
 
     def is_valid_version(self):
@@ -195,3 +197,11 @@ class MapperValidator(ContentEntityValidator):
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True
+
+    def is_id_equals_name(self):
+        """Check whether the mapper ID is equal to its name.
+
+        Returns:
+            bool. Whether the file id equals to its name
+        """
+        return super()._is_id_equals_name('mapper')

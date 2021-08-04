@@ -509,7 +509,7 @@ class GitUtil:
         """
         relative_file_path = os.path.relpath(full_file_path, self.git_path())
         try:
-            remote_name = self.repo.remote().name
+            remote_name = self.repo.remote()
         except ValueError as exc:
             if "Remote named 'origin' didn't exist" in str(exc):
                 remote_name = 'origin'

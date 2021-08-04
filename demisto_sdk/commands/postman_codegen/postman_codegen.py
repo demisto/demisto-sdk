@@ -299,7 +299,9 @@ def convert_request_to_command(item: dict):
     command_name = tools.to_kebab_case(name)
     context_prefix = tools.to_pascal_case(name)
 
-    request = item.get('request', {})
+    request = item.get('request')
+    if request is None:
+        raise DemistoException('Could not find request in the collection. Is it a valid postman collection?')
 
     logger.debug(f'converting postman headers of request: {name}')
     headers = postman_headers_to_conf_headers(request.get('header'), skip_authorization_header=True)
@@ -309,9 +311,6 @@ def convert_request_to_command(item: dict):
     returns_file = False
 
     logger.debug(f'creating url arguments of request: {name}')
-    request = item.get('request')
-    if request is None:
-        raise DemistoException('Could not find request in the collection. Is it a valid postman collection?')
     request_url_object = request.get('url')
 
     if not request_url_object:
@@ -328,6 +327,18 @@ def convert_request_to_command(item: dict):
                 in_='url'
             )
             args.append(arg)
+
+    for url_path_variable in request_url_object.get('variable', []):
+        variable_name = url_path_variable.get('key')
+        if not variable_name:
+            continue
+        arg = IntegrationGeneratorArg(
+            name=variable_name,
+            description='',
+            in_='url'
+        )
+        args.append(arg)
+        url_path = url_path.replace(f'/:{variable_name}', f'/{{{variable_name}}}')
 
     logger.debug(f'creating query arguments of request: {name}')
     for q in request_url_object.get('query', []):
@@ -388,7 +399,7 @@ def convert_request_to_command(item: dict):
         url_path=url_path,
         http_method=request.get('method'),
         headers=headers,
-        description=request.get('description'),
+        description=request.get('description') or '',
         arguments=args,
         outputs=outputs,
         context_path=context_prefix,

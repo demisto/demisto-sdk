@@ -1,4 +1,5 @@
 from click.testing import CliRunner
+
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
 from TestSuite.test_tools import ChangeCWD
@@ -29,7 +30,7 @@ def test_conf_file_custom(mocker, repo):
         runner = CliRunner(mix_stderr=False)
         # pre-conf file - see validate fail on docker related issue
         res = runner.invoke(main, f"validate -i {integration.yml.path}")
-        assert '================= Validating file =================' in res.stdout
+        assert '================= Validating file ' in res.stdout
         assert 'DO106' in res.stdout
 
     repo.make_file('.demisto-sdk-conf', '[validate]\nno_docker_checks=True')
@@ -37,5 +38,5 @@ def test_conf_file_custom(mocker, repo):
         runner = CliRunner(mix_stderr=False)
         # post-conf file - see validate not fail on docker related issue as we are skipping
         res = runner.invoke(main, f"validate -i {integration.yml.path}")
-        assert '================= Validating file =================' in res.stdout
+        assert '================= Validating file ' in res.stdout
         assert 'DO106' not in res.stdout

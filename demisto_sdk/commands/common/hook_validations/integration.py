@@ -3,12 +3,14 @@ import re
 from typing import Dict, Optional
 
 import yaml
+
 from demisto_sdk.commands.common.constants import (
     BANG_COMMAND_ARGS_MAPPING_DICT, BANG_COMMAND_NAMES, DBOT_SCORES_DICT,
     DEPRECATED_REGEXES, ENDPOINT_COMMAND_NAME, ENDPOINT_FLEXIBLE_REQUIRED_ARGS,
     FEED_REQUIRED_PARAMS, FETCH_REQUIRED_PARAMS, FIRST_FETCH,
     FIRST_FETCH_PARAM, INTEGRATION_CATEGORIES, IOC_OUTPUTS_DICT, MAX_FETCH,
-    MAX_FETCH_PARAM, PYTHON_SUBTYPES, TYPE_PWSH, XSOAR_CONTEXT_STANDARD_URL)
+    MAX_FETCH_PARAM, PYTHON_SUBTYPES, REPUTATION_COMMAND_NAMES, TYPE_PWSH,
+    XSOAR_CONTEXT_STANDARD_URL)
 from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
                                                 Errors)
@@ -65,6 +67,42 @@ class IntegrationValidator(ContentEntityValidator):
         ]
         return not any(answers)
 
+    def core_integration_validations(self, validate_rn: bool = True):
+        """Perform the core integration validations (common to both beta and regular integrations)
+        Args:
+            validate_rn (bool): Whether to validate release notes (changelog) or not.
+        """
+        answers = [
+            super().is_valid_file(validate_rn),
+            self.is_valid_subtype(),
+            self.is_valid_default_argument_in_reputation_command(),
+            self.is_valid_default_argument(),
+            self.is_proxy_configured_correctly(),
+            self.is_insecure_configured_correctly(),
+            self.is_checkbox_param_configured_correctly(),
+            self.is_valid_category(),
+            self.is_id_equals_name(),
+            self.is_docker_image_valid(),
+            self.is_valid_feed(),
+            self.is_valid_fetch(),
+            self.is_there_a_runnable(),
+            self.is_valid_display_name(),
+            self.is_valid_pwsh(),
+            self.is_valid_image(),
+            self.is_valid_max_fetch_and_first_fetch(),
+            self.is_valid_as_deprecated(),
+            self.is_valid_parameters_display_name(),
+            self.is_mapping_fields_command_exist(),
+            self.is_valid_integration_file_path(),
+            self.has_no_duplicate_params(),
+            self.has_no_duplicate_args(),
+            self.is_there_separators_in_names(),
+            self.name_not_contain_the_type(),
+            self.is_valid_endpoint_command(),
+        ]
+
+        return all(answers)
+
     def is_valid_file(self, validate_rn: bool = True, skip_test_conf: bool = False,
                       check_is_unskipped: bool = True, conf_json_data: dict = {}) -> bool:
         """Check whether the Integration is valid or not according to the LEVEL SUPPORT OPTIONS
@@ -81,36 +119,10 @@ class IntegrationValidator(ContentEntityValidator):
         """
 
         answers = [
-            super().is_valid_file(validate_rn),
-            self.is_valid_subtype(),
-            self.is_valid_default_argument_in_reputation_command(),
-            self.is_valid_default_argument(),
-            self.is_proxy_configured_correctly(),
-            self.is_insecure_configured_correctly(),
-            self.is_checkbox_param_configured_correctly(),
-            self.is_valid_category(),
-            self.is_id_equals_name(),
-            self.is_docker_image_valid(),
-            self.is_valid_feed(),
-            self.is_valid_fetch(),
-            self.is_there_a_runnable(),
-            self.is_valid_display_name(),
+            self.core_integration_validations(validate_rn),
             self.is_valid_hidden_params(),
-            self.is_valid_pwsh(),
-            self.is_valid_image(),
             self.is_valid_description(beta_integration=False),
-            self.is_valid_max_fetch_and_first_fetch(),
-            self.is_valid_as_deprecated(),
-            self.is_valid_parameters_display_name(),
-            self.is_mapping_fields_command_exist(),
-            self.is_context_change_in_readme(),
-            self.is_valid_integration_file_path(),
-            self.has_no_duplicate_params(),
-            self.has_no_duplicate_args(),
-            self.is_there_separators_in_names(),
-            self.name_not_contain_the_type(),
-            self.is_valid_endpoint_command(),
-
+            self.is_context_correct_in_readme(),
         ]
 
         if check_is_unskipped:
@@ -137,17 +149,9 @@ class IntegrationValidator(ContentEntityValidator):
                 bool: True if integration is valid, False otherwise.
         """
         answers = [
-            super().is_valid_file(validate_rn),
-            self.is_valid_default_argument_in_reputation_command(),
-            self.is_valid_subtype(),
-            self.is_valid_category(),
+            self.core_integration_validations(validate_rn),
             self.is_valid_beta(),
-            self.is_valid_image(),
             self.is_valid_description(beta_integration=True),
-            self.is_valid_as_deprecated(),
-            self.is_there_separators_in_names(),
-            self.name_not_contain_the_type()
-
         ]
         return all(answers)
 
@@ -219,7 +223,7 @@ class IntegrationValidator(ContentEntityValidator):
                     if formatted_message:
                         err_msgs.append(formatted_message)
 
-                if configuration_param.get('defaultvalue', '') not in ('false', ''):
+                if configuration_param.get('defaultvalue', '') not in (False, 'false', ''):
                     error_message, error_code = Errors.wrong_default_parameter_not_empty(param_name, "''")
                     formatted_message = self.handle_error(error_message, error_code, file_path=self.file_path,
                                                           should_print=False)
@@ -367,6 +371,20 @@ class IntegrationValidator(ContentEntityValidator):
 
         return is_valid
 
+    @staticmethod
+    def _get_invalid_dbot_outputs(context_outputs_paths, context_outputs_descriptions):
+        missing_outputs = set()
+        missing_descriptions = set()
+        for dbot_score_output in DBOT_SCORES_DICT:
+            if dbot_score_output not in context_outputs_paths:
+                missing_outputs.add(dbot_score_output)
+            else:  # DBot Score output path is in the outputs
+                if DBOT_SCORES_DICT.get(dbot_score_output) not in context_outputs_descriptions:
+                    missing_descriptions.add(dbot_score_output)
+                    # self.is_valid = False - Do not fail build over wrong description
+
+        return missing_outputs, missing_descriptions
+
     def is_outputs_for_reputations_commands_valid(self):
         # type: () -> bool
         """Check if a reputation command (domain/email/file/ip/url)
@@ -390,28 +408,22 @@ class IntegrationValidator(ContentEntityValidator):
                     context_outputs_descriptions.add(output.get('description'))
 
                 # validate DBotScore outputs and descriptions
-                missing_outputs = set()
-                missing_descriptions = set()
-                for dbot_score_output in DBOT_SCORES_DICT:
-                    if dbot_score_output not in context_outputs_paths:
-                        missing_outputs.add(dbot_score_output)
-                    else:  # DBot Score output path is in the outputs
-                        if DBOT_SCORES_DICT.get(dbot_score_output) not in context_outputs_descriptions:
-                            missing_descriptions.add(dbot_score_output)
-                            # self.is_valid = False - Do not fail build over wrong description
+                if command_name in REPUTATION_COMMAND_NAMES:
+                    missing_outputs, missing_descriptions = self._get_invalid_dbot_outputs(
+                        context_outputs_paths, context_outputs_descriptions)
+                    if missing_outputs:
+                        error_message, error_code = Errors.dbot_invalid_output(command_name, missing_outputs,
+                                                                               context_standard)
+                        if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                             warning=self.structure_validator.quite_bc):
+                            self.is_valid = False
+                            output_for_reputation_valid = False
 
-                if missing_outputs:
-                    error_message, error_code = Errors.dbot_invalid_output(command_name, missing_outputs,
-                                                                           context_standard)
-                    if self.handle_error(error_message, error_code, file_path=self.file_path,
-                                         warning=self.structure_validator.quite_bc):
-                        self.is_valid = False
-                        output_for_reputation_valid = False
-
-                if missing_descriptions:
-                    error_message, error_code = Errors.dbot_invalid_description(command_name, missing_descriptions,
-                                                                                context_standard)
-                    self.handle_error(error_message, error_code, file_path=self.file_path, warning=True)
+                    if missing_descriptions:
+                        error_message, error_code = Errors.dbot_invalid_description(command_name,
+                                                                                    missing_descriptions,
+                                                                                    context_standard)
+                        self.handle_error(error_message, error_code, file_path=self.file_path, warning=True)
 
                 # validate the IOC output
                 reputation_output = IOC_OUTPUTS_DICT.get(command_name)
@@ -525,16 +537,17 @@ class IntegrationValidator(ContentEntityValidator):
         commands = self.current_file.get('script', {}).get('commands', [])
         does_not_have_duplicate_args = True
         for command in commands:
-            arg_list = []  # type: list
+            arg_names = []  # type: list
             for arg in command.get('arguments', []):
-                if arg in arg_list:
-                    error_message, error_code = Errors.duplicate_arg_in_file(arg['name'], command['name'])
+                arg_name = arg.get('name')
+                if arg_name in arg_names:
+                    error_message, error_code = Errors.duplicate_arg_in_file(arg_name, command['name'])
                     if self.handle_error(error_message, error_code, file_path=self.file_path):
                         self.is_valid = False
                         does_not_have_duplicate_args = False
 
                 else:
-                    arg_list.append(arg)
+                    arg_names.append(arg_name)
 
         return does_not_have_duplicate_args
 
@@ -1105,7 +1118,7 @@ class IntegrationValidator(ContentEntityValidator):
                     return False
         return True
 
-    def is_context_change_in_readme(self) -> bool:
+    def is_context_correct_in_readme(self) -> bool:
         """
         Checks if there has been a corresponding change to the integration's README
         when changing the context paths of an integration.
@@ -1273,8 +1286,7 @@ class IntegrationValidator(ContentEntityValidator):
 
         # extracting the specific command from commands.
         endpoint_command = [arg for arg in commands if arg.get('name') == 'endpoint'][0]
-        return self._is_valid_endpoint_inputs(endpoint_command, required_arguments=ENDPOINT_FLEXIBLE_REQUIRED_ARGS) \
-            and self._is_valid_endpoint_outputs(endpoint_command)
+        return self._is_valid_endpoint_inputs(endpoint_command, required_arguments=ENDPOINT_FLEXIBLE_REQUIRED_ARGS)
 
     def _is_valid_endpoint_inputs(self, command_data, required_arguments):
         """
@@ -1307,21 +1319,3 @@ class IntegrationValidator(ContentEntityValidator):
                 self.is_valid = False
                 return False
         return True
-
-    def _is_valid_endpoint_outputs(self, command_data):
-        context_standard = XSOAR_CONTEXT_STANDARD_URL
-        output_for_reputation_valid = True
-        context_outputs_paths = set()
-        for output in command_data.get('outputs', []):
-            context_outputs_paths.add(output.get('contextPath'))
-
-        # validate the reputation command outputs
-        reputation_output = IOC_OUTPUTS_DICT.get(ENDPOINT_COMMAND_NAME)
-        if reputation_output and (reputation_output - context_outputs_paths):
-            error_message, error_code = Errors.missing_reputation(ENDPOINT_COMMAND_NAME, reputation_output,
-                                                                  context_standard)
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
-                self.is_valid = False
-                output_for_reputation_valid = False
-
-        return output_for_reputation_valid

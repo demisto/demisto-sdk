@@ -3,7 +3,10 @@ import os
 
 import click
 import pytest
+import requests_mock
 from click.testing import CliRunner
+from git import GitCommandError
+
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (PACK_METADATA_DESC,
@@ -18,7 +21,6 @@ from demisto_sdk.commands.common.hook_validations.base_validator import \
 from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
     PackUniqueFilesValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from git import GitCommandError
 from TestSuite.test_tools import ChangeCWD
 
 VALIDATE_CMD = "validate"
@@ -84,17 +86,21 @@ class TestPackUniqueFilesValidator:
     def test_validate_pack_unique_files(self, mocker):
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_readme_and_pack_description', return_value=True)
+        mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_readme_images', return_value=True)
         mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
         assert not self.validator.are_valid_files(id_set_validations=False)
         fake_validator = PackUniqueFilesValidator('fake')
+        mocker.patch.object(fake_validator, '_read_metadata_content', return_value=dict())
         assert fake_validator.are_valid_files(id_set_validations=False)
 
     def test_validate_pack_metadata(self, mocker):
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_readme_and_pack_description', return_value=True)
+        mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_readme_images', return_value=True)
         mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
         assert not self.validator.are_valid_files(id_set_validations=False)
         fake_validator = PackUniqueFilesValidator('fake')
+        mocker.patch.object(fake_validator, '_read_metadata_content', return_value=dict())
         assert fake_validator.are_valid_files(id_set_validations=False)
 
     def test_validate_partner_contribute_pack_metadata_no_mail_and_url(self, mocker, repo):
@@ -275,6 +281,7 @@ class TestPackUniqueFilesValidator:
             PACK_METADATA_SUPPORT: XSOAR_SUPPORT,
             PACK_METADATA_TAGS: []
         })
+        mocker.patch.object(tools, 'is_external_repository', return_value=False)
         mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': branch_usecases}, 'json'))
         self.validator.pack_path = pack.path
 
@@ -319,6 +326,7 @@ class TestPackUniqueFilesValidator:
             PACK_METADATA_SUPPORT: XSOAR_SUPPORT,
             PACK_METADATA_TAGS: tags
         })
+        mocker.patch.object(tools, 'is_external_repository', return_value=False)
         mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': branch_tags}, 'json'))
         self.validator.pack_path = pack.path
 
@@ -515,6 +523,74 @@ class TestPackUniqueFilesValidator:
     def test_validate_pack_readme_file_is_not_empty_missing_file(self):
         self.validator = PackUniqueFilesValidator(os.path.join(self.FILES_PATH, 'DummyPack'))
         assert self.validator._is_pack_file_exists(self.validator.readme_file) is False
+
+    def test_validate_pack_readme_valid_images(self, mocker):
+        """
+            Given
+                - A pack README file with valid absolute image paths in it.
+            When
+                - Run validate on pack README file
+            Then
+                - Ensure:
+                    - Validation succeed
+                    - Valid absolute image paths were not caught
+        """
+        from demisto_sdk.commands.common.hook_validations.readme import \
+            ReadMeValidator
+
+        self.validator = PackUniqueFilesValidator(os.path.join(self.FILES_PATH, 'DummyPack2'))
+        mocker.patch.object(ReadMeValidator, 'check_readme_relative_image_paths', return_value=[])  # Test only absolute paths
+
+        with requests_mock.Mocker() as m:
+            # Mock get requests
+            m.get('https://github.com/demisto/content/raw/test1.png',
+                  status_code=200, text="Test1")
+            m.get('https://raw.githubusercontent.com/demisto/content/raw/test1.png',
+                  status_code=200, text="Test1")
+            m.get('https://raw.githubusercontent.com/demisto/content/raw/test1.jpg',
+                  status_code=200, text="Test1")
+
+            result = self.validator.validate_pack_readme_images()
+            errors = self.validator.get_errors()
+        assert result
+        assert 'please repair it:\n![Identity with High Risk Score](https://github.com/demisto/content/raw/test1.png)' not in errors
+        assert 'please repair it:\n![Identity with High Risk Score](https://raw.githubusercontent.com/demisto/content/raw/test1.png)' not in errors
+        assert 'please repair it:\n(https://raw.githubusercontent.com/demisto/content/raw/test1.jpg)' not in errors
+
+    def test_validate_pack_readme_invalid_images(self):
+        """
+            Given
+                - A pack README file with invalid absolute and relative image paths in it.
+            When
+                - Run validate on pack README file
+            Then
+                - Ensure:
+                    - Validation fails
+                    - Invalid relative image paths were caught correctly
+                    - Invalid absolute image paths were caught correctly
+        """
+        self.validator = PackUniqueFilesValidator(os.path.join(self.FILES_PATH, 'DummyPack2'))
+
+        with requests_mock.Mocker() as m:
+            # Mock get requests
+            m.get('https://github.com/demisto/content/raw/test1.png',
+                  status_code=404, text="Test1")
+            m.get('https://raw.githubusercontent.com/demisto/content/raw/test1.png',
+                  status_code=404, text="Test1")
+            m.get('https://raw.githubusercontent.com/demisto/content/raw/test1.jpg',
+                  status_code=404, text="Test1")
+
+            result = self.validator.validate_pack_readme_images()
+            errors = self.validator.get_errors()
+        assert not result
+        assert 'Detected the following image relative path: ![Identity with High Risk Score](doc_files/High_Risk_User.png)' in errors
+        assert 'Detected the following image relative path: ![Identity with High Risk Score](home/test1/test2/doc_files/High_Risk_User.png)' in errors
+        assert 'Detected the following image relative path: (../../doc_files/Access_investigation_-_Generic_4_5.png)' in errors
+        assert 'Image link was not found, either insert it or remove it:\n![Account Enrichment](Insert the link to your image here)' in errors
+
+        assert 'please repair it:\n![Identity with High Risk Score](https://github.com/demisto/content/raw/test1.png)' in errors
+        assert 'please repair it:\n![Identity with High Risk Score](https://raw.githubusercontent.com/demisto/content/raw/test1.png)' in errors
+        assert 'please repair it:\n(https://raw.githubusercontent.com/demisto/content/raw/test1.jpg)' in errors
 
     @pytest.mark.parametrize('readme_content, is_valid', [
         ('Hey there, just testing', True),

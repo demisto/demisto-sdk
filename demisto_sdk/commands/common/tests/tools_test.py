@@ -8,6 +8,8 @@ from typing import List, Union
 import git
 import pytest
 import requests
+from pytest import raises
+
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    LAYOUTS_DIR, PACKS_DIR,
@@ -24,14 +26,19 @@ from demisto_sdk.commands.common.tools import (
     get_files_in_dir, get_ignore_pack_skipped_tests, get_last_release_version,
     get_last_remote_release_version, get_latest_release_notes_text,
     get_pack_metadata, get_relative_path_from_packs_dir,
-    get_release_notes_file_path, get_ryaml, get_to_version,
-    has_remote_configured, is_origin_content_repo, is_pack_path, is_uuid,
-    retrieve_file_ending, run_command_os, server_version_compare)
+    get_release_note_entries, get_release_notes_file_path, get_ryaml,
+    get_to_version, has_remote_configured, is_origin_content_repo,
+    is_pack_path, is_uuid, retrieve_file_ending, run_command_os,
+    server_version_compare)
 from demisto_sdk.tests.constants_test import (IGNORED_PNG,
                                               INDICATORFIELD_EXTRA_FIELDS,
                                               SOURCE_FORMAT_INTEGRATION_COPY,
                                               VALID_BETA_INTEGRATION_PATH,
                                               VALID_DASHBOARD_PATH,
+                                              VALID_GENERIC_DEFINITION_PATH,
+                                              VALID_GENERIC_FIELD_PATH,
+                                              VALID_GENERIC_MODULE_PATH,
+                                              VALID_GENERIC_TYPE_PATH,
                                               VALID_INCIDENT_FIELD_PATH,
                                               VALID_INCIDENT_TYPE_PATH,
                                               VALID_INTEGRATION_TEST_PATH,
@@ -60,8 +67,20 @@ class TestGenericFunctions:
         assert func(file_path)
 
     def test_get_file_exception(self):
+        """
+        Given
+        - A non supported file.
+
+        When
+        - Running get_file.
+
+        Then
+        - Ensure the function raise an error.
+        """
         path_to_here = f'{git_path()}/demisto_sdk/tests/test_files/'
-        assert get_file(json.load, os.path.join(path_to_here, 'fake_integration.yml'), ('yml', 'yaml')) == {}
+        with raises(ValueError) as e:
+            result = get_file(json.load, os.path.join(path_to_here, 'fake_integration.yml'), ('yml', 'yaml'))
+            assert result == e.value
 
     @pytest.mark.parametrize('dir_path', ['demisto_sdk', f'{git_path()}/demisto_sdk/tests/test_files'])
     def test_get_yml_paths_in_dir(self, dir_path):
@@ -74,15 +93,16 @@ class TestGenericFunctions:
             assert not first_yml_path
 
     data_test_get_dict_from_file = [
-        (VALID_REPUTATION_FILE, 'json'),
-        (VALID_SCRIPT_PATH, 'yml'),
-        ('test', None),
-        (None, None)
+        (VALID_REPUTATION_FILE, True, 'json'),
+        (VALID_SCRIPT_PATH, True, 'yml'),
+        ('test', True, None),
+        (None, True, None),
+        ('invalid-path.json', False, None)
     ]
 
-    @pytest.mark.parametrize('path, _type', data_test_get_dict_from_file)
-    def test_get_dict_from_file(self, path, _type):
-        output = get_dict_from_file(str(path))[1]
+    @pytest.mark.parametrize('path, raises_error, _type', data_test_get_dict_from_file)
+    def test_get_dict_from_file(self, path, raises_error, _type):
+        output = get_dict_from_file(str(path), raises_error=raises_error)[1]
         assert output == _type, f'get_dict_from_file({path}) returns: {output} instead {_type}'
 
     data_test_find_type = [
@@ -96,6 +116,10 @@ class TestGenericFunctions:
         (VALID_REPUTATION_FILE, FileType.REPUTATION),
         (VALID_SCRIPT_PATH, FileType.SCRIPT),
         (VALID_WIDGET_PATH, FileType.WIDGET),
+        (VALID_GENERIC_TYPE_PATH, FileType.GENERIC_TYPE),
+        (VALID_GENERIC_FIELD_PATH, FileType.GENERIC_FIELD),
+        (VALID_GENERIC_MODULE_PATH, FileType.GENERIC_MODULE),
+        (VALID_GENERIC_DEFINITION_PATH, FileType.GENERIC_DEFINITION),
         (IGNORED_PNG, None),
         ('', None),
         ('Author_image.png', None),
@@ -1083,3 +1107,68 @@ def test_get_relative_path_from_packs_dir():
     assert get_relative_path_from_packs_dir(abs_path) == rel_path
     assert get_relative_path_from_packs_dir(rel_path) == rel_path
     assert get_relative_path_from_packs_dir(unrelated_path) == unrelated_path
+
+
+@pytest.mark.parametrize('version,expected_result', [
+    ('1.3.8', ['* Updated the **secrets** command to work on forked branches.']),
+    ('1.3', [])
+])
+def test_get_release_note_entries(version, expected_result):
+    """
+    Given:
+        - Version of the demisto-sdk.
+
+    When:
+        - Running get_release_note_entries.
+
+    Then:
+        - Ensure that the result as expected.
+    """
+
+    assert get_release_note_entries(version) == expected_result
+
+
+def test_suppress_stdout(capsys):
+    """
+        Given:
+            - Messages to print.
+
+        When:
+            - Printing a message inside the suppress_stdout context manager.
+            - Printing message after the suppress_stdout context manager is used.
+        Then:
+            - Ensure that messages are not printed to console while suppress_stdout is enabled.
+            - Ensure that messages are printed to console when suppress_stdout is disabled.
+    """
+    print('You can see this')
+    captured = capsys.readouterr()
+    assert captured.out == 'You can see this\n'
+    with tools.suppress_stdout():
+        print('You cannot see this')
+        captured = capsys.readouterr()
+    assert captured.out == ''
+    print('And you can see this again')
+    captured = capsys.readouterr()
+    assert captured.out == 'And you can see this again\n'
+
+
+def test_suppress_stdout_exception(capsys):
+    """
+        Given:
+            - Messages to print.
+
+        When:
+            - Performing an operation which throws an exception inside the suppress_stdout context manager.
+            - Printing something after the suppress_stdout context manager is used.
+        Then:
+            - Ensure that the context manager do not not effect exception handling.
+            - Ensure that messages are printed to console when suppress_stdout is disabled.
+
+    """
+    with pytest.raises(Exception) as excinfo:
+        with tools.suppress_stdout():
+            2 / 0
+    assert str(excinfo.value) == 'division by zero'
+    print('After error prints are enabled again.')
+    captured = capsys.readouterr()
+    assert captured.out == 'After error prints are enabled again.\n'

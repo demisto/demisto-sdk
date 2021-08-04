@@ -1,4 +1,5 @@
 import click
+
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.tools import print_error
 from demisto_sdk.commands.convert.dir_convert_managers import *  # lgtm [py/polluting-import]

@@ -72,10 +72,13 @@ outputs:
   type: String
 """
 import json
+import os
 import sys
+from typing import Dict, Optional
 
 import dateparser
 import yaml
+
 from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
                                                print_error)
 
@@ -152,7 +155,7 @@ def determine_type(val):
     return 'Unknown'
 
 
-def parse_json(data, command_name, prefix, verbose=False, interactive=False):
+def parse_json(data, command_name, prefix, verbose=False, interactive=False, descriptions: Optional[Dict] = None):
     if data == '':
         raise ValueError('Invalid input JSON - got empty string')
 
@@ -173,11 +176,15 @@ def parse_json(data, command_name, prefix, verbose=False, interactive=False):
     flattened_data = flatten_json(data)
     if prefix:
         flattened_data = {f'{prefix}.{key}': value for key, value in flattened_data.items()}
+        if descriptions:
+            descriptions = {f'{prefix}.{key}': value for key, value in descriptions.items()}
 
     arg_json = []
     for key, value in flattened_data.items():
         description = ''
-        if interactive:
+        if descriptions and key in descriptions:
+            description = descriptions[key]
+        elif interactive:
             print(f'Enter description for: [{key}]')
             description = input_multiline()
 
@@ -197,7 +204,7 @@ def parse_json(data, command_name, prefix, verbose=False, interactive=False):
     return yaml_output
 
 
-def json_to_outputs(command, input, prefix, output=None, verbose=False, interactive=False):
+def json_to_outputs(command, input, prefix, output=None, verbose=False, interactive=False, descriptions=None):
     """
     This script parses JSON to Demisto Outputs YAML format
 
@@ -210,7 +217,7 @@ def json_to_outputs(command, input, prefix, output=None, verbose=False, interact
         verbose: This used for debugging purposes - more logs
         interactive: by default all the output descriptions are empty, but if user sets this to True then the script
             will ask user input for each description
-
+        descriptions: JSON or path to JSON file mapping field names to their context descriptions. (Optional)
     Returns:
     """
     try:
@@ -218,10 +225,12 @@ def json_to_outputs(command, input, prefix, output=None, verbose=False, interact
             with open(input, 'r') as json_file:
                 input_json = json_file.read()
         else:
-            print("Enter the command's output in JSON format.\n As an example, If one of the command's output is `item_id`,\n enter {\"item_id\": 1234}")
+            print("Enter the command's output in JSON format.\n "
+                  "As an example, If one of the command's output is `item_id`,\n enter {\"item_id\": 1234}")
             input_json = input_multiline()
 
-        yaml_output = parse_json(input_json, command, prefix, verbose, interactive)
+        descriptions = _parse_description_argument(descriptions)
+        yaml_output = parse_json(input_json, command, prefix, verbose, interactive, descriptions)
 
         if output:
             with open(output, 'w') as yf:
@@ -238,3 +247,24 @@ def json_to_outputs(command, input, prefix, output=None, verbose=False, interact
         else:
             print_error(f'Error: {str(ex)}')
             sys.exit(1)
+
+
+def _parse_description_argument(descriptions: Optional[str]) -> Optional[dict]:  # type: ignore
+    """Parses the descriptions argument, be it a path to JSON or a JSON body given as argument """
+
+    if not descriptions:  # None or empty
+        return None
+
+    try:
+        if os.path.exists(descriptions):  # file input
+            with open(descriptions, encoding='utf8') as f:
+                return json.load(f)
+
+        else:
+            parsed = json.loads(descriptions)  # argument input
+            if not isinstance(parsed, Dict):
+                raise TypeError("Expected a dictionary")
+            return parsed
+
+    except (json.JSONDecodeError, TypeError):
+        print("Error decoding JSON descriptions, ignoring them.")

@@ -1,6 +1,8 @@
 from os.path import join
 
+import pytest
 from click.testing import CliRunner
+
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import DEFAULT_IMAGE_BASE64
@@ -27,8 +29,9 @@ from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.tests.constants_test import (CONTENT_REPO_EXAMPLE_ROOT,
                                               NOT_VALID_IMAGE_PATH)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
-    CONNECTION, DASHBOARD, INCIDENT_FIELD, INCIDENT_TYPE, INDICATOR_FIELD,
-    LAYOUT, LAYOUTS_CONTAINER, MAPPER, NEW_CLASSIFIER, OLD_CLASSIFIER, REPORT,
+    CONNECTION, DASHBOARD, GENERIC_DEFINITION, GENERIC_FIELD, GENERIC_MODULE,
+    GENERIC_TYPE, INCIDENT_FIELD, INCIDENT_TYPE, INDICATOR_FIELD, LAYOUT,
+    LAYOUTS_CONTAINER, MAPPER, NEW_CLASSIFIER, OLD_CLASSIFIER, REPORT,
     REPUTATION, WIDGET)
 from TestSuite.test_tools import ChangeCWD
 
@@ -55,6 +58,309 @@ CONF_JSON_MOCK = {
         }
     ]
 }
+
+
+class TestGenericFieldValidation:
+    def test_valid_generic_field(self, mocker, repo):
+        """
+        Given
+        - Valid generic field.
+
+        When
+        - Running validation on it.
+
+        Then
+        - Ensure validation passes.
+        - Ensure success validation message is printed.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        pack.create_generic_field("generic-field", GENERIC_FIELD)
+        generic_field_path = pack.generic_fields[0].path
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', generic_field_path], catch_exceptions=False)
+        assert f'Validating {generic_field_path} as genericfield' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
+    def test_invalid_schema_generic_field(self, mocker, repo):
+        """
+        Given
+        - invalid generic field - adding a new field named 'test' which doesn't exist in scheme.
+
+        When
+        - Running validation on it.
+
+        Then
+        - Ensure validation fails on ST108 - a field which doesn't defined in the scheme.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        generic_field_copy = GENERIC_FIELD.copy()
+        generic_field_copy['test'] = True
+        pack.create_generic_field("generic-field", generic_field_copy)
+        generic_field_path = pack.generic_fields[0].path
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', generic_field_path], catch_exceptions=False)
+        assert result.exit_code == 1
+        assert f"Validating {generic_field_path} as genericfield" in result.stdout
+        assert 'ST108' in result.stdout
+        assert "The files were found as invalid" in result.stdout
+
+    @pytest.mark.parametrize('field_to_test, invalid_value, expected_error_code', [
+        ('fromVersion', '6.0.0', 'BA106'),
+        ('group', 0, 'GF100'),
+        ('id', 'asset_operatingsystem', 'GF101')
+    ])
+    def test_invalid_generic_field(self, mocker, repo, field_to_test, invalid_value, expected_error_code):
+        """
+        Given
+        - invalid generic field.
+
+        When
+        - Running validation on it.
+
+        Then
+        - Ensure validation fails with the right error code.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        generic_field_copy = GENERIC_FIELD.copy()
+        generic_field_copy[field_to_test] = invalid_value
+        pack.create_generic_field("generic-field", generic_field_copy)
+        generic_field_path = pack.generic_fields[0].path
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', generic_field_path], catch_exceptions=False)
+        assert result.exit_code == 1
+        assert f"Validating {generic_field_path} as genericfield" in result.stdout
+        assert expected_error_code in result.stdout
+        assert "The files were found as invalid" in result.stdout
+
+
+class TestGenericTypeValidation:
+    def test_valid_generic_type(self, mocker, repo):
+        """
+        Given
+        - Valid generic type.
+
+        When
+        - Running validation on it.
+
+        Then
+        - Ensure validation passes.
+        - Ensure success validation message is printed.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        pack.create_generic_type("generic-type", GENERIC_TYPE)
+        generic_type_path = pack.generic_types[0].path
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', generic_type_path], catch_exceptions=False)
+        assert f'Validating {generic_type_path} as generictype' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
+    def test_invalid_schema_generic_type(self, mocker, repo):
+        """
+        Given
+        - invalid generic type - adding a new field named 'test' which doesn't exist in scheme.
+
+        When
+        - Running validation on it.
+
+        Then
+        - Ensure validation fails on ST108 - a field which doesn't defined in the scheme.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        generic_type_copy = GENERIC_TYPE.copy()
+        generic_type_copy['test'] = True
+        pack.create_generic_type("generic-type", generic_type_copy)
+        generic_type_path = pack.generic_types[0].path
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', generic_type_path], catch_exceptions=False)
+        assert result.exit_code == 1
+        assert f"Validating {generic_type_path} as generictype" in result.stdout
+        assert 'ST108' in result.stdout
+        assert "The files were found as invalid" in result.stdout
+
+    def test_invalid_from_version_generic_type(self, mocker, repo):
+        """
+        Given
+        - invalid generic type - 'fromVersion' field is below 6.5.0.
+
+        When
+        - Running validation on it.
+
+        Then
+        - Ensure validation fails on BA106 - no minimal fromversion in file.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        generic_type_copy = GENERIC_TYPE.copy()
+        generic_type_copy['fromVersion'] = '6.0.0'
+        pack.create_generic_type("generic-type", generic_type_copy)
+        generic_type_path = pack.generic_types[0].path
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', generic_type_path], catch_exceptions=False)
+        assert result.exit_code == 1
+        assert f"Validating {generic_type_path} as generictype" in result.stdout
+        assert 'BA106' in result.stdout
+        assert "The files were found as invalid" in result.stdout
+
+
+class TestGenericModuleValidation:
+    def test_valid_generic_module(self, mocker, repo):
+        """
+        Given
+        - Valid generic module.
+
+        When
+        - Running validation on it.
+
+        Then
+        - Ensure validation passes.
+        - Ensure success validation message is printed.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        pack.create_generic_module("generic-module", GENERIC_MODULE)
+        generic_module_path = pack.generic_modules[0].path
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', generic_module_path], catch_exceptions=False)
+        assert f'Validating {generic_module_path} as genericmodule' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
+    def test_invalid_schema_generic_module(self, mocker, repo):
+        """
+        Given
+        - invalid generic module - adding a new field named 'test' which doesn't exist in scheme.
+
+        When
+        - Running validation on it.
+
+        Then
+        - Ensure validation fails on ST108 - a field which doesn't defined in the scheme.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        generic_module_copy = GENERIC_MODULE.copy()
+        generic_module_copy['test'] = True
+        pack.create_generic_module("generic-module", generic_module_copy)
+        generic_module_path = pack.generic_modules[0].path
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', generic_module_path], catch_exceptions=False)
+        assert result.exit_code == 1
+        assert f"Validating {generic_module_path} as genericmodule" in result.stdout
+        assert 'ST108' in result.stdout
+        assert "The files were found as invalid" in result.stdout
+
+    def test_invalid_fromversion_generic_module(self, mocker, repo):
+        """
+        Given
+        - invalid generic module - 'fromVersion' field is below 6.5.0.
+
+        When
+        - Running validation on it.
+
+        Then
+        - Ensure validation fails on BA106 - no minimal fromversion in file.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        generic_module_copy = GENERIC_MODULE.copy()
+        generic_module_copy['fromVersion'] = '6.0.0'
+        pack.create_generic_module("generic-module", generic_module_copy)
+        generic_module_path = pack.generic_modules[0].path
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', generic_module_path], catch_exceptions=False)
+        assert result.exit_code == 1
+        assert f"Validating {generic_module_path} as genericmodule" in result.stdout
+        assert 'BA106' in result.stdout
+        assert "The files were found as invalid" in result.stdout
+
+
+class TestGenericDefinitionValidation:
+    def test_valid_generic_definition(self, mocker, repo):
+        """
+        Given
+        - Valid generic definition.
+
+        When
+        - Running validation on it.
+
+        Then
+        - Ensure validation passes.
+        - Ensure success validation message is printed.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        generic_def_copy = GENERIC_DEFINITION.copy()
+        genefic_def = pack.create_generic_definition("generic-definition", generic_def_copy)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', genefic_def.path], catch_exceptions=False)
+        assert f"Validating {genefic_def.path} as genericdefinition" in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
+    def test_invalid_schema_generic_definition(self, mocker, repo):
+        """
+        Given
+        - Invalid generic definition.
+
+        When
+        - Running validation on it.
+
+        Then
+        - Ensure validation fails.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        generic_def_copy = GENERIC_DEFINITION.copy()
+        generic_def_copy['anotherField'] = False
+        genefic_def = pack.create_generic_definition("generic-definition", generic_def_copy)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', genefic_def.path], catch_exceptions=False)
+        assert result.exit_code == 1
+        assert f"Validating {genefic_def.path} as genericdefinition" in result.stdout
+        assert 'ST108' in result.stdout
+        assert "The files were found as invalid" in result.stdout
+
+    def test_invalid_fromversion_generic_definition(self, mocker, repo):
+        """
+        Given
+        - invalid generic definition - 'fromVersion' field is below 6.5.0.
+
+        When
+        - Running validation on it.
+
+        Then
+        - Ensure validation fails on BA106 - no minimal fromversion in file.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        generic_def_copy = GENERIC_DEFINITION.copy()
+        generic_def_copy['fromVersion'] = '6.0.0'
+        genefic_def = pack.create_generic_definition("generic-definition", generic_def_copy)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', genefic_def.path], catch_exceptions=False)
+        assert result.exit_code == 1
+        assert f"Validating {genefic_def.path} as genericdefinition" in result.stdout
+        assert 'BA106' in result.stdout
+        assert "The files were found as invalid" in result.stdout
 
 
 class TestIncidentFieldValidation:
@@ -514,6 +820,32 @@ class TestIntegrationValidation:
         assert '''The parameter 'feedTags' of the file is duplicated''' in result.stdout
         assert f'''The argument '{first_command_args[0]['name']}' is duplicated''' in result.stdout
 
+    def test_missing_mandatory_field_in_yml(self, mocker, repo):
+        """
+        Given
+        - An invalid Integration - argument description is missing
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate fails on ST107 - pykwalify_missing_parameter.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
+        pack = repo.create_pack('PackName')
+        pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
+        invalid_integration_yml = get_yaml(pack_integration_path)
+        first_argument = invalid_integration_yml['script']['commands'][0]['arguments'][0]
+        first_argument.pop('description')
+        integration = pack.create_integration(yml=invalid_integration_yml)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml.rel_path, '--no-docker-checks'],
+                                   catch_exceptions=False)
+        assert 'ST107' in result.stdout
+        assert 'Please add the field "description" to the path'
+
 
 class TestPackValidation:
     def test_integration_validate_pack_positive(self, mocker):
@@ -530,6 +862,7 @@ class TestPackValidation:
         mocker.patch.object(ContentEntityValidator, '_load_conf_file', return_value=CONF_JSON_MOCK)
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         mocker.patch.object(IntegrationValidator, 'is_there_separators_in_names', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'is_docker_image_valid', return_value=True)
         mocker.patch('demisto_sdk.commands.common.hook_validations.pack_unique_files.tools.get_current_usecases',
                      return_value=[])
         mocker.patch('demisto_sdk.commands.common.hook_validations.pack_unique_files.tools.get_current_tags',
@@ -560,7 +893,8 @@ class TestPackValidation:
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         mocker.patch('demisto_sdk.commands.common.hook_validations.pack_unique_files.tools.get_current_usecases',
                      return_value=[])
-        mocker.patch('demisto_sdk.commands.common.hook_validations.pack_unique_files.tools.get_current_tags', return_value=[])
+        mocker.patch('demisto_sdk.commands.common.hook_validations.pack_unique_files.tools.get_current_tags',
+                     return_value=[])
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [VALIDATE_CMD, "-i", AZURE_FEED_PACK_PATH, "--no-conf-json",
                                       "--allow-skipped"])
@@ -747,7 +1081,7 @@ class TestClassifierValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', classifier.path], catch_exceptions=False)
-        assert 'The file type is not supported in validate command' in result.stdout
+        assert 'The file type is not supported in the validate command.' in result.stdout
         assert result.exit_code == 1
 
     def test_valid_old_classifier(self, mocker, repo):
@@ -1000,7 +1334,7 @@ class TestMapperValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', mapper.path], catch_exceptions=False)
-        assert 'The file type is not supported in validate command' in result.stdout
+        assert 'The file type is not supported in the validate command.' in result.stdout
         assert result.exit_code == 1
 
 
@@ -2192,7 +2526,7 @@ class TestImageValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', NOT_VALID_IMAGE_PATH], catch_exceptions=False)
-        assert 'The file type is not supported in validate command' in result.stdout
+        assert 'The file type is not supported in the validate command.' in result.stdout
         assert result.exit_code == 1
 
 

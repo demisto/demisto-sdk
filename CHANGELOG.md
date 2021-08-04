@@ -1,4 +1,6 @@
 # Changelog
+* Fixed an issue when `View Integration Documentation` button was added twice during the download and re-upload.
+* Fixed an issue when `(Partner Contridution)` was added twice to the display name during the download and re-upload.
 
 # 1.4.6
 * Fixed an issue where **validate** suggests, with no reason, running **format** on missing mandatory keys in yml file.

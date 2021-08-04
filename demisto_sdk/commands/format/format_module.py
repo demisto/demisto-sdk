@@ -184,8 +184,16 @@ def format_manager(input: str = None,
     return 0
 
 
-def get_files_to_format_from_git(supported_file_types, prev_ver, include_untracked) -> List[str]:
+def get_files_to_format_from_git(supported_file_types: List[str], prev_ver: str, include_untracked: bool) -> List[str]:
     """Get the files to format from git.
+
+    Args:
+        supported_file_types(list): File extensions which are supported by format
+        prev_ver(str): The branch name or commit hash to compare with
+        include_untracked(bool): Whether to include untracked files
+
+    Returns:
+        list. a list of all the files that should be formatted.
     """
     git_util = GitUtil()
     all_changed_files = git_util.get_all_changed_files(prev_ver=prev_ver, include_untracked=include_untracked)
@@ -196,7 +204,7 @@ def get_files_to_format_from_git(supported_file_types, prev_ver, include_untrack
         file_extension = os.path.splitext(str_file_path)[1]
         if file_extension in supported_file_types and os.path.exists(str_file_path):
             filtered_files.append(str_file_path)
-            break
+            continue
 
     if filtered_files:
         detected_files_string = "\n".join(filtered_files)

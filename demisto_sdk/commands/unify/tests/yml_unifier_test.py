@@ -235,6 +235,28 @@ def test_get_integration_doc_link_negative(tmp_path):
     assert integration_doc_link == ''
 
 
+def test_get_integration_doc_link_negative_test(tmp_path):
+    """
+    Given:
+        - Case A: integration which does not have README in the integration dir
+        - Case B: integration with empty README in the integration dir
+
+    When:
+        - Getting integration doc link
+
+    Then:
+        - Verify an empty string is returned
+    """
+    unifier = YmlUnifier(str(tmp_path))
+    integration_doc_link = unifier.get_integration_doc_link({'commonfields': {'id': 'Integration With No README'}})
+    assert integration_doc_link == ''
+
+    readme = tmp_path / 'README.md'
+    readme.write_text('')
+    integration_doc_link = unifier.get_integration_doc_link({'commonfields': {'id': 'Integration With Empty README'}})
+    assert integration_doc_link == ''
+
+
 def test_insert_image_to_yml():
     with patch.object(YmlUnifier, "__init__", lambda a, b, c, d, e: None):
         unifier = YmlUnifier('', None, None, None)

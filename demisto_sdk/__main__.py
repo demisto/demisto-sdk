@@ -681,7 +681,7 @@ def lint(**kwargs):
     "-d", "--deprecate", help="Set if you want to deprecate the integration/script/playbook", is_flag=True)
 @click.option(
     "-g", "--use-git",
-    help="Use git to automatically recognize which files changed and run format on them",
+    help="Use git to automatically recognize which files changed and run format on them.",
     is_flag=True)
 @click.option(
     '--prev-ver', help='Previous branch or SHA1 commit to run checks against.')

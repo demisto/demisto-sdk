@@ -155,7 +155,8 @@ class ValidateManager:
         self.ignored_files = set()
         self.new_packs = set()
         self.skipped_file_types = (FileType.CHANGELOG,
-                                   FileType.DOC_IMAGE)
+                                   FileType.DOC_IMAGE,
+                                   FileType.AUTHOR_IMAGE)
 
         self.is_external_repo = is_external_repo
         if is_external_repo:
@@ -1089,7 +1090,8 @@ class ValidateManager:
                              FileType.README,
                              FileType.TEST_PLAYBOOK,
                              FileType.TEST_SCRIPT,
-                             FileType.DOC_IMAGE}
+                             FileType.DOC_IMAGE,
+                             FileType.AUTHOR_IMAGE}
         )
         if API_MODULES_PACK in packs_that_should_have_new_rn:
             api_module_set = get_api_module_ids(changed_files)
@@ -1238,7 +1240,8 @@ class ValidateManager:
         filtered_modified, old_format_files = self.filter_to_relevant_files(modified_files)
         filtered_renamed, _ = self.filter_to_relevant_files(renamed_files)
         filtered_modified = filtered_modified.union(filtered_renamed)
-        filtered_added, _ = self.filter_to_relevant_files(added_files)
+        filtered_added, new_files_in_old_format = self.filter_to_relevant_files(added_files)
+        old_format_files = old_format_files.union(new_files_in_old_format)
 
         # extract metadata files from the recognised changes
         changed_meta = self.pack_metadata_extraction(modified_files, added_files, renamed_files)

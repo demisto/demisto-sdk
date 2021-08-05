@@ -754,7 +754,7 @@ def test_format_playbook_no_input_specified(mocker, repo):
     playbook_content['name'] = playbook_name + '_copy'
     playbook.yml.write_dict(playbook_content)
     playbook_file = {'name': str(playbook.yml.path)}
-    mocker.patch.object(format_module, 'get_changed_files', return_value=[playbook_file])
+    mocker.patch.object(format_module, 'get_files_to_format_from_git', return_value=[playbook_file])
     runner = CliRunner(mix_stderr=False)
     format_result = runner.invoke(main, [FORMAT_CMD, '-v'], input='y\n5.5.0')
     assert 'Success' in format_result.stdout

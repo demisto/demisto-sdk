@@ -370,8 +370,8 @@ def test_update_release_on_matadata_change(demisto_client, mocker, repo):
     pack.pack_metadata.write_json(open('demisto_sdk/tests/test_files/1.pack_metadata.json').read())
 
     mocker.patch.object(UpdateRN, 'is_bump_required', return_value=True)
-    mocker.patch.object(UpdateReleaseNotesManager, 'get_git_changed_files',
-                        return_value=(set(), set(), {pack.pack_metadata.path}, set()))
+    mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(set(), set(),
+                                                                                     {pack.pack_metadata.path}, set()))
     mocker.patch.object(ValidateManager, 'setup_git_params', return_value='')
     mocker.patch.object(GitUtil, 'get_current_working_branch', return_value="branch_name")
     mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value={'currentVersion': '1.0.0'})
@@ -403,7 +403,7 @@ def test_update_release_notes_master_ahead_of_current(demisto_client, mocker, re
     mocker.patch.object(UpdateRN, 'is_bump_required', return_value=True)
     mocker.patch.object(ValidateManager, 'setup_git_params', return_value='')
     mocker.patch.object(UpdateReleaseNotesManager, 'get_git_changed_files',
-                        return_value=(modified_files, {'1_1_0.md'}, set(), set()))
+                        return_value=(modified_files, {'1_1_0.md'}, set()))
     mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value={'currentVersion': '1.0.0'})
     mocker.patch('demisto_sdk.commands.common.tools.get_pack_name', return_value='FeedAzureValid')
     mocker.patch.object(UpdateRN, 'get_master_version', return_value='2.0.0')
@@ -434,7 +434,7 @@ def test_update_release_notes_master_unavailable(demisto_client, mocker, repo):
     mocker.patch.object(UpdateRN, 'is_bump_required', return_value=True)
     mocker.patch.object(ValidateManager, 'setup_git_params', return_value='')
     mocker.patch.object(UpdateReleaseNotesManager, 'get_git_changed_files',
-                        return_value=(modified_files, {'1_1_0.md'}, set(), set()))
+                        return_value=(modified_files, {'1_1_0.md'}, set()))
     mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value={'currentVersion': '1.1.0'})
     mocker.patch('demisto_sdk.commands.common.tools.get_pack_name', return_value='FeedAzureValid')
     mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
@@ -479,7 +479,7 @@ def test_force_update_release(demisto_client, mocker, repo):
         os.remove(rn_path)
     mocker.patch.object(UpdateRN, 'is_bump_required', return_value=True)
     mocker.patch.object(ValidateManager, 'get_changed_files_from_git',
-                        return_value=(set(), set(), set(), set()))
+                        return_value=(set(), set(), set()))
     mocker.patch.object(ValidateManager, 'setup_git_params', return_value='')
     mocker.patch.object(GitUtil, 'get_current_working_branch', return_value="branch_name")
     mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value={'currentVersion': '1.0.0'})

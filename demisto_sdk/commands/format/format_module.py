@@ -1,5 +1,4 @@
 import os
-import sys
 from pathlib import Path
 from typing import Dict, List, Tuple
 
@@ -212,7 +211,6 @@ def get_files_to_format_from_git(supported_file_types: List[str], prev_ver: str,
 
     else:
         click.secho('Did not find any files to format', fg='bright_red')
-        sys.exit(1)
 
     return filtered_files
 

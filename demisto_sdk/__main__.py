@@ -718,7 +718,7 @@ def format(
         deprecate=deprecate,
         use_git=use_git,
         prev_ver=prev_ver,
-        include_untracked=include_untracked
+        include_untracked=include_untracked,
     )
 
 

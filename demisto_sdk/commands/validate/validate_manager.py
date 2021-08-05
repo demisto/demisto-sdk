@@ -9,17 +9,12 @@ from packaging import version
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
-from demisto_sdk.commands.common.constants import (API_MODULES_PACK,
-                                                   CONTENT_ENTITIES_DIRS,
-                                                   DEFAULT_ID_SET_PATH,
-                                                   GENERIC_FIELDS_DIR,
-                                                   GENERIC_TYPES_DIR,
-                                                   IGNORED_PACK_NAMES,
-                                                   OLDEST_SUPPORTED_VERSION,
-                                                   PACKS_DIR,
-                                                   PACKS_PACK_META_FILE_NAME,
-                                                   TESTS_AND_DOC_DIRECTORIES,
-                                                   FileType, PathLevel)
+from demisto_sdk.commands.common.constants import (
+    API_MODULES_PACK, CONTENT_ENTITIES_DIRS, DEFAULT_ID_SET_PATH,
+    GENERIC_FIELDS_DIR, GENERIC_TYPES_DIR, IGNORED_PACK_NAMES,
+    OLDEST_SUPPORTED_VERSION, PACKS_DIR, PACKS_PACK_META_FILE_NAME,
+    SKIP_RELEASE_NOTES_FOR_TYPES, TESTS_AND_DOC_DIRECTORIES, FileType,
+    PathLevel)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
                                                 FOUND_FILES_AND_ERRORS,
@@ -1096,12 +1091,7 @@ class ValidateManager:
         changed_files = modified_files.union(old_format_files).union(added_files)
         packs_that_should_have_new_rn = get_pack_names_from_files(
             changed_files,
-            skip_file_types={FileType.RELEASE_NOTES,
-                             FileType.README,
-                             FileType.TEST_PLAYBOOK,
-                             FileType.TEST_SCRIPT,
-                             FileType.DOC_IMAGE,
-                             FileType.AUTHOR_IMAGE}
+            skip_file_types=SKIP_RELEASE_NOTES_FOR_TYPES
         )
         if API_MODULES_PACK in packs_that_should_have_new_rn:
             api_module_set = get_api_module_ids(changed_files)

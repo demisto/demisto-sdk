@@ -172,7 +172,8 @@ def format_manager(input: str = None,
         update_content_entity_ids(files, verbose)
 
     else:
-        log_list.append(([f'Failed format file {input}.' + "No such file or directory"], print_error))
+        if not use_git:
+            log_list.append(([f'Failed format file {input}.' + "No such file or directory"], print_error))
         return 1
 
     print('')  # Just adding a new line before summary

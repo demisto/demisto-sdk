@@ -1722,7 +1722,7 @@ def compare_context_path_in_yml_and_readme(yml_dict, readme_content):
     # the pattern to get the context part out of command section:
     context_section_pattern = r"\| *\*\*Path\*\* *\| *\*\*Type\*\* *\| *\*\*Description\*\* *\|.(.*?)#{3,5}"
     # the pattern to get the value in the first column under the outputs table:
-    context_path_pattern = r"\| *(.*\S) *\| [^\|]* \| [^\|]* \|"
+    context_path_pattern = r"\| *(\S.*?\S) *\| *[^\|]* *\| *[^\|]* *\|"
     readme_content += "### "  # mark end of file so last pattern of regex will be recognized.
     commands = yml_dict.get("script", {})
 

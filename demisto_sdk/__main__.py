@@ -701,7 +701,7 @@ def format(
         deprecate: bool,
         use_git: bool,
         prev_ver: str,
-        include_untracked: bool
+        include_untracked: bool,
 ):
     """Run formatter on a given script/playbook/integration/incidentfield/indicatorfield/
     incidenttype/indicatortype/layout/dashboard/classifier/mapper/widget/report file/genericfield/generictype/

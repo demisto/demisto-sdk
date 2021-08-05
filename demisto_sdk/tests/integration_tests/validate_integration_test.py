@@ -2530,6 +2530,84 @@ class TestImageValidation:
         assert result.exit_code == 1
 
 
+class TestAuthorImageValidation:
+    def test_author_image_valid(self, repo, mocker):
+        """
+        Given
+        - A valid author image image.
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate passes.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(ImageValidator, 'load_image', return_value=DEFAULT_IMAGE_BASE64)
+        pack = repo.create_pack('PackName')
+        pack.pack_metadata.write_json({
+            "name": "PackName",
+            "description": "This pack.",
+            "support": "xsoar",
+            "currentVersion": "1.0.1",
+            "author": "Cortex XSOAR",
+            "url": "https://www.paloaltonetworks.com/cortex",
+            "email": "",
+            "created": "2021-06-07T07:45:21Z",
+            "categories": [],
+            "tags": [],
+            "useCases": [],
+            "keywords": []
+        })
+
+        with ChangeCWD(repo.path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', pack.author_image.path],
+                                   catch_exceptions=False)
+
+        assert f'Validating {pack.author_image.path} as author_image' in result.stdout
+        assert result.exit_code == 0
+
+    def test_author_image_invalid(self, repo, mocker):
+        """
+        Given
+        - An empty author image.
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate fails on error IM108 - empty author image error.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(ImageValidator, 'load_image', return_value='')
+        pack = repo.create_pack('PackName')
+        pack.pack_metadata.write_json({
+            "name": "PackName",
+            "description": "This pack.",
+            "support": "partner",
+            "currentVersion": "1.0.1",
+            "author": "Cortex XSOAR",
+            "url": "https://www.paloaltonetworks.com/cortex",
+            "email": "",
+            "created": "2021-06-07T07:45:21Z",
+            "categories": [],
+            "tags": [],
+            "useCases": [],
+            "keywords": []
+        })
+        author_image_path = pack.author_image.path
+        with ChangeCWD(repo.path):
+
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', author_image_path],
+                                   catch_exceptions=False)
+
+        assert f'Validating {author_image_path} as author_image' in result.stdout
+        assert 'IM108' in result.stdout
+        assert result.exit_code == 1
+
+
 class TestAllFilesValidator:
     def test_all_files_valid(self, mocker, repo):
         """

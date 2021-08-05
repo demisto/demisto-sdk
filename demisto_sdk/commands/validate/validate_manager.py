@@ -28,6 +28,8 @@ from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
                                                 PRESET_ERROR_TO_IGNORE, Errors,
                                                 get_all_error_codes)
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.hook_validations.author_image import \
+    AuthorImageValidator
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.classifier import \
@@ -155,8 +157,7 @@ class ValidateManager:
         self.ignored_files = set()
         self.new_packs = set()
         self.skipped_file_types = (FileType.CHANGELOG,
-                                   FileType.DOC_IMAGE,
-                                   FileType.AUTHOR_IMAGE)
+                                   FileType.DOC_IMAGE)
 
         self.is_external_repo = is_external_repo
         if is_external_repo:
@@ -511,6 +512,9 @@ class ValidateManager:
         elif file_type == FileType.IMAGE:
             return self.validate_image(file_path, pack_error_ignore_list)
 
+        elif file_type == FileType.AUTHOR_IMAGE:
+            return self.validate_author_image(file_path, pack_error_ignore_list)
+
         # incident fields and indicator fields are using the same validation.
         elif file_type in (FileType.INCIDENT_FIELD, FileType.INDICATOR_FIELD):
             return self.validate_incident_field(structure_validator, pack_error_ignore_list, is_modified)
@@ -809,6 +813,12 @@ class ValidateManager:
                                          print_as_warnings=self.print_ignored_errors,
                                          json_file_path=self.json_file_path)
         return image_validator.is_valid()
+
+    def validate_author_image(self, file_path, pack_error_ignore_list):
+        author_image_validator: AuthorImageValidator = AuthorImageValidator(file_path,
+                                                                            ignored_errors=pack_error_ignore_list,
+                                                                            print_as_warnings=self.print_ignored_errors)
+        return author_image_validator.is_valid()
 
     def validate_report(self, structure_validator, pack_error_ignore_list):
         report_validator = ReportValidator(structure_validator=structure_validator,

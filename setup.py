@@ -16,9 +16,6 @@ REQUIREMENTS_NAME = 'requirements.txt'
 # prerequisite: setuptools
 # http://pypi.python.org/pypi/setuptools
 
-# Converting Pipfile to requirements because PyPi expects requirements.txt file
-requirements = convert_pipfile_or_lock('.')
-
 with open('README.md', 'r') as f:
     readme = f.read()
 
@@ -26,13 +23,13 @@ setup(
     use_scm_version={
         'local_scheme': lambda a: ""
     },
-    setup_requires=['setuptools_scm'],
+    setup_requires=['setuptools_scm', 'pipfile-requirements'],
     name=NAME,
     description="A Python library for the Demisto SDK",
     author_email="",
     url="https://github.com/demisto/demisto-sdk",
     keywords=["Demisto"],
-    install_requires=requirements,
+    install_requires=convert_pipfile_or_lock('.'),
     packages=find_packages(),
     include_package_data=True,
     entry_points={

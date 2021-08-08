@@ -731,10 +731,7 @@ class BuildContext:
         """
         user_id = ''
         try:
-            if os.environ.get('GITLAB_USER_LOGIN'):
-                user_name = os.environ['GITLAB_USER_LOGIN']
-            else:
-                user_name = self._get_user_name_from_circle()
+            user_name = os.getenv('GITLAB_USER_LOGIN') or self._get_user_name_from_circle()
             res = self.slack_client.api_call('users.list')
 
             user_list = res.get('members', [])

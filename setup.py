@@ -4,7 +4,6 @@
 """
     Demisto SDK
 """
-import toml
 import configparser
 from setuptools import find_packages, setup  # noqa: H301
 

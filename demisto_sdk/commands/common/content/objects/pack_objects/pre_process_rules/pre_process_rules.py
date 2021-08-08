@@ -6,8 +6,8 @@ from wcmatch.pathlib import Path
 from demisto_sdk.commands.common.constants import PRE_PROCESS_RULES, FileType
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import \
     JSONContentObject
-from demisto_sdk.commands.format.update_pre_process_rules import \
-    PRE_PROCESS_RULES_PREFIX
+
+PRE_PROCESS_RULES_PREFIX = 'preprocessrule-'
 
 
 class PreProcessRules(JSONContentObject):

@@ -24,7 +24,7 @@ from demisto_sdk.commands.format.update_indicatortype import \
 from demisto_sdk.commands.format.update_layout import LayoutBaseFormat
 from demisto_sdk.commands.format.update_mapper import MapperJSONFormat
 from demisto_sdk.commands.format.update_pre_process_rules import \
-    PreProcessRulesBaseFormat
+    PreProcessRulesFormat
 from demisto_sdk.commands.format.update_report import ReportJSONFormat
 from demisto_sdk.commands.format.update_widget import WidgetJSONFormat
 from demisto_sdk.tests.constants_test import (
@@ -638,11 +638,11 @@ class TestFormattingPreProcessRule:
 
     @pytest.fixture(autouse=True)
     def pre_process_rules_formatter(self, pre_process_rules_copy):
-        yield PreProcessRulesBaseFormat(input=pre_process_rules_copy, output=DESTINATION_FORMAT_PRE_PROCESS_RULES_COPY)
+        yield PreProcessRulesFormat(input=pre_process_rules_copy, output=DESTINATION_FORMAT_PRE_PROCESS_RULES_COPY)
 
     @pytest.fixture(autouse=True)
     def invalid_path_pre_process_rules_formatter(self, pre_process_rules_copy):
-        yield PreProcessRulesBaseFormat(input=pre_process_rules_copy, output=DESTINATION_FORMAT_PRE_PROCESS_RULES_INVALID_NAME_COPY)
+        yield PreProcessRulesFormat(input=pre_process_rules_copy, output=DESTINATION_FORMAT_PRE_PROCESS_RULES_INVALID_NAME_COPY)
 
     def test_remove_unnecessary_keys(self, pre_process_rules_formatter):
         """

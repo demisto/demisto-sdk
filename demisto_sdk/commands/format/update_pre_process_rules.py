@@ -11,7 +11,7 @@ from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
 FROM_VERSION_PRE_PROCESS_RULES = '6.5.0'
 
 
-class PreProcessRulesBaseFormat(BaseUpdateJSON):
+class PreProcessRulesFormat(BaseUpdateJSON):
 
     def __init__(self,
                  input: str = '',

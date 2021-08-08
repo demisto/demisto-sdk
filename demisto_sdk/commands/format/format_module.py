@@ -37,7 +37,7 @@ from demisto_sdk.commands.format.update_mapper import MapperJSONFormat
 from demisto_sdk.commands.format.update_playbook import (PlaybookYMLFormat,
                                                          TestPlaybookYMLFormat)
 from demisto_sdk.commands.format.update_pre_process_rules import \
-    PreProcessRulesBaseFormat
+    PreProcessRulesFormat
 from demisto_sdk.commands.format.update_pythonfile import PythonFileFormat
 from demisto_sdk.commands.format.update_report import ReportJSONFormat
 from demisto_sdk.commands.format.update_script import ScriptYMLFormat
@@ -55,7 +55,7 @@ FILE_TYPE_AND_LINKED_CLASS = {
     'reputation': IndicatorTypeJSONFormat,
     'layout': LayoutBaseFormat,
     'layoutscontainer': LayoutBaseFormat,
-    'pre-process-rules': PreProcessRulesBaseFormat,
+    'pre-process-rules': PreProcessRulesFormat,
     'dashboard': DashboardJSONFormat,
     'classifier': ClassifierJSONFormat,
     'classifier_5_9_9': OldClassifierJSONFormat,

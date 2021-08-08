@@ -2543,7 +2543,6 @@ class TestAuthorImageValidation:
         - Ensure validate passes.
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
-        mocker.patch.object(ImageValidator, 'load_image', return_value=DEFAULT_IMAGE_BASE64)
         pack = repo.create_pack('PackName')
         pack.pack_metadata.write_json({
             "name": "PackName",
@@ -2559,6 +2558,7 @@ class TestAuthorImageValidation:
             "useCases": [],
             "keywords": []
         })
+        pack.author_image.write(DEFAULT_IMAGE_BASE64)
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)

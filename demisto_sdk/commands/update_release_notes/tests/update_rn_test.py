@@ -1026,20 +1026,49 @@ class TestRNUpdateUnit:
         from demisto_sdk.commands.update_release_notes.update_rn import \
             check_docker_image_changed
 
-        return_value = '+category: Utilities\
-                        +commonfields:\
-                        +  id: Test\
-                        +  version: -1\
-                        +configuration:\
-                        +- defaultvalue: https://soar.test.com\
-                        +  display: Server URL (e.g. https://soar.test.com)\
-                        +- display: Fetch incidents\
-                        +  name: isFetch\
-                        +- display: Incident type'
+        return_value = '+category: Utilities' \
+            '+commonfields:\n' \
+            '+  id: Test\n' \
+            '+  version: -1\n' \
+            '+configuration:\n' \
+            '+- defaultvalue: https://soar.test.com\n' \
+            '+  display: Server URL (e.g. https://soar.test.com)\n' \
+            '+- display: Fetch incidents\n' \
+            '+  name: isFetch\n' \
+            '+- display: Incident type'
 
         mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.run_command', return_value=return_value)
 
         assert check_docker_image_changed('test.yml') is None
+
+    def test_update_docker_image_when_docker_image_changed(self, mocker):
+        """
+        Given
+            - Modified .yml file
+        When
+            - Working on an integration's yml, and updated docker image
+
+        Then
+            - find the correct docker image
+        """
+        from demisto_sdk.commands.update_release_notes.update_rn import \
+            check_docker_image_changed
+
+        return_value = '+category: Utilities' \
+            '+commonfields:\n' \
+            '+  id: Test\n' \
+            '+  version: -1\n' \
+            '+configuration:\n' \
+            '+- defaultvalue: https://soar.test.com\n' \
+            '+  display: Server URL (e.g. https://soar.test.com)\n' \
+            '+- display: Fetch incidents\n' \
+            '+  name: isFetch\n' \
+            '-dockerimage: demisto/python3:1.2.3.0\n' \
+            '+dockerimage: demisto/python3:1.2.3.4'
+
+        mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.run_command', return_value=return_value)
+
+        assert check_docker_image_changed('test.yml') == 'demisto/python3:1.2.3.4'
 
     def test_update_docker_image_in_yml(self, mocker):
         """

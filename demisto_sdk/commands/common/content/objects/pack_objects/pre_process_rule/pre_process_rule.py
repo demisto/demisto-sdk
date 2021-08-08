@@ -10,7 +10,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_obje
 PRE_PROCESS_RULES_PREFIX = 'preprocessrule-'
 
 
-class PreProcessRules(JSONContentObject):
+class PreProcessRule(JSONContentObject):
     def __init__(self, path: Union[Path, str]):
         super().__init__(path, PRE_PROCESS_RULES)
 

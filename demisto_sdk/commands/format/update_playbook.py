@@ -215,9 +215,9 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
             git_util = GitUtil()
             modified_files = git_util.modified_files(include_untracked=True)
             added_files = git_util.added_files(include_untracked=True)
-            renamed_files = {item[1] for item in git_util.renamed_files(include_untracked=True)}
+            renamed_files = git_util.renamed_files(include_untracked=True, get_only_current_file_names=True)
 
-            all_changed_files = modified_files.union(added_files).union(renamed_files)
+            all_changed_files = modified_files.union(added_files).union(renamed_files)  # type: ignore[arg-type]
 
         except (InvalidGitRepositoryError, TypeError) as e:
             click.secho('Unable to connect to git - skipping sub-playbook checks', fg='yellow')

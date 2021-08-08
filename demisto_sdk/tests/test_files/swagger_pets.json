@@ -406,6 +406,13 @@
             "type": "string"
           },
           {
+            "name": "arg-name",
+            "in": "query",
+            "description": "Argument with dash",
+            "required": false,
+            "type": "string"
+          },
+          {
             "name": "additionalMetadata",
             "in": "formData",
             "description": "Additional data to pass to server",

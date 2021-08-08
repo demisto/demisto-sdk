@@ -936,6 +936,17 @@
                     "properties": {}
                 },
                 {
+                    "name": "arg_name",
+                    "description": "Argument with dash",
+                    "required": false,
+                    "default": "",
+                    "in": "query",
+                    "ref": "",
+                    "type": "string",
+                    "options": null,
+                    "properties": {}
+                },
+                {
                     "name": "additionalMetadata",
                     "description": "Additional data to pass to server",
                     "required": false,

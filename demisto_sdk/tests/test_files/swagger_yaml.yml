@@ -382,6 +382,10 @@ script:
       isArray: false
       name: filter_
       required: false
+    - description: Argument with dash
+      isArray: false
+      name: arg_name
+      required: false
     - description: Additional data to pass to server
       isArray: false
       name: additionalMetadata

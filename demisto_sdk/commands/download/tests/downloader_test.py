@@ -51,7 +51,7 @@ class Environment:
         self.SCRIPT_PACK_OBJECT = None
         self.PLAYBOOK_PACK_OBJECT = None
         self.LAYOUT_PACK_OBJECT = None
-        self.PRE_PREOCESS_RULES_PACK_OBJECT = None
+        self.PRE_PROCESS_RULES_PACK_OBJECT = None
         self.PACK_CONTENT = None
         self.INTEGRATION_CUSTOM_CONTENT_OBJECT = None
         self.SCRIPT_CUSTOM_CONTENT_OBJECT = None
@@ -120,7 +120,7 @@ class Environment:
             {'name': 'Hello World Alert', 'id': 'Hello World Alert', 'path': self.LAYOUT_INSTANCE_PATH,
              'file_ending': 'json'}
         ]}
-        self.PRE_PREOCESS_RULES_PACK_OBJECT = {'DummyPreProcessRule': [
+        self.PRE_PROCESS_RULES_PACK_OBJECT = {'DummyPreProcessRule': [
             {'name': 'DummyPreProcessRule', 'id': 'DummyPreProcessRule',
              'path': self.PRE_PROCESS_RULES_INSTANCE_PATH, 'file_ending': 'yml'}
         ]}

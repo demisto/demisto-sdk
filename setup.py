@@ -4,7 +4,7 @@
 """
     Demisto SDK
 """
-import pipfile2req
+from pipfile2req import convert_pipfile_or_lock
 from setuptools import find_packages, setup  # noqa: H301
 
 NAME = "demisto-sdk"
@@ -17,7 +17,7 @@ REQUIREMENTS_NAME = 'requirements.txt'
 # http://pypi.python.org/pypi/setuptools
 
 # Converting Pipfile to requirements because PyPi expects requirements.txt file
-requirements = pipfile2req.convert_pipfile_or_lock('.')
+requirements = convert_pipfile_or_lock('.')
 
 with open('README.md', 'r') as f:
     readme = f.read()

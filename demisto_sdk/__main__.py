@@ -679,6 +679,17 @@ def lint(**kwargs):
     is_flag=True)
 @click.option(
     "-d", "--deprecate", help="Set if you want to deprecate the integration/script/playbook", is_flag=True)
+@click.option(
+    "-g", "--use-git",
+    help="Use git to automatically recognize which files changed and run format on them.",
+    is_flag=True)
+@click.option(
+    '--prev-ver', help='Previous branch or SHA1 commit to run checks against.')
+@click.option(
+    '-iu', '--include-untracked',
+    is_flag=True,
+    help='Whether to include untracked files in the formatting.'
+)
 def format(
         input: Path,
         output: Path,
@@ -687,10 +698,14 @@ def format(
         update_docker: bool,
         verbose: bool,
         assume_yes: bool,
-        deprecate: bool
+        deprecate: bool,
+        use_git: bool,
+        prev_ver: str,
+        include_untracked: bool,
 ):
     """Run formatter on a given script/playbook/integration/incidentfield/indicatorfield/
-    incidenttype/indicatortype/layout/dashboard/classifier/mapper/widget/report file.
+    incidenttype/indicatortype/layout/dashboard/classifier/mapper/widget/report file/genericfield/generictype/
+    genericmodule/genericdefinition.
     """
     return format_manager(
         str(input) if input else None,
@@ -700,7 +715,10 @@ def format(
         update_docker=update_docker,
         assume_yes=assume_yes,
         verbose=verbose,
-        deprecate=deprecate
+        deprecate=deprecate,
+        use_git=use_git,
+        prev_ver=prev_ver,
+        include_untracked=include_untracked,
     )
 
 
@@ -887,8 +905,13 @@ def run_playbook(**kwargs):
 @click.option(
     "-v", "--verbose", is_flag=True, help="Verbose output - mainly for debugging purposes")
 @click.option(
-    "-int", "--interactive", help="If passed, then for each output field will ask user interactively to enter the "
-                                  "description.", is_flag=True, default=False)
+    "--interactive", help="If passed, then for each output field will ask user interactively to enter the "
+                          "description. By default is interactive mode is disabled", is_flag=True)
+@click.option(
+    "-d", "--description-json",
+    help="A JSON or a path to a JSON file, mapping field names to their descriptions. "
+         "If not specified, the script prompt the user to input the JSON content.",
+    is_flag=True)
 def json_to_outputs_command(**kwargs):
     """Demisto integrations/scripts have a YAML file that defines them.
     Creating the YAML file is a tedious and error-prone task of manually copying outputs from the API result to the
@@ -921,6 +944,12 @@ def json_to_outputs_command(**kwargs):
          'outputs to verify and which not')
 @click.option(
     "-v", "--verbose", help="Verbose output for debug purposes - shows full exception stack trace", is_flag=True)
+@click.option(
+    "-ab", "--all-brands",
+    help="Generate a test-playbook which calls commands using integrations of all available brands. "
+         "When not used, the generated playbook calls commands using instances of the provided integration brand.",
+    is_flag=True
+)
 def generate_test_playbook(**kwargs):
     """Generate test playbook from integration or script"""
     check_configuration_file('generate-test-playbook', kwargs)

@@ -211,6 +211,7 @@ class TestValidators:
             res_validator = validator(structure)
             mocker.patch.object(ScriptValidator, 'is_valid_script_file_path', return_value=True)
             mocker.patch.object(ScriptValidator, 'is_there_separators_in_names', return_value=True)
+            mocker.patch.object(ScriptValidator, 'is_docker_image_valid', return_value=True)
             assert res_validator.is_valid_file(validate_rn=False) is answer
         finally:
             os.remove(target)
@@ -384,6 +385,7 @@ class TestValidators:
         mocker.patch.object(PlaybookValidator, 'is_script_id_valid', return_value=True)
         mocker.patch.object(ScriptValidator, 'is_valid_script_file_path', return_value=True)
         mocker.patch.object(ScriptValidator, 'is_there_separators_in_names', return_value=True)
+        mocker.patch.object(ScriptValidator, 'is_docker_image_valid', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_valid_integration_file_path', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_there_separators_in_names', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_docker_image_valid', return_value=True)
@@ -485,6 +487,7 @@ class TestValidators:
         validate_manager = ValidateManager(skip_conf_json=True, id_set_path=id_set_path)
         mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_readme_and_pack_description', return_value=True)
         mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_readme_images', return_value=True)
+        mocker.patch.object(PackUniqueFilesValidator, '_read_metadata_content', return_value=dict())
         result = validate_manager.validate_pack_unique_files('QRadar', pack_error_ignore_list={})
         assert not result
 
@@ -509,6 +512,7 @@ class TestValidators:
         mocker.patch.object(ScriptValidator, 'is_valid_name', return_value=True)
         mocker.patch.object(ScriptValidator, 'is_valid_script_file_path', return_value=True)
         mocker.patch.object(ScriptValidator, 'is_there_separators_in_names', return_value=True)
+        mocker.patch.object(ScriptValidator, 'is_docker_image_valid', return_value=True)
         self.mock_unifier()
         validate_manager = ValidateManager(skip_conf_json=True)
         is_valid = validate_manager.validate_added_files([VALID_SCRIPT_PATH], None)
@@ -622,7 +626,7 @@ class TestValidators:
     def test_create_ignored_errors_list(self):
         validate_manager = ValidateManager()
         errors_to_check = ["IN", "SC", "CJ", "DA", "DB", "DO", "ID", "DS", "IM", "IF", "IT", "RN", "RM", "PA", "PB",
-                           "WD", "RP", "BA100", "BC100", "ST", "CL", "MP", "LO", "XC", "PP"]
+                           "WD", "RP", "BA100", "BC100", "ST", "CL", "MP", "LO", "XC", "GF", "PP"]
         ignored_list = validate_manager.create_ignored_errors_list(errors_to_check)
         assert ignored_list == ["BA101", "BA102", "BA103", "BA104", "BA105", "BA106", "BA107", "BA108", "BA109",
                                 "BA110", 'BA111', "BC101", "BC102", "BC103", "BC104"]

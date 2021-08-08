@@ -7,8 +7,6 @@ from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
                                                    FEED_REQUIRED_PARAMS,
                                                    FETCH_REQUIRED_PARAMS,
                                                    INTEGRATION, TYPE_PWSH)
-from demisto_sdk.commands.common.hook_validations.integration import \
-    IntegrationValidator
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
@@ -137,7 +135,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
 
     def run_format(self) -> int:
         try:
-            click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
+            click.secho(f'\n================= Updating file {self.source_file} =================', fg='bright_blue')
             super().update_yml(file_type=INTEGRATION)
             self.update_tests()
             self.update_conf_json('integration')
@@ -159,4 +157,4 @@ class IntegrationYMLFormat(BaseUpdateYML):
         if format_res:
             return format_res, SKIP_RETURN_CODE
         else:
-            return format_res, self.initiate_file_validator(IntegrationValidator)
+            return format_res, self.initiate_file_validator()

@@ -38,6 +38,14 @@ from demisto_sdk.commands.common.hook_validations.dashboard import \
     DashboardValidator
 from demisto_sdk.commands.common.hook_validations.description import \
     DescriptionValidator
+from demisto_sdk.commands.common.hook_validations.generic_definition import \
+    GenericDefinitionValidator
+from demisto_sdk.commands.common.hook_validations.generic_field import \
+    GenericFieldValidator
+from demisto_sdk.commands.common.hook_validations.generic_module import \
+    GenericModuleValidator
+from demisto_sdk.commands.common.hook_validations.generic_type import \
+    GenericTypeValidator
 from demisto_sdk.commands.common.hook_validations.id import IDSetValidations
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.hook_validations.incident_field import \
@@ -252,7 +260,7 @@ class ValidateManager:
             file_level = self.detect_file_level(path)
 
             if file_level == PathLevel.FILE:
-                click.secho('\n================= Validating file =================', fg="bright_cyan")
+                click.secho(f'\n================= Validating file {path} =================', fg="bright_cyan")
                 files_validation_result.add(self.run_validations_on_file(path, error_ignore_list))
 
             elif file_level == PathLevel.CONTENT_ENTITY_DIR:
@@ -451,11 +459,6 @@ class ValidateManager:
         if self.check_only_schema:
             return True
 
-        # Note: these file are not ignored but there are no additional validators for Generic Objects at the moment
-        if file_type in [FileType.GENERIC_FIELD, FileType.GENERIC_TYPE,
-                         FileType.GENERIC_MODULE, FileType.GENERIC_DEFINITION]:
-            return True
-
         # id_set validation
         if self.id_set_validations and not self.id_set_validations.is_file_valid_in_set(file_path, file_type,
                                                                                         pack_error_ignore_list):
@@ -539,6 +542,18 @@ class ValidateManager:
 
         elif file_type == FileType.WIDGET:
             return self.validate_widget(structure_validator, pack_error_ignore_list)
+
+        elif file_type == FileType.GENERIC_FIELD:
+            return self.validate_generic_field(structure_validator, pack_error_ignore_list)
+
+        elif file_type == FileType.GENERIC_TYPE:
+            return self.validate_generic_type(structure_validator, pack_error_ignore_list)
+
+        elif file_type == FileType.GENERIC_MODULE:
+            return self.validate_generic_module(structure_validator, pack_error_ignore_list)
+
+        elif file_type == FileType.GENERIC_DEFINITION:
+            return self.validate_generic_definition(structure_validator, pack_error_ignore_list)
 
         else:
             error_message, error_code = Errors.file_type_not_supported()
@@ -891,6 +906,35 @@ class ValidateManager:
                                            print_as_warnings=self.print_ignored_errors,
                                            json_file_path=self.json_file_path)
         return widget_validator.is_valid_file(validate_rn=False)
+
+    def validate_generic_field(self, structure_validator, pack_error_ignore_list):
+        generic_field_validator = GenericFieldValidator(structure_validator, ignored_errors=pack_error_ignore_list,
+                                                        print_as_warnings=self.print_ignored_errors,
+                                                        json_file_path=self.json_file_path)
+
+        return generic_field_validator.is_valid_file(validate_rn=False)
+
+    def validate_generic_type(self, structure_validator, pack_error_ignore_list):
+        generic_type_validator = GenericTypeValidator(structure_validator, ignored_errors=pack_error_ignore_list,
+                                                      print_as_warnings=self.print_ignored_errors,
+                                                      json_file_path=self.json_file_path)
+
+        return generic_type_validator.is_valid_file(validate_rn=False)
+
+    def validate_generic_module(self, structure_validator, pack_error_ignore_list):
+        generic_module_validator = GenericModuleValidator(structure_validator, ignored_errors=pack_error_ignore_list,
+                                                          print_as_warnings=self.print_ignored_errors,
+                                                          json_file_path=self.json_file_path)
+
+        return generic_module_validator.is_valid_file(validate_rn=False)
+
+    def validate_generic_definition(self, structure_validator, pack_error_ignore_list):
+        generic_definition_validator = GenericDefinitionValidator(structure_validator,
+                                                                  ignored_errors=pack_error_ignore_list,
+                                                                  print_as_warnings=self.print_ignored_errors,
+                                                                  json_file_path=self.json_file_path)
+
+        return generic_definition_validator.is_valid_file(validate_rn=False)
 
     def validate_pack_unique_files(self, pack_path: str, pack_error_ignore_list: dict,
                                    should_version_raise=False) -> bool:

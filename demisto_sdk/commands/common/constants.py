@@ -65,6 +65,10 @@ CANVAS = 'canvas'
 OLD_REPUTATION = 'reputations.json'
 PACK_VERIFY_KEY = 'content.pack.verify'
 XSOAR_CONFIG_FILE = 'xsoar_config.json'
+GENERIC_FIELD = 'genericfield'
+GENERIC_TYPE = 'generictype'
+GENERIC_MODULE = 'genericmodule'
+GENERIC_DEFINITION = 'genericdefinition'
 
 
 class FileType(Enum):
@@ -1233,7 +1237,10 @@ MAX_FETCH = 'max_fetch'
 
 OLDEST_SUPPORTED_VERSION = '5.0.0'
 
+GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION = '6.5.0'
+
 FEATURE_BRANCHES = ['v4.5.0']
+
 
 SKIP_RELEASE_NOTES_FOR_TYPES = (FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK,
                                 FileType.TEST_SCRIPT, FileType.DOC_IMAGE)
@@ -1280,6 +1287,10 @@ class ContentItems(Enum):
     LAYOUTS = 'layoutscontainer'
     CLASSIFIERS = 'classifier'
     WIDGETS = 'widget'
+    GENERIC_MODULES = 'genericmodule'
+    GENERIC_DEFINITIONS = 'genericdefinition'
+    GENERIC_FIELDS = 'genericfield'
+    GENERIC_TYPES = 'generictype'
     PRE_PROCESS_RULES = 'pre-process-rules'
 
 

@@ -2,8 +2,6 @@ from typing import Tuple
 
 import click
 
-from demisto_sdk.commands.common.hook_validations.incident_field import \
-    IncidentFieldValidator
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
@@ -31,7 +29,7 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
 
     def run_format(self) -> int:
         try:
-            click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
+            click.secho(f'\n================= Updating file {self.source_file} =================', fg='bright_blue')
             super().update_json()
             self.set_default_values_as_needed()
             self.save_json_to_destination_file()
@@ -47,4 +45,4 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
         if format_res:
             return format_res, SKIP_RETURN_CODE
         else:
-            return format_res, self.initiate_file_validator(IncidentFieldValidator)
+            return format_res, self.initiate_file_validator()

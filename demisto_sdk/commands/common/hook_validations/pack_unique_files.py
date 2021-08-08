@@ -8,20 +8,25 @@ import re
 from datetime import datetime
 from distutils.version import LooseVersion
 from pathlib import Path
-from typing import Tuple
+from typing import Dict, Tuple
 
 import click
 from dateutil import parser
+from git import GitCommandError, Repo
+
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
-    API_MODULES_PACK, PACK_METADATA_CATEGORIES, PACK_METADATA_CERTIFICATION,
-    PACK_METADATA_CREATED, PACK_METADATA_DEPENDENCIES, PACK_METADATA_DESC,
-    PACK_METADATA_EMAIL, PACK_METADATA_FIELDS, PACK_METADATA_KEYWORDS,
-    PACK_METADATA_NAME, PACK_METADATA_SUPPORT, PACK_METADATA_TAGS,
-    PACK_METADATA_URL, PACK_METADATA_USE_CASES, PACKS_PACK_IGNORE_FILE_NAME,
+    API_MODULES_PACK, EXCLUDED_DISPLAY_NAME_WORDS, PACK_METADATA_CATEGORIES,
+    PACK_METADATA_CERTIFICATION, PACK_METADATA_CREATED,
+    PACK_METADATA_DEPENDENCIES, PACK_METADATA_DESC, PACK_METADATA_EMAIL,
+    PACK_METADATA_FIELDS, PACK_METADATA_KEYWORDS, PACK_METADATA_NAME,
+    PACK_METADATA_SUPPORT, PACK_METADATA_TAGS, PACK_METADATA_URL,
+    PACK_METADATA_USE_CASES, PACKS_PACK_IGNORE_FILE_NAME,
     PACKS_PACK_META_FILE_NAME, PACKS_README_FILE_NAME,
     PACKS_WHITELIST_FILE_NAME)
 from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.hook_validations.author_image import \
+    AuthorImageValidator
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
@@ -30,7 +35,6 @@ from demisto_sdk.commands.common.tools import (get_core_pack_list, get_json,
                                                pack_name_to_path)
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
-from git import GitCommandError, Repo
 
 CONTRIBUTORS_LIST = ['partner', 'developer', 'community']
 SUPPORTED_CONTRIBUTORS_LIST = ['partner', 'developer']
@@ -78,6 +82,7 @@ class PackUniqueFilesValidator(BaseValidator):
         self.skip_id_set_creation = skip_id_set_creation
         self.prev_ver = prev_ver
         self.support = support
+        self.metadata_content: Dict = dict()
 
     # error handling
     def _add_error(self, error: Tuple[str, str], file_path: str, warning=False):
@@ -132,6 +137,17 @@ class PackUniqueFilesValidator(BaseValidator):
                 return "No-Text-Required"
 
         return False
+
+    def _read_metadata_content(self) -> Dict:
+        """
+        Reads metadata content. Avoids the duplication of file opening in case metadata was already opened once.
+        Returns:
+            (Dict): Metadata JSON pack file content.
+        """
+        if not self.metadata_content:
+            pack_meta_file_content = self._read_file_content(self.pack_meta_file)
+            self.metadata_content = json.loads(pack_meta_file_content)
+        return self.metadata_content
 
     def _parse_file_into_list(self, file_name, delimiter='\n'):
         """Parse file's content to list, throw exception if can't"""
@@ -199,8 +215,7 @@ class PackUniqueFilesValidator(BaseValidator):
         Validates that README.md file is not the same as the pack description.
         Returns False if the pack readme is different than the pack description.
         """
-        pack_meta_file_content = self._read_file_content(self.pack_meta_file)
-        metadata = json.loads(pack_meta_file_content)
+        metadata = self._read_metadata_content()
         metadata_description = metadata.get(PACK_METADATA_DESC, '').lower().strip()
         if self._is_pack_file_exists(self.readme_file) and not self._check_if_file_is_empty(self.readme_file):
             pack_readme = self._read_file_content(self.readme_file)
@@ -272,7 +287,12 @@ class PackUniqueFilesValidator(BaseValidator):
 
         return True
 
-    def validate_pack_name(self, pack_name):
+    def validate_pack_name(self, metadata_file_content: Dict) -> bool:
+        # check validity of pack metadata mandatory fields
+        pack_name: str = metadata_file_content.get(PACK_METADATA_NAME, '')
+        if not pack_name or 'fill mandatory field' in pack_name:
+            if self._add_error(Errors.pack_metadata_name_not_valid(), self.pack_meta_file):
+                return False
         if len(pack_name) < 3:
             if self._add_error(Errors.pack_name_is_not_in_xsoar_standards("short"), self.pack_meta_file):
                 return False
@@ -282,17 +302,32 @@ class PackUniqueFilesValidator(BaseValidator):
         if re.findall(INCORRECT_PACK_NAME_PATTERN, pack_name):
             if self._add_error(Errors.pack_name_is_not_in_xsoar_standards("wrong_word"), self.pack_meta_file):
                 return False
+        if not self.name_does_not_contain_excluded_word(pack_name):
+            if self._add_error(
+                    Errors.pack_name_is_not_in_xsoar_standards('excluded_word', EXCLUDED_DISPLAY_NAME_WORDS),
+                    self.pack_meta_file):
+                return False
         return True
+
+    def name_does_not_contain_excluded_word(self, pack_name: str) -> bool:
+        """
+        Checks whether given object has excluded name.
+        Args:
+            pack_name (str): Name of the pack.
+        Returns:
+            (bool) False if name corresponding pack name contains excluded name, true otherwise.
+        """
+        lowercase_name = pack_name.lower()
+        return not any(excluded_word in lowercase_name for excluded_word in EXCLUDED_DISPLAY_NAME_WORDS)
 
     def _is_pack_meta_file_structure_valid(self):
         """Check if pack_metadata.json structure is json parse-able and valid"""
         try:
-            pack_meta_file_content = self._read_file_content(self.pack_meta_file)
-            if not pack_meta_file_content:
+            metadata = self._read_metadata_content()
+            if not metadata:
                 if self._add_error(Errors.pack_metadata_empty(), self.pack_meta_file):
                     return False
 
-            metadata = json.loads(pack_meta_file_content)
             if not isinstance(metadata, dict):
                 if self._add_error(Errors.pack_metadata_should_be_dict(self.pack_meta_file), self.pack_meta_file):
                     return False
@@ -303,12 +338,7 @@ class PackUniqueFilesValidator(BaseValidator):
                                    self.pack_meta_file):
                     return False
 
-            # check validity of pack metadata mandatory fields
-            name_field = metadata.get(PACK_METADATA_NAME, '')
-            if not name_field or 'fill mandatory field' in name_field:
-                if self._add_error(Errors.pack_metadata_name_not_valid(), self.pack_meta_file):
-                    return False
-            elif not self.validate_pack_name(name_field):
+            elif not self.validate_pack_name(metadata):
                 return False
 
             description_name = metadata.get(PACK_METADATA_DESC, '').lower()
@@ -369,7 +399,7 @@ class PackUniqueFilesValidator(BaseValidator):
     def _is_valid_contributor_pack_support_details(self):
         """Checks if email or url exist in contributed pack details."""
         try:
-            pack_meta_file_content = json.loads(self._read_file_content(self.pack_meta_file))
+            pack_meta_file_content = self._read_metadata_content()
             if pack_meta_file_content[PACK_METADATA_SUPPORT] in SUPPORTED_CONTRIBUTORS_LIST:
                 if not pack_meta_file_content[PACK_METADATA_URL] and not pack_meta_file_content[PACK_METADATA_EMAIL]:
                     if self._add_error(Errors.pack_metadata_missing_url_and_email(), self.pack_meta_file):
@@ -389,7 +419,7 @@ class PackUniqueFilesValidator(BaseValidator):
 
         """
         try:
-            pack_meta_file_content = json.loads(self._read_file_content(self.pack_meta_file))
+            pack_meta_file_content = self._read_metadata_content()
             if pack_meta_file_content[PACK_METADATA_SUPPORT] not in SUPPORT_TYPES:
                 self._add_error(Errors.pack_metadata_invalid_support_type(), self.pack_meta_file)
                 return False
@@ -409,7 +439,7 @@ class PackUniqueFilesValidator(BaseValidator):
         non_approved_usecases = set()
         try:
             approved_usecases = tools.get_approved_usecases()
-            pack_meta_file_content = json.loads(self._read_file_content(self.pack_meta_file))
+            pack_meta_file_content = self._read_metadata_content()
             current_usecases = tools.get_current_usecases()
             non_approved_usecases = set(pack_meta_file_content[PACK_METADATA_USE_CASES]) - set(
                 approved_usecases + current_usecases)
@@ -431,7 +461,7 @@ class PackUniqueFilesValidator(BaseValidator):
         non_approved_tags = set()
         try:
             approved_tags = tools.get_approved_tags()
-            pack_meta_file_content = json.loads(self._read_file_content(self.pack_meta_file))
+            pack_meta_file_content = self._read_metadata_content()
             current_tags = tools.get_current_tags()
             non_approved_tags = set(pack_meta_file_content[PACK_METADATA_TAGS]) - set(approved_tags + current_tags)
             if non_approved_tags:
@@ -465,7 +495,7 @@ class PackUniqueFilesValidator(BaseValidator):
              bool: True if the Pack contains at least one PB, Incident Type or Layout, otherwise False
         """
         try:
-            pack_meta_file_content = json.loads(self._read_file_content(self.pack_meta_file))
+            pack_meta_file_content = self._read_metadata_content()
 
             if "Use Case" in pack_meta_file_content['tags']:
                 if not self._contains_use_case():
@@ -547,7 +577,18 @@ class PackUniqueFilesValidator(BaseValidator):
             if not is_valid:
                 self._add_error(error, self.pack_path)
 
+        self.validate_author_image()
+
         return self.get_errors()
+
+    def validate_author_image(self):
+        pack_meta_file_content = self._read_metadata_content()
+        support_level: str = pack_meta_file_content.get(PACK_METADATA_SUPPORT, '')
+        author_image_validator: AuthorImageValidator = AuthorImageValidator(self.pack_path, support_level,
+                                                                            ignored_errors=self.ignored_errors,
+                                                                            print_as_warnings=self.print_as_warnings,
+                                                                            suppress_print=self.suppress_print)
+        return author_image_validator.is_valid()
 
     # pack dependencies validation
     def validate_pack_dependencies(self):

@@ -3,6 +3,8 @@ from copy import deepcopy
 from typing import Optional
 
 import pytest
+from mock import mock_open, patch
+
 from demisto_sdk.commands.common.constants import (FEED_REQUIRED_PARAMS,
                                                    FETCH_REQUIRED_PARAMS,
                                                    FIRST_FETCH_PARAM,
@@ -12,7 +14,6 @@ from demisto_sdk.commands.common.hook_validations.integration import \
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from mock import mock_open, patch
 from TestSuite.test_tools import ChangeCWD
 
 FEED_REQUIRED_PARAMS_STRUCTURE = [dict(required_param.get('must_equal'), **required_param.get('must_contain'),
@@ -228,9 +229,14 @@ class TestIntegrationValidator:
 
     WITHOUT_DUP_ARGS = [{"name": "testing", "arguments": [{"name": "test1"}, {"name": "test2"}]}]
     WITH_DUP_ARGS = [{"name": "testing", "arguments": [{"name": "test1"}, {"name": "test1"}]}]
+    WITH_DUP_ARGS_NON_IDENTICAL = [
+        {"name": "testing", "arguments": [{"name": "test1", "desc": "hello"}, {"name": "test1", "desc": "hello1"}]},
+    ]
+
     DUPLICATE_ARGS_INPUTS = [
         (WITHOUT_DUP_ARGS, True),
-        (WITH_DUP_ARGS, False)
+        (WITH_DUP_ARGS, False),
+        (WITH_DUP_ARGS_NON_IDENTICAL, False),
     ]
 
     @pytest.mark.parametrize("current, answer", DUPLICATE_ARGS_INPUTS)
@@ -396,12 +402,18 @@ class TestIntegrationValidator:
         {"contextPath": "DBotScore.Vendor", "description": "Vendor used to calculate the score.", "type": "string"},
         {"contextPath": "DBotScore.Score", "description": "The actual score.", "type": "int"},
         {"contextPath": "IP.Address", "description": "IP address", "type": "string"}]
+    MOCK_REPUTATIONS_VALID_ENDPOINT = [
+        {"contextPath": 'Endpoint.Hostname', "description": "The endpoint's hostname.", "type": "string"},
+        {"contextPath": 'Endpoint.IPAddress', "description": "The endpoint's IP address.", "type": "string"},
+        {"contextPath": 'Endpoint.ID', "description": "The endpoint's ID.", "type": "string"}]
+
     IS_OUTPUT_FOR_REPUTATION_INPUTS = [
         (MOCK_REPUTATIONS_1, "not bang", True),
         (MOCK_REPUTATIONS_2, "not bang", True),
         (MOCK_REPUTATIONS_INVALID_EMAIL, "email", False),
         (MOCK_REPUTATIONS_INVALID_FILE, "file", False),
-        (MOCK_REPUTATIONS_VALID_IP, "ip", True)
+        (MOCK_REPUTATIONS_VALID_IP, "ip", True),
+        (MOCK_REPUTATIONS_VALID_ENDPOINT, "endpoint", True)
     ]
 
     @pytest.mark.parametrize("current, name, answer", IS_OUTPUT_FOR_REPUTATION_INPUTS)
@@ -434,8 +446,7 @@ class TestIntegrationValidator:
         (CASE_EXISTS_WITH_DEFAULT_TRUE, True),
         (CASE_REQUIRED_ARG_WITH_DEFAULT_FALSE, True),
         (CASE_INVALID_MISSING_REQUIRED_ARGS, False),
-        (CASE_INVALID_NON_DEFAULT_ARG_WITH_DEFAULT_TRUE, False),
-        (CASE_INVALID_MISSING_OUTPUT, False)
+        (CASE_INVALID_NON_DEFAULT_ARG_WITH_DEFAULT_TRUE, False)
     ]
 
     @pytest.mark.parametrize("current, answer", ENDPOINT_CASES)
@@ -1265,7 +1276,7 @@ class TestisContextChanged:
     ]
 
     @pytest.mark.parametrize('readme, current_yml, expected', TEST_CASE)
-    def test_is_context_change_in_readme(self, readme, current_yml, expected):
+    def test_is_context_correct_in_readme(self, readme, current_yml, expected):
         """
         Given: a changed YML file
         When: running validate on integration with at least one command
@@ -1279,6 +1290,6 @@ class TestisContextChanged:
             structure = mock_structure("Pack/Test", current)
             validator = IntegrationValidator(structure)
             validator.current_file = current_yml
-            res = validator.is_context_change_in_readme()
+            res = validator.is_context_correct_in_readme()
             assert res == expected
         patcher.stop()

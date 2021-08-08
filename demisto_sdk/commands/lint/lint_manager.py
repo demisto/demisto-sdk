@@ -14,6 +14,8 @@ import docker.errors
 import git
 import requests.exceptions
 import urllib3.exceptions
+from wcmatch.pathlib import Path
+
 from demisto_sdk.commands.common.constants import (PACKS_PACK_META_FILE_NAME,
                                                    TYPE_PWSH, TYPE_PYTHON,
                                                    DemistoException)
@@ -33,7 +35,6 @@ from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, PWSH_CHECKS,
                                                generate_coverage_report,
                                                get_test_modules, validate_env)
 from demisto_sdk.commands.lint.linter import Linter
-from wcmatch.pathlib import Path
 
 logger = logging.getLogger('demisto-sdk')
 

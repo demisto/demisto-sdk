@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+
 from demisto_sdk.commands.common.content.errors import ContentInitializeError
 from demisto_sdk.commands.common.content.objects.abstract_objects import \
     TextObject

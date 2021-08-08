@@ -5,6 +5,8 @@ import click
 import pytest
 import requests_mock
 from click.testing import CliRunner
+from git import GitCommandError
+
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (PACK_METADATA_DESC,
@@ -19,7 +21,6 @@ from demisto_sdk.commands.common.hook_validations.base_validator import \
 from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
     PackUniqueFilesValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from git import GitCommandError
 from TestSuite.test_tools import ChangeCWD
 
 VALIDATE_CMD = "validate"
@@ -89,6 +90,7 @@ class TestPackUniqueFilesValidator:
         mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
         assert not self.validator.are_valid_files(id_set_validations=False)
         fake_validator = PackUniqueFilesValidator('fake')
+        mocker.patch.object(fake_validator, '_read_metadata_content', return_value=dict())
         assert fake_validator.are_valid_files(id_set_validations=False)
 
     def test_validate_pack_metadata(self, mocker):
@@ -98,6 +100,7 @@ class TestPackUniqueFilesValidator:
         mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
         assert not self.validator.are_valid_files(id_set_validations=False)
         fake_validator = PackUniqueFilesValidator('fake')
+        mocker.patch.object(fake_validator, '_read_metadata_content', return_value=dict())
         assert fake_validator.are_valid_files(id_set_validations=False)
 
     def test_validate_partner_contribute_pack_metadata_no_mail_and_url(self, mocker, repo):
@@ -532,7 +535,8 @@ class TestPackUniqueFilesValidator:
                     - Validation succeed
                     - Valid absolute image paths were not caught
         """
-        from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
+        from demisto_sdk.commands.common.hook_validations.readme import \
+            ReadMeValidator
 
         self.validator = PackUniqueFilesValidator(os.path.join(self.FILES_PATH, 'DummyPack2'))
         mocker.patch.object(ReadMeValidator, 'check_readme_relative_image_paths', return_value=[])  # Test only absolute paths

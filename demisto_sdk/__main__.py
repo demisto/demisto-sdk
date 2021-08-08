@@ -3,15 +3,16 @@ import json
 import logging
 import os
 import sys
+import tempfile
 from configparser import ConfigParser, MissingSectionHeaderError
 from pathlib import Path
 from typing import IO
 
-from pkg_resources import get_distribution
-
 # Third party packages
 import click
 import git
+from pkg_resources import get_distribution
+
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 # Common tools
@@ -60,11 +61,15 @@ from demisto_sdk.commands.secrets.secrets import SecretsValidator
 from demisto_sdk.commands.split_yml.extractor import Extractor
 from demisto_sdk.commands.test_content.execute_test_content import \
     execute_test_content
-from demisto_sdk.commands.unify.unifier import Unifier
+from demisto_sdk.commands.unify.generic_module_unifier import \
+    GenericModuleUnifier
+from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
 from demisto_sdk.commands.update_release_notes.update_rn_manager import \
     UpdateReleaseNotesManager
 from demisto_sdk.commands.upload.uploader import Uploader
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
+from demisto_sdk.commands.zip_packs.packs_zipper import (EX_FAIL, EX_SUCCESS,
+                                                         PacksZipper)
 
 
 class PathsParamType(click.Path):
@@ -273,16 +278,64 @@ def extract_code(config, **kwargs):
     show_default=False
 )
 def unify(**kwargs):
-    """Unify code, image, description and yml files to a single Demisto yml file. Note that
-       this should be used on a single integration/script and not a pack
-       not multiple scripts/integrations
     """
+    This command has two main functions:
+
+    1. YML Unifier - Unifies integration/script code, image, description and yml files to a single XSOAR yml file.
+     * Note that this should be used on a single integration/script and not a pack, not multiple scripts/integrations.
+     * To use this function - set as input a path to the *directory* of the integration/script to unify.
+
+    2. GenericModule Unifier - Unifies a GenericModule with its Dashboards to a single JSON object.
+     * To use this function - set as input a path to a GenericModule *file*.
+    """
+
     check_configuration_file('unify', kwargs)
     # Input is of type Path.
     kwargs['input'] = str(kwargs['input'])
-    unifier = Unifier(**kwargs)
-    unifier.merge_script_package_to_yml()
+    file_type = find_type(kwargs['input'])
+    if file_type == FileType.GENERIC_MODULE:
+        # pass arguments to GenericModule unifier and call the command
+        generic_module_unifier = GenericModuleUnifier(**kwargs)
+        generic_module_unifier.merge_generic_module_with_its_dashboards()
+
+    else:
+        # pass arguments to YML unifier and call the command
+        yml_unifier = YmlUnifier(**kwargs)
+        yml_unifier.merge_script_package_to_yml()
+
     return 0
+
+
+# ====================== zip-packs ====================== #
+@main.command(hidden=True)
+@click.help_option(
+    '-h', '--help'
+)
+@click.option('-i', '--input',
+              help="The packs to be zipped as csv list of pack paths.",
+              type=PathsParamType(exists=True, resolve_path=True),
+              required=True)
+@click.option('-o', '--output', help='The destination directory to create the packs.',
+              type=click.Path(file_okay=False, resolve_path=True), required=True)
+@click.option('-v', '--content-version', help='The content version in CommonServerPython.', default='0.0.0')
+@click.option('-u', '--upload', is_flag=True, help='Upload the unified packs to the marketplace.', default=False)
+@click.option('--zip-all', is_flag=True, help='Zip all the packs in one zip file.', default=False)
+def zip_packs(**kwargs) -> int:
+    """Generating zipped packs that are ready to be uploaded to Cortex XSOAR machine."""
+    logging_setup(3)
+    check_configuration_file('zip-packs', kwargs)
+
+    # if upload is true - all zip packs will be compressed to one zip file
+    should_upload = kwargs.pop('upload', False)
+    zip_all = kwargs.pop('zip_all', False) or should_upload
+
+    packs_zipper = PacksZipper(zip_all=zip_all, pack_paths=kwargs.pop('input'), quiet_mode=zip_all, **kwargs)
+    zip_path, unified_pack_names = packs_zipper.zip_packs()
+
+    if should_upload and zip_path:
+        return Uploader(input=zip_path, pack_names=unified_pack_names).upload()
+
+    return EX_SUCCESS if zip_path is not None else EX_FAIL
 
 
 # ====================== validate ====================== #
@@ -626,6 +679,17 @@ def lint(**kwargs):
     is_flag=True)
 @click.option(
     "-d", "--deprecate", help="Set if you want to deprecate the integration/script/playbook", is_flag=True)
+@click.option(
+    "-g", "--use-git",
+    help="Use git to automatically recognize which files changed and run format on them.",
+    is_flag=True)
+@click.option(
+    '--prev-ver', help='Previous branch or SHA1 commit to run checks against.')
+@click.option(
+    '-iu', '--include-untracked',
+    is_flag=True,
+    help='Whether to include untracked files in the formatting.'
+)
 def format(
         input: Path,
         output: Path,
@@ -634,10 +698,14 @@ def format(
         update_docker: bool,
         verbose: bool,
         assume_yes: bool,
-        deprecate: bool
+        deprecate: bool,
+        use_git: bool,
+        prev_ver: str,
+        include_untracked: bool,
 ):
     """Run formatter on a given script/playbook/integration/incidentfield/indicatorfield/
-    incidenttype/indicatortype/layout/dashboard/classifier/mapper/widget/report file.
+    incidenttype/indicatortype/layout/dashboard/classifier/mapper/widget/report file/genericfield/generictype/
+    genericmodule/genericdefinition.
     """
     return format_manager(
         str(input) if input else None,
@@ -647,7 +715,10 @@ def format(
         update_docker=update_docker,
         assume_yes=assume_yes,
         verbose=verbose,
-        deprecate=deprecate
+        deprecate=deprecate,
+        use_git=use_git,
+        prev_ver=prev_ver,
+        include_untracked=include_untracked,
     )
 
 
@@ -658,6 +729,7 @@ def format(
 )
 @click.option(
     "-i", "--input",
+    type=PathsParamType(exists=True, resolve_path=True),
     help="The path of file or a directory to upload. The following are supported:\n"
          "- Pack\n"
          "- A content entity directory that is inside a pack. For example: an Integrations "
@@ -665,6 +737,13 @@ def format(
          "- Valid file that can be imported to Cortex XSOAR manually. For example a playbook: "
          "helloWorld.yml", required=True
 )
+@click.option(
+    "-z", "--zip",
+    help="Compress the pack to zip before upload, this flag is relevant only for packs.", is_flag=True
+)
+@click.option(
+    "--keep-zip", help="Directory where to store the zip after creation, this argument is relevant only for packs "
+                       "and in case the --zip flag is used.", required=False, type=click.Path(exists=True))
 @click.option(
     "--insecure",
     help="Skip certificate validation", is_flag=True
@@ -674,14 +753,27 @@ def format(
     help="Verbose output", is_flag=True
 )
 def upload(**kwargs):
-    """Upload integration to Demisto instance.
+    """Upload integration or pack to Demisto instance.
     DEMISTO_BASE_URL environment variable should contain the Demisto server base URL.
     DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
     * Note: Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up. *
     """
+    if kwargs.pop('zip', False):
+        pack_path = kwargs['input']
+        output_zip_path = kwargs.pop('keep_zip') or tempfile.gettempdir()
+        packs_unifier = PacksZipper(pack_paths=pack_path, output=output_zip_path,
+                                    content_version='0.0.0', zip_all=True, quiet_mode=True)
+        packs_zip_path, pack_names = packs_unifier.zip_packs()
+        if packs_zip_path is None:
+            return EX_FAIL
+
+        kwargs['input'] = packs_zip_path
+        kwargs['pack_names'] = pack_names
+    else:
+        kwargs.pop('keep_zip')
+
     check_configuration_file('upload', kwargs)
-    uploader = Uploader(**kwargs)
-    return uploader.upload()
+    return Uploader(**kwargs).upload()
 
 
 # ====================== download ====================== #
@@ -813,8 +905,13 @@ def run_playbook(**kwargs):
 @click.option(
     "-v", "--verbose", is_flag=True, help="Verbose output - mainly for debugging purposes")
 @click.option(
-    "-int", "--interactive", help="If passed, then for each output field will ask user interactively to enter the "
-                                  "description.", is_flag=True, default=False)
+    "--interactive", help="If passed, then for each output field will ask user interactively to enter the "
+                          "description. By default is interactive mode is disabled", is_flag=True)
+@click.option(
+    "-d", "--description-json",
+    help="A JSON or a path to a JSON file, mapping field names to their descriptions. "
+         "If not specified, the script prompt the user to input the JSON content.",
+    is_flag=True)
 def json_to_outputs_command(**kwargs):
     """Demisto integrations/scripts have a YAML file that defines them.
     Creating the YAML file is a tedious and error-prone task of manually copying outputs from the API result to the
@@ -847,6 +944,12 @@ def json_to_outputs_command(**kwargs):
          'outputs to verify and which not')
 @click.option(
     "-v", "--verbose", help="Verbose output for debug purposes - shows full exception stack trace", is_flag=True)
+@click.option(
+    "-ab", "--all-brands",
+    help="Generate a test-playbook which calls commands using integrations of all available brands. "
+         "When not used, the generated playbook calls commands using instances of the provided integration brand.",
+    is_flag=True
+)
 def generate_test_playbook(**kwargs):
     """Generate test playbook from integration or script"""
     check_configuration_file('generate-test-playbook', kwargs)
@@ -946,7 +1049,7 @@ def generate_docs(**kwargs):
     input_path: str = kwargs.get('input', '')
     output_path = kwargs.get('output')
     command = kwargs.get('command')
-    examples = str(kwargs.get('examples', ''))
+    examples: str = kwargs.get('examples', '')
     permissions = kwargs.get('permissions')
     limitations = kwargs.get('limitations')
     insecure: bool = kwargs.get('insecure', False)
@@ -1135,6 +1238,9 @@ def update_release_notes(**kwargs):
 
 # ====================== find-dependencies ====================== #
 @main.command()
+@click.help_option(
+    '-h', '--help'
+)
 @click.option(
     "-i", "--input", help="Pack path to find dependencies. For example: Pack/HelloWorld", required=True,
     type=click.Path(exists=True, dir_okay=True))
@@ -1370,7 +1476,7 @@ def openapi_codegen(**kwargs):
         integration.save_config(integration.configuration, output_dir)
         tools.print_success(f'Created configuration file in {output_dir}')
         if not kwargs.get('use_default', False):
-            config_path = os.path.join(output_dir, f'{base_name}.json')
+            config_path = os.path.join(output_dir, f'{base_name}_config.json')
             command_to_run = f'demisto-sdk openapi-codegen -i "{input_file}" -cf "{config_path}" -n "{base_name}" ' \
                              f'-o "{output_dir}" -pr "{command_prefix}" -c "{context_path}"'
             if unique_keys:
@@ -1585,7 +1691,6 @@ def error_code(config, **kwargs):
 @main.resultcallback()
 def exit_from_program(result=0, **kwargs):
     sys.exit(result)
-
 
 # todo: add download from demisto command
 

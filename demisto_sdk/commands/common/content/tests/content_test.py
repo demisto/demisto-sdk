@@ -1,4 +1,5 @@
 import pytest
+
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.content.objects.pack_objects import (Playbook,
                                                                       Script)

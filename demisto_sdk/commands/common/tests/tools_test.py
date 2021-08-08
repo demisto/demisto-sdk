@@ -8,6 +8,8 @@ from typing import List, Union
 import git
 import pytest
 import requests
+from pytest import raises
+
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    LAYOUTS_DIR, PACKS_DIR,
@@ -33,6 +35,10 @@ from demisto_sdk.tests.constants_test import (IGNORED_PNG,
                                               SOURCE_FORMAT_INTEGRATION_COPY,
                                               VALID_BETA_INTEGRATION_PATH,
                                               VALID_DASHBOARD_PATH,
+                                              VALID_GENERIC_DEFINITION_PATH,
+                                              VALID_GENERIC_FIELD_PATH,
+                                              VALID_GENERIC_MODULE_PATH,
+                                              VALID_GENERIC_TYPE_PATH,
                                               VALID_INCIDENT_FIELD_PATH,
                                               VALID_INCIDENT_TYPE_PATH,
                                               VALID_INTEGRATION_TEST_PATH,
@@ -40,11 +46,7 @@ from demisto_sdk.tests.constants_test import (IGNORED_PNG,
                                               VALID_PLAYBOOK_ID_PATH,
                                               VALID_REPUTATION_FILE,
                                               VALID_SCRIPT_PATH,
-                                              VALID_WIDGET_PATH,
-                                              VALID_GENERIC_TYPE_PATH,
-                                              VALID_GENERIC_FIELD_PATH,
-                                              VALID_GENERIC_MODULE_PATH,
-                                              VALID_GENERIC_DEFINITION_PATH)
+                                              VALID_WIDGET_PATH)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     LAYOUT, MAPPER, OLD_CLASSIFIER, REPUTATION)
 from TestSuite.pack import Pack
@@ -65,8 +67,20 @@ class TestGenericFunctions:
         assert func(file_path)
 
     def test_get_file_exception(self):
+        """
+        Given
+        - A non supported file.
+
+        When
+        - Running get_file.
+
+        Then
+        - Ensure the function raise an error.
+        """
         path_to_here = f'{git_path()}/demisto_sdk/tests/test_files/'
-        assert get_file(json.load, os.path.join(path_to_here, 'fake_integration.yml'), ('yml', 'yaml')) == {}
+        with raises(ValueError) as e:
+            result = get_file(json.load, os.path.join(path_to_here, 'fake_integration.yml'), ('yml', 'yaml'))
+            assert result == e.value
 
     @pytest.mark.parametrize('dir_path', ['demisto_sdk', f'{git_path()}/demisto_sdk/tests/test_files'])
     def test_get_yml_paths_in_dir(self, dir_path):
@@ -1112,3 +1126,49 @@ def test_get_release_note_entries(version, expected_result):
     """
 
     assert get_release_note_entries(version) == expected_result
+
+
+def test_suppress_stdout(capsys):
+    """
+        Given:
+            - Messages to print.
+
+        When:
+            - Printing a message inside the suppress_stdout context manager.
+            - Printing message after the suppress_stdout context manager is used.
+        Then:
+            - Ensure that messages are not printed to console while suppress_stdout is enabled.
+            - Ensure that messages are printed to console when suppress_stdout is disabled.
+    """
+    print('You can see this')
+    captured = capsys.readouterr()
+    assert captured.out == 'You can see this\n'
+    with tools.suppress_stdout():
+        print('You cannot see this')
+        captured = capsys.readouterr()
+    assert captured.out == ''
+    print('And you can see this again')
+    captured = capsys.readouterr()
+    assert captured.out == 'And you can see this again\n'
+
+
+def test_suppress_stdout_exception(capsys):
+    """
+        Given:
+            - Messages to print.
+
+        When:
+            - Performing an operation which throws an exception inside the suppress_stdout context manager.
+            - Printing something after the suppress_stdout context manager is used.
+        Then:
+            - Ensure that the context manager do not not effect exception handling.
+            - Ensure that messages are printed to console when suppress_stdout is disabled.
+
+    """
+    with pytest.raises(Exception) as excinfo:
+        with tools.suppress_stdout():
+            2 / 0
+    assert str(excinfo.value) == 'division by zero'
+    print('After error prints are enabled again.')
+    captured = capsys.readouterr()
+    assert captured.out == 'After error prints are enabled again.\n'

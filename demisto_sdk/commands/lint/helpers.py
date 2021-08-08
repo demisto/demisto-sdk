@@ -19,11 +19,12 @@ import docker
 import docker.errors
 import git
 import requests
+from docker.models.containers import Container
+
 # Local packages
 from demisto_sdk.commands.common.constants import (TYPE_PWSH, TYPE_PYTHON,
                                                    DemistoException)
 from demisto_sdk.commands.common.tools import print_warning, run_command_os
-from docker.models.containers import Container
 
 # Python2 requirements
 PYTHON2_REQ = ["flake8", "vulture"]
@@ -280,18 +281,23 @@ def add_tmp_lint_files(content_repo: git.Repo, pack_path: Path, lint_files: List
 
 
 @lru_cache(maxsize=100)
-def get_python_version_from_image(image: str) -> float:
+def get_python_version_from_image(image: str, timeout: int = 60, log_prompt: str = "") -> float:
     """ Get python version from docker image
 
     Args:
         image(str): Docker image id or name
+        timeout(int): Docker client request timeout
 
     Returns:
         float: Python version X.Y (3.7, 3.6, ..)
     """
+    # skip pwoershell images
+    if 'pwsh' in image or 'powershell' in image:
+        return 3.8
+
     docker_user = os.getenv('DOCKERHUB_USER')
     docker_pass = os.getenv('DOCKERHUB_PASSWORD')
-    docker_client = docker.from_env()
+    docker_client = docker.from_env(timeout=timeout)
     docker_client.login(username=docker_user,
                         password=docker_pass,
                         registry="https://index.docker.io/v1")
@@ -318,12 +324,13 @@ def get_python_version_from_image(image: str) -> float:
                         container_obj.remove(force=True)
                         break
                     except docker.errors.APIError:
-                        logger.warning(f'Could not remove the image {image}')
+                        logger.warning(f'{log_prompt} - Could not remove the image {image}')
                 return py_num
             else:
                 raise docker.errors.ContainerError
+
         except Exception:
-            logger.exception(f'Failed detecting Python version (in attempt {attempt})')
+            logger.exception(f'{log_prompt} - Failed detecting Python version (in attempt {attempt}) for image {image}')
             continue
 
     return py_num

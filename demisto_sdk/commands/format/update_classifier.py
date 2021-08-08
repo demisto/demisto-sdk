@@ -2,7 +2,7 @@ from abc import ABC
 from typing import Tuple
 
 import click
-from demisto_sdk.commands.common.tools import LOG_COLORS, print_color
+
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE,
@@ -43,7 +43,7 @@ class OldClassifierJSONFormat(BaseClassifierJSONFormat):
 
     def run_format(self) -> int:
         try:
-            print_color(f'\n======= Updating file: {self.source_file} =======', LOG_COLORS.WHITE)
+            click.secho(f'\n================= Updating file {self.source_file} =================', fg='bright_blue')
             super().run_format()
             self.set_toVersion()
             self.save_json_to_destination_file()
@@ -65,7 +65,7 @@ class ClassifierJSONFormat(BaseClassifierJSONFormat):
 
     def run_format(self) -> int:
         try:
-            click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
+            click.secho(f'\n================= Updating file {self.source_file} =================', fg='bright_blue')
             super().run_format()
             self.set_fromVersion(VERSION_6_0_0)
             self.set_description()

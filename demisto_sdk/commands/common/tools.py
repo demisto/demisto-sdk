@@ -1002,6 +1002,9 @@ def find_type_by_path(path: str = '') -> Optional[FileType]:
     if path.endswith('_image.png') and not path.endswith("Author_image.png"):
         return FileType.IMAGE
 
+    if path.endswith("Author_image.png"):
+        return FileType.AUTHOR_IMAGE
+
     # doc files images
     if path.endswith('.png') and DOC_FILES_DIR in path:
         return FileType.DOC_IMAGE

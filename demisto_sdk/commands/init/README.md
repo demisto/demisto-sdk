@@ -5,23 +5,23 @@ Create a pack, integration or script template.
 * This command is used to ease the initial creation of a pack, integration or a script.
 
 **Arguments**:
-* **-n, --name** 
+* **-n, --name**
 The name given to the files and directories of new pack/integration/script being created
-* **--id** 
+* **--id**
 The id used for the yml file of the integration/script
-* **-o, --output** 
+* **-o, --output**
 The output directory to which the created object will be saved
-* **--integration** 
+* **--integration**
 Create an integration
-* **--script** 
+* **--script**
 Create a script
-* **--pack** 
+* **--pack**
 Create a pack
-* **-t, --template** 
+* **-t, --template**
 Create an Integration/Script based on a specific template.</br>
 Integration template options: HelloWorld, HelloIAMWorld, FeedHelloWorld.</br>
 Script template options: HelloWorldScript
-* **-a, --author_image** For pack only: The path of author image will be presented in marketplace 
+* **-a, --author_image** For pack only: The path of author image will be presented in marketplace
 under PUBLISHER section. File should be up to 4kb and in the dimensions of 120x50.
 * **--demisto_mock**
 Copy the demistomock. Relevant for initialization of Scripts and Integrations within a Pack.

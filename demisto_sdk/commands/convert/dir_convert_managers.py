@@ -2,6 +2,8 @@ import os
 from abc import abstractmethod
 
 import click
+from packaging.version import Version
+
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.tools import is_pack_path
 from demisto_sdk.commands.convert.converters.classifier.classifier_6_0_0_converter import \
@@ -14,7 +16,6 @@ from demisto_sdk.commands.convert.converters.layout.layout_base_converter import
     LayoutBaseConverter
 from demisto_sdk.commands.convert.converters.layout.layout_up_to_5_9_9_converter import \
     LayoutBelowSixConverter
-from packaging.version import Version
 
 
 class AbstractDirConvertManager:

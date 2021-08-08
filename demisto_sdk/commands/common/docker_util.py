@@ -4,6 +4,7 @@ import tarfile
 from typing import Dict, List, Optional, Union
 
 import docker
+
 from demisto_sdk.commands.common.logger import logger
 
 client = docker.from_env()

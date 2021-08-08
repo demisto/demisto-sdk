@@ -1,5 +1,6 @@
 import astroid
 import pylint.testutils
+
 from demisto_sdk.commands.lint.resources.pylint_plugins import \
     partner_level_checker
 

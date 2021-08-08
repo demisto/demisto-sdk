@@ -55,6 +55,56 @@ def test_handle_error():
     assert 'path/to/file_name - [ST109]' in FOUND_FILES_AND_ERRORS
 
 
+def test_handle_error_file_with_path(pack):
+    """
+    Given
+    - An ignore errors list associated with a file_path.
+    - An error, message, code and file paths.
+
+    When
+    - Running handle_error method.
+
+    Then
+    _ Ensure ignoring right file when full path mentioned in .pack-ignore.
+    - Ensure the resulting error messages are correctly formatted.
+    - Ensure ignored error codes return None.
+    - Ensure non ignored errors are in FOUND_FILES_AND_ERRORS list.
+    - Ensure ignored error are not in FOUND_FILES_AND_ERRORS and in FOUND_FILES_AND_IGNORED_ERRORS
+    """
+    integration = pack.create_integration("TestIntegration")
+    rel_path_integration_readme = integration.readme.path[integration.readme.path.find("Packs"):]
+    rel_path_pack_readme = pack.readme.path[pack.readme.path.find("Packs"):]
+
+    pack_ignore_text = f"""[file:{rel_path_integration_readme}]
+    ignore=ST109
+
+    [file:{rel_path_pack_readme}]
+    ignore=BA101"""
+    pack.pack_ignore.write_text(pack_ignore_text)
+
+    base_validator = BaseValidator(ignored_errors={rel_path_pack_readme: ["BA101"],
+                                                   rel_path_integration_readme: ["ST109"]},
+                                   print_as_warnings=True)
+
+    formatted_error = base_validator.handle_error("Error-message", "BA101", integration.readme.path)
+    assert formatted_error == f'{integration.readme.path}: [BA101] - Error-message\n'
+    assert f'{integration.readme.path} - [BA101]' in FOUND_FILES_AND_ERRORS
+
+    formatted_error = base_validator.handle_error("Error-message", "ST109", integration.readme.path)
+    assert formatted_error is None
+    assert f'{integration.readme.path} - [ST109]' not in FOUND_FILES_AND_ERRORS
+    assert f'{integration.readme.path} - [ST109]' in FOUND_FILES_AND_IGNORED_ERRORS
+
+    formatted_error = base_validator.handle_error("Error-message", "ST109", pack.readme.path)
+    assert formatted_error == f'{pack.readme.path}: [ST109] - Error-message\n'
+    assert f'{pack.readme.path} - [ST109]' in FOUND_FILES_AND_ERRORS
+
+    formatted_error = base_validator.handle_error("Error-message", "BA101", pack.readme.path)
+    assert formatted_error is None
+    assert f'{pack.readme.path} - [BA101]' not in FOUND_FILES_AND_ERRORS
+    assert f'{pack.readme.path} - [BA101]' in FOUND_FILES_AND_IGNORED_ERRORS
+
+
 def test_check_deprecated_where_ignored_list_exists(repo):
     """
     Given

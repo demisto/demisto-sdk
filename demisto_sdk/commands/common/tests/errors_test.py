@@ -1,7 +1,9 @@
 import unittest
 
+from demisto_sdk.commands.common.constants import (AUTHOR_IMAGE_DIMENSIONS,
+                                                   AUTHOR_IMAGE_SIZE)
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.constants import AUTHOR_IMAGE_SIZE, AUTHOR_IMAGE_DIMENSIONS
+
 
 class TestErrors(unittest.TestCase):
     def test_file_name_includes_spaces(self):
@@ -95,10 +97,10 @@ class TestErrors(unittest.TestCase):
         When: Returning an error message
         Then: Return error message with the input value as a tuple containing error and error code.
         """
-        error_statement = "The file type is not supported in validate command\n " \
-                          "validate' command supports: Integrations, Scripts, Playbooks, " \
+        error_statement = "The file type is not supported in the validate command.\n" \
+                          "The validate command supports: Integrations, Scripts, Playbooks, " \
                           "Incident fields, Incident types, Indicator fields, Indicator types, Objects fields," \
-                          " Object types, Object modules, Images, Release notes,Layouts and Descriptions"
+                          " Object types, Object modules, Images, Release notes, Layouts and Descriptions."
         expected_result = (error_statement, "BA102")
         result = Errors.file_type_not_supported()
         assert result == expected_result

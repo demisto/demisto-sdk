@@ -7,6 +7,7 @@ import re
 import shlex
 import sys
 from configparser import ConfigParser, MissingSectionHeaderError
+from contextlib import contextmanager
 from distutils.version import LooseVersion
 from enum import Enum
 from functools import lru_cache, partial
@@ -21,6 +22,9 @@ import git
 import requests
 import urllib3
 import yaml
+from packaging.version import parse
+from ruamel.yaml import YAML
+
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK, CLASSIFIERS_DIR,
     CONTEXT_OUTPUT_README_TABLE_HEADER, DASHBOARDS_DIR, DEF_DOCKER,
@@ -35,8 +39,6 @@ from demisto_sdk.commands.common.constants import (
     TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, XSOAR_CONFIG_FILE,
     FileType, GithubContentConfig, urljoin)
 from demisto_sdk.commands.common.git_util import GitUtil
-from packaging.version import parse
-from ruamel.yaml import YAML
 
 urllib3.disable_warnings()
 
@@ -432,9 +434,8 @@ def get_file(method, file_path, type_of_file):
             try:
                 data_dictionary = method(stream)
             except Exception as e:
-                print_error(
+                raise ValueError(
                     "{} has a structure issue of file type {}. Error was: {}".format(file_path, type_of_file, str(e)))
-                return {}
     if isinstance(data_dictionary, (dict, list)):
         return data_dictionary
     return {}
@@ -1267,20 +1268,25 @@ def is_file_from_content_repo(file_path: str) -> Tuple[bool, str]:
         bool: if file is part of content repo.
         str: relative path of file in content repo.
     """
-    git_repo = git.Repo(os.getcwd(),
-                        search_parent_directories=True)
-    remote_url = git_repo.remote().urls.__next__()
-    is_fork_repo = 'content' in remote_url
-    is_external_repo = is_external_repository()
+    try:
+        git_repo = git.Repo(os.getcwd(),
+                            search_parent_directories=True)
+        remote_url = git_repo.remote().urls.__next__()
+        is_fork_repo = 'content' in remote_url
+        is_external_repo = is_external_repository()
 
-    if not is_fork_repo and not is_external_repo:
-        return False, ''
-    content_path_parts = Path(git_repo.working_dir).parts
-    input_path_parts = Path(file_path).parts
-    input_path_parts_prefix = input_path_parts[:len(content_path_parts)]
-    if content_path_parts == input_path_parts_prefix:
-        return True, '/'.join(input_path_parts[len(content_path_parts):])
-    else:
+        if not is_fork_repo and not is_external_repo:
+            return False, ''
+        content_path_parts = Path(git_repo.working_dir).parts
+        input_path_parts = Path(file_path).parts
+        input_path_parts_prefix = input_path_parts[:len(content_path_parts)]
+        if content_path_parts == input_path_parts_prefix:
+            return True, '/'.join(input_path_parts[len(content_path_parts):])
+        else:
+            return False, ''
+
+    except Exception as e:
+        click.secho(f"Unable to identify the repository: {e}")
         return False, ''
 
 
@@ -1946,3 +1952,22 @@ def get_current_tags() -> list:
         approved_tags_json, _ = get_dict_from_file('Tests/Marketplace/approved_tags.json')
         return approved_tags_json.get('approved_list', [])
     return []
+
+
+@contextmanager
+def suppress_stdout():
+    """
+        Temporarily suppress console output without effecting error outputs.
+        Example of use:
+
+            with suppress_stdout():
+                print('This message will not be printed')
+            print('This message will be printed')
+    """
+    with open(os.devnull, "w") as devnull:
+        try:
+            old_stdout = sys.stdout
+            sys.stdout = devnull
+            yield
+        finally:
+            sys.stdout = old_stdout

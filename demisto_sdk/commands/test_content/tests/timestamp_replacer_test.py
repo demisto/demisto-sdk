@@ -5,10 +5,11 @@ from unittest.mock import MagicMock, mock_open
 
 import mitmproxy
 import pytest
-from demisto_sdk.commands.test_content.timestamp_replacer import \
-    TimestampReplacer
 from mitmproxy.http import HTTPFlow, HTTPRequest
 from mitmproxy.net.http import Headers
+
+from demisto_sdk.commands.test_content.timestamp_replacer import \
+    TimestampReplacer
 
 
 @pytest.fixture()

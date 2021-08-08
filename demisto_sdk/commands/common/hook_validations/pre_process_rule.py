@@ -1,4 +1,3 @@
-import os
 from distutils.version import LooseVersion
 
 from demisto_sdk.commands.common.errors import Errors
@@ -29,7 +28,6 @@ class PreProcessRuleValidator(ContentEntityValidator):
         return all([
             self.is_valid_version(),
             self.is_valid_from_server_version(),
-            self.is_script_exist(),
         ])
 
     def is_valid_version(self) -> bool:
@@ -102,10 +100,3 @@ class PreProcessRuleValidator(ContentEntityValidator):
     #         if self.handle_error(error_message, error_code, file_path=self.file_path):
     #             return False
     #     return True
-
-    def is_script_exist(self) -> bool:
-        """Check if the file exists"""
-        if not os.path.isfile(self.file_path):
-            return False
-
-        return True

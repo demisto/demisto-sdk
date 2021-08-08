@@ -5,6 +5,7 @@
     Demisto SDK
 """
 import configparser
+
 from setuptools import find_packages, setup  # noqa: H301
 
 NAME = "demisto-sdk"

@@ -63,6 +63,10 @@ CANVAS = 'canvas'
 OLD_REPUTATION = 'reputations.json'
 PACK_VERIFY_KEY = 'content.pack.verify'
 XSOAR_CONFIG_FILE = 'xsoar_config.json'
+GENERIC_FIELD = 'genericfield'
+GENERIC_TYPE = 'generictype'
+GENERIC_MODULE = 'genericmodule'
+GENERIC_DEFINITION = 'genericdefinition'
 
 
 class FileType(Enum):
@@ -1264,6 +1268,10 @@ class ContentItems(Enum):
     LAYOUTS = 'layoutscontainer'
     CLASSIFIERS = 'classifier'
     WIDGETS = 'widget'
+    GENERIC_MODULES = 'genericmodule'
+    GENERIC_DEFINITIONS = 'genericdefinition'
+    GENERIC_FIELDS = 'genericfield'
+    GENERIC_TYPES = 'generictype'
 
 
 YML_SUPPORTED_FOLDERS = {

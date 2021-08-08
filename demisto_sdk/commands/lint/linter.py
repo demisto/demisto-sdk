@@ -64,6 +64,7 @@ class Linter:
         self._content_repo = content_repo
         self._pack_abs_dir = pack_dir
         self._pack_name = None
+        self.docker_timeout = docker_timeout
         # Docker client init
         if docker_engine:
             self._docker_client: docker.DockerClient = docker.from_env(timeout=docker_timeout)
@@ -227,7 +228,7 @@ class Linter:
             if self._facts["docker_engine"]:
                 # Getting python version from docker image - verifying if not valid docker image configured
                 for image in self._facts["images"]:
-                    py_num: float = get_python_version_from_image(image=image[0])
+                    py_num: float = get_python_version_from_image(image=image[0], timeout=self.docker_timeout, log_prompt=log_prompt)
                     image[1] = py_num
                     logger.info(f"{self._pack_name} - Facts - {image[0]} - Python {py_num}")
                     if not self._facts["python_version"]:
@@ -711,7 +712,8 @@ class Linter:
                                 self._docker_client.images.push(test_image_name)
                                 logger.info(f"{log_prompt} - Image {test_image_name} pushed to repository")
                                 break
-                            except (requests.exceptions.ConnectionError, urllib3.exceptions.ReadTimeoutError):
+                            except (requests.exceptions.ConnectionError, urllib3.exceptions.ReadTimeoutError,
+                                    requests.exceptions.ReadTimeout):
                                 logger.info(f"{log_prompt} - Unable to push image {test_image_name} to repository")
 
             except (docker.errors.BuildError, docker.errors.APIError, Exception) as e:
@@ -951,11 +953,13 @@ class Linter:
         exit_code = SUCCESS
         output = ""
         try:
+            uid = os.getuid() or 4000
+            logger.debug(f'{log_prompt} - user uid for running lint/test: {uid}')  # lgtm[py/clear-text-logging-sensitive-data]
             container_obj = self._docker_client.containers.run(name=container_name,
                                                                image=test_image,
                                                                command=build_pwsh_analyze_command(
                                                                    self._facts["lint_files"][0]),
-                                                               user=f"{os.getuid()}:4000",
+                                                               user=f"{uid}:4000",
                                                                detach=True,
                                                                environment=self._facts["env_vars"])
             stream_docker_container_output(container_obj.logs(stream=True))
@@ -982,7 +986,7 @@ class Linter:
                     container_obj.remove(force=True)
                 except docker.errors.NotFound as e:
                     logger.critical(f"{log_prompt} - Unable to delete container - {e}")
-        except (docker.errors.ImageNotFound, docker.errors.APIError) as e:
+        except (docker.errors.ImageNotFound, docker.errors.APIError, requests.exceptions.ReadTimeout) as e:
             logger.critical(f"{log_prompt} - Unable to run powershell test - {e}")
             exit_code = RERUN
 
@@ -1017,9 +1021,11 @@ class Linter:
         exit_code = SUCCESS
         output = ""
         try:
+            uid = os.getuid() or 4000
+            logger.debug(f'{log_prompt} - user uid for running lint/test: {uid}')  # lgtm[py/clear-text-logging-sensitive-data]
             container_obj: docker.models.containers.Container = self._docker_client.containers.run(
                 name=container_name, image=test_image, command=build_pwsh_test_command(),
-                user=f"{os.getuid()}:4000", detach=True, environment=self._facts["env_vars"])
+                user=f"{uid}:4000", detach=True, environment=self._facts["env_vars"])
             stream_docker_container_output(container_obj.logs(stream=True))
             # wait for container to finish
             container_status = container_obj.wait(condition="exited")
@@ -1044,7 +1050,7 @@ class Linter:
                     container_obj.remove(force=True)
                 except docker.errors.NotFound as e:
                     logger.critical(f"{log_prompt} - Unable to delete container - {e}")
-        except (docker.errors.ImageNotFound, docker.errors.APIError) as e:
+        except (docker.errors.ImageNotFound, docker.errors.APIError, requests.exceptions.ReadTimeout) as e:
             logger.critical(f"{log_prompt} - Unable to run powershell test - {e}")
             exit_code = RERUN
 

@@ -325,7 +325,7 @@ def test_integration_format_remove_playbook_sourceplaybookid(tmp_path):
     prompt = f'The file {source_playbook_path} has no test playbooks configured. Do you want to configure it with "No tests"'
     assert result.exit_code == 0
     assert prompt in result.output
-    assert '======= Updating file: ' in result.stdout
+    assert '======= Updating file ' in result.stdout
     assert f'Format Status   on file: {source_playbook_path} - Success' in result.stdout
     with open(playbook_path) as f:
         yaml_content = yaml.safe_load(f)
@@ -354,7 +354,7 @@ def test_format_on_valid_py(mocker, repo):
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path, '-v'], catch_exceptions=True)
-    assert '======= Updating file:' in result.stdout
+    assert '======= Updating file' in result.stdout
     assert 'Running autopep8 on file' in result.stdout
     assert 'Success' in result.stdout
     assert valid_py == integration.code.read()
@@ -380,7 +380,7 @@ def test_format_on_invalid_py_empty_lines(mocker, repo):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path, '-v'], catch_exceptions=False)
 
-    assert '======= Updating file:' in result.stdout
+    assert '======= Updating file' in result.stdout
     assert 'Running autopep8 on file' in result.stdout
     assert 'Success' in result.stdout
     assert invalid_py != integration.code.read()
@@ -406,7 +406,7 @@ def test_format_on_invalid_py_dict(mocker, repo):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path, '-v'], catch_exceptions=False)
 
-    assert '======= Updating file:' in result.stdout
+    assert '======= Updating file' in result.stdout
     assert 'Running autopep8 on file' in result.stdout
     assert 'Success' in result.stdout
     assert invalid_py != integration.code.read()
@@ -433,7 +433,7 @@ def test_format_on_invalid_py_long_dict(mocker, repo):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path, '-v'], catch_exceptions=False)
 
-    assert '======= Updating file:' in result.stdout
+    assert '======= Updating file' in result.stdout
     assert 'Running autopep8 on file' in result.stdout
     assert 'Success' in result.stdout
     assert invalid_py != integration.code.read()
@@ -461,7 +461,7 @@ def test_format_on_invalid_py_long_dict_no_verbose(mocker, repo):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [FORMAT_CMD, '-nv', '-i', integration.code.path], catch_exceptions=False)
 
-    assert '======= Updating file:' in result.stdout
+    assert '======= Updating file' in result.stdout
     assert 'Running autopep8 on file' not in result.stdout
     assert 'Success' in result.stdout
     assert invalid_py != integration.code.read()
@@ -500,7 +500,7 @@ def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
                                                    '--no-docker-checks', '--no-conf-json', '--allow-skipped'],
                                             catch_exceptions=False)
 
-    assert '======= Updating file:' in result_format.stdout
+    assert '======= Updating file' in result_format.stdout
     assert success_reg.search(result_format.stdout)
     assert 'The files are valid' in result_validate.stdout
 
@@ -525,7 +525,7 @@ def test_format_integration_skipped_files(repo):
     runner = CliRunner(mix_stderr=False)
     format_result = runner.invoke(main, [FORMAT_CMD, '-i', str(pack.path)], catch_exceptions=False)
 
-    assert '======= Updating file:' in format_result.stdout
+    assert '======= Updating file' in format_result.stdout
     assert 'Success' in format_result.stdout
     for excluded_file in excluded_files + ['pack_metadata.json']:
         assert excluded_file not in format_result.stdout
@@ -753,10 +753,10 @@ def test_format_playbook_no_input_specified(mocker, repo):
     playbook_content['id'] = playbook_id + '_copy'
     playbook_content['name'] = playbook_name + '_copy'
     playbook.yml.write_dict(playbook_content)
-    playbook_file = {'name': str(playbook.yml.path)}
-    mocker.patch.object(format_module, 'get_changed_files', return_value=[playbook_file])
+    mocker.patch.object(format_module, 'get_files_to_format_from_git', return_value=[str(playbook.yml.path)])
     runner = CliRunner(mix_stderr=False)
     format_result = runner.invoke(main, [FORMAT_CMD, '-v'], input='y\n5.5.0')
+    print(format_result.stdout)
     assert 'Success' in format_result.stdout
     assert playbook.yml.read_dict().get('id') == playbook_id
     assert playbook.yml.read_dict().get('name') == playbook_name
@@ -810,10 +810,10 @@ def test_format_incident_type_layout_id(repo):
 
     assert format_result.exit_code == 0
     assert 'Success' in format_result.stdout
-    assert f'======= Updating file: {pack.path}' in format_result.stdout
-    assert f'======= Updating file: {layout.path}' in format_result.stdout
-    assert f'======= Updating file: {incident_type.path}' in format_result.stdout
-    assert f'======= Updating file: {playbook.yml.path}' in format_result.stdout
+    assert f'======= Updating file {pack.path}' in format_result.stdout
+    assert f'======= Updating file {layout.path}' in format_result.stdout
+    assert f'======= Updating file {incident_type.path}' in format_result.stdout
+    assert f'======= Updating file {playbook.yml.path}' in format_result.stdout
 
     with open(layout.path) as layout_file:
         layout_content = json.loads(layout_file.read())
@@ -858,7 +858,7 @@ def test_format_generic_field_wrong_values(mocker, repo, field_to_test, invalid_
         result = runner.invoke(main, [FORMAT_CMD, '-i', generic_field_path, '-v', '-y'], catch_exceptions=False)
         assert 'Setting fromVersion field' in result.stdout
         assert 'Success' in result.stdout
-        assert f'======= Updating file: {generic_field_path}' in result.stdout
+        assert f'======= Updating file {generic_field_path}' in result.stdout
         assert result.exit_code == 0
 
         # check that sdk format did change the wrong fromVersion to '6.5.0':
@@ -891,7 +891,7 @@ def test_format_generic_field_missing_from_version_key(mocker, repo):
         result = runner.invoke(main, [FORMAT_CMD, '-i', generic_field_path, '-v', '-y'], catch_exceptions=False)
         assert 'Setting fromVersion field' in result.stdout
         assert 'Success' in result.stdout
-        assert f'======= Updating file: {generic_field_path}' in result.stdout
+        assert f'======= Updating file {generic_field_path}' in result.stdout
         assert result.exit_code == 0
 
         # check that sdk format did add a fromVersion key with '6.5.0' as a value:
@@ -923,7 +923,7 @@ def test_format_generic_type_wrong_from_version(mocker, repo):
         result = runner.invoke(main, [FORMAT_CMD, '-i', generic_type_path, '-v', '-y'], catch_exceptions=False)
         assert 'Setting fromVersion field' in result.stdout
         assert 'Success' in result.stdout
-        assert f'======= Updating file: {generic_type_path}' in result.stdout
+        assert f'======= Updating file {generic_type_path}' in result.stdout
         assert result.exit_code == 0
 
         # check that sdk format did change the wrong fromVersion to '6.5.0':
@@ -956,7 +956,7 @@ def test_format_generic_type_missing_from_version_key(mocker, repo):
         result = runner.invoke(main, [FORMAT_CMD, '-i', generic_type_path, '-v', '-y'], catch_exceptions=False)
         assert 'Setting fromVersion field' in result.stdout
         assert 'Success' in result.stdout
-        assert f'======= Updating file: {generic_type_path}' in result.stdout
+        assert f'======= Updating file {generic_type_path}' in result.stdout
         assert result.exit_code == 0
 
         # check that sdk format did add a fromVersion key with '6.5.0' as a value:
@@ -988,7 +988,7 @@ def test_format_generic_module_wrong_from_version(mocker, repo):
         result = runner.invoke(main, [FORMAT_CMD, '-i', generic_module_path, '-v', '-y'], catch_exceptions=False)
         assert 'Setting fromVersion field' in result.stdout
         assert 'Success' in result.stdout
-        assert f'======= Updating file: {generic_module_path}' in result.stdout
+        assert f'======= Updating file {generic_module_path}' in result.stdout
         assert result.exit_code == 0
 
         # check that sdk format did change the wrong fromVersion to '6.5.0':
@@ -1021,7 +1021,7 @@ def test_format_generic_module_missing_from_version_key(mocker, repo):
         result = runner.invoke(main, [FORMAT_CMD, '-i', generic_module_path, '-v', '-y'], catch_exceptions=False)
         assert 'Setting fromVersion field' in result.stdout
         assert 'Success' in result.stdout
-        assert f'======= Updating file: {generic_module_path}' in result.stdout
+        assert f'======= Updating file {generic_module_path}' in result.stdout
         assert result.exit_code == 0
 
         # check that sdk format did add a fromVersion key with '6.5.0' as a value:
@@ -1053,7 +1053,7 @@ def test_format_generic_definition_wrong_from_version(mocker, repo):
         result = runner.invoke(main, [FORMAT_CMD, '-i', generic_definition_path, '-v', '-y'], catch_exceptions=False)
         assert 'Setting fromVersion field' in result.stdout
         assert 'Success' in result.stdout
-        assert f'======= Updating file: {generic_definition_path}' in result.stdout
+        assert f'======= Updating file {generic_definition_path}' in result.stdout
         assert result.exit_code == 0
 
         # check that sdk format did change the wrong fromVersion to '6.5.0':
@@ -1086,7 +1086,7 @@ def test_format_generic_definition_missing_from_version_key(mocker, repo):
         result = runner.invoke(main, [FORMAT_CMD, '-i', generic_definition_path, '-v', '-y'], catch_exceptions=False)
         assert 'Setting fromVersion field' in result.stdout
         assert 'Success' in result.stdout
-        assert f'======= Updating file: {generic_definition_path}' in result.stdout
+        assert f'======= Updating file {generic_definition_path}' in result.stdout
         assert result.exit_code == 0
 
         # check that sdk format did add a fromVersion key with '6.5.0' as a value:

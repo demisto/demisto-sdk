@@ -315,7 +315,7 @@ class IntegrationValidator(ContentEntityValidator):
             has a default non required argument.
 
         Returns:
-            bool. Whether a reputation command hold a valid argument
+            bool. Whether a reputation command hold a valid argument which support array.
         """
         commands = self.current_file.get('script', {}).get('commands', [])
         if commands is None:
@@ -333,6 +333,12 @@ class IntegrationValidator(ContentEntityValidator):
                         if arg.get('default') is False:
                             error_message, error_code = Errors.wrong_default_argument(arg_name,
                                                                                       command_name)
+                            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                                self.is_valid = False
+                                flag = False
+                        if arg.get('isArray') is False:
+                            error_message, error_code = Errors.wrong_is_array_argument(arg_name,
+                                                                                       command_name)
                             if self.handle_error(error_message, error_code, file_path=self.file_path):
                                 self.is_valid = False
                                 flag = False

@@ -55,7 +55,7 @@ FILE_TYPE_AND_LINKED_CLASS = {
     'reputation': IndicatorTypeJSONFormat,
     'layout': LayoutBaseFormat,
     'layoutscontainer': LayoutBaseFormat,
-    'pre-process-rules': PreProcessRulesFormat,
+    'pre-process-rule': PreProcessRulesFormat,
     'dashboard': DashboardJSONFormat,
     'classifier': ClassifierJSONFormat,
     'classifier_5_9_9': OldClassifierJSONFormat,

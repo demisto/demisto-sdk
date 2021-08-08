@@ -22,7 +22,7 @@ packages = "packages"
 al = []
 for key in parser[packages]:
     value = parser[packages][key]
-    al.append(key + value.replace("\"", "") + "\n")
+    al.append(key + value.replace("\"", "").replace('*', ''))
 
 with open('README.md', 'r') as f:
     readme = f.read()

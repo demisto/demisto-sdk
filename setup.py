@@ -4,7 +4,8 @@
 """
     Demisto SDK
 """
-from pipfile2req import convert_pipfile_or_lock
+import toml
+import configparser
 from setuptools import find_packages, setup  # noqa: H301
 
 NAME = "demisto-sdk"
@@ -15,6 +16,14 @@ REQUIREMENTS_NAME = 'requirements.txt'
 #
 # prerequisite: setuptools
 # http://pypi.python.org/pypi/setuptools
+parser = configparser.ConfigParser()
+parser.read("Pipfile")
+
+packages = "packages"
+al = []
+for key in parser[packages]:
+    value = parser[packages][key]
+    al.append(key + value.replace("\"", "") + "\n")
 
 with open('README.md', 'r') as f:
     readme = f.read()
@@ -23,13 +32,13 @@ setup(
     use_scm_version={
         'local_scheme': lambda a: ""
     },
-    setup_requires=['setuptools_scm', 'pipfile-requirements'],
+    setup_requires=['setuptools_scm'],
     name=NAME,
     description="A Python library for the Demisto SDK",
     author_email="",
     url="https://github.com/demisto/demisto-sdk",
     keywords=["Demisto"],
-    install_requires=convert_pipfile_or_lock('.'),
+    install_requires=al,
     packages=find_packages(),
     include_package_data=True,
     entry_points={

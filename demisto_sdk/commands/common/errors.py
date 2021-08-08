@@ -873,7 +873,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def author_image_is_missing(image_path: str):
-        return f'Partners must provide a non-empty author image under the path {image_path}. '
+        return f'Partners must provide a non-empty author image under the path {image_path}.'
 
     @staticmethod
     @error_code_decorator

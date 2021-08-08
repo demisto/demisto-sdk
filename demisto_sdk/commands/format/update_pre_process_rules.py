@@ -55,5 +55,4 @@ class PreProcessRulesFormat(BaseUpdateJSON):
         if location and not location.get('fromServerVersion'):
             location['fromServerVersion'] = FROM_VERSION_PRE_PROCESS_RULES
         else:
-            if not self.data['fromServerVersion']:
-                self.data['fromServerVersion'] = FROM_VERSION_PRE_PROCESS_RULES
+            self.data.setdefault('fromServerVersion', FROM_VERSION_PRE_PROCESS_RULES)

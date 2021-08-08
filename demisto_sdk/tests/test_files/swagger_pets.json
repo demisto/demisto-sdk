@@ -399,6 +399,20 @@
             "format": "int64"
           },
           {
+            "name": "filter",
+            "in": "query",
+            "description": "Pet filter",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "arg-name",
+            "in": "query",
+            "description": "Argument with dash",
+            "required": false,
+            "type": "string"
+          },
+          {
             "name": "additionalMetadata",
             "in": "formData",
             "description": "Additional data to pass to server",

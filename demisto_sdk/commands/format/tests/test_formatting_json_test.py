@@ -670,18 +670,6 @@ class TestFormattingPreProcessRule:
         pre_process_rules_formatter.set_description()
         assert 'description' in pre_process_rules_formatter.data
 
-    def test_set_toVersion(self, pre_process_rules_formatter):
-        """
-        Given
-            - A pre_process_rule file without a toVersion field
-        When
-            - Run format on pre_process_rule file
-        Then
-            - Ensure that toVersion field was updated successfully with '5.9.9' value
-        """
-        pre_process_rules_formatter.set_toVersion()
-        assert pre_process_rules_formatter.data.get('toVersion') == '5.9.9'
-
 
 class TestFormattingClassifier:
 

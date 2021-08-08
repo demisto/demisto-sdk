@@ -8,21 +8,17 @@ import configparser
 from setuptools import find_packages, setup  # noqa: H301
 
 NAME = "demisto-sdk"
-REQUIREMENTS_NAME = 'requirements.txt'
 # To install the library, run the following
 #
 # python setup.py install
 #
 # prerequisite: setuptools
 # http://pypi.python.org/pypi/setuptools
+
+# Converting Pipfile to requirements style list because setup expects requirements.txt file.
 parser = configparser.ConfigParser()
 parser.read("Pipfile")
-
-packages = "packages"
-al = []
-for key in parser[packages]:
-    value = parser[packages][key]
-    al.append(key.replace('\"', '') + value.replace("\"", "").replace('*', ''))
+install_requires = [f'{key}{value}'.replace('\"', '').replace('*', '') for key, value in parser['packages'].items()]
 
 with open('README.md', 'r') as f:
     readme = f.read()
@@ -37,7 +33,7 @@ setup(
     author_email="",
     url="https://github.com/demisto/demisto-sdk",
     keywords=["Demisto"],
-    install_requires=al,
+    install_requires=install_requires,
     packages=find_packages(),
     include_package_data=True,
     entry_points={

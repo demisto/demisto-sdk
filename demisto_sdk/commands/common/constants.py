@@ -1291,7 +1291,7 @@ class ContentItems(Enum):
     GENERIC_DEFINITIONS = 'genericdefinition'
     GENERIC_FIELDS = 'genericfield'
     GENERIC_TYPES = 'generictype'
-    PRE_PROCESS_RULES = 'pre-process-rules'
+    PRE_PROCESS_RULES = 'pre-process-rule'
 
 
 YML_SUPPORTED_FOLDERS = {

@@ -1,4 +1,7 @@
 # Changelog
+* Fixed an issue where the **format** command has incorrectly recognized on which files to run when running using git.
+
+# 1.4.6
 * Fixed an issue where **validate** suggests, with no reason, running **format** on missing mandatory keys in yml file.
 * Skipped existence of TestPlaybook check on community and contribution integrations.
 * Fixed an issue where pre-commit didn't run on the demisto_sdk/commands folder.
@@ -18,6 +21,13 @@
   - Generic Definition validator - verify that the 'fromVersion' field is above 6.5.0
  * Expanded Format command to support Generic Objects - Fixes generic objects according to their validations.
 * Fixed an issue where the **update-release-notes** command did not handle ApiModules properly.
+* Added option to enter a dictionary or json of format `[{field_name:description}]` in the **json-to-outputs** command,
+  with the `-d` flag.
+* Improved the outputs for the **format** command.
+* Fixed an issue where the validations performed after the **format** command were inconsistent with **validate**.
+* Added to the **validate** command a validation for the author image.
+* Updated the **create-content-artifacts** command to support generic modules, definitions, fields and types.
+* Added an option to ignore errors for file paths and not only file name in .pack-ignore file.
 
 # 1.4.5
 * Enhanced the **postman-codegen** command to name all generated arguments with lower case.
@@ -157,8 +167,7 @@
 * Fixed the error message of the **validate** command to not always suggest adding the *description* field.
 * Fixed an issue where running **format** on feed integration generated invalid parameter structure.
 * Fixed an issue where the **generate-docs** command did not add all the used scripts in a playbook to the README file.
-* Fixed an issue where contrib/partner details might be added twice to the same file, when using unify
-and create-content-artifacts commands
+* Fixed an issue where contrib/partner details might be added twice to the same file, when using unify and create-content-artifacts commands
 * Fixed issue where running **validate** command on image-related integration did not return the correct outputs to json file.
 * When formatting playbooks, the **format** command will now remove empty fields from SetIncident, SetIndicator, CreateNewIncident, CreateNewIndicator script arguments.
 * Added an option to fill in the developer email when running the **init** command.

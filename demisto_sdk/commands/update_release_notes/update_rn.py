@@ -748,6 +748,7 @@ def check_docker_image_changed(added_or_modified_yml: str) -> Optional[str]:
         :return
         The latest docker image
     """
+    regex = re.compile(r'\+\s*dockerimage: (.*)')
     try:
         diff = run_command(f'git diff origin/master -- {added_or_modified_yml}', exit_on_error=False)
     except RuntimeError as e:
@@ -759,9 +760,10 @@ def check_docker_image_changed(added_or_modified_yml: str) -> Optional[str]:
     else:
         diff_lines = diff.splitlines()
         for diff_line in diff_lines:
-            if 'dockerimage:' in diff_line:  # search whether exists a line that notes that the Docker image was
-                # changed.
-                return diff_line.split()[-1]
+            # search whether exists a line that notes that the Docker image was changed.
+            docker_image = regex.match(diff_line)
+            if docker_image:
+                return docker_image.group(1)
         return None
 
 

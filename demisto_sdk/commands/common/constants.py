@@ -111,7 +111,7 @@ class FileType(Enum):
     GENERIC_FIELD = 'genericfield'
     GENERIC_TYPE = 'generictype'
     GENERIC_DEFINITION = 'genericdefinition'
-    PRE_PROCESS_RULES = 'pre-process-rules'
+    PRE_PROCESS_RULES = 'pre-process-rule'
 
 
 RN_HEADER_BY_FILE_TYPE = {

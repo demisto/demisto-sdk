@@ -1055,10 +1055,23 @@ class TestRNUpdateUnit:
 
         from demisto_sdk.commands.update_release_notes.update_rn import \
             UpdateRN
+        expected_res = "diff --git a/Packs/test1/Integrations/test1/test1.yml b/Packs/test1/Integrations/test1/test1.yml\n" \
+                       "--- a/Packs/test1/Integrations/test1/test1.yml\n" \
+                       "+++ b/Packs/test1/Integrations/test1/test1.yml\n" \
+                       "@@ -1270,7 +1270,7 @@ script:\n" \
+                       "description: update docker image.\n" \
+                       "execution: false\n" \
+                       "name: test1\n" \
+                       "-  dockerimage: demisto/python3:3.9.6.22912\n" \
+                       "+  dockerimage: demisto/python3:3.9.6.22914\n" \
+                       "feed: false\n" \
+                       "isfetch: false\n" \
+                       "longRunning: false\n"
+
         with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json', 'r') as file:
             pack_data = json.load(file)
         mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.run_command',
-                     return_value='+  dockerimage:python/test:1243')
+                     return_value=expected_res)
         mocker.patch.object(UpdateRN, 'is_bump_required', return_value=False)
         mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value=pack_data)
         mocker.patch.object(UpdateRN, 'get_changed_file_name_and_type', return_value=('Test', FileType.INTEGRATION))
@@ -1074,7 +1087,7 @@ class TestRNUpdateUnit:
         with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md', 'r') as file:
             RN = file.read()
         os.remove('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md')
-        assert 'Updated the Docker image to: *dockerimage:python/test:1243*.' in RN
+        assert 'Updated the Docker image to: *demisto/python3:3.9.6.22914*.' in RN
 
     def test_update_docker_image_in_yml_when_RN_aleady_exists(self, mocker):
         """

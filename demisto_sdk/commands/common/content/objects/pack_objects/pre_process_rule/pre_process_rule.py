@@ -18,8 +18,8 @@ class PreProcessRules(JSONContentObject):
         """Add prefix to file name if not exists.
 
         Examples:
-            1. "hello-world.yml" -> "preprocessrule-hello-world.yml"
-            2. "preprocessrule-hello-world.yml" -> "preprocessrule-hello-world.yml"
+            1. "hello-world.json" -> "preprocessrule-hello-world.json"
+            2. "preprocessrule-hello-world.json" -> "preprocessrule-hello-world.json"
 
         Returns:
             str: Normalize file name.

@@ -1,4 +1,5 @@
 # Changelog
+* Fixed an issue where the **format** command has incorrectly recognized on which files to run when running using git.
 * Fixed an issue where the wording in the from version validation error for subplaybooks was incorrect.
 
 # 1.4.6

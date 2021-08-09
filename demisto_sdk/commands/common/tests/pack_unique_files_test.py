@@ -709,3 +709,50 @@ class TestPackUniqueFilesValidator:
 
         assert self.validator.is_pack_metadata_desc_too_long(pack_description) is True
         assert error_desc in click.secho.call_args_list[0][0][0]
+
+    def test_validate_author_image_exists_valid(self, repo):
+        """
+        Given:
+            - Pack with partner support and author image
+
+        When:
+            - Validating if author image exists
+
+        Then:
+            - Ensure validation passes.
+        """
+        pack = repo.create_pack('MyPack')
+
+        self.validator.metadata_content = {'support': 'partner'}
+        self.validator.pack_path = pack.path
+        author_image_path = pack.author_image.path
+
+        with ChangeCWD(repo.path):
+            res = self.validator.validate_author_image_exists()
+            assert res
+            assert f'Partners must provide a non-empty author image under the path {author_image_path}.' not in \
+                   self.validator.get_errors()
+
+    def test_validate_author_image_exists_invalid(self, repo):
+        """
+        Given:
+            - Pack with partner support and no author image
+
+        When:
+            - Validating if author image exists
+
+        Then:
+            - Ensure validation fails.
+        """
+        pack = repo.create_pack('MyPack')
+
+        self.validator.metadata_content = {'support': 'partner'}
+        self.validator.pack_path = pack.path
+        author_image_path = pack.author_image.path
+
+        with ChangeCWD(repo.path):
+            os.remove(author_image_path)
+            res = self.validator.validate_author_image_exists()
+            assert not res
+            assert f'Partners must provide a non-empty author image under the path {author_image_path}.' in \
+                   self.validator.get_errors()

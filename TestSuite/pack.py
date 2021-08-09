@@ -122,6 +122,8 @@ class Pack:
 
         self.pack_metadata = JSONBased(self._pack_path, 'pack_metadata', '')
 
+        self.author_image = File(tmp_path=self._pack_path / 'Author_image.png', repo_path=repo.path)
+
     def create_integration(
             self,
             name: Optional[str] = None,

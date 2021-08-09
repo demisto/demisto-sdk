@@ -963,7 +963,7 @@ def json_to_outputs_command(**kwargs):
                              " For example: -e '!ConvertFile entry_id=<entry_id>'"
 )
 @click.option(
-    "-u", "--to-upload", help="Whether to upload the test playbook after the generation.", is_flag=True)
+    "-u", "--upload", help="Whether to upload the test playbook after the generation.", is_flag=True)
 def generate_test_playbook(**kwargs):
     """Generate test playbook from integration or script"""
     check_configuration_file('generate-test-playbook', kwargs)

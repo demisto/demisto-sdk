@@ -9,17 +9,12 @@ from packaging import version
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
-from demisto_sdk.commands.common.constants import (API_MODULES_PACK,
-                                                   CONTENT_ENTITIES_DIRS,
-                                                   DEFAULT_ID_SET_PATH,
-                                                   GENERIC_FIELDS_DIR,
-                                                   GENERIC_TYPES_DIR,
-                                                   IGNORED_PACK_NAMES,
-                                                   OLDEST_SUPPORTED_VERSION,
-                                                   PACKS_DIR,
-                                                   PACKS_PACK_META_FILE_NAME,
-                                                   TESTS_AND_DOC_DIRECTORIES,
-                                                   FileType, PathLevel)
+from demisto_sdk.commands.common.constants import (
+    API_MODULES_PACK, CONTENT_ENTITIES_DIRS, DEFAULT_ID_SET_PATH,
+    GENERIC_FIELDS_DIR, GENERIC_TYPES_DIR, IGNORED_PACK_NAMES,
+    OLDEST_SUPPORTED_VERSION, PACKS_DIR, PACKS_PACK_META_FILE_NAME,
+    SKIP_RELEASE_NOTES_FOR_TYPES, TESTS_AND_DOC_DIRECTORIES, FileType,
+    PathLevel)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
                                                 FOUND_FILES_AND_ERRORS,
@@ -28,6 +23,8 @@ from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
                                                 PRESET_ERROR_TO_IGNORE, Errors,
                                                 get_all_error_codes)
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.hook_validations.author_image import \
+    AuthorImageValidator
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.classifier import \
@@ -510,6 +507,9 @@ class ValidateManager:
         elif file_type == FileType.IMAGE:
             return self.validate_image(file_path, pack_error_ignore_list)
 
+        elif file_type == FileType.AUTHOR_IMAGE:
+            return self.validate_author_image(file_path, pack_error_ignore_list)
+
         # incident fields and indicator fields are using the same validation.
         elif file_type in (FileType.INCIDENT_FIELD, FileType.INDICATOR_FIELD):
             return self.validate_incident_field(structure_validator, pack_error_ignore_list, is_modified)
@@ -809,6 +809,12 @@ class ValidateManager:
                                          json_file_path=self.json_file_path)
         return image_validator.is_valid()
 
+    def validate_author_image(self, file_path, pack_error_ignore_list):
+        author_image_validator: AuthorImageValidator = AuthorImageValidator(file_path,
+                                                                            ignored_errors=pack_error_ignore_list,
+                                                                            print_as_warnings=self.print_ignored_errors)
+        return author_image_validator.is_valid()
+
     def validate_report(self, structure_validator, pack_error_ignore_list):
         report_validator = ReportValidator(structure_validator=structure_validator,
                                            ignored_errors=pack_error_ignore_list,
@@ -1085,11 +1091,7 @@ class ValidateManager:
         changed_files = modified_files.union(old_format_files).union(added_files)
         packs_that_should_have_new_rn = get_pack_names_from_files(
             changed_files,
-            skip_file_types={FileType.RELEASE_NOTES,
-                             FileType.README,
-                             FileType.TEST_PLAYBOOK,
-                             FileType.TEST_SCRIPT,
-                             FileType.DOC_IMAGE}
+            skip_file_types=SKIP_RELEASE_NOTES_FOR_TYPES
         )
         if API_MODULES_PACK in packs_that_should_have_new_rn:
             api_module_set = get_api_module_ids(changed_files)
@@ -1238,7 +1240,8 @@ class ValidateManager:
         filtered_modified, old_format_files = self.filter_to_relevant_files(modified_files)
         filtered_renamed, _ = self.filter_to_relevant_files(renamed_files)
         filtered_modified = filtered_modified.union(filtered_renamed)
-        filtered_added, _ = self.filter_to_relevant_files(added_files)
+        filtered_added, new_files_in_old_format = self.filter_to_relevant_files(added_files)
+        old_format_files = old_format_files.union(new_files_in_old_format)
 
         # extract metadata files from the recognised changes
         changed_meta = self.pack_metadata_extraction(modified_files, added_files, renamed_files)

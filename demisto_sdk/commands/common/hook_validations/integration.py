@@ -1027,7 +1027,7 @@ class IntegrationValidator(ContentEntityValidator):
             if not description_validator.is_valid_beta_description():
                 return False
         else:
-            if not description_validator.is_valid():
+            if not description_validator.is_valid_file():
                 return False
         return True
 

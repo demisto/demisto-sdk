@@ -3,13 +3,13 @@ from typing import Optional
 
 from demisto_sdk.commands.common.constants import (
     BETA_INTEGRATION_DISCLAIMER, PACKS_INTEGRATION_NON_SPLIT_YML_REGEX,
-    PACKS_INTEGRATION_YML_REGEX)
-from demisto_sdk.commands.common.errors import Errors
+    PACKS_INTEGRATION_YML_REGEX, FileType)
+from demisto_sdk.commands.common.errors import FOUND_FILES_AND_ERRORS, Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
-from demisto_sdk.commands.common.tools import get_yaml, os, re
+from demisto_sdk.commands.common.tools import find_type, get_yaml, os, re
 
 CONTRIBUTOR_DETAILED_DESC = 'Contributed Integration'
 
@@ -30,17 +30,19 @@ class DescriptionValidator(BaseValidator):
         # Handling a case where the init function initiated with file path instead of structure validator
         self.file_path = file_path.file_path if isinstance(file_path, StructureValidator) else file_path
 
-    def is_valid(self):
+    def is_valid_file(self):
         self.is_duplicate_description()
         self.verify_demisto_in_description_content()
 
+        # make sure the description is a seperate file
         data_dictionary = get_yaml(self.file_path)
         if not data_dictionary.get('detaileddescription'):
             self.is_valid_description_name()
+            self.contains_contrib_details()
 
         return self._is_valid
 
-    def is_valid_file(self):
+    def contains_contrib_details(self):
         """check if DESCRIPTION file contains contribution details"""
         with open(self.file_path) as f:
             description_content = f.read()
@@ -147,28 +149,39 @@ class DescriptionValidator(BaseValidator):
         Return:
             True if 'Demisto' does not exist in the description content, and False if it does.
         """
-
-        data_dictionary = get_yaml(self.file_path)
-        is_unified_integration = data_dictionary.get('script', {}).get('script', '') not in {'-', ''}
+        description_path = ''
         yml_line_num = 0
 
-        if is_unified_integration:
-            description_content = data_dictionary.get('detaileddescription', '')
+        # case 1 the file path is for an integration
+        if find_type(self.file_path) == FileType.INTEGRATION:
+            integration_path = self.file_path
+            data_dictionary = get_yaml(self.file_path)
+            is_unified_integration = data_dictionary.get('script', {}).get('script', '') not in {'-', ''}
 
-            with open(self.file_path, 'r') as f:
+            if is_unified_integration:
+                description_content = data_dictionary.get('detaileddescription', '')
 
-                for line_n, line in enumerate(f.read().split('\n')):
-                    if 'detaileddescription:' in line:
-                        yml_line_num = line_n + 1
+                # find in which line the description begins in the yml
+                with open(self.file_path, 'r') as f:
+                    for line_n, line in enumerate(f.read().split('\n')):
+                        if 'detaileddescription:' in line:
+                            yml_line_num = line_n + 1
+
+            # if not found try and look for the description file path
+            else:
+                try:
+                    description_path = glob.glob(os.path.join(os.path.dirname(self.file_path), '*_description.md'))[0]
+                except IndexError:
+                    error_message, error_code = Errors.no_description_file_warning()
+                    self.handle_error(error_message, error_code, file_path=self.file_path, warning=True)
+                    return True
+
+        # running on a description file so the file path is the description path
         else:
-            try:
-                description_path = glob.glob(os.path.join(os.path.dirname(self.file_path), '*_description.md'))[0]
+            description_path = self.file_path
+            integration_path = self.file_path.replace('_description.md', '.yml')
 
-            except IndexError:
-                error_message, error_code = Errors.no_description_file_warning()
-                self.handle_error(error_message, error_code, file_path=self.file_path, warning=True)
-                return True
-
+        if description_path:
             with open(description_path) as f:
                 description_content = f.read()
 
@@ -179,8 +192,13 @@ class DescriptionValidator(BaseValidator):
 
         if invalid_lines:
             error_message, error_code = Errors.description_contains_demisto_word(invalid_lines)
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
-                self._is_valid = False
-                return False
+
+            # check if the error was already noted in the final report
+            check_in_report = f'{integration_path} - [{error_code}]'
+            if check_in_report not in FOUND_FILES_AND_ERRORS:
+
+                if self.handle_error(error_message, error_code, file_path=integration_path):
+                    self._is_valid = False
+                    return False
 
         return True

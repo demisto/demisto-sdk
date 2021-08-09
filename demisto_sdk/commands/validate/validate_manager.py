@@ -10,11 +10,11 @@ from packaging import version
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
-    API_MODULES_PACK, CONTENT_ENTITIES_DIRS, DEFAULT_ID_SET_PATH,
-    GENERIC_FIELDS_DIR, GENERIC_TYPES_DIR, IGNORED_PACK_NAMES,
-    OLDEST_SUPPORTED_VERSION, PACKS_DIR, PACKS_PACK_META_FILE_NAME,
-    SKIP_RELEASE_NOTES_FOR_TYPES, TESTS_AND_DOC_DIRECTORIES, FileType,
-    PathLevel)
+    API_MODULES_PACK, AUTHOR_IMAGE_FILE_NAME, CONTENT_ENTITIES_DIRS,
+    DEFAULT_ID_SET_PATH, GENERIC_FIELDS_DIR, GENERIC_TYPES_DIR,
+    IGNORED_PACK_NAMES, OLDEST_SUPPORTED_VERSION, PACKS_DIR,
+    PACKS_PACK_META_FILE_NAME, SKIP_RELEASE_NOTES_FOR_TYPES,
+    TESTS_AND_DOC_DIRECTORIES, FileType, PathLevel)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
                                                 FOUND_FILES_AND_ERRORS,
@@ -318,6 +318,10 @@ class ValidateManager:
         pack_error_ignore_list = self.get_error_ignore_list(os.path.basename(pack_path))
 
         pack_entities_validation_results.add(self.validate_pack_unique_files(pack_path, pack_error_ignore_list))
+
+        author_image_path = os.path.join(pack_path, AUTHOR_IMAGE_FILE_NAME)
+        if os.path.exists(author_image_path):
+            self.run_validations_on_file(author_image_path, pack_error_ignore_list)
 
         for content_dir in os.listdir(pack_path):
             content_entity_path = os.path.join(pack_path, content_dir)

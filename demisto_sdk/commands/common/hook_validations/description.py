@@ -4,7 +4,7 @@ from typing import Optional
 from demisto_sdk.commands.common.constants import (
     BETA_INTEGRATION_DISCLAIMER, PACKS_INTEGRATION_NON_SPLIT_YML_REGEX,
     PACKS_INTEGRATION_YML_REGEX, FileType)
-from demisto_sdk.commands.common.errors import FOUND_FILES_AND_ERRORS, Errors
+from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
@@ -151,6 +151,7 @@ class DescriptionValidator(BaseValidator):
         """
         description_path = ''
         yml_line_num = 0
+        yml_or_file = ''
 
         # case 1 the file path is for an integration
         if find_type(self.file_path) == FileType.INTEGRATION:
@@ -160,6 +161,7 @@ class DescriptionValidator(BaseValidator):
 
             if is_unified_integration:
                 description_content = data_dictionary.get('detaileddescription', '')
+                yml_or_file = 'in the yml file'
 
                 # find in which line the description begins in the yml
                 with open(self.file_path, 'r') as f:
@@ -170,6 +172,7 @@ class DescriptionValidator(BaseValidator):
             # if not found try and look for the description file path
             else:
                 try:
+                    yml_or_file = 'in the description file'
                     description_path = glob.glob(os.path.join(os.path.dirname(self.file_path), '*_description.md'))[0]
                 except IndexError:
                     error_message, error_code = Errors.no_description_file_warning()
@@ -180,6 +183,7 @@ class DescriptionValidator(BaseValidator):
         else:
             description_path = self.file_path
             integration_path = self.file_path.replace('_description.md', '.yml')
+            yml_or_file = 'in the description file'
 
         if description_path:
             with open(description_path) as f:
@@ -191,14 +195,9 @@ class DescriptionValidator(BaseValidator):
                 invalid_lines.append(line_num + yml_line_num + 1)
 
         if invalid_lines:
-            error_message, error_code = Errors.description_contains_demisto_word(invalid_lines)
-
-            # check if the error was already noted in the final report
-            check_in_report = f'{integration_path} - [{error_code}]'
-            if check_in_report not in FOUND_FILES_AND_ERRORS:
-
-                if self.handle_error(error_message, error_code, file_path=integration_path):
-                    self._is_valid = False
-                    return False
+            error_message, error_code = Errors.description_contains_demisto_word(invalid_lines, yml_or_file)
+            if self.handle_error(error_message, error_code, file_path=integration_path):
+                self._is_valid = False
+                return False
 
         return True

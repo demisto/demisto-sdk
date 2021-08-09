@@ -89,7 +89,9 @@ class BaseValidator:
                 self.add_to_report_error_list(error_code, file_path, FOUND_FILES_AND_IGNORED_ERRORS)
             return None
 
-        if should_print and not self.suppress_print:
+        # print unless suppressed or if the error was already printed
+        if should_print and not self.suppress_print and self.add_to_report_error_list(error_code, file_path,
+                                                                                      FOUND_FILES_AND_ERRORS):
             if suggested_fix:
                 click.secho(formatted_error[:-1], fg="bright_red")
                 if error_code == 'ST109':
@@ -106,7 +108,6 @@ class BaseValidator:
                 click.secho(formatted_error, fg="bright_red")
 
         self.json_output(file_path, error_code, error_message, warning)
-        self.add_to_report_error_list(error_code, file_path, FOUND_FILES_AND_ERRORS)
         return formatted_error
 
     def check_file_flags(self, file_name, file_path):
@@ -168,10 +169,12 @@ class BaseValidator:
             self.ignored_errors[file_name] = additional_ignored_errors
 
     @staticmethod
-    def add_to_report_error_list(error_code, file_path, error_list):
+    def add_to_report_error_list(error_code, file_path, error_list) -> bool:
         formatted_file_and_error = f'{file_path} - [{error_code}]'
         if formatted_file_and_error not in error_list:
             error_list.append(formatted_file_and_error)
+            return True
+        return False
 
     def json_output(self, file_path: str, error_code: str, error_message: str, warning: bool) -> None:
         """Adds an error's info to the output JSON file

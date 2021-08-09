@@ -945,7 +945,7 @@ def json_to_outputs_command(**kwargs):
 @click.option(
     "-v", "--verbose", help="Verbose output for debug purposes - shows full exception stack trace", is_flag=True)
 @click.option(
-    "-ab", "--all-brands",
+    "-ab", "--all-brands", "use_all_brands",
     help="Generate a test-playbook which calls commands using integrations of all available brands. "
          "When not used, the generated playbook calls commands using instances of the provided integration brand.",
     is_flag=True

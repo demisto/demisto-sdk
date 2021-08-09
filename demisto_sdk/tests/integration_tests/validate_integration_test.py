@@ -2640,6 +2640,7 @@ class TestAllFilesValidator:
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-a', '--no-docker-checks', '--no-conf-json'],
                                    catch_exceptions=False)
+            print(result.stdout)
 
         assert 'Validating all files' in result.stdout
         assert 'Validating Packs/PackName1 unique pack files' in result.stdout
@@ -2648,6 +2649,7 @@ class TestAllFilesValidator:
         assert f'Validating {incident_field.get_path_from_pack()} as incidentfield' in result.stdout
         assert f'Validating {dashboard.get_path_from_pack()} as dashboard' in result.stdout
         assert f'Validating {script.yml.rel_path} as script' in result.stdout
+        assert 'Validating pack author image' in result.stdout
         assert 'The files are valid' in result.stdout
         assert result.exit_code == 0
 
@@ -2692,6 +2694,7 @@ class TestAllFilesValidator:
         assert f'Validating {incident_field.get_path_from_pack()} as incidentfield' in result.stdout
         assert f'Validating {dashboard.get_path_from_pack()} as dashboard' in result.stdout
         assert f'Validating {script.yml.rel_path} as script' in result.stdout
+        assert 'Validating pack author image' in result.stdout
         assert 'IF101' in result.stdout
         assert 'The content key must be set to True.' in result.stdout
         assert 'SC100' in result.stdout

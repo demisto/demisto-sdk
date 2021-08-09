@@ -321,6 +321,7 @@ class ValidateManager:
 
         author_image_path = os.path.join(pack_path, AUTHOR_IMAGE_FILE_NAME)
         if os.path.exists(author_image_path):
+            click.echo("Validating pack author image")
             pack_entities_validation_results.add(self.validate_author_image(author_image_path, pack_error_ignore_list))
 
         for content_dir in os.listdir(pack_path):

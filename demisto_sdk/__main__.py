@@ -985,6 +985,9 @@ def generate_test_playbook(**kwargs):
                              "Integration template options: HelloWorld, HelloIAMWorld, FeedHelloWorld.\n"
                              "Script template options: HelloWorldScript")
 @click.option(
+    "-a", "--author-image", help=""
+)
+@click.option(
     '--demisto_mock', is_flag=True,
     help="Copy the demistomock. Relevant for initialization of Scripts and Integrations within a Pack.")
 @click.option(

@@ -251,7 +251,6 @@ class Initiator:
             os.mkdir(path=path)
 
         self.create_pack_base_files()
-
         click.echo(
             f"Successfully created the pack {self.dir_name} in: {self.full_output_path}",
             color=LOG_COLORS.GREEN
@@ -297,8 +296,13 @@ class Initiator:
         fp = open(os.path.join(self.full_output_path, '.pack-ignore'), 'a')
         fp.close()
 
-        fp = open(os.path.join(self.full_output_path, 'Author_image.png'), 'a')
-        fp.close()
+        # if an `Author_image.png` file was given - replace the default file with it
+        author_image_path = os.path.join(self.full_output_path, 'Author_image.png')
+        if self.author_image:
+            shutil.copyfile(self.author_image, author_image_path)
+        else:
+            fp = open(author_image_path)
+            fp.close()
 
     @staticmethod
     def create_metadata(fill_manually: bool, data: Dict = {}) -> Dict:

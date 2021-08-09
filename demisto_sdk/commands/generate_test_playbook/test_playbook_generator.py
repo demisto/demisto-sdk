@@ -5,7 +5,7 @@ from typing import Dict, Optional
 from ruamel.yaml import YAML
 
 from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
-                                               print_error)
+                                               print_error, get_pack_name)
 from demisto_sdk.commands.upload.uploader import Uploader
 
 
@@ -322,11 +322,13 @@ class PlaybookTestsGenerator:
                  verbose: bool = False, all_brands: bool = False, commands: str = None, examples: str = None,
                  upload: bool = False):
         self.integration_yml_path = input
-        self.output = output
-        if output:
-            self.test_playbook_yml_path = os.path.join(output, name + '.yml')
+
+        if not output or not os.path.isdir(output):
+            self.output = f'Packs/{get_pack_name(self.integration_yml_path)}/TestPlaybooks'
         else:
-            self.test_playbook_yml_path = f'{name}.yml'
+            self.output = output
+
+        self.test_playbook_yml_path = os.path.join(self.output, name + '.yml')
 
         self.file_type = file_type
         self.name = name
@@ -351,10 +353,6 @@ class PlaybookTestsGenerator:
         local directory
 
         """
-        if self.output:
-            if not os.path.isdir(self.output):
-                print_error(f'Directory not exist: {self.output}')
-                return
 
         ryaml = YAML()
         ryaml.preserve_quotes = True
@@ -387,6 +385,10 @@ class PlaybookTestsGenerator:
 
                 # Skip the commands that not specified in the `commands` argument
                 if self.commands and command.get('name') not in self.commands.split(','):
+                    continue
+
+                # Skip the commands that not specified in the command examples file if exist
+                if self.examples and command.get('name') not in command_examples_args:
                     continue
 
                 create_automation_task_and_verify_outputs_task(

@@ -2624,6 +2624,7 @@ class TestAllFilesValidator:
         mocker.patch.object(PackUniqueFilesValidator, 'are_valid_files', return_value='')
         mocker.patch.object(ValidateManager, 'validate_readme', return_value=True)
         pack1 = repo.create_pack('PackName1')
+        pack1.author_image.write(DEFAULT_IMAGE_BASE64)
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
         valid_integration_yml = get_yaml(pack_integration_path)
         integration = pack1.create_integration('integration0', yml=valid_integration_yml)
@@ -2632,6 +2633,7 @@ class TestAllFilesValidator:
 
         valid_script_yml = get_yaml(VALID_SCRIPT_PATH)
         pack2 = repo.create_pack('PackName2')
+        pack2.author_image.write(DEFAULT_IMAGE_BASE64)
         script = pack2.create_script(yml=valid_script_yml)
 
         with ChangeCWD(repo.path):

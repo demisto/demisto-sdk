@@ -908,7 +908,7 @@ def run_playbook(**kwargs):
     "--interactive", help="If passed, then for each output field will ask user interactively to enter the "
                           "description. By default is interactive mode is disabled", is_flag=True)
 @click.option(
-    "-d", "--description-json",
+    "-d", "--descriptions",
     help="A JSON or a path to a JSON file, mapping field names to their descriptions. "
          "If not specified, the script prompt the user to input the JSON content.",
     is_flag=True)

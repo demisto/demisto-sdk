@@ -278,7 +278,7 @@ def create_automation_task_and_verify_outputs_task(test_playbook, command, args,
         test_playbook.add_task(task_verify_outputs)
 
 
-def get_command_examples(commands_file_path, specific_commands: list = None) -> dict:
+def get_command_examples(commands_file_path) -> dict:
     """
     Gets the command examples from command file with their arguments.
 
@@ -298,18 +298,9 @@ def get_command_examples(commands_file_path, specific_commands: list = None) -> 
         print('Failed to open command examples file.')
         command_examples = commands_file_path.split('\n')
 
-    # Filter from the examples only the commands specified by the user
-    commands = []
-    if specific_commands:
-        for command_ex in command_examples:
-            if command_ex.split(' ')[0].strip('!') in specific_commands:
-                commands.append(command_ex)
-    else:
-        commands = command_examples
-
     # Split the command example to dictionary of arguments for each command
     result_commands = {}
-    for command in commands:
+    for command in command_examples:
         command = command.split(' ', 1)
         result_commands[command[0].strip('!')] = dict(arg.split('=') for arg in command[1].split(' ')) \
             if len(command) > 1 else {}

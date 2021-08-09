@@ -4,7 +4,7 @@ from typing import Optional
 from demisto_sdk.commands.common.constants import (
     BETA_INTEGRATION_DISCLAIMER, PACKS_INTEGRATION_NON_SPLIT_YML_REGEX,
     PACKS_INTEGRATION_YML_REGEX, FileType)
-from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.errors import FOUND_FILES_AND_ERRORS, Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
@@ -196,7 +196,11 @@ class DescriptionValidator(BaseValidator):
 
         if invalid_lines:
             error_message, error_code = Errors.description_contains_demisto_word(invalid_lines, yml_or_file)
-            if self.handle_error(error_message, error_code, file_path=integration_path):
+
+            # print only if the error is not already in the report
+            check_in_report = f'{integration_path} - [{error_code}]'
+            if self.handle_error(error_message, error_code, file_path=integration_path,
+                                 should_print=check_in_report not in FOUND_FILES_AND_ERRORS):
                 self._is_valid = False
                 return False
 

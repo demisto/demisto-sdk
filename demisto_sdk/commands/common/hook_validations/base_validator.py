@@ -89,9 +89,7 @@ class BaseValidator:
                 self.add_to_report_error_list(error_code, file_path, FOUND_FILES_AND_IGNORED_ERRORS)
             return None
 
-        # print unless suppressed or if the error was already printed
-        if should_print and not self.suppress_print and self.add_to_report_error_list(error_code, file_path,
-                                                                                      FOUND_FILES_AND_ERRORS):
+        if should_print and not self.suppress_print:
             if suggested_fix:
                 click.secho(formatted_error[:-1], fg="bright_red")
                 if error_code == 'ST109':
@@ -108,6 +106,7 @@ class BaseValidator:
                 click.secho(formatted_error, fg="bright_red")
 
         self.json_output(file_path, error_code, error_message, warning)
+        self.add_to_report_error_list(error_code, file_path, FOUND_FILES_AND_ERRORS)
         return formatted_error
 
     def check_file_flags(self, file_name, file_path):

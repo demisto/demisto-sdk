@@ -6,8 +6,8 @@ import pytest
 
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml
-from demisto_sdk.commands.generate_test_playbook.test_playbook_generator import \
-    (PlaybookTestsGenerator, get_command_examples)
+from demisto_sdk.commands.generate_test_playbook.test_playbook_generator import (
+    PlaybookTestsGenerator, get_command_examples)
 
 
 def load_file_from_test_dir(filename):

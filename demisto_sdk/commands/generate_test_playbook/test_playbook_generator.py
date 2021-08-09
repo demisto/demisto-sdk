@@ -4,8 +4,8 @@ from typing import Dict, Optional
 
 from ruamel.yaml import YAML
 
-from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
-                                               print_error, get_pack_name)
+from demisto_sdk.commands.common.tools import (LOG_COLORS, get_pack_name,
+                                               print_color, print_error)
 from demisto_sdk.commands.upload.uploader import Uploader
 
 

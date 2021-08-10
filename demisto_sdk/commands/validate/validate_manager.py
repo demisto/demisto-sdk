@@ -319,11 +319,6 @@ class ValidateManager:
 
         pack_entities_validation_results.add(self.validate_pack_unique_files(pack_path, pack_error_ignore_list))
 
-        author_image_path = os.path.join(pack_path, AUTHOR_IMAGE_FILE_NAME)
-        if os.path.exists(author_image_path):
-            click.echo("Validating pack author image")
-            pack_entities_validation_results.add(self.validate_author_image(author_image_path, pack_error_ignore_list))
-
         for content_dir in os.listdir(pack_path):
             content_entity_path = os.path.join(pack_path, content_dir)
             if content_dir in CONTENT_ENTITIES_DIRS:
@@ -949,8 +944,10 @@ class ValidateManager:
             pack_error_ignore_list: A dictionary of all pack ignored errors
             pack_path: A path to a pack
         """
-        print(f'\nValidating {pack_path} unique pack files')
+        files_valid = True
+        author_valid = True
 
+        click.echo(f'\nValidating {pack_path} unique pack files')
         pack_unique_files_validator = PackUniqueFilesValidator(pack=os.path.basename(pack_path),
                                                                pack_path=pack_path,
                                                                ignored_errors=pack_error_ignore_list,
@@ -965,9 +962,15 @@ class ValidateManager:
         pack_errors = pack_unique_files_validator.are_valid_files(self.id_set_validations)
         if pack_errors:
             click.secho(pack_errors, fg="bright_red")
-            return False
+            files_valid = False
 
-        return True
+        # check author image
+        author_image_path = os.path.join(pack_path, AUTHOR_IMAGE_FILE_NAME)
+        if os.path.exists(author_image_path):
+            click.echo("Validating pack author image")
+            author_valid = self.validate_author_image(author_image_path, pack_error_ignore_list)
+
+        return files_valid and author_valid
 
     def validate_modified_files(self, modified_files):
         click.secho(f'\n================= Running validation on modified files =================',

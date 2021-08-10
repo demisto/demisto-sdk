@@ -1295,6 +1295,10 @@ class ValidateManager:
 
     def format_file_path(self, file_path, old_path, old_format_files):
         """Determines if a file is relevant for validation and create any modification to the file_path if needed"""
+
+        if file_path.split(os.path.sep)[0] in ('.gitlab', '.circleci', '.github'):
+            return None
+
         file_type = find_type(file_path)
 
         # ignore unrecognized file types, unified.yml, doc data and test_data

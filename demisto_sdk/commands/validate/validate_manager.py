@@ -1434,10 +1434,12 @@ class ValidateManager:
                         fg="yellow")
 
     def get_packs_that_should_have_version_raised(self, modified_files, added_files, old_format_files):
-        # modified packs (where the change is not test-playbook, test-script, readme, metadata file or release notes)
+        # modified packs (where the change is not test-playbook, test-script, readme, metadata file, release notes or
+        # doc/author images)
         all_modified_files = modified_files.union(old_format_files)
         modified_packs_that_should_have_version_raised = get_pack_names_from_files(all_modified_files, skip_file_types={
-            FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT})
+            FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT,
+            FileType.DOC_IMAGE, FileType.AUTHOR_IMAGE})
 
         # also existing packs with added files which are not test-playbook, test-script readme or release notes
         # should have their version raised

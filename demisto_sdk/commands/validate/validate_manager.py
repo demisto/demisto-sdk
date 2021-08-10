@@ -1300,7 +1300,6 @@ class ValidateManager:
             return None
 
         file_type = find_type(file_path)
-
         # ignore unrecognized file types, unified.yml, doc data and test_data
         if not file_type or file_path.endswith('_unified.yml') or \
                 any(test_dir in str(file_path) for test_dir in TESTS_AND_DOC_DIRECTORIES):

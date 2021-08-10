@@ -172,7 +172,7 @@ class DescriptionValidator(BaseValidator):
             # if not found try and look for the description file path
             else:
                 yml_or_file = 'in the description file'
-                description_path = f'{os.path.splitext(self.file_path)}_description.md'
+                description_path = f'{os.path.splitext(self.file_path)[0]}_description.md'
 
                 if not os.path.exists(description_path):
                     error_message, error_code = Errors.no_description_file_warning()

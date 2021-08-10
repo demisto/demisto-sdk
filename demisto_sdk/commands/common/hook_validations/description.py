@@ -154,7 +154,7 @@ class DescriptionValidator(BaseValidator):
         yml_or_file = ''
 
         # case 1 the file path is for an integration
-        if find_type(self.file_path) == FileType.INTEGRATION:
+        if find_type(self.file_path) in [FileType.INTEGRATION, FileType.BETA_INTEGRATION]:
             integration_path = self.file_path
             data_dictionary = get_yaml(self.file_path)
             is_unified_integration = data_dictionary.get('script', {}).get('script', '') not in {'-', ''}
@@ -165,16 +165,16 @@ class DescriptionValidator(BaseValidator):
 
                 # find in which line the description begins in the yml
                 with open(self.file_path, 'r') as f:
-                    for line_n, line in enumerate(f.read().split('\n')):
+                    for line_n, line in enumerate(f.readlines()):
                         if 'detaileddescription:' in line:
                             yml_line_num = line_n + 1
 
             # if not found try and look for the description file path
             else:
-                try:
-                    yml_or_file = 'in the description file'
-                    description_path = glob.glob(os.path.join(os.path.dirname(self.file_path), '*_description.md'))[0]
-                except IndexError:
+                yml_or_file = 'in the description file'
+                description_path = f'{os.path.splitext(self.file_path)}_description.md'
+
+                if not os.path.exists(description_path):
                     error_message, error_code = Errors.no_description_file_warning()
                     self.handle_error(error_message, error_code, file_path=self.file_path, warning=True)
                     return True

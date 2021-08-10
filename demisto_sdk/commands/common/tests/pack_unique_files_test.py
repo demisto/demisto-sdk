@@ -492,7 +492,8 @@ class TestPackUniqueFilesValidator:
         assert "Unable to find previous pack_metadata.json file - skipping price change validation" in \
                capsys.readouterr().out
 
-    def test_validate_pack_readme_file_is_not_empty_partner(self, mocker, result):
+    @pytest.mark.parametrize('text, result', README_INPUT_RESULTS_LIST)
+    def test_validate_pack_readme_file_is_not_empty_partner(self, mocker, text, result):
         """
        Given:
             - partner pack
@@ -505,7 +506,7 @@ class TestPackUniqueFilesValidator:
         """
         self.validator = PackUniqueFilesValidator(os.path.join(self.FILES_PATH, 'fake_pack'))
         self.validator.support = 'partner'
-        mocker.patch.object(PackUniqueFilesValidator, '_read_file_content', return_value='')
+        mocker.patch.object(PackUniqueFilesValidator, '_read_file_content', return_value=text)
         assert self.validator.validate_pack_readme_file_is_not_empty() == result
 
     @pytest.mark.parametrize('text, result', README_INPUT_RESULTS_LIST)

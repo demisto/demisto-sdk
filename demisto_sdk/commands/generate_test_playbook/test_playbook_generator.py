@@ -310,7 +310,7 @@ def get_command_examples(commands_file_path) -> dict:
 
 class PlaybookTestsGenerator:
     def __init__(self, input: str, output: str, name: str, file_type: str, no_outputs: bool = False,
-                 verbose: bool = False, all_brands: bool = False, commands: str = None, examples: str = None,
+                 verbose: bool = False, use_all_brands: bool = False, commands: str = None, examples: str = None,
                  upload: bool = False):
         self.integration_yml_path = input
 
@@ -325,7 +325,7 @@ class PlaybookTestsGenerator:
         self.name = name
         self.no_outputs = no_outputs
         self.verbose = verbose
-        self.use_all_brands = all_brands
+        self.use_all_brands = use_all_brands
         self.commands = commands
         self.examples = examples
         self.upload = upload

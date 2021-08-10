@@ -6,6 +6,7 @@
 * Fixed an issue where the **update-release-notes** command used the old docker image version instead of the new when detecting a docker change.
 * Fixed an issue where the **generate-test-playbook** command used an incorrect argument name as default
 * Fixed an issue where the **json-to-outputs** command used an incorrect argument name as default when using `-d`.
+* Fixed an issue where validations failed while trying to validate non content files.
 * Added the following enhancements in the **generate-test-playbook** command:
     * Added the *--commands* argument to generate tasks for specific commands.
     * Added the *--examples* argument to get the command examples file path and generate tasks from the commands and arguments specified there.

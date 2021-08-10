@@ -301,7 +301,7 @@ class Initiator:
         if self.author_image:
             shutil.copyfile(self.author_image, author_image_path)
         else:
-            fp = open(author_image_path)
+            fp = open(author_image_path, 'a')
             fp.close()
 
     @staticmethod

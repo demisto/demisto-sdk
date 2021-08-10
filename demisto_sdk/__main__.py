@@ -908,7 +908,7 @@ def run_playbook(**kwargs):
     "--interactive", help="If passed, then for each output field will ask user interactively to enter the "
                           "description. By default is interactive mode is disabled", is_flag=True)
 @click.option(
-    "-d", "--description-json",
+    "-d", "--descriptions",
     help="A JSON or a path to a JSON file, mapping field names to their descriptions. "
          "If not specified, the script prompt the user to input the JSON content.",
     is_flag=True)
@@ -945,7 +945,7 @@ def json_to_outputs_command(**kwargs):
 @click.option(
     "-v", "--verbose", help="Verbose output for debug purposes - shows full exception stack trace", is_flag=True)
 @click.option(
-    "-ab", "--all-brands",
+    "-ab", "--all-brands", "use_all_brands",
     help="Generate a test-playbook which calls commands using integrations of all available brands. "
          "When not used, the generated playbook calls commands using instances of the provided integration brand.",
     is_flag=True

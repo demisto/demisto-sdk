@@ -4,6 +4,8 @@
 * Fixed an issue where new old-formatted scripts and integrations were not validated.
 * Fixed an issue where the wording in the from version validation error for subplaybooks was incorrect.
 * Fixed an issue where the **update-release-notes** command used the old docker image version instead of the new when detecting a docker change.
+* Fixed an issue where the **generate-test-playbook** command used an incorrect argument name as default
+* Fixed an issue where the **json-to-outputs** command used an incorrect argument name as default when using `-d`.
 
 # 1.4.6
 * Fixed an issue where **validate** suggests, with no reason, running **format** on missing mandatory keys in yml file.

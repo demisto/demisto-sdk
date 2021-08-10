@@ -1449,7 +1449,7 @@ class ValidateManager:
         modified_packs_that_should_have_version_raised = modified_packs_that_should_have_version_raised.union(
             get_pack_names_from_files(added_files, skip_file_types={
                 FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK,
-                FileType.TEST_SCRIPT}) - self.new_packs)
+                FileType.TEST_SCRIPT, FileType.DOC_IMAGE, FileType.AUTHOR_IMAGE}) - self.new_packs)
 
         return modified_packs_that_should_have_version_raised
 

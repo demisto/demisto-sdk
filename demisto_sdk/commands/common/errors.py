@@ -1775,6 +1775,8 @@ class Errors:
                " For more information please visit {}".\
             format("https://xsoar.pan.dev/docs/packs/packs-format#author_imagepng")
 
+    @staticmethod
+    @error_code_decorator
     def xsoar_config_file_is_not_json(file_path):
         return f"Could not load {file_path} as a JSON XSOAR configuration file."
 

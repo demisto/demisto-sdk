@@ -1693,8 +1693,11 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def integration_is_skipped(integration_id):
-        return f"The integration {integration_id} is currently in skipped. Please add working tests and unskip."
+    def integration_is_skipped(integration_id, skip_comment: Optional[str] = None):
+        message = f"The integration {integration_id} is currently in skipped. Please add working tests and unskip."
+        if skip_comment:
+            message += f" Skip comment: {skip_comment}"
+        return message
 
     @staticmethod
     @error_code_decorator

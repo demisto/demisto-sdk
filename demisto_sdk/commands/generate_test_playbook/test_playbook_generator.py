@@ -279,7 +279,8 @@ class PlaybookTestsGenerator:
         if output:
             self.test_playbook_yml_path = os.path.join(output, name + '.yml')
         else:
-            self.test_playbook_yml_path = f'{name}.yml'
+            parent = os.path.dirname(input)
+            self.test_playbook_yml_path = os.path.join(parent, f'{name}.yml')
 
         self.file_type = file_type
         self.name = name

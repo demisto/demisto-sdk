@@ -10,11 +10,11 @@ from packaging import version
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
-    API_MODULES_PACK, CONTENT_ENTITIES_DIRS, DEFAULT_ID_SET_PATH,
-    GENERIC_FIELDS_DIR, GENERIC_TYPES_DIR, IGNORED_PACK_NAMES,
-    OLDEST_SUPPORTED_VERSION, PACKS_DIR, PACKS_PACK_META_FILE_NAME,
-    SKIP_RELEASE_NOTES_FOR_TYPES, TESTS_AND_DOC_DIRECTORIES, FileType,
-    PathLevel)
+    API_MODULES_PACK, AUTHOR_IMAGE_FILE_NAME, CONTENT_ENTITIES_DIRS,
+    DEFAULT_ID_SET_PATH, GENERIC_FIELDS_DIR, GENERIC_TYPES_DIR,
+    IGNORED_PACK_NAMES, OLDEST_SUPPORTED_VERSION, PACKS_DIR,
+    PACKS_PACK_META_FILE_NAME, SKIP_RELEASE_NOTES_FOR_TYPES,
+    TESTS_AND_DOC_DIRECTORIES, FileType, PathLevel)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
                                                 FOUND_FILES_AND_ERRORS,
@@ -944,8 +944,10 @@ class ValidateManager:
             pack_error_ignore_list: A dictionary of all pack ignored errors
             pack_path: A path to a pack
         """
-        print(f'\nValidating {pack_path} unique pack files')
+        files_valid = True
+        author_valid = True
 
+        click.echo(f'\nValidating {pack_path} unique pack files')
         pack_unique_files_validator = PackUniqueFilesValidator(pack=os.path.basename(pack_path),
                                                                pack_path=pack_path,
                                                                ignored_errors=pack_error_ignore_list,
@@ -960,9 +962,15 @@ class ValidateManager:
         pack_errors = pack_unique_files_validator.are_valid_files(self.id_set_validations)
         if pack_errors:
             click.secho(pack_errors, fg="bright_red")
-            return False
+            files_valid = False
 
-        return True
+        # check author image
+        author_image_path = os.path.join(pack_path, AUTHOR_IMAGE_FILE_NAME)
+        if os.path.exists(author_image_path):
+            click.echo("Validating pack author image")
+            author_valid = self.validate_author_image(author_image_path, pack_error_ignore_list)
+
+        return files_valid and author_valid
 
     def validate_modified_files(self, modified_files):
         click.secho(f'\n================= Running validation on modified files =================',
@@ -1429,17 +1437,19 @@ class ValidateManager:
                         fg="yellow")
 
     def get_packs_that_should_have_version_raised(self, modified_files, added_files, old_format_files):
-        # modified packs (where the change is not test-playbook, test-script, readme, metadata file or release notes)
+        # modified packs (where the change is not test-playbook, test-script, readme, metadata file, release notes or
+        # doc/author images)
         all_modified_files = modified_files.union(old_format_files)
         modified_packs_that_should_have_version_raised = get_pack_names_from_files(all_modified_files, skip_file_types={
-            FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT})
+            FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT,
+            FileType.DOC_IMAGE, FileType.AUTHOR_IMAGE})
 
         # also existing packs with added files which are not test-playbook, test-script readme or release notes
         # should have their version raised
         modified_packs_that_should_have_version_raised = modified_packs_that_should_have_version_raised.union(
             get_pack_names_from_files(added_files, skip_file_types={
                 FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK,
-                FileType.TEST_SCRIPT}) - self.new_packs)
+                FileType.TEST_SCRIPT, FileType.DOC_IMAGE, FileType.AUTHOR_IMAGE}) - self.new_packs)
 
         return modified_packs_that_should_have_version_raised
 

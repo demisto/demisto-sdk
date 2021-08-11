@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import List, Optional
 
+from demisto_sdk.commands.common.constants import DEFAULT_IMAGE_BASE64
 from TestSuite.file import File
 from TestSuite.integration import Integration
 from TestSuite.json_based import JSONBased
@@ -123,6 +124,7 @@ class Pack:
         self.pack_metadata = JSONBased(self._pack_path, 'pack_metadata', '')
 
         self.author_image = File(tmp_path=self._pack_path / 'Author_image.png', repo_path=repo.path)
+        self.author_image.write(DEFAULT_IMAGE_BASE64)
 
     def create_integration(
             self,

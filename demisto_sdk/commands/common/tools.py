@@ -214,7 +214,7 @@ def get_remote_file(
     local_content = '{}'
 
     github_path = urljoin(github_config.CONTENT_GITHUB_LINK, github_tag, full_file_path)
-    github_token = ''
+    github_token: Optional[str] = None
     try:
         external_repo = is_external_repository()
         if external_repo:
@@ -258,7 +258,7 @@ def get_remote_file(
             res.raise_for_status()
     except Exception as exc:
         # Replace token secret if needed
-        err_msg: str = str(exc).replace(github_token, 'XXX')
+        err_msg: str = str(exc).replace(github_token, 'XXX') if github_token else str(exc)
         if not suppress_print:
             click.secho(
                 f'Could not find the old entity file under "{github_path}".\n'

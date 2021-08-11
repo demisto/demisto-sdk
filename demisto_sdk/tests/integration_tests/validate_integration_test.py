@@ -2596,9 +2596,9 @@ class TestAuthorImageValidation:
             "useCases": [],
             "keywords": []
         })
+        pack.author_image.write('')
         author_image_path = pack.author_image.path
         with ChangeCWD(repo.path):
-
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', author_image_path],
                                    catch_exceptions=False)

@@ -41,7 +41,7 @@ class TestGenerateTestPlaybook:
             file_type='integration',
             output=TestGenerateTestPlaybook.TEMP_DIR,
             name='TestPlaybook',
-            all_brands=use_all_brands
+            use_all_brands=use_all_brands
         )
 
         generator.run()

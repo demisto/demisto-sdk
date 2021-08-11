@@ -8,6 +8,7 @@
 * Fixed an issue where the **json-to-outputs** command used an incorrect argument name as default when using `-d`.
 * Fixed an issue where validations failed while trying to validate non content files.
 * Fixed an issue where README validations did not work post VS Code formatting.
+* Fixed an issue where the description validations were inconsistent when running through an integration file or a description file.
 
 # 1.4.6
 * Fixed an issue where **validate** suggests, with no reason, running **format** on missing mandatory keys in yml file.

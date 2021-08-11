@@ -1153,3 +1153,20 @@ def test_quite_bc_flag(repo):
     existing_pack1 = repo.create_pack('PackWithModifiedIntegration')
     moodified_integration = existing_pack1.create_integration('MyIn')
     moodified_integration.create_default_integration()
+
+
+data_test_filted_dirs_in_format_file_path = [
+    ('Packs/PackName/Integrations/IntegrationName/IntegrationName.yml', 'Packs/PackName/Integrations/IntegrationName/IntegrationName.yml'),
+    ('.circleci/config.yml', None),
+    ('.github/workflows/check-contribution-form-filled.yml', None),
+    ('.gitlab/ci/.gitlab-ci.yml', None),
+]
+
+
+@pytest.mark.parametrize('input_file_path, output_file_path', data_test_filted_dirs_in_format_file_path)
+def test_filted_dirs_in_format_file_path(mocker, input_file_path, output_file_path):
+    validator_obj = ValidateManager(is_external_repo=True, check_is_unskipped=False)
+    mocker.patch.object(validator_obj, 'is_old_file_format', return_value=False)
+    mocker.patch.object(tools, 'get_dict_from_file', return_value=({'category': 'test'}, 'yml'))
+    filterd_files = validator_obj.format_file_path(input_file_path, None, set())
+    assert filterd_files == output_file_path

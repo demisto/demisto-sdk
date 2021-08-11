@@ -1,6 +1,12 @@
 # Changelog
 * Fixed an issue where the **format** command has incorrectly recognized on which files to run when running using git.
+* Fixed an issue where author image validations were not checked properly.
+* Fixed an issue where new old-formatted scripts and integrations were not validated.
 * Fixed an issue where the wording in the from version validation error for subplaybooks was incorrect.
+* Fixed an issue where the **update-release-notes** command used the old docker image version instead of the new when detecting a docker change.
+* Fixed an issue where the **generate-test-playbook** command used an incorrect argument name as default
+* Fixed an issue where the **json-to-outputs** command used an incorrect argument name as default when using `-d`.
+* Fixed an issue where validations failed while trying to validate non content files.
 * Fixed an issue where README validations did not work post VS Code formatting.
 
 # 1.4.6

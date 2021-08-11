@@ -426,6 +426,32 @@ def test_generate_command_section_with_empty_cotext_example():
     assert '\n'.join(section) == '\n'.join(expected_section)
 
 
+def test_generate_command_section_with_empty_cotext_list():
+    """
+    When given an empty outputs list,
+    the 'Context Outputs' sections should indicate they are empty without empty tables.
+    """
+    example_dict = {
+        'test1': (None, None, '{}')
+    }
+    command = {'deprecated': False, 'name': 'test1', 'outputs': []}
+
+    section, errors = generate_single_command_section(command,
+                                                      example_dict={},
+                                                      command_permissions_dict={})
+
+    expected_section = ['### test1', '***', ' ', '#### Required Permissions',
+                        '**FILL IN REQUIRED PERMISSIONS HERE**',
+                        '#### Base Command', '', '`test1`', '#### Input', '',
+                        'There are no input arguments for this command.', '',
+                        '#### Context Output', '',
+                        'There is no context output for this command.', '',
+                        '#### Command Example', '``` ```', '',
+                        '#### Human Readable Output', '\n', '']
+
+    assert '\n'.join(section) == '\n'.join(expected_section)
+
+
 def test_generate_commands_section_human_readable():
     yml_data = {
         'script': {

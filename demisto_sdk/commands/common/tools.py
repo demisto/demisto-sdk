@@ -214,13 +214,15 @@ def get_remote_file(
     local_content = '{}'
 
     github_path = urljoin(github_config.CONTENT_GITHUB_LINK, github_tag, full_file_path)
+    github_token = ''
     try:
         external_repo = is_external_repository()
         if external_repo:
             githhub_config = GithubContentConfig()
-            if githhub_config.Credentials.TOKEN:
+            github_token = githhub_config.Credentials.TOKEN
+            if github_token:
                 res = requests.get(github_path, verify=False, timeout=10, headers={
-                    'Authorization': f"Bearer {githhub_config.Credentials.TOKEN}",
+                    'Authorization': f"Bearer {github_token}",
                     'Accept': f'application/vnd.github.VERSION.raw',
                 })  # Sometime we need headers
                 if not res.ok:  # sometime we need param token
@@ -228,7 +230,7 @@ def get_remote_file(
                         github_path,
                         verify=False,
                         timeout=10,
-                        params={'token': githhub_config.Credentials.TOKEN}
+                        params={'token': github_token}
                     )
                 res.raise_for_status()
             else:
@@ -255,11 +257,13 @@ def get_remote_file(
             res = requests.get(github_path, verify=False, timeout=10)
             res.raise_for_status()
     except Exception as exc:
+        # Replace token secret if needed
+        err_msg: str = str(exc).replace(github_token, 'XXX')
         if not suppress_print:
             click.secho(
                 f'Could not find the old entity file under "{github_path}".\n'
                 'please make sure that you did not break backward compatibility.\n'
-                f'Reason: {exc}', fg='yellow'
+                f'Reason: {err_msg}', fg='yellow'
             )
         return {}
     file_content = res.content if res.ok else local_content

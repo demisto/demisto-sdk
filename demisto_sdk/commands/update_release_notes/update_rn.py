@@ -20,9 +20,9 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                get_from_version, get_json,
                                                get_latest_release_notes_text,
                                                get_pack_name, get_remote_file,
-                                               get_yaml, print_color,
-                                               print_error, print_warning,
-                                               run_command)
+                                               get_yaml, pack_name_to_path,
+                                               print_color, print_error,
+                                               print_warning, run_command)
 
 
 class UpdateRN:
@@ -728,7 +728,8 @@ def update_api_modules_dependents_rn(pre_release: bool, update_type: Union[str, 
     for integration in integrations:
         integration_path = integration.get('file_path')
         integration_pack = integration.get('pack')
-        update_pack_rn = UpdateRN(pack_path=integration_pack, update_type=update_type,
+        integration_pack_path = pack_name_to_path(integration_pack)
+        update_pack_rn = UpdateRN(pack_path=integration_pack_path, update_type=update_type,
                                   modified_files_in_pack={integration_path}, pre_release=pre_release,
                                   added_files=set(), pack=integration_pack, text=text)
         updated = update_pack_rn.execute_update()
@@ -760,7 +761,9 @@ def check_docker_image_changed(added_or_modified_yml: str) -> Optional[str]:
         for diff_line in diff_lines:
             if 'dockerimage:' in diff_line:  # search whether exists a line that notes that the Docker image was
                 # changed.
-                return diff_line.split()[-1]
+                split_line = diff_line.split()
+                if split_line[0] == '+':
+                    return split_line[-1]
         return None
 
 

@@ -41,7 +41,7 @@ from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.unify.unifier import Unifier
+from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.tests.constants_test import (
     CONF_JSON_MOCK_PATH, DASHBOARD_TARGET, DIR_LIST, IGNORED_PNG,
@@ -211,6 +211,7 @@ class TestValidators:
             res_validator = validator(structure)
             mocker.patch.object(ScriptValidator, 'is_valid_script_file_path', return_value=True)
             mocker.patch.object(ScriptValidator, 'is_there_separators_in_names', return_value=True)
+            mocker.patch.object(ScriptValidator, 'is_docker_image_valid', return_value=True)
             assert res_validator.is_valid_file(validate_rn=False) is answer
         finally:
             os.remove(target)
@@ -384,6 +385,7 @@ class TestValidators:
         mocker.patch.object(PlaybookValidator, 'is_script_id_valid', return_value=True)
         mocker.patch.object(ScriptValidator, 'is_valid_script_file_path', return_value=True)
         mocker.patch.object(ScriptValidator, 'is_there_separators_in_names', return_value=True)
+        mocker.patch.object(ScriptValidator, 'is_docker_image_valid', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_valid_integration_file_path', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_there_separators_in_names', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_docker_image_valid', return_value=True)
@@ -485,6 +487,7 @@ class TestValidators:
         validate_manager = ValidateManager(skip_conf_json=True, id_set_path=id_set_path)
         mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_readme_and_pack_description', return_value=True)
         mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_readme_images', return_value=True)
+        mocker.patch.object(PackUniqueFilesValidator, '_read_metadata_content', return_value=dict())
         result = validate_manager.validate_pack_unique_files('QRadar', pack_error_ignore_list={})
         assert not result
 
@@ -493,9 +496,9 @@ class TestValidators:
         def get_script_or_integration_package_data_mock(*args, **kwargs):
             return VALID_SCRIPT_PATH, ''
 
-        with patch.object(Unifier, '__init__', lambda a, b: None):
-            Unifier.get_script_or_integration_package_data = get_script_or_integration_package_data_mock
-            return Unifier('')
+        with patch.object(YmlUnifier, '__init__', lambda a, b: None):
+            YmlUnifier.get_script_or_integration_package_data = get_script_or_integration_package_data_mock
+            return YmlUnifier('')
 
     def test_script_valid_rn(self, mocker):
         """
@@ -509,6 +512,7 @@ class TestValidators:
         mocker.patch.object(ScriptValidator, 'is_valid_name', return_value=True)
         mocker.patch.object(ScriptValidator, 'is_valid_script_file_path', return_value=True)
         mocker.patch.object(ScriptValidator, 'is_there_separators_in_names', return_value=True)
+        mocker.patch.object(ScriptValidator, 'is_docker_image_valid', return_value=True)
         self.mock_unifier()
         validate_manager = ValidateManager(skip_conf_json=True)
         is_valid = validate_manager.validate_added_files([VALID_SCRIPT_PATH], None)
@@ -622,7 +626,7 @@ class TestValidators:
     def test_create_ignored_errors_list(self):
         validate_manager = ValidateManager()
         errors_to_check = ["IN", "SC", "CJ", "DA", "DB", "DO", "ID", "DS", "IM", "IF", "IT", "RN", "RM", "PA", "PB",
-                           "WD", "RP", "BA100", "BC100", "ST", "CL", "MP", "LO", "XC"]
+                           "WD", "RP", "BA100", "BC100", "ST", "CL", "MP", "LO", "XC", "GF"]
         ignored_list = validate_manager.create_ignored_errors_list(errors_to_check)
         assert ignored_list == ["BA101", "BA102", "BA103", "BA104", "BA105", "BA106", "BA107", "BA108", "BA109",
                                 "BA110", 'BA111', "BC101", "BC102", "BC103", "BC104"]
@@ -1149,3 +1153,20 @@ def test_quite_bc_flag(repo):
     existing_pack1 = repo.create_pack('PackWithModifiedIntegration')
     moodified_integration = existing_pack1.create_integration('MyIn')
     moodified_integration.create_default_integration()
+
+
+data_test_filted_dirs_in_format_file_path = [
+    ('Packs/PackName/Integrations/IntegrationName/IntegrationName.yml', 'Packs/PackName/Integrations/IntegrationName/IntegrationName.yml'),
+    ('.circleci/config.yml', None),
+    ('.github/workflows/check-contribution-form-filled.yml', None),
+    ('.gitlab/ci/.gitlab-ci.yml', None),
+]
+
+
+@pytest.mark.parametrize('input_file_path, output_file_path', data_test_filted_dirs_in_format_file_path)
+def test_filted_dirs_in_format_file_path(mocker, input_file_path, output_file_path):
+    validator_obj = ValidateManager(is_external_repo=True, check_is_unskipped=False)
+    mocker.patch.object(validator_obj, 'is_old_file_format', return_value=False)
+    mocker.patch.object(tools, 'get_dict_from_file', return_value=({'category': 'test'}, 'yml'))
+    filterd_files = validator_obj.format_file_path(input_file_path, None, set())
+    assert filterd_files == output_file_path

@@ -1,4 +1,15 @@
 # Changelog
+* Fixed an issue where the **format** command has incorrectly recognized on which files to run when running using git.
+* Fixed an issue where author image validations were not checked properly.
+* Fixed an issue where new old-formatted scripts and integrations were not validated.
+* Fixed an issue where the wording in the from version validation error for subplaybooks was incorrect.
+* Fixed an issue where the **update-release-notes** command used the old docker image version instead of the new when detecting a docker change.
+* Fixed an issue where the **generate-test-playbook** command used an incorrect argument name as default
+* Fixed an issue where the **json-to-outputs** command used an incorrect argument name as default when using `-d`.
+* Fixed an issue where validations failed while trying to validate non content files.
+* Fixed an issue on **generate-test-playbook** where generating for scripts didn't behave accordingly.
+
+# 1.4.6
 * Fixed an issue where **validate** suggests, with no reason, running **format** on missing mandatory keys in yml file.
 * Skipped existence of TestPlaybook check on community and contribution integrations.
 * Fixed an issue where pre-commit didn't run on the demisto_sdk/commands folder.
@@ -7,7 +18,24 @@
 * Improved the error messages in **generate-docs**, if an example was not provided.
 * Added to **validate** command a validation that a content entity or a pack name does not contain the words "partner" and "community".
 * Fixed an issue where **update-release-notes** ignores *--text* flag while using *-f*
-* Fixed an issue on **generate-test-playbook** where generating for scripts didn't behave accordingly.
+* Fixed the outputs validations in **validate** so enrichment commands will not be checked to have DBotScore outputs.
+* Added a new validation to require the dockerimage key to exist in an integration and script yml files.
+* Enhanced the **generate-test-playbook** command to use only integration tested on commands, rather than (possibly) other integrations implementing them.
+* Expanded unify command to support GenericModules - Unifies a GenericModule object with its Dashboards.
+* Added validators for generic objects:
+  - Generic Field validator - verify that the 'fromVersion' field is above 6.5.0, 'group' field equals 4 and 'id' field starts with the prefix 'generic_'.
+  - Generic Type validator - verify that the 'fromVersion' field is above 6.5.0
+  - Generic Module validator - verify that the 'fromVersion' field is above 6.5.0
+  - Generic Definition validator - verify that the 'fromVersion' field is above 6.5.0
+ * Expanded Format command to support Generic Objects - Fixes generic objects according to their validations.
+* Fixed an issue where the **update-release-notes** command did not handle ApiModules properly.
+* Added option to enter a dictionary or json of format `[{field_name:description}]` in the **json-to-outputs** command,
+  with the `-d` flag.
+* Improved the outputs for the **format** command.
+* Fixed an issue where the validations performed after the **format** command were inconsistent with **validate**.
+* Added to the **validate** command a validation for the author image.
+* Updated the **create-content-artifacts** command to support generic modules, definitions, fields and types.
+* Added an option to ignore errors for file paths and not only file name in .pack-ignore file.
 
 # 1.4.5
 * Enhanced the **postman-codegen** command to name all generated arguments with lower case.

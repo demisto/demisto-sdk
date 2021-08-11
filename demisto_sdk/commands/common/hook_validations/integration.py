@@ -9,7 +9,8 @@ from demisto_sdk.commands.common.constants import (
     DEPRECATED_REGEXES, ENDPOINT_COMMAND_NAME, ENDPOINT_FLEXIBLE_REQUIRED_ARGS,
     FEED_REQUIRED_PARAMS, FETCH_REQUIRED_PARAMS, FIRST_FETCH,
     FIRST_FETCH_PARAM, INTEGRATION_CATEGORIES, IOC_OUTPUTS_DICT, MAX_FETCH,
-    MAX_FETCH_PARAM, PYTHON_SUBTYPES, TYPE_PWSH, XSOAR_CONTEXT_STANDARD_URL)
+    MAX_FETCH_PARAM, PYTHON_SUBTYPES, REPUTATION_COMMAND_NAMES, TYPE_PWSH,
+    XSOAR_CONTEXT_STANDARD_URL)
 from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
                                                 Errors)
@@ -167,7 +168,8 @@ class IntegrationValidator(ContentEntityValidator):
         skipped_integrations = conf_json_data.get('skipped_integrations', {})
         integration_id = _get_file_id('integration', self.current_file)
         if skipped_integrations and integration_id in skipped_integrations:
-            error_message, error_code = Errors.integration_is_skipped(integration_id)
+            skip_comment = skipped_integrations[integration_id]
+            error_message, error_code = Errors.integration_is_skipped(integration_id, skip_comment)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
         return self.is_valid
@@ -370,6 +372,20 @@ class IntegrationValidator(ContentEntityValidator):
 
         return is_valid
 
+    @staticmethod
+    def _get_invalid_dbot_outputs(context_outputs_paths, context_outputs_descriptions):
+        missing_outputs = set()
+        missing_descriptions = set()
+        for dbot_score_output in DBOT_SCORES_DICT:
+            if dbot_score_output not in context_outputs_paths:
+                missing_outputs.add(dbot_score_output)
+            else:  # DBot Score output path is in the outputs
+                if DBOT_SCORES_DICT.get(dbot_score_output) not in context_outputs_descriptions:
+                    missing_descriptions.add(dbot_score_output)
+                    # self.is_valid = False - Do not fail build over wrong description
+
+        return missing_outputs, missing_descriptions
+
     def is_outputs_for_reputations_commands_valid(self):
         # type: () -> bool
         """Check if a reputation command (domain/email/file/ip/url)
@@ -393,28 +409,22 @@ class IntegrationValidator(ContentEntityValidator):
                     context_outputs_descriptions.add(output.get('description'))
 
                 # validate DBotScore outputs and descriptions
-                missing_outputs = set()
-                missing_descriptions = set()
-                for dbot_score_output in DBOT_SCORES_DICT:
-                    if dbot_score_output not in context_outputs_paths:
-                        missing_outputs.add(dbot_score_output)
-                    else:  # DBot Score output path is in the outputs
-                        if DBOT_SCORES_DICT.get(dbot_score_output) not in context_outputs_descriptions:
-                            missing_descriptions.add(dbot_score_output)
-                            # self.is_valid = False - Do not fail build over wrong description
+                if command_name in REPUTATION_COMMAND_NAMES:
+                    missing_outputs, missing_descriptions = self._get_invalid_dbot_outputs(
+                        context_outputs_paths, context_outputs_descriptions)
+                    if missing_outputs:
+                        error_message, error_code = Errors.dbot_invalid_output(command_name, missing_outputs,
+                                                                               context_standard)
+                        if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                             warning=self.structure_validator.quite_bc):
+                            self.is_valid = False
+                            output_for_reputation_valid = False
 
-                if missing_outputs:
-                    error_message, error_code = Errors.dbot_invalid_output(command_name, missing_outputs,
-                                                                           context_standard)
-                    if self.handle_error(error_message, error_code, file_path=self.file_path,
-                                         warning=self.structure_validator.quite_bc):
-                        self.is_valid = False
-                        output_for_reputation_valid = False
-
-                if missing_descriptions:
-                    error_message, error_code = Errors.dbot_invalid_description(command_name, missing_descriptions,
-                                                                                context_standard)
-                    self.handle_error(error_message, error_code, file_path=self.file_path, warning=True)
+                    if missing_descriptions:
+                        error_message, error_code = Errors.dbot_invalid_description(command_name,
+                                                                                    missing_descriptions,
+                                                                                    context_standard)
+                        self.handle_error(error_message, error_code, file_path=self.file_path, warning=True)
 
                 # validate the IOC output
                 reputation_output = IOC_OUTPUTS_DICT.get(command_name)
@@ -1277,8 +1287,7 @@ class IntegrationValidator(ContentEntityValidator):
 
         # extracting the specific command from commands.
         endpoint_command = [arg for arg in commands if arg.get('name') == 'endpoint'][0]
-        return self._is_valid_endpoint_inputs(endpoint_command, required_arguments=ENDPOINT_FLEXIBLE_REQUIRED_ARGS) \
-            and self._is_valid_endpoint_outputs(endpoint_command)
+        return self._is_valid_endpoint_inputs(endpoint_command, required_arguments=ENDPOINT_FLEXIBLE_REQUIRED_ARGS)
 
     def _is_valid_endpoint_inputs(self, command_data, required_arguments):
         """
@@ -1311,21 +1320,3 @@ class IntegrationValidator(ContentEntityValidator):
                 self.is_valid = False
                 return False
         return True
-
-    def _is_valid_endpoint_outputs(self, command_data):
-        context_standard = XSOAR_CONTEXT_STANDARD_URL
-        output_for_reputation_valid = True
-        context_outputs_paths = set()
-        for output in command_data.get('outputs', []):
-            context_outputs_paths.add(output.get('contextPath'))
-
-        # validate the reputation command outputs
-        reputation_output = IOC_OUTPUTS_DICT.get(ENDPOINT_COMMAND_NAME)
-        if reputation_output and (reputation_output - context_outputs_paths):
-            error_message, error_code = Errors.missing_reputation(ENDPOINT_COMMAND_NAME, reputation_output,
-                                                                  context_standard)
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
-                self.is_valid = False
-                output_for_reputation_valid = False
-
-        return output_for_reputation_valid

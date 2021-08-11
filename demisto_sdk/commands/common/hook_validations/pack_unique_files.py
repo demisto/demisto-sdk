@@ -198,13 +198,22 @@ class PackUniqueFilesValidator(BaseValidator):
             return False
         return True
 
+    def validate_author_image_exists(self):
+        if self.metadata_content.get(PACK_METADATA_SUPPORT) == 'partner':
+            author_image_path = os.path.join(self.pack_path, 'Author_image.png')
+            if not os.path.exists(author_image_path):
+                if self._add_error(Errors.author_image_is_missing(author_image_path), file_path=author_image_path):
+                    return False
+
+        return True
+
     def validate_pack_readme_file_is_not_empty(self):
         """
         Validates that README.md file is not empty for partner packs and packs with use cases
         """
         if (self.support == 'partner' or self._contains_use_case()) and self._check_if_file_is_empty(self.readme_file):
-            self._add_error(Errors.empty_readme_error(), self.readme_file)
-            return False
+            if self._add_error(Errors.empty_readme_error(), self.readme_file):
+                return False
 
         return True
 
@@ -219,8 +228,8 @@ class PackUniqueFilesValidator(BaseValidator):
             pack_readme = self._read_file_content(self.readme_file)
             readme_content = pack_readme.lower().strip()
             if metadata_description == readme_content:
-                self._add_error(Errors.readme_equal_description_error(), self.readme_file)
-                return False
+                if self._add_error(Errors.readme_equal_description_error(), self.readme_file):
+                    return False
 
         return True
 
@@ -564,6 +573,7 @@ class PackUniqueFilesValidator(BaseValidator):
         self.validate_pack_readme_file_is_not_empty()
         self.validate_pack_readme_and_pack_description()
         self.validate_pack_readme_images()
+        self.validate_author_image_exists()
 
         # We only check pack dependencies for -g flag
         if self.validate_dependencies:

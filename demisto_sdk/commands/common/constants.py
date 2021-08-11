@@ -63,6 +63,10 @@ CANVAS = 'canvas'
 OLD_REPUTATION = 'reputations.json'
 PACK_VERIFY_KEY = 'content.pack.verify'
 XSOAR_CONFIG_FILE = 'xsoar_config.json'
+GENERIC_FIELD = 'genericfield'
+GENERIC_TYPE = 'generictype'
+GENERIC_MODULE = 'genericmodule'
+GENERIC_DEFINITION = 'genericdefinition'
 
 
 class FileType(Enum):
@@ -90,6 +94,7 @@ class FileType(Enum):
     DESCRIPTION = 'description'
     CHANGELOG = 'changelog'
     IMAGE = 'image'
+    AUTHOR_IMAGE = 'author_image'
     DOC_IMAGE = 'doc_image'
     PYTHON_FILE = 'pythonfile'
     JAVASCRIPT_FILE = 'javascriptfile'
@@ -526,6 +531,7 @@ PACKS_PACK_IGNORE_FILE_NAME = '.pack-ignore'
 PACKS_PACK_META_FILE_NAME = 'pack_metadata.json'
 PACKS_README_FILE_NAME = 'README.md'
 PACKS_CONTRIBUTORS_FILE_NAME = 'CONTRIBUTORS.md'
+AUTHOR_IMAGE_FILE_NAME = 'Author_image.png'
 
 PYTHON_TEST_REGEXES = [
     PACKS_SCRIPT_TEST_PY_REGEX,
@@ -998,6 +1004,8 @@ ACCEPTED_FILE_EXTENSIONS = [
 ]
 ENDPOINT_COMMAND_NAME = 'endpoint'
 
+REPUTATION_COMMAND_NAMES = {'file', 'email', 'domain', 'url', 'ip', 'cve'}
+
 BANG_COMMAND_NAMES = {'file', 'email', 'domain', 'url', 'ip', 'cve', 'endpoint'}
 
 BANG_COMMAND_ARGS_MAPPING_DICT: Dict[str, dict] = {
@@ -1212,10 +1220,13 @@ MAX_FETCH = 'max_fetch'
 
 OLDEST_SUPPORTED_VERSION = '5.0.0'
 
+GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION = '6.5.0'
+
 FEATURE_BRANCHES = ['v4.5.0']
 
+
 SKIP_RELEASE_NOTES_FOR_TYPES = (FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK,
-                                FileType.TEST_SCRIPT, FileType.DOC_IMAGE)
+                                FileType.TEST_SCRIPT, FileType.DOC_IMAGE, FileType.AUTHOR_IMAGE)
 
 LAYOUT_AND_MAPPER_BUILT_IN_FIELDS = ['indicatortype', 'source', 'comment', 'aggregatedreliability', 'detectedips',
                                      'detectedhosts', 'modified', 'expiration', 'timestamp', 'shortdesc',
@@ -1259,6 +1270,10 @@ class ContentItems(Enum):
     LAYOUTS = 'layoutscontainer'
     CLASSIFIERS = 'classifier'
     WIDGETS = 'widget'
+    GENERIC_MODULES = 'genericmodule'
+    GENERIC_DEFINITIONS = 'genericdefinition'
+    GENERIC_FIELDS = 'genericfield'
+    GENERIC_TYPES = 'generictype'
 
 
 YML_SUPPORTED_FOLDERS = {

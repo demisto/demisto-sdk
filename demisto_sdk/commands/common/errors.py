@@ -876,7 +876,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def author_image_is_missing(image_path: str):
-        return f'Partners must provide a non-empty author image under the path {image_path}. '
+        return f'Partners must provide a non-empty author image under the path {image_path}.'
 
     @staticmethod
     @error_code_decorator
@@ -1048,14 +1048,14 @@ class Errors:
     def content_entity_version_not_match_playbook_version(main_playbook, entities_names, main_playbook_version):
         return f"Playbook {main_playbook} with version {main_playbook_version} uses {entities_names} " \
                f"with a version that does not match the main playbook version. The from version of" \
-               f" {entities_names} should be at least {main_playbook_version}."
+               f" {entities_names} should be {main_playbook_version} or lower."
 
     @staticmethod
     @error_code_decorator
     def integration_version_not_match_playbook_version(main_playbook, command, main_playbook_version):
         return f"Playbook {main_playbook} with version {main_playbook_version} uses the command {command} " \
                f"that not implemented in integration that match the main playbook version. This command should be " \
-               f"implemented in an integration with a from version of at least {main_playbook_version}."
+               f"implemented in an integration with a from version of {main_playbook_version} or lower."
 
     @staticmethod
     @error_code_decorator
@@ -1106,8 +1106,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def description_contains_demisto_word(line_nums):
-        return f'Found the word \'Demisto\' in the description content in lines: {line_nums}.'
+    def description_contains_demisto_word(line_nums, yml_or_file):
+        return f'Found the word \'Demisto\' in the description content {yml_or_file} in lines: {line_nums}.'
 
     @staticmethod
     @error_code_decorator
@@ -1725,8 +1725,11 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def integration_is_skipped(integration_id):
-        return f"The integration {integration_id} is currently in skipped. Please add working tests and unskip."
+    def integration_is_skipped(integration_id, skip_comment: Optional[str] = None):
+        message = f"The integration {integration_id} is currently in skipped. Please add working tests and unskip."
+        if skip_comment:
+            message += f" Skip comment: {skip_comment}"
+        return message
 
     @staticmethod
     @error_code_decorator

@@ -1,4 +1,5 @@
 # Changelog
+* Added to **validate** command a validation which verifies that each script that appears in incident fields, layouts or layoutscontainers exists in the id_set json.
 
 # 1.4.6
 * Fixed an issue where **validate** suggests, with no reason, running **format** on missing mandatory keys in yml file.

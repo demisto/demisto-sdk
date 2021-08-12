@@ -29,10 +29,10 @@ from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.tests.constants_test import (CONTENT_REPO_EXAMPLE_ROOT,
                                               NOT_VALID_IMAGE_PATH)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
-    CONNECTION, DASHBOARD, GENERIC_DEFINITION, GENERIC_FIELD, GENERIC_MODULE,
-    GENERIC_TYPE, INCIDENT_FIELD, INCIDENT_TYPE, INDICATOR_FIELD, LAYOUT,
-    LAYOUTS_CONTAINER, MAPPER, NEW_CLASSIFIER, OLD_CLASSIFIER, REPORT,
-    REPUTATION, WIDGET)
+    CONNECTION, DASHBOARD, EMPTY_ID_SET, GENERIC_DEFINITION, GENERIC_FIELD,
+    GENERIC_MODULE, GENERIC_TYPE, INCIDENT_FIELD, INCIDENT_TYPE,
+    INDICATOR_FIELD, LAYOUT, LAYOUTS_CONTAINER, MAPPER, NEW_CLASSIFIER,
+    OLD_CLASSIFIER, REPORT, REPUTATION, WIDGET)
 from TestSuite.test_tools import ChangeCWD
 
 VALIDATE_CMD = "validate"
@@ -57,6 +57,64 @@ CONF_JSON_MOCK = {
             "playbookID": "AzureFeed - Test"
         }
     ]
+}
+
+# Layouts tests consts:
+DYNAMIC_SECTION_WITH_SCRIPT = {
+    "description": "",
+    "h": 1,
+    "i": "tjlpilelnw-978b0c1e-6739-432d-82d1-3b6641eed99f-tjlpilelnw-978b0c1e-6739-432d-82d1-",
+    "items": [],
+    "maxW": 3,
+    "minH": 1,
+    "minW": 1,
+    "moved": False,
+    "name": "Employment Status",
+    "query": "test_script",
+    "queryType": "script",
+    "static": False,
+    "w": 1,
+    "x": 0,
+    "y": 0
+}
+BUTTON_ITEM_SECTION_WITH_SCRIPT = {
+    "description": "",
+    "displayType": "CARD",
+    "h": 2,
+    "hideItemTitleOnlyOne": False,
+    "hideName": False,
+    "i": "xvcv8dtmxx-74334ff1-32a3-11eb-8468-67c152ca7f29",
+    "items": [
+        {
+            "args": {
+                "add_or_remove": {
+                    "simple": "remove"
+                }
+            },
+            "buttonClass": "error",
+            "dropEffect": "move",
+            "endCol": 2,
+            "fieldId": "",
+            "height": 44,
+            "id": "74334ff0-32a3-11eb-8468-67c152ca7f29",
+            "index": 2,
+            "listId": "zfkg6snvly-07513a70-3021-11eb-ba8d-510056356597",
+            "name": "Disconnect",
+            "scriptId": "test_script",
+            "sectionItemType": "button",
+            "startCol": 0
+        }
+    ],
+    "maxH": None,
+    "maxW": 1,
+    "minH": 1,
+    "minW": 1,
+    "moved": False,
+    "name": "Disconnect XSOAR integration from Okta application",
+    "static": False,
+    "w": 1,
+    "x": 0,
+    "y": 4
 }
 
 
@@ -411,6 +469,88 @@ class TestIncidentFieldValidation:
         assert f"Validating {incident_field_path} as incidentfield" in result.stdout
         assert 'IF102' in result.stdout
         assert "The system key must be set to False" in result.stdout
+
+    def test_valid_scripts_in_incident_field(self, mocker, repo):
+        """
+        Given
+        - Valid incident field - with scripts that exist in the id_set json.
+
+        When
+        - Running validation on it.
+
+        Then
+        - Ensure validation passes.
+        - Ensure success validation message is printed.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        incident_field_copy = INCIDENT_FIELD.copy()
+        incident_field_copy['script'] = 'test_script'
+        incident_field_copy['fieldCalcScript'] = 'test_calc_script'
+        pack.create_incident_field('incident-field', incident_field_copy)
+        incident_field_path = pack.incident_fields[0].path
+
+        id_set = EMPTY_ID_SET.copy()
+        id_set['scripts'].extend([{'test_script': {
+            'name': 'test_script',
+            'file_path': 'Packs/DeveloperTools/TestPlaybooks/test_script.yml',
+            'fromversion': '5.0.0',
+            'pack': 'DeveloperTools'}
+        },
+            {'test_calc_script': {
+                'name': 'test_calc_script',
+                'file_path': 'Packs/DeveloperTools/TestPlaybooks/test_calc_script.yml',
+                'fromversion': '5.0.0',
+                'pack': 'DeveloperTools'
+            }
+        }])
+        repo.id_set.write_json(id_set)
+
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', incident_field_path, '-s', '-idp', repo.id_set.path,
+                                          '-pc'], catch_exceptions=False)
+        assert f'Validating {incident_field_path} as incidentfield' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
+    def test_invalid_scripts_in_incident_field(self, mocker, repo):
+        """
+        Given
+        - An incident field with script that isn't exist in the id_set json.
+
+        When
+        - Running validation on it.
+
+        Then
+        - Ensure validation fails on IF114 - incident field with non existent script id
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        incident_field_copy = INCIDENT_FIELD.copy()
+        incident_field_copy['script'] = 'test_script'
+        incident_field_copy['fieldCalcScript'] = 'test_calc_script'
+        pack.create_incident_field('incident-field', incident_field_copy)
+        incident_field_path = pack.incident_fields[0].path
+
+        id_set = EMPTY_ID_SET.copy()
+        id_set['scripts'].append({'test_calc_script': {
+            'name': 'test_calc_script',
+            'file_path': 'Packs/DeveloperTools/TestPlaybooks/test_calc_script.yml',
+            'fromversion': '5.0.0',
+            'pack': 'DeveloperTools'
+        }
+        })
+        repo.id_set.write_json(id_set)
+
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', incident_field_path, '-s', '-idp', repo.id_set.path,
+                                          '-pc'], catch_exceptions=False)
+        assert f'Validating {incident_field_path} as incidentfield' in result.stdout
+        assert 'IF114' in result.stdout
+        assert 'the following scripts were not found in the id_set.json' in result.stdout
+        assert result.exit_code == 1
 
 
 class TestDeprecatedIntegration:
@@ -1683,6 +1823,7 @@ class TestIncidentTypeValidation:
 
 
 class TestLayoutValidation:
+
     def test_valid_layout(self, mocker, repo):
         """
         Given
@@ -1865,6 +2006,171 @@ class TestLayoutValidation:
             result = runner.invoke(main, [VALIDATE_CMD, '-i', layout.path], catch_exceptions=False)
         assert f"Validating {layout.path} as layout" in result.stdout
         assert 'toVersion field in layout needs to be lower than 6.0.0' in result.stdout
+        assert result.exit_code == 1
+
+    @pytest.mark.parametrize('tab_section_to_test', [
+        DYNAMIC_SECTION_WITH_SCRIPT,
+        BUTTON_ITEM_SECTION_WITH_SCRIPT
+    ])
+    def test_valid_scripts_in_layoutscontainer(self, mocker, repo, tab_section_to_test):
+        """
+        Given
+            1. Valid layoutcontainer - with a dynamic section which include a script that exist in the id_set json.
+            2. Valid layoutcontainer - with a section which include a button item with a script that exist in the
+               id_set json.
+        When
+        - Running validation on it.
+
+        Then
+        - Ensure validation passes.
+        - Ensure success validation message is printed.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        layoutscontainer_copy = LAYOUTS_CONTAINER.copy()
+        layoutscontainer_copy['detailsV2']['tabs'][0]['sections'] = [tab_section_to_test]
+        layoutscontainer = pack._create_json_based(name='layoutscontainer-test',
+                                                   prefix='',
+                                                   content=layoutscontainer_copy)
+
+        id_set = EMPTY_ID_SET.copy()
+        id_set['scripts'].append({'test_script': {
+            'name': 'test_script',
+            'file_path': 'Packs/DeveloperTools/TestPlaybooks/test_script.yml',
+            'fromversion': '5.0.0',
+            'pack': 'DeveloperTools'}
+        })
+        repo.id_set.write_json(id_set)
+
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', layoutscontainer.path, '-s', '-idp', repo.id_set.path,
+                                          '-pc'], catch_exceptions=False)
+        assert f'Validating {layoutscontainer.path} as layoutscontainer' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
+    @pytest.mark.parametrize('tab_section_to_test', [
+        DYNAMIC_SECTION_WITH_SCRIPT,
+        BUTTON_ITEM_SECTION_WITH_SCRIPT
+    ])
+    def test_invalid_scripts_in_layoutscontainer(self, mocker, repo, tab_section_to_test):
+        """
+        Given
+            1. inValid layoutcontainer - with a dynamic section which include a script that doesn't exist in the
+               id_set json.
+            2. Valid layoutcontainer - with a section which include a button item with a script that doesn't exist in
+               the id_set json.
+        When
+        - Running validation on it.
+
+        Then
+        - Ensure validation fails on LO105 - layouts container non existent script id
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        layoutscontainer_copy = LAYOUTS_CONTAINER.copy()
+        layoutscontainer_copy['detailsV2']['tabs'][0]['sections'] = [tab_section_to_test]
+        layoutscontainer = pack._create_json_based(name='layoutscontainer-test',
+                                                   prefix='',
+                                                   content=layoutscontainer_copy)
+
+        id_set = EMPTY_ID_SET.copy()
+        id_set['scripts'].append({'not_test_script': {
+            'name': 'test_script',
+            'file_path': 'Packs/DeveloperTools/TestPlaybooks/test_script.yml',
+            'fromversion': '5.0.0',
+            'pack': 'DeveloperTools'}
+        })
+        repo.id_set.write_json(id_set)
+
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', layoutscontainer.path, '-s', '-idp', repo.id_set.path,
+                                          '-pc'], catch_exceptions=False)
+        assert f'Validating {layoutscontainer.path} as layoutscontainer' in result.stdout
+        assert 'LO105' in result.stdout
+        assert 'the following scripts were not found in the id_set.json' in result.stdout
+        assert result.exit_code == 1
+
+    @pytest.mark.parametrize('tab_section_to_test', [
+        DYNAMIC_SECTION_WITH_SCRIPT,
+        BUTTON_ITEM_SECTION_WITH_SCRIPT
+    ])
+    def test_valid_scripts_in_layout(self, mocker, repo, tab_section_to_test):
+        """
+        Given
+            1. Valid layout - with a dynamic section which include a script that exist in the id_set json.
+            2. Valid layout - with a section which include a button item with a script that exist in the id_set json.
+
+        When
+        - Running validation on it.
+
+        Then
+        - Ensure validation passes.
+        - Ensure success validation message is printed.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        layout_copy = LAYOUT.copy()
+        layout_copy['layout']['tabs'][0]['sections'] = [tab_section_to_test]
+        layout = pack._create_json_based(name='layout-test', prefix='', content=layout_copy)
+
+        id_set = EMPTY_ID_SET.copy()
+        id_set['scripts'].append({'test_script': {
+            'name': 'test_script',
+            'file_path': 'Packs/DeveloperTools/TestPlaybooks/test_script.yml',
+            'fromversion': '5.0.0',
+            'pack': 'DeveloperTools'}
+        })
+        repo.id_set.write_json(id_set)
+
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', layout.path, '-s', '-idp', repo.id_set.path,
+                                          '-pc'], catch_exceptions=False)
+        assert f'Validating {layout.path} as layout' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
+    @pytest.mark.parametrize('tab_section_to_test', [
+        DYNAMIC_SECTION_WITH_SCRIPT,
+        BUTTON_ITEM_SECTION_WITH_SCRIPT
+    ])
+    def test_invalid_scripts_in_layout(self, mocker, repo, tab_section_to_test):
+        """
+        Given
+            1. inValid layout - with a dynamic section which include a script that doesn't exist in the id_set json.
+            2. Valid layout - with a section which include a button item with a script that doesn't exist in the id_set
+               json.
+        When
+        - Running validation on it.
+
+        Then
+        - Ensure validation fails on LO106 - layout non existent script id
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        layout_copy = LAYOUT.copy()
+        layout_copy['layout']['tabs'][0]['sections'] = [tab_section_to_test]
+        layout = pack._create_json_based(name='layout-test', prefix='', content=layout_copy)
+
+        id_set = EMPTY_ID_SET.copy()
+        id_set['scripts'].append({'not_test_script': {
+            'name': 'test_script',
+            'file_path': 'Packs/DeveloperTools/TestPlaybooks/test_script.yml',
+            'fromversion': '5.0.0',
+            'pack': 'DeveloperTools'}
+        })
+        repo.id_set.write_json(id_set)
+
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', layout.path, '-s', '-idp', repo.id_set.path,
+                                          '-pc'], catch_exceptions=False)
+        assert f'Validating {layout.path} as layout' in result.stdout
+        assert 'LO106' in result.stdout
+        assert 'the following scripts were not found in the id_set.json' in result.stdout
         assert result.exit_code == 1
 
 

@@ -934,8 +934,8 @@ def json_to_outputs_command(**kwargs):
     '-o', '--output',
     required=False,
     help='Specify output directory or path. '
-         'If not specified, and the input is located at `.../Packs/<pack_name>/Integrations`, ' 
-         'the output is saved under `.../Packs/<pack_name>/TestPlaybooks`. ' 
+         'If not specified, and the input is located at `.../Packs/<pack_name>/Integrations`, '
+         'the output is saved under `.../Packs/<pack_name>/TestPlaybooks`. '
          'If not specified, and no folder in the input hierarchy is named Packs, '
          'the output is saved in the current directory.')
 @click.option(

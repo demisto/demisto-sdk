@@ -1,5 +1,7 @@
 import json
 import os
+from pathlib import Path
+
 from typing import Dict, Optional
 
 from ruamel.yaml import YAML
@@ -276,11 +278,27 @@ class PlaybookTestsGenerator:
                  verbose: bool = False, use_all_brands: bool = False):
         self.integration_yml_path = input
         self.output = output
+
+        generated_test_playbook_file_name = f'playbook-{name}_Test.yml'
+
         if output:
-            self.test_playbook_yml_path = os.path.join(output, name + '.yml')
+            """ if an output folder is provided, save it there"""
+            self.test_playbook_yml_path = str(Path(output) / generated_test_playbook_file_name)
         else:
-            parent = os.path.dirname(input)
-            self.test_playbook_yml_path = os.path.join(parent, f'{name}.yml')
+            input_folder = Path(input)
+
+            if 'Packs' in (p.name for p in input_folder.parents):
+                """ 
+                if input yml is under standard Packs/<Pack>/Integrations/<Integration> path,
+                save the test-playbook under   Packs/<Pack>/TestPlaybooks
+                 """
+                folder = (input_folder.parent.parent / 'TestPlaybooks')
+                folder.mkdir(exist_ok=True, parents=True)
+            else:
+                """ otherwise, save the generated test-playbook in the folder from which SDK is called."""
+                folder = Path()
+
+            self.test_playbook_yml_path = str(folder / generated_test_playbook_file_name)
 
         self.file_type = file_type
         self.name = name

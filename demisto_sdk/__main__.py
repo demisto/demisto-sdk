@@ -34,6 +34,8 @@ from demisto_sdk.commands.error_code_info.error_code_info import \
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
 from demisto_sdk.commands.format.format_module import format_manager
+from demisto_sdk.commands.generate_context.generate_integration_context import \
+    generate_integration_context
 from demisto_sdk.commands.generate_docs.generate_integration_doc import \
     generate_integration_doc
 from demisto_sdk.commands.generate_docs.generate_playbook_doc import \
@@ -1000,6 +1002,50 @@ def init(**kwargs):
     initiator.init()
     return 0
 
+# ====================== generate-context ====================== #
+@main.command()
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    "-i", "--input", help="Path of the yml file.", required=True)
+@click.option(
+    "-e", "--examples",
+    help="Integrations: path for file containing command examples."
+         " Each command should be in a separate line."
+         " Scripts: the script example surrounded by quotes."
+         " For example: -e '!ConvertFile entry_id=<entry_id>'")
+@click.option(
+    "--insecure",
+    help="Skip certificate validation to run the commands in order to generate the docs.",
+    is_flag=True)
+def generate_context(**kwargs):
+    input_path: str = kwargs.get('input', '')
+    examples: str = kwargs.get('examples', '')
+    insecure: bool = kwargs.get('insecure', False)
+
+
+    # validate inputs
+    if input_path and not os.path.isfile(input_path):
+        print_error(F'Input file {input_path} was not found.')
+        return 1
+
+    if not input_path.lower().endswith('.yml'):
+        print_error(F'Input {input_path} is not a valid yml file.')
+        return 1
+
+    file_type = find_type(kwargs.get('input', ''), ignore_sub_categories=True)
+    if file_type is not FileType.INTEGRATION:
+        print_error('File is not an Integration.')
+        return 1
+
+    if file_type == FileType.INTEGRATION:
+        generate_integration_context(input_path, examples, insecure)
+    else:
+        print_error(f'File type {file_type.value} is not supported.')
+        return 1
+
+    print(input_path, examples, insecure)
 
 # ====================== generate-docs ====================== #
 @main.command()

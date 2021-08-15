@@ -238,7 +238,7 @@ def test_get_integration_doc_link_negative(tmp_path):
 def test_get_integration_doc_link_exist_in_readme(tmp_path):
     """
     Given:
-        - integration which have README in the integration dir, with "View Integration Documentation" doc link
+        - integration which have a detailed description with "View Integration Documentation" doc link
 
     When:
         - Getting integration doc link

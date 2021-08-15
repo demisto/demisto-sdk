@@ -1,9 +1,9 @@
 import glob
 from typing import Optional
 
-from demisto_sdk.commands.common.constants import (
-    BETA_INTEGRATION_DISCLAIMER, PACKS_INTEGRATION_NON_SPLIT_YML_REGEX,
-    PACKS_INTEGRATION_YML_REGEX, FileType)
+from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
+                                                   PACKS_INTEGRATION_YML_REGEX,
+                                                   FileType)
 from demisto_sdk.commands.common.errors import FOUND_FILES_AND_ERRORS, Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
@@ -29,7 +29,8 @@ class DescriptionValidator(BaseValidator):
         self._is_valid = True
         # Handling a case where the init function initiated with file path instead of structure validator
         self.file_path = file_path.file_path if isinstance(file_path, StructureValidator) else file_path
-        self.data_dictionary = get_yaml(self.file_path) if find_type(self.file_path) == FileType.INTEGRATION else {}
+        self.data_dictionary = get_yaml(self.file_path) if \
+            find_type(self.file_path) in [FileType.INTEGRATION, FileType.BETA_INTEGRATION] else {}
 
     def is_valid_file(self):
         self.is_duplicate_description()
@@ -58,8 +59,9 @@ class DescriptionValidator(BaseValidator):
     def is_valid_beta_description(self):
         """Check if beta disclaimer exists in detailed description"""
         description_in_yml = self.data_dictionary.get('detaileddescription', '') if self.data_dictionary else ''
+        is_unified_integration = self.data_dictionary.get('script', {}).get('script', '') not in {'-', ''}
 
-        if not re.match(PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, self.file_path, re.IGNORECASE):
+        if not is_unified_integration:
             try:
                 md_file_path = glob.glob(os.path.join(os.path.dirname(self.file_path), '*_description.md'))[0]
             except IndexError:
@@ -77,6 +79,8 @@ class DescriptionValidator(BaseValidator):
                     return False
             else:
                 return True
+
+        # unified integration case
         elif BETA_INTEGRATION_DISCLAIMER not in description_in_yml:
             error_message, error_code = Errors.no_beta_disclaimer_in_yml()
             if self.handle_error(error_message, error_code, file_path=self.file_path):

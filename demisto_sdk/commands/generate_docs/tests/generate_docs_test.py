@@ -430,6 +430,15 @@ def test_generate_command_section_with_empty_cotext_list():
     """
     When given an empty outputs list,
     the 'Context Outputs' sections should indicate they are empty without empty tables.
+
+    Given
+    - An empty command context (as an empty list)
+
+    When
+    - Running generate_single_command_section
+
+    Then
+    -  Ensure that there is no blank table but a proper error that there is no output
     """
     command = {'deprecated': False, 'name': 'test1', 'outputs': []}
 

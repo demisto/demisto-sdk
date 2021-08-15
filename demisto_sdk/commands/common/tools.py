@@ -464,10 +464,13 @@ def get_file(method, file_path, type_of_file):
 def get_yaml(file_path):
     with open(os.path.expanduser(file_path), mode="r", encoding="utf8") as f:
         try:
-            return yaml.load(f, Loader=XsoarLoader)
+            data_dictionary = yaml.load(f, Loader=XsoarLoader)
         except Exception as e:
             raise ValueError(
                 "{} has a structure issue of file type {}. Error was: {}".format(file_path, 'yml', str(e)))
+
+    if isinstance(data_dictionary, (dict, list)):
+        return data_dictionary
     return {}
 
 

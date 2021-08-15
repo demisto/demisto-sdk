@@ -443,7 +443,7 @@ def get_last_remote_release_version():
     return ''
 
 
-def get_file(method, file_path, type_of_file):
+def get_file(file_path, type_of_file):
     data_dictionary = None
     with open(os.path.expanduser(file_path), mode="r", encoding="utf8") as f:
         if file_path.endswith(type_of_file):
@@ -452,7 +452,12 @@ def get_file(method, file_path, type_of_file):
             # revert str to stream for loader
             stream = io.StringIO(replaced)
             try:
-                data_dictionary = method(stream)
+                if 'yml' == type_of_file:
+                    data_dictionary = yaml.load(stream, Loader=XsoarLoader)
+
+                else:
+                    data_dictionary = json.load(stream)
+
             except Exception as e:
                 raise ValueError(
                     "{} has a structure issue of file type {}. Error was: {}".format(file_path, type_of_file, str(e)))
@@ -462,16 +467,7 @@ def get_file(method, file_path, type_of_file):
 
 
 def get_yaml(file_path):
-    with open(os.path.expanduser(file_path), mode="r", encoding="utf8") as f:
-        try:
-            data_dictionary = yaml.load(f, Loader=XsoarLoader)
-        except Exception as e:
-            raise ValueError(
-                "{} has a structure issue of file type {}. Error was: {}".format(file_path, 'yml', str(e)))
-
-    if isinstance(data_dictionary, (dict, list)):
-        return data_dictionary
-    return {}
+    return get_file(file_path, 'yml')
 
 
 def get_ryaml(file_path: str) -> dict:
@@ -496,7 +492,7 @@ def get_ryaml(file_path: str) -> dict:
 
 
 def get_json(file_path):
-    return get_file(json.load, file_path, 'json')
+    return get_file(file_path, 'json')
 
 
 def get_script_or_integration_id(file_path):
@@ -569,7 +565,7 @@ def collect_ids(file_path):
 
 
 def get_from_version(file_path):
-    data_dictionary = get_yaml(file_path) or get_json(file_path)
+    data_dictionary = get_yaml(file_path) if file_path.endswith('yml') else get_json(file_path)
 
     if data_dictionary:
         from_version = data_dictionary.get('fromversion') if 'fromversion' in data_dictionary \

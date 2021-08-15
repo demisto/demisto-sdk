@@ -1,5 +1,4 @@
 import glob
-import json
 import os
 import shutil
 from pathlib import Path
@@ -80,7 +79,7 @@ class TestGenericFunctions:
         """
         path_to_here = f'{git_path()}/demisto_sdk/tests/test_files/'
         with raises(ValueError) as e:
-            result = get_file(json.load, os.path.join(path_to_here, 'fake_integration.yml'), ('yml', 'yaml'))
+            result = get_file(os.path.join(path_to_here, 'fake_integration.yml'), 'yml')
             assert result == e.value
 
     @pytest.mark.parametrize('dir_path', ['demisto_sdk', f'{git_path()}/demisto_sdk/tests/test_files'])

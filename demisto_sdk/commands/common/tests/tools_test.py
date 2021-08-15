@@ -1371,3 +1371,25 @@ def test_compare_context_path_in_yml_and_readme_vs_code_format_invalid():
 
     diffs = compare_context_path_in_yml_and_readme(yml_dict, readme_content)
     assert 'ServiceNow.Ticket.OpenedBy' in diffs.get('servicenow-create-ticket').get('only in yml')
+
+
+def test_gitlab_ci_yml_load():
+    """
+        Given:
+            - a yml file with gitlab ci data
+
+        When:
+            - trying to load it to the sdk  - like via find_type
+
+        Then:
+            - Ensure that the load does not fail.
+            - Ensure the file has no identification
+    """
+    test_file = f'{git_path()}/demisto_sdk/tests/test_files/gitlab_ci_test_file.yml'
+    try:
+        res = find_type(test_file)
+    except Exception:
+        # if we got here an error has occurred when trying to load the file
+        assert False
+
+    assert res is None

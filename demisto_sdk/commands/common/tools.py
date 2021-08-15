@@ -64,6 +64,23 @@ LAYOUT_CONTAINER_FIELDS = {'details', 'detailsV2', 'edit', 'close', 'mobile', 'q
 SDK_PYPI_VERSION = r'https://pypi.org/pypi/demisto-sdk/json'
 
 
+class XsoarLoader(yaml.SafeLoader):
+    """
+    New yaml loader based on SafeLoader which can handle the XSOAR related changes in yml.
+    """
+
+    def reference(self, node):
+        """
+        !reference - found in gitlab ci files.
+        handle !reference tag by turning its line into a string.
+        """
+        build_string = '!reference ' + str(self.construct_sequence(node))
+        return self.construct_yaml_str(yaml.ScalarNode(tag='!reference', value=build_string))
+
+
+XsoarLoader.add_constructor('!reference', XsoarLoader.reference)
+
+
 def set_log_verbose(verbose: bool):
     global LOG_VERBOSE
     LOG_VERBOSE = verbose
@@ -445,7 +462,13 @@ def get_file(method, file_path, type_of_file):
 
 
 def get_yaml(file_path):
-    return get_file(yaml.safe_load, file_path, ('yml', 'yaml'))
+    with open(os.path.expanduser(file_path), mode="r", encoding="utf8") as f:
+        try:
+            return yaml.load(f, Loader=XsoarLoader)
+        except Exception as e:
+            raise ValueError(
+                "{} has a structure issue of file type {}. Error was: {}".format(file_path, 'yml', str(e)))
+    return {}
 
 
 def get_ryaml(file_path: str) -> dict:
@@ -546,7 +569,7 @@ def get_from_version(file_path):
     data_dictionary = get_yaml(file_path) or get_json(file_path)
 
     if data_dictionary:
-        from_version = data_dictionary.get('fromversion') if 'fromversion' in data_dictionary\
+        from_version = data_dictionary.get('fromversion') if 'fromversion' in data_dictionary \
             else data_dictionary.get('fromVersion', '0.0.0')
         if from_version == "":
             return "0.0.0"
@@ -1025,6 +1048,7 @@ def find_type_by_path(path: str = '') -> Optional[FileType]:
         return FileType.XSOAR_CONFIG
 
     return None
+
 
 # flake8: noqa: C901
 

@@ -444,6 +444,19 @@ def get_file(method, file_path, type_of_file):
     return {}
 
 
+# fix for https://github.com/yaml/pyyaml/issues/266
+class reference(yaml.YAMLObject):
+    yaml_loader = yaml.SafeLoader
+    yaml_tag = 'reference'
+    def __init__(self, val):
+        self.val = val
+
+    @classmethod
+    def from_yaml(cls, loader, node):
+
+        return cls(node.value)
+
+
 def get_yaml(file_path):
     return get_file(yaml.safe_load, file_path, ('yml', 'yaml'))
 

@@ -294,7 +294,7 @@ class UpdateRN:
             :return
             The display name
         """
-        struct = StructureValidator(file_path=file_path, is_new_file=True)
+        struct = StructureValidator(file_path=file_path, is_new_file=True, predefined_scheme=find_type(file_path))
         file_data = struct.load_data_from_file()
         if 'display' in file_data:
             name = file_data.get('display', None)

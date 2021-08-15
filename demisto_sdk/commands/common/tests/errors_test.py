@@ -181,3 +181,26 @@ class TestErrors(unittest.TestCase):
         expected_result = (error_statement, "AI101")
         result = Errors.author_image_fie_invalid_dimensions()
         assert result == expected_result
+
+    def test_integration_is_skipped(self):
+        """
+        Given: Name of a skipped integration, with no `skip comment`
+        When: Returning an error message
+        Then: Compile an error message, without the comment part.
+        """
+        integration_id = "dummy_integration"
+        expected = f"The integration {integration_id} is currently in skipped. Please add working tests and unskip."
+
+        assert Errors.integration_is_skipped(integration_id, skip_comment=None)[0] == expected
+        assert Errors.integration_is_skipped(integration_id, skip_comment='')[0] == expected
+        assert Errors.integration_is_skipped(integration_id)[0] == expected  # skip_comment argument is None by default
+
+    def test_integration_is_skipped__comment(self):
+        integration_id = "dummy_integration"
+        skip_comment = "Issue 00000"
+
+        expected = f"The integration {integration_id} is currently in skipped. Please add working tests and " + \
+                   f"unskip. Skip comment: {skip_comment}"
+
+        result = Errors.integration_is_skipped(integration_id, skip_comment)
+        assert result[0] == expected

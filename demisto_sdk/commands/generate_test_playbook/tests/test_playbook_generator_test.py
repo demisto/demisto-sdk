@@ -1,8 +1,14 @@
 import shutil
 from pathlib import Path
+import pytest
 
 from demisto_sdk.commands.generate_test_playbook.test_playbook_generator import \
     PlaybookTestsGenerator
+from demisto_sdk.commands.common.tools import run_command
+
+
+def git_path() -> str:
+    return run_command('git rev-parse --show-toplevel').replace('\n', '')
 
 
 class TestGenerateTestPlaybook:
@@ -40,9 +46,9 @@ class TestGenerateTestPlaybook:
         )
 
         generator.run()
-
         expected_test_playbook_yml = (TestGenerateTestPlaybook.TEST_FILE_PATH / expected_yml).read_text()
-        actual_test_playbook_yml = (Path(TestGenerateTestPlaybook.TEMP_DIR) / 'TestPlaybook.yml').read_text()
+        actual_test_playbook_yml = (
+                    Path(TestGenerateTestPlaybook.TEMP_DIR) / 'playbook-TestPlaybook_Test.yml').read_text()
 
         assert expected_test_playbook_yml == actual_test_playbook_yml
 
@@ -50,8 +56,8 @@ class TestGenerateTestPlaybook:
         """
         Given:  An integration, inside the standard Content folder structure
         When:   Called `generate_test_playbook`
-        Then:   Make sure the generated test playbook is located at the standard location
-                (Pack/TestPlayBooks/playbook-{integration_name}_Test.yml)
+        Then:   Make sure the generated test playbook is correct, and saved in the standard location
+                (.../Packs/<Pack name>/TestPlayBooks/playbook-<integration_name>_Test.yml)
         """
         pack_folder = Path(tmpdir) / 'Packs' / 'DummyPack'
 
@@ -79,10 +85,9 @@ class TestGenerateTestPlaybook:
 
     def test_generate_test_playbook__integration_not_under_packs(self, tmpdir):
         """
-        Given: an integration, NOT inside the standard Content folder structure
+        Given: an integration, NOT inside the standard Content folder structure.
         When: called `generate_test_playbook`
-        Then: Make sure the generated test playbook is located at the standard location
-              (Pack/TestPlayBooks/playbook-{integration_name}_Test.yml)
+        Then: Make sure the generated test playbook is correct, and saved in the folder from which SDK was called.
         """
 
         generator = PlaybookTestsGenerator(

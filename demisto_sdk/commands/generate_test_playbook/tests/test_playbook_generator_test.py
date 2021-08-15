@@ -1,10 +1,11 @@
 import shutil
 from pathlib import Path
+
 import pytest
 
+from demisto_sdk.commands.common.tools import run_command
 from demisto_sdk.commands.generate_test_playbook.test_playbook_generator import \
     PlaybookTestsGenerator
-from demisto_sdk.commands.common.tools import run_command
 
 
 def git_path() -> str:

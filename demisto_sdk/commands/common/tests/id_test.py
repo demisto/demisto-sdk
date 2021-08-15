@@ -112,7 +112,7 @@ def test_is_incident_field_using_existing_script_positive():
     """
     validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
 
-    incident_field_data = {'incident-field': {
+    incident_field_data = {'Incident_field_test': {
         'id': 'Incident_field_test',
         'name': 'Incident_field_test',
         'scripts': ['script_to_test']
@@ -144,7 +144,7 @@ def test_is_incident_field_using_existing_script_negative():
     """
     validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
 
-    incident_field_data = {'incident-field': {
+    incident_field_data = {'Incident_field_test': {
         'id': 'Incident_field_test',
         'name': 'Incident_field_test',
         'scripts': ['a fake script id']
@@ -177,7 +177,7 @@ def test_is_incident_field_using_existing_script_no_scripts():
     """
     validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
 
-    incident_field_data = {'incident-field': {
+    incident_field_data = {'Incident_field_test': {
         'id': 'Incident_field_test',
         'name': 'Incident_field_test'
     }

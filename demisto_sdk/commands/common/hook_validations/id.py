@@ -102,8 +102,9 @@ class IDSetValidations(BaseValidator):
         is_valid = True
         scripts_not_in_id_set = set()
 
-        incident_field = incident_field_data.get('incident-field')
-        incident_field_name = incident_field.get('name')
+        incident_field_id = list(incident_field_data.keys())[0]
+        incident_field = incident_field_data.get(incident_field_id, {})
+        incident_field_name = incident_field.get('name', incident_field_id)
         scripts_set = set(incident_field.get('scripts', []))
 
         # Check if the incident field scripts are in the id_set:
@@ -133,8 +134,9 @@ class IDSetValidations(BaseValidator):
         is_valid = True
         scripts_not_in_id_set = set()
 
-        layouts_container = layouts_container_data.get('my_layoutscontainer')
-        layouts_container_name = layouts_container.get('name')
+        layouts_container_id = list(layouts_container_data.keys())[0]
+        layouts_container = layouts_container_data.get(layouts_container_id, {})
+        layouts_container_name = layouts_container.get('name', layouts_container_id)
         layouts_container_tabs = self._get_layouts_container_tabs(layouts_container)
         scripts_set = set(get_layouts_scripts_ids(layouts_container_tabs))
 
@@ -165,8 +167,9 @@ class IDSetValidations(BaseValidator):
         is_valid = True
         scripts_not_in_id_set = set()
 
-        layout = layout_data.get('my-layout')
-        layout_name = layout.get('typename')
+        layout_id = list(layout_data.keys())[0]
+        layout = layout_data.get(layout_id, {})
+        layout_name = layout.get('typename', layout_id)
         scripts = layout.get('scripts', [])
         scripts_set = set(scripts)
 

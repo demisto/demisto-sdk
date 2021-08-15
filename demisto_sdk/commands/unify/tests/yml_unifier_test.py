@@ -248,10 +248,12 @@ def test_get_integration_doc_link_exist_in_readme(tmp_path):
     """
     unifier = YmlUnifier(str(tmp_path))
 
-    readme = tmp_path / 'README.md'
-    readme.write_text('\n\n---\n[View Integration Documentation]'
-                      '(https://xsoar.pan.dev/docs/reference/integrations/integration-readme-with-link)')
-    integration_doc_link = unifier.get_integration_doc_link({'commonfields': {'id': 'Integration README with link'}})
+    doc_link = '\n\n---\n[View Integration Documentation]' \
+               '(https://xsoar.pan.dev/docs/reference/integrations/integration-readme-with-link)'
+    integration_doc_link = unifier.get_integration_doc_link(
+        {'commonfields': {'id': 'Integration README with link'}},
+        doc_link
+    )
     assert integration_doc_link == ''
 
 

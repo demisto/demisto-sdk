@@ -1,3 +1,4 @@
+import copy
 from os.path import join
 
 import pytest
@@ -490,7 +491,7 @@ class TestIncidentFieldValidation:
         pack.create_incident_field('incident-field', incident_field_copy)
         incident_field_path = pack.incident_fields[0].path
 
-        id_set = EMPTY_ID_SET.copy()
+        id_set = copy.deepcopy(EMPTY_ID_SET)
         id_set['scripts'].extend([{'test_script': {
             'name': 'test_script',
             'file_path': 'Packs/DeveloperTools/TestPlaybooks/test_script.yml',
@@ -533,7 +534,7 @@ class TestIncidentFieldValidation:
         pack.create_incident_field('incident-field', incident_field_copy)
         incident_field_path = pack.incident_fields[0].path
 
-        id_set = EMPTY_ID_SET.copy()
+        id_set = copy.deepcopy(EMPTY_ID_SET)
         id_set['scripts'].append({'test_calc_script': {
             'name': 'test_calc_script',
             'file_path': 'Packs/DeveloperTools/TestPlaybooks/test_calc_script.yml',
@@ -2033,7 +2034,7 @@ class TestLayoutValidation:
                                                    prefix='',
                                                    content=layoutscontainer_copy)
 
-        id_set = EMPTY_ID_SET.copy()
+        id_set = copy.deepcopy(EMPTY_ID_SET)
         id_set['scripts'].append({'test_script': {
             'name': 'test_script',
             'file_path': 'Packs/DeveloperTools/TestPlaybooks/test_script.yml',
@@ -2075,7 +2076,7 @@ class TestLayoutValidation:
                                                    prefix='',
                                                    content=layoutscontainer_copy)
 
-        id_set = EMPTY_ID_SET.copy()
+        id_set = copy.deepcopy(EMPTY_ID_SET)
         id_set['scripts'].append({'not_test_script': {
             'name': 'test_script',
             'file_path': 'Packs/DeveloperTools/TestPlaybooks/test_script.yml',
@@ -2116,7 +2117,7 @@ class TestLayoutValidation:
         layout_copy['layout']['tabs'][0]['sections'] = [tab_section_to_test]
         layout = pack._create_json_based(name='layout-test', prefix='', content=layout_copy)
 
-        id_set = EMPTY_ID_SET.copy()
+        id_set = copy.deepcopy(EMPTY_ID_SET)
         id_set['scripts'].append({'test_script': {
             'name': 'test_script',
             'file_path': 'Packs/DeveloperTools/TestPlaybooks/test_script.yml',
@@ -2155,7 +2156,7 @@ class TestLayoutValidation:
         layout_copy['layout']['tabs'][0]['sections'] = [tab_section_to_test]
         layout = pack._create_json_based(name='layout-test', prefix='', content=layout_copy)
 
-        id_set = EMPTY_ID_SET.copy()
+        id_set = copy.deepcopy(EMPTY_ID_SET)
         id_set['scripts'].append({'not_test_script': {
             'name': 'test_script',
             'file_path': 'Packs/DeveloperTools/TestPlaybooks/test_script.yml',

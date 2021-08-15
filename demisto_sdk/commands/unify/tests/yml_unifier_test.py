@@ -235,28 +235,6 @@ def test_get_integration_doc_link_negative(tmp_path):
     assert integration_doc_link == ''
 
 
-def test_get_integration_doc_link_exist_in_readme(tmp_path):
-    """
-    Given:
-        - integration which have a detailed description with "View Integration Documentation" doc link
-
-    When:
-        - Getting integration doc link
-
-    Then:
-        - Verify an empty string is returned
-    """
-    unifier = YmlUnifier(str(tmp_path))
-
-    doc_link = '\n\n---\n[View Integration Documentation]' \
-               '(https://xsoar.pan.dev/docs/reference/integrations/integration-readme-with-link)'
-    integration_doc_link = unifier.get_integration_doc_link(
-        {'commonfields': {'id': 'Integration README with link'}},
-        doc_link
-    )
-    assert integration_doc_link == ''
-
-
 def test_insert_description_to_yml_doc_link_exist(tmp_path, mocker):
     """
         Given:

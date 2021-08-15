@@ -642,10 +642,11 @@ def get_layouts_scripts_ids(layout_tabs):
 
             # Find Buttons scripts:
             items = section.get('items', [])
-            for item in items:
-                script_id = item.get('scriptId')
-                if script_id:
-                    scripts.append(script_id)
+            if items:
+                for item in items:
+                    script_id = item.get('scriptId')
+                    if script_id:
+                        scripts.append(script_id)
 
     return scripts
 

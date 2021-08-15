@@ -79,7 +79,8 @@ def test_json_to_outputs__invalid_json():
         assert str(ex) == 'Invalid input JSON'
 
 
-def test_json_to_outputs__detect_date():
+@pytest.mark.parametrize('time_created', ['2019-10-10T00:00:00', '0001-01-01T00:00:00'])
+def test_json_to_outputs__detect_date(time_created):
     """
     Given
         - valid json {"create_at": "2019-10-10T00:00:00"}
@@ -90,7 +91,7 @@ def test_json_to_outputs__detect_date():
 
     """
     yaml_output = parse_json(
-        data='{"created_at": "2019-10-10T00:00:00"}',
+        data=json.dumps({"created_at": time_created}),
         command_name='jira-ticket',
         prefix='Jira.Ticket',
         descriptions={'created_at': 'time when the ticket was created.'}

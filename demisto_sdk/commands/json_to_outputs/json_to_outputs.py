@@ -123,13 +123,13 @@ def is_date(val):
     """
     Determines if val is Date, if yes returns True otherwise False
     """
-    if isinstance(val, (int, float)) and val > 15737548065 and val < 2573754806500:
+    if isinstance(val, (int, float)) and 15737548065 < val < 2573754806500:
         # 15737548065 is the lowest timestamp that exist year - 1970
         # 2573754806500 is the year 2050 - I believe no json will contain date time over this time
         # if number is between these two numbers it probably is timestamp=date
         return True
 
-    if isinstance(val, str) and len(val) >= 10 and len(val) <= 30 and dateparser.parse(val):
+    if isinstance(val, str) and 10 <= len(val) <= 30 and dateparser.parse(val, settings={'TIMEZONE': 'UTC'}):
         # the shortest date string is => len(2019-10-10) = 10
         # The longest date string I could think of wasn't of length over len=30 '2019-10-10T00:00:00.000 +0900'
         # To reduce in performance of using dateparser.parse,I

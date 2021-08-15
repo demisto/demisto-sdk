@@ -1,4 +1,5 @@
 # Changelog
+* Fixed an issue where the **json-to-outputs** command failed checking whether `0001-01-01T00:00:00` is of type `Date`
 
 # 1.4.7
 * Fixed an issue where the **format** command has incorrectly recognized on which files to run when running using git.

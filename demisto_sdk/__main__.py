@@ -933,11 +933,15 @@ def json_to_outputs_command(**kwargs):
 @click.option(
     '-o', '--output',
     required=False,
-    help='Specify output directory')
+    help='Specify output directory or path. '
+         'If not specified, and the input is located at `.../Packs/<pack_name>/Integrations`, ' 
+         'the output is saved under `.../Packs/<pack_name>/TestPlaybooks`. ' 
+         'If not specified, and no folder in the input hierarchy is named Packs, '
+         'the output is saved in the current directory.')
 @click.option(
     '-n', '--name',
     required=True,
-    help='Specify test playbook name')
+    help='Specify test playbook name. The output file name will be `playbook-<name>_Test.yml')
 @click.option(
     '--no-outputs', is_flag=True,
     help='Skip generating verification conditions for each output contextPath. Use when you want to decide which '

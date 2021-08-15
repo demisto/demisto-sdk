@@ -24,7 +24,7 @@ class TestAuthorImageValidator:
                        ]
 
     @pytest.mark.parametrize('author_image_path, support_level, max_image_size, expected', IS_VALID_INPUTS)
-    def test_is_valid(self, mocker, author_image_path: str, support_level: str, max_image_size: int, expected: bool):
+    def test_is_valid(self, mocker, repo, author_image_path: str, support_level: str, max_image_size: int, expected: bool):
         """
         Given:
         - 'author_image_path': path to where author image should be found.
@@ -52,8 +52,15 @@ class TestAuthorImageValidator:
         Case h: Ensure false is returned.
 
         """
-        author_image_validator: AuthorImageValidator = AuthorImageValidator('', '', maximum_image_size=max_image_size)
+        # setup test pack and write the author image to test if exists
+        pack = repo.create_pack('my_pack')
+        if os.path.exists(author_image_path):
+            with open(author_image_path, 'rb') as f:
+                pack.author_image.write_bytes(f.read())
+
+        author_image_validator: AuthorImageValidator = AuthorImageValidator(pack.author_image.path,
+                                                                            maximum_image_size=max_image_size)
         mocker.patch.object(author_image_validator, 'handle_error')
+        mocker.patch.object(author_image_validator, 'get_support_level', return_value=support_level)
         author_image_validator.file_path = author_image_path
-        author_image_validator.support_level = support_level
         assert author_image_validator.is_valid() == expected

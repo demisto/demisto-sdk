@@ -294,7 +294,7 @@ class UpdateRN:
             :return
             The display name
         """
-        struct = StructureValidator(file_path=file_path, is_new_file=True)
+        struct = StructureValidator(file_path=file_path, is_new_file=True, predefined_scheme=find_type(file_path))
         file_data = struct.load_data_from_file()
         if 'display' in file_data:
             name = file_data.get('display', None)
@@ -761,7 +761,9 @@ def check_docker_image_changed(added_or_modified_yml: str) -> Optional[str]:
         for diff_line in diff_lines:
             if 'dockerimage:' in diff_line:  # search whether exists a line that notes that the Docker image was
                 # changed.
-                return diff_line.split()[-1]
+                split_line = diff_line.split()
+                if split_line[0] == '+':
+                    return split_line[-1]
         return None
 
 

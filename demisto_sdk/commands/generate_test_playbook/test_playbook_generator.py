@@ -282,8 +282,13 @@ class PlaybookTestsGenerator:
         generated_test_playbook_file_name = f'playbook-{name}_Test.yml'
 
         if output:
-            """ if an output folder is provided, save it there"""
-            self.test_playbook_yml_path = str(Path(output) / generated_test_playbook_file_name)
+            """ if an output folder path is provided, save it there"""
+            output_path = Path(output)
+            if output_path.is_dir():
+                self.test_playbook_yml_path = str(output_path / generated_test_playbook_file_name)
+            else:
+                """ if a specific destination path is specified for the playbook, use it"""
+                self.test_playbook_yml_path = output
         else:
             input_folder = Path(input)
 
@@ -320,11 +325,6 @@ class PlaybookTestsGenerator:
         local directory
 
         """
-        if self.output:
-            if not os.path.isdir(self.output):
-                print_error(f'Directory not exist: {self.output}')
-                return
-
         ryaml = YAML()
         ryaml.preserve_quotes = True
         try:
@@ -368,6 +368,10 @@ class PlaybookTestsGenerator:
             )
 
         test_playbook.add_task(create_end_task(test_playbook.task_counter))
+
+        if Path(self.test_playbook_yml_path).exists():
+            print_color(f'Warning: There already exists a test playbook at {self.test_playbook_yml_path}, '
+                        f'it will be overwritten.', LOG_COLORS.YELLOW)
 
         with open(self.test_playbook_yml_path, 'w') as yf:
             ryaml.dump(test_playbook.to_dict(), yf)

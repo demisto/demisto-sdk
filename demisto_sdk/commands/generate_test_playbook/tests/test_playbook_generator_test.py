@@ -34,7 +34,7 @@ class TestGenerateTestPlaybook:
     def test_generate_test_playbook(self, use_all_brands, expected_yml):
         """
         Given:  An integration yml file
-        When:   Calling generate_test_playbook
+        When:   Calling generate_test_playbook with any value of use_all_brands
         Then:   Ensure output is in the expected format
         """
         generator = PlaybookTestsGenerator(
@@ -47,15 +47,15 @@ class TestGenerateTestPlaybook:
 
         generator.run()
         expected_test_playbook_yml = (TestGenerateTestPlaybook.TEST_FILE_PATH / expected_yml).read_text()
-        actual_test_playbook_yml = (
-                    Path(TestGenerateTestPlaybook.TEMP_DIR) / 'playbook-TestPlaybook_Test.yml').read_text()
+        actual_test_playbook_yml = (Path(TestGenerateTestPlaybook.TEMP_DIR) /
+                                    'playbook-TestPlaybook_Test.yml').read_text()
 
         assert expected_test_playbook_yml == actual_test_playbook_yml
 
     def test_generate_test_playbook__integration_under_packs(self, tmpdir):
         """
         Given:  An integration, inside the standard Content folder structure
-        When:   Called `generate_test_playbook`
+        When:   Called `generate_test_playbook` without a blank `output` field
         Then:   Make sure the generated test playbook is correct, and saved in the standard location
                 (.../Packs/<Pack name>/TestPlayBooks/playbook-<integration_name>_Test.yml)
         """
@@ -103,5 +103,54 @@ class TestGenerateTestPlaybook:
         expected_test_playbook_yml = Path(TestGenerateTestPlaybook.TEST_FILE_PATH /
                                           'fake_integration_expected_test_playbook.yml').read_text()
         actual_test_playbook_yml = Path('playbook-TestPlaybook_Test.yml').read_text()
+
+        assert expected_test_playbook_yml == actual_test_playbook_yml
+
+    def test_generate_test_playbook__specified_output_folder(self, tmpdir):
+        """
+        Given: an integration yaml, and a specified output folder
+        When: called `generate_test_playbook`
+        Then: Make sure the generated test playbook is correct, and saved in the relevant location.
+        """
+        tmpdir.mkdir("some_folder")
+        output = tmpdir.join("some_folder")
+        generator = PlaybookTestsGenerator(
+            input=TestGenerateTestPlaybook.DUMMY_INTEGRATION_YML_PATH,
+            file_type='integration',
+            output=output,
+            name='TestPlaybook',
+            use_all_brands=False
+        )
+
+        generator.run()
+
+        expected_test_playbook_yml = Path(TestGenerateTestPlaybook.TEST_FILE_PATH /
+                                          'fake_integration_expected_test_playbook.yml').read_text()
+        actual_test_playbook_yml = output.join(f'playbook-TestPlaybook_Test.yml').read_text('utf8')
+
+        assert expected_test_playbook_yml == actual_test_playbook_yml
+
+    def test_generate_test_playbook__specified_output_file(self, tmpdir):
+        """
+        Given: an integration yaml, and a specified output file
+        When: called `generate_test_playbook`
+        Then: Make sure the generated test playbook is correct, and saved in the relevant location.
+        """
+        tmpdir.mkdir("some_folder")
+        output = tmpdir.join("some_folder").join("dest_file.yml")
+
+        generator = PlaybookTestsGenerator(
+            input=TestGenerateTestPlaybook.DUMMY_INTEGRATION_YML_PATH,
+            file_type='integration',
+            output=output,
+            name='TestPlaybook',
+            use_all_brands=False
+        )
+
+        generator.run()
+
+        expected_test_playbook_yml = Path(TestGenerateTestPlaybook.TEST_FILE_PATH /
+                                          'fake_integration_expected_test_playbook.yml').read_text()
+        actual_test_playbook_yml = output.read_text('utf8')
 
         assert expected_test_playbook_yml == actual_test_playbook_yml

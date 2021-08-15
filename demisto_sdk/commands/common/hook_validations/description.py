@@ -35,7 +35,7 @@ class DescriptionValidator(BaseValidator):
         self.verify_demisto_in_description_content()
 
         # make sure the description is a seperate file
-        data_dictionary = get_yaml(self.file_path)
+        data_dictionary = get_yaml(self.file_path) if find_type(self.file_path) else {}
         if not data_dictionary.get('detaileddescription'):
             self.is_valid_description_name()
             self.contains_contrib_details()

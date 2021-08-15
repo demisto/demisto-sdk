@@ -448,6 +448,7 @@ def get_file(method, file_path, type_of_file):
 class reference(yaml.YAMLObject):
     yaml_loader = yaml.SafeLoader
     yaml_tag = 'reference'
+
     def __init__(self, val):
         self.val = val
 

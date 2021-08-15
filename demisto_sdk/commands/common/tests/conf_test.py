@@ -21,9 +21,6 @@ TESTS_SECTION = [
 ]
 
 
-# TODO: Unskip
-
-
 def test_conf_json_description(mocker):
     mocker.patch('demisto_sdk.commands.common.hook_validations.conf_json.ConfJsonValidator.load_conf_file',
                  return_value=None)

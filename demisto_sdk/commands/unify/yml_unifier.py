@@ -233,7 +233,9 @@ class YmlUnifier:
         if desc_data:
             detailed_description = FoldedScalarString(desc_data.decode('utf-8'))
 
-        integration_doc_link = self.get_integration_doc_link(yml_data, detailed_description)
+        integration_doc_link = ''
+        if '[View Integration Documentation]' not in detailed_description:
+            integration_doc_link = self.get_integration_doc_link(yml_data)
         if integration_doc_link:
             if detailed_description:
                 detailed_description += '\n\n---\n' + integration_doc_link
@@ -466,11 +468,10 @@ class YmlUnifier:
 
         return unified_yml
 
-    def get_integration_doc_link(self, unified_yml: Dict, detailed_description='') -> str:
+    def get_integration_doc_link(self, unified_yml: Dict) -> str:
         """Generates the integration link to the integration documentation
 
         Args:
-            detailed_description: the detailed description in yml
             unified_yml (Dict): The integration YAML dictionary object
 
         Returns:
@@ -482,10 +483,7 @@ class YmlUnifier:
         readme_path = os.path.join(self.package_path, 'README.md')
         if os.path.isfile(readme_path) and os.stat(readme_path).st_size != 0:
             # verify README file exists and is not empty
-            if '[View Integration Documentation]' not in detailed_description:
-                return f'[View Integration Documentation]({integration_doc_link})'
-            else:
-                return ''
+            return f'[View Integration Documentation]({integration_doc_link})'
         else:
             click.secho(
                 f'Did not find README in {self.package_path}, not adding integration doc link',

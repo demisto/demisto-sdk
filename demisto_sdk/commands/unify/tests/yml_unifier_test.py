@@ -257,6 +257,26 @@ def test_get_integration_doc_link_exist_in_readme(tmp_path):
     assert integration_doc_link == ''
 
 
+def test_insert_description_to_yml_doc_link_exist(tmp_path, mocker):
+    """
+        Given:
+            - integration which have a detailed description with "View Integration Documentation" doc link
+
+        When:
+            - Getting integration doc link
+
+        Then:
+            - Verify get_integration_doc_link function is not called
+        """
+    detailed_desc = tmp_path / 'integration_description.md'
+    detailed_desc.write_text('[View Integration Documentation]'
+                             '(https://xsoar.pan.dev/docs/reference/integrations/some-integration-id)')
+    mock_func = mocker.patch.object(YmlUnifier, 'get_integration_doc_link', return_result='')
+    unifier = YmlUnifier(str(tmp_path))
+    yml_unified, _ = unifier.insert_description_to_yml({'commonfields': {'id': 'some integration id'}}, {})
+    assert mock_func.call_count == 0
+
+
 def test_insert_image_to_yml():
     with patch.object(YmlUnifier, "__init__", lambda a, b, c, d, e: None):
         unifier = YmlUnifier('', None, None, None)

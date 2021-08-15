@@ -630,23 +630,24 @@ def get_layouts_scripts_ids(layout_tabs):
     scripts = []
 
     for tab in layout_tabs:
-        tab_sections = tab.get('sections', [])
-        for section in tab_sections:
+        if isinstance(tab, dict):
+            tab_sections = tab.get('sections', [])
+            for section in tab_sections:
 
-            # Find dynamic sections scripts:
-            query_type = section.get('queryType')
-            if query_type == 'script':
-                script_id = section.get('query')
-                if script_id:
-                    scripts.append(script_id)
-
-            # Find Buttons scripts:
-            items = section.get('items', [])
-            if items:
-                for item in items:
-                    script_id = item.get('scriptId')
+                # Find dynamic sections scripts:
+                query_type = section.get('queryType')
+                if query_type == 'script':
+                    script_id = section.get('query')
                     if script_id:
                         scripts.append(script_id)
+
+                # Find Buttons scripts:
+                items = section.get('items', [])
+                if items:
+                    for item in items:
+                        script_id = item.get('scriptId')
+                        if script_id:
+                            scripts.append(script_id)
 
     return scripts
 

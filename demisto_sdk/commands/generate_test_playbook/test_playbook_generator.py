@@ -291,7 +291,7 @@ class PlaybookTestsGenerator:
             input_folder = Path(input)
 
             if 'Packs' in (p.name for p in input_folder.parents):
-                """ 
+                """
                 if input yml is under standard Packs/<Pack>/Integrations/<Integration> path,
                 save the test-playbook under   Packs/<Pack>/TestPlaybooks
                  """

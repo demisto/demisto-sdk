@@ -168,10 +168,12 @@ class BaseValidator:
             self.ignored_errors[file_name] = additional_ignored_errors
 
     @staticmethod
-    def add_to_report_error_list(error_code, file_path, error_list):
+    def add_to_report_error_list(error_code, file_path, error_list) -> bool:
         formatted_file_and_error = f'{file_path} - [{error_code}]'
         if formatted_file_and_error not in error_list:
             error_list.append(formatted_file_and_error)
+            return True
+        return False
 
     def json_output(self, file_path: str, error_code: str, error_message: str, warning: bool) -> None:
         """Adds an error's info to the output JSON file

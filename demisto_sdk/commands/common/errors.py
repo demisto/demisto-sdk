@@ -770,7 +770,7 @@ class Errors:
     def suggest_docker_fix(docker_image_name: str, file_path: str) -> str:
         return f'You can check for the most updated version of {docker_image_name} ' \
                f'here: https://hub.docker.com/r/{docker_image_name}/tags\n' \
-               f'To update the docker image run: demisto-sdk format -ud -i {file_path}\n'
+               f'To update the docker image run:\ndemisto-sdk format -ud -i {file_path}\n'
 
     @staticmethod
     @error_code_decorator
@@ -1103,8 +1103,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def description_contains_demisto_word(line_nums):
-        return f'Found the word \'Demisto\' in the description content in lines: {line_nums}.'
+    def description_contains_demisto_word(line_nums, yml_or_file):
+        return f'Found the word \'Demisto\' in the description content {yml_or_file} in lines: {line_nums}.'
 
     @staticmethod
     @error_code_decorator

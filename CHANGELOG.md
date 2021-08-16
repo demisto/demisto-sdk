@@ -1,5 +1,7 @@
 # Changelog
 * Fixed an issue where yml files with '!reference' failed to load properly.
+* Fixed an issue when `View Integration Documentation` button was added twice during the download and re-upload.
+* Fixed an issue when `(Partner Contribution)` was added twice to the display name during the download and re-upload.
 * Enhanced **generate-docs** with default `additionalinformation` (description) for common parameters.
 
 # 1.4.7

@@ -1,7 +1,9 @@
 import json
 import os.path
 import re
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 
 from requests.structures import CaseInsensitiveDict
 
@@ -172,7 +174,7 @@ def generate_integration_doc(
 
 # Setup integration on Demisto
 
-with open('demisto_sdk/commands/generate_docs/default_additional_information.json') as f:
+with open(Path(git_path()) / 'demisto_sdk/commands/generate_docs/default_additional_information.json') as f:
     # Case insensitive to catch both `API key` and `API Key`, giving both the same value.
     default_additional_information: CaseInsensitiveDict = CaseInsensitiveDict(json.load(f))
 

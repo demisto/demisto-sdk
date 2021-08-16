@@ -27,13 +27,12 @@ from ruamel.yaml import YAML
 
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK, CLASSIFIERS_DIR,
-    CONTEXT_OUTPUT_README_TABLE_HEADER, DASHBOARDS_DIR, DEF_DOCKER,
-    DEF_DOCKER_PWSH, DOC_FILES_DIR, ID_IN_COMMONFIELDS, ID_IN_ROOT,
-    INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
-    INTEGRATIONS_DIR, LAYOUTS_DIR, OFFICIAL_CONTENT_ID_SET_PATH,
-    PACK_IGNORE_TEST_FLAG, PACKAGE_SUPPORTING_DIRECTORIES,
-    PACKAGE_YML_FILE_REGEX, PACKS_DIR, PACKS_DIR_REGEX,
-    PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
+    DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH, DOC_FILES_DIR,
+    ID_IN_COMMONFIELDS, ID_IN_ROOT, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
+    INDICATOR_FIELDS_DIR, INTEGRATIONS_DIR, LAYOUTS_DIR,
+    OFFICIAL_CONTENT_ID_SET_PATH, PACK_IGNORE_TEST_FLAG,
+    PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
+    PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
     PACKS_README_FILE_NAME, PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR,
     RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR,
@@ -63,6 +62,23 @@ LOG_VERBOSE = False
 LAYOUT_CONTAINER_FIELDS = {'details', 'detailsV2', 'edit', 'close', 'mobile', 'quickView', 'indicatorsQuickView',
                            'indicatorsDetails'}
 SDK_PYPI_VERSION = r'https://pypi.org/pypi/demisto-sdk/json'
+
+
+class XsoarLoader(yaml.SafeLoader):
+    """
+    New yaml loader based on SafeLoader which can handle the XSOAR related changes in yml.
+    """
+
+    def reference(self, node):
+        """
+        !reference - found in gitlab ci files.
+        handle !reference tag by turning its line into a string.
+        """
+        build_string = '!reference ' + str(self.construct_sequence(node))
+        return self.construct_yaml_str(yaml.ScalarNode(tag='!reference', value=build_string))
+
+
+XsoarLoader.add_constructor('!reference', XsoarLoader.reference)
 
 
 def set_log_verbose(verbose: bool):
@@ -214,13 +230,15 @@ def get_remote_file(
     local_content = '{}'
 
     github_path = urljoin(github_config.CONTENT_GITHUB_LINK, github_tag, full_file_path)
+    github_token: Optional[str] = None
     try:
         external_repo = is_external_repository()
         if external_repo:
             githhub_config = GithubContentConfig()
-            if githhub_config.Credentials.TOKEN:
+            github_token = githhub_config.Credentials.TOKEN
+            if github_token:
                 res = requests.get(github_path, verify=False, timeout=10, headers={
-                    'Authorization': f"Bearer {githhub_config.Credentials.TOKEN}",
+                    'Authorization': f"Bearer {github_token}",
                     'Accept': f'application/vnd.github.VERSION.raw',
                 })  # Sometime we need headers
                 if not res.ok:  # sometime we need param token
@@ -228,7 +246,7 @@ def get_remote_file(
                         github_path,
                         verify=False,
                         timeout=10,
-                        params={'token': githhub_config.Credentials.TOKEN}
+                        params={'token': github_token}
                     )
                 res.raise_for_status()
             else:
@@ -255,11 +273,13 @@ def get_remote_file(
             res = requests.get(github_path, verify=False, timeout=10)
             res.raise_for_status()
     except Exception as exc:
+        # Replace token secret if needed
+        err_msg: str = str(exc).replace(github_token, 'XXX') if github_token else str(exc)
         if not suppress_print:
             click.secho(
                 f'Could not find the old entity file under "{github_path}".\n'
                 'please make sure that you did not break backward compatibility.\n'
-                f'Reason: {exc}', fg='yellow'
+                f'Reason: {err_msg}', fg='yellow'
             )
         return {}
     file_content = res.content if res.ok else local_content
@@ -423,7 +443,7 @@ def get_last_remote_release_version():
     return ''
 
 
-def get_file(method, file_path, type_of_file):
+def get_file(file_path, type_of_file):
     data_dictionary = None
     with open(os.path.expanduser(file_path), mode="r", encoding="utf8") as f:
         if file_path.endswith(type_of_file):
@@ -432,7 +452,12 @@ def get_file(method, file_path, type_of_file):
             # revert str to stream for loader
             stream = io.StringIO(replaced)
             try:
-                data_dictionary = method(stream)
+                if 'yml' == type_of_file:
+                    data_dictionary = yaml.load(stream, Loader=XsoarLoader)
+
+                else:
+                    data_dictionary = json.load(stream)
+
             except Exception as e:
                 raise ValueError(
                     "{} has a structure issue of file type {}. Error was: {}".format(file_path, type_of_file, str(e)))
@@ -442,7 +467,7 @@ def get_file(method, file_path, type_of_file):
 
 
 def get_yaml(file_path):
-    return get_file(yaml.safe_load, file_path, ('yml', 'yaml'))
+    return get_file(file_path, 'yml')
 
 
 def get_ryaml(file_path: str) -> dict:
@@ -467,7 +492,7 @@ def get_ryaml(file_path: str) -> dict:
 
 
 def get_json(file_path):
-    return get_file(json.load, file_path, 'json')
+    return get_file(file_path, 'json')
 
 
 def get_script_or_integration_id(file_path):
@@ -540,10 +565,10 @@ def collect_ids(file_path):
 
 
 def get_from_version(file_path):
-    data_dictionary = get_yaml(file_path) or get_json(file_path)
+    data_dictionary = get_yaml(file_path) if file_path.endswith('yml') else get_json(file_path)
 
     if data_dictionary:
-        from_version = data_dictionary.get('fromversion') if 'fromversion' in data_dictionary\
+        from_version = data_dictionary.get('fromversion') if 'fromversion' in data_dictionary \
             else data_dictionary.get('fromVersion', '0.0.0')
         if from_version == "":
             return "0.0.0"
@@ -1022,6 +1047,7 @@ def find_type_by_path(path: str = '') -> Optional[FileType]:
         return FileType.XSOAR_CONFIG
 
     return None
+
 
 # flake8: noqa: C901
 
@@ -1733,10 +1759,9 @@ def compare_context_path_in_yml_and_readme(yml_dict, readme_content):
 
     # Gets the data from the README
     # the pattern to get the context part out of command section:
-    context_section_pattern = CONTEXT_OUTPUT_README_TABLE_HEADER.replace('|', '\\|').replace('*',
-                                                                                             r'\*') + ".(.*?)#{3,5}"
+    context_section_pattern = r"\| *\*\*Path\*\* *\| *\*\*Type\*\* *\| *\*\*Description\*\* *\|.(.*?)#{3,5}"
     # the pattern to get the value in the first column under the outputs table:
-    context_path_pattern = r"\| ([^\|]*) \| [^\|]* \| [^\|]* \|"
+    context_path_pattern = r"\| *(\S.*?\S) *\| *[^\|]* *\| *[^\|]* *\|"
     readme_content += "### "  # mark end of file so last pattern of regex will be recognized.
     commands = yml_dict.get("script", {})
 
@@ -1759,7 +1784,12 @@ def compare_context_path_in_yml_and_readme(yml_dict, readme_content):
             context_path_in_command = set()
         else:
             context_path_in_command = set(re.findall(context_path_pattern, context_section[0], re.DOTALL))
-            context_path_in_command.remove('---')
+
+            # remove the header line ---- (could be of any length)
+            for path in context_path_in_command:
+                if not path.replace('-', ''):
+                    context_path_in_command.remove(path)
+                    break
 
         # handles cases of old integrations with context in 'important' section
         if 'important' in command:

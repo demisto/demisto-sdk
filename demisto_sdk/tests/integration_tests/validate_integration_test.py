@@ -2596,9 +2596,9 @@ class TestAuthorImageValidation:
             "useCases": [],
             "keywords": []
         })
+        pack.author_image.write('')
         author_image_path = pack.author_image.path
         with ChangeCWD(repo.path):
-
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', author_image_path],
                                    catch_exceptions=False)
@@ -2624,6 +2624,7 @@ class TestAllFilesValidator:
         mocker.patch.object(PackUniqueFilesValidator, 'are_valid_files', return_value='')
         mocker.patch.object(ValidateManager, 'validate_readme', return_value=True)
         pack1 = repo.create_pack('PackName1')
+        pack1.author_image.write(DEFAULT_IMAGE_BASE64)
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
         valid_integration_yml = get_yaml(pack_integration_path)
         integration = pack1.create_integration('integration0', yml=valid_integration_yml)
@@ -2632,12 +2633,14 @@ class TestAllFilesValidator:
 
         valid_script_yml = get_yaml(VALID_SCRIPT_PATH)
         pack2 = repo.create_pack('PackName2')
+        pack2.author_image.write(DEFAULT_IMAGE_BASE64)
         script = pack2.create_script(yml=valid_script_yml)
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-a', '--no-docker-checks', '--no-conf-json'],
                                    catch_exceptions=False)
+            print(result.stdout)
 
         assert 'Validating all files' in result.stdout
         assert 'Validating Packs/PackName1 unique pack files' in result.stdout
@@ -2646,6 +2649,7 @@ class TestAllFilesValidator:
         assert f'Validating {incident_field.get_path_from_pack()} as incidentfield' in result.stdout
         assert f'Validating {dashboard.get_path_from_pack()} as dashboard' in result.stdout
         assert f'Validating {script.yml.rel_path} as script' in result.stdout
+        assert 'Validating pack author image' in result.stdout
         assert 'The files are valid' in result.stdout
         assert result.exit_code == 0
 
@@ -2690,6 +2694,7 @@ class TestAllFilesValidator:
         assert f'Validating {incident_field.get_path_from_pack()} as incidentfield' in result.stdout
         assert f'Validating {dashboard.get_path_from_pack()} as dashboard' in result.stdout
         assert f'Validating {script.yml.rel_path} as script' in result.stdout
+        assert 'Validating pack author image' in result.stdout
         assert 'IF101' in result.stdout
         assert 'The content key must be set to True.' in result.stdout
         assert 'SC100' in result.stdout

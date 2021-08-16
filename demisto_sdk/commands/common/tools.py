@@ -64,6 +64,23 @@ LAYOUT_CONTAINER_FIELDS = {'details', 'detailsV2', 'edit', 'close', 'mobile', 'q
 SDK_PYPI_VERSION = r'https://pypi.org/pypi/demisto-sdk/json'
 
 
+class XsoarLoader(yaml.SafeLoader):
+    """
+    New yaml loader based on SafeLoader which can handle the XSOAR related changes in yml.
+    """
+
+    def reference(self, node):
+        """
+        !reference - found in gitlab ci files.
+        handle !reference tag by turning its line into a string.
+        """
+        build_string = '!reference ' + str(self.construct_sequence(node))
+        return self.construct_yaml_str(yaml.ScalarNode(tag='!reference', value=build_string))
+
+
+XsoarLoader.add_constructor('!reference', XsoarLoader.reference)
+
+
 def set_log_verbose(verbose: bool):
     global LOG_VERBOSE
     LOG_VERBOSE = verbose
@@ -426,7 +443,7 @@ def get_last_remote_release_version():
     return ''
 
 
-def get_file(method, file_path, type_of_file):
+def get_file(file_path, type_of_file):
     data_dictionary = None
     with open(os.path.expanduser(file_path), mode="r", encoding="utf8") as f:
         if file_path.endswith(type_of_file):
@@ -435,7 +452,12 @@ def get_file(method, file_path, type_of_file):
             # revert str to stream for loader
             stream = io.StringIO(replaced)
             try:
-                data_dictionary = method(stream)
+                if 'yml' == type_of_file:
+                    data_dictionary = yaml.load(stream, Loader=XsoarLoader)
+
+                else:
+                    data_dictionary = json.load(stream)
+
             except Exception as e:
                 raise ValueError(
                     "{} has a structure issue of file type {}. Error was: {}".format(file_path, type_of_file, str(e)))
@@ -445,7 +467,7 @@ def get_file(method, file_path, type_of_file):
 
 
 def get_yaml(file_path):
-    return get_file(yaml.safe_load, file_path, ('yml', 'yaml'))
+    return get_file(file_path, 'yml')
 
 
 def get_ryaml(file_path: str) -> dict:
@@ -470,7 +492,7 @@ def get_ryaml(file_path: str) -> dict:
 
 
 def get_json(file_path):
-    return get_file(json.load, file_path, 'json')
+    return get_file(file_path, 'json')
 
 
 def get_script_or_integration_id(file_path):
@@ -543,10 +565,10 @@ def collect_ids(file_path):
 
 
 def get_from_version(file_path):
-    data_dictionary = get_yaml(file_path) or get_json(file_path)
+    data_dictionary = get_yaml(file_path) if file_path.endswith('yml') else get_json(file_path)
 
     if data_dictionary:
-        from_version = data_dictionary.get('fromversion') if 'fromversion' in data_dictionary\
+        from_version = data_dictionary.get('fromversion') if 'fromversion' in data_dictionary \
             else data_dictionary.get('fromVersion', '0.0.0')
         if from_version == "":
             return "0.0.0"
@@ -1025,6 +1047,7 @@ def find_type_by_path(path: str = '') -> Optional[FileType]:
         return FileType.XSOAR_CONFIG
 
     return None
+
 
 # flake8: noqa: C901
 

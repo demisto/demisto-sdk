@@ -1,5 +1,6 @@
 # Changelog
 * Fixed an issue where yml files with '!reference' failed to load properly.
+* Enhanced **generate-docs** with default `additionalinformation` (description) for common parameters.
 
 # 1.4.7
 * Fixed an issue where an empty list for a command context didn't produce an indication other than an empty table.

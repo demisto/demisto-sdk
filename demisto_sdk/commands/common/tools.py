@@ -5,7 +5,6 @@ import json
 import os
 import re
 import shlex
-import struct
 import sys
 from configparser import ConfigParser, MissingSectionHeaderError
 from contextlib import contextmanager
@@ -547,7 +546,7 @@ def get_from_version(file_path):
     data_dictionary = get_yaml(file_path) or get_json(file_path)
 
     if data_dictionary:
-        from_version = data_dictionary.get('fromversion') if 'fromversion' in data_dictionary \
+        from_version = data_dictionary.get('fromversion') if 'fromversion' in data_dictionary\
             else data_dictionary.get('fromVersion', '0.0.0')
         if from_version == "":
             return "0.0.0"
@@ -1026,7 +1025,6 @@ def find_type_by_path(path: str = '') -> Optional[FileType]:
         return FileType.XSOAR_CONFIG
 
     return None
-
 
 # flake8: noqa: C901
 
@@ -2011,4 +2009,5 @@ def get_definition_name(path: str, pack_path: str) -> str:
 
     except FileNotFoundError or AttributeError:
         raise Exception("Generic Definition name was not found - "
-                        "make sure the generic field/generic type files are valid and connected to a generic definition file")
+                        "make sure the generic field/generic type files are valid and connected to a generic "
+                        "definition file")

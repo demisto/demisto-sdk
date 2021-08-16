@@ -74,7 +74,7 @@ class TestRNUpdate(unittest.TestCase):
     def test_build_rn_template_integration_for_generic(self, mock_master):
         """
             Given:
-                - a dict of changed items
+                - a dict of changed generic items
             When:
                 - we want to produce a release notes template
             Then:

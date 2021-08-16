@@ -1,5 +1,8 @@
 # Changelog
 * Fixed an issue where the **format** command has incorrectly recognized on which files to run when running using git.
+* Fixed an issue where author image validations were not checked properly.
+* Fixed an issue where new old-formatted scripts and integrations were not validated.
+* Fixed an issue where the wording in the from version validation error for subplaybooks was incorrect.
 
 # 1.4.6
 * Fixed an issue where **validate** suggests, with no reason, running **format** on missing mandatory keys in yml file.

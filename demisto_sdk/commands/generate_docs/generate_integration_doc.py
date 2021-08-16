@@ -174,7 +174,7 @@ def generate_integration_doc(
 
 # Setup integration on Demisto
 
-with open(Path(git_path()) / 'demisto_sdk/commands/generate_docs/default_additional_information.json') as f:
+with open(os.path.normpath(os.path.join(__file__, '..', 'default_additional_information.json'))) as f:
     # Case insensitive to catch both `API key` and `API Key`, giving both the same value.
     default_additional_information: CaseInsensitiveDict = CaseInsensitiveDict(json.load(f))
 

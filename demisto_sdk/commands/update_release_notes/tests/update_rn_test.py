@@ -38,8 +38,6 @@ class TestRNUpdate(unittest.TestCase):
             "\n#### Layouts\n- **Hello World Layout**\n" \
             "- **Second Hello World Layout**\n" \
             "\n#### Modules\n##### Hello World Generic Module\n- %%UPDATE_RN%%\n" \
-            "\n#### Object Fields\n- **(Object) - Hello World Generic Field**\n" \
-            "\n#### Object Types\n- **(Object) - Hello World Generic Type**\n" \
             "\n#### Objects\n##### Hello World Generic Definition\n- %%UPDATE_RN%%\n" \
             "\n#### Playbooks\n##### Hello World Playbook\n- %%UPDATE_RN%%\n" \
             "\n#### Reports\n##### Hello World Report\n- %%UPDATE_RN%%\n" \
@@ -66,19 +64,14 @@ class TestRNUpdate(unittest.TestCase):
             ("Hello World Connection", FileType.CONNECTION): {"description": "", "is_new_file": False},
             ("Hello World Report", FileType.REPORT): {"description": "", "is_new_file": False},
             ("N/A2", None): {"description": "", "is_new_file": True},
-            ("Hello World Generic Field", FileType.GENERIC_FIELD): {"description": "", "is_new_file": False, "path": "Packs"
-                                                                                                               "/HelloWorld/GenericField/object/Hello World_GenericField"},
-            ("Hello World Generic Type", FileType.GENERIC_TYPE): {"description": "", "is_new_file": False, "path": "Packs"
-                                                                                                             "/HelloWorld/GenericType/object/Hello World_GenericType"},
             ("Hello World Generic Module", FileType.GENERIC_MODULE): {"description": "", "is_new_file": False},
             ("Hello World Generic Definition", FileType.GENERIC_DEFINITION): {"description": "", "is_new_file": False}
         }
-        mock_master.patch('demisto_sdk.commands.update_release_notes.update_rn.get_definition_name', return_value="Object")
         release_notes = update_rn.build_rn_template(changed_items)
         assert expected_result == release_notes
 
     @mock.patch.object(UpdateRN, 'get_master_version')
-    def test_build_rn_template_integration(self, mock_master):
+    def test_build_rn_template_integration_for_generic(self, mock_master):
         """
             Given:
                 - a dict of changed items

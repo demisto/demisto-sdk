@@ -1998,19 +1998,17 @@ def get_definition_name(path: str, pack_path: str) -> str:
     """
     try:
         file_dictionary = get_json(path)
-        definition_id = file_dictionary.get('definitionId', "")
-
-        generic_def_path = f'{pack_path}/GenericDefinitions'
+        definition_id = file_dictionary['definitionId']
+        generic_def_path = os.path.join(pack_path, 'GenericDefinitions')
         file_names_lst = os.listdir(generic_def_path)
         for file in file_names_lst:
             if str.find(file, definition_id):
-                def_file_path = generic_def_path + "/" + file
+                def_file_path = os.path.join(generic_def_path, file)
                 def_file_dictionary = get_json(def_file_path)
-                cur_id = def_file_dictionary.get("id", "")
+                cur_id = def_file_dictionary["id"]
                 if cur_id == definition_id:
-                    return def_file_dictionary.get("name", "")
+                    return def_file_dictionary["name"]
 
-    except FileNotFoundError as e:
-        print_error("Generic Definition file was not found - printing Generic field/Generic type note without "
-                    "definition name")
-        return ""
+    except FileNotFoundError or AttributeError:
+        raise Exception("Generic Definition name was not found - "
+                        "make sure the generic field/generic type files are valid and connected to a generic definition file")

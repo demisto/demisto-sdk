@@ -1,9 +1,7 @@
 import json
 import os.path
 import re
-from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
-from demisto_sdk.commands.common.legacy_git_tools import git_path
 
 from requests.structures import CaseInsensitiveDict
 

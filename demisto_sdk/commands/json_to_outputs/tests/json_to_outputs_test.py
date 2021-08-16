@@ -105,50 +105,6 @@ outputs:
 '''
 
 
-def test_json_to_outputs__default_description():
-    """
-    Given
-        - a valid response json
-        - a description for one field that exists in default, one that isn't
-        - no description for `source Reliability` (testing case insensitivity)
-    When
-        - passed to json_to_outputs
-    Then
-        - ensure the description provided for the field that has a default description shows in description
-        - ensure the descriptions provided for the fields that do not have a default description shows in description
-
-    """
-    yaml_output = parse_json(
-        data=json.dumps({"source Reliability": "A - Completely reliable",  # default description are case insensitive
-                         "Color": "blue",
-                         "proxy": "maybe"
-                         }),
-        command_name='jira-ticket',
-        prefix='Jira.Ticket',
-        descriptions={'Color': 'The color supplied by the integration.',
-                      'Proxy': 'a non-default description for proxy'}  # none for `source Reliability` - uses default
-    )
-
-    # for comparing output with the most recent default_description values
-    with open('demisto_sdk/commands/json_to_outputs/default_key_descriptions.json') as f:
-        from requests.structures import CaseInsensitiveDict
-        default_descriptions = CaseInsensitiveDict(json.load(f))
-
-    assert yaml_output == f'''arguments: []
-name: jira-ticket
-outputs:
-- contextPath: Jira.Ticket.source Reliability
-  description: {default_descriptions['source reliability']}
-  type: String
-- contextPath: Jira.Ticket.Color
-  description: The color supplied by the integration.
-  type: String
-- contextPath: Jira.Ticket.proxy
-  description: a non-default description for proxy
-  type: String
-'''
-
-
 def test_json_to_outputs__a_list_of_dict():
     """
     Given

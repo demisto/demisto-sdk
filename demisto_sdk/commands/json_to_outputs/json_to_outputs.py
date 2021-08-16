@@ -78,7 +78,6 @@ from typing import Dict, Optional
 
 import dateparser
 import yaml
-from requests.structures import CaseInsensitiveDict
 
 from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
                                                print_error)
@@ -174,16 +173,11 @@ def parse_json(data, command_name, prefix, verbose=False, interactive=False, des
     if isinstance(data, list):
         data = {k: v for d in data for k, v in d.items()}
 
-    with open('demisto_sdk/commands/json_to_outputs/default_key_descriptions.json') as f:
-        default_descriptions: CaseInsensitiveDict = CaseInsensitiveDict(json.load(f))
-
     flattened_data = flatten_json(data)
     if prefix:
         flattened_data = {f'{prefix}.{key}': value for key, value in flattened_data.items()}
         if descriptions:
             descriptions = {f'{prefix}.{key}': value for key, value in descriptions.items()}
-        default_descriptions = \
-            CaseInsensitiveDict({f'{prefix}.{key}': value for key, value in default_descriptions.items()})
 
     arg_json = []
     for key, value in flattened_data.items():
@@ -193,8 +187,6 @@ def parse_json(data, command_name, prefix, verbose=False, interactive=False, des
         elif interactive:
             print(f'Enter description for: [{key}]')
             description = input_multiline()
-        elif key in default_descriptions:
-            description = default_descriptions[key]
 
         arg_json.append(jsonise(key, value, description))
 

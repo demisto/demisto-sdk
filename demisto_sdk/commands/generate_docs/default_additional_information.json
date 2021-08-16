@@ -1,8 +1,8 @@
 {
   "API key": "The API Key to use for connection.",
-  "Fetch Incidents": "If set to true this integration instance will pull incidents.",
-  "Incident Type": "The incident default type to create.",
-  "Source Reliability": "Reliability of the source providing the intelligence data.",
+  "Fetch Incidents": "If set to true, this integration instance will pull incidents.",
+  "Incident Type": "The default incident type to create.",
+  "Source Reliability": "Reliability of the source providing the data.",
   "Proxy": "Use system proxy settings.",
   "Insecure": "Trust any certificate (not secure)."
 }

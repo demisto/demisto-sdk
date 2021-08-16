@@ -190,10 +190,10 @@ def generate_setup_section(yaml_data: dict):
         else:
             access_data.append({
                 'Parameter': conf.get('display'),
-                'Description': string_escape_md(conf.get('additionalinfo', '')) or
-                               default_additional_information.get(conf.get('name', ''), ''),
-                               'Required': conf.get('required', '')
-                               })
+                'Description': string_escape_md(conf.get('additionalinfo', '') or
+                                                default_additional_information.get(conf.get('name', ''), '')),
+                'Required': conf.get('required', '')
+            })
 
     # Check if at least one parameter has additional info field.
     # If not, remove the description column from the access data table section.

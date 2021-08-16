@@ -22,7 +22,8 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                get_pack_name, get_remote_file,
                                                get_yaml, pack_name_to_path,
                                                print_color, print_error,
-                                               print_warning, run_command)
+                                               print_warning, run_command,
+                                               get_definition_name)
 
 
 class UpdateRN:
@@ -119,7 +120,8 @@ class UpdateRN:
                 'description': get_file_description(packfile, file_type),
                 'is_new_file': True if packfile in self.added_files else False,
                 'fromversion': get_from_version_at_update_rn(packfile),
-                'dockerimage': docker_image_name
+                'dockerimage': docker_image_name,
+                'path': packfile
             }
         return self.create_pack_rn(rn_path, changed_files, new_metadata, docker_image_name)
 
@@ -468,11 +470,13 @@ class UpdateRN:
             is_new_file = data.get('is_new_file', False)
             from_version = data.get('fromversion', '')
             docker_image = data.get('dockerimage')
+            path = data.get('path')
             # Skipping the invalid files
             if not _type or content_name == 'N/A':
                 continue
             rn_desc = self.build_rn_desc(_type=_type, content_name=content_name, desc=desc, is_new_file=is_new_file,
-                                         text=self.text, docker_image=docker_image, from_version=from_version)
+                                         text=self.text, docker_image=docker_image, from_version=from_version,
+                                         path=path)
 
             header = f'\n#### {RN_HEADER_BY_FILE_TYPE[_type]}\n'
             rn_template_as_dict[header] = rn_template_as_dict.get(header, '') + rn_desc
@@ -483,7 +487,7 @@ class UpdateRN:
         return rn_string
 
     def build_rn_desc(self, _type: FileType = None, content_name: str = '', desc: str = '', is_new_file: bool = False,
-                      text: str = '', docker_image: Optional[str] = '', from_version: str = '') -> str:
+                      text: str = '', docker_image: Optional[str] = '', from_version: str = '', path: str = '') -> str:
         """ Builds the release notes description.
 
             :param
@@ -501,6 +505,10 @@ class UpdateRN:
         if _type in (FileType.CONNECTION, FileType.INCIDENT_TYPE, FileType.REPUTATION, FileType.LAYOUT,
                      FileType.INCIDENT_FIELD, FileType.INDICATOR_FIELD):
             rn_desc = f'- **{content_name}**\n'
+
+        elif _type in (FileType.GENERIC_TYPE, FileType.GENERIC_FIELD):
+            definition_name = get_definition_name(path, self.pack_path)
+            rn_desc = f'- **({definition_name}) - {content_name}**\n'
         else:
             if is_new_file:
                 rn_desc = f'##### New: {content_name}\n- {desc}'
@@ -541,6 +549,7 @@ class UpdateRN:
             is_new_file = data.get('is_new_file')
             desc = data.get('description', '')
             docker_image = data.get('dockerimage')
+            path = data.get('path')
 
             if _type is None:
                 continue
@@ -550,6 +559,11 @@ class UpdateRN:
             if _type in (FileType.CONNECTION, FileType.INCIDENT_TYPE, FileType.REPUTATION, FileType.LAYOUT,
                          FileType.INCIDENT_FIELD):
                 rn_desc = f'\n- **{content_name}**'
+
+            elif _type in (FileType.GENERIC_TYPE, FileType.GENERIC_FIELD):
+                definition_name = get_definition_name(path, self.pack_path)
+                rn_desc = f'\n- **({definition_name}) - {content_name}**'
+
             else:
                 rn_desc = f'\n##### New: {content_name}\n- {desc}\n' if is_new_file \
                     else f'\n##### {content_name}\n- %%UPDATE_RN%%\n'

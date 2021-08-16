@@ -1,0 +1,31 @@
+{
+    "associatedToAll": false,
+    "associatedTypes": [
+        "Sample"
+    ],
+    "caseInsensitive": true,
+    "cliName": "sample",
+    "id": "generic_object_sample",
+    "name": "Sample",
+    "closeForm": false,
+    "content": true,
+    "editForm": true,
+    "group": 0,
+    "definitionId": "object",
+    "genericModuleId": "generic_testing",
+    "hidden": false,
+    "isReadOnly": false,
+    "locked": false,
+    "neverSetAsRequired": false,
+    "ownerOnly": false,
+    "required": false,
+    "sla": 0,
+    "system": false,
+    "threshold": 72,
+    "type": "shortText",
+    "unmapped": false,
+    "unsearchable": false,
+    "useAsKpi": false,
+    "version": -1,
+    "fromVersion": "6.5.0"
+}

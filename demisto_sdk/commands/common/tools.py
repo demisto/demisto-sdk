@@ -5,6 +5,7 @@ import json
 import os
 import re
 import shlex
+import struct
 import sys
 from configparser import ConfigParser, MissingSectionHeaderError
 from contextlib import contextmanager
@@ -546,7 +547,7 @@ def get_from_version(file_path):
     data_dictionary = get_yaml(file_path) or get_json(file_path)
 
     if data_dictionary:
-        from_version = data_dictionary.get('fromversion') if 'fromversion' in data_dictionary\
+        from_version = data_dictionary.get('fromversion') if 'fromversion' in data_dictionary \
             else data_dictionary.get('fromVersion', '0.0.0')
         if from_version == "":
             return "0.0.0"
@@ -1025,6 +1026,7 @@ def find_type_by_path(path: str = '') -> Optional[FileType]:
         return FileType.XSOAR_CONFIG
 
     return None
+
 
 # flake8: noqa: C901
 
@@ -1981,3 +1983,34 @@ def suppress_stdout():
             yield
         finally:
             sys.stdout = old_stdout
+
+
+def get_definition_name(path: str, pack_path: str) -> str:
+    """
+        param:
+            path (str): path to the file which needs a definition name (generic field\generic type file)
+            pack_name (str): relevant pack name
+
+        :rtype: ``str``
+        :return:
+            for generic type and generic field return associated generic definition name folder
+
+    """
+    try:
+        file_dictionary = get_json(path)
+        definition_id = file_dictionary.get('definitionId', "")
+
+        generic_def_path = f'{pack_path}/GenericDefinitions'
+        file_names_lst = os.listdir(generic_def_path)
+        for file in file_names_lst:
+            if str.find(file, definition_id):
+                def_file_path = generic_def_path + "/" + file
+                def_file_dictionary = get_json(def_file_path)
+                cur_id = def_file_dictionary.get("id", "")
+                if cur_id == definition_id:
+                    return def_file_dictionary.get("name", "")
+
+    except FileNotFoundError as e:
+        print_error("Generic Definition file was not found - printing Generic field/Generic type note without "
+                    "definition name")
+        return ""

@@ -1,0 +1,12 @@
+{
+    "id": "Sample",
+    "layout": "sample Layout",
+    "locked": false,
+    "name": "Sample",
+    "color": "#8052f4",
+    "definitionId": "object",
+    "genericModuleId": "generic_testing",
+    "system": false,
+    "version": -1,
+    "fromVersion": "6.5.0"
+}

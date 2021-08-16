@@ -1371,3 +1371,23 @@ def test_compare_context_path_in_yml_and_readme_vs_code_format_invalid():
 
     diffs = compare_context_path_in_yml_and_readme(yml_dict, readme_content)
     assert 'ServiceNow.Ticket.OpenedBy' in diffs.get('servicenow-create-ticket').get('only in yml')
+
+
+def test_get_definition_name():
+    """
+    Given
+    - The path to a generic field\genric type file.
+
+    When
+    - the file has a connected generic definition
+
+    Then:
+    - Ensure the returned name is the connected definitions name.
+    """
+
+    pack_path = f'{git_path()}/demisto_sdk/tests/test_files/generic_testing'
+    field_path = pack_path + "/GenericFields/Object/genericfield-Sample.json"
+    type_path = pack_path + "/GenericTypes/Object/generictype-Sample.json"
+
+    assert tools.get_definition_name(field_path, pack_path) == 'Object'
+    assert tools.get_definition_name(type_path, pack_path) == 'Object'

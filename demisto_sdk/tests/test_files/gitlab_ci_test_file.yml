@@ -1,0 +1,3 @@
+.install_packs_in_server:
+  script:
+    - !reference [.open-ssh-tunnel]

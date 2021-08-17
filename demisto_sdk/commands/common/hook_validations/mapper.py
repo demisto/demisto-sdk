@@ -39,6 +39,7 @@ class MapperValidator(ContentEntityValidator):
             self.is_valid_type(),
             self.is_incident_field_exist(id_set_file, is_circle),
             self.is_id_equals_name(),
+            self.is_there_spaces_in_the_end_of_id(),
         ])
 
     def is_valid_version(self):
@@ -205,3 +206,10 @@ class MapperValidator(ContentEntityValidator):
             bool. Whether the file id equals to its name
         """
         return super()._is_id_equals_name('mapper')
+
+    def is_there_spaces_in_the_end_of_id(self):
+        """
+        Returns:
+            bool. Whether the dashboard's id has no spaces in the end
+        """
+        return super()._is_there_spaces_in_the_end_of_id('mapper')

@@ -45,6 +45,8 @@ ERROR_CODE = {
     "file_name_has_separators": {'code': "BA109", 'ui_applicable': False, 'related_field': ''},
     "field_contain_forbidden_word": {'code': "BA110", 'ui_applicable': False, 'related_field': ''},
     'entity_name_contains_excluded_word': {'code': 'BA111', 'ui_applicable': False, 'related_field': ''},
+    "spaces_in_the_end_of_id": {'code': "BA112", 'ui_applicable': False, 'related_field': 'id'},
+    "spaces_in_the_end_of_name": {'code': "BA113", 'ui_applicable': False, 'related_field': 'name'},
     "wrong_display_name": {'code': "IN100", 'ui_applicable': True, 'related_field': '<parameter-name>.display'},
     "wrong_default_parameter_not_empty": {'code': "IN101", 'ui_applicable': True,
                                           'related_field': '<parameter-name>.default'},
@@ -1800,3 +1802,13 @@ class Errors:
     @error_code_decorator
     def entity_name_contains_excluded_word(entity_name: str, excluded_words: List[str]):
         return f'Entity {entity_name} should not contain one of {excluded_words} in its name. Please remove.'
+
+    @staticmethod
+    @error_code_decorator
+    def spaces_in_the_end_of_id(item_id: str):
+        return f'Content item id {item_id} should not contain spaces in the end. Please remove.'
+
+    @staticmethod
+    @error_code_decorator
+    def spaces_in_the_end_of_name(name: str):
+        return f'Content item name {name} should not contain spaces in the end. Please remove.'

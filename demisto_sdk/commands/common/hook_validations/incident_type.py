@@ -34,7 +34,8 @@ class IncidentTypeValidator(ContentEntityValidator):
         is_incident_type__valid = all([
             super().is_valid_file(validate_rn),
             self.is_valid_version(),
-            self.is_valid_autoextract()
+            self.is_valid_autoextract(),
+            self.is_there_spaces_in_the_end_of_id(),
         ])
 
         # check only on added files
@@ -174,3 +175,10 @@ class IncidentTypeValidator(ContentEntityValidator):
                 is_valid = False
 
         return is_valid
+
+    def is_there_spaces_in_the_end_of_id(self):
+        """
+        Returns:
+            bool. Whether the incident_type's id has no spaces in the end
+        """
+        return super(IncidentTypeValidator, self)._is_there_spaces_in_the_end_of_id('incident_type')

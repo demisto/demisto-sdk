@@ -21,7 +21,10 @@ class DashboardValidator(ContentEntityValidator):
         Returns:
             bool. Whether the dashboard is valid or not
         """
-        is_dashboard_valid = super().is_valid_file(validate_rn)
+        is_dashboard_valid = all([
+            super().is_valid_file(validate_rn),
+            self.is_there_spaces_in_the_end_of_id(),
+        ])
 
         # check only on added files
         if not self.old_file:
@@ -121,3 +124,10 @@ class DashboardValidator(ContentEntityValidator):
         if error_msg:
             print_error(error_msg)
         return is_valid
+
+    def is_there_spaces_in_the_end_of_id(self):
+        """
+        Returns:
+            bool. Whether the dashboard's id has no spaces in the end
+        """
+        return super(DashboardValidator, self)._is_there_spaces_in_the_end_of_id('dashboard')

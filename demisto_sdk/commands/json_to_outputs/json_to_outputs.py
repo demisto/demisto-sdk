@@ -129,10 +129,10 @@ def is_date(val):
         # if number is between these two numbers it probably is timestamp=date
         return True
 
-    if isinstance(val, str) and len(val) >= 10 and len(val) <= 30 and dateparser.parse(val):
+    if isinstance(val, str) and len(val) >= 10 and len(val) <= 30 and dateparser.parse(val,
+                                                                                       settings={'TIMEZONE': 'UTC'}):
         # the shortest date string is => len(2019-10-10) = 10
         # The longest date string I could think of wasn't of length over len=30 '2019-10-10T00:00:00.000 +0900'
-        # To reduce in performance of using dateparser.parse,I
         return True
 
     return False

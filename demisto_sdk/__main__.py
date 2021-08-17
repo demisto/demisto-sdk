@@ -957,9 +957,9 @@ def json_to_outputs_command(**kwargs):
     required=False
 )
 @click.option(
-    "-e", "--examples", help="Integrations: path for file containing command examples."
+    "-e", "--examples", help="For integrations: path for file containing command examples."
                              " Each command should be in a separate line."
-                             " Scripts: the script example surrounded by quotes."
+                             " For scripts: the script example surrounded by quotes."
                              " For example: -e '!ConvertFile entry_id=<entry_id>'"
 )
 @click.option(

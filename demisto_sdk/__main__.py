@@ -933,11 +933,13 @@ def json_to_outputs_command(**kwargs):
 @click.option(
     '-o', '--output',
     required=False,
-    help='Specify output directory or path. '
+    help='Specify output directory or path to an output yml file. '
+         'If a path to a yml file is specified - it will be the output path.\n'
+         'If a folder path is specified - a yml output will be saved in the folder.\n'
          'If not specified, and the input is located at `.../Packs/<pack_name>/Integrations`, '
-         'the output is saved under `.../Packs/<pack_name>/TestPlaybooks`. '
-         'If not specified, and no folder in the input hierarchy is named Packs, '
-         'the output is saved in the current directory.')
+         'the output will be saved under `.../Packs/<pack_name>/TestPlaybooks`.\n'
+         'Otherwise (no folder in the input hierarchy is named `Packs`), '
+         'the output will be saved in the current directory.')
 @click.option(
     '-n', '--name',
     required=True,

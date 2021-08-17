@@ -9,6 +9,7 @@ import pytest
 from mock import patch
 
 import demisto_sdk.commands.validate.validate_manager
+from TestSuite.pack import Pack
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (CONF_PATH, TEST_PLAYBOOK,
                                                    FileType)
@@ -629,7 +630,7 @@ class TestValidators:
                            "WD", "RP", "BA100", "BC100", "ST", "CL", "MP", "LO", "XC", "GF"]
         ignored_list = validate_manager.create_ignored_errors_list(errors_to_check)
         assert ignored_list == ["BA101", "BA102", "BA103", "BA104", "BA105", "BA106", "BA107", "BA108", "BA109",
-                                "BA110", 'BA111','BA112', 'BA113', "BC101", "BC102", "BC103", "BC104"]
+                                "BA110", 'BA111', "BC101", "BC102", "BC103", "BC104"]
 
     def test_added_files_type_using_function(self, repo, mocker):
         """
@@ -1008,16 +1009,56 @@ class TestValidators:
         validate_manager.new_packs = {'CortexXDR'}
         assert validate_manager.validate_release_notes(file_path, {file_path}, modified_files, None, False) is False
 
-    @pytest.mark.parametrize('answer, validator',
-                             True, PlaybookValidator)
-    def test_is_id_no_spaces(self, repo, answer, validator):
-        # type: (Any, Any, Type[ContentEntityValidator]) -> None
+    @pytest.mark.parametrize('answer, integration_id', [(True, 'MyIntegration'), (False, 'MyIntegration  ')])
+    def test_is_there_spaces_in_the_end_of_id_yml(self, pack: Pack, answer, integration_id):
+        """
+                Given
+                    - An integration which id doesn't ends with whitespaces
+                    - An integration which id ends with spaces
+                When
+                    - Run the validate command.
+                Then
+                    - validate that is_there_spaces_in_the_end_of_id returns expected answer
+        """
+        integration = pack.create_integration('MyIntegration')
+        integration.yml.write_dict({'commonfields': {'id': integration_id}})
+        structure = StructureValidator(integration.yml.path)
+        res_validator = IntegrationValidator(structure)
+        assert res_validator.is_there_spaces_in_the_end_of_id() is answer
 
-        pack = repo.create_pack('MyPack')
-        # playbook = pack.create_playbook('MyPlaybook')
-        # structure = StructureValidator(playbook.yml.path)
-        # res_validator = validator(structure)
-        # assert res_validator.is_there_spaces_in_the_end_of_id() is answer
+    @pytest.mark.parametrize('answer, dashboard_id', [(True, 'MyDashboard'), (False, 'MyDashboard  ')])
+    def test_is_there_spaces_in_the_end_of_id_json(self, pack: Pack, answer, dashboard_id):
+        """
+                Given
+                    - A dashboard which id doesn't ends with whitespaces
+                    - A dashboard which id ends with spaces
+                When
+                    - Run the validate command.
+                Then
+                    - validate that is_there_spaces_in_the_end_of_id returns expected answer
+        """
+        dashboard = pack.create_dashboard('MyDashboard')
+        dashboard.write_json({'id': dashboard_id})
+        structure = StructureValidator(dashboard.path)
+        res_validator = DashboardValidator(structure)
+        assert res_validator.is_there_spaces_in_the_end_of_id() is answer
+
+    @pytest.mark.parametrize('answer, dashboard_name', [(True, 'MyDashboard'), (False, 'MyDashboard  ')])
+    def test_is_there_spaces_in_the_end_of_name(self, pack: Pack, answer, dashboard_name):
+        """
+                Given
+                    - A dashboard which name doesn't ends with whitespaces
+                    - A dashboard which name ends with spaces
+                When
+                    - Run the validate command.
+                Then
+                    - validate that is_there_spaces_in_the_end_of_name returns expected answer
+        """
+        dashboard = pack.create_dashboard(dashboard_name)
+        dashboard.write_json({'name': dashboard_name})
+        structure = StructureValidator(dashboard.path)
+        res_validator = IntegrationValidator(structure)
+        assert res_validator.is_there_spaces_in_the_end_of_name() is answer
 
 
 @pytest.mark.parametrize('pack_name, expected', [

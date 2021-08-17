@@ -301,8 +301,11 @@ class ContentEntityValidator(BaseValidator):
         name = self.current_file.get('name', '')
         if name.endswith(' '):
             error_message, error_code = Errors.spaces_in_the_end_of_name(name)
-            if self.handle_error(error_message, error_code, file_path=self.file_path,
-                                 suggested_fix=Errors.suggest_fix(self.file_path)):
+            if self.handle_error(
+                    error_message,
+                    error_code,
+                    file_path=self.file_path,
+                    suggested_fix=Errors.suggest_fix(self.file_path)):
                 return False
 
         return True
@@ -315,8 +318,11 @@ class ContentEntityValidator(BaseValidator):
         file_id = self.structure_validator.get_file_id_from_loaded_file_data(self.current_file)
         if file_id and file_id.endswith(' '):
             error_message, error_code = Errors.spaces_in_the_end_of_id(file_id)
-            if self.handle_error(error_message, error_code, file_path=self.file_path,
-                                 suggested_fix=Errors.suggest_fix(self.file_path)):
+            if self.handle_error(
+                    error_message,
+                    error_code,
+                    file_path=self.file_path,
+                    suggested_fix=Errors.suggest_fix(self.file_path)):
                 return False
 
         return True

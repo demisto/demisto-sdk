@@ -155,7 +155,7 @@ def determine_type(val):
     return 'Unknown'
 
 
-def parse_json(data, command_name, prefix, verbose=False, interactive=False, descriptions: Optional[Dict] = None):
+def parse_json(data, command_name, prefix, verbose=False, interactive=False, descriptions: Optional[Dict] = None, return_object=False):
     if data == '':
         raise ValueError('Invalid input JSON - got empty string')
 
@@ -193,14 +193,16 @@ def parse_json(data, command_name, prefix, verbose=False, interactive=False, des
     if verbose:
         print(f'JSON before converting to YAML: {arg_json}')
 
-    yaml_output = yaml.safe_dump(
-        {
-            'name': command_name.lstrip('!'),
-            'arguments': [],
-            'outputs': arg_json
-        },
-        default_flow_style=False
-    )
+    outputs = {
+        'name': command_name.lstrip('!'),
+        'arguments': [],
+        'outputs': arg_json
+    }
+
+    if return_object:
+        return outputs
+
+    yaml_output = yaml.safe_dump(outputs, default_flow_style=False)
     return yaml_output
 
 

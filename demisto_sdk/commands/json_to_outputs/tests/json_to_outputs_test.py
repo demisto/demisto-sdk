@@ -139,9 +139,12 @@ outputs:
                              ({'nonexistent_field': 'foo'}, "''"),
                              (None, "''"),
                              ("", "''"),
-                             ({"q": "this should not show as q is not in the data"}, "''")
+                             ({
+                                  "q": "this should not show as q is not in the data"},
+                              "''")
                          ])
-def test_json_to_outputs__invalid_description_dictionary(description_dictionary, expected_a_description):
+def test_json_to_outputs__invalid_description_dictionary(description_dictionary,
+                                                         expected_a_description):
     """
     Given
         - A list of dictionaries
@@ -169,6 +172,45 @@ outputs:
 '''
 
 
+def test_json_to_outputs_return_object():
+    """
+    Given
+        - valid json file: {"aaa":100,"bbb":"foo"}
+        - prefix: XDR.Incident
+        - command: xdr-get-incidents
+    When
+        - passed to json_to_outputs with return_object=True
+    Then
+        - ensure outputs generated aer a pythonic object and not yaml
+
+    arguments: []
+    name: xdr-get-incidents
+    outputs:
+    - contextPath: XDR.Incident.aaa
+      description: ''
+      type: Number
+    - contextPath: XDR.Incident.bbb
+      description: ''
+      type: String
+
+        """
+    yaml_output = parse_json(
+        data='{"aaa":100,"bbb":"foo"}',
+        command_name='xdr-get-incidents',
+        prefix='XDR.Incident',
+        return_object=True,
+    )
+
+    assert yaml_output == {'arguments': [],
+                           'name': 'xdr-get-incidents',
+                           'outputs': [{'contextPath': 'XDR.Incident.aaa',
+                                        'description': '',
+                                        'type': 'Number'},
+                                       {'contextPath': 'XDR.Incident.bbb',
+                                        'description': '',
+                                        'type': 'String'}]}
+
+
 dummy_description_dictionary = {"day": "day of the week",
                                 "color": "assigned color",
                                 "surprise": "a value that should not appear in the result."}
@@ -182,9 +224,12 @@ dummy_integration_output = {"day": "Sunday", "color": "Blue"}
                              # description_dictionary from mock input
                              ("not_a_json_string", dict()),
                              # description dictionary from argument
-                             (json.dumps(dummy_description_dictionary), dummy_description_dictionary),
+                             (json.dumps(dummy_description_dictionary),
+                              dummy_description_dictionary),
                          ])
-def test_json_to_outputs__description_dictionary(tmpdir, description_argument: Optional[str], dictionary: dict):
+def test_json_to_outputs__description_dictionary(tmpdir,
+                                                 description_argument: Optional[
+                                                     str], dictionary: dict):
     """
     Given
         - a (possibly-empty) JSON description dictionary

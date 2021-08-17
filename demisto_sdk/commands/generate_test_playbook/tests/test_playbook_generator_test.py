@@ -117,12 +117,14 @@ def test_get_command_examples(tmp_path, command_examples, excepted_result):
 
     if command_examples == "command_examples":
         command_examples_arg = tmp_path / command_examples
+        entity_type = 'integration'
         with open(command_examples_arg, 'w+') as ce:
             ce.write('!zoom-create-user first_name=fname last_name=lname email=flname@example.com\n'
                      '!zoom-create-meeting type=Instant user=fname topic=Meeting')
     else:
         command_examples_arg = command_examples
+        entity_type = 'script'
 
-    result = get_command_examples(command_examples_arg)
+    result = get_command_examples(command_examples_arg, entity_type)
 
     assert result == excepted_result

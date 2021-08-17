@@ -10,8 +10,10 @@ from TestSuite.test_tools import ChangeCWD
 
 
 @pytest.mark.parametrize('integration_obj', [
-    ({'script': {'script': 'Here Comes The Script'}}),
-    ({'deprecated': True})
+    ({'script': {'script': 'Here Comes The Script'},
+      'category': 'ok'}),
+    ({'deprecated': True,
+      'category': 'ok'})
 ])
 def test_is_duplicate_description_unified_deprecated_integration(mocker, tmp_path, integration_obj):
     """

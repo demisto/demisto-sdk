@@ -1,4 +1,7 @@
 # Changelog
+* Fixed an issue where yml files with '!reference' failed to load properly.
+* Fixed an issue when `View Integration Documentation` button was added twice during the download and re-upload.
+* Fixed an issue when `(Partner Contribution)` was added twice to the display name during the download and re-upload.
 * Added the following enhancements in the **generate-test-playbook** command:
     * Added the *--commands* argument to generate tasks for specific commands.
     * Added the *--examples* argument to get the command examples file path and generate tasks from the commands and arguments specified there.
@@ -6,6 +9,7 @@
     * Fixed the output condition generation for outputs of type 'Boolean'.
 
 # 1.4.7
+* Fixed an issue where an empty list for a command context didn't produce an indication other than an empty table.
 * Fixed an issue where the **format** command has incorrectly recognized on which files to run when running using git.
 * Fixed an issue where author image validations were not checked properly.
 * Fixed an issue where new old-formatted scripts and integrations were not validated.

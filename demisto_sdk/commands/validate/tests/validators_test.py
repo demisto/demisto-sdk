@@ -9,7 +9,6 @@ import pytest
 from mock import patch
 
 import demisto_sdk.commands.validate.validate_manager
-from TestSuite.pack import Pack
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (CONF_PATH, TEST_PLAYBOOK,
                                                    FileType)
@@ -72,6 +71,7 @@ from demisto_sdk.tests.constants_test import (
     WIDGET_TARGET)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import \
     INCIDENT_FIELD
+from TestSuite.pack import Pack
 from TestSuite.test_tools import ChangeCWD
 
 

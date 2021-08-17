@@ -285,7 +285,9 @@ class PlaybookTestsGenerator:
             if output_path.is_dir():
                 self.test_playbook_yml_path = str(output_path / generated_test_playbook_file_name)
             else:
-                """ if a specific destination path is specified for the playbook, use it"""
+                """ if a destination path is specified for the playbook, and it's of a yml file, use it"""
+                if not output_path.suffix.lower() == 'yml':
+                    raise PlaybookTestsGenerator.InvalidOutputPathError(output)
                 self.test_playbook_yml_path = output
         else:
             input_folder = Path(input)
@@ -308,6 +310,12 @@ class PlaybookTestsGenerator:
         self.no_outputs = no_outputs
         self.verbose = verbose
         self.use_all_brands = use_all_brands
+
+    class InvalidOutputPathError(BaseException):
+        def __init__(self, output: str):
+            super().__init__(f'The output path provided ({output}) is neither a path to folder, nor to a yml file. '
+                             f'Please check the help section or documentation for possible values, '
+                             f'or call without the -o flag.')
 
     def run(self):
         """

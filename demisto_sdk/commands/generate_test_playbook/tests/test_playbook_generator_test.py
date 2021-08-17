@@ -155,3 +155,22 @@ class TestGenerateTestPlaybook:
         actual_test_playbook_yml = output.read_text('utf8')
 
         assert expected_test_playbook_yml == actual_test_playbook_yml
+
+    def test_generate_test_playbook__specified_non_yml_output_file(self, tmpdir):
+        """
+        Given: an integration yaml, and a specified output file that is NOT a yml file
+        When: called `generate_test_playbook`
+        Then: Make sure a relevant message is shown to user.
+        """
+        tmpdir.mkdir("some_folder")
+        output = tmpdir.join("some_folder").join("dest_file.not_yml")
+
+        with pytest.raises(PlaybookTestsGenerator.InvalidOutputPathError):
+            generator = PlaybookTestsGenerator(
+                input=TestGenerateTestPlaybook.DUMMY_INTEGRATION_YML_PATH,
+                file_type='integration',
+                output=output,
+                name='TestPlaybook',
+                use_all_brands=False
+            )
+            generator.run()

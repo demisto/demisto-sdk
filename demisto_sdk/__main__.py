@@ -963,9 +963,12 @@ def generate_test_playbook(**kwargs):
     if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
         print_error('Generating test playbook is possible only for an Integration or a Script.')
         return 1
-    generator = PlaybookTestsGenerator(file_type=file_type.value, **kwargs)
-    generator.run()
-
+    try:
+        generator = PlaybookTestsGenerator(file_type=file_type.value, **kwargs)
+        generator.run()
+    except PlaybookTestsGenerator.InvalidOutputPathError as e:
+        print_error(str(e))
+        return 1
 
 # ====================== init ====================== #
 @main.command()

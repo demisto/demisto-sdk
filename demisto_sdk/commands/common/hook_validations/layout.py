@@ -37,7 +37,6 @@ class LayoutBaseValidator(ContentEntityValidator, ABC):
                     self.is_to_version_higher_than_from_version(),
                     self.is_valid_file_path(),
                     self.is_incident_field_exist(id_set_file, is_circle),
-                    self.is_there_spaces_in_the_end_of_id(),
                     ])
 
     def is_valid_version(self) -> bool:
@@ -252,10 +251,3 @@ class LayoutValidator(LayoutBaseValidator):
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True
-
-    def is_there_spaces_in_the_end_of_id(self):
-        """
-        Returns:
-            bool. Whether the layout's id has no spaces in the end
-        """
-        return super()._is_there_spaces_in_the_end_of_id('layoutscontainer')

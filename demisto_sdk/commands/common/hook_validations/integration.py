@@ -99,7 +99,6 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_there_separators_in_names(),
             self.name_not_contain_the_type(),
             self.is_valid_endpoint_command(),
-            self.is_there_spaces_in_the_end_of_id(),
         ]
 
         return all(answers)
@@ -1321,10 +1320,3 @@ class IntegrationValidator(ContentEntityValidator):
                 self.is_valid = False
                 return False
         return True
-
-    def is_there_spaces_in_the_end_of_id(self):
-        """
-        Returns:
-            bool. Whether the integration's id has no spaces in the end
-        """
-        return super(IntegrationValidator, self)._is_there_spaces_in_the_end_of_id('integration')

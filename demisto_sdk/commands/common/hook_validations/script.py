@@ -72,7 +72,6 @@ class ScriptValidator(ContentEntityValidator):
             self.is_valid_script_file_path(),
             self.is_there_separators_in_names(),
             self.name_not_contain_the_type(),
-            self.is_there_spaces_in_the_end_of_id(),
         ])
         # check only on added files
         if not self.old_file:
@@ -381,10 +380,3 @@ class ScriptValidator(ContentEntityValidator):
                 self.is_valid = False
                 return False
         return True
-
-    def is_there_spaces_in_the_end_of_id(self):
-        """
-        Returns:
-            bool. Whether the script's id has no spaces in the end
-        """
-        return super(ScriptValidator, self)._is_there_spaces_in_the_end_of_id('script')

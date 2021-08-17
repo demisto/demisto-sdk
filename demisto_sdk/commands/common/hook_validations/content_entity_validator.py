@@ -44,6 +44,7 @@ class ContentEntityValidator(BaseValidator):
             self.is_valid_fromversion(),
             self.name_does_not_contain_excluded_word(),
             self.is_there_spaces_in_the_end_of_name(),
+            self.is_there_spaces_in_the_end_of_id(),
         ]
         return all(tests)
 
@@ -306,16 +307,12 @@ class ContentEntityValidator(BaseValidator):
 
         return True
 
-    def _is_there_spaces_in_the_end_of_id(self, file_type):
+    def is_there_spaces_in_the_end_of_id(self):
         """Validate that the id of the file equals to the name.
-         Args:
-            file_type (str): the file type. can be 'integration', 'script', 'playbook', 'dashboard', 'mapper',
-            'incident_type', 'layoutscontainer'
-
-        Returns:
+         Returns:
             bool. Whether the file's id ends with spaces
         """
-        file_id = _get_file_id(file_type, self.current_file)
+        file_id = self.structure_validator.get_file_id_from_loaded_file_data(self.current_file)
         if file_id.endswith(' '):
             error_message, error_code = Errors.spaces_in_the_end_of_id(file_id)
             if self.handle_error(error_message, error_code, file_path=self.file_path,

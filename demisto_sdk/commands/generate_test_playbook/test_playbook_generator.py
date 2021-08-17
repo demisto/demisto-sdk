@@ -1,14 +1,15 @@
 import json
 import os
 from typing import Dict, Optional
-import click
 
+import click
 from ruamel.yaml import YAML
 
-from demisto_sdk.commands.common.tools import (get_pack_name, print_error,
-                                               is_external_repository)
-from demisto_sdk.commands.upload.uploader import Uploader
 from demisto_sdk.commands.common.constants import FileType
+from demisto_sdk.commands.common.tools import (get_pack_name,
+                                               is_external_repository,
+                                               print_error)
+from demisto_sdk.commands.upload.uploader import Uploader
 
 
 class ContentItemType:

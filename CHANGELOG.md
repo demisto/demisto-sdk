@@ -2,6 +2,8 @@
 * Fixed an issue where yml files with '!reference' failed to load properly.
 * Fixed an issue when `View Integration Documentation` button was added twice during the download and re-upload.
 * Fixed an issue when `(Partner Contribution)` was added twice to the display name during the download and re-upload.
+* Added to **validate** command a validation that a content item's id and name will not end with spaces.
+* The **format** command will now remove whitespaces at the end of content item's id and name.
 
 # 1.4.7
 * Fixed an issue where an empty list for a command context didn't produce an indication other than an empty table.

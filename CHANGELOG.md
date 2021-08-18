@@ -2,6 +2,11 @@
 * Fixed an issue where yml files with '!reference' failed to load properly.
 * Fixed an issue when `View Integration Documentation` button was added twice during the download and re-upload.
 * Fixed an issue when `(Partner Contribution)` was added twice to the display name during the download and re-upload.
+* Added the following enhancements in the **generate-test-playbook** command:
+    * Added the *--commands* argument to generate tasks for specific commands.
+    * Added the *--examples* argument to get the command examples file path and generate tasks from the commands and arguments specified there.
+    * Added the *--upload* flag to specify whether to upload the test playbook after the generation.
+    * Fixed the output condition generation for outputs of type 'Boolean'.
 * Added validation that the support URL in partner contribution pack metadata does not lead to a GitHub repo.
 
 # 1.4.7

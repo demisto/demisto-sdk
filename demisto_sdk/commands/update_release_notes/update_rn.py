@@ -107,13 +107,12 @@ class UpdateRN:
         self.check_rn_dir(rn_path)
         self.rn_path = rn_path
         self.find_added_pack_files()
-        docker_image_name: Optional[str] = None
         changed_files = {}
         for packfile in self.modified_files_in_pack:
             file_name, file_type = self.get_changed_file_name_and_type(packfile)
             if 'yml' in packfile and file_type in [FileType.INTEGRATION, FileType.BETA_INTEGRATION,
                                                    FileType.SCRIPT] and packfile not in self.added_files:
-                docker_image_name = check_docker_image_changed(packfile)
+                docker_image_name: Optional[str] = check_docker_image_changed(packfile)
             else:
                 docker_image_name = None
             changed_files[(file_name, file_type)] = {
@@ -122,7 +121,7 @@ class UpdateRN:
                 'fromversion': get_from_version_at_update_rn(packfile),
                 'dockerimage': docker_image_name
             }
-        return self.create_pack_rn(rn_path, changed_files, new_metadata, docker_image_name)
+        return self.create_pack_rn(rn_path, changed_files, new_metadata)
 
     def create_pack_rn(self, rn_path: str, changed_files: dict, new_metadata: dict) -> bool:
         """ Checks whether the pack requires a new rn and if so, creates it.

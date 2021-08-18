@@ -1214,7 +1214,6 @@ def get_general_paths(path, pack_to_create):
     files = list()
     for path in path_list:
         files.extend(glob.glob(os.path.join(*path)))
-    print_color(f"files: {files}", LOG_COLORS.WHITE)
 
     return files
 
@@ -1238,7 +1237,6 @@ def get_generic_entities_paths(path, pack_to_create):
     files = list()
     for path in path_list:
         files.extend(glob.glob(os.path.join(*path)))
-    print_color(f"files: {files}", LOG_COLORS.WHITE)
 
     return files
 

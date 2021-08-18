@@ -4,13 +4,9 @@ from pathlib import Path
 import pytest
 
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.tools import get_yaml, run_command
+from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.generate_test_playbook.test_playbook_generator import (
     PlaybookTestsGenerator, get_command_examples)
-
-
-def git_path() -> str:
-    return run_command('git rev-parse --show-toplevel').replace('\n', '')
 
 
 class TestGenerateTestPlaybook:
@@ -84,7 +80,7 @@ class TestGenerateTestPlaybook:
         actual_test_playbook_yml = (pack_folder / 'TestPlaybooks' / 'playbook-TestPlaybook_Test.yml').read_text()
 
         assert expected_test_playbook_yml == actual_test_playbook_yml
-    
+
     def test_generate_test_playbook__integration_not_under_packs(self, tmpdir):
         """
         Given: an integration, NOT inside the standard Content folder structure.
@@ -175,7 +171,7 @@ class TestGenerateTestPlaybook:
                 use_all_brands=False
             )
             generator.run()
-            
+
 
 @pytest.mark.parametrize("commands, excepted_num_tasks", [('zoom-create-user,zoom-delete-user', 6), (None, 8)])
 def test_generate_test_playbook_with_command_examples(tmp_path, commands, excepted_num_tasks):

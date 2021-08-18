@@ -1,5 +1,5 @@
 import json
-import os
+from pathlib import Path
 from typing import Dict, Optional
 
 import click
@@ -313,18 +313,35 @@ class PlaybookTestsGenerator:
                  verbose: bool = False, use_all_brands: bool = False, commands: str = None, examples: str = None,
                  upload: bool = False):
         self.integration_yml_path = input
+        self.output = output
 
-        if not output and not is_external_repository():
-            output = f'Packs/{get_pack_name(self.integration_yml_path)}/TestPlaybooks'
+        generated_test_playbook_file_name = f'playbook-{name}_Test.yml'
 
         if output:
-            if not os.path.isdir(output):
-                os.mkdir(output)
-            self.output = output
+            """ if an output folder path is provided, save it there"""
+            output_path = Path(output)
+            if output_path.is_dir():
+                self.test_playbook_yml_path = str(output_path / generated_test_playbook_file_name)
+            else:
+                """ if a destination path is specified for the playbook, and it's of a yml file, use it"""
+                if not output_path.suffix.lower() == '.yml':
+                    raise PlaybookTestsGenerator.InvalidOutputPathError(output)
+                self.test_playbook_yml_path = output
         else:
-            self.output = ''
+            input_folder = Path(input)
 
-        self.test_playbook_yml_path = os.path.join(self.output, name + '.yml')
+            if 'Packs' in (p.name for p in input_folder.parents):
+                """
+                if input yml is under standard Packs/<Pack>/Integrations/<Integration> path,
+                save the test-playbook under   Packs/<Pack>/TestPlaybooks
+                """
+                folder = (input_folder.parent.parent / 'TestPlaybooks')
+                folder.mkdir(exist_ok=True, parents=True)
+            else:
+                """ otherwise, save the generated test-playbook in the folder from which SDK is called."""
+                folder = Path()
+
+            self.test_playbook_yml_path = str(folder / generated_test_playbook_file_name)
 
         self.file_type = file_type
         self.name = name
@@ -334,6 +351,12 @@ class PlaybookTestsGenerator:
         self.commands = commands
         self.examples = examples
         self.upload = upload
+
+    class InvalidOutputPathError(BaseException):
+        def __init__(self, output: str):
+            super().__init__(f'The output path provided ({output}) is neither a path to folder, nor to a yml file. '
+                             f'Please check the help section or documentation for possible values, '
+                             f'or call without the -o flag.')
 
     def run(self):
         """
@@ -349,7 +372,6 @@ class PlaybookTestsGenerator:
         local directory
 
         """
-
         ryaml = YAML()
         ryaml.preserve_quotes = True
         try:
@@ -406,6 +428,10 @@ class PlaybookTestsGenerator:
             )
 
         test_playbook.add_task(create_end_task(test_playbook.task_counter))
+
+        if Path(self.test_playbook_yml_path).exists():
+            print_color(f'Warning: There already exists a test playbook at {self.test_playbook_yml_path}, '
+                        f'it will be overwritten.', LOG_COLORS.YELLOW)
 
         with open(self.test_playbook_yml_path, 'w') as yf:
             ryaml.dump(test_playbook.to_dict(), yf)

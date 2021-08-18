@@ -1,7 +1,7 @@
 import os
 import re
 from pathlib import Path
-from typing import Set, Tuple
+from typing import Set, Tuple, Union
 
 import click
 import gitdb
@@ -42,7 +42,7 @@ class GitUtil:
 
         # get all renamed files - some of these can be identified as modified by git,
         # but we want to identify them as renamed - so will remove them from the returned files.
-        renamed = {item[0] for item in self.renamed_files(prev_ver, committed_only, staged_only)}
+        renamed = {item[0] for item in self.renamed_files(prev_ver, committed_only, staged_only)}  # type: ignore[index]
 
         # handle a case where a file is wrongly recognized as renamed (not 100% score) and
         # is actually of modified status
@@ -260,7 +260,8 @@ class GitUtil:
 
     def renamed_files(self, prev_ver: str = 'master', committed_only: bool = False,
                       staged_only: bool = False, debug: bool = False,
-                      include_untracked: bool = False) -> Set[Tuple[Path, Path]]:
+                      include_untracked: bool = False,
+                      get_only_current_file_names: bool = False) -> Union[Set[Tuple[Path, Path]], Set[Path]]:
         """Gets all the files that are recognized by git as renamed against the prev_ver.
         Args:
             prev_ver (str): The base branch against which the comparison is made.
@@ -268,6 +269,7 @@ class GitUtil:
             staged_only (bool): Whether to return only staged files.
             debug (bool): Whether to print the debug logs.
             include_untracked (bool): Whether to include untracked files.
+            get_only_current_file_names (bool): Whether to get only the current file names and not the old file names.
         Returns:
             Set: A set of Tuples of Paths to the renamed files -
             first element being the old file path and the second is the new.
@@ -305,6 +307,10 @@ class GitUtil:
 
         if committed_only:
             self.debug_print(debug=debug, status='Renamed', staged=set(), committed=committed)
+            if get_only_current_file_names:
+                committed_only_new = {file[1] for file in committed}
+                return committed_only_new
+
             return committed
 
         untracked = set()  # type:Set
@@ -318,11 +324,20 @@ class GitUtil:
 
         if staged_only:
             self.debug_print(debug=debug, status='Renamed', staged=staged, committed=set())
+            if get_only_current_file_names:
+                staged_only_new = {file[1] for file in staged}
+                return staged_only_new
+
             return staged
 
         self.debug_print(debug=debug, status='Renamed', staged=staged, committed=committed)
 
-        return staged.union(committed)
+        all_renamed_files = staged.union(committed)
+        if get_only_current_file_names:
+            all_renamed_files_only_new = {file[1] for file in all_renamed_files}
+            return all_renamed_files_only_new
+
+        return all_renamed_files
 
     def _get_untracked_files(self, requested_status: str) -> set:
         """return all untracked files of the given requested status.
@@ -457,8 +472,8 @@ class GitUtil:
 
         # if remote does not exist we are checking against the commit sha1
         return {Path(item.b_path) for item in self.repo.commit(rev=branch).diff(
-                self.repo.active_branch).iter_change_type('R') if item.score < 100 and
-                self._check_file_status(file_path=str(item.b_path), remote=remote, branch=branch) == status}
+            self.repo.active_branch).iter_change_type('R') if item.score < 100 and
+            self._check_file_status(file_path=str(item.b_path), remote=remote, branch=branch) == status}
 
     def _check_file_status(self, file_path: str, remote: str, branch: str) -> str:
         """Get the git status of a given file path
@@ -516,3 +531,29 @@ class GitUtil:
             else:
                 raise exc
         return f'{remote_name}/{tag}:{relative_file_path}'
+
+    def get_all_changed_files(self, prev_ver: str = 'master', committed_only: bool = False,
+                              staged_only: bool = False, debug: bool = False,
+                              include_untracked: bool = False) -> Set[Path]:
+        """Get a set of all changed files in the branch (modified, added and renamed)
+
+        Args:
+            prev_ver (str): The base branch against which the comparison is made.
+            committed_only (bool): Whether to return only committed files.
+            staged_only (bool): Whether to return only staged files.
+            debug (bool): Whether to print the debug logs.
+            include_untracked (bool): Whether to include untracked files.
+        Returns:
+            Set. A set of all the changed files in the given branch when comparing to prev_ver
+        """
+        modified_files: Set[Path] = self.modified_files(prev_ver=prev_ver, committed_only=committed_only,
+                                                        staged_only=staged_only, debug=debug,
+                                                        include_untracked=include_untracked)
+        added_files: Set[Path] = self.added_files(prev_ver=prev_ver, committed_only=committed_only,
+                                                  staged_only=staged_only, debug=debug,
+                                                  include_untracked=include_untracked)
+        renamed_files: Set[Path] = self.renamed_files(prev_ver=prev_ver, committed_only=committed_only,  # type: ignore[assignment]
+                                                      staged_only=staged_only, debug=debug,
+                                                      include_untracked=include_untracked,
+                                                      get_only_current_file_names=True)
+        return modified_files.union(added_files).union(renamed_files)

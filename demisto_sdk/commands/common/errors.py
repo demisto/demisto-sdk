@@ -1,6 +1,7 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import decorator
+
 from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
                                                    CONF_PATH,
                                                    INTEGRATION_CATEGORIES,
@@ -10,7 +11,7 @@ from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
 FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
 ALLOWED_IGNORE_ERRORS = [
-    'BA101', 'BA106', 'BA108', 'BA109', 'BA110',
+    'BA101', 'BA106', 'BA108', 'BA109', 'BA110', 'BA111',
     'DS107',
     'IF100', 'IF106',
     'IN109', 'IN110', 'IN122', 'IN126', 'IN128', 'IN135', 'IN136', 'IN139',
@@ -23,8 +24,8 @@ ALLOWED_IGNORE_ERRORS = [
 ]
 
 PRESET_ERROR_TO_IGNORE = {
-    'community': ['BC', 'CJ', 'DS100', 'DS101', 'DS102', 'DS103', 'DS104', 'IN125', 'IN126'],
-    'partner': ['CJ']
+    'community': ['BC', 'CJ', 'DS100', 'DS101', 'DS102', 'DS103', 'DS104', 'IN125', 'IN126', 'IN140'],
+    'partner': ['CJ', 'IN140']
 }
 
 PRESET_ERROR_TO_CHECK = {
@@ -43,6 +44,7 @@ ERROR_CODE = {
     "folder_name_has_separators": {'code': "BA108", 'ui_applicable': False, 'related_field': ''},
     "file_name_has_separators": {'code': "BA109", 'ui_applicable': False, 'related_field': ''},
     "field_contain_forbidden_word": {'code': "BA110", 'ui_applicable': False, 'related_field': ''},
+    'entity_name_contains_excluded_word': {'code': 'BA111', 'ui_applicable': False, 'related_field': ''},
     "wrong_display_name": {'code': "IN100", 'ui_applicable': True, 'related_field': '<parameter-name>.display'},
     "wrong_default_parameter_not_empty": {'code': "IN101", 'ui_applicable': True,
                                           'related_field': '<parameter-name>.default'},
@@ -114,6 +116,7 @@ ERROR_CODE = {
     "docker_not_formatted_correctly": {'code': "DO105", 'ui_applicable': True, 'related_field': 'dockerimage'},
     "docker_not_on_the_latest_tag": {'code': "DO106", 'ui_applicable': True, 'related_field': 'dockerimage'},
     "non_existing_docker": {'code': "DO107", 'ui_applicable': True, 'related_field': 'dockerimage'},
+    "dockerimage_not_in_yml_file": {'code': "DO108", 'ui_applicable': True, 'related_field': 'dockerimage'},
     "id_set_conflicts": {'code': "ID100", 'ui_applicable': False, 'related_field': ''},
     "duplicated_id": {'code': "ID102", 'ui_applicable': False, 'related_field': ''},
     "no_id_set_file": {'code': "ID103", 'ui_applicable': False, 'related_field': ''},
@@ -130,6 +133,8 @@ ERROR_CODE = {
     "image_field_not_in_base64": {'code': "IM105", 'ui_applicable': True, 'related_field': 'image'},
     "default_image_error": {'code': "IM106", 'ui_applicable': True, 'related_field': 'image'},
     "invalid_image_name": {'code': "IM107", 'ui_applicable': False, 'related_field': 'image'},
+    "image_is_empty": {'code': "IM108", 'ui_applicable': True, 'related_field': 'image'},
+    "author_image_is_missing": {'code': "IM109", 'ui_applicable': True, 'related_field': 'image'},
     "description_missing_from_conf_json": {'code': "CJ100", 'ui_applicable': False, 'related_field': ''},
     "test_not_in_conf_json": {'code': "CJ101", 'ui_applicable': False, 'related_field': ''},
     "integration_not_registered": {'code': "CJ102", 'ui_applicable': False, 'related_field': ''},
@@ -280,6 +285,8 @@ ERROR_CODE = {
     "xsoar_config_file_is_not_json": {'code': "XC100", 'ui_applicable': False, 'related_field': ''},
     "xsoar_config_file_malformed": {'code': "XC101", 'ui_applicable': False, 'related_field': ''},
     "invalid_readme_image_error": {'code': "RM108", 'ui_applicable': False, 'related_field': ''},
+    "invalid_generic_field_group_value": {'code': "GF100", 'ui_applicable': False, 'related_field': 'group'},
+    "invalid_generic_field_id": {'code': "GF101", 'ui_applicable': False, 'related_field': 'id'}
 }
 
 
@@ -325,10 +332,10 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def file_type_not_supported():
-        return "The file type is not supported in validate command\n " \
-               "validate' command supports: Integrations, Scripts, Playbooks, " \
+        return "The file type is not supported in the validate command.\n" \
+               "The validate command supports: Integrations, Scripts, Playbooks, " \
                "Incident fields, Incident types, Indicator fields, Indicator types, Objects fields, Object types," \
-               " Object modules, Images, Release notes,Layouts and Descriptions"
+               " Object modules, Images, Release notes, Layouts and Descriptions."
 
     @staticmethod
     @error_code_decorator
@@ -744,6 +751,13 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def dockerimage_not_in_yml_file(file_path):
+        return f'There is no docker image provided in file {file_path}.\nYou can choose one from ' \
+               'DockerHub: https://hub.docker.com/u/demisto/, or create your own in the repo: ' \
+               ' https://github.com/demisto/dockerfiles'
+
+    @staticmethod
+    @error_code_decorator
     def non_existing_docker(docker_image):
         return f'{docker_image} - Could not find the docker image. Check if it exists in ' \
                f'DockerHub: https://hub.docker.com/u/demisto/.'
@@ -757,7 +771,7 @@ class Errors:
     def suggest_docker_fix(docker_image_name: str, file_path: str) -> str:
         return f'You can check for the most updated version of {docker_image_name} ' \
                f'here: https://hub.docker.com/r/{docker_image_name}/tags\n' \
-               f'To update the docker image run: demisto-sdk format -ud -i {file_path}\n'
+               f'To update the docker image run:\ndemisto-sdk format -ud -i {file_path}\n'
 
     @staticmethod
     @error_code_decorator
@@ -806,7 +820,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_fromversion_for_type_metrics():
-        return f'The minimal fromVersion for widget with data type \'metrics\' is \'6.2.0\'.\n'
+        return 'The minimal fromVersion for widget with data type \'metrics\' is \'6.2.0\'.\n'
 
     @staticmethod
     @error_code_decorator
@@ -850,6 +864,17 @@ class Errors:
     def invalid_image_name():
         return "The image's file name is invalid - " \
                "make sure the name looks like the following: <integration_name>_image.png"
+
+    @staticmethod
+    @error_code_decorator
+    def image_is_empty(image_path: str):
+        return f'The author image in path {image_path} should not be empty. ' \
+               'Please provide a relevant image.'
+
+    @staticmethod
+    @error_code_decorator
+    def author_image_is_missing(image_path: str):
+        return f'Partners must provide a non-empty author image under the path {image_path}.'
 
     @staticmethod
     @error_code_decorator
@@ -1021,14 +1046,14 @@ class Errors:
     def content_entity_version_not_match_playbook_version(main_playbook, entities_names, main_playbook_version):
         return f"Playbook {main_playbook} with version {main_playbook_version} uses {entities_names} " \
                f"with a version that does not match the main playbook version. The from version of" \
-               f" {entities_names} should be at least {main_playbook_version}."
+               f" {entities_names} should be {main_playbook_version} or lower."
 
     @staticmethod
     @error_code_decorator
     def integration_version_not_match_playbook_version(main_playbook, command, main_playbook_version):
         return f"Playbook {main_playbook} with version {main_playbook_version} uses the command {command} " \
                f"that not implemented in integration that match the main playbook version. This command should be " \
-               f"implemented in an integration with a from version of at least {main_playbook_version}."
+               f"implemented in an integration with a from version of {main_playbook_version} or lower."
 
     @staticmethod
     @error_code_decorator
@@ -1079,8 +1104,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def description_contains_demisto_word(line_nums):
-        return f'Found the word \'Demisto\' in the description content in lines: {line_nums}.'
+    def description_contains_demisto_word(line_nums, yml_or_file):
+        return f'Found the word \'Demisto\' in the description content {yml_or_file} in lines: {line_nums}.'
 
     @staticmethod
     @error_code_decorator
@@ -1208,6 +1233,16 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def invalid_generic_field_group_value(group, generic_field_group):
+        return f"Group {group} is not a valid generic field group. Please set group = {generic_field_group} instead."
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_generic_field_id(generic_id, generic_id_prefix):
+        return f"ID {generic_id} is not a valid generic field ID - it should start with the prefix {generic_id_prefix}."
+
+    @staticmethod
+    @error_code_decorator
     def pack_file_does_not_exist(file_name):
         return f'"{file_name}" file does not exist, create one in the root of the pack'
 
@@ -1325,7 +1360,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def pack_name_is_not_in_xsoar_standards(reason):
+    def pack_name_is_not_in_xsoar_standards(reason, excluded_words: Optional[List[str]] = None):
         if reason == "short":
             return f'Pack metadata {PACK_METADATA_NAME} field is not valid. The pack name must be at least 3' \
                    f' characters long.'
@@ -1335,6 +1370,9 @@ class Errors:
         if reason == "wrong_word":
             return f'Pack metadata {PACK_METADATA_NAME} field is not valid. The pack name must not contain the words:' \
                    f' ["Pack", "Playbook", "Integration", "Script"]'
+        if reason == 'excluded_word':
+            return f'Pack metadata {PACK_METADATA_NAME} field is not valid. The pack name must not contain the words:' \
+                   f' {excluded_words}'
 
     @staticmethod
     @error_code_decorator
@@ -1665,8 +1703,11 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def integration_is_skipped(integration_id):
-        return f"The integration {integration_id} is currently in skipped. Please add working tests and unskip."
+    def integration_is_skipped(integration_id, skip_comment: Optional[str] = None):
+        message = f"The integration {integration_id} is currently in skipped. Please add working tests and unskip."
+        if skip_comment:
+            message += f" Skip comment: {skip_comment}"
+        return message
 
     @staticmethod
     @error_code_decorator
@@ -1764,3 +1805,8 @@ class Errors:
                f"Example: {pack_prefix} {field_name}.\n" \
                f"Also make sure to update the field id and cliName accordingly. " \
                f"Example: cliName: {pack_prefix.replace(' ', '')}{field_name.replace(' ', '')}, "
+
+    @staticmethod
+    @error_code_decorator
+    def entity_name_contains_excluded_word(entity_name: str, excluded_words: List[str]):
+        return f'Entity {entity_name} should not contain one of {excluded_words} in its name. Please remove.'

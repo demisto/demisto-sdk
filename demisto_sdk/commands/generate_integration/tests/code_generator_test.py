@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 
 import yaml
+
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.generate_integration.code_generator import (
     IntegrationGeneratorCommand, IntegrationGeneratorConfig,

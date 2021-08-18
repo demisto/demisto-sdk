@@ -1,12 +1,13 @@
 import json
 import os
 from collections import OrderedDict
-from genericpath import exists
 from typing import Optional
 
-from demisto_sdk.commands.common.constants import DEFAULT_ID_SET_PATH
+from genericpath import exists
+
+from demisto_sdk.commands.common.constants import (DEFAULT_ID_SET_PATH,
+                                                   GENERIC_COMMANDS_NAMES)
 from demisto_sdk.commands.common.update_id_set import re_create_id_set
-from demisto_sdk.commands.common.constants import GENERIC_COMMANDS_NAMES
 
 
 class IDSetCreator:

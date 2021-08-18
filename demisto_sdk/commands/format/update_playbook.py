@@ -5,17 +5,16 @@ from distutils.version import LooseVersion
 from typing import Tuple
 
 import click
+from git import InvalidGitRepositoryError
+
 from demisto_sdk.commands.common.constants import PLAYBOOK, FileType
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.hook_validations.playbook import \
-    PlaybookValidator
 from demisto_sdk.commands.common.tools import (find_type, get_yaml,
                                                is_string_uuid, write_yml)
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE, NEW_FILE_DEFAULT_5_5_0_FROMVERSION, SCHEMAS_PATH,
     SKIP_RETURN_CODE, SUCCESS_RETURN_CODE)
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
-from git import InvalidGitRepositoryError
 
 
 class BasePlaybookYMLFormat(BaseUpdateYML):
@@ -132,7 +131,7 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
         if format_res:
             return format_res, SKIP_RETURN_CODE
         else:
-            return format_res, self.initiate_file_validator(PlaybookValidator)
+            return format_res, self.initiate_file_validator()
 
 
 class PlaybookYMLFormat(BasePlaybookYMLFormat):
@@ -216,9 +215,9 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
             git_util = GitUtil()
             modified_files = git_util.modified_files(include_untracked=True)
             added_files = git_util.added_files(include_untracked=True)
-            renamed_files = {item[1] for item in git_util.renamed_files(include_untracked=True)}
+            renamed_files = git_util.renamed_files(include_untracked=True, get_only_current_file_names=True)
 
-            all_changed_files = modified_files.union(added_files).union(renamed_files)
+            all_changed_files = modified_files.union(added_files).union(renamed_files)  # type: ignore[arg-type]
 
         except (InvalidGitRepositoryError, TypeError) as e:
             click.secho('Unable to connect to git - skipping sub-playbook checks', fg='yellow')
@@ -244,7 +243,7 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
 
     def run_format(self) -> int:
         try:
-            click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
+            click.secho(f'\n================= Updating file {self.source_file} =================', fg='bright_blue')
             self.update_playbook_usages()
             self.update_tests()
             self.remove_copy_and_dev_suffixes_from_subplaybook()
@@ -275,7 +274,7 @@ class TestPlaybookYMLFormat(BasePlaybookYMLFormat):
 
     def run_format(self) -> int:
         try:
-            click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
+            click.secho(f'\n================= Updating file {self.source_file} =================', fg='bright_blue')
             return super().run_format()
         except Exception as err:
             if self.verbose:

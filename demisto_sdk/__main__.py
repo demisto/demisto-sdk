@@ -8,11 +8,11 @@ from configparser import ConfigParser, MissingSectionHeaderError
 from pathlib import Path
 from typing import IO
 
-from pkg_resources import get_distribution
-
 # Third party packages
 import click
 import git
+from pkg_resources import get_distribution
+
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 # Common tools
@@ -61,7 +61,9 @@ from demisto_sdk.commands.secrets.secrets import SecretsValidator
 from demisto_sdk.commands.split_yml.extractor import Extractor
 from demisto_sdk.commands.test_content.execute_test_content import \
     execute_test_content
-from demisto_sdk.commands.unify.unifier import Unifier
+from demisto_sdk.commands.unify.generic_module_unifier import \
+    GenericModuleUnifier
+from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
 from demisto_sdk.commands.update_release_notes.update_rn_manager import \
     UpdateReleaseNotesManager
 from demisto_sdk.commands.upload.uploader import Uploader
@@ -276,15 +278,31 @@ def extract_code(config, **kwargs):
     show_default=False
 )
 def unify(**kwargs):
-    """Unify code, image, description and yml files to a single Demisto yml file. Note that
-       this should be used on a single integration/script and not a pack
-       not multiple scripts/integrations
     """
+    This command has two main functions:
+
+    1. YML Unifier - Unifies integration/script code, image, description and yml files to a single XSOAR yml file.
+     * Note that this should be used on a single integration/script and not a pack, not multiple scripts/integrations.
+     * To use this function - set as input a path to the *directory* of the integration/script to unify.
+
+    2. GenericModule Unifier - Unifies a GenericModule with its Dashboards to a single JSON object.
+     * To use this function - set as input a path to a GenericModule *file*.
+    """
+
     check_configuration_file('unify', kwargs)
     # Input is of type Path.
     kwargs['input'] = str(kwargs['input'])
-    unifier = Unifier(**kwargs)
-    unifier.merge_script_package_to_yml()
+    file_type = find_type(kwargs['input'])
+    if file_type == FileType.GENERIC_MODULE:
+        # pass arguments to GenericModule unifier and call the command
+        generic_module_unifier = GenericModuleUnifier(**kwargs)
+        generic_module_unifier.merge_generic_module_with_its_dashboards()
+
+    else:
+        # pass arguments to YML unifier and call the command
+        yml_unifier = YmlUnifier(**kwargs)
+        yml_unifier.merge_script_package_to_yml()
+
     return 0
 
 
@@ -661,6 +679,17 @@ def lint(**kwargs):
     is_flag=True)
 @click.option(
     "-d", "--deprecate", help="Set if you want to deprecate the integration/script/playbook", is_flag=True)
+@click.option(
+    "-g", "--use-git",
+    help="Use git to automatically recognize which files changed and run format on them.",
+    is_flag=True)
+@click.option(
+    '--prev-ver', help='Previous branch or SHA1 commit to run checks against.')
+@click.option(
+    '-iu', '--include-untracked',
+    is_flag=True,
+    help='Whether to include untracked files in the formatting.'
+)
 def format(
         input: Path,
         output: Path,
@@ -669,10 +698,14 @@ def format(
         update_docker: bool,
         verbose: bool,
         assume_yes: bool,
-        deprecate: bool
+        deprecate: bool,
+        use_git: bool,
+        prev_ver: str,
+        include_untracked: bool,
 ):
     """Run formatter on a given script/playbook/integration/incidentfield/indicatorfield/
-    incidenttype/indicatortype/layout/dashboard/classifier/mapper/widget/report file.
+    incidenttype/indicatortype/layout/dashboard/classifier/mapper/widget/report file/genericfield/generictype/
+    genericmodule/genericdefinition.
     """
     return format_manager(
         str(input) if input else None,
@@ -682,7 +715,10 @@ def format(
         update_docker=update_docker,
         assume_yes=assume_yes,
         verbose=verbose,
-        deprecate=deprecate
+        deprecate=deprecate,
+        use_git=use_git,
+        prev_ver=prev_ver,
+        include_untracked=include_untracked,
     )
 
 
@@ -869,8 +905,13 @@ def run_playbook(**kwargs):
 @click.option(
     "-v", "--verbose", is_flag=True, help="Verbose output - mainly for debugging purposes")
 @click.option(
-    "-int", "--interactive", help="If passed, then for each output field will ask user interactively to enter the "
-                                  "description.", is_flag=True, default=False)
+    "--interactive", help="If passed, then for each output field will ask user interactively to enter the "
+                          "description. By default is interactive mode is disabled", is_flag=True)
+@click.option(
+    "-d", "--descriptions",
+    help="A JSON or a path to a JSON file, mapping field names to their descriptions. "
+         "If not specified, the script prompt the user to input the JSON content.",
+    is_flag=True)
 def json_to_outputs_command(**kwargs):
     """Demisto integrations/scripts have a YAML file that defines them.
     Creating the YAML file is a tedious and error-prone task of manually copying outputs from the API result to the
@@ -892,17 +933,29 @@ def json_to_outputs_command(**kwargs):
 @click.option(
     '-o', '--output',
     required=False,
-    help='Specify output directory')
+    help='Specify output directory or path to an output yml file. '
+         'If a path to a yml file is specified - it will be the output path.\n'
+         'If a folder path is specified - a yml output will be saved in the folder.\n'
+         'If not specified, and the input is located at `.../Packs/<pack_name>/Integrations`, '
+         'the output will be saved under `.../Packs/<pack_name>/TestPlaybooks`.\n'
+         'Otherwise (no folder in the input hierarchy is named `Packs`), '
+         'the output will be saved in the current directory.')
 @click.option(
     '-n', '--name',
     required=True,
-    help='Specify test playbook name')
+    help='Specify test playbook name. The output file name will be `playbook-<name>_Test.yml')
 @click.option(
     '--no-outputs', is_flag=True,
     help='Skip generating verification conditions for each output contextPath. Use when you want to decide which '
          'outputs to verify and which not')
 @click.option(
     "-v", "--verbose", help="Verbose output for debug purposes - shows full exception stack trace", is_flag=True)
+@click.option(
+    "-ab", "--all-brands", "use_all_brands",
+    help="Generate a test-playbook which calls commands using integrations of all available brands. "
+         "When not used, the generated playbook calls commands using instances of the provided integration brand.",
+    is_flag=True
+)
 def generate_test_playbook(**kwargs):
     """Generate test playbook from integration or script"""
     check_configuration_file('generate-test-playbook', kwargs)
@@ -910,11 +963,16 @@ def generate_test_playbook(**kwargs):
     if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
         print_error('Generating test playbook is possible only for an Integration or a Script.')
         return 1
-    generator = PlaybookTestsGenerator(file_type=file_type.value, **kwargs)
-    generator.run()
-
+    try:
+        generator = PlaybookTestsGenerator(file_type=file_type.value, **kwargs)
+        generator.run()
+    except PlaybookTestsGenerator.InvalidOutputPathError as e:
+        print_error(str(e))
+        return 1
 
 # ====================== init ====================== #
+
+
 @main.command()
 @click.help_option(
     '-h', '--help'
@@ -1002,7 +1060,7 @@ def generate_docs(**kwargs):
     input_path: str = kwargs.get('input', '')
     output_path = kwargs.get('output')
     command = kwargs.get('command')
-    examples = str(kwargs.get('examples', ''))
+    examples: str = kwargs.get('examples', '')
     permissions = kwargs.get('permissions')
     limitations = kwargs.get('limitations')
     insecure: bool = kwargs.get('insecure', False)

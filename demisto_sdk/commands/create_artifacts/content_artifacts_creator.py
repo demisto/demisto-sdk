@@ -9,21 +9,24 @@ from contextlib import contextmanager
 from shutil import make_archive, rmtree
 from typing import Callable, Dict, List, Optional, Union
 
+from packaging.version import parse
+from pebble import ProcessFuture, ProcessPool
+from wcmatch.pathlib import BRACE, EXTMATCH, NEGATE, NODIR, SPLIT, Path
+
 from demisto_sdk.commands.common.constants import (
     BASE_PACK, CLASSIFIERS_DIR, CONTENT_ITEMS_DISPLAY_FOLDERS, DASHBOARDS_DIR,
-    DOCUMENTATION_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
-    INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, INTEGRATIONS_DIR, LAYOUTS_DIR,
-    PACKS_DIR, PLAYBOOKS_DIR, RELEASE_NOTES_DIR, REPORTS_DIR, SCRIPTS_DIR,
-    TEST_PLAYBOOKS_DIR, TOOLS_DIR, WIDGETS_DIR, ContentItems)
+    DOCUMENTATION_DIR, GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR,
+    GENERIC_MODULES_DIR, GENERIC_TYPES_DIR, INCIDENT_FIELDS_DIR,
+    INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR,
+    INTEGRATIONS_DIR, LAYOUTS_DIR, PACKS_DIR, PLAYBOOKS_DIR, RELEASE_NOTES_DIR,
+    REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, TOOLS_DIR, WIDGETS_DIR,
+    ContentItems)
 from demisto_sdk.commands.common.content import (Content, ContentError,
                                                  ContentFactoryError, Pack)
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     JSONContentObject, Script, TextObject, YAMLContentObject,
     YAMLContentUnifiedObject)
 from demisto_sdk.commands.common.tools import arg_to_list
-from packaging.version import parse
-from pebble import ProcessFuture, ProcessPool
-from wcmatch.pathlib import BRACE, EXTMATCH, NEGATE, NODIR, SPLIT, Path
 
 from .artifacts_report import ArtifactsReport, ObjectReport
 
@@ -159,7 +162,11 @@ class ContentItemsHandler:
             ContentItems.INDICATOR_TYPES: [],
             ContentItems.LAYOUTS: [],
             ContentItems.CLASSIFIERS: [],
-            ContentItems.WIDGETS: []
+            ContentItems.WIDGETS: [],
+            ContentItems.GENERIC_FIELDS: [],
+            ContentItems.GENERIC_TYPES: [],
+            ContentItems.GENERIC_MODULES: [],
+            ContentItems.GENERIC_DEFINITIONS: []
         }
         self.content_folder_name_to_func: Dict[str, Callable] = {
             SCRIPTS_DIR: self.add_script_as_content_item,
@@ -173,7 +180,11 @@ class ContentItemsHandler:
             REPORTS_DIR: self.add_report_as_content_item,
             LAYOUTS_DIR: self.add_layout_as_content_item,
             CLASSIFIERS_DIR: self.add_classifier_as_content_item,
-            WIDGETS_DIR: self.add_widget_as_content_item
+            WIDGETS_DIR: self.add_widget_as_content_item,
+            GENERIC_TYPES_DIR: self.add_generic_type_as_content_item,
+            GENERIC_FIELDS_DIR: self.add_generic_field_as_content_item,
+            GENERIC_MODULES_DIR: self.add_generic_module_as_content_item,
+            GENERIC_DEFINITIONS_DIR: self.add_generic_definition_as_content_item
         }
 
     def handle_content_item(self, content_object: ContentObject):
@@ -294,6 +305,31 @@ class ContentItemsHandler:
             'name': content_object.get('name', ''),
             'dataType': content_object.get('dataType', ''),
             'widgetType': content_object.get('widgetType', '')
+        })
+
+    def add_generic_field_as_content_item(self, content_object: ContentObject):
+        self.content_items[ContentItems.GENERIC_FIELDS].append({
+            'name': content_object.get('name', ''),
+            'type': content_object.get('type', ''),
+            'description': content_object.get('description', '')
+        })
+
+    def add_generic_type_as_content_item(self, content_object: ContentObject):
+        self.content_items[ContentItems.GENERIC_TYPES].append({
+            'name': content_object.get('name', ''),
+            'details': content_object.get('details', ''),
+        })
+
+    def add_generic_definition_as_content_item(self, content_object: ContentObject):
+        self.content_items[ContentItems.GENERIC_DEFINITIONS].append({
+            'name': content_object.get('name', ''),
+            'description': content_object.get('description', '')
+        })
+
+    def add_generic_module_as_content_item(self, content_object: ContentObject):
+        self.content_items[ContentItems.GENERIC_MODULES].append({
+            'name': content_object.get('name', ''),
+            'description': content_object.get('description', '')
         })
 
 
@@ -617,9 +653,22 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
     for widget in pack.widgets:
         content_items_handler.handle_content_item(widget)
         pack_report += dump_pack_conditionally(artifact_manager, widget)
+    for generic_definition in pack.generic_definitions:
+        content_items_handler.handle_content_item(generic_definition)
+        pack_report += dump_pack_conditionally(artifact_manager, generic_definition)
+    for generic_module in pack.generic_modules:
+        content_items_handler.handle_content_item(generic_module)
+        pack_report += dump_pack_conditionally(artifact_manager, generic_module)
+    for generic_type in pack.generic_types:
+        content_items_handler.handle_content_item(generic_type)
+        pack_report += dump_pack_conditionally(artifact_manager, generic_type)
+    for generic_field in pack.generic_fields:
+        content_items_handler.handle_content_item(generic_field)
+        pack_report += dump_pack_conditionally(artifact_manager, generic_field)
     for release_note in pack.release_notes:
         pack_report += ObjectReport(release_note, content_packs=True)
         release_note.dump(artifact_manager.content_packs_path / pack.id / RELEASE_NOTES_DIR)
+
     for tool in pack.tools:
         object_report = ObjectReport(tool, content_packs=True)
         created_files = tool.dump(artifact_manager.content_packs_path / pack.id / TOOLS_DIR)

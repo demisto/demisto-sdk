@@ -1,4 +1,6 @@
 import pytest
+
+from demisto_sdk.commands.common.constants import EXCLUDED_DISPLAY_NAME_WORDS
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
@@ -145,3 +147,45 @@ def test_get_not_registered_tests(file_path, schema, conf_json_data, content_ite
     structure_validator = StructureValidator(file_path, predefined_scheme=schema)
     tests = structure_validator.current_file.get('tests')
     assert get_not_registered_tests(conf_json_data, content_item_id, schema, tests) == expected
+
+
+def test_entity_valid_name_valid(repo, mocker):
+    """
+    Given:
+    - Entity name that does not contain excluded words.
+
+    When:
+    - Checking whether entity name contains excluded word.
+
+    Then:
+    - Ensure true is returned.
+    """
+    pack = repo.create_pack('TestPack')
+    integration = pack.create_integration(name='BitcoinAbuse')
+    integration.create_default_integration(name='BitcoinAbuse')
+    integration.yml.update({'display': 'BitcoinAbuse'})
+    integration_structure_validator = StructureValidator(integration.yml.path)
+    integration_content_entity_validator = ContentEntityValidator(integration_structure_validator)
+    assert integration_content_entity_validator.name_does_not_contain_excluded_word()
+
+
+def test_entity_valid_name_invalid(repo, mocker):
+    """
+    Given:
+    - Entity name with excluded word.
+
+    When:
+    - Checking whether entity name contains excluded word.
+
+    Then:
+    - Ensure false is returned.
+    """
+    pack = repo.create_pack('TestPack')
+    script = pack.create_script(name='QRadar')
+    script.create_default_script(name='QRadar')
+    excluded_word = EXCLUDED_DISPLAY_NAME_WORDS[0]
+    script.yml.update({'name': f'QRadar ({excluded_word})'})
+    script_structure_validator = StructureValidator(script.yml.path)
+    script_content_entity_validator = ContentEntityValidator(script_structure_validator)
+    mocker.patch.object(script_content_entity_validator, 'handle_error')
+    assert not script_content_entity_validator.name_does_not_contain_excluded_word()

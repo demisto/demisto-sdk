@@ -1,9 +1,10 @@
 from typing import Union
 
-import demisto_sdk.commands.common.content.errors as exc
 from ruamel.yaml import YAML
 from ruamel.yaml.scanner import ScannerError
 from wcmatch.pathlib import EXTGLOB, NEGATE, Path
+
+import demisto_sdk.commands.common.content.errors as exc
 
 from .dictionary_based_object import DictionaryBasedObject
 

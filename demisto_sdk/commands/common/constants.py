@@ -5,9 +5,10 @@ from functools import reduce
 from typing import Dict, Iterable, List, Optional
 
 import click
-from demisto_sdk.commands.common.git_util import GitUtil
 # dirs
 from git import InvalidGitRepositoryError
+
+from demisto_sdk.commands.common.git_util import GitUtil
 
 CAN_START_WITH_DOT_SLASH = '(?:./)?'
 NOT_TEST = '(?!Test)'
@@ -62,6 +63,10 @@ CANVAS = 'canvas'
 OLD_REPUTATION = 'reputations.json'
 PACK_VERIFY_KEY = 'content.pack.verify'
 XSOAR_CONFIG_FILE = 'xsoar_config.json'
+GENERIC_FIELD = 'genericfield'
+GENERIC_TYPE = 'generictype'
+GENERIC_MODULE = 'genericmodule'
+GENERIC_DEFINITION = 'genericdefinition'
 
 
 class FileType(Enum):
@@ -89,6 +94,7 @@ class FileType(Enum):
     DESCRIPTION = 'description'
     CHANGELOG = 'changelog'
     IMAGE = 'image'
+    AUTHOR_IMAGE = 'author_image'
     DOC_IMAGE = 'doc_image'
     PYTHON_FILE = 'pythonfile'
     JAVASCRIPT_FILE = 'javascriptfile'
@@ -415,14 +421,17 @@ PACKS_INDICATOR_TYPE_JSON_REGEX = fr'{PACKS_INDICATOR_TYPES_DIR_REGEX}\/([^/]+)\
 PACKS_INDICATOR_FIELDS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{INDICATOR_FIELDS_DIR}'
 PACKS_INDICATOR_FIELD_JSON_REGEX = fr'{PACKS_INDICATOR_FIELDS_DIR_REGEX}\/([^/]+)\.json'
 
-PACKS_GENERIC_TYPES_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{GENERIC_TYPES_DIR}'
+PACKS_GENERIC_TYPES_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{GENERIC_TYPES_DIR}\/([^\\\/]+)'
 PACKS_GENERIC_TYPE_JSON_REGEX = fr'{PACKS_GENERIC_TYPES_DIR_REGEX}\/([^/]+)\.json'
 
-PACKS_GENERIC_FIELDS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{GENERIC_FIELDS_DIR}'
+PACKS_GENERIC_FIELDS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{GENERIC_FIELDS_DIR}\/([^\\\/]+)'
 PACKS_GENERIC_FIELD_JSON_REGEX = fr'{PACKS_GENERIC_FIELDS_DIR_REGEX}\/([^/]+)\.json'
 
 PACKS_GENERIC_MODULES_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{GENERIC_MODULES_DIR}'
 PACKS_GENERIC_MODULE_JSON_REGEX = fr'{PACKS_GENERIC_MODULES_DIR_REGEX}\/([^/]+)\.json'
+
+PACKS_GENERIC_DEFINITIONS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{GENERIC_DEFINITIONS_DIR}'
+PACKS_GENERIC_DEFINITION_JSON_REGEX = fr'{PACKS_GENERIC_DEFINITIONS_DIR_REGEX}\/([^/]+)\.json'
 
 PACKS_CLASSIFIERS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{CLASSIFIERS_DIR}'
 
@@ -525,6 +534,7 @@ PACKS_PACK_IGNORE_FILE_NAME = '.pack-ignore'
 PACKS_PACK_META_FILE_NAME = 'pack_metadata.json'
 PACKS_README_FILE_NAME = 'README.md'
 PACKS_CONTRIBUTORS_FILE_NAME = 'CONTRIBUTORS.md'
+AUTHOR_IMAGE_FILE_NAME = 'Author_image.png'
 
 PYTHON_TEST_REGEXES = [
     PACKS_SCRIPT_TEST_PY_REGEX,
@@ -662,6 +672,10 @@ JSON_ALL_GENERIC_TYPES_REGEXES = [
 
 JSON_ALL_GENERIC_MODULES_REGEXES = [
     PACKS_GENERIC_MODULE_JSON_REGEX,
+]
+
+JSON_ALL_GENERIC_DEFINITIONS_REGEXES = [
+    PACKS_GENERIC_DEFINITION_JSON_REGEX,
 ]
 
 JSON_ALL_REPUTATIONS_INDICATOR_TYPES_REGEXES = [
@@ -965,7 +979,8 @@ SCHEMA_TO_REGEX = {
     'release-notes': [PACKS_RELEASE_NOTES_REGEX],
     'genericfield': JSON_ALL_GENERIC_FIELDS_REGEXES,
     'generictype': JSON_ALL_GENERIC_TYPES_REGEXES,
-    'genericmodule': JSON_ALL_GENERIC_MODULES_REGEXES
+    'genericmodule': JSON_ALL_GENERIC_MODULES_REGEXES,
+    'genericdefinition': JSON_ALL_GENERIC_DEFINITIONS_REGEXES
 }
 
 EXTERNAL_PR_REGEX = r'^pull/(\d+)$'
@@ -996,6 +1011,8 @@ ACCEPTED_FILE_EXTENSIONS = [
     '.yml', '.json', '.md', '.py', '.js', '.ps1', '.png', '', '.lock'
 ]
 ENDPOINT_COMMAND_NAME = 'endpoint'
+
+REPUTATION_COMMAND_NAMES = {'file', 'email', 'domain', 'url', 'ip', 'cve'}
 
 BANG_COMMAND_NAMES = {'file', 'email', 'domain', 'url', 'ip', 'cve', 'endpoint'}
 
@@ -1036,6 +1053,7 @@ XSOAR_SUPPORT_URL = "https://www.paloaltonetworks.com/cortex"
 MARKETPLACE_LIVE_DISCUSSIONS = \
     'https://live.paloaltonetworks.com/t5/cortex-xsoar-discussions/bd-p/Cortex_XSOAR_Discussions'
 MARKETPLACE_MIN_VERSION = '6.0.0'
+EXCLUDED_DISPLAY_NAME_WORDS = ['partner', 'community']
 
 BASE_PACK = "Base"
 NON_SUPPORTED_PACK = "NonSupported"
@@ -1210,10 +1228,13 @@ MAX_FETCH = 'max_fetch'
 
 OLDEST_SUPPORTED_VERSION = '5.0.0'
 
+GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION = '6.5.0'
+
 FEATURE_BRANCHES = ['v4.5.0']
 
+
 SKIP_RELEASE_NOTES_FOR_TYPES = (FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK,
-                                FileType.TEST_SCRIPT, FileType.DOC_IMAGE)
+                                FileType.TEST_SCRIPT, FileType.DOC_IMAGE, FileType.AUTHOR_IMAGE)
 
 LAYOUT_AND_MAPPER_BUILT_IN_FIELDS = ['indicatortype', 'source', 'comment', 'aggregatedreliability', 'detectedips',
                                      'detectedhosts', 'modified', 'expiration', 'timestamp', 'shortdesc',
@@ -1257,6 +1278,10 @@ class ContentItems(Enum):
     LAYOUTS = 'layoutscontainer'
     CLASSIFIERS = 'classifier'
     WIDGETS = 'widget'
+    GENERIC_MODULES = 'genericmodule'
+    GENERIC_DEFINITIONS = 'genericdefinition'
+    GENERIC_FIELDS = 'genericfield'
+    GENERIC_TYPES = 'generictype'
 
 
 YML_SUPPORTED_FOLDERS = {

@@ -3,7 +3,9 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 
 import click
-from demisto_sdk.commands.common.legacy_git_tools import get_changed_files
+
+from demisto_sdk.commands.common.constants import TESTS_AND_DOC_DIRECTORIES
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.tools import (find_type, get_files_in_dir,
                                                print_error, print_success,
                                                print_warning)
@@ -13,6 +15,14 @@ from demisto_sdk.commands.format.update_classifier import (
 from demisto_sdk.commands.format.update_connection import ConnectionJSONFormat
 from demisto_sdk.commands.format.update_dashboard import DashboardJSONFormat
 from demisto_sdk.commands.format.update_description import DescriptionFormat
+from demisto_sdk.commands.format.update_genericdefinition import \
+    GenericDefinitionJSONFormat
+from demisto_sdk.commands.format.update_genericfield import \
+    GenericFieldJSONFormat
+from demisto_sdk.commands.format.update_genericmodule import \
+    GenericModuleJSONFormat
+from demisto_sdk.commands.format.update_generictype import \
+    GenericTypeJSONFormat
 from demisto_sdk.commands.format.update_incidentfields import \
     IncidentFieldJSONFormat
 from demisto_sdk.commands.format.update_incidenttype import \
@@ -31,10 +41,6 @@ from demisto_sdk.commands.format.update_report import ReportJSONFormat
 from demisto_sdk.commands.format.update_script import ScriptYMLFormat
 from demisto_sdk.commands.format.update_widget import WidgetJSONFormat
 from demisto_sdk.commands.lint.commands_builder import excluded_files
-
-from demisto_sdk.commands.common.constants import (
-                                                   TESTS_AND_DOC_DIRECTORIES,
-                                                  )
 
 FILE_TYPE_AND_LINKED_CLASS = {
     'integration': IntegrationYMLFormat,
@@ -56,8 +62,13 @@ FILE_TYPE_AND_LINKED_CLASS = {
     'report': ReportJSONFormat,
     'testscript': ScriptYMLFormat,
     'canvas-context-connections': ConnectionJSONFormat,
-    'description': DescriptionFormat
+    'description': DescriptionFormat,
+    'genericfield': GenericFieldJSONFormat,
+    'generictype': GenericTypeJSONFormat,
+    'genericmodule': GenericModuleJSONFormat,
+    'genericdefinition': GenericDefinitionJSONFormat
 }
+
 UNFORMATTED_FILES = ['readme',
                      'releasenotes',
                      'changelog',
@@ -66,6 +77,7 @@ UNFORMATTED_FILES = ['readme',
                      'powershellfile',
                      'betaintegration',
                      'doc_image',
+                     'author_image'
                      ]
 
 VALIDATE_RES_SKIPPED_CODE = 2
@@ -81,7 +93,11 @@ def format_manager(input: str = None,
                    verbose: bool = False,
                    update_docker: bool = False,
                    assume_yes: bool = False,
-                   deprecate: bool = False):
+                   deprecate: bool = False,
+                   use_git: bool = False,
+                   prev_ver: str = None,
+                   include_untracked: bool = False,
+                   ):
     """
     Format_manager is a function that activated format command on different type of files.
     Args:
@@ -92,14 +108,23 @@ def format_manager(input: str = None,
         verbose (bool): Whether to print verbose logs or not
         update_docker (flag): Whether to update the docker image.
         assume_yes (bool): Whether to assume "yes" as answer to all prompts and run non-interactively
+        deprecate (bool): Whether to deprecate the entity
+        use_git (bool): Use git to automatically recognize which files changed and run format on them
+        prev_ver (str): Against which branch should the difference be recognized
+        include_untracked (bool): Whether to include untracked files when checking against git
     Returns:
         int 0 in case of success 1 otherwise
     """
+    prev_ver = prev_ver if prev_ver else 'demisto/master'
+    supported_file_types = ['json', 'yml', 'py', 'md']
+    use_git = use_git or not input
+
     if input:
-        files = get_files_in_dir(input, ['json', 'yml', 'py', 'md'])
-    else:
-        files = [file['name'] for file in
-                 get_changed_files(filter_results=lambda _file: not _file.pop('status') == 'D')]
+        files = get_files_in_dir(input, supported_file_types)
+
+    elif use_git:
+        files = get_files_to_format_from_git(supported_file_types, prev_ver, include_untracked)
+
     if output and not output.endswith(('yml', 'json', 'py')):
         raise Exception("The given output path is not a specific file path.\n"
                         "Only file path can be a output path.  Please specify a correct output.")
@@ -148,7 +173,9 @@ def format_manager(input: str = None,
         update_content_entity_ids(files, verbose)
 
     else:
-        log_list.append(([f'Failed format file {input}.' + "No such file or directory"], print_error))
+        if not use_git:
+            log_list.append(([f'Failed format file {input}.' + "No such file or directory"], print_error))
+        return 1
 
     print('')  # Just adding a new line before summary
     for string, print_func in log_list:
@@ -157,6 +184,38 @@ def format_manager(input: str = None,
     if error_list:
         return 1
     return 0
+
+
+def get_files_to_format_from_git(supported_file_types: List[str], prev_ver: str, include_untracked: bool) -> List[str]:
+    """Get the files to format from git.
+
+    Args:
+        supported_file_types(list): File extensions which are supported by format
+        prev_ver(str): The branch name or commit hash to compare with
+        include_untracked(bool): Whether to include untracked files
+
+    Returns:
+        list. a list of all the files that should be formatted.
+    """
+    git_util = GitUtil()
+    all_changed_files = git_util.get_all_changed_files(prev_ver=prev_ver, include_untracked=include_untracked)
+
+    filtered_files = []
+    for file_path in all_changed_files:
+        str_file_path = str(file_path)
+        file_extension = os.path.splitext(str_file_path)[1]
+        if file_extension in supported_file_types and os.path.exists(str_file_path):
+            filtered_files.append(str_file_path)
+            continue
+
+    if filtered_files:
+        detected_files_string = "\n".join(filtered_files)
+        click.secho(f'Found the following files to format:\n{detected_files_string}', fg='bright_cyan')
+
+    else:
+        click.secho('Did not find any files to format', fg='bright_red')
+
+    return filtered_files
 
 
 def update_content_entity_ids(files: List[str], verbose: bool):

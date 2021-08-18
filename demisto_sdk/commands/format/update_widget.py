@@ -1,7 +1,8 @@
-from typing import Tuple
 from distutils.version import LooseVersion
+from typing import Tuple
 
 import click
+
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
@@ -29,7 +30,7 @@ class WidgetJSONFormat(BaseUpdateJSON):
 
     def run_format(self) -> int:
         try:
-            click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
+            click.secho(f'\n================= Updating file {self.source_file} =================', fg='bright_blue')
             self.update_json()
             self.set_description()
             self.set_isPredefined()

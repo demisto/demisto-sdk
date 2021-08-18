@@ -6,9 +6,6 @@ import click
 from ruamel.yaml import YAML
 
 from demisto_sdk.commands.common.constants import FileType
-from demisto_sdk.commands.common.tools import (get_pack_name,
-                                               is_external_repository,
-                                               print_error)
 from demisto_sdk.commands.upload.uploader import Uploader
 
 
@@ -383,10 +380,11 @@ class PlaybookTestsGenerator:
             if self.verbose:
                 raise
 
-            print_error(str(ex))
+            click.secho(str(ex), fg='bright_red')
             return
         except AttributeError:
-            print_error(f'Error - failed to parse: {self.integration_yml_path}.\nProbably invalid yml file')
+            click.secho(f'Error - failed to parse: {self.integration_yml_path}.\nProbably invalid yml file',
+                        fg='bright_red')
             return
 
         test_playbook = Playbook(
@@ -430,8 +428,8 @@ class PlaybookTestsGenerator:
         test_playbook.add_task(create_end_task(test_playbook.task_counter))
 
         if Path(self.test_playbook_yml_path).exists():
-            print_color(f'Warning: There already exists a test playbook at {self.test_playbook_yml_path}, '
-                        f'it will be overwritten.', LOG_COLORS.YELLOW)
+            click.secho(f'Warning: There already exists a test playbook at {self.test_playbook_yml_path}, '
+                        f'it will be overwritten.', fg='yellow')
 
         with open(self.test_playbook_yml_path, 'w') as yf:
             ryaml.dump(test_playbook.to_dict(), yf)

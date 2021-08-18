@@ -982,7 +982,7 @@ def generate_test_playbook(**kwargs):
         generator = PlaybookTestsGenerator(file_type=file_type.value, **kwargs)
         if generator.run():
             sys.exit(0)
-        sys.exit(1)    
+        sys.exit(1)
     except PlaybookTestsGenerator.InvalidOutputPathError as e:
         print_error(str(e))
         return 1

@@ -301,7 +301,7 @@ def generate_single_command_section(cmd: dict, example_dict: dict, command_permi
         '',
     ])
     outputs = cmd.get('outputs')
-    if outputs is None:
+    if outputs is None or len(outputs) == 0:
         section.append('There is no context output for this command.')
     else:
         section.extend([

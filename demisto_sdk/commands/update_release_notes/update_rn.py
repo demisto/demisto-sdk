@@ -29,7 +29,7 @@ class UpdateRN:
     def __init__(self, pack_path: str, update_type: Union[str, None], modified_files_in_pack: set, added_files: set,
                  specific_version: str = None, pre_release: bool = False, pack: str = None,
                  pack_metadata_only: bool = False, text: str = '', existing_rn_version_path: str = '',
-                 is_force: bool = False):
+                 is_force: bool = False, is_bc: bool = False):
         self.pack = pack if pack else get_pack_name(pack_path)
         self.update_type = update_type
         self.pack_path = pack_path
@@ -51,6 +51,7 @@ class UpdateRN:
         self.metadata_path = os.path.join(self.pack_path, 'pack_metadata.json')
         self.master_version = self.get_master_version()
         self.rn_path = ''
+        self.is_bc = is_bc
 
     @staticmethod
     def change_image_or_desc_file_path(file_path: str) -> str:
@@ -123,15 +124,13 @@ class UpdateRN:
             }
         return self.create_pack_rn(rn_path, changed_files, new_metadata, docker_image_name)
 
-    def create_pack_rn(self, rn_path: str, changed_files: dict, new_metadata: dict,
-                       docker_image_name: Optional[str]) -> bool:
+    def create_pack_rn(self, rn_path: str, changed_files: dict, new_metadata: dict) -> bool:
         """ Checks whether the pack requires a new rn and if so, creates it.
 
             :param
                 rn_path: The rn path
                 changed_files: The changed files details
                 new_metadata: The new pack metadata
-                docker_image_name: The docker image name
 
 
             :rtype: ``bool``

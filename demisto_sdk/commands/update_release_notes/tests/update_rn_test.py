@@ -1213,6 +1213,29 @@ class TestRNUpdateUnit:
          'to: *demisto/python3:3.9.1.149616*.\n', True)
     ]
 
+    def test_build_rn_config_file(self):
+        """
+        Given:
+        - BC flag - indicating whether new version introduced has breaking changes.
+
+        When:
+        - Generating conf file for new RN.
+        Case a: BC flag was not specified.
+        Case b: BC flag was specified, no conf exists.
+        Case c: BC flag was specified, conf exists, breakingChanges field is false.
+        Case c: BC flag was specified, conf exists, breakingChangesNotes field is not empty.
+
+        Then:
+        - Ensure expected results happen.
+        Case a: No conf JSON file generated.
+        Case b: Conf JSON file generated with null value for breakingChangesNotes, and true value for breakingChanges.
+        Case c: Conf JSON file generated with null value for breakingChangesNotes, and true value for breakingChanges.
+        Case d: Conf JSON file generated with old value for breakingChangesNotes, and true value for breakingChanges.
+
+        Returns:
+
+        """
+
 
 def test_get_from_version_at_update_rn(integration):
     """

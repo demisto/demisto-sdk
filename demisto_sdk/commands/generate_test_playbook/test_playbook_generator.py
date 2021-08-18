@@ -286,7 +286,7 @@ class PlaybookTestsGenerator:
                 self.test_playbook_yml_path = str(output_path / generated_test_playbook_file_name)
             else:
                 """ if a destination path is specified for the playbook, and it's of a yml file, use it"""
-                if not output_path.suffix.lower() == 'yml':
+                if not output_path.suffix.lower() == '.yml':
                     raise PlaybookTestsGenerator.InvalidOutputPathError(output)
                 self.test_playbook_yml_path = output
         else:

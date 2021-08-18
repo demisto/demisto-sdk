@@ -510,7 +510,7 @@ class TimestampReplacer:
             True if the val was parsed to datetime object and False otherwise
         """
         try:
-            if parse(val):
+            if parse(val,settings={'TIMEZONE': 'local'}):
                 return True
         except Exception:
             logging.exception(f'Failed to parse as date object: {val}')

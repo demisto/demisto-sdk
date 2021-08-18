@@ -1,6 +1,6 @@
 {
-  "API key": "The API Key to use for connection.",
-  "Fetch Incidents": "If set to true, this integration instance will pull incidents.",
+  "API key": "The API Key to use for the connection.",
+  "Fetch Incidents": "When set to true, this integration instance will pull incidents.",
   "Incident Type": "The default incident type to create.",
   "Source Reliability": "Reliability of the source providing the data.",
   "Proxy": "Use system proxy settings.",

@@ -6,7 +6,7 @@ In order to release a new version of `demisto-sdk` to the public follow these st
 3) Make sure that sdk-nightly and sdk-master builds are both green. If there were no new commits to the sdk after
  the nightly tests finished you can skip step 4.
 4) If there were new commits to the sdk after the nightly tests finished you will need to trigger sdk nightly build again in order to test sdk master on content branch \
-   Do so by running `./Utils/trigger_nightly_sdk_build.sh <branch_name> <circle_token>` in content repo and check for green build.
+   Do so by running `./Utils/trigger_nightly_sdk_build.sh -sr <branch_name> -ct <circle_token>` in content repo and check for green build.
 5) If there was any change in the content creation steps (**create content artifacts** or **unify** commands) - we need to check that the new content is valid.
 To do so, you can do the following:\
   a. Compare the content_new.zip from nightly-sdk build and nightly-content build and see if there is any major difference between them.\

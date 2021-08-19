@@ -11,7 +11,7 @@ from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_json
 from demisto_sdk.commands.common.update_id_set import DEFAULT_ID_SET_PATH
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
-
+from typing import Optional, Dict
 
 class TestRNUpdate(unittest.TestCase):
     FILES_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
@@ -1213,7 +1213,17 @@ class TestRNUpdateUnit:
          'to: *demisto/python3:3.9.1.149616*.\n', True)
     ]
 
-    def test_build_rn_config_file(self):
+    BUILD_RN_CONFIG_FILE_INPUTS = [(False, None, None),
+                                   (True, None, {'breakingChanges': True, 'breakingChangesNotes': None}),
+                                   (True, {'breakingChanges': True},
+                                    {'breakingChanges': True, 'breakingChangesNotes': None}),
+                                   (True, {'breakingChanges': True, 'breakingChangesNotes': 'bc notes'},
+                                    {'breakingChanges': True, 'breakingChangesNotes': 'bc notes'})
+                                   ]
+
+    @pytest.mark.parametrize('is_bc, existing_conf_data, expected_conf_data', BUILD_RN_CONFIG_FILE_INPUTS)
+    def test_build_rn_config_file(self, pack, is_bc: bool, existing_conf_data: Optional[Dict],
+                                  expected_conf_data: Optional[Dict]):
         """
         Given:
         - BC flag - indicating whether new version introduced has breaking changes.
@@ -1232,9 +1242,21 @@ class TestRNUpdateUnit:
         Case c: Conf JSON file generated with null value for breakingChangesNotes, and true value for breakingChanges.
         Case d: Conf JSON file generated with old value for breakingChangesNotes, and true value for breakingChanges.
 
-        Returns:
-
         """
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        client = UpdateRN(pack_path=pack.path, update_type=None, modified_files_in_pack=set(), added_files=set(),
+                          is_bc=is_bc)
+        conf_path: str = f'{pack.path}/ReleaseNotes/1_0_1.json'
+        if existing_conf_data:
+            with open(conf_path, 'w') as f:
+                f.write(json.dumps(existing_conf_data))
+        client.build_rn_config_file('1.0.1')
+        if expected_conf_data:
+            assert os.path.exists(conf_path)
+            with open(conf_path, 'r') as f:
+                assert json.loads(f.read()) == expected_conf_data
+        else:
+            assert not os.path.exists(conf_path)
 
 
 def test_get_from_version_at_update_rn(integration):

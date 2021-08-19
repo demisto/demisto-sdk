@@ -9,7 +9,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     GenericField, GenericModule, GenericType, IncidentField, IncidentType,
     IndicatorField, IndicatorType, Integration, Layout, LayoutsContainer,
     OldClassifier, OldIndicatorType, PackIgnore, PackMetaData, Playbook,
-    Readme, ReleaseNote, Report, Script, SecretIgnore, Widget)
+    Readme, ReleaseNote, Report, Script, SecretIgnore, Widget, ReleaseNoteConfig)
 from demisto_sdk.commands.common.content.objects.root_objects import \
     Documentation
 from demisto_sdk.commands.common.tools import find_type
@@ -40,6 +40,7 @@ TYPE_CONVERSION_BY_FileType = {
     FileType.DESCRIPTION: Readme,
     FileType.README: Readme,
     FileType.RELEASE_NOTES: ReleaseNote,
+    FileType.RELEASE_NOTES_CONFIG: ReleaseNoteConfig,
     FileType.DOC_IMAGE: DocFile,
     FileType.JAVASCRIPT_FILE: '',
     FileType.POWERSHELL_FILE: '',

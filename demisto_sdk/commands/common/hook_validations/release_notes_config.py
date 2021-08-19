@@ -1,19 +1,9 @@
 from __future__ import print_function
 
-import itertools
 import os
-import re
 
-from demisto_sdk.commands.common.constants import (PACKS_DIR,
-                                                   RN_HEADER_BY_FILE_TYPE,
-                                                   FileType)
-from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
-from demisto_sdk.commands.common.tools import (find_type,
-                                               get_latest_release_notes_text,
-                                               get_release_notes_file_path)
-from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
 
 class ReleaseNotesConfigValidator(BaseValidator):

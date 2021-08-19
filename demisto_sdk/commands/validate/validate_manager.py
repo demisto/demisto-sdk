@@ -740,18 +740,17 @@ class ValidateManager:
 
         return True
 
-    def validate_release_notes_config(self, pack_name: str, file_path: str, pack_error_ignore_list: list) -> bool:
+    def validate_release_notes_config(self, file_path: str, pack_error_ignore_list: list) -> bool:
         """
         Builds validator for RN config file and returns its validation results.
         Args:
-            pack_name (str): Pack name of the pack containing the RN config.
             file_path (str): Path to RN config file.
             pack_error_ignore_list (list): Pack error ignore list.
 
         Returns:
             (bool): Whether RN config file is valid.
         """
-
+        pack_name = get_pack_name(file_path)
         if pack_name == 'NonSupported':
             return True
         release_notes_config_validator = ReleaseNotesConfigValidator(file_path, ignored_errors=pack_error_ignore_list,

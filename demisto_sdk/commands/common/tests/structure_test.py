@@ -1,8 +1,9 @@
+import json
 import os
 from os.path import isfile
 from shutil import copyfile
 from typing import List, Tuple
-import json
+
 import pytest
 from ruamel.yaml import YAML
 

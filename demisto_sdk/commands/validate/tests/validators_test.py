@@ -1008,6 +1008,27 @@ class TestValidators:
         validate_manager.new_packs = {'CortexXDR'}
         assert validate_manager.validate_release_notes(file_path, {file_path}, modified_files, None, False) is False
 
+    def test_run_validations_on_file_release_notes_config(self, pack):
+        """
+        Sanity test for running validation on RN config file
+
+        Given:
+        - Valid RN config file.
+
+        When:
+        - Checking if file is valid.
+
+        Then:
+        - Ensure true is returned.
+        """
+        config_file_path: str = f'{pack.path}/ReleaseNotes/1_0_1.json'
+        with open(config_file_path, 'w') as f:
+            f.write(json.dumps({'breakingChanges': True}))
+        with open(config_file_path.replace('.json', '.md'), 'w') as f:
+            f.write('RN text')
+        validate_manager: ValidateManager = ValidateManager()
+        assert validate_manager.run_validations_on_file(config_file_path, list())
+
 
 @pytest.mark.parametrize('pack_name, expected', [
     ('NonSupported', False),

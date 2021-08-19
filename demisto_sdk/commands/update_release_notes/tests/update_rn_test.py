@@ -2,6 +2,7 @@ import json
 import os
 import shutil
 import unittest
+from typing import Dict, Optional
 
 import mock
 import pytest
@@ -11,7 +12,7 @@ from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_json
 from demisto_sdk.commands.common.update_id_set import DEFAULT_ID_SET_PATH
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
-from typing import Optional, Dict
+
 
 class TestRNUpdate(unittest.TestCase):
     FILES_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
@@ -1243,7 +1244,8 @@ class TestRNUpdateUnit:
         Case d: Conf JSON file generated with old value for breakingChangesNotes, and true value for breakingChanges.
 
         """
-        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+        from demisto_sdk.commands.update_release_notes.update_rn import \
+            UpdateRN
         client = UpdateRN(pack_path=pack.path, update_type=None, modified_files_in_pack=set(), added_files=set(),
                           is_bc=is_bc)
         conf_path: str = f'{pack.path}/ReleaseNotes/1_0_1.json'

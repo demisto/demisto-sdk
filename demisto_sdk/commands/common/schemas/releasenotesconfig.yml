@@ -1,0 +1,8 @@
+type: map
+mapping:
+  breakingChanges:
+    type: bool
+    required: false
+  breakingChangesNotes:
+    type: str
+    required: false

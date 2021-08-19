@@ -7,6 +7,7 @@
     * Added the *--examples* argument to get the command examples file path and generate tasks from the commands and arguments specified there.
     * Added the *--upload* flag to specify whether to upload the test playbook after the generation.
     * Fixed the output condition generation for outputs of type 'Boolean'.
+* Added to the **update-release-notes** command `-bc` flag to generate template for breaking changes version.
 
 # 1.4.7
 * Fixed an issue where an empty list for a command context didn't produce an indication other than an empty table.

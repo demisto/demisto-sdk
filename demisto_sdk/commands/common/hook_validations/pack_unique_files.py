@@ -402,14 +402,33 @@ class PackUniqueFilesValidator(BaseValidator):
                 return False
         return True
 
+    def validate_support_details_exist(self, pack_meta_file_content):
+        """Validate either email or url exist in contributed pack details."""
+        if not pack_meta_file_content[PACK_METADATA_URL] and not pack_meta_file_content[PACK_METADATA_EMAIL]:
+            if self._add_error(Errors.pack_metadata_missing_url_and_email(), self.pack_meta_file):
+                return False
+
+        return True
+
+    def validate_metadata_url(self, pack_meta_file_content):
+        """Validate the url in the pack metadata doesn't lead to a github repository."""
+        metadata_url = pack_meta_file_content[PACK_METADATA_URL]
+        metadata_url = metadata_url.lower().strip()
+        if len(re.findall("github.com", metadata_url)) > 0:
+            # GitHub URLs that lead to a /issues page are also acceptable as a support URL.
+            if not metadata_url.endswith('/issues'):
+                self._add_error(Errors.metadata_url_invalid(), self.pack_meta_file)
+                return False
+
+        return True
+
     def _is_valid_contributor_pack_support_details(self):
-        """Checks if email or url exist in contributed pack details."""
+        """Check email and url in contributed pack metadata details."""
         try:
             pack_meta_file_content = self._read_metadata_content()
             if pack_meta_file_content[PACK_METADATA_SUPPORT] in SUPPORTED_CONTRIBUTORS_LIST:
-                if not pack_meta_file_content[PACK_METADATA_URL] and not pack_meta_file_content[PACK_METADATA_EMAIL]:
-                    if self._add_error(Errors.pack_metadata_missing_url_and_email(), self.pack_meta_file):
-                        return False
+                return all([self.validate_support_details_exist(pack_meta_file_content),
+                            self.validate_metadata_url(pack_meta_file_content)])
 
         except (ValueError, TypeError):
             if self._add_error(Errors.pack_metadata_isnt_json(self.pack_meta_file), self.pack_meta_file):

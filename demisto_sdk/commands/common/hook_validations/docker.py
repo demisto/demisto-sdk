@@ -66,7 +66,7 @@ class DockerImageValidator(BaseValidator):
 
         return self.is_valid
 
-    def is_docker_image_latest_tag(self, latest):
+    def is_docker_image_latest_tag(self):
         if 'demisto/python:1.3-alpine' == f'{self.docker_image_name}:{self.docker_image_tag}':
             # the docker image is the default one
             error_message, error_code = Errors.default_docker_error()

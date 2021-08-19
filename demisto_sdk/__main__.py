@@ -935,11 +935,17 @@ def json_to_outputs_command(**kwargs):
 @click.option(
     '-o', '--output',
     required=False,
-    help='Specify output directory')
+    help='Specify output directory or path to an output yml file. '
+         'If a path to a yml file is specified - it will be the output path.\n'
+         'If a folder path is specified - a yml output will be saved in the folder.\n'
+         'If not specified, and the input is located at `.../Packs/<pack_name>/Integrations`, '
+         'the output will be saved under `.../Packs/<pack_name>/TestPlaybooks`.\n'
+         'Otherwise (no folder in the input hierarchy is named `Packs`), '
+         'the output will be saved in the current directory.')
 @click.option(
     '-n', '--name',
     required=True,
-    help='Specify test playbook name')
+    help='Specify test playbook name. The output file name will be `playbook-<name>_Test.yml')
 @click.option(
     '--no-outputs', is_flag=True,
     help='Skip generating verification conditions for each output contextPath. Use when you want to decide which '
@@ -952,6 +958,20 @@ def json_to_outputs_command(**kwargs):
          "When not used, the generated playbook calls commands using instances of the provided integration brand.",
     is_flag=True
 )
+@click.option(
+    "-c", "--commands", help="A comma-separated command names to generate playbook tasks for, "
+                             "will ignore the rest of the commands."
+                             "e.g xdr-get-incidents,xdr-update-incident",
+    required=False
+)
+@click.option(
+    "-e", "--examples", help="For integrations: path for file containing command examples."
+                             " Each command should be in a separate line."
+                             " For scripts: the script example surrounded by quotes."
+                             " For example: -e '!ConvertFile entry_id=<entry_id>'"
+)
+@click.option(
+    "-u", "--upload", help="Whether to upload the test playbook after the generation.", is_flag=True)
 def generate_test_playbook(**kwargs):
     """Generate test playbook from integration or script"""
     check_configuration_file('generate-test-playbook', kwargs)
@@ -959,11 +979,19 @@ def generate_test_playbook(**kwargs):
     if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
         print_error('Generating test playbook is possible only for an Integration or a Script.')
         return 1
-    generator = PlaybookTestsGenerator(file_type=file_type.value, **kwargs)
-    generator.run()
 
+    try:
+        generator = PlaybookTestsGenerator(file_type=file_type.value, **kwargs)
+        if generator.run():
+            sys.exit(0)
+        sys.exit(1)
+    except PlaybookTestsGenerator.InvalidOutputPathError as e:
+        print_error(str(e))
+        return 1
 
 # ====================== init ====================== #
+
+
 @main.command()
 @click.help_option(
     '-h', '--help'

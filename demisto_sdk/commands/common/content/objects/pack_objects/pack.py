@@ -160,6 +160,11 @@ class Pack:
                                                           suffix="md")
 
     @property
+    def release_notes_config(self) -> Iterator[ReleaseNote]:
+        return self._content_files_list_generator_factory(dir_name=RELEASE_NOTES_DIR,
+                                                          suffix="json")
+
+    @property
     def generic_definitions(self) -> Iterator[GenericDefinition]:
         return self._content_files_list_generator_factory(dir_name=GENERIC_DEFINITIONS_DIR,
                                                           suffix="json")

@@ -117,6 +117,7 @@ ERROR_CODE = {
     "docker_not_on_the_latest_tag": {'code': "DO106", 'ui_applicable': True, 'related_field': 'dockerimage'},
     "non_existing_docker": {'code': "DO107", 'ui_applicable': True, 'related_field': 'dockerimage'},
     "dockerimage_not_in_yml_file": {'code': "DO108", 'ui_applicable': True, 'related_field': 'dockerimage'},
+    "no_docker_tag_in_iron_bank": {'code': "DO109", 'ui_applicable': True, 'related_field': 'dockerimage'},
     "id_set_conflicts": {'code': "ID100", 'ui_applicable': False, 'related_field': ''},
     "duplicated_id": {'code': "ID102", 'ui_applicable': False, 'related_field': ''},
     "no_id_set_file": {'code': "ID103", 'ui_applicable': False, 'related_field': ''},
@@ -747,6 +748,18 @@ class Errors:
     def no_docker_tag(docker_image):
         return f'{docker_image} - The docker image in your integration/script does not have a tag.' \
                f' Please create or update to an updated versioned image.'
+
+    @staticmethod
+    @error_code_decorator
+    def no_docker_tag_in_iron_bank(docker_image):
+        return f'{docker_image} - The docker image in your integration/script does not have a tag in Iron Bank.' \
+               f' Please create or update to an updated versioned image In Iron Bank.'
+
+    @staticmethod
+    @error_code_decorator
+    def no_docker_image_in_iron_bank(docker_image):
+        return f'{docker_image} - The docker image in your integration/script cannot be found in Iron Bank.' \
+               f' Please create image In Iron Bank.'
 
     @staticmethod
     @error_code_decorator

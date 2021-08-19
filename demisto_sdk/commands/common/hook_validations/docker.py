@@ -28,7 +28,7 @@ DEFAULT_REGISTRY = 'registry-1.docker.io'
 class DockerImageValidator(BaseValidator):
 
     def __init__(self, yml_file_path, is_modified_file, is_integration, ignored_errors=None, print_as_warnings=False,
-                 suppress_print: bool = False, json_file_path: Optional[str] = None):
+                 suppress_print: bool = False, json_file_path: Optional[str] = None, is_iron_bank:bool = False):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          suppress_print=suppress_print, json_file_path=json_file_path)
         self.is_valid = True
@@ -42,7 +42,9 @@ class DockerImageValidator(BaseValidator):
         self.from_version = self.yml_file.get('fromversion', '0')
         self.docker_image_name, self.docker_image_tag = self.parse_docker_image(self.yml_docker_image)
         self.is_latest_tag = True
-        self.docker_image_latest_tag = self.get_docker_image_latest_tag(self.docker_image_name, self.yml_docker_image)
+        self.is_iron_bank = is_iron_bank
+        self.docker_image_latest_tag = self.get_docker_image_latest_tag(self.docker_image_name, self.yml_docker_image,
+                                                                        self.is_iron_bank)
 
     def is_docker_image_valid(self):
         # javascript code should not check docker
@@ -64,7 +66,7 @@ class DockerImageValidator(BaseValidator):
 
         return self.is_valid
 
-    def is_docker_image_latest_tag(self):
+    def is_docker_image_latest_tag(self, latest):
         if 'demisto/python:1.3-alpine' == f'{self.docker_image_name}:{self.docker_image_tag}':
             # the docker image is the default one
             error_message, error_code = Errors.default_docker_error()
@@ -275,7 +277,63 @@ class DockerImageValidator(BaseValidator):
                 tag = DockerImageValidator.lexical_find_latest_tag(tags)
         return tag
 
-    def get_docker_image_latest_tag(self, docker_image_name, yml_docker_image):
+    def get_docker_image_latest_tag_from_iron_bank_request(self, docker_image_name):
+        """
+        Get the latest tag for a docker image by request to Iron Bank Repo.
+        Args:
+            docker_image_name: The docker image name.
+
+        Returns:
+            The latest tag for the docker image.
+        """
+        project_name = docker_image_name.replace('demisto/','')
+        api_url = 'https://repo1.dso.mil/api/v4/projects/dsop%2Fopensource%2Fpalo-alto-networks%2Fdemisto%2F'
+        commits_url = api_url + f'{project_name}/pipelines'
+        manifest_url = api_url + f'{project_name}/repository/files/hardening_manifest.yaml/raw'
+
+        # Get latest commit in master which passed the pipeline of the project:
+        res = requests.get(url=commits_url, params={'ref': 'master', 'status': 'success'}, verify=False,
+                           timeout=TIMEOUT)
+
+        # Project may not be existing and needs to be created.
+        if res.status_code != 200:
+            error_message, error_code = Errors.no_docker_image_in_iron_bank(docker_image_name)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return ''
+
+        list_of_commits = res.json()
+
+        # Project seems to have no succeed pipeline for master branch, meaning the image is not in Iron Bank.
+        if not list_of_commits:
+            error_message, error_code = Errors.no_docker_tag_in_iron_bank(docker_image_name)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return ''
+
+        list_of_commits = sorted(list_of_commits, key=lambda x: x['updated_at'], reverse=True)
+        latest_commit = list_of_commits[0]['sha']
+
+        # gets the manifest file from the commit found:
+        res = requests.get(url=manifest_url, params={'ref': latest_commit}, verify=False, timeout=TIMEOUT)
+
+        # If file does not exists in the last commit:
+        if res.status_code != 200:
+            error_message, error_code = Errors.docker_tag_not_fetched(docker_image_name)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return ''
+
+        data = res.text
+        version_pattern = 'tags:\n- (.*)\n'
+        latest_version = re.findall(version_pattern, data)
+
+        # If manifest file does not contain the tag:
+        if not latest_version:
+            error_message, error_code = Errors.docker_tag_not_fetched(docker_image_name)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return ''
+
+        return latest_version[0].strip('"')
+
+    def get_docker_image_latest_tag(self, docker_image_name, yml_docker_image, is_iron_bank):
         """Returns the docker image latest tag of the given docker image
 
         Args:
@@ -292,7 +350,10 @@ class DockerImageValidator(BaseValidator):
                     return ''
                 return "no-tag-required"
         try:
-            return self.get_docker_image_latest_tag_request(docker_image_name)
+            if is_iron_bank:
+                return self.get_docker_image_latest_tag_from_iron_bank_request(docker_image_name)
+            else:
+                return self.get_docker_image_latest_tag_request(docker_image_name)
         except (requests.exceptions.RequestException, Exception):
             if not docker_image_name:
                 docker_image_name = yml_docker_image

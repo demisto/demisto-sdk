@@ -268,7 +268,6 @@ class PackUniqueFilesValidator(BaseValidator):
             self._is_approved_usecases(),
             self._is_approved_tags(),
             self._is_price_changed(),
-            self._is_approved_tags(),
             self._is_valid_support_type(),
             self.is_right_usage_of_usecase_tag(),
         ]):

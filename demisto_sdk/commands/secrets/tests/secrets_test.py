@@ -155,6 +155,8 @@ my_email = "fooo@someorg.com"
         secrets_found = validator.search_potential_secrets([file1_path, file2_path], True)
         assert secrets_found[os.path.join(dir1_path, file_name)] == {4: ['fooo@someorg.com']}
         assert secrets_found[os.path.join(dir2_path, file_name)] == {4: ['fooo@someorg.com']}
+        shutil.rmtree(dir1_path)
+        shutil.rmtree(dir2_path)
 
     def test_remove_white_list_regex(self):
         white_list = '155.165.45.232'

@@ -622,6 +622,7 @@ def get_layoutscontainer_data(path):
     pack = get_pack_name(path)
     incident_indicator_types_dependency = {id_}
     incident_indicator_fields_dependency = get_values_for_keys_recursively(json_data, ['fieldId'])
+    definition_id = json_data.get('definitionId')
 
     if data.get('name'):
         incident_indicator_types_dependency.add(data['name'])
@@ -635,6 +636,8 @@ def get_layoutscontainer_data(path):
     data['incident_and_indicator_types'] = list(incident_indicator_types_dependency)
     if incident_indicator_fields_dependency['fieldId']:
         data['incident_and_indicator_fields'] = incident_indicator_fields_dependency['fieldId']
+    if definition_id:
+        data['definitionId'] = definition_id
 
     return {id_: data}
 

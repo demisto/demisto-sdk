@@ -133,7 +133,7 @@ def generate_integration_doc(
             if permissions == 'general':
                 docs.extend(generate_section('Permissions', ''))
             # Setup integration to work with Demisto
-            docs.extend(generate_section('Configure {} on Cortex XSOAR'.format(yml_data['name']), ''))
+            docs.extend(generate_section('Configure {} on Cortex XSOAR'.format(yml_data['display']), ''))
             # Setup integration on Demisto
             docs.extend(generate_setup_section(yml_data))
             # Commands
@@ -171,7 +171,7 @@ def generate_integration_doc(
 def generate_setup_section(yaml_data: dict):
     section = [
         '1. Navigate to **Settings** > **Integrations** > **Servers & Services**.',
-        '2. Search for {}.'.format(yaml_data['name']),
+        '2. Search for {}.'.format(yaml_data['display']),
         '3. Click **Add instance** to create and configure a new integration instance.'
     ]
     access_data: List[Dict] = []

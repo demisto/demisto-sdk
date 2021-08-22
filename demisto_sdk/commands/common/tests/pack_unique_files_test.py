@@ -9,10 +9,12 @@ from git import GitCommandError
 
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.common.constants import (
-    PACK_METADATA_DESC, PACK_METADATA_SUPPORT, PACK_METADATA_TAGS,
-    PACK_METADATA_USE_CASES, PACKS_AUTHOR_IMAGE_FILE_NAME,
-    PACKS_README_FILE_NAME, XSOAR_SUPPORT)
+from demisto_sdk.commands.common.constants import (PACK_METADATA_DESC,
+                                                   PACK_METADATA_SUPPORT,
+                                                   PACK_METADATA_TAGS,
+                                                   PACK_METADATA_USE_CASES,
+                                                   PACKS_README_FILE_NAME,
+                                                   XSOAR_SUPPORT)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
@@ -46,18 +48,11 @@ README_INPUT_RESULTS_LIST = [
     ('Text', True),
 ]
 
-AUTHOR_IMAGE_INPUT = [
-    (os.path.join('BadSize', PACKS_AUTHOR_IMAGE_FILE_NAME), False),
-    (os.path.join('SanityCheck', PACKS_AUTHOR_IMAGE_FILE_NAME), True)
-]
-
 
 class TestPackUniqueFilesValidator:
     FILES_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
     FAKE_PATH_NAME = 'fake_pack'
     FAKE_PACK_PATH = os.path.join(FILES_PATH, FAKE_PATH_NAME)
-    AUTHOR_IMAGE_TEST_REL_DIR_PATH = 'artifacts/content/content_packs/AuthorImageTest'
-    AUTHOR_IMAGE_TEST_DIR_PATH = os.path.join(FILES_PATH, AUTHOR_IMAGE_TEST_REL_DIR_PATH)
     validator = PackUniqueFilesValidator(FAKE_PATH_NAME)
     validator.pack_path = FAKE_PACK_PATH
 
@@ -669,25 +664,6 @@ class TestPackUniqueFilesValidator:
             if not is_valid:
                 assert 'README.md content is equal to pack description. ' \
                        'Please remove the duplicate description from README.md file' in self.validator.get_errors()
-
-    @pytest.mark.parametrize('author_image_path, result', AUTHOR_IMAGE_INPUT)
-    def test_validate_author_image_file(self, author_image_path, result):
-        """
-       Given:
-            - partner pack
-
-        When:
-            - Running test_validate_author_image_file.
-
-        Then:
-            - Validates Author_image.png:
-                - Non-empty file
-                - Up to 4 Kb
-                - Dimensions of 120*50
-        """
-        self.validator = PackUniqueFilesValidator(self.__class__.FAKE_PACK_PATH)
-        assert self.validator.validate_author_image_file(
-            os.path.join(self.AUTHOR_IMAGE_TEST_DIR_PATH, author_image_path)) == result
 
     def test_validate_pack_readme_and_pack_description_no_readme_file(self, repo):
         """

@@ -1,7 +1,5 @@
 import unittest
 
-from demisto_sdk.commands.common.constants import (AUTHOR_IMAGE_DIMENSIONS,
-                                                   AUTHOR_IMAGE_SIZE)
 from demisto_sdk.commands.common.errors import Errors
 
 
@@ -144,42 +142,6 @@ class TestErrors(unittest.TestCase):
                           f'{alternative_path}'
         expected_result = (error_statement, "RM101")
         result = Errors.image_path_error(path, alternative_path)
-        assert result == expected_result
-
-    def test_author_image_fie_is_empty(self):
-        """
-        Given: None
-        When: Returning an error message
-        Then: Return error message with the input value as a tuple containing error and error code.
-        """
-        error_statement = "`Author_image.png` has not been uploaded, you should consider upload one. " \
-                          "For more information please visit {}".\
-            format("https://xsoar.pan.dev/docs/packs/packs-format#author_imagepng")
-        expected_result = (error_statement, "AI100")
-        result = Errors.author_image_fie_is_empty()
-        assert result == expected_result
-
-    def test_author_image_fie_invalid_size(self):
-        """
-        Given: Author image too large
-        When: Returning an error message
-        Then: Return error message with the input value as a tuple containing error and error code.
-        """
-        error_statement = "Size of `Author_image.png` should be up to {} bytes.".format(str(AUTHOR_IMAGE_SIZE))
-        expected_result = (error_statement, "AI102")
-        result = Errors.author_image_fie_invalid_size()
-        assert result == expected_result
-
-    def test_author_image_fie_invalid_dimensions(self):
-        """
-        Given: Author image with non-standard dimensions
-        When: Returning an error message
-        Then: Return error message with the input value as a tuple containing error and error code.
-        """
-        error_statement = "Dimensions of `Author_image.png` file should be {} pixels.".\
-            format(str(AUTHOR_IMAGE_DIMENSIONS))
-        expected_result = (error_statement, "AI101")
-        result = Errors.author_image_fie_invalid_dimensions()
         assert result == expected_result
 
     def test_integration_is_skipped(self):

@@ -2,9 +2,7 @@ from typing import Any, Dict, List, Optional
 
 import decorator
 
-from demisto_sdk.commands.common.constants import (AUTHOR_IMAGE_DIMENSIONS,
-                                                   AUTHOR_IMAGE_SIZE,
-                                                   BETA_INTEGRATION_DISCLAIMER,
+from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
                                                    CONF_PATH,
                                                    INTEGRATION_CATEGORIES,
                                                    PACK_METADATA_DESC,
@@ -238,9 +236,6 @@ ERROR_CODE = {
     "empty_readme_error": {'code': "RM104", 'ui_applicable': False, 'related_field': ''},
     "readme_equal_description_error": {'code': "RM105", 'ui_applicable': False, 'related_field': ''},
     "readme_contains_demisto_word": {'code': "RM106", 'ui_applicable': False, 'related_field': ''},
-    "author_image_fie_is_empty": {'code': "AI100", 'ui_applicable': False, 'related_field': 'Author_image'},
-    "author_image_fie_invalid_dimensions": {'code': "AI101", 'ui_applicable': False, 'related_field': 'Author_image'},
-    "author_image_fie_invalid_size": {'code': "AI102", 'ui_applicable': False, 'related_field': 'Author_image'},
     "template_sentence_in_readme": {'code': "RM107", 'ui_applicable': False, 'related_field': ''},
     "wrong_version_reputations": {'code': "RP100", 'ui_applicable': False, 'related_field': 'version'},
     "reputation_expiration_should_be_numeric": {'code': "RP101", 'ui_applicable': True, 'related_field': 'expiration'},
@@ -1770,23 +1765,6 @@ class Errors:
     @error_code_decorator
     def playbook_condition_has_no_else_path(tasks_ids):
         return f'Playbook conditional tasks with ids: {" ".join([str(id) for id in tasks_ids])} have no else path'
-
-    @staticmethod
-    @error_code_decorator
-    def author_image_fie_invalid_size():
-        return 'Size of `Author_image.png` should be up to {} bytes.'.format(str(AUTHOR_IMAGE_SIZE))
-
-    @staticmethod
-    @error_code_decorator
-    def author_image_fie_invalid_dimensions():
-        return 'Dimensions of `Author_image.png` file should be {} pixels.'.format(str(AUTHOR_IMAGE_DIMENSIONS))
-
-    @staticmethod
-    @error_code_decorator
-    def author_image_fie_is_empty():
-        return "`Author_image.png` has not been uploaded, you should consider upload one." \
-               " For more information please visit {}".\
-            format("https://xsoar.pan.dev/docs/packs/packs-format#author_imagepng")
 
     @staticmethod
     @error_code_decorator

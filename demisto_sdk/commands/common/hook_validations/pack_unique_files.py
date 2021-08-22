@@ -13,12 +13,9 @@ from typing import Dict, Tuple
 import click
 from dateutil import parser
 from git import GitCommandError, Repo
-from PIL import Image
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (API_MODULES_PACK,
-                                                   AUTHOR_IMAGE_DIMENSIONS,
-                                                   AUTHOR_IMAGE_SIZE,
                                                    EXCLUDED_DISPLAY_NAME_WORDS,
                                                    PACK_METADATA_CATEGORIES,
                                                    PACK_METADATA_CERTIFICATION,
@@ -305,36 +302,6 @@ class PackUniqueFilesValidator(BaseValidator):
         elif self._add_error(Errors.pack_metadata_version_should_be_raised(self.pack, old_version), metadata_file_path):
             return False
 
-        return True
-
-    # Author_image.png validation
-    def validate_author_image_file(self, author_image_path) -> bool:
-        """
-        Validates Author_image.png.
-        For more info please visit https://xsoar.pan.dev/docs/packs/packs-format#author_imagepng
-        """
-        return all([self._is_author_image_not_empty(author_image_path),
-                    self._is_author_image_dimensions_valid(author_image_path),
-                    self._is_author_image_size_valid(author_image_path)])
-
-    def _is_author_image_not_empty(self, author_image_path) -> bool:
-        author_image_content = Image.open(author_image_path)
-        if not author_image_content:
-            self._add_error(Errors.author_image_fie_is_empty(), self.pack_meta_file)
-            return False
-        return True
-
-    def _is_author_image_dimensions_valid(self, author_image_path) -> bool:
-        author_image = Image.open(author_image_path)
-        if not author_image.size == AUTHOR_IMAGE_DIMENSIONS:
-            self._add_error(Errors.author_image_fie_invalid_dimensions(), self.pack_meta_file)
-            return False
-        return True
-
-    def _is_author_image_size_valid(self, author_image_path) -> bool:
-        if not os.path.getsize(author_image_path) <= AUTHOR_IMAGE_SIZE:
-            self._add_error(Errors.author_image_fie_invalid_size(), self.pack_meta_file)
-            return False
         return True
 
     def validate_pack_name(self, metadata_file_content: Dict) -> bool:

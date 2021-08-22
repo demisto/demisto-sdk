@@ -1806,9 +1806,9 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def spaces_in_the_end_of_id(item_id: str):
-        return f'Content item id {item_id} should not contain spaces in the end. Please remove.'
+        return f'Content item id "{item_id}" should not have trailing spaces. Please remove.'
 
     @staticmethod
     @error_code_decorator
     def spaces_in_the_end_of_name(name: str):
-        return f'Content item name {name} should not contain spaces in the end. Please remove.'
+        return f'Content item name "{name}" should not have trailing spaces. Please remove.'

@@ -508,7 +508,9 @@ def get_command_examples(commands_file_path, specific_commands):
 
 
 def command_example_filter(command):
-    if command.startswith('#'):
+    if not command:
+        return
+    elif command.startswith('#'):
         return
     elif not command.startswith('!'):
         return f'!{command}'

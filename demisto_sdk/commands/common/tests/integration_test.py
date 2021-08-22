@@ -1200,7 +1200,6 @@ class TestIsFeedParamsExist:
         validator.current_file = current
         assert validator.is_there_a_runnable() is False
 
-
 class TestisContextChanged:
     invalid_readme = """
 #### Base Command

@@ -1324,4 +1324,4 @@ class IntegrationValidator(ContentEntityValidator):
 
     def _is_iron_bank_pack(self):
         metadata = get_pack_metadata(self.file_path)
-        return 'Iron Bank' in metadata.get('tags')
+        return 'Iron Bank' in metadata.get('tags', [])

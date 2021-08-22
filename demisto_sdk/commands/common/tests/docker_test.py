@@ -350,3 +350,32 @@ class TestDockerImage:
             assert validator.is_valid is False
             assert error in captured.out
             assert code in captured.out
+
+    class TestIronBankDockerParse:
+        def test_iron_bank_docker(self, integration, requests_mock):
+            requests_mock.get(
+                'https://repo1.dso.mil/api/v4/projects/dsop%2Fopensource%2Fpalo-alto-networks%2Fdemisto%2Fpython3/pipelines',
+                json={'results': [{'id': 433333,
+                                   'project_id': 7070,
+                                   'sha': 'db055de878dd9b4acce787cf2fda8c1978365f8b',
+                                   'ref': 'master',
+                                   'status': 'success',
+                                   'created_at': '2021-08-19T09:18:35.547Z',
+                                   'updated_at': '2021-08-19T09:38:21.743Z',
+                                   'web_url': 'https://repo1.dso.mil/dsop/opensource/palo-alto-networks/demisto/python3/-/pipelines/433333'},
+                                  {'id': 432507,
+                                   'project_id': 7070,
+                                   'sha': 'db055de878dd9b4acce787cf2fda8c1978365f8b',
+                                   'ref': 'master',
+                                   'status': 'success',
+                                   'created_at': '2021-08-18T22:19:19.843Z',
+                                   'updated_at': '2021-08-18T22:40:29.950Z',
+                                   'web_url': 'https://repo1.dso.mil/dsop/opensource/palo-alto-networks/demisto/python3/-/pipelines/432507'}]}
+            )
+            docker_image_validator = DockerImageValidator(integration.yml.path, is_modified_file=True,
+                                                          is_integration=True,
+                                                          json_file_path=integration.yml.path,
+                                                          is_iron_bank=True)
+            docker_image_validator.yml_docker_image = 'demisto/python3:1.0.2'
+
+            res = docker_image_validator.is_docker_image_valid()

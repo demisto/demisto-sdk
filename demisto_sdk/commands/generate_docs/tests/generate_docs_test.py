@@ -645,54 +645,81 @@ class TestGenerateIntegrationDoc:
                 assert '| API Token | The API key to use for the connection. | False |' in readme_data
 
 
-def test_get_command_examples_with_exclamation_mark(tmp_path):
-    """
-        Given
-            - command_examples file with exclamation mark.
-            - list of specific commands
-        When
-            - Running get_command_examples with the given command examples and specific commands.
-        Then
-            - Verify that the returned commands from the examples are only the specific sommands
-    """
-    command_examples = tmp_path / "command_examples"
+class TestGetCommandExamples:
+    @staticmethod
+    def test_examples_with_exclamation_mark(tmp_path):
+        """
+            Given
+                - command_examples file with exclamation mark.
+                - list of specific commands.
+            When
+                - Running get_command_examples with the given command examples and specific commands.
+            Then
+                - Verify that the returned commands from the examples are only the specific commands.
+        """
+        command_examples = tmp_path / "command_examples"
 
-    with open(command_examples, 'w+') as ce:
-        ce.write('!zoom-create-user\n!zoom-create-meeting\n!zoom-fetch-recording\n!zoom-list-users\n!zoom-delete-user')
+        with open(command_examples, 'w+') as ce:
+            ce.write('!zoom-create-user\n!zoom-create-meeting\n!zoom-fetch-recording\n!zoom-list-users\n!zoom-delete-user')
 
-    command_example_a = 'zoom-create-user'
-    command_example_b = 'zoom-list-users'
+        command_example_a = 'zoom-create-user'
+        command_example_b = 'zoom-list-users'
 
-    specific_commands = [command_example_a, command_example_b]
+        specific_commands = [command_example_a, command_example_b]
 
-    commands = get_command_examples(commands_file_path=command_examples, specific_commands=specific_commands)
+        commands = get_command_examples(commands_file_path=command_examples, specific_commands=specific_commands)
 
-    assert commands == [f'!{command_example_a}', f'!{command_example_b}']
+        assert commands == [f'!{command_example_a}', f'!{command_example_b}']
 
+    @staticmethod
+    def test_examples_without_exclamation_mark(tmp_path):
+        """
+            Given
+                - command_examples file without exclamation mark.
+                - list of specific commands.
+            When
+                - Running get_command_examples with the given command examples and specific commands.
+            Then
+                - Verify that the returned commands from the examples are only the specific commands.
+        """
+        command_examples = tmp_path / "command_examples"
 
-def test_get_command_examples_without_exclamation_mark(tmp_path):
-    """
-        Given
-            - command_examples file without exclamation mark.
-            - list of specific commands
-        When
-            - Running get_command_examples with the given command examples and specific commands.
-        Then
-            - Verify that the returned commands from the examples are only the specific sommands
-    """
-    command_examples = tmp_path / "command_examples"
+        with open(command_examples, 'w+') as ce:
+            ce.write('zoom-create-user\nzoom-create-meeting\nzoom-fetch-recording\nzoom-list-users\nzoom-delete-user')
 
-    with open(command_examples, 'w+') as ce:
-        ce.write('zoom-create-user\nzoom-create-meeting\nzoom-fetch-recording\nzoom-list-users\nzoom-delete-user')
+        command_example_a = 'zoom-create-user'
+        command_example_b = 'zoom-list-users'
 
-    command_example_a = 'zoom-create-user'
-    command_example_b = 'zoom-list-users'
+        specific_commands = [command_example_a, command_example_b]
 
-    specific_commands = [command_example_a, command_example_b]
+        commands = get_command_examples(commands_file_path=command_examples, specific_commands=specific_commands)
 
-    commands = get_command_examples(commands_file_path=command_examples, specific_commands=specific_commands)
+        assert commands == [f'!{command_example_a}', f'!{command_example_b}']
 
-    assert commands == [f'!{command_example_a}', f'!{command_example_b}']
+    @staticmethod
+    def test_ignored_lines(tmp_path):
+        """
+            Given
+                - command_examples file with comments and empty lines.
+            When
+                - Running get_command_examples with the given command examples.
+            Then
+                - Verify that the returned commands from the examples are only the specific commands
+        """
+        command_examples = tmp_path / "command_examples"
+
+        with open(command_examples, 'w+') as ce:
+            ce.write(
+                '# comment before command\n'
+                'zoom-create-user\n'
+                '\n'
+                '# this is a comment line\n'
+                'zoom-create-meeting\n'
+            )
+
+        commands = get_command_examples(command_examples, None)
+
+        assert commands == ['!zoom-create-user', '!zoom-create-meeting']
 
 
 def test_generate_table_section_numbered_section():

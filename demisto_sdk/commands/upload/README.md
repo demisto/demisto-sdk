@@ -85,12 +85,12 @@ This will iterate over **all content entities** under the pack `HelloWorld` and 
 ```
 demisto-sdk upload -i Packs/HelloWorld -z
 ```
-This will zip the pack `HelloWorld` and will upload the zip file `uploadable_packs.zip` to the Cortex XSOAR instance.
+This will zip the pack `HelloWorld` and will upload the zip file `uploadable_packs.zip` as a pack to the designated Cortex XSOAR Marketplace.
 <br/><br/>
 ```
 demisto-sdk upload -i Packs/HelloWorld -z --keep-zip some/directory
 ```
-This will zip the pack `HelloWorld` in `some/directory/uploadable_packs.zip` directory and will upload the zip file to the Cortex XSOAR instance.
+This will zip the pack `HelloWorld` in `some/directory/uploadable_packs.zip` directory and will upload the zip file as a pack to the designated Cortex XSOAR Marketplace.
 <br/><br/>
 ```
 demisto-sdk upload -i path/to/HelloWorld.zip

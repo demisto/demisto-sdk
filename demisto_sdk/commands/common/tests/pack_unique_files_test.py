@@ -577,9 +577,6 @@ class TestPackUniqueFilesValidator:
             ReadMeValidator
 
         self.validator = PackUniqueFilesValidator(os.path.join(self.FILES_PATH, 'DummyPack2'))
-        mocker.patch.object(ReadMeValidator, 'check_readme_relative_image_paths',
-                            return_value=[])  # Test only absolute paths
-
         with requests_mock.Mocker() as m:
             # Mock get requests
             m.get('https://github.com/demisto/content/raw/test1.png',

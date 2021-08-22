@@ -2,6 +2,7 @@ from __future__ import print_function
 
 import os
 
+from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 
@@ -37,4 +38,8 @@ class ReleaseNotesConfigValidator(BaseValidator):
         Returns:
             (bool): True if does, false otherwise.
         """
-        return os.path.exists(self.rn_config_path.replace('.json', '.md'))
+        if not os.path.exists(self.rn_config_path.replace('.json', '.md')):
+            error_message, error_code = Errors.release_notes_config_file_missing_release_notes(self.rn_config_path)
+            if self.handle_error(error_message, error_code, file_path=self.rn_config_path):
+                return False
+        return True

@@ -573,9 +573,6 @@ class TestPackUniqueFilesValidator:
                     - Validation succeed
                     - Valid absolute image paths were not caught
         """
-        from demisto_sdk.commands.common.hook_validations.readme import \
-            ReadMeValidator
-
         self.validator = PackUniqueFilesValidator(os.path.join(self.FILES_PATH, 'DummyPack2'))
         with requests_mock.Mocker() as m:
             # Mock get requests
@@ -589,8 +586,10 @@ class TestPackUniqueFilesValidator:
             result = self.validator.validate_pack_readme_images()
             errors = self.validator.get_errors()
         assert result
-        assert 'please repair it:\n![Identity with High Risk Score](https://github.com/demisto/content/raw/test1.png)' not in errors
-        assert 'please repair it:\n![Identity with High Risk Score](https://raw.githubusercontent.com/demisto/content/raw/test1.png)' not in errors
+        assert 'please repair it:\n![Identity with High Risk Score](https://github.com/demisto/content/raw/test1.png)'\
+               not in errors
+        assert 'please repair it:\n![Identity with High Risk Score](' \
+               'https://raw.githubusercontent.com/demisto/content/raw/test1.png)' not in errors
         assert 'please repair it:\n(https://raw.githubusercontent.com/demisto/content/raw/test1.jpg)' not in errors
 
     def test_validate_pack_readme_invalid_images(self):

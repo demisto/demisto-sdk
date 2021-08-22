@@ -1,5 +1,10 @@
 # Changelog
 * Added validation that the support URL in partner contribution pack metadata does not lead to a GitHub repo.
+* Enhanced ***generate-docs*** with default `additionalinformation` (description) for common parameters.
+
+# 1.4.8
+* Fixed an issue where yml files with `!reference` failed to load properly.
+* Added validation that the support URL in partner contribution pack metadata does not lead to a GitHub repo.
 
 # 1.4.8
 * Fixed an issue where yml files with `!reference` failed to load properly.

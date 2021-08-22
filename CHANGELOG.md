@@ -1,5 +1,6 @@
 # Changelog
 * Added validation that the support URL in partner contribution pack metadata does not lead to a GitHub repo.
+* Added to the **create artifacts** command support for release notes configuration file.
 
 # 1.4.8
 * Fixed an issue where yml files with `!reference` failed to load properly.

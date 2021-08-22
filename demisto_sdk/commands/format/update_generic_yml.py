@@ -248,14 +248,8 @@ class BaseUpdateYML(BaseUpdate):
     def remove_spaces_end_of_id_and_name(self):
         """Updates the id and name of the YML to have no spaces on its end
         """
-        updated_id = {}
-        if self.verbose:
-            click.echo('Updating YML ID and name to be without spaces at the end')
-
-        self.data['name'] = self.data['name'].rstrip()
-
-        if is_uuid(self.id_and_version_location['id']):
-            updated_id[self.id_and_version_location['id']] = self.id_and_version_location['id'].rstrip()
-        self.id_and_version_location['id'] = self.id_and_version_location['id'].rstrip()
-        if updated_id:
-            self.updated_ids.update(updated_id)
+        if not self.old_file:
+            if self.verbose:
+                click.echo('Updating YML ID and name to be without spaces at the end')
+            self.data['name'] = self.data['name'].strip()
+            self.id_and_version_location['id'] = self.id_and_version_location['id'].strip()

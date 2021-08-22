@@ -299,7 +299,7 @@ class ContentEntityValidator(BaseValidator):
             bool. Whether the file's name ends with spaces
         """
         name = self.current_file.get('name', '')
-        if name.endswith(' '):
+        if name != name.strip():
             error_message, error_code = Errors.spaces_in_the_end_of_name(name)
             if self.handle_error(
                     error_message,
@@ -316,7 +316,7 @@ class ContentEntityValidator(BaseValidator):
             bool. Whether the file's id ends with spaces
         """
         file_id = self.structure_validator.get_file_id_from_loaded_file_data(self.current_file)
-        if file_id and file_id.endswith(' '):
+        if file_id and file_id != file_id.strip():
             error_message, error_code = Errors.spaces_in_the_end_of_id(file_id)
             if self.handle_error(
                     error_message,

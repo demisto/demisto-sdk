@@ -1030,7 +1030,7 @@ class TestFormatting:
         assert base_update_yml.data['tests'] == 'No test'
         assert base_update_yml.data['description'] == description_result
 
-    @pytest.mark.parametrize('name', ['MyIntegration', 'MyIntegration '])
+    @pytest.mark.parametrize('name', ['MyIntegration', 'MyIntegration ', ' MyIntegration '])
     def test_remove_spaces_end_of_id_and_name(self, pack, mocker, name):
         """
         Given

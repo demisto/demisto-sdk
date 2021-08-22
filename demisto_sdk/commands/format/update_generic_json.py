@@ -104,14 +104,9 @@ class BaseUpdateJSON(BaseUpdate):
     def remove_spaces_end_of_id_and_name(self):
         """Updates the id and name of the json to have no spaces on its end
                 """
-        updated_id = {}
-        if self.verbose:
-            click.echo('Updating YML ID and name to be without spaces at the end')
+        if not self.old_file:
+            if self.verbose:
+                click.echo('Updating YML ID and name to be without spaces at the end')
+            self.data['name'] = self.data['name'].strip()
+            self.data['id'] = self.data['id'].strip()
 
-        self.data['name'] = self.data['name'].rstrip()
-
-        if is_uuid(self.data['id']):
-            updated_id[self.data['id']] = self.data['id'].rstrip()
-        self.data['id'] = self.data['id'].rstrip()
-        if updated_id:
-            self.updated_ids.update(updated_id)

@@ -434,7 +434,7 @@ def test_update_id_dashboard_negative(mocker, tmpdir):
         assert error.args[0] == 'Missing "name" field in file test - add this field manually'
 
 
-@pytest.mark.parametrize('name', ['MyDashboard', 'MyDashboard '])
+@pytest.mark.parametrize('name', ['MyDashboard', 'MyDashboard ', ' MyDashboard '])
 def test_remove_spaces_end_of_id_and_name(pack, name):
     """
     Given

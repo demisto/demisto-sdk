@@ -15,21 +15,10 @@ mapping:
     required: true
   fromVersion:
     type: str
-  definitions:
+  definitionIds:
     type: seq
     sequence:
-      - type: map
-        mapping:
-          id:
-            type: str
-          name:
-            type: str
-          partitioned:
-            type: bool
-          auditable:
-            type: bool
-          rbacSupport:
-            type: bool
+      - type: str
     required: true
   views:
     type: seq
@@ -42,6 +31,9 @@ mapping:
             type: str
           title:
             type: str
+          id:
+            type: str
+            required: true
           tabs:
             type: seq
             sequence:

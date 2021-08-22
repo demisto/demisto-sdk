@@ -1,5 +1,5 @@
-import os
 import json
+import os
 import shutil
 from collections import OrderedDict
 from tempfile import mkdtemp
@@ -9,7 +9,6 @@ from demisto_sdk.commands.common.update_id_set import ID_SET_ENTITIES
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from TestSuite.test_tools import ChangeCWD
 from TestSuite.utils import IsEqualFunctions
-
 
 TESTS_DIR = f'{git_path()}/demisto_sdk/tests'
 
@@ -299,3 +298,97 @@ class TestAddCommandToImplementingIntegrationsMapping:
         assert playbook1['command_to_integration']['generic-command'] == ['MainInteg', 'SecondaryInteg']
         assert playbook2['command_to_integration']['generic-command'] == 'MainInteg'
         assert playbook2['command_to_integration']['no-integration'] == ''
+
+    @staticmethod
+    def test_generic_command_that_does_not_use_a_specific_brand(repo):
+        """
+        Given
+        - A playbook with a generic command (send-notification, etc.) that does not use a specific brand
+
+        When
+        - Updating the commands_to_integrations fields in playbooks
+
+        Then
+        - Do not update 'command_to_integration' fields with any other brands
+
+        """
+        integrations = [
+            {
+                'Slack': OrderedDict([
+                    ('name', 'Slack'),
+                    ('commands', ['send-notification']),
+                ])
+            },
+            {
+                'Syslog': OrderedDict([
+                    ('name', 'Syslog'),
+                    ('commands', ['send-notification']),
+                ])
+            },
+        ]
+        playbooks = [
+            {
+                'Playbook': OrderedDict([
+                    ('name', 'Playbook'),
+                    ('command_to_integration', {
+                        'send-notification': '',
+                    }),
+                ]),
+            }
+        ]
+
+        id_set_creator = IDSetCreator(print_logs=False)
+        id_set_creator.id_set["integrations"] = integrations
+        id_set_creator.id_set["playbooks"] = playbooks
+
+        id_set_creator.add_command_to_implementing_integrations_mapping()
+
+        playbook = id_set_creator.id_set['playbooks'][0]['Playbook']
+        assert playbook['command_to_integration']['send-notification'] == ''
+
+    @staticmethod
+    def test_generic_command_that_uses_a_specific_brand(repo):
+        """
+        Given
+        - A playbook with a generic command (send-notification, etc.) that uses a specific brand
+
+        When
+        - Updating the commands_to_integrations fields in playbooks
+
+        Then
+        - Do not update 'command_to_integration' fields with any other brands
+
+        """
+        integrations = [
+            {
+                'Slack': OrderedDict([
+                    ('name', 'Slack'),
+                    ('commands', ['send-notification']),
+                ])
+            },
+            {
+                'Syslog': OrderedDict([
+                    ('name', 'Syslog'),
+                    ('commands', ['send-notification']),
+                ])
+            },
+        ]
+        playbooks = [
+            {
+                'Playbook': OrderedDict([
+                    ('name', 'Playbook'),
+                    ('command_to_integration', {
+                        'send-notification': 'Slack',
+                    }),
+                ]),
+            }
+        ]
+
+        id_set_creator = IDSetCreator(print_logs=False)
+        id_set_creator.id_set["integrations"] = integrations
+        id_set_creator.id_set["playbooks"] = playbooks
+
+        id_set_creator.add_command_to_implementing_integrations_mapping()
+
+        playbook = id_set_creator.id_set['playbooks'][0]['Playbook']
+        assert playbook['command_to_integration']['send-notification'] == 'Slack'

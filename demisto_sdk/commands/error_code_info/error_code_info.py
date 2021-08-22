@@ -2,11 +2,13 @@ from inspect import signature
 
 import click
 from colorama import Fore
+
 from demisto_sdk.commands.common import errors
 
 TEMPLATE = '''
 Error Code: {code}
 Function: {func}
+Ignorable: {ignorable}
 Message:
 {msg}
 '''
@@ -17,6 +19,7 @@ def print_error_information(func_name, error_data, func, sig):
     click.secho(TEMPLATE.format(
         code=error_data['code'],
         func=f'{func_name}{sig}',
+        ignorable=error_data['code'] in errors.ALLOWED_IGNORE_ERRORS,
         msg=func(**{a: f'<{a}>' for a in list(sig.parameters)})[0],
     ))
 

@@ -5,6 +5,8 @@ import click
 import pytest
 import requests_mock
 from click.testing import CliRunner
+from git import GitCommandError
+
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (PACK_METADATA_DESC,
@@ -19,7 +21,6 @@ from demisto_sdk.commands.common.hook_validations.base_validator import \
 from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
     PackUniqueFilesValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from git import GitCommandError
 from TestSuite.test_tools import ChangeCWD
 
 VALIDATE_CMD = "validate"
@@ -89,6 +90,7 @@ class TestPackUniqueFilesValidator:
         mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
         assert not self.validator.are_valid_files(id_set_validations=False)
         fake_validator = PackUniqueFilesValidator('fake')
+        mocker.patch.object(fake_validator, '_read_metadata_content', return_value=dict())
         assert fake_validator.are_valid_files(id_set_validations=False)
 
     def test_validate_pack_metadata(self, mocker):
@@ -98,6 +100,7 @@ class TestPackUniqueFilesValidator:
         mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
         assert not self.validator.are_valid_files(id_set_validations=False)
         fake_validator = PackUniqueFilesValidator('fake')
+        mocker.patch.object(fake_validator, '_read_metadata_content', return_value=dict())
         assert fake_validator.are_valid_files(id_set_validations=False)
 
     def test_validate_partner_contribute_pack_metadata_no_mail_and_url(self, mocker, repo):
@@ -127,6 +130,44 @@ class TestPackUniqueFilesValidator:
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', pack.path], catch_exceptions=False)
         assert 'Contributed packs must include email or url' in result.stdout
+
+    @pytest.mark.parametrize('url, is_valid', [
+        ('https://github.com/pont_to_repo', False),
+        ('some_support_url', True),
+        ('https://github.com/pont_to_repo/issues', True),
+    ])
+    def test_validate_partner_pack_metadata_url(self, mocker, repo, url, is_valid):
+        """
+        Given
+        - Partner contributed pack with an is_valid url.
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate finds errors accordingly.
+        """
+        pack_metadata_changed_url = PACK_METADATA_PARTNER.copy()
+        pack_metadata_changed_url['url'] = url
+
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(PackUniqueFilesValidator, '_is_pack_file_exists', return_value=True)
+        mocker.patch.object(PackUniqueFilesValidator, 'get_master_private_repo_meta_file', return_value=None)
+        mocker.patch.object(PackUniqueFilesValidator, '_read_file_content',
+                            return_value=json.dumps(pack_metadata_changed_url))
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value=None)
+        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
+        pack = repo.create_pack('PackName')
+        pack.pack_metadata.write_json(pack_metadata_changed_url)
+        with ChangeCWD(repo.path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', pack.path], catch_exceptions=False)
+
+        error_text = 'The metadata URL leads to a GitHub repo instead of a support page.'
+        if is_valid:
+            assert error_text not in result.stdout
+        else:
+            assert error_text in result.stdout
 
     def test_validate_partner_contribute_pack_metadata_price_change(self, mocker, repo):
         """
@@ -532,7 +573,8 @@ class TestPackUniqueFilesValidator:
                     - Validation succeed
                     - Valid absolute image paths were not caught
         """
-        from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
+        from demisto_sdk.commands.common.hook_validations.readme import \
+            ReadMeValidator
 
         self.validator = PackUniqueFilesValidator(os.path.join(self.FILES_PATH, 'DummyPack2'))
         mocker.patch.object(ReadMeValidator, 'check_readme_relative_image_paths', return_value=[])  # Test only absolute paths
@@ -681,3 +723,50 @@ class TestPackUniqueFilesValidator:
 
         assert self.validator.is_pack_metadata_desc_too_long(pack_description) is True
         assert error_desc in click.secho.call_args_list[0][0][0]
+
+    def test_validate_author_image_exists_valid(self, repo):
+        """
+        Given:
+            - Pack with partner support and author image
+
+        When:
+            - Validating if author image exists
+
+        Then:
+            - Ensure validation passes.
+        """
+        pack = repo.create_pack('MyPack')
+
+        self.validator.metadata_content = {'support': 'partner'}
+        self.validator.pack_path = pack.path
+        author_image_path = pack.author_image.path
+
+        with ChangeCWD(repo.path):
+            res = self.validator.validate_author_image_exists()
+            assert res
+            assert f'Partners must provide a non-empty author image under the path {author_image_path}.' not in \
+                   self.validator.get_errors()
+
+    def test_validate_author_image_exists_invalid(self, repo):
+        """
+        Given:
+            - Pack with partner support and no author image
+
+        When:
+            - Validating if author image exists
+
+        Then:
+            - Ensure validation fails.
+        """
+        pack = repo.create_pack('MyPack')
+
+        self.validator.metadata_content = {'support': 'partner'}
+        self.validator.pack_path = pack.path
+        author_image_path = pack.author_image.path
+
+        with ChangeCWD(repo.path):
+            os.remove(author_image_path)
+            res = self.validator.validate_author_image_exists()
+            assert not res
+            assert f'Partners must provide a non-empty author image under the path {author_image_path}.' in \
+                   self.validator.get_errors()

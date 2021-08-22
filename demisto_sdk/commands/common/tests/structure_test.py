@@ -4,6 +4,8 @@ from shutil import copyfile
 from typing import List, Tuple
 
 import pytest
+from ruamel.yaml import YAML
+
 from demisto_sdk.commands.common.constants import (
     CODE_FILES_REGEX, PACKAGE_YML_FILE_REGEX,
     PACKS_CLASSIFIER_JSON_5_9_9_REGEX, PACKS_CLASSIFIER_JSON_REGEX,
@@ -36,7 +38,8 @@ from demisto_sdk.tests.constants_test import (
     VALID_PLAYBOOK_ARCSIGHT_ADD_DOMAIN_PATH, VALID_PLAYBOOK_ID_PATH,
     VALID_REPUTATION_FILE, VALID_TEST_PLAYBOOK_PATH, VALID_WIDGET_PATH,
     WIDGET_TARGET)
-from ruamel.yaml import YAML
+from TestSuite.json_based import JSONBased
+from TestSuite.pack import Pack
 
 
 class TestStructureValidator:
@@ -259,6 +262,24 @@ class TestStructureValidator:
 
         structure = StructureValidator(file_path=no_extension)
         assert not structure.is_valid_file_extension()
+
+    def test_is_field_with_open_ended(self, pack: Pack):
+        from demisto_sdk.commands.common.hook_validations.incident_field import \
+            TypeFields
+        field_content = {
+            'cliName': 'sanityname',
+            'name': 'sanity name',
+            'id': 'incident',
+            'content': True,
+            'type': TypeFields.IncidentFieldTypeMultiSelect.value,
+            'openEnded': True
+        }
+        incident_field: JSONBased = pack.create_incident_field(
+            'incident-field-test',
+            content=field_content
+        )
+        structure = StructureValidator(incident_field.path)
+        assert structure.is_valid_scheme()
 
 
 class TestGetMatchingRegex:

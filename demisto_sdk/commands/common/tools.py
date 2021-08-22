@@ -7,6 +7,7 @@ import re
 import shlex
 import sys
 from configparser import ConfigParser, MissingSectionHeaderError
+from contextlib import contextmanager
 from distutils.version import LooseVersion
 from enum import Enum
 from functools import lru_cache, partial
@@ -21,22 +22,22 @@ import git
 import requests
 import urllib3
 import yaml
+from packaging.version import parse
+from ruamel.yaml import YAML
+
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK, CLASSIFIERS_DIR,
-    CONTEXT_OUTPUT_README_TABLE_HEADER, DASHBOARDS_DIR, DEF_DOCKER,
-    DEF_DOCKER_PWSH, DOC_FILES_DIR, ID_IN_COMMONFIELDS, ID_IN_ROOT,
-    INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
-    INTEGRATIONS_DIR, LAYOUTS_DIR, OFFICIAL_CONTENT_ID_SET_PATH,
-    PACK_IGNORE_TEST_FLAG, PACKAGE_SUPPORTING_DIRECTORIES,
-    PACKAGE_YML_FILE_REGEX, PACKS_DIR, PACKS_DIR_REGEX,
-    PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
+    DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH, DOC_FILES_DIR,
+    ID_IN_COMMONFIELDS, ID_IN_ROOT, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
+    INDICATOR_FIELDS_DIR, INTEGRATIONS_DIR, LAYOUTS_DIR,
+    OFFICIAL_CONTENT_ID_SET_PATH, PACK_IGNORE_TEST_FLAG,
+    PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
+    PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
     PACKS_README_FILE_NAME, PLAYBOOKS_DIR, RELEASE_NOTES_DIR,
     RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR,
     TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, XSOAR_CONFIG_FILE,
     FileType, GithubContentConfig, urljoin)
 from demisto_sdk.commands.common.git_util import GitUtil
-from packaging.version import parse
-from ruamel.yaml import YAML
 
 urllib3.disable_warnings()
 
@@ -61,6 +62,23 @@ LOG_VERBOSE = False
 LAYOUT_CONTAINER_FIELDS = {'details', 'detailsV2', 'edit', 'close', 'mobile', 'quickView', 'indicatorsQuickView',
                            'indicatorsDetails'}
 SDK_PYPI_VERSION = r'https://pypi.org/pypi/demisto-sdk/json'
+
+
+class XsoarLoader(yaml.SafeLoader):
+    """
+    New yaml loader based on SafeLoader which can handle the XSOAR related changes in yml.
+    """
+
+    def reference(self, node):
+        """
+        !reference - found in gitlab ci files.
+        handle !reference tag by turning its line into a string.
+        """
+        build_string = '!reference ' + str(self.construct_sequence(node))
+        return self.construct_yaml_str(yaml.ScalarNode(tag='!reference', value=build_string))
+
+
+XsoarLoader.add_constructor('!reference', XsoarLoader.reference)
 
 
 def set_log_verbose(verbose: bool):
@@ -212,13 +230,15 @@ def get_remote_file(
     local_content = '{}'
 
     github_path = urljoin(github_config.CONTENT_GITHUB_LINK, github_tag, full_file_path)
+    github_token: Optional[str] = None
     try:
         external_repo = is_external_repository()
         if external_repo:
             githhub_config = GithubContentConfig()
-            if githhub_config.Credentials.TOKEN:
+            github_token = githhub_config.Credentials.TOKEN
+            if github_token:
                 res = requests.get(github_path, verify=False, timeout=10, headers={
-                    'Authorization': f"Bearer {githhub_config.Credentials.TOKEN}",
+                    'Authorization': f"Bearer {github_token}",
                     'Accept': f'application/vnd.github.VERSION.raw',
                 })  # Sometime we need headers
                 if not res.ok:  # sometime we need param token
@@ -226,7 +246,7 @@ def get_remote_file(
                         github_path,
                         verify=False,
                         timeout=10,
-                        params={'token': githhub_config.Credentials.TOKEN}
+                        params={'token': github_token}
                     )
                 res.raise_for_status()
             else:
@@ -235,28 +255,31 @@ def get_remote_file(
                 # And maybe it's just not defined. 😢
                 if not res.ok:
                     if not suppress_print:
-                        print_warning(
+                        click.secho(
                             f'You are working in a private repository: "{githhub_config.CURRENT_REPOSITORY}".\n'
                             f'The github token in your environment is undefined.\n'
                             f'Getting file from local repository instead. \n'
                             f'If you wish to get the file from the remote repository, \n'
                             f'Please define your github token in your environment.\n'
-                            f'`export {githhub_config.Credentials.ENV_TOKEN_NAME}=<TOKEN>`'
+                            f'`export {githhub_config.Credentials.ENV_TOKEN_NAME}=<TOKEN>`\n', fg='yellow'
                         )
+                        click.echo("Getting file from local environment")
                     # Get from local git origin/master instead
                     repo = git.Repo(os.path.dirname(full_file_path), search_parent_directories=True)
                     repo_git_util = GitUtil(repo)
-                    github_path = repo_git_util.get_local_remote_file_path(full_file_path, tag)
+                    github_path = repo_git_util.get_local_remote_file_path(full_file_path, github_tag)
                     local_content = repo_git_util.get_local_remote_file_content(github_path)
         else:
             res = requests.get(github_path, verify=False, timeout=10)
             res.raise_for_status()
     except Exception as exc:
+        # Replace token secret if needed
+        err_msg: str = str(exc).replace(github_token, 'XXX') if github_token else str(exc)
         if not suppress_print:
-            print_warning(
+            click.secho(
                 f'Could not find the old entity file under "{github_path}".\n'
                 'please make sure that you did not break backward compatibility.\n'
-                f'Reason: {exc}'
+                f'Reason: {err_msg}', fg='yellow'
             )
         return {}
     file_content = res.content if res.ok else local_content
@@ -420,7 +443,7 @@ def get_last_remote_release_version():
     return ''
 
 
-def get_file(method, file_path, type_of_file):
+def get_file(file_path, type_of_file):
     data_dictionary = None
     with open(os.path.expanduser(file_path), mode="r", encoding="utf8") as f:
         if file_path.endswith(type_of_file):
@@ -429,18 +452,22 @@ def get_file(method, file_path, type_of_file):
             # revert str to stream for loader
             stream = io.StringIO(replaced)
             try:
-                data_dictionary = method(stream)
+                if 'yml' == type_of_file:
+                    data_dictionary = yaml.load(stream, Loader=XsoarLoader)
+
+                else:
+                    data_dictionary = json.load(stream)
+
             except Exception as e:
-                print_error(
+                raise ValueError(
                     "{} has a structure issue of file type {}. Error was: {}".format(file_path, type_of_file, str(e)))
-                return {}
     if isinstance(data_dictionary, (dict, list)):
         return data_dictionary
     return {}
 
 
 def get_yaml(file_path):
-    return get_file(yaml.safe_load, file_path, ('yml', 'yaml'))
+    return get_file(file_path, 'yml')
 
 
 def get_ryaml(file_path: str) -> dict:
@@ -465,7 +492,7 @@ def get_ryaml(file_path: str) -> dict:
 
 
 def get_json(file_path):
-    return get_file(json.load, file_path, 'json')
+    return get_file(file_path, 'json')
 
 
 def get_script_or_integration_id(file_path):
@@ -538,10 +565,11 @@ def collect_ids(file_path):
 
 
 def get_from_version(file_path):
-    data_dictionary = get_yaml(file_path)
+    data_dictionary = get_yaml(file_path) if file_path.endswith('yml') else get_json(file_path)
 
     if data_dictionary:
-        from_version = data_dictionary.get('fromversion', '0.0.0')
+        from_version = data_dictionary.get('fromversion') if 'fromversion' in data_dictionary \
+            else data_dictionary.get('fromVersion', '0.0.0')
         if from_version == "":
             return "0.0.0"
 
@@ -999,6 +1027,9 @@ def find_type_by_path(path: str = '') -> Optional[FileType]:
     if path.endswith('_image.png') and not path.endswith("Author_image.png"):
         return FileType.IMAGE
 
+    if path.endswith("Author_image.png"):
+        return FileType.AUTHOR_IMAGE
+
     # doc files images
     if path.endswith('.png') and DOC_FILES_DIR in path:
         return FileType.DOC_IMAGE
@@ -1016,6 +1047,7 @@ def find_type_by_path(path: str = '') -> Optional[FileType]:
         return FileType.XSOAR_CONFIG
 
     return None
+
 
 # flake8: noqa: C901
 
@@ -1067,8 +1099,9 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
         if 'orientation' in _dict:
             return FileType.REPORT
 
-        if 'color' in _dict and 'cliName' not in _dict:  # check against another key to make it more robust
-            if 'definitionId' in _dict and _dict['definitionId'] not in [None, 'incident', 'indicator']:
+        if 'color' in _dict and 'cliName' not in _dict:
+            if 'definitionId' in _dict and _dict['definitionId'] and \
+                    _dict['definitionId'].lower() not in ['incident', 'indicator']:
                 return FileType.GENERIC_TYPE
             return FileType.INCIDENT_TYPE
 
@@ -1090,7 +1123,7 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
         if 'canvasContextConnections' in _dict:
             return FileType.CONNECTION
 
-        if 'layout' in _dict or 'kind' in _dict:
+        if 'layout' in _dict or 'kind' in _dict:  # it's a Layout or Dashboard but not a Generic Object
             if 'kind' in _dict or 'typeId' in _dict:
                 return FileType.LAYOUT
 
@@ -1099,13 +1132,17 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
         if 'group' in _dict and LAYOUT_CONTAINER_FIELDS.intersection(_dict):
             return FileType.LAYOUTS_CONTAINER
 
-        if 'definitions' in _dict and 'views' in _dict:
+        if 'definitionIds' in _dict and 'views' in _dict:
             return FileType.GENERIC_MODULE
+
+        if 'auditable' in _dict:
+            return FileType.GENERIC_DEFINITION
 
         # When using it for all files validation- sometimes 'id' can be integer
         if 'id' in _dict:
             if isinstance(_dict['id'], str):
-                if 'definitionId' in _dict and _dict['definitionId'].lower() not in [None, 'incident', 'indicator']:
+                if 'definitionId' in _dict and _dict['definitionId'] and \
+                        _dict['definitionId'].lower() not in ['incident', 'indicator']:
                     return FileType.GENERIC_FIELD
                 _id = _dict['id'].lower()
                 if _id.startswith('incident'):
@@ -1260,20 +1297,25 @@ def is_file_from_content_repo(file_path: str) -> Tuple[bool, str]:
         bool: if file is part of content repo.
         str: relative path of file in content repo.
     """
-    git_repo = git.Repo(os.getcwd(),
-                        search_parent_directories=True)
-    remote_url = git_repo.remote().urls.__next__()
-    is_fork_repo = 'content' in remote_url
-    is_external_repo = is_external_repository()
+    try:
+        git_repo = git.Repo(os.getcwd(),
+                            search_parent_directories=True)
+        remote_url = git_repo.remote().urls.__next__()
+        is_fork_repo = 'content' in remote_url
+        is_external_repo = is_external_repository()
 
-    if not is_fork_repo and not is_external_repo:
-        return False, ''
-    content_path_parts = Path(git_repo.working_dir).parts
-    input_path_parts = Path(file_path).parts
-    input_path_parts_prefix = input_path_parts[:len(content_path_parts)]
-    if content_path_parts == input_path_parts_prefix:
-        return True, '/'.join(input_path_parts[len(content_path_parts):])
-    else:
+        if not is_fork_repo and not is_external_repo:
+            return False, ''
+        content_path_parts = Path(git_repo.working_dir).parts
+        input_path_parts = Path(file_path).parts
+        input_path_parts_prefix = input_path_parts[:len(content_path_parts)]
+        if content_path_parts == input_path_parts_prefix:
+            return True, '/'.join(input_path_parts[len(content_path_parts):])
+        else:
+            return False, ''
+
+    except Exception as e:
+        click.secho(f"Unable to identify the repository: {e}")
         return False, ''
 
 
@@ -1708,10 +1750,9 @@ def compare_context_path_in_yml_and_readme(yml_dict, readme_content):
 
     # Gets the data from the README
     # the pattern to get the context part out of command section:
-    context_section_pattern = CONTEXT_OUTPUT_README_TABLE_HEADER.replace('|', '\\|').replace('*',
-                                                                                             r'\*') + ".(.*?)#{3,5}"
+    context_section_pattern = r"\| *\*\*Path\*\* *\| *\*\*Type\*\* *\| *\*\*Description\*\* *\|.(.*?)#{3,5}"
     # the pattern to get the value in the first column under the outputs table:
-    context_path_pattern = r"\| ([^\|]*) \| [^\|]* \| [^\|]* \|"
+    context_path_pattern = r"\| *(\S.*?\S) *\| *[^\|]* *\| *[^\|]* *\|"
     readme_content += "### "  # mark end of file so last pattern of regex will be recognized.
     commands = yml_dict.get("script", {})
 
@@ -1734,7 +1775,12 @@ def compare_context_path_in_yml_and_readme(yml_dict, readme_content):
             context_path_in_command = set()
         else:
             context_path_in_command = set(re.findall(context_path_pattern, context_section[0], re.DOTALL))
-            context_path_in_command.remove('---')
+
+            # remove the header line ---- (could be of any length)
+            for path in context_path_in_command:
+                if not path.replace('-', ''):
+                    context_path_in_command.remove(path)
+                    break
 
         # handles cases of old integrations with context in 'important' section
         if 'important' in command:
@@ -1939,3 +1985,22 @@ def get_current_tags() -> list:
         approved_tags_json, _ = get_dict_from_file('Tests/Marketplace/approved_tags.json')
         return approved_tags_json.get('approved_list', [])
     return []
+
+
+@contextmanager
+def suppress_stdout():
+    """
+        Temporarily suppress console output without effecting error outputs.
+        Example of use:
+
+            with suppress_stdout():
+                print('This message will not be printed')
+            print('This message will be printed')
+    """
+    with open(os.devnull, "w") as devnull:
+        try:
+            old_stdout = sys.stdout
+            sys.stdout = devnull
+            yield
+        finally:
+            sys.stdout = old_stdout

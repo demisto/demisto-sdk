@@ -50,6 +50,8 @@ mapping:
         type: seq
         sequence:
         - include: section_schema
+  definitionId:
+    type: str
 
 schema;tabs_schema:
   type: any

@@ -20,6 +20,8 @@ import requests
 import urllib3
 from demisto_client.demisto_api import DefaultApi, Incident
 from demisto_client.demisto_api.rest import ApiException
+from slack import WebClient as SlackClient
+
 from demisto_sdk.commands.common.constants import FILTER_CONF, PB_Status
 from demisto_sdk.commands.test_content.constants import (
     CONTENT_BUILD_SSH_USER, LOAD_BALANCER_DNS)
@@ -32,7 +34,6 @@ from demisto_sdk.commands.test_content.ParallelLoggingManager import \
     ParallelLoggingManager
 from demisto_sdk.commands.test_content.tools import (
     is_redhat_instance, update_server_configuration)
-from slack import WebClient as SlackClient
 
 ENV_RESULTS_PATH = './artifacts/env_results.json'
 FAILED_MATCH_INSTANCE_MSG = "{} Failed to run.\n There are {} instances of {}, please select one of them by using " \
@@ -707,45 +708,40 @@ class BuildContext:
         return conf, secret_conf
 
     def _get_user_name_from_circle(self):
-        url = f"https://circleci.com/api/v1.1/project/github/demisto/content/{self.build_number}?" \
-              f"circle-token={self.circleci_token}"
-        res = self._http_request(url)
+        url = f'https://circleci.com/api/v1.1/project/github/demisto/content/{self.build_number}'
+        res = self._http_request(url, params_dict={'circle-token': self.circleci_token})
 
         user_details = res.get('user', {})
         return user_details.get('name', '')
 
     @staticmethod
     def _http_request(url, params_dict=None):
-        try:
-            res = requests.request("GET",
-                                   url,
-                                   verify=True,
-                                   params=params_dict,
-                                   )
-            res.raise_for_status()
+        res = requests.request("GET",
+                               url,
+                               verify=True,
+                               params=params_dict,
+                               )
+        res.raise_for_status()
 
-            return res.json()
-
-        except Exception as e:
-            raise e
+        return res.json()
 
     def _retrieve_slack_user_id(self):
         """
         Gets the user id of the circle user who triggered the current build
         """
-        if os.environ.get('GITLAB_USER_LOGIN'):
-            user_name = os.environ['GITLAB_USER_LOGIN']
-        else:
-            user_name = self._get_user_name_from_circle()
         user_id = ''
-        res = self.slack_client.api_call('users.list')
+        try:
+            user_name = os.getenv('GITLAB_USER_LOGIN') or self._get_user_name_from_circle()
+            res = self.slack_client.api_call('users.list')
 
-        user_list = res.get('members', [])
-        for user in user_list:
-            profile = user.get('profile', {})
-            name = profile.get('real_name_normalized', '')
-            if name == user_name:
-                user_id = user.get('id', '')
+            user_list = res.get('members', [])
+            for user in user_list:
+                profile = user.get('profile', {})
+                name = profile.get('real_name_normalized', '')
+                if name == user_name:
+                    user_id = user.get('id', '')
+        except Exception as exc:
+            logging.debug(f'failed to retrieve the slack user ID.\nError: {exc}')
 
         return user_id
 
@@ -1387,7 +1383,7 @@ class TestContext:
             Empty string or
         """
         try:
-            self.build_context.logging_module.info(f'ssh tunnel command: {self.tunnel_command}')
+            self.build_context.logging_module.info(f'ssh tunnel command:\n{self.tunnel_command}')
 
             if not self.playbook.configure_integrations(self.client, self.server_context):
                 return PB_Status.FAILED

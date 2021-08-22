@@ -18,6 +18,24 @@ references:
         - checkout-content
         - prepare-tox3-7
 
+    create_requirement_files: &create_requirement_files
+      run:
+        name: Create requirement files
+        command: |
+          pip install pipfile-requirements
+          pipfile2req > requirements.txt
+          pipfile2req -d > requirements-dev.txt
+
+    restore_tox_37_cache: &restore_tox_37_cache
+      restore_cache:
+        key: tox-37-cache-{{ checksum "Pipfile" }}-{{ checksum "Pipfile.lock" }}
+
+    save_tox_37_cache: &save_tox_37_cache
+      save_cache:
+        key: tox-37-cache-{{ checksum "Pipfile" }}-{{ checksum "Pipfile.lock" }}
+        paths:
+          - .tox/py37
+
 jobs:
   tox3-7-unit-tests:
       # docker image circleci/python:3.8.3-buster-node also contains python 3.7
@@ -25,8 +43,8 @@ jobs:
         - image: circleci/python:3.8.3-buster-node
       steps:
         - checkout
-        - restore_cache:
-            key: tox-37-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
+        - *create_requirement_files
+        - *restore_tox_37_cache
         - run:
             # install npm modules so readme tests run with mdx verification
             name: npm install
@@ -41,18 +59,16 @@ jobs:
             no_output_timeout: 15m
             command: |
               tox -e py37 -v
-        - save_cache:
-            key: tox-37-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
-            paths:
-              - .tox/py37
+        - *save_tox_37_cache
 
   tox3-8-unit-tests:
       docker:
         - image: circleci/python:3.8.3-buster-node
       steps:
         - checkout
+        - *create_requirement_files
         - restore_cache:
-            key: tox-38-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
+            key: tox-38-cache-{{ checksum "Pipfile" }}-{{ checksum "Pipfile.lock" }}
         - run:
             # install npm modules so readme tests run with mdx verification
             name: npm install
@@ -84,8 +100,8 @@ jobs:
       - image: circleci/python:3.8.3-buster-node
     steps:
       - checkout
-      - restore_cache:
-          key: tox-37-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
+      - *create_requirement_files
+      - *restore_tox_37_cache
       - run:
           # install npm modules so readme tests run with mdx verification
           name: npm install
@@ -99,10 +115,7 @@ jobs:
           name: Tox build
           command: |
             tox -e py37 --notest
-      - save_cache:
-          key: tox-37-cache-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
-          paths:
-            - .tox/py37
+      - *save_tox_37_cache
       - persist_to_workspace:
           root: ~/project
           paths:
@@ -187,6 +200,43 @@ jobs:
 
               CI_COMMIT_BRANCH="master" python3 ./Tests/scripts/update_conf_json.py
               CI_COMMIT_BRANCH="master" ./Tests/scripts/validate.sh
+  test-lint:
+      docker:
+        - image: devdemisto/content-build:3.0.0.12681
+      steps:
+        - checkout
+        - setup_remote_docker
+        - attach_workspace:
+            at: ~/project
+        - run:
+            name: Test lint on python and ps files
+            when: always
+            command: |
+              cd ~/project
+              export SDK_LINT_FILES_CHANGED=$(git diff master... --name-only -- demisto_sdk/commands/lint)
+
+              if [[ -z "${SDK_LINT_FILES_CHANGED}" ]]; then
+                  echo "files under demisto_sdk/commands/lint did not change - Skipping lint runs."
+                  exit 0
+              fi
+              cd content
+              echo "installing venv"
+              NO_HOOKS=1 SETUP_PY2=yes .hooks/bootstrap >> /tmp/lint_env_installation.log
+              source ./venv/bin/activate
+              pip3 install -r .circleci/build-requirements.txt >> /tmp/lint_env_installation.log
+              
+              # installing local sdk inside venv
+              pip3 install ~/project >> /tmp/lint_env_installation.log
+              echo ""
+              echo "lint files changed running lint"
+              # python file (CommonServerPython lint is running over python 3 and 2)
+              demisto-sdk lint -i ./Packs/Base/Scripts/CommonServerPython
+              
+              # ps file
+              demisto-sdk lint -i ./Packs/Base/Scripts/CommonServerPowerShell
+              
+        - store_artifacts:
+            path: /tmp/lint_env_installation.log
   create-content-artifacts:
       docker:
         - image: circleci/python:3.8.3-buster-node
@@ -235,6 +285,8 @@ workflows:
       - validate-files:
           <<: *tag_filter
           <<: *reqs_content_checkout
+      - test-lint:
+          <<: *reqs_content_checkout
       - create-content-artifacts:
           <<: *tag_filter
           <<: *reqs_content_checkout
@@ -246,3 +298,4 @@ workflows:
             - precommit-checks
             - validate-files
             - create-content-artifacts
+            - test-lint

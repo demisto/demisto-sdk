@@ -23,12 +23,17 @@ In case of a private repo and an un-configured 'DEMISTO_SDK_GITHUB_TOKEN' remote
     - maintenance (revision)
     - documentation (revision)
 
-* **--all**
+* **-g, --use-git**
 
-    Update all release notes in every pack which has been changed. Please note that the `-u` argument will be applied to **all** changed packs.
+    Uses git to identify the relevant changed files and updates all release notes in every pack which has been changed.
+    Will be used by default if '-i' is not set. Please note that the `-u` argument will be applied to **all** changed packs.
+
+* **-f, --force**
+
+    Update the release notes of a pack even if no changes that require update were made.
 
 * **--text**
-    
+
     Text to add to all of the release notes files.
 
 * **--pre_release**
@@ -42,9 +47,9 @@ In case of a private repo and an un-configured 'DEMISTO_SDK_GITHUB_TOKEN' remote
 * **-v, --version <DESIRED_VERSION>**
 
     Bump to a specific version. Cannot be used with `-u, --update_type` flags.
-    
+
 * **-idp, --id-set-path**
-    
+
     The path of the id-set.json used for APIModule updates.
 
 ### Examples
@@ -64,7 +69,7 @@ demisto-sdk update-release-notes -i Packs/HelloWorld -u revision
 This will create a new markdown file in the `ReleaseNotes` folder for the HelloWorld pack and bump the `currentVersion` with a **revision** increment.
 <br/><br/>
 ```
-demisto-sdk update-release-notes --all -u revision
+demisto-sdk update-release-notes -g -u revision
 ```
 This will create a new markdown file in the `ReleaseNotes` folder for **all** changed packs and bump the `currentVersion` for **all** changed packs with a **revision** increment.
 <br/><br/>

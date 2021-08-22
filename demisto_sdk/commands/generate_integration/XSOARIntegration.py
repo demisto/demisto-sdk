@@ -1,8 +1,9 @@
 import json
 from typing import Optional
 
-import demisto_sdk.commands.common.tools as tools
 from ruamel.yaml.scalarstring import FoldedScalarString
+
+import demisto_sdk.commands.common.tools as tools
 
 
 class XSOARIntegration:

@@ -1,6 +1,7 @@
 from typing import Tuple
 
 import click
+
 from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
                                                print_error)
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
@@ -30,7 +31,7 @@ class ReportJSONFormat(BaseUpdateJSON):
 
     def run_format(self) -> int:
         try:
-            click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
+            click.secho(f'\n================= Updating file {self.source_file} =================', fg='bright_blue')
             self.update_json()
             self.set_description()
             self.set_recipients()

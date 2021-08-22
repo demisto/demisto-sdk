@@ -1,6 +1,7 @@
 from unittest.mock import DEFAULT
 
 import pytest
+
 from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON
 from demisto_sdk.commands.lint import linter
 from demisto_sdk.commands.lint.linter import Linter

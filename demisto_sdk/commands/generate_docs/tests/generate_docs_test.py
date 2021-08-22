@@ -782,7 +782,7 @@ yml_data_cases = [(
          '    | **Parameter** | **Description** | **Required** |',
          '    | --- | --- | --- |',
          '    | test1 | More info | True |',
-         '    | API key | The API Key to use for connection. | True |',
+         '    | API key | The API Key to use for the connection. | True |',
          '    | Proxy | non-default info. | True |',
          '',
          '4. Click **Test** to validate the URLs, token, and connection.']  # expected

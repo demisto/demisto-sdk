@@ -1,6 +1,7 @@
 # Changelog
 * Added validation that the support URL in partner contribution pack metadata does not lead to a GitHub repo.
 * Enhanced ***generate-docs*** with default `additionalinformation` (description) for common parameters.
+* Added the *hidden* field to the integration argument schema.
 * Fixed an issue where the **generate-test-playbook** command would not place the playbook in the proper folder.
 
 # 1.4.8
@@ -12,7 +13,6 @@
     * Added the *--examples* argument to get the command examples file path and generate tasks from the commands and arguments specified there.
     * Added the *--upload* flag to specify whether to upload the test playbook after the generation.
     * Fixed the output condition generation for outputs of type `Boolean`.
-* Added validation that the support URL in partner contribution pack metadata does not lead to a GitHub repo.
 
 # 1.4.7
 * Fixed an issue where an empty list for a command context didn't produce an indication other than an empty table.

@@ -89,7 +89,7 @@ You can create your own configuration for the `demisto-sdk` commands by creating
 This file will enable you to set a default value to the existing command flags that will take effect whenever the command is run.
 This can be done by entering the following structure into the file:
 
-```toml
+```INI
 [command_name]
 flag_name=flag_default_value
 ```
@@ -100,14 +100,14 @@ Here are a few examples:
 
 - As a user, I would like to not use the `mypy` linter in my environment when using the `lint` command. In the `.demisto-sdk-conf` file I'll enter:
 
- ```toml
+ ```INI
 [lint]
 no_mypy=true
 ```
 
 - As a user, I would like to include untracked git files in my validation when running the `validate` command. In the `.demisto-sdk-conf` file I'll enter:
 
-```toml
+```INI
 [validate]
 include_untracked=true
 ```

@@ -7,13 +7,13 @@ import pytest
 
 def test_generate_context_from_outputs():
     """
-        Given
-            - A string representing an example output json
-        When
-            - generating context objects
-        Then
-            - Ensure the outputs are correct
-        """
+    Given
+        - A string representing an example output json
+    When
+        - generating context objects
+    Then
+        - Ensure the outputs are correct
+    """
     from demisto_sdk.commands.generate_context.generate_integration_context import \
         generate_context_from_outputs
 
@@ -48,3 +48,15 @@ def test_generate_context_from_outputs():
                            {'contextPath': 'Guardicore.Endpoint.tenant_name',
                             'description': '',
                             'type': 'String'}]}
+
+
+def test_generate_example_dict():
+    """
+    Given
+       - An exmaples file path
+    When
+       - generating examples outputs
+    Then
+       - Ensure the outputs are correct
+    """
+    pass

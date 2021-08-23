@@ -5,12 +5,58 @@ import json
 from typing import Any, Dict, List, Optional, Tuple
 
 from demisto_sdk.commands.json_to_outputs.json_to_outputs import parse_json
+from demisto_sdk.commands.common.tools import (LOG_COLORS, get_yaml, write_yml,
+                                               print_color, print_error,
+                                               print_warning)
+from demisto_sdk.commands.generate_docs.common import (build_example_dict)
+from demisto_sdk.commands.generate_docs.generate_integration_doc import \
+    get_command_examples
 
 
 def generate_context_from_outputs(command: str, outputs: str):
-    yaml_output = parse_json(outputs.replace("'", '"'), command, "", True, return_object=True)
-    print(1)
+    yaml_output = parse_json(outputs.replace("'", '"'), command, "", True,
+                             return_object=True)
     return yaml_output
+
+
+def generate_example_dict(examples_file, insecure=False):
+    # TODO: ask how to test this
+    example_dict = {}
+    if examples_file and os.path.isfile(examples_file):
+        command_examples = get_command_examples(examples_file,
+                                                None)
+        example_dict, build_errors = build_example_dict(command_examples,
+                                                        insecure)
+        if len(build_errors) > 0:
+            raise Exception(
+                f'Command examples had errors: {build_errors}')
+    else:
+        raise Exception(
+            f'Command examples file was not found {examples_file}.')
+    return example_dict
+
+
+def insert_outputs(yml_data: Dict, command: str, output_with_contexts: List):
+    """ Insert new ouputs for a command in the yml_data and return it.
+
+    Args:
+        yml_data: yaml as python dict
+        commnad: the command we want to change the outputs of
+        output_with_contexts: the new outputs
+    """
+    commands = yml_data['script']['commands']
+    found = False
+    for i, v in enumerate(commands):
+        if v.get('name') == command:
+            commands[i]['outputs'] = output_with_contexts
+            found = True
+            break
+
+    if not found:
+        raise Exception(
+            f'Input YML doesn\'t have the "{command}" command from the example')
+    yml_data['script']['commands'] = commands
+    return yml_data
 
 
 def generate_integration_context(
@@ -18,9 +64,8 @@ def generate_integration_context(
         examples: Optional[str] = None,
         insecure: bool = False,
         verbose: bool = False,
-        command: Optional[str] = None
 ):
-    """ Generate integration command contexts.
+    """ Generate integration command contexts in-place.
 
     Args:
         input_path: path to the yaml integration
@@ -34,20 +79,19 @@ def generate_integration_context(
     try:
         yml_data = get_yaml(input_path)
 
-        errors: list = []
-        example_dict = {}
-        if examples and os.path.isfile(examples):
-            specific_commands = command.split(',') if command else None
-            command_examples = get_command_examples(examples, specific_commands)
-            example_dict, build_errors = build_example_dict(command_examples,
-                                                            insecure)
-            errors.extend(build_errors)
-        else:
-            errors.append(f'Command examples was not found {examples}.')
+        example_dict = generate_example_dict(examples, insecure)
 
-        outputs = example_dict.get('guardicore-search-asset')[2]
-        outputs = json.loads(outputs)
-        pprint.pprint(outputs)
+        for command in example_dict:
+            print(f'Building context for the {command} command...')
+            _, _, outputs = example_dict.get(command)
+            output_with_contexts = generate_context_from_outputs(command,
+                                                                 outputs)
+            output_contexts = output_with_contexts.get('outputs')
+
+            yml_data = insert_outputs(yml_data, command, output_contexts)
+
+        # Make the changes in place
+        write_yml(input_path, yml_data)
     except Exception as ex:
         if verbose:
             raise

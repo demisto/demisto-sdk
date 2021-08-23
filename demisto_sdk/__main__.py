@@ -1073,7 +1073,7 @@ def generate_context(**kwargs):
         print_error(f'File type {file_type.value} is not supported.')
         return 1
 
-    print(input_path, examples, insecure)
+
 
 # ====================== generate-docs ====================== #
 @main.command()

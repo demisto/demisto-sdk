@@ -1,6 +1,6 @@
 import os
 from copy import deepcopy
-from typing import Optional
+from typing import Optional, Any, Dict, List
 
 import pytest
 from mock import mock_open, patch
@@ -15,6 +15,9 @@ from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from TestSuite.test_tools import ChangeCWD
+from demisto_sdk.commands.common.default_additional_info_loader import load_default_additional_info_dict
+
+default_additional_info = load_default_additional_info_dict()
 
 FEED_REQUIRED_PARAMS_STRUCTURE = [dict(required_param.get('must_equal'), **required_param.get('must_contain'),
                                        name=required_param.get('name')) for required_param in FEED_REQUIRED_PARAMS]
@@ -245,6 +248,27 @@ class TestIntegrationValidator:
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
         assert validator.has_no_duplicate_args() is answer
+
+    WITH_DEFAULT_INFO = [{"name": "API key",
+                          "additionalinfo": default_additional_info['API key']}]
+    MISSING_DEFAULT_INFO = [{"name": "API key",
+                             "additionalinfo": ""}]
+    NON_DEFAULT_INFO = [{"name": "API key",
+                         "additionalinfo": "you know, the API key"}]
+
+    DEFAULT_INFO_INPUTS = [
+        (WITH_DEFAULT_INFO, True),
+        (MISSING_DEFAULT_INFO, False),
+        (NON_DEFAULT_INFO, True),
+    ]
+
+    @pytest.mark.parametrize("args, answer", DEFAULT_INFO_INPUTS)
+    def test_default_params_default_info(self, args, answer):
+        # [{"name": "testing", "arguments": [{"name": "test1"}, {"name": "test2"}]}]
+        args = {"configuration": args}
+        structure = mock_structure("", args)
+        validator = IntegrationValidator(structure)
+        assert validator.default_params_have_default_additional_info() is answer
 
     NO_INCIDENT_INPUT = [
         ({"script": {"commands": [{"name": "command1", "arguments": [{"name": "arg1"}]}]}}, True),

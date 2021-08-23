@@ -285,7 +285,9 @@ ERROR_CODE = {
     "xsoar_config_file_malformed": {'code': "XC101", 'ui_applicable': False, 'related_field': ''},
     "invalid_readme_image_error": {'code': "RM108", 'ui_applicable': False, 'related_field': ''},
     "invalid_generic_field_group_value": {'code': "GF100", 'ui_applicable': False, 'related_field': 'group'},
-    "invalid_generic_field_id": {'code': "GF101", 'ui_applicable': False, 'related_field': 'id'}
+    "invalid_generic_field_id": {'code': "GF101", 'ui_applicable': False, 'related_field': 'id'},
+    "non_default_additional_info": {'code': "IN142", 'ui_applicable': True, 'related_field': 'additionalinfo'},
+    "missing_default_additional_info": {'code': "IN143", 'ui_applicable': True, 'related_field': 'additionalinfo'}
 }
 
 
@@ -1800,3 +1802,13 @@ class Errors:
     @error_code_decorator
     def entity_name_contains_excluded_word(entity_name: str, excluded_words: List[str]):
         return f'Entity {entity_name} should not contain one of {excluded_words} in its name. Please remove.'
+
+    @staticmethod
+    @error_code_decorator
+    def non_default_additional_info(params: List[str]):
+        return f'The additionalinfo of params {params} is not the default value, please consider changing it.'
+
+    @staticmethod
+    @error_code_decorator
+    def missing_default_additional_info(params: List[str]):
+        return f'The additionalinfo of params {params} is empty.'

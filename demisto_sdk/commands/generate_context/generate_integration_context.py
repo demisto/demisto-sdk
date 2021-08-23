@@ -13,10 +13,10 @@ from demisto_sdk.commands.generate_docs.generate_integration_doc import \
     get_command_examples
 
 
-def generate_context_from_outputs(command: str, outputs: str):
-    yaml_output = parse_json(outputs.replace("'", '"'), command, "", True,
+def dict_from_outputs_str(command: str, outputs: str):
+    dict_output = parse_json(outputs.replace("'", '"'), command, "", True,
                              return_object=True)
-    return yaml_output
+    return dict_output
 
 
 def generate_example_dict(examples_file, insecure=False):
@@ -79,18 +79,19 @@ def generate_integration_context(
     try:
         yml_data = get_yaml(input_path)
 
+        # Parse examples file
         example_dict = generate_example_dict(examples, insecure)
 
         for command in example_dict:
             print(f'Building context for the {command} command...')
             _, _, outputs = example_dict.get(command)
-            output_with_contexts = generate_context_from_outputs(command,
-                                                                 outputs)
-            output_contexts = output_with_contexts.get('outputs')
 
+            # Generate the examples with a local server
+            output_with_contexts = dict_from_outputs_str(command, outputs)
+            output_contexts = output_with_contexts.get('outputs')
             yml_data = insert_outputs(yml_data, command, output_contexts)
 
-        # Make the changes in place
+        # Make the changes in place the input yml
         write_yml(input_path, yml_data)
     except Exception as ex:
         if verbose:

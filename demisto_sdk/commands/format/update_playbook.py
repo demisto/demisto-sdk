@@ -19,6 +19,7 @@ from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 
 class BasePlaybookYMLFormat(BaseUpdateYML):
     def __init__(self,
+                 add_tests: bool,
                  input: str = '',
                  output: str = '',
                  path: str = '',
@@ -28,7 +29,7 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
                  assume_yes: bool = False,
                  deprecate: bool = False):
         super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
-                         verbose=verbose, assume_yes=assume_yes, deprecate=deprecate)
+                         verbose=verbose, assume_yes=assume_yes, deprecate=deprecate, add_tests=add_tests)
 
     def add_description(self):
         """Add empty description to playbook and tasks."""

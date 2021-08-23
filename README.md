@@ -114,7 +114,7 @@ include_untracked=true
 
 - As a user, I would like to automatically use minor version changes when running the `update-release-notes` command. In the `.demisto-sdk-conf` file I'll enter:
 
-```buildoutcfg
+```INI
 [update-release-notes]
 update_type=minor
 ```

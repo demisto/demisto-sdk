@@ -97,6 +97,7 @@ def format_manager(input: str = None,
                    use_git: bool = False,
                    prev_ver: str = None,
                    include_untracked: bool = False,
+                   add_tests: bool = True,
                    ):
     """
     Format_manager is a function that activated format command on different type of files.
@@ -112,6 +113,7 @@ def format_manager(input: str = None,
         use_git (bool): Use git to automatically recognize which files changed and run format on them
         prev_ver (str): Against which branch should the difference be recognized
         include_untracked (bool): Whether to include untracked files when checking against git
+        add_tests (bool): Whether to exclude tests automatically.
     Returns:
         int 0 in case of success 1 otherwise
     """
@@ -156,7 +158,8 @@ def format_manager(input: str = None,
                                                                  verbose=verbose,
                                                                  update_docker=update_docker,
                                                                  assume_yes=assume_yes,
-                                                                 deprecate=deprecate)
+                                                                 deprecate=deprecate,
+                                                                 add_tests=add_tests)
                 if err_res:
                     log_list.extend([(err_res, print_error)])
                 if info_res:
@@ -260,6 +263,9 @@ def run_format_on_file(input: str, file_type: str, from_version: str, **kwargs) 
     if file_type not in ('integration', 'script') and 'update_docker' in kwargs:
         # non code formatters don't support update_docker param. remove it
         del kwargs['update_docker']
+    if file_type not in ('integration', 'playbook', 'script') and 'add_tests' in kwargs:
+        # adding tests is relevant only for integrations, playbooks and scripts.
+        del kwargs['add_tests']
     update_object = FILE_TYPE_AND_LINKED_CLASS[file_type](input=input, path=schema_path,
                                                           from_version=from_version,
                                                           **kwargs)

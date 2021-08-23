@@ -690,6 +690,11 @@ def lint(**kwargs):
     is_flag=True,
     help='Whether to include untracked files in the formatting.'
 )
+@click.option(
+    '-at', '--add-tests',
+    is_flag=True,
+    help='Whether to answer manually to add tests configuration prompt when running interactively.'
+)
 def format(
         input: Path,
         output: Path,
@@ -702,6 +707,7 @@ def format(
         use_git: bool,
         prev_ver: str,
         include_untracked: bool,
+        add_tests: bool,
 ):
     """Run formatter on a given script/playbook/integration/incidentfield/indicatorfield/
     incidenttype/indicatortype/layout/dashboard/classifier/mapper/widget/report file/genericfield/generictype/
@@ -719,6 +725,7 @@ def format(
         use_git=use_git,
         prev_ver=prev_ver,
         include_untracked=include_untracked,
+        add_tests=add_tests,
     )
 
 

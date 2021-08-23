@@ -130,8 +130,7 @@ class ValidateManager:
                                                    ignored_errors=None,
                                                    print_as_warnings=self.print_ignored_errors,
                                                    id_set_file=self.id_set_file,
-                                                   json_file_path=json_file_path) \
-            if validate_id_set else None
+                                                   json_file_path=json_file_path) if validate_id_set else None
 
         try:
             self.git_util = GitUtil(repo=Content.git())

@@ -117,7 +117,6 @@ ERROR_CODE = {
     "docker_not_on_the_latest_tag": {'code': "DO106", 'ui_applicable': True, 'related_field': 'dockerimage'},
     "non_existing_docker": {'code': "DO107", 'ui_applicable': True, 'related_field': 'dockerimage'},
     "dockerimage_not_in_yml_file": {'code': "DO108", 'ui_applicable': True, 'related_field': 'dockerimage'},
-    "no_docker_tag_in_iron_bank": {'code': "DO109", 'ui_applicable': True, 'related_field': 'dockerimage'},
     "id_set_conflicts": {'code': "ID100", 'ui_applicable': False, 'related_field': ''},
     "duplicated_id": {'code': "ID102", 'ui_applicable': False, 'related_field': ''},
     "no_id_set_file": {'code': "ID103", 'ui_applicable': False, 'related_field': ''},
@@ -752,18 +751,6 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def no_docker_tag_in_iron_bank(docker_image):
-        return f'{docker_image} - The docker image in your integration/script does not have a tag in Iron Bank.' \
-               f' Please create or update to an updated versioned image In Iron Bank.'
-
-    @staticmethod
-    @error_code_decorator
-    def no_docker_image_in_iron_bank(docker_image):
-        return f'{docker_image} - The docker image in your integration/script cannot be found in Iron Bank.' \
-               f' Please create image In Iron Bank.'
-
-    @staticmethod
-    @error_code_decorator
     def dockerimage_not_in_yml_file(file_path):
         return f'There is no docker image provided in file {file_path}.\nYou can choose one from ' \
                'DockerHub: https://hub.docker.com/u/demisto/, or create your own in the repo: ' \
@@ -781,17 +768,20 @@ class Errors:
         return f'The docker image: {docker_image} is not of format - demisto/image_name:X.X'
 
     @staticmethod
-    def suggest_docker_fix(docker_image_name: str, file_path: str) -> str:
+    def suggest_docker_fix(docker_image_name: str, file_path: str, is_iron_bank=False) -> str:
+        docker_hub_link = f'https://hub.docker.com/r/{docker_image_name}/tags'
+        iron_bank_link = f'https://repo1.dso.mil/dsop/opensource/palo-alto-networks/{docker_image_name}/'
         return f'You can check for the most updated version of {docker_image_name} ' \
-               f'here: https://hub.docker.com/r/{docker_image_name}/tags\n' \
+               f'at {iron_bank_link if is_iron_bank else docker_hub_link} \n' \
                f'To update the docker image run:\ndemisto-sdk format -ud -i {file_path}\n'
 
     @staticmethod
     @error_code_decorator
-    def docker_not_on_the_latest_tag(docker_image_tag, docker_image_latest_tag) -> str:
+    def docker_not_on_the_latest_tag(docker_image_tag, docker_image_latest_tag, is_iron_bank=False) -> str:
         return f'The docker image tag is not the latest numeric tag, please update it.\n' \
                f'The docker image tag in the yml file is: {docker_image_tag}\n' \
-               f'The latest docker image tag in docker hub is: {docker_image_latest_tag}\n'
+               f'The latest docker image tag in {"Iron Bank" if is_iron_bank else "docker hub" } ' \
+               f'is: {docker_image_latest_tag}\n'
 
     @staticmethod
     @error_code_decorator

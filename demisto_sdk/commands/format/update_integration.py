@@ -12,6 +12,7 @@ from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 from demisto_sdk.commands.format.update_script import ScriptYMLFormat
+from demisto_sdk.commands.common.tools import is_iron_bank_pack
 
 
 class IntegrationYMLFormat(BaseUpdateYML):
@@ -131,7 +132,8 @@ class IntegrationYMLFormat(BaseUpdateYML):
 
     def update_docker_image(self):
         if self.update_docker:
-            ScriptYMLFormat.update_docker_image_in_script(self.data['script'], self.data.get(self.from_version_key))
+            ScriptYMLFormat.update_docker_image_in_script(self.data['script'], self.source_file,
+                                                          self.data.get(self.from_version_key))
 
     def run_format(self) -> int:
         try:

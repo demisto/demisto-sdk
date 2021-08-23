@@ -90,8 +90,8 @@ class DockerImageValidator(BaseValidator):
             # If docker image tag is not the most updated one that exists in docker-hub
             error_message, error_code = Errors.docker_not_on_the_latest_tag(self.docker_image_tag,
                                                                             self.docker_image_latest_tag,
-                                                                            )
-            suggested_fix = Errors.suggest_docker_fix(self.docker_image_name, self.file_path)
+                                                                            self.is_iron_bank)
+            suggested_fix = Errors.suggest_docker_fix(self.docker_image_name, self.file_path, self.is_iron_bank)
             if self.handle_error(error_message, error_code, file_path=self.file_path, suggested_fix=suggested_fix):
                 self.is_latest_tag = False
 
@@ -277,63 +277,7 @@ class DockerImageValidator(BaseValidator):
                 tag = DockerImageValidator.lexical_find_latest_tag(tags)
         return tag
 
-    def get_docker_image_latest_tag_from_iron_bank_request(self, docker_image_name):
-        """
-        Get the latest tag for a docker image by request to Iron Bank Repo.
-        Args:
-            docker_image_name: The docker image name.
-
-        Returns:
-            The latest tag for the docker image.
-        """
-        project_name = docker_image_name.replace('demisto/','')
-        api_url = 'https://repo1.dso.mil/api/v4/projects/dsop%2Fopensource%2Fpalo-alto-networks%2Fdemisto%2F'
-        commits_url = api_url + f'{project_name}/pipelines'
-        manifest_url = api_url + f'{project_name}/repository/files/hardening_manifest.yaml/raw'
-
-        # Get latest commit in master which passed the pipeline of the project:
-        res = requests.get(url=commits_url, params={'ref': 'master', 'status': 'success'}, verify=False,
-                           timeout=TIMEOUT)
-
-        # Project may not be existing and needs to be created.
-        if res.status_code != 200:
-            error_message, error_code = Errors.no_docker_image_in_iron_bank(docker_image_name)
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
-                return ''
-
-        list_of_commits = res.json()
-
-        # Project seems to have no succeed pipeline for master branch, meaning the image is not in Iron Bank.
-        if not list_of_commits:
-            error_message, error_code = Errors.no_docker_tag_in_iron_bank(docker_image_name)
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
-                return ''
-
-        list_of_commits = sorted(list_of_commits, key=lambda x: x['updated_at'], reverse=True)
-        latest_commit = list_of_commits[0]['sha']
-
-        # gets the manifest file from the commit found:
-        res = requests.get(url=manifest_url, params={'ref': latest_commit}, verify=False, timeout=TIMEOUT)
-
-        # If file does not exists in the last commit:
-        if res.status_code != 200:
-            error_message, error_code = Errors.docker_tag_not_fetched(docker_image_name)
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
-                return ''
-
-        data = res.text
-        version_pattern = 'tags:\n- (.*)\n'
-        latest_version = re.findall(version_pattern, data)
-
-        # If manifest file does not contain the tag:
-        if not latest_version:
-            error_message, error_code = Errors.docker_tag_not_fetched(docker_image_name)
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
-                return ''
-
-        return latest_version[0].strip('"')
-
-    def get_docker_image_latest_tag(self, docker_image_name, yml_docker_image, is_iron_bank):
+    def get_docker_image_latest_tag(self, docker_image_name, yml_docker_image, is_iron_bank=False):
         """Returns the docker image latest tag of the given docker image
 
         Args:
@@ -398,3 +342,69 @@ class DockerImageValidator(BaseValidator):
                 return 'demisto/python', self.get_docker_image_latest_tag('demisto/python', None)
             else:
                 return 'demisto/python3', self.get_docker_image_latest_tag('demisto/python3', None)
+
+    @staticmethod
+    def get_docker_image_latest_tag_from_iron_bank_request(docker_image_name):
+        """
+        Get the latest tag for a docker image by request to Iron Bank Repo.
+        Args:
+            docker_image_name: The docker image name.
+
+        Returns:
+            The latest tag for the docker image.
+        """
+        project_name = docker_image_name.replace('demisto/', '')
+        api_url = 'https://repo1.dso.mil/api/v4/projects/dsop%2Fopensource%2Fpalo-alto-networks%2Fdemisto%2F'
+        commits_url = api_url + f'{project_name}/pipelines'
+        manifest_url = api_url + f'{project_name}/repository/files/hardening_manifest.yaml/raw'
+
+        try:
+            last_commit = DockerImageValidator._get_latest_commit(commits_url, docker_image_name)
+            if not last_commit:
+                return ''
+            manifest_file_content = DockerImageValidator._get_manifest_from_commit(manifest_url, last_commit)
+            if not manifest_file_content:
+                return ''
+        except Exception as e:
+            raise(e)
+
+        version_pattern = 'tags:\n- (.*)\n'
+        latest_version = re.findall(version_pattern, manifest_file_content)
+
+        # If manifest file does not contain the tag:
+        if not latest_version:
+            raise Exception('(Iron Bank) Manifest file does not contain tag in expected format.')
+
+        return latest_version[0].strip('"')
+
+    @staticmethod
+    def _get_manifest_from_commit(manifest_url, commit_id):
+        # gets the manifest file from the specified commit in Iron Bank:
+        res = requests.get(url=manifest_url, params={'ref': commit_id}, verify=False, timeout=TIMEOUT)
+
+        # If file does not exists in the last commit:
+        if res.status_code != 200:
+            raise Exception("Missing manifest file in the latest successful commit.")
+
+        return res.text
+
+    @staticmethod
+    def _get_latest_commit(commits_url, docker_image_name):
+        # Get latest commit in master which passed the pipeline of the project in Iron Bank:
+        res = requests.get(url=commits_url, params={'ref': 'master', 'status': 'success'}, verify=False,
+                           timeout=TIMEOUT)
+
+        # Project may not be existing and needs to be created.
+        if res.status_code != 200:
+            raise Exception('The docker image in your integration/script cannot be found in Iron Bank.'
+                            f' Please create image {docker_image_name} In Iron Bank.')
+
+        list_of_commits = res.json()
+
+        # Project seems to have no succeed pipeline for master branch, meaning the image is not in Iron Bank.
+        if not list_of_commits:
+            raise Exception('The docker image in your integration/script does not have a tag in Iron Bank.'
+                            f' Please create or update to an updated versioned image In Iron Bank.')
+
+        list_of_commits = sorted(list_of_commits, key=lambda x: x['updated_at'], reverse=True)
+        return list_of_commits[0]['sha']

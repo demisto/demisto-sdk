@@ -23,8 +23,8 @@ from demisto_sdk.commands.common.hook_validations.docker import \
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.tools import (
     _get_file_id, compare_context_path_in_yml_and_readme, get_core_pack_list,
-    get_file_version_suffix_if_exists, get_files_in_dir, get_pack_name,
-    print_error, server_version_compare, get_pack_metadata)
+    get_file_version_suffix_if_exists, get_files_in_dir, get_pack_name, is_iron_bank_pack,
+    print_error, server_version_compare)
 
 
 class IntegrationValidator(ContentEntityValidator):
@@ -835,7 +835,7 @@ class IntegrationValidator(ContentEntityValidator):
         # dockers should not be checked when running on all files
         if self.skip_docker_check:
             return True
-        is_iron_bank = self._is_iron_bank_pack()
+        is_iron_bank = is_iron_bank_pack(self.file_path)
         docker_image_validator = DockerImageValidator(self.file_path, is_modified_file=True, is_integration=True,
                                                       ignored_errors=self.ignored_errors,
                                                       print_as_warnings=self.print_as_warnings,
@@ -1322,6 +1322,4 @@ class IntegrationValidator(ContentEntityValidator):
                 return False
         return True
 
-    def _is_iron_bank_pack(self):
-        metadata = get_pack_metadata(self.file_path)
-        return 'Iron Bank' in metadata.get('tags', [])
+

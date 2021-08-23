@@ -327,13 +327,16 @@ class PlaybookTestsGenerator:
         else:
             input_folder = Path(input)
 
-            if 'Packs' in (p.name for p in input_folder.parents):
-                """
-                if input yml is under standard Packs/<Pack>/Integrations/<Integration> path,
-                save the test-playbook under   Packs/<Pack>/TestPlaybooks
-                """
-                folder = (input_folder.parent.parent / 'TestPlaybooks')
-                folder.mkdir(exist_ok=True, parents=True)
+            """
+            if input yml is under standard Packs/<Pack>/<...>/<Integration> path,
+            save the test-playbook under   Packs/<Pack>/TestPlaybooks
+            """
+            for p in input_folder.parents:
+                if p.parent.name == "Packs":
+                    pack_path = p
+                    folder = (pack_path / 'TestPlaybooks')
+                    folder.mkdir(exist_ok=True, parents=True)
+                    break
             else:
                 """ otherwise, save the generated test-playbook in the folder from which SDK is called."""
                 folder = Path()

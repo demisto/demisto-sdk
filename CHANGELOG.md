@@ -1,5 +1,6 @@
 # Changelog
 * Added validation that the support URL in partner contribution pack metadata does not lead to a GitHub repo.
+* Fixed an issue where the **generate-test-playbook** command would not place the playbook in the proper folder.
 
 # 1.4.8
 * Fixed an issue where yml files with `!reference` failed to load properly.

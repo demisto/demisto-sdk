@@ -1,13 +1,9 @@
 import os.path
-import io
-import re
-import json
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 from demisto_sdk.commands.json_to_outputs.json_to_outputs import parse_json
-from demisto_sdk.commands.common.tools import (LOG_COLORS, get_yaml, write_yml,
-                                               print_color, print_error,
-                                               print_warning)
+from demisto_sdk.commands.common.tools import (get_yaml, write_yml,
+                                               print_error)
 from demisto_sdk.commands.generate_docs.common import (build_example_dict)
 from demisto_sdk.commands.generate_docs.generate_integration_doc import \
     get_command_examples

@@ -1030,6 +1030,7 @@ def init(**kwargs):
     initiator.init()
     return 0
 
+
 # ====================== generate-context ====================== #
 @main.command()
 @click.help_option(
@@ -1049,13 +1050,13 @@ def init(**kwargs):
     help="Skip certificate validation to run the commands in order to generate the docs.",
     is_flag=True)
 @click.option(
-    "-v", "--verbose", is_flag=True, help="Verbose output - mainly for debugging purposes.")
+    "-v", "--verbose", is_flag=True,
+    help="Verbose output - mainly for debugging purposes.")
 def generate_context(**kwargs):
     input_path: str = kwargs.get('input', '')
     examples: str = kwargs.get('examples', '')
     insecure: bool = kwargs.get('insecure', False)
     verbose: bool = kwargs.get('verbose', False)
-
 
     # validate inputs
     if input_path and not os.path.isfile(input_path):
@@ -1076,7 +1077,6 @@ def generate_context(**kwargs):
     else:
         print_error(f'File type {file_type.value} is not supported.')
         return 1
-
 
 
 # ====================== generate-docs ====================== #

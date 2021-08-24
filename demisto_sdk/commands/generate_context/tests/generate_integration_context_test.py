@@ -1,8 +1,5 @@
-import json
 import os
-from typing import Dict, List
 
-import pytest
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_json, get_yaml
 

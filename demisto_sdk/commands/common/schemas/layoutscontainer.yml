@@ -7,6 +7,8 @@ mapping:
     type: str
     required: True
     enum: ['incident', 'indicator']
+  definitionId:
+    type: str
   version:
     type: number
     required: True

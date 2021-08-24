@@ -11,12 +11,12 @@ from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
 FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
 ALLOWED_IGNORE_ERRORS = [
-    'BA101', 'BA106', 'BA108', 'BA109', 'BA110', 'BA111',
+    'BA101', 'BA106', 'BA108', 'BA109', 'BA110', 'BA111', 'BA112', 'BA113',
     'DS107',
     'IF100', 'IF106',
     'IN109', 'IN110', 'IN122', 'IN126', 'IN128', 'IN135', 'IN136', 'IN139',
     'MP106',
-    'PA113', 'PA116', 'PA124', 'PA125',
+    'PA113', 'PA116', 'PA124', 'PA125', 'PA127',
     'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112', 'PB114', 'PB115', 'PB116',
     'RM100', 'RM102', 'RM104', 'RM106',
     'RP102', 'RP104',
@@ -45,6 +45,8 @@ ERROR_CODE = {
     "file_name_has_separators": {'code': "BA109", 'ui_applicable': False, 'related_field': ''},
     "field_contain_forbidden_word": {'code': "BA110", 'ui_applicable': False, 'related_field': ''},
     'entity_name_contains_excluded_word': {'code': 'BA111', 'ui_applicable': False, 'related_field': ''},
+    "spaces_in_the_end_of_id": {'code': "BA112", 'ui_applicable': False, 'related_field': 'id'},
+    "spaces_in_the_end_of_name": {'code': "BA113", 'ui_applicable': False, 'related_field': 'name'},
     "wrong_display_name": {'code': "IN100", 'ui_applicable': True, 'related_field': '<parameter-name>.display'},
     "wrong_default_parameter_not_empty": {'code': "IN101", 'ui_applicable': True,
                                           'related_field': '<parameter-name>.default'},
@@ -170,6 +172,7 @@ ERROR_CODE = {
     "playbook_not_quiet_mode": {'code': "PB114", 'ui_applicable': False, 'related_field': ''},
     "playbook_tasks_not_quiet_mode": {'code': "PB115", 'ui_applicable': False, 'related_field': 'tasks'},
     "playbook_tasks_continue_on_error": {'code': "PB116", 'ui_applicable': False, 'related_field': 'tasks'},
+    "content_entity_is_not_in_id_set": {'code': "PB117", 'ui_applicable': False, 'related_field': ''},
     "description_missing_in_beta_integration": {'code': "DS100", 'ui_applicable': False, 'related_field': ''},
     "no_beta_disclaimer_in_description": {'code': "DS101", 'ui_applicable': False, 'related_field': ''},
     "no_beta_disclaimer_in_yml": {'code': "DS102", 'ui_applicable': False, 'related_field': ''},
@@ -228,6 +231,7 @@ ERROR_CODE = {
     "invalid_core_pack_dependencies": {'code': "PA124", 'ui_applicable': True, 'related_field': ''},
     "pack_name_is_not_in_xsoar_standards": {'code': "PA125", 'ui_applicable': False, 'related_field': ''},
     "pack_metadata_long_description": {'code': "PA126", 'ui_applicable': False, 'related_field': ''},
+    "metadata_url_invalid": {'code': "PA127", 'ui_applicable': False, 'related_field': ''},
     "readme_error": {'code': "RM100", 'ui_applicable': False, 'related_field': ''},
     "image_path_error": {'code': "RM101", 'ui_applicable': False, 'related_field': ''},
     "readme_missing_output_context": {'code': "RM102", 'ui_applicable': False, 'related_field': ''},
@@ -1405,6 +1409,15 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def metadata_url_invalid():
+        return 'The metadata URL leads to a GitHub repo instead of a support page. ' \
+               'Please provide a URL for a support page as detailed in:\n ' \
+               'https://xsoar.pan.dev/docs/packs/packs-format#pack_metadatajson\n ' \
+               'Note that GitHub URLs that lead to a /issues page are also acceptable. ' \
+               '(e.g. https://github.com/some_monitored_repo/issues)'
+
+    @staticmethod
+    @error_code_decorator
     def readme_contains_demisto_word(line_nums):
         return f'Found the word \'Demisto\' in the readme content in lines: {line_nums}.'
 
@@ -1802,6 +1815,23 @@ class Errors:
     @error_code_decorator
     def entity_name_contains_excluded_word(entity_name: str, excluded_words: List[str]):
         return f'Entity {entity_name} should not contain one of {excluded_words} in its name. Please remove.'
+
+    @staticmethod
+    @error_code_decorator
+    def content_entity_is_not_in_id_set(main_playbook, entities_names):
+        return f"Playbook {main_playbook} uses {entities_names}, which do not exist in the id_set.\n" \
+               f"Possible reason for such an error, would be that the name of the entity in the yml file of " \
+               f"{main_playbook} is not identical to its name in its own yml file. Or the id_set is not up to date"
+
+    @staticmethod
+    @error_code_decorator
+    def spaces_in_the_end_of_id(item_id: str):
+        return f'Content item id "{item_id}" should not have trailing spaces. Please remove.'
+
+    @staticmethod
+    @error_code_decorator
+    def spaces_in_the_end_of_name(name: str):
+        return f'Content item name "{name}" should not have trailing spaces. Please remove.'
 
     @staticmethod
     @error_code_decorator

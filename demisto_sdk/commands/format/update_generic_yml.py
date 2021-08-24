@@ -26,7 +26,7 @@ class BaseUpdateYML(BaseUpdate):
             input (str): the path to the file we are updating at the moment.
             output (str): the desired file name to save the updated version of the YML to.
             data (Dict): YML file data arranged in a Dict.
-            id_and_version_location (Dict): the object in the yml_data that holds the is and version values.
+            id_and_version_location (Dict): the object in the yml_data that holds the id and version values.
     """
     ID_AND_VERSION_PATH_BY_YML_TYPE = {
         'IntegrationYMLFormat': 'commonfields',
@@ -102,6 +102,7 @@ class BaseUpdateYML(BaseUpdate):
         self.set_fromVersion(from_version=self.from_version, file_type=file_type)
         self.remove_copy_and_dev_suffixes_from_name()
         self.remove_unnecessary_keys()
+        self.remove_spaces_end_of_id_and_name()
         self.update_id_to_equal_name()
         self.set_version_to_default(self.id_and_version_location)
         self.copy_tests_from_old_file()
@@ -243,3 +244,12 @@ class BaseUpdateYML(BaseUpdate):
         elif file_type in {'playbook', 'script'}:
             return [{'playbookID': test_playbook_id} for test_playbook_id in test_playbooks]
         return []
+
+    def remove_spaces_end_of_id_and_name(self):
+        """Updates the id and name of the YML to have no spaces on its end
+        """
+        if not self.old_file:
+            if self.verbose:
+                click.echo('Updating YML ID and name to be without spaces at the end')
+            self.data['name'] = self.data['name'].strip()
+            self.id_and_version_location['id'] = self.id_and_version_location['id'].strip()

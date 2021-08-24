@@ -11,7 +11,7 @@ from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
 FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
 ALLOWED_IGNORE_ERRORS = [
-    'BA101', 'BA106', 'BA108', 'BA109', 'BA110', 'BA111',
+    'BA101', 'BA106', 'BA108', 'BA109', 'BA110', 'BA111', 'BA112', 'BA113',
     'DS107',
     'IF100', 'IF106',
     'IN109', 'IN110', 'IN122', 'IN126', 'IN128', 'IN135', 'IN136', 'IN139',
@@ -45,6 +45,8 @@ ERROR_CODE = {
     "file_name_has_separators": {'code': "BA109", 'ui_applicable': False, 'related_field': ''},
     "field_contain_forbidden_word": {'code': "BA110", 'ui_applicable': False, 'related_field': ''},
     'entity_name_contains_excluded_word': {'code': 'BA111', 'ui_applicable': False, 'related_field': ''},
+    "spaces_in_the_end_of_id": {'code': "BA112", 'ui_applicable': False, 'related_field': 'id'},
+    "spaces_in_the_end_of_name": {'code': "BA113", 'ui_applicable': False, 'related_field': 'name'},
     "wrong_display_name": {'code': "IN100", 'ui_applicable': True, 'related_field': '<parameter-name>.display'},
     "wrong_default_parameter_not_empty": {'code': "IN101", 'ui_applicable': True,
                                           'related_field': '<parameter-name>.default'},
@@ -1821,3 +1823,13 @@ class Errors:
         return f"Playbook {main_playbook} uses {entities_names}, which do not exist in the id_set.\n" \
                f"Possible reason for such an error, would be that the name of the entity in the yml file of " \
                f"{main_playbook} is not identical to its name in its own yml file. Or the id_set is not up to date"
+
+    @staticmethod
+    @error_code_decorator
+    def spaces_in_the_end_of_id(item_id: str):
+        return f'Content item id "{item_id}" should not have trailing spaces. Please remove.'
+
+    @staticmethod
+    @error_code_decorator
+    def spaces_in_the_end_of_name(name: str):
+        return f'Content item name "{name}" should not have trailing spaces. Please remove.'

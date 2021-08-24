@@ -66,18 +66,17 @@ def test_generate_example_dict(mocker):
     Then
        - Ensure the outputs are correct
     """
-    import demisto_sdk.commands.generate_docs.common
-
-    os.environ["DEMISTO_BASE_URL"] = "1"
-    os.environ["DEMISTO_USERNAME"] = "1"
-    os.environ["DEMISTO_PASSWORD"] = "1"
-    mocker.patch.object(demisto_sdk.commands.generate_docs.common,
+    # os.environ["DEMISTO_BASE_URL"] = "1"
+    # os.environ["DEMISTO_USERNAME"] = "1"
+    # os.environ["DEMISTO_PASSWORD"] = "1"
+    from demisto_sdk.commands.generate_context import \
+        generate_integration_context
+    mocker.patch.object(generate_integration_context,
                         'build_example_dict',
                         return_value=(FAKE_OUTPUT_CONTEXTS, []))
-    from demisto_sdk.commands.generate_context.generate_integration_context import \
-        generate_example_dict
 
-    assert generate_example_dict(FAKE_EXAMPLES_FILE) == FAKE_OUTPUT_CONTEXTS
+    assert generate_integration_context.generate_example_dict(
+        FAKE_EXAMPLES_FILE) == FAKE_OUTPUT_CONTEXTS
 
 
 def test_insert_outputs(mocker):
@@ -89,20 +88,19 @@ def test_insert_outputs(mocker):
     Then
       - Ensure the outputs are inserted correctly
     """
-    import demisto_sdk.commands.generate_docs.common
-    os.environ["DEMISTO_BASE_URL"] = "1"
-    os.environ["DEMISTO_USERNAME"] = "1"
-    os.environ["DEMISTO_PASSWORD"] = "1"
-    mocker.patch.object(demisto_sdk.commands.generate_docs.common,
+    # os.environ["DEMISTO_BASE_URL"] = "1"
+    # os.environ["DEMISTO_USERNAME"] = "1"
+    # os.environ["DEMISTO_PASSWORD"] = "1"
+    from demisto_sdk.commands.generate_context import \
+        generate_integration_context
+    mocker.patch.object(generate_integration_context,
                         'build_example_dict',
                         return_value=(FAKE_OUTPUT_CONTEXTS, []))
-    from demisto_sdk.commands.generate_context.generate_integration_context import \
-        insert_outputs
 
     yml_data = FAKE_INTEGRATION_YML
 
     command = 'zoom-fetch-recording'
-    yml_data = insert_outputs(yml_data, command, FAKE_OUTPUT_CONTEXTS)
+    yml_data = generate_integration_context.insert_outputs(yml_data, command, FAKE_OUTPUT_CONTEXTS)
     for command in yml_data['script']['commands']:
         if command.get('name') == command:
             assert command['outputs'] == FAKE_OUTPUT_CONTEXTS

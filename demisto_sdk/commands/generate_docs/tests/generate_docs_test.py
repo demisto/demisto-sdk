@@ -744,7 +744,7 @@ def test_generate_table_section_numbered_section():
 
 
 yml_data_cases = [(
-    {"name": "test", "configuration": [
+    {'name': 'test', 'display': 'test', 'configuration': [
         {'defaultvalue': '', 'display': 'test1', 'name': 'test1', 'required': True, 'type': 8},
         {'defaultvalue': '', 'display': 'test2', 'name': 'test2', 'required': True, 'type': 8}
     ]},  # case no param with additional info field
@@ -754,7 +754,7 @@ yml_data_cases = [(
      '', '4. Click **Test** to validate the URLs, token, and connection.']  # expected
 ),
     (
-        {"name": "test", "configuration": [
+        {'name': 'test', 'display': 'test', 'configuration': [
             {'display': 'test1', 'name': 'test1', 'additionalinfo': 'More info', 'required': True, 'type': 8},
             {'display': 'test2', 'name': 'test2', 'required': True, 'type': 8}
         ]},  # case some params with additional info field
@@ -765,7 +765,7 @@ yml_data_cases = [(
          '4. Click **Test** to validate the URLs, token, and connection.']  # expected
 ),
     (
-        {"name": "test", "configuration": [
+        {'name': 'test', 'display': 'test', 'configuration': [
             {'display': 'test1', 'name': 'test1', 'additionalinfo': 'More info', 'required': True, 'type': 8},
             {'display': 'test2', 'name': 'test2', 'additionalinfo': 'Some more data', 'required': True, 'type': 8}
         ]},  # case all params with additional info field
@@ -776,7 +776,7 @@ yml_data_cases = [(
          '4. Click **Test** to validate the URLs, token, and connection.']  # expected
 ),
     (
-        {"name": "test", "configuration": [
+        {'name': 'test', 'display': 'test', 'configuration': [
             {'display': 'userName', 'displaypassword': 'password', 'name': 'userName', 'additionalinfo': 'Credentials',
              'required': True, 'type': 9},
         ]},  # case credentials parameter have displaypassword
@@ -787,7 +787,7 @@ yml_data_cases = [(
          '4. Click **Test** to validate the URLs, token, and connection.']  # expected
 ),
     (
-        {"name": "test", "configuration": [
+        {'name': 'test', 'display': 'test', 'configuration': [
             {'display': 'userName', 'name': 'userName', 'additionalinfo': 'Credentials',
              'required': True, 'type': 9},
         ]},  # case credentials parameter have no displaypassword
@@ -798,7 +798,7 @@ yml_data_cases = [(
          '4. Click **Test** to validate the URLs, token, and connection.']  # expected
 ),
     (
-        {"name": "test", "configuration": [
+        {'name': 'test', 'display': 'test', 'configuration': [
             {'display': 'test1', 'name': 'test1', 'additionalinfo': 'More info', 'required': True, 'type': 8},
             {'display': 'API key', 'name': 'API key', 'additionalinfo': '', 'required': True, 'type': 8},
             {'display': 'Proxy', 'name': 'Proxy', 'additionalinfo': 'non-default info.', 'required': True, 'type': 8}

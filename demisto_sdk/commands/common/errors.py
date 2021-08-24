@@ -775,7 +775,7 @@ class Errors:
         docker_hub_link = f'https://hub.docker.com/r/{docker_image_name}/tags'
         iron_bank_link = f'https://repo1.dso.mil/dsop/opensource/palo-alto-networks/{docker_image_name}/'
         return f'You can check for the most updated version of {docker_image_name} ' \
-               f'at {iron_bank_link if is_iron_bank else docker_hub_link} \n' \
+               f'here: {iron_bank_link if is_iron_bank else docker_hub_link} \n' \
                f'To update the docker image run:\ndemisto-sdk format -ud -i {file_path}\n'
 
     @staticmethod

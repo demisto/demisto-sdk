@@ -22,7 +22,7 @@ def dict_from_outputs_str(command: str, outputs: str, verbose=False):
     return dict_output
 
 
-def generate_example_dict(examples_file: str, insecure=False):
+def generate_example_dict(examples_file: Optional[str], insecure=False):
     """ Generate the example dict via an XSOAR server and return dict results.
 
     Args:

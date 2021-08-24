@@ -139,12 +139,9 @@ outputs:
                              ({'nonexistent_field': 'foo'}, "''"),
                              (None, "''"),
                              ("", "''"),
-                             ({
-                                  "q": "this should not show as q is not in the data"},
-                              "''")
+                             ({"q": "this should not show as q is not in the data"}, "''")
                          ])
-def test_json_to_outputs__invalid_description_dictionary(description_dictionary,
-                                                         expected_a_description):
+def test_json_to_outputs__invalid_description_dictionary(description_dictionary, expected_a_description):
     """
     Given
         - A list of dictionaries
@@ -224,12 +221,9 @@ dummy_integration_output = {"day": "Sunday", "color": "Blue"}
                              # description_dictionary from mock input
                              ("not_a_json_string", dict()),
                              # description dictionary from argument
-                             (json.dumps(dummy_description_dictionary),
-                              dummy_description_dictionary),
+                             (json.dumps(dummy_description_dictionary), dummy_description_dictionary),
                          ])
-def test_json_to_outputs__description_dictionary(tmpdir,
-                                                 description_argument: Optional[
-                                                     str], dictionary: dict):
+def test_json_to_outputs__description_dictionary(tmpdir, description_argument: Optional[str], dictionary: dict):
     """
     Given
         - a (possibly-empty) JSON description dictionary

@@ -67,6 +67,10 @@ def test_generate_example_dict(mocker):
        - Ensure the outputs are correct
     """
     import demisto_sdk.commands.generate_docs.common
+
+    os.environ["DEMISTO_BASE_URL"] = "1"
+    os.environ["DEMISTO_USERNAME"] = "1"
+    os.environ["DEMISTO_PASSWORD"] = "1"
     mocker.patch.object(demisto_sdk.commands.generate_docs.common,
                         'build_example_dict',
                         return_value=(FAKE_OUTPUT_CONTEXTS, []))
@@ -86,6 +90,9 @@ def test_insert_outputs(mocker):
       - Ensure the outputs are inserted correctly
     """
     import demisto_sdk.commands.generate_docs.common
+    os.environ["DEMISTO_BASE_URL"] = "1"
+    os.environ["DEMISTO_USERNAME"] = "1"
+    os.environ["DEMISTO_PASSWORD"] = "1"
     mocker.patch.object(demisto_sdk.commands.generate_docs.common,
                         'build_example_dict',
                         return_value=(FAKE_OUTPUT_CONTEXTS, []))

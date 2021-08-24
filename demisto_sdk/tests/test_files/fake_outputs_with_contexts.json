@@ -1,0 +1,52 @@
+[
+  {
+    "contextPath": "File.SHA256",
+    "description": "",
+    "type": "String"
+  },
+  {
+    "contextPath": "File.SHA1",
+    "description": "",
+    "type": "String"
+  },
+  {
+    "contextPath": "File.MD5",
+    "description": "",
+    "type": "Date"
+  },
+  {
+    "contextPath": "File.Name",
+    "description": "",
+    "type": "String"
+  },
+  {
+    "contextPath": "File.Info",
+    "description": "",
+    "type": "String"
+  },
+  {
+    "contextPath": "File.Size",
+    "description": "",
+    "type": "String"
+  },
+  {
+    "contextPath": "File.Extension",
+    "description": "",
+    "type": "String"
+  },
+  {
+    "contextPath": "File.Type",
+    "description": "",
+    "type": "String"
+  },
+  {
+    "contextPath": "File.EntryID",
+    "description": "",
+    "type": "String"
+  },
+  {
+    "contextPath": "File.SSDeep",
+    "description": "",
+    "type": "String"
+  }
+]

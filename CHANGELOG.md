@@ -2,6 +2,7 @@
 * Added validation that the support URL in partner contribution pack metadata does not lead to a GitHub repo.
 * Enhanced ***generate-docs*** with default `additionalinformation` (description) for common parameters.
 * Added the *hidden* field to the integration argument schema.
+* Added a validation to ensure reputation command's default argument is set as an array input.
 
 # 1.4.8
 * Fixed an issue where yml files with `!reference` failed to load properly.

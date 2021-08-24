@@ -337,7 +337,7 @@ class IntegrationValidator(ContentEntityValidator):
                             if self.handle_error(error_message, error_code, file_path=self.file_path):
                                 self.is_valid = False
                                 flag = False
-                        if arg.get('isArray') is False:
+                        if not arg.get('isArray'):
                             error_message, error_code = Errors.wrong_is_array_argument(arg_name,
                                                                                        command_name)
                             if self.handle_error(error_message, error_code, file_path=self.file_path):

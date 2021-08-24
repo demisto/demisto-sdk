@@ -254,17 +254,22 @@ class TestIntegrationValidator:
     NON_DEFAULT_INFO = [{"name": "API key", "additionalinfo": "you know, the API key"}]
 
     DEFAULT_INFO_INPUTS = [
-        (WITH_DEFAULT_INFO, True),
-        (MISSING_DEFAULT_INFO, False),
-        (NON_DEFAULT_INFO, True),
-    ]
+        (WITH_DEFAULT_INFO, True, False),
+        (MISSING_DEFAULT_INFO, False, False),
+        (NON_DEFAULT_INFO, True, True)]
 
-    @pytest.mark.parametrize("args, answer", DEFAULT_INFO_INPUTS)
-    def test_default_params_default_info(self, args, answer):
-        args = {"configuration": args}
-        structure = mock_structure("", args)
-        validator = IntegrationValidator(structure)
+    @pytest.mark.parametrize("args, answer, expecting_warning", DEFAULT_INFO_INPUTS)
+    def test_default_params_default_info(self, capsys, args, answer, expecting_warning):
+        validator = IntegrationValidator(mock_structure("", {"configuration": args}))
         assert validator.default_params_have_default_additional_info() is answer
+
+        if expecting_warning:
+            from demisto_sdk.commands.common.errors import Errors
+            warning_message, warning_code = Errors.non_default_additional_info(['API key'])
+            expected_warning = f"[{warning_code}] - {warning_message}"
+            captured = capsys.readouterr()
+            assert captured.out.lstrip("\":").strip() == expected_warning
+            assert not captured.err
 
     NO_INCIDENT_INPUT = [
         ({"script": {"commands": [{"name": "command1", "arguments": [{"name": "arg1"}]}]}}, True),

@@ -391,20 +391,20 @@ class DockerImageValidator(BaseValidator):
     @staticmethod
     def _get_latest_commit(commits_url, docker_image_name):
         # Get latest commit in master which passed the pipeline of the project in Iron Bank:
-        res = requests.get(url=commits_url, params={'ref': 'master', 'status': 'success'}, verify=False,
-                           timeout=TIMEOUT)
+        res = requests.get(url=commits_url, params={'ref': 'master', 'status': 'success',
+                                                    'order_by': 'updated_at', 'per_page': '1'},
+                           verify=False, timeout=TIMEOUT)
 
         # Project may not be existing and needs to be created.
         if res.status_code != 200:
             raise Exception('The docker image in your integration/script cannot be found in Iron Bank.'
                             f' Please create image {docker_image_name} In Iron Bank.')
 
-        list_of_commits = res.json()
+        last_successful_pipelines = res.json()
 
         # Project seems to have no succeed pipeline for master branch, meaning the image is not in Iron Bank.
-        if not list_of_commits:
+        if not last_successful_pipelines:
             raise Exception('The docker image in your integration/script does not have a tag in Iron Bank.'
                             ' Please create or update to an updated versioned image In Iron Bank.')
 
-        list_of_commits = sorted(list_of_commits, key=lambda x: x['updated_at'], reverse=True)
-        return list_of_commits[0]['sha']
+        return last_successful_pipelines[0]['sha']

@@ -233,7 +233,9 @@ class YmlUnifier:
         if desc_data:
             detailed_description = FoldedScalarString(desc_data.decode('utf-8'))
 
-        integration_doc_link = self.get_integration_doc_link(yml_data)
+        integration_doc_link = ''
+        if '[View Integration Documentation]' not in detailed_description:
+            integration_doc_link = self.get_integration_doc_link(yml_data)
         if integration_doc_link:
             if detailed_description:
                 detailed_description += '\n\n---\n' + integration_doc_link
@@ -445,7 +447,8 @@ class YmlUnifier:
         Returns:
             The unified yaml file (dict).
         """
-        unified_yml['display'] += CONTRIBUTOR_DISPLAY_NAME.format(contributor_type.capitalize())
+        if ' Contribution)' not in unified_yml['display']:
+            unified_yml['display'] += CONTRIBUTOR_DISPLAY_NAME.format(contributor_type.capitalize())
         existing_detailed_description = unified_yml.get('detaileddescription', '')
         if contributor_type == COMMUNITY_CONTRIBUTOR:
             contributor_description = CONTRIBUTOR_COMMUNITY_DETAILED_DESC.format(author)

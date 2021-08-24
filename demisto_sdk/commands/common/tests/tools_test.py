@@ -1,5 +1,4 @@
 import glob
-import json
 import os
 import shutil
 from pathlib import Path
@@ -8,7 +7,6 @@ from typing import List, Union
 import git
 import pytest
 import requests
-from pytest import raises
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
@@ -19,11 +17,12 @@ from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    FileType)
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import (
-    LOG_COLORS, arg_to_list, filter_files_by_type, filter_files_on_pack,
-    filter_packagify_changes, find_type, get_code_lang, get_dict_from_file,
-    get_entity_id_by_entity_type, get_entity_name_by_entity_type, get_file,
-    get_file_displayed_name, get_file_version_suffix_if_exists,
-    get_files_in_dir, get_ignore_pack_skipped_tests, get_last_release_version,
+    LOG_COLORS, arg_to_list, compare_context_path_in_yml_and_readme,
+    filter_files_by_type, filter_files_on_pack, filter_packagify_changes,
+    find_type, get_code_lang, get_dict_from_file, get_entity_id_by_entity_type,
+    get_entity_name_by_entity_type, get_file_displayed_name,
+    get_file_version_suffix_if_exists, get_files_in_dir,
+    get_ignore_pack_skipped_tests, get_last_release_version,
     get_last_remote_release_version, get_latest_release_notes_text,
     get_pack_metadata, get_relative_path_from_packs_dir,
     get_release_note_entries, get_release_notes_file_path, get_ryaml,
@@ -66,22 +65,6 @@ class TestGenericFunctions:
     def test_get_file(self, file_path, func):
         assert func(file_path)
 
-    def test_get_file_exception(self):
-        """
-        Given
-        - A non supported file.
-
-        When
-        - Running get_file.
-
-        Then
-        - Ensure the function raise an error.
-        """
-        path_to_here = f'{git_path()}/demisto_sdk/tests/test_files/'
-        with raises(ValueError) as e:
-            result = get_file(json.load, os.path.join(path_to_here, 'fake_integration.yml'), ('yml', 'yaml'))
-            assert result == e.value
-
     @pytest.mark.parametrize('dir_path', ['demisto_sdk', f'{git_path()}/demisto_sdk/tests/test_files'])
     def test_get_yml_paths_in_dir(self, dir_path):
         yml_paths, first_yml_path = tools.get_yml_paths_in_dir(dir_path, error_msg='')
@@ -122,7 +105,7 @@ class TestGenericFunctions:
         (VALID_GENERIC_DEFINITION_PATH, FileType.GENERIC_DEFINITION),
         (IGNORED_PNG, None),
         ('', None),
-        ('Author_image.png', None),
+        ('Author_image.png', FileType.AUTHOR_IMAGE),
     ]
 
     @pytest.mark.parametrize('path, _type', data_test_find_type)
@@ -1172,3 +1155,223 @@ def test_suppress_stdout_exception(capsys):
     print('After error prints are enabled again.')
     captured = capsys.readouterr()
     assert captured.out == 'After error prints are enabled again.\n'
+
+
+def test_compare_context_path_in_yml_and_readme_non_vs_code_format_valid():
+    """
+        Given:
+            - a yml for an integration.
+            - a valid readme in a non-vs code format
+
+        When:
+            - running compare_context_path_in_yml_and_readme.
+
+        Then:
+            - Ensure that no differences are found.
+    """
+    yml_dict = {"script": {
+        "commands": [
+            {
+                "name": "servicenow-create-ticket",
+                "outputs": [
+                    {
+                        "contextPath": "ServiceNow.Ticket.ID",
+                        "description": "Ticket ID.",
+                        "type": "string"
+                    },
+                    {
+                        "contextPath": "ServiceNow.Ticket.OpenedBy",
+                        "description": "Ticket opener ID.",
+                        "type": "string"
+                    }
+                ]
+            }
+        ]
+    }}
+    readme_content = "### servicenow-create-ticket\n" \
+                     "***\n" \
+                     "Creates new ServiceNow ticket.\n\n\n" \
+                     "#### Base Command\n\n" \
+                     "`servicenow-create-ticket`\n" \
+                     "#### Input\n\n" \
+                     "| **Argument Name** | **Description** | **Required** |\n" \
+                     "| --- | --- | --- |\n" \
+                     "| short_description | Short description of the ticket. | Optional |\n\n\n" \
+                     " #### Context Output\n\n" \
+                     "| **Path** | **Type** | **Description** |\n" \
+                     "| --- | --- | --- |\n" \
+                     "| ServiceNow.Ticket.ID | string | ServiceNow ticket ID. |\n" \
+                     "| ServiceNow.Ticket.OpenedBy | string | ServiceNow ticket opener ID. |\n"
+
+    diffs = compare_context_path_in_yml_and_readme(yml_dict, readme_content)
+    assert not diffs
+
+
+def test_compare_context_path_in_yml_and_readme_non_vs_code_format_invalid():
+    """
+        Given:
+            - a yml for an integration.
+            - an invalid readme in a non-vs code format
+
+        When:
+            - running compare_context_path_in_yml_and_readme.
+
+        Then:
+            - Ensure that differences are found.
+    """
+    yml_dict = {"script": {
+        "commands": [
+            {
+                "name": "servicenow-create-ticket",
+                "outputs": [
+                    {
+                        "contextPath": "ServiceNow.Ticket.ID",
+                        "description": "Ticket ID.",
+                        "type": "string"
+                    },
+                    {
+                        "contextPath": "ServiceNow.Ticket.OpenedBy",
+                        "description": "Ticket opener ID.",
+                        "type": "string"
+                    }
+                ]
+            }
+        ]
+    }}
+    readme_content = "### servicenow-create-ticket\n" \
+                     "***\n" \
+                     "Creates new ServiceNow ticket.\n\n\n" \
+                     "#### Base Command\n\n" \
+                     "`servicenow-create-ticket`\n" \
+                     "#### Input\n\n" \
+                     "| **Argument Name** | **Description** | **Required** |\n" \
+                     "| --- | --- | --- |\n" \
+                     "| short_description | Short description of the ticket. | Optional |\n\n\n" \
+                     " #### Context Output\n\n" \
+                     "| **Path** | **Type** | **Description** |\n" \
+                     "| --- | --- | --- |\n" \
+                     "| ServiceNow.Ticket.ID | string | ServiceNow ticket ID. |\n"
+
+    diffs = compare_context_path_in_yml_and_readme(yml_dict, readme_content)
+    assert 'ServiceNow.Ticket.OpenedBy' in diffs.get('servicenow-create-ticket').get('only in yml')
+
+
+def test_compare_context_path_in_yml_and_readme_vs_code_format_valid():
+    """
+        Given:
+            - a yml for an integration.
+            - a valid readme in a vs code format
+
+        When:
+            - running compare_context_path_in_yml_and_readme.
+
+        Then:
+            - Ensure that no differences are found.
+    """
+    yml_dict = {"script": {
+        "commands": [
+            {
+                "name": "servicenow-create-ticket",
+                "outputs": [
+                    {
+                        "contextPath": "ServiceNow.Ticket.ID",
+                        "description": "Ticket ID.",
+                        "type": "string"
+                    },
+                    {
+                        "contextPath": "ServiceNow.Ticket.OpenedBy",
+                        "description": "Ticket opener ID.",
+                        "type": "string"
+                    }
+                ]
+            }
+        ]
+    }}
+    readme_content = "### servicenow-create-ticket\n" \
+                     "***\n" \
+                     "Creates new ServiceNow ticket.\n\n\n" \
+                     "#### Base Command\n\n" \
+                     "`servicenow-create-ticket`\n" \
+                     "#### Input\n\n" \
+                     "| **Argument Name** | **Description**                  | **Required** |\n" \
+                     "| ----------------- | -------------------------------- | ------------ |\n" \
+                     "| short_description | Short description of the ticket. | Optional     |\n\n\n" \
+                     " #### Context Output\n\n" \
+                     "| **Path**                   | **Type** | **Description**              |\n" \
+                     "| -------------------------- | -------- | ---------------------------- |\n" \
+                     "| ServiceNow.Ticket.ID       | string   | ServiceNow ticket ID.        |\n" \
+                     "| ServiceNow.Ticket.OpenedBy | string   | ServiceNow ticket opener ID. |\n"
+
+    diffs = compare_context_path_in_yml_and_readme(yml_dict, readme_content)
+    assert not diffs
+
+
+def test_compare_context_path_in_yml_and_readme_vs_code_format_invalid():
+    """
+        Given:
+            - a yml for an integration.
+            - an invalid readme in a vs code format
+
+        When:
+            - running compare_context_path_in_yml_and_readme.
+
+        Then:
+            - Ensure that differences are found.
+    """
+    yml_dict = {"script": {
+        "commands": [
+            {
+                "name": "servicenow-create-ticket",
+                "outputs": [
+                    {
+                        "contextPath": "ServiceNow.Ticket.ID",
+                        "description": "Ticket ID.",
+                        "type": "string"
+                    },
+                    {
+                        "contextPath": "ServiceNow.Ticket.OpenedBy",
+                        "description": "Ticket opener ID.",
+                        "type": "string"
+                    }
+                ]
+            }
+        ]
+    }}
+    readme_content = "### servicenow-create-ticket\n" \
+                     "***\n" \
+                     "Creates new ServiceNow ticket.\n\n\n" \
+                     "#### Base Command\n\n" \
+                     "`servicenow-create-ticket`\n" \
+                     "#### Input\n\n" \
+                     "| **Argument Name** | **Description**                  | **Required** |\n" \
+                     "| ----------------- | -------------------------------- | ------------ |\n" \
+                     "| short_description | Short description of the ticket. | Optional     |\n\n\n" \
+                     " #### Context Output\n\n" \
+                     "| **Path**             | **Type** | **Description**       |\n" \
+                     "| -------------------- | -------- | --------------------- |\n" \
+                     "| ServiceNow.Ticket.ID | string   | ServiceNow ticket ID. |\n"
+
+    diffs = compare_context_path_in_yml_and_readme(yml_dict, readme_content)
+    assert 'ServiceNow.Ticket.OpenedBy' in diffs.get('servicenow-create-ticket').get('only in yml')
+
+
+def test_gitlab_ci_yml_load():
+    """
+        Given:
+            - a yml file with gitlab ci data
+
+        When:
+            - trying to load it to the sdk  - like via find_type
+
+        Then:
+            - Ensure that the load does not fail.
+            - Ensure the file has no identification
+    """
+    test_file = f'{git_path()}/demisto_sdk/tests/test_files/gitlab_ci_test_file.yml'
+    try:
+        res = find_type(test_file)
+    except Exception:
+        # if we got here an error has occurred when trying to load the file
+        assert False
+
+    assert res is None

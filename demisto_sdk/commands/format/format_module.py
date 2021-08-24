@@ -77,6 +77,7 @@ UNFORMATTED_FILES = ['readme',
                      'powershellfile',
                      'betaintegration',
                      'doc_image',
+                     'author_image'
                      ]
 
 VALIDATE_RES_SKIPPED_CODE = 2

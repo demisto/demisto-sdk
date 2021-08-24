@@ -821,6 +821,15 @@ class TestPlaybookEntitiesVersionsValid:
             ]
         }
     }}
+    playbook_with_sub_playbook_not_in_id_set = {"Example Playbook": {
+        "name": "Example Playbook",
+        "file_path": playbook_path,
+        "fromversion": "5.0.0",
+        "pack": "Example",
+        "implementing_playbooks": [
+            "SubPlaybook_not_in_id_set"
+        ]
+    }}
     playbook_with_valid_sub_playbook_name = {"Example Playbook": {
         "name": "Example Playbook",
         "file_path": playbook_path,
@@ -931,24 +940,30 @@ class TestPlaybookEntitiesVersionsValid:
 
         with ChangeCWD(repo.path):
 
+            is_sub_playbook_invalid, error = self.validator._are_playbook_entities_versions_valid(
+                self.playbook_with_sub_playbook_not_in_id_set, pack.path)
+            assert not is_sub_playbook_invalid
+            assert "do not exist in the id_set" in error
+
             # all playbook's entities has valid versions
-            is_playbook_version_valid = self.validator._are_playbook_entities_versions_valid(
+            is_playbook_version_valid, error = self.validator._are_playbook_entities_versions_valid(
                 self.playbook_with_valid_versions, pack.path)
             assert is_playbook_version_valid
+            assert error is None
 
             # playbook uses scripts with invalid versions
-            is_script_version_invalid = self.validator._are_playbook_entities_versions_valid(
+            is_script_version_invalid, error = self.validator._are_playbook_entities_versions_valid(
                 self.playbook_with_invalid_scripts_version, pack.path)
             assert not is_script_version_invalid
 
             # playbook uses sub playbooks with invalid versions
-            is_sub_playbook_version_invalid = self.validator._are_playbook_entities_versions_valid(
+            is_sub_playbook_version_invalid, error = self.validator._are_playbook_entities_versions_valid(
                 self.playbook_with_invalid_sub_playbook_version, pack.path)
             assert not is_sub_playbook_version_invalid
 
             # playbook uses integration's commands with invalid versions
             mocker.patch.object(self.validator, 'handle_error', return_value=True)
-            is_integration_version_invalid = self.validator._are_playbook_entities_versions_valid(
+            is_integration_version_invalid, error = self.validator._are_playbook_entities_versions_valid(
                 self.playbook_with_invalid_integration_version, self.playbook_path)
             assert not is_integration_version_invalid
 

@@ -1036,7 +1036,8 @@ def init(**kwargs):
     '-h', '--help'
 )
 @click.option(
-    "-i", "--input", help="Path of the yml file.", required=True)
+    "-i", "--input", help="Path of the yml file (will change it in-place).",
+    required=True)
 @click.option(
     "-e", "--examples",
     help="Integrations: path for file containing command examples."
@@ -1047,10 +1048,13 @@ def init(**kwargs):
     "--insecure",
     help="Skip certificate validation to run the commands in order to generate the docs.",
     is_flag=True)
+@click.option(
+    "-v", "--verbose", is_flag=True, help="Verbose output - mainly for debugging purposes.")
 def generate_context(**kwargs):
     input_path: str = kwargs.get('input', '')
     examples: str = kwargs.get('examples', '')
     insecure: bool = kwargs.get('insecure', False)
+    verbose: bool = kwargs.get('verbose', False)
 
 
     # validate inputs
@@ -1068,7 +1072,7 @@ def generate_context(**kwargs):
         return 1
 
     if file_type == FileType.INTEGRATION:
-        generate_integration_context(input_path, examples, insecure)
+        generate_integration_context(input_path, examples, insecure, verbose)
     else:
         print_error(f'File type {file_type.value} is not supported.')
         return 1

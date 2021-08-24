@@ -50,6 +50,7 @@ class BaseUpdateJSON(BaseUpdate):
         self.set_version_to_default()
         self.remove_null_fields()
         self.remove_unnecessary_keys()
+        self.remove_spaces_end_of_id_and_name()
         source_file_type = find_type(self.source_file)
         if source_file_type in GENERIC_OBJECTS_FILE_TYPES:
             self.set_fromVersion(from_version=self.from_version, file_type=source_file_type)
@@ -99,3 +100,12 @@ class BaseUpdateJSON(BaseUpdate):
 
         if updated_integration_id_dict:
             self.updated_ids.update(updated_integration_id_dict)
+
+    def remove_spaces_end_of_id_and_name(self):
+        """Updates the id and name of the json to have no spaces on its end
+                """
+        if not self.old_file:
+            if self.verbose:
+                click.echo('Updating YML ID and name to be without spaces at the end')
+            self.data['name'] = self.data['name'].strip()
+            self.data['id'] = self.data['id'].strip()

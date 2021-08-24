@@ -5,7 +5,8 @@ import click
 from demisto_sdk.commands.common.constants import TYPE_JS, TYPE_PWSH
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
-from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color, is_iron_bank_pack,
+from demisto_sdk.commands.common.tools import (LOG_COLORS, is_iron_bank_pack,
+                                               print_color,
                                                server_version_compare)
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,

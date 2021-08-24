@@ -2005,6 +2005,7 @@ def suppress_stdout():
         finally:
             sys.stdout = old_stdout
 
+
 def is_iron_bank_pack(file_path):
     metadata = get_pack_metadata(file_path)
     return 'Iron Bank' in metadata.get('tags', [])

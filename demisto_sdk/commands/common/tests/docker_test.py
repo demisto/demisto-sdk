@@ -436,8 +436,8 @@ class TestDockerImage:
             Then:
                 Validates we send the correct request to Iron Bank.
             """
-            manifest_url = 'https://repo1.dso.mil/api/v4/projects/dsop%2Fopensource%2Fpalo-alto-networks%2Ftest%2F' \
-                      'test_project/repository/files/hardening_manifest.yaml/raw'
+            manifest_url = 'https://repo1.dso.mil/api/v4/projects/dsop%2Fopensource%2Fpalo-alto-networks%2Ftest%2F'\
+                           'test_project/repository/files/hardening_manifest.yaml/raw'
             request_mock = requests_mock.get(
                 manifest_url,
                 text="""apiVersion: v1\nname: opensource/palo-alto-networks/test/test_project\ntags:\n- 1.0.1.23955\n"""
@@ -459,7 +459,7 @@ class TestDockerImage:
 
         @pytest.mark.parametrize('mock_results, mocked_status, expected', FAIL_CASES_GET_MANIFEST)
         def test_get_manifest_from_commit_fails(self, mocker, integration, requests_mock,
-                                         mock_results, mocked_status, expected):
+                                                mock_results, mocked_status, expected):
             """
             Given:
                 - A project without manifest file in master in Iron Bank.

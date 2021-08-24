@@ -28,7 +28,7 @@ DEFAULT_REGISTRY = 'registry-1.docker.io'
 class DockerImageValidator(BaseValidator):
 
     def __init__(self, yml_file_path, is_modified_file, is_integration, ignored_errors=None, print_as_warnings=False,
-                 suppress_print: bool = False, json_file_path: Optional[str] = None, is_iron_bank:bool = False):
+                 suppress_print: bool = False, json_file_path: Optional[str] = None, is_iron_bank: bool = False):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          suppress_print=suppress_print, json_file_path=json_file_path)
         self.is_valid = True
@@ -404,7 +404,7 @@ class DockerImageValidator(BaseValidator):
         # Project seems to have no succeed pipeline for master branch, meaning the image is not in Iron Bank.
         if not list_of_commits:
             raise Exception('The docker image in your integration/script does not have a tag in Iron Bank.'
-                            f' Please create or update to an updated versioned image In Iron Bank.')
+                            ' Please create or update to an updated versioned image In Iron Bank.')
 
         list_of_commits = sorted(list_of_commits, key=lambda x: x['updated_at'], reverse=True)
         return list_of_commits[0]['sha']

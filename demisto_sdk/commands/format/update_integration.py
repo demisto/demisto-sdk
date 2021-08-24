@@ -12,7 +12,6 @@ from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 from demisto_sdk.commands.format.update_script import ScriptYMLFormat
-from demisto_sdk.commands.common.tools import is_iron_bank_pack
 
 
 class IntegrationYMLFormat(BaseUpdateYML):

@@ -315,7 +315,8 @@ class TestIntegrationValidator:
         {"name": "email", "arguments": [{"name": "email", "required": False, "default": True}, {"name": "verbose"}]}]
     DEFAULT_ARGS_MISSING_DEFAULT_PARAM_WHEN_ALLOWED = [
         {"name": "endpoint", "arguments": [{"name": "id", "required": False, "default": False}]}]
-    DEFAULT_ARGS_INVALID_PARMA_MISSING_DEFAULT = [{"name": "file", "required": True, "default": True}, {"name": "verbose"}]
+    DEFAULT_ARGS_INVALID_PARMA_MISSING_DEFAULT = [{"name": "file", "required": True, "default": True},
+                                                  {"name": "verbose"}]
     DEFAULT_ARGS_INVALID_NOT_DEFAULT = [
         {"name": "email", "arguments": [{"name": "email", "required": False, "default": False}, {"name": "verbose"}]}]
     DEFAULT_ARGS_INVALID_COMMAND = [{"name": "file", "required": True, "default": False}, {"name": "verbose"}]
@@ -1199,6 +1200,7 @@ class TestIsFeedParamsExist:
         validator = IntegrationValidator(structure)
         validator.current_file = current
         assert validator.is_there_a_runnable() is False
+
 
 class TestisContextChanged:
     invalid_readme = """

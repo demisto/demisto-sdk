@@ -2,11 +2,12 @@ import os.path
 import re
 from typing import Any, Dict, List, Optional, Tuple
 
-from demisto_sdk.commands.common.default_additional_info_loader import load_default_additional_info_dict
 from requests.structures import CaseInsensitiveDict
 
 from demisto_sdk.commands.common.constants import (
     CONTEXT_OUTPUT_README_TABLE_HEADER, DOCS_COMMAND_SECTION_REGEX)
+from demisto_sdk.commands.common.default_additional_info_loader import \
+    load_default_additional_info_dict
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_yaml,
                                                print_color, print_error,
                                                print_warning)
@@ -187,8 +188,8 @@ def generate_setup_section(yaml_data: dict):
         else:
             access_data.append({
                 'Parameter': conf.get('display'),
-                'Description': string_escape_md(conf.get('additionalinfo', '')
-                                                or default_additional_info.get(conf.get('name', ''), '')),
+                'Description': string_escape_md(conf.get('additionalinfo', '') or
+                                                default_additional_info.get(conf.get('name', ''), '')),
                 'Required': conf.get('required', '')
             })
 

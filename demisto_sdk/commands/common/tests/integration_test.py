@@ -1,6 +1,6 @@
 import os
 from copy import deepcopy
-from typing import Optional, Any, Dict, List
+from typing import Dict, List, Optional
 
 import pytest
 from mock import mock_open, patch
@@ -9,13 +9,14 @@ from demisto_sdk.commands.common.constants import (FEED_REQUIRED_PARAMS,
                                                    FETCH_REQUIRED_PARAMS,
                                                    FIRST_FETCH_PARAM,
                                                    MAX_FETCH_PARAM)
+from demisto_sdk.commands.common.default_additional_info_loader import \
+    load_default_additional_info_dict
 from demisto_sdk.commands.common.hook_validations.integration import \
     IntegrationValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from TestSuite.test_tools import ChangeCWD
-from demisto_sdk.commands.common.default_additional_info_loader import load_default_additional_info_dict
 
 default_additional_info = load_default_additional_info_dict()
 
@@ -259,7 +260,7 @@ class TestIntegrationValidator:
         (NON_DEFAULT_INFO, True, True)]
 
     @pytest.mark.parametrize("args, answer, expecting_warning", DEFAULT_INFO_INPUTS)
-    def test_default_params_default_info(self, capsys, args: Dict, answer: str, expecting_warning: bool):
+    def test_default_params_default_info(self, capsys, args: List[Dict], answer: str, expecting_warning: bool):
         validator = IntegrationValidator(mock_structure("", {"configuration": args}))
         assert validator.default_params_have_default_additional_info() is answer
 

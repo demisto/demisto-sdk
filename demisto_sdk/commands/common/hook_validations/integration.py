@@ -11,6 +11,8 @@ from demisto_sdk.commands.common.constants import (
     FIRST_FETCH_PARAM, INTEGRATION_CATEGORIES, IOC_OUTPUTS_DICT, MAX_FETCH,
     MAX_FETCH_PARAM, PYTHON_SUBTYPES, REPUTATION_COMMAND_NAMES, TYPE_PWSH,
     XSOAR_CONTEXT_STANDARD_URL)
+from demisto_sdk.commands.common.default_additional_info_loader import \
+    load_default_additional_info_dict
 from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
                                                 Errors)
@@ -25,7 +27,6 @@ from demisto_sdk.commands.common.tools import (
     _get_file_id, compare_context_path_in_yml_and_readme, get_core_pack_list,
     get_file_version_suffix_if_exists, get_files_in_dir, get_pack_name,
     print_error, server_version_compare)
-from demisto_sdk.commands.common.default_additional_info_loader import load_default_additional_info_dict
 
 default_additional_info = load_default_additional_info_dict()
 
@@ -1352,6 +1353,6 @@ class IntegrationValidator(ContentEntityValidator):
         if params_missing_defaults:
             missing_error_message, missing_error_code = Errors.missing_default_additional_info(params_missing_defaults)
             self.handle_error(missing_error_message, missing_error_code, self.current_file,
-                              suggested_fix=Errors.suggest_fix(self.current_file))
+                              suggested_fix=Errors.suggest_fix(self.file_path))
             return False
         return True

@@ -168,7 +168,9 @@ jobs:
             command: |
               . .tox/py37/bin/activate
               cd content
+              echo "after cd content"
               npm update
+              echo "after npm update"
               npm ci
               export PYTHONPATH=".:${PYTHONPATH}"
               demisto-sdk -v

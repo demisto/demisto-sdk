@@ -259,7 +259,7 @@ class TestIntegrationValidator:
         (NON_DEFAULT_INFO, True, True)]
 
     @pytest.mark.parametrize("args, answer, expecting_warning", DEFAULT_INFO_INPUTS)
-    def test_default_params_default_info(self, capsys, args, answer, expecting_warning):
+    def test_default_params_default_info(self, capsys, args: Dict, answer: str, expecting_warning: bool):
         validator = IntegrationValidator(mock_structure("", {"configuration": args}))
         assert validator.default_params_have_default_additional_info() is answer
 

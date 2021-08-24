@@ -796,8 +796,24 @@ yml_data_cases = [(
          '', '    | **Parameter** | **Description** | **Required** |', '    | --- | --- | --- |',
          '    | userName | Credentials | True |', '    | Password |  | True |', '',
          '4. Click **Test** to validate the URLs, token, and connection.']  # expected
+),
+    (
+        {"name": "test", "configuration": [
+            {'display': 'test1', 'name': 'test1', 'additionalinfo': 'More info', 'required': True, 'type': 8},
+            {'display': 'API key', 'name': 'API key', 'additionalinfo': '', 'required': True, 'type': 8},
+            {'display': 'Proxy', 'name': 'Proxy', 'additionalinfo': 'non-default info.', 'required': True, 'type': 8}
+        ]},  # case some param with additional information, one that should take default, and one overriding default
+        ['1. Navigate to **Settings** > **Integrations** > **Servers & Services**.',
+         '2. Search for test.', '3. Click **Add instance** to create and configure a new integration instance.',
+         '',
+         '    | **Parameter** | **Description** | **Required** |',
+         '    | --- | --- | --- |',
+         '    | test1 | More info | True |',
+         '    | API key | The API Key to use for the connection. | True |',
+         '    | Proxy | non-default info. | True |',
+         '',
+         '4. Click **Test** to validate the URLs, token, and connection.']  # expected
 )
-
 ]
 
 

@@ -34,27 +34,27 @@ def test_generate_context_from_outputs():
 
     assert dict_from_outputs_str('!some-test-command=172.16.1.111',
                                  EXAMPLE_INT_OUTPUTS) == \
-           {
-               'arguments': [],
-               'name': 'some-test-command=172.16.1.111',
-               'outputs': [{'contextPath': 'Guardicore.Endpoint.asset_id',
-                            'description': '',
-                            'type': 'String'},
-                           {'contextPath': 'Guardicore.Endpoint.ip_addresses',
-                            'description': '',
-                            'type': 'String'},
-                           {'contextPath': 'Guardicore.Endpoint.last_seen',
-                            'description': '',
-                            'type': 'Date'},
-                           {'contextPath': 'Guardicore.Endpoint.name',
-                            'description': '',
-                            'type': 'String'},
-                           {'contextPath': 'Guardicore.Endpoint.status',
-                            'description': '',
-                            'type': 'String'},
-                           {'contextPath': 'Guardicore.Endpoint.tenant_name',
-                            'description': '',
-                            'type': 'String'}]}
+        {
+        'arguments': [],
+        'name': 'some-test-command=172.16.1.111',
+        'outputs': [{'contextPath': 'Guardicore.Endpoint.asset_id',
+                     'description': '',
+                     'type': 'String'},
+                    {'contextPath': 'Guardicore.Endpoint.ip_addresses',
+                     'description': '',
+                     'type': 'String'},
+                    {'contextPath': 'Guardicore.Endpoint.last_seen',
+                     'description': '',
+                     'type': 'Date'},
+                    {'contextPath': 'Guardicore.Endpoint.name',
+                     'description': '',
+                     'type': 'String'},
+                    {'contextPath': 'Guardicore.Endpoint.status',
+                     'description': '',
+                     'type': 'String'},
+                    {'contextPath': 'Guardicore.Endpoint.tenant_name',
+                     'description': '',
+                     'type': 'String'}]}
 
 
 def test_generate_example_dict(mocker):

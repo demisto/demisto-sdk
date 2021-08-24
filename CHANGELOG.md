@@ -1,6 +1,7 @@
 # Changelog
 * Added validation that the support URL in partner contribution pack metadata does not lead to a GitHub repo.
 * Enhanced ***generate-docs*** with default `additionalinformation` (description) for common parameters.
+* Added the *hidden* field to the integration argument schema.
 * Added to **validate** command a validation that a content item's id and name will not end with spaces.
 * The **format** command will now remove trailing whitespaces from content items' id and name fields.
 

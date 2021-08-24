@@ -1,6 +1,34 @@
 # Changelog
+* Added validation that the support URL in partner contribution pack metadata does not lead to a GitHub repo.
+* Enhanced ***generate-docs*** with default `additionalinformation` (description) for common parameters.
+* Added the *hidden* field to the integration argument schema.
+
+# 1.4.8
+* Fixed an issue where yml files with `!reference` failed to load properly.
+* Added validation that the support URL in partner contribution pack metadata does not lead to a GitHub repo.
+
+# 1.4.8
+* Fixed an issue where yml files with `!reference` failed to load properly.
+* Fixed an issue when `View Integration Documentation` button was added twice during the download and re-upload.
+* Fixed an issue when `(Partner Contribution)` was added twice to the display name during the download and re-upload.
+* Added the following enhancements in the **generate-test-playbook** command:
+    * Added the *--commands* argument to generate tasks for specific commands.
+    * Added the *--examples* argument to get the command examples file path and generate tasks from the commands and arguments specified there.
+    * Added the *--upload* flag to specify whether to upload the test playbook after the generation.
+    * Fixed the output condition generation for outputs of type `Boolean`.
+
+# 1.4.7
+* Fixed an issue where an empty list for a command context didn't produce an indication other than an empty table.
 * Fixed an issue where the **format** command has incorrectly recognized on which files to run when running using git.
-* Added a validation to ensure reputation command's default argument is set as an array input.
+* Fixed an issue where author image validations were not checked properly.
+* Fixed an issue where new old-formatted scripts and integrations were not validated.
+* Fixed an issue where the wording in the from version validation error for subplaybooks was incorrect.
+* Fixed an issue where the **update-release-notes** command used the old docker image version instead of the new when detecting a docker change.
+* Fixed an issue where the **generate-test-playbook** command used an incorrect argument name as default
+* Fixed an issue where the **json-to-outputs** command used an incorrect argument name as default when using `-d`.
+* Fixed an issue where validations failed while trying to validate non content files.
+* Fixed an issue where README validations did not work post VS Code formatting.
+* Fixed an issue where the description validations were inconsistent when running through an integration file or a description file.
 
 # 1.4.6
 * Fixed an issue where **validate** suggests, with no reason, running **format** on missing mandatory keys in yml file.

@@ -743,8 +743,11 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def docker_tag_not_fetched(docker_image_name):
-        return f'Failed getting tag for: {docker_image_name}. Please check it exists and of demisto format.'
+    def docker_tag_not_fetched(docker_image_name, exception_msg=None):
+        msg =  f'Failed getting tag for: {docker_image_name}. Please check it exists and of demisto format.'
+        if exception_msg:
+            msg = msg + '\n' + exception_msg
+        return msg
 
     @staticmethod
     @error_code_decorator

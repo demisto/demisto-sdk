@@ -298,10 +298,10 @@ class DockerImageValidator(BaseValidator):
                 return self.get_docker_image_latest_tag_from_iron_bank_request(docker_image_name)
             else:
                 return self.get_docker_image_latest_tag_request(docker_image_name)
-        except (requests.exceptions.RequestException, Exception):
+        except (requests.exceptions.RequestException, Exception) as e:
             if not docker_image_name:
                 docker_image_name = yml_docker_image
-            error_message, error_code = Errors.docker_tag_not_fetched(docker_image_name)
+            error_message, error_code = Errors.docker_tag_not_fetched(docker_image_name, e)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return ''
 

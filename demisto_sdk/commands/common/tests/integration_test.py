@@ -249,12 +249,9 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         assert validator.has_no_duplicate_args() is answer
 
-    WITH_DEFAULT_INFO = [{"name": "API key",
-                          "additionalinfo": default_additional_info['API key']}]
-    MISSING_DEFAULT_INFO = [{"name": "API key",
-                             "additionalinfo": ""}]
-    NON_DEFAULT_INFO = [{"name": "API key",
-                         "additionalinfo": "you know, the API key"}]
+    WITH_DEFAULT_INFO = [{"name": "API key", "additionalinfo": default_additional_info['API key']}]
+    MISSING_DEFAULT_INFO = [{"name": "API key", "additionalinfo": ""}]
+    NON_DEFAULT_INFO = [{"name": "API key", "additionalinfo": "you know, the API key"}]
 
     DEFAULT_INFO_INPUTS = [
         (WITH_DEFAULT_INFO, True),

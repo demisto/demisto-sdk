@@ -168,13 +168,9 @@ jobs:
             command: |
               . .tox/py37/bin/activate
               cd content
-              echo "after cd content"
               npm update
-              echo "after npm update"
               npm ci
-              echo "after npm ci"
               export PYTHONPATH=".:${PYTHONPATH}"
-              echo "$PYTHONPATH"
               demisto-sdk -v
 
               CI_COMMIT_BRANCH="master" demisto-sdk create-id-set -o ./Tests/id_set.json --fail-duplicates

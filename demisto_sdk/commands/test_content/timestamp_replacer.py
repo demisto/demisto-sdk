@@ -512,8 +512,9 @@ class TimestampReplacer:
         try:
             if parse(val, settings={'TIMEZONE': 'UTC'}):
                 return True
-        except Exception:
+        except Exception as e:
             logging.exception(f'Failed to parse as date object: {val}')
+            raise e  # todo delete
         return False
 
 

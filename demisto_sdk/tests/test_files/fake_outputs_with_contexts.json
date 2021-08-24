@@ -12,7 +12,7 @@
   {
     "contextPath": "File.MD5",
     "description": "",
-    "type": "Date"
+    "type": "String"
   },
   {
     "contextPath": "File.Name",

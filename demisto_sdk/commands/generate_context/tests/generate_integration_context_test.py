@@ -135,11 +135,11 @@ def test_generate_integration_context(mocker, tmpdir):
     filename = os.path.join(tmpdir.strpath, 'fake_integration.yml')
     write_yml(filename, FAKE_INTEGRATION_YML)
 
-    # Check there are no outputs
+    # Make sure that there are no outputs
     yml_data = get_yaml(filename)
     for command in yml_data['script']['commands']:
         if command.get('name') == command_name:
-            assert command['outputs'] == ''
+            command['outputs'] = ''
             break
 
     generate_integration_context.generate_integration_context(filename, FAKE_EXAMPLES_FILE, insecure=True, verbose=False)

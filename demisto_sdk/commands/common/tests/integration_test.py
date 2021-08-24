@@ -261,7 +261,6 @@ class TestIntegrationValidator:
 
     @pytest.mark.parametrize("args, answer", DEFAULT_INFO_INPUTS)
     def test_default_params_default_info(self, args, answer):
-        # [{"name": "testing", "arguments": [{"name": "test1"}, {"name": "test2"}]}]
         args = {"configuration": args}
         structure = mock_structure("", args)
         validator = IntegrationValidator(structure)

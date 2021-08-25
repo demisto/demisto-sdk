@@ -68,7 +68,7 @@ GENERIC_FIELD = 'genericfield'
 GENERIC_TYPE = 'generictype'
 GENERIC_MODULE = 'genericmodule'
 GENERIC_DEFINITION = 'genericdefinition'
-
+JOB = "job"
 
 class FileType(Enum):
     INTEGRATION = 'integration'
@@ -111,7 +111,7 @@ class FileType(Enum):
     GENERIC_FIELD = 'genericfield'
     GENERIC_TYPE = 'generictype'
     GENERIC_DEFINITION = 'genericdefinition'
-
+    JOB = 'job'
 
 RN_HEADER_BY_FILE_TYPE = {
     FileType.PLAYBOOK: 'Playbooks',

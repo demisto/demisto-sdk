@@ -81,7 +81,7 @@ class TestStructureValidator:
         (VALID_TEST_PLAYBOOK_PATH, 'playbook', True, "Found a problem in the scheme although there is no problem"),
         (VALID_PLAYBOOK_ARCSIGHT_ADD_DOMAIN_PATH, 'playbook', True,
          "Found a problem in the scheme although there is no problem"),
-        (INVALID_PLAYBOOK_PATH, 'playbook', False, "Found no problem in the scheme although there is a problem")
+        (INVALID_PLAYBOOK_PATH, 'playbook', False, "Found no problem in the scheme although there is a problem"),
     ]
 
     @pytest.mark.parametrize("path, scheme, answer, error", SCHEME_VALIDATION_INPUTS)

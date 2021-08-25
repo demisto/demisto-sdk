@@ -404,6 +404,6 @@ class DockerImageValidator(BaseValidator):
         # Project seems to have no succeed pipeline for master branch, meaning the image is not in Iron Bank.
         if not last_successful_pipelines:
             raise Exception('The docker image in your integration/script does not have a tag in Iron Bank.'
-                            ' Please create or update to an updated versioned image In Iron Bank.')
+                            ' Please use only images that are already in Iron Bank, or upload your image to it.')
 
         return last_successful_pipelines[0]['sha']

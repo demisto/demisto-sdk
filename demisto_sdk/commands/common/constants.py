@@ -500,6 +500,7 @@ PACK_METADATA_USE_CASES = 'useCases'
 PACK_METADATA_KEYWORDS = 'keywords'
 PACK_METADATA_PRICE = 'price'
 PACK_METADATA_DEPENDENCIES = 'dependencies'
+PACK_METADATA_IRON_BANK_TAG = 'Iron Bank'
 
 PACK_METADATA_FIELDS = (PACK_METADATA_NAME, PACK_METADATA_DESC, PACK_METADATA_SUPPORT,
                         PACK_METADATA_CURR_VERSION, PACK_METADATA_AUTHOR, PACK_METADATA_URL, PACK_METADATA_CATEGORIES,
@@ -1334,3 +1335,7 @@ class DemistoException(Exception):
 
 
 UUID_REGEX = r'([\w]{8}-[\w]{4}-[\w]{4}-[\w]{4}-[\w]{8,12})'
+
+
+class IronBankDockers:
+    API_LINK = 'https://repo1.dso.mil/api/v4/projects/dsop%2Fopensource%2Fpalo-alto-networks%2Fdemisto%2F'

@@ -3,6 +3,7 @@
 * Enhanced ***generate-docs*** with default `additionalinformation` (description) for common parameters.
 * Added to **validate** command a validation that a content item's id and name will not end with spaces.
 * The **format** command will now remove trailing whitespaces from content items' id and name fields.
+* Fixed an issue where **update-release-notes** could fail on files outside the user given pack.
 * Fixed an issue where the **generate-test-playbook** command would not place the playbook in the proper folder.
 
 # 1.4.8

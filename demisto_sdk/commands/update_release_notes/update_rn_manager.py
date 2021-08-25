@@ -95,6 +95,11 @@ class UpdateReleaseNotesManager:
         old_format_files = old_format_files.union(new_files_in_old_format)
         return filtered_modified, filtered_added, old_format_files
 
+    def setup_validate_manager(self):
+        return ValidateManager(skip_pack_rn_validation=True, prev_ver=self.prev_ver,
+                               silence_init_prints=True, skip_conf_json=True, check_is_unskipped=False,
+                               file_path=self.given_pack)
+
     def get_git_changed_files(self) -> Tuple[set, set, set]:
         """ Get the changed files from git (added, modified, old format, metadata).
 
@@ -104,9 +109,7 @@ class UpdateReleaseNotesManager:
                 - The modified old-format files (legacy unified python files)
         """
         try:
-            validate_manager = ValidateManager(skip_pack_rn_validation=True, prev_ver=self.prev_ver,
-                                               silence_init_prints=True, skip_conf_json=True, check_is_unskipped=False,
-                                               file_path=self.given_pack)
+            validate_manager = self.setup_validate_manager()
             if not validate_manager.git_util:  # in case git utils can't be initialized.
                 raise git.InvalidGitRepositoryError('unable to connect to git.')
             validate_manager.setup_git_params()

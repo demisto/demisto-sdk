@@ -1579,6 +1579,11 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def unknown_field_in_pre_process_rules(field_name):
+        return f'Unknown field in Pre Process Rule: {field_name}'
+
+    @staticmethod
+    @error_code_decorator
     def invalid_incident_field_in_layout(invalid_inc_fields_list):
         return f"The layout contains incident fields that do not exist in the content: {invalid_inc_fields_list}.\n" \
                "Please make sure:\n" \

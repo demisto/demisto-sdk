@@ -1,4 +1,7 @@
 from distutils.version import LooseVersion
+from typing import List
+
+import click
 
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
@@ -25,10 +28,19 @@ class PreProcessRuleValidator(ContentEntityValidator):
             bool. Whether the pre_process_rules is valid or not
         """
         # PreProcessRules files have fromServerVersion instead of fromVersion
-        return all([
+        validations: List = [
             self.is_valid_version(),
             self.is_valid_from_server_version(),
-        ])
+        ]
+        if id_set_file:
+            validations.extend([
+                self.is_script_exists(id_set_file=id_set_file, is_ci=is_ci),
+                self.are_incident_fields_exist(id_set_file=id_set_file, is_ci=is_ci),
+            ])
+        else:
+            click.secho("Skipping PreProcessRule id_set validations. Could not read id_set.json.", fg="yellow")
+
+        return all(validations)
 
     def is_valid_version(self) -> bool:
         """Checks if version field is valid. uses default method.
@@ -51,52 +63,84 @@ class PreProcessRuleValidator(ContentEntityValidator):
                     return False
         return True
 
-    # # TODO Needed! Check that scripts and incident_fields exists
-    # # Needed incident_fields: description
-    # # If the key "scriptName" is not empty - Check that the script exists
-    # def is_incident_field_exist(self, id_set_file, is_ci) -> bool:
-    #     """Checks if incident field is valid - exist in the content.
+    def get_all_incident_fields(self) -> List[str]:
+        """Retrieved all mentioned Incident Fields from a ProProcessRule file.
+        Sections to check: existingEventsFilters, newEventFilters, readyNewEventFilters
 
-    #     Returns:
-    #         bool. True if incident field is valid, else False.
-    #     """
-    #     if not is_ci:
-    #         return True
+        Returns:
+            List[str]. Of all the fields.
+        """
+        ret_value: List[str] = []
 
-    #     if not id_set_file:
-    #         click.secho("Skipping mapper incident field validation. Could not read id_set.json.", fg="yellow")
-    #         return True
+        for current_section in ['existingEventsFilters', 'newEventFilters', 'readyNewEventFilters']:
+            ret_value.extend(self.get_all_incident_fields_in_section(current_section))
 
-    #     pre_process_rules_incident_fields = []
+        return ret_value
 
-    #     layout = self.current_file.get('layout', {})
-    #     pre_process_rules_sections = layout.get('sections', [])
-    #     for section in pre_process_rules_sections:
-    #         for field in section.get('fields', []):
-    #             inc_field = field.get('fieldId', '')
-    #             pre_process_rules_incident_fields.append(inc_field.replace('incident_', ''))
+    def get_all_incident_fields_in_section(self, section_name) -> List[str]:
+        """Retrieved all mentioned Incident Fields from a specific section in a ProProcessRule file.
 
-    #     layout_tabs = layout.get('tabs', [])
-    #     for tab in layout_tabs:
-    #         pre_process_rules_sections = tab.get('sections', [])
+        Returns:
+            List[str]. Of all the fields.
+        """
+        ret_value: List[str] = []
 
-    #         for section in pre_process_rules_sections:
-    #             if section and section.get('items'):
-    #                 for item in section.get('items', []):
-    #                     inc_field = item.get('fieldId', '')
-    #                     pre_process_rules_incident_fields.append(inc_field.replace('incident_', '').replace('indicator_', ''))
+        if section_name in self.current_file:
+            for current_section_item in self.current_file.get(section_name, []):
+                if current_section_item['left']['isContext']:
+                    ret_value.append(current_section_item['left']['value']['simple'])
 
-    #     content_incident_fields = get_all_incident_and_indicator_fields_from_id_set(id_set_file, 'layout')
+        return ret_value
 
-    #     built_in_fields = [field.lower() for field in BUILT_IN_FIELDS] + PRE_PROCESS_RULES_BUILT_IN_FIELDS
+    def is_script_exists(self, id_set_file, is_ci) -> bool:
+        """Checks if scriptName is valid - exists in the content.
 
-    #     invalid_inc_fields_list = []
-    #     for inc_field in pre_process_rules_incident_fields:
-    #         if inc_field and inc_field.lower() not in built_in_fields and inc_field not in content_incident_fields:
-    #             invalid_inc_fields_list.append(inc_field) if inc_field not in invalid_inc_fields_list else None
+        Returns:
+            bool. True if the script is valid, else False.
+        """
+        if not is_ci:
+            return True
 
-    #     if invalid_inc_fields_list:
-    #         error_message, error_code = Errors.invalid_incident_field_in_pre_process_rules(invalid_inc_fields_list)
-    #         if self.handle_error(error_message, error_code, file_path=self.file_path):
-    #             return False
-    #     return True
+        script_name = self.current_file.get('scriptName', '')
+        if not script_name:
+            return True
+
+        scripts = id_set_file['scripts', []]
+        for current_script in scripts:
+            script_id = current_script.keys()[0]
+            if script_name == current_script[script_id]['name']:
+                return True
+
+        return False
+
+    def are_incident_fields_exist(self, id_set_file, is_ci) -> bool:
+        """Checks if incident field is valid - exist in the content.
+
+        Returns:
+            bool. True if incident field is valid, else False.
+        """
+        if not is_ci:
+            return True
+
+        if not id_set_file:
+            click.secho("Skipping PreProcessRule incident field validation. Could not read id_set.json.", fg="yellow")
+            return True
+
+        script_name = self.current_file.get('scriptName', '')
+        if script_name:
+            # TODO Check that the script exists
+            pass
+
+        fields = id_set_file['IncidentFields'] + id_set_file['IndicatorFields']
+        field_ids = {list(field.keys())[0] for field in fields}
+
+        pre_process_rule_fields = self.get_all_incident_fields()
+
+        ret_value: bool = True
+        for current_pre_process_rule_fields in pre_process_rule_fields:
+            if current_pre_process_rule_fields not in field_ids:
+                error_message, error_code = Errors.unknown_field_in_pre_process_rules(current_pre_process_rule_fields)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    ret_value = False
+
+        return ret_value

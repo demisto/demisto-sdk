@@ -10,6 +10,7 @@ from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.tools import get_yaml
+from demisto_sdk.commands.common.constants import IronBankDockers
 
 # disable insecure warnings
 requests.packages.urllib3.disable_warnings()
@@ -353,9 +354,8 @@ class DockerImageValidator(BaseValidator):
             The latest tag for the docker image.
         """
         project_name = docker_image_name.replace('demisto/', '')
-        api_url = 'https://repo1.dso.mil/api/v4/projects/dsop%2Fopensource%2Fpalo-alto-networks%2Fdemisto%2F'
-        commits_url = api_url + f'{project_name}/pipelines'
-        manifest_url = api_url + f'{project_name}/repository/files/hardening_manifest.yaml/raw'
+        commits_url = f'{IronBankDockers.API_LINK}{project_name}/pipelines'
+        manifest_url = f'{IronBankDockers.API_LINK}{project_name}/repository/files/hardening_manifest.yaml/raw'
 
         try:
             last_commit = DockerImageValidator._get_latest_commit(commits_url, docker_image_name)

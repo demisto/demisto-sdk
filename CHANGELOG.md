@@ -4,6 +4,7 @@
 * Added the *hidden* field to the integration argument schema.
 * Added to **validate** command a validation that a content item's id and name will not end with spaces.
 * The **format** command will now remove trailing whitespaces from content items' id and name fields.
+* Fixed an issue where the **generate-test-playbook** command would not place the playbook in the proper folder.
 * Fixed an issue where the **json-to-outputs** command failed checking whether `0001-01-01T00:00:00` is of type `Date`
 
 # 1.4.8

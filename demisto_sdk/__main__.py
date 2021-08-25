@@ -679,6 +679,17 @@ def lint(**kwargs):
     is_flag=True)
 @click.option(
     "-d", "--deprecate", help="Set if you want to deprecate the integration/script/playbook", is_flag=True)
+@click.option(
+    "-g", "--use-git",
+    help="Use git to automatically recognize which files changed and run format on them.",
+    is_flag=True)
+@click.option(
+    '--prev-ver', help='Previous branch or SHA1 commit to run checks against.')
+@click.option(
+    '-iu', '--include-untracked',
+    is_flag=True,
+    help='Whether to include untracked files in the formatting.'
+)
 def format(
         input: Path,
         output: Path,
@@ -687,7 +698,10 @@ def format(
         update_docker: bool,
         verbose: bool,
         assume_yes: bool,
-        deprecate: bool
+        deprecate: bool,
+        use_git: bool,
+        prev_ver: str,
+        include_untracked: bool,
 ):
     """Run formatter on a given script/playbook/integration/incidentfield/indicatorfield/
     incidenttype/indicatortype/layout/dashboard/classifier/mapper/widget/report file/genericfield/generictype/
@@ -701,7 +715,10 @@ def format(
         update_docker=update_docker,
         assume_yes=assume_yes,
         verbose=verbose,
-        deprecate=deprecate
+        deprecate=deprecate,
+        use_git=use_git,
+        prev_ver=prev_ver,
+        include_untracked=include_untracked,
     )
 
 
@@ -891,7 +908,7 @@ def run_playbook(**kwargs):
     "--interactive", help="If passed, then for each output field will ask user interactively to enter the "
                           "description. By default is interactive mode is disabled", is_flag=True)
 @click.option(
-    "-d", "--description-json",
+    "-d", "--descriptions",
     help="A JSON or a path to a JSON file, mapping field names to their descriptions. "
          "If not specified, the script prompt the user to input the JSON content.",
     is_flag=True)
@@ -916,11 +933,17 @@ def json_to_outputs_command(**kwargs):
 @click.option(
     '-o', '--output',
     required=False,
-    help='Specify output directory')
+    help='Specify output directory or path to an output yml file. '
+         'If a path to a yml file is specified - it will be the output path.\n'
+         'If a folder path is specified - a yml output will be saved in the folder.\n'
+         'If not specified, and the input is located at `.../Packs/<pack_name>/Integrations`, '
+         'the output will be saved under `.../Packs/<pack_name>/TestPlaybooks`.\n'
+         'Otherwise (no folder in the input hierarchy is named `Packs`), '
+         'the output will be saved in the current directory.')
 @click.option(
     '-n', '--name',
     required=True,
-    help='Specify test playbook name')
+    help='Specify test playbook name. The output file name will be `playbook-<name>_Test.yml')
 @click.option(
     '--no-outputs', is_flag=True,
     help='Skip generating verification conditions for each output contextPath. Use when you want to decide which '
@@ -928,11 +951,25 @@ def json_to_outputs_command(**kwargs):
 @click.option(
     "-v", "--verbose", help="Verbose output for debug purposes - shows full exception stack trace", is_flag=True)
 @click.option(
-    "-ab", "--all-brands",
+    "-ab", "--all-brands", "use_all_brands",
     help="Generate a test-playbook which calls commands using integrations of all available brands. "
          "When not used, the generated playbook calls commands using instances of the provided integration brand.",
     is_flag=True
 )
+@click.option(
+    "-c", "--commands", help="A comma-separated command names to generate playbook tasks for, "
+                             "will ignore the rest of the commands."
+                             "e.g xdr-get-incidents,xdr-update-incident",
+    required=False
+)
+@click.option(
+    "-e", "--examples", help="For integrations: path for file containing command examples."
+                             " Each command should be in a separate line."
+                             " For scripts: the script example surrounded by quotes."
+                             " For example: -e '!ConvertFile entry_id=<entry_id>'"
+)
+@click.option(
+    "-u", "--upload", help="Whether to upload the test playbook after the generation.", is_flag=True)
 def generate_test_playbook(**kwargs):
     """Generate test playbook from integration or script"""
     check_configuration_file('generate-test-playbook', kwargs)
@@ -940,11 +977,19 @@ def generate_test_playbook(**kwargs):
     if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
         print_error('Generating test playbook is possible only for an Integration or a Script.')
         return 1
-    generator = PlaybookTestsGenerator(file_type=file_type.value, **kwargs)
-    generator.run()
 
+    try:
+        generator = PlaybookTestsGenerator(file_type=file_type.value, **kwargs)
+        if generator.run():
+            sys.exit(0)
+        sys.exit(1)
+    except PlaybookTestsGenerator.InvalidOutputPathError as e:
+        print_error(str(e))
+        return 1
 
 # ====================== init ====================== #
+
+
 @main.command()
 @click.help_option(
     '-h', '--help'

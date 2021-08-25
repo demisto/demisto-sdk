@@ -1,10 +1,10 @@
 # Changelog
 * Added validation that the support URL in partner contribution pack metadata does not lead to a GitHub repo.
 * Enhanced ***generate-docs*** with default `additionalinformation` (description) for common parameters.
-* Added the *hidden* field to the integration argument schema.
 * Added to **validate** command a validation that a content item's id and name will not end with spaces.
 * The **format** command will now remove trailing whitespaces from content items' id and name fields.
 * Fixed an issue where the **generate-test-playbook** command would not place the playbook in the proper folder.
+* Added to **validate** command a validation that packs with `Iron Bank` uses the latest docker from Iron Bank.
 * Fixed an issue where the **json-to-outputs** command failed checking whether `0001-01-01T00:00:00` is of type `Date`
 
 # 1.4.8

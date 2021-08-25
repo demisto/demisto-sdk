@@ -201,7 +201,6 @@ script:
       description: The maximum number of indicators to return. The default value is 10.
       isArray: false
       name: limit
-      hidden: true
       required: false
       secret: false
     deprecated: false

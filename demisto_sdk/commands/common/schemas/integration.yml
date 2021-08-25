@@ -209,8 +209,6 @@ schema;argument_schema:
       type: bool
     deprecated:
       type: bool
-    hidden:
-      type: bool
 
 
 # integration->script->command->outputs

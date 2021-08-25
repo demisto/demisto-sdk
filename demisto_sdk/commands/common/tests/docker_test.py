@@ -392,10 +392,10 @@ class TestDockerImage:
         FAIL_CASES_GET_COMMIT = [
             ([], 200,
              'The docker image in your integration/script does not have a tag in Iron Bank. '
-             'Please create or update to an updated versioned image In Iron Bank.'),
+             'Please use only images that are already in Iron Bank, or upload your image to it.'),
             ({}, 404,
              'The docker image in your integration/script cannot be found in Iron Bank. '
-             'Please create image test/test_project:1.0.2 In Iron Bank.'),
+             'Please create the image: test/test_project:1.0.2 in Iron Bank.'),
         ]
 
         @pytest.mark.parametrize('mock_results, mocked_status, expected', FAIL_CASES_GET_COMMIT)

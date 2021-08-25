@@ -396,14 +396,14 @@ class DockerImageValidator(BaseValidator):
 
         # Project may not be existing and needs to be created.
         if res.status_code != 200:
-            raise Exception('The docker image in your integration/script cannot be found in Iron Bank.'
-                            f' Please create the image: {docker_image_name} in Iron Bank.')
+            raise Exception('The docker image in your integration/script cannot be found in Iron Bank. '
+                            f'Please create the image: {docker_image_name} in Iron Bank.')
 
         last_successful_pipelines = res.json()
 
         # Project seems to have no succeed pipeline for master branch, meaning the image is not in Iron Bank.
         if not last_successful_pipelines:
-            raise Exception('The docker image in your integration/script does not have a tag in Iron Bank.'
-                            ' Please use only images that are already in Iron Bank, or upload your image to it.')
+            raise Exception('The docker image in your integration/script does not have a tag in Iron Bank. '
+                            'Please use only images that are already in Iron Bank, or upload your image to it.')
 
         return last_successful_pipelines[0]['sha']

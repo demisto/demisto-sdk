@@ -89,7 +89,8 @@ class TestFormatting:
 
         api_key_param = base_yml.data['configuration'][4]
 
-        assert api_key_param['name'] == (tested_api_key_name := 'API key')
+        tested_api_key_name = 'API key'
+        assert api_key_param['name'] == tested_api_key_name
         assert api_key_param.get('additionalinfo') == default_additional_info[tested_api_key_name]
 
     @pytest.mark.parametrize('source_path, destination_path, formatter, yml_title, file_type', BASIC_YML_TEST_PACKS)

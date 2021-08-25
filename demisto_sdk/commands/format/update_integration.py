@@ -64,8 +64,8 @@ class IntegrationYMLFormat(BaseUpdateYML):
             click.echo('Updating params with an empty additionalnifo, to the default (if exists)')
 
         for param in self.data.get('configuration', {}):
-            if (name := param['name']) in default_additional_info and not param.get('additionalinfo'):
-                param['additionalinfo'] = default_additional_info[name]
+            if param['name'] in default_additional_info and not param.get('additionalinfo'):
+                param['additionalinfo'] = default_additional_info[param['name']]
 
     def set_reputation_commands_basic_argument_as_needed(self):
         """Sets basic arguments of reputation commands to be default, isArray and required."""

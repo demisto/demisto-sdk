@@ -6,11 +6,11 @@ from typing import Optional
 import requests
 from pkg_resources import parse_version
 
+from demisto_sdk.commands.common.constants import IronBankDockers
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.tools import get_yaml
-from demisto_sdk.commands.common.constants import IronBankDockers
 
 # disable insecure warnings
 requests.packages.urllib3.disable_warnings()

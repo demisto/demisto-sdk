@@ -37,6 +37,7 @@ RELEASE_NOTES_DIR = 'ReleaseNotes'
 TESTS_DIR = 'Tests'
 DOC_FILES_DIR = 'doc_files'
 DOCUMENTATION_DIR = 'Documentation'
+JOBS_DIR = 'Jobs'
 
 SCRIPT = 'script'
 AUTOMATION = 'automation'

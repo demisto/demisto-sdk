@@ -22,7 +22,7 @@ from demisto_sdk.commands.lint.commands_builder import excluded_files
 from demisto_sdk.tests.constants_test import (
     DESTINATION_FORMAT_INTEGRATION_COPY, DESTINATION_FORMAT_PLAYBOOK_COPY,
     INTEGRATION_WITH_TEST_PLAYBOOKS, PLAYBOOK_WITH_TEST_PLAYBOOKS,
-    SOURCE_FORMAT_INTEGRATION_COPY, SOURCE_FORMAT_PLAYBOOK_COPY)
+    SOURCE_FORMAT_INTEGRATION_COPY, SOURCE_FORMAT_PLAYBOOK_COPY, INTEGRATION_FOLDER)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     GENERIC_DEFINITION, GENERIC_FIELD, GENERIC_MODULE, GENERIC_TYPE)
 from TestSuite.test_tools import ChangeCWD
@@ -80,6 +80,8 @@ def test_integration_format_yml_with_no_test_positive(tmp_path: PosixPath,
         - A yml file (integration, playbook or script) with no 'tests' configured
 
         When
+        - Entering '-ad' so the prompt message about asking the user if he wants to add 'No tests' to the file will
+            appear.
         - Entering 'Y' into the prompt message about that asks the user if he wants to add 'No tests' to the file
 
         Then
@@ -90,7 +92,7 @@ def test_integration_format_yml_with_no_test_positive(tmp_path: PosixPath,
     saved_file_path = str(tmp_path / os.path.basename(destination_path))
     runner = CliRunner()
     # Running format in the first time
-    result = runner.invoke(main, [FORMAT_CMD, '-i', source_path, '-o', saved_file_path], input='Y')
+    result = runner.invoke(main, [FORMAT_CMD, '-i', source_path, '-o', saved_file_path, '-at'], input='Y')
     prompt = f'The file {source_path} has no test playbooks configured. Do you want to configure it with "No tests"'
     assert not result.exception
     assert prompt in result.output
@@ -116,6 +118,8 @@ def test_integration_format_yml_with_no_test_negative(tmp_path: PosixPath,
         - A yml file (integration, playbook or script) with no 'tests' configured
 
         When
+        - Entering '-ad' so the prompt message about asking the user if he wants to add 'No tests' to the file will
+            appear.
         - Entering 'N' into the prompt message about that asks the user if he wants to add 'No tests' to the file
 
         Then
@@ -124,7 +128,7 @@ def test_integration_format_yml_with_no_test_negative(tmp_path: PosixPath,
     """
     saved_file_path = str(tmp_path / os.path.basename(destination_path))
     runner = CliRunner()
-    result = runner.invoke(main, [FORMAT_CMD, '-i', source_path, '-o', saved_file_path], input='N')
+    result = runner.invoke(main, [FORMAT_CMD, '-i', source_path, '-o', saved_file_path, '-at'], input='N')
     assert not result.exception
     prompt = f'The file {source_path} has no test playbooks configured. Do you want to configure it with "No tests"'
     assert prompt in result.output
@@ -314,6 +318,8 @@ def test_integration_format_remove_playbook_sourceplaybookid(tmp_path):
 
     When
     - Running the format command.
+    - Entering '-ad' so the prompt message about asking the user if he wants to add 'No tests' to the file will
+        appear.
 
     Then
     - Ensure 'sourceplaybookid' was deleted from the yml file.
@@ -321,7 +327,7 @@ def test_integration_format_remove_playbook_sourceplaybookid(tmp_path):
     source_playbook_path = SOURCE_FORMAT_PLAYBOOK_COPY
     playbook_path = str(tmp_path / 'format_new_playbook_copy.yml')
     runner = CliRunner()
-    result = runner.invoke(main, [FORMAT_CMD, '-i', source_playbook_path, '-o', playbook_path], input='N')
+    result = runner.invoke(main, [FORMAT_CMD, '-i', source_playbook_path, '-o', playbook_path, '-at'], input='N')
     prompt = f'The file {source_playbook_path} has no test playbooks configured. Do you want to configure it with "No tests"'
     assert result.exit_code == 0
     assert prompt in result.output
@@ -1093,3 +1099,49 @@ def test_format_generic_definition_missing_from_version_key(mocker, repo):
         with open(generic_definition_path) as f:
             updated_generic_definition = json.load(f)
         assert updated_generic_definition['fromVersion'] == GENERIC_DEFINITION['fromVersion']
+
+
+def test_format_integration_folder(tmp_path: PosixPath):
+    """
+        Given
+        - An integration folder with
+
+        When
+        - Running format command on it
+
+        Then
+        -  Ensure no exception is raised.
+        -  Ensure 'No tests' is added to the yaml file.
+        -  Ensure message asking to add tests is not prompt.
+        -  Ensure a message for formatting automatically the yaml file is added.
+    """
+    runner = CliRunner()
+
+    with open(f'{INTEGRATION_FOLDER}/UploadTest/UploadTest.yml', 'r') as f:
+        x = f.read()
+        file_context = yaml.safe_load(x)
+        if file_context.get('tests'):
+            del file_context['tests']
+
+    with open(f'{INTEGRATION_FOLDER}/UploadTest/UploadTest.yml', 'w') as f:
+        f.write(yaml.dump(file_context))
+
+    result = runner.invoke(main, [FORMAT_CMD, '-i', INTEGRATION_FOLDER])
+    prompt = f'The file {INTEGRATION_FOLDER} has no test playbooks configured. Do you want to configure it with "No ' \
+             f'tests" '
+    prompt1 = f'Formatting {INTEGRATION_FOLDER}/UploadTest/UploadTest.yml with "No tests"'
+    assert not result.exception
+    assert prompt not in result.output
+    assert prompt1 in result.output
+
+    with open(f'{INTEGRATION_FOLDER}/UploadTest/UploadTest.yml', 'r') as f:
+        x = f.read()
+        file_context = yaml.safe_load(x)
+        tests_value = file_context.get('tests')
+        if tests_value:
+            del file_context['tests']
+        else:
+            assert 'could not find "tests" key in yml'
+
+    with open(f'{INTEGRATION_FOLDER}/UploadTest/UploadTest.yml', 'w') as f:
+        f.write(yaml.dump(file_context))

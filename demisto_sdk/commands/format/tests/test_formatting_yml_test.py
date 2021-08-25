@@ -1029,3 +1029,21 @@ class TestFormatting:
         assert base_update_yml.data['deprecated']
         assert base_update_yml.data['tests'] == 'No test'
         assert base_update_yml.data['description'] == description_result
+
+    @pytest.mark.parametrize('name', ['MyIntegration', 'MyIntegration ', ' MyIntegration '])
+    def test_remove_spaces_end_of_id_and_name(self, pack, mocker, name):
+        """
+        Given
+            - An integration which id doesn't ends with whitespaces.
+            - An integration which id ends with spaces.
+        When
+            - Running format.
+        Then
+            - Ensure that the yaml fields (name, id) that need to be changed are changed.
+        """
+        integration = pack.create_integration(name)
+        integration.yml.write_dict({'commonfields': {'id': name}, 'name': name})
+        mocker.patch.object(BaseUpdateYML, 'get_id_and_version_path_object', return_value={'id': name})
+        base_update_yml = BaseUpdateYML(input=integration.yml.path)
+        base_update_yml.remove_spaces_end_of_id_and_name()
+        assert base_update_yml.data['name'] == 'MyIntegration'

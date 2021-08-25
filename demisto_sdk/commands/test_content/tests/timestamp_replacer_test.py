@@ -123,8 +123,6 @@ class TestTimeStampReplacer:
             - Ensure the valid key is not loaded into form_keys
         """
         mocker.patch('builtins.open', mock_open())
-        # patching builtin.open breaks dateparser, which attempts to open a timezone file, the following patch fixes it.
-        mocker.patch('dateparser.date.apply_timezone_from_settings', lambda x, _: x)
         mitmproxy.ctx.options.detect_timestamps = True
         mitmproxy.ctx.options.script_mode = 'record'
         flow.request._set_urlencoded_form([('key1', 'value1'), ('timestamp_key', time)])

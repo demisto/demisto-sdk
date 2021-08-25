@@ -510,11 +510,10 @@ class TimestampReplacer:
             True if the val was parsed to datetime object and False otherwise
         """
         try:
-            if parse(val, settings={'TIMEZONE': 'UTC'}):
+            if parse(val):
                 return True
-        except Exception as e:
+        except Exception:
             logging.exception(f'Failed to parse as date object: {val}')
-            raise e  # todo delete
         return False
 
 

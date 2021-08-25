@@ -842,6 +842,12 @@ class IntegrationValidator(ContentEntityValidator):
                                                       suppress_print=self.suppress_print,
                                                       json_file_path=self.json_file_path,
                                                       is_iron_bank=is_iron_bank)
+
+        # making sure we don't show error of validation if fetching is failed.
+        _, error_code = Errors.docker_tag_not_fetched('', '')
+        if f'{self.file_path} - [{error_code}]' in FOUND_FILES_AND_ERRORS:
+            return False
+
         if docker_image_validator.is_docker_image_valid():
             return True
 

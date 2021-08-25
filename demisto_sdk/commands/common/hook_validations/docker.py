@@ -301,7 +301,7 @@ class DockerImageValidator(BaseValidator):
         except (requests.exceptions.RequestException, Exception) as e:
             if not docker_image_name:
                 docker_image_name = yml_docker_image
-            error_message, error_code = Errors.docker_tag_not_fetched(docker_image_name, e)
+            error_message, error_code = Errors.docker_tag_not_fetched(docker_image_name, str(e))
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return ''
 

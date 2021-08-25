@@ -296,8 +296,7 @@ class DockerImageValidator(BaseValidator):
         try:
             if is_iron_bank:
                 return self.get_docker_image_latest_tag_from_iron_bank_request(docker_image_name)
-            else:
-                return self.get_docker_image_latest_tag_request(docker_image_name)
+            return self.get_docker_image_latest_tag_request(docker_image_name)
         except (requests.exceptions.RequestException, Exception) as e:
             if not docker_image_name:
                 docker_image_name = yml_docker_image

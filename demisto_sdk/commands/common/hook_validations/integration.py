@@ -1356,35 +1356,3 @@ class IntegrationValidator(ContentEntityValidator):
                               suggested_fix=Errors.suggest_fix(self.file_path))
             return False
         return True
-
-    def default_params_have_default_additional_info(self):
-        """Check if the all integration params that can have a default description have a it set.
-        Raises warnings if the additional info is defined (not empty) but is different from the default.
-
-        Returns:
-            bool: True if all relevant params have an additional info value
-                  False if at least one param that can have a default additionalInfo has an empty one.
-        """
-        params_missing_defaults = []
-        params_with_non_default_description = []
-
-        additional_info = {param['name']: param['additionalinfo']
-                           for param in self.current_file.get('configuration', [])}
-
-        for param, info in additional_info.items():
-            if param in default_additional_info and info != default_additional_info[param]:
-                if info == '':
-                    params_missing_defaults.append(param)
-                else:
-                    params_with_non_default_description.append(param)
-        if params_with_non_default_description:
-            non_default_error_message, non_default_error_code = \
-                Errors.non_default_additional_info(params_with_non_default_description)
-            self.handle_error(non_default_error_message, non_default_error_code, file_path=self.file_path, warning=True)
-
-        if params_missing_defaults:
-            missing_error_message, missing_error_code = Errors.missing_default_additional_info(params_missing_defaults)
-            self.handle_error(missing_error_message, missing_error_code, self.current_file,
-                              suggested_fix=Errors.suggest_fix(self.file_path))
-            return False
-        return True

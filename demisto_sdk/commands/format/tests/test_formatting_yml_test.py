@@ -84,7 +84,8 @@ class TestFormatting:
         base_yml = IntegrationYMLFormat(source_path, path=schema_path)
         base_yml.set_params_default_additional_info()
 
-        from demisto_sdk.commands.common.default_additional_info_loader import load_default_additional_info_dict
+        from demisto_sdk.commands.common.default_additional_info_loader import \
+            load_default_additional_info_dict
         default_additional_info = load_default_additional_info_dict()
 
         api_key_param = base_yml.data['configuration'][4]

@@ -1116,7 +1116,7 @@ class TestFormatWithoutAddTestsFlag:
             f.write(yaml.dump(file_context))
         return tests_value
 
-    def test_format_integrations_folder_with_add_tests(self, tmp_path: PosixPath):
+    def test_format_integrations_folder_with_add_tests(self):
         """
             Given
             - An integration folder.
@@ -1140,7 +1140,7 @@ class TestFormatWithoutAddTestsFlag:
         assert not result.exception
         assert prompt in result.output
 
-    def test_format_integrations_folder(self, tmp_path:PosixPath):
+    def test_format_integrations_folder(self):
         """
             Given
             - An integration folder.
@@ -1165,8 +1165,7 @@ class TestFormatWithoutAddTestsFlag:
         assert prompt not in result.output
         assert message in result.output
 
-
-    def test_format_scripts_folder(self, tmp_path: PosixPath):
+    def test_format_scripts_folder(self):
         """
             Given
             - An script folder.
@@ -1194,7 +1193,7 @@ class TestFormatWithoutAddTestsFlag:
         tests_value_from_yml = self.remove_tests_key_from_yml(f'{script_path}{os.sep}DummyScript{os.sep}DummyScript.yml')
         assert tests_value_from_yml == 'No tests (auto formatted)'
 
-    def test_format_playbooks_folder(self, tmp_path: PosixPath):
+    def test_format_playbooks_folder(self):
         """
             Given
             - A playbooks folder.
@@ -1222,7 +1221,7 @@ class TestFormatWithoutAddTestsFlag:
         tests_value_from_yml = self.remove_tests_key_from_yml(f'{playbooks_path}{os.sep}DummyPlaybook.yml')
         assert tests_value_from_yml == 'No tests (auto formatted)'
 
-    def test_format_testplaybook_folder_without_add_tests_flag(self, tmp_path: PosixPath):
+    def test_format_testplaybook_folder_without_add_tests_flag(self):
         """
             Given
             - An TestPlaybook folder.
@@ -1250,7 +1249,7 @@ class TestFormatWithoutAddTestsFlag:
         tests_value_from_yml = self.remove_tests_key_from_yml(f'{script_path}{os.sep}DummyTestPlaybook.yml')
         assert '' == tests_value_from_yml
 
-    def test_format_test_playbook_folder_with_add_tests_flag(self, tmp_path: PosixPath):
+    def test_format_test_playbook_folder_with_add_tests_flag(self):
         """
             Given
             - An TestPlaybook folder.

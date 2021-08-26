@@ -1,0 +1,27 @@
+{
+	"fromVersion": "5.0.0",
+	"autorun": true,
+	"closureScript": "",
+	"color": "#80DEEA",
+	"days": 0,
+	"daysR": 0,
+	"default": false,
+	"disabled": false,
+	"hours": 0,
+	"hoursR": 0,
+	"id": "upload_type",
+	"locked": false,
+	"name": "upload_type",
+	"playbookId": "upload_playbook",
+	"preProcessingScript": "",
+	"propagationLabels": [
+		"all"
+	],
+	"readonly": false,
+	"reputationCalc": 0,
+	"sortValues": null,
+	"system": false,
+	"version": -1,
+	"weeks": 0,
+	"weeksR": 0
+}

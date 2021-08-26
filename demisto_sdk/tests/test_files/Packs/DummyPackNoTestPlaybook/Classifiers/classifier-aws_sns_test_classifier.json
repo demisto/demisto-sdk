@@ -1,0 +1,14 @@
+{
+    "brandName": "aws_sns",
+    "custom": true,
+    "feed": false,
+    "id": "aws_sns",
+    "isDefault": false,
+    "transformer": {
+        "complex": null,
+        "simple": "testing"
+    },
+    "version": -1,
+    "fromVersion": "5.5.0",
+    "toVersion": "5.9.9"
+}

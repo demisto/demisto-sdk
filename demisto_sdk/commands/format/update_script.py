@@ -22,7 +22,7 @@ class ScriptYMLFormat(BaseUpdateYML):
     """
 
     def __init__(self,
-                 add_tests: bool,
+                 add_tests: bool = False,
                  input: str = '',
                  output: str = '',
                  path: str = '',
@@ -31,8 +31,9 @@ class ScriptYMLFormat(BaseUpdateYML):
                  update_docker: bool = False,
                  verbose: bool = False,
                  **kwargs):
-        super().__init__(input, output, path, from_version, no_validate, verbose=verbose, add_tests=add_tests, **kwargs)
+        super().__init__(input, output, path, from_version, no_validate, verbose=verbose, **kwargs)
         self.update_docker = update_docker
+        self.add_tests = add_tests
         if not from_version and self.data.get("type") == TYPE_PWSH:
             self.from_version = '5.5.0'
 

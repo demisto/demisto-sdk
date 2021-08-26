@@ -28,7 +28,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
     }
 
     def __init__(self,
-                 add_tests: bool,
+                 add_tests: bool = False,
                  input: str = '',
                  output: str = '',
                  path: str = '',
@@ -37,8 +37,9 @@ class IntegrationYMLFormat(BaseUpdateYML):
                  verbose: bool = False,
                  update_docker: bool = False,
                  **kwargs):
-        super().__init__(input, output, path, from_version, no_validate, verbose=verbose, add_tests=add_tests, **kwargs)
+        super().__init__(input, output, path, from_version, no_validate, verbose=verbose, **kwargs)
         self.update_docker = update_docker
+        self.add_tests = add_tests
         if not from_version and self.data.get("script", {}).get("type") == TYPE_PWSH:
             self.from_version = '5.5.0'
 

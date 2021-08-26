@@ -995,8 +995,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def \
-            release_notes_config_file_missing_release_notes(config_rn_path: str):
+    def release_notes_config_file_missing_release_notes(config_rn_path: str):
         return f'Release notes config file {config_rn_path} is missing corresponding release notes file.\n' \
                f'''Please add release notes file: {config_rn_path.replace('json', 'md')}'''
 

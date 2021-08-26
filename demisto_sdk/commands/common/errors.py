@@ -11,7 +11,7 @@ from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
 FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
 ALLOWED_IGNORE_ERRORS = [
-    'BA101', 'BA106', 'BA108', 'BA109', 'BA110', 'BA111',
+    'BA101', 'BA106', 'BA108', 'BA109', 'BA110', 'BA111', 'BA112', 'BA113',
     'DS107',
     'IF100', 'IF106',
     'IN109', 'IN110', 'IN122', 'IN126', 'IN128', 'IN135', 'IN136', 'IN139',
@@ -45,6 +45,8 @@ ERROR_CODE = {
     "file_name_has_separators": {'code': "BA109", 'ui_applicable': False, 'related_field': ''},
     "field_contain_forbidden_word": {'code': "BA110", 'ui_applicable': False, 'related_field': ''},
     'entity_name_contains_excluded_word': {'code': 'BA111', 'ui_applicable': False, 'related_field': ''},
+    "spaces_in_the_end_of_id": {'code': "BA112", 'ui_applicable': False, 'related_field': 'id'},
+    "spaces_in_the_end_of_name": {'code': "BA113", 'ui_applicable': False, 'related_field': 'name'},
     "wrong_display_name": {'code': "IN100", 'ui_applicable': True, 'related_field': '<parameter-name>.display'},
     "wrong_default_parameter_not_empty": {'code': "IN101", 'ui_applicable': True,
                                           'related_field': '<parameter-name>.default'},
@@ -170,6 +172,7 @@ ERROR_CODE = {
     "playbook_not_quiet_mode": {'code': "PB114", 'ui_applicable': False, 'related_field': ''},
     "playbook_tasks_not_quiet_mode": {'code': "PB115", 'ui_applicable': False, 'related_field': 'tasks'},
     "playbook_tasks_continue_on_error": {'code': "PB116", 'ui_applicable': False, 'related_field': 'tasks'},
+    "content_entity_is_not_in_id_set": {'code': "PB117", 'ui_applicable': False, 'related_field': ''},
     "description_missing_in_beta_integration": {'code': "DS100", 'ui_applicable': False, 'related_field': ''},
     "no_beta_disclaimer_in_description": {'code': "DS101", 'ui_applicable': False, 'related_field': ''},
     "no_beta_disclaimer_in_yml": {'code': "DS102", 'ui_applicable': False, 'related_field': ''},
@@ -740,8 +743,11 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def docker_tag_not_fetched(docker_image_name):
-        return f'Failed getting tag for: {docker_image_name}. Please check it exists and of demisto format.'
+    def docker_tag_not_fetched(docker_image_name, exception_msg=None):
+        msg = f'Failed getting tag for: {docker_image_name}. Please check it exists and of demisto format.'
+        if exception_msg:
+            msg = msg + '\n' + exception_msg
+        return msg
 
     @staticmethod
     @error_code_decorator
@@ -768,17 +774,20 @@ class Errors:
         return f'The docker image: {docker_image} is not of format - demisto/image_name:X.X'
 
     @staticmethod
-    def suggest_docker_fix(docker_image_name: str, file_path: str) -> str:
+    def suggest_docker_fix(docker_image_name: str, file_path: str, is_iron_bank=False) -> str:
+        docker_hub_link = f'https://hub.docker.com/r/{docker_image_name}/tags'
+        iron_bank_link = f'https://repo1.dso.mil/dsop/opensource/palo-alto-networks/{docker_image_name}/'
         return f'You can check for the most updated version of {docker_image_name} ' \
-               f'here: https://hub.docker.com/r/{docker_image_name}/tags\n' \
+               f'here: {iron_bank_link if is_iron_bank else docker_hub_link} \n' \
                f'To update the docker image run:\ndemisto-sdk format -ud -i {file_path}\n'
 
     @staticmethod
     @error_code_decorator
-    def docker_not_on_the_latest_tag(docker_image_tag, docker_image_latest_tag) -> str:
+    def docker_not_on_the_latest_tag(docker_image_tag, docker_image_latest_tag, is_iron_bank=False) -> str:
         return f'The docker image tag is not the latest numeric tag, please update it.\n' \
                f'The docker image tag in the yml file is: {docker_image_tag}\n' \
-               f'The latest docker image tag in docker hub is: {docker_image_latest_tag}\n'
+               f'The latest docker image tag in {"Iron Bank" if is_iron_bank else "docker hub" } ' \
+               f'is: {docker_image_latest_tag}\n'
 
     @staticmethod
     @error_code_decorator
@@ -1810,3 +1819,20 @@ class Errors:
     @error_code_decorator
     def entity_name_contains_excluded_word(entity_name: str, excluded_words: List[str]):
         return f'Entity {entity_name} should not contain one of {excluded_words} in its name. Please remove.'
+
+    @staticmethod
+    @error_code_decorator
+    def content_entity_is_not_in_id_set(main_playbook, entities_names):
+        return f"Playbook {main_playbook} uses {entities_names}, which do not exist in the id_set.\n" \
+               f"Possible reason for such an error, would be that the name of the entity in the yml file of " \
+               f"{main_playbook} is not identical to its name in its own yml file. Or the id_set is not up to date"
+
+    @staticmethod
+    @error_code_decorator
+    def spaces_in_the_end_of_id(item_id: str):
+        return f'Content item id "{item_id}" should not have trailing spaces. Please remove.'
+
+    @staticmethod
+    @error_code_decorator
+    def spaces_in_the_end_of_name(name: str):
+        return f'Content item name "{name}" should not have trailing spaces. Please remove.'

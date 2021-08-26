@@ -34,7 +34,7 @@ def generate_example_dict(examples_file: Optional[str], insecure=False):
                                                 None)
         example_dict, build_errors = build_example_dict(command_examples,
                                                         insecure)
-        if len(build_errors) > 0:
+        if build_errors:
             raise Exception(
                 f'Command examples had errors: {build_errors}')
     else:

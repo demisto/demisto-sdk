@@ -1,4 +1,4 @@
-## unify-packs
+## zip-packs
 
 Zip content packs to uploadable zip file.
 
@@ -19,9 +19,9 @@ This command is used in order to create a zip file, able to be uploaded to Corte
   Zip all the packs in one zip file.
 
 **Examples**:
-`demisto-sdk unify-packs -i Campaign -o "DestinationDir"`
-This will unify the "Campaign" pack into Campaign.zip file in the "DestinationDir" directory.
+`demisto-sdk zip-packs -i Campaign -o "DestinationDir"`
+This will zip the "Campaign" pack into Campaign.zip file in the "DestinationDir" directory.
 
-`demisto-sdk unify-packs -i Campaign -o "DestinationDir" -u`
-This will unify the "Campaign" pack into uploadable_packs.zip file in the "DestinationDir" directory
+`demisto-sdk zip-packs -i Campaign -o "DestinationDir" -u`
+This will zip the "Campaign" pack into uploadable_packs.zip file in the "DestinationDir" directory
 and will upload the created uploadable_packs.zip to the marketplace.

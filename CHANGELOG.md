@@ -1,6 +1,24 @@
 # Changelog
+* Added validation that the support URL in partner contribution pack metadata does not lead to a GitHub repo.
+* Enhanced ***generate-docs*** with default `additionalinformation` (description) for common parameters.
+* Added to **validate** command a validation that a content item's id and name will not end with spaces.
+* The **format** command will now remove trailing whitespaces from content items' id and name fields.
+* Fixed an issue where the **generate-test-playbook** command would not place the playbook in the proper folder.
+* Added to **validate** command a validation that packs with `Iron Bank` uses the latest docker from Iron Bank.
+* Added to the **create artifacts** command support for release notes configuration file.
+
+# 1.4.8
+* Fixed an issue where yml files with `!reference` failed to load properly.
+* Fixed an issue when `View Integration Documentation` button was added twice during the download and re-upload.
+* Fixed an issue when `(Partner Contribution)` was added twice to the display name during the download and re-upload.
+* Added the following enhancements in the **generate-test-playbook** command:
+    * Added the *--commands* argument to generate tasks for specific commands.
+    * Added the *--examples* argument to get the command examples file path and generate tasks from the commands and arguments specified there.
+    * Added the *--upload* flag to specify whether to upload the test playbook after the generation.
+    * Fixed the output condition generation for outputs of type `Boolean`.
 
 # 1.4.7
+* Fixed an issue where an empty list for a command context didn't produce an indication other than an empty table.
 * Fixed an issue where the **format** command has incorrectly recognized on which files to run when running using git.
 * Fixed an issue where author image validations were not checked properly.
 * Fixed an issue where new old-formatted scripts and integrations were not validated.

@@ -1375,3 +1375,18 @@ def test_gitlab_ci_yml_load():
         assert False
 
     assert res is None
+
+
+IRON_BANK_CASES = [
+    ({'tags': []}, False),  # case no tags
+    ({'tags': ['iron bank']}, False),  # case some other tags than "Iron Bank"
+    ({'tags': ['Iron Bank', 'other_tag']}, True),  # case Iron Bank tag exist
+    ({}, False)  # case no tags
+]
+
+
+@pytest.mark.parametrize('metadata, expected', IRON_BANK_CASES)
+def test_is_iron_bank_pack(mocker, metadata, expected):
+    mocker.patch.object(tools, 'get_pack_metadata', return_value=metadata)
+    res = tools.is_iron_bank_pack('example_path')
+    assert res == expected

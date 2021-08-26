@@ -309,7 +309,7 @@ def unify(**kwargs):
 
 
 # ====================== zip-packs ====================== #
-@main.command(hidden=True)
+@main.command()
 @click.help_option(
     '-h', '--help'
 )

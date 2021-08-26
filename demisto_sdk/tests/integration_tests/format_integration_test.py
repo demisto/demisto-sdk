@@ -1127,9 +1127,7 @@ class TestFormatWithoutAddTestsFlag:
 
             Then
             -  Ensure no exception is raised.
-            -  Ensure 'No tests' is added to the yaml file.
             -  Ensure message asking to add tests is prompt.
-            -  Ensure a message for formatting automatically the yaml file is added.
         """
         runner = CliRunner()
         integration_path = f'{DUMMY_PACK_FOLDER}Integrations'

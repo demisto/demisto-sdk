@@ -1,7 +1,8 @@
-import os.path
 from typing import Dict, List, Optional
 
-from demisto_sdk.commands.common.tools import get_yaml, print_error, write_yml
+from demisto_sdk.commands.common.tools import (get_yaml, print_error,
+                                               print_success, print_v,
+                                               write_yml)
 from demisto_sdk.commands.generate_docs.common import build_example_dict
 from demisto_sdk.commands.generate_docs.generate_integration_doc import \
     get_command_examples
@@ -16,7 +17,7 @@ def dict_from_outputs_str(command: str, outputs: str, verbose=False):
         outputs: the json outputs to parse into a dict.
         verbose: whether to run in verbose mode or not.
     """
-    dict_output = parse_json(outputs.replace("'", '"'), command, "", verbose,
+    dict_output = parse_json(outputs, command, "", verbose,
                              return_object=True)
     return dict_output
 
@@ -28,18 +29,11 @@ def generate_example_dict(examples_file: Optional[str], insecure=False):
         examples_file: yaml as python dict.
         insecure: wether to run the examples without checking ssl.
     """
-    example_dict = {}
-    if examples_file and os.path.isfile(examples_file):
-        command_examples = get_command_examples(examples_file,
-                                                None)
-        example_dict, build_errors = build_example_dict(command_examples,
-                                                        insecure)
-        if len(build_errors) > 0:
-            raise Exception(
-                f'Command examples had errors: {build_errors}')
-    else:
+    command_examples = get_command_examples(examples_file, None)
+    example_dict, build_errors = build_example_dict(command_examples, insecure)
+    if len(build_errors) > 0:
         raise Exception(
-            f'Command examples file was not found {examples_file}.')
+            f'Command examples had errors: {build_errors}')
     return example_dict
 
 
@@ -89,7 +83,7 @@ def generate_integration_context(
         example_dict = generate_example_dict(examples, insecure)
 
         for command in example_dict:
-            print(f'Building context for the {command} command...')
+            print_v(f'Building context for the {command} command...', verbose)
             _, _, outputs = example_dict.get(command)
 
             # Generate the examples with a local server
@@ -99,7 +93,7 @@ def generate_integration_context(
             yml_data = insert_outputs(yml_data, command, output_contexts)
 
         # Make the changes in place the input yml
-        print(f'Writing outputs to input file "{input_path}"...')
+        print_success(f'Writing outputs to input file "{input_path}"...')
         write_yml(input_path, yml_data)
     except Exception as ex:
         if verbose:

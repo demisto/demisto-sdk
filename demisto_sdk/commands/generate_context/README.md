@@ -2,7 +2,7 @@
 Generate a README file for an Integration, Script or a Playbook.
 
 **Use-Cases**
-This command is used to create a documentation file for Cortex XSOAR content files.
+This command is used to generate context paths automatically from an example file directly into an integration yml file.
 
 **Arguments**:
 * **-i, --input**

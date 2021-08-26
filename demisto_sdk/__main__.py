@@ -1072,6 +1072,9 @@ def generate_context(**kwargs):
         print_error('File is not an Integration.')
         return 1
 
+    if not examples or not os.path.isfile(examples):
+        print_error(f'Command examples file was not found {examples}.')
+
     if file_type == FileType.INTEGRATION:
         generate_integration_context(input_path, examples, insecure, verbose)
     else:

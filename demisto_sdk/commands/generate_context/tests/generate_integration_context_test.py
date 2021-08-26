@@ -27,13 +27,13 @@ def test_generate_context_from_outputs():
     from demisto_sdk.commands.generate_context.generate_integration_context import \
         dict_from_outputs_str
 
-    EXAMPLE_INT_OUTPUTS = '''{'Guardicore': {'Endpoint': {'asset_id': '1-2-3-4-5',
-'ip_addresses': ['1.1.1.1',
-              'ffe::fef:fefe:fefee:fefe'],
-'last_seen': 1629200550561,
-'name': 'Accounting-web-1',
-'status': 'on',
-'tenant_name': 'esx10/lab_a/Apps/Accounting'}}}'''
+    EXAMPLE_INT_OUTPUTS = '''{"Guardicore": {"Endpoint": {"asset_id": "1-2-3-4-5",
+                                "ip_addresses": ["1.1.1.1",
+                                              "ffe::fef:fefe:fefee:fefe"],
+                                "last_seen": 1629200550561,
+                                "name": "Accounting-web-1",
+                                "status": "on",
+                                "tenant_name": "esx10/lab_a/Apps/Accounting"}}}'''
 
     assert dict_from_outputs_str('!some-test-command=172.16.1.111',
                                  EXAMPLE_INT_OUTPUTS) == \
@@ -69,9 +69,6 @@ def test_generate_example_dict(mocker):
     Then
        - Ensure the outputs are correct
     """
-    # os.environ["DEMISTO_BASE_URL"] = "1"
-    # os.environ["DEMISTO_USERNAME"] = "1"
-    # os.environ["DEMISTO_PASSWORD"] = "1"
     from demisto_sdk.commands.generate_context import \
         generate_integration_context
     mocker.patch.object(generate_integration_context,
@@ -91,9 +88,6 @@ def test_insert_outputs(mocker):
     Then
       - Ensure the outputs are inserted correctly
     """
-    # os.environ["DEMISTO_BASE_URL"] = "1"
-    # os.environ["DEMISTO_USERNAME"] = "1"
-    # os.environ["DEMISTO_PASSWORD"] = "1"
     from demisto_sdk.commands.generate_context import \
         generate_integration_context
     command_name = 'zoom-fetch-recording'

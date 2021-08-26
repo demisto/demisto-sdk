@@ -77,6 +77,7 @@ Supported commands:
 1. [Generate-test-playbook](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/generate_test_playbook/README.md)
 1. [Json-to-outputs](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/json_to_outputs/README.md)
 1. [Update-release-notes](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/update_release_notes/README.md)
+1. [Zip-packs](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/zip_packs/README.md)
 1. [openapi-codegen](https://xsoar.pan.dev/docs/integrations/openapi-codegen)
 1. [postman-codegen](https://xsoar.pan.dev/docs/integrations/postman-codegen)
 1. [generate-integration](https://xsoar.pan.dev/docs/integrations/code-generator)

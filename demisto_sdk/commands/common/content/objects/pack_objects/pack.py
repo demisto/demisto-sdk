@@ -30,8 +30,8 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     Contributors, Dashboard, DocFile, GenericDefinition, GenericField,
     GenericModule, GenericType, IncidentField, IncidentType, IndicatorField,
     IndicatorType, Integration, LayoutObject, OldClassifier, PackIgnore,
-    PackMetaData, Playbook, Readme, ReleaseNote, Report, Script, SecretIgnore,
-    Widget, ReleaseNoteConfig)
+    PackMetaData, Playbook, Readme, ReleaseNote, ReleaseNoteConfig, Report,
+    Script, SecretIgnore, Widget)
 from demisto_sdk.commands.common.content.objects_factory import \
     path_to_pack_object
 from demisto_sdk.commands.test_content import tools

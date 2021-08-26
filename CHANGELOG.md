@@ -16,7 +16,6 @@
     * Added the *--commands* argument to generate tasks for specific commands.
     * Added the *--examples* argument to get the command examples file path and generate tasks from the commands and arguments specified there.
     * Added the *--upload* flag to specify whether to upload the test playbook after the generation.
-    * Fixed the output condition generation for outputs of type 'Boolean'.
     * Fixed the output condition generation for outputs of type `Boolean`.
 
 # 1.4.7

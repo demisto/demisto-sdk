@@ -1009,7 +1009,6 @@ class TestValidators:
         validate_manager.new_packs = {'CortexXDR'}
         assert validate_manager.validate_release_notes(file_path, {file_path}, modified_files, None, False) is False
 
-<<<<<<< HEAD
     def test_run_validations_on_file_release_notes_config(self, pack):
         """
         Sanity test for running validation on RN config file
@@ -1023,14 +1022,11 @@ class TestValidators:
         Then:
         - Ensure true is returned.
         """
-        config_file_path: str = f'{pack.path}/ReleaseNotes/1_0_1.json'
-        with open(config_file_path, 'w') as f:
-            f.write(json.dumps({'breakingChanges': True}))
-        with open(config_file_path.replace('.json', '.md'), 'w') as f:
-            f.write('RN text')
+        rn = pack.create_release_notes('1_0_1', is_bc=True)
+        rn_config_path: str = str(rn.path).replace('md', 'json')
         validate_manager: ValidateManager = ValidateManager()
-        assert validate_manager.run_validations_on_file(config_file_path, list())
-=======
+        assert validate_manager.run_validations_on_file(rn_config_path, list())
+
     @pytest.mark.parametrize('answer, integration_id', [(True, 'MyIntegration'), (False, 'MyIntegration  ')])
     def test_is_there_spaces_in_the_end_of_id_yml(self, pack: Pack, answer, integration_id):
         """
@@ -1081,7 +1077,6 @@ class TestValidators:
         structure = StructureValidator(dashboard.path)
         res_validator = IntegrationValidator(structure)
         assert res_validator.is_there_spaces_in_the_end_of_name() is answer
->>>>>>> master
 
 
 @pytest.mark.parametrize('pack_name, expected', [

@@ -1116,6 +1116,30 @@ class TestFormatWithoutAddTestsFlag:
             f.write(yaml.dump(file_context))
         return tests_value
 
+    def test_format_integrations_folder_with_add_tests(self, tmp_path: PosixPath):
+        """
+            Given
+            - An integration folder.
+
+            When
+            - Running format command on it
+
+            Then
+            -  Ensure no exception is raised.
+            -  Ensure 'No tests' is added to the yaml file.
+            -  Ensure message asking to add tests is prompt.
+            -  Ensure a message for formatting automatically the yaml file is added.
+        """
+        runner = CliRunner()
+        integration_path = f'{DUMMY_PACK_FOLDER}Integrations'
+        test = self.remove_tests_key_from_yml(f'{integration_path}{os.sep}UploadTest{os.sep}UploadTest.yml')
+        print(f'%%%: {test} %%%%')
+        result = runner.invoke(main, [FORMAT_CMD, '-i', integration_path, '-at'])
+        prompt = f'The file {integration_path}{os.sep}UploadTest{os.sep}' \
+                 f'UploadTest.yml has no test playbooks configured. Do you want to configure it with "No tests"?'
+        assert not result.exception
+        assert prompt in result.output
+
     def test_format_integrations_folder(self, tmp_path:PosixPath):
         """
             Given
@@ -1134,43 +1158,13 @@ class TestFormatWithoutAddTestsFlag:
         integration_path = f'{DUMMY_PACK_FOLDER}Integrations'
         self.remove_tests_key_from_yml(f'{integration_path}{os.sep}UploadTest{os.sep}UploadTest.yml')
         result = runner.invoke(main, [FORMAT_CMD, '-i', integration_path])
-        prompt = f'The file {integration_path} has no test playbooks configured. Do you want to configure it with "No ' \
-                 f'tests" '
+        prompt = f'The file {integration_path}{os.sep}UploadTest{os.sep}' \
+                 f'UploadTest.yml has no test playbooks configured. Do you want to configure it with "No tests" '
         message = f'Formatting {integration_path}{os.sep}UploadTest{os.sep}UploadTest.yml with "No tests"'
         assert not result.exception
         assert prompt not in result.output
         assert message in result.output
 
-    def test_format_integrations_folder_with_add_tests(self, tmp_path: PosixPath):
-        """
-            Given
-            - An integration folder.
-
-            When
-            - Running format command on it
-
-            Then
-            -  Ensure no exception is raised.
-            -  Ensure 'No tests' is added to the yaml file.
-            -  Ensure message asking to add tests is prompt.
-            -  Ensure a message for formatting automatically the yaml file is added.
-        """
-        runner = CliRunner()
-        integration_path = f'{DUMMY_PACK_FOLDER}Integrations'
-        self.remove_tests_key_from_yml(f'{integration_path}{os.sep}UploadTest{os.sep}UploadTest.yml')
-        result = runner.invoke(main, [FORMAT_CMD, '-i', integration_path, '-at'], input='Y')
-        prompt = f'The file {integration_path}{os.sep}UploadTest{os.sep}UploadTest.yml' \
-                 f' has no test playbooks configured. Do you want to configure it with "No ' \
-                 f'tests"?'
-        message = f'Formatting {integration_path}{os.sep}UploadTest{os.sep}UploadTest.yml with "No tests"'
-        assert not result.exception
-        assert prompt in result.output
-        assert message in result.output
-
-        tests_value_from_yml = self.remove_tests_key_from_yml(f'{integration_path}{os.sep}UploadTest{os.sep}'
-                                                              f'UploadTest.yml')
-
-        assert tests_value_from_yml == 'No tests (auto formatted)'
 
     def test_format_scripts_folder(self, tmp_path: PosixPath):
         """
@@ -1190,8 +1184,8 @@ class TestFormatWithoutAddTestsFlag:
         script_path = f'{DUMMY_PACK_FOLDER}Scripts'
         self.remove_tests_key_from_yml(f'{script_path}{os.sep}DummyScript{os.sep}DummyScript.yml')
         result = runner.invoke(main, [FORMAT_CMD, '-i', script_path])
-        prompt = f'The file {script_path} has no test playbooks configured. Do you want to configure it with "No ' \
-                 f'tests" '
+        prompt = f'The file {script_path}{os.sep}DummyScript{os.sep}' \
+                 f'DummyScript.yml has no test playbooks configured. Do you want to configure it with "No tests" '
         message = f'Formatting {script_path}{os.sep}DummyScript{os.sep}DummyScript.yml with "No tests"'
         assert not result.exception
         assert prompt not in result.output
@@ -1218,8 +1212,8 @@ class TestFormatWithoutAddTestsFlag:
         playbooks_path = f'{DUMMY_PACK_NO_TEST_PLAYBOOK}Playbooks'
         self.remove_tests_key_from_yml(f'{playbooks_path}{os.sep}DummyPlaybook.yml')
         result = runner.invoke(main, [FORMAT_CMD, '-i', playbooks_path], input='N')
-        prompt = f'The file {playbooks_path} has no test playbooks configured. Do you want to configure it with "No ' \
-                 f'tests" '
+        prompt = f'The file {playbooks_path}{os.sep}' \
+                 f'DummyPlaybook.yml has no test playbooks configured. Do you want to configure it with "No tests" '
         message = f'Formatting {playbooks_path}{os.sep}DummyPlaybook.yml with "No tests"'
         assert not result.exception
         assert prompt not in result.output
@@ -1246,8 +1240,8 @@ class TestFormatWithoutAddTestsFlag:
         script_path = f'{DUMMY_PACK_FOLDER}TestPlaybooks'
         self.remove_tests_key_from_yml(f'{script_path}{os.sep}DummyTestPlaybook.yml')
         result = runner.invoke(main, [FORMAT_CMD, '-i', script_path], input='N')
-        prompt = f'The file {script_path} has no test playbooks configured. Do you want to configure it with "No ' \
-                 f'tests" '
+        prompt = f'The file {script_path}{os.sep}' \
+                 f'DummyTestPlaybook.yml has no test playbooks configured. Do you want to configure it with "No tests" '
         message = f'Formatting {script_path}{os.sep}DummyTestPlaybook.yml with "No tests"'
         assert not result.exception
         assert prompt not in result.output
@@ -1274,8 +1268,8 @@ class TestFormatWithoutAddTestsFlag:
         test_playbook_path = f'{DUMMY_PACK_FOLDER}TestPlaybooks'
         self.remove_tests_key_from_yml(f'{test_playbook_path}{os.sep}DummyTestPlaybook.yml')
         result = runner.invoke(main, [FORMAT_CMD, '-i', test_playbook_path, '-at'], input='N')
-        prompt = f'The file {test_playbook_path} has no test playbooks configured. Do you want to configure it with "No ' \
-                 f'tests" '
+        prompt = f'The file {test_playbook_path}{os.sep}' \
+                 f'DummyTestPlaybook.yml has no test playbooks configured. Do you want to configure it with "No tests" '
         message = f'Formatting {test_playbook_path}{os.sep}DummyTestPlaybook.yml with "No tests"'
         assert not result.exception
         assert prompt not in result.output
@@ -1300,8 +1294,8 @@ class TestFormatWithoutAddTestsFlag:
         runner = CliRunner()
         layouts_path = f'{DUMMY_PACK_FOLDER}Layouts'
         result = runner.invoke(main, [FORMAT_CMD, '-i', layouts_path])
-        prompt = f'The file {layouts_path} has no test playbooks configured. Do you want to configure it with "No ' \
-                 f'tests" '
+        prompt = f'The file {layouts_path}{os.sep}layout-details-test_bla-V2.json has no test playbooks configured.' \
+                 f' Do you want to configure it with "No tests" '
         message = f'Formatting {layouts_path}{os.sep}layout-details-test_bla-V2.json with "No tests"'
         message1 = f'Format Status   on file: {layouts_path}/layout-details-test_bla-V2.json - Success'
 
@@ -1326,8 +1320,8 @@ class TestFormatWithoutAddTestsFlag:
         runner = CliRunner()
         layouts_path = f'{DUMMY_PACK_FOLDER}Layouts'
         result = runner.invoke(main, [FORMAT_CMD, '-i', layouts_path, '-at'])
-        prompt = f'The file {layouts_path} has no test playbooks configured. Do you want to configure it with "No ' \
-                 f'tests" '
+        prompt = f'The file {layouts_path}{os.sep}layout-details-test_bla-V2.json has no test playbooks configured.' \
+                 f' Do you want to configure it with "No tests" '
         message = f'Formatting {layouts_path}{os.sep}layout-details-test_bla-V2.json with "No tests"'
         message1 = f'Format Status   on file: {layouts_path}/layout-details-test_bla-V2.json - Success'
         assert not result.exception

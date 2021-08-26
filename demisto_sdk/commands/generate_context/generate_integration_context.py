@@ -31,7 +31,7 @@ def generate_example_dict(examples_file: Optional[str], insecure=False):
     """
     command_examples = get_command_examples(examples_file, None)
     example_dict, build_errors = build_example_dict(command_examples, insecure)
-    if len(build_errors) > 0:
+    if build_errors:
         raise Exception(
             f'Command examples had errors: {build_errors}')
     return example_dict
@@ -47,9 +47,9 @@ def insert_outputs(yml_data: Dict, command: str, output_with_contexts: List):
     """
     commands = yml_data['script']['commands']
     found = False
-    for i, v in enumerate(commands):
-        if v.get('name') == command:
-            commands[i]['outputs'] = output_with_contexts
+    for cmd in commands:
+        if cmd.get('name') == command:
+            cmd['outputs'] = output_with_contexts
             found = True
             break
 
@@ -57,7 +57,6 @@ def insert_outputs(yml_data: Dict, command: str, output_with_contexts: List):
         raise Exception(
             f'Input YML doesn\'t have the "{command}" command that exists in the examples file.')
 
-    yml_data['script']['commands'] = commands
     return yml_data
 
 

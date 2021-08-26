@@ -1376,7 +1376,7 @@ def test_compare_context_path_in_yml_and_readme_vs_code_format_invalid():
 def test_get_definition_name():
     """
     Given
-    - The path to a generic field\genric type file.
+    - The path to a generic field/generic type file.
 
     When
     - the file has a connected generic definition

@@ -82,15 +82,18 @@ class TestRNUpdate(unittest.TestCase):
         """
         expected_result = \
             "\n#### Object Fields\n- **(Object) - Sample Generic Field**\n" \
-            "\n#### Object Types\n- **(Object) - Sample Generic Type**\n" \
+            "\n#### Object Types\n- **(Object) - Sample Generic Type**\n"
 
         pack_path = TestRNUpdate.FILES_PATH + "/generic_testing"
         mock_master.return_value = '1.0.0'
         update_rn = UpdateRN(pack_path=pack_path, update_type='minor', modified_files_in_pack={'Sample'},
                              added_files=set())
         changed_items = {
-            ("Sample Generic Field", FileType.GENERIC_FIELD): {"description": "", "is_new_file": False, "path": pack_path + "/GenericFields/Object/genericfield-Sample.json"},
-            ("Sample Generic Type", FileType.GENERIC_TYPE): {"description": "", "is_new_file": False, "path": pack_path + "/GenericTypes/Object/generictype-Sample.json"}
+            ("Sample Generic Field", FileType.GENERIC_FIELD): {"description": "", "is_new_file": False,
+                                                               "path": pack_path + "/GenericFields/Object"
+                                                                                   "/genericfield-Sample.json"},
+            ("Sample Generic Type", FileType.GENERIC_TYPE): {"description": "", "is_new_file": False,
+                                                             "path": pack_path + "/GenericTypes/Object/generictype-Sample.json"}
         }
         release_notes = update_rn.build_rn_template(changed_items)
         assert expected_result == release_notes
@@ -676,10 +679,10 @@ class TestRNUpdateUnit:
         ("Cortex XDR - IR", FileType.INTEGRATION): {"description": "", "is_new_file": False},
         ("Nothing", None): {"description": "", "is_new_file": False},
         ("Sample", FileType.INTEGRATION): {"description": "", "is_new_file": False},
-        ("Sample GenericField", FileType.GENERIC_FIELD): {"description": "", "is_new_file": False,  "path": "Packs"
-                                                                                                            "/HelloWorld/GenericField/asset/Sample_GenericType"},
+        ("Sample GenericField", FileType.GENERIC_FIELD): {"description": "", "is_new_file": False, "path": "Packs"
+                                                          "/HelloWorld/GenericField/asset/Sample_GenericType"},
         ("Sample GenericType", FileType.GENERIC_TYPE): {"description": "", "is_new_file": False, "path": "Packs"
-                                                                                                         "/HelloWorld/GenericType/asset/Sample_GenericType"}
+                                                        "/HelloWorld/GenericType/asset/Sample_GenericType"}
     }
     EXPECTED_RN_RES = """
 #### Incident Types

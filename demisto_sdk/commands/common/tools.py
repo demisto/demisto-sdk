@@ -1984,18 +1984,17 @@ def suppress_stdout():
 
 
 def get_definition_name(path: str, pack_path: str) -> str:
-    """
+    r"""
         param:
             path (str): path to the file which needs a definition name (generic field\generic type file)
-            pack_name (str): relevant pack name
+            pack_path (str): relevant pack path
 
         :rtype: ``str``
         :return:
             for generic type and generic field return associated generic definition name folder
 
     """
-    exception = "Generic Definition name was not found - make sure the generic field/generic type files are valid and " \
-                "connected to a generic definition file "
+
     try:
         file_dictionary = get_json(path)
         definition_id = file_dictionary['definitionId']
@@ -2010,9 +2009,5 @@ def get_definition_name(path: str, pack_path: str) -> str:
                     return def_file_dictionary["name"]
 
     except FileNotFoundError or AttributeError:
-        raise Exception(exception)
-
-    # if we couldn't find the definition name throw exception
-    raise Exception(exception)
-
-
+        print("Was unable to find the file for definitionId " + definition_id)
+    return None

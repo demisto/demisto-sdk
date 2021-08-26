@@ -17,13 +17,13 @@ from demisto_sdk.commands.common.hook_validations.structure import \
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                get_api_module_ids,
                                                get_api_module_integrations_set,
+                                               get_definition_name,
                                                get_from_version, get_json,
                                                get_latest_release_notes_text,
                                                get_pack_name, get_remote_file,
                                                get_yaml, pack_name_to_path,
                                                print_color, print_error,
-                                               print_warning, run_command,
-                                               get_definition_name)
+                                               print_warning, run_command)
 
 
 class UpdateRN:

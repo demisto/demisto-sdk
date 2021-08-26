@@ -63,7 +63,6 @@ def insert_outputs(yml_data: Dict, command: str, output_with_contexts: List):
         raise Exception(
             f'Input YML doesn\'t have the "{command}" command that exists in the examples file.')
 
-    yml_data['script']['commands'] = commands
     return yml_data
 
 

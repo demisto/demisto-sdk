@@ -1,5 +1,4 @@
 import glob
-import json
 import os
 import shutil
 from pathlib import Path
@@ -8,7 +7,6 @@ from typing import List, Union
 import git
 import pytest
 import requests
-from pytest import raises
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,

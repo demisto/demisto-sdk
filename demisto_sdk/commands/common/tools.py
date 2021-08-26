@@ -2007,7 +2007,7 @@ def suppress_stdout():
             sys.stdout = old_stdout
 
 
-def get_definition_name(path: str, pack_path: str) -> str:
+def get_definition_name(path: str, pack_path: str) -> Optional[str]:
     r"""
         param:
             path (str): path to the file which needs a definition name (generic field\generic type file)
@@ -2032,9 +2032,13 @@ def get_definition_name(path: str, pack_path: str) -> str:
                 if cur_id == definition_id:
                     return def_file_dictionary["name"]
 
-    except FileNotFoundError or AttributeError:
         print("Was unable to find the file for definitionId " + definition_id)
-    return None
+        return None
+
+    except FileNotFoundError or AttributeError:
+        print("Error while retrieving definition name for definitionId " + definition_id +
+              "\n Check file structure and make sure all relevant fields are entered properly")
+        return None
 
 
 def is_iron_bank_pack(file_path):

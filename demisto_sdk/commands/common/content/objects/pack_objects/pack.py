@@ -31,7 +31,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     GenericModule, GenericType, IncidentField, IncidentType, IndicatorField,
     IndicatorType, Integration, LayoutObject, OldClassifier, PackIgnore,
     PackMetaData, Playbook, Readme, ReleaseNote, Report, Script, SecretIgnore,
-    Widget)
+    Widget, ReleaseNoteConfig)
 from demisto_sdk.commands.common.content.objects_factory import \
     path_to_pack_object
 from demisto_sdk.commands.test_content import tools
@@ -160,7 +160,7 @@ class Pack:
                                                           suffix="md")
 
     @property
-    def release_notes_config(self) -> Iterator[ReleaseNote]:
+    def release_notes_config(self) -> Iterator[ReleaseNoteConfig]:
         return self._content_files_list_generator_factory(dir_name=RELEASE_NOTES_DIR,
                                                           suffix="json")
 

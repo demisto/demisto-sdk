@@ -53,9 +53,9 @@ def insert_outputs(yml_data: Dict, command: str, output_with_contexts: List):
     """
     commands = yml_data['script']['commands']
     found = False
-    for i, v in enumerate(commands):
-        if v.get('name') == command:
-            commands[i]['outputs'] = output_with_contexts
+    for command in enumerate(commands):
+        if command.get('name') == command:
+            command['outputs'] = output_with_contexts
             found = True
             break
 

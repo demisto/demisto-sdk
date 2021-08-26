@@ -1,11 +1,12 @@
 import json
-import os
+from pathlib import Path
 from typing import Dict, Optional
 
+import click
 from ruamel.yaml import YAML
 
-from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
-                                               print_error)
+from demisto_sdk.commands.common.constants import FileType
+from demisto_sdk.commands.upload.uploader import Uploader
 
 
 class ContentItemType:
@@ -116,9 +117,10 @@ def create_end_task(id):
 def create_automation_task(_id, automation_name, item_type: str, args: Optional[Dict] = None, brand: str = ""):
     script_args = {}  # type:Dict
     if args and len(args) > 0:
-        script_args['all'] = {}
         for arg, val in args.items():
-            script_args['all']['simple'] = val
+            script_args[arg] = {
+                "simple": val
+            }
 
     if item_type == ContentItemType.INTEGRATION:
         """
@@ -212,10 +214,12 @@ def outputs_to_condition(outputs):
     for output in outputs:
         context_output_path = output.get('contextPath')
 
+        operator = 'isExists' if output.get('type', '') == 'Boolean' else 'isNotEmpty'
+
         conditions.append(
             [
                 {
-                    "operator": "isNotEmpty",
+                    "operator": operator,
                     "left": {
                         "value": {
                             "simple": context_output_path
@@ -235,7 +239,7 @@ def outputs_to_condition(outputs):
     return condition
 
 
-def create_automation_task_and_verify_outputs_task(test_playbook, command, item_type, no_outputs,
+def create_automation_task_and_verify_outputs_task(test_playbook, command, args, item_type, no_outputs,
                                                    brand: str = ""):
     """
     create automation task from command and verify outputs task from automation(script/integration command) outputs.
@@ -258,6 +262,7 @@ def create_automation_task_and_verify_outputs_task(test_playbook, command, item_
     task_command = create_automation_task(test_playbook.task_counter,
                                           command_name,
                                           item_type,
+                                          args=args,
                                           brand=brand)
     test_playbook.add_task(task_command)
 
@@ -271,21 +276,90 @@ def create_automation_task_and_verify_outputs_task(test_playbook, command, item_
         test_playbook.add_task(task_verify_outputs)
 
 
+def get_command_examples(commands_file_path, entity_type) -> dict:
+    """
+    Gets the command examples from command file with their arguments.
+
+    Args:
+        commands_file_path: command file or the content of such file.
+        entity_type: The entity type to generate test playbook for.
+
+    Return:
+        dict. Arguments separated by the commands.
+    """
+    command_examples = []  # type: list
+
+    if entity_type == FileType.INTEGRATION.value:
+        with open(commands_file_path, 'r') as examples_file:
+            command_examples = examples_file.read().splitlines()
+    else:
+        command_examples = commands_file_path.split('\n')
+
+    # Split the command example to dictionary of arguments for each command
+    result_commands = {}
+    for command in command_examples:
+        command = command.split(' ', 1)
+        result_commands[command[0].strip('!')] = dict(arg.split('=') for arg in command[1].split(' ')) \
+            if len(command) > 1 else {}
+
+    return result_commands
+
+
 class PlaybookTestsGenerator:
     def __init__(self, input: str, output: str, name: str, file_type: str, no_outputs: bool = False,
-                 verbose: bool = False, use_all_brands: bool = False):
+                 verbose: bool = False, use_all_brands: bool = False, commands: str = None, examples: str = None,
+                 upload: bool = False):
         self.integration_yml_path = input
         self.output = output
+
+        generated_test_playbook_file_name = f'playbook-{name}_Test.yml'
+
         if output:
-            self.test_playbook_yml_path = os.path.join(output, name + '.yml')
+            """ if an output folder path is provided, save it there"""
+            output_path = Path(output)
+            if output_path.is_dir():
+                self.test_playbook_yml_path = str(output_path / generated_test_playbook_file_name)
+            else:
+                """ if a destination path is specified for the playbook, and it's of a yml file, use it"""
+                if not output_path.suffix.lower() == '.yml':
+                    raise PlaybookTestsGenerator.InvalidOutputPathError(output)
+                self.test_playbook_yml_path = output
         else:
-            self.test_playbook_yml_path = f'{name}.yml'
+            input_folder = Path(input)
+
+            """
+            if input yml is under standard Packs/<Pack>/<...>/<Integration> path,
+            save the test-playbook under   Packs/<Pack>/TestPlaybooks
+            """
+            pack_path = None
+            for p in input_folder.parents:
+                if p.parent.name == "Packs":
+                    pack_path = p
+                    break
+
+            if pack_path:
+                folder = (pack_path / 'TestPlaybooks')
+                folder.mkdir(exist_ok=True, parents=True)
+            else:
+                """ otherwise, save the generated test-playbook in the folder from which SDK is called."""
+                folder = Path()
+
+            self.test_playbook_yml_path = str(folder / generated_test_playbook_file_name)
 
         self.file_type = file_type
         self.name = name
         self.no_outputs = no_outputs
         self.verbose = verbose
         self.use_all_brands = use_all_brands
+        self.commands = commands
+        self.examples = examples
+        self.upload = upload
+
+    class InvalidOutputPathError(BaseException):
+        def __init__(self, output: str):
+            super().__init__(f'The output path provided ({output}) is neither a path to folder, nor to a yml file. '
+                             f'Please check the help section or documentation for possible values, '
+                             f'or call without the -o flag.')
 
     def run(self):
         """
@@ -301,11 +375,6 @@ class PlaybookTestsGenerator:
         local directory
 
         """
-        if self.output:
-            if not os.path.isdir(self.output):
-                print_error(f'Directory not exist: {self.output}')
-                return
-
         ryaml = YAML()
         ryaml.preserve_quotes = True
         try:
@@ -317,10 +386,11 @@ class PlaybookTestsGenerator:
             if self.verbose:
                 raise
 
-            print_error(str(ex))
+            click.secho(str(ex), fg='bright_red')
             return
         except AttributeError:
-            print_error(f'Error - failed to parse: {self.integration_yml_path}.\nProbably invalid yml file')
+            click.secho(f'Error - failed to parse: {self.integration_yml_path}.\nProbably invalid yml file',
+                        fg='bright_red')
             return
 
         test_playbook = Playbook(
@@ -328,13 +398,25 @@ class PlaybookTestsGenerator:
             fromversion='4.5.0'
         )
 
+        command_examples_args = get_command_examples(self.examples, self.file_type) if self.examples else {}
+
         if self.file_type == ContentItemType.INTEGRATION:
             brand = '' if self.use_all_brands else yaml_obj.get('commonfields', {}).get('id', '')
 
             for command in yaml_obj.get('script').get('commands'):
+
+                # Skip the commands that not specified in the `commands` argument
+                if self.commands and command.get('name') not in self.commands.split(','):
+                    continue
+
+                # Skip the commands that not specified in the command examples file if exist
+                if self.examples and command.get('name') not in command_examples_args:
+                    continue
+
                 create_automation_task_and_verify_outputs_task(
                     test_playbook=test_playbook,
                     command=command,
+                    args=command_examples_args.get(command.get('name'), {}),
                     item_type=ContentItemType.INTEGRATION,
                     no_outputs=self.no_outputs,
                     brand=brand
@@ -344,13 +426,23 @@ class PlaybookTestsGenerator:
             create_automation_task_and_verify_outputs_task(
                 test_playbook=test_playbook,
                 command=yaml_obj,
-                item_type=ContentItemType.INTEGRATION,
+                args=command_examples_args.get(yaml_obj.get('name'), {}),
+                item_type=ContentItemType.SCRIPT,
                 no_outputs=self.no_outputs
             )
 
         test_playbook.add_task(create_end_task(test_playbook.task_counter))
 
+        if Path(self.test_playbook_yml_path).exists():
+            click.secho(f'Warning: There already exists a test playbook at {self.test_playbook_yml_path}, '
+                        f'it will be overwritten.', fg='yellow')
+
         with open(self.test_playbook_yml_path, 'w') as yf:
             ryaml.dump(test_playbook.to_dict(), yf)
 
-            print_color(f'Test playbook yml was saved at:\n{self.test_playbook_yml_path}', LOG_COLORS.GREEN)
+            click.secho(f'Test playbook yml was saved at:\n{self.test_playbook_yml_path}\n', fg='green')
+
+        if self.upload:
+            return Uploader(input=self.test_playbook_yml_path).upload()
+
+        return True

@@ -1,6 +1,10 @@
+import json
 import os.path
 import re
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+
+from requests.structures import CaseInsensitiveDict
 
 from demisto_sdk.commands.common.constants import (
     CONTEXT_OUTPUT_README_TABLE_HEADER, DOCS_COMMAND_SECTION_REGEX)
@@ -133,7 +137,7 @@ def generate_integration_doc(
             if permissions == 'general':
                 docs.extend(generate_section('Permissions', ''))
             # Setup integration to work with Demisto
-            docs.extend(generate_section('Configure {} on Cortex XSOAR'.format(yml_data['name']), ''))
+            docs.extend(generate_section('Configure {} on Cortex XSOAR'.format(yml_data['display']), ''))
             # Setup integration on Demisto
             docs.extend(generate_setup_section(yml_data))
             # Commands
@@ -168,10 +172,16 @@ def generate_integration_doc(
 
 
 # Setup integration on Demisto
+
+with (Path(__file__).parent / 'default_additional_information.json').open() as f:
+    # Case insensitive to catch both `API key` and `API Key`, giving both the same value.
+    default_additional_information: CaseInsensitiveDict = CaseInsensitiveDict(json.load(f))
+
+
 def generate_setup_section(yaml_data: dict):
     section = [
         '1. Navigate to **Settings** > **Integrations** > **Servers & Services**.',
-        '2. Search for {}.'.format(yaml_data['name']),
+        '2. Search for {}.'.format(yaml_data['display']),
         '3. Click **Add instance** to create and configure a new integration instance.'
     ]
     access_data: List[Dict] = []
@@ -180,10 +190,12 @@ def generate_setup_section(yaml_data: dict):
         if conf['type'] == CREDENTIALS:
             add_access_data_of_type_credentials(access_data, conf)
         else:
-            access_data.append(
-                {'Parameter': conf.get('display'),
-                 'Description': string_escape_md(conf.get('additionalinfo', '')),
-                 'Required': conf.get('required', '')})
+            access_data.append({
+                'Parameter': conf.get('display'),
+                'Description': string_escape_md(conf.get('additionalinfo', '') or
+                                                default_additional_information.get(conf.get('name', ''), '')),
+                'Required': conf.get('required', '')
+            })
 
     # Check if at least one parameter has additional info field.
     # If not, remove the description column from the access data table section.
@@ -301,7 +313,7 @@ def generate_single_command_section(cmd: dict, example_dict: dict, command_permi
         '',
     ])
     outputs = cmd.get('outputs')
-    if outputs is None:
+    if outputs is None or len(outputs) == 0:
         section.append('There is no context output for this command.')
     else:
         section.extend([
@@ -508,7 +520,9 @@ def get_command_examples(commands_file_path, specific_commands):
 
 
 def command_example_filter(command):
-    if command.startswith('#'):
+    if not command:
+        return
+    elif command.startswith('#'):
         return
     elif not command.startswith('!'):
         return f'!{command}'

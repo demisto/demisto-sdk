@@ -22,7 +22,7 @@ from demisto_sdk.commands.common.tools import (
     LOG_COLORS, arg_to_list, compare_context_path_in_yml_and_readme,
     filter_files_by_type, filter_files_on_pack, filter_packagify_changes,
     find_type, get_code_lang, get_dict_from_file, get_entity_id_by_entity_type,
-    get_entity_name_by_entity_type, get_file, get_file_displayed_name,
+    get_entity_name_by_entity_type, get_file_displayed_name,
     get_file_version_suffix_if_exists, get_files_in_dir,
     get_ignore_pack_skipped_tests, get_last_release_version,
     get_last_remote_release_version, get_latest_release_notes_text,
@@ -66,22 +66,6 @@ class TestGenericFunctions:
     @pytest.mark.parametrize('file_path, func', FILE_PATHS)
     def test_get_file(self, file_path, func):
         assert func(file_path)
-
-    def test_get_file_exception(self):
-        """
-        Given
-        - A non supported file.
-
-        When
-        - Running get_file.
-
-        Then
-        - Ensure the function raise an error.
-        """
-        path_to_here = f'{git_path()}/demisto_sdk/tests/test_files/'
-        with raises(ValueError) as e:
-            result = get_file(json.load, os.path.join(path_to_here, 'fake_integration.yml'), ('yml', 'yaml'))
-            assert result == e.value
 
     @pytest.mark.parametrize('dir_path', ['demisto_sdk', f'{git_path()}/demisto_sdk/tests/test_files'])
     def test_get_yml_paths_in_dir(self, dir_path):
@@ -1391,3 +1375,40 @@ def test_get_definition_name():
 
     assert tools.get_definition_name(field_path, pack_path) == 'Object'
     assert tools.get_definition_name(type_path, pack_path) == 'Object'
+
+
+def test_gitlab_ci_yml_load():
+    """
+        Given:
+            - a yml file with gitlab ci data
+
+        When:
+            - trying to load it to the sdk  - like via find_type
+
+        Then:
+            - Ensure that the load does not fail.
+            - Ensure the file has no identification
+    """
+    test_file = f'{git_path()}/demisto_sdk/tests/test_files/gitlab_ci_test_file.yml'
+    try:
+        res = find_type(test_file)
+    except Exception:
+        # if we got here an error has occurred when trying to load the file
+        assert False
+
+    assert res is None
+
+
+IRON_BANK_CASES = [
+    ({'tags': []}, False),  # case no tags
+    ({'tags': ['iron bank']}, False),  # case some other tags than "Iron Bank"
+    ({'tags': ['Iron Bank', 'other_tag']}, True),  # case Iron Bank tag exist
+    ({}, False)  # case no tags
+]
+
+
+@pytest.mark.parametrize('metadata, expected', IRON_BANK_CASES)
+def test_is_iron_bank_pack(mocker, metadata, expected):
+    mocker.patch.object(tools, 'get_pack_metadata', return_value=metadata)
+    res = tools.is_iron_bank_pack('example_path')
+    assert res == expected

@@ -34,6 +34,8 @@ Skip generating of breaking changes section.
 **Notes**
 * If `command_permissions` wil not be given, a generic message regarding the need of permissions will be given.
 * If no `output` given, the README.md file will be generated in the `input` file repository.
+* If no `additionalinfo` is provided for a commonly-used parameter (for example, `API Key`), a matching default value
+  will be used, see the parameters and defaults in `default_additional_information.json`.
 
 ### Examples
 ```

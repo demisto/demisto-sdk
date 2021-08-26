@@ -439,6 +439,24 @@ def test_update_id_dashboard_negative(mocker, tmpdir):
         assert error.args[0] == 'Missing "name" field in file test - add this field manually'
 
 
+@pytest.mark.parametrize('name', ['MyDashboard', 'MyDashboard ', ' MyDashboard '])
+def test_remove_spaces_end_of_id_and_name(pack, name):
+    """
+    Given
+        - An dashboard which id doesn't ends with whitespaces.
+        - An dashboard which id ends with spaces.
+    When
+        - Running format.
+    Then
+        - Ensure that the json fields (name, id) that need to be changed are changed.
+    """
+    dashboard = pack.create_dashboard(name)
+    dashboard.write_json({'id': name, 'name': name})
+    base_update_json = BaseUpdateJSON(input=dashboard.path)
+    base_update_json.remove_spaces_end_of_id_and_name()
+    assert base_update_json.data['name'] == 'MyDashboard'
+
+
 class TestFormattingLayoutscontainer:
 
     @pytest.fixture(autouse=True)

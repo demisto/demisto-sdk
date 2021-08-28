@@ -868,19 +868,19 @@ def get_ignore_pack_skipped_tests(pack_name: str, modified_pack: str) -> set:
                                 ignore_list.append({'file_name': file_name, 'ignore_code': str(config[section][key])})
             except MissingSectionHeaderError:
                 pass
-    else:
-        if pack_name:
-            for item in ignore_list:
-                file_name = item.get('file_name')
-                if item.get('ignore_code') == PACK_IGNORE_TEST_FLAG:
-                    tests.add(file_name)
-                    # given file is to be ignored, try to get its id directly from yaml
-                    for test in tests:
-                        path = os.path.join(PACKS_DIR, pack_name, TEST_PLAYBOOKS_DIR, test)
-                        if os.path.isfile(path):
-                            test_yaml = get_yaml(path)
-                            if 'id' in test_yaml:
-                                ignored_tests_set.add(test_yaml['id'])
+
+    if pack_name:
+        for item in ignore_list:
+            file_name = item.get('file_name')
+            if item.get('ignore_code') == PACK_IGNORE_TEST_FLAG:
+                tests.add(file_name)
+                # given file is to be ignored, try to get its id directly from yaml
+                for test in tests:
+                    path = os.path.join(PACKS_DIR, pack_name, TEST_PLAYBOOKS_DIR, test)
+                    if os.path.isfile(path):
+                        test_yaml = get_yaml(path)
+                        if 'id' in test_yaml:
+                            ignored_tests_set.add(test_yaml['id'])
     return ignored_tests_set
 
 # def get_ignore_pack_skipped_tests(pack_name: str) -> set:

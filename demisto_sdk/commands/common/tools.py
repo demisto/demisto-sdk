@@ -891,7 +891,7 @@ def get_ignore_pack_skipped_tests(pack_name: str, modified_packs) -> set:
                 pass
 
     for item in ignore_list:
-        file_name = item.get('file_name')
+        file_name = item.get('file_name', '')
         if item.get('ignore_code') == 'auto-test':
             tests.add(file_name)
 

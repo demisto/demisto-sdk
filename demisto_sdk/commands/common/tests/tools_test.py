@@ -667,8 +667,9 @@ def test_get_ignore_pack_tests__ignore_test(tmpdir, mocker):
     # prepare mocks
     mocker.patch.object(tools, "get_pack_ignore_file_path", return_value=pack_ignore_path)
     mocker.patch.object(os.path, "join", return_value=str(test_playbook_path / (test_playbook.name + ".yml")))
+    mocker.patch.object(tools, "get_test_playbook_id", return_value=('SamplePlaybookTest', 'FakeTestPack'))
 
-    ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name, fake_pack_name)
+    ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name, {fake_pack_name})
     assert len(ignore_test_set) == 1
     assert expected_id in ignore_test_set
 

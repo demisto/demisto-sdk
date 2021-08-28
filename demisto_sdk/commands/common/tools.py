@@ -830,7 +830,26 @@ def get_pack_ignore_file_path(pack_name):
     return os.path.join(PACKS_DIR, pack_name, PACKS_PACK_IGNORE_FILE_NAME)
 
 
-def get_ignore_pack_skipped_tests(pack_name: str, modified_pack: str) -> set:
+def get_test_playbook_id(test_playbooks_list: list, tpb_path: str):
+    """
+
+    Args:
+        test_playbooks_list: The test playbook list from id_set
+        tpb_path: test playbook path.
+
+    Returns (Tuple): test playbook name and pack.
+
+    """
+    for test_playbook_dict in test_playbooks_list:
+        test_playbook_name = list(test_playbook_dict.keys())[0]
+        test_playbook_path = test_playbook_dict[test_playbook_name].get('file_path')
+        test_playbook_pack = test_playbook_dict[test_playbook_name].get('pack')
+
+        if tpb_path in test_playbook_path:
+            return test_playbook_name, test_playbook_pack
+
+
+def get_ignore_pack_skipped_tests(pack_name: str, modified_packs) -> set:
     """
     Retrieve the skipped tests of a given pack, as detailed in the .pack-ignore file
 
@@ -839,7 +858,8 @@ def get_ignore_pack_skipped_tests(pack_name: str, modified_pack: str) -> set:
         ignore=auto-test
 
     Arguments:
-        pack name (str): name of the pack
+        pack_name (str): name of the pack
+        modified_packs (set): Set of the modified packs.
 
     Returns:
         ignored_tests_set (set[str]): set of ignored test ids
@@ -848,8 +868,9 @@ def get_ignore_pack_skipped_tests(pack_name: str, modified_pack: str) -> set:
     ignored_tests_set = set()
     tests = set()
     ignore_list = []
-    # id_set = get_content_id_set()
-    if pack_name == modified_pack:
+    id_set = get_content_id_set()
+    test_playbooks = id_set['TestPlaybooks']
+    if pack_name in modified_packs:
         pack_ignore_path = get_pack_ignore_file_path(pack_name)
         if os.path.isfile(pack_ignore_path):
             try:
@@ -869,67 +890,15 @@ def get_ignore_pack_skipped_tests(pack_name: str, modified_pack: str) -> set:
             except MissingSectionHeaderError:
                 pass
 
-    if pack_name:
-        for item in ignore_list:
-            file_name = item.get('file_name')
-            if item.get('ignore_code') == PACK_IGNORE_TEST_FLAG:
-                tests.add(file_name)
-                # given file is to be ignored, try to get its id directly from yaml
-                for test in tests:
-                    path = os.path.join(PACKS_DIR, pack_name, TEST_PLAYBOOKS_DIR, test)
-                    if os.path.isfile(path):
-                        test_yaml = get_yaml(path)
-                        if 'id' in test_yaml:
-                            ignored_tests_set.add(test_yaml['id'])
-    return ignored_tests_set
+    for item in ignore_list:
+        file_name = item.get('file_name')
+        if item.get('ignore_code') == 'auto-test':
+            tests.add(file_name)
 
-# def get_ignore_pack_skipped_tests(pack_name: str) -> set:
-#     """
-#     Retrieve the skipped tests of a given pack, as detailed in the .pack-ignore file
-#
-#     expected ignored tests structure in .pack-ignore:
-#         [file:playbook-Not-To-Run-Directly.yml]
-#         ignore=auto-test
-#
-#     Arguments:
-#         pack name (str): name of the pack
-#
-#     Returns:
-#         ignored_tests_set (set[str]): set of ignored test ids
-#
-#     """
-#     ignore_list = []
-#     ignored_tests_set = set()
-#     if pack_name:
-#         pack_ignore_path = get_pack_ignore_file_path(pack_name)
-#
-#         if os.path.isfile(pack_ignore_path):
-#             try:
-#                 # read pack_ignore using ConfigParser
-#                 config = ConfigParser(allow_no_value=True)
-#                 config.read(pack_ignore_path)
-#
-#                 # go over every file in the config
-#                 for section in config.sections():
-#                     if section.startswith("file:"):
-#                         # given section is of type file
-#                         file_name = section[5:]
-#                         for key in config[section]:
-#                             if key == 'ignore':
-#                                 # group ignore codes to a list
-#                                 ignore_list = str(config[section][key]).split(',')
-#             except MissingSectionHeaderError:
-#                 pass
-#
-#     if PACK_IGNORE_TEST_FLAG in ignore_list:
-#         # given file is to be ignored, try to get its id directly from yaml
-#         path = os.path.join(PACKS_DIR, pack_name, TEST_PLAYBOOKS_DIR, file_name)
-#         if os.path.isfile(path):
-#             test_yaml = get_yaml(path)
-#             if 'id' in test_yaml:
-#                 ignored_tests_set.add(test_yaml['id'])
-#
-#     return ignored_tests_set
+            for test in tests:
+                test_id, test_pack = get_test_playbook_id(test_playbooks, test)
+                ignored_tests_set.add(test_id)
+    return ignored_tests_set
 
 
 def get_all_docker_images(script_obj) -> List[str]:

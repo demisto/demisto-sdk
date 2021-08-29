@@ -831,7 +831,7 @@ def get_pack_ignore_file_path(pack_name):
     return os.path.join(PACKS_DIR, pack_name, PACKS_PACK_IGNORE_FILE_NAME)
 
 
-def get_test_playbook_id(test_playbooks_list: list, tpb_path: str):
+def get_test_playbook_id(test_playbooks_list: list, tpb_path: str) -> Tuple:
     """
 
     Args:
@@ -850,7 +850,7 @@ def get_test_playbook_id(test_playbooks_list: list, tpb_path: str):
             return test_playbook_name, test_playbook_pack
 
 
-def get_ignore_pack_skipped_tests(pack_name: str, modified_packs) -> set:
+def get_ignore_pack_skipped_tests(pack_name: str, modified_packs: set) -> set:
     """
     Retrieve the skipped tests of a given pack, as detailed in the .pack-ignore file
 

@@ -234,19 +234,22 @@ class IDSetValidations(BaseValidator):
         sub_playbooks_list = playbook_data_2nd_level.get("implementing_playbooks", [])
         playbook_integration_commands = self.get_commands_to_integration(playbook_name, file_path)
 
-        if not self.is_entity_version_match_playbook_version(sub_playbooks_list, playbook_version, self.playbook_set,
-                                                             playbook_name, file_path):
-            return False
+        result, error = self.is_entity_version_match_playbook_version(sub_playbooks_list, playbook_version,
+                                                                      self.playbook_set, playbook_name, file_path)
+        if not result:
+            return False, error
 
-        if not self.is_entity_version_match_playbook_version(playbook_scripts_list, playbook_version, self.script_set,
-                                                             playbook_name, file_path):
-            return False
+        result, error = self.is_entity_version_match_playbook_version(playbook_scripts_list, playbook_version,
+                                                                      self.script_set, playbook_name, file_path)
+        if not result:
+            return False, error
 
-        if not self.is_playbook_integration_version_valid(playbook_integration_commands,
-                                                          playbook_version, playbook_name, file_path):
-            return False
+        result, error = self.is_playbook_integration_version_valid(playbook_integration_commands, playbook_version,
+                                                                   playbook_name, file_path)
+        if not result:
+            return False, error
 
-        return True
+        return True, None
 
     def is_subplaybook_name_valid(self, playbook_data, file_path):
         """Checks whether a sub playbook name is valid (i.e id exists in set_id)
@@ -317,31 +320,40 @@ class IDSetValidations(BaseValidator):
         Returns:
             bool. Whether the playbook's version match playbook's entities.
         """
+        invalid_version_entities = []
+        implemented_entities = implemented_entity_list_from_playbook.copy()
+        is_valid = True, None
         for entity_data_dict in entity_set_from_id_set:
-            if not implemented_entity_list_from_playbook:
-                return True
+            if not implemented_entities:
+                break
 
             entity_id = list(entity_data_dict.keys())[0]
             all_entity_fields = entity_data_dict[entity_id]
             entity_name = entity_id if entity_id in implemented_entity_list_from_playbook else all_entity_fields.get(
                 "name")
-
             is_entity_used_in_playbook = entity_name in implemented_entity_list_from_playbook
 
             if is_entity_used_in_playbook:
                 entity_version = all_entity_fields.get("fromversion", "")
                 is_version_valid = not entity_version or LooseVersion(entity_version) <= LooseVersion(
                     main_playbook_version)
-                if is_version_valid:
-                    implemented_entity_list_from_playbook.remove(entity_name)
+                if not is_version_valid:
+                    invalid_version_entities.append(entity_name)
+                implemented_entities.remove(entity_name)
 
-        if implemented_entity_list_from_playbook:
+        if invalid_version_entities:
             error_message, error_code = Errors.content_entity_version_not_match_playbook_version(
-                playbook_name, implemented_entity_list_from_playbook, main_playbook_version)
+                playbook_name, invalid_version_entities, main_playbook_version)
             if self.handle_error(error_message, error_code, file_path):
-                return False
+                is_valid = False, error_message
 
-        return True
+        if implemented_entities:
+            error_message, error_code = Errors.content_entity_is_not_in_id_set(
+                playbook_name, implemented_entities)
+            if self.handle_error(error_message, error_code, file_path):
+                is_valid = False, error_message
+
+        return is_valid
 
     def is_playbook_integration_version_valid(self, playbook_integration_commands, playbook_version, playbook_name,
                                               file_path):
@@ -380,9 +392,9 @@ class IDSetValidations(BaseValidator):
                                                                                                   command,
                                                                                                   playbook_version)
                 if self.handle_error(error_message, error_code, file_path):
-                    return False
+                    return False, error_message
 
-        return True
+        return True, None
 
     def get_integration_version(self, integration_to_search):
         general_version = ""  # i.e integration has no specific version
@@ -428,6 +440,8 @@ class IDSetValidations(BaseValidator):
                 is_valid = self._is_mapper_incident_types_found(mapper_data)
             elif file_type == constants.FileType.PLAYBOOK:
                 playbook_data = get_playbook_data(file_path)
+                is_valid, _ = self._are_playbook_entities_versions_valid(playbook_data, file_path)
+
                 playbook_answers = [self._are_playbook_entities_versions_valid(playbook_data, file_path),
                                     self.is_subplaybook_name_valid(playbook_data, file_path)]
                 is_valid = all(playbook_answers)

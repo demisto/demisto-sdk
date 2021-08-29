@@ -57,7 +57,7 @@ class UpdateReleaseNotesManager:
         # Check whether the packs have some existing RNs already (created manually or by the command)
         self.check_existing_rn(added_files)
 
-        self.handle_api_module_change(modified_files, added_files)  # TODO check BC logic here
+        self.handle_api_module_change(modified_files, added_files)
         self.create_release_notes(modified_files, added_files, old_format_files)
         if len(self.total_updated_packs) > 1:
             print_color('\nSuccessfully updated the following packs:\n' + '\n'.join(self.total_updated_packs),

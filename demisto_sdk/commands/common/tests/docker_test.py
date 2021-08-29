@@ -246,7 +246,7 @@ class TestDockerImage:
         docker_image_validator.docker_image_tag = '1.0.2'
         docker_image_validator.is_valid = True
         docker_image_validator.yml_docker_image = 'demisto/python:1.0.2'
-
+        docker_image_validator.is_iron_bank = False
         assert docker_image_validator.is_docker_image_latest_tag() is False
         assert docker_image_validator.is_latest_tag is False
         assert docker_image_validator.is_docker_image_valid() is False
@@ -350,3 +350,136 @@ class TestDockerImage:
             assert validator.is_valid is False
             assert error in captured.out
             assert code in captured.out
+
+    class TestIronBankDockerParse:
+        def test_get_latest_commit(self, integration, requests_mock):
+            """
+            Given:
+                An example existing project with successful commits in master in Iron Bank.
+            When:
+                Validating docker image of Iron Bank pack.
+            Then:
+                Validates we extract correctly the commit id.
+            """
+            api_url = 'https://repo1.dso.mil/api/v4/projects/dsop%2Fopensource%2Fpalo-alto-networks%2Ftest%2Ftest_project/pipelines'
+            requests_mock.get(
+                api_url,
+                json=[{'id': 433333,
+                       'project_id': 7070,
+                       'sha': 'sha_1',
+                       'ref': 'master',
+                       'status': 'success',
+                       'created_at': '2021-08-19T09:18:35.547Z',
+                       'updated_at': '2021-08-19T09:38:21.743Z',
+                       'web_url': 'https://repo1.dso.mil/dsop/opensource/palo-alto-networks/test/test_project/-/pipelines/433333'},
+                      {'id': 432507,
+                       'project_id': 7070,
+                       'sha': 'sha_2',
+                       'ref': 'master',
+                       'status': 'success',
+                       'created_at': '2021-08-18T22:19:19.843Z',
+                       'updated_at': '2021-08-18T22:40:29.950Z',
+                       'web_url': 'https://repo1.dso.mil/dsop/opensource/palo-alto-networks/test/test_project/-/pipelines/432507'}]
+            )
+
+            DockerImageValidator.file_path = integration.yml.path
+            DockerImageValidator.is_iron_bank = True
+            docker_image_name = 'test/test_project:1.0.2'
+            DockerImageValidator.yml_docker_image = docker_image_name
+            res = DockerImageValidator._get_latest_commit(api_url, docker_image_name)
+            assert 'sha_1' == res
+
+        FAIL_CASES_GET_COMMIT = [
+            ([], 200,
+             'The docker image in your integration/script does not have a tag in Iron Bank. '
+             'Please use only images that are already in Iron Bank, or upload your image to it.'),
+            ({}, 404,
+             'The docker image in your integration/script cannot be found in Iron Bank. '
+             'Please create the image: test/test_project:1.0.2 in Iron Bank.'),
+        ]
+
+        @pytest.mark.parametrize('mock_results, mocked_status, expected', FAIL_CASES_GET_COMMIT)
+        def test_get_latest_commit_fails(self, mocker, integration, requests_mock,
+                                         mock_results, mocked_status, expected):
+            """
+            Given:
+                - A project with no successful commit in master in Iron Bank.
+                - A project that does not exists in Iron Bank.
+            When:
+                Validating docker image of Iron Bank pack.
+            Then:
+                Validates we show the correct error.
+            """
+            api_url = 'https://repo1.dso.mil/api/v4/projects/dsop%2Fopensource%2Fpalo-alto-networks%2Ftest%2Ftest_project/pipelines'
+            requests_mock.get(
+                api_url,
+                status_code=mocked_status,
+                json=mock_results
+            )
+
+            DockerImageValidator.is_iron_bank = True
+            docker_image_name = 'test/test_project:1.0.2'
+            DockerImageValidator.yml_docker_image = docker_image_name
+            DockerImageValidator.file_path = integration.yml.path
+
+            with pytest.raises(Exception) as e:
+                DockerImageValidator._get_latest_commit(api_url, docker_image_name)
+
+            assert str(e.value) == expected
+
+        def test_get_manifest_from_commit(self, integration, requests_mock):
+            """
+            Given:
+                An example existing commit with successful commits in master with Manifest file in Iron Bank.
+            When:
+                Validating docker image of Iron Bank pack.
+            Then:
+                Validates we send the correct request to Iron Bank.
+            """
+            manifest_url = 'https://repo1.dso.mil/api/v4/projects/dsop%2Fopensource%2Fpalo-alto-networks%2Ftest%2F'\
+                           'test_project/repository/files/hardening_manifest.yaml/raw'
+            request_mock = requests_mock.get(
+                manifest_url,
+                text="""apiVersion: v1\nname: opensource/palo-alto-networks/test/test_project\ntags:\n- 1.0.1.23955\n"""
+            )
+
+            DockerImageValidator.file_path = integration.yml.path
+            DockerImageValidator.is_iron_bank = True
+            docker_image_name = 'test/test_project:1.0.2'
+            DockerImageValidator.yml_docker_image = docker_image_name
+            DockerImageValidator._get_manifest_from_commit(manifest_url, 'sha1')
+            assert request_mock.last_request.query == 'ref=sha1'
+            assert request_mock.last_request.path == '/api/v4/projects/dsop%2fopensource%2fpalo-alto-networks%2f' \
+                                                     'test%2ftest_project/repository/files/hardening_manifest.yaml/raw'
+
+        FAIL_CASES_GET_MANIFEST = [
+            ('', 404,
+             'Missing manifest file in the latest successful commit.'),
+        ]
+
+        @pytest.mark.parametrize('mock_results, mocked_status, expected', FAIL_CASES_GET_MANIFEST)
+        def test_get_manifest_from_commit_fails(self, mocker, integration, requests_mock,
+                                                mock_results, mocked_status, expected):
+            """
+            Given:
+                - A project without manifest file in master in Iron Bank.
+            When:
+                Validating docker image of Iron Bank pack.
+            Then:
+                Validates we show the correct error.
+            """
+            manifest_url = 'https://repo1.dso.mil/api/v4/projects/dsop%2Fopensource%2Fpalo-alto-networks%2Ftest%2F' \
+                           'test_project/repository/files/hardening_manifest.yaml/raw'
+            requests_mock.get(
+                manifest_url,
+                status_code=mocked_status,
+                text=mock_results
+            )
+
+            DockerImageValidator.is_iron_bank = True
+            docker_image_name = 'test/test_project:1.0.2'
+            DockerImageValidator.yml_docker_image = docker_image_name
+            DockerImageValidator.file_path = integration.yml.path
+            with pytest.raises(Exception) as e:
+                DockerImageValidator._get_manifest_from_commit(manifest_url, 'sha1')
+            assert str(e.value) == expected

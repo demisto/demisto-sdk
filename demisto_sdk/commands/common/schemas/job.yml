@@ -1,0 +1,359 @@
+type: map
+mapping:
+  id:
+    type: str
+    required: true
+  version:
+    type: int
+    required: true
+  modified:
+    type: str
+    required: true
+  sortValues:
+    type: ' >>> SET THIS MANUALLY <<<'
+    allowempty: true
+    required: true
+  roles:
+    type: ' >>> SET THIS MANUALLY <<<'
+    allowempty: true
+    required: true
+  allRead:
+    type: bool
+    required: true
+  allReadWrite:
+    type: bool
+    required: true
+  previousRoles:
+    type: ' >>> SET THIS MANUALLY <<<'
+    allowempty: true
+    required: true
+  previousAllRead:
+    type: bool
+    required: true
+  previousAllReadWrite:
+    type: bool
+    required: true
+  hasRole:
+    type: bool
+    required: true
+  dbotCreatedBy:
+    type: str
+    allowempty: true
+    required: true
+  ShardID:
+    type: int
+    required: true
+  CustomFields:
+    type: ' >>> SET THIS MANUALLY <<<'
+    allowempty: true
+    required: true
+  account:
+    type: str
+    allowempty: true
+    required: true
+  autime:
+    type: int
+    required: true
+  type:
+    type: str
+    required: true
+  rawType:
+    type: str
+    required: true
+  name:
+    type: str
+    required: true
+  rawName:
+    type: str
+    required: true
+  status:
+    type: int
+    required: true
+  reason:
+    type: str
+    allowempty: true
+    required: true
+  created:
+    type: str
+    required: true
+  occurred:
+    type: str
+    required: true
+  closed:
+    type: str
+    required: true
+  sla:
+    type: int
+    required: true
+  severity:
+    type: int
+    required: true
+  investigationId:
+    type: str
+    allowempty: true
+    required: true
+  labels:
+    type: ' >>> SET THIS MANUALLY <<<'
+    allowempty: true
+    required: true
+  attachment:
+    type: ' >>> SET THIS MANUALLY <<<'
+    allowempty: true
+    required: true
+  details:
+    type: str
+    allowempty: true
+    required: true
+  openDuration:
+    type: int
+    required: true
+  lastOpen:
+    type: str
+    required: true
+  closingUserId:
+    type: str
+    allowempty: true
+    required: true
+  owner:
+    type: str
+    required: true
+  activated:
+    type: str
+    required: true
+  closeReason:
+    type: str
+    allowempty: true
+    required: true
+  rawCloseReason:
+    type: str
+    allowempty: true
+    required: true
+  closeNotes:
+    type: str
+    allowempty: true
+    required: true
+  playbookId:
+    type: str
+    required: true
+  dueDate:
+    type: str
+    required: true
+  reminder:
+    type: str
+    required: true
+  runStatus:
+    type: str
+    required: true
+  notifyTime:
+    type: str
+    required: true
+  phase:
+    type: str
+    allowempty: true
+    required: true
+  rawPhase:
+    type: str
+    allowempty: true
+    required: true
+  isPlayground:
+    type: bool
+    required: true
+  rawJSON:
+    type: str
+    allowempty: true
+    required: true
+  parent:
+    type: str
+    required: true
+  category:
+    type: str
+    required: true
+  rawCategory:
+    type: str
+    required: true
+  linkedIncidents:
+    type: ' >>> SET THIS MANUALLY <<<'
+    allowempty: true
+    required: true
+  linkedCount:
+    type: int
+    required: true
+  droppedCount:
+    type: int
+    required: true
+  sourceInstance:
+    type: str
+    allowempty: true
+    required: true
+  sourceBrand:
+    type: str
+    allowempty: true
+    required: true
+  canvases:
+    type: ' >>> SET THIS MANUALLY <<<'
+    allowempty: true
+    required: true
+  lastJobRunTime:
+    type: str
+    required: true
+  feedBased:
+    type: bool
+    required: true
+  dbotMirrorId:
+    type: str
+    allowempty: true
+    required: true
+  dbotMirrorInstance:
+    type: str
+    allowempty: true
+    required: true
+  dbotMirrorDirection:
+    type: str
+    allowempty: true
+    required: true
+  dbotDirtyFields:
+    type: ' >>> SET THIS MANUALLY <<<'
+    allowempty: true
+    required: true
+  dbotCurrentDirtyFields:
+    type: ' >>> SET THIS MANUALLY <<<'
+    allowempty: true
+    required: true
+  dbotMirrorTags:
+    type: ' >>> SET THIS MANUALLY <<<'
+    allowempty: true
+    required: true
+  dbotMirrorLastSync:
+    type: str
+    required: true
+  isDebug:
+    type: bool
+    required: true
+  startDate:
+    type: str
+    required: true
+  endingType:
+    type: str
+    required: true
+  times:
+    type: int
+    required: true
+  recurrent:
+    type: bool
+    required: true
+  endingDate:
+    type: str
+    required: true
+  humanCron:
+    type: map
+    mapping:
+      timePeriodType:
+        type: str
+        required: true
+      timePeriod:
+        type: int
+        required: true
+  timezoneOffset:
+    type: int
+    required: true
+  cronView:
+    type: bool
+    required: true
+  timezone:
+    type: str
+    required: true
+  scheduled:
+    type: bool
+    required: true
+  packID:
+    type: str
+    required: true
+  itemVersion:
+    type: str
+    required: true
+  fromServerVersion:
+    type: str
+    allowempty: true
+    required: true
+  toServerVersion:
+    type: str
+    allowempty: true
+    required: true
+  propagationLabels:
+    type: list
+    required: true
+  packPropagationLabels:
+    type: list
+    required: true
+  definitionId:
+    type: str
+    allowempty: true
+    required: true
+  vcShouldIgnore:
+    type: bool
+    required: true
+  vcShouldKeepItemLegacyProdMachine:
+    type: bool
+    required: true
+  commitMessage:
+    type: str
+    allowempty: true
+    required: true
+  shouldCommit:
+    type: bool
+    required: true
+  minutesToTimeout:
+    type: int
+    required: true
+  description:
+    type: str
+    allowempty: true
+    required: true
+  currentIncidentId:
+    type: str
+    required: true
+  lastRunTime:
+    type: str
+    required: true
+  nextRunTime:
+    type: str
+    required: true
+  displayNextRunTime:
+    type: str
+    required: true
+  disabledNextRunTime:
+    type: str
+    required: true
+  schedulingStatus:
+    type: str
+    required: true
+  previousRunStatus:
+    type: str
+    required: true
+  tags:
+    type: list
+    required: true
+  shouldTriggerNew:
+    type: bool
+    required: true
+  closePrevRun:
+    type: bool
+    required: true
+  notifyOwner:
+    type: bool
+    required: true
+  isFeed:
+    type: bool
+    required: true
+  selectedFeeds:
+    type: list
+    required: true
+  isAllFeeds:
+    type: bool
+    required: true
+  locked:
+    type: bool
+    required: true
+  system:
+    type: bool
+    required: true

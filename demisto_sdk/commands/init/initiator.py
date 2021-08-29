@@ -415,10 +415,14 @@ class Initiator:
 
     def ignore_secrets(self, secrets):
         pack_dir = get_pack_name(self.full_output_path)
-        with open(f'Packs/{pack_dir}/.secrets-ignore', 'a') as f:
-            for secret in secrets:
-                f.write(secret)
-                f.write('\n')
+        try:
+            with open(f'Packs/{pack_dir}/.secrets-ignore', 'a') as f:
+                for secret in secrets:
+                    f.write(secret)
+                    f.write('\n')
+        except FileNotFoundError:
+            print_warning(f"Could not find the .secrets-ignore file - make sure your path is correct "
+                          f"and is of format Packs/my_pack_name")
 
     def integration_init(self) -> bool:
         """Creates a new integration according to a template.

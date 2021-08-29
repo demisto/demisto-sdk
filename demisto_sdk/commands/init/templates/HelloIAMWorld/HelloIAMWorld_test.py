@@ -123,7 +123,7 @@ class TestGetUserCommand:
         assert outputs.get('errorMessage') == 'message: details'
 
 
-class CreateUserCommand:
+class TestCreateUserCommand:
     def test_create_user_command__success(self, mocker):
         """
         Given:
@@ -182,7 +182,7 @@ class CreateUserCommand:
         assert outputs.get('details', {}).get('last_name') == 'mock_last_name'
 
 
-class UpdateUserCommand:
+class TestUpdateUserCommand:
     def test_update_user_command__non_existing_user(self, mocker):
         """
         Given:
@@ -273,7 +273,7 @@ class UpdateUserCommand:
         assert outputs.get('details', {}).get('last_name') == 'mock_last_name'
 
 
-class DisableUserCommand:
+class TestDisableUserCommand:
     def test_disable_user_command__non_existing_user(self, mocker):
         """
         Given:

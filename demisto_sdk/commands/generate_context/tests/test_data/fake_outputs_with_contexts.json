@@ -30,9 +30,9 @@
     "type": "Number"
   },
   {
-    "contextPath": "File.Extension",
+    "contextPath": "File.Check",
     "description": "",
-    "type": "String"
+    "type": "Boolean"
   },
   {
     "contextPath": "File.Type",

@@ -1044,7 +1044,7 @@ def process_indicator_types(file_path: str, print_logs: bool, all_integrations: 
     Args:
         file_path: The file path from indicator type folder
         print_logs: Whether to print logs to stdout
-        all_integrations: The integrations section in the id set
+        all_integrations: The integrations section in the id-set
 
     Returns:
         a list of indicator type data.
@@ -1111,7 +1111,7 @@ def process_general_items(file_path: str, print_logs: bool, expected_file_types:
         file_path: The file path from an item folder
         print_logs: Whether to print logs to stdout
         expected_file_types: specific file type to parse, will ignore the rest
-        data_extraction_func: a function that given a file path will returns an ID set data dict.
+        data_extraction_func: a function that given a file path will returns an id-set data dict.
 
     Returns:
         a list of item data.
@@ -1386,7 +1386,7 @@ class IDSet:
 
 def merge_id_sets_from_files(first_id_set_path, second_id_set_path, output_id_set_path, print_logs: bool = True):
     """
-    Merges two id sets. Loads them from files and saves the merged unified id_set into output_id_set_path.
+    Merges two id-sets. Loads them from files and saves the merged unified id_set into output_id_set_path.
     """
     with open(first_id_set_path, mode='r') as f1:
         first_id_set = json.load(f1)

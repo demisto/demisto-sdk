@@ -8,6 +8,7 @@
 * Added to **update-release-notes** command support for `Generic Object Module`
 * Added to the **create artifacts** command support for release notes configuration file.
 * Added validation to **validate** for release notes config file.
+* Added **isoversize** and **isautoswitchedtoquietmode** fields to the playbook schema.
 
 # 1.4.8
 * Fixed an issue where yml files with `!reference` failed to load properly.

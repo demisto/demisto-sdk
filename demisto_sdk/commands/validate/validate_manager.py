@@ -61,6 +61,8 @@ from demisto_sdk.commands.common.hook_validations.playbook import \
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.hook_validations.release_notes import \
     ReleaseNotesValidator
+from demisto_sdk.commands.common.hook_validations.release_notes_config import \
+    ReleaseNotesConfigValidator
 from demisto_sdk.commands.common.hook_validations.report import ReportValidator
 from demisto_sdk.commands.common.hook_validations.reputation import \
     ReputationValidator
@@ -130,8 +132,7 @@ class ValidateManager:
                                                    ignored_errors=None,
                                                    print_as_warnings=self.print_ignored_errors,
                                                    id_set_file=self.id_set_file,
-                                                   json_file_path=json_file_path) \
-            if validate_id_set else None
+                                                   json_file_path=json_file_path) if validate_id_set else None
 
         try:
             self.git_util = GitUtil(repo=Content.git())
@@ -480,6 +481,10 @@ class ValidateManager:
                                                    is_modified)
             else:
                 click.secho('Skipping release notes validation', fg='yellow')
+
+        elif file_type == FileType.RELEASE_NOTES_CONFIG:
+            return self.validate_release_notes_config(file_path, pack_error_ignore_list)
+
         elif file_type == FileType.DESCRIPTION:
             return self.validate_description(file_path, pack_error_ignore_list)
 
@@ -733,6 +738,24 @@ class ValidateManager:
             return release_notes_validator.is_file_valid()
 
         return True
+
+    def validate_release_notes_config(self, file_path: str, pack_error_ignore_list: list) -> bool:
+        """
+        Builds validator for RN config file and returns its validation results.
+        Args:
+            file_path (str): Path to RN config file.
+            pack_error_ignore_list (list): Pack error ignore list.
+
+        Returns:
+            (bool): Whether RN config file is valid.
+        """
+        pack_name = get_pack_name(file_path)
+        if pack_name == 'NonSupported':
+            return True
+        release_notes_config_validator = ReleaseNotesConfigValidator(file_path, ignored_errors=pack_error_ignore_list,
+                                                                     print_as_warnings=self.print_ignored_errors,
+                                                                     json_file_path=self.json_file_path)
+        return release_notes_config_validator.is_file_valid()
 
     def validate_playbook(self, structure_validator, pack_error_ignore_list, file_type):
         playbook_validator = PlaybookValidator(structure_validator, ignored_errors=pack_error_ignore_list,

@@ -1358,6 +1358,26 @@ def test_compare_context_path_in_yml_and_readme_vs_code_format_invalid():
     assert 'ServiceNow.Ticket.OpenedBy' in diffs.get('servicenow-create-ticket').get('only in yml')
 
 
+def test_get_definition_name():
+    """
+    Given
+    - The path to a generic field/generic type file.
+
+    When
+    - the file has a connected generic definition
+
+    Then:
+    - Ensure the returned name is the connected definitions name.
+    """
+
+    pack_path = f'{git_path()}/demisto_sdk/tests/test_files/generic_testing'
+    field_path = pack_path + "/GenericFields/Object/genericfield-Sample.json"
+    type_path = pack_path + "/GenericTypes/Object/generictype-Sample.json"
+
+    assert tools.get_definition_name(field_path, pack_path) == 'Object'
+    assert tools.get_definition_name(type_path, pack_path) == 'Object'
+
+
 def test_gitlab_ci_yml_load():
     """
         Given:
@@ -1378,3 +1398,18 @@ def test_gitlab_ci_yml_load():
         assert False
 
     assert res is None
+
+
+IRON_BANK_CASES = [
+    ({'tags': []}, False),  # case no tags
+    ({'tags': ['iron bank']}, False),  # case some other tags than "Iron Bank"
+    ({'tags': ['Iron Bank', 'other_tag']}, True),  # case Iron Bank tag exist
+    ({}, False)  # case no tags
+]
+
+
+@pytest.mark.parametrize('metadata, expected', IRON_BANK_CASES)
+def test_is_iron_bank_pack(mocker, metadata, expected):
+    mocker.patch.object(tools, 'get_pack_metadata', return_value=metadata)
+    res = tools.is_iron_bank_pack('example_path')
+    assert res == expected

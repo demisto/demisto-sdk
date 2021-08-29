@@ -53,6 +53,7 @@ class Pack:
         self.playbooks: List[Playbook] = list()
         self.test_playbooks: List[Playbook] = list()
         self.release_notes: List[TextBased] = list()
+        self.release_notes_config: List[JSONBased] = list()
         # Create base pack
         self._pack_path = packs_dir / name
         self._pack_path.mkdir()
@@ -404,10 +405,17 @@ class Pack:
         self.test_playbooks.append(playbook)
         return playbook
 
-    def create_release_notes(self, version: str, content: str = ''):
+    def create_release_notes(self, version: str, content: str = '', is_bc: bool = False):
         rn = self._create_text_based(f'{version}.md', content, dir_path=self._release_notes)
         self.release_notes.append(rn)
+        if is_bc:
+            self.create_release_notes_config(version, {'breakingChanges': True})
         return rn
+
+    def create_release_notes_config(self, version: str, content: dict):
+        rn_config = self._create_json_based(f'{version}', '', content, dir_path=self._release_notes)
+        self.release_notes_config.append(rn_config)
+        return rn_config
 
     def create_doc_file(self, name: str = 'image') -> File:
         doc_file_dir = self._pack_path / 'doc_files'

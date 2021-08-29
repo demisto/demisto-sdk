@@ -1131,8 +1131,7 @@ class TestFormatWithoutAddTestsFlag:
         """
         runner = CliRunner()
         integration_path = f'{DUMMY_PACK_FOLDER}Integrations'
-        test = self.remove_tests_key_from_yml(f'{integration_path}{os.sep}UploadTest{os.sep}UploadTest.yml')
-        print(f'%%%: {test} %%%%')
+        self.remove_tests_key_from_yml(f'{integration_path}{os.sep}UploadTest{os.sep}UploadTest.yml')
         result = runner.invoke(main, [FORMAT_CMD, '-i', integration_path, '-at'])
         prompt = f'The file {integration_path}{os.sep}UploadTest{os.sep}' \
                  f'UploadTest.yml has no test playbooks configured. Do you want to configure it with "No tests"?'

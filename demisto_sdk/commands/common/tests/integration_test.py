@@ -324,7 +324,7 @@ class TestIntegrationValidator:
     DEFAULT_ARGS_MISSING_DEFAULT_PARAM_WHEN_NOT_ALLOWED = [
         {"name": "email", "arguments": [{"name": "verbose", "required": False, "default": False, "isArray": True}]}]
     DEFAULT_ARGS_NOT_ARRAY = [
-        {"name": "email", "arguments": [{"name": "email", "required": False, "default": True, "isArray": True},
+        {"name": "email", "arguments": [{"name": "email", "required": False, "default": True, "isArray": False},
                                         {"name": "verbose"}]}]
     DEFAULT_ARGS_INPUTS = [
         (DEFAULT_ARGS_DIFFERENT_ARG_NAME, True),

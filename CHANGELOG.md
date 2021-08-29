@@ -5,6 +5,7 @@
 * The **format** command will now remove trailing whitespaces from content items' id and name fields.
 * Fixed an issue where the **generate-test-playbook** command would not place the playbook in the proper folder.
 * Added to **validate** command a validation that packs with `Iron Bank` uses the latest docker from Iron Bank.
+* Added to **update-release-notes** command support for `Generic Object Module`
 * Added to the **create artifacts** command support for release notes configuration file.
 * Added validation to **validate** for release notes config file.
 

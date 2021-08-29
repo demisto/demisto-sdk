@@ -1430,45 +1430,45 @@ def test_get_test_playbook_id():
 
     """
     test_playbook_id_set = [{
-       "HelloWorld-Test": {
-           "name": "HelloWorld-Test",
-           "file_path": "Packs/HelloWorld/TestPlaybooks/playbook-HelloWorld-Test.yml",
-           "fromversion": "5.0.0",
-           "implementing_scripts": [
-               "HelloWorldScript",
-               "DeleteContext",
-               "FetchFromInstance"
-           ],
-           "command_to_integration": {
-               "helloworld-say-hello": "",
-               "helloworld-search-alerts": ""
-           },
-           "pack": "HelloWorld"
-       }
-    },
-    {
-        "HighlightWords_Test": {
-            "name": "HighlightWords - Test",
-            "file_path": "Packs/CommonScripts/TestPlaybooks/playbook-HighlightWords_-_Test.yml",
+        "HelloWorld-Test": {
+            "name": "HelloWorld-Test",
+            "file_path": "Packs/HelloWorld/TestPlaybooks/playbook-HelloWorld-Test.yml",
+            "fromversion": "5.0.0",
             "implementing_scripts": [
-                "VerifyHumanReadableContains",
-                "HighlightWords"
+                "HelloWorldScript",
+                "DeleteContext",
+                "FetchFromInstance"
             ],
-            "pack": "CommonScripts"
+            "command_to_integration": {
+                "helloworld-say-hello": "",
+                "helloworld-search-alerts": ""
+            },
+            "pack": "HelloWorld"
         }
     },
-    {
-        "HTTPListRedirects - Test SSL": {
-            "name": "HTTPListRedirects - Test SSL",
-            "file_path": "Packs/CommonScripts/TestPlaybooks/playbook-HTTPListRedirects_-_Test_SSL.yml",
-            "implementing_scripts": [
-                "PrintErrorEntry",
-                "HTTPListRedirects",
-                "DeleteContext"
-            ],
-            "pack": "CommonScripts"
-        }
-    }]
+        {
+            "HighlightWords_Test": {
+                "name": "HighlightWords - Test",
+                "file_path": "Packs/CommonScripts/TestPlaybooks/playbook-HighlightWords_-_Test.yml",
+                "implementing_scripts": [
+                    "VerifyHumanReadableContains",
+                    "HighlightWords"
+                ],
+                "pack": "CommonScripts"
+            }
+        },
+        {
+            "HTTPListRedirects - Test SSL": {
+                "name": "HTTPListRedirects - Test SSL",
+                "file_path": "Packs/CommonScripts/TestPlaybooks/playbook-HTTPListRedirects_-_Test_SSL.yml",
+                "implementing_scripts": [
+                    "PrintErrorEntry",
+                    "HTTPListRedirects",
+                    "DeleteContext"
+                ],
+                "pack": "CommonScripts"
+            }
+        }]
 
     test_name = 'playbook-HelloWorld-Test.yml'
     test_playbook_name, test_playbook_pack = get_test_playbook_id(test_playbook_id_set, test_name)

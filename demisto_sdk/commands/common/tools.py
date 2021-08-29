@@ -848,6 +848,8 @@ def get_test_playbook_id(test_playbooks_list: list, tpb_path: str) -> Tuple:
 
         if tpb_path in test_playbook_path:
             return test_playbook_name, test_playbook_pack
+        else:
+            return None, None
 
 
 def get_ignore_pack_skipped_tests(pack_name: str, modified_packs: set) -> set:

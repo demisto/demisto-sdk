@@ -38,17 +38,20 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type, get_json,
                                                print_warning)
 from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
 
+# todo necessary?
 CONTENT_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
                     'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
                     'Layouts', 'Reports', 'Widgets', 'Mappers', 'Packs', 'GenericTypes',
-                    'GenericFields', 'GenericModules', 'GenericDefinitions']
+                    'GenericFields', 'GenericModules', 'GenericDefinitions', 'Jobs']
 
+# todo necessary?
 ID_SET_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Classifiers',
                    'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
                    'Layouts', 'Reports', 'Widgets', 'Mappers', 'GenericTypes', 'GenericFields', 'GenericModules',
-                   'GenericDefinitions']
+                   'GenericDefinitions', 'Jobs']
 
 BUILT_IN_FIELDS = [
+    # todo anything to update?
     "name",
     "details",
     "severity",
@@ -430,6 +433,7 @@ def get_dependent_incident_and_indicator_fields(data_dictionary):
         if input_value_dict and isinstance(input_value_dict, dict):  # deprecated playbooks bug
             dependent_incident_fields.update(get_incident_fields_by_playbook_input(input_value_dict))
 
+    # todo anything job-related here?
     return dependent_incident_fields, dependent_indicator_fields
 
 
@@ -1092,6 +1096,31 @@ def process_generic_items(file_path: str, print_logs: bool,
     return res
 
 
+def process_jobs(file_path: str, print_logs: bool, jobs_list: list = None) -> list:
+    # todo use generic JSON instead?
+    """
+    Process a JSON file representing a Job object.
+    Args:
+        file_path: The file path from object field folder
+        print_logs: Whether to print logs to stdout.
+        jobs_list: List of all Jobs objects in the system.
+
+    Returns:
+        a list of Job data.
+    """
+    result = []
+    try:
+        if find_type(file_path) == FileType.Job:
+            if print_logs:
+                print(f'adding {file_path} to id_set')
+            result.append(get_job_data(file_path, jobs_list))
+        # todo else?
+    except Exception as exp:  # noqa
+        print_error(f'failed to process job {file_path}, Error: {str(exp)}')
+        raise
+    return result
+
+
 def process_general_items(file_path: str, print_logs: bool, expected_file_types: Tuple[FileType],
                           data_extraction_func: Callable) -> list:
     """
@@ -1281,6 +1310,52 @@ def get_generic_field_data(path, generic_types_list):
     fromversion = json_data.get('fromVersion')
     toversion = json_data.get('toVersion')
     pack = get_pack_name(path)
+    all_associated_types: set = set()
+    all_scripts = set()
+    definitionId = json_data.get('definitionId')
+
+    associated_types = json_data.get('associatedTypes')
+    if associated_types:
+        all_associated_types = set(associated_types)
+
+    system_associated_types = json_data.get('systemAssociatedTypes')
+    if system_associated_types:
+        all_associated_types = all_associated_types.union(set(system_associated_types))
+
+    if 'all' in all_associated_types:
+        all_associated_types = {list(generic_type.keys())[0] for generic_type in generic_types_list}
+
+    scripts = json_data.get('script')
+    if scripts:
+        all_scripts = {scripts}
+
+    field_calculations_scripts = json_data.get('fieldCalcScript')
+    if field_calculations_scripts:
+        all_scripts = all_scripts.union({field_calculations_scripts})
+
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
+
+    if all_associated_types:
+        data['generic_types'] = list(all_associated_types)
+    if all_scripts:
+        data['scripts'] = list(all_scripts)
+    if definitionId:
+        data['definitionId'] = definitionId
+
+    return {id_: data}
+
+
+def get_job_data(path, job_list):
+    # todo all of it
+    raise NotImplementedError()
+    json_data = get_json(path)
+
+    id_ = json_data.get('id')
+    name = json_data.get('name', '')
+    fromversion = json_data.get('fromVersion')
+    toversion = json_data.get('toVersion')
+    pack = get_pack_name(path)
+
     all_associated_types: set = set()
     all_scripts = set()
     definitionId = json_data.get('definitionId')
@@ -1509,6 +1584,8 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     generic_fields_list = []
     generic_modules_list = []
     generic_definitions_list = []
+    jobs_list = []
+
     packs_dict: Dict[str, Dict] = {}
 
     pool = Pool(processes=int(cpu_count()))
@@ -1747,6 +1824,15 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
 
         progress_bar.update(1)
 
+        if 'Jobs' in objects_to_create:
+            print_color("\nStarting iteration over Jobs", LOG_COLORS.GREEN)
+            print_color(f"pack to create: {pack_to_create}", LOG_COLORS.YELLOW)
+            for arr in pool.map(partial(process_jobs, print_logs=print_logs),
+                                get_generic_entities_paths(GENERIC_TYPES_DIR, pack_to_create)):
+                jobs_list.extend(arr)
+
+        progress_bar.update(1)
+
     new_ids_dict = OrderedDict()
     # we sort each time the whole set in case someone manually changed something
     # it shouldn't take too much time
@@ -1769,6 +1855,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     new_ids_dict['GenericFields'] = sort(generic_fields_list)
     new_ids_dict['GenericModules'] = sort(generic_modules_list)
     new_ids_dict['GenericDefinitions'] = sort(generic_definitions_list)
+    new_ids_dict['Jobs'] = sort(jobs_list)
 
     exec_time = time.time() - start_time
     print_color("Finished the creation of the id_set. Total time: {} seconds".format(exec_time), LOG_COLORS.GREEN)

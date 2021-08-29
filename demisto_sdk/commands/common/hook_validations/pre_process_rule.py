@@ -18,10 +18,7 @@ class PreProcessRuleValidator(ContentEntityValidator):
         self.from_version = self.current_file.get('fromServerVersion')
         self.to_version = self.current_file.get('toServerVersion')
 
-    def is_valid_file(self, validate_rn=True):
-        return self.is_valid_pre_process_rules()
-
-    def is_valid_pre_process_rules(self, validate_rn=True, id_set_file=None, is_ci=False) -> bool:
+    def is_valid_pre_process_rule(self, validate_rn=True, id_set_file=None, is_ci=False) -> bool:
         """Check whether the pre_process_rules is valid or not.
 
         Returns:
@@ -85,11 +82,23 @@ class PreProcessRuleValidator(ContentEntityValidator):
         """
         ret_value: List[str] = []
 
-        if section_name in self.current_file:
-            for current_section_item in self.current_file.get(section_name, []):
-                if current_section_item['left']['isContext']:
-                    ret_value.append(current_section_item['left']['value']['simple'])
+        for current_section_item in self.current_file.get(section_name, []):
+            if current_section_item['left']['isContext']:
+                ret_value.append(current_section_item['left']['value']['simple'])
+            if current_section_item['right']['isContext']:
+                right_value_simple = str(current_section_item['right']['value']['simple'])
+                right_value_simple = PreProcessRuleValidator.get_field_name(right_value_simple)
+                ret_value.append(right_value_simple)
 
+        return ret_value
+
+    @staticmethod
+    def get_field_name(src: str) -> str:
+        ret_value = src
+        if ret_value.startswith("${"):
+            ret_value = ret_value[2:]
+        if ret_value.endswith("}"):
+            ret_value = ret_value[:-1]
         return ret_value
 
     def is_script_exists(self, id_set_file, is_ci) -> bool:
@@ -107,7 +116,7 @@ class PreProcessRuleValidator(ContentEntityValidator):
 
         scripts = id_set_file['scripts', []]
         for current_script in scripts:
-            script_id = current_script.keys()[0]
+            script_id = list(current_script.keys())[0]
             if script_name == current_script[script_id]['name']:
                 return True
 
@@ -122,16 +131,7 @@ class PreProcessRuleValidator(ContentEntityValidator):
         if not is_ci:
             return True
 
-        if not id_set_file:
-            click.secho("Skipping PreProcessRule incident field validation. Could not read id_set.json.", fg="yellow")
-            return True
-
-        script_name = self.current_file.get('scriptName', '')
-        if script_name:
-            # TODO Check that the script exists
-            pass
-
-        fields = id_set_file['IncidentFields'] + id_set_file['IndicatorFields']
+        fields = id_set_file['IncidentFields']
         field_ids = {list(field.keys())[0] for field in fields}
 
         pre_process_rule_fields = self.get_all_incident_fields()

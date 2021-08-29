@@ -897,7 +897,8 @@ def get_ignore_pack_skipped_tests(pack_name: str, modified_packs) -> set:
 
             for test in tests:
                 test_id, test_pack = get_test_playbook_id(test_playbooks, test)
-                ignored_tests_set.add(test_id)
+                if test_id:
+                    ignored_tests_set.add(test_id)
     return ignored_tests_set
 
 

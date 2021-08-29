@@ -1,3 +1,4 @@
+import json
 import os
 from os.path import isfile
 from shutil import copyfile
@@ -378,3 +379,19 @@ class TestGetMatchingRegex:
 
         for test_path in non_acceptable:
             assert not checked_type_by_reg(test_path, compared_regexes=regex)
+
+    RELEASE_NOTES_CONFIG_SCHEME_INPUTS = [(dict(), True),
+                                          ({'breakingChanges': True}, True),
+                                          ({'breakingChanges': False}, True),
+                                          ({'breakingChanges': True, 'breakingChangesNotes': 'BC'}, True),
+                                          ({'breakingChanges': False, 'breakingChangesNotes': 'BC'}, True),
+                                          ({'breakingChanges': 'true', 'breakingChangesNotes': 'BC'}, False),
+                                          ({'breakingChanges': True, 'breakingChangesNotes': True}, False)]
+
+    @pytest.mark.parametrize('release_notes_config, expected', RELEASE_NOTES_CONFIG_SCHEME_INPUTS)
+    def test_release_notes_config_scheme(self, tmpdir, release_notes_config: dict, expected: bool):
+        file_path: str = f'{tmpdir}/1_0_1.json'
+        with open(file_path, 'w') as f:
+            f.write(json.dumps(release_notes_config))
+        validator = StructureValidator(file_path=file_path, predefined_scheme='releasenotesconfig')
+        assert validator.is_valid_scheme() is expected

@@ -31,8 +31,9 @@ from demisto_sdk.commands.common.constants import (
     ID_IN_COMMONFIELDS, ID_IN_ROOT, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
     INDICATOR_FIELDS_DIR, INTEGRATIONS_DIR, LAYOUTS_DIR,
     OFFICIAL_CONTENT_ID_SET_PATH, PACK_IGNORE_TEST_FLAG,
-    PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
-    PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
+    PACK_METADATA_IRON_BANK_TAG, PACKAGE_SUPPORTING_DIRECTORIES,
+    PACKAGE_YML_FILE_REGEX, PACKS_DIR, PACKS_DIR_REGEX,
+    PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
     PACKS_README_FILE_NAME, PLAYBOOKS_DIR, RELEASE_NOTES_DIR,
     RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR,
     TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, XSOAR_CONFIG_FILE,
@@ -1023,6 +1024,11 @@ def find_type_by_path(path: str = '') -> Optional[FileType]:
             return FileType.DESCRIPTION
 
         return FileType.CHANGELOG
+
+    if path.endswith('.json'):
+        if RELEASE_NOTES_DIR in path:
+            return FileType.RELEASE_NOTES_CONFIG
+
     # integration image
     if path.endswith('_image.png') and not path.endswith("Author_image.png"):
         return FileType.IMAGE
@@ -2004,3 +2010,8 @@ def suppress_stdout():
             yield
         finally:
             sys.stdout = old_stdout
+
+
+def is_iron_bank_pack(file_path):
+    metadata = get_pack_metadata(file_path)
+    return PACK_METADATA_IRON_BANK_TAG in metadata.get('tags', [])

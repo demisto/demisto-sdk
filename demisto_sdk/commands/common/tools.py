@@ -1138,6 +1138,9 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
         if 'auditable' in _dict:
             return FileType.GENERIC_DEFINITION
 
+        if 'lastJobRunTime' in _dict:
+            return FileType.JOB
+
         # When using it for all files validation- sometimes 'id' can be integer
         if 'id' in _dict:
             if isinstance(_dict['id'], str):
@@ -1724,7 +1727,7 @@ def get_file_displayed_name(file_path):
         return get_yaml(file_path).get('name')
     elif file_type in [FileType.MAPPER, FileType.CLASSIFIER, FileType.INCIDENT_FIELD, FileType.INCIDENT_TYPE,
                        FileType.INDICATOR_FIELD, FileType.LAYOUTS_CONTAINER, FileType.DASHBOARD, FileType.WIDGET,
-                       FileType.REPORT]:
+                       FileType.REPORT, FileType.JOB]:
         return get_json(file_path).get('name')
     elif file_type == FileType.OLD_CLASSIFIER:
         return get_json(file_path).get('brandName')

@@ -68,7 +68,7 @@ GENERIC_FIELD = 'genericfield'
 GENERIC_TYPE = 'generictype'
 GENERIC_MODULE = 'genericmodule'
 GENERIC_DEFINITION = 'genericdefinition'
-JOB = "job"
+JOB = 'job'
 
 class FileType(Enum):
     INTEGRATION = 'integration'
@@ -134,7 +134,8 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.GENERIC_DEFINITION: 'Objects',
     FileType.GENERIC_MODULE: 'Modules',
     FileType.GENERIC_TYPE: 'Object Types',
-    FileType.GENERIC_FIELD: 'Object Fields'
+    FileType.GENERIC_FIELD: 'Object Fields',
+    FileType.JOB: 'Jobs'
 }
 
 ENTITY_TYPE_TO_DIR = {
@@ -158,7 +159,8 @@ ENTITY_TYPE_TO_DIR = {
     FileType.GENERIC_DEFINITION.value: GENERIC_DEFINITIONS_DIR,
     FileType.GENERIC_MODULE.value: GENERIC_MODULES_DIR,
     FileType.GENERIC_FIELD.value: GENERIC_FIELDS_DIR,
-    FileType.GENERIC_TYPE.value: GENERIC_TYPES_DIR
+    FileType.GENERIC_TYPE.value: GENERIC_TYPES_DIR,
+    FileType.JOB.value: JOBS_DIR
 }
 
 CONTENT_FILE_ENDINGS = ['py', 'yml', 'png', 'json', 'md']
@@ -184,6 +186,7 @@ CONTENT_ENTITIES_DIRS = [
     GENERIC_TYPES_DIR,
     GENERIC_MODULES_DIR,
     GENERIC_DEFINITIONS_DIR,
+    JOBS_DIR
 ]
 
 CONTENT_ENTITY_UPLOAD_ORDER = [
@@ -198,7 +201,8 @@ CONTENT_ENTITY_UPLOAD_ORDER = [
     CLASSIFIERS_DIR,
     WIDGETS_DIR,
     LAYOUTS_DIR,
-    DASHBOARDS_DIR
+    DASHBOARDS_DIR,
+    JOBS_DIR
 ]
 
 DEFAULT_IMAGE_PREFIX = 'data:image/png;base64,'
@@ -439,6 +443,9 @@ PACKS_CLASSIFIERS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{CLASSIFIERS_DIR}'
 _PACKS_CLASSIFIER_BASE_REGEX = fr'{PACKS_CLASSIFIERS_DIR_REGEX}\/*classifier-(?!mapper).*(?<!5_9_9)'
 PACKS_CLASSIFIER_JSON_REGEX = fr'{_PACKS_CLASSIFIER_BASE_REGEX}\.json'
 
+JOBS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{JOBS_DIR}'
+JOB_JSON_REGEX = fr'{JOBS_DIR_REGEX}\/job-([^/]+)\.json'
+
 # old classifier structure
 _PACKS_CLASSIFIER_BASE_5_9_9_REGEX = fr'{PACKS_CLASSIFIERS_DIR_REGEX}\/*classifier-(?!mapper).*_5_9_9'
 PACKS_CLASSIFIER_JSON_5_9_9_REGEX = fr'{_PACKS_CLASSIFIER_BASE_5_9_9_REGEX}\.json'
@@ -524,6 +531,7 @@ ID_IN_ROOT = [  # entities in which 'id' key is in the root
     'incident_type',
     'layoutscontainer',
     'mapper',
+    # todo job?
 ]
 
 INTEGRATION_PREFIX = 'integration'
@@ -691,6 +699,10 @@ JSON_ALL_REPORTS_REGEXES = [
     PACKS_REPORT_JSON_REGEX
 ]
 
+JSON_ALL_JOB_REGEXES = [
+    JOB_JSON_REGEX
+]
+
 CHECKED_TYPES_REGEXES = [
     # Playbooks
     PLAYBOOK_YML_REGEX,
@@ -729,6 +741,8 @@ CHECKED_TYPES_REGEXES = [
     PACKS_RELEASE_NOTES_REGEX,
     PACKS_TOOLS_REGEX,
     CONNECTIONS_REGEX,
+    JOB_JSON_REGEX,
+
     # ReleaseNotes
     PACKS_RELEASE_NOTES_REGEX
 ]
@@ -772,6 +786,7 @@ DIR_LIST_FOR_REGULAR_ENTETIES = [
     INDICATOR_TYPES_DIR,
     CONNECTIONS_DIR,
     INDICATOR_FIELDS_DIR,
+    # todo jobs here?
 ]
 PACKS_DIRECTORIES = [
     SCRIPTS_DIR,
@@ -784,7 +799,8 @@ PACKS_DIRECTORIES = [
     INCIDENT_TYPES_DIR,
     REPORTS_DIR,
     CONNECTIONS_DIR,
-    PLAYBOOKS_DIR
+    PLAYBOOKS_DIR,
+    JOBS_DIR
 ]
 SPELLCHECK_FILE_TYPES = [
     PACKS_INTEGRATION_YML_REGEX,
@@ -981,7 +997,8 @@ SCHEMA_TO_REGEX = {
     'genericfield': JSON_ALL_GENERIC_FIELDS_REGEXES,
     'generictype': JSON_ALL_GENERIC_TYPES_REGEXES,
     'genericmodule': JSON_ALL_GENERIC_MODULES_REGEXES,
-    'genericdefinition': JSON_ALL_GENERIC_DEFINITIONS_REGEXES
+    'genericdefinition': JSON_ALL_GENERIC_DEFINITIONS_REGEXES,
+    'job': JSON_ALL_JOB_REGEXES # todo jobs?
 }
 
 EXTERNAL_PR_REGEX = r'^pull/(\d+)$'
@@ -1283,6 +1300,7 @@ class ContentItems(Enum):
     GENERIC_DEFINITIONS = 'genericdefinition'
     GENERIC_FIELDS = 'genericfield'
     GENERIC_TYPES = 'generictype'
+    JOB = 'job'
 
 
 YML_SUPPORTED_FOLDERS = {
@@ -1302,7 +1320,8 @@ JSON_SUPPORTED_FOLDERS = {
     LAYOUTS_DIR,
     INDICATOR_TYPES_DIR,
     REPORTS_DIR,
-    WIDGETS_DIR
+    WIDGETS_DIR,
+    JOBS_DIR
 }
 
 CONTENT_ITEMS_DISPLAY_FOLDERS = {
@@ -1317,7 +1336,8 @@ CONTENT_ITEMS_DISPLAY_FOLDERS = {
     INDICATOR_TYPES_DIR,
     LAYOUTS_DIR,
     CLASSIFIERS_DIR,
-    WIDGETS_DIR
+    WIDGETS_DIR,
+    JOBS_DIR
 }
 
 

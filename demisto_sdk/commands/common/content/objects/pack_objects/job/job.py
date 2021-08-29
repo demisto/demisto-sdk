@@ -17,11 +17,11 @@ class Job(JSONContentObject):
 
     def upload(self, client: demisto_client):
         # return client.job_upload() # todo
-        pass  # todo
+        raise NotImplementedError()
 
     def download(self, client: demisto_client):
         # return demisto_client.download_job('??') # todo
-        pass  # todo
+        raise NotImplementedError()
 
     def type(self):
         return FileType.JOB

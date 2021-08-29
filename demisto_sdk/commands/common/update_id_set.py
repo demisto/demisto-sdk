@@ -1135,7 +1135,7 @@ def process_test_playbook_path(file_path: str, print_logs: bool) -> tuple:
 
     Arguments:
         file_path {string} -- path to yaml file
-        print_logs {bool} -- whether to print logs to stdoud
+        print_logs {bool} -- whether to print logs to stdout
 
     Returns:
         pair -- first element is a playbook second is a script. each may be None

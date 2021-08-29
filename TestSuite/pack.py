@@ -413,7 +413,7 @@ class Pack:
         return rn
 
     def create_release_notes_config(self, version: str, content: dict):
-        rn_config = self._create_json_based(f'{version}.json', '', content, dir_path=self._release_notes)
+        rn_config = self._create_json_based(f'{version}', '', content, dir_path=self._release_notes)
         self.release_notes_config.append(rn_config)
         return rn_config
 

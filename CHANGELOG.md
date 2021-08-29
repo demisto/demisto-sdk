@@ -6,6 +6,7 @@
 * Fixed an issue where the **generate-test-playbook** command would not place the playbook in the proper folder.
 * Added to **validate** command a validation that packs with `Iron Bank` uses the latest docker from Iron Bank.
 * Added to the **create artifacts** command support for release notes configuration file.
+* Added validation to **validate** for release notes config file.
 
 # 1.4.8
 * Fixed an issue where yml files with `!reference` failed to load properly.

@@ -310,7 +310,7 @@ class TestIntegrationValidator:
         assert validator.is_valid_subtype() is answer
 
     DEFAULT_ARGS_DIFFERENT_ARG_NAME = [
-        {"name": "cve", "arguments": [{"name": "cve_id", "required": False, "default": True}]}]
+        {"name": "cve", "arguments": [{"name": "cve_id", "required": False, "default": True, 'isArray': True}]}]
     DEFAULT_ARGS_MISSING_UNREQUIRED_DEFAULT_FIELD = [
         {"name": "email", "arguments": [{"name": "email", "required": False, "default": True}, {"name": "verbose"}]}]
     DEFAULT_ARGS_MISSING_DEFAULT_PARAM_WHEN_ALLOWED = [
@@ -323,7 +323,7 @@ class TestIntegrationValidator:
     DEFAULT_ARGS_MISSING_DEFAULT_PARAM_WHEN_NOT_ALLOWED = [
         {"name": "email", "arguments": [{"name": "verbose", "required": False, "default": False}]}]
     DEFAULT_ARGS_NOT_ARRAY = [
-        {"name": "email", "arguments": [{"name": "email", "required": False, "default": True, "isArray": False},
+        {"name": "email", "arguments": [{"name": "email", "required": False, "default": True, "isArray": True},
                                         {"name": "verbose"}]}]
     DEFAULT_ARGS_INPUTS = [
         (DEFAULT_ARGS_DIFFERENT_ARG_NAME, True),

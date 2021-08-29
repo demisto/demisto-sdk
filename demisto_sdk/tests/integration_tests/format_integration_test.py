@@ -1163,7 +1163,7 @@ class TestFormatWithoutAddTestsFlag:
         assert prompt not in result.output
         assert message in result.output
 
-    def test_format_scripts_folder(self):
+    def test_format_script_without_test_flag(self, pack):
         """
             Given
             - An script folder.
@@ -1178,18 +1178,16 @@ class TestFormatWithoutAddTestsFlag:
             -  Ensure a message for formatting automatically the yaml file is added.
         """
         runner = CliRunner()
-        script_path = f'{DUMMY_PACK_FOLDER}Scripts'
-        self.remove_tests_key_from_yml(f'{script_path}{os.sep}DummyScript{os.sep}DummyScript.yml')
-        result = runner.invoke(main, [FORMAT_CMD, '-i', script_path])
-        prompt = f'The file {script_path}{os.sep}DummyScript{os.sep}' \
-                 f'DummyScript.yml has no test playbooks configured. Do you want to configure it with "No tests" '
-        message = f'Formatting {script_path}{os.sep}DummyScript{os.sep}DummyScript.yml with "No tests"'
+        script = pack.create_script()
+        script.create_default_script()
+        script.yml.update({'fromversion': '5.5.0'})
+        result = runner.invoke(main, [FORMAT_CMD, '-i', script.yml.path])
+        prompt = f'The file {script.yml.path}' \
+                 f'{script.name} has no test playbooks configured. Do you want to configure it with "No tests" '
+        message = f'Formatting {script.yml.path} with "No tests"'
         assert not result.exception
         assert prompt not in result.output
         assert message in result.output
-
-        tests_value_from_yml = self.remove_tests_key_from_yml(f'{script_path}{os.sep}DummyScript{os.sep}DummyScript.yml')
-        assert tests_value_from_yml == 'No tests (auto formatted)'
 
     def test_format_playbooks_folder(self):
         """

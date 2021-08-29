@@ -1,12 +1,14 @@
 # Changelog
 * Added validation that the support URL in partner contribution pack metadata does not lead to a GitHub repo.
 * Enhanced ***generate-docs*** with default `additionalinformation` (description) for common parameters.
-* Added the *hidden* field to the integration argument schema.
-* Added a validation to ensure reputation command's default argument is set as an array input.
-
-# 1.4.8
-* Fixed an issue where yml files with `!reference` failed to load properly.
-* Added validation that the support URL in partner contribution pack metadata does not lead to a GitHub repo.
+* Added to **validate** command a validation that a content item's id and name will not end with spaces.
+* The **format** command will now remove trailing whitespaces from content items' id and name fields.
+* Fixed an issue where the **generate-test-playbook** command would not place the playbook in the proper folder.
+* Added to **validate** command a validation that packs with `Iron Bank` uses the latest docker from Iron Bank.
+* Added to **update-release-notes** command support for `Generic Object Module`
+* Added to the **create artifacts** command support for release notes configuration file.
+* Added validation to **validate** for release notes config file.
+* Added **isoversize** and **isautoswitchedtoquietmode** fields to the playbook schema.
 
 # 1.4.8
 * Fixed an issue where yml files with `!reference` failed to load properly.

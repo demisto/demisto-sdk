@@ -37,7 +37,7 @@
   {
     "contextPath": "File.Type",
     "description": "",
-    "type": "String"
+    "type": "Unknown"
   },
   {
     "contextPath": "File.EntryID",

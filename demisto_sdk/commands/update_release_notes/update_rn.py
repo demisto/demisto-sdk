@@ -117,7 +117,7 @@ class UpdateRN:
                 docker_image_name = None
             changed_files[(file_name, file_type)] = {
                 'description': get_file_description(packfile, file_type),
-                'is_new_file': True if packfile in self.added_files else False,
+                'is_new_file': packfile in self.added_files,
                 'fromversion': get_from_version_at_update_rn(packfile),
                 'dockerimage': docker_image_name
             }
@@ -509,7 +509,7 @@ class UpdateRN:
                 rn_desc += '\n'
             else:
                 rn_desc = f'##### {content_name}\n'
-                if self.update_type == 'maintenance':
+                if self.update_type == 'maintenance':  # todo typo
                     rn_desc += '- Maintenance and stability enhancements.\n'
                 elif self.update_type == 'documentation':
                     rn_desc += '- Documentation and metadata improvements.\n'
@@ -546,7 +546,7 @@ class UpdateRN:
                 continue
 
             _header_by_type = RN_HEADER_BY_FILE_TYPE.get(_type)
-
+            # todo what is the expected behaviour for Job?
             if _type in (FileType.CONNECTION, FileType.INCIDENT_TYPE, FileType.REPUTATION, FileType.LAYOUT,
                          FileType.INCIDENT_FIELD):
                 rn_desc = f'\n- **{content_name}**'
@@ -687,9 +687,10 @@ def get_file_description(path, file_type) -> str:
         yml_file = get_yaml(path)
         return yml_file.get('comment', '')
 
-    elif file_type in (FileType.CLASSIFIER, FileType.REPORT, FileType.WIDGET, FileType.DASHBOARD):
+    elif file_type in (FileType.CLASSIFIER, FileType.REPORT, FileType.WIDGET, FileType.DASHBOARD, FileType.JOB):
+        # todo should job use CommitMessage instead?
         json_file = get_json(path)
-        return json_file.get('description', '')
+        return json_file.get('description', '')  # todo perhaps not return if the value is empty?
 
     return '%%UPDATE_RN%%'
 

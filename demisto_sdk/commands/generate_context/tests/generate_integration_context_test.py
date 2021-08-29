@@ -7,12 +7,14 @@ from demisto_sdk.commands.common.tools import get_json, get_yaml, write_yml
 FILES_PATH = os.path.normpath(
     os.path.join(__file__, git_path(), 'demisto_sdk', 'tests', 'test_files'))
 
-FAKE_INTEGRATION_YML = get_yaml(os.path.join(FILES_PATH, 'fake_integration_empty_output.yml'))
+# Test data files
+FAKE_INTEGRATION_YML = get_yaml(
+    f'{git_path()}/demisto_sdk/commands/generate_context/tests/test_data/fake_integration_empty_output.yml')
 FAKE_OUTPUT_CONTEXTS = get_json(
-    os.path.join(FILES_PATH, 'fake_outputs_with_contexts.json'))
+    f'{git_path()}/demisto_sdk/commands/generate_context/tests/test_data/fake_outputs_with_contexts.json')
 FAKE_OUTPUTS = get_json(
-    os.path.join(FILES_PATH, 'fake_outputs.json'))
-FAKE_EXAMPLES_FILE = os.path.join(FILES_PATH, 'fake_examples.txt')
+    f'{git_path()}/demisto_sdk/commands/generate_context/tests/test_data/fake_outputs.json')
+FAKE_EXAMPLES_FILE = f'{git_path()}/commands/demisto_sdk/generate_context/tests/test_data/fake_examples.txt'
 
 
 def test_generate_context_from_outputs():
@@ -32,7 +34,7 @@ def test_generate_context_from_outputs():
                                               "ffe::fef:fefe:fefee:fefe"],
                                 "last_seen": 1629200550561,
                                 "name": "Accounting-web-1",
-                                "status": "on",
+                                "status": 1,
                                 "tenant_name": "esx10/lab_a/Apps/Accounting"}}}'''
 
     assert dict_from_outputs_str('!some-test-command=172.16.1.111',
@@ -54,7 +56,7 @@ def test_generate_context_from_outputs():
                      'type': 'String'},
                     {'contextPath': 'Guardicore.Endpoint.status',
                      'description': '',
-                     'type': 'String'},
+                     'type': 'Number'},
                     {'contextPath': 'Guardicore.Endpoint.tenant_name',
                      'description': '',
                      'type': 'String'}]}
@@ -94,12 +96,15 @@ def test_insert_outputs(mocker):
     mocker.patch.object(generate_integration_context,
                         'build_example_dict',
                         return_value=(
-                            {command_name: (None, None, json.dumps(FAKE_OUTPUTS))},
+                            {command_name: (
+                                None, None, json.dumps(FAKE_OUTPUTS))},
                             []))
 
     yml_data = FAKE_INTEGRATION_YML
 
-    yml_data = generate_integration_context.insert_outputs(yml_data, command_name, FAKE_OUTPUT_CONTEXTS)
+    yml_data = generate_integration_context.insert_outputs(yml_data,
+                                                           command_name,
+                                                           FAKE_OUTPUT_CONTEXTS)
     for command in yml_data['script']['commands']:
         if command.get('name') == command_name:
             assert command['outputs'] == FAKE_OUTPUT_CONTEXTS
@@ -122,8 +127,7 @@ def test_generate_integration_context(mocker, tmpdir):
     mocker.patch.object(generate_integration_context,
                         'build_example_dict',
                         return_value=(
-                            {command_name: (None, None, json.dumps(FAKE_OUTPUTS))},
-                            []))
+                            {command_name: (None, None, json.dumps(FAKE_OUTPUTS))}, []))
 
     # Temp file to check
     filename = os.path.join(tmpdir.strpath, 'fake_integration.yml')
@@ -136,7 +140,10 @@ def test_generate_integration_context(mocker, tmpdir):
             command['outputs'] = ''
             break
 
-    generate_integration_context.generate_integration_context(filename, FAKE_EXAMPLES_FILE, insecure=True, verbose=False)
+    generate_integration_context.generate_integration_context(filename,
+                                                              FAKE_EXAMPLES_FILE,
+                                                              insecure=True,
+                                                              verbose=False)
 
     # Check we have new data
     yml_data = get_yaml(filename)

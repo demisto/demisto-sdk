@@ -20,14 +20,14 @@
     "type": "String"
   },
   {
-    "contextPath": "File.Info",
+    "contextPath": "File.Date",
     "description": "",
-    "type": "String"
+    "type": "Date"
   },
   {
     "contextPath": "File.Size",
     "description": "",
-    "type": "String"
+    "type": "Number"
   },
   {
     "contextPath": "File.Extension",

@@ -1076,7 +1076,7 @@ def generate_context(**kwargs):
         print_error(f'Command examples file was not found {examples}.')
 
     if file_type == FileType.INTEGRATION:
-        generate_integration_context(input_path, examples, insecure, verbose)
+        return generate_integration_context(input_path, examples, insecure, verbose)
     else:
         print_error(f'File type {file_type.value} is not supported.')
         return 1

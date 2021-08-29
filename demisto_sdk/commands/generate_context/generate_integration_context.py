@@ -99,4 +99,5 @@ def generate_integration_context(
             raise
         else:
             print_error(f'Error: {str(ex)}')
-            return
+            return 1
+    return 0

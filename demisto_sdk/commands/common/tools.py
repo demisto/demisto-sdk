@@ -2063,7 +2063,7 @@ def get_script_or_sub_playbook_tasks_from_playbook(searched_entity_name: str, ma
     if not tasks:
         return searched_tasks
 
-    for task_id, task_data in tasks.items():
+    for task_data in tasks.values():
         task_details = task_data.get('task', {})
         found_entity = searched_entity_name in {task_details.get('scriptName'), task_details.get('playbookName')}
 

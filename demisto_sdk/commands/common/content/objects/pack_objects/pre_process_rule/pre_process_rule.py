@@ -3,31 +3,16 @@ from typing import Union
 import demisto_client
 from wcmatch.pathlib import Path
 
-from demisto_sdk.commands.common.constants import PRE_PROCESS_RULES, FileType
+from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import \
     JSONContentObject
 
-PRE_PROCESS_RULES_PREFIX = 'preprocessrule-'
+PRE_PROCESS_RULES_PREFIX = 'preprocessrule'
 
 
 class PreProcessRule(JSONContentObject):
     def __init__(self, path: Union[Path, str]):
-        super().__init__(path, PRE_PROCESS_RULES)
-
-    def normalize_file_name(self) -> str:
-        """Add prefix to file name if not exists.
-
-        Examples:
-            1. "hello-world.json" -> "preprocessrule-hello-world.json"
-            2. "preprocessrule-hello-world.json" -> "preprocessrule-hello-world.json"
-
-        Returns:
-            str: Normalize file name.
-        """
-        output_basename = self._path.name
-        if not output_basename.startswith(PRE_PROCESS_RULES_PREFIX):
-            output_basename = PRE_PROCESS_RULES_PREFIX + output_basename
-        return output_basename
+        super().__init__(path, PRE_PROCESS_RULES_PREFIX)
 
     def upload(self, client: demisto_client):
         """

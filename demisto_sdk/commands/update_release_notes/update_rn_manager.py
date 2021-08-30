@@ -51,7 +51,7 @@ class UpdateReleaseNotesManager:
             self.given_pack = get_pack_name(self.given_pack)  # extract pack from path
 
         # Find which files were changed from git
-        modified_files, added_files, _, old_format_files = self.get_git_changed_files()
+        modified_files, added_files, old_format_files = self.get_git_changed_files()
         self.changed_packs_from_git = get_pack_names_from_files(modified_files).union(
             get_pack_names_from_files(added_files)).union(get_pack_names_from_files(old_format_files))
         # Check whether the packs have some existing RNs already (created manually or by the command)
@@ -63,29 +63,70 @@ class UpdateReleaseNotesManager:
             print_color('\nSuccessfully updated the following packs:\n' + '\n'.join(self.total_updated_packs),
                         LOG_COLORS.GREEN)
 
-    def get_git_changed_files(self) -> Tuple[set, set, set, set]:
+    def filter_to_relevant_files(self, file_set: set, validate_manager: ValidateManager) -> Tuple[set, set]:
+        """
+        Given a file set, filter it to only files which require RN and if given, from a specific pack
+        """
+        filtered_set = set()
+        if self.given_pack:
+            for file in file_set:
+                if isinstance(file, tuple):
+                    file_path = str(file[1])
+
+                else:
+                    file_path = str(file)
+
+                file_pack_name = get_pack_name(file_path)
+                if file_pack_name not in self.given_pack:
+                    continue
+
+                filtered_set.add(file)
+
+        return validate_manager.filter_to_relevant_files(filtered_set)
+
+    def filter_files_from_git(self, modified_files: set, added_files: set, renamed_files: set,
+                              validate_manager: ValidateManager):
+        """
+        Filter the raw file sets to only the relevant files for RN
+        """
+        filtered_modified, old_format_files = self.filter_to_relevant_files(modified_files, validate_manager)
+        filtered_renamed, _ = self.filter_to_relevant_files(renamed_files, validate_manager)
+        filtered_modified = filtered_modified.union(filtered_renamed)
+        filtered_added, new_files_in_old_format = self.filter_to_relevant_files(added_files, validate_manager)
+        old_format_files = old_format_files.union(new_files_in_old_format)
+        return filtered_modified, filtered_added, old_format_files
+
+    def setup_validate_manager(self):
+        return ValidateManager(skip_pack_rn_validation=True, prev_ver=self.prev_ver,
+                               silence_init_prints=True, skip_conf_json=True, check_is_unskipped=False,
+                               file_path=self.given_pack)
+
+    def get_git_changed_files(self) -> Tuple[set, set, set]:
         """ Get the changed files from git (added, modified, old format, metadata).
 
             :return:
-                4 sets:
                 - The filtered modified files (including the renamed files)
                 - The filtered added files
-                - The changed metadata files
                 - The modified old-format files (legacy unified python files)
         """
         try:
-            validate_manager = ValidateManager(skip_pack_rn_validation=True, prev_ver=self.prev_ver,
-                                               silence_init_prints=True, skip_conf_json=True, check_is_unskipped=False)
+            validate_manager = self.setup_validate_manager()
             if not validate_manager.git_util:  # in case git utils can't be initialized.
                 raise git.InvalidGitRepositoryError('unable to connect to git.')
             validate_manager.setup_git_params()
             if self.given_pack:
-                # The Validator prints errors which are related to all changed files that were changed against prev
-                # version. When the user is giving a specific pack to update, we want to suppress the error messages
-                # which are related to other packs.
                 with suppress_stdout():
-                    return validate_manager.get_changed_files_from_git()
-            return validate_manager.get_changed_files_from_git()
+                    # The Validator prints errors which are related to all changed files that
+                    # were changed against prev version. When the user is giving a specific pack to update,
+                    # we want to suppress the error messages which are related to other packs.
+                    modified_files, added_files, renamed_files = \
+                        validate_manager.get_unfiltered_changed_files_from_git()
+                    return self.filter_files_from_git(modified_files, added_files, renamed_files, validate_manager)
+
+            modified_files, added_files, renamed_files = \
+                validate_manager.get_unfiltered_changed_files_from_git()
+            return self.filter_files_from_git(modified_files, added_files, renamed_files, validate_manager)
+
         except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:
             raise FileNotFoundError(
                 "You are not running `demisto-sdk update-release-notes` command in the content repository.\n"

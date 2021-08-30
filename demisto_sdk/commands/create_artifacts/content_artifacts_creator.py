@@ -590,7 +590,7 @@ def dump_packs(artifact_manager: ArtifactsManager, pool: ProcessPool) -> List[Pr
     return futures
 
 
-def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport:
+def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport:  # noqa: C901
     """ Dumping content/Packs/<pack_id>/ into:
             1. content_test
             2. content_new
@@ -679,6 +679,9 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
     for release_note in pack.release_notes:
         pack_report += ObjectReport(release_note, content_packs=True)
         release_note.dump(artifact_manager.content_packs_path / pack.id / RELEASE_NOTES_DIR)
+    for release_note_config in pack.release_notes_config:
+        pack_report += ObjectReport(release_note_config, content_packs=True)
+        release_note_config.dump(artifact_manager.content_packs_path / pack.id / RELEASE_NOTES_DIR)
 
     for tool in pack.tools:
         object_report = ObjectReport(tool, content_packs=True)

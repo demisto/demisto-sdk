@@ -93,6 +93,7 @@ class FileType(Enum):
     CONNECTION = 'canvas-context-connections'
     README = 'readme'
     RELEASE_NOTES = 'releasenotes'
+    RELEASE_NOTES_CONFIG = 'releasenotesconfig'
     DESCRIPTION = 'description'
     CHANGELOG = 'changelog'
     IMAGE = 'image'

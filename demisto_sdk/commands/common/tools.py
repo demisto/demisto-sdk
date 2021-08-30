@@ -1024,6 +1024,11 @@ def find_type_by_path(path: str = '') -> Optional[FileType]:
             return FileType.DESCRIPTION
 
         return FileType.CHANGELOG
+
+    if path.endswith('.json'):
+        if RELEASE_NOTES_DIR in path:
+            return FileType.RELEASE_NOTES_CONFIG
+
     # integration image
     if path.endswith('_image.png') and not path.endswith("Author_image.png"):
         return FileType.IMAGE
@@ -2014,6 +2019,40 @@ def suppress_stdout():
             yield
         finally:
             sys.stdout = old_stdout
+
+
+def get_definition_name(path: str, pack_path: str) -> Optional[str]:
+    r"""
+        param:
+            path (str): path to the file which needs a definition name (generic field\generic type file)
+            pack_path (str): relevant pack path
+
+        :rtype: ``str``
+        :return:
+            for generic type and generic field return associated generic definition name folder
+
+    """
+
+    try:
+        file_dictionary = get_json(path)
+        definition_id = file_dictionary['definitionId']
+        generic_def_path = os.path.join(pack_path, 'GenericDefinitions')
+        file_names_lst = os.listdir(generic_def_path)
+        for file in file_names_lst:
+            if str.find(file, definition_id):
+                def_file_path = os.path.join(generic_def_path, file)
+                def_file_dictionary = get_json(def_file_path)
+                cur_id = def_file_dictionary["id"]
+                if cur_id == definition_id:
+                    return def_file_dictionary["name"]
+
+        print("Was unable to find the file for definitionId " + definition_id)
+        return None
+
+    except FileNotFoundError or AttributeError:
+        print("Error while retrieving definition name for definitionId " + definition_id +
+              "\n Check file structure and make sure all relevant fields are entered properly")
+        return None
 
 
 def is_iron_bank_pack(file_path):

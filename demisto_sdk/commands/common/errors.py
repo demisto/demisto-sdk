@@ -1598,8 +1598,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def unknown_field_in_pre_process_rules(field_name):
-        return f'Unknown field in Pre Process Rule: {field_name}'
+    def unknown_fields_in_pre_process_rules(fields_names: str):
+        return f'Unknown field(s) in Pre Process Rule: {fields_names}'
 
     @staticmethod
     @error_code_decorator

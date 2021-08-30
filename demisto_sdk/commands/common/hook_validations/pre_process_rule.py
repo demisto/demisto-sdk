@@ -132,15 +132,14 @@ class PreProcessRuleValidator(ContentEntityValidator):
             return True
 
         fields = id_set_file['IncidentFields']
-        field_ids = {list(field.keys())[0] for field in fields}
+        id_set_fields = {list(field.keys())[0] for field in fields}
 
         pre_process_rule_fields = self.get_all_incident_fields()
 
-        ret_value: bool = True
-        for current_pre_process_rule_fields in pre_process_rule_fields:
-            if current_pre_process_rule_fields not in field_ids:
-                error_message, error_code = Errors.unknown_field_in_pre_process_rules(current_pre_process_rule_fields)
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
-                    ret_value = False
+        invalid_fields = set(pre_process_rule_fields) - id_set_fields
+        if invalid_fields:
+            error_message, error_code = Errors.unknown_fields_in_pre_process_rules(', '.join(invalid_fields))
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
 
-        return ret_value
+        return True

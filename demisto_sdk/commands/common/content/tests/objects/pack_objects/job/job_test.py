@@ -1,7 +1,9 @@
 from pathlib import Path
 
-from demisto_sdk.commands.common.content.objects.pack_objects.job.job import Job
-from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
+from demisto_sdk.commands.common.content.objects.pack_objects.job.job import \
+    Job
+from demisto_sdk.commands.common.content.objects_factory import \
+    path_to_pack_object
 
 sample_file_path = Path('sample-job.json')
 

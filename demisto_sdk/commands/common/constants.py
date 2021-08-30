@@ -70,6 +70,7 @@ GENERIC_MODULE = 'genericmodule'
 GENERIC_DEFINITION = 'genericdefinition'
 JOB = 'job'
 
+
 class FileType(Enum):
     INTEGRATION = 'integration'
     SCRIPT = 'script'
@@ -112,6 +113,7 @@ class FileType(Enum):
     GENERIC_TYPE = 'generictype'
     GENERIC_DEFINITION = 'genericdefinition'
     JOB = 'job'
+
 
 RN_HEADER_BY_FILE_TYPE = {
     FileType.PLAYBOOK: 'Playbooks',
@@ -998,7 +1000,7 @@ SCHEMA_TO_REGEX = {
     'generictype': JSON_ALL_GENERIC_TYPES_REGEXES,
     'genericmodule': JSON_ALL_GENERIC_MODULES_REGEXES,
     'genericdefinition': JSON_ALL_GENERIC_DEFINITIONS_REGEXES,
-    'job': JSON_ALL_JOB_REGEXES # todo jobs?
+    'job': JSON_ALL_JOB_REGEXES  # todo jobs?
 }
 
 EXTERNAL_PR_REGEX = r'^pull/(\d+)$'

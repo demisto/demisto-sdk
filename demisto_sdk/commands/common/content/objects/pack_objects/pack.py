@@ -17,22 +17,21 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    INCIDENT_TYPES_DIR,
                                                    INDICATOR_FIELDS_DIR,
                                                    INDICATOR_TYPES_DIR,
-                                                   INTEGRATIONS_DIR,
+                                                   INTEGRATIONS_DIR, JOBS_DIR,
                                                    LAYOUTS_DIR,
                                                    PACK_VERIFY_KEY,
                                                    PLAYBOOKS_DIR,
                                                    RELEASE_NOTES_DIR,
                                                    REPORTS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
-                                                   TOOLS_DIR, WIDGETS_DIR,
-                                                   JOBS_DIR)
+                                                   TOOLS_DIR, WIDGETS_DIR)
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     AgentTool, AuthorImage, Classifier, ClassifierMapper, Connection,
     Contributors, Dashboard, DocFile, GenericDefinition, GenericField,
     GenericModule, GenericType, IncidentField, IncidentType, IndicatorField,
-    IndicatorType, Integration, LayoutObject, OldClassifier, PackIgnore,
+    IndicatorType, Integration, Job, LayoutObject, OldClassifier, PackIgnore,
     PackMetaData, Playbook, Readme, ReleaseNote, Report, Script, SecretIgnore,
-    Widget, Job)
+    Widget)
 from demisto_sdk.commands.common.content.objects_factory import \
     path_to_pack_object
 from demisto_sdk.commands.test_content import tools

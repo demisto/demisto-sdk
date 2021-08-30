@@ -2056,7 +2056,7 @@ def get_script_or_sub_playbook_tasks_from_playbook(searched_entity_name: str, ma
     """Get the tasks data for a task running the searched_entity_name (script/playbook).
 
     Returns:
-        Set. A set of dicts representing tasks running the searched_entity_name.
+        List. A list of dicts representing tasks running the searched_entity_name.
     """
     searched_tasks: List = []
     tasks = main_playbook_data.get('tasks', {})

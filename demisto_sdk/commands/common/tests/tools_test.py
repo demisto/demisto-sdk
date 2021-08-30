@@ -26,9 +26,9 @@ from demisto_sdk.commands.common.tools import (
     get_last_remote_release_version, get_latest_release_notes_text,
     get_pack_metadata, get_relative_path_from_packs_dir,
     get_release_note_entries, get_release_notes_file_path, get_ryaml,
-    get_to_version, has_remote_configured, is_origin_content_repo,
-    is_pack_path, is_uuid, retrieve_file_ending, run_command_os,
-    server_version_compare, get_test_playbook_id)
+    get_test_playbook_id, get_to_version, has_remote_configured,
+    is_origin_content_repo, is_pack_path, is_uuid, retrieve_file_ending,
+    run_command_os, server_version_compare)
 from demisto_sdk.tests.constants_test import (IGNORED_PNG,
                                               INDICATORFIELD_EXTRA_FIELDS,
                                               SOURCE_FORMAT_INTEGRATION_COPY,
@@ -1429,23 +1429,24 @@ def test_get_test_playbook_id():
         - Ensure that the currect test name returned.
 
     """
-    test_playbook_id_set = [{
-        "HelloWorld-Test": {
-            "name": "HelloWorld-Test",
-            "file_path": "Packs/HelloWorld/TestPlaybooks/playbook-HelloWorld-Test.yml",
-            "fromversion": "5.0.0",
-            "implementing_scripts": [
-                "HelloWorldScript",
-                "DeleteContext",
-                "FetchFromInstance"
-            ],
-            "command_to_integration": {
-                "helloworld-say-hello": "",
-                "helloworld-search-alerts": ""
-            },
-            "pack": "HelloWorld"
-        }
-    },
+    test_playbook_id_set = [
+        {
+            "HelloWorld-Test": {
+                "name": "HelloWorld-Test",
+                "file_path": "Packs/HelloWorld/TestPlaybooks/playbook-HelloWorld-Test.yml",
+                "fromversion": "5.0.0",
+                "implementing_scripts": [
+                    "HelloWorldScript",
+                    "DeleteContext",
+                    "FetchFromInstance"
+                ],
+                "command_to_integration": {
+                    "helloworld-say-hello": "",
+                    "helloworld-search-alerts": ""
+                },
+                "pack": "HelloWorld"
+            }
+        },
         {
             "HighlightWords_Test": {
                 "name": "HighlightWords - Test",

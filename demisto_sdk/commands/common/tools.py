@@ -831,7 +831,7 @@ def get_pack_ignore_file_path(pack_name):
     return os.path.join(PACKS_DIR, pack_name, PACKS_PACK_IGNORE_FILE_NAME)
 
 
-def get_test_playbook_id(test_playbooks_list: list, tpb_path: str) -> Tuple:
+def get_test_playbook_id(test_playbooks_list: list, tpb_path: str) -> Tuple:  # type: ignore
     """
 
     Args:

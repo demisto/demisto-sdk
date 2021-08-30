@@ -809,18 +809,6 @@ class TestPlaybookEntitiesVersionsValid:
             "SubPlaybook_version_5_5"
         ]
     }}
-    playbook_with_invalid_integration_version = {"Example Playbook": {
-        "name": "Example Playbook",
-        "file_path": playbook_path,
-        "fromversion": "3.0.0",
-        "pack": "Example",
-        "command_to_integration": {
-            "test-command": [
-                "Integration_version_4",
-                "Integration_version_5"
-            ]
-        }
-    }}
     playbook_with_sub_playbook_not_in_id_set = {"Example Playbook": {
         "name": "Example Playbook",
         "file_path": playbook_path,
@@ -934,6 +922,8 @@ class TestPlaybookEntitiesVersionsValid:
 
         """
         pack = repo.create_pack("Pack1")
+        playbook = pack.create_playbook('MyPlay')
+        playbook.create_default_playbook()
         self.validator.playbook_set = self.id_set["playbooks"]
         self.validator.integration_set = self.id_set["integrations"]
         self.validator.script_set = self.id_set["scripts"]
@@ -941,31 +931,101 @@ class TestPlaybookEntitiesVersionsValid:
         with ChangeCWD(repo.path):
 
             is_sub_playbook_invalid, error = self.validator._are_playbook_entities_versions_valid(
-                self.playbook_with_sub_playbook_not_in_id_set, pack.path)
+                self.playbook_with_sub_playbook_not_in_id_set, playbook.yml.path)
             assert not is_sub_playbook_invalid
             assert "do not exist in the id_set" in error
 
             # all playbook's entities has valid versions
             is_playbook_version_valid, error = self.validator._are_playbook_entities_versions_valid(
-                self.playbook_with_valid_versions, pack.path)
+                self.playbook_with_valid_versions, playbook.yml.path)
             assert is_playbook_version_valid
             assert error is None
 
             # playbook uses scripts with invalid versions
             is_script_version_invalid, error = self.validator._are_playbook_entities_versions_valid(
-                self.playbook_with_invalid_scripts_version, pack.path)
+                self.playbook_with_invalid_scripts_version, playbook.yml.path)
             assert not is_script_version_invalid
 
             # playbook uses sub playbooks with invalid versions
             is_sub_playbook_version_invalid, error = self.validator._are_playbook_entities_versions_valid(
-                self.playbook_with_invalid_sub_playbook_version, pack.path)
+                self.playbook_with_invalid_sub_playbook_version, playbook.yml.path)
             assert not is_sub_playbook_version_invalid
 
+    def test_are_playbook_entities_versions_valid_integration_commands(self, repo, mocker):
+        """
+
+        Given
+            - an id_set file
+            - a Playbook those entities:
+                * command_to_integration
+
+        When
+            - _are_playbook_entities_versions_valid is called
+
+        Then
+            - Validates that integrations version match the playbook version.
+        """
+        pack = repo.create_pack("Pack1")
+        playbook = pack.create_playbook('MyPlay')
+        playbook.create_default_playbook()
+
+        # setup validator
+        validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+        validator.playbook_set = [{
+            playbook.name: {
+                'name': playbook.name,
+                'fromversion': "5.5.0",
+                "file_path": playbook.yml.path,
+                "command_to_integration": {
+                    "test-command": [
+                        "Integration_version_4",
+                        "Integration_version_5"
+                    ]
+                }
+            }
+        }]
+
+        validator.integration_set = self.id_set["integrations"]
+        validator.script_set = self.id_set["scripts"]
+
+        playbook_with_invalid_integration_version = {playbook.name: {
+            "name": playbook.name,
+            "file_path": playbook.yml.path,
+            "fromversion": "3.0.0",
+            "pack": "Example",
+            "command_to_integration": {
+                "test-command": [
+                    "Integration_version_4",
+                    "Integration_version_5"
+                ]
+            }
+        }}
+
+        playbook_with_valid_integration_version = {playbook.name: {
+            "name": playbook.name,
+            "file_path": playbook.yml.path,
+            "fromversion": "5.0.0",
+            "pack": "Example",
+            "command_to_integration": {
+                "test-command": [
+                    "Integration_version_4",
+                    "Integration_version_5"
+                ]
+            }
+        }}
+
+        with ChangeCWD(repo.path):
             # playbook uses integration's commands with invalid versions
-            mocker.patch.object(self.validator, 'handle_error', return_value=True)
-            is_integration_version_invalid, error = self.validator._are_playbook_entities_versions_valid(
-                self.playbook_with_invalid_integration_version, self.playbook_path)
+            mocker.patch.object(validator, 'handle_error', return_value=True)
+            is_integration_version_invalid, error = validator._are_playbook_entities_versions_valid(
+                playbook_with_invalid_integration_version, playbook.yml.path)
             assert not is_integration_version_invalid
+
+            # playbook uses integration's commands with valid versions
+            mocker.patch.object(validator, 'handle_error', return_value=True)
+            is_integration_version_invalid, error = validator._are_playbook_entities_versions_valid(
+                playbook_with_valid_integration_version, playbook.yml.path)
+            assert is_integration_version_invalid
 
     def test_playbook_sub_playbook_exist(self, repo, mocker):
         """

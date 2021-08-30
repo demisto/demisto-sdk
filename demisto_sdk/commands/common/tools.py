@@ -2052,22 +2052,22 @@ def is_iron_bank_pack(file_path):
     return PACK_METADATA_IRON_BANK_TAG in metadata.get('tags', [])
 
 
-def get_script_or_sub_playbook_tasks_from_playbook(searched_entity_name: str, main_playbook_data: Dict) -> Set[Dict]:
+def get_script_or_sub_playbook_tasks_from_playbook(searched_entity_name: str, main_playbook_data: Dict) -> List[Dict]:
     """Get the tasks data for a task running the searched_entity_name (script/playbook).
 
     Returns:
         Set. A set of dicts representing tasks running the searched_entity_name.
     """
-    searched_tasks: Set = set()
+    searched_tasks: List = []
     tasks = main_playbook_data.get('tasks', {})
     if not tasks:
         return searched_tasks
 
-    for task_id, task_data in tasks:
+    for task_id, task_data in tasks.items():
         task_details = task_data.get('task', {})
         found_entity = searched_entity_name in {task_details.get('scriptName'), task_details.get('playbookName')}
 
         if found_entity:
-            searched_tasks.add(task_data)
+            searched_tasks.append(task_data)
 
     return searched_tasks

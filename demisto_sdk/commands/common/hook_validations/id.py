@@ -11,8 +11,8 @@ from demisto_sdk.commands.common.constants import GENERIC_COMMANDS_NAMES
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
-from demisto_sdk.commands.common.tools import \
-    get_script_or_sub_playbook_tasks_from_playbook
+from demisto_sdk.commands.common.tools import (
+    get_script_or_sub_playbook_tasks_from_playbook, get_yaml)
 from demisto_sdk.commands.common.update_id_set import (get_classifier_data,
                                                        get_incident_type_data,
                                                        get_integration_data,
@@ -235,16 +235,16 @@ class IDSetValidations(BaseValidator):
         playbook_scripts_list = playbook_data_2nd_level.get("implementing_scripts", [])
         sub_playbooks_list = playbook_data_2nd_level.get("implementing_playbooks", [])
         playbook_integration_commands = self.get_commands_to_integration(playbook_name, file_path)
+        main_playbook_data = get_yaml(file_path)
 
         result, error = self.is_entity_version_match_playbook_version(sub_playbooks_list, playbook_version,
                                                                       self.playbook_set, playbook_name, file_path,
-                                                                      playbook_data)
+                                                                      main_playbook_data)
         if not result:
             return False, error
-
         result, error = self.is_entity_version_match_playbook_version(playbook_scripts_list, playbook_version,
                                                                       self.script_set, playbook_name, file_path,
-                                                                      playbook_data)
+                                                                      main_playbook_data)
         if not result:
             return False, error
 
@@ -345,7 +345,6 @@ class IDSetValidations(BaseValidator):
                 entity_version = all_entity_fields.get("fromversion", "")
                 is_version_valid = not entity_version or LooseVersion(entity_version) <= LooseVersion(
                     main_playbook_version)
-
                 skip_unavailable = all(task_data.get('skipunavailable', False) for task_data in tasks_data)
 
                 # if entities with miss-matched versions were found and skipunavailable is not set, fail the validation
@@ -452,8 +451,6 @@ class IDSetValidations(BaseValidator):
                 is_valid = self._is_mapper_incident_types_found(mapper_data)
             elif file_type == constants.FileType.PLAYBOOK:
                 playbook_data = get_playbook_data(file_path)
-                is_valid, _ = self._are_playbook_entities_versions_valid(playbook_data, file_path)
-
                 playbook_answers = [self._are_playbook_entities_versions_valid(playbook_data, file_path),
                                     self.is_subplaybook_name_valid(playbook_data, file_path)]
                 is_valid = all(playbook_answers)

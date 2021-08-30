@@ -904,7 +904,7 @@ class TestPlaybookEntitiesVersionsValid:
         ],
     }
 
-    def test_are_playbook_entities_versions_valid(self, repo, mocker):
+    def test_are_playbook_entities_versions_valid_scripts_and_subplaybooks(self, repo, mocker):
         """
 
         Given
@@ -912,7 +912,6 @@ class TestPlaybookEntitiesVersionsValid:
             - a Playbook those entities:
                 * implementing_scripts
                 * implementing_playbooks
-                * command_to_integration
 
         When
             - _are_playbook_entities_versions_valid is called
@@ -929,7 +928,6 @@ class TestPlaybookEntitiesVersionsValid:
         self.validator.script_set = self.id_set["scripts"]
 
         with ChangeCWD(repo.path):
-
             is_sub_playbook_invalid, error = self.validator._are_playbook_entities_versions_valid(
                 self.playbook_with_sub_playbook_not_in_id_set, playbook.yml.path)
             assert not is_sub_playbook_invalid
@@ -947,6 +945,59 @@ class TestPlaybookEntitiesVersionsValid:
             assert not is_script_version_invalid
 
             # playbook uses sub playbooks with invalid versions
+            is_sub_playbook_version_invalid, error = self.validator._are_playbook_entities_versions_valid(
+                self.playbook_with_invalid_sub_playbook_version, playbook.yml.path)
+            assert not is_sub_playbook_version_invalid
+
+    def test_are_playbook_entities_versions_valid_skip_unavailable(self, repo, mocker):
+        """
+        Given
+            - an id_set file
+            - a Playbook that is implemented by sub-playbooks with mismatched fromversions:
+                - once with skipunavailable, and once without
+
+        When
+            - _are_playbook_entities_versions_valid is called
+
+        Then
+            - Validates that validation fails when skipunavailable is not set and passes otherwise
+        """
+        pack = repo.create_pack("Pack1")
+        playbook = pack.create_playbook('MyPlay')
+        playbook.create_default_playbook()
+        playbook_data = playbook.yml.read_dict()
+
+        self.validator.playbook_set = self.id_set["playbooks"]
+        self.validator.integration_set = self.id_set["integrations"]
+        self.validator.script_set = self.id_set["scripts"]
+
+        with ChangeCWD(repo.path):
+            # playbook uses sub playbooks with invalid versions but skipunavailable
+            playbook_data['tasks'] = {
+                '0': {
+                    'id': '0',
+                    'task': {
+                        'playbookName': 'SubPlaybook_version_5_5'
+                    },
+                    'skipunavailable': True
+                }
+            }
+            playbook.yml.write_dict(playbook_data)
+            is_sub_playbook_version_invalid, error = self.validator._are_playbook_entities_versions_valid(
+                self.playbook_with_invalid_sub_playbook_version, playbook.yml.path)
+            assert is_sub_playbook_version_invalid
+
+            # playbook uses sub playbooks with invalid versions but no skipunavailable
+            playbook_data['tasks'] = {
+                '0': {
+                    'id': '0',
+                    'task': {
+                        'playbookName': 'SubPlaybook_version_5_5'
+                    },
+                    'skipunavailable': False
+                }
+            }
+            playbook.yml.write_dict(playbook_data)
             is_sub_playbook_version_invalid, error = self.validator._are_playbook_entities_versions_valid(
                 self.playbook_with_invalid_sub_playbook_version, playbook.yml.path)
             assert not is_sub_playbook_version_invalid
@@ -1044,7 +1095,6 @@ class TestPlaybookEntitiesVersionsValid:
         self.validator.playbook_set = self.id_set["playbooks"]
 
         with ChangeCWD(repo.path):
-
             # playbook uses existing sub playbooks
             is_subplaybook_name_exist = self.validator.is_subplaybook_name_valid(
                 self.playbook_with_valid_sub_playbook_name, pack.path)
@@ -1067,7 +1117,6 @@ class TestPlaybookEntitiesVersionsValid:
         self.validator.playbook_set = self.id_set["playbooks"]
 
         with ChangeCWD(repo.path):
-
             # playbook uses existing sub playbooks
             is_subplaybook_name_exist = self.validator.is_subplaybook_name_valid(
                 self.playbook_with_invalid_sub_playbook_name, pack.path)

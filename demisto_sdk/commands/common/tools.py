@@ -13,7 +13,8 @@ from enum import Enum
 from functools import lru_cache, partial
 from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen, check_output
-from typing import Callable, Dict, List, Match, Optional, Tuple, Type, Union
+from typing import (Callable, Dict, List, Match, Optional, Set, Tuple, Type,
+                    Union)
 
 import click
 import colorama
@@ -2049,3 +2050,24 @@ def get_definition_name(path: str, pack_path: str) -> Optional[str]:
 def is_iron_bank_pack(file_path):
     metadata = get_pack_metadata(file_path)
     return PACK_METADATA_IRON_BANK_TAG in metadata.get('tags', [])
+
+
+def get_script_or_sub_playbook_tasks_from_playbook(searched_entity_name: str, main_playbook_data: Dict) -> Set[Dict]:
+    """Get the tasks data for a task running the searched_entity_name (script/playbook).
+
+    Returns:
+        Set. A set of dicts representing tasks running the searched_entity_name.
+    """
+    searched_tasks: Set = set()
+    tasks = main_playbook_data.get('tasks', {})
+    if not tasks:
+        return searched_tasks
+
+    for task_id, task_data in tasks:
+        task_details = task_data.get('task', {})
+        found_entity = searched_entity_name in {task_details.get('scriptName'), task_details.get('playbookName')}
+
+        if found_entity:
+            searched_tasks.add(task_data)
+
+    return searched_tasks

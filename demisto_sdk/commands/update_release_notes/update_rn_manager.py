@@ -113,13 +113,18 @@ class UpdateReleaseNotesManager:
             if not validate_manager.git_util:  # in case git utils can't be initialized.
                 raise git.InvalidGitRepositoryError('unable to connect to git.')
             validate_manager.setup_git_params()
+            if self.given_pack:
+                with suppress_stdout():
+                    # The Validator prints errors which are related to all changed files that
+                    # were changed against prev version. When the user is giving a specific pack to update,
+                    # we want to suppress the error messages which are related to other packs.
+                    modified_files, added_files, renamed_files = \
+                        validate_manager.get_unfiltered_changed_files_from_git()
+                    return self.filter_files_from_git(modified_files, added_files, renamed_files, validate_manager)
 
-            with suppress_stdout():
-                # The Validator prints errors which are related to all changed files that
-                # were changed against prev version. When the user is giving a specific pack to update,
-                # we want to suppress the error messages which are related to other packs.
-                modified_files, added_files, renamed_files = validate_manager.get_unfiltered_changed_files_from_git()
-                return self.filter_files_from_git(modified_files, added_files, renamed_files, validate_manager)
+            modified_files, added_files, renamed_files = \
+                validate_manager.get_unfiltered_changed_files_from_git()
+            return self.filter_files_from_git(modified_files, added_files, renamed_files, validate_manager)
 
         except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:
             raise FileNotFoundError(

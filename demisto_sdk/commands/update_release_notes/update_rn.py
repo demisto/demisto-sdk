@@ -30,7 +30,7 @@ class UpdateRN:
     def __init__(self, pack_path: str, update_type: Union[str, None], modified_files_in_pack: set, added_files: set,
                  specific_version: str = None, pre_release: bool = False, pack: str = None,
                  pack_metadata_only: bool = False, text: str = '', existing_rn_version_path: str = '',
-                 is_force: bool = False):
+                 is_force: bool = False, is_bc: bool = False):
         self.pack = pack if pack else get_pack_name(pack_path)
         self.update_type = update_type
         self.pack_path = pack_path
@@ -52,6 +52,7 @@ class UpdateRN:
         self.metadata_path = os.path.join(self.pack_path, 'pack_metadata.json')
         self.master_version = self.get_master_version()
         self.rn_path = ''
+        self.is_bc = is_bc
 
     @staticmethod
     def change_image_or_desc_file_path(file_path: str) -> str:
@@ -107,13 +108,12 @@ class UpdateRN:
         self.check_rn_dir(rn_path)
         self.rn_path = rn_path
         self.find_added_pack_files()
-        docker_image_name: Optional[str] = None
         changed_files = {}
         for packfile in self.modified_files_in_pack:
             file_name, file_type = self.get_changed_file_name_and_type(packfile)
             if 'yml' in packfile and file_type in [FileType.INTEGRATION, FileType.BETA_INTEGRATION,
                                                    FileType.SCRIPT] and packfile not in self.added_files:
-                docker_image_name = check_docker_image_changed(packfile)
+                docker_image_name: Optional[str] = check_docker_image_changed(packfile)
             else:
                 docker_image_name = None
             changed_files[(file_name, file_type)] = {
@@ -123,17 +123,16 @@ class UpdateRN:
                 'dockerimage': docker_image_name,
                 'path': packfile
             }
-        return self.create_pack_rn(rn_path, changed_files, new_metadata, docker_image_name)
+        return self.create_pack_rn(rn_path, changed_files, new_metadata, new_version)
 
-    def create_pack_rn(self, rn_path: str, changed_files: dict, new_metadata: dict,
-                       docker_image_name: Optional[str]) -> bool:
+    def create_pack_rn(self, rn_path: str, changed_files: dict, new_metadata: dict, new_version: str) -> bool:
         """ Checks whether the pack requires a new rn and if so, creates it.
 
             :param
-                rn_path: The rn path
-                changed_files: The changed files details
-                new_metadata: The new pack metadata
-                docker_image_name: The docker image name
+                rn_path (str): The rn path
+                changed_files (dict): The changed files details
+                new_metadata (dict): The new pack metadata
+                new_version (str): The new version str representation, e.g 1.0.2, 1.11.2 etc.
 
 
             :rtype: ``bool``
@@ -147,6 +146,7 @@ class UpdateRN:
             if self.is_bump_required():
                 self.write_metadata_to_file(new_metadata)
             self.create_markdown(rn_path, rn_string, changed_files)
+            self.build_rn_config_file(new_version)
             try:
                 run_command(f'git add {rn_path}', exit_on_error=False)
             except RuntimeError:
@@ -168,6 +168,32 @@ class UpdateRN:
         else:
             print_color("No changes which would belong in release notes were detected.", LOG_COLORS.YELLOW)
         return False
+
+    def build_rn_config_file(self, new_version: str) -> None:
+        """
+        Builds RN config file if needed. Currently, we use RN config file only for cases where version has breaking
+        changes.
+        Args:
+            new_version (str): The new version number representation, e.g 1.2.1, 1.22.1, etc.
+
+        Returns:
+            (None): Creates/updates config file with BC entries, if -bc flag was given.
+        """
+        # Currently, we only use config file if version is BC. If version is not BC no need to create config file.
+        if not self.is_bc:
+            return
+        bc_file_path: str = f'''{self.pack_path}/ReleaseNotes/{new_version.replace('.', '_')}.json'''
+        bc_file_data: dict = dict()
+        if os.path.exists(bc_file_path):
+            with open(bc_file_path, 'r') as f:
+                bc_file_data = json.loads(f.read())
+        bc_file_data['breakingChanges'] = True
+        bc_file_data['breakingChangesNotes'] = bc_file_data.get('breakingChangesNotes')
+        with open(bc_file_path, 'w') as f:
+            f.write(json.dumps(bc_file_data))
+        print_color(f'Finished creating config file for RN version {new_version}.\n'
+                    'If you wish only specific text to be shown as breaking changes, please fill the '
+                    '`breakingChangesNotes` field with the appropriate breaking changes text.', LOG_COLORS.GREEN)
 
     def get_new_version_and_metadata(self) -> Tuple[str, dict]:
         """

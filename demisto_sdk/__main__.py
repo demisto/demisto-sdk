@@ -178,7 +178,7 @@ def main(config, version, release_notes):
     '-h', '--help'
 )
 @click.option(
-    '-i', '--input', help='The yml file to extract from', required=True
+    '-i', '--input', help='The yml/json file to extract from', required=True
 )
 @click.option(
     '-o', '--output',
@@ -186,31 +186,32 @@ def main(config, version, release_notes):
 )
 @click.option(
     '--no-demisto-mock',
-    help="Don't add an import for demisto mock.",
+    help="Don't add an import for demisto mock. (only for yml files)",
     is_flag=True,
     show_default=True
 )
 @click.option(
     '--no-common-server',
-    help="Don't add an import for CommonServerPython.",
+    help="Don't add an import for CommonServerPython. (only for yml files)",
     is_flag=True,
     show_default=True
 )
 @click.option(
     '--no-auto-create-dir',
-    help="Don't auto create the directory if the target directory ends with *Integrations/*Scripts.",
+    help="Don't auto create the directory if the target directory ends with *Integrations/*Scripts/*Dashboards"
+         "/*GenericModules.",
     is_flag=True,
     show_default=True
 )
 @click.option(
     '--no-pipenv',
-    help="Don't auto create pipenv for requirements installation.",
+    help="Don't auto create pipenv for requirements installation. (only for yml files)",
     is_flag=True,
     show_default=True
 )
 @click.option(
     '--new-module-file',
-    help="Create a new module file instead of editing the existing file.",
+    help="Create a new module file instead of editing the existing file. (only for json files)",
     is_flag=True,
     show_default=True
 )

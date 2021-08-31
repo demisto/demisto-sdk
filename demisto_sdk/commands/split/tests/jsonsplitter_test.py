@@ -36,7 +36,7 @@ def test_split_json(repo):
 
         assert result_dashboard == EXTRACTED_DASHBOARD
 
-        with open(generic_module_path, 'r') as f:
+        with open(generic_module.path, 'r') as f:
             result_generic_module = json.load(f)
 
         assert result_generic_module == GENERIC_MODULE

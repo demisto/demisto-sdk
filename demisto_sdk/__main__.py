@@ -171,7 +171,7 @@ def main(config, version, release_notes):
                 click.echo('')
 
 
-# ====================== split-yml ====================== #
+# ====================== split ====================== #
 @main.command()
 @click.help_option(
     '-h', '--help'
@@ -208,11 +208,11 @@ def main(config, version, release_notes):
     show_default=True
 )
 @pass_config
-def split_yml(config, **kwargs):
+def split(config, **kwargs):
     """Split the code, image and description files from a Demisto integration or script yaml file
     to multiple files(To a package format - https://demisto.pan.dev/docs/package-dir).
     """
-    check_configuration_file('split-yml', kwargs)
+    check_configuration_file('split', kwargs)
     file_type: FileType = find_type(kwargs.get('input', ''), ignore_sub_categories=True)
     if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
         print_error('File is not an Integration or Script.')

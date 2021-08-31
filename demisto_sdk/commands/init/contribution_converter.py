@@ -371,9 +371,9 @@ class ContributionConverter:
             del_unified (bool): Whether to delete the unified yaml the package was extracted from
             source_mapping (Union[Dict], optional): Can be used when updating an existing pack and
                 the package directory of a content item is not what would ordinarily be set by the
-                `demisto-sdk` `split-yml` command. Sample value would be,
+                `demisto-sdk` `split` command. Sample value would be,
                 `{'integration-AbuseIPDB.yml': {'containing_dir_name': 'AbuseDB', 'base_name': 'AbuseDB'}}`
-                - the split-yml command would create a containing directory of `AbuseIPDB` for the file
+                - the split command would create a containing directory of `AbuseIPDB` for the file
                 `integration-AbuseIPDB.yml` and we need the containing directory of the package to match
                 what already exists in the repo.
         """

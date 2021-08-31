@@ -12,6 +12,7 @@
 * Added validation to **validate** for release notes config file.
 * Added **isoversize** and **isautoswitchedtoquietmode** fields to the playbook schema.
 * Added to the **update-release-notes** command `-bc` flag to generate template for breaking changes version.
+* Fixed an issue where **validate** did not search description file correctly, leading to a wrong warning message.
 
 # 1.4.8
 * Fixed an issue where yml files with `!reference` failed to load properly.

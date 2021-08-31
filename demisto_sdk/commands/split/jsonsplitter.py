@@ -103,7 +103,7 @@ class JsonSplitter:
         else:
             if self.logging:
                 click.echo("Creating new module file")
-            file_name = os.path.split(self.input)[1]
+            file_name = os.path.basename(self.input)
             module_file_path = os.path.join(self.module_dir, file_name)
 
             if os.path.exists(module_file_path):

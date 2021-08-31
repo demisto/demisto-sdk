@@ -1,4 +1,6 @@
 # Changelog
+
+# 1.4.9
 * Added validation that the support URL in partner contribution pack metadata does not lead to a GitHub repo.
 * Enhanced ***generate-docs*** with default `additionalinformation` (description) for common parameters.
 * Added to **validate** command a validation that a content item's id and name will not end with spaces.

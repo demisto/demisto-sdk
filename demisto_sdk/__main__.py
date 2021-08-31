@@ -58,6 +58,7 @@ from demisto_sdk.commands.postman_codegen.postman_codegen import \
 from demisto_sdk.commands.run_cmd.runner import Runner
 from demisto_sdk.commands.run_playbook.playbook_runner import PlaybookRunner
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
+from demisto_sdk.commands.split.jsonsplitter import JsonSplitter
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 from demisto_sdk.commands.test_content.execute_test_content import \
     execute_test_content
@@ -180,8 +181,8 @@ def main(config, version, release_notes):
     '-i', '--input', help='The yml file to extract from', required=True
 )
 @click.option(
-    '-o', '--output', required=True,
-    help="The output dir to write the extracted code/description/image to."
+    '-o', '--output',
+    help="The output dir to write the extracted code/description/image/json to."
 )
 @click.option(
     '--no-demisto-mock',
@@ -207,6 +208,12 @@ def main(config, version, release_notes):
     is_flag=True,
     show_default=True
 )
+@click.option(
+    '--new-module-file',
+    help="Create a new module file instead of editing the existing file.",
+    is_flag=True,
+    show_default=True
+)
 @pass_config
 def split(config, **kwargs):
     """Split the code, image and description files from a Demisto integration or script yaml file
@@ -214,11 +221,20 @@ def split(config, **kwargs):
     """
     check_configuration_file('split', kwargs)
     file_type: FileType = find_type(kwargs.get('input', ''), ignore_sub_categories=True)
-    if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
-        print_error('File is not an Integration or Script.')
+    if file_type not in [FileType.INTEGRATION, FileType.SCRIPT, FileType.GENERIC_MODULE]:
+        print_error('File is not an Integration, Script or Generic Module.')
         return 1
-    extractor = YmlSplitter(configuration=config.configuration, file_type=file_type.value, **kwargs)
-    return extractor.extract_to_package_format()
+
+    if file_type in [FileType.INTEGRATION, FileType.SCRIPT]:
+        yml_splitter = YmlSplitter(configuration=config.configuration, file_type=file_type.value, **kwargs)
+        return yml_splitter.extract_to_package_format()
+
+    else:
+        json_splitter = JsonSplitter(input=kwargs.get('input'), output=kwargs.get('output'),  # type: ignore[arg-type]
+                                     no_auto_create_dir=kwargs.get('no_auto_create_dir'),  # type: ignore[arg-type]
+                                     no_logging=kwargs.get('no_logging'),  # type: ignore[arg-type]
+                                     new_module_file=kwargs.get('new_module_file'))  # type: ignore[arg-type]
+        return json_splitter.split_json()
 
 
 # ====================== extract-code ====================== #

@@ -44,6 +44,12 @@ class JsonSplitter:
         self.create_module()
         return 0
 
+    def create_output_dir(self, path):
+        try:
+            os.mkdir(path)
+        except FileExistsError:
+            pass
+
     def create_output_dirs(self):
         # no output given
         if not self.dashboard_dir:
@@ -51,26 +57,21 @@ class JsonSplitter:
             if not is_external_repository() and self.autocreate_dir:
                 pack_name = get_pack_name(self.input)
                 if self.logging:
-                    click.echo(f"No output path given creating dirs in pack {pack_name}")
+                    click.echo(f"No output path given creating Dashboards and GenericModules "
+                               f"directories in pack {pack_name}")
                 pack_path = os.path.join(PACKS_DIR, pack_name)
                 self.dashboard_dir = os.path.join(pack_path, DASHBOARDS_DIR)
                 self.module_dir = os.path.join(pack_path, GENERIC_MODULES_DIR)
 
                 # create the dirs, dont fail if exist
-                try:
-                    os.mkdir(self.dashboard_dir)
-                except FileExistsError:
-                    pass
-
-                try:
-                    os.mkdir(self.module_dir)
-                except FileExistsError:
-                    pass
+                self.create_output_dir(self.dashboard_dir)
+                self.create_output_dir(self.module_dir)
 
             # if not in content create the files locally
             else:
                 if self.logging:
-                    click.echo("No output path given and not running in content repo, creating files locally")
+                    click.echo("No output path given and not running in content repo, creating "
+                               "files in the current working directory")
                 self.dashboard_dir = '.'
                 self.module_dir = '.'
 
@@ -103,23 +104,20 @@ class JsonSplitter:
         else:
             if self.logging:
                 click.echo("Creating new module file")
-            file_name = os.path.basename(self.input)
-            module_file_path = os.path.join(self.module_dir, file_name)
 
-            if os.path.exists(module_file_path):
-                given_name = False
-                while not given_name:
-                    file_name = str(input("\nPlease enter a new file name: "))
-                    if not file_name or ' ' in file_name:
-                        click.echo("File name cannot be empty nor have spaces in it")
+            given_name = False
+            while not given_name:
+                file_name = str(input("\nPlease enter a new module file name: "))
+                if not file_name or ' ' in file_name:
+                    click.echo("File name cannot be empty nor have spaces in it")
 
-                    else:
-                        given_name = True
+                else:
+                    given_name = True
 
                 if not file_name.endswith('.json'):
                     file_name = file_name + '.json'
 
-                module_file_path = os.path.join(self.module_dir, file_name)
+            module_file_path = os.path.join(self.module_dir, file_name)
 
         with open(module_file_path, 'w') as module_file:
             json.dump(self.module_json_data, module_file, indent=4)

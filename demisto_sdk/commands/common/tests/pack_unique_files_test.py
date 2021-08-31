@@ -623,8 +623,8 @@ class TestPackUniqueFilesValidator:
             result = self.validator.validate_pack_readme_images()
             errors = self.validator.get_errors()
         assert not result
-        assert 'Detected the following image relative path: ![Identitytest_validate_pack_readme_valid_images with ' \
-               'High Risk Score](doc_files/High_Risk_User.png)' in errors
+        assert 'Detected the following image relative path: ![Identity with High Risk Score](' \
+               'doc_files/High_Risk_User.png)' in errors
         assert 'Detected the following image relative path: ![Identity with High Risk Score](' \
                'home/test1/test2/doc_files/High_Risk_User.png)' in errors
         assert 'Detected the following image relative path: (../../doc_files/Access_investigation_-_Generic_4_5.png)' \

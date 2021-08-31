@@ -79,7 +79,7 @@ def rename_file_in_zip(path_to_zip: Union[os.PathLike, str], original_file_name:
     os.replace(modded_zip_file, path_to_zip)
 
 
-@patch('demisto_sdk.commands.split.extractor.get_python_version')
+@patch('demisto_sdk.commands.split.ymlsplitter.get_python_version')
 @patch('demisto_sdk.commands.init.contribution_converter.get_content_path')
 def test_convert_contribution_zip_updated_pack(get_content_path_mock, get_python_version_mock, tmp_path):
     """

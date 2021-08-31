@@ -115,15 +115,15 @@ def test_extract_to_package_format_pwsh(tmpdir):
 def test_extract_to_package_format_py(pack, mocker, tmp_path):
     mocker.patch.object(YmlSplitter, 'extract_image', return_value='12312321')
     mocker.patch(
-        'demisto_sdk.commands.split.extractor.get_python_version',
+        'demisto_sdk.commands.split.ymlsplitter.get_python_version',
         return_value='2.7'
     )
     mocker.patch(
-        'demisto_sdk.commands.split.extractor.get_pipenv_dir',
+        'demisto_sdk.commands.split.ymlsplitter.get_pipenv_dir',
         return_value=os.path.join(git_path(), 'demisto_sdk/tests/test_files/default_python2')
     )
     mocker.patch(
-        'demisto_sdk.commands.split.extractor.get_pip_requirements',
+        'demisto_sdk.commands.split.ymlsplitter.get_pip_requirements',
         return_value="""certifi==2017.11.5
 chardet==3.0.4
 idna==2.6

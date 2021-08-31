@@ -29,7 +29,7 @@ from demisto_sdk.commands.generate_docs.generate_playbook_doc import \
     generate_playbook_doc
 from demisto_sdk.commands.generate_docs.generate_script_doc import \
     generate_script_doc
-from demisto_sdk.commands.split_yml.extractor import Extractor
+from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 from demisto_sdk.commands.update_release_notes.update_rn_manager import \
     UpdateReleaseNotesManager
@@ -399,13 +399,13 @@ class ContributionConverter:
                         if not autocreate_dir:
                             output_dir = os.path.join(output_dir, containing_dir_name)
                         os.makedirs(output_dir, exist_ok=True)
-                        extractor = Extractor(input=content_item_file_path, file_type=file_type, output=output_dir,
-                                              no_readme=True, base_name=base_name,
-                                              no_auto_create_dir=(not autocreate_dir), no_pipenv=self.no_pipenv)
+                        extractor = YmlSplitter(input=content_item_file_path, file_type=file_type, output=output_dir,
+                                                no_readme=True, base_name=base_name,
+                                                no_auto_create_dir=(not autocreate_dir), no_pipenv=self.no_pipenv)
 
                     else:
-                        extractor = Extractor(input=content_item_file_path, file_type=file_type,
-                                              output=content_item_dir, no_pipenv=self.no_pipenv)
+                        extractor = YmlSplitter(input=content_item_file_path, file_type=file_type,
+                                                output=content_item_dir, no_pipenv=self.no_pipenv)
                     extractor.extract_to_package_format()
                 except Exception as e:
                     err_msg = f'Error occurred while trying to split the unified YAML "{content_item_file_path}" ' \

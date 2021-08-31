@@ -58,7 +58,7 @@ from demisto_sdk.commands.postman_codegen.postman_codegen import \
 from demisto_sdk.commands.run_cmd.runner import Runner
 from demisto_sdk.commands.run_playbook.playbook_runner import PlaybookRunner
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
-from demisto_sdk.commands.split_yml.extractor import Extractor
+from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 from demisto_sdk.commands.test_content.execute_test_content import \
     execute_test_content
 from demisto_sdk.commands.unify.generic_module_unifier import \
@@ -217,7 +217,7 @@ def split_yml(config, **kwargs):
     if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
         print_error('File is not an Integration or Script.')
         return 1
-    extractor = Extractor(configuration=config.configuration, file_type=file_type.value, **kwargs)
+    extractor = YmlSplitter(configuration=config.configuration, file_type=file_type.value, **kwargs)
     return extractor.extract_to_package_format()
 
 
@@ -257,7 +257,7 @@ def extract_code(config, **kwargs):
     if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
         print_error('File is not an Integration or Script.')
         return 1
-    extractor = Extractor(configuration=config.configuration, file_type=file_type.value, **kwargs)
+    extractor = YmlSplitter(configuration=config.configuration, file_type=file_type.value, **kwargs)
     return extractor.extract_code(kwargs['outfile'])
 
 

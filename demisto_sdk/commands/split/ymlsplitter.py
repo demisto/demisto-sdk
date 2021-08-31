@@ -25,7 +25,7 @@ def get_pip_requirements(docker_image: str):
                                    universal_newlines=True, stderr=subprocess.DEVNULL).strip()
 
 
-class Extractor:
+class YmlSplitter:
     """Extractor is a class that's designed to split a yml file to it's components.
 
     Attributes:

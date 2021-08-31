@@ -12,6 +12,7 @@
 * Added validation to **validate** for release notes config file.
 * Added **isoversize** and **isautoswitchedtoquietmode** fields to the playbook schema.
 * Added to the **update-release-notes** command `-bc` flag to generate template for breaking changes version.
+* Added support for **init** command to run from non-content repo.
 
 # 1.4.8
 * Fixed an issue where yml files with `!reference` failed to load properly.

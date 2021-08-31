@@ -421,8 +421,7 @@ class Initiator:
                     f.write(secret)
                     f.write('\n')
         except FileNotFoundError:
-            print_warning("Could not find the .secrets-ignore file - make sure your path is correct and is of format "
-                          "Packs/my_pack_name")
+            print_warning("Could not find the .secrets-ignore file - make sure your path is correct")
 
     def integration_init(self) -> bool:
         """Creates a new integration according to a template.

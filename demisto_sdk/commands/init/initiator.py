@@ -461,13 +461,14 @@ class Initiator:
 
         if self.template != self.DEFAULT_INTEGRATION_TEMPLATE:  # DEFAULT_INTEGRATION_TEMPLATE there are no secrets
             secrets = self.find_secrets()
-            new_line = '\n'
-            click.echo(f"\nThe following secrets were detected:\n"
-                       f"{new_line.join(secret for secret in secrets)}", color=LOG_COLORS.GREEN)
+            if secrets:
+                new_line = '\n'
+                click.echo(f"\nThe following secrets were detected:\n"
+                           f"{new_line.join(secret for secret in secrets)}", color=LOG_COLORS.GREEN)
 
-            ignore_secrets = input("\nWould you like ignore them automatically? Y/N ").lower()
-            if ignore_secrets in ['y', 'yes']:
-                self.ignore_secrets(secrets)
+                ignore_secrets = input("\nWould you like ignore them automatically? Y/N ").lower()
+                if ignore_secrets in ['y', 'yes']:
+                    self.ignore_secrets(secrets)
 
         click.echo(f"Finished creating integration: {self.full_output_path}.", color=LOG_COLORS.GREEN)
 
@@ -511,13 +512,14 @@ class Initiator:
         self.copy_demistotmock()
 
         secrets = self.find_secrets()
-        new_line = '\n'
-        click.echo(f"\nThe following secrets were detected in the pack:\n"
-                   f"{new_line.join(secret for secret in secrets)}", color=LOG_COLORS.GREEN)
+        if secrets:
+            new_line = '\n'
+            click.echo(f"\nThe following secrets were detected in the pack:\n"
+                       f"{new_line.join(secret for secret in secrets)}", color=LOG_COLORS.GREEN)
 
-        ignore_secrets = input("\nWould you like ignore them automatically? Y/N ").lower()
-        if ignore_secrets in ['y', 'yes']:
-            self.ignore_secrets(secrets)
+            ignore_secrets = input("\nWould you like ignore them automatically? Y/N ").lower()
+            if ignore_secrets in ['y', 'yes']:
+                self.ignore_secrets(secrets)
 
         click.echo(f"Finished creating script: {self.full_output_path}", color=LOG_COLORS.GREEN)
 

@@ -1,4 +1,5 @@
 # Changelog
+* Added support for **init** command to run from non-content repo.
 * Added validation that the support URL in partner contribution pack metadata does not lead to a GitHub repo.
 * Enhanced ***generate-docs*** with default `additionalinformation` (description) for common parameters.
 * Added to **validate** command a validation that a content item's id and name will not end with spaces.
@@ -12,7 +13,6 @@
 * Added validation to **validate** for release notes config file.
 * Added **isoversize** and **isautoswitchedtoquietmode** fields to the playbook schema.
 * Added to the **update-release-notes** command `-bc` flag to generate template for breaking changes version.
-* Added support for **init** command to run from non-content repo.
 
 # 1.4.8
 * Fixed an issue where yml files with `!reference` failed to load properly.

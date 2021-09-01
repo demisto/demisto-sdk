@@ -41,21 +41,21 @@ def test_is_duplicate_description_unified_deprecated_integration(mocker, tmp_pat
 def test_is_duplicate_description_given(pack, mocker):
     """
     Given:
-        - Case A: Content pack with unified integration
-        - Case B: Content pack with deprecated integration
+        - Description file path
 
     When:
-        - Running detailed description validator on the integration
+        - Running detailed description validator on the integration.
 
     Then:
         - Ensure validation passes
-        - Ensure no warning is printed
+        - Ensure handle error is not called.
     """
     mocker.patch.object(DescriptionValidator, 'handle_error')
     integration = pack.create_integration()
     integration.create_default_integration()
     description_validator = DescriptionValidator(integration.description.path)
     assert description_validator.is_duplicate_description()
+    assert not DescriptionValidator.handle_error.called
 
 
 @pytest.mark.parametrize("file_input, result",

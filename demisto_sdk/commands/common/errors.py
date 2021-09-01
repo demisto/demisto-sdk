@@ -1731,8 +1731,8 @@ class Errors:
         return f"Either {entity_id} does not have any test playbooks or that all test playbooks in this " \
                f"pack are currently skipped.\n" \
                f"Please create a test playbook or un-skip at least one of the relevant test playbooks.\n " \
-               f"You can un-skip a playbook by deleting the line relevant to one of the test playbooks from the skip section conf.json" \
-               f"in the 'skipped_tests' section inside the conf.json file and deal " \
+               f"You can un-skip a playbook by deleting the line relevant to one of the test playbooks from " \
+               f"the 'skipped_tests' section inside the conf.json file and deal " \
                f"with the matching issue,\n  or create a new active test playbook " \
                f"and add the id to the 'tests' field in the yml."
 

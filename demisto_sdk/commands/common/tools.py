@@ -536,12 +536,17 @@ def get_entity_id_by_entity_type(data: dict, content_entity: str):
     :param content_entity: The content entity type
     :return: The file id
     """
-    if content_entity in (INTEGRATIONS_DIR, SCRIPTS_DIR):
-        return data.get('commonfields', {}).get('id', '')
-    elif content_entity == LAYOUTS_DIR:
-        return data.get('typeId', '')
-    else:
-        return data.get('id', '')
+    try:
+        if content_entity in (INTEGRATIONS_DIR, SCRIPTS_DIR):
+            return data.get('commonfields', {}).get('id', '')
+        elif content_entity == LAYOUTS_DIR:
+            return data.get('typeId', '')
+        else:
+            return data.get('id', '')
+
+    except AttributeError:
+        raise ValueError(f"Could not retrieve id from file of type {content_entity} - make sure the file structure is "
+                         f"valid")
 
 
 def get_entity_name_by_entity_type(data: dict, content_entity: str):
@@ -551,11 +556,17 @@ def get_entity_name_by_entity_type(data: dict, content_entity: str):
     :param content_entity: The content entity type
     :return: The file name
     """
-    if content_entity == LAYOUTS_DIR:
-        if 'typeId' in data:
-            return data.get('typeId', '')
-        return data.get('name', '')  # for layoutscontainer
-    return data.get('name', '')
+    try:
+        if content_entity == LAYOUTS_DIR:
+            if 'typeId' in data:
+                return data.get('typeId', '')
+            return data.get('name', '')  # for layoutscontainer
+        return data.get('name', '')
+
+    except AttributeError:
+        raise ValueError(
+            f"Could not retrieve name from file of type {content_entity} - make sure the file structure is "
+            f"valid")
 
 
 def collect_ids(file_path):

@@ -1341,7 +1341,7 @@ class IntegrationValidator(ContentEntityValidator):
 
         for param, info in additional_info.items():
             if param in default_additional_info and info != default_additional_info[param]:
-                if info == '':
+                if not info:
                     params_missing_defaults.append(param)
                 else:
                     params_with_non_default_description.append(param)

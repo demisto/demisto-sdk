@@ -80,7 +80,7 @@ def test_integration_format_yml_with_no_test_positive(tmp_path: PosixPath,
         - A yml file (integration, playbook or script) with no 'tests' configured
 
         When
-        - Entering '-ad' so the prompt message about asking the user if he wants to add 'No tests' to the file will
+        - Entering '-at' so the prompt message about asking the user if he wants to add 'No tests' to the file will
             appear.
         - Entering 'Y' into the prompt message about that asks the user if he wants to add 'No tests' to the file
 
@@ -118,7 +118,7 @@ def test_integration_format_yml_with_no_test_negative(tmp_path: PosixPath,
         - A yml file (integration, playbook or script) with no 'tests' configured
 
         When
-        - Entering '-ad' so the prompt message about asking the user if he wants to add 'No tests' to the file will
+        - Entering '-at' so the prompt message about asking the user if he wants to add 'No tests' to the file will
             appear.
         - Entering 'N' into the prompt message about that asks the user if he wants to add 'No tests' to the file
 
@@ -318,7 +318,7 @@ def test_integration_format_remove_playbook_sourceplaybookid(tmp_path):
 
     When
     - Running the format command.
-    - Entering '-ad' so the prompt message about asking the user if he wants to add 'No tests' to the file will
+    - Entering '-at' so the prompt message about asking the user if he wants to add 'No tests' to the file will
         appear.
 
     Then
@@ -1103,19 +1103,6 @@ def test_format_generic_definition_missing_from_version_key(mocker, repo):
 
 class TestFormatWithoutAddTestsFlag:
 
-    def remove_tests_key_from_yml(self, path):
-        tests_value = ''
-        with open(path, 'r') as f:
-            x = f.read()
-            file_context = yaml.safe_load(x)
-            if file_context.get('tests'):
-                tests_value = file_context.get('tests')[0]
-                del file_context['tests']
-
-        with open(path, 'w') as f:
-            f.write(yaml.dump(file_context))
-        return tests_value
-
     def test_format_integrations_folder_with_add_tests(self, pack):
         """
             Given
@@ -1133,7 +1120,6 @@ class TestFormatWithoutAddTestsFlag:
         integration.create_default_integration()
         integration.yml.update({'fromversion': '5.5.0'})
         integration_path = integration.yml.path
-        self.remove_tests_key_from_yml(integration_path)
         result = runner.invoke(main, [FORMAT_CMD, '-i', integration_path, '-at'])
         prompt = f'The file {integration_path} has no test playbooks configured.' \
                  f' Do you want to configure it with "No tests"?'
@@ -1160,7 +1146,6 @@ class TestFormatWithoutAddTestsFlag:
         integration = pack.create_integration()
         integration.create_default_integration()
         integration_path = integration.yml.path
-        self.remove_tests_key_from_yml(integration_path)
         result = runner.invoke(main, [FORMAT_CMD, '-i', integration_path], input='Y')
         prompt = f'The file {integration_path} has no test playbooks configured.' \
                  f' Do you want to configure it with "No tests"?'
@@ -1216,7 +1201,7 @@ class TestFormatWithoutAddTestsFlag:
         playbook.create_default_playbook()
         playbook.yml.update({'fromversion': '5.5.0'})
         playbooks_path = playbook.yml.path
-        self.remove_tests_key_from_yml(playbooks_path)
+        playbook.yml.delete_key('tests')
         result = runner.invoke(main, [FORMAT_CMD, '-i', playbooks_path], input='N')
         prompt = f'The file {playbooks_path} has no test playbooks configured.' \
                  f' Do you want to configure it with "No tests"?'
@@ -1225,8 +1210,7 @@ class TestFormatWithoutAddTestsFlag:
         assert prompt not in result.output
         assert message in result.output
 
-        tests_value_from_yml = self.remove_tests_key_from_yml(playbooks_path)
-        assert tests_value_from_yml == 'No tests (auto formatted)'
+        assert playbook.yml.read_dict().get('tests')[0] == 'No tests (auto formatted)'
 
     def test_format_testplaybook_folder_without_add_tests_flag(self, pack):
         """
@@ -1247,7 +1231,7 @@ class TestFormatWithoutAddTestsFlag:
         test_playbook.create_default_test_playbook()
         test_playbook.yml.update({'fromversion': '5.5.0'})
         test_playbooks_path = test_playbook.yml.path
-        self.remove_tests_key_from_yml(test_playbooks_path)
+        test_playbook.yml.delete_key('tests')
         result = runner.invoke(main, [FORMAT_CMD, '-i', test_playbooks_path], input='N')
         prompt = f'The file {test_playbooks_path} has no test playbooks configured.' \
                  f' Do you want to configure it with "No tests"?'
@@ -1256,8 +1240,7 @@ class TestFormatWithoutAddTestsFlag:
         assert prompt not in result.output
         assert message not in result.output
 
-        tests_value_from_yml = self.remove_tests_key_from_yml(test_playbooks_path)
-        assert '' == tests_value_from_yml
+        assert not test_playbook.yml.read_dict().get('tests')
 
     def test_format_test_playbook_folder_with_add_tests_flag(self, pack):
         """
@@ -1278,7 +1261,7 @@ class TestFormatWithoutAddTestsFlag:
         test_playbook.create_default_test_playbook()
         test_playbook.yml.update({'fromversion': '5.5.0'})
         test_playbooks_path = test_playbook.yml.path
-        self.remove_tests_key_from_yml(test_playbooks_path)
+        test_playbook.yml.delete_key('tests')
         result = runner.invoke(main, [FORMAT_CMD, '-i', test_playbooks_path, '-at'], input='N')
         prompt = f'The file {test_playbooks_path} has no test playbooks configured.' \
                  f' Do you want to configure it with "No tests"?'
@@ -1287,8 +1270,7 @@ class TestFormatWithoutAddTestsFlag:
         assert prompt not in result.output
         assert message not in result.output
 
-        tests_value_from_yml = self.remove_tests_key_from_yml(test_playbooks_path)
-        assert tests_value_from_yml == ''
+        assert not test_playbook.yml.read_dict().get('tests')
 
     def test_format_layouts_folder_without_add_tests_flag(self, repo):
         """

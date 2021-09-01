@@ -1728,9 +1728,10 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def all_entity_test_playbooks_are_skipped(entity_id):
-        return f"All test playbooks for {entity_id} in this pack are currently skipped. " \
-               f"Please unskip at least one of the relevant test playbooks.\n " \
-               f"You can do this by deleting the line relevant to one of the test playbooks " \
+        return f"Either {entity_id} does not have any test playbooks or that all test playbooks in this " \
+               f"pack are currently skipped.\n" \
+               f"Please create a test playbook or unskip at least one of the relevant test playbooks.\n " \
+               f"You can unskip a playbook by deleting the line relevant to one of the test playbooks " \
                f"in the 'skipped_tests' section inside the conf.json file and deal " \
                f"with the matching issue,\n  or create a new active test playbook " \
                f"and add the id to the 'tests' field in the yml."

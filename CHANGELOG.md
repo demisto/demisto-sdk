@@ -1,4 +1,5 @@
 # Changelog
+* Added error handling for invalid JSON files for **download** command.
 * Added support for **init** command to run from non-content repo.
 * The **split-yml** has been renamed to **split** and now supports splitting Dashboards from unified Generic Modules.
 

@@ -79,7 +79,7 @@ def rename_file_in_zip(path_to_zip: Union[os.PathLike, str], original_file_name:
     os.replace(modded_zip_file, path_to_zip)
 
 
-@patch('demisto_sdk.commands.split_yml.extractor.get_python_version')
+@patch('demisto_sdk.commands.split.ymlsplitter.get_python_version')
 @patch('demisto_sdk.commands.init.contribution_converter.get_content_path')
 def test_convert_contribution_zip_updated_pack(get_content_path_mock, get_python_version_mock, tmp_path):
     """
@@ -156,7 +156,7 @@ def test_convert_contribution_zip_updated_pack(get_content_path_mock, get_python
     assert not unified_yml_in_sample.exists()
 
 
-@patch('demisto_sdk.commands.split_yml.extractor.get_python_version')
+@patch('demisto_sdk.commands.split.ymlsplitter.get_python_version')
 @patch('demisto_sdk.commands.init.contribution_converter.get_content_path')
 def test_convert_contribution_zip_outputs_structure(get_content_path_mock, get_python_version_mock, tmp_path):
     """Create a fake contribution zip file and test that it is converted to a Pack correctly
@@ -263,7 +263,7 @@ def test_convert_contribution_zip_outputs_structure(get_content_path_mock, get_p
     assert not unified_yml_in_sample.exists()
 
 
-@patch('demisto_sdk.commands.split_yml.extractor.get_python_version')
+@patch('demisto_sdk.commands.split.ymlsplitter.get_python_version')
 @patch('demisto_sdk.commands.init.contribution_converter.get_content_path')
 def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock, tmp_path):
     """Create a fake contribution zip file and test that it is converted to a Pack correctly
@@ -375,7 +375,7 @@ def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock
                                                         str(script_readme_md)}
 
 
-@patch('demisto_sdk.commands.split_yml.extractor.get_python_version')
+@patch('demisto_sdk.commands.split.ymlsplitter.get_python_version')
 @patch('demisto_sdk.commands.init.contribution_converter.get_content_path')
 def test_convert_contribution_zip_with_args(get_content_path_mock, get_python_version_mock, tmp_path):
     '''Convert a contribution zip to a pack and test that the converted pack's 'pack_metadata.json' is correct

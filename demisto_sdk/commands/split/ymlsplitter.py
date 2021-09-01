@@ -25,8 +25,8 @@ def get_pip_requirements(docker_image: str):
                                    universal_newlines=True, stderr=subprocess.DEVNULL).strip()
 
 
-class Extractor:
-    """Extractor is a class that's designed to split a yml file to it's components.
+class YmlSplitter:
+    """YmlSplitter is a class that's designed to split a yml file to it's components.
 
     Attributes:
         input (str): input yml file path
@@ -46,7 +46,7 @@ class Extractor:
     def __init__(self, input: str, output: str, file_type: str, no_demisto_mock: bool = False,
                  no_common_server: bool = False, no_auto_create_dir: bool = False, configuration: Configuration = None,
                  base_name: str = '', no_readme: bool = False, no_pipenv: bool = False,
-                 no_logging: bool = False, no_basic_fmt: bool = False):
+                 no_logging: bool = False, no_basic_fmt: bool = False, new_module_file: bool = False):
         self.input = input
         self.output = output
         self.demisto_mock = not no_demisto_mock

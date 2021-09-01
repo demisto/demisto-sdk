@@ -143,7 +143,8 @@ class IntegrationYMLFormat(BaseUpdateYML):
 
     def update_docker_image(self):
         if self.update_docker:
-            ScriptYMLFormat.update_docker_image_in_script(self.data['script'], self.data.get(self.from_version_key))
+            ScriptYMLFormat.update_docker_image_in_script(self.data['script'], self.source_file,
+                                                          self.data.get(self.from_version_key))
 
     def run_format(self) -> int:
         try:

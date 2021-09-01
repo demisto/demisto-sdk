@@ -29,7 +29,7 @@ from demisto_sdk.commands.generate_docs.generate_playbook_doc import \
     generate_playbook_doc
 from demisto_sdk.commands.generate_docs.generate_script_doc import \
     generate_script_doc
-from demisto_sdk.commands.split_yml.extractor import Extractor
+from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 from demisto_sdk.commands.update_release_notes.update_rn_manager import \
     UpdateReleaseNotesManager
@@ -371,9 +371,9 @@ class ContributionConverter:
             del_unified (bool): Whether to delete the unified yaml the package was extracted from
             source_mapping (Union[Dict], optional): Can be used when updating an existing pack and
                 the package directory of a content item is not what would ordinarily be set by the
-                `demisto-sdk` `split-yml` command. Sample value would be,
+                `demisto-sdk` `split` command. Sample value would be,
                 `{'integration-AbuseIPDB.yml': {'containing_dir_name': 'AbuseDB', 'base_name': 'AbuseDB'}}`
-                - the split-yml command would create a containing directory of `AbuseIPDB` for the file
+                - the split command would create a containing directory of `AbuseIPDB` for the file
                 `integration-AbuseIPDB.yml` and we need the containing directory of the package to match
                 what already exists in the repo.
         """
@@ -399,13 +399,13 @@ class ContributionConverter:
                         if not autocreate_dir:
                             output_dir = os.path.join(output_dir, containing_dir_name)
                         os.makedirs(output_dir, exist_ok=True)
-                        extractor = Extractor(input=content_item_file_path, file_type=file_type, output=output_dir,
-                                              no_readme=True, base_name=base_name,
-                                              no_auto_create_dir=(not autocreate_dir), no_pipenv=self.no_pipenv)
+                        extractor = YmlSplitter(input=content_item_file_path, file_type=file_type, output=output_dir,
+                                                no_readme=True, base_name=base_name,
+                                                no_auto_create_dir=(not autocreate_dir), no_pipenv=self.no_pipenv)
 
                     else:
-                        extractor = Extractor(input=content_item_file_path, file_type=file_type,
-                                              output=content_item_dir, no_pipenv=self.no_pipenv)
+                        extractor = YmlSplitter(input=content_item_file_path, file_type=file_type,
+                                                output=content_item_dir, no_pipenv=self.no_pipenv)
                     extractor.extract_to_package_format()
                 except Exception as e:
                     err_msg = f'Error occurred while trying to split the unified YAML "{content_item_file_path}" ' \

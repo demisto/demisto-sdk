@@ -1,9 +1,24 @@
 # Changelog
+* Added support for **init** command to run from non-content repo.
+* The **split-yml** has been renamed to **split** and now supports splitting Dashboards from unified Generic Modules.
+* Fixed an issue where the skipped tests validation ran on the `ApiModules` pack in the **validate** command.
+* The **init** command will now create the `Generic Object` entities directories.
+* Fixed an issue where the **format** command failed to recognize changed files from git.
+
+# 1.4.9
 * Added validation that the support URL in partner contribution pack metadata does not lead to a GitHub repo.
 * Enhanced ***generate-docs*** with default `additionalinformation` (description) for common parameters.
-* Added the *hidden* field to the integration argument schema.
 * Added to **validate** command a validation that a content item's id and name will not end with spaces.
 * The **format** command will now remove trailing whitespaces from content items' id and name fields.
+* Fixed an issue where **update-release-notes** could fail on files outside the user given pack.
+* Fixed an issue where the **generate-test-playbook** command would not place the playbook in the proper folder.
+* Added to **validate** command a validation that packs with `Iron Bank` uses the latest docker from Iron Bank.
+* Added to **update-release-notes** command support for `Generic Object` entities.
+* Fixed an issue where playbook `fromversion` mismatch validation failed even if `skipunavailable` was set to true.
+* Added to the **create artifacts** command support for release notes configuration file.
+* Added validation to **validate** for release notes config file.
+* Added **isoversize** and **isautoswitchedtoquietmode** fields to the playbook schema.
+* Added to the **update-release-notes** command `-bc` flag to generate template for breaking changes version.
 
 # 1.4.8
 * Fixed an issue where yml files with `!reference` failed to load properly.

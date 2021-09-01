@@ -25,8 +25,8 @@ def get_pip_requirements(docker_image: str):
                                    universal_newlines=True, stderr=subprocess.DEVNULL).strip()
 
 
-class Extractor:
-    """Extractor is a class that's designed to split a yml file to it's components.
+class YmlSplitter:
+    """YmlSplitter is a class that's designed to split a yml file to it's components.
 
     Attributes:
         input (str): input yml file path
@@ -46,7 +46,7 @@ class Extractor:
     def __init__(self, input: str, output: str, file_type: str, no_demisto_mock: bool = False,
                  no_common_server: bool = False, no_auto_create_dir: bool = False, configuration: Configuration = None,
                  base_name: str = '', no_readme: bool = False, no_pipenv: bool = False,
-                 no_logging: bool = False, no_basic_fmt: bool = False):
+                 no_logging: bool = False, no_basic_fmt: bool = False, new_module_file: bool = False):
         self.input = input
         self.output = output
         self.demisto_mock = not no_demisto_mock
@@ -145,60 +145,66 @@ class Extractor:
                                     "Make sure to install it with: pip install autopep8.\n"
                                     "Then run: autopep8 -i {}".format(code_file), LOG_COLORS.YELLOW)
             if self.pipenv:
-                if self.basic_fmt:
-                    self.print_logs("Running isort on file: {} ...".format(code_file), LOG_COLORS.NATIVE)
-                    try:
-                        subprocess.call(["isort", code_file])
-                    except FileNotFoundError:
-                        self.print_logs("isort skipped! It doesn't seem you have isort installed.\n"
-                                        "Make sure to install it with: pip install isort.\n"
-                                        "Then run: isort {}".format(code_file), LOG_COLORS.YELLOW)
-
-                self.print_logs("Detecting python version and setting up pipenv files ...", log_color=LOG_COLORS.NATIVE)
-                docker = get_all_docker_images(script_obj)[0]
-                py_ver = get_python_version(docker, self.config.log_verbose)
-                pip_env_dir = get_pipenv_dir(py_ver, self.config.envs_dirs_base)
-                self.print_logs("Copying pipenv files from: {}".format(pip_env_dir), log_color=LOG_COLORS.NATIVE)
-                shutil.copy("{}/Pipfile".format(pip_env_dir), output_path)
-                shutil.copy("{}/Pipfile.lock".format(pip_env_dir), output_path)
-                env = os.environ.copy()
-                env["PIPENV_IGNORE_VIRTUALENVS"] = "1"
                 try:
-                    subprocess.call(["pipenv", "install", "--dev"], cwd=output_path, env=env)
-                    self.print_logs("Installing all py requirements from docker: [{}] into pipenv".format(docker),
-                                    LOG_COLORS.NATIVE)
-                    requirements = get_pip_requirements(docker)
-                    fp = tempfile.NamedTemporaryFile(delete=False)
-                    fp.write(requirements.encode('utf-8'))
-                    fp.close()
+                    if self.basic_fmt:
+                        self.print_logs("Running isort on file: {} ...".format(code_file), LOG_COLORS.NATIVE)
+                        try:
+                            subprocess.call(["isort", code_file])
+                        except FileNotFoundError:
+                            self.print_logs("isort skipped! It doesn't seem you have isort installed.\n"
+                                            "Make sure to install it with: pip install isort.\n"
+                                            "Then run: isort {}".format(code_file), LOG_COLORS.YELLOW)
 
+                    self.print_logs("Detecting python version and setting up pipenv files ...", log_color=LOG_COLORS.NATIVE)
+                    docker = get_all_docker_images(script_obj)[0]
+                    py_ver = get_python_version(docker, self.config.log_verbose)
+                    pip_env_dir = get_pipenv_dir(py_ver, self.config.envs_dirs_base)
+                    self.print_logs("Copying pipenv files from: {}".format(pip_env_dir), log_color=LOG_COLORS.NATIVE)
+                    shutil.copy("{}/Pipfile".format(pip_env_dir), output_path)
+                    shutil.copy("{}/Pipfile.lock".format(pip_env_dir), output_path)
+                    env = os.environ.copy()
+                    env["PIPENV_IGNORE_VIRTUALENVS"] = "1"
                     try:
-                        subprocess.check_call(["pipenv", "install", "-r", fp.name], cwd=output_path, env=env)
+                        subprocess.call(["pipenv", "install", "--dev"], cwd=output_path, env=env)
+                        self.print_logs("Installing all py requirements from docker: [{}] into pipenv".format(docker),
+                                        LOG_COLORS.NATIVE)
+                        requirements = get_pip_requirements(docker)
+                        fp = tempfile.NamedTemporaryFile(delete=False)
+                        fp.write(requirements.encode('utf-8'))
+                        fp.close()
 
-                    except Exception:
-                        self.print_logs("Failed installing requirements in pipenv.\n "
-                                        "Please try installing manually after extract ends\n", LOG_COLORS.RED)
+                        try:
+                            subprocess.check_call(["pipenv", "install", "-r", fp.name], cwd=output_path, env=env)
 
-                    os.unlink(fp.name)
-                    self.print_logs("Installing flake8 for linting", log_color=LOG_COLORS.NATIVE)
-                    subprocess.call(["pipenv", "install", "--dev", "flake8"], cwd=output_path, env=env)
-                except FileNotFoundError as err:
-                    self.print_logs("pipenv install skipped! It doesn't seem you have pipenv installed.\n"
-                                    "Make sure to install it with: pip3 install pipenv.\n"
-                                    f"Then run in the package dir: pipenv install --dev\n.Err: {err}", LOG_COLORS.YELLOW)
-                arg_path = os.path.relpath(output_path)
-                self.print_logs("\nCompleted: setting up package: {}\n".format(arg_path), LOG_COLORS.GREEN)
-                next_steps: str = "Next steps: \n" \
-                                  "* Install additional py packages for unit testing (if needed): cd {};" \
-                                  " pipenv install <package>\n".format(arg_path) if code_type == TYPE_PYTHON else ''
-                next_steps += "* Create unit tests\n" \
-                              "* Check linting and unit tests by running: demisto-sdk lint -i {}\n".format(arg_path)
-                next_steps += "* When ready, remove from git the old yml and/or README and add the new package:\n" \
-                              "    git rm {}\n".format(self.input)
-                if found_readme:
-                    next_steps += "    git rm {}\n".format(os.path.splitext(self.input)[0] + '_README.md')
-                next_steps += "    git add {}\n".format(arg_path)
-                self.print_logs(next_steps, log_color=LOG_COLORS.NATIVE)
+                        except Exception:
+                            self.print_logs("Failed installing requirements in pipenv.\n "
+                                            "Please try installing manually after extract ends\n", LOG_COLORS.RED)
+
+                        os.unlink(fp.name)
+                        self.print_logs("Installing flake8 for linting", log_color=LOG_COLORS.NATIVE)
+                        subprocess.call(["pipenv", "install", "--dev", "flake8"], cwd=output_path, env=env)
+                    except FileNotFoundError as err:
+                        self.print_logs("pipenv install skipped! It doesn't seem you have pipenv installed.\n"
+                                        "Make sure to install it with: pip3 install pipenv.\n"
+                                        f"Then run in the package dir: pipenv install --dev\n.Err: {err}", LOG_COLORS.YELLOW)
+                    arg_path = os.path.relpath(output_path)
+                    self.print_logs("\nCompleted: setting up package: {}\n".format(arg_path), LOG_COLORS.GREEN)
+                    next_steps: str = "Next steps: \n" \
+                                      "* Install additional py packages for unit testing (if needed): cd {};" \
+                                      " pipenv install <package>\n".format(arg_path) if code_type == TYPE_PYTHON else ''
+                    next_steps += "* Create unit tests\n" \
+                                  "* Check linting and unit tests by running: demisto-sdk lint -i {}\n".format(arg_path)
+                    next_steps += "* When ready, remove from git the old yml and/or README and add the new package:\n" \
+                                  "    git rm {}\n".format(self.input)
+                    if found_readme:
+                        next_steps += "    git rm {}\n".format(os.path.splitext(self.input)[0] + '_README.md')
+                    next_steps += "    git add {}\n".format(arg_path)
+                    self.print_logs(next_steps, log_color=LOG_COLORS.NATIVE)
+
+                except Exception:
+                    self.print_logs("An unexpected error has occurred while trying to install "
+                                    "the requirements in pipenv.\n"
+                                    "Please try installing manually after extract ends.\n", LOG_COLORS.RED)
 
             else:
                 self.print_logs("Skipping pipenv and requirements installation - Note: no Pipfile will be created",

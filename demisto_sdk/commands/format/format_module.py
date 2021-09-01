@@ -203,10 +203,11 @@ def get_files_to_format_from_git(supported_file_types: List[str], prev_ver: str,
     filtered_files = []
     for file_path in all_changed_files:
         str_file_path = str(file_path)
-        file_extension = os.path.splitext(str_file_path)[1]
+
+        # get the file extension without the '.'
+        file_extension = os.path.splitext(str_file_path)[1][1:]
         if file_extension in supported_file_types and os.path.exists(str_file_path):
             filtered_files.append(str_file_path)
-            continue
 
     if filtered_files:
         detected_files_string = "\n".join(filtered_files)

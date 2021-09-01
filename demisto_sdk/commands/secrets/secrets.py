@@ -368,19 +368,20 @@ class SecretsValidator(object):
         final_white_list = []
         ioc_white_list = []
         files_while_list = []
-        with io.open(whitelist_path, mode="r", encoding="utf-8") as secrets_white_list_file:
-            secrets_white_list_file = json.load(secrets_white_list_file)
-            for name, white_list in secrets_white_list_file.items():  # type: ignore
-                if name == 'iocs':
-                    for sublist in white_list:
-                        ioc_white_list += [white_item for white_item in white_list[sublist] if len(white_item) > 4]
-                    final_white_list += ioc_white_list
-                elif name == 'files':
-                    files_while_list = white_list
-                else:
-                    final_white_list += [white_item for white_item in white_list if len(white_item) > 4]
+        if os.path.isfile(whitelist_path):
+            with io.open(whitelist_path, mode="r", encoding="utf-8") as secrets_white_list_file:
+                secrets_white_list_file = json.load(secrets_white_list_file)
+                for name, white_list in secrets_white_list_file.items():  # type: ignore
+                    if name == 'iocs':
+                        for sublist in white_list:
+                            ioc_white_list += [white_item for white_item in white_list[sublist] if len(white_item) > 4]
+                        final_white_list += ioc_white_list
+                    elif name == 'files':
+                        files_while_list = white_list
+                    else:
+                        final_white_list += [white_item for white_item in white_list if len(white_item) > 4]
 
-            return final_white_list, ioc_white_list, files_while_list
+        return final_white_list, ioc_white_list, files_while_list
 
     @staticmethod
     def get_packs_white_list(whitelist_path, pack_name=None):

@@ -1357,6 +1357,7 @@ class IDSetType(Enum):
     GENERIC_TYPE = 'GenericTypes'
     GENERIC_FIELD = 'GenericFields'
     GENERIC_MODULE = 'GenericModules'
+    GENERIC_DEFINITION = 'GenericDefinitions'
 
     @classmethod
     def has_value(cls, value):

@@ -38,7 +38,7 @@ def test_is_duplicate_description_unified_deprecated_integration(mocker, tmp_pat
     assert not DescriptionValidator.handle_error.called
 
 
-def test_is_duplicate_description_description_given(pack, mocker):
+def test_is_duplicate_description_given(pack, mocker):
     """
     Given:
         - Case A: Content pack with unified integration

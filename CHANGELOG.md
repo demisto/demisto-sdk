@@ -1,4 +1,5 @@
 # Changelog
+* The **split-yml** has been renamed to **split** and now supports splitting Dashboards from unified Generic Modules.
 
 # 1.4.9
 * Added validation that the support URL in partner contribution pack metadata does not lead to a GitHub repo.

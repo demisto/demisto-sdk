@@ -657,11 +657,25 @@ class TestRNUpdate(unittest.TestCase):
         assert client.is_bump_required() is False
 
     def test_filter_to_relevant_files_pack_not_found(self):
+        """
+        Given:
+        - Pack input.
+        - File difference of a file outside of Packs structure.
+
+        When:
+        - Executing filter relevant files from given pack.
+
+        Then:
+        - Ensure file is filtered.
+        """
         from demisto_sdk.commands.update_release_notes.update_rn_manager import UpdateReleaseNotesManager
         from demisto_sdk.commands.validate.validate_manager import ValidateManager
         manager = UpdateReleaseNotesManager(user_input='BitcoinAbuse')
         validate_manager: ValidateManager = ValidateManager(check_is_unskipped=False)
-        manager.filter_to_relevant_files(file_set={'.gitlab/ci/.gitlab-ci.yml'}, validate_manager=validate_manager)
+        filtered_set, old_format_files = manager.filter_to_relevant_files(
+            {'.gitlab/ci/.gitlab-ci.yml'}, validate_manager)
+        assert filtered_set == set()
+        assert old_format_files == set()
 
 
 class TestRNUpdateUnit:

@@ -1066,9 +1066,7 @@ def init(**kwargs):
 @click.option(
     "-e", "--examples",
     help="Integrations: path for file containing command examples."
-         " Each command should be in a separate line."
-         " Scripts: the script example surrounded by quotes."
-         " For example: -e '!ConvertFile entry_id=<entry_id>'")
+         " Each command should be in a separate line.")
 @click.option(
     "--insecure",
     help="Skip certificate validation to run the commands in order to generate the docs.",
@@ -1092,9 +1090,6 @@ def generate_context(**kwargs):
         return 1
 
     file_type = find_type(kwargs.get('input', ''), ignore_sub_categories=True)
-    if file_type is not FileType.INTEGRATION:
-        print_error('File is not an Integration.')
-        return 1
 
     if not examples or not os.path.isfile(examples):
         print_error(f'Command examples file was not found {examples}.')

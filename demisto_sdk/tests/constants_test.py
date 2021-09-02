@@ -217,6 +217,8 @@ VALID_GENERIC_FIELD_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/generic-fie
 VALID_GENERIC_MODULE_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/generic-module-valid.json"
 VALID_GENERIC_DEFINITION_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/generic-definitions-valid.json"
 
+DUMMY_PACK_WITH_TEST_PLAYBOOKS = f"{GIT_ROOT}/demisto_sdk/tests/test_files/Packs/DummyPackWithTests/"
+
 DIR_LIST = [
     f'{PACK_TARGET}/{constants.INTEGRATIONS_DIR}',
     f'{PACK_TARGET}/{constants.SCRIPTS_DIR}',

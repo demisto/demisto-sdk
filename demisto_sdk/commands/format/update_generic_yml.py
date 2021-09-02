@@ -11,7 +11,7 @@ from demisto_sdk.commands.common.constants import (INTEGRATION, PLAYBOOK,
 from demisto_sdk.commands.common.tools import (_get_file_id, find_type,
                                                get_entity_id_by_entity_type,
                                                get_not_registered_tests,
-                                               get_yaml, is_uuid)
+                                               get_yaml, is_uuid, get_entity_name_by_entity_type)
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 
 ryaml = YAML()
@@ -113,6 +113,19 @@ class BaseUpdateYML(BaseUpdate):
         if self.deprecate:
             self.update_deprecate(file_type=file_type)
 
+    def is_playbook_or_script_in_use_in_test_playbook(self, test_playbook_file_path, file_type):
+        test_playbook_content = get_yaml(test_playbook_file_path)
+        playbook_or_script_content = get_yaml(self.source_file)
+        file_name = get_entity_name_by_entity_type(playbook_or_script_content, file_type)
+        yml_tasks = test_playbook_content.get('tasks')
+        if yml_tasks:
+            for task_number, task_content in yml_tasks.items():
+                for key, value in task_content.items():
+                    if file_type == 'PLAYBOOK':
+                        if key == 'task':
+                            if value.get('playbookName') == file_name:
+                                return True
+
     def update_tests(self) -> None:
         """
         If there are no tests configured: Prompts a question to the cli that asks the user whether he wants to add
@@ -130,7 +143,9 @@ class BaseUpdateYML(BaseUpdate):
                         is_yml_file = file_path.endswith('.yml')
                         # concat as we might not be in content repo
                         tpb_file_path = os.path.join(test_playbook_dir_path, file_path)
-                        if is_yml_file and find_type(tpb_file_path) == FileType.TEST_PLAYBOOK:
+                        if is_yml_file and find_type(tpb_file_path) == FileType.TEST_PLAYBOOK and self.\
+                                is_playbook_or_script_in_use_in_test_playbook(tpb_file_path,
+                                                                              find_type(self.source_file).name):
                             test_playbook_data = get_yaml(tpb_file_path)
                             test_playbook_id = get_entity_id_by_entity_type(test_playbook_data,
                                                                             content_entity='')

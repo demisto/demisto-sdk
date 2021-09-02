@@ -1,0 +1,93 @@
+id: Dummy Playbook
+version: -1
+name: Dummy Playbook
+description: "This playbook is triggered by fetching a Palo Alto Networks Cortex XDR
+  incident. \nThe playbook syncs and updates new XDR alerts that construct the incident.
+  It enriches indicators using Threat Intelligence integrations and Palo Alto Networks
+  AutoFocus. The incident's severity is then updated based on the indicators reputation
+  and an analyst is assigned for manual investigation. If chosen, automated remediation
+  with Palo Alto Networks FireWall is initiated. After a manual review by the
+  SOC analyst, the XDR incident is closed automatically.\n\n*** Note - The XDRSyncScript
+  used by this playbook sets data in the XDR incident fields that were released
+  to content from the Demisto server version 5.0.0.\nFor Demisto versions under 5.0.0,
+  please follow the 'Palo Alto Networks Cortex XDR' documentation to upload the new
+  fields manually."
+fromversion: 4.5.0
+starttaskid: "0"
+tasks:
+  "4":
+    id: "4"
+    taskid: 38c6ac55-ffd2-47cc-81ab-cd80d63efe9c
+    type: playbook
+    task:
+      id: 38c6ac55-ffd2-47cc-81ab-cd80d63efe9c
+      version: -1
+      name: Dummy Playbook
+      playbookName: Dummy Playbook
+      type: playbook
+      iscommand: false
+      brand: ""
+    nexttasks:
+      '#none#':
+      - "3"
+    separatecontext: true
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 545
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+  "5":
+    id: "5"
+    taskid: 41f6acc5-4a08-47d9-8886-ea034c4f1a74
+    type: regular
+    task:
+      id: 41f6acc5-4a08-47d9-8886-ea034c4f1a74
+      version: -1
+      name: Perform XDR Alerts Sync with Incident
+      description: This script
+      scriptName: DummyScript
+      type: regular
+      iscommand: false
+      brand: ""
+    nexttasks:
+      '#none#':
+      - "10"
+    scriptarguments:
+      alert_count: {}
+    separatecontext: false
+    view: |-
+      {
+        "position": {
+          "x": 1062.5,
+          "y": -85
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+view: |-
+  {
+    "linkLabelsPosition": {
+      "12_31_yes": 0.6,
+      "12_38_#default#": 0.71,
+      "31_15_yes": 0.66,
+      "31_38_#default#": 0.3
+    },
+    "paper": {
+      "dimensions": {
+        "height": 2545,
+        "width": 1300,
+        "x": 440,
+        "y": -250
+      }
+    }
+  }
+inputs: []
+outputs: []
+tests:
+  - No Test

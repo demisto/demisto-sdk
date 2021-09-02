@@ -22,7 +22,7 @@ from demisto_sdk.commands.lint.commands_builder import excluded_files
 from demisto_sdk.tests.constants_test import (
     DESTINATION_FORMAT_INTEGRATION_COPY, DESTINATION_FORMAT_PLAYBOOK_COPY,
     INTEGRATION_WITH_TEST_PLAYBOOKS, PLAYBOOK_WITH_TEST_PLAYBOOKS,
-    SOURCE_FORMAT_INTEGRATION_COPY, SOURCE_FORMAT_PLAYBOOK_COPY)
+    SOURCE_FORMAT_INTEGRATION_COPY, SOURCE_FORMAT_PLAYBOOK_COPY, DUMMY_PACK_WITH_TEST_PLAYBOOKS)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     GENERIC_DEFINITION, GENERIC_FIELD, GENERIC_MODULE, GENERIC_TYPE)
 from TestSuite.test_tools import ChangeCWD
@@ -1342,3 +1342,37 @@ class TestFormatWithoutAddTestsFlag:
         assert prompt not in result.output
         assert message not in result.output
         assert message1 in result.output
+
+class TestCollectTestsInFormat:
+    def remove_tests_key_from_yml(self, path):
+        tests_value = ''
+        with open(path, 'r') as f:
+            x = f.read()
+            file_context = yaml.safe_load(x)
+            if file_context.get('tests'):
+                tests_value = file_context.get('tests')[0]
+                del file_context['tests']
+
+        with open(path, 'w') as f:
+            f.write(yaml.dump(file_context))
+        return tests_value
+
+    def test_format_add_tests_automatically_to_playbook(self, tmp_path: PosixPath):
+        """
+            Given: Test playbook to format.
+            When: Running format command.
+            Then: Add under 'tests' test playbooks that use the tested playbook.
+
+        """
+        runner = CliRunner()
+        playbooks_path = f'{DUMMY_PACK_WITH_TEST_PLAYBOOKS}Playbooks'
+        result = runner.invoke(main, [FORMAT_CMD, '-i', playbooks_path, '-at'], input='N')
+        prompt = f'The file {playbooks_path}{os.sep}' \
+                 f'DummyPlaybook.yml has no test playbooks configured. Do you want to configure it with "No tests" '
+        message = f'Formatting {playbooks_path}{os.sep}DummyPlaybook.yml with "No tests"'
+        assert not result.exception
+        assert prompt not in result.output
+        assert message not in result.output
+
+        tests_value_from_yml = self.remove_tests_key_from_yml(f'{playbooks_path}{os.sep}DummyPlaybook.yml')
+        assert tests_value_from_yml == 'Dummy Playbook'

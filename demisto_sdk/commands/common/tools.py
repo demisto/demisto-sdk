@@ -854,12 +854,12 @@ def get_test_playbook_id(test_playbooks_list: list, tpb_path: str) -> Tuple:  # 
 
     """
     for test_playbook_dict in test_playbooks_list:
-        test_playbook_name = list(test_playbook_dict.keys())[0]
-        test_playbook_path = test_playbook_dict[test_playbook_name].get('file_path')
-        test_playbook_pack = test_playbook_dict[test_playbook_name].get('pack')
+        test_playbook_id = list(test_playbook_dict.keys())[0]
+        test_playbook_path = test_playbook_dict[test_playbook_id].get('file_path')
+        test_playbook_pack = test_playbook_dict[test_playbook_id].get('pack')
 
         if tpb_path in test_playbook_path:
-            return test_playbook_name, test_playbook_pack
+            return test_playbook_id, test_playbook_pack
         else:
             return None, None
 
@@ -881,7 +881,6 @@ def get_ignore_pack_skipped_tests(pack_name: str, modified_packs: set) -> set:
 
     """
     ignored_tests_set = set()
-    tests = set()
     ignore_list = []
     id_set = get_content_id_set()
     test_playbooks = id_set['TestPlaybooks']
@@ -908,12 +907,9 @@ def get_ignore_pack_skipped_tests(pack_name: str, modified_packs: set) -> set:
     for item in ignore_list:
         file_name = item.get('file_name', '')
         if item.get('ignore_code') == 'auto-test':
-            tests.add(file_name)
-
-            for test in tests:
-                test_id, test_pack = get_test_playbook_id(test_playbooks, test)
-                if test_id:
-                    ignored_tests_set.add(test_id)
+            test_id, test_pack = get_test_playbook_id(test_playbooks, file_name)
+            if test_id:
+                ignored_tests_set.add(test_id)
     return ignored_tests_set
 
 

@@ -24,7 +24,7 @@ In order to release a new version of `demisto-sdk` to the public follow these st
 2) Update the **Tag version** and **Release title** to `vX.X.X`.
 3) In the **Describe the release** text box paste the `CHANGELOG` contents for this release.
 4) Make sure the relevant nightly SDK build passed (step 3 on the previous section), then click **Publish release**. Your release will go through a deploy build, and if the build will be successful, your release will be public 🎉.
-5) Update [**dev-requirements-py3.txt**](https://github.com/demisto/content/blob/master/dev-requirements-py3.txt) again, this time with the newly-released version (rather than the branch).
+5) Update [**dev-requirements-py3.txt**](https://github.com/demisto/content/blob/master/dev-requirements-py3.txt) again, this time with the newly-released version (rather than the branch), e.g demisto-sdk==x.x.x.
 6) Wait for the build to finish, or force merge your PR to the Content repository.
 7) Announce regarding the SDK release in the content-team slack channel.
 8) Update **CHANGELOG.md** file - change the `# Changelog` header to the release version in the format `# X.X.X` e.g. `# 1.0.0`, and create a new `# Changelog` header at the top of the file.

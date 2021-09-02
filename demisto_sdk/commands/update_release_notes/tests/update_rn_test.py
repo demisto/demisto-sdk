@@ -656,6 +656,13 @@ class TestRNUpdate(unittest.TestCase):
             'Packs/Test/Integrations/Test.yml'}, added_files=set('Packs/Test/some_added_file.py'))
         assert client.is_bump_required() is False
 
+    def test_filter_to_relevant_files_pack_not_found(self):
+        from demisto_sdk.commands.update_release_notes.update_rn_manager import UpdateReleaseNotesManager
+        from demisto_sdk.commands.validate.validate_manager import ValidateManager
+        manager = UpdateReleaseNotesManager(user_input='BitcoinAbuse')
+        validate_manager: ValidateManager = ValidateManager(check_is_unskipped=False)
+        manager.filter_to_relevant_files(file_set={'.gitlab/ci/.gitlab-ci.yml'}, validate_manager=validate_manager)
+
 
 class TestRNUpdateUnit:
     META_BACKUP = ""

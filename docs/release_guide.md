@@ -6,9 +6,9 @@ In order to release a new version of `demisto-sdk` to the public follow these st
 3) Make sure that both `sdk-nightly` and `sdk-master` builds passed.
    * If **new SDK commits** were pushed after the nightly tests have started, manually trigger the sdk nightly build again as written in step 4. This will test sdk master on content branch.
    * If **no new SDK commits** were done after the nightly tests, skip step 4.
-4) Enter the content repo, and run `./Utils/trigger_nightly_sdk_build.sh -ct <circle_token> -bt <release_branch_name>`. 
+4) Enter the content repo, and run `./Utils/trigger_nightly_sdk_build.sh -ct <circle_token> -bt <release_branch_name>`.
   **Note:** if you're on `content/master`, a notification will be sent to the content-team slack channel. The destination channel can be set via argument.
-  Wait until the nightly sdk completes (around 2-3h, mostly for validation) 
+  Wait until the nightly sdk completes (around 2-3h, mostly for validation)
    _circle_token is a private key tied to your github user, generate one on your circle user settings page, under `Personal API Tokens`._
 5) If any change was introduced in the content creation steps (**create content artifacts** or **unify** commands):
   a) Compare the content_new.zip from nightly-sdk build and nightly-content build and see if there is any major difference between them.\

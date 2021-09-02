@@ -107,6 +107,12 @@ mapping:
           skipunavailable:
             type: bool
             required: false
+          isoversize:
+            type: bool
+            required: false
+          isautoswitchedtoquietmode:
+            type: bool
+            required: false
           quiet:
             type: bool
           evidencedata:

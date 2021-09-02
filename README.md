@@ -67,7 +67,7 @@ Supported commands:
 1. [Lint](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/lint/README.md)
 1. [Secrets](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/secrets/README.md)
 1. [Unify](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/unify/README.md)
-1. [Split-yml](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/split_yml/README.md)
+1. [Split](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/split/README.md)
 1. [Format](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/format/README.md)
 1. [Run](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/run_cmd/README.md)
 1. [Run-playbook](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/run_playbook/README.md)

@@ -1,10 +1,11 @@
 import json
 
-from demisto_sdk.commands.common.constants import CONF_PATH, FileType
+from demisto_sdk.commands.common.constants import (API_MODULES_PACK, CONF_PATH,
+                                                   FileType)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
-from demisto_sdk.commands.common.tools import _get_file_id
+from demisto_sdk.commands.common.tools import _get_file_id, get_pack_name
 
 
 class ConfJsonValidator(BaseValidator):
@@ -106,6 +107,10 @@ class ConfJsonValidator(BaseValidator):
         test_playbooks_unskip_status = {}
         all_test_playbook_ids = test_playbook_ids.copy()
         skipped_tests = self.conf_data.get('skipped_tests', {})
+
+        # do not check this validation for ApiModules pack
+        if get_pack_name(file_path) == API_MODULES_PACK:
+            return self._is_valid
 
         if isinstance(current_file.get('tests'), list):
             all_test_playbook_ids.extend(current_file.get('tests', []))

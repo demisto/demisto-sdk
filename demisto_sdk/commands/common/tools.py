@@ -13,7 +13,8 @@ from enum import Enum
 from functools import lru_cache, partial
 from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen, check_output
-from typing import Callable, Dict, List, Match, Optional, Tuple, Type, Union
+from typing import (Callable, Dict, List, Match, Optional, Set, Tuple, Type,
+                    Union)
 
 import click
 import colorama
@@ -535,12 +536,17 @@ def get_entity_id_by_entity_type(data: dict, content_entity: str):
     :param content_entity: The content entity type
     :return: The file id
     """
-    if content_entity in (INTEGRATIONS_DIR, SCRIPTS_DIR):
-        return data.get('commonfields', {}).get('id', '')
-    elif content_entity == LAYOUTS_DIR:
-        return data.get('typeId', '')
-    else:
-        return data.get('id', '')
+    try:
+        if content_entity in (INTEGRATIONS_DIR, SCRIPTS_DIR):
+            return data.get('commonfields', {}).get('id', '')
+        elif content_entity == LAYOUTS_DIR:
+            return data.get('typeId', '')
+        else:
+            return data.get('id', '')
+
+    except AttributeError:
+        raise ValueError(f"Could not retrieve id from file of type {content_entity} - make sure the file structure is "
+                         f"valid")
 
 
 def get_entity_name_by_entity_type(data: dict, content_entity: str):
@@ -550,11 +556,17 @@ def get_entity_name_by_entity_type(data: dict, content_entity: str):
     :param content_entity: The content entity type
     :return: The file name
     """
-    if content_entity == LAYOUTS_DIR:
-        if 'typeId' in data:
-            return data.get('typeId', '')
-        return data.get('name', '')  # for layoutscontainer
-    return data.get('name', '')
+    try:
+        if content_entity == LAYOUTS_DIR:
+            if 'typeId' in data:
+                return data.get('typeId', '')
+            return data.get('name', '')  # for layoutscontainer
+        return data.get('name', '')
+
+    except AttributeError:
+        raise ValueError(
+            f"Could not retrieve name from file of type {content_entity} - make sure the file structure is "
+            f"valid")
 
 
 def collect_ids(file_path):
@@ -2012,6 +2024,61 @@ def suppress_stdout():
             sys.stdout = old_stdout
 
 
+def get_definition_name(path: str, pack_path: str) -> Optional[str]:
+    r"""
+        param:
+            path (str): path to the file which needs a definition name (generic field\generic type file)
+            pack_path (str): relevant pack path
+
+        :rtype: ``str``
+        :return:
+            for generic type and generic field return associated generic definition name folder
+
+    """
+
+    try:
+        file_dictionary = get_json(path)
+        definition_id = file_dictionary['definitionId']
+        generic_def_path = os.path.join(pack_path, 'GenericDefinitions')
+        file_names_lst = os.listdir(generic_def_path)
+        for file in file_names_lst:
+            if str.find(file, definition_id):
+                def_file_path = os.path.join(generic_def_path, file)
+                def_file_dictionary = get_json(def_file_path)
+                cur_id = def_file_dictionary["id"]
+                if cur_id == definition_id:
+                    return def_file_dictionary["name"]
+
+        print("Was unable to find the file for definitionId " + definition_id)
+        return None
+
+    except FileNotFoundError or AttributeError:
+        print("Error while retrieving definition name for definitionId " + definition_id +
+              "\n Check file structure and make sure all relevant fields are entered properly")
+        return None
+
+
 def is_iron_bank_pack(file_path):
     metadata = get_pack_metadata(file_path)
     return PACK_METADATA_IRON_BANK_TAG in metadata.get('tags', [])
+
+
+def get_script_or_sub_playbook_tasks_from_playbook(searched_entity_name: str, main_playbook_data: Dict) -> List[Dict]:
+    """Get the tasks data for a task running the searched_entity_name (script/playbook).
+
+    Returns:
+        List. A list of dicts representing tasks running the searched_entity_name.
+    """
+    searched_tasks: List = []
+    tasks = main_playbook_data.get('tasks', {})
+    if not tasks:
+        return searched_tasks
+
+    for task_data in tasks.values():
+        task_details = task_data.get('task', {})
+        found_entity = searched_entity_name in {task_details.get('scriptName'), task_details.get('playbookName')}
+
+        if found_entity:
+            searched_tasks.append(task_data)
+
+    return searched_tasks

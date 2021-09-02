@@ -34,7 +34,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                print_color,
                                                retrieve_file_ending)
 from demisto_sdk.commands.format.format_module import format_manager
-from demisto_sdk.commands.split_yml.extractor import Extractor
+from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 
 
 class Downloader:
@@ -504,9 +504,9 @@ class Downloader:
         base_name: str = self.create_dir_name(file_name)
         temp_dir = mkdtemp()
 
-        extractor = Extractor(input=file_path, output=temp_dir, file_type=file_type, base_name=base_name,
-                              no_logging=not self.log_verbose, no_pipenv=True, no_readme=True,
-                              no_auto_create_dir=True)
+        extractor = YmlSplitter(input=file_path, output=temp_dir, file_type=file_type, base_name=base_name,
+                                no_logging=not self.log_verbose, no_pipenv=True, no_readme=True,
+                                no_auto_create_dir=True)
         extractor.extract_to_package_format()
 
         extracted_file_paths: list = get_child_files(temp_dir)
@@ -594,8 +594,8 @@ class Downloader:
         dir_name: str = self.create_dir_name(file_name)
         dir_output_path = os.path.join(dir_output_path, dir_name)
 
-        extractor = Extractor(input=file_path, output=dir_output_path, file_type=file_type, base_name=dir_name,
-                              no_auto_create_dir=True, no_logging=not self.log_verbose, no_pipenv=True)
+        extractor = YmlSplitter(input=file_path, output=dir_output_path, file_type=file_type, base_name=dir_name,
+                                no_auto_create_dir=True, no_logging=not self.log_verbose, no_pipenv=True)
         extractor.extract_to_package_format()
 
         for file_path in get_child_files(dir_output_path):

@@ -668,8 +668,10 @@ class TestRNUpdate(unittest.TestCase):
         Then:
         - Ensure file is filtered.
         """
-        from demisto_sdk.commands.update_release_notes.update_rn_manager import UpdateReleaseNotesManager
-        from demisto_sdk.commands.validate.validate_manager import ValidateManager
+        from demisto_sdk.commands.update_release_notes.update_rn_manager import \
+            UpdateReleaseNotesManager
+        from demisto_sdk.commands.validate.validate_manager import \
+            ValidateManager
         manager = UpdateReleaseNotesManager(user_input='BitcoinAbuse')
         validate_manager: ValidateManager = ValidateManager(check_is_unskipped=False)
         filtered_set, old_format_files = manager.filter_to_relevant_files(

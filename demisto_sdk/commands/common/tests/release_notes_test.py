@@ -304,7 +304,7 @@ def test_are_release_notes_complete_rn_config(pack):
     - Checking if it should have an entry in RN.
 
     Then:
-    - Ensure it is skipped.
+    - Ensure it is not checked and release notes return valid response.
     """
     rn = pack.create_release_notes('1_0_1', is_bc=True)
     validator = ReleaseNotesValidator(rn.path, modified_files=[rn.path.replace('md', 'json')],

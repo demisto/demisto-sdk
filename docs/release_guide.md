@@ -4,7 +4,7 @@ In order to release a new version of `demisto-sdk` to the public follow these st
 1) Make sure the **CHANGELOG.md** file is in order and is updated with all the changes in the current release.
 2) Create a new release branch on the sdk repo, formatted as `X.X.X`, e.g. `1.0.0`.
 3) Make sure that both `sdk-nightly` and `sdk-master` builds passed.
-   * If **new SDK commits** were pushed after the nightly tests started, manually trigger the sdk nightly build again. This will test sdk master on content branch.
+   * If **new SDK commits** were pushed after the nightly tests have started, manually trigger the sdk nightly build again as written in step 4. This will test sdk master on content branch.
    * If **no new SDK commits** were done after the nightly tests, you're good.
 4) Enter the content repo, and run `./Utils/trigger_nightly_sdk_build.sh -ct <circle_token> -bt <release_branch_name>`. 
   **Note:** if you're on `content/master`, a notification will be sent to the content-team slack channel. The destination channel can be set via argument.

@@ -96,7 +96,8 @@ class Uploader:
         self.path = input
         self.log_verbose = verbose
         verify = (not insecure) if insecure else None  # set to None so demisto_client will use env var DEMISTO_VERIFY_SSL
-        if os.environ.get('DEMISTO_BASE_URL').startswith('https'):
+        url = os.environ.get('DEMISTO_BASE_URL')
+        if url and url.startswith('https'):
             proxy = os.environ.get('HTTPS_PROXY') or os.environ.get('https_proxy', '')
         else:
             proxy = os.environ.get('HTTP_PROXY') or os.environ.get('http_proxy', '')

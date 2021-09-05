@@ -39,7 +39,7 @@ def get_outputs_from_user_profile(user_profile):
 
 
 class TestGetUserCommand:
-    def test_get_user_command__existing_user(self, mocker):
+    def test_existing_user(self, mocker):
         """
         Given:
             - An app client object
@@ -67,7 +67,7 @@ class TestGetUserCommand:
         assert outputs.get('details', {}).get('first_name') == 'mock_first_name'
         assert outputs.get('details', {}).get('last_name') == 'mock_last_name'
 
-    def test_get_user_command__non_existing_user(self, mocker):
+    def test_non_existing_user(self, mocker):
         """
         Given:
             - An app client object
@@ -91,7 +91,7 @@ class TestGetUserCommand:
         assert outputs.get('errorCode') == IAMErrors.USER_DOES_NOT_EXIST[0]
         assert outputs.get('errorMessage') == IAMErrors.USER_DOES_NOT_EXIST[1]
 
-    def test_get_user_command__bad_response(self, mocker):
+    def test_bad_response(self, mocker):
         """
         Given:
             - An app client object
@@ -124,7 +124,7 @@ class TestGetUserCommand:
 
 
 class TestCreateUserCommand:
-    def test_create_user_command__success(self, mocker):
+    def test_success(self, mocker):
         """
         Given:
             - An app client object
@@ -152,7 +152,7 @@ class TestCreateUserCommand:
         assert outputs.get('details', {}).get('first_name') == 'mock_first_name'
         assert outputs.get('details', {}).get('last_name') == 'mock_last_name'
 
-    def test_create_user_command__user_already_exists(self, mocker):
+    def test_user_already_exists(self, mocker):
         """
         Given:
             - An app client object
@@ -183,7 +183,7 @@ class TestCreateUserCommand:
 
 
 class TestUpdateUserCommand:
-    def test_update_user_command__non_existing_user(self, mocker):
+    def test_non_existing_user(self, mocker):
         """
         Given:
             - An app client object
@@ -215,7 +215,7 @@ class TestUpdateUserCommand:
         assert outputs.get('details', {}).get('first_name') == 'mock_first_name'
         assert outputs.get('details', {}).get('last_name') == 'mock_last_name'
 
-    def test_update_user_command__command_is_disabled(self, mocker):
+    def test_command_is_disabled(self, mocker):
         """
         Given:
             - An app client object
@@ -241,7 +241,7 @@ class TestUpdateUserCommand:
         assert outputs.get('skipped') is True
         assert outputs.get('reason') == 'Command is disabled.'
 
-    def test_update_user_command__allow_enable(self, mocker):
+    def test_allow_enable(self, mocker):
         """
         Given:
             - An app client object
@@ -274,7 +274,7 @@ class TestUpdateUserCommand:
 
 
 class TestDisableUserCommand:
-    def test_disable_user_command__non_existing_user(self, mocker):
+    def test_non_existing_user(self, mocker):
         """
         Given:
             - An app client object

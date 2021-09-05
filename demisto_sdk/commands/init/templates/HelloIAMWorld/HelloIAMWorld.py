@@ -43,7 +43,7 @@ class Client(BaseClient):
             params=query_params,
         )
 
-        if res and res.get('result', []):  # TODO: make sure you verify a single result was retrieved
+        if res and len(res.get('result', [])) == 1:  # TODO: make sure you verify a single result was retrieved
             user_app_data = res.get('result')[0]     # TODO: get the user_id, username, is_active and user_app_data
 
             user_id = user_app_data.get('user_id')

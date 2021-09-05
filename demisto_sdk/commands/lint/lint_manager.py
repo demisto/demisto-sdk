@@ -243,6 +243,7 @@ class LintManager:
         else:
             last_common_commit = content_repo.merge_base(content_repo.active_branch.commit,
                                                          f'{content_repo.remote()}/{base_branch}')
+        print(f'last_common_commit: {last_common_commit}')
         changed_from_base = {content_repo.working_dir / Path(item.b_path).parent for item in
                              content_repo.active_branch.commit.tree.diff(last_common_commit, paths=pkgs)}
         print(f'changed_from_base: {changed_from_base}')

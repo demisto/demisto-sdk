@@ -132,7 +132,7 @@ class Uploader:
                 status_code = self.unified_entity_uploader(self.path) or status_code
             elif os.path.basename(self.path.rstrip('/')) in CONTENT_ENTITIES_DIRS:
                 status_code = self.entity_dir_uploader(self.path) or status_code
-            elif parent_dir_name == PACKS_DIR:
+            else:
                 status_code = self.pack_uploader(self.path) or status_code
 
         if status_code == ABORTED_RETURN_CODE:

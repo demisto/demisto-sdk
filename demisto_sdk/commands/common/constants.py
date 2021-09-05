@@ -879,33 +879,6 @@ def urljoin(*args: str):
     return reduce(lambda a, b: str(a).rstrip('/') + '/' + str(b).lstrip('/'), args).rstrip("/")
 
 
-# class GitlabConfig:
-#     def __init__(self):
-#         try:
-#             urls = list(GitUtil().repo.remote().urls)
-#             self.CURRENT_REPOSITORY = self._get_repository_name(urls)
-#         except (InvalidGitRepositoryError, AttributeError):  # No repository
-#             self.CURRENT_REPOSITORY = self.OFFICIAL_CONTENT_REPO_NAME
-#
-#
-#
-#     @staticmethod
-#     def _get_repository_name(urls: Iterable) -> str:
-#         """Returns the git repository of the cwd.
-#         if not running in a git repository, will return an empty string
-#         """
-#         try:
-#             for url in urls:
-#                 repo = re.findall(r'.com[/:](.*)', url)[0].replace('.git', '')
-#                 return repo
-#         except (AttributeError, IndexError):
-#             pass
-#
-#         # default to content repo if the repo is not found
-#         click.secho('Could not find the repository name - defaulting to demisto/content', fg='yellow')
-#         return GithubContentConfig.OFFICIAL_CONTENT_REPO_NAME
-
-
 class GitCredentials:
     ENV_GITHUB_TOKEN_NAME = 'DEMISTO_SDK_GITHUB_TOKEN'
     ENV_GITLAB_TOKEN_NAME = 'DEMISTO_SDK_GITLAB_TOKEN'

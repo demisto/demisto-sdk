@@ -12,8 +12,8 @@ from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_latest_release_notes_text,
-                                               get_release_notes_file_path,
-                                               get_pack_name)
+                                               get_pack_name,
+                                               get_release_notes_file_path)
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
 

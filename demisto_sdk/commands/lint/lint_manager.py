@@ -58,12 +58,14 @@ class LintManager:
         self._verbose = not quiet if quiet else verbose
         # Gather facts for manager
         self._facts: dict = self._gather_facts()
+        print(f'self._facts["content_repo"] = {self._facts["content_repo"]}')
         self._prev_ver = prev_ver
         self._all_packs = all_packs
         # Set 'git' to true if no packs have been specified, 'lint' should operate as 'lint -g'
         lint_no_packs_command = not git and not all_packs and not input
         if lint_no_packs_command:
             git = True
+        print(f'git is {git}')
         # Filter packages to lint and test check
         self._pkgs: List[Path] = self._get_packages(content_repo=self._facts["content_repo"],
                                                     input=input,
@@ -216,7 +218,7 @@ class LintManager:
         content_packs_pkgs: set = set(packs_dir.glob(['*/Integrations/*/',
                                                       '*/Scripts/*/']))
         all_pkgs = content_packs_pkgs.union(content_main_pkgs)
-
+        print(f'all pkgs: {all_pkgs}')
         return list(all_pkgs)
 
     @staticmethod
@@ -243,8 +245,11 @@ class LintManager:
                                                          f'{content_repo.remote()}/{base_branch}')
         changed_from_base = {content_repo.working_dir / Path(item.b_path).parent for item in
                              content_repo.active_branch.commit.tree.diff(last_common_commit, paths=pkgs)}
+        print(f'changed_from_base: {changed_from_base}')
         all_changed = staged_files.union(changed_from_base)
+        print(f'all changed: {all_changed}')
         pkgs_to_check = all_changed.intersection(pkgs)
+        print(f'pkgs to check: {pkgs_to_check}')
 
         return list(pkgs_to_check)
 

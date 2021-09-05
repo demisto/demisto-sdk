@@ -219,10 +219,11 @@ def init_pack(content_repo: ContentGitRepo, monkeypatch: MonkeyPatch):
     """
     author_image_rel_path = \
         r"test_files/artifacts/content/content_packs/AuthorImageTest/SanityCheck"
-    monkeypatch.chdir(os.path.abspath(f"./{author_image_rel_path}"))
+    author_image_abs_path = os.path.abspath(f"./{author_image_rel_path}/{AUTHOR_IMAGE_FILE_NAME}")
+    monkeypatch.chdir(content_repo.content)
     runner = CliRunner(mix_stderr=False)
     res = runner.invoke(
-        main, f"init -a {AUTHOR_IMAGE_FILE_NAME} --pack --name Sample",
+        main, f"init -a {author_image_abs_path} --pack --name Sample",
         input="\n".join(["y", "Sample", "description", "1", "1", "n", "6.0.0"])
     )
     assert res.exit_code == 0, f"Could not run the init command.\nstdout={res.stdout}\nstderr={res.stderr}"

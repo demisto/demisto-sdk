@@ -4,6 +4,7 @@
 * Fixed an issue where the skipped tests validation ran on the `ApiModules` pack in the **validate** command.
 * The **init** command will now create the `Generic Object` entities directories.
 * Fixed an issue where the **format** command failed to recognize changed files from git.
+* Added to the **generate context** command to generate context paths for integrations from an example file.
 
 # 1.4.9
 * Added validation that the support URL in partner contribution pack metadata does not lead to a GitHub repo.

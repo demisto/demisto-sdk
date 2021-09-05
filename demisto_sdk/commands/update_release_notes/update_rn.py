@@ -548,7 +548,7 @@ class UpdateRN:
                 elif self.update_type == 'documentation':
                     rn_desc += '- Documentation and metadata improvements.\n'
                 else:
-                    rn_desc += f'- {text or "%%UPDATE_RN%%"}\n'
+                    rn_desc += f'- {desc or "%%UPDATE_RN%%"}\n'
         if docker_image:
             rn_desc += f'- Updated the Docker image to: *{docker_image}*.\n'
         return rn_desc

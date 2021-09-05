@@ -128,20 +128,23 @@ class TestRNUpdate(unittest.TestCase):
             Given:
                 - a dict of changed items
             When:
-                - we want to produce a release notes template for modified file
+                - we want to produce a release notes template for modified files
             Then:
-                - return a markdown string
+                - validate the returned release notes
         """
-        expected_result = "\n#### Playbooks\n##### Hello World Playbook\n- %%UPDATE_RN%%\n"
+        changed_file_description = "Hello World Playbook description"
+        expected_result = "\n".join(("",
+                                     "#### Playbooks",
+                                     "##### Hello World Playbook",
+                                     f"- {changed_file_description}",
+                                     ""))
         from demisto_sdk.commands.update_release_notes.update_rn import \
             UpdateRN
         mock_master.return_value = '1.0.0'
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
-        changed_items = {
-            ("Hello World Playbook", FileType.PLAYBOOK): {"description": "Hello World Playbook description",
-                                                          "is_new_file": False},
-        }
+        changed_items = {("Hello World Playbook", FileType.PLAYBOOK): {"description": changed_file_description,
+                                                                       "is_new_file": False}}
         release_notes = update_rn.build_rn_template(changed_items)
         assert expected_result == release_notes
 

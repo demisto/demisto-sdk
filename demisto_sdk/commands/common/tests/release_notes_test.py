@@ -25,6 +25,7 @@ def get_validator(file_path='', modified_files=None, added_files=None):
     release_notes_validator.checked_files = set()
     release_notes_validator.json_file_path = ''
     release_notes_validator.pack_path = 'Path/CortexXDR'
+    release_notes_validator.suppress_print = False
     return release_notes_validator
 
 
@@ -59,7 +60,6 @@ def test_rn_master_diff(release_notes, expected_result, mocker):
     mocker.patch.object(ReleaseNotesValidator, '__init__', lambda a, b: None)
     ReleaseNotesValidator.ignored_errors = []
     validator = get_validator(release_notes)
-    validator.suppress_print = False
     assert validator.is_file_valid() == expected_result
 
 
@@ -185,7 +185,6 @@ def test_are_release_notes_complete(release_notes, complete_expected_result, moc
     mocker.patch.object(StructureValidator, 'scheme_of_file_by_path', return_value='integration')
     mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
     validator = get_validator(release_notes, MODIFIED_FILES)
-    validator.suppress_print = False
     assert validator.are_release_notes_complete() == complete_expected_result
 
 
@@ -226,7 +225,6 @@ def test_are_release_notes_complete_invalid_file_type(release_notes, complete_ex
     mocker.patch.object(StructureValidator, 'scheme_of_file_by_path', return_value='integration')
     mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
     validator = get_validator(release_notes, MODIFIED_FILES_INVALID)
-    validator.suppress_print = False
     assert validator.are_release_notes_complete() == complete_expected_result
 
 
@@ -264,7 +262,6 @@ def test_are_release_notes_complete_added(release_notes, complete_expected_resul
     mocker.patch.object(StructureValidator, 'scheme_of_file_by_path', return_value='integration')
     mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
     validator = get_validator(release_notes, MODIFIED_FILES, ADDED_FILES)
-    validator.suppress_print = False
     assert validator.are_release_notes_complete() == complete_expected_result
 
 
@@ -291,7 +288,38 @@ def test_are_release_notes_complete_renamed_file(mocker):
     mocker.patch.object(StructureValidator, 'scheme_of_file_by_path', return_value='integration')
     mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
     validator = get_validator(release_notes, renamed_file)
-    validator.suppress_print = False
+    assert validator.are_release_notes_complete()
+
+
+def test_are_release_notes_complete_file_pack_contained_in_file_name_different_pack(mocker, repo):
+    """
+    Given:
+    - Modified file whose name contains the checked pack name.
+        checked pack: CortexXDR.
+        modified file pack name: FeedCortexXDR.
+
+    When:
+    - Validation CortexXDR pack.
+
+    Then:
+    - Ensure validation returns true.
+
+    When:
+    - Validating
+    Args:
+        mocker:
+        repo:
+
+    Returns:
+
+    """
+    mocker.patch.object(ReleaseNotesValidator, '__init__', lambda a, b: None)
+    mocker.patch.object(StructureValidator, 'scheme_of_file_by_path', return_value='integration')
+    mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
+    pack = repo.create_pack('FeedCortexXDR')
+    integration_outside_pack = pack.create_integration(name='FeedCortexXDR')
+    integration_outside_pack.create_default_integration('FeedCortexXDR')
+    validator = get_validator('', modified_files=[integration_outside_pack.yml.path])
     assert validator.are_release_notes_complete()
 
 
@@ -335,5 +363,4 @@ def test_has_release_notes_been_filled_out(release_notes, filled_expected_result
     mocker.patch.object(StructureValidator, 'scheme_of_file_by_path', return_value='integration')
     mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
     validator = get_validator(release_notes, MODIFIED_FILES)
-    validator.suppress_print = False
     assert validator.has_release_notes_been_filled_out() == filled_expected_result

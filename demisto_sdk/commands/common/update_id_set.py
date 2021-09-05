@@ -662,6 +662,7 @@ def get_layoutscontainer_data(path):
     pack = get_pack_name(path)
     incident_indicator_types_dependency = {id_}
     incident_indicator_fields_dependency = get_values_for_keys_recursively(json_data, ['fieldId'])
+    definition_id = json_data.get('definitionId')
 
     if data.get('name'):
         incident_indicator_types_dependency.add(data['name'])
@@ -675,6 +676,8 @@ def get_layoutscontainer_data(path):
     data['incident_and_indicator_types'] = list(incident_indicator_types_dependency)
     if incident_indicator_fields_dependency['fieldId']:
         data['incident_and_indicator_fields'] = incident_indicator_fields_dependency['fieldId']
+    if definition_id:
+        data['definitionId'] = definition_id
 
     return {id_: data}
 
@@ -1254,7 +1257,6 @@ def get_general_paths(path, pack_to_create):
     files = list()
     for path in path_list:
         files.extend(glob.glob(os.path.join(*path)))
-    print_color(f"files: {files}", LOG_COLORS.WHITE)
 
     return files
 
@@ -1278,7 +1280,6 @@ def get_generic_entities_paths(path, pack_to_create):
     files = list()
     for path in path_list:
         files.extend(glob.glob(os.path.join(*path)))
-    print_color(f"files: {files}", LOG_COLORS.WHITE)
 
     return files
 
@@ -1396,6 +1397,7 @@ class IDSetType(Enum):
     GENERIC_TYPE = 'GenericTypes'
     GENERIC_FIELD = 'GenericFields'
     GENERIC_MODULE = 'GenericModules'
+    GENERIC_DEFINITION = 'GenericDefinitions'
 
     @classmethod
     def has_value(cls, value):

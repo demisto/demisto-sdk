@@ -58,9 +58,13 @@ from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
     PackUniqueFilesValidator
 from demisto_sdk.commands.common.hook_validations.playbook import \
     PlaybookValidator
+from demisto_sdk.commands.common.hook_validations.pre_process_rule import \
+    PreProcessRuleValidator
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.hook_validations.release_notes import \
     ReleaseNotesValidator
+from demisto_sdk.commands.common.hook_validations.release_notes_config import \
+    ReleaseNotesConfigValidator
 from demisto_sdk.commands.common.hook_validations.report import ReportValidator
 from demisto_sdk.commands.common.hook_validations.reputation import \
     ReputationValidator
@@ -130,8 +134,7 @@ class ValidateManager:
                                                    ignored_errors=None,
                                                    print_as_warnings=self.print_ignored_errors,
                                                    id_set_file=self.id_set_file,
-                                                   json_file_path=json_file_path) \
-            if validate_id_set else None
+                                                   json_file_path=json_file_path) if validate_id_set else None
 
         try:
             self.git_util = GitUtil(repo=Content.git())
@@ -480,6 +483,10 @@ class ValidateManager:
                                                    is_modified)
             else:
                 click.secho('Skipping release notes validation', fg='yellow')
+
+        elif file_type == FileType.RELEASE_NOTES_CONFIG:
+            return self.validate_release_notes_config(file_path, pack_error_ignore_list)
+
         elif file_type == FileType.DESCRIPTION:
             return self.validate_description(file_path, pack_error_ignore_list)
 
@@ -522,6 +529,9 @@ class ValidateManager:
 
         elif file_type == FileType.LAYOUTS_CONTAINER:
             return self.validate_layoutscontainer(structure_validator, pack_error_ignore_list)
+
+        elif file_type == FileType.PRE_PROCESS_RULES:
+            return self.validate_pre_process_rule(structure_validator, pack_error_ignore_list)
 
         elif file_type == FileType.DASHBOARD:
             return self.validate_dashboard(structure_validator, pack_error_ignore_list)
@@ -734,6 +744,24 @@ class ValidateManager:
 
         return True
 
+    def validate_release_notes_config(self, file_path: str, pack_error_ignore_list: list) -> bool:
+        """
+        Builds validator for RN config file and returns its validation results.
+        Args:
+            file_path (str): Path to RN config file.
+            pack_error_ignore_list (list): Pack error ignore list.
+
+        Returns:
+            (bool): Whether RN config file is valid.
+        """
+        pack_name = get_pack_name(file_path)
+        if pack_name == 'NonSupported':
+            return True
+        release_notes_config_validator = ReleaseNotesConfigValidator(file_path, ignored_errors=pack_error_ignore_list,
+                                                                     print_as_warnings=self.print_ignored_errors,
+                                                                     json_file_path=self.json_file_path)
+        return release_notes_config_validator.is_file_valid()
+
     def validate_playbook(self, structure_validator, pack_error_ignore_list, file_type):
         playbook_validator = PlaybookValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                                print_as_warnings=self.print_ignored_errors,
@@ -827,10 +855,12 @@ class ValidateManager:
                                                           print_as_warnings=self.print_ignored_errors,
                                                           json_file_path=self.json_file_path)
         if is_modified and self.is_backward_check:
-            return all([incident_field_validator.is_valid_file(validate_rn=False, is_new_file=not is_modified, use_git=self.use_git),
+            return all([incident_field_validator.is_valid_file(validate_rn=False, is_new_file=not is_modified,
+                                                               use_git=self.use_git),
                         incident_field_validator.is_backward_compatible()])
         else:
-            return incident_field_validator.is_valid_file(validate_rn=False, is_new_file=not is_modified, use_git=self.use_git)
+            return incident_field_validator.is_valid_file(validate_rn=False, is_new_file=not is_modified,
+                                                          use_git=self.use_git)
 
     def validate_reputation(self, structure_validator, pack_error_ignore_list):
         reputation_validator = ReputationValidator(structure_validator, ignored_errors=pack_error_ignore_list,
@@ -851,6 +881,13 @@ class ValidateManager:
                                                      json_file_path=self.json_file_path)
         return layout_validator.is_valid_layout(validate_rn=False, id_set_file=self.id_set_file,
                                                 is_circle=self.is_circle)
+
+    def validate_pre_process_rule(self, structure_validator, pack_error_ignore_list):
+        pre_process_rules_validator = PreProcessRuleValidator(structure_validator, ignored_errors=pack_error_ignore_list,
+                                                              print_as_warnings=self.print_ignored_errors,
+                                                              json_file_path=self.json_file_path)
+        return pre_process_rules_validator.is_valid_pre_process_rule(validate_rn=False, id_set_file=self.id_set_file,
+                                                                     is_ci=self.is_circle)
 
     def validate_dashboard(self, structure_validator, pack_error_ignore_list):
         dashboard_validator = DashboardValidator(structure_validator, ignored_errors=pack_error_ignore_list,
@@ -1223,15 +1260,15 @@ class ValidateManager:
             if self.skip_dependencies:
                 click.echo("Skipping pack dependencies check")
 
-    def get_changed_files_from_git(self) -> Tuple[Set, Set, Set, Set]:
-        """Get the added and modified after file filtration to only relevant files for validate
+    def get_unfiltered_changed_files_from_git(self) -> Tuple[Set, Set, Set]:
+        """
+        Get the added and modified before file filtration to only relevant files
 
         Returns:
-            4 sets:
-            - The filtered modified files (including the renamed files)
-            - The filtered added files
-            - The changed metadata files
-            - The modified old-format files (legacy unified python files)
+            3 sets:
+            - The unfiltered modified files
+            - The unfiltered added files
+            - The unfiltered renamed files
         """
         # get files from git by status identification against prev-ver
         modified_files = self.git_util.modified_files(prev_ver=self.prev_ver,
@@ -1243,6 +1280,21 @@ class ValidateManager:
         renamed_files = self.git_util.renamed_files(prev_ver=self.prev_ver, committed_only=self.is_circle,
                                                     staged_only=self.staged, debug=self.debug_git,
                                                     include_untracked=self.include_untracked)
+
+        return modified_files, added_files, renamed_files
+
+    def get_changed_files_from_git(self) -> Tuple[Set, Set, Set, Set]:
+        """Get the added and modified after file filtration to only relevant files for validate
+
+        Returns:
+            4 sets:
+            - The filtered modified files (including the renamed files)
+            - The filtered added files
+            - The changed metadata files
+            - The modified old-format files (legacy unified python files)
+        """
+
+        modified_files, added_files, renamed_files = self.get_unfiltered_changed_files_from_git()
 
         # filter files only to relevant files
         filtered_modified, old_format_files = self.filter_to_relevant_files(modified_files)

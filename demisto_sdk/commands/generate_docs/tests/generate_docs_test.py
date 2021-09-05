@@ -426,6 +426,38 @@ def test_generate_command_section_with_empty_cotext_example():
     assert '\n'.join(section) == '\n'.join(expected_section)
 
 
+def test_generate_command_section_with_empty_cotext_list():
+    """
+    When given an empty outputs list,
+    the 'Context Outputs' sections should indicate they are empty without empty tables.
+
+    Given
+    - An empty command context (as an empty list)
+
+    When
+    - Running generate_single_command_section
+
+    Then
+    -  Ensure that there is no blank table but a proper error that there is no output
+    """
+    command = {'deprecated': False, 'name': 'test1', 'outputs': []}
+
+    section, errors = generate_single_command_section(command,
+                                                      example_dict={},
+                                                      command_permissions_dict={})
+
+    expected_section = ['### test1', '***', ' ', '#### Required Permissions',
+                        '**FILL IN REQUIRED PERMISSIONS HERE**',
+                        '#### Base Command', '', '`test1`', '#### Input', '',
+                        'There are no input arguments for this command.', '',
+                        '#### Context Output', '',
+                        'There is no context output for this command.', '',
+                        '#### Command Example', '``` ```', '',
+                        '#### Human Readable Output', '\n', '']
+
+    assert '\n'.join(section) == '\n'.join(expected_section)
+
+
 def test_generate_commands_section_human_readable():
     yml_data = {
         'script': {
@@ -613,54 +645,81 @@ class TestGenerateIntegrationDoc:
                 assert '| API Token | The API key to use for the connection. | False |' in readme_data
 
 
-def test_get_command_examples_with_exclamation_mark(tmp_path):
-    """
-        Given
-            - command_examples file with exclamation mark.
-            - list of specific commands
-        When
-            - Running get_command_examples with the given command examples and specific commands.
-        Then
-            - Verify that the returned commands from the examples are only the specific sommands
-    """
-    command_examples = tmp_path / "command_examples"
+class TestGetCommandExamples:
+    @staticmethod
+    def test_examples_with_exclamation_mark(tmp_path):
+        """
+            Given
+                - command_examples file with exclamation mark.
+                - list of specific commands.
+            When
+                - Running get_command_examples with the given command examples and specific commands.
+            Then
+                - Verify that the returned commands from the examples are only the specific commands.
+        """
+        command_examples = tmp_path / "command_examples"
 
-    with open(command_examples, 'w+') as ce:
-        ce.write('!zoom-create-user\n!zoom-create-meeting\n!zoom-fetch-recording\n!zoom-list-users\n!zoom-delete-user')
+        with open(command_examples, 'w+') as ce:
+            ce.write('!zoom-create-user\n!zoom-create-meeting\n!zoom-fetch-recording\n!zoom-list-users\n!zoom-delete-user')
 
-    command_example_a = 'zoom-create-user'
-    command_example_b = 'zoom-list-users'
+        command_example_a = 'zoom-create-user'
+        command_example_b = 'zoom-list-users'
 
-    specific_commands = [command_example_a, command_example_b]
+        specific_commands = [command_example_a, command_example_b]
 
-    commands = get_command_examples(commands_file_path=command_examples, specific_commands=specific_commands)
+        commands = get_command_examples(commands_file_path=command_examples, specific_commands=specific_commands)
 
-    assert commands == [f'!{command_example_a}', f'!{command_example_b}']
+        assert commands == [f'!{command_example_a}', f'!{command_example_b}']
 
+    @staticmethod
+    def test_examples_without_exclamation_mark(tmp_path):
+        """
+            Given
+                - command_examples file without exclamation mark.
+                - list of specific commands.
+            When
+                - Running get_command_examples with the given command examples and specific commands.
+            Then
+                - Verify that the returned commands from the examples are only the specific commands.
+        """
+        command_examples = tmp_path / "command_examples"
 
-def test_get_command_examples_without_exclamation_mark(tmp_path):
-    """
-        Given
-            - command_examples file without exclamation mark.
-            - list of specific commands
-        When
-            - Running get_command_examples with the given command examples and specific commands.
-        Then
-            - Verify that the returned commands from the examples are only the specific sommands
-    """
-    command_examples = tmp_path / "command_examples"
+        with open(command_examples, 'w+') as ce:
+            ce.write('zoom-create-user\nzoom-create-meeting\nzoom-fetch-recording\nzoom-list-users\nzoom-delete-user')
 
-    with open(command_examples, 'w+') as ce:
-        ce.write('zoom-create-user\nzoom-create-meeting\nzoom-fetch-recording\nzoom-list-users\nzoom-delete-user')
+        command_example_a = 'zoom-create-user'
+        command_example_b = 'zoom-list-users'
 
-    command_example_a = 'zoom-create-user'
-    command_example_b = 'zoom-list-users'
+        specific_commands = [command_example_a, command_example_b]
 
-    specific_commands = [command_example_a, command_example_b]
+        commands = get_command_examples(commands_file_path=command_examples, specific_commands=specific_commands)
 
-    commands = get_command_examples(commands_file_path=command_examples, specific_commands=specific_commands)
+        assert commands == [f'!{command_example_a}', f'!{command_example_b}']
 
-    assert commands == [f'!{command_example_a}', f'!{command_example_b}']
+    @staticmethod
+    def test_ignored_lines(tmp_path):
+        """
+            Given
+                - command_examples file with comments and empty lines.
+            When
+                - Running get_command_examples with the given command examples.
+            Then
+                - Verify that the returned commands from the examples are only the specific commands
+        """
+        command_examples = tmp_path / "command_examples"
+
+        with open(command_examples, 'w+') as ce:
+            ce.write(
+                '# comment before command\n'
+                'zoom-create-user\n'
+                '\n'
+                '# this is a comment line\n'
+                'zoom-create-meeting\n'
+            )
+
+        commands = get_command_examples(command_examples, None)
+
+        assert commands == ['!zoom-create-user', '!zoom-create-meeting']
 
 
 def test_generate_table_section_numbered_section():
@@ -685,7 +744,7 @@ def test_generate_table_section_numbered_section():
 
 
 yml_data_cases = [(
-    {"name": "test", "configuration": [
+    {'name': 'test', 'display': 'test', 'configuration': [
         {'defaultvalue': '', 'display': 'test1', 'name': 'test1', 'required': True, 'type': 8},
         {'defaultvalue': '', 'display': 'test2', 'name': 'test2', 'required': True, 'type': 8}
     ]},  # case no param with additional info field
@@ -695,7 +754,7 @@ yml_data_cases = [(
      '', '4. Click **Test** to validate the URLs, token, and connection.']  # expected
 ),
     (
-        {"name": "test", "configuration": [
+        {'name': 'test', 'display': 'test', 'configuration': [
             {'display': 'test1', 'name': 'test1', 'additionalinfo': 'More info', 'required': True, 'type': 8},
             {'display': 'test2', 'name': 'test2', 'required': True, 'type': 8}
         ]},  # case some params with additional info field
@@ -706,7 +765,7 @@ yml_data_cases = [(
          '4. Click **Test** to validate the URLs, token, and connection.']  # expected
 ),
     (
-        {"name": "test", "configuration": [
+        {'name': 'test', 'display': 'test', 'configuration': [
             {'display': 'test1', 'name': 'test1', 'additionalinfo': 'More info', 'required': True, 'type': 8},
             {'display': 'test2', 'name': 'test2', 'additionalinfo': 'Some more data', 'required': True, 'type': 8}
         ]},  # case all params with additional info field
@@ -717,7 +776,7 @@ yml_data_cases = [(
          '4. Click **Test** to validate the URLs, token, and connection.']  # expected
 ),
     (
-        {"name": "test", "configuration": [
+        {'name': 'test', 'display': 'test', 'configuration': [
             {'display': 'userName', 'displaypassword': 'password', 'name': 'userName', 'additionalinfo': 'Credentials',
              'required': True, 'type': 9},
         ]},  # case credentials parameter have displaypassword
@@ -728,7 +787,7 @@ yml_data_cases = [(
          '4. Click **Test** to validate the URLs, token, and connection.']  # expected
 ),
     (
-        {"name": "test", "configuration": [
+        {'name': 'test', 'display': 'test', 'configuration': [
             {'display': 'userName', 'name': 'userName', 'additionalinfo': 'Credentials',
              'required': True, 'type': 9},
         ]},  # case credentials parameter have no displaypassword
@@ -737,8 +796,24 @@ yml_data_cases = [(
          '', '    | **Parameter** | **Description** | **Required** |', '    | --- | --- | --- |',
          '    | userName | Credentials | True |', '    | Password |  | True |', '',
          '4. Click **Test** to validate the URLs, token, and connection.']  # expected
+),
+    (
+        {'name': 'test', 'display': 'test', 'configuration': [
+            {'display': 'test1', 'name': 'test1', 'additionalinfo': 'More info', 'required': True, 'type': 8},
+            {'display': 'API key', 'name': 'API key', 'additionalinfo': '', 'required': True, 'type': 8},
+            {'display': 'Proxy', 'name': 'Proxy', 'additionalinfo': 'non-default info.', 'required': True, 'type': 8}
+        ]},  # case some param with additional information, one that should take default, and one overriding default
+        ['1. Navigate to **Settings** > **Integrations** > **Servers & Services**.',
+         '2. Search for test.', '3. Click **Add instance** to create and configure a new integration instance.',
+         '',
+         '    | **Parameter** | **Description** | **Required** |',
+         '    | --- | --- | --- |',
+         '    | test1 | More info | True |',
+         '    | API key | The API Key to use for the connection. | True |',
+         '    | Proxy | non-default info. | True |',
+         '',
+         '4. Click **Test** to validate the URLs, token, and connection.']  # expected
 )
-
 ]
 
 

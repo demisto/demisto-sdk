@@ -156,10 +156,7 @@ class TestUpdateRNManager:
         from demisto_sdk.commands.update_release_notes.update_rn_manager import \
             UpdateReleaseNotesManager
         mocker.patch.object(UpdateReleaseNotesManager, 'get_git_changed_files',
-                            return_value=({'Packs/test1', 'Packs/test2'},
-                                          set(),
-                                          set(),
-                                          set()))
+                            return_value=({'Packs/test1', 'Packs/test2'}, set(), set()))
         mocker.patch.object(UpdateReleaseNotesManager, 'check_existing_rn')
         mocker.patch.object(UpdateReleaseNotesManager, 'handle_api_module_change')
         func_mock = mocker.patch.object(UpdateReleaseNotesManager, 'create_release_notes')

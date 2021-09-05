@@ -456,7 +456,7 @@ class BuildContext:
         self.build_name = kwargs['branch_name']
         self.isAMI = kwargs['is_ami']
         self.memCheck = kwargs['mem_check']
-        self.server_version = kwargs['server_version']
+        self.server_version = kwargs['server_version']  # AMI Role
         self.is_local_run = (self.server is not None)
         self.server_numeric_version = self._get_server_numeric_version()
         self.instances_ips = self._get_instances_ips()
@@ -689,7 +689,9 @@ class BuildContext:
             'Server 5.0': '5.0.0',
             'Server 5.5': '5.5.0',
             'Server 6.0': '6.0.0',
-            'Server Master': default_version
+            'Server 6.1': '6.1.0',
+            'Server 6.2': '6.2.0',
+            'Server Master': default_version,
         }
         server_numeric_version = server_version_mapping.get(self.server_version, default_version)
         self.logging_module.info(f'Server version: {server_numeric_version}', real_time=True)

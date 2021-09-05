@@ -6,9 +6,6 @@ from unittest import mock
 import pytest
 from _pytest.fixtures import FixtureRequest
 from _pytest.tmpdir import TempPathFactory, _mk_tmp
-from _pytest.assertion import truncate
-truncate.DEFAULT_MAX_LINES = 99999
-truncate.DEFAULT_MAX_CHARS = 99999
 
 from TestSuite.integration import Integration
 from TestSuite.pack import Pack

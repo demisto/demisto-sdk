@@ -51,7 +51,8 @@ README_INPUT_RESULTS_LIST = [
 
 class TestPackUniqueFilesValidator:
     FILES_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files', 'Packs'))
-    FAKE_PACK_PATH = os.path.join(FILES_PATH, 'fake_pack')
+    FAKE_PACK_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files',
+                                                   'fake_pack'))
     FAKE_PATH_NAME = 'fake_pack'
     validator = PackUniqueFilesValidator(FAKE_PATH_NAME)
     validator.pack_path = FAKE_PACK_PATH
@@ -537,7 +538,7 @@ class TestPackUniqueFilesValidator:
         Then:
             - Ensure result is False for empty README.md file and True otherwise.
         """
-        self.validator = PackUniqueFilesValidator(os.path.join(self.FILES_PATH, 'fake_pack'))
+        self.validator = PackUniqueFilesValidator(self.FAKE_PACK_PATH)
         self.validator.support = 'partner'
         mocker.patch.object(PackUniqueFilesValidator, '_read_file_content', return_value=text)
         assert self.validator.validate_pack_readme_file_is_not_empty() == result

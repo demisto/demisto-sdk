@@ -34,10 +34,10 @@ from demisto_sdk.commands.common.constants import (
     OFFICIAL_CONTENT_ID_SET_PATH, PACK_METADATA_IRON_BANK_TAG,
     PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
     PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
-    PACKS_README_FILE_NAME, PLAYBOOKS_DIR, RELEASE_NOTES_DIR,
-    RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR,
-    TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, XSOAR_CONFIG_FILE,
-    FileType, GithubContentConfig, urljoin)
+    PACKS_README_FILE_NAME, PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR,
+    RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR,
+    TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR,
+    XSOAR_CONFIG_FILE, FileType, GithubContentConfig, urljoin)
 from demisto_sdk.commands.common.git_util import GitUtil
 
 urllib3.disable_warnings()
@@ -1546,6 +1546,10 @@ def is_path_of_layout_directory(path: str) -> bool:
     """
     return os.path.basename(path) == LAYOUTS_DIR
 
+def is_path_of_pre_process_rules_directory(path: str) -> bool:
+    """Returns true if directory is pre-processing rules directory, false if not.
+    """
+    return os.path.basename(path) == PRE_PROCESS_RULES_DIR
 
 def is_path_of_classifier_directory(path: str) -> bool:
     """Returns true if directory is integration directory false if not.
@@ -1763,7 +1767,8 @@ def get_file_displayed_name(file_path):
     elif file_type in [FileType.SCRIPT, FileType.TEST_SCRIPT, FileType.PLAYBOOK, FileType.TEST_PLAYBOOK]:
         return get_yaml(file_path).get('name')
     elif file_type in [FileType.MAPPER, FileType.CLASSIFIER, FileType.INCIDENT_FIELD, FileType.INCIDENT_TYPE,
-                       FileType.INDICATOR_FIELD, FileType.LAYOUTS_CONTAINER, FileType.DASHBOARD, FileType.WIDGET,
+                       FileType.INDICATOR_FIELD, FileType.LAYOUTS_CONTAINER, FileType.PRE_PROCESS_RULES,
+                       FileType.DASHBOARD, FileType.WIDGET,
                        FileType.REPORT]:
         return get_json(file_path).get('name')
     elif file_type == FileType.OLD_CLASSIFIER:

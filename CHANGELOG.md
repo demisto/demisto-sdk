@@ -4,6 +4,7 @@
 * Fixed an issue where the skipped tests validation ran on the `ApiModules` pack in the **validate** command.
 * The **init** command will now create the `Generic Object` entities directories.
 * Fixed an issue where the **format** command failed to recognize changed files from git.
+* Fixed an issue where the **json-to-outputs** command failed checking whether `0001-01-01T00:00:00` is of type `Date`
 * Fixed an issue where the **generate-docs** command would not use the `description` of content items, but `%%UPDATE_RN``.
 
 # 1.4.9

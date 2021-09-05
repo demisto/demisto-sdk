@@ -92,7 +92,7 @@ class IDSetValidations(BaseValidator):
 
         return is_valid
 
-    def _is_incident_field_scripts_found(self, incident_field_data, incident_field_file_path):
+    def _is_incident_field_scripts_found(self, incident_field_data, incident_field_file_path=None):
         """Check if scripts and field calculations scripts of an incident field is in the id_set
 
         Args:
@@ -125,7 +125,7 @@ class IDSetValidations(BaseValidator):
 
         return is_valid
 
-    def _is_layouts_container_scripts_found(self, layouts_container_data, layouts_container_file_path):
+    def _is_layouts_container_scripts_found(self, layouts_container_data, layouts_container_file_path=None):
         """Check if scripts of a layouts container is in the id_set
 
         Args:
@@ -159,7 +159,7 @@ class IDSetValidations(BaseValidator):
 
         return is_valid
 
-    def _is_layout_scripts_found(self, layout_data, layout_file_path):
+    def _is_layout_scripts_found(self, layout_data, layout_file_path=None):
         """Check if scripts of a layout  is in the id_set
 
         Args:
@@ -209,7 +209,30 @@ class IDSetValidations(BaseValidator):
             if checked_script_id in scripts_set:
                 scripts_set.remove(checked_script_id)
 
+        # Ignore Builtin scripts because they are implemented on the server side and thus not in the id_set.json
+        scripts_set = self._remove_builtin_scripts(scripts_set)
+
         return scripts_set
+
+    def _remove_builtin_scripts(self, scripts_set):
+        """
+        For each script ID in the given scripts set checks if it is a Builtin script (implemented on the server side)
+        by checking if it starts with the string: 'Builtin|||'.
+        If a script is not a Builtin script add it to a new scripts set.
+
+        Args:
+            scripts_set: A set of scripts IDs
+
+        Returns:
+            A new set which includes all scripts of the input scripts set which are not Builtin scripts.
+        """
+        not_builtin_scripts_set = set()
+
+        for script_id in scripts_set:
+            if not script_id.startswith('Builtin|||'):
+                not_builtin_scripts_set.add(script_id)
+
+        return not_builtin_scripts_set
 
     def _get_layouts_container_tabs(self, layouts_container):
         """

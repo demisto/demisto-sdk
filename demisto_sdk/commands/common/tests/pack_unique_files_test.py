@@ -50,7 +50,7 @@ README_INPUT_RESULTS_LIST = [
 
 
 class TestPackUniqueFilesValidator:
-    FILES_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
+    FILES_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files', 'Packs'))
     FAKE_PACK_PATH = os.path.join(FILES_PATH, 'fake_pack')
     FAKE_PATH_NAME = 'fake_pack'
     validator = PackUniqueFilesValidator(FAKE_PATH_NAME)

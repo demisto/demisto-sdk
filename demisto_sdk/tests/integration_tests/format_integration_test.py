@@ -95,7 +95,7 @@ def test_integration_format_yml_with_no_test_positive(tmp_path: PosixPath,
     result = runner.invoke(main, [FORMAT_CMD, '-i', source_path, '-o', saved_file_path, '-at'], input='Y')
     prompt = f'The file {source_path} has no test playbooks configured. Do you want to configure it with "No tests"'
     assert not result.exception
-    assert '' in result.output
+    assert '' == result.output
     yml_content = get_dict_from_file(saved_file_path)
     assert yml_content[0].get('tests') == ['No tests (auto formatted)']
 

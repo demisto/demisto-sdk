@@ -533,7 +533,7 @@ ID_IN_ROOT = [  # entities in which 'id' key is in the root
     'incident_type',
     'layoutscontainer',
     'mapper',
-    # todo job?
+    'job'```
 ]
 
 INTEGRATION_PREFIX = 'integration'

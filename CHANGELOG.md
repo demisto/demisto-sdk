@@ -49,6 +49,7 @@
 * Fixed an issue where pre-commit didn't run on the demisto_sdk/commands folder.
 * The **init** command will now change the script template name in the code to the given script name.
 * Expanded the validations performed on beta integrations.
+* Added support for PreProcessRules in the **format**, **validate**, **download**, and **create-content-artifacts** commands.
 * Improved the error messages in **generate-docs**, if an example was not provided.
 * Added to **validate** command a validation that a content entity or a pack name does not contain the words "partner" and "community".
 * Fixed an issue where **update-release-notes** ignores *--text* flag while using *-f*

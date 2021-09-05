@@ -58,6 +58,8 @@ from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
     PackUniqueFilesValidator
 from demisto_sdk.commands.common.hook_validations.playbook import \
     PlaybookValidator
+from demisto_sdk.commands.common.hook_validations.pre_process_rule import \
+    PreProcessRuleValidator
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.hook_validations.release_notes import \
     ReleaseNotesValidator
@@ -528,6 +530,9 @@ class ValidateManager:
         elif file_type == FileType.LAYOUTS_CONTAINER:
             return self.validate_layoutscontainer(structure_validator, pack_error_ignore_list)
 
+        elif file_type == FileType.PRE_PROCESS_RULES:
+            return self.validate_pre_process_rule(structure_validator, pack_error_ignore_list)
+
         elif file_type == FileType.DASHBOARD:
             return self.validate_dashboard(structure_validator, pack_error_ignore_list)
 
@@ -876,6 +881,13 @@ class ValidateManager:
                                                      json_file_path=self.json_file_path)
         return layout_validator.is_valid_layout(validate_rn=False, id_set_file=self.id_set_file,
                                                 is_circle=self.is_circle)
+
+    def validate_pre_process_rule(self, structure_validator, pack_error_ignore_list):
+        pre_process_rules_validator = PreProcessRuleValidator(structure_validator, ignored_errors=pack_error_ignore_list,
+                                                              print_as_warnings=self.print_ignored_errors,
+                                                              json_file_path=self.json_file_path)
+        return pre_process_rules_validator.is_valid_pre_process_rule(validate_rn=False, id_set_file=self.id_set_file,
+                                                                     is_ci=self.is_circle)
 
     def validate_dashboard(self, structure_validator, pack_error_ignore_list):
         dashboard_validator = DashboardValidator(structure_validator, ignored_errors=pack_error_ignore_list,

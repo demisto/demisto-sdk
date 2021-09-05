@@ -4,6 +4,7 @@
 * Fixed an issue where the skipped tests validation ran on the `ApiModules` pack in the **validate** command.
 * The **init** command will now create the `Generic Object` entities directories.
 * Fixed an issue where the **format** command failed to recognize changed files from git.
+* Fixed an issue where the **json-to-outputs** command failed checking whether `0001-01-01T00:00:00` is of type `Date`
 
 # 1.4.9
 * Added validation that the support URL in partner contribution pack metadata does not lead to a GitHub repo.
@@ -49,6 +50,7 @@
 * Fixed an issue where pre-commit didn't run on the demisto_sdk/commands folder.
 * The **init** command will now change the script template name in the code to the given script name.
 * Expanded the validations performed on beta integrations.
+* Added support for PreProcessRules in the **format**, **validate**, **download**, and **create-content-artifacts** commands.
 * Improved the error messages in **generate-docs**, if an example was not provided.
 * Added to **validate** command a validation that a content entity or a pack name does not contain the words "partner" and "community".
 * Fixed an issue where **update-release-notes** ignores *--text* flag while using *-f*

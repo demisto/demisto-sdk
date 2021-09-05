@@ -60,64 +60,6 @@ CONF_JSON_MOCK = {
     ]
 }
 
-# Layouts tests consts:
-DYNAMIC_SECTION_WITH_SCRIPT = {
-    "description": "",
-    "h": 1,
-    "i": "tjlpilelnw-978b0c1e-6739-432d-82d1-3b6641eed99f-tjlpilelnw-978b0c1e-6739-432d-82d1-",
-    "items": [],
-    "maxW": 3,
-    "minH": 1,
-    "minW": 1,
-    "moved": False,
-    "name": "Employment Status",
-    "query": "test_script",
-    "queryType": "script",
-    "static": False,
-    "w": 1,
-    "x": 0,
-    "y": 0
-}
-BUTTON_ITEM_SECTION_WITH_SCRIPT = {
-    "description": "",
-    "displayType": "CARD",
-    "h": 2,
-    "hideItemTitleOnlyOne": False,
-    "hideName": False,
-    "i": "xvcv8dtmxx-74334ff1-32a3-11eb-8468-67c152ca7f29",
-    "items": [
-        {
-            "args": {
-                "add_or_remove": {
-                    "simple": "remove"
-                }
-            },
-            "buttonClass": "error",
-            "dropEffect": "move",
-            "endCol": 2,
-            "fieldId": "",
-            "height": 44,
-            "id": "74334ff0-32a3-11eb-8468-67c152ca7f29",
-            "index": 2,
-            "listId": "zfkg6snvly-07513a70-3021-11eb-ba8d-510056356597",
-            "name": "Disconnect",
-            "scriptId": "test_script",
-            "sectionItemType": "button",
-            "startCol": 0
-        }
-    ],
-    "maxH": None,
-    "maxW": 1,
-    "minH": 1,
-    "minW": 1,
-    "moved": False,
-    "name": "Disconnect XSOAR integration from Okta application",
-    "static": False,
-    "w": 1,
-    "x": 0,
-    "y": 4
-}
-
 
 class TestGenericFieldValidation:
     def test_valid_generic_field(self, mocker, repo):
@@ -1824,6 +1766,63 @@ class TestIncidentTypeValidation:
 
 
 class TestLayoutValidation:
+
+    DYNAMIC_SECTION_WITH_SCRIPT = {
+        "description": "",
+        "h": 1,
+        "i": "tjlpilelnw-978b0c1e-6739-432d-82d1-3b6641eed99f-tjlpilelnw-978b0c1e-6739-432d-82d1-",
+        "items": [],
+        "maxW": 3,
+        "minH": 1,
+        "minW": 1,
+        "moved": False,
+        "name": "Employment Status",
+        "query": "test_script",
+        "queryType": "script",
+        "static": False,
+        "w": 1,
+        "x": 0,
+        "y": 0
+    }
+    BUTTON_ITEM_SECTION_WITH_SCRIPT = {
+        "description": "",
+        "displayType": "CARD",
+        "h": 2,
+        "hideItemTitleOnlyOne": False,
+        "hideName": False,
+        "i": "xvcv8dtmxx-74334ff1-32a3-11eb-8468-67c152ca7f29",
+        "items": [
+            {
+                "args": {
+                    "add_or_remove": {
+                        "simple": "remove"
+                    }
+                },
+                "buttonClass": "error",
+                "dropEffect": "move",
+                "endCol": 2,
+                "fieldId": "",
+                "height": 44,
+                "id": "74334ff0-32a3-11eb-8468-67c152ca7f29",
+                "index": 2,
+                "listId": "zfkg6snvly-07513a70-3021-11eb-ba8d-510056356597",
+                "name": "Disconnect",
+                "scriptId": "test_script",
+                "sectionItemType": "button",
+                "startCol": 0
+            }
+        ],
+        "maxH": None,
+        "maxW": 1,
+        "minH": 1,
+        "minW": 1,
+        "moved": False,
+        "name": "Disconnect XSOAR integration from Okta application",
+        "static": False,
+        "w": 1,
+        "x": 0,
+        "y": 4
+    }
 
     def test_valid_layout(self, mocker, repo):
         """

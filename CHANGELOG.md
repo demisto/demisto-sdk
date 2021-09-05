@@ -5,7 +5,7 @@
 * The **init** command will now create the `Generic Object` entities directories.
 * Fixed an issue where the **format** command failed to recognize changed files from git.
 * Fixed an issue where the **json-to-outputs** command failed checking whether `0001-01-01T00:00:00` is of type `Date`
-* Added to **validate** command a validation which verifies that each script that appears in incident fields, layouts or layoutscontainers exists in the id_set json.
+* Added a validation that verifies that each script which appears in incident fields, layouts or layout containers exists in the id_set.json.
 
 # 1.4.9
 * Added validation that the support URL in partner contribution pack metadata does not lead to a GitHub repo.

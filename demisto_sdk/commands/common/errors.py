@@ -1260,7 +1260,7 @@ class Errors:
                f"Please make sure:\n" \
                f"1 - The right script name is set and the spelling is correct.\n" \
                f"2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
-               f" rerun the command."
+               f" rerun the command with the --create-id-set option."
 
     @staticmethod
     @error_code_decorator
@@ -1270,7 +1270,7 @@ class Errors:
                f"Please make sure:\n" \
                f"1 - The right script name is set and the spelling is correct.\n" \
                f"2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
-               f" rerun the command."
+               f" rerun the command with the --create-id-set option."
 
     @staticmethod
     @error_code_decorator
@@ -1279,7 +1279,7 @@ class Errors:
                f"Please make sure:\n" \
                f"1 - The right script name is set and the spelling is correct.\n" \
                f"2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
-               f" rerun the command."
+               f" rerun the command with the --create-id-set option."
 
     @staticmethod
     @error_code_decorator

@@ -729,7 +729,7 @@ def get_file_description(path, file_type) -> str:
     elif file_type in (FileType.CLASSIFIER, FileType.REPORT, FileType.WIDGET, FileType.DASHBOARD, FileType.JOB):
         # todo should job use CommitMessage instead?
         json_file = get_json(path)
-        return json_file.get('description', '')  # todo perhaps not return if the value is empty?
+        return json_file.get('description', '')
 
     return '%%UPDATE_RN%%'
 

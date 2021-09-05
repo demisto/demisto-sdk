@@ -28,8 +28,9 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    INCIDENT_TYPES_DIR,
                                                    INDICATOR_FIELDS_DIR,
                                                    INDICATOR_TYPES_DIR,
-                                                   LAYOUTS_DIR, MAPPERS_DIR,
-                                                   REPORTS_DIR, SCRIPTS_DIR,
+                                                   JOBS_DIR, LAYOUTS_DIR,
+                                                   MAPPERS_DIR, REPORTS_DIR,
+                                                   SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
                                                    WIDGETS_DIR, FileType)
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type, get_json,
@@ -1097,7 +1098,6 @@ def process_generic_items(file_path: str, print_logs: bool,
 
 
 def process_jobs(file_path: str, print_logs: bool, jobs_list: list = None) -> list:
-    # todo use generic JSON instead?
     """
     Process a JSON file representing a Job object.
     Args:
@@ -1113,7 +1113,7 @@ def process_jobs(file_path: str, print_logs: bool, jobs_list: list = None) -> li
         if find_type(file_path) == FileType.JOB:
             if print_logs:
                 print(f'adding {file_path} to id_set')
-            # result.append(get_job_data(file_path, jobs_list)) # todo
+            result.append(get_job_data(file_path, jobs_list))  # todo
         # todo else?
     except Exception as exp:  # noqa
         print_error(f'failed to process job {file_path}, Error: {str(exp)}')
@@ -1345,9 +1345,9 @@ def get_generic_field_data(path, generic_types_list):
     return {id_: data}
 
 
-# def get_job_data(path, job_list):
+def get_job_data(path, job_list):
+    raise NotImplementedError()
 #     # todo all of it
-#     raise NotImplementedError()
 #     json_data = get_json(path)
 #
 #     id_ = json_data.get('id')
@@ -1828,7 +1828,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
             print_color("\nStarting iteration over Jobs", LOG_COLORS.GREEN)
             print_color(f"pack to create: {pack_to_create}", LOG_COLORS.YELLOW)
             for arr in pool.map(partial(process_jobs, print_logs=print_logs),
-                                get_generic_entities_paths(GENERIC_TYPES_DIR, pack_to_create)):
+                                get_general_paths(JOBS_DIR, pack_to_create)):
                 jobs_list.extend(arr)
 
         progress_bar.update(1)

@@ -59,6 +59,8 @@ jobs:
             no_output_timeout: 15m
             command: |
               tox -e py37 -v
+        - store_test_results:
+            path: test-results
         - *save_tox_37_cache
 
   tox3-8-unit-tests:
@@ -83,6 +85,8 @@ jobs:
             no_output_timeout: 15m
             command: |
               tox -e py38 -v -- --cov=demisto_sdk --cov-report=html
+        - store_test_results:
+            path: test-results
         - store_artifacts:
             path: coverage_html_report
         - run:

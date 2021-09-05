@@ -1172,6 +1172,10 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
         if 'group' in _dict and LAYOUT_CONTAINER_FIELDS.intersection(_dict):
             return FileType.LAYOUTS_CONTAINER
 
+        if 'scriptName' in _dict and 'existingEventsFilters' in _dict and 'readyExistingEventsFilters' in _dict and \
+                'newEventFilters' in _dict and 'readyNewEventFilters' in _dict:
+            return FileType.PRE_PROCESS_RULES
+
         if 'definitionIds' in _dict and 'views' in _dict:
             return FileType.GENERIC_MODULE
 

@@ -14,11 +14,12 @@ from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     CLASSIFIERS_DIR, CONNECTIONS_DIR, DASHBOARDS_DIR, DOC_FILES_DIR,
-    INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
-    INDICATOR_TYPES_DIR, INTEGRATION_CATEGORIES, INTEGRATIONS_DIR, JOBS_DIR,
-    LAYOUTS_DIR, MARKETPLACE_LIVE_DISCUSSIONS, PACK_INITIAL_VERSION,
-    PACK_SUPPORT_OPTIONS, PLAYBOOKS_DIR, REPORTS_DIR, SCRIPTS_DIR,
-    TEST_PLAYBOOKS_DIR, WIDGETS_DIR, XSOAR_AUTHOR, XSOAR_SUPPORT,
+    GENERIC_DEFINITIONS_DIR, JOBS_DIR, GENERIC_FIELDS_DIR, GENERIC_MODULES_DIR,
+    GENERIC_TYPES_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
+    INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, INTEGRATION_CATEGORIES,
+    INTEGRATIONS_DIR, LAYOUTS_DIR, MARKETPLACE_LIVE_DISCUSSIONS,
+    PACK_INITIAL_VERSION, PACK_SUPPORT_OPTIONS, PLAYBOOKS_DIR, REPORTS_DIR,
+    SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR, XSOAR_AUTHOR, XSOAR_SUPPORT,
     XSOAR_SUPPORT_URL, GithubContentConfig)
 from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                get_common_server_path,
@@ -116,7 +117,8 @@ class Initiator:
 
     DIR_LIST = [INTEGRATIONS_DIR, SCRIPTS_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
                 PLAYBOOKS_DIR, LAYOUTS_DIR, TEST_PLAYBOOKS_DIR, CLASSIFIERS_DIR, CONNECTIONS_DIR, DASHBOARDS_DIR,
-                INDICATOR_TYPES_DIR, REPORTS_DIR, WIDGETS_DIR, DOC_FILES_DIR, JOBS_DIR]
+                INDICATOR_TYPES_DIR, REPORTS_DIR, WIDGETS_DIR, DOC_FILES_DIR, GENERIC_MODULES_DIR,
+                GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR, GENERIC_TYPES_DIR, JOBS_DIR]
 
     def __init__(self, output: str, name: str = '', id: str = '', integration: bool = False, template: str = '',
                  category: str = '', script: bool = False, pack: bool = False, demisto_mock: bool = False,
@@ -416,10 +418,13 @@ class Initiator:
 
     def ignore_secrets(self, secrets):
         pack_dir = get_pack_name(self.full_output_path)
-        with open(f'Packs/{pack_dir}/.secrets-ignore', 'a') as f:
-            for secret in secrets:
-                f.write(secret)
-                f.write('\n')
+        try:
+            with open(f'Packs/{pack_dir}/.secrets-ignore', 'a') as f:
+                for secret in secrets:
+                    f.write(secret)
+                    f.write('\n')
+        except FileNotFoundError:
+            print_warning("Could not find the .secrets-ignore file - make sure your path is correct")
 
     def integration_init(self) -> bool:
         """Creates a new integration according to a template.
@@ -458,13 +463,14 @@ class Initiator:
 
         if self.template != self.DEFAULT_INTEGRATION_TEMPLATE:  # DEFAULT_INTEGRATION_TEMPLATE there are no secrets
             secrets = self.find_secrets()
-            new_line = '\n'
-            click.echo(f"\nThe following secrets were detected:\n"
-                       f"{new_line.join(secret for secret in secrets)}", color=LOG_COLORS.GREEN)
+            if secrets:
+                new_line = '\n'
+                click.echo(f"\nThe following secrets were detected:\n"
+                           f"{new_line.join(secret for secret in secrets)}", color=LOG_COLORS.GREEN)
 
-            ignore_secrets = input("\nWould you like ignore them automatically? Y/N ").lower()
-            if ignore_secrets in ['y', 'yes']:
-                self.ignore_secrets(secrets)
+                ignore_secrets = input("\nWould you like ignore them automatically? Y/N ").lower()
+                if ignore_secrets in ['y', 'yes']:
+                    self.ignore_secrets(secrets)
 
         click.echo(f"Finished creating integration: {self.full_output_path}.", color=LOG_COLORS.GREEN)
 
@@ -508,13 +514,14 @@ class Initiator:
         self.copy_demistotmock()
 
         secrets = self.find_secrets()
-        new_line = '\n'
-        click.echo(f"\nThe following secrets were detected in the pack:\n"
-                   f"{new_line.join(secret for secret in secrets)}", color=LOG_COLORS.GREEN)
+        if secrets:
+            new_line = '\n'
+            click.echo(f"\nThe following secrets were detected in the pack:\n"
+                       f"{new_line.join(secret for secret in secrets)}", color=LOG_COLORS.GREEN)
 
-        ignore_secrets = input("\nWould you like ignore them automatically? Y/N ").lower()
-        if ignore_secrets in ['y', 'yes']:
-            self.ignore_secrets(secrets)
+            ignore_secrets = input("\nWould you like ignore them automatically? Y/N ").lower()
+            if ignore_secrets in ['y', 'yes']:
+                self.ignore_secrets(secrets)
 
         click.echo(f"Finished creating script: {self.full_output_path}", color=LOG_COLORS.GREEN)
 

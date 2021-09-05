@@ -87,6 +87,8 @@ mapping:
             type: str
   polling:
     type: bool
+  autoUpdateDockerImage:
+    type: bool
 
 # script->args
 schema;argument_schema:

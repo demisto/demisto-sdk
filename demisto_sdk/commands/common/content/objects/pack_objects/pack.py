@@ -17,10 +17,12 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    INCIDENT_TYPES_DIR,
                                                    INDICATOR_FIELDS_DIR,
                                                    INDICATOR_TYPES_DIR,
-                                                   INTEGRATIONS_DIR, JOBS_DIR,
+                                                   INTEGRATIONS_DIR,
+                                                   JOBS_DIR,
                                                    LAYOUTS_DIR,
                                                    PACK_VERIFY_KEY,
                                                    PLAYBOOKS_DIR,
+                                                   PRE_PROCESS_RULES_DIR,
                                                    RELEASE_NOTES_DIR,
                                                    REPORTS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
@@ -30,8 +32,8 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     Contributors, Dashboard, DocFile, GenericDefinition, GenericField,
     GenericModule, GenericType, IncidentField, IncidentType, IndicatorField,
     IndicatorType, Integration, Job, LayoutObject, OldClassifier, PackIgnore,
-    PackMetaData, Playbook, Readme, ReleaseNote, Report, Script, SecretIgnore,
-    Widget)
+    PackMetaData, Playbook, PreProcessRule, Readme, ReleaseNote,
+    ReleaseNoteConfig, Report, Script, SecretIgnore, Widget)
 from demisto_sdk.commands.common.content.objects_factory import \
     path_to_pack_object
 from demisto_sdk.commands.test_content import tools
@@ -125,6 +127,11 @@ class Pack:
                                                           suffix="json")
 
     @property
+    def pre_process_rules(self) -> Iterator[PreProcessRule]:
+        return self._content_files_list_generator_factory(dir_name=PRE_PROCESS_RULES_DIR,
+                                                          suffix="json")
+
+    @property
     def classifiers(self) -> Iterator[Union[Classifier, OldClassifier, ClassifierMapper]]:
         return self._content_files_list_generator_factory(dir_name=CLASSIFIERS_DIR,
                                                           suffix="json")
@@ -158,6 +165,11 @@ class Pack:
     def release_notes(self) -> Iterator[ReleaseNote]:
         return self._content_files_list_generator_factory(dir_name=RELEASE_NOTES_DIR,
                                                           suffix="md")
+
+    @property
+    def release_notes_config(self) -> Iterator[ReleaseNoteConfig]:
+        return self._content_files_list_generator_factory(dir_name=RELEASE_NOTES_DIR,
+                                                          suffix="json")
 
     @property
     def generic_definitions(self) -> Iterator[GenericDefinition]:

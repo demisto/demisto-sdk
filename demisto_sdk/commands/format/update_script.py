@@ -5,7 +5,8 @@ import click
 from demisto_sdk.commands.common.constants import TYPE_JS, TYPE_PWSH
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
-from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
+from demisto_sdk.commands.common.tools import (LOG_COLORS, is_iron_bank_pack,
+                                               print_color,
                                                server_version_compare)
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
@@ -29,14 +30,16 @@ class ScriptYMLFormat(BaseUpdateYML):
                  no_validate: bool = False,
                  update_docker: bool = False,
                  verbose: bool = False,
+                 add_tests: bool = False,
                  **kwargs):
-        super().__init__(input, output, path, from_version, no_validate, verbose=verbose, **kwargs)
+        super().__init__(input, output, path, from_version, no_validate, verbose=verbose, add_tests=add_tests, **kwargs)
         self.update_docker = update_docker
+
         if not from_version and self.data.get("type") == TYPE_PWSH:
             self.from_version = '5.5.0'
 
     @staticmethod
-    def update_docker_image_in_script(script_obj: dict, from_version: Optional[str] = None):
+    def update_docker_image_in_script(script_obj: dict, file_path: str, from_version: Optional[str] = None):
         """Update the docker image for the passed script object. Will ignore if this is a javascript
         object or using default image (not set).
 
@@ -52,7 +55,10 @@ class ScriptYMLFormat(BaseUpdateYML):
             return
         image_name = dockerimage.split(':')[0]
         try:
-            latest_tag = DockerImageValidator.get_docker_image_latest_tag_request(image_name)
+            if is_iron_bank_pack(file_path):
+                latest_tag = DockerImageValidator.get_docker_image_latest_tag_from_iron_bank_request(image_name)
+            else:
+                latest_tag = DockerImageValidator.get_docker_image_latest_tag_request(image_name)
             if not latest_tag:
                 click.secho('Failed getting docker image latest tag', fg='yellow')
                 return
@@ -73,7 +79,7 @@ class ScriptYMLFormat(BaseUpdateYML):
 
     def update_docker_image(self):
         if self.update_docker:
-            self.update_docker_image_in_script(self.data, self.data.get(self.from_version_key))
+            self.update_docker_image_in_script(self.data, self.source_file, self.data.get(self.from_version_key))
 
     def run_format(self) -> int:
         try:

@@ -36,6 +36,8 @@ from demisto_sdk.commands.format.update_layout import LayoutBaseFormat
 from demisto_sdk.commands.format.update_mapper import MapperJSONFormat
 from demisto_sdk.commands.format.update_playbook import (PlaybookYMLFormat,
                                                          TestPlaybookYMLFormat)
+from demisto_sdk.commands.format.update_pre_process_rules import \
+    PreProcessRulesFormat
 from demisto_sdk.commands.format.update_pythonfile import PythonFileFormat
 from demisto_sdk.commands.format.update_report import ReportJSONFormat
 from demisto_sdk.commands.format.update_script import ScriptYMLFormat
@@ -53,6 +55,7 @@ FILE_TYPE_AND_LINKED_CLASS = {
     'reputation': IndicatorTypeJSONFormat,
     'layout': LayoutBaseFormat,
     'layoutscontainer': LayoutBaseFormat,
+    'pre-process-rule': PreProcessRulesFormat,
     'dashboard': DashboardJSONFormat,
     'classifier': ClassifierJSONFormat,
     'classifier_5_9_9': OldClassifierJSONFormat,
@@ -97,6 +100,7 @@ def format_manager(input: str = None,
                    use_git: bool = False,
                    prev_ver: str = None,
                    include_untracked: bool = False,
+                   add_tests: bool = None,
                    ):
     """
     Format_manager is a function that activated format command on different type of files.
@@ -112,6 +116,7 @@ def format_manager(input: str = None,
         use_git (bool): Use git to automatically recognize which files changed and run format on them
         prev_ver (str): Against which branch should the difference be recognized
         include_untracked (bool): Whether to include untracked files when checking against git
+        add_tests (bool): Whether to exclude tests automatically.
     Returns:
         int 0 in case of success 1 otherwise
     """
@@ -156,7 +161,8 @@ def format_manager(input: str = None,
                                                                  verbose=verbose,
                                                                  update_docker=update_docker,
                                                                  assume_yes=assume_yes,
-                                                                 deprecate=deprecate)
+                                                                 deprecate=deprecate,
+                                                                 add_tests=add_tests)
                 if err_res:
                     log_list.extend([(err_res, print_error)])
                 if info_res:
@@ -203,10 +209,11 @@ def get_files_to_format_from_git(supported_file_types: List[str], prev_ver: str,
     filtered_files = []
     for file_path in all_changed_files:
         str_file_path = str(file_path)
-        file_extension = os.path.splitext(str_file_path)[1]
+
+        # get the file extension without the '.'
+        file_extension = os.path.splitext(str_file_path)[1][1:]
         if file_extension in supported_file_types and os.path.exists(str_file_path):
             filtered_files.append(str_file_path)
-            continue
 
     if filtered_files:
         detected_files_string = "\n".join(filtered_files)
@@ -260,6 +267,9 @@ def run_format_on_file(input: str, file_type: str, from_version: str, **kwargs) 
     if file_type not in ('integration', 'script') and 'update_docker' in kwargs:
         # non code formatters don't support update_docker param. remove it
         del kwargs['update_docker']
+    if file_type not in ('integration', 'playbook', 'script') and 'add_tests' in kwargs:
+        # adding tests is relevant only for integrations, playbooks and scripts.
+        del kwargs['add_tests']
     update_object = FILE_TYPE_AND_LINKED_CLASS[file_type](input=input, path=schema_path,
                                                           from_version=from_version,
                                                           **kwargs)

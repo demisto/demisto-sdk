@@ -44,11 +44,14 @@ class BaseUpdateYML(BaseUpdate):
                  no_validate: bool = False,
                  verbose: bool = False,
                  assume_yes: bool = False,
-                 deprecate: bool = False):
+                 deprecate: bool = False,
+                 add_tests: bool = True,
+                 ):
         super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
                          verbose=verbose, assume_yes=assume_yes)
         self.id_and_version_location = self.get_id_and_version_path_object()
         self.deprecate = deprecate
+        self.add_tests = add_tests
 
     def _load_conf_file(self) -> Dict:
         """
@@ -137,7 +140,7 @@ class BaseUpdateYML(BaseUpdate):
                 pass
             if not test_playbook_ids:
                 # In case no_interactive flag was given - modify the tests without confirmation
-                if self.assume_yes:
+                if self.assume_yes or not self.add_tests:
                     should_modify_yml_tests = True
                 else:
                     should_modify_yml_tests = click.confirm(f'The file {self.source_file} has no test playbooks '

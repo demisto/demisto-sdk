@@ -581,9 +581,8 @@ class UpdateRN:
                 continue
 
             _header_by_type = RN_HEADER_BY_FILE_TYPE.get(_type)
-            # todo what is the expected behaviour for Job?
             if _type in (FileType.CONNECTION, FileType.INCIDENT_TYPE, FileType.REPUTATION, FileType.LAYOUT,
-                         FileType.INCIDENT_FIELD):
+                         FileType.INCIDENT_FIELD, FileType.JOB):
                 rn_desc = f'\n- **{content_name}**'
 
             elif _type in (FileType.GENERIC_TYPE, FileType.GENERIC_FIELD):

@@ -1108,12 +1108,12 @@ def process_jobs(file_path: str, print_logs: bool, jobs_list: list = None) -> li
     Returns:
         a list of Job data.
     """
-    result = []
+    result: List = []
     try:
-        if find_type(file_path) == FileType.Job:
+        if find_type(file_path) == FileType.JOB:
             if print_logs:
                 print(f'adding {file_path} to id_set')
-            result.append(get_job_data(file_path, jobs_list))
+            # result.append(get_job_data(file_path, jobs_list)) # todo
         # todo else?
     except Exception as exp:  # noqa
         print_error(f'failed to process job {file_path}, Error: {str(exp)}')
@@ -1345,50 +1345,50 @@ def get_generic_field_data(path, generic_types_list):
     return {id_: data}
 
 
-def get_job_data(path, job_list):
-    # todo all of it
-    raise NotImplementedError()
-    json_data = get_json(path)
-
-    id_ = json_data.get('id')
-    name = json_data.get('name', '')
-    fromversion = json_data.get('fromVersion')
-    toversion = json_data.get('toVersion')
-    pack = get_pack_name(path)
-
-    all_associated_types: set = set()
-    all_scripts = set()
-    definitionId = json_data.get('definitionId')
-
-    associated_types = json_data.get('associatedTypes')
-    if associated_types:
-        all_associated_types = set(associated_types)
-
-    system_associated_types = json_data.get('systemAssociatedTypes')
-    if system_associated_types:
-        all_associated_types = all_associated_types.union(set(system_associated_types))
-
-    if 'all' in all_associated_types:
-        all_associated_types = {list(generic_type.keys())[0] for generic_type in generic_types_list}
-
-    scripts = json_data.get('script')
-    if scripts:
-        all_scripts = {scripts}
-
-    field_calculations_scripts = json_data.get('fieldCalcScript')
-    if field_calculations_scripts:
-        all_scripts = all_scripts.union({field_calculations_scripts})
-
-    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
-
-    if all_associated_types:
-        data['generic_types'] = list(all_associated_types)
-    if all_scripts:
-        data['scripts'] = list(all_scripts)
-    if definitionId:
-        data['definitionId'] = definitionId
-
-    return {id_: data}
+# def get_job_data(path, job_list):
+#     # todo all of it
+#     raise NotImplementedError()
+#     json_data = get_json(path)
+#
+#     id_ = json_data.get('id')
+#     name = json_data.get('name', '')
+#     fromversion = json_data.get('fromVersion')
+#     toversion = json_data.get('toVersion')
+#     pack = get_pack_name(path)
+#
+#     all_associated_types: set = set()
+#     all_scripts = set()
+#     definitionId = json_data.get('definitionId')
+#
+#     associated_types = json_data.get('associatedTypes')
+#     if associated_types:
+#         all_associated_types = set(associated_types)
+#
+#     system_associated_types = json_data.get('systemAssociatedTypes')
+#     if system_associated_types:
+#         all_associated_types = all_associated_types.union(set(system_associated_types))
+#
+#     if 'all' in all_associated_types:
+#         all_associated_types = {list(generic_type.keys())[0] for generic_type in generic_types_list}
+#
+#     scripts = json_data.get('script')
+#     if scripts:
+#         all_scripts = {scripts}
+#
+#     field_calculations_scripts = json_data.get('fieldCalcScript')
+#     if field_calculations_scripts:
+#         all_scripts = all_scripts.union({field_calculations_scripts})
+#
+#     data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
+#
+#     if all_associated_types:
+#         data['generic_types'] = list(all_associated_types)
+#     if all_scripts:
+#         data['scripts'] = list(all_scripts)
+#     if definitionId:
+#         data['definitionId'] = definitionId
+#
+#     return {id_: data}
 
 
 def get_generic_module_data(path):

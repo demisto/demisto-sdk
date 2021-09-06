@@ -61,7 +61,7 @@ export DEMISTO_SDK_SKIP_VERSION_CHECK=yes
 ## Commands
 
 Supported commands:
-get_ignore_pack_skipped_tests
+
 1. [init](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/init/README.md)
 1. [Validate](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/validate/README.md)
 1. [Lint](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/lint/README.md)

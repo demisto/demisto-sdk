@@ -863,7 +863,7 @@ def get_test_playbook_id(test_playbooks_list: list, tpb_path: str) -> Tuple:  # 
             return None, None
 
 
-def get_ignore_pack_skipped_tests(pack_name: str, modified_packs: set) -> set:
+def get_ignore_pack_skipped_tests(pack_name: str, modified_packs: Optional[set] = None) -> set:
     """
     Retrieve the skipped tests of a given pack, as detailed in the .pack-ignore file
 
@@ -879,6 +879,8 @@ def get_ignore_pack_skipped_tests(pack_name: str, modified_packs: set) -> set:
         ignored_tests_set (set[str]): set of ignored test ids
 
     """
+    if not modified_packs:
+        modified_packs = set()
     ignored_tests_set = set()
     ignore_list = []
     id_set = get_content_id_set()

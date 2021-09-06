@@ -6,6 +6,7 @@
 * Fixed an issue where the **format** command failed to recognize changed files from git.
 * Fixed an issue where the **json-to-outputs** command failed checking whether `0001-01-01T00:00:00` is of type `Date`
 * Added to the **generate context** command to generate context paths for integrations from an example file.
+* Fixed an issue where **validate** failed on release notes configuration files.
 
 # 1.4.9
 * Added validation that the support URL in partner contribution pack metadata does not lead to a GitHub repo.

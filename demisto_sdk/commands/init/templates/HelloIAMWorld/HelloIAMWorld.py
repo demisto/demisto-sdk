@@ -40,7 +40,7 @@ class Client(BaseClient):
         res = self._http_request(
             method='GET',
             url_suffix=uri,
-            params=query_params
+            params=query_params,
         )
 
         if res and len(res.get('result', [])) == 1:  # TODO: make sure you verify a single result was retrieved
@@ -66,7 +66,7 @@ class Client(BaseClient):
         res = self._http_request(
             method='POST',
             url_suffix=uri,
-            json_data=user_data
+            json_data=user_data,
         )
         user_app_data = res.get('result')           # TODO: get the user_id, username, is_active and user_app_data
         user_id = user_app_data.get('user_id')
@@ -91,7 +91,7 @@ class Client(BaseClient):
         res = self._http_request(
             method='PATCH',
             url_suffix=uri,
-            json_data=user_data
+            json_data=user_data,
         )
 
         user_app_data = res.get('result')
@@ -143,7 +143,7 @@ class Client(BaseClient):
         uri = '/schema'                             # TODO: replace to the correct GET Schema API endpoint
         res = self._http_request(
             method='GET',
-            url_suffix=uri
+            url_suffix=uri,
         )
 
         fields = res.get('result', [])
@@ -266,7 +266,7 @@ def main():
 
     headers = {
         'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        'Accept': 'application/json',
     }
 
     client = Client(
@@ -275,7 +275,7 @@ def main():
         proxy=proxy,
         headers=headers,
         ok_codes=(200, 201),
-        auth=(username, password)
+        auth=(username, password),
     )
 
     demisto.debug(f'Command being called is {command}')
@@ -306,9 +306,10 @@ def main():
         elif command == 'get-mapping-fields':
             return_results(get_mapping_fields(client))
 
-    except Exception:
+    except Exception as exc:
         # For any other integration command exception, return an error
-        return_error(f'Failed to execute {command} command. Traceback: {traceback.format_exc()}')
+        demisto.error(traceback.format_exc())
+        return_error(f'Failed to execute {command} command. Error:\n{exc}', error=exc)
 
 
 if __name__ in ('__main__', '__builtin__', 'builtins'):  # pragma: no cover

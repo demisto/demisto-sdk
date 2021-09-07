@@ -880,7 +880,7 @@ def get_ignore_pack_skipped_tests(pack_name: str, modified_packs: Optional[set] 
 
     """
     if not modified_packs:
-        modified_packs = set()
+        modified_packs = {pack_name}
     ignored_tests_set = set()
     ignore_list = []
     id_set = get_content_id_set()

@@ -286,6 +286,8 @@ ERROR_CODE = {
     "invalid_file_path_layout": {'code': "LO102", 'ui_applicable': False, 'related_field': ''},
     "invalid_file_path_layoutscontainer": {'code': "LO103", 'ui_applicable': False, 'related_field': ''},
     "invalid_incident_field_in_layout": {'code': "LO104", 'ui_applicable': False, 'related_field': ''},
+    "invalid_from_server_version_in_pre_process_rules": {'code': "PP100", 'ui_applicable': False, 'related_field': 'fromServerVersion'},
+    "invalid_incident_field_in_pre_process_rules": {'code': "PP101", 'ui_applicable': False, 'related_field': ''},
     "xsoar_config_file_is_not_json": {'code': "XC100", 'ui_applicable': False, 'related_field': ''},
     "xsoar_config_file_malformed": {'code': "XC101", 'ui_applicable': False, 'related_field': ''},
     "invalid_readme_image_error": {'code': "RM108", 'ui_applicable': False, 'related_field': ''},
@@ -1595,6 +1597,25 @@ class Errors:
     def invalid_file_path_layoutscontainer(file_name):
         return f'Invalid file name - {file_name}. layoutscontainer file name should start with ' \
                '"layoutscontainer-" prefix.'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_from_server_version_in_pre_process_rules(version_field):
+        return f'{version_field} field in Pre Process Rule needs to be at least 6.5.0'
+
+    @staticmethod
+    @error_code_decorator
+    def unknown_fields_in_pre_process_rules(fields_names: str):
+        return f'Unknown field(s) in Pre Process Rule: {fields_names}'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_incident_field_in_pre_process_rules(invalid_inc_fields_list):
+        return f"The Pre Process Rules contains incident fields that do not exist in the content: {invalid_inc_fields_list}.\n" \
+               "Please make sure:\n" \
+               "1 - The right incident field is set and the spelling is correct.\n" \
+               "2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
+               " rerun the command."
 
     @staticmethod
     @error_code_decorator

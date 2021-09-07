@@ -31,14 +31,13 @@ from demisto_sdk.commands.common.constants import (
     DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH, DOC_FILES_DIR,
     ID_IN_COMMONFIELDS, ID_IN_ROOT, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
     INDICATOR_FIELDS_DIR, INTEGRATIONS_DIR, LAYOUTS_DIR,
-    OFFICIAL_CONTENT_ID_SET_PATH, PACK_IGNORE_TEST_FLAG,
-    PACK_METADATA_IRON_BANK_TAG, PACKAGE_SUPPORTING_DIRECTORIES,
-    PACKAGE_YML_FILE_REGEX, PACKS_DIR, PACKS_DIR_REGEX,
-    PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
-    PACKS_README_FILE_NAME, PLAYBOOKS_DIR, RELEASE_NOTES_DIR,
-    RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR,
-    TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, XSOAR_CONFIG_FILE,
-    FileType, GithubContentConfig, urljoin)
+    OFFICIAL_CONTENT_ID_SET_PATH, PACK_METADATA_IRON_BANK_TAG,
+    PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
+    PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
+    PACKS_README_FILE_NAME, PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR,
+    RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR,
+    TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR,
+    XSOAR_CONFIG_FILE, FileType, GithubContentConfig, urljoin)
 from demisto_sdk.commands.common.git_util import GitUtil
 
 urllib3.disable_warnings()
@@ -843,7 +842,28 @@ def get_pack_ignore_file_path(pack_name):
     return os.path.join(PACKS_DIR, pack_name, PACKS_PACK_IGNORE_FILE_NAME)
 
 
-def get_ignore_pack_skipped_tests(pack_name: str) -> set:
+def get_test_playbook_id(test_playbooks_list: list, tpb_path: str) -> Tuple:  # type: ignore
+    """
+
+    Args:
+        test_playbooks_list: The test playbook list from id_set
+        tpb_path: test playbook path.
+
+    Returns (Tuple): test playbook name and pack.
+
+    """
+    for test_playbook_dict in test_playbooks_list:
+        test_playbook_id = list(test_playbook_dict.keys())[0]
+        test_playbook_path = test_playbook_dict[test_playbook_id].get('file_path')
+        test_playbook_pack = test_playbook_dict[test_playbook_id].get('pack')
+
+        if tpb_path in test_playbook_path:
+            return test_playbook_id, test_playbook_pack
+        else:
+            return None, None
+
+
+def get_ignore_pack_skipped_tests(pack_name: str, modified_packs: Optional[set] = None) -> set:
     """
     Retrieve the skipped tests of a given pack, as detailed in the .pack-ignore file
 
@@ -852,16 +872,21 @@ def get_ignore_pack_skipped_tests(pack_name: str) -> set:
         ignore=auto-test
 
     Arguments:
-        pack name (str): name of the pack
+        pack_name (str): name of the pack
+        modified_packs (set): Set of the modified packs.
 
     Returns:
         ignored_tests_set (set[str]): set of ignored test ids
 
     """
+    if not modified_packs:
+        modified_packs = {pack_name}
     ignored_tests_set = set()
-    if pack_name:
+    ignore_list = []
+    id_set = get_content_id_set()
+    test_playbooks = id_set['TestPlaybooks']
+    if pack_name in modified_packs:
         pack_ignore_path = get_pack_ignore_file_path(pack_name)
-
         if os.path.isfile(pack_ignore_path):
             try:
                 # read pack_ignore using ConfigParser
@@ -876,17 +901,16 @@ def get_ignore_pack_skipped_tests(pack_name: str) -> set:
                         for key in config[section]:
                             if key == 'ignore':
                                 # group ignore codes to a list
-                                ignore_list = str(config[section][key]).split(',')
-                                if PACK_IGNORE_TEST_FLAG in ignore_list:
-                                    # given file is to be ignored, try to get its id directly from yaml
-                                    path = os.path.join(PACKS_DIR, pack_name, TEST_PLAYBOOKS_DIR, file_name)
-                                    if os.path.isfile(path):
-                                        test_yaml = get_yaml(path)
-                                        if 'id' in test_yaml:
-                                            ignored_tests_set.add(test_yaml['id'])
+                                ignore_list.append({'file_name': file_name, 'ignore_code': str(config[section][key])})
             except MissingSectionHeaderError:
                 pass
 
+    for item in ignore_list:
+        file_name = item.get('file_name', '')
+        if item.get('ignore_code') == 'auto-test':
+            test_id, test_pack = get_test_playbook_id(test_playbooks, file_name)
+            if test_id:
+                ignored_tests_set.add(test_id)
     return ignored_tests_set
 
 
@@ -1149,6 +1173,10 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
 
         if 'group' in _dict and LAYOUT_CONTAINER_FIELDS.intersection(_dict):
             return FileType.LAYOUTS_CONTAINER
+
+        if 'scriptName' in _dict and 'existingEventsFilters' in _dict and 'readyExistingEventsFilters' in _dict and \
+                'newEventFilters' in _dict and 'readyNewEventFilters' in _dict:
+            return FileType.PRE_PROCESS_RULES
 
         if 'definitionIds' in _dict and 'views' in _dict:
             return FileType.GENERIC_MODULE
@@ -1525,6 +1553,12 @@ def is_path_of_layout_directory(path: str) -> bool:
     return os.path.basename(path) == LAYOUTS_DIR
 
 
+def is_path_of_pre_process_rules_directory(path: str) -> bool:
+    """Returns true if directory is pre-processing rules directory, false if not.
+    """
+    return os.path.basename(path) == PRE_PROCESS_RULES_DIR
+
+
 def is_path_of_classifier_directory(path: str) -> bool:
     """Returns true if directory is integration directory false if not.
     """
@@ -1741,7 +1775,8 @@ def get_file_displayed_name(file_path):
     elif file_type in [FileType.SCRIPT, FileType.TEST_SCRIPT, FileType.PLAYBOOK, FileType.TEST_PLAYBOOK]:
         return get_yaml(file_path).get('name')
     elif file_type in [FileType.MAPPER, FileType.CLASSIFIER, FileType.INCIDENT_FIELD, FileType.INCIDENT_TYPE,
-                       FileType.INDICATOR_FIELD, FileType.LAYOUTS_CONTAINER, FileType.DASHBOARD, FileType.WIDGET,
+                       FileType.INDICATOR_FIELD, FileType.LAYOUTS_CONTAINER, FileType.PRE_PROCESS_RULES,
+                       FileType.DASHBOARD, FileType.WIDGET,
                        FileType.REPORT]:
         return get_json(file_path).get('name')
     elif file_type == FileType.OLD_CLASSIFIER:

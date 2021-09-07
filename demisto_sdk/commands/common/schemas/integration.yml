@@ -114,6 +114,8 @@ mapping:
     - type: str
   scriptNotVisible:
     type: bool
+  autoUpdateDockerImage:
+    type: bool
 
 # integration->configuration
 schema;configuration_schema:

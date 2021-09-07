@@ -9,8 +9,8 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     GenericField, GenericModule, GenericType, IncidentField, IncidentType,
     IndicatorField, IndicatorType, Integration, Layout, LayoutsContainer,
     OldClassifier, OldIndicatorType, PackIgnore, PackMetaData, Playbook,
-    Readme, ReleaseNote, ReleaseNoteConfig, Report, Script, SecretIgnore,
-    Widget)
+    PreProcessRule, Readme, ReleaseNote, ReleaseNoteConfig, Report, Script,
+    SecretIgnore, Widget)
 from demisto_sdk.commands.common.content.objects.root_objects import \
     Documentation
 from demisto_sdk.commands.common.tools import find_type
@@ -32,6 +32,7 @@ TYPE_CONVERSION_BY_FileType = {
     FileType.MAPPER: ClassifierMapper,
     FileType.LAYOUT: Layout,
     FileType.LAYOUTS_CONTAINER: LayoutsContainer,
+    FileType.PRE_PROCESS_RULES: PreProcessRule,
     FileType.REPUTATION: IndicatorType,
     FileType.INDICATOR_FIELD: IndicatorField,
     FileType.INCIDENT_FIELD: IncidentField,

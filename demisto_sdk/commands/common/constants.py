@@ -1026,7 +1026,7 @@ class GithubContentConfig:
         click.secho('Could not find the repository name - defaulting to demisto/content', fg='yellow')
         return GithubContentConfig.OFFICIAL_CONTENT_REPO_NAME
 
-    @lru_cache
+    @lru_cache(maxsize=128)
     def _search_gitlab_id(self, repo: str):
         res = requests.get("https://code.pan.run/api/v4/projects",
                            params={'search': repo},

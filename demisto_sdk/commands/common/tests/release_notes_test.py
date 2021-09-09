@@ -314,6 +314,23 @@ def test_are_release_notes_complete_file_pack_contained_in_file_name_different_p
     assert validator.are_release_notes_complete()
 
 
+def test_are_release_notes_complete_rn_config(pack):
+    """
+    Given:
+    - Release notes config file.
+
+    When:
+    - Checking if it should have an entry in RN.
+
+    Then:
+    - Ensure it is not checked and release notes return valid response.
+    """
+    rn = pack.create_release_notes('1_0_1', is_bc=True)
+    validator = ReleaseNotesValidator(rn.path, modified_files=[rn.path.replace('md', 'json')],
+                                      pack_name=os.path.basename(pack.path))
+    assert validator.are_release_notes_complete()
+
+
 TEST_RELEASE_NOTES_TEST_BANK_2 = [
     ('', False),  # Completely Empty
     ('### Integrations\n#### HelloWorld\n- Grammar correction for code '  # Missing Items

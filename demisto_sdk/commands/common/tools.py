@@ -856,6 +856,8 @@ def get_test_playbook_id(test_playbooks_list: list, tpb_path: str) -> Tuple:  # 
         test_playbook_id = list(test_playbook_dict.keys())[0]
         test_playbook_path = test_playbook_dict[test_playbook_id].get('file_path')
         test_playbook_pack = test_playbook_dict[test_playbook_id].get('pack')
+        if not test_playbook_path or not test_playbook_pack:
+            continue
 
         if tpb_path in test_playbook_path:
             return test_playbook_id, test_playbook_pack

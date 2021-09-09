@@ -310,7 +310,7 @@ def get_remote_file(
                 if not res.ok:
                     if not suppress_print:
                         click.secho(
-                            f'You are working in a private repository: "{githhub_config.CURRENT_REPOSITORY}".\n'
+                            f'You are working in a private repository: "{git_config.CURRENT_REPOSITORY}".\n'
                             f'The github token in your environment is undefined.\n'
                             f'Getting file from local repository instead. \n'
                             f'If you wish to get the file from the remote repository, \n'

@@ -961,12 +961,10 @@ class GitContentConfig:
         """
         try:
             for url in urls:
-                print(f'url={url}')
                 if 'github.com' in url:
                     return re.findall(r'.com[/:](.*)', url)[0].replace('.git', '')
                 else:  # gitlab
                     repo = re.findall(r'code\.pan\.run/xsoar[/:](.*)', url)[0].replace('.git', '')
-                    print(f'repo={repo}')
                     self.GITLAB_ID = self._search_gitlab_id(repo)
                     self.IS_GITLAB = True
                     return repo
@@ -985,9 +983,7 @@ class GitContentConfig:
                            timeout=10,
                            verify=False)
         res.raise_for_status()
-        print(f'json={res.json()}')
-
-        return res.json()[0]['id']
+        return res.json()[0].get('id')
 
 
 OFFICIAL_CONTENT_ID_SET_PATH = 'https://storage.googleapis.com/marketplace-dist/content/id_set.json'

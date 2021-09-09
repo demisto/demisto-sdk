@@ -417,6 +417,38 @@ def test_is_layout_using_existing_script_ignore_builtin_scripts():
         "The layout's script id is a builtin script therefore ignored and thus the result should be True."
 
 
+def test_is_layout_using_existing_script_ignore_integration_commands_scripts():
+    """
+    Given
+        - layout which has an integration command script id .
+        - id_set.json
+
+    When
+        - is_layout_scripts_found is called with an id_set.json
+
+    Then
+        - Ensure that the integration command script is ignored - i.e is_layout_scripts_found returns True.
+    """
+
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+
+    validator.script_set = [{"script_to_test": {
+        "name": "script_to_test",
+        "file_path": "Packs/DeveloperTools/TestPlaybooks/script-script_to_test.yml",
+        "fromversion": "6.0.0",
+        "pack": "DeveloperTools"
+    }
+    }]
+
+    layout_data = {'my-layout': {
+        'typename': 'my-layout',
+        'scripts': ['SlackV2|||send-notification']
+    }}
+
+    assert validator._is_layout_scripts_found(layout_data=layout_data) is True, \
+        "The layout's script id is an integration command script therefore ignored and thus the result should be True."
+
+
 def test_is_non_real_command_found__happy_flow():
     """
     Given

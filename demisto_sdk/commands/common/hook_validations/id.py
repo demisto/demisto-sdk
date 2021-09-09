@@ -212,6 +212,9 @@ class IDSetValidations(BaseValidator):
         # Ignore Builtin scripts because they are implemented on the server side and thus not in the id_set.json
         scripts_set = self._remove_builtin_scripts(scripts_set)
 
+        # Ignore integration commands scripts because they are not in the id_set.json
+        scripts_set = self._remove_integration_commands_scripts(scripts_set)
+
         return scripts_set
 
     def _remove_builtin_scripts(self, scripts_set):
@@ -233,6 +236,27 @@ class IDSetValidations(BaseValidator):
                 not_builtin_scripts_set.add(script_id)
 
         return not_builtin_scripts_set
+
+    def _remove_integration_commands_scripts(self, scripts_set):
+        """
+        For each script ID in the given scripts set checks if it is an integration command by checking if it contains
+        '|||'.  If a script is not an integration command add it to a new scripts set.
+        TODO: need to check - This condition may not be sufficient... for example builtin scripts also contain |||
+            maybe use regex
+
+        Args:
+            scripts_set: A set of scripts IDs
+
+        Returns:
+            A new set which includes all scripts of the input scripts set which are not integration commands.
+        """
+        not_integration_commands_scripts_set = set()
+
+        for script_id in scripts_set:
+            if '|||' not in script_id:
+                not_integration_commands_scripts_set.add(script_id)
+
+        return not_integration_commands_scripts_set
 
     def _get_layouts_container_tabs(self, layouts_container):
         """

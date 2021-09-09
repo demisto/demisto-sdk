@@ -260,7 +260,7 @@ class TestGithubContentConfig:
         Then:
             Validate the correct repo got back (demisto/content)
         """
-        github_config = constants.GithubContentConfig()
+        github_config = constants.GitContentConfig()
         assert github_config._get_repository_name([url]) == 'demisto/content-dist'
 
     def test_get_repo_name_empty_case(self):
@@ -272,5 +272,5 @@ class TestGithubContentConfig:
         Then:
             Validate the correct repo got back - demisto/content
         """
-        github_config = constants.GithubContentConfig()
+        github_config = constants.GitContentConfig()
         assert github_config._get_repository_name([]) == github_config.OFFICIAL_CONTENT_REPO_NAME

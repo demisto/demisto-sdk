@@ -20,12 +20,11 @@ from demisto_sdk.commands.common.constants import (DEFAULT_IMAGE_PREFIX,
                                                    TYPE_TO_EXTENSION, FileType)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.tools import (LOG_COLORS, arg_to_list,
-                                               find_type, get_yaml,
-                                               get_yml_paths_in_dir,
+                                               find_type, get_pack_name,
+                                               get_yaml, get_yml_paths_in_dir,
                                                print_color, print_error,
                                                print_warning,
-                                               server_version_compare,
-                                               get_pack_name)
+                                               server_version_compare)
 
 PACK_METADATA_PATH = 'pack_metadata.json'
 CONTRIBUTOR_DISPLAY_NAME = ' ({} Contribution)'

@@ -51,6 +51,7 @@ class IDSetValidations(BaseValidator):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          suppress_print=suppress_print, json_file_path=json_file_path)
         self.is_circle = is_circle
+        self.is_circle = True
         self.configuration = configuration
         if not is_test_run and self.is_circle:
             self.id_set_file = id_set_file
@@ -151,7 +152,7 @@ class IDSetValidations(BaseValidator):
         # Add error message if there are scripts that aren't in the id_set:
         if scripts_not_in_id_set:
             is_valid = False
-            scripts_not_in_id_set_str = ', '.join(scripts_set)
+            scripts_not_in_id_set_str = ', '.join(scripts_not_in_id_set)
             error_message, error_code = Errors.layouts_container_non_existent_script_id(layouts_container_name,
                                                                                         scripts_not_in_id_set_str)
             if not self.handle_error(error_message, error_code, file_path=layouts_container_file_path):
@@ -185,7 +186,7 @@ class IDSetValidations(BaseValidator):
         # Add error message if there are scripts that aren't in the id_set:
         if scripts_not_in_id_set:
             is_valid = False
-            scripts_not_in_id_set_str = ', '.join(scripts_set)
+            scripts_not_in_id_set_str = ', '.join(scripts_not_in_id_set)
             error_message, error_code = Errors.layout_non_existent_script_id(layout_name,
                                                                              scripts_not_in_id_set_str)
             if not self.handle_error(error_message, error_code, file_path=layout_file_path):

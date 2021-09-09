@@ -442,7 +442,7 @@ def test_is_layout_using_existing_script_ignore_integration_commands_scripts():
 
     layout_data = {'my-layout': {
         'typename': 'my-layout',
-        'scripts': ['SlackV2|||send-notification']
+        'scripts': ['SlackV2|||send-notification', 'Mail Sender (New)|||send-mail']
     }}
 
     assert validator._is_layout_scripts_found(layout_data=layout_data) is True, \

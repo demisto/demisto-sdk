@@ -24,7 +24,8 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, arg_to_list,
                                                get_yml_paths_in_dir,
                                                print_color, print_error,
                                                print_warning,
-                                               server_version_compare)
+                                               server_version_compare,
+                                               get_pack_name)
 
 PACK_METADATA_PATH = 'pack_metadata.json'
 CONTRIBUTOR_DISPLAY_NAME = ' ({} Contribution)'
@@ -427,7 +428,11 @@ class YmlUnifier:
         pack_metadata_data, pack_metadata_path = self.get_data(pack_path, PACK_METADATA_PATH)
 
         if pack_metadata_data:
-            json_pack_metadata = json.loads(pack_metadata_data)
+            try:
+                json_pack_metadata = json.loads(pack_metadata_data)
+            except json.JSONDecodeError as e:
+                pack_name: str = get_pack_name(pack_path)
+                raise Exception(f'Failed to load pack metadata of pack {pack_name}: {str(e)}') from e
             support_field = json_pack_metadata.get('support')
             return support_field, json_pack_metadata
         return None, None

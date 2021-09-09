@@ -99,8 +99,11 @@ class DescriptionValidator(BaseValidator):
         if not re.match(PACKS_INTEGRATION_YML_REGEX, self.file_path, re.IGNORECASE):
             package_path = os.path.dirname(self.file_path)
             try:
-                path_without_extension = os.path.splitext(self.file_path)[0]
-                md_file_path = glob.glob(path_without_extension + '_description.md')[0]
+                base_name_without_extension: str = os.path.basename(os.path.splitext(self.file_path)[0].replace(
+                    '_description', ''))
+                dir_name: str = os.path.dirname(self.file_path)
+                expected_description_name: str = os.path.join(dir_name, f'{base_name_without_extension}_description.md')
+                md_file_path = glob.glob(expected_description_name)[0]
             except IndexError:
                 is_unified_integration = self.data_dictionary.get('script', {}).get('script', '') not in {'-', ''}
                 if not (self.data_dictionary.get('deprecated') or is_unified_integration):

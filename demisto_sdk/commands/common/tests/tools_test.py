@@ -583,7 +583,7 @@ def test_get_ignore_pack_tests__no_pack():
     - returns an empty set
     """
     nonexistent_pack = 'NonexistentFakeTestPack'
-    ignore_test_set = get_ignore_pack_skipped_tests(nonexistent_pack, {''})
+    ignore_test_set = get_ignore_pack_skipped_tests(nonexistent_pack, {})
     assert len(ignore_test_set) == 0
 
 
@@ -608,7 +608,7 @@ def test_get_ignore_pack_tests__no_ignore_pack(tmpdir):
     if os.path.exists(pack_ignore_path):
         os.remove(pack_ignore_path)
 
-    ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name, {fake_pack_name})
+    ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name, {})
     assert len(ignore_test_set) == 0
 
 
@@ -633,7 +633,7 @@ def test_get_ignore_pack_tests__test_not_ignored(tmpdir):
     # prepare .pack-ignore
     open(pack_ignore_path, 'a').close()
 
-    ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name, {fake_pack_name})
+    ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name, {})
     assert len(ignore_test_set) == 0
 
 
@@ -670,7 +670,7 @@ def test_get_ignore_pack_tests__ignore_test(tmpdir, mocker):
     mocker.patch.object(os.path, "join", return_value=str(test_playbook_path / (test_playbook.name + ".yml")))
     mocker.patch.object(tools, "get_test_playbook_id", return_value=('SamplePlaybookTest', 'FakeTestPack'))
 
-    ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name, {fake_pack_name})
+    ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name, {})
     assert len(ignore_test_set) == 1
     assert expected_id in ignore_test_set
 
@@ -706,7 +706,7 @@ def test_get_ignore_pack_tests__ignore_missing_test(tmpdir, mocker):
     mocker.patch.object(os.path, "join", return_value=str(test_playbook_path / fake_test_name))
     mocker.patch.object(tools, "get_test_playbook_id", return_value=(None, 'FakeTestPack'))
 
-    ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name, {fake_pack_name})
+    ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name, {})
     assert len(ignore_test_set) == 0
 
 

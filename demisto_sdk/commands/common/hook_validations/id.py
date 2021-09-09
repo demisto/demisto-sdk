@@ -51,7 +51,6 @@ class IDSetValidations(BaseValidator):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          suppress_print=suppress_print, json_file_path=json_file_path)
         self.is_circle = is_circle
-        self.is_circle = True
         self.configuration = configuration
         if not is_test_run and self.is_circle:
             self.id_set_file = id_set_file

@@ -99,7 +99,7 @@ def test_upload_playbook_positive(demisto_client_configure, mocker):
     mocker.patch.object(demisto_client, 'configure', return_value="object")
 
     playbook_name = "Cortex_XDR_Incident_Handling.yml"
-    playbook_path = f"{git_path()}/demisto_sdk/tests/test_files/CortexXDR/Playbooks/{playbook_name}"
+    playbook_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/CortexXDR/Playbooks/{playbook_name}"
     uploader = Uploader(input=playbook_path, insecure=False, verbose=False)
     mocker.patch.object(uploader, 'client')
     uploader.upload()
@@ -233,7 +233,7 @@ def test_upload_incident_field_positive(demisto_client_configure, mocker):
     """
     mocker.patch.object(demisto_client, 'configure', return_value="object")
     incident_field_name = "XDR_Alert_Count.json"
-    incident_field_path = f"{git_path()}/demisto_sdk/tests/test_files/CortexXDR/IncidentFields/{incident_field_name}"
+    incident_field_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/CortexXDR/IncidentFields/{incident_field_name}"
     uploader = Uploader(input=incident_field_path, insecure=False, verbose=False)
     mocker.patch.object(uploader, 'client')
     uploader.upload()
@@ -253,7 +253,7 @@ def test_upload_indicator_field_positive(demisto_client_configure, mocker):
     """
     mocker.patch.object(demisto_client, 'configure', return_value='object')
     indicator_field_name = 'dns.json'
-    indicator_field_path = f'{git_path()}/demisto_sdk/tests/test_files/CortexXDR/IndicatorFields/{indicator_field_name}'
+    indicator_field_path = f'{git_path()}/demisto_sdk/tests/test_files/Packs/CortexXDR/IndicatorFields/{indicator_field_name}'
     uploader = Uploader(input=indicator_field_path, insecure=False, verbose=False)
     mocker.patch.object(uploader, 'client')
     uploader.upload()
@@ -344,7 +344,7 @@ def test_upload_incident_field_correct_file_change(demisto_client_configure, moc
 
     mocker.patch.object(demisto_client, 'configure', return_value=demisto_client_mocker)
     incident_field_name = "XDR_Alert_Count.json"
-    incident_field_path = f"{git_path()}/demisto_sdk/tests/test_files/CortexXDR/IncidentFields/{incident_field_name}"
+    incident_field_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/CortexXDR/IncidentFields/{incident_field_name}"
     uploader = Uploader(input=incident_field_path, insecure=False, verbose=False)
     uploader.client.import_incident_fields = MagicMock(side_effect=save_file)
     uploader.upload()

@@ -9,6 +9,7 @@
 * Added to the **generate context** command to generate context paths for integrations from an example file.
 * Fixed an issue where **validate** failed on release notes configuration files.
 * Fixed an issue where the **validate** command failed on pack input if git detected changed files outside of `Packs` directory.
+* Fixed an issue where **validate** command failed to recognize files inside validated pack when validation release notes, resulting in a false error message for missing entity in release note.
 
 # 1.4.9
 * Added validation that the support URL in partner contribution pack metadata does not lead to a GitHub repo.

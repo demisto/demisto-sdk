@@ -670,7 +670,7 @@ class TestValidators:
                 - return a False
         """
         files_path = os.path.normpath(
-            os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
+            os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files', 'Packs'))
         test_file = os.path.join(files_path, 'CortexXDR',
                                  'Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR.yml')
         validate_manager = ValidateManager()

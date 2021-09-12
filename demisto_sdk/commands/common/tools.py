@@ -271,7 +271,6 @@ def get_remote_file(
         full_file_path_quote_plus = urllib.parse.quote_plus(full_file_path)
         git_path = urljoin(git_config.BASE_RAW_GITLAB_LINK, 'files', full_file_path_quote_plus, 'raw')
         tag = tag.replace('origin/', '')
-        # return get_remote_file_gitlab(github_config, full_file_path, tag, return_content, suppress_print)
     else:
         # 'origin/' prefix is used to compared with remote branches but it is not a part of the github url.
         tag = tag.replace('origin/', '').replace('demisto/', '')

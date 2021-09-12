@@ -1,5 +1,4 @@
 import glob
-import json
 import os
 import shutil
 from pathlib import Path
@@ -8,6 +7,7 @@ from typing import List, Union
 import git
 import pytest
 import requests
+
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    LAYOUTS_DIR, PACKS_DIR,
@@ -17,20 +17,27 @@ from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    FileType)
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import (
-    LOG_COLORS, arg_to_list, filter_files_by_type, filter_files_on_pack,
-    filter_packagify_changes, find_type, get_code_lang, get_dict_from_file,
-    get_entity_id_by_entity_type, get_entity_name_by_entity_type, get_file,
-    get_file_displayed_name, get_file_version_suffix_if_exists,
-    get_files_in_dir, get_ignore_pack_skipped_tests, get_last_release_version,
+    LOG_COLORS, arg_to_list, compare_context_path_in_yml_and_readme,
+    filter_files_by_type, filter_files_on_pack, filter_packagify_changes,
+    find_type, get_code_lang, get_dict_from_file, get_entity_id_by_entity_type,
+    get_entity_name_by_entity_type, get_file_displayed_name,
+    get_file_version_suffix_if_exists, get_files_in_dir,
+    get_ignore_pack_skipped_tests, get_last_release_version,
     get_last_remote_release_version, get_latest_release_notes_text,
-    get_pack_metadata, get_release_notes_file_path, get_ryaml, get_to_version,
-    has_remote_configured, is_origin_content_repo, is_pack_path,
-    retrieve_file_ending, run_command_os, server_version_compare)
+    get_pack_metadata, get_relative_path_from_packs_dir,
+    get_release_note_entries, get_release_notes_file_path, get_ryaml,
+    get_test_playbook_id, get_to_version, has_remote_configured,
+    is_origin_content_repo, is_pack_path, is_uuid, retrieve_file_ending,
+    run_command_os, server_version_compare)
 from demisto_sdk.tests.constants_test import (IGNORED_PNG,
                                               INDICATORFIELD_EXTRA_FIELDS,
                                               SOURCE_FORMAT_INTEGRATION_COPY,
                                               VALID_BETA_INTEGRATION_PATH,
                                               VALID_DASHBOARD_PATH,
+                                              VALID_GENERIC_DEFINITION_PATH,
+                                              VALID_GENERIC_FIELD_PATH,
+                                              VALID_GENERIC_MODULE_PATH,
+                                              VALID_GENERIC_TYPE_PATH,
                                               VALID_INCIDENT_FIELD_PATH,
                                               VALID_INCIDENT_TYPE_PATH,
                                               VALID_INTEGRATION_TEST_PATH,
@@ -58,10 +65,6 @@ class TestGenericFunctions:
     def test_get_file(self, file_path, func):
         assert func(file_path)
 
-    def test_get_file_exception(self):
-        path_to_here = f'{git_path()}/demisto_sdk/tests/test_files/'
-        assert get_file(json.load, os.path.join(path_to_here, 'fake_integration.yml'), ('yml', 'yaml')) == {}
-
     @pytest.mark.parametrize('dir_path', ['demisto_sdk', f'{git_path()}/demisto_sdk/tests/test_files'])
     def test_get_yml_paths_in_dir(self, dir_path):
         yml_paths, first_yml_path = tools.get_yml_paths_in_dir(dir_path, error_msg='')
@@ -73,15 +76,16 @@ class TestGenericFunctions:
             assert not first_yml_path
 
     data_test_get_dict_from_file = [
-        (VALID_REPUTATION_FILE, 'json'),
-        (VALID_SCRIPT_PATH, 'yml'),
-        ('test', None),
-        (None, None)
+        (VALID_REPUTATION_FILE, True, 'json'),
+        (VALID_SCRIPT_PATH, True, 'yml'),
+        ('test', True, None),
+        (None, True, None),
+        ('invalid-path.json', False, None)
     ]
 
-    @pytest.mark.parametrize('path, _type', data_test_get_dict_from_file)
-    def test_get_dict_from_file(self, path, _type):
-        output = get_dict_from_file(str(path))[1]
+    @pytest.mark.parametrize('path, raises_error, _type', data_test_get_dict_from_file)
+    def test_get_dict_from_file(self, path, raises_error, _type):
+        output = get_dict_from_file(str(path), raises_error=raises_error)[1]
         assert output == _type, f'get_dict_from_file({path}) returns: {output} instead {_type}'
 
     data_test_find_type = [
@@ -95,9 +99,13 @@ class TestGenericFunctions:
         (VALID_REPUTATION_FILE, FileType.REPUTATION),
         (VALID_SCRIPT_PATH, FileType.SCRIPT),
         (VALID_WIDGET_PATH, FileType.WIDGET),
+        (VALID_GENERIC_TYPE_PATH, FileType.GENERIC_TYPE),
+        (VALID_GENERIC_FIELD_PATH, FileType.GENERIC_FIELD),
+        (VALID_GENERIC_MODULE_PATH, FileType.GENERIC_MODULE),
+        (VALID_GENERIC_DEFINITION_PATH, FileType.GENERIC_DEFINITION),
         (IGNORED_PNG, None),
         ('', None),
-        ('Author_image.png', None),
+        ('Author_image.png', FileType.AUTHOR_IMAGE),
     ]
 
     @pytest.mark.parametrize('path, _type', data_test_find_type)
@@ -575,7 +583,7 @@ def test_get_ignore_pack_tests__no_pack():
     - returns an empty set
     """
     nonexistent_pack = 'NonexistentFakeTestPack'
-    ignore_test_set = get_ignore_pack_skipped_tests(nonexistent_pack)
+    ignore_test_set = get_ignore_pack_skipped_tests(nonexistent_pack, {''})
     assert len(ignore_test_set) == 0
 
 
@@ -600,7 +608,7 @@ def test_get_ignore_pack_tests__no_ignore_pack(tmpdir):
     if os.path.exists(pack_ignore_path):
         os.remove(pack_ignore_path)
 
-    ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name)
+    ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name, {fake_pack_name})
     assert len(ignore_test_set) == 0
 
 
@@ -625,7 +633,7 @@ def test_get_ignore_pack_tests__test_not_ignored(tmpdir):
     # prepare .pack-ignore
     open(pack_ignore_path, 'a').close()
 
-    ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name)
+    ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name, {fake_pack_name})
     assert len(ignore_test_set) == 0
 
 
@@ -634,6 +642,7 @@ def test_get_ignore_pack_tests__ignore_test(tmpdir, mocker):
     Given
     - Pack have .pack-ignore file
     - There are skipped tests in .pack-ignore
+    - Set of modified packs.
     When
     - Collecting packs' ignored tests - running `get_ignore_pack_tests()`
     Then:
@@ -641,7 +650,7 @@ def test_get_ignore_pack_tests__ignore_test(tmpdir, mocker):
     """
     fake_pack_name = 'FakeTestPack'
     fake_test_name = 'FakeTestPlaybook'
-    expected_id = 'sample playbook'
+    expected_id = 'SamplePlaybookTest'
 
     # prepare repo
     repo = Repo(tmpdir)
@@ -659,8 +668,9 @@ def test_get_ignore_pack_tests__ignore_test(tmpdir, mocker):
     # prepare mocks
     mocker.patch.object(tools, "get_pack_ignore_file_path", return_value=pack_ignore_path)
     mocker.patch.object(os.path, "join", return_value=str(test_playbook_path / (test_playbook.name + ".yml")))
+    mocker.patch.object(tools, "get_test_playbook_id", return_value=('SamplePlaybookTest', 'FakeTestPack'))
 
-    ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name)
+    ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name, {fake_pack_name})
     assert len(ignore_test_set) == 1
     assert expected_id in ignore_test_set
 
@@ -694,8 +704,9 @@ def test_get_ignore_pack_tests__ignore_missing_test(tmpdir, mocker):
     # prepare mocks
     mocker.patch.object(tools, "get_pack_ignore_file_path", return_value=pack_ignore_path)
     mocker.patch.object(os.path, "join", return_value=str(test_playbook_path / fake_test_name))
+    mocker.patch.object(tools, "get_test_playbook_id", return_value=(None, 'FakeTestPack'))
 
-    ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name)
+    ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name, {fake_pack_name})
     assert len(ignore_test_set) == 0
 
 
@@ -1033,3 +1044,434 @@ def test_is_pack_path(input_path: str, expected: bool):
 
     """
     assert is_pack_path(input_path) == expected
+
+
+@pytest.mark.parametrize('s, is_valid_uuid', [
+    ('', False),
+    ('ffc9fbb0-1a73-448c-89a8-fe979e0f0c3e', True),
+    ('somestring', False)
+])
+def test_is_uuid(s, is_valid_uuid):
+    """
+    Given:
+        - Case A: Empty string
+        - Case B: Valid UUID
+        - Case C: Invalid UUID
+
+    When:
+        - Checking if the string is a valid UUID
+
+    Then:
+        - Case A: False as it is an empty string
+        - Case B: True as it is a valid UUID
+        - Case C: False as it is a string which is not a valid UUID
+    """
+    if is_valid_uuid:
+        assert is_uuid(s)
+    else:
+        assert not is_uuid(s)
+
+
+def test_get_relative_path_from_packs_dir():
+    """
+    Given:
+        - 'input_path': Path to some file or directory
+
+    When:
+        - Running get_relative_path_from_packs_dir
+
+    Then:
+        - Ensure that:
+          - If it is an absolute path to a pack related object - it returns the relative path from Packs dir.
+          - If it is a relative path from Packs dir or an unrelated path - return the path unchanged.
+
+    """
+    abs_path = '/Users/who/dev/demisto/content/Packs/Accessdata/Integrations/Accessdata/Accessdata.yml'
+    rel_path = 'Packs/Accessdata/Integrations/Accessdata/Accessdata.yml'
+    unrelated_path = '/Users/who/dev/demisto'
+
+    assert get_relative_path_from_packs_dir(abs_path) == rel_path
+    assert get_relative_path_from_packs_dir(rel_path) == rel_path
+    assert get_relative_path_from_packs_dir(unrelated_path) == unrelated_path
+
+
+@pytest.mark.parametrize('version,expected_result', [
+    ('1.3.8', ['* Updated the **secrets** command to work on forked branches.']),
+    ('1.3', [])
+])
+def test_get_release_note_entries(version, expected_result):
+    """
+    Given:
+        - Version of the demisto-sdk.
+
+    When:
+        - Running get_release_note_entries.
+
+    Then:
+        - Ensure that the result as expected.
+    """
+
+    assert get_release_note_entries(version) == expected_result
+
+
+def test_suppress_stdout(capsys):
+    """
+        Given:
+            - Messages to print.
+
+        When:
+            - Printing a message inside the suppress_stdout context manager.
+            - Printing message after the suppress_stdout context manager is used.
+        Then:
+            - Ensure that messages are not printed to console while suppress_stdout is enabled.
+            - Ensure that messages are printed to console when suppress_stdout is disabled.
+    """
+    print('You can see this')
+    captured = capsys.readouterr()
+    assert captured.out == 'You can see this\n'
+    with tools.suppress_stdout():
+        print('You cannot see this')
+        captured = capsys.readouterr()
+    assert captured.out == ''
+    print('And you can see this again')
+    captured = capsys.readouterr()
+    assert captured.out == 'And you can see this again\n'
+
+
+def test_suppress_stdout_exception(capsys):
+    """
+        Given:
+            - Messages to print.
+
+        When:
+            - Performing an operation which throws an exception inside the suppress_stdout context manager.
+            - Printing something after the suppress_stdout context manager is used.
+        Then:
+            - Ensure that the context manager do not not effect exception handling.
+            - Ensure that messages are printed to console when suppress_stdout is disabled.
+
+    """
+    with pytest.raises(Exception) as excinfo:
+        with tools.suppress_stdout():
+            2 / 0
+    assert str(excinfo.value) == 'division by zero'
+    print('After error prints are enabled again.')
+    captured = capsys.readouterr()
+    assert captured.out == 'After error prints are enabled again.\n'
+
+
+def test_compare_context_path_in_yml_and_readme_non_vs_code_format_valid():
+    """
+        Given:
+            - a yml for an integration.
+            - a valid readme in a non-vs code format
+
+        When:
+            - running compare_context_path_in_yml_and_readme.
+
+        Then:
+            - Ensure that no differences are found.
+    """
+    yml_dict = {"script": {
+        "commands": [
+            {
+                "name": "servicenow-create-ticket",
+                "outputs": [
+                    {
+                        "contextPath": "ServiceNow.Ticket.ID",
+                        "description": "Ticket ID.",
+                        "type": "string"
+                    },
+                    {
+                        "contextPath": "ServiceNow.Ticket.OpenedBy",
+                        "description": "Ticket opener ID.",
+                        "type": "string"
+                    }
+                ]
+            }
+        ]
+    }}
+    readme_content = "### servicenow-create-ticket\n" \
+                     "***\n" \
+                     "Creates new ServiceNow ticket.\n\n\n" \
+                     "#### Base Command\n\n" \
+                     "`servicenow-create-ticket`\n" \
+                     "#### Input\n\n" \
+                     "| **Argument Name** | **Description** | **Required** |\n" \
+                     "| --- | --- | --- |\n" \
+                     "| short_description | Short description of the ticket. | Optional |\n\n\n" \
+                     " #### Context Output\n\n" \
+                     "| **Path** | **Type** | **Description** |\n" \
+                     "| --- | --- | --- |\n" \
+                     "| ServiceNow.Ticket.ID | string | ServiceNow ticket ID. |\n" \
+                     "| ServiceNow.Ticket.OpenedBy | string | ServiceNow ticket opener ID. |\n"
+
+    diffs = compare_context_path_in_yml_and_readme(yml_dict, readme_content)
+    assert not diffs
+
+
+def test_compare_context_path_in_yml_and_readme_non_vs_code_format_invalid():
+    """
+        Given:
+            - a yml for an integration.
+            - an invalid readme in a non-vs code format
+
+        When:
+            - running compare_context_path_in_yml_and_readme.
+
+        Then:
+            - Ensure that differences are found.
+    """
+    yml_dict = {"script": {
+        "commands": [
+            {
+                "name": "servicenow-create-ticket",
+                "outputs": [
+                    {
+                        "contextPath": "ServiceNow.Ticket.ID",
+                        "description": "Ticket ID.",
+                        "type": "string"
+                    },
+                    {
+                        "contextPath": "ServiceNow.Ticket.OpenedBy",
+                        "description": "Ticket opener ID.",
+                        "type": "string"
+                    }
+                ]
+            }
+        ]
+    }}
+    readme_content = "### servicenow-create-ticket\n" \
+                     "***\n" \
+                     "Creates new ServiceNow ticket.\n\n\n" \
+                     "#### Base Command\n\n" \
+                     "`servicenow-create-ticket`\n" \
+                     "#### Input\n\n" \
+                     "| **Argument Name** | **Description** | **Required** |\n" \
+                     "| --- | --- | --- |\n" \
+                     "| short_description | Short description of the ticket. | Optional |\n\n\n" \
+                     " #### Context Output\n\n" \
+                     "| **Path** | **Type** | **Description** |\n" \
+                     "| --- | --- | --- |\n" \
+                     "| ServiceNow.Ticket.ID | string | ServiceNow ticket ID. |\n"
+
+    diffs = compare_context_path_in_yml_and_readme(yml_dict, readme_content)
+    assert 'ServiceNow.Ticket.OpenedBy' in diffs.get('servicenow-create-ticket').get('only in yml')
+
+
+def test_compare_context_path_in_yml_and_readme_vs_code_format_valid():
+    """
+        Given:
+            - a yml for an integration.
+            - a valid readme in a vs code format
+
+        When:
+            - running compare_context_path_in_yml_and_readme.
+
+        Then:
+            - Ensure that no differences are found.
+    """
+    yml_dict = {"script": {
+        "commands": [
+            {
+                "name": "servicenow-create-ticket",
+                "outputs": [
+                    {
+                        "contextPath": "ServiceNow.Ticket.ID",
+                        "description": "Ticket ID.",
+                        "type": "string"
+                    },
+                    {
+                        "contextPath": "ServiceNow.Ticket.OpenedBy",
+                        "description": "Ticket opener ID.",
+                        "type": "string"
+                    }
+                ]
+            }
+        ]
+    }}
+    readme_content = "### servicenow-create-ticket\n" \
+                     "***\n" \
+                     "Creates new ServiceNow ticket.\n\n\n" \
+                     "#### Base Command\n\n" \
+                     "`servicenow-create-ticket`\n" \
+                     "#### Input\n\n" \
+                     "| **Argument Name** | **Description**                  | **Required** |\n" \
+                     "| ----------------- | -------------------------------- | ------------ |\n" \
+                     "| short_description | Short description of the ticket. | Optional     |\n\n\n" \
+                     " #### Context Output\n\n" \
+                     "| **Path**                   | **Type** | **Description**              |\n" \
+                     "| -------------------------- | -------- | ---------------------------- |\n" \
+                     "| ServiceNow.Ticket.ID       | string   | ServiceNow ticket ID.        |\n" \
+                     "| ServiceNow.Ticket.OpenedBy | string   | ServiceNow ticket opener ID. |\n"
+
+    diffs = compare_context_path_in_yml_and_readme(yml_dict, readme_content)
+    assert not diffs
+
+
+def test_compare_context_path_in_yml_and_readme_vs_code_format_invalid():
+    """
+        Given:
+            - a yml for an integration.
+            - an invalid readme in a vs code format
+
+        When:
+            - running compare_context_path_in_yml_and_readme.
+
+        Then:
+            - Ensure that differences are found.
+    """
+    yml_dict = {"script": {
+        "commands": [
+            {
+                "name": "servicenow-create-ticket",
+                "outputs": [
+                    {
+                        "contextPath": "ServiceNow.Ticket.ID",
+                        "description": "Ticket ID.",
+                        "type": "string"
+                    },
+                    {
+                        "contextPath": "ServiceNow.Ticket.OpenedBy",
+                        "description": "Ticket opener ID.",
+                        "type": "string"
+                    }
+                ]
+            }
+        ]
+    }}
+    readme_content = "### servicenow-create-ticket\n" \
+                     "***\n" \
+                     "Creates new ServiceNow ticket.\n\n\n" \
+                     "#### Base Command\n\n" \
+                     "`servicenow-create-ticket`\n" \
+                     "#### Input\n\n" \
+                     "| **Argument Name** | **Description**                  | **Required** |\n" \
+                     "| ----------------- | -------------------------------- | ------------ |\n" \
+                     "| short_description | Short description of the ticket. | Optional     |\n\n\n" \
+                     " #### Context Output\n\n" \
+                     "| **Path**             | **Type** | **Description**       |\n" \
+                     "| -------------------- | -------- | --------------------- |\n" \
+                     "| ServiceNow.Ticket.ID | string   | ServiceNow ticket ID. |\n"
+
+    diffs = compare_context_path_in_yml_and_readme(yml_dict, readme_content)
+    assert 'ServiceNow.Ticket.OpenedBy' in diffs.get('servicenow-create-ticket').get('only in yml')
+
+
+def test_get_definition_name():
+    """
+    Given
+    - The path to a generic field/generic type file.
+
+    When
+    - the file has a connected generic definition
+
+    Then:
+    - Ensure the returned name is the connected definitions name.
+    """
+
+    pack_path = f'{git_path()}/demisto_sdk/tests/test_files/generic_testing'
+    field_path = pack_path + "/GenericFields/Object/genericfield-Sample.json"
+    type_path = pack_path + "/GenericTypes/Object/generictype-Sample.json"
+
+    assert tools.get_definition_name(field_path, pack_path) == 'Object'
+    assert tools.get_definition_name(type_path, pack_path) == 'Object'
+
+
+def test_gitlab_ci_yml_load():
+    """
+        Given:
+            - a yml file with gitlab ci data
+
+        When:
+            - trying to load it to the sdk  - like via find_type
+
+        Then:
+            - Ensure that the load does not fail.
+            - Ensure the file has no identification
+    """
+    test_file = f'{git_path()}/demisto_sdk/tests/test_files/gitlab_ci_test_file.yml'
+    try:
+        res = find_type(test_file)
+    except Exception:
+        # if we got here an error has occurred when trying to load the file
+        assert False
+
+    assert res is None
+
+
+IRON_BANK_CASES = [
+    ({'tags': []}, False),  # case no tags
+    ({'tags': ['iron bank']}, False),  # case some other tags than "Iron Bank"
+    ({'tags': ['Iron Bank', 'other_tag']}, True),  # case Iron Bank tag exist
+    ({}, False)  # case no tags
+]
+
+
+@pytest.mark.parametrize('metadata, expected', IRON_BANK_CASES)
+def test_is_iron_bank_pack(mocker, metadata, expected):
+    mocker.patch.object(tools, 'get_pack_metadata', return_value=metadata)
+    res = tools.is_iron_bank_pack('example_path')
+    assert res == expected
+
+
+def test_get_test_playbook_id():
+    """
+    Given:
+        - A list of test playbooks from id_set
+        - Test playbook file name
+
+    When:
+        - trying to get the pack and name of the test playbook - via running get_test_playbook_id command
+
+    Then:
+        - Ensure that the currect pack name returned.
+        - Ensure that the currect test name returned.
+
+    """
+    test_playbook_id_set = [
+        {
+            "HelloWorld-Test": {
+                "name": "HelloWorld-Test",
+                "file_path": "Packs/HelloWorld/TestPlaybooks/playbook-HelloWorld-Test.yml",
+                "fromversion": "5.0.0",
+                "implementing_scripts": [
+                    "HelloWorldScript",
+                    "DeleteContext",
+                    "FetchFromInstance"
+                ],
+                "command_to_integration": {
+                    "helloworld-say-hello": "",
+                    "helloworld-search-alerts": ""
+                },
+                "pack": "HelloWorld"
+            }
+        },
+        {
+            "HighlightWords_Test": {
+                "name": "HighlightWords - Test",
+                "file_path": "Packs/CommonScripts/TestPlaybooks/playbook-HighlightWords_-_Test.yml",
+                "implementing_scripts": [
+                    "VerifyHumanReadableContains",
+                    "HighlightWords"
+                ],
+                "pack": "CommonScripts"
+            }
+        },
+        {
+            "HTTPListRedirects - Test SSL": {
+                "name": "HTTPListRedirects - Test SSL",
+                "file_path": "Packs/CommonScripts/TestPlaybooks/playbook-HTTPListRedirects_-_Test_SSL.yml",
+                "implementing_scripts": [
+                    "PrintErrorEntry",
+                    "HTTPListRedirects",
+                    "DeleteContext"
+                ],
+                "pack": "CommonScripts"
+            }
+        }]
+
+    test_name = 'playbook-HelloWorld-Test.yml'
+    test_playbook_name, test_playbook_pack = get_test_playbook_id(test_playbook_id_set, test_name)
+    assert test_playbook_name == 'HelloWorld-Test'
+    assert test_playbook_pack == 'HelloWorld'

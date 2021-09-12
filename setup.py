@@ -4,11 +4,11 @@
 """
     Demisto SDK
 """
+import configparser
 
 from setuptools import find_packages, setup  # noqa: H301
 
 NAME = "demisto-sdk"
-
 # To install the library, run the following
 #
 # python setup.py install
@@ -16,8 +16,10 @@ NAME = "demisto-sdk"
 # prerequisite: setuptools
 # http://pypi.python.org/pypi/setuptools
 
-with open('requirements.txt') as f:
-    requirements = f.read().splitlines()
+# Converting Pipfile to requirements style list because setup expects requirements.txt file.
+parser = configparser.ConfigParser()
+parser.read("Pipfile")
+install_requires = [f'{key}{value}'.replace('\"', '').replace('*', '') for key, value in parser['packages'].items()]
 
 with open('README.md', 'r') as f:
     readme = f.read()
@@ -32,7 +34,7 @@ setup(
     author_email="",
     url="https://github.com/demisto/demisto-sdk",
     keywords=["Demisto"],
-    install_requires=requirements,
+    install_requires=install_requires,
     packages=find_packages(),
     include_package_data=True,
     entry_points={

@@ -11,6 +11,8 @@ from typing import List, Optional, Tuple
 
 import click
 import yaml
+from pykwalify.core import Core
+
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     ACCEPTED_FILE_EXTENSIONS, CHECKED_TYPES_REGEXES,
@@ -22,7 +24,6 @@ from demisto_sdk.commands.common.tools import (get_remote_file,
                                                is_file_path_in_pack)
 from demisto_sdk.commands.format.format_constants import \
     OLD_FILE_DEFAULT_1_FROMVERSION
-from pykwalify.core import Core
 
 
 class StructureValidator(BaseValidator):
@@ -125,7 +126,8 @@ class StructureValidator(BaseValidator):
             bool. Whether the scheme is valid on self.file_path.
         """
         # ignore schema checks for unsupported file types, reputations.json or is skip-schema-check is set.
-        if self.scheme_name in [None, FileType.IMAGE, FileType.README, FileType.RELEASE_NOTES, FileType.TEST_PLAYBOOK] \
+        if self.scheme_name in [None, FileType.IMAGE, FileType.README, FileType.RELEASE_NOTES, FileType.TEST_PLAYBOOK,
+                                FileType.AUTHOR_IMAGE] \
                 or self.skip_schema_check or (self.scheme_name == FileType.REPUTATION and
                                               os.path.basename(self.file_path) == OLD_REPUTATION):
             return True

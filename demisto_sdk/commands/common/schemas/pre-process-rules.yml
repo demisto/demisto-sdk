@@ -1,0 +1,85 @@
+type: map
+mapping:
+  action:
+    type: str
+    required: True
+  enabled:
+    type: bool
+    required: True
+  existingEventsFilters:
+    type: seq
+    sequence:
+    - include: existingEventsFilters_schema
+  fromServerVersion:
+    type: str
+    required: True
+  id:
+    type: str
+    required: True
+  index:
+    type: number
+    required: True
+  itemVersion:
+    type: str
+    required: True
+  linkTo:
+    type: str
+    required: True
+  locked:
+    type: bool
+    required: True
+  name:
+    type: str
+    required: True
+  description:
+    type: str
+    required: false
+  newEventFilters:
+    type: seq
+    sequence:
+    - include: newEventFilters_schema
+  packID:
+    type: str
+    required: True
+  period:
+    type: seq
+    sequence:
+    - include: period_schema
+  readyExistingEventsFilters:
+    type: seq
+    sequence:
+    - include: readyExistingEventsFilters_schema
+  readyNewEventFilters:
+    type: seq
+    sequence:
+    - include: readyNewEventFilters_schema
+  scriptName:
+    type: number
+    required: True
+  searchClosed:
+    type: bool
+    required: True
+  system:
+    type: bool
+    required: True
+  toServerVersion:
+    type: str
+    required: True
+  version:
+    type: number
+    required: True
+
+schema;existingEventsFilters_schema:
+  type: any
+
+schema;newEventFilters_schema:
+  type: any
+
+schema;period_schema:
+  type: any
+
+schema;readyExistingEventsFilters_schema:
+  type: any
+
+schema;readyNewEventFilters_schema:
+  type: any

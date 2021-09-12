@@ -95,9 +95,10 @@ class TestErrors(unittest.TestCase):
         When: Returning an error message
         Then: Return error message with the input value as a tuple containing error and error code.
         """
-        error_statement = "The file type is not supported in validate command\n " \
-            "validate' command supports: Integrations, Scripts, Playbooks, " \
-            "Incident fields, Indicator fields, Images, Release notes, Layouts and Descriptions"
+        error_statement = "The file type is not supported in the validate command.\n" \
+                          "The validate command supports: Integrations, Scripts, Playbooks, " \
+                          "Incident fields, Incident types, Indicator fields, Indicator types, Objects fields," \
+                          " Object types, Object modules, Images, Release notes, Layouts and Descriptions."
         expected_result = (error_statement, "BA102")
         result = Errors.file_type_not_supported()
         assert result == expected_result
@@ -142,3 +143,26 @@ class TestErrors(unittest.TestCase):
         expected_result = (error_statement, "RM101")
         result = Errors.image_path_error(path, alternative_path)
         assert result == expected_result
+
+    def test_integration_is_skipped(self):
+        """
+        Given: Name of a skipped integration, with no `skip comment`
+        When: Returning an error message
+        Then: Compile an error message, without the comment part.
+        """
+        integration_id = "dummy_integration"
+        expected = f"The integration {integration_id} is currently in skipped. Please add working tests and unskip."
+
+        assert Errors.integration_is_skipped(integration_id, skip_comment=None)[0] == expected
+        assert Errors.integration_is_skipped(integration_id, skip_comment='')[0] == expected
+        assert Errors.integration_is_skipped(integration_id)[0] == expected  # skip_comment argument is None by default
+
+    def test_integration_is_skipped__comment(self):
+        integration_id = "dummy_integration"
+        skip_comment = "Issue 00000"
+
+        expected = f"The integration {integration_id} is currently in skipped. Please add working tests and " + \
+                   f"unskip. Skip comment: {skip_comment}"
+
+        result = Errors.integration_is_skipped(integration_id, skip_comment)
+        assert result[0] == expected

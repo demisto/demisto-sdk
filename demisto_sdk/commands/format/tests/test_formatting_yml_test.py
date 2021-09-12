@@ -5,6 +5,9 @@ import sys
 import click
 import pytest
 import yaml
+from mock import Mock, patch
+from ruamel.yaml import YAML
+
 from demisto_sdk.commands.common.constants import (FEED_REQUIRED_PARAMS,
                                                    FETCH_REQUIRED_PARAMS,
                                                    INTEGRATION)
@@ -23,15 +26,12 @@ from demisto_sdk.tests.constants_test import (
     DESTINATION_FORMAT_INTEGRATION, DESTINATION_FORMAT_INTEGRATION_COPY,
     DESTINATION_FORMAT_PLAYBOOK, DESTINATION_FORMAT_PLAYBOOK_COPY,
     DESTINATION_FORMAT_SCRIPT_COPY, DESTINATION_FORMAT_TEST_PLAYBOOK,
-    EQUAL_VAL_FORMAT_PLAYBOOK_DESTINATION, EQUAL_VAL_FORMAT_PLAYBOOK_SOURCE,
-    EQUAL_VAL_PATH, FEED_INTEGRATION_EMPTY_VALID, FEED_INTEGRATION_INVALID,
+    FEED_INTEGRATION_EMPTY_VALID, FEED_INTEGRATION_INVALID,
     FEED_INTEGRATION_VALID, GIT_ROOT, INTEGRATION_PATH, PLAYBOOK_PATH,
     PLAYBOOK_WITH_INCIDENT_INDICATOR_SCRIPTS, SOURCE_FORMAT_INTEGRATION_COPY,
     SOURCE_FORMAT_INTEGRATION_INVALID, SOURCE_FORMAT_INTEGRATION_VALID,
     SOURCE_FORMAT_PLAYBOOK, SOURCE_FORMAT_PLAYBOOK_COPY,
     SOURCE_FORMAT_SCRIPT_COPY, SOURCE_FORMAT_TEST_PLAYBOOK, TEST_PLAYBOOK_PATH)
-from mock import Mock, patch
-from ruamel.yaml import YAML
 from TestSuite.test_tools import ChangeCWD
 
 ryaml = YAML()
@@ -234,25 +234,6 @@ class TestFormatting:
         base_yml.delete_sourceplaybookid()
 
         assert 'sourceplaybookid' not in base_yml.data
-
-    EQUAL_TEST = [
-        (EQUAL_VAL_FORMAT_PLAYBOOK_SOURCE, EQUAL_VAL_FORMAT_PLAYBOOK_DESTINATION, EQUAL_VAL_PATH),
-    ]
-
-    @pytest.mark.parametrize('input, output, path', EQUAL_TEST)
-    @patch('builtins.input', lambda *args: '5.0.0')
-    def test_equal_value_in_file(self, input, output, path):
-        os.makedirs(path, exist_ok=True)
-        shutil.copyfile(input, output)
-        format_ = format_manager(input=output)
-        check = True
-        with open(output, 'r') as f:
-            if 'simple: =' in f:
-                check = False
-        os.remove(output)
-        os.rmdir(path)
-        assert check
-        assert not format_
 
     @pytest.mark.parametrize('yml_file, yml_type', [
         ('format_pwsh_script.yml', 'script'),
@@ -1048,3 +1029,21 @@ class TestFormatting:
         assert base_update_yml.data['deprecated']
         assert base_update_yml.data['tests'] == 'No test'
         assert base_update_yml.data['description'] == description_result
+
+    @pytest.mark.parametrize('name', ['MyIntegration', 'MyIntegration ', ' MyIntegration '])
+    def test_remove_spaces_end_of_id_and_name(self, pack, mocker, name):
+        """
+        Given
+            - An integration which id doesn't ends with whitespaces.
+            - An integration which id ends with spaces.
+        When
+            - Running format.
+        Then
+            - Ensure that the yaml fields (name, id) that need to be changed are changed.
+        """
+        integration = pack.create_integration(name)
+        integration.yml.write_dict({'commonfields': {'id': name}, 'name': name})
+        mocker.patch.object(BaseUpdateYML, 'get_id_and_version_path_object', return_value={'id': name})
+        base_update_yml = BaseUpdateYML(input=integration.yml.path)
+        base_update_yml.remove_spaces_end_of_id_and_name()
+        assert base_update_yml.data['name'] == 'MyIntegration'

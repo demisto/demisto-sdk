@@ -1,4 +1,5 @@
 import pytest
+
 from demisto_sdk.commands.common.constants import (INDICATOR_TYPES_DIR,
                                                    PACKS_DIR)
 from demisto_sdk.commands.common.content.objects.pack_objects import (

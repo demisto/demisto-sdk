@@ -14,6 +14,8 @@ import docker.errors
 import git
 import requests.exceptions
 import urllib3.exceptions
+from wcmatch.pathlib import Path
+
 from demisto_sdk.commands.common.constants import (PACKS_PACK_META_FILE_NAME,
                                                    TYPE_PWSH, TYPE_PYTHON,
                                                    DemistoException)
@@ -33,7 +35,6 @@ from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, PWSH_CHECKS,
                                                generate_coverage_report,
                                                get_test_modules, validate_env)
 from demisto_sdk.commands.lint.linter import Linter
-from wcmatch.pathlib import Path
 
 logger = logging.getLogger('demisto-sdk')
 
@@ -315,7 +316,7 @@ class LintManager:
             return_warning_code: int = 0
             results = []
             # Executing lint checks in different threads
-            for pack in self._pkgs:
+            for pack in sorted(self._pkgs):
                 linter: Linter = Linter(pack_dir=pack,
                                         content_repo="" if not self._facts["content_repo"] else
                                         Path(self._facts["content_repo"].working_dir),
@@ -750,7 +751,6 @@ class LintManager:
                 self.vulture_error_formatter(check, json_contents)
             elif check.get('linter') == 'XSOAR_linter':
                 self.xsoar_linter_error_formatter(check, json_contents)
-
         with open(self.json_file_path, 'w+') as f:
             json.dump(json_contents, f, indent=4)
 
@@ -916,7 +916,7 @@ class LintManager:
                 self.add_to_json_outputs(output, file_path, json_contents)
 
     @staticmethod
-    def add_to_json_outputs(output: Dict, file_path: str, json_contents: List) -> None:
+    def add_to_json_outputs(output: Dict, file_path: str, json_contents: List):
         """Adds an error entry to the JSON file contents
 
         Args:
@@ -931,7 +931,7 @@ class LintManager:
             'fileType': os.path.splitext(file_path)[1].replace('.', ''),
             'entityType': file_type.value if file_type else '',
             'errorType': 'Code',
-            'name': get_file_displayed_name(yml_file_path),
+            'name': get_file_displayed_name(yml_file_path),  # type: ignore[arg-type]
             **output
         }
         json_contents.append(full_error_output)

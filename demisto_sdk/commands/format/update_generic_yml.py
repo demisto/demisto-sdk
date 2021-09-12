@@ -3,15 +3,16 @@ import os
 from typing import Dict, List, Optional
 
 import click
+from ruamel.yaml import YAML
+
 from demisto_sdk.commands.common.constants import (INTEGRATION, PLAYBOOK,
                                                    TEST_PLAYBOOKS_DIR,
                                                    FileType)
 from demisto_sdk.commands.common.tools import (_get_file_id, find_type,
                                                get_entity_id_by_entity_type,
                                                get_not_registered_tests,
-                                               get_yaml)
+                                               get_yaml, is_uuid)
 from demisto_sdk.commands.format.update_generic import BaseUpdate
-from ruamel.yaml import YAML
 
 ryaml = YAML()
 ryaml.allow_duplicate_keys = True
@@ -25,7 +26,7 @@ class BaseUpdateYML(BaseUpdate):
             input (str): the path to the file we are updating at the moment.
             output (str): the desired file name to save the updated version of the YML to.
             data (Dict): YML file data arranged in a Dict.
-            id_and_version_location (Dict): the object in the yml_data that holds the is and version values.
+            id_and_version_location (Dict): the object in the yml_data that holds the id and version values.
     """
     ID_AND_VERSION_PATH_BY_YML_TYPE = {
         'IntegrationYMLFormat': 'commonfields',
@@ -43,11 +44,14 @@ class BaseUpdateYML(BaseUpdate):
                  no_validate: bool = False,
                  verbose: bool = False,
                  assume_yes: bool = False,
-                 deprecate: bool = False):
+                 deprecate: bool = False,
+                 add_tests: bool = True,
+                 ):
         super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
                          verbose=verbose, assume_yes=assume_yes)
         self.id_and_version_location = self.get_id_and_version_path_object()
         self.deprecate = deprecate
+        self.add_tests = add_tests
 
     def _load_conf_file(self) -> Dict:
         """
@@ -67,14 +71,19 @@ class BaseUpdateYML(BaseUpdate):
         path = self.ID_AND_VERSION_PATH_BY_YML_TYPE[yml_type]
         return self.data.get(path, self.data)
 
-    def update_id_to_equal_name(self):
+    def update_id_to_equal_name(self) -> None:
         """Updates the id of the YML to be the same as it's name
             Only relevant for new files.
         """
+        updated_integration_id = {}
         if not self.old_file:
             if self.verbose:
                 click.echo('Updating YML ID to be the same as YML name')
+            if is_uuid(self.id_and_version_location['id']):
+                updated_integration_id[self.id_and_version_location['id']] = self.data['name']
             self.id_and_version_location['id'] = self.data['name']
+        if updated_integration_id:
+            self.updated_ids.update(updated_integration_id)
 
     def save_yml_to_destination_file(self):
         """Safely saves formatted YML data to destination file."""
@@ -90,12 +99,13 @@ class BaseUpdateYML(BaseUpdate):
             if not self.data.get('tests', '') and self.old_file.get('tests', ''):
                 self.data['tests'] = self.old_file['tests']
 
-    def update_yml(self, file_type: Optional[str] = None):
+    def update_yml(self, file_type: Optional[str] = None) -> None:
         """Manager function for the generic YML updates."""
 
         self.set_fromVersion(from_version=self.from_version, file_type=file_type)
         self.remove_copy_and_dev_suffixes_from_name()
         self.remove_unnecessary_keys()
+        self.remove_spaces_end_of_id_and_name()
         self.update_id_to_equal_name()
         self.set_version_to_default(self.id_and_version_location)
         self.copy_tests_from_old_file()
@@ -130,7 +140,7 @@ class BaseUpdateYML(BaseUpdate):
                 pass
             if not test_playbook_ids:
                 # In case no_interactive flag was given - modify the tests without confirmation
-                if self.assume_yes:
+                if self.assume_yes or not self.add_tests:
                     should_modify_yml_tests = True
                 else:
                     should_modify_yml_tests = click.confirm(f'The file {self.source_file} has no test playbooks '
@@ -237,3 +247,12 @@ class BaseUpdateYML(BaseUpdate):
         elif file_type in {'playbook', 'script'}:
             return [{'playbookID': test_playbook_id} for test_playbook_id in test_playbooks]
         return []
+
+    def remove_spaces_end_of_id_and_name(self):
+        """Updates the id and name of the YML to have no spaces on its end
+        """
+        if not self.old_file:
+            if self.verbose:
+                click.echo('Updating YML ID and name to be without spaces at the end')
+            self.data['name'] = self.data['name'].strip()
+            self.id_and_version_location['id'] = self.id_and_version_location['id'].strip()

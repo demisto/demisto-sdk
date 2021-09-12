@@ -3,6 +3,8 @@ from copy import deepcopy
 from typing import Optional
 
 import pytest
+from mock import mock_open, patch
+
 from demisto_sdk.commands.common.constants import (FEED_REQUIRED_PARAMS,
                                                    FETCH_REQUIRED_PARAMS,
                                                    FIRST_FETCH_PARAM,
@@ -12,7 +14,6 @@ from demisto_sdk.commands.common.hook_validations.integration import \
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from mock import mock_open, patch
 from TestSuite.test_tools import ChangeCWD
 
 FEED_REQUIRED_PARAMS_STRUCTURE = [dict(required_param.get('must_equal'), **required_param.get('must_contain'),
@@ -228,9 +229,14 @@ class TestIntegrationValidator:
 
     WITHOUT_DUP_ARGS = [{"name": "testing", "arguments": [{"name": "test1"}, {"name": "test2"}]}]
     WITH_DUP_ARGS = [{"name": "testing", "arguments": [{"name": "test1"}, {"name": "test1"}]}]
+    WITH_DUP_ARGS_NON_IDENTICAL = [
+        {"name": "testing", "arguments": [{"name": "test1", "desc": "hello"}, {"name": "test1", "desc": "hello1"}]},
+    ]
+
     DUPLICATE_ARGS_INPUTS = [
         (WITHOUT_DUP_ARGS, True),
-        (WITH_DUP_ARGS, False)
+        (WITH_DUP_ARGS, False),
+        (WITH_DUP_ARGS_NON_IDENTICAL, False),
     ]
 
     @pytest.mark.parametrize("current, answer", DUPLICATE_ARGS_INPUTS)
@@ -303,20 +309,27 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         assert validator.is_valid_subtype() is answer
 
-    DEFAULT_ARGS_1 = [
+    DEFAULT_ARGS_DIFFERENT_ARG_NAME = [
         {"name": "cve", "arguments": [{"name": "cve_id", "required": False, "default": True}]}]
-    DEFAULT_ARGS_2 = [
+    DEFAULT_ARGS_MISSING_UNREQUIRED_DEFAULT_FIELD = [
         {"name": "email", "arguments": [{"name": "email", "required": False, "default": True}, {"name": "verbose"}]}]
-    DEFAULT_ARGS_INVALID_1 = [{"name": "file", "required": True, "default": True}, {"name": "verbose"}]
-    DEFAULT_ARGS_INVALID_2 = [
+    DEFAULT_ARGS_MISSING_DEFAULT_PARAM_WHEN_ALLOWED = [
+        {"name": "endpoint", "arguments": [{"name": "id", "required": False, "default": False}]}]
+    DEFAULT_ARGS_INVALID_PARMA_MISSING_DEFAULT = [{"name": "file", "required": True, "default": True},
+                                                  {"name": "verbose"}]
+    DEFAULT_ARGS_INVALID_NOT_DEFAULT = [
         {"name": "email", "arguments": [{"name": "email", "required": False, "default": False}, {"name": "verbose"}]}]
-    DEFAULT_ARGS_INVALID_3 = [{"name": "file", "required": True, "default": False}, {"name": "verbose"}]
+    DEFAULT_ARGS_INVALID_COMMAND = [{"name": "file", "required": True, "default": False}, {"name": "verbose"}]
+    DEFAULT_ARGS_MISSING_DEFAULT_PARAM_WHEN_NOT_ALLOWED = [
+        {"name": "email", "arguments": [{"name": "verbose", "required": False, "default": False}]}]
     DEFAULT_ARGS_INPUTS = [
-        (DEFAULT_ARGS_1, True),
-        (DEFAULT_ARGS_2, True),
-        (DEFAULT_ARGS_INVALID_1, False),
-        (DEFAULT_ARGS_INVALID_2, False),
-        (DEFAULT_ARGS_INVALID_3, False),
+        (DEFAULT_ARGS_DIFFERENT_ARG_NAME, True),
+        (DEFAULT_ARGS_MISSING_UNREQUIRED_DEFAULT_FIELD, True),
+        (DEFAULT_ARGS_MISSING_DEFAULT_PARAM_WHEN_ALLOWED, True),
+        (DEFAULT_ARGS_INVALID_PARMA_MISSING_DEFAULT, False),
+        (DEFAULT_ARGS_INVALID_NOT_DEFAULT, False),
+        (DEFAULT_ARGS_INVALID_COMMAND, False),
+        (DEFAULT_ARGS_MISSING_DEFAULT_PARAM_WHEN_NOT_ALLOWED, False)
     ]
 
     @pytest.mark.parametrize("current, answer", DEFAULT_ARGS_INPUTS)
@@ -385,12 +398,18 @@ class TestIntegrationValidator:
         {"contextPath": "DBotScore.Vendor", "description": "Vendor used to calculate the score.", "type": "string"},
         {"contextPath": "DBotScore.Score", "description": "The actual score.", "type": "int"},
         {"contextPath": "IP.Address", "description": "IP address", "type": "string"}]
+    MOCK_REPUTATIONS_VALID_ENDPOINT = [
+        {"contextPath": 'Endpoint.Hostname', "description": "The endpoint's hostname.", "type": "string"},
+        {"contextPath": 'Endpoint.IPAddress', "description": "The endpoint's IP address.", "type": "string"},
+        {"contextPath": 'Endpoint.ID', "description": "The endpoint's ID.", "type": "string"}]
+
     IS_OUTPUT_FOR_REPUTATION_INPUTS = [
         (MOCK_REPUTATIONS_1, "not bang", True),
         (MOCK_REPUTATIONS_2, "not bang", True),
         (MOCK_REPUTATIONS_INVALID_EMAIL, "email", False),
         (MOCK_REPUTATIONS_INVALID_FILE, "file", False),
-        (MOCK_REPUTATIONS_VALID_IP, "ip", True)
+        (MOCK_REPUTATIONS_VALID_IP, "ip", True),
+        (MOCK_REPUTATIONS_VALID_ENDPOINT, "endpoint", True)
     ]
 
     @pytest.mark.parametrize("current, name, answer", IS_OUTPUT_FOR_REPUTATION_INPUTS)
@@ -402,6 +421,45 @@ class TestIntegrationValidator:
         assert validator.is_outputs_for_reputations_commands_valid() is answer
         structure.quite_bc = True
         assert validator.is_outputs_for_reputations_commands_valid() is True  # if quite_bc is true should succeed
+
+    CASE_EXISTS_WITH_DEFAULT_TRUE = [
+        {"name": "endpoint", "arguments": [{"name": "ip", "required": False, "default": True}],
+         "outputs": [{'contextPath': 'Endpoint.ID'}, {'contextPath': 'Endpoint.IPAddress'},
+                     {'contextPath': 'Endpoint.Hostname'}]}]
+    CASE_REQUIRED_ARG_WITH_DEFAULT_FALSE = [
+        {"name": "endpoint", "arguments": [{"name": "id", "required": False, "default": False}],
+         "outputs": [{'contextPath': 'Endpoint.ID'}, {'contextPath': 'Endpoint.IPAddress'},
+                     {'contextPath': 'Endpoint.Hostname'}]}]
+    CASE_INVALID_MISSING_REQUIRED_ARGS = [
+        {"name": "endpoint", "arguments": [{"name": "url", "required": False, "default": True}]}]
+    CASE_INVALID_NON_DEFAULT_ARG_WITH_DEFAULT_TRUE = [
+        {"name": "endpoint", "arguments": [{"name": "id", "required": False, "default": True}]}]
+    CASE_INVALID_MISSING_OUTPUT = [
+        {"name": "endpoint", "arguments": [{"name": "ip", "required": False, "default": True}],
+         "outputs": [{'contextPath': 'Endpoint.IPAddress'}, {'contextPath': 'Endpoint.Hostname'},
+                     {'contextPath': 'Endpoint.Test'}]}]
+    ENDPOINT_CASES = [
+        (CASE_EXISTS_WITH_DEFAULT_TRUE, True),
+        (CASE_REQUIRED_ARG_WITH_DEFAULT_FALSE, True),
+        (CASE_INVALID_MISSING_REQUIRED_ARGS, False),
+        (CASE_INVALID_NON_DEFAULT_ARG_WITH_DEFAULT_TRUE, False)
+    ]
+
+    @pytest.mark.parametrize("current, answer", ENDPOINT_CASES)
+    def test_is_valid_endpoint_command(self, current, answer):
+        """
+        Given: Endpoint command with arguments and outputs in yml.
+
+        When: running is_valid_endpoint_command.
+
+        Then: Validate that at least one of the required input exists (with correct deafult field)
+         and the relevant outputs are correct.
+        """
+        current = {"script": {"commands": current}}
+        structure = mock_structure("", current)
+        validator = IntegrationValidator(structure)
+        validator.current_file = current
+        assert validator.is_valid_endpoint_command() is answer
 
     VALID_BETA = {"commonfields": {"id": "newIntegration"}, "name": "newIntegration",
                   "display": "newIntegration (Beta)", "beta": True}
@@ -1214,7 +1272,7 @@ class TestisContextChanged:
     ]
 
     @pytest.mark.parametrize('readme, current_yml, expected', TEST_CASE)
-    def test_is_context_change_in_readme(self, readme, current_yml, expected):
+    def test_is_context_correct_in_readme(self, readme, current_yml, expected):
         """
         Given: a changed YML file
         When: running validate on integration with at least one command
@@ -1228,6 +1286,6 @@ class TestisContextChanged:
             structure = mock_structure("Pack/Test", current)
             validator = IntegrationValidator(structure)
             validator.current_file = current_yml
-            res = validator.is_context_change_in_readme()
+            res = validator.is_context_correct_in_readme()
             assert res == expected
         patcher.stop()

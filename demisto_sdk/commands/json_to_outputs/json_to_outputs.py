@@ -72,10 +72,13 @@ outputs:
   type: String
 """
 import json
+import os
 import sys
+from typing import Dict, Optional
 
 import dateparser
 import yaml
+
 from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
                                                print_error)
 
@@ -116,23 +119,25 @@ def jsonise(context_key, value, description=''):
     }
 
 
+def _is_min_date(val: str):
+    # catches `0001-01-01Z00:00:00`, `0001-01-01T00:00:00`, `0001-01-01 00:00`, etc
+    return '0001-01-01' in val and '00:00' in val
+
+
 def is_date(val):
     """
     Determines if val is Date, if yes returns True otherwise False
     """
     if isinstance(val, (int, float)) and val > 15737548065 and val < 2573754806500:
-        # 15737548065 is the lowest timestamp that exist year - 1970
-        # 2573754806500 is the year 2050 - I believe no json will contain date time over this time
+        # 15737548065 is Jul 02 1970 (milliseconds)
+        # 2573754806500 is the year 2050 (milliseconds)
         # if number is between these two numbers it probably is timestamp=date
         return True
 
-    if isinstance(val, str) and len(val) >= 10 and len(val) <= 30 and dateparser.parse(val):
+    if isinstance(val, str) and len(val) >= 10 and len(val) <= 30 and (_is_min_date(val) or dateparser.parse(val)):
         # the shortest date string is => len(2019-10-10) = 10
         # The longest date string I could think of wasn't of length over len=30 '2019-10-10T00:00:00.000 +0900'
-        # To reduce in performance of using dateparser.parse,I
         return True
-
-    return False
 
 
 def determine_type(val):
@@ -152,7 +157,7 @@ def determine_type(val):
     return 'Unknown'
 
 
-def parse_json(data, command_name, prefix, verbose=False, interactive=False):
+def parse_json(data, command_name, prefix, verbose=False, interactive=False, descriptions: Optional[Dict] = None, return_object=False):
     if data == '':
         raise ValueError('Invalid input JSON - got empty string')
 
@@ -164,14 +169,24 @@ def parse_json(data, command_name, prefix, verbose=False, interactive=False):
 
         raise ValueError('Invalid input JSON')
 
+    # If data is a list of dictionaries [{'a': 'b', 'c': 'd'}, {'e': 'f'}] -> {'a': 'b', 'c': 'd', 'e': 'f'}.
+    # In case there are two identical keys (in two different dictionaries) with values of different types,
+    # the type will be determined by the last dictionary [{'a': 'b'}, {'a': 1}] -> {'a': 1} -> type of 'a' = Number.
+    if isinstance(data, list):
+        data = {k: v for d in data for k, v in d.items()}
+
     flattened_data = flatten_json(data)
     if prefix:
         flattened_data = {f'{prefix}.{key}': value for key, value in flattened_data.items()}
+        if descriptions:
+            descriptions = {f'{prefix}.{key}': value for key, value in descriptions.items()}
 
     arg_json = []
     for key, value in flattened_data.items():
         description = ''
-        if interactive:
+        if descriptions and key in descriptions:
+            description = descriptions[key]
+        elif interactive:
             print(f'Enter description for: [{key}]')
             description = input_multiline()
 
@@ -180,18 +195,20 @@ def parse_json(data, command_name, prefix, verbose=False, interactive=False):
     if verbose:
         print(f'JSON before converting to YAML: {arg_json}')
 
-    yaml_output = yaml.safe_dump(
-        {
-            'name': command_name.lstrip('!'),
-            'arguments': [],
-            'outputs': arg_json
-        },
-        default_flow_style=False
-    )
+    outputs = {
+        'name': command_name.lstrip('!'),
+        'arguments': [],
+        'outputs': arg_json
+    }
+
+    if return_object:
+        return outputs
+
+    yaml_output = yaml.safe_dump(outputs, default_flow_style=False)
     return yaml_output
 
 
-def json_to_outputs(command, input, prefix, output=None, verbose=False, interactive=False):
+def json_to_outputs(command, input, prefix, output=None, verbose=False, interactive=False, descriptions=None):
     """
     This script parses JSON to Demisto Outputs YAML format
 
@@ -204,7 +221,7 @@ def json_to_outputs(command, input, prefix, output=None, verbose=False, interact
         verbose: This used for debugging purposes - more logs
         interactive: by default all the output descriptions are empty, but if user sets this to True then the script
             will ask user input for each description
-
+        descriptions: JSON or path to JSON file mapping field names to their context descriptions. (Optional)
     Returns:
     """
     try:
@@ -212,10 +229,12 @@ def json_to_outputs(command, input, prefix, output=None, verbose=False, interact
             with open(input, 'r') as json_file:
                 input_json = json_file.read()
         else:
-            print("Enter the command's output in JSON format.\n As an example, If one of the command's output is `item_id`,\n enter {\"item_id\": 1234}")
+            print("Enter the command's output in JSON format.\n "
+                  "As an example, If one of the command's output is `item_id`,\n enter {\"item_id\": 1234}")
             input_json = input_multiline()
 
-        yaml_output = parse_json(input_json, command, prefix, verbose, interactive)
+        descriptions = _parse_description_argument(descriptions)
+        yaml_output = parse_json(input_json, command, prefix, verbose, interactive, descriptions)
 
         if output:
             with open(output, 'w') as yf:
@@ -232,3 +251,24 @@ def json_to_outputs(command, input, prefix, output=None, verbose=False, interact
         else:
             print_error(f'Error: {str(ex)}')
             sys.exit(1)
+
+
+def _parse_description_argument(descriptions: Optional[str]) -> Optional[dict]:  # type: ignore
+    """Parses the descriptions argument, be it a path to JSON or a JSON body given as argument """
+
+    if not descriptions:  # None or empty
+        return None
+
+    try:
+        if os.path.exists(descriptions):  # file input
+            with open(descriptions, encoding='utf8') as f:
+                return json.load(f)
+
+        else:
+            parsed = json.loads(descriptions)  # argument input
+            if not isinstance(parsed, Dict):
+                raise TypeError("Expected a dictionary")
+            return parsed
+
+    except (json.JSONDecodeError, TypeError):
+        print("Error decoding JSON descriptions, ignoring them.")

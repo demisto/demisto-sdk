@@ -5,8 +5,11 @@ from io import StringIO
 from shutil import copyfile
 from typing import Any, Type, Union
 
-import demisto_sdk.commands.validate.validate_manager
 import pytest
+from mock import patch
+
+import demisto_sdk.commands.validate.validate_manager
+from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (CONF_PATH, TEST_PLAYBOOK,
                                                    FileType)
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -38,7 +41,7 @@ from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.unify.unifier import Unifier
+from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.tests.constants_test import (
     CONF_JSON_MOCK_PATH, DASHBOARD_TARGET, DIR_LIST, IGNORED_PNG,
@@ -68,7 +71,7 @@ from demisto_sdk.tests.constants_test import (
     WIDGET_TARGET)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import \
     INCIDENT_FIELD
-from mock import patch
+from TestSuite.pack import Pack
 from TestSuite.test_tools import ChangeCWD
 
 
@@ -202,13 +205,14 @@ class TestValidators:
 
     @pytest.mark.parametrize('source, target, answer, validator', INPUTS_IS_VALID_VERSION)
     def test_is_file_valid(self, source, target, answer, validator, mocker):
-        # type: (str, str, Any, Type[ContentEntityValidator]) -> None
+        # type: (str, str, str, Any, Type[ContentEntityValidator]) -> None
         try:
             copyfile(source, target)
             structure = StructureValidator(source)
             res_validator = validator(structure)
             mocker.patch.object(ScriptValidator, 'is_valid_script_file_path', return_value=True)
             mocker.patch.object(ScriptValidator, 'is_there_separators_in_names', return_value=True)
+            mocker.patch.object(ScriptValidator, 'is_docker_image_valid', return_value=True)
             assert res_validator.is_valid_file(validate_rn=False) is answer
         finally:
             os.remove(target)
@@ -382,8 +386,10 @@ class TestValidators:
         mocker.patch.object(PlaybookValidator, 'is_script_id_valid', return_value=True)
         mocker.patch.object(ScriptValidator, 'is_valid_script_file_path', return_value=True)
         mocker.patch.object(ScriptValidator, 'is_there_separators_in_names', return_value=True)
+        mocker.patch.object(ScriptValidator, 'is_docker_image_valid', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_valid_integration_file_path', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_there_separators_in_names', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'is_docker_image_valid', return_value=True)
         validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
         assert validate_manager.run_validation_on_specific_files()
 
@@ -446,12 +452,13 @@ class TestValidators:
             assert not validate_manager.run_validations_on_file(file_path=integration.yml.path,
                                                                 pack_error_ignore_list=[], is_modified=True)
 
-    def test_files_validator_validate_pack_unique_files(self):
+    def test_files_validator_validate_pack_unique_files(self, mocker):
+        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
         validate_manager = ValidateManager(skip_conf_json=True)
         result = validate_manager.validate_pack_unique_files(VALID_PACK, pack_error_ignore_list={})
         assert result
 
-    def test_validate_pack_dependencies(self):
+    def test_validate_pack_dependencies(self, mocker):
         """
             Given:
                 - A file path with valid pack dependencies
@@ -462,6 +469,7 @@ class TestValidators:
         """
         id_set_path = os.path.normpath(
             os.path.join(__file__, git_path(), 'demisto_sdk', 'tests', 'test_files', 'id_set', 'id_set.json'))
+        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
         validate_manager = ValidateManager(skip_conf_json=True, id_set_path=id_set_path)
         result = validate_manager.validate_pack_unique_files(VALID_PACK, pack_error_ignore_list={})
         assert result
@@ -479,6 +487,8 @@ class TestValidators:
             os.path.join(__file__, git_path(), 'demisto_sdk', 'tests', 'test_files', 'id_set', 'id_set.json'))
         validate_manager = ValidateManager(skip_conf_json=True, id_set_path=id_set_path)
         mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_readme_and_pack_description', return_value=True)
+        mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_readme_images', return_value=True)
+        mocker.patch.object(PackUniqueFilesValidator, '_read_metadata_content', return_value=dict())
         result = validate_manager.validate_pack_unique_files('QRadar', pack_error_ignore_list={})
         assert not result
 
@@ -487,9 +497,9 @@ class TestValidators:
         def get_script_or_integration_package_data_mock(*args, **kwargs):
             return VALID_SCRIPT_PATH, ''
 
-        with patch.object(Unifier, '__init__', lambda a, b: None):
-            Unifier.get_script_or_integration_package_data = get_script_or_integration_package_data_mock
-            return Unifier('')
+        with patch.object(YmlUnifier, '__init__', lambda a, b: None):
+            YmlUnifier.get_script_or_integration_package_data = get_script_or_integration_package_data_mock
+            return YmlUnifier('')
 
     def test_script_valid_rn(self, mocker):
         """
@@ -503,6 +513,7 @@ class TestValidators:
         mocker.patch.object(ScriptValidator, 'is_valid_name', return_value=True)
         mocker.patch.object(ScriptValidator, 'is_valid_script_file_path', return_value=True)
         mocker.patch.object(ScriptValidator, 'is_there_separators_in_names', return_value=True)
+        mocker.patch.object(ScriptValidator, 'is_docker_image_valid', return_value=True)
         self.mock_unifier()
         validate_manager = ValidateManager(skip_conf_json=True)
         is_valid = validate_manager.validate_added_files([VALID_SCRIPT_PATH], None)
@@ -616,10 +627,10 @@ class TestValidators:
     def test_create_ignored_errors_list(self):
         validate_manager = ValidateManager()
         errors_to_check = ["IN", "SC", "CJ", "DA", "DB", "DO", "ID", "DS", "IM", "IF", "IT", "RN", "RM", "PA", "PB",
-                           "WD", "RP", "BA100", "BC100", "ST", "CL", "MP", "LO", "XC"]
+                           "WD", "RP", "BA100", "BC100", "ST", "CL", "MP", "LO", "XC", "GF", "PP"]
         ignored_list = validate_manager.create_ignored_errors_list(errors_to_check)
         assert ignored_list == ["BA101", "BA102", "BA103", "BA104", "BA105", "BA106", "BA107", "BA108", "BA109",
-                                "BA110", "BC101", "BC102", "BC103", "BC104"]
+                                "BA110", 'BA111', "BA112", "BA113", "BC101", "BC102", "BC103", "BC104"]
 
     def test_added_files_type_using_function(self, repo, mocker):
         """
@@ -659,7 +670,7 @@ class TestValidators:
                 - return a False
         """
         files_path = os.path.normpath(
-            os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
+            os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files', 'Packs'))
         test_file = os.path.join(files_path, 'CortexXDR',
                                  'Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR.yml')
         validate_manager = ValidateManager()
@@ -998,6 +1009,75 @@ class TestValidators:
         validate_manager.new_packs = {'CortexXDR'}
         assert validate_manager.validate_release_notes(file_path, {file_path}, modified_files, None, False) is False
 
+    def test_run_validations_on_file_release_notes_config(self, pack):
+        """
+        Sanity test for running validation on RN config file
+
+        Given:
+        - Valid RN config file.
+
+        When:
+        - Checking if file is valid.
+
+        Then:
+        - Ensure true is returned.
+        """
+        rn = pack.create_release_notes('1_0_1', is_bc=True)
+        rn_config_path: str = str(rn.path).replace('md', 'json')
+        validate_manager: ValidateManager = ValidateManager()
+        assert validate_manager.run_validations_on_file(rn_config_path, list())
+
+    @pytest.mark.parametrize('answer, integration_id', [(True, 'MyIntegration'), (False, 'MyIntegration  ')])
+    def test_is_there_spaces_in_the_end_of_id_yml(self, pack: Pack, answer, integration_id):
+        """
+                Given
+                    - An integration which id doesn't ends with whitespaces
+                    - An integration which id ends with spaces
+                When
+                    - Run the validate command.
+                Then
+                    - validate that is_there_spaces_in_the_end_of_id returns expected answer
+        """
+        integration = pack.create_integration('MyIntegration')
+        integration.yml.write_dict({'commonfields': {'id': integration_id}})
+        structure = StructureValidator(integration.yml.path)
+        res_validator = IntegrationValidator(structure)
+        assert res_validator.is_there_spaces_in_the_end_of_id() is answer
+
+    @pytest.mark.parametrize('answer, dashboard_id', [(True, 'MyDashboard'), (False, 'MyDashboard  ')])
+    def test_is_there_spaces_in_the_end_of_id_json(self, pack: Pack, answer, dashboard_id):
+        """
+                Given
+                    - A dashboard which id doesn't ends with whitespaces
+                    - A dashboard which id ends with spaces
+                When
+                    - Run the validate command.
+                Then
+                    - validate that is_there_spaces_in_the_end_of_id returns expected answer
+        """
+        dashboard = pack.create_dashboard('MyDashboard')
+        dashboard.write_json({'id': dashboard_id})
+        structure = StructureValidator(dashboard.path)
+        res_validator = DashboardValidator(structure)
+        assert res_validator.is_there_spaces_in_the_end_of_id() is answer
+
+    @pytest.mark.parametrize('answer, dashboard_name', [(True, 'MyDashboard'), (False, 'MyDashboard  ')])
+    def test_is_there_spaces_in_the_end_of_name(self, pack: Pack, answer, dashboard_name):
+        """
+                Given
+                    - A dashboard which name doesn't ends with whitespaces
+                    - A dashboard which name ends with spaces
+                When
+                    - Run the validate command.
+                Then
+                    - validate that is_there_spaces_in_the_end_of_name returns expected answer
+        """
+        dashboard = pack.create_dashboard(dashboard_name)
+        dashboard.write_json({'name': dashboard_name})
+        structure = StructureValidator(dashboard.path)
+        res_validator = IntegrationValidator(structure)
+        assert res_validator.is_there_spaces_in_the_end_of_name() is answer
+
 
 @pytest.mark.parametrize('pack_name, expected', [
     ('NonSupported', False),
@@ -1030,6 +1110,7 @@ def test_run_validation_using_git_on_only_metadata_changed(mocker):
     mocker.patch.object(ValidateManager, 'setup_git_params')
     mocker.patch.object(ValidateManager, 'get_changed_files_from_git',
                         return_value=(set(), set(), {'/Packs/ForTesting/pack_metadata.json'}, set()))
+    mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
 
     validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
     res = validate_manager.run_validation_using_git()
@@ -1142,3 +1223,20 @@ def test_quite_bc_flag(repo):
     existing_pack1 = repo.create_pack('PackWithModifiedIntegration')
     moodified_integration = existing_pack1.create_integration('MyIn')
     moodified_integration.create_default_integration()
+
+
+data_test_filted_dirs_in_format_file_path = [
+    ('Packs/PackName/Integrations/IntegrationName/IntegrationName.yml', 'Packs/PackName/Integrations/IntegrationName/IntegrationName.yml'),
+    ('.circleci/config.yml', None),
+    ('.github/workflows/check-contribution-form-filled.yml', None),
+    ('.gitlab/ci/.gitlab-ci.yml', None),
+]
+
+
+@pytest.mark.parametrize('input_file_path, output_file_path', data_test_filted_dirs_in_format_file_path)
+def test_filted_dirs_in_format_file_path(mocker, input_file_path, output_file_path):
+    validator_obj = ValidateManager(is_external_repo=True, check_is_unskipped=False)
+    mocker.patch.object(validator_obj, 'is_old_file_format', return_value=False)
+    mocker.patch.object(tools, 'get_dict_from_file', return_value=({'category': 'test'}, 'yml'))
+    filterd_files = validator_obj.format_file_path(input_file_path, None, set())
+    assert filterd_files == output_file_path

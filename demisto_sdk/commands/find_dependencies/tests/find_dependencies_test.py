@@ -1,23 +1,434 @@
 import json
 import os
+from pathlib import Path
+from typing import List
 
 import networkx as nx
 import pytest
-from demisto_sdk.commands.common.legacy_git_tools import git_path
+
+import demisto_sdk.commands.create_id_set.create_id_set as cis
+from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
+from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
 from TestSuite.utils import IsEqualFunctions
 
 
+def create_a_pack_entity(pack, entity_type: FileType = None, entity_id: str = None, entity_name: str = None,
+                         commands: List[str] = None):
+    """
+    Given
+        - A Pack.
+
+    When
+        - add an entity to the pack.
+
+    Then
+        - Adds the entity to the pack with basic data.
+    """
+    if entity_type == FileType.SCRIPT:
+        pack.create_script(entity_id).create_default_script(entity_id)
+    elif entity_type == FileType.INTEGRATION:
+        pack.create_integration(entity_id).create_default_integration(entity_id, commands)
+    elif entity_type == FileType.PLAYBOOK:
+        pack.create_playbook(entity_id).create_default_playbook(entity_id)
+    elif entity_type == FileType.TEST_PLAYBOOK:
+        pack.create_test_playbook(entity_id).create_default_test_playbook(entity_id)
+    elif entity_type == FileType.CLASSIFIER:
+        content = {'id': entity_id, 'name': entity_name, 'transformer': '', 'keyTypeMap': {}, 'type': 'classification'}
+        pack.create_classifier(entity_id, content)
+    elif entity_type == FileType.LAYOUT:
+        content = {"typeId": entity_id, "TypeName": entity_id, "kind": "details", "layout": {}}
+        pack.create_layout(entity_id, content)
+    elif entity_type == FileType.LAYOUTS_CONTAINER:
+        content = {"id": entity_id, "name": entity_name, "group": "incident", "detailsV2": {}}
+        pack.create_layout(entity_id, content)
+    elif entity_type == FileType.MAPPER:
+        content = {'id': entity_id, 'name': entity_name, 'mapping': {}, 'type': 'mapping-incomming'}
+        pack.create_mapper(entity_id, content)
+    elif entity_type == FileType.INCIDENT_FIELD:
+        content = {'id': f'incident_{entity_id}', 'name': entity_name}
+        pack.create_incident_field(entity_id, content)
+    elif entity_type == FileType.INCIDENT_TYPE:
+        content = {'id': entity_id, 'name': entity_name, 'preProcessingScript': '', 'color': 'test'}
+        pack.create_incident_type(entity_id, content)
+    elif entity_type == FileType.INDICATOR_FIELD:
+        content = {'id': f'indicator_{entity_id}', 'name': entity_name}
+        pack.create_indicator_field(entity_id, content)
+    elif entity_type == FileType.REPUTATION:
+        content = {'id': entity_id, 'details': entity_name, 'regex': ''}
+        pack.create_indicator_type(entity_id, content)
+    elif entity_type == FileType.GENERIC_DEFINITION:
+        content = {'id': entity_id, 'details': entity_name, "auditable": True}
+        pack.create_generic_definition(entity_id, content)
+    elif entity_type == FileType.GENERIC_TYPE:
+        content = {'id': entity_id, 'details': entity_name, "color": "#8052f4", "definitionId": "assets"}
+        pack.create_generic_type(entity_id, content)
+    elif entity_type == FileType.GENERIC_MODULE:
+        content = {'id': entity_id, 'details': entity_name, "views": [], "definitionId": "assets"}
+        pack.create_generic_module(entity_id, content)
+    elif entity_type == FileType.GENERIC_FIELD:
+        content = {'id': entity_id, 'details': entity_name, "definitionId": "assets"}
+        pack.create_generic_field(entity_id, content)
+
+
 @pytest.fixture(scope="module")
 def id_set():
-    id_set_path = os.path.normpath(
-        os.path.join(__file__, git_path(), 'demisto_sdk', 'tests', 'test_files', 'id_set', 'id_set.json'))
-
-    with open(id_set_path, 'r') as id_set_file:
+    with open("Content/Tests/id_set.json", 'r') as id_set_file:
         id_set = json.load(id_set_file)
         yield id_set
+
+
+def create_content_repo():
+    os.makedirs('Content')
+    repo = Repo(Path('Content'))
+
+    # Create 5 packs with all entities
+    repo.setup_content_repo(5)
+
+    # Create a pack called 'PrismaCloudCompute' with 4 scripts and 1 incident_type.
+    prisma_cloud_compute = repo.create_pack('PrismaCloudCompute')
+    prisma_cloud_compute_scripts = ['PrismaCloudComputeParseAuditAlert',
+                                    'PrismaCloudComputeParseCloudDiscoveryAlert',
+                                    'PrismaCloudComputeParseComplianceAlert',
+                                    'PrismaCloudComputeParseVulnerabilityAlert']
+    for script in prisma_cloud_compute_scripts:
+        create_a_pack_entity(prisma_cloud_compute, FileType.SCRIPT, script)
+    create_a_pack_entity(prisma_cloud_compute, FileType.INCIDENT_TYPE, 'Prisma Cloud Compute Cloud Discovery',
+                         'Prisma Cloud Compute Cloud Discovery')
+
+    # Create a pack called 'Expanse' with 1 playbook.
+    expanse = repo.create_pack('Expanse')
+    create_a_pack_entity(expanse, FileType.PLAYBOOK, 'Expanse_Incident_Playbook')
+
+    # Create a pack called 'GetServerURL' with 1 script.
+    get_server_url = repo.create_pack('GetServerURL')
+    create_a_pack_entity(get_server_url, FileType.SCRIPT, 'GetServerURL')
+
+    # Create a pack called 'HelloWorld' with 1 script and 1 classifier.
+    hello_world = repo.create_pack('HelloWorld')
+    create_a_pack_entity(hello_world, FileType.SCRIPT, 'HelloWorldScript')
+    create_a_pack_entity(hello_world, FileType.CLASSIFIER, 'HelloWorld', 'HelloWorld')
+
+    # Create a pack called 'Feedsslabusech' with 1 integration.
+    feedsslabusech = repo.create_pack('Feedsslabusech')
+    create_a_pack_entity(feedsslabusech, FileType.INTEGRATION, 'Feedsslabusech', commands=['sslbl-get-indicators'])
+
+    # Create a pack called 'ActiveMQ' with 1 integration.
+    active_mq = repo.create_pack('ActiveMQ')
+    create_a_pack_entity(active_mq, FileType.INTEGRATION, 'ActiveMQ', commands=['activemq-subscribe'])
+
+    # Create a pack called 'FeedAlienVault' with 1 integration.
+    feed_alien_vault = repo.create_pack('FeedAlienVault')
+    create_a_pack_entity(feed_alien_vault, FileType.INTEGRATION, 'FeedAlienVault',
+                         commands=['alienvault-get-indicators'])
+
+    # Create a pack called 'QRadar' with 1 integration.
+    qradar = repo.create_pack('QRadar')
+    create_a_pack_entity(qradar, FileType.INTEGRATION, 'QRadar', commands=['qradar-searches'])
+
+    # Create a pack called 'Active_Directory_Query' with 1 integration and 1 script.
+    active_directory_query = repo.create_pack('Active_Directory_Query')
+    create_a_pack_entity(active_directory_query, FileType.INTEGRATION, 'Active Directory Query',
+                         commands=['ad-get-user', 'ad-search'])
+    create_a_pack_entity(active_directory_query, FileType.SCRIPT, 'ADGetUser')
+
+    # Create a pack called 'Pcysys' with 1 playbook.
+    pcysys = repo.create_pack('Pcysys')
+    create_a_pack_entity(pcysys, FileType.PLAYBOOK, 'Pentera Run Scan')
+
+    # Create a pack called 'Indeni' with 1 playbook.
+    indeni = repo.create_pack('Indeni')
+    create_a_pack_entity(indeni, FileType.PLAYBOOK, 'Indeni Demo')
+
+    # Create a pack called 'Pcysys' with 1 playbook.
+    slack = repo.create_pack('Slack')
+    create_a_pack_entity(slack, FileType.PLAYBOOK, 'Failed Login Playbook - Slack v2')
+
+    # Create a pack called 'FeedAWS' with 1 integration.
+    feed_aws = repo.create_pack('FeedAWS')
+    create_a_pack_entity(feed_aws, FileType.INTEGRATION, 'FeedAWS', commands=['aws-get-indicators'])
+
+    # Create a pack called 'FeedAutoFocus' with 1 integration.
+    feed_autofocus = repo.create_pack('FeedAutofocus')
+    create_a_pack_entity(feed_autofocus, FileType.INTEGRATION, 'FeedAutofocus', commands=['autofocus-get-indicators'])
+
+    # Create a pack called 'ipinfo' with 1 integration.
+    ipinfo = repo.create_pack('ipinfo')
+    create_a_pack_entity(ipinfo, FileType.INTEGRATION, 'ipinfo', commands=['ip'])
+
+    # Create a pack called 'DigitalGuardian' with 1 incident_field.
+    digital_guardian = repo.create_pack('DigitalGuardian')
+    create_a_pack_entity(digital_guardian, FileType.INCIDENT_FIELD, 'digitalguardianusername',
+                         'Digital Guardian Username')
+
+    # Create a pack called 'EmployeeOffboarding' with 1 incident_field.
+    employee_offboarding = repo.create_pack('EmployeeOffboarding')
+    create_a_pack_entity(employee_offboarding, FileType.INCIDENT_FIELD, 'googledisplayname', 'Google Display Name')
+
+    # Create a pack called 'Phishing' with 3 incident_fields and 1 script.
+    phishing = repo.create_pack('Phishing')
+    create_a_pack_entity(phishing, FileType.INCIDENT_FIELD, 'attachmentname', 'Attachment Name')
+    create_a_pack_entity(phishing, FileType.INCIDENT_FIELD, 'emailfrom', 'Email From')
+    create_a_pack_entity(phishing, FileType.INCIDENT_FIELD, 'emailsubject', 'Email Subject')
+    create_a_pack_entity(phishing, FileType.SCRIPT, 'CheckEmailAuthenticity')
+
+    # Create a pack called 'CommonTypes' with 3 incident_fields 2 incident_types 5 indicator_fields 1 indicator_type.
+    common_types = repo.create_pack('CommonTypes')
+    ct_incident_field_ids = ['accountid', 'country', 'username']
+    ct_incident_field_names = ['Account Id', 'Country', 'Username']
+    ct_incident_type_ids = ['Network', 'Authentication']
+    ct_incident_type_names = ['Network', 'Authentication']
+    ct_indicator_field_ids = ['accounttype', 'adminname', 'tags', 'commontypes', 'adminemail']
+    ct_indicator_field_names = ['Account Type', 'Admin Name', 'Tags', 'Common Types', 'Admin Email']
+    for field_id, field_name in zip(ct_incident_field_ids, ct_incident_field_names):
+        create_a_pack_entity(common_types, FileType.INCIDENT_FIELD, field_id, field_name)
+    for field_id, field_name in zip(ct_incident_type_ids, ct_incident_type_names):
+        create_a_pack_entity(common_types, FileType.INCIDENT_TYPE, field_id, field_name)
+    for field_id, field_name in zip(ct_indicator_field_ids, ct_indicator_field_names):
+        create_a_pack_entity(common_types, FileType.INDICATOR_FIELD, field_id, field_name)
+    create_a_pack_entity(common_types, FileType.REPUTATION, 'accountrep', 'Account Rep')
+
+    # Create a pack called 'SafeBreach' with 1 incident_field and 1 integration.
+    safe_breach = repo.create_pack('SafeBreach')
+    create_a_pack_entity(safe_breach, FileType.INDICATOR_FIELD, 'safebreachremediationstatus',
+                         'SafeBreach Remediation Status')
+    create_a_pack_entity(safe_breach, FileType.INTEGRATION, 'SafeBreach', commands=['safebreach-get-remediation-data'])
+
+    # Create a pack called 'CommonScripts' with 7 scripts.
+    common_scripts = repo.create_pack('CommonScripts')
+    create_a_pack_entity(common_scripts, FileType.SCRIPT, 'ChangeContext')
+    create_a_pack_entity(common_scripts, FileType.SCRIPT, 'Set')
+    create_a_pack_entity(common_scripts, FileType.SCRIPT, 'SetAndHandleEmpty')
+    create_a_pack_entity(common_scripts, FileType.SCRIPT, 'AssignAnalystToIncident')
+    create_a_pack_entity(common_scripts, FileType.SCRIPT, 'EmailAskUser')
+    create_a_pack_entity(common_scripts, FileType.SCRIPT, 'ScheduleCommand')
+    create_a_pack_entity(common_scripts, FileType.SCRIPT, 'DeleteContext')
+    create_a_pack_entity(common_scripts, FileType.SCRIPT, 'IsInCidrRanges')
+
+    # Create a pack called 'CalculateTimeDifference' with 1 script.
+    calculate_time_difference = repo.create_pack('CalculateTimeDifference')
+    create_a_pack_entity(calculate_time_difference, FileType.SCRIPT, 'CalculateTimeDifference')
+
+    # Create a pack called 'CommonPlaybooks' with 3 playbooks.
+    common_playbooks = repo.create_pack('CommonPlaybooks')
+    create_a_pack_entity(common_playbooks, FileType.PLAYBOOK, 'Block IP - Generic v2')
+    create_a_pack_entity(common_playbooks, FileType.PLAYBOOK, 'IP Enrichment - Generic v2')
+    create_a_pack_entity(common_playbooks, FileType.PLAYBOOK, 'Active Directory - Get User Manager Details')
+
+    # Create a pack called 'FeedMitreAttack' with 1 indicator_type.
+    feed_mitre_attack = repo.create_pack('FeedMitreAttack')
+    create_a_pack_entity(feed_mitre_attack, FileType.REPUTATION, 'MITRE ATT&CK', 'MITRE ATT&CK')
+
+    # Create a pack called 'CrisisManagement' with 1 incident_type and 1 incident_field.
+    crisis_management = repo.create_pack('CrisisManagement')
+    create_a_pack_entity(crisis_management, FileType.INCIDENT_TYPE, 'HR Ticket', 'HR Ticket')
+    create_a_pack_entity(crisis_management, FileType.INDICATOR_FIELD, 'jobtitle', 'Job Title')
+
+    # Create a pack called 'Carbon_Black_Enterprise_Response' with 2 scripts.
+    carbon_black_enterprise_response = repo.create_pack('Carbon_Black_Enterprise_Response')
+    create_a_pack_entity(carbon_black_enterprise_response, FileType.SCRIPT, 'CBLiveFetchFiles')
+    create_a_pack_entity(carbon_black_enterprise_response, FileType.SCRIPT, 'CBAlerts')
+
+    # Create a pack called 'Claroty' with 3 mappers and 1 incident_type.
+    claroty = repo.create_pack('Claroty')
+    create_a_pack_entity(claroty, FileType.MAPPER, 'CBAlerts-mapper', 'Claroty-mapper')
+    create_a_pack_entity(claroty, FileType.MAPPER, 'Claroty', 'Claroty')
+    create_a_pack_entity(claroty, FileType.MAPPER, 'CBAlerts - Incoming Mapper', 'Claroty - Incoming Mapper')
+    create_a_pack_entity(claroty, FileType.INCIDENT_TYPE, 'Claroty Integrity Incident', 'Claroty Integrity Incident')
+
+    # Create a pack called 'EWS' with 1 mapper.
+    ews = repo.create_pack('EWS')
+    create_a_pack_entity(ews, FileType.MAPPER, 'EWS v2-mapper', 'EWS v2-mapper')
+
+    # Create a pack called 'AutoFocus' with 1 playbook.
+    auto_focus = repo.create_pack('AutoFocus')
+    create_a_pack_entity(auto_focus, FileType.PLAYBOOK, 'Autofocus Query Samples, Sessions and Tags',
+                         'Autofocus Query Samples, Sessions and Tags')
+
+    # Create a pack called 'Volatility' with 1 script.
+    volatility = repo.create_pack('Volatility')
+    create_a_pack_entity(volatility, FileType.SCRIPT, 'AnalyzeMemImage')
+
+    # Create a pack called 'PAN-OS' with 1 incident_type.
+    pan_os = repo.create_pack('PAN-OS')
+    create_a_pack_entity(pan_os, FileType.INCIDENT_TYPE, 'FirewallUpgrade', 'FirewallUpgrade')
+
+    # Create a pack called 'Logzio' with 1 incident_type.
+    logzio = repo.create_pack('Logzio')
+    create_a_pack_entity(logzio, FileType.INCIDENT_TYPE, 'Logz.io Alert', 'Logz.io Alert')
+
+    # Create a pack called 'AccessInvestigation' with 1 incident_type.
+    access_investigation = repo.create_pack('AccessInvestigation')
+    create_a_pack_entity(access_investigation, FileType.INCIDENT_TYPE, 'Access', 'Access')
+
+    # Create a pack called 'PrismaCloud' with 1 incident_type.
+    prisma_cloud = repo.create_pack('PrismaCloud')
+    create_a_pack_entity(prisma_cloud, FileType.INCIDENT_TYPE, 'AWS CloudTrail Misconfiguration',
+                         'AWS CloudTrail Misconfiguration')
+
+    # Create a pack called 'BruteForce' with 1 incident_field.
+    brute_force = repo.create_pack('BruteForce')
+    create_a_pack_entity(brute_force, FileType.INCIDENT_FIELD, 'accountgroups', 'Account Groups')
+
+    # Create a pack called 'Compliance' with 1 incident_field.
+    complience = repo.create_pack('Compliance')
+    create_a_pack_entity(complience, FileType.INCIDENT_FIELD, 'emailaddress', 'E-mail Address')
+
+    # Create a pack called 'CortexXDR' with 1 classifier.
+    cortex_xdr = repo.create_pack('CortexXDR')
+    create_a_pack_entity(cortex_xdr, FileType.CLASSIFIER, 'Cortex XDR - IR', 'Cortex XDR - IR')
+
+    # Create a pack called 'ImpossibleTraveler' with:
+    # 1 integration 1 playbook 1 test_playbook 1 layout 7 incident_fields 1 incident type
+    impossible_traveler = repo.create_pack('ImpossibleTraveler')
+    create_a_pack_entity(impossible_traveler, FileType.SCRIPT, 'CalculateGeoDistance')
+    create_a_pack_entity(impossible_traveler, FileType.PLAYBOOK, 'Impossible Traveler')
+    create_a_pack_entity(impossible_traveler, FileType.TEST_PLAYBOOK, 'Impossible Traveler - Test')
+    create_a_pack_entity(impossible_traveler, FileType.LAYOUT, 'Impossible Traveler')
+    create_a_pack_entity(impossible_traveler, FileType.INCIDENT_FIELD, 'coordinates' 'Coordinates')
+    create_a_pack_entity(impossible_traveler, FileType.INCIDENT_FIELD, 'previouscoordinates' 'Previous Coordinates')
+    create_a_pack_entity(impossible_traveler, FileType.INCIDENT_FIELD, 'previouscountry' 'Previou Country')
+    create_a_pack_entity(impossible_traveler, FileType.INCIDENT_FIELD,
+                         'previoussignindatetime' 'Previous Sign In Date Time')
+    create_a_pack_entity(impossible_traveler, FileType.INCIDENT_FIELD, 'previoussourceiP' 'Previous Source IP')
+    create_a_pack_entity(impossible_traveler, FileType.INCIDENT_FIELD, 'signindatetime' 'Sign In Date Time')
+    create_a_pack_entity(impossible_traveler, FileType.INCIDENT_FIELD, 'travelmaplink' 'Travel Map Link')
+    create_a_pack_entity(impossible_traveler, FileType.INCIDENT_TYPE, 'impossibletraveler' 'Impossible Traveler')
+
+    # Create a pack called 'pack_with_definition' with 1 generic definition.
+    definition_pack = repo.create_pack('pack_with_definition')
+    create_a_pack_entity(definition_pack, FileType.GENERIC_DEFINITION, 'assets', 'assets')
+
+    # Create a pack called 'pack_with_module' with 1 generic module.
+    pack_with_module = repo.create_pack('pack_with_module')
+    create_a_pack_entity(pack_with_module, FileType.GENERIC_MODULE, 'module_id', 'module_id')
+
+    # Create a pack called 'pack_with_generic_field' with 1 generic field.
+    pack_with_generic_field = repo.create_pack('pack_with_generic_field')
+    create_a_pack_entity(pack_with_generic_field, FileType.GENERIC_FIELD, 'generic_field_id', 'generic_field_id')
+
+    # Create a pack called 'pack_with_generic_type' with 1 generic type.
+    pack_with_generic_type = repo.create_pack('pack_with_generic_type')
+    create_a_pack_entity(pack_with_generic_type, FileType.GENERIC_TYPE, 'generic_type_id', 'generic_type_id')
+
+    incident_layout = {
+        "detailsV2": {
+            "tabs": [
+                {
+                    "id": "caseinfoid",
+                    "name": "Incident Info",
+                    "sections": [
+                        {
+                            "items": [
+                                {
+                                    "endCol": 2,
+                                    "fieldId": "incident_example",
+                                    "height": 22,
+                                    "id": "example",
+                                    "index": 0,
+                                    "sectionItemType": "field",
+                                    "startCol": 0
+                                }
+                            ]
+                        }
+                    ],
+                    "type": "custom"
+                },
+            ]
+        },
+        "group": "incident",
+        "id": "example",
+        "name": "example",
+        "system": "false",
+        "version": -1,
+        "fromVersion": "6.0.0",
+        "description": ""
+    }
+    indicator_layout = {
+        "group": "indicator",
+        "id": "example",
+        "indicatorsDetails": {
+            "tabs": [
+                {
+                    "sections": [
+                        {
+                            "items": [
+                                {
+                                    "endCol": 2,
+                                    "fieldId": "indicator_example",
+                                    "height": 22,
+                                    "id": "example",
+                                    "index": 0,
+                                    "sectionItemType": "field",
+                                    "startCol": 0
+                                }
+                            ]
+                        }
+                    ],
+                    "type": "custom"
+                }
+            ]
+        },
+        "name": "example",
+        "system": "false",
+        "version": -1,
+        "fromVersion": "6.0.0",
+    }
+    generic_layout = {
+        "detailsV2": {
+            "tabs": [
+                {
+                    "id": "caseinfoid",
+                    "name": "Incident Info",
+                    "sections": [
+                        {
+                            "items": [
+                                {
+                                    "endCol": 2,
+                                    "fieldId": "incident_example",
+                                    "height": 22,
+                                    "id": "example",
+                                    "index": 0,
+                                    "sectionItemType": "field",
+                                    "startCol": 0
+                                }
+                            ]
+                        }
+                    ],
+                    "type": "custom"
+                },
+            ]
+        },
+        "group": "generic",
+        "id": "generic_layout_id",
+        "name": "generic_layout_id",
+        "system": "false",
+        "version": -1,
+        "fromVersion": "6.0.0",
+        "description": "",
+        "definitionId": "assets"
+    }
+
+    pack1 = repo.create_pack('pack1')
+    create_a_pack_entity(pack1, FileType.INCIDENT_FIELD, 'example', 'example')
+    pack2 = repo.create_pack('pack2')
+    create_a_pack_entity(pack2, FileType.INDICATOR_FIELD, 'example', 'example')
+    pack3 = repo.create_pack('pack3')
+    pack3.create_layoutcontainer('example', incident_layout)
+    pack4 = repo.create_pack('pack4')
+    pack4.create_layoutcontainer('example', indicator_layout)
+    pack5 = repo.create_pack('pack5')
+    pack5.create_layout(pack5, generic_layout)
+
+    with ChangeCWD(repo.path):
+        ids = cis.IDSetCreator()
+        ids.create_id_set()
+
+
+def setup_module():
+    create_content_repo()
 
 
 class TestIdSetFilters:
@@ -28,7 +439,7 @@ class TestIdSetFilters:
 
         assert len(found_filtered_result) == 0
 
-    @pytest.mark.parametrize("pack_id", ["CalculateTimeDifference", "Expanse", "HelloWorld"])
+    @pytest.mark.parametrize("pack_id", ["pack_0", "pack_1", "pack_2"])
     def test_search_for_pack_script_item(self, pack_id, id_set):
         found_filtered_result = PackDependencies._search_for_pack_items(pack_id, id_set['scripts'])
 
@@ -42,6 +453,8 @@ class TestIdSetFilters:
                 "PrismaCloudComputeParseAuditAlert": {
                     "name": "PrismaCloudComputeParseAuditAlert",
                     "file_path": "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseAuditAlert/PrismaCloudComputeParseAuditAlert.yml",
+                    "fromversion": '5.0.0',
+                    "docker_image": "demisto/python3:3.8.3.8715",
                     "pack": "PrismaCloudCompute"
                 }
             },
@@ -49,6 +462,8 @@ class TestIdSetFilters:
                 "PrismaCloudComputeParseCloudDiscoveryAlert": {
                     "name": "PrismaCloudComputeParseCloudDiscoveryAlert",
                     "file_path": "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseCloudDiscoveryAlert/PrismaCloudComputeParseCloudDiscoveryAlert.yml",
+                    "fromversion": '5.0.0',
+                    "docker_image": "demisto/python3:3.8.3.8715",
                     "pack": "PrismaCloudCompute"
                 }
             },
@@ -56,6 +471,8 @@ class TestIdSetFilters:
                 "PrismaCloudComputeParseComplianceAlert": {
                     "name": "PrismaCloudComputeParseComplianceAlert",
                     "file_path": "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseComplianceAlert/PrismaCloudComputeParseComplianceAlert.yml",
+                    "fromversion": '5.0.0',
+                    "docker_image": "demisto/python3:3.8.3.8715",
                     "pack": "PrismaCloudCompute"
                 }
             },
@@ -63,6 +480,8 @@ class TestIdSetFilters:
                 "PrismaCloudComputeParseVulnerabilityAlert": {
                     "name": "PrismaCloudComputeParseVulnerabilityAlert",
                     "file_path": "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseVulnerabilityAlert/PrismaCloudComputeParseVulnerabilityAlert.yml",
+                    "fromversion": '5.0.0',
+                    "docker_image": "demisto/python3:3.8.3.8715",
                     "pack": "PrismaCloudCompute"
                 }
             }
@@ -72,7 +491,7 @@ class TestIdSetFilters:
 
         assert IsEqualFunctions.is_lists_equal(found_filtered_result, expected_result)
 
-    @pytest.mark.parametrize("pack_id", ["Claroty", "Code42", "Cymulate"])
+    @pytest.mark.parametrize("pack_id", ["pack_0", "pack_1", "pack_2"])
     def test_search_for_pack_playbook_item(self, pack_id, id_set):
         found_filtered_result = PackDependencies._search_for_pack_items(pack_id, id_set['playbooks'])
 
@@ -83,15 +502,15 @@ class TestIdSetFilters:
 
         expected_result = [
             {
-                "ExpanseParseRawIncident": {
-                    "name": "Expanse Incident Playbook",
+                "Expanse_Incident_Playbook": {
+                    "name": "Expanse_Incident_Playbook",
                     "file_path": "Packs/Expanse/Playbooks/Expanse_Incident_Playbook.yml",
                     "fromversion": "5.0.0",
                     "implementing_scripts": [
-                        "ExpanseParseRawIncident"
+                        'DeleteContext'
                     ],
                     "tests": [
-                        "No tests (auto formatted)"
+                        "No tests"
                     ],
                     "pack": "Expanse"
                 }
@@ -126,6 +545,7 @@ class TestDependsOnScriptAndIntegration:
                 "DummyScript": {
                     "name": "DummyScript",
                     "file_path": "dummy_path",
+                    "docker_image": "demisto/python3:3.8.3.8715",
                     "depends_on": [
                         dependency_script
                     ],
@@ -805,7 +1225,6 @@ class TestDependsOnPlaybook:
                     "pack": "SafeBreach",
                     "indicator_fields": [
                         "accounttype",
-                        "safebreachremediationstatus"
                     ]
                 }
             },
@@ -880,128 +1299,53 @@ class TestDependsOnPlaybook:
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
-
-class TestDependsOnLayout:
-
-    @pytest.mark.parametrize('pack, pack_in_repo, expected_dependencies', [
-        ('pack3', 2, 'pack1'),  # pack3 has a layout of type incident that depends in an incident of pack1
-        ('pack4', 3, 'pack2')  # pack4 has a layout of type indicator that depends in an indicator of pack2
-    ])
-    def test_layouts_dependencies(self, mocker, repo, pack, pack_in_repo, expected_dependencies):
+    def test_collect_playbooks_dependencies_on_filter(self, id_set):
         """
         Given
-            - A repo with 4 packs,
-            'pack1' has an incident_field called 'example',
-            'pack2' has an indicator_field also called 'example',
-            'pack3' has a layout of type 'incident' that depends on the 'example' incident,
-            'pack4' has a layout of type 'indicator' that depends on the 'example' indicator,
+            - A playbook entry in the id_set with filter from the CommonScripts pack.
+            -
 
         When
             - Building dependency graph for pack.
 
         Then
-            - Extracting the packs that the layout depends on, by the layouts type (incident/indicator).
+            - Extracting the packs that the playbook depends on.
         """
+        expected_result = {("CommonScripts", True)}
 
-        incident = {
-            "id": "incident_example",
-            "name": "example",
-            "cliName": "example",
-        }
-        indicator = {
-            "id": "indicator_example",
-            "name": "example",
-            "cliName": "example",
-        }
-        incident_layout = {
-            "detailsV2": {
-                "tabs": [
-                    {
-                        "id": "caseinfoid",
-                        "name": "Incident Info",
-                        "sections": [
-                            {
-                                "items": [
-                                    {
-                                        "endCol": 2,
-                                        "fieldId": "incident_example",
-                                        "height": 22,
-                                        "id": "example",
-                                        "index": 0,
-                                        "sectionItemType": "field",
-                                        "startCol": 0
-                                    }
-                                ]
-                            }
-                        ],
-                        "type": "custom"
-                    },
-                ]
+        test_input = [
+            {
+                'Dummy Playbook': {
+                    'name': 'Dummy Playbook',
+                    'file_path': 'dummy_path',
+                    'fromversion': 'dummy_version',
+                    "filters": ["IsInCidrRanges"]
+                }
             },
-            "group": "incident",
-            "id": "example",
-            "name": "example",
-            "system": "false",
-            "version": -1,
-            "fromVersion": "6.0.0",
-            "description": ""
-        }
-        indicator_layout = {
-            "group": "indicator",
-            "id": "example",
-            "indicatorsDetails": {
-                "tabs": [
-                    {
-                        "sections": [
-                            {
-                                "items": [
-                                    {
-                                        "endCol": 2,
-                                        "fieldId": "indicator_example",
-                                        "height": 22,
-                                        "id": "example",
-                                        "index": 0,
-                                        "sectionItemType": "field",
-                                        "startCol": 0
-                                    }
-                                ]
-                            }
-                        ],
-                        "type": "custom"
-                    }
-                ]
-            },
-            "name": "example",
-            "system": "false",
-            "version": -1,
-            "fromVersion": "6.0.0",
-        }
+        ]
 
-        pack1 = repo.create_pack('pack1')
-        pack2 = repo.create_pack('pack2')
-        pack3 = repo.create_pack('pack3')
-        pack4 = repo.create_pack('pack4')
+        found_result = PackDependencies._collect_playbooks_dependencies(pack_playbooks=test_input,
+                                                                        id_set=id_set,
+                                                                        verbose=False,
+                                                                        )
 
-        pack1.create_incident_field('example', incident)
-        pack2.create_indicator_field('example', indicator)
-        pack3.create_layoutcontainer('example', incident_layout)
-        pack4.create_layoutcontainer('example', indicator_layout)
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
-        with ChangeCWD(repo.path):
-            # Circle froze on 3.7 dut to high usage of processing power.
-            # pool = Pool(processes=cpu_count() * 2) is the line that in charge of the multiprocessing initiation,
-            # so changing `cpu_count` return value to 1 still gives you multiprocessing but with only 2 processors,
-            # and not the maximum amount.
-            import demisto_sdk.commands.common.update_id_set as uis
-            mocker.patch.object(uis, 'cpu_count', return_value=1)
-            PackDependencies.find_dependencies(pack, silent_mode=True)
-            dependencies = list(repo.packs[pack_in_repo].pack_metadata.read_json_as_dict().get('dependencies').keys())
-            assert dependencies == [expected_dependencies]
 
-    def test_collect_incident_layout_dependencies(self, id_set):
+class TestDependsOnLayout:
+    @pytest.mark.parametrize('pack, expected_dependencies', [
+        ('pack3', 'pack1'),  # pack3 has a layout of type incident that depends in an incident of pack1
+        ('pack4', 'pack2')  # pack4 has a layout of type indicator that depends in an indicator of pack2
+    ])
+    def test_layouts_dependencies(self, pack, expected_dependencies):
+        dependencies = PackDependencies.find_dependencies(pack, id_set_path="Content/Tests/id_set.json",
+                                                          update_pack_metadata=False)
+        assert list(dependencies.keys())[0] == expected_dependencies
+
+    def test_collect_incident_layouts_dependencies(self, id_set):
         """
         Given
-            - A layout of type incident entry in the id_set.
+            - A layout entry in the id_set.
 
         When
             - Building dependency graph for pack.
@@ -1035,13 +1379,12 @@ class TestDependsOnLayout:
                                                                       id_set=id_set,
                                                                       verbose=False,
                                                                       )
-
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
-    def test_collect_indicator_layout_dependencies(self, id_set):
+    def test_collect_indicator_layouts_dependencies(self, id_set):
         """
         Given
-            - A layout of type indicator entry in the id_set.
+            - A layout entry in the id_set.
 
         When
             - Building dependency graph for pack.
@@ -1116,6 +1459,44 @@ class TestDependsOnLayout:
                                                                       exclude_ignored_dependencies=False,
                                                                       )
 
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
+    def test_collect_generic_layouts_dependencies(self, id_set):
+        """
+        Given
+            - A layout entry in the id_set that is related to generic definition
+
+        When
+            - Building dependency graph for pack.
+
+        Then
+            - Extracting the packs that the layout depends on.
+        """
+        expected_result = {("pack_with_generic_field", True)}
+
+        test_input = [
+            {
+                "Dummy Layout": {
+                    "typeID": "dummy_layout",
+                    "name": "Dummy Layout",
+                    "pack": "dummy_pack",
+                    "kind": "indicatorsDetails",
+                    "path": "dummy_path",
+                    "definitionId": "assets",
+                    "incident_and_indicator_types": [
+                        "generic_type_id"
+                    ],
+                    "incident_and_indicator_fields": [
+                        "generic_field_id"
+                    ]
+                }
+            }
+        ]
+
+        found_result = PackDependencies._collect_layouts_dependencies(pack_layouts=test_input,
+                                                                      id_set=id_set,
+                                                                      verbose=False,
+                                                                      )
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
 
@@ -1350,6 +1731,66 @@ class TestDependsOnClassifiers:
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
+    def test_collect_classifier_dependencies_on_filter(self, id_set):
+        """
+        Given
+            - A classifier entry in the id_set with filter from the CommonScripts pack.
+        When
+            - Building dependency graph for pack.
+        Then
+            - Extracting the packs that the classifier depends on a mandatory dependencies.
+        """
+        expected_result = {("CommonScripts", True)}
+
+        test_input = [
+            {
+                "Dummy Classifier": {
+                    "name": "Dummy Classifier",
+                    "fromversion": "5.0.0",
+                    "pack": "dummy_pack",
+                    "filters": ["IsInCidrRanges"]
+                }
+            }
+        ]
+
+        found_result = PackDependencies._collect_classifiers_dependencies(
+            pack_classifiers=test_input,
+            id_set=id_set,
+            verbose=False,
+        )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
+    def test_collect_generic_classifier_dependencies(self, id_set):
+        """
+        Given
+            - A classifier entry in the id_set that has generic definition
+        When
+            - Building dependency graph for pack.
+        Then
+            - Extracting the packs that the classifier depends on as optional dependencies.
+        """
+        expected_result = {("pack_with_generic_type", True)}
+
+        test_input = [
+            {
+                "Dummy Classifier": {
+                    "name": "Dummy Classifier",
+                    "fromversion": "5.0.0",
+                    "definitionId": "assets",
+                    "pack": "dummy_pack",
+                    "incident_types": ["generic_type_id"],
+                }
+            }
+        ]
+
+        found_result = PackDependencies._collect_classifiers_dependencies(
+            pack_classifiers=test_input,
+            id_set=id_set,
+            verbose=False,
+        )
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
 
 class TestDependsOnMappers:
     def test_collect_mapper_dependencies(self, id_set):
@@ -1387,7 +1828,7 @@ class TestDependsOnMappers:
             id_set=id_set,
             verbose=False,
         )
-
+        print(found_result)
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
     def test_collect_mapper_dependencies__commontypes_pack(self, id_set):
@@ -1410,6 +1851,36 @@ class TestDependsOnMappers:
                     "incident_types": [
                         "Authentication"
                     ]
+                }
+            }
+        ]
+
+        found_result = PackDependencies._collect_mappers_dependencies(
+            pack_mappers=test_input,
+            id_set=id_set,
+            verbose=False,
+        )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
+    def test_collect_mapper_dependencies_on_filter(self, id_set):
+        """
+        Given
+            - A mapper entry in the id_set with filter from the CommonScripts pack.
+        When
+            - Building dependency graph for pack.
+        Then
+            - Extracting the packs that the mapper depends on a mandatory dependencies.
+        """
+        expected_result = {("CommonScripts", True)}
+
+        test_input = [
+            {
+                "Dummy Mapper": {
+                    "name": "Dummy Mapper",
+                    "fromversion": "5.0.0",
+                    "pack": "dummy_pack",
+                    "filters": ["IsInCidrRanges"]
                 }
             }
         ]
@@ -1700,3 +2171,113 @@ class TestDependencyGraph:
         assert root_of_graph == pack_name
         assert len(pack_dependencies) > 0
         assert 'NonSupported' not in pack_dependencies
+
+
+class TestDependsOnGenericField:
+    def test_collect_generic_field_dependencies(self, id_set):
+        """
+        Given
+            - a generic field entry in the id_set.
+
+        When
+            - Building dependency graph for pack.
+
+        Then
+            - Extracting the packs that the generic field depends on.
+        """
+        expected_result = {
+            ("Volatility", True), ("pack_with_definition", True), ("pack_with_generic_type", True)
+        }
+
+        test_input = [
+            {
+                "Dummy Generic Field": {
+                    "name": "Dummy Generic Field",
+                    "fromversion": "5.0.0",
+                    "pack": "dummy_pack",
+                    "definitionId": "assets",
+                    "generic_types": ["generic_type_id"],
+                    "scripts": ["AnalyzeMemImage"],
+                }
+            }
+        ]
+
+        found_result = PackDependencies._collect_generic_fields_dependencies(
+            pack_generic_fields=test_input,
+            id_set=id_set,
+            verbose=False,
+        )
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
+
+class TestDependsOnGenericType:
+    def test_collect_generic_type_dependencies(self, id_set):
+        """
+        Given
+            - A generic type entry in the id_set.
+        When
+            - Building dependency graph for pack.
+        Then
+            - Extracting the packs that the generic type depends on.
+        """
+        expected_result = {("pack_with_definition", True), ("Volatility", True), ("pack5", True)}
+
+        test_input = [
+            {
+                "Dummy Generic Type": {
+                    "name": "Dummy Generic Type",
+                    "fromversion": "5.0.0",
+                    "pack": "dummy_pack",
+                    "scripts": "AnalyzeMemImage",
+                    "definitionId": "assets",
+                    "layout": "generic_layout_id"
+                }
+            }
+        ]
+
+        found_result = PackDependencies._collect_generic_types_dependencies(
+            pack_generic_types=test_input,
+            id_set=id_set,
+            verbose=False,
+
+        )
+
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
+
+class TestDependsOnGenericModules:
+    def test_collect_generic_module_dependencies(self, id_set):
+        """
+        Given
+            - A generic module entry in the id_set.
+        When
+            - Building dependency graph for pack.
+        Then
+            - Extracting the packs that the generic module depends on.
+        """
+        expected_result = {("pack_with_definition", True), ("pack_4", True)}
+
+        test_input = [
+            {
+                "dummy generic module": {
+                    "name": "dummy generic module",
+                    "file_path": "path.json",
+                    "fromversion": "6.5.0",
+                    "pack": "dummy pack",
+                    "definitionIds": ["assets"],
+                    "views": {
+                        "Vulnerability Management": {
+                            "title": "Risk Base Vulnerability Management",
+                            "dashboards": ["pack_4 - dashboard"]
+                        }
+                    }
+                }
+            }
+        ]
+
+        found_result = PackDependencies._collect_generic_modules_dependencies(
+            pack_generic_modules=test_input,
+            id_set=id_set,
+            verbose=False,
+        )
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)

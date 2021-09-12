@@ -23,7 +23,8 @@ class ScriptValidator(ContentEntityValidator):
     def is_valid_version(self) -> bool:
         if self.current_file.get('commonfields', {}).get('version') != self.DEFAULT_VERSION:
             error_message, error_code = Errors.wrong_version()
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
+            if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                 suggested_fix=Errors.suggest_fix(self.file_path)):
                 return False
 
         return True
@@ -114,7 +115,7 @@ class ScriptValidator(ContentEntityValidator):
                 old_subtype = self.old_file.get('subtype', "")
                 if old_subtype and old_subtype != subtype:
                     error_message, error_code = Errors.breaking_backwards_subtype()
-                    if self.handle_error(error_message, error_message, file_path=self.file_path,
+                    if self.handle_error(error_message, error_code, file_path=self.file_path,
                                          warning=self.structure_validator.quite_bc):
                         return True
 

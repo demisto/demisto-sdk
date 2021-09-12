@@ -3,11 +3,12 @@ from tempfile import NamedTemporaryFile
 from typing import Union
 
 import demisto_client
+from wcmatch.pathlib import Path
+
 from demisto_sdk.commands.common.constants import (INCIDENT_FIELD,
                                                    INDICATOR_FIELD, FileType)
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import \
     JSONContentObject
-from wcmatch.pathlib import Path
 
 
 class IndicatorField(JSONContentObject):

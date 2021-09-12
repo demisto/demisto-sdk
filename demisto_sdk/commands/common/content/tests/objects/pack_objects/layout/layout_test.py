@@ -1,4 +1,5 @@
 import pytest
+
 from demisto_sdk.commands.common.content.objects.pack_objects import \
     LayoutsContainer
 from demisto_sdk.commands.common.content.objects_factory import \

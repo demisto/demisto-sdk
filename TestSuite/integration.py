@@ -1,10 +1,11 @@
 import os
 import shutil
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 import yaml
-from demisto_sdk.commands.unify.unifier import Unifier
+
+from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
 from TestSuite.file import File
 from TestSuite.test_tools import suite_join_path
 from TestSuite.yml import YAML
@@ -56,13 +57,24 @@ class Integration:
         if image is not None:
             self.image.write_bytes(image)
 
-    def create_default_integration(self):
+    def create_default_integration(self, name: str = 'Sample', commands: List[str] = None):
+        """Creates a new integration with basic data
+
+        Args:
+            name: The name and ID of the new integration, default is "Sample".
+            commands: List of additional commands to add to the integration.
+
+        """
         default_integration_dir = 'assets/default_integration'
 
         with open(suite_join_path(default_integration_dir, 'sample.py')) as code_file:
             code = str(code_file.read())
         with open(suite_join_path(default_integration_dir, 'sample.yml')) as yml_file:
             yml = yaml.safe_load(yml_file)
+            yml['name'] = yml['commonfields']['id'] = name
+            if commands:
+                for command in commands:
+                    yml['script']['commands'].append({'name': command})
         with open(suite_join_path(default_integration_dir, 'sample_image.png'), 'rb') as image_file:
             image = image_file.read()
         with open(suite_join_path(default_integration_dir, 'CHANGELOG.md')) as changelog_file:
@@ -79,6 +91,6 @@ class Integration:
         )
 
         if self.create_unified:
-            unifier = Unifier(input=self.path, output=os.path.dirname(self._tmpdir_integration_path))
+            unifier = YmlUnifier(input=self.path, output=os.path.dirname(self._tmpdir_integration_path))
             unifier.merge_script_package_to_yml()
             shutil.rmtree(self._tmpdir_integration_path)

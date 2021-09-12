@@ -2,12 +2,13 @@ import os
 import re
 from enum import Enum
 from functools import reduce
-from typing import Iterable, List, Optional
+from typing import Dict, Iterable, List, Optional
 
 import click
-from demisto_sdk.commands.common.git_util import GitUtil
 # dirs
 from git import InvalidGitRepositoryError
+
+from demisto_sdk.commands.common.git_util import GitUtil
 
 CAN_START_WITH_DOT_SLASH = '(?:./)?'
 NOT_TEST = '(?!Test)'
@@ -22,6 +23,10 @@ INCIDENT_FIELDS_DIR = 'IncidentFields'
 INCIDENT_TYPES_DIR = 'IncidentTypes'
 INDICATOR_FIELDS_DIR = 'IndicatorFields'
 INDICATOR_TYPES_DIR = 'IndicatorTypes'
+GENERIC_FIELDS_DIR = 'GenericFields'
+GENERIC_TYPES_DIR = 'GenericTypes'
+GENERIC_MODULES_DIR = 'GenericModules'
+GENERIC_DEFINITIONS_DIR = 'GenericDefinitions'
 LAYOUTS_DIR = 'Layouts'
 CLASSIFIERS_DIR = 'Classifiers'
 MAPPERS_DIR = 'Classifiers'
@@ -32,6 +37,7 @@ RELEASE_NOTES_DIR = 'ReleaseNotes'
 TESTS_DIR = 'Tests'
 DOC_FILES_DIR = 'doc_files'
 DOCUMENTATION_DIR = 'Documentation'
+PRE_PROCESS_RULES_DIR = 'PreProcessRules'
 
 SCRIPT = 'script'
 AUTOMATION = 'automation'
@@ -40,6 +46,7 @@ PLAYBOOK = 'playbook'
 TEST_PLAYBOOK = 'testplaybook'
 LAYOUT = 'layout'
 LAYOUTS_CONTAINER = 'layoutscontainer'
+PRE_PROCESS_RULES = 'pre-process-rules'
 INCIDENT_TYPE = 'incidenttype'
 INCIDENT_FIELD = 'incidentfield'
 INDICATOR_FIELD = 'indicatorfield'
@@ -56,7 +63,12 @@ DOCUMENTATION = 'doc'
 MAPPER = 'classifier-mapper'
 CANVAS = 'canvas'
 OLD_REPUTATION = 'reputations.json'
+PACK_VERIFY_KEY = 'content.pack.verify'
 XSOAR_CONFIG_FILE = 'xsoar_config.json'
+GENERIC_FIELD = 'genericfield'
+GENERIC_TYPE = 'generictype'
+GENERIC_MODULE = 'genericmodule'
+GENERIC_DEFINITION = 'genericdefinition'
 
 
 class FileType(Enum):
@@ -81,9 +93,11 @@ class FileType(Enum):
     CONNECTION = 'canvas-context-connections'
     README = 'readme'
     RELEASE_NOTES = 'releasenotes'
+    RELEASE_NOTES_CONFIG = 'releasenotesconfig'
     DESCRIPTION = 'description'
     CHANGELOG = 'changelog'
     IMAGE = 'image'
+    AUTHOR_IMAGE = 'author_image'
     DOC_IMAGE = 'doc_image'
     PYTHON_FILE = 'pythonfile'
     JAVASCRIPT_FILE = 'javascriptfile'
@@ -93,7 +107,13 @@ class FileType(Enum):
     WHITE_LIST = 'whitelist'
     LANDING_PAGE_SECTIONS_JSON = 'landingPage_sections.json'
     CONTRIBUTORS = 'contributors'
+    PACK = 'pack'
     XSOAR_CONFIG = 'xsoar_config'
+    GENERIC_MODULE = 'genericmodule'
+    GENERIC_FIELD = 'genericfield'
+    GENERIC_TYPE = 'generictype'
+    GENERIC_DEFINITION = 'genericdefinition'
+    PRE_PROCESS_RULES = 'pre-process-rule'
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -114,6 +134,11 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.DASHBOARD: 'Dashboards',
     FileType.CONNECTION: 'Connections',
     FileType.MAPPER: 'Mappers',
+    FileType.PRE_PROCESS_RULES: 'PreProcess Rules',
+    FileType.GENERIC_DEFINITION: 'Objects',
+    FileType.GENERIC_MODULE: 'Modules',
+    FileType.GENERIC_TYPE: 'Object Types',
+    FileType.GENERIC_FIELD: 'Object Fields'
 }
 
 ENTITY_TYPE_TO_DIR = {
@@ -133,7 +158,12 @@ ENTITY_TYPE_TO_DIR = {
     FileType.REPORT.value: REPORTS_DIR,
     FileType.WIDGET.value: WIDGETS_DIR,
     FileType.BETA_INTEGRATION.value: INTEGRATIONS_DIR,
-    FileType.MAPPER.value: CLASSIFIERS_DIR
+    FileType.MAPPER.value: CLASSIFIERS_DIR,
+    FileType.PRE_PROCESS_RULES.value: PRE_PROCESS_RULES_DIR,
+    FileType.GENERIC_DEFINITION.value: GENERIC_DEFINITIONS_DIR,
+    FileType.GENERIC_MODULE.value: GENERIC_MODULES_DIR,
+    FileType.GENERIC_FIELD.value: GENERIC_FIELDS_DIR,
+    FileType.GENERIC_TYPE.value: GENERIC_TYPES_DIR
 }
 
 CONTENT_FILE_ENDINGS = ['py', 'yml', 'png', 'json', 'md']
@@ -154,7 +184,12 @@ CONTENT_ENTITIES_DIRS = [
     INCIDENT_TYPES_DIR,
     LAYOUTS_DIR,
     CLASSIFIERS_DIR,
-    CONNECTIONS_DIR
+    CONNECTIONS_DIR,
+    GENERIC_FIELDS_DIR,
+    GENERIC_TYPES_DIR,
+    GENERIC_MODULES_DIR,
+    GENERIC_DEFINITIONS_DIR,
+    PRE_PROCESS_RULES_DIR,
 ]
 
 CONTENT_ENTITY_UPLOAD_ORDER = [
@@ -169,7 +204,8 @@ CONTENT_ENTITY_UPLOAD_ORDER = [
     CLASSIFIERS_DIR,
     WIDGETS_DIR,
     LAYOUTS_DIR,
-    DASHBOARDS_DIR
+    DASHBOARDS_DIR,
+    PRE_PROCESS_RULES_DIR,
 ]
 
 DEFAULT_IMAGE_PREFIX = 'data:image/png;base64,'
@@ -372,6 +408,9 @@ PACKS_LAYOUT_JSON_REGEX = fr'{PACKS_LAYOUTS_DIR_REGEX}\/(?!layoutscontainer)([^/
 
 PACKS_LAYOUTS_CONTAINER_JSON_REGEX = fr'{PACKS_LAYOUTS_DIR_REGEX}\/layoutscontainer([^/]+)\.json'
 
+PACKS_PRE_PROCESS_RULES_DIR_REGEX = fr'{PACK_DIR_REGEX}/{PRE_PROCESS_RULES_DIR}'
+PACKS_PRE_PROCESS_RULES_JSON_REGEX = fr'{PACKS_PRE_PROCESS_RULES_DIR_REGEX}/(?:preprocessrule-)?([^/]+)\.json'
+
 PACKS_WIDGETS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{WIDGETS_DIR}'
 PACKS_WIDGET_JSON_REGEX = fr'{PACKS_WIDGETS_DIR_REGEX}\/([^/]+)\.json'
 
@@ -392,6 +431,18 @@ PACKS_INDICATOR_TYPE_JSON_REGEX = fr'{PACKS_INDICATOR_TYPES_DIR_REGEX}\/([^/]+)\
 
 PACKS_INDICATOR_FIELDS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{INDICATOR_FIELDS_DIR}'
 PACKS_INDICATOR_FIELD_JSON_REGEX = fr'{PACKS_INDICATOR_FIELDS_DIR_REGEX}\/([^/]+)\.json'
+
+PACKS_GENERIC_TYPES_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{GENERIC_TYPES_DIR}\/([^\\\/]+)'
+PACKS_GENERIC_TYPE_JSON_REGEX = fr'{PACKS_GENERIC_TYPES_DIR_REGEX}\/([^/]+)\.json'
+
+PACKS_GENERIC_FIELDS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{GENERIC_FIELDS_DIR}\/([^\\\/]+)'
+PACKS_GENERIC_FIELD_JSON_REGEX = fr'{PACKS_GENERIC_FIELDS_DIR_REGEX}\/([^/]+)\.json'
+
+PACKS_GENERIC_MODULES_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{GENERIC_MODULES_DIR}'
+PACKS_GENERIC_MODULE_JSON_REGEX = fr'{PACKS_GENERIC_MODULES_DIR_REGEX}\/([^/]+)\.json'
+
+PACKS_GENERIC_DEFINITIONS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{GENERIC_DEFINITIONS_DIR}'
+PACKS_GENERIC_DEFINITION_JSON_REGEX = fr'{PACKS_GENERIC_DEFINITIONS_DIR_REGEX}\/([^/]+)\.json'
 
 PACKS_CLASSIFIERS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{CLASSIFIERS_DIR}'
 
@@ -459,6 +510,7 @@ PACK_METADATA_USE_CASES = 'useCases'
 PACK_METADATA_KEYWORDS = 'keywords'
 PACK_METADATA_PRICE = 'price'
 PACK_METADATA_DEPENDENCIES = 'dependencies'
+PACK_METADATA_IRON_BANK_TAG = 'Iron Bank'
 
 PACK_METADATA_FIELDS = (PACK_METADATA_NAME, PACK_METADATA_DESC, PACK_METADATA_SUPPORT,
                         PACK_METADATA_CURR_VERSION, PACK_METADATA_AUTHOR, PACK_METADATA_URL, PACK_METADATA_CATEGORIES,
@@ -482,6 +534,8 @@ ID_IN_ROOT = [  # entities in which 'id' key is in the root
     'dashboard',
     'incident_type',
     'layoutscontainer',
+    'mapper',
+    'pre_process_rule',
 ]
 
 INTEGRATION_PREFIX = 'integration'
@@ -493,6 +547,7 @@ PACKS_PACK_IGNORE_FILE_NAME = '.pack-ignore'
 PACKS_PACK_META_FILE_NAME = 'pack_metadata.json'
 PACKS_README_FILE_NAME = 'README.md'
 PACKS_CONTRIBUTORS_FILE_NAME = 'CONTRIBUTORS.md'
+AUTHOR_IMAGE_FILE_NAME = 'Author_image.png'
 
 PYTHON_TEST_REGEXES = [
     PACKS_SCRIPT_TEST_PY_REGEX,
@@ -604,6 +659,10 @@ JSON_ALL_LAYOUTS_CONTAINER_REGEXES = [
     PACKS_LAYOUTS_CONTAINER_JSON_REGEX,
 ]
 
+JSON_ALL_PRE_PROCESS_RULES_REGEXES = [
+    PACKS_PRE_PROCESS_RULES_JSON_REGEX,
+]
+
 JSON_ALL_INCIDENT_FIELD_REGEXES = [
     PACKS_INCIDENT_FIELD_JSON_REGEX,
 ]
@@ -618,6 +677,22 @@ JSON_ALL_INDICATOR_FIELDS_REGEXES = [
 
 JSON_ALL_INDICATOR_TYPES_REGEXES = [
     PACKS_INDICATOR_TYPE_JSON_REGEX
+]
+
+JSON_ALL_GENERIC_FIELDS_REGEXES = [
+    PACKS_GENERIC_FIELD_JSON_REGEX,
+]
+
+JSON_ALL_GENERIC_TYPES_REGEXES = [
+    PACKS_GENERIC_TYPE_JSON_REGEX,
+]
+
+JSON_ALL_GENERIC_MODULES_REGEXES = [
+    PACKS_GENERIC_MODULE_JSON_REGEX,
+]
+
+JSON_ALL_GENERIC_DEFINITIONS_REGEXES = [
+    PACKS_GENERIC_DEFINITION_JSON_REGEX,
 ]
 
 JSON_ALL_REPUTATIONS_INDICATOR_TYPES_REGEXES = [
@@ -665,6 +740,7 @@ CHECKED_TYPES_REGEXES = [
     PACKS_INDICATOR_TYPE_JSON_REGEX,
     PACKS_LAYOUT_JSON_REGEX,
     PACKS_LAYOUTS_CONTAINER_JSON_REGEX,
+    PACKS_PRE_PROCESS_RULES_JSON_REGEX,
     PACKS_WIDGET_JSON_REGEX,
     PACKS_REPORT_JSON_REGEX,
     PACKS_RELEASE_NOTES_REGEX,
@@ -709,6 +785,7 @@ DIR_LIST_FOR_REGULAR_ENTETIES = [
     INCIDENT_TYPES_DIR,
     INCIDENT_FIELDS_DIR,
     LAYOUTS_DIR,
+    PRE_PROCESS_RULES_DIR,
     CLASSIFIERS_DIR,
     INDICATOR_TYPES_DIR,
     CONNECTIONS_DIR,
@@ -770,7 +847,8 @@ TESTS_AND_DOC_DIRECTORIES = [
     'test_data',
     'data_test',
     'tests_data',
-    'doc_files'
+    'doc_files',
+    'doc_imgs',
 ]
 
 FILE_TYPES_FOR_TESTING = [
@@ -860,7 +938,6 @@ class GithubContentConfig:
 
 OFFICIAL_CONTENT_ID_SET_PATH = 'https://storage.googleapis.com/marketplace-dist/content/id_set.json'
 
-
 # Run all test signal
 RUN_ALL_TESTS_FORMAT = 'Run all tests'
 FILTER_CONF = './artifacts/filter_file.txt'
@@ -905,6 +982,7 @@ SCHEMA_TO_REGEX = {
     'mapper': JSON_ALL_MAPPER_REGEXES,
     'layoutscontainer': JSON_ALL_LAYOUTS_CONTAINER_REGEXES,
     'layout': JSON_ALL_LAYOUT_REGEXES,
+    'pre-process-rules': JSON_ALL_PRE_PROCESS_RULES_REGEXES,
     'incidentfield': JSON_ALL_INCIDENT_FIELD_REGEXES + JSON_ALL_INDICATOR_FIELDS_REGEXES,
     'incidenttype': JSON_ALL_INCIDENT_TYPES_REGEXES,
     'image': [IMAGE_REGEX],
@@ -918,7 +996,11 @@ SCHEMA_TO_REGEX = {
                ],
 
     'report': [PACKS_REPORT_JSON_REGEX],
-    'release-notes': [PACKS_RELEASE_NOTES_REGEX]
+    'release-notes': [PACKS_RELEASE_NOTES_REGEX],
+    'genericfield': JSON_ALL_GENERIC_FIELDS_REGEXES,
+    'generictype': JSON_ALL_GENERIC_TYPES_REGEXES,
+    'genericmodule': JSON_ALL_GENERIC_MODULES_REGEXES,
+    'genericdefinition': JSON_ALL_GENERIC_DEFINITIONS_REGEXES
 }
 
 EXTERNAL_PR_REGEX = r'^pull/(\d+)$'
@@ -948,8 +1030,23 @@ FILE_NOT_IN_CC_REASON = 'File does not exist in Demisto instance'
 ACCEPTED_FILE_EXTENSIONS = [
     '.yml', '.json', '.md', '.py', '.js', '.ps1', '.png', '', '.lock'
 ]
+ENDPOINT_COMMAND_NAME = 'endpoint'
 
-BANG_COMMAND_NAMES = {'file', 'email', 'domain', 'url', 'ip', 'cve'}
+REPUTATION_COMMAND_NAMES = {'file', 'email', 'domain', 'url', 'ip', 'cve'}
+
+BANG_COMMAND_NAMES = {'file', 'email', 'domain', 'url', 'ip', 'cve', 'endpoint'}
+
+BANG_COMMAND_ARGS_MAPPING_DICT: Dict[str, dict] = {
+    'file': {'default': ['file'], },
+    'email': {'default': ['email']},
+    'domain': {'default': ['domain']},
+    'url': {'default': ['url']},
+    'ip': {'default': ['ip']},
+    'cve': {'default': ['cve', 'cve_id']},
+    'endpoint': {'default': ['ip'], 'required': False}
+}
+
+ENDPOINT_FLEXIBLE_REQUIRED_ARGS = ["ip", "id", "hostname"]
 
 GENERIC_COMMANDS_NAMES = BANG_COMMAND_NAMES.union({'send-mail', 'send-notification', 'cve-latest', 'cve-search'})
 
@@ -964,17 +1061,19 @@ IOC_OUTPUTS_DICT = {
     'domain': {'Domain.Name'},
     'file': {'File.MD5', 'File.SHA1', 'File.SHA256'},
     'ip': {'IP.Address'},
-    'url': {'URL.Data'}
+    'url': {'URL.Data'},
+    'endpoint': {'Endpoint.Hostname', 'Endpoint.IPAddress', 'Endpoint.ID'}
 }
 XSOAR_SUPPORT = "xsoar"
 XSOAR_AUTHOR = "Cortex XSOAR"
 PACK_INITIAL_VERSION = '1.0.0'
 PACK_SUPPORT_OPTIONS = ['xsoar', 'partner', 'developer', 'community']
-
+XSOAR_CONTEXT_STANDARD_URL = "https://xsoar.pan.dev/docs/integrations/context-standards"
 XSOAR_SUPPORT_URL = "https://www.paloaltonetworks.com/cortex"
 MARKETPLACE_LIVE_DISCUSSIONS = \
     'https://live.paloaltonetworks.com/t5/cortex-xsoar-discussions/bd-p/Cortex_XSOAR_Discussions'
 MARKETPLACE_MIN_VERSION = '6.0.0'
+EXCLUDED_DISPLAY_NAME_WORDS = ['partner', 'community']
 
 BASE_PACK = "Base"
 NON_SUPPORTED_PACK = "NonSupported"
@@ -1140,7 +1239,8 @@ VALIDATED_PACK_ITEM_TYPES = [
     'IncidentFields',
     'IncidentTypes',
     'Classifiers',
-    'Layouts'
+    'Layouts',
+    'PreProcessRules',
 ]
 
 FIRST_FETCH = 'first_fetch'
@@ -1149,10 +1249,13 @@ MAX_FETCH = 'max_fetch'
 
 OLDEST_SUPPORTED_VERSION = '5.0.0'
 
+GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION = '6.5.0'
+
 FEATURE_BRANCHES = ['v4.5.0']
 
+
 SKIP_RELEASE_NOTES_FOR_TYPES = (FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK,
-                                FileType.TEST_SCRIPT, FileType.DOC_IMAGE)
+                                FileType.TEST_SCRIPT, FileType.DOC_IMAGE, FileType.AUTHOR_IMAGE)
 
 LAYOUT_AND_MAPPER_BUILT_IN_FIELDS = ['indicatortype', 'source', 'comment', 'aggregatedreliability', 'detectedips',
                                      'detectedhosts', 'modified', 'expiration', 'timestamp', 'shortdesc',
@@ -1178,6 +1281,9 @@ INTEGRATION_ARGUMENT_TYPES = {
     '16': 'MultiSelect'
 }
 
+BUILD_IN_COMMANDS = ['getIncidents', 'DeleteContext', 'isWhitelisted', 'excludeIndicators',
+                     'deleteIndicators', 'extractIndicators']
+
 
 class ContentItems(Enum):
     # the format is defined in issue #19786, may change in the future
@@ -1193,6 +1299,11 @@ class ContentItems(Enum):
     LAYOUTS = 'layoutscontainer'
     CLASSIFIERS = 'classifier'
     WIDGETS = 'widget'
+    GENERIC_MODULES = 'genericmodule'
+    GENERIC_DEFINITIONS = 'genericdefinition'
+    GENERIC_FIELDS = 'genericfield'
+    GENERIC_TYPES = 'generictype'
+    PRE_PROCESS_RULES = 'pre-process-rule'
 
 
 YML_SUPPORTED_FOLDERS = {
@@ -1210,6 +1321,7 @@ JSON_SUPPORTED_FOLDERS = {
     INCIDENT_TYPES_DIR,
     INDICATOR_FIELDS_DIR,
     LAYOUTS_DIR,
+    PRE_PROCESS_RULES_DIR,
     INDICATOR_TYPES_DIR,
     REPORTS_DIR,
     WIDGETS_DIR
@@ -1226,10 +1338,26 @@ CONTENT_ITEMS_DISPLAY_FOLDERS = {
     REPORTS_DIR,
     INDICATOR_TYPES_DIR,
     LAYOUTS_DIR,
+    PRE_PROCESS_RULES_DIR,
     CLASSIFIERS_DIR,
     WIDGETS_DIR
 }
 
 
+class PathLevel(Enum):
+    PACK = 'Pack',
+    CONTENT_ENTITY_DIR = 'ContentDir',
+    PACKAGE = 'Package',
+    FILE = 'File'
+    CONTENT_GENERIC_ENTITY_DIR = 'ContentGenericDir'
+
+
 class DemistoException(Exception):
     pass
+
+
+UUID_REGEX = r'([\w]{8}-[\w]{4}-[\w]{4}-[\w]{4}-[\w]{8,12})'
+
+
+class IronBankDockers:
+    API_LINK = 'https://repo1.dso.mil/api/v4/projects/dsop%2Fopensource%2Fpalo-alto-networks%2Fdemisto%2F'

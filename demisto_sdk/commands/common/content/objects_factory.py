@@ -1,16 +1,19 @@
 from typing import Union
 
+from wcmatch.pathlib import Path
+
 from demisto_sdk.commands.common.constants import OLD_INDICATOR_TYPE, FileType
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     AgentTool, AuthorImage, ChangeLog, Classifier, ClassifierMapper,
-    Connection, Contributors, Dashboard, DocFile, IncidentField, IncidentType,
+    Connection, Contributors, Dashboard, DocFile, GenericDefinition,
+    GenericField, GenericModule, GenericType, IncidentField, IncidentType,
     IndicatorField, IndicatorType, Integration, Layout, LayoutsContainer,
     OldClassifier, OldIndicatorType, PackIgnore, PackMetaData, Playbook,
-    Readme, ReleaseNote, Report, Script, SecretIgnore, Widget)
+    PreProcessRule, Readme, ReleaseNote, ReleaseNoteConfig, Report, Script,
+    SecretIgnore, Widget)
 from demisto_sdk.commands.common.content.objects.root_objects import \
     Documentation
 from demisto_sdk.commands.common.tools import find_type
-from wcmatch.pathlib import Path
 
 from .errors import ContentFactoryError
 
@@ -29,6 +32,7 @@ TYPE_CONVERSION_BY_FileType = {
     FileType.MAPPER: ClassifierMapper,
     FileType.LAYOUT: Layout,
     FileType.LAYOUTS_CONTAINER: LayoutsContainer,
+    FileType.PRE_PROCESS_RULES: PreProcessRule,
     FileType.REPUTATION: IndicatorType,
     FileType.INDICATOR_FIELD: IndicatorField,
     FileType.INCIDENT_FIELD: IncidentField,
@@ -38,11 +42,16 @@ TYPE_CONVERSION_BY_FileType = {
     FileType.DESCRIPTION: Readme,
     FileType.README: Readme,
     FileType.RELEASE_NOTES: ReleaseNote,
+    FileType.RELEASE_NOTES_CONFIG: ReleaseNoteConfig,
     FileType.DOC_IMAGE: DocFile,
     FileType.JAVASCRIPT_FILE: '',
     FileType.POWERSHELL_FILE: '',
     FileType.PYTHON_FILE: '',
     FileType.CONTRIBUTORS: Contributors,
+    FileType.GENERIC_TYPE: GenericType,
+    FileType.GENERIC_FIELD: GenericField,
+    FileType.GENERIC_MODULE: GenericModule,
+    FileType.GENERIC_DEFINITION: GenericDefinition
 }
 
 TYPE_CONVERSION_BY_FILE_NAME = {

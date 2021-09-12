@@ -346,9 +346,10 @@ class IDSetValidations(BaseValidator):
                 is_version_valid = not entity_version or LooseVersion(entity_version) <= LooseVersion(
                     main_playbook_version)
                 skip_unavailable = all(task_data.get('skipunavailable', False) for task_data in tasks_data) \
-                    if tasks_data and LooseVersion(entity_version) >= LooseVersion('6.0.0') else False
+                    if tasks_data and LooseVersion(main_playbook_version) >= LooseVersion('6.0.0') else False
 
-                # if entities with miss-matched versions were found and skipunavailable is not set, fail the validation
+                # if entities with miss-matched versions were found and skipunavailable is
+                # not set or main playbook fromversion is below 6.0.0, fail the validation
                 if not is_version_valid and not skip_unavailable:
                     invalid_version_entities.append(entity_name)
                 implemented_entities.remove(entity_name)

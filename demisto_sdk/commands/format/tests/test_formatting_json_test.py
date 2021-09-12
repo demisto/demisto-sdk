@@ -614,11 +614,8 @@ class TestFormattingLayout:
         Then
             - Ensure that description field was updated successfully with '' value
         """
-        with open(layouts_formatter.source_file, 'w') as f:
-
+        layouts_formatter.set_description()
         assert 'description' in layouts_formatter.data
-
-    def test_remove_dev_copy_name(self, ):
 
     def test_set_toVersion(self, layouts_formatter):
         """

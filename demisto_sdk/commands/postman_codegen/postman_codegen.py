@@ -1,7 +1,7 @@
 import json
 import logging
 import re
-from typing import Union, Dict, List
+from typing import Dict, List, Union
 
 import demisto_sdk.commands.common.tools as tools
 from demisto_sdk.commands.common.constants import DemistoException

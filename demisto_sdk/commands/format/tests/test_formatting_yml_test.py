@@ -38,14 +38,13 @@ ryaml = YAML()
 ryaml.preserve_quotes = True
 ryaml.allow_duplicate_keys = True
 
-INTEGRATION_TEST_ARGS = (SOURCE_FORMAT_INTEGRATION_COPY, DESTINATION_FORMAT_INTEGRATION_COPY, IntegrationYMLFormat,
-                         'New Integration_copy', 'integration')
-SCRIPT_TEST_ARGS = (SOURCE_FORMAT_SCRIPT_COPY, DESTINATION_FORMAT_SCRIPT_COPY, ScriptYMLFormat,
-                    'New_script_copy', 'script')
-PLAYBOOK_TEST_ARGS = (SOURCE_FORMAT_PLAYBOOK_COPY, DESTINATION_FORMAT_PLAYBOOK_COPY, PlaybookYMLFormat,
-                      'File Enrichment-GenericV2_copy', 'playbook')
-
-BASIC_YML_TEST_PACKS = [INTEGRATION_TEST_ARGS, SCRIPT_TEST_ARGS, PLAYBOOK_TEST_ARGS]
+BASIC_YML_TEST_PACKS = [
+    (SOURCE_FORMAT_INTEGRATION_COPY, DESTINATION_FORMAT_INTEGRATION_COPY, IntegrationYMLFormat, 'New Integration_copy',
+     'integration'),
+    (SOURCE_FORMAT_SCRIPT_COPY, DESTINATION_FORMAT_SCRIPT_COPY, ScriptYMLFormat, 'New_script_copy', 'script'),
+    (SOURCE_FORMAT_PLAYBOOK_COPY, DESTINATION_FORMAT_PLAYBOOK_COPY, PlaybookYMLFormat, 'File Enrichment-GenericV2_copy',
+     'playbook')
+]
 
 
 class TestFormatting:
@@ -76,23 +75,6 @@ class TestFormatting:
         base_yml.update_yml(file_type=file_type)
         assert yml_title not in str(base_yml.data)
         assert -1 == base_yml.id_and_version_location['version']
-
-    @pytest.mark.parametrize('source_path, destination_path, formatter, yml_title, file_type', [INTEGRATION_TEST_ARGS])
-    def test_default_additional_info_filled(self, source_path, destination_path, formatter, yml_title, file_type):
-        schema_path = os.path.normpath(
-            os.path.join(__file__, "..", "..", "..", "common", "schemas", f'{file_type}.yml'))
-        base_yml = IntegrationYMLFormat(source_path, path=schema_path)
-        base_yml.set_params_default_additional_info()
-
-        from demisto_sdk.commands.common.default_additional_info_loader import \
-            load_default_additional_info_dict
-        default_additional_info = load_default_additional_info_dict()
-
-        api_key_param = base_yml.data['configuration'][4]
-
-        tested_api_key_name = 'API key'
-        assert api_key_param['name'] == tested_api_key_name
-        assert api_key_param.get('additionalinfo') == default_additional_info[tested_api_key_name]
 
     @pytest.mark.parametrize('source_path, destination_path, formatter, yml_title, file_type', BASIC_YML_TEST_PACKS)
     def test_save_output_file(self, source_path, destination_path, formatter, yml_title, file_type):
@@ -272,7 +254,11 @@ class TestFormatting:
         assert data['fromversion'] == '5.5.0'
         assert data['commonfields']['version'] == -1
 
-    PLAYBOOK_TEST = [PLAYBOOK_TEST_ARGS]
+    PLAYBOOK_TEST = [
+        (SOURCE_FORMAT_PLAYBOOK_COPY, DESTINATION_FORMAT_PLAYBOOK_COPY, PlaybookYMLFormat,
+         'File Enrichment-GenericV2_copy',
+         'playbook')
+    ]
 
     @pytest.mark.parametrize('source_path, destination_path, formatter, yml_title, file_type', PLAYBOOK_TEST)
     def test_string_condition_in_playbook(self, source_path, destination_path, formatter, yml_title, file_type):

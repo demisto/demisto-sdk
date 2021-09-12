@@ -27,11 +27,6 @@ configuration:
   type: 0
   required: false
 - display: ''
-  name: API key
-  defaultvalue: ''
-  type: 0
-  required: false
-- display: ''
   name: unsecure
   defaultvalue: ''
   type: 0

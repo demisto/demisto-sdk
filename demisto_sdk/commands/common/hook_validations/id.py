@@ -213,6 +213,9 @@ class IDSetValidations(BaseValidator):
         scripts_set = self._remove_builtin_scripts(scripts_set)
 
         # Ignore integration commands scripts because they are not in the id_set.json
+        # Ignoring integration commands is temporary. Validate command should verify that each integration command
+        # called from a layout, a layoutscontainer or an incident field is really exist.
+        # will be fixed in: https://github.com/demisto/etc/issues/41246
         scripts_set = self._remove_integration_commands_scripts(scripts_set)
 
         return scripts_set
@@ -241,8 +244,9 @@ class IDSetValidations(BaseValidator):
         """
         For each script ID in the given scripts set checks if it is an integration command by checking if it contains
         '|||'.  If a script is not an integration command add it to a new scripts set.
-        TODO: need to check - This condition may not be sufficient... for example builtin scripts also contain |||
-            maybe use regex
+        TODO: Ignoring integration commands is temporary. Validate command should verify that each integration command
+         called from a layout, a layoutscontainer or an incident field is really exist.
+         will be fixed in: https://github.com/demisto/etc/issues/41246
 
         Args:
             scripts_set: A set of scripts IDs

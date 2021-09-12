@@ -1,7 +1,7 @@
 import json
 import logging
 import re
-from typing import Union
+from typing import Union, Dict, List
 
 import demisto_sdk.commands.common.tools as tools
 from demisto_sdk.commands.common.constants import DemistoException
@@ -380,14 +380,7 @@ def convert_request_to_command(item: dict):
         try:
             response = item.get('response')[0]  # type: ignore[index]  # It will be catched in the except
             if response.get('_postman_previewlanguage') == 'json':
-                body = json.loads(response.get('body'))
-                for key, value in flatten_json(body).items():
-                    output = IntegrationGeneratorOutput(
-                        name=key,
-                        description='',
-                        type_=determine_type(value)
-                    )
-                    outputs.append(output)
+                outputs = generate_command_outputs(json.loads(response.get('body')))
             elif response.get('_postman_previewlanguage') == 'raw':
                 returns_file = True
 
@@ -410,3 +403,14 @@ def convert_request_to_command(item: dict):
     )
 
     return command
+
+
+def generate_command_outputs(body: Union[Dict, List]) -> List[IntegrationGeneratorOutput]:
+    flattened_body = flatten_json(body)
+    # if isinstance(body, list):
+    #     flattened_body = {k[1:]: v for k, v in flattened_body.items()}
+    return [IntegrationGeneratorOutput(
+        name=key,
+        description='',
+        type_=determine_type(value)
+    ) for key, value in flattened_body.items()]

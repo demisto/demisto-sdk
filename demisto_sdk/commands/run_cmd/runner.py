@@ -131,7 +131,7 @@ class Runner:
             if entry.contents:
                 print_color('## Readable Output', LOG_COLORS.YELLOW)
                 if entry.type == self.ERROR_ENTRY_TYPE:
-                    print_error(entry.contents)
+                    print_error(f'{entry.contents}\n')
                 else:
                     print(entry.contents)
 

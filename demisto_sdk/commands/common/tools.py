@@ -207,46 +207,6 @@ def get_core_pack_list() -> list:
     return core_pack_list
 
 
-def get_remote_file_gitlab(
-        gitlab_config: GitContentConfig,
-        full_file_path: str,
-        tag: str = 'master',
-        return_content: bool = False,
-        suppress_print: bool = False,
-):
-    full_file_path = urllib.parse.quote_plus(full_file_path)
-    gitlab_token = gitlab_config.Credentials.TOKEN
-    gitlab_path = urljoin(gitlab_config.BASE_RAW_GITLAB_LINK, 'files', full_file_path, 'raw')
-    tag = tag.replace('origin/', '')
-    try:
-        res = requests.get(gitlab_path,
-                           params={'ref': tag},
-                           headers={'PRIVATE-TOKEN': gitlab_token},
-                           verify=False)
-        res.raise_for_status()
-    except Exception as exc:
-        # Replace token secret if needed
-        err_msg: str = str(exc).replace(gitlab_token, 'XXX') if gitlab_token else str(exc)
-        if not suppress_print:
-            click.secho(
-                f'Could not find the old entity file under "{gitlab_path}".\n'
-                'please make sure that you did not break backward compatibility.\n'
-                f'Reason: {err_msg}', fg='yellow'
-            )
-        return {}
-    file_content = res.content
-    if return_content:
-        return file_content
-    if full_file_path.endswith('json'):
-        details = res.json()
-    elif full_file_path.endswith('yml'):
-        details = yaml.safe_load(file_content)  # type: ignore[arg-type]
-    # if neither yml nor json then probably a CHANGELOG or README file.
-    else:
-        details = {}
-    return details
-
-
 # @lru_cache(maxsize=64)
 def get_remote_file(
         full_file_path: str,

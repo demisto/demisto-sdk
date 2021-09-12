@@ -406,6 +406,14 @@ def convert_request_to_command(item: dict):
 
 
 def generate_command_outputs(body: Union[Dict, List]) -> List[IntegrationGeneratorOutput]:
+    """
+    Parses postman body to list of command outputs.
+    Args:
+        body (Union[Dict, List]): Body returned from HTTP request.
+
+    Returns:
+        (List[IntegrationGeneratorOutput]): List of outputs returned from the HTTP request.
+    """
     flattened_body = flatten_json(body)
     # If body is list, remove first item of every key as it generates additional not needed dot.
     if isinstance(body, list):

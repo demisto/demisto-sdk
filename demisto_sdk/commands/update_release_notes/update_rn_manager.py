@@ -77,7 +77,7 @@ class UpdateReleaseNotesManager:
                     file_path = str(file)
 
                 file_pack_name = get_pack_name(file_path)
-                if file_pack_name not in self.given_pack:
+                if not file_pack_name or file_pack_name not in self.given_pack:
                     continue
 
                 filtered_set.add(file)

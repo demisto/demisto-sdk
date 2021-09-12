@@ -314,8 +314,9 @@ def get_remote_file(
                             f'The github token in your environment is undefined.\n'
                             f'Getting file from local repository instead. \n'
                             f'If you wish to get the file from the remote repository, \n'
-                            f'Please define your github token in your environment.\n'
-                            f'`export {git_config.Credentials.ENV_GITHUB_TOKEN_NAME}=<TOKEN>`\n', fg='yellow'
+                            f'Please define your github or github token in your environment.\n'
+                            f'`export {git_config.Credentials.ENV_GITHUB_TOKEN_NAME}=<TOKEN> or`\n'
+                            f'export {git_config.Credentials.ENV_GITLAB_TOKEN_NAME}=<TOKEN>', fg='yellow'
                         )
                         click.echo("Getting file from local environment")
                     # Get from local git origin/master instead

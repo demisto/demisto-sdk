@@ -908,7 +908,7 @@ class GitContentConfig:
     CONTENT_GITHUB_MASTER_LINK: str
 
     IS_GITLAB = False
-    GITLAB_ID = None
+    GITLAB_ID: Optional[int] = None
     BASE_RAW_GITLAB_LINK = "https://code.pan.run/api/v4/projects/{GITLAB_ID}/repository"
 
     def __init__(self, repo_name: Optional[str] = None):
@@ -935,11 +935,13 @@ class GitContentConfig:
         """
         try:
             for url in urls:
-                if 'github.com' in url:
+                if 'github' in url:
                     return re.findall(r'.com[/:](.*)', url)[0].replace('.git', '')
                 else:  # gitlab
                     repo = re.findall(r'code\.pan\.run/xsoar[/:](.*)', url)[0].replace('.git', '')
                     self.GITLAB_ID = self._search_gitlab_id(repo)
+                    if self.GITLAB_ID is None:
+                        continue
                     self.IS_GITLAB = True
                     return repo
         except (AttributeError, IndexError):
@@ -950,14 +952,15 @@ class GitContentConfig:
         return GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
 
     @lru_cache(maxsize=128)
-    def _search_gitlab_id(self, repo: str):
+    def _search_gitlab_id(self, repo: str) -> Optional[int]:
         res = requests.get("https://code.pan.run/api/v4/projects",
                            params={'search': repo},
                            headers={'PRIVATE-TOKEN': self.Credentials.TOKEN},
                            timeout=10,
                            verify=False)
         res.raise_for_status()
-        return res.json()[0].get('id')
+        res = res.json()
+        return res[0].get('id', None) if res else None
 
 
 OFFICIAL_CONTENT_ID_SET_PATH = 'https://storage.googleapis.com/marketplace-dist/content/id_set.json'

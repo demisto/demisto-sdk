@@ -1,7 +1,7 @@
 import os
 import re
 from enum import Enum
-from functools import reduce, lru_cache
+from functools import lru_cache, reduce
 from typing import Dict, Iterable, List, Optional
 
 import click

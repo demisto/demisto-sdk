@@ -864,7 +864,7 @@ def get_test_playbook_id(test_playbooks_list: list, tpb_path: str) -> Tuple:  # 
     return None, None
 
 
-def get_ignore_pack_skipped_tests(pack_name: str, id_set: dict) -> set:
+def get_ignore_pack_skipped_tests(pack_name: str, modified_packs: set, id_set: dict) -> set:
     """
     Retrieve the skipped tests of a given pack, as detailed in the .pack-ignore file
 
@@ -874,34 +874,38 @@ def get_ignore_pack_skipped_tests(pack_name: str, id_set: dict) -> set:
 
     Arguments:
         pack_name (str): name of the pack
+        modified_packs (set): Set of modified packs
         id_set (dict): ID set
 
     Returns:
         ignored_tests_set (set[str]): set of ignored test ids
 
     """
+    if not modified_packs:
+        modified_packs = {pack_name}
     ignored_tests_set = set()
     file_name_to_ignore_dict: Dict[str, List[str]] = {}
     test_playbooks = id_set.get('TestPlaybooks', {})
 
     pack_ignore_path = get_pack_ignore_file_path(pack_name)
-    if os.path.isfile(pack_ignore_path):
-        try:
-            # read pack_ignore using ConfigParser
-            config = ConfigParser(allow_no_value=True)
-            config.read(pack_ignore_path)
+    if pack_name in modified_packs:
+        if os.path.isfile(pack_ignore_path):
+            try:
+                # read pack_ignore using ConfigParser
+                config = ConfigParser(allow_no_value=True)
+                config.read(pack_ignore_path)
 
-            # go over every file in the config
-            for section in config.sections():
-                if section.startswith("file:"):
-                    # given section is of type file
-                    file_name: str = section[5:]
-                    for key in config[section]:
-                        if key == 'ignore':
-                            # group ignore codes to a list
-                            file_name_to_ignore_dict[file_name] = str(config[section][key]).split(',')
-        except MissingSectionHeaderError:
-            pass
+                # go over every file in the config
+                for section in config.sections():
+                    if section.startswith("file:"):
+                        # given section is of type file
+                        file_name: str = section[5:]
+                        for key in config[section]:
+                            if key == 'ignore':
+                                # group ignore codes to a list
+                                file_name_to_ignore_dict[file_name] = str(config[section][key]).split(',')
+            except MissingSectionHeaderError:
+                pass
 
     for file_name, ignore_list in file_name_to_ignore_dict.items():
         if any(ignore_code == 'auto-test' for ignore_code in ignore_list):

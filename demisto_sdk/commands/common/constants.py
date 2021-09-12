@@ -906,12 +906,13 @@ def urljoin(*args: str):
 #         return GithubContentConfig.OFFICIAL_CONTENT_REPO_NAME
 
 
-class GithubCredentials:
-    ENV_TOKEN_NAME = 'DEMISTO_SDK_GITHUB_TOKEN'
+class GitCredentials:
+    ENV_GITHUB_TOKEN_NAME = 'DEMISTO_SDK_GITHUB_TOKEN'
+    ENV_GITLAB_TOKEN_NAME = 'DEMISTO_SDK_GITLAB_TOKEN'
     TOKEN: Optional[str]
 
     def __init__(self):
-        self.TOKEN = os.getenv(self.ENV_TOKEN_NAME)
+        self.TOKEN = os.getenv(self.ENV_GITHUB_TOKEN_NAME) or os.getenv(self.ENV_GITLAB_TOKEN_NAME)
 
 
 class GitContentConfig:
@@ -938,7 +939,7 @@ class GitContentConfig:
     BASE_RAW_GITLAB_LINK = "https://code.pan.run/api/v4/projects/{GITLAB_ID}/repository"
 
     def __init__(self, repo_name: Optional[str] = None):
-        self.Credentials = GithubCredentials()
+        self.Credentials = GitCredentials()
         if not repo_name:
             try:
                 urls = list(GitUtil().repo.remote().urls)

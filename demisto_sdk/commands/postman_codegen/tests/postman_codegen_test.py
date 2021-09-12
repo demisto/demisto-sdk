@@ -552,11 +552,22 @@ class TestPostmanCodeGen:
 
     @pytest.mark.parametrize('body, expected', GENERATE_COMMAND_OUTPUTS_INPUTS)
     def test_generate_command_outputs(self, body: Union[List, Dict], expected: List[IntegrationGeneratorOutput]):
+        """
+        Given:
+        - Body of postman generator command.
+
+        When:
+        - Building corresponding command for Cortex XSOAR.
+
+        Then:
+        - Ensure outputs are flattened correctly.
+        """
         outputs: List[IntegrationGeneratorOutput] = generate_command_outputs(body)
         for i in range(len(outputs)):
             assert outputs[i].name == expected[i].name
             assert outputs[i].description == expected[i].description
             assert outputs[i].type_ == expected[i].type_
+        assert len(outputs) == len(expected)
 
 
 def _testutil_create_postman_collection(dest_path, with_request: Optional[dict] = None, no_auth: bool = False):

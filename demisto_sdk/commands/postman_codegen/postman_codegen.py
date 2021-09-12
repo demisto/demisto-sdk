@@ -407,8 +407,9 @@ def convert_request_to_command(item: dict):
 
 def generate_command_outputs(body: Union[Dict, List]) -> List[IntegrationGeneratorOutput]:
     flattened_body = flatten_json(body)
-    # if isinstance(body, list):
-    #     flattened_body = {k[1:]: v for k, v in flattened_body.items()}
+    # If body is list, remove first item of every key as it generates additional not needed dot.
+    if isinstance(body, list):
+        flattened_body = {k[1:]: v for k, v in flattened_body.items()}
     return [IntegrationGeneratorOutput(
         name=key,
         description='',

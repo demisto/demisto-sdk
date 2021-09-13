@@ -335,7 +335,6 @@ my_email = "fooo@someorg.com"
         Then
             Ensure we are looking for secrets in this branch
         """
-        mocker.patch("demisto_sdk.commands.secrets.secrets.SecretsValidator.get_branch_name", return_value='pull/123')
         mocker.patch("demisto_sdk.commands.secrets.secrets.SecretsValidator.get_secrets", return_value=True)
         result = self.validator.find_secrets()
         assert result

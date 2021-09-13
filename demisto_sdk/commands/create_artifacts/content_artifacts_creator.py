@@ -20,7 +20,7 @@ from demisto_sdk.commands.common.constants import (
     INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR,
     INTEGRATIONS_DIR, LAYOUTS_DIR, PACKS_DIR, PLAYBOOKS_DIR,
     PRE_PROCESS_RULES_DIR, RELEASE_NOTES_DIR, REPORTS_DIR, SCRIPTS_DIR,
-    TEST_PLAYBOOKS_DIR, TOOLS_DIR, WIDGETS_DIR, ContentItems)
+    TEST_PLAYBOOKS_DIR, TOOLS_DIR, WIDGETS_DIR, ContentItems, JOBS_DIR)
 from demisto_sdk.commands.common.content import (Content, ContentError,
                                                  ContentFactoryError, Pack)
 from demisto_sdk.commands.common.content.objects.pack_objects import (
@@ -162,6 +162,7 @@ class ContentItemsHandler:
             ContentItems.INDICATOR_TYPES: [],
             ContentItems.LAYOUTS: [],
             ContentItems.PRE_PROCESS_RULES: [],
+            ContentItems.JOB: [],
             ContentItems.CLASSIFIERS: [],
             ContentItems.WIDGETS: [],
             ContentItems.GENERIC_FIELDS: [],
@@ -181,6 +182,7 @@ class ContentItemsHandler:
             REPORTS_DIR: self.add_report_as_content_item,
             LAYOUTS_DIR: self.add_layout_as_content_item,
             PRE_PROCESS_RULES_DIR: self.add_pre_process_rules_as_content_item,
+            JOBS_DIR: self.add_jobs_as_content_item,
             CLASSIFIERS_DIR: self.add_classifier_as_content_item,
             WIDGETS_DIR: self.add_widget_as_content_item,
             GENERIC_TYPES_DIR: self.add_generic_type_as_content_item,
@@ -298,6 +300,12 @@ class ContentItemsHandler:
 
     def add_pre_process_rules_as_content_item(self, content_object: ContentObject):
         self.content_items[ContentItems.PRE_PROCESS_RULES].append({
+            'name': content_object.get('name') or content_object.get('id', ''),
+            'description': content_object.get('description', ''),
+        })
+
+    def add_jobs_as_content_item(self, content_object: ContentObject):
+        self.content_items[ContentItems.JOB].append({
             'name': content_object.get('name') or content_object.get('id', ''),
             'description': content_object.get('description', ''),
         })
@@ -641,6 +649,9 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
     for pre_process_rule in pack.pre_process_rules:
         content_items_handler.handle_content_item(pre_process_rule)
         pack_report += dump_pack_conditionally(artifact_manager, pre_process_rule)
+    for job in pack.jobs:
+        content_items_handler.handle_content_item(job)
+        pack_report += dump_pack_conditionally(artifact_manager, job)
     for dashboard in pack.dashboards:
         content_items_handler.handle_content_item(dashboard)
         pack_report += dump_pack_conditionally(artifact_manager, dashboard)

@@ -93,10 +93,10 @@ def test_integration_format_yml_with_no_test_positive(tmp_path: PosixPath,
     runner = CliRunner()
     # Running format in the first time
     result = runner.invoke(main, [FORMAT_CMD, '-i', source_path, '-o', saved_file_path, '-at'], input='Y')
-    prompt = f'The file {source_path} has no test playbooks configured. Do you want to configure it with "No tests"'
+    prompt = f'has no test playbooks configured. Do you want to configure it with "No tests"'
     assert not result.exception
-    output = result.output
 
+    output = result.output
     with open('/tmp/test_integration_format_yml_with_no_test_positive.log', 'wt') as of:
         of.write(f"expecting to find '{prompt}' in '{output}")
 

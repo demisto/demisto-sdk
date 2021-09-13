@@ -39,13 +39,11 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type, get_json,
                                                print_warning)
 from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
 
-# todo necessary?
 CONTENT_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
                     'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
                     'Layouts', 'Reports', 'Widgets', 'Mappers', 'Packs', 'GenericTypes',
                     'GenericFields', 'GenericModules', 'GenericDefinitions', 'Jobs']
 
-# todo necessary?
 ID_SET_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Classifiers',
                    'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
                    'Layouts', 'Reports', 'Widgets', 'Mappers', 'GenericTypes', 'GenericFields', 'GenericModules',

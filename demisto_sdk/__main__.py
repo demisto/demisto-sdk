@@ -565,10 +565,6 @@ def create_content_artifacts(**kwargs) -> int:
     show_default=True,
     help='Full path to whitelist file, file name should be "secrets_white_list.json"'
 )
-@click.option(
-    '--prev-ver',
-    help='The branch against which to run secrets validation.'
-)
 @pass_config
 def secrets(config, **kwargs):
     """Run Secrets validator to catch sensitive data before exposing your code to public repository.

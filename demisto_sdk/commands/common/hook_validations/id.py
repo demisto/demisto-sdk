@@ -120,7 +120,8 @@ class IDSetValidations(BaseValidator):
             scripts_not_in_id_set_str = ', '.join(scripts_not_in_id_set)
             error_message, error_code = Errors.incident_field_non_existent_script_id(incident_field_name,
                                                                                      scripts_not_in_id_set_str)
-            if not self.handle_error(error_message, error_code, file_path=incident_field_file_path):
+            if not self.handle_error(error_message, error_code, file_path=incident_field_file_path,
+                                     suggested_fix=Errors.suggest_fix_non_existent_script_id()):
                 is_valid = True
 
         return is_valid
@@ -154,7 +155,8 @@ class IDSetValidations(BaseValidator):
             scripts_not_in_id_set_str = ', '.join(scripts_not_in_id_set)
             error_message, error_code = Errors.layouts_container_non_existent_script_id(layouts_container_name,
                                                                                         scripts_not_in_id_set_str)
-            if not self.handle_error(error_message, error_code, file_path=layouts_container_file_path):
+            if not self.handle_error(error_message, error_code, file_path=layouts_container_file_path,
+                                     suggested_fix=Errors.suggest_fix_non_existent_script_id()):
                 is_valid = True
 
         return is_valid
@@ -188,12 +190,13 @@ class IDSetValidations(BaseValidator):
             scripts_not_in_id_set_str = ', '.join(scripts_not_in_id_set)
             error_message, error_code = Errors.layout_non_existent_script_id(layout_name,
                                                                              scripts_not_in_id_set_str)
-            if not self.handle_error(error_message, error_code, file_path=layout_file_path):
+            if not self.handle_error(error_message, error_code, file_path=layout_file_path,
+                                     suggested_fix=Errors.suggest_fix_non_existent_script_id()):
                 is_valid = True
 
         return is_valid
 
-    def _get_scripts_that_are_not_in_id_set(self, scripts_set):
+    def _get_scripts_that_are_not_in_id_set(self, scripts_in_entity):
         """
         For each script ID in the given scripts set checks if it is exist in the id set.
         If a script is in the id set removes it from the input scripts set.
@@ -206,19 +209,19 @@ class IDSetValidations(BaseValidator):
         """
         for checked_script in self.script_set:
             checked_script_id = list(checked_script.keys())[0]
-            if checked_script_id in scripts_set:
-                scripts_set.remove(checked_script_id)
+            if checked_script_id in scripts_in_entity:
+                scripts_in_entity.remove(checked_script_id)
 
         # Ignore Builtin scripts because they are implemented on the server side and thus not in the id_set.json
-        scripts_set = self._remove_builtin_scripts(scripts_set)
+        scripts_in_entity = self._remove_builtin_scripts(scripts_in_entity)
 
         # Ignore integration commands scripts because they are not in the id_set.json
         # Ignoring integration commands is temporary. Validate command should verify that each integration command
         # called from a layout, a layoutscontainer or an incident field is really exist.
         # will be fixed in: https://github.com/demisto/etc/issues/41246
-        scripts_set = self._remove_integration_commands_scripts(scripts_set)
+        scripts_in_entity = self._remove_integration_commands_scripts(scripts_in_entity)
 
-        return scripts_set
+        return scripts_in_entity
 
     def _remove_builtin_scripts(self, scripts_set):
         """

@@ -1257,26 +1257,23 @@ class Errors:
     def incident_field_non_existent_script_id(incident_field, scripts):
         return f"In incident field {incident_field} the following scripts were not found in the id_set.json file:" \
                f" {scripts} \n " \
-               f"Please make sure:\n" \
-               f"1 - The right script name is set and the spelling is correct.\n" \
-               f"2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
-               f" rerun the command with the --create-id-set option."
+
 
     @staticmethod
     @error_code_decorator
     def layouts_container_non_existent_script_id(layouts_container, scripts):
         return f"In layouts container {layouts_container} the following scripts were not found in the id_set.json " \
                f"file: {scripts} \n " \
-               f"Please make sure:\n" \
-               f"1 - The right script name is set and the spelling is correct.\n" \
-               f"2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
-               f" rerun the command with the --create-id-set option."
+
 
     @staticmethod
     @error_code_decorator
     def layout_non_existent_script_id(layout, scripts):
-        return f"In layout {layout} the following scripts were not found in the id_set.json file: {scripts} \n " \
-               f"Please make sure:\n" \
+        return f"In layout {layout} the following scripts were not found in the id_set.json file: {scripts} \n "
+
+    @staticmethod
+    def suggest_fix_non_existent_script_id() -> str:
+        return f"Please make sure:\n" \
                f"1 - The right script name is set and the spelling is correct.\n" \
                f"2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
                f" rerun the command with the --create-id-set option."

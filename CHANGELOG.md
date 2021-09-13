@@ -38,7 +38,6 @@
     * Added the *--upload* flag to specify whether to upload the test playbook after the generation.
     * Fixed the output condition generation for outputs of type `Boolean`.
 
-
 # 1.4.7
 * Fixed an issue where an empty list for a command context didn't produce an indication other than an empty table.
 * Fixed an issue where the **format** command has incorrectly recognized on which files to run when running using git.

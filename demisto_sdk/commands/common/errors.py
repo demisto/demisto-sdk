@@ -1256,20 +1256,18 @@ class Errors:
     @error_code_decorator
     def incident_field_non_existent_script_id(incident_field, scripts):
         return f"In incident field {incident_field} the following scripts were not found in the id_set.json file:" \
-               f" {scripts} \n " \
-
+               f" {scripts}"
 
     @staticmethod
     @error_code_decorator
     def layouts_container_non_existent_script_id(layouts_container, scripts):
         return f"In layouts container {layouts_container} the following scripts were not found in the id_set.json " \
-               f"file: {scripts} \n " \
-
+               f"file: {scripts}"
 
     @staticmethod
     @error_code_decorator
     def layout_non_existent_script_id(layout, scripts):
-        return f"In layout {layout} the following scripts were not found in the id_set.json file: {scripts} \n "
+        return f"In layout {layout} the following scripts were not found in the id_set.json file: {scripts}"
 
     @staticmethod
     def suggest_fix_non_existent_script_id() -> str:

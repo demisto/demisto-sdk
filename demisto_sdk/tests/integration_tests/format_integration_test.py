@@ -97,7 +97,7 @@ def test_integration_format_yml_with_no_test_positive(tmp_path: PosixPath,
     assert not result.exception
     output = result.output
 
-    with open('/tmp/temp1.log', 'wt') as of:
+    with open('/tmp/test_integration_format_yml_with_no_test_positive.log', 'wt') as of:
         of.write(output)
 
     assert prompt in output
@@ -136,7 +136,11 @@ def test_integration_format_yml_with_no_test_negative(tmp_path: PosixPath,
     result = runner.invoke(main, [FORMAT_CMD, '-i', source_path, '-o', saved_file_path, '-at'], input='N')
     assert not result.exception
     prompt = f'The file {source_path} has no test playbooks configured. Do you want to configure it with "No tests"'
-    assert prompt in result.output
+    output = result.output  # todo remove
+    with open('/tmp/test_integration_format_yml_with_no_test_negative.log', 'wt') as of:
+        of.write(output)
+
+    assert prompt in output
     yml_content = get_dict_from_file(saved_file_path)
     assert not yml_content[0].get('tests')
     os.remove(saved_file_path)

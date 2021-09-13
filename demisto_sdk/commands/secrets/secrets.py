@@ -375,7 +375,7 @@ class SecretsValidator(object):
             file_ext = os.path.splitext(whitelist_path)[1]
 
             with io.open(whitelist_path, mode="r", encoding="utf-8") as secrets_white_list_file:
-                if file_ext.lower() == 'json':
+                if file_ext.lower() == '.json':
                     secrets_white_list_file = json.load(secrets_white_list_file)
                     for name, white_list in secrets_white_list_file.items():  # type: ignore
                         if name == 'iocs':

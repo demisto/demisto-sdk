@@ -1197,8 +1197,9 @@ class ValidateManager:
         if self.git_util and self.git_util.check_if_remote_exists('demisto'):
             return 'demisto/master'
 
-        # default to 'origin/master' if none of the above apply
-        return 'origin/master'
+        # default to 'origin' and main or master if none of the above apply, per the repo
+        _, branch = self.git_util.handle_prev_ver()
+        return 'origin/' + branch
 
     def setup_git_params(self):
         """Setting up the git relevant params"""
@@ -1222,7 +1223,7 @@ class ValidateManager:
             self.always_valid = True
 
         # on master don't check RN
-        elif self.branch_name == 'master':
+        elif self.branch_name in ['master', 'main']:
             self.skip_pack_rn_validation = True
             error_message, error_code = Errors.running_on_master_with_git()
             if self.handle_error(error_message, error_code, file_path='General',

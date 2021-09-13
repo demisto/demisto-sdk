@@ -32,7 +32,7 @@ class GitUtil:
         Returns:
             Set: A set of Paths to the modified files.
         """
-        remote, branch = self._handle_prev_ver(prev_ver)
+        remote, branch = self.handle_prev_ver(prev_ver)
 
         # when checking branch against itself only return the last commit.
         last_commit = self._only_last_commit(prev_ver, requested_status='M')
@@ -126,7 +126,7 @@ class GitUtil:
         Returns:
             Set: A set of Paths to the added files.
         """
-        remote, branch = self._handle_prev_ver(prev_ver)
+        remote, branch = self.handle_prev_ver(prev_ver)
 
         # when checking branch against itself only return the last commit.
         last_commit = self._only_last_commit(prev_ver, requested_status='A')
@@ -213,7 +213,7 @@ class GitUtil:
         Returns:
             Set: A set of Paths to the deleted files.
         """
-        remote, branch = self._handle_prev_ver(prev_ver)
+        remote, branch = self.handle_prev_ver(prev_ver)
 
         # when checking branch against itself only return the last commit.
         last_commit = self._only_last_commit(prev_ver, requested_status='D')
@@ -274,7 +274,7 @@ class GitUtil:
             Set: A set of Tuples of Paths to the renamed files -
             first element being the old file path and the second is the new.
         """
-        remote, branch = self._handle_prev_ver(prev_ver)
+        remote, branch = self.handle_prev_ver(prev_ver)
 
         # when checking branch against itself only return the last commit.
         last_commit = self._only_last_commit(prev_ver, requested_status='R')
@@ -372,7 +372,7 @@ class GitUtil:
         Returns:
             Set: of Paths to files changed in the current branch.
         """
-        remote, branch = self._handle_prev_ver(prev_ver)
+        remote, branch = self.handle_prev_ver(prev_ver)
 
         if remote:
             return {Path(os.path.join(item)) for item
@@ -417,7 +417,7 @@ class GitUtil:
 
         return remote in self.repo.remotes
 
-    def _handle_prev_ver(self, prev_ver: str):
+    def handle_prev_ver(self, prev_ver: str = ''):
         # check for sha1 in regex
         sha1_pattern = re.compile(r'\b[0-9a-f]{40}\b', flags=re.IGNORECASE)
         if prev_ver and sha1_pattern.match(prev_ver):
@@ -437,6 +437,8 @@ class GitUtil:
                     branch = self.repo.heads.main.name
                 except AttributeError:  # if main does not exist, get master
                     branch = self.repo.heads.master.name
+                except AttributeError:
+                    raise Exception("Unable to find main or master branch from current working directory - aborting.")
         return remote, branch
 
     def get_current_working_branch(self) -> str:

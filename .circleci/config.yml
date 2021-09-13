@@ -90,7 +90,7 @@ jobs:
         - store_artifacts:
             path: coverage_html_report
         - store_artifacts:
-            path: /temp1.log
+            path: /tmp/temp1.log
             destination: test-artifacts
         - run:
             name: Coveralls upload

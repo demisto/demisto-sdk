@@ -97,7 +97,7 @@ def test_integration_format_yml_with_no_test_positive(tmp_path: PosixPath,
     assert not result.exception
     output = result.output
 
-    with open('/temp1.log', 'wt') as of:
+    with open('/tmp/temp1.log', 'wt') as of:
         of.write(output)
 
     assert prompt in output

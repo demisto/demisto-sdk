@@ -856,14 +856,15 @@ def get_test_playbook_id(test_playbooks_list: list, tpb_path: str) -> Tuple:  # 
         test_playbook_id = list(test_playbook_dict.keys())[0]
         test_playbook_path = test_playbook_dict[test_playbook_id].get('file_path')
         test_playbook_pack = test_playbook_dict[test_playbook_id].get('pack')
+        if not test_playbook_path or not test_playbook_pack:
+            continue
 
         if tpb_path in test_playbook_path:
             return test_playbook_id, test_playbook_pack
-        else:
-            return None, None
+    return None, None
 
 
-def get_ignore_pack_skipped_tests(pack_name: str, modified_packs: set) -> set:
+def get_ignore_pack_skipped_tests(pack_name: str, modified_packs: set, id_set: dict) -> set:
     """
     Retrieve the skipped tests of a given pack, as detailed in the .pack-ignore file
 
@@ -873,18 +874,21 @@ def get_ignore_pack_skipped_tests(pack_name: str, modified_packs: set) -> set:
 
     Arguments:
         pack_name (str): name of the pack
-        modified_packs (set): Set of the modified packs.
+        modified_packs (set): Set of modified packs
+        id_set (dict): ID set
 
     Returns:
         ignored_tests_set (set[str]): set of ignored test ids
 
     """
+    if not modified_packs:
+        modified_packs = {pack_name}
     ignored_tests_set = set()
-    ignore_list = []
-    id_set = get_content_id_set()
-    test_playbooks = id_set['TestPlaybooks']
+    file_name_to_ignore_dict: Dict[str, List[str]] = {}
+    test_playbooks = id_set.get('TestPlaybooks', {})
+
+    pack_ignore_path = get_pack_ignore_file_path(pack_name)
     if pack_name in modified_packs:
-        pack_ignore_path = get_pack_ignore_file_path(pack_name)
         if os.path.isfile(pack_ignore_path):
             try:
                 # read pack_ignore using ConfigParser
@@ -895,17 +899,16 @@ def get_ignore_pack_skipped_tests(pack_name: str, modified_packs: set) -> set:
                 for section in config.sections():
                     if section.startswith("file:"):
                         # given section is of type file
-                        file_name = section[5:]
+                        file_name: str = section[5:]
                         for key in config[section]:
                             if key == 'ignore':
                                 # group ignore codes to a list
-                                ignore_list.append({'file_name': file_name, 'ignore_code': str(config[section][key])})
+                                file_name_to_ignore_dict[file_name] = str(config[section][key]).split(',')
             except MissingSectionHeaderError:
                 pass
 
-    for item in ignore_list:
-        file_name = item.get('file_name', '')
-        if item.get('ignore_code') == 'auto-test':
+    for file_name, ignore_list in file_name_to_ignore_dict.items():
+        if any(ignore_code == 'auto-test' for ignore_code in ignore_list):
             test_id, test_pack = get_test_playbook_id(test_playbooks, file_name)
             if test_id:
                 ignored_tests_set.add(test_id)

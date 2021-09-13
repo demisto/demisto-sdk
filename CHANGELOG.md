@@ -1,9 +1,16 @@
 # Changelog
+* Fixed an issue where **upload** command failed to upload packs not under content structure.
 * Added support for **init** command to run from non-content repo.
 * The **split-yml** has been renamed to **split** and now supports splitting Dashboards from unified Generic Modules.
 * Fixed an issue where the skipped tests validation ran on the `ApiModules` pack in the **validate** command.
 * The **init** command will now create the `Generic Object` entities directories.
 * Fixed an issue where the **format** command failed to recognize changed files from git.
+* Fixed an issue where the **json-to-outputs** command failed checking whether `0001-01-01T00:00:00` is of type `Date`
+* Added to the **generate context** command to generate context paths for integrations from an example file.
+* Fixed an issue where **validate** failed on release notes configuration files.
+* Fixed an issue where the **validate** command failed on pack input if git detected changed files outside of `Packs` directory.
+* Fixed an issue where **validate** command failed to recognize files inside validated pack when validation release notes, resulting in a false error message for missing entity in release note.
+* Fixed an issue where the **download** command failed when downloading an invalid YML, instead of skipping it.
 
 # 1.4.9
 * Added validation that the support URL in partner contribution pack metadata does not lead to a GitHub repo.
@@ -19,6 +26,7 @@
 * Added validation to **validate** for release notes config file.
 * Added **isoversize** and **isautoswitchedtoquietmode** fields to the playbook schema.
 * Added to the **update-release-notes** command `-bc` flag to generate template for breaking changes version.
+* Fixed an issue where **validate** did not search description files correctly, leading to a wrong warning message.
 
 # 1.4.8
 * Fixed an issue where yml files with `!reference` failed to load properly.

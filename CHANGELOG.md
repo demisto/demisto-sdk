@@ -1,4 +1,6 @@
 # Changelog
+
+# 1.5.0
 * Fixed an issue where **upload** command failed to upload packs not under content structure.
 * Added support for **init** command to run from non-content repo.
 * The **split-yml** has been renamed to **split** and now supports splitting Dashboards from unified Generic Modules.

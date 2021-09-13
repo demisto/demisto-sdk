@@ -81,7 +81,7 @@ class SecretsValidator(object):
         self.white_list_path = white_list_path
         self.ignore_entropy = ignore_entropy
 
-    def get_secrets(self, is_circle):
+    def get_secrets(self):
         secret_to_location_mapping = {}
         if self.input_paths:
             secrets_file_paths = self.input_paths
@@ -100,16 +100,11 @@ class SecretsValidator(object):
                         else:
                             secrets_found_string += f'Secrets found: {secret_to_location_mapping[file_name][line]}\n'
 
-                if not is_circle:
-                    secrets_found_string += '\n\nRemove or whitelist secrets in order to proceed, then re-commit\n'
-
-                else:
-                    secrets_found_string += '\n\nThe secrets were exposed in public repository,' \
-                                            ' remove the files asap and report it.\n'
-
-                secrets_found_string += 'For more information about whitelisting visit: ' \
-                                        'https://pull-request-696--demisto-content-docs.netlify.app/docs/concepts/demisto-sdk' \
-                                        '#secrets'
+                secrets_found_string += '\n\nThe secrets were exposed in public repository,'\
+                                        ' remove the files asap and report it.\n'\
+                                        'For more information about whitelisting visit: ' \
+                                        'https://pull-request-696--demisto-content-docs.netlify.app/docs' \
+                                        '/concepts/demisto-sdk#secrets'
                 print_error(secrets_found_string)
         return secret_to_location_mapping
 
@@ -126,7 +121,6 @@ class SecretsValidator(object):
         Get all new/modified text files that need to be searched for secrets
         :return: list: list of text files
         """
-
         git_util = GitUtil()
         all_changed_files = git_util.get_all_changed_files()
         return list(self.get_diff_text_files(all_changed_files))
@@ -166,7 +160,6 @@ class SecretsValidator(object):
         """Returns potential secrets(sensitive data) found in committed and added files
         :param secrets_file_paths: paths of files that are being commited to git repo
         :param ignore_entropy: If True then will ignore running entropy algorithm for finding potential secrets
-
         :return: dictionary(filename: (list)secrets) of strings sorted by file name for secrets found in files
         """
         secret_to_location_mapping: DefaultDict[str, defaultdict] = defaultdict(lambda: defaultdict(list))
@@ -230,11 +223,9 @@ class SecretsValidator(object):
     @staticmethod
     def remove_whitelisted_items_from_file(file_content: str, secrets_white_list: set) -> str:
         """Removes whitelisted items from file content
-
         Arguments:
             file_content (str): The content of the file to remove the whitelisted item from
             secrets_white_list (set): List of whitelist items to remove from the file content.
-
         Returns:
             str: The file content with the whitelisted items removed.
         """
@@ -360,19 +351,20 @@ class SecretsValidator(object):
         final_white_list = []
         ioc_white_list = []
         files_while_list = []
-        with io.open(whitelist_path, mode="r", encoding="utf-8") as secrets_white_list_file:
-            secrets_white_list_file = json.load(secrets_white_list_file)
-            for name, white_list in secrets_white_list_file.items():  # type: ignore
-                if name == 'iocs':
-                    for sublist in white_list:
-                        ioc_white_list += [white_item for white_item in white_list[sublist] if len(white_item) > 4]
-                    final_white_list += ioc_white_list
-                elif name == 'files':
-                    files_while_list = white_list
-                else:
-                    final_white_list += [white_item for white_item in white_list if len(white_item) > 4]
+        if os.path.isfile(whitelist_path):
+            with io.open(whitelist_path, mode="r", encoding="utf-8") as secrets_white_list_file:
+                secrets_white_list_file = json.load(secrets_white_list_file)
+                for name, white_list in secrets_white_list_file.items():  # type: ignore
+                    if name == 'iocs':
+                        for sublist in white_list:
+                            ioc_white_list += [white_item for white_item in white_list[sublist] if len(white_item) > 4]
+                        final_white_list += ioc_white_list
+                    elif name == 'files':
+                        files_while_list = white_list
+                    else:
+                        final_white_list += [white_item for white_item in white_list if len(white_item) > 4]
 
-            return final_white_list, ioc_white_list, files_while_list
+        return final_white_list, ioc_white_list, files_while_list
 
     @staticmethod
     def get_packs_white_list(whitelist_path, pack_name=None):
@@ -473,8 +465,7 @@ class SecretsValidator(object):
 
     def find_secrets(self):
         print_color('Starting secrets detection', LOG_COLORS.GREEN)
-        is_circle = self.is_circle
-        secrets_found = self.get_secrets(is_circle)
+        secrets_found = self.get_secrets()
         if secrets_found:
             return True
         else:
@@ -483,10 +474,8 @@ class SecretsValidator(object):
 
     def remove_secrets_disabled_line(self, file_content: str) -> str:
         """Removes lines that have "disable-secrets-detection" from file content
-
         Arguments:
             file_content (str): The content of the file to remove the "disable-secrets-detection" lines from
-
         Returns:
             str: The new file content with the "disable-secrets-detection" lines removed.
         """

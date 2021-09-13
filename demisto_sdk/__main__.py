@@ -34,6 +34,8 @@ from demisto_sdk.commands.error_code_info.error_code_info import \
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
 from demisto_sdk.commands.format.format_module import format_manager
+from demisto_sdk.commands.generate_context.generate_integration_context import \
+    generate_integration_context
 from demisto_sdk.commands.generate_docs.generate_integration_doc import \
     generate_integration_doc
 from demisto_sdk.commands.generate_docs.generate_playbook_doc import \
@@ -296,11 +298,9 @@ def extract_code(config, **kwargs):
 def unify(**kwargs):
     """
     This command has two main functions:
-
     1. YML Unifier - Unifies integration/script code, image, description and yml files to a single XSOAR yml file.
      * Note that this should be used on a single integration/script and not a pack, not multiple scripts/integrations.
      * To use this function - set as input a path to the *directory* of the integration/script to unify.
-
     2. GenericModule Unifier - Unifies a GenericModule with its Dashboards to a single JSON object.
      * To use this function - set as input a path to a GenericModule *file*.
     """
@@ -323,7 +323,7 @@ def unify(**kwargs):
 
 
 # ====================== zip-packs ====================== #
-@main.command(hidden=True)
+@main.command()
 @click.help_option(
     '-h', '--help'
 )
@@ -376,7 +376,7 @@ def zip_packs(**kwargs) -> int:
 @click.option(
     '-g', '--use-git', is_flag=True, show_default=True,
     default=False,
-    help='Validate changes using git - this will check current branch\'s changes against origin/master. '
+    help='Validate changes using git - this will check current branch\'s changes against origin/master or origin/main. '
          'If the --post-commit flag is supplied: validation will run only on the current branch\'s changed files '
          'that have been committed. '
          'If the --post-commit flag is not supplied: validation will run on all changed files in the current branch, '
@@ -565,6 +565,10 @@ def create_content_artifacts(**kwargs) -> int:
     show_default=True,
     help='Full path to whitelist file, file name should be "secrets_white_list.json"'
 )
+@click.option(
+    '--prev-ver',
+    help='The branch against which to run secrets validation.'
+)
 @pass_config
 def secrets(config, **kwargs):
     """Run Secrets validator to catch sensitive data before exposing your code to public repository.
@@ -702,6 +706,11 @@ def lint(**kwargs):
     is_flag=True,
     help='Whether to include untracked files in the formatting.'
 )
+@click.option(
+    '-at', '--add-tests',
+    is_flag=True,
+    help='Whether to answer manually to add tests configuration prompt when running interactively.'
+)
 def format(
         input: Path,
         output: Path,
@@ -714,6 +723,7 @@ def format(
         use_git: bool,
         prev_ver: str,
         include_untracked: bool,
+        add_tests: bool
 ):
     """Run formatter on a given script/playbook/integration/incidentfield/indicatorfield/
     incidenttype/indicatortype/layout/dashboard/classifier/mapper/widget/report file/genericfield/generictype/
@@ -731,6 +741,7 @@ def format(
         use_git=use_git,
         prev_ver=prev_ver,
         include_untracked=include_untracked,
+        add_tests=add_tests,
     )
 
 
@@ -945,11 +956,17 @@ def json_to_outputs_command(**kwargs):
 @click.option(
     '-o', '--output',
     required=False,
-    help='Specify output directory')
+    help='Specify output directory or path to an output yml file. '
+         'If a path to a yml file is specified - it will be the output path.\n'
+         'If a folder path is specified - a yml output will be saved in the folder.\n'
+         'If not specified, and the input is located at `.../Packs/<pack_name>/Integrations`, '
+         'the output will be saved under `.../Packs/<pack_name>/TestPlaybooks`.\n'
+         'Otherwise (no folder in the input hierarchy is named `Packs`), '
+         'the output will be saved in the current directory.')
 @click.option(
     '-n', '--name',
     required=True,
-    help='Specify test playbook name')
+    help='Specify test playbook name. The output file name will be `playbook-<name>_Test.yml')
 @click.option(
     '--no-outputs', is_flag=True,
     help='Skip generating verification conditions for each output contextPath. Use when you want to decide which '
@@ -962,6 +979,20 @@ def json_to_outputs_command(**kwargs):
          "When not used, the generated playbook calls commands using instances of the provided integration brand.",
     is_flag=True
 )
+@click.option(
+    "-c", "--commands", help="A comma-separated command names to generate playbook tasks for, "
+                             "will ignore the rest of the commands."
+                             "e.g xdr-get-incidents,xdr-update-incident",
+    required=False
+)
+@click.option(
+    "-e", "--examples", help="For integrations: path for file containing command examples."
+                             " Each command should be in a separate line."
+                             " For scripts: the script example surrounded by quotes."
+                             " For example: -e '!ConvertFile entry_id=<entry_id>'"
+)
+@click.option(
+    "-u", "--upload", help="Whether to upload the test playbook after the generation.", is_flag=True)
 def generate_test_playbook(**kwargs):
     """Generate test playbook from integration or script"""
     check_configuration_file('generate-test-playbook', kwargs)
@@ -969,11 +1000,19 @@ def generate_test_playbook(**kwargs):
     if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
         print_error('Generating test playbook is possible only for an Integration or a Script.')
         return 1
-    generator = PlaybookTestsGenerator(file_type=file_type.value, **kwargs)
-    generator.run()
 
+    try:
+        generator = PlaybookTestsGenerator(file_type=file_type.value, **kwargs)
+        if generator.run():
+            sys.exit(0)
+        sys.exit(1)
+    except PlaybookTestsGenerator.InvalidOutputPathError as e:
+        print_error(str(e))
+        return 1
 
 # ====================== init ====================== #
+
+
 @main.command()
 @click.help_option(
     '-h', '--help'
@@ -1011,6 +1050,52 @@ def init(**kwargs):
     initiator = Initiator(**kwargs)
     initiator.init()
     return 0
+
+
+# ====================== generate-context ====================== #
+@main.command()
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    "-i", "--input", help="Path of the yml file (will change it in-place).",
+    required=True)
+@click.option(
+    "-e", "--examples",
+    help="Integrations: path for file containing command examples."
+         " Each command should be in a separate line.")
+@click.option(
+    "--insecure",
+    help="Skip certificate validation to run the commands in order to generate the docs.",
+    is_flag=True)
+@click.option(
+    "-v", "--verbose", is_flag=True,
+    help="Verbose output - mainly for debugging purposes.")
+def generate_context(**kwargs):
+    input_path: str = kwargs.get('input', '')
+    examples: str = kwargs.get('examples', '')
+    insecure: bool = kwargs.get('insecure', False)
+    verbose: bool = kwargs.get('verbose', False)
+
+    # validate inputs
+    if input_path and not os.path.isfile(input_path):
+        print_error(F'Input file {input_path} was not found.')
+        return 1
+
+    if not input_path.lower().endswith('.yml'):
+        print_error(F'Input {input_path} is not a valid yml file.')
+        return 1
+
+    file_type = find_type(kwargs.get('input', ''), ignore_sub_categories=True)
+
+    if not examples or not os.path.isfile(examples):
+        print_error(f'Command examples file was not found {examples}.')
+
+    if file_type == FileType.INTEGRATION:
+        return generate_integration_context(input_path, examples, insecure, verbose)
+    else:
+        print_error(f'File type {file_type.value} is not supported.')
+        return 1
 
 
 # ====================== generate-docs ====================== #
@@ -1225,6 +1310,9 @@ def merge_id_sets(**kwargs):
 @click.option(
     "-idp", "--id-set-path", help="The path of the id-set.json used for APIModule updates.",
     type=click.Path(resolve_path=True))
+@click.option(
+    '-bc', '--breaking-changes', help='If new version contains breaking changes.',
+    is_flag=True)
 def update_release_notes(**kwargs):
     """Auto-increment pack version and generate release notes template."""
     check_configuration_file('update-release-notes', kwargs)
@@ -1240,7 +1328,8 @@ def update_release_notes(**kwargs):
                                            pre_release=kwargs.get('pre_release', False), is_all=kwargs.get('use_git'),
                                            text=kwargs.get('text'), specific_version=kwargs.get('version'),
                                            id_set_path=kwargs.get('id_set_path'), prev_ver=kwargs.get('prev_ver'),
-                                           is_force=kwargs.get('force', False))
+                                           is_force=kwargs.get('force', False),
+                                           is_bc=kwargs.get('breaking_changes', False))
         rn_mng.manage_rn_update()
         sys.exit(0)
     except Exception as e:

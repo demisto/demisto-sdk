@@ -808,7 +808,7 @@ DIR_LIST_FOR_REGULAR_ENTETIES = [
     INDICATOR_TYPES_DIR,
     CONNECTIONS_DIR,
     INDICATOR_FIELDS_DIR,
-    # todo jobs here?
+    JOBS_DIR
 ]
 PACKS_DIRECTORIES = [
     SCRIPTS_DIR,
@@ -1021,7 +1021,7 @@ SCHEMA_TO_REGEX = {
     'generictype': JSON_ALL_GENERIC_TYPES_REGEXES,
     'genericmodule': JSON_ALL_GENERIC_MODULES_REGEXES,
     'genericdefinition': JSON_ALL_GENERIC_DEFINITIONS_REGEXES,
-    'job': JSON_ALL_JOB_REGEXES  # todo jobs?
+    'job': JSON_ALL_JOB_REGEXES
 }
 
 EXTERNAL_PR_REGEX = r'^pull/(\d+)$'

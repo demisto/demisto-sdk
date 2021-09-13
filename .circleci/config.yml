@@ -105,6 +105,7 @@ jobs:
   prepare-tox3-7:
     docker:
       - image: circleci/python:3.8.3-buster-node
+    parallelism: 4
     steps:
       - checkout
       - *create_requirement_files

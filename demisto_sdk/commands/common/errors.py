@@ -1273,10 +1273,10 @@ class Errors:
 
     @staticmethod
     def suggest_fix_non_existent_script_id() -> str:
-        return f"Please make sure:\n" \
-               f"1 - The right script name is set and the spelling is correct.\n" \
-               f"2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
-               f" rerun the command with the --create-id-set option."
+        return "Please make sure:\n" \
+               "1 - The right script name is set and the spelling is correct.\n" \
+               "2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
+               " rerun the command with the --create-id-set option."
 
     @staticmethod
     @error_code_decorator

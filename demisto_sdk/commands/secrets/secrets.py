@@ -399,8 +399,8 @@ class SecretsValidator(object):
                 file_contents = self.extract_text_from_md_html(file_path)
             else:
                 # Open each file, read its contents in UTF-8 encoding to avoid unicode characters
-                with io.open(file_path, mode="r", encoding="utf-8", errors='ignore') as commited_file:
-                    file_contents = commited_file.read()
+                with io.open(file_path, mode="r", encoding="utf-8", errors='ignore') as committed_file:
+                    file_contents = committed_file.read()
             file_contents = self.ignore_base64(file_contents)
             return file_contents
         except Exception as ex:

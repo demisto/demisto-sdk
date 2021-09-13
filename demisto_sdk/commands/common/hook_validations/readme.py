@@ -250,7 +250,7 @@ class ReadMeValidator(BaseValidator):
         should_print_error = not is_pack_readme
         relative_images = re.findall(r'(\!\[.*?\])\(((?!http).*?)\)$', self.readme_content, re.IGNORECASE | re.MULTILINE)
         relative_images += re.findall(  # HTML image tag
-            r'(<img.*?src\s*=\s*\"((?!http).*?)\")', self.readme_content,
+            r'(<img.*?src\s*=\s*"((?!http).*?)")', self.readme_content,
             re.IGNORECASE | re.MULTILINE)
 
         for img in relative_images:

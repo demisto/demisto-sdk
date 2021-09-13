@@ -158,7 +158,7 @@ def test_create_id_set_flow(repo, mocker):
     assert IsEqualFunctions.is_lists_equal(list(id_set_content.keys()), ID_SET_ENTITIES + ['Packs'])
     for id_set_entity in ID_SET_ENTITIES:
         entity_content_in_id_set = id_set_content.get(id_set_entity)
-        assert entity_content_in_id_set
+        assert entity_content_in_id_set, f'ID set for {id_set_entity} is empty'
 
         # Since Layouts folder contains both layouts and layoutcontainers then this folder has 2 * amount objects
         # And since there is a test playbook for each integration and script.

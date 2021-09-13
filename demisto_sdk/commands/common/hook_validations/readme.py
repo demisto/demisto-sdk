@@ -292,8 +292,8 @@ class ReadMeValidator(BaseValidator):
         # files validation.
         absolute_links = re.findall(
             r'(!\[.*\])\((https://.*)\)$', self.readme_content, re.IGNORECASE | re.MULTILINE)
-        absolute_links += re.findall(  # image tag
-            r'(src\s*=\s*"(https://.*?)")', self.readme_content, re.IGNORECASE | re.MULTILINE)
+        absolute_links += re.findall(
+            r'(<img.*?src\s*=\s*"(https://.*?)")', self.readme_content, re.IGNORECASE | re.MULTILINE)
         for link in absolute_links:
             prefix = '' if 'src' in link[0] else link[0].strip()
             img_url = link[1].strip()  # striping in case there are whitespaces at the beginning/ending of url.

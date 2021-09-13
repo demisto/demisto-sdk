@@ -7,6 +7,7 @@
 * Fixed an issue where the **format** command failed to recognize changed files from git.
 * Fixed an issue where the **json-to-outputs** command failed checking whether `0001-01-01T00:00:00` is of type `Date`
 * Added to the **generate context** command to generate context paths for integrations from an example file.
+* You can now pass a txt file to the *--whitelist* flag in the **secrets** command.
 * Fixed an issue where **validate** failed on release notes configuration files.
 * Fixed an issue where the **validate** command failed on pack input if git detected changed files outside of `Packs` directory.
 * Fixed an issue where **validate** command failed to recognize files inside validated pack when validation release notes, resulting in a false error message for missing entity in release note.

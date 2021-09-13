@@ -566,7 +566,7 @@ def create_content_artifacts(**kwargs) -> int:
     '-wl', '--whitelist',
     default='./Tests/secrets_white_list.json',
     show_default=True,
-    help='Full path to whitelist file, file name should be "secrets_white_list.json"'
+    help='Full path to whitelist file. Can be either json or txt file.'
 )
 @click.option(
     '--prev-ver',

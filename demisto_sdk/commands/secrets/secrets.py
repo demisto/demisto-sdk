@@ -81,6 +81,9 @@ class SecretsValidator(object):
         self.ignore_entropy = ignore_entropy
         self.prev_ver = prev_ver if prev_ver is not None else 'origin/master'
 
+        if white_list_path:
+            SKIPPED_FILES.add(os.path.splitext(white_list_path)[0])
+
     def get_secrets(self, branch_name, is_circle):
         secret_to_location_mapping = {}
         if self.input_paths:
@@ -369,17 +372,24 @@ class SecretsValidator(object):
         ioc_white_list = []
         files_while_list = []
         if os.path.isfile(whitelist_path):
+            file_ext = os.path.splitext(whitelist_path)[1]
+
             with io.open(whitelist_path, mode="r", encoding="utf-8") as secrets_white_list_file:
-                secrets_white_list_file = json.load(secrets_white_list_file)
-                for name, white_list in secrets_white_list_file.items():  # type: ignore
-                    if name == 'iocs':
-                        for sublist in white_list:
-                            ioc_white_list += [white_item for white_item in white_list[sublist] if len(white_item) > 4]
-                        final_white_list += ioc_white_list
-                    elif name == 'files':
-                        files_while_list = white_list
-                    else:
-                        final_white_list += [white_item for white_item in white_list if len(white_item) > 4]
+                if file_ext.lower() == 'json':
+                    secrets_white_list_file = json.load(secrets_white_list_file)
+                    for name, white_list in secrets_white_list_file.items():  # type: ignore
+                        if name == 'iocs':
+                            for sublist in white_list:
+                                ioc_white_list += [white_item for white_item in white_list[sublist] if
+                                                   len(white_item) > 4]
+                            final_white_list += ioc_white_list
+                        elif name == 'files':
+                            files_while_list = white_list
+                        else:
+                            final_white_list += [white_item for white_item in white_list if len(white_item) > 4]
+
+                else:
+                    final_white_list.extend(secrets_white_list_file.read().split('\n'))
 
         return final_white_list, ioc_white_list, files_while_list
 

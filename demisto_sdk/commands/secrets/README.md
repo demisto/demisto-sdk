@@ -13,7 +13,7 @@ validations. (default: False)
 * **-ie, --ignore-entropy**
 Ignore entropy algorithm that finds secret strings (passwords/api keys).
 * **-wl WHITELIST, --whitelist WHITELIST**
-Full path to whitelist file, file name should be "secrets_white_list.json".
+Full path to whitelist file. Can be either json or txt file.
 (default: ./Tests/secrets_white_list.json)
 * **--prev-ver**
 The branch against which to run secrets validation.

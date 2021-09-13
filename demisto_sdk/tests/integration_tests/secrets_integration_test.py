@@ -2,14 +2,12 @@ import pytest
 from click.testing import CliRunner
 
 from demisto_sdk.__main__ import main
-from demisto_sdk.commands.secrets.secrets import SecretsValidator
 from TestSuite.test_tools import ChangeCWD
 
 SECRETS_CMD = "secrets"
 
 
 def mock_git(mocker, is_merge: bool = False):
-    mocker.patch.object(SecretsValidator, 'get_branch_name', return_value='branch name')
     mocker.patch('demisto_sdk.commands.secrets.secrets.run_command', return_value=is_merge)
 
 

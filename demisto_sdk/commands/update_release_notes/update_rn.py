@@ -12,6 +12,8 @@ from typing import Optional, Tuple, Union
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, DEFAULT_ID_SET_PATH,
     IGNORED_PACK_NAMES, RN_HEADER_BY_FILE_TYPE, FileType)
+from demisto_sdk.commands.common.content import Content
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
@@ -49,6 +51,8 @@ class UpdateRN:
         self.should_delete_existing_rn = False
         self.pack_metadata_only = pack_metadata_only
         self.is_force = is_force
+        self.git_util = GitUtil(repo=Content.git())
+        self.main_branch = self.git_util.handle_prev_ver()[1]
         self.metadata_path = os.path.join(self.pack_path, 'pack_metadata.json')
         self.master_version = self.get_master_version()
         self.rn_path = ''
@@ -233,7 +237,7 @@ class UpdateRN:
 
     def get_master_version(self) -> str:
         """
-            Gets the current version from origin/master if available, otherwise return '0.0.0'.
+            Gets the current version from origin/master or origin/main if available, otherwise return '0.0.0'.
 
             :rtype: ``str``
             :return
@@ -243,7 +247,7 @@ class UpdateRN:
         master_current_version = '0.0.0'
         master_metadata = None
         try:
-            master_metadata = get_remote_file(self.metadata_path)
+            master_metadata = get_remote_file(self.metadata_path, tag=self.main_branch)
         except Exception as e:
             print_error(f"master branch is unreachable.\n The reason is:{e} \n "
                         f"The updated version will be taken from local metadata file instead of master")

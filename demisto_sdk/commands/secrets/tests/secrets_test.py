@@ -289,12 +289,12 @@ my_email = "fooo@someorg.com"
         validator = SecretsValidator(is_circle=True, white_list_path=os.path.join(TestSecrets.TEMP_DIR,
                                                                                   TestSecrets.WHITE_LIST_FILE_NAME))
 
-        assert validator.get_all_diff_text_files('master', True) == ['Packs/Integrations/integration/testing.py']
-        assert validator.get_all_diff_text_files('master', False) == ['Packs/Integrations/integration/testing.py']
+        assert validator.get_all_diff_text_files() == ['Packs/Integrations/integration/testing.py']
+        assert validator.get_all_diff_text_files() == ['Packs/Integrations/integration/testing.py']
 
         validator.prev_ver = 'Testing_branch'
-        assert validator.get_all_diff_text_files('master', True) == ['Packs/Integrations/integration/testing.py']
-        assert validator.get_all_diff_text_files('master', False) == ['Packs/Integrations/integration/testing.py']
+        assert validator.get_all_diff_text_files() == ['Packs/Integrations/integration/testing.py']
+        assert validator.get_all_diff_text_files() == ['Packs/Integrations/integration/testing.py']
 
     def test_remove_secrets_disabled_line(self):
         """

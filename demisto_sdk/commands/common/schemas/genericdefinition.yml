@@ -22,3 +22,5 @@ mapping:
   fromVersion:
     type: str
     required: true
+  pluralName:
+    type: str

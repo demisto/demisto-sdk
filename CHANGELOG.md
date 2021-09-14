@@ -1,4 +1,5 @@
 # Changelog
+* Fixed an issue were the **validate** command was falsely recognizing image paths in readme files.
 
 # 1.5.0
 * Fixed an issue where **upload** command failed to upload packs not under content structure.

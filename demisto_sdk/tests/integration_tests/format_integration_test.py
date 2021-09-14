@@ -138,13 +138,8 @@ def test_integration_format_yml_with_no_test_negative(tmp_path: PosixPath, sourc
     assert not yml_content[0].get('tests')
 
 
-@pytest.mark.parametrize('source_path,destination_path,formatter,yml_title,file_type', BASIC_YML_TEST_PACKS)
-def test_integration_format_yml_with_no_test_no_interactive_positive(tmp_path: PosixPath,
-                                                                     source_path: str,
-                                                                     destination_path: str,
-                                                                     formatter: BaseUpdateYML,
-                                                                     yml_title: str,
-                                                                     file_type: str):
+@pytest.mark.parametrize('source_yml', BASIC_YML_CONTENTS)
+def test_integration_format_yml_with_no_test_no_interactive_positive(tmp_path: PosixPath, source_yml: str):
     """
         Given
         - A yml file (integration, playbook or script) with no 'tests' configured
@@ -156,12 +151,15 @@ def test_integration_format_yml_with_no_test_no_interactive_positive(tmp_path: P
         -  Ensure no exception is raised
         -  Ensure 'No tests' is added in the first time
     """
-    saved_file_path = str(tmp_path / os.path.basename(destination_path))
+    source_file, output_file = tmp_path / 'source.yml', tmp_path / 'output.yml'
+    source_path, output_path = str(source_file), str(output_file)
+    source_file.write_text(source_yml)
+
     runner = CliRunner()
     # Running format in the first time
-    result = runner.invoke(main, [FORMAT_CMD, '-i', source_path, '-o', saved_file_path, '-y'])
+    result = runner.invoke(main, [FORMAT_CMD, '-i', source_path, '-o', output_path, '-y'])
     assert not result.exception
-    yml_content = get_dict_from_file(saved_file_path)
+    yml_content = get_dict_from_file(output_path)
     assert yml_content[0].get('tests') == ['No tests (auto formatted)']
 
 

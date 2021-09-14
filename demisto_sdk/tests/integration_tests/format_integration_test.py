@@ -27,6 +27,12 @@ from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     GENERIC_DEFINITION, GENERIC_FIELD, GENERIC_MODULE, GENERIC_TYPE)
 from TestSuite.test_tools import ChangeCWD
 
+with open(SOURCE_FORMAT_INTEGRATION_COPY) as of:
+    SOURCE_FORMAT_INTEGRATION_YML = of.read()  # prevents overriding by other `format` calls.
+with open(SOURCE_FORMAT_PLAYBOOK_COPY) as of:
+    SOURCE_FORMAT_PLAYBOOK_YML = of.read()  # prevents overriding by other `format` calls.
+BASIC_YML_CONTENTS = (SOURCE_FORMAT_INTEGRATION_YML, SOURCE_FORMAT_PLAYBOOK_YML)
+
 BASIC_YML_TEST_PACKS = [
     (SOURCE_FORMAT_INTEGRATION_COPY, DESTINATION_FORMAT_INTEGRATION_COPY, IntegrationYMLFormat, 'New Integration_copy',
      'integration'),
@@ -68,13 +74,8 @@ CONF_JSON_ORIGINAL_CONTENT = {
 }
 
 
-@pytest.mark.parametrize('source_path,destination_path,formatter,yml_title,file_type', BASIC_YML_TEST_PACKS)
-def test_integration_format_yml_with_no_test_positive(tmp_path: PosixPath,
-                                                      source_path: str,
-                                                      destination_path: str,
-                                                      formatter: BaseUpdateYML,
-                                                      yml_title: str,
-                                                      file_type: str):
+@pytest.mark.parametrize('source_yml', BASIC_YML_CONTENTS)
+def test_integration_format_yml_with_no_test_positive(tmp_path: PosixPath, source_yml: str):
     """
         Given
         - A yml file (integration, playbook or script) with no 'tests' configured
@@ -89,30 +90,28 @@ def test_integration_format_yml_with_no_test_positive(tmp_path: PosixPath,
         -  Ensure 'No tests' is added in the first time
         -  Ensure message is not prompt in the second time
     """
-    saved_file_path = str(tmp_path / os.path.basename(destination_path))
-    runner = CliRunner()
+    source_file, output_file = tmp_path / 'source.yml', tmp_path / 'output.yml'
+    source_path, output_path = str(source_file), str(output_file)
+    source_file.write_text(source_yml)
+
     # Running format in the first time
-    result = runner.invoke(main, [FORMAT_CMD, '-i', source_path, '-o', saved_file_path, '-at'], input='Y')
-    prompt = f'The file {source_path} has no test playbooks configured. Do you want to configure it with "No tests"'
+    runner = CliRunner()
+    result = runner.invoke(main, [FORMAT_CMD, '-i', source_path, '-o', output_path, '-at'], input='Y')
+    prompt = f'The file {source_path} has no test playbooks configured. ' \
+             f'Do you want to configure it with "No tests"'
     assert not result.exception
     assert prompt in result.output
-    yml_content = get_dict_from_file(saved_file_path)
-    assert yml_content[0].get('tests') == ['No tests (auto formatted)']
+    output_yml = get_dict_from_file(output_path)
+    assert output_yml[0].get('tests') == ['No tests (auto formatted)']
 
     # Running format for the second time should raise no exception and should raise no prompt to the user
-    result = runner.invoke(main, [FORMAT_CMD, '-i', saved_file_path], input='Y')
+    result = runner.invoke(main, [FORMAT_CMD, '-i', output_path], input='Y')
     assert not result.exception
     assert prompt not in result.output
-    os.remove(saved_file_path)
 
 
-@pytest.mark.parametrize('source_path,destination_path,formatter,yml_title,file_type', BASIC_YML_TEST_PACKS)
-def test_integration_format_yml_with_no_test_negative(tmp_path: PosixPath,
-                                                      source_path: str,
-                                                      destination_path: str,
-                                                      formatter: BaseUpdateYML,
-                                                      yml_title: str,
-                                                      file_type: str):
+@pytest.mark.parametrize('source_yml', BASIC_YML_CONTENTS)
+def test_integration_format_yml_with_no_test_negative(tmp_path: PosixPath, source_yml: str):
     """
         Given
         - A yml file (integration, playbook or script) with no 'tests' configured
@@ -126,15 +125,17 @@ def test_integration_format_yml_with_no_test_negative(tmp_path: PosixPath,
         -  Ensure no exception is raised
         -  Ensure 'No tests' is not added
     """
-    saved_file_path = str(tmp_path / os.path.basename(destination_path))
+    source_file, output_file = tmp_path / 'source.yml', tmp_path / 'output.yml'
+    source_path, output_path = str(source_file), str(output_file)
+    source_file.write_text(source_yml)
+
     runner = CliRunner()
-    result = runner.invoke(main, [FORMAT_CMD, '-i', source_path, '-o', saved_file_path, '-at'], input='N')
+    result = runner.invoke(main, [FORMAT_CMD, '-i', source_path, '-o', output_path, '-at'], input='N')
     assert not result.exception
     prompt = f'The file {source_path} has no test playbooks configured. Do you want to configure it with "No tests"'
     assert prompt in result.output
-    yml_content = get_dict_from_file(saved_file_path)
+    yml_content = get_dict_from_file(output_path)
     assert not yml_content[0].get('tests')
-    os.remove(saved_file_path)
 
 
 @pytest.mark.parametrize('source_path,destination_path,formatter,yml_title,file_type', BASIC_YML_TEST_PACKS)

@@ -1831,15 +1831,6 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
 
         progress_bar.update(1)
 
-        if 'Jobs' in objects_to_create:
-            print_color("\nStarting iteration over Jobs", LOG_COLORS.GREEN)
-            print_color(f"pack to create: {pack_to_create}", LOG_COLORS.YELLOW)
-            for arr in pool.map(partial(process_jobs, print_logs=print_logs),
-                                get_general_paths(JOBS_DIR, pack_to_create)):
-                jobs_list.extend(arr)
-
-        progress_bar.update(1)
-
     new_ids_dict = OrderedDict()
     # we sort each time the whole set in case someone manually changed something
     # it shouldn't take too much time

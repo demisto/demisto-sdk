@@ -199,6 +199,7 @@ ERROR_CODE = {
     "indicator_field_type_grid_minimal_version": {'code': "IF112", 'ui_applicable': False,
                                                   'related_field': 'fromVersion'},
     "invalid_incident_field_prefix": {'code': "IF113", 'ui_applicable': False, 'related_field': 'name'},
+    "incident_field_non_existent_script_id": {'code': "IF114", 'ui_applicable': False, 'related_field': ''},
     "incident_type_integer_field": {'code': "IT100", 'ui_applicable': True, 'related_field': ''},
     "incident_type_invalid_playbook_id_field": {'code': "IT101", 'ui_applicable': False, 'related_field': 'playbookId'},
     "incident_type_auto_extract_fields_invalid": {'code': "IT102", 'ui_applicable': False,
@@ -286,6 +287,8 @@ ERROR_CODE = {
     "invalid_file_path_layout": {'code': "LO102", 'ui_applicable': False, 'related_field': ''},
     "invalid_file_path_layoutscontainer": {'code': "LO103", 'ui_applicable': False, 'related_field': ''},
     "invalid_incident_field_in_layout": {'code': "LO104", 'ui_applicable': False, 'related_field': ''},
+    "layouts_container_non_existent_script_id": {'code': "LO105", 'ui_applicable': False, 'related_field': ''},
+    "layout_non_existent_script_id": {'code': "LO106", 'ui_applicable': False, 'related_field': ''},
     "invalid_from_server_version_in_pre_process_rules": {'code': "PP100", 'ui_applicable': False, 'related_field': 'fromServerVersion'},
     "invalid_incident_field_in_pre_process_rules": {'code': "PP101", 'ui_applicable': False, 'related_field': ''},
     "xsoar_config_file_is_not_json": {'code': "XC100", 'ui_applicable': False, 'related_field': ''},
@@ -1250,6 +1253,30 @@ class Errors:
                f"1 - The right playbook name is set and the spelling is correct.\n" \
                f"2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
                f" rerun the command."
+
+    @staticmethod
+    @error_code_decorator
+    def incident_field_non_existent_script_id(incident_field, scripts):
+        return f"In incident field {incident_field} the following scripts were not found in the id_set.json file:" \
+               f" {scripts}"
+
+    @staticmethod
+    @error_code_decorator
+    def layouts_container_non_existent_script_id(layouts_container, scripts):
+        return f"In layouts container {layouts_container} the following scripts were not found in the id_set.json " \
+               f"file: {scripts}"
+
+    @staticmethod
+    @error_code_decorator
+    def layout_non_existent_script_id(layout, scripts):
+        return f"In layout {layout} the following scripts were not found in the id_set.json file: {scripts}"
+
+    @staticmethod
+    def suggest_fix_non_existent_script_id() -> str:
+        return "Please make sure:\n" \
+               "1 - The right script name is set and the spelling is correct.\n" \
+               "2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
+               " rerun the command with the --create-id-set option."
 
     @staticmethod
     @error_code_decorator

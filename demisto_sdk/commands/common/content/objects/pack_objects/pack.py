@@ -200,7 +200,7 @@ class Pack:
                                                           suffix="*")
 
     @property
-    def job(self) -> Iterator[Job]:
+    def jobs(self) -> Iterator[Job]:
         return self._content_files_list_generator_factory(JOBS_DIR, suffix="json")
 
     @property

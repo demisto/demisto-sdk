@@ -32,6 +32,7 @@ PRESET_ERROR_TO_CHECK = {
     "deprecated": ['ST', 'BC', 'BA', 'IN127', 'IN128', 'PB104', 'SC101'],
 }
 
+
 ERROR_CODE = {
     "wrong_version": {'code': "BA100", 'ui_applicable': False, 'related_field': 'version'},
     "id_should_equal_name": {'code': "BA101", 'ui_applicable': False, 'related_field': 'id'},
@@ -286,15 +287,17 @@ ERROR_CODE = {
     "invalid_file_path_layout": {'code': "LO102", 'ui_applicable': False, 'related_field': ''},
     "invalid_file_path_layoutscontainer": {'code': "LO103", 'ui_applicable': False, 'related_field': ''},
     "invalid_incident_field_in_layout": {'code': "LO104", 'ui_applicable': False, 'related_field': ''},
-    "invalid_from_server_version_in_pre_process_rules": {'code': "PP100", 'ui_applicable': False, 'related_field': 'fromServerVersion'},
+    "invalid_from_server_version_in_pre_process_rules": {'code': "PP100", 'ui_applicable': False,
+                                                         'related_field': 'fromServerVersion'},
     "invalid_incident_field_in_pre_process_rules": {'code': "PP101", 'ui_applicable': False, 'related_field': ''},
+    "invalid_from_server_version_in_job": {'code': "JB100", 'ui_applicable': False,
+                                           'related_field': 'fromServerVersion'},
     "xsoar_config_file_is_not_json": {'code': "XC100", 'ui_applicable': False, 'related_field': ''},
     "xsoar_config_file_malformed": {'code': "XC101", 'ui_applicable': False, 'related_field': ''},
     "invalid_readme_image_error": {'code': "RM108", 'ui_applicable': False, 'related_field': ''},
     "invalid_generic_field_group_value": {'code': "GF100", 'ui_applicable': False, 'related_field': 'group'},
     "invalid_generic_field_id": {'code': "GF101", 'ui_applicable': False, 'related_field': 'id'}
 }
-
 
 def get_all_error_codes() -> List:
     error_codes = []
@@ -1597,6 +1600,13 @@ class Errors:
     def invalid_file_path_layoutscontainer(file_name):
         return f'Invalid file name - {file_name}. layoutscontainer file name should start with ' \
                '"layoutscontainer-" prefix.'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_from_server_version_in_job(version):
+        return f'fromServerVersion field in Job needs to be at least 6.5.0 (found {version})'
+
+    # todo error for unknown fields?
 
     @staticmethod
     @error_code_decorator

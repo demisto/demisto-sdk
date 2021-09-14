@@ -14,7 +14,7 @@ class TestJob:
         assert isinstance(obj, Job)
 
     def test_prefix(self, datadir):
-        obj = Job(datadir[sample_file_path.name])  # todo is okay
+        obj = Job(datadir[sample_file_path.name])
         assert obj.normalize_file_name() == 'job-' + sample_file_path.name
 
     def test_files_detection(self, datadir):

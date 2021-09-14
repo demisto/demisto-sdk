@@ -1,4 +1,7 @@
 # Changelog
+* Fixed an issue were the **validate** command was falsely recognizing image paths in readme files.
+
+# 1.5.0
 * Fixed an issue where **upload** command failed to upload packs not under content structure.
 * Added support for **init** command to run from non-content repo.
 * The **split-yml** has been renamed to **split** and now supports splitting Dashboards from unified Generic Modules.
@@ -11,7 +14,7 @@
 * Fixed an issue where the **validate** command failed on pack input if git detected changed files outside of `Packs` directory.
 * Fixed an issue where **validate** command failed to recognize files inside validated pack when validation release notes, resulting in a false error message for missing entity in release note.
 * Fixed an issue where the **download** command failed when downloading an invalid YML, instead of skipping it.
-* Fixed an issue were the **validate** command was falsely recognizing image paths in readme files.
+* Added a validation that verifies that each script which appears in incident fields, layouts or layout containers exists in the id_set.json.
 
 # 1.4.9
 * Added validation that the support URL in partner contribution pack metadata does not lead to a GitHub repo.

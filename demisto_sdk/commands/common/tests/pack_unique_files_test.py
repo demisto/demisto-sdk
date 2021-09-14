@@ -630,6 +630,7 @@ class TestPackUniqueFilesValidator:
         assert 'please repair it:\n![Identity with High Risk Score](https://github.com/demisto/content/raw/test1.png)' in errors
         assert 'please repair it:\n![Identity with High Risk Score](https://raw.githubusercontent.com/demisto/content/raw/test1.png)' in errors
         assert 'please repair it:\n(https://raw.githubusercontent.com/demisto/content/raw/test1.jpg)' in errors
+        assert 'https://test.com' not in errors  # this path is not an image path and should not be shown.
 
     @pytest.mark.parametrize('readme_content, is_valid', [
         ('Hey there, just testing', True),

@@ -13,6 +13,10 @@ This integration was integrated and tested with version 1.0.1 of PhishTank.
 ![Identity with High Risk Score](https://raw.githubusercontent.com/demisto/content/raw/test1.png)
 <img src="https://raw.githubusercontent.com/demisto/content/raw/test1.jpg" width="757" height="54">
 
+#### paths that should not be caught
+!command host="ip" action="test" src="https://test.com" state="present"
+
+
 
 
 

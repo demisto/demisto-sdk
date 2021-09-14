@@ -93,13 +93,9 @@ def test_integration_format_yml_with_no_test_positive(tmp_path: PosixPath,
     runner = CliRunner()
     # Running format in the first time
     result = runner.invoke(main, [FORMAT_CMD, '-i', source_path, '-o', saved_file_path, '-at'], input='Y')
-    prompt = 'has no test playbooks configured. Do you want to configure it with "No tests"'
+    prompt = f'The file {source_path} has no test playbooks configured. Do you want to configure it with "No tests"'
     assert not result.exception
-    output = result.output
-    with open('/tmp/test_integration_format_yml_with_no_test_positive.log', 'wt') as of:
-        of.write(f"expecting to find '{prompt}' in '{output}' (type={type(output)}")
-
-    assert prompt in output
+    assert prompt in result.output
     yml_content = get_dict_from_file(saved_file_path)
     assert yml_content[0].get('tests') == ['No tests (auto formatted)']
 
@@ -135,10 +131,7 @@ def test_integration_format_yml_with_no_test_negative(tmp_path: PosixPath,
     result = runner.invoke(main, [FORMAT_CMD, '-i', source_path, '-o', saved_file_path, '-at'], input='N')
     assert not result.exception
     prompt = f'The file {source_path} has no test playbooks configured. Do you want to configure it with "No tests"'
-    output = result.output  # todo remove
-    check = prompt in output
-    if not check:
-        assert f'{prompt}\nWas not in\n{output}' == ''
+    assert prompt in result.output
     yml_content = get_dict_from_file(saved_file_path)
     assert not yml_content[0].get('tests')
     os.remove(saved_file_path)
@@ -236,9 +229,6 @@ def test_integration_format_configuring_conf_json_positive(tmp_path: PosixPath,
         -  Ensure message is not prompt in the second time
     """
     # Setting up conf.json
-    from demisto_sdk.commands.common.logger import logging_setup
-    logger = logging_setup(verbose=3)
-
     conf_json_path = str(tmp_path / 'conf.json')
     with open(conf_json_path, 'w') as file:
         json.dump(CONF_JSON_ORIGINAL_CONTENT, file, indent=4)
@@ -259,7 +249,6 @@ def test_integration_format_configuring_conf_json_positive(tmp_path: PosixPath,
     # Running format for the second time should raise no exception and should raise no prompt to the user
     result = runner.invoke(main, [FORMAT_CMD, '-i', saved_file_path], input='Y')
     assert not result.exception
-    logger.warning(result.output)
     assert prompt not in result.output
 
 

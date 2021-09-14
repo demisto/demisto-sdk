@@ -10,11 +10,70 @@ mapping:
     type: str
     required: true
   sortValues:
-    type: ' >>> SET THIS MANUALLY <<<'
+    type: seq
     allowempty: true
     required: true
   roles:
-    type: ' >>> SET THIS MANUALLY <<<'
+    type: map
+    mapping:
+      CommonFields:
+        type: any
+        required: true
+        allowempty: true
+      Name:
+        type: str
+        required: true
+        allowempty: true
+      Locked:
+        type: bool
+        required: true
+      NestedRoles:
+        type: seq
+        required: true
+        allowempty: true
+      PagesAccess:
+        type: seq
+        required: true
+        allowempty: true
+      flattenedRoles:
+        type: str
+        required: true
+        allowempty: true
+      Permissions:
+        type: any
+        required: true
+        allowempty: true
+      flattenedPermissions:
+        type: any
+        required: true
+        allowempty: true
+      flattenedPermissionsArr:
+        type: seq
+        required: true
+        allowempty: true
+      ADGroups:
+        type: any
+        required: true
+        allowempty: true
+      SAMLGroups:
+        type: any
+        required: true
+        allowempty: true
+      flattened:
+        type: bool
+        required: true
+      Shifts:
+        type: any
+        required: true
+        allowempty: true
+      DefaultPreferences:
+        type: any
+        required: true
+        allowempty: true
+      DefaultDashboards:
+        type: seq
+        required: true
+        allowempty: true
     allowempty: true
     required: true
   allRead:
@@ -24,7 +83,7 @@ mapping:
     type: bool
     required: true
   previousRoles:
-    type: ' >>> SET THIS MANUALLY <<<'
+    type: seq
     allowempty: true
     required: true
   previousAllRead:
@@ -44,7 +103,7 @@ mapping:
     type: int
     required: true
   CustomFields:
-    type: ' >>> SET THIS MANUALLY <<<'
+    type: any
     allowempty: true
     required: true
   account:
@@ -93,11 +152,11 @@ mapping:
     allowempty: true
     required: true
   labels:
-    type: ' >>> SET THIS MANUALLY <<<'
+    type: seq
     allowempty: true
     required: true
   attachment:
-    type: ' >>> SET THIS MANUALLY <<<'
+    type: map
     allowempty: true
     required: true
   details:
@@ -172,7 +231,7 @@ mapping:
     type: str
     required: true
   linkedIncidents:
-    type: ' >>> SET THIS MANUALLY <<<'
+    type: seq
     allowempty: true
     required: true
   linkedCount:
@@ -190,7 +249,7 @@ mapping:
     allowempty: true
     required: true
   canvases:
-    type: ' >>> SET THIS MANUALLY <<<'
+    type: seq
     allowempty: true
     required: true
   lastJobRunTime:
@@ -212,7 +271,7 @@ mapping:
     allowempty: true
     required: true
   dbotDirtyFields:
-    type: ' >>> SET THIS MANUALLY <<<'
+    type: seq
     allowempty: true
     required: true
   dbotCurrentDirtyFields:

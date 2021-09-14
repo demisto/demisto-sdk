@@ -15,9 +15,3 @@ This integration was integrated and tested with version 1.0.1 of PhishTank.
 
 #### paths that should not be caught
 !command host="ip" action="test" src="https://github.com/demisto/content/raw/test3.png" state="present"
-
-
-
-
-
-

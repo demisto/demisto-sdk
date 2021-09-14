@@ -98,7 +98,7 @@ def test_integration_format_yml_with_no_test_positive(tmp_path: PosixPath,
 
     output = result.output
     with open('/tmp/test_integration_format_yml_with_no_test_positive.log', 'wt') as of:
-        of.write(f"expecting to find '{prompt}' in '{output}")
+        of.write(f"expecting to find '{prompt}' in '{output}' (type={type(output)}")
 
     assert prompt in output
     yml_content = get_dict_from_file(saved_file_path)

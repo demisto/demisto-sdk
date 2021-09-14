@@ -201,7 +201,8 @@ class Pack:
 
     @property
     def jobs(self) -> Iterator[Job]:
-        return self._content_files_list_generator_factory(JOBS_DIR, suffix="json")
+        return self._content_files_list_generator_factory(JOBS_DIR,
+                                                          suffix="json")
 
     @property
     def pack_metadata(self) -> Optional[PackMetaData]:

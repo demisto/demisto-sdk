@@ -137,10 +137,9 @@ def test_integration_format_yml_with_no_test_negative(tmp_path: PosixPath,
     assert not result.exception
     prompt = f'The file {source_path} has no test playbooks configured. Do you want to configure it with "No tests"'
     output = result.output  # todo remove
-    with open('/tmp/test_integration_format_yml_with_no_test_negative.log', 'wt') as of:
-        of.write(f"expecting to find '{prompt}' in '{output}")
-
-    assert prompt in output
+    check = prompt in output
+    if not check:
+        assert f'{prompt}\nWas not in\n{output}' == ''
     yml_content = get_dict_from_file(saved_file_path)
     assert not yml_content[0].get('tests')
     os.remove(saved_file_path)

@@ -1,3 +1,5 @@
+import json
+
 import pytest
 
 import demisto_sdk.commands.common.constants as constants
@@ -240,6 +242,8 @@ DIR_LIST = [
     constants.TESTS_DIR
 ]
 
+VALID_GITLAB_RESPONSE = 'test_files/valid_gitlab_search_response.json'
+
 
 class TestGithubContentConfig:
     @pytest.mark.parametrize(
@@ -248,10 +252,13 @@ class TestGithubContentConfig:
             'ssh://git@github.com/demisto/content-dist.git',
             'git@github.com:demisto/content-dist.git',  # clone using github ssh example
             'https://github.com/demisto/content-dist.git',  # clone using github https example
-            'https://github.com/demisto/content-dist'
+            'https://github.com/demisto/content-dist',
+            'https://code.pan.run/xsoar/content-dist',  # gitlab
+            'https://code.pan.run/xsoar/content-dist.git',
+            'https://gitlab-ci-token:token@code.pan.run/xsoar/content-dist.git'
         ]
     )
-    def test_get_repo_name(self, url: str):
+    def test_get_repo_name(self, mocker, url: str):
         """
         Given:
             No repository (not running in git)
@@ -260,8 +267,22 @@ class TestGithubContentConfig:
         Then:
             Validate the correct repo got back (demisto/content)
         """
-        github_config = constants.GitContentConfig()
-        assert github_config._get_repository_name([url]) == 'demisto/content-dist'
+        git_config = constants.GitContentConfig()
+        if 'github' in url:
+            assert git_config._get_repository_name([url]) == 'demisto/content-dist'
+        elif 'code.pan.run' in url:
+            # ignore this function, but don't return None so it will get a valid value
+            mocker.patch.object(constants.GitContentConfig,
+                                '_search_gitlab_id',
+                                return_value=0)
+            assert git_config._get_repository_name([url]) == 'content-dist'
+            mocker.patch.object(constants.GitContentConfig,
+                                '_search_gitlab_id',
+                                return_value=None)  # for invalid response should return the official content repo
+            assert git_config._get_repository_name([]) == git_config.OFFICIAL_CONTENT_REPO_NAME
+
+        else:
+            assert False, "Supported only github and gitlab"
 
     def test_get_repo_name_empty_case(self):
         """
@@ -274,3 +295,21 @@ class TestGithubContentConfig:
         """
         github_config = constants.GitContentConfig()
         assert github_config._get_repository_name([]) == github_config.OFFICIAL_CONTENT_REPO_NAME
+
+    def test_search_gitlab_id_valid(self, requests_mock):
+        with open(VALID_GITLAB_RESPONSE) as f:
+            gitlab_response = json.load(f)
+        repo = 'content-internal-dist'
+        url = f'https://code.pan.run/api/v4/projects?search={repo}'
+        requests_mock.get(url, json=gitlab_response)
+        git_config = constants.GitContentConfig()
+        assert git_config._search_gitlab_id(repo) == 3606
+
+    def test_search_gitlab_id_invalid(self, requests_mock):
+        repo = "no-real-repo"
+        url = f'https://code.pan.run/api/v4/projects?search={repo}'
+        requests_mock.get(url, json=[])
+        git_config = constants.GitContentConfig()
+        assert git_config._search_gitlab_id(repo) is None
+
+

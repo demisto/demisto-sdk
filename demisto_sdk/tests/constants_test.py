@@ -292,7 +292,8 @@ class TestGithubContentConfig:
         git_config = constants.GitContentConfig()
         mocker.patch.object(constants.GitContentConfig,
                             '_search_gitlab_id',
-                            return_value=None)  # for invalid response should return the official content repo
+                            return_value=None)
+        # for invalid response should return the official content repo
         assert git_config._get_repository_name([url]) == git_config.OFFICIAL_CONTENT_REPO_NAME
 
     def test_get_repo_name_empty_case(self):

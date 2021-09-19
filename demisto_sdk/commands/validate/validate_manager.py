@@ -296,7 +296,7 @@ class ValidateManager:
             all_packs_valid.add(self.conf_json_validator.is_valid_conf_json())
 
         count = 1
-        # Ignores local files (non-packs), such as .DS_STORE on MacOS
+        # Filter non-pack files that might exist locally (e.g, .DS_STORE on MacOS)
         all_packs = list(filter(os.path.isdir, [os.path.join(PACKS_DIR, p) for p in os.listdir(PACKS_DIR)]))
         num_of_packs = len(all_packs)
         all_packs.sort(key=str.lower)

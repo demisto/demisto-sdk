@@ -114,8 +114,8 @@ class PackUniqueFilesValidator(BaseValidator):
         """Returns the full file path to pack's file"""
         return os.path.join(self.pack_path, file_name)
 
-    def _is_pack_file_exists(self, file_name):
-        """Check if .secrets-ignore exists"""
+    def _is_pack_file_exists(self, file_name: str):
+        """Check if a file with given name exists in pack root"""
         if not os.path.isfile(self._get_pack_file_path(file_name)):
             if self._add_error(Errors.pack_file_does_not_exist(file_name), file_name):
                 return False
@@ -582,6 +582,7 @@ class PackUniqueFilesValidator(BaseValidator):
 
     def are_valid_files(self, id_set_validations) -> str:
         """Main Execution Method"""
+        self._is_pack_file_exists(self.pack_meta_file)
         self.validate_secrets_file()
         self.validate_pack_ignore_file()
         # We don't want to check the metadata file for this pack

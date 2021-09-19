@@ -53,12 +53,11 @@ https://xsoar.pan.dev/docs/integrations/unit-testing
 
 """
 
-import io
+from FeedHelloWorld import Client, get_indicators_command, fetch_indicators_command
+from CommonServerPython import tableToMarkdown, string_to_table_header
 import json
+import io
 
-from CommonServerPython import string_to_table_header, tableToMarkdown
-from FeedHelloWorld import (Client, fetch_indicators_command,
-                            get_indicators_command)
 
 URL = "https://openphish.com/feed.txt"
 

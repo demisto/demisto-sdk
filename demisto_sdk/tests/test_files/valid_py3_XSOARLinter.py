@@ -1,11 +1,11 @@
-import json
-from typing import Any, Callable, Dict, Optional, Tuple, Union
+from typing import Dict, Optional, Tuple, Callable, Any, Union
 
-import dateparser
 import demistomock as demisto
-import requests
 from CommonServerPython import *
 from CommonServerUserPython import *
+import json
+import requests
+import dateparser
 
 # Disable insecure warnings
 requests.packages.urllib3.disable_warnings()

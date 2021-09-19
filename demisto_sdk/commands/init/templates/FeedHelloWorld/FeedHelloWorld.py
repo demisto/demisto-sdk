@@ -153,8 +153,9 @@ Python 3) and then calls the ``main()`` function. Just keep this convention.
 
 from typing import Dict, List, Optional
 
-import demistomock as demisto  # noqa: F401
 import urllib3
+
+import demistomock as demisto  # noqa: F401
 from CommonServerPython import *  # noqa: F401
 
 # disable insecure warnings

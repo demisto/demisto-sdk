@@ -1,7 +1,8 @@
+from requests import Response, Session
+
 from CommonServerPython import (IAMActions, IAMCommand, IAMErrors,
                                 IAMUserAppData, IAMUserProfile)
 from HelloIAMWorld import Client, get_mapping_fields
-from requests import Response, Session
 
 APP_USER_OUTPUT = {
     "user_id": "mock_id",

@@ -15,7 +15,7 @@ https://github.com/demisto/content/blob/master/Packs/HelloWorld/Integrations/Hel
 """
 
 import traceback
-from typing import Any, Dict, Optional
+from typing import Any, Optional, Dict
 
 import demistomock as demisto
 import urllib3

@@ -2073,7 +2073,6 @@ class DebugLogger(object):
         if IS_PY3:
             # pylint: disable=import-error
             import http.client as http_client
-
             # pylint: enable=import-error
             self.http_client = http_client
             self.http_client.HTTPConnection.debuglevel = 1

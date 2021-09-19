@@ -276,13 +276,24 @@ class TestGithubContentConfig:
                                 '_search_gitlab_id',
                                 return_value=0)
             assert git_config._get_repository_name([url]) == 'content-dist'
-            mocker.patch.object(constants.GitContentConfig,
-                                '_search_gitlab_id',
-                                return_value=None)  # for invalid response should return the official content repo
-            assert git_config._get_repository_name([]) == git_config.OFFICIAL_CONTENT_REPO_NAME
-
         else:
             assert False, "Supported only github and gitlab"
+
+    def test_get_repo_name_gitlab_invalid(self, mocker):
+        """
+        Given:
+            No repository (not running in git)
+        When:
+            A known output of git.Repo().remotes().url, but this url not found in GitLab API
+        Then:
+            Ignore gitlab and get back to content (demisto/content)
+        """
+        url = 'https://code.pan.run/xsoar/very-private-repo'
+        git_config = constants.GitContentConfig()
+        mocker.patch.object(constants.GitContentConfig,
+                            '_search_gitlab_id',
+                            return_value=None)  # for invalid response should return the official content repo
+        assert git_config._get_repository_name([url]) == git_config.OFFICIAL_CONTENT_REPO_NAME
 
     def test_get_repo_name_empty_case(self):
         """
@@ -329,5 +340,3 @@ class TestGithubContentConfig:
         requests_mock.get(url, json=[])
         git_config = constants.GitContentConfig()
         assert git_config._search_gitlab_id(repo) is None
-
-

@@ -2,417 +2,417 @@ type: map
 mapping:
   id:
     type: str
-    required: true
+    required: false
   version:
     type: int
-    required: true
+    required: false
   modified:
     type: str
-    required: true
+    required: false
   sortValues:
     type: seq
     allowempty: true
-    required: true
+    required: false
   roles:
     type: map
     mapping:
       CommonFields:
         type: any
-        required: true
+        required: false
         allowempty: true
       Name:
         type: str
-        required: true
+        required: false
         allowempty: true
       Locked:
         type: bool
-        required: true
+        required: false
       NestedRoles:
         type: seq
-        required: true
+        required: false
         allowempty: true
       PagesAccess:
         type: seq
-        required: true
+        required: false
         allowempty: true
       flattenedRoles:
         type: str
-        required: true
+        required: false
         allowempty: true
       Permissions:
         type: any
-        required: true
+        required: false
         allowempty: true
       flattenedPermissions:
         type: any
-        required: true
+        required: false
         allowempty: true
       flattenedPermissionsArr:
         type: seq
-        required: true
+        required: false
         allowempty: true
       ADGroups:
         type: any
-        required: true
+        required: false
         allowempty: true
       SAMLGroups:
         type: any
-        required: true
+        required: false
         allowempty: true
       flattened:
         type: bool
-        required: true
+        required: false
       Shifts:
         type: any
-        required: true
+        required: false
         allowempty: true
       DefaultPreferences:
         type: any
-        required: true
+        required: false
         allowempty: true
       DefaultDashboards:
         type: seq
-        required: true
+        required: false
         allowempty: true
     allowempty: true
-    required: true
+    required: false
   allRead:
     type: bool
-    required: true
+    required: false
   allReadWrite:
     type: bool
-    required: true
+    required: false
   previousRoles:
     type: seq
     allowempty: true
-    required: true
+    required: false
   previousAllRead:
     type: bool
-    required: true
+    required: false
   previousAllReadWrite:
     type: bool
-    required: true
+    required: false
   hasRole:
     type: bool
-    required: true
+    required: false
   dbotCreatedBy:
     type: str
     allowempty: true
-    required: true
+    required: false
   ShardID:
     type: int
-    required: true
+    required: false
   CustomFields:
     type: any
     allowempty: true
-    required: true
+    required: false
   account:
     type: str
     allowempty: true
-    required: true
+    required: false
   autime:
     type: int
-    required: true
+    required: false
   type:
     type: str
-    required: true
+    required: false
   rawType:
     type: str
-    required: true
+    required: false
   name:
     type: str
-    required: true
+    required: false
   rawName:
     type: str
-    required: true
+    required: false
   status:
     type: int
-    required: true
+    required: false
   reason:
     type: str
     allowempty: true
-    required: true
+    required: false
   created:
     type: str
-    required: true
+    required: false
   occurred:
     type: str
-    required: true
+    required: false
   closed:
     type: str
-    required: true
+    required: false
   sla:
     type: int
-    required: true
+    required: false
   severity:
     type: int
-    required: true
+    required: false
   investigationId:
     type: str
     allowempty: true
-    required: true
+    required: false
   labels:
     type: seq
     allowempty: true
-    required: true
+    required: false
   attachment:
     type: map
     allowempty: true
-    required: true
+    required: false
   details:
     type: str
     allowempty: true
-    required: true
+    required: false
   openDuration:
     type: int
-    required: true
+    required: false
   lastOpen:
     type: str
-    required: true
+    required: false
   closingUserId:
     type: str
     allowempty: true
-    required: true
+    required: false
   owner:
     type: str
-    required: true
+    required: false
   activated:
     type: str
-    required: true
+    required: false
   closeReason:
     type: str
     allowempty: true
-    required: true
+    required: false
   rawCloseReason:
     type: str
     allowempty: true
-    required: true
+    required: false
   closeNotes:
     type: str
     allowempty: true
-    required: true
+    required: false
   playbookId:
     type: str
     required: true
   dueDate:
     type: str
-    required: true
+    required: false
   reminder:
     type: str
-    required: true
+    required: false
   runStatus:
     type: str
-    required: true
+    required: false
   notifyTime:
     type: str
-    required: true
+    required: false
   phase:
     type: str
     allowempty: true
-    required: true
+    required: false
   rawPhase:
     type: str
     allowempty: true
-    required: true
+    required: false
   isPlayground:
     type: bool
-    required: true
+    required: false
   rawJSON:
     type: str
     allowempty: true
-    required: true
+    required: false
   parent:
     type: str
-    required: true
+    required: false
   category:
     type: str
-    required: true
+    required: false
   rawCategory:
     type: str
-    required: true
+    required: false
   linkedIncidents:
     type: seq
     allowempty: true
-    required: true
+    required: false
   linkedCount:
     type: int
-    required: true
+    required: false
   droppedCount:
     type: int
-    required: true
+    required: false
   sourceInstance:
     type: str
     allowempty: true
-    required: true
+    required: false
   sourceBrand:
     type: str
     allowempty: true
-    required: true
+    required: false
   canvases:
     type: seq
     allowempty: true
-    required: true
+    required: false
   lastJobRunTime:
     type: str
-    required: true
+    required: false
   feedBased:
     type: bool
-    required: true
+    required: false
   dbotMirrorId:
     type: str
     allowempty: true
-    required: true
+    required: false
   dbotMirrorInstance:
     type: str
     allowempty: true
-    required: true
+    required: false
   dbotMirrorDirection:
     type: str
     allowempty: true
-    required: true
+    required: false
   dbotDirtyFields:
     type: seq
     allowempty: true
-    required: true
+    required: false
   dbotCurrentDirtyFields:
-    type: ' >>> SET THIS MANUALLY <<<'
+    type: any
     allowempty: true
-    required: true
+    required: false
   dbotMirrorTags:
-    type: ' >>> SET THIS MANUALLY <<<'
+    type: any
     allowempty: true
-    required: true
+    required: false
   dbotMirrorLastSync:
     type: str
-    required: true
+    required: false
   isDebug:
     type: bool
-    required: true
+    required: false
   startDate:
     type: str
-    required: true
+    required: false
   endingType:
     type: str
-    required: true
+    required: false
   times:
     type: int
-    required: true
+    required: false
   recurrent:
     type: bool
-    required: true
+    required: false
   endingDate:
     type: str
-    required: true
+    required: false
   humanCron:
     type: map
     mapping:
       timePeriodType:
         type: str
-        required: true
+        required: false
       timePeriod:
         type: int
-        required: true
+        required: false
   timezoneOffset:
     type: int
-    required: true
+    required: false
   cronView:
     type: bool
-    required: true
+    required: false
   timezone:
     type: str
-    required: true
+    required: false
   scheduled:
     type: bool
-    required: true
+    required: false
   packID:
     type: str
-    required: true
+    required: false
   itemVersion:
     type: str
-    required: true
+    required: false
   fromServerVersion:
     type: str
     allowempty: true
-    required: true
+    required: false
   toServerVersion:
     type: str
     allowempty: true
-    required: true
+    required: false
   propagationLabels:
     type: list
-    required: true
+    required: false
   packPropagationLabels:
     type: list
-    required: true
+    required: false
   definitionId:
     type: str
     allowempty: true
-    required: true
+    required: false
   vcShouldIgnore:
     type: bool
-    required: true
+    required: false
   vcShouldKeepItemLegacyProdMachine:
     type: bool
-    required: true
+    required: false
   commitMessage:
     type: str
     allowempty: true
-    required: true
+    required: false
   shouldCommit:
     type: bool
-    required: true
+    required: false
   minutesToTimeout:
     type: int
-    required: true
+    required: false
   description:
     type: str
     allowempty: true
-    required: true
+    required: false
   currentIncidentId:
     type: str
-    required: true
+    required: false
   lastRunTime:
     type: str
-    required: true
+    required: false
   nextRunTime:
     type: str
-    required: true
+    required: false
   displayNextRunTime:
     type: str
-    required: true
+    required: false
   disabledNextRunTime:
     type: str
-    required: true
+    required: false
   schedulingStatus:
     type: str
-    required: true
+    required: false
   previousRunStatus:
     type: str
-    required: true
+    required: false
   tags:
     type: list
-    required: true
+    required: false
   shouldTriggerNew:
     type: bool
-    required: true
+    required: false
   closePrevRun:
     type: bool
-    required: true
+    required: false
   notifyOwner:
     type: bool
-    required: true
+    required: false
   isFeed:
     type: bool
-    required: true
+    required: false
   selectedFeeds:
     type: list
-    required: true
+    required: false
   isAllFeeds:
     type: bool
-    required: true
+    required: false
   locked:
     type: bool
-    required: true
+    required: false
   system:
     type: bool
-    required: true
+    required: false

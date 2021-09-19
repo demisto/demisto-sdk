@@ -295,9 +295,7 @@ ERROR_CODE = {
     "xsoar_config_file_malformed": {'code': "XC101", 'ui_applicable': False, 'related_field': ''},
     "invalid_readme_image_error": {'code': "RM108", 'ui_applicable': False, 'related_field': ''},
     "invalid_generic_field_group_value": {'code': "GF100", 'ui_applicable': False, 'related_field': 'group'},
-    "invalid_generic_field_id": {'code': "GF101", 'ui_applicable': False, 'related_field': 'id'},
-    "non_default_additional_info": {'code': "IN142", 'ui_applicable': True, 'related_field': 'additionalinfo'},
-    "missing_default_additional_info": {'code': "IN143", 'ui_applicable': True, 'related_field': 'additionalinfo'}
+    "invalid_generic_field_id": {'code': "GF101", 'ui_applicable': False, 'related_field': 'id'}
 }
 
 
@@ -1894,13 +1892,3 @@ class Errors:
     @error_code_decorator
     def spaces_in_the_end_of_name(name: str):
         return f'Content item name "{name}" should not have trailing spaces. Please remove.'
-
-    @staticmethod
-    @error_code_decorator
-    def non_default_additional_info(params: List[str]):
-        return f'The additionalinfo of params {params} is not the default value, please consider changing it.'
-
-    @staticmethod
-    @error_code_decorator
-    def missing_default_additional_info(params: List[str]):
-        return f'The additionalinfo of params {params} is empty.'

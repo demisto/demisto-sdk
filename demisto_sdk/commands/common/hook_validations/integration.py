@@ -11,8 +11,6 @@ from demisto_sdk.commands.common.constants import (
     FIRST_FETCH_PARAM, INTEGRATION_CATEGORIES, IOC_OUTPUTS_DICT, MAX_FETCH,
     MAX_FETCH_PARAM, PYTHON_SUBTYPES, REPUTATION_COMMAND_NAMES, TYPE_PWSH,
     XSOAR_CONTEXT_STANDARD_URL)
-from demisto_sdk.commands.common.default_additional_info_loader import \
-    load_default_additional_info_dict
 from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
                                                 Errors)
@@ -27,8 +25,6 @@ from demisto_sdk.commands.common.tools import (
     _get_file_id, compare_context_path_in_yml_and_readme, get_core_pack_list,
     get_file_version_suffix_if_exists, get_files_in_dir, get_pack_name,
     is_iron_bank_pack, print_error, server_version_compare)
-
-default_additional_info = load_default_additional_info_dict()
 
 
 class IntegrationValidator(ContentEntityValidator):
@@ -1330,36 +1326,4 @@ class IntegrationValidator(ContentEntityValidator):
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
                 return False
-        return True
-
-    def default_params_have_default_additional_info(self):
-        """Check if the all integration params that can have a default description have a it set.
-        Raises warnings if the additional info is defined (not empty) but is different from the default.
-
-        Returns:
-            bool: True if all relevant params have an additional info value
-                  False if at least one param that can have a default additionalInfo has an empty one.
-        """
-        params_missing_defaults = []
-        params_with_non_default_description = []
-
-        additional_info = {param['name']: param.get('additionalinfo', '')
-                           for param in self.current_file.get('configuration', [])}
-
-        for param, info in additional_info.items():
-            if param in default_additional_info and info != default_additional_info[param]:
-                if not info:
-                    params_missing_defaults.append(param)
-                else:
-                    params_with_non_default_description.append(param)
-        if params_with_non_default_description:
-            non_default_error_message, non_default_error_code = \
-                Errors.non_default_additional_info(params_with_non_default_description)
-            self.handle_error(non_default_error_message, non_default_error_code, file_path=self.file_path, warning=True)
-
-        if params_missing_defaults:
-            missing_error_message, missing_error_code = Errors.missing_default_additional_info(params_missing_defaults)
-            self.handle_error(missing_error_message, missing_error_code, self.current_file,
-                              suggested_fix=Errors.suggest_fix(self.file_path))
-            return False
         return True

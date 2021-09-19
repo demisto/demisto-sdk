@@ -8,8 +8,6 @@ from requests.structures import CaseInsensitiveDict
 
 from demisto_sdk.commands.common.constants import (
     CONTEXT_OUTPUT_README_TABLE_HEADER, DOCS_COMMAND_SECTION_REGEX)
-from demisto_sdk.commands.common.default_additional_info_loader import \
-    load_default_additional_info_dict
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_yaml,
                                                print_color, print_error,
                                                print_warning)
@@ -181,8 +179,6 @@ with (Path(__file__).parent / 'default_additional_information.json').open() as f
 
 
 def generate_setup_section(yaml_data: dict):
-    default_additional_info: CaseInsensitiveDict = load_default_additional_info_dict()
-
     section = [
         '1. Navigate to **Settings** > **Integrations** > **Servers & Services**.',
         '2. Search for {}.'.format(yaml_data['display']),
@@ -197,7 +193,7 @@ def generate_setup_section(yaml_data: dict):
             access_data.append({
                 'Parameter': conf.get('display'),
                 'Description': string_escape_md(conf.get('additionalinfo', '') or
-                                                default_additional_info.get(conf.get('name', ''), '')),
+                                                default_additional_information.get(conf.get('name', ''), '')),
                 'Required': conf.get('required', '')
             })
 

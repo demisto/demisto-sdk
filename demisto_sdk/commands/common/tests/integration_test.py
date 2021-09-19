@@ -1,6 +1,6 @@
 import os
 from copy import deepcopy
-from typing import Dict, List, Optional
+from typing import Optional
 
 import pytest
 from mock import mock_open, patch
@@ -9,16 +9,12 @@ from demisto_sdk.commands.common.constants import (FEED_REQUIRED_PARAMS,
                                                    FETCH_REQUIRED_PARAMS,
                                                    FIRST_FETCH_PARAM,
                                                    MAX_FETCH_PARAM)
-from demisto_sdk.commands.common.default_additional_info_loader import \
-    load_default_additional_info_dict
 from demisto_sdk.commands.common.hook_validations.integration import \
     IntegrationValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from TestSuite.test_tools import ChangeCWD
-
-default_additional_info = load_default_additional_info_dict()
 
 FEED_REQUIRED_PARAMS_STRUCTURE = [dict(required_param.get('must_equal'), **required_param.get('must_contain'),
                                        name=required_param.get('name')) for required_param in FEED_REQUIRED_PARAMS]
@@ -249,28 +245,6 @@ class TestIntegrationValidator:
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
         assert validator.has_no_duplicate_args() is answer
-
-    WITH_DEFAULT_INFO = [{"name": "API key", "additionalinfo": default_additional_info['API key']}]
-    MISSING_DEFAULT_INFO = [{"name": "API key", "additionalinfo": ""}]
-    NON_DEFAULT_INFO = [{"name": "API key", "additionalinfo": "you know, the API key"}]
-
-    DEFAULT_INFO_INPUTS = [
-        (WITH_DEFAULT_INFO, True, False),
-        (MISSING_DEFAULT_INFO, False, False),
-        (NON_DEFAULT_INFO, True, True)]
-
-    @pytest.mark.parametrize("args, answer, expecting_warning", DEFAULT_INFO_INPUTS)
-    def test_default_params_default_info(self, capsys, args: List[Dict], answer: str, expecting_warning: bool):
-        validator = IntegrationValidator(mock_structure("", {"configuration": args}))
-        assert validator.default_params_have_default_additional_info() is answer
-
-        if expecting_warning:
-            from demisto_sdk.commands.common.errors import Errors
-            warning_message, warning_code = Errors.non_default_additional_info(['API key'])
-            expected_warning = f"[{warning_code}] - {warning_message}"
-            captured = capsys.readouterr()
-            assert captured.out.lstrip("\":").strip() == expected_warning
-            assert not captured.err
 
     NO_INCIDENT_INPUT = [
         ({"script": {"commands": [{"name": "command1", "arguments": [{"name": "arg1"}]}]}}, True),

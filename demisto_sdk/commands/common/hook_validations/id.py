@@ -13,13 +13,11 @@ from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.tools import (
     get_script_or_sub_playbook_tasks_from_playbook, get_yaml)
-from demisto_sdk.commands.common.update_id_set import (get_classifier_data,
-                                                       get_incident_type_data,
-                                                       get_integration_data,
-                                                       get_mapper_data,
-                                                       get_pack_metadata_data,
-                                                       get_playbook_data,
-                                                       get_script_data)
+from demisto_sdk.commands.common.update_id_set import (
+    get_classifier_data, get_incident_field_data, get_incident_type_data,
+    get_integration_data, get_layout_data, get_layouts_scripts_ids,
+    get_layoutscontainer_data, get_mapper_data, get_pack_metadata_data,
+    get_playbook_data, get_script_data)
 from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
 
 
@@ -93,6 +91,200 @@ class IDSetValidations(BaseValidator):
                     is_valid = True
 
         return is_valid
+
+    def _is_incident_field_scripts_found(self, incident_field_data, incident_field_file_path=None):
+        """Check if scripts and field calculations scripts of an incident field is in the id_set
+
+        Args:
+            incident_field_data (dict): Dictionary that holds the extracted details from the given incident field.
+            incident_field_file_path (str): Path to the file.
+
+        Returns:
+            bool. Whether the scripts are in the id_set or not.
+        """
+        is_valid = True
+        scripts_not_in_id_set = set()
+
+        incident_field_id = list(incident_field_data.keys())[0]
+        incident_field = incident_field_data.get(incident_field_id, {})
+        incident_field_name = incident_field.get('name', incident_field_id)
+        scripts_set = set(incident_field.get('scripts', []))
+
+        # Check if the incident field scripts are in the id_set:
+        if scripts_set:
+            scripts_not_in_id_set = self._get_scripts_that_are_not_in_id_set(scripts_set)
+
+        # Add error message if there are scripts that aren't in the id_set:
+        if scripts_not_in_id_set:
+            is_valid = False
+            scripts_not_in_id_set_str = ', '.join(scripts_not_in_id_set)
+            error_message, error_code = Errors.incident_field_non_existent_script_id(incident_field_name,
+                                                                                     scripts_not_in_id_set_str)
+            if not self.handle_error(error_message, error_code, file_path=incident_field_file_path,
+                                     suggested_fix=Errors.suggest_fix_non_existent_script_id()):
+                is_valid = True
+
+        return is_valid
+
+    def _is_layouts_container_scripts_found(self, layouts_container_data, layouts_container_file_path=None):
+        """Check if scripts of a layouts container is in the id_set
+
+        Args:
+            layouts_container_data (dict): Dictionary that holds the extracted details from the given layouts container.
+            layouts_container_file_path (str): Path to the file.
+
+        Returns:
+            bool. Whether the scripts are in the id_set or not.
+        """
+        is_valid = True
+        scripts_not_in_id_set = set()
+
+        layouts_container_id = list(layouts_container_data.keys())[0]
+        layouts_container = layouts_container_data.get(layouts_container_id, {})
+        layouts_container_name = layouts_container.get('name', layouts_container_id)
+        layouts_container_tabs = self._get_layouts_container_tabs(layouts_container)
+        scripts_set = set(get_layouts_scripts_ids(layouts_container_tabs))
+
+        # Check if the layouts container's scripts are in the id_set:
+        if scripts_set:
+            scripts_not_in_id_set = self._get_scripts_that_are_not_in_id_set(scripts_set)
+
+        # Add error message if there are scripts that aren't in the id_set:
+        if scripts_not_in_id_set:
+            is_valid = False
+            scripts_not_in_id_set_str = ', '.join(scripts_not_in_id_set)
+            error_message, error_code = Errors.layouts_container_non_existent_script_id(layouts_container_name,
+                                                                                        scripts_not_in_id_set_str)
+            if not self.handle_error(error_message, error_code, file_path=layouts_container_file_path,
+                                     suggested_fix=Errors.suggest_fix_non_existent_script_id()):
+                is_valid = True
+
+        return is_valid
+
+    def _is_layout_scripts_found(self, layout_data, layout_file_path=None):
+        """Check if scripts of a layout  is in the id_set
+
+        Args:
+            layout_data (dict): Dictionary that holds the extracted details from the given layout.
+            layout_file_path (str): Path to the file.
+
+        Returns:
+            bool. Whether the scripts are in the id_set or not.
+        """
+        is_valid = True
+        scripts_not_in_id_set = set()
+
+        layout_id = list(layout_data.keys())[0]
+        layout = layout_data.get(layout_id, {})
+        layout_name = layout.get('typename', layout_id)
+        scripts = layout.get('scripts', [])
+        scripts_set = set(scripts)
+
+        # Check if the layouts container's scripts are in the id_set:
+        if scripts_set:
+            scripts_not_in_id_set = self._get_scripts_that_are_not_in_id_set(scripts_set)
+
+        # Add error message if there are scripts that aren't in the id_set:
+        if scripts_not_in_id_set:
+            is_valid = False
+            scripts_not_in_id_set_str = ', '.join(scripts_not_in_id_set)
+            error_message, error_code = Errors.layout_non_existent_script_id(layout_name,
+                                                                             scripts_not_in_id_set_str)
+            if not self.handle_error(error_message, error_code, file_path=layout_file_path,
+                                     suggested_fix=Errors.suggest_fix_non_existent_script_id()):
+                is_valid = True
+
+        return is_valid
+
+    def _get_scripts_that_are_not_in_id_set(self, scripts_in_entity):
+        """
+        For each script ID in the given scripts set checks if it is exist in the id set.
+        If a script is in the id set removes it from the input scripts set.
+
+        Args:
+            scripts_set: A set of scripts IDs
+
+        Returns:
+            A sub set of the input scripts set which contains only scripts that are not in the id set.
+        """
+        for checked_script in self.script_set:
+            checked_script_id = list(checked_script.keys())[0]
+            if checked_script_id in scripts_in_entity:
+                scripts_in_entity.remove(checked_script_id)
+
+        # Ignore Builtin scripts because they are implemented on the server side and thus not in the id_set.json
+        scripts_in_entity = self._remove_builtin_scripts(scripts_in_entity)
+
+        # Ignore integration commands scripts because they are not in the id_set.json
+        # Ignoring integration commands is temporary. Validate command should verify that each integration command
+        # called from a layout, a layoutscontainer or an incident field is really exist.
+        # will be fixed in: https://github.com/demisto/etc/issues/41246
+        scripts_in_entity = self._remove_integration_commands_scripts(scripts_in_entity)
+
+        return scripts_in_entity
+
+    def _remove_builtin_scripts(self, scripts_set):
+        """
+        For each script ID in the given scripts set checks if it is a Builtin script (implemented on the server side)
+        by checking if it starts with the string: 'Builtin|||'.
+        If a script is not a Builtin script add it to a new scripts set.
+
+        Args:
+            scripts_set: A set of scripts IDs
+
+        Returns:
+            A new set which includes all scripts of the input scripts set which are not Builtin scripts.
+        """
+        not_builtin_scripts_set = set()
+
+        for script_id in scripts_set:
+            if not script_id.startswith('Builtin|||'):
+                not_builtin_scripts_set.add(script_id)
+
+        return not_builtin_scripts_set
+
+    def _remove_integration_commands_scripts(self, scripts_set):
+        """
+        For each script ID in the given scripts set checks if it is an integration command by checking if it contains
+        '|||'.  If a script is not an integration command add it to a new scripts set.
+        TODO: Ignoring integration commands is temporary. Validate command should verify that each integration command
+         called from a layout, a layoutscontainer or an incident field is really exist.
+         will be fixed in: https://github.com/demisto/etc/issues/41246
+
+        Args:
+            scripts_set: A set of scripts IDs
+
+        Returns:
+            A new set which includes all scripts of the input scripts set which are not integration commands.
+        """
+        not_integration_commands_scripts_set = set()
+
+        for script_id in scripts_set:
+            if '|||' not in script_id:
+                not_integration_commands_scripts_set.add(script_id)
+
+        return not_integration_commands_scripts_set
+
+    def _get_layouts_container_tabs(self, layouts_container):
+        """
+        Finds all tabs of the given layouts container
+
+        Args:
+            layouts_container: A layout container
+
+        Returns: A list of all the given layouts container's tabs
+
+        """
+        all_tabs = []
+        layouts_container_fields_with_tabs = ["edit", "indicatorsDetails", "indicatorsQuickView", "quickView",
+                                              "details", "detailsV2", "mobile"]
+        for field in layouts_container_fields_with_tabs:
+            field_content = layouts_container.get(field)
+            if field_content:
+                tabs = field_content.get('tabs', [])
+                all_tabs.extend(tabs)
+
+        return all_tabs
 
     def _is_non_real_command_found(self, script_data):
         """Check if the script depend-on section has a non real command
@@ -346,12 +538,14 @@ class IDSetValidations(BaseValidator):
                 is_version_valid = not entity_version or LooseVersion(entity_version) <= LooseVersion(
                     main_playbook_version)
                 skip_unavailable = all(task_data.get('skipunavailable', False) for task_data in tasks_data) \
-                    if tasks_data else False
+                    if tasks_data and LooseVersion(main_playbook_version) >= LooseVersion('6.0.0') else False
 
-                # if entities with miss-matched versions were found and skipunavailable is not set, fail the validation
+                # if entities with miss-matched versions were found and skipunavailable is
+                # not set or main playbook fromversion is below 6.0.0, fail the validation
                 if not is_version_valid and not skip_unavailable:
                     invalid_version_entities.append(entity_name)
-                implemented_entities.remove(entity_name)
+                if entity_name in implemented_entities:
+                    implemented_entities.remove(entity_name)
 
         if invalid_version_entities:
             error_message, error_code = Errors.content_entity_version_not_match_playbook_version(
@@ -441,6 +635,15 @@ class IDSetValidations(BaseValidator):
             elif file_type == constants.FileType.INCIDENT_TYPE:
                 incident_type_data = OrderedDict(get_incident_type_data(file_path))
                 is_valid = self._is_incident_type_default_playbook_found(incident_type_data)
+            elif file_type == constants.FileType.INCIDENT_FIELD:
+                incident_field_data = OrderedDict(get_incident_field_data(file_path, []))
+                is_valid = self._is_incident_field_scripts_found(incident_field_data, file_path)
+            elif file_type == constants.FileType.LAYOUTS_CONTAINER:
+                layouts_container_data = OrderedDict(get_layoutscontainer_data(file_path))
+                is_valid = self._is_layouts_container_scripts_found(layouts_container_data, file_path)
+            elif file_type == constants.FileType.LAYOUT:
+                layout_data = OrderedDict(get_layout_data(file_path))
+                is_valid = self._is_layout_scripts_found(layout_data, file_path)
             elif file_type == constants.FileType.INTEGRATION:
                 integration_data = get_integration_data(file_path)
                 is_valid = self._is_integration_classifier_and_mapper_found(integration_data)

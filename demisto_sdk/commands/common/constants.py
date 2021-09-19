@@ -928,7 +928,6 @@ class GitContentConfig:
         else:
             self.BASE_RAW_GITLAB_LINK = self.BASE_RAW_GITLAB_LINK.format(GITLAB_ID=self.GITLAB_ID)
 
-    # @staticmethod
     def _get_repository_name(self, urls: Iterable) -> str:
         """Returns the git repository of the cwd.
         if not running in a git repository, will return an empty string

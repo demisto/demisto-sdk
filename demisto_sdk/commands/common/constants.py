@@ -907,7 +907,6 @@ class GitContentConfig:
     CONTENT_GITHUB_LINK: str
     CONTENT_GITHUB_MASTER_LINK: str
 
-    IS_GITLAB = False
     GITLAB_ID: Optional[int] = None
     BASE_RAW_GITLAB_LINK = "https://code.pan.run/api/v4/projects/{GITLAB_ID}/repository"
 
@@ -922,7 +921,7 @@ class GitContentConfig:
         else:
             self.CURRENT_REPOSITORY = repo_name
         # DO NOT USE os.path.join on URLs, it may cause errors
-        if not self.IS_GITLAB:
+        if self.GITLAB_ID is not None:
             self.CONTENT_GITHUB_LINK = urljoin(self.BASE_RAW_GITHUB_LINK, self.CURRENT_REPOSITORY)
             self.CONTENT_GITHUB_MASTER_LINK = urljoin(self.CONTENT_GITHUB_LINK, r'master')
         else:
@@ -941,7 +940,6 @@ class GitContentConfig:
                     self.GITLAB_ID = self._search_gitlab_id(repo)
                     if self.GITLAB_ID is None:
                         continue
-                    self.IS_GITLAB = True
                     return repo
         except (AttributeError, IndexError):
             pass

@@ -296,13 +296,13 @@ class ValidateManager:
             all_packs_valid.add(self.conf_json_validator.is_valid_conf_json())
 
         count = 1
-        all_packs = os.listdir(PACKS_DIR) if os.listdir(PACKS_DIR) else []
+        # Ignores local files (non-packs), such as .DS_STORE on MacOS
+        all_packs = list(filter(os.path.isdir, [os.path.join(PACKS_DIR, p) for p in os.listdir(PACKS_DIR)]))
         num_of_packs = len(all_packs)
         all_packs.sort(key=str.lower)
 
-        for pack_name in all_packs:
+        for pack_path in all_packs:
             self.completion_percentage = format((count / num_of_packs) * 100, ".2f")  # type: ignore
-            pack_path = os.path.join(PACKS_DIR, pack_name)
             all_packs_valid.add(self.run_validations_on_pack(pack_path))
             count += 1
 

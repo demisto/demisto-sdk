@@ -22,3 +22,33 @@ class JobValidator(ContentEntityValidator):
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
         return True  # todo is missing from_version okay?
+
+    def is_valid_feed_fields(self):
+        is_feed = self.current_file.get('is_feed')
+        selected_fields = self.current_file.get('selectedFeeds')
+        is_all_feeds = self.current_file.get('isAllFeeds')
+
+        if is_feed:
+            if selected_fields and is_all_feeds:
+                error_message, error_code = Errors.invalid_both_selected_and_all_feeds_in_job()
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    return False
+
+            elif selected_fields:
+                pass  # todo validate feeds somehow?
+
+            elif is_all_feeds:
+                pass  # todo anything to validate?
+
+            else:  # neither selected_fields nor is_all_fields
+                error_message, error_code = Errors.missing_field_values_in_feed_job()
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    return False
+
+        else:  # is_feed=false
+            if selected_fields or is_all_feeds:
+                error_message, error_code = Errors.unexpected_field_values_in_non_feed_job()
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    return False
+
+        return True

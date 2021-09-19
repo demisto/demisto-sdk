@@ -292,8 +292,18 @@ ERROR_CODE = {
     "invalid_from_server_version_in_pre_process_rules": {'code': "PP100", 'ui_applicable': False,
                                                          'related_field': 'fromServerVersion'},
     "invalid_incident_field_in_pre_process_rules": {'code': "PP101", 'ui_applicable': False, 'related_field': ''},
-    "invalid_from_server_version_in_job": {'code': "JB100", 'ui_applicable': False,
-                                           'related_field': 'fromServerVersion'},
+    "invalid_from_server_version_in_job": {
+        'code': "JB100", 'ui_applicable': False, 'related_field': 'fromServerVersion'
+    },
+    "invalid_both_selected_and_all_feeds_in_job": {
+        'code': "JB101", 'ui_applicable': False, 'related_field': 'isAllFields'
+    },
+    "unexpected_field_values_in_non_feed_job": {
+        'code': "JB102", 'ui_applicable': False, 'related_field': 'isFeed'
+    },
+    "missing_field_values_in_feed_job": {
+        'code': "JB103", 'ui_applicable': False, 'related_field': 'isFeed'
+    },
     "xsoar_config_file_is_not_json": {'code': "XC100", 'ui_applicable': False, 'related_field': ''},
     "xsoar_config_file_malformed": {'code': "XC101", 'ui_applicable': False, 'related_field': ''},
     "invalid_readme_image_error": {'code': "RM108", 'ui_applicable': False, 'related_field': ''},
@@ -1632,6 +1642,22 @@ class Errors:
     @error_code_decorator
     def invalid_from_server_version_in_job(version):
         return f'fromServerVersion field in Job needs to be at least 6.5.0 (found {version})'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_both_selected_and_all_feeds_in_job():
+        return f'Job cannot have non-empty selectedFeeds values when isAllFields is set to true.'
+
+    @staticmethod
+    @error_code_decorator
+    def unexpected_field_values_in_non_feed_job():
+        return f'Job cannot have non-empty selectedFeeds values or isAllFields when isFeed is set to false.'
+
+    @staticmethod
+    @error_code_decorator
+    def missing_field_values_in_feed_job():
+        return f'Job must either have non-empty selectedFeeds OR have isAllFields set to true ' \
+               f'when isFeed is set to true.'
 
     @staticmethod
     @error_code_decorator

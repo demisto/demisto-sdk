@@ -297,6 +297,15 @@ class TestGithubContentConfig:
         assert github_config._get_repository_name([]) == github_config.OFFICIAL_CONTENT_REPO_NAME
 
     def test_search_gitlab_id_valid(self, requests_mock):
+        """
+        Given:
+            A valid repo name
+        When:
+            Searching for the id of the repo
+        Then:
+            The id of the repo should be returned
+        """
+
         with open(VALID_GITLAB_RESPONSE) as f:
             gitlab_response = json.load(f)
         repo = 'content-internal-dist'
@@ -306,6 +315,15 @@ class TestGithubContentConfig:
         assert git_config._search_gitlab_id(repo) == 3606
 
     def test_search_gitlab_id_invalid(self, requests_mock):
+        """
+        Given:
+            An invalid repo name
+        When:
+            Searching for the id of the repo
+        Then:
+            None should be returned
+        """
+
         repo = "no-real-repo"
         url = f'https://code.pan.run/api/v4/projects?search={repo}'
         requests_mock.get(url, json=[])

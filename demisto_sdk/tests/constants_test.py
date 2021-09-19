@@ -245,7 +245,7 @@ DIR_LIST = [
 ]
 
 
-class TestGithubContentConfig:
+class TestGitContentConfig:
     @pytest.mark.parametrize(
         'url',
         [

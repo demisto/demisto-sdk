@@ -1879,6 +1879,8 @@ def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=
         if object_type == 'Layouts':
             if dict1.get('kind', '') != dict2.get('kind', ''):
                 return False
+            if dict1.get('typeId', '') != dict2.get('typeId', ''):
+                return False
 
         # If they have the same pack name they actually the same entity.
         # Added to support merge between two ID sets that contain the same pack.

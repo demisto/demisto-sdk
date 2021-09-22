@@ -3,8 +3,9 @@ import re
 from enum import Enum
 from functools import lru_cache, reduce
 from typing import Dict, Iterable, List, Optional
-import giturlparse
+
 import click
+import giturlparse
 # dirs
 import requests
 from git import InvalidGitRepositoryError

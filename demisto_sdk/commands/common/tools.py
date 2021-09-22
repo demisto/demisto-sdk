@@ -291,7 +291,7 @@ def get_remote_file(
     except Exception as exc:
         # Replace token secret if needed
         err_msg: str = str(exc).replace(github_token, 'XXX') if github_token else str(exc)
-        err_msg: str = err_msg.replace(gitlab_token, 'XXX') if gitlab_token else err_msg
+        err_msg = err_msg.replace(gitlab_token, 'XXX') if gitlab_token else err_msg
         if not suppress_print:
             click.secho(
                 f'Could not find the old entity file under "{git_path}".\n'

@@ -6,6 +6,7 @@ from typing import Dict, Iterable, List, Optional
 
 import click
 import giturlparse
+from urllib.parse import urlparse
 # dirs
 import requests
 from git import InvalidGitRepositoryError
@@ -919,7 +920,8 @@ class GitContentConfig:
         if not repo_name:
             try:
                 urls = list(GitUtil().repo.remote().urls)
-                self.CURRENT_REPOSITORY = self._get_repository_name(urls)
+                parsed_git = self._get_repository_properties(urls)
+                self._set_repo_properties(parsed_git)
             except (InvalidGitRepositoryError, AttributeError):  # No repository
                 self.CURRENT_REPOSITORY = self.OFFICIAL_CONTENT_REPO_NAME
         else:
@@ -932,27 +934,39 @@ class GitContentConfig:
             self.BASE_RAW_GITLAB_LINK = self.BASE_RAW_GITLAB_LINK.format(GITLAB_URL=self.GITLAB_URL,
                                                                          GITLAB_ID=self.GITLAB_ID)
 
-    def _get_repository_name(self, urls: Iterable) -> str:
+    def _get_repository_properties(self, urls: Iterable) -> Optional[giturlparse.result.GitUrlParsed]:
         """Returns the git repository of the cwd.
         if not running in a git repository, will return an empty string
         """
-        try:
-            for url in urls:
-                parsed_url = giturlparse.parse(url)
-                if 'github' in parsed_url.host:
-                    return f'{parsed_url.owner}/{parsed_url.repo}'
-                else:  # gitlab
-                    self.GITLAB_ID = self._search_gitlab_id(parsed_url.host, parsed_url.repo)
-                    if self.GITLAB_ID is None:
-                        continue
-                    self.GITLAB_URL = parsed_url.host
-                    return parsed_url.repo
-        except (AttributeError, IndexError):
-            pass
+        for url in urls:
+            parsed_git = giturlparse.parse(url)
+            if parsed_git and parsed_git.host and parsed_git.repo:
+                return parsed_git
+        return None
 
-        # default to content repo if the repo is not found
-        click.secho('Could not find the repository name - defaulting to demisto/content', fg='yellow')
-        return GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
+    def _set_repo_properties(self, parsed_git: Optional[giturlparse.result.GitUrlParsed]):
+        if parsed_git is None:
+            # default to content repo if the repo is not found
+            click.secho('Could not find the repository name - defaulting to demisto/content', fg='yellow')
+            self.CURRENT_REPOSITORY = GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
+            return
+        if parsed_git.github:
+            self.CURRENT_REPOSITORY = f'{parsed_git.owner}/{parsed_git.repo}'
+        elif parsed_git.gitlab:
+            gitlab_host = urlparse(parsed_git.url).hostname
+            gitlab_id = self._search_gitlab_id(gitlab_host, parsed_git.repo)
+            if gitlab_id is None:
+                # default to content repo if the id is not found
+                click.secho('Could not repository id in gitlab - defaulting to demisto/content', fg='yellow')
+                self.CURRENT_REPOSITORY = GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
+                return
+            self.GITLAB_ID = gitlab_id
+            self.GITLAB_URL = gitlab_host
+            self.CURRENT_REPOSITORY = parsed_git.repo
+        else:
+            # default to content repo if the id is not found
+            click.secho('Not in gitlab or github - defaulting to demisto/content', fg='yellow')
+            self.CURRENT_REPOSITORY = GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
 
     @lru_cache(maxsize=10)
     def _search_gitlab_id(self, github_hostname: str, repo: str) -> Optional[int]:

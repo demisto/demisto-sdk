@@ -247,18 +247,20 @@ DIR_LIST = [
 
 class TestGitContentConfig:
     @pytest.mark.parametrize(
-        'url',
+        'url, host, repo_name',
         [
-            'ssh://git@github.com/demisto/content-dist.git',
-            'git@github.com:demisto/content-dist.git',  # clone using github ssh example
-            'https://github.com/demisto/content-dist.git',  # clone using github https example
-            'https://github.com/demisto/content-dist',
-            'https://code.pan.run/xsoar/content-dist',  # gitlab
-            'https://code.pan.run/xsoar/content-dist.git',
-            'https://gitlab-ci-token:token@code.pan.run/xsoar/content-dist.git'
+            ('ssh://git@github.com/demisto/content-dist.git', 'github.com', 'demisto/content-dist'),
+            ('git@github.com:demisto/content-dist.git', 'github.com', 'demisto/content-dist'),
+            # clone using github ssh example
+            ('https://github.com/demisto/content-dist.git', 'github.com', 'demisto/content-dist'),
+            # clone using github https example
+            ('https://github.com/demisto/content-dist', 'github.com', 'demisto/content-dist'),
+            ('https://code.pan.run/xsoar/content-dist', 'code.pan.run', 'content-dist'),  # gitlab
+            ('https://code.pan.run/xsoar/content-dist.git', 'code.pan.run', 'content-dist'),
+            ('https://gitlab-ci-token:token@code.pan.run/xsoar/content-dist.git', 'code.pan.run', 'content-dist')
         ]
     )
-    def test_get_repo_name(self, mocker, url: str):
+    def test_get_properties(self, mocker, url: str, host: str, repo_name):
         """
         Given:
             No repository (not running in git)
@@ -267,17 +269,16 @@ class TestGitContentConfig:
         Then:
             Validate the correct repo got back (demisto/content)
         """
+        mocker.patch.object(constants.GitContentConfig,
+                            '_search_gitlab_id',
+                            return_value=0)
         git_config = constants.GitContentConfig()
-        if 'github' in url:
-            assert git_config._get_repository_name([url]) == 'demisto/content-dist'
-        elif 'code.pan.run' in url:
-            # ignore this function, but don't return None so it will get a valid value
-            mocker.patch.object(constants.GitContentConfig,
-                                '_search_gitlab_id',
-                                return_value=0)
-            assert git_config._get_repository_name([url]) == 'content-dist'
-        else:
-            assert False, "Supported only github and gitlab"
+        parsed_git = git_config._get_repository_properties([url])
+        assert host in parsed_git.host  # it parse the domain with user and password
+        git_config._set_repo_properties(parsed_git)
+        assert git_config.CURRENT_REPOSITORY == repo_name
+        if 'code.pan.run' in url:
+            assert git_config.GITLAB_URL == 'code.pan.run'
 
     def test_get_repo_name_gitlab_invalid(self, mocker):
         """
@@ -294,7 +295,9 @@ class TestGitContentConfig:
                             '_search_gitlab_id',
                             return_value=None)
         # for invalid response should return the official content repo
-        assert git_config._get_repository_name([url]) == git_config.OFFICIAL_CONTENT_REPO_NAME
+        parsed_git = git_config._get_repository_properties([url])
+        git_config._set_repo_properties(parsed_git)
+        assert git_config.CURRENT_REPOSITORY == constants.GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
 
     def test_get_repo_name_empty_case(self):
         """
@@ -305,8 +308,10 @@ class TestGitContentConfig:
         Then:
             Validate the correct repo got back - demisto/content
         """
-        github_config = constants.GitContentConfig()
-        assert github_config._get_repository_name([]) == github_config.OFFICIAL_CONTENT_REPO_NAME
+        git_config = constants.GitContentConfig()
+        parsed_git = git_config._get_repository_properties([])
+        git_config._set_repo_properties(parsed_git)
+        assert git_config.CURRENT_REPOSITORY == constants.GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
 
     def test_search_gitlab_id_valid(self, requests_mock):
         """

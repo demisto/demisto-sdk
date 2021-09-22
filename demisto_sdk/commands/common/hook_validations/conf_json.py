@@ -78,15 +78,16 @@ class ConfJsonValidator(BaseValidator):
             return False
         return True
 
-    def is_valid_file_in_conf_json(self, current_file, file_type, file_path):
+    def is_valid_file_in_conf_json(self, current_file, file_type, file_path, id_test_list):
         """Check if the file is valid in the conf.json"""
         entity_id = _get_file_id(file_type.value, current_file)
         if file_type in {FileType.INTEGRATION, FileType.BETA_INTEGRATION}:
-            return self.integration_has_unskipped_test_playbook(current_file, entity_id, file_path)
+            return self.integration_has_unskipped_test_playbook(current_file, entity_id, file_path, id_test_list)
         if file_type == FileType.SCRIPT:
             return self.has_unskipped_test_playbook(current_file=current_file,
                                                     entity_id=entity_id,
-                                                    file_path=file_path)
+                                                    file_path=file_path,
+                                                    test_playbook_ids=id_test_list)
         return True
 
     def has_unskipped_test_playbook(self, current_file, entity_id, file_path, test_playbook_ids: list = []):
@@ -116,7 +117,7 @@ class ConfJsonValidator(BaseValidator):
             all_test_playbook_ids.extend(current_file.get('tests', []))
 
         for test_playbook_id in set(all_test_playbook_ids):
-            if skipped_tests and test_playbook_id in skipped_tests:
+            if (skipped_tests and test_playbook_id in skipped_tests) or 'No test' in test_playbook_id:
                 test_playbooks_unskip_status[test_playbook_id] = False
             else:
                 test_playbooks_unskip_status[test_playbook_id] = True
@@ -127,9 +128,9 @@ class ConfJsonValidator(BaseValidator):
                 self._is_valid = False
         return self._is_valid
 
-    def integration_has_unskipped_test_playbook(self, integration_data, integration_id, file_path):
+    def integration_has_unskipped_test_playbook(self, integration_data, integration_id, file_path, id_test_list):
         """Validate there is at least one unskipped test playbook."""
-        test_playbook_ids = []
+        test_playbook_ids = id_test_list
         conf_tests = self.conf_data.get('tests', [])
         for test in conf_tests:
             if 'integrations' in test:

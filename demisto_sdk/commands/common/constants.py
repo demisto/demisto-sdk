@@ -527,6 +527,7 @@ API_MODULE_REGEXES = [
 
 ID_IN_COMMONFIELDS = [  # entities in which 'id' key is under 'commonfields'
     'integration',
+    'betaintegration',
     'script'
 ]
 ID_IN_ROOT = [  # entities in which 'id' key is in the root

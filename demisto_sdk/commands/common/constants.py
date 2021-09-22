@@ -911,7 +911,7 @@ class GitContentConfig:
     CONTENT_GITHUB_LINK: str
     CONTENT_GITHUB_MASTER_LINK: str
 
-    GITLAB_URL: Optional[str] = None
+    GITLAB_HOST: Optional[str] = None
     GITLAB_ID: Optional[int] = None
     BASE_RAW_GITLAB_LINK = "https://{GITLAB_URL}/api/v4/projects/{GITLAB_ID}/repository"
 
@@ -921,18 +921,15 @@ class GitContentConfig:
             try:
                 urls = list(GitUtil().repo.remote().urls)
                 parsed_git = self._get_repository_properties(urls)
-                self._set_repo_properties(parsed_git)
+                self._set_repo_config(parsed_git)
             except (InvalidGitRepositoryError, AttributeError):  # No repository
                 self.CURRENT_REPOSITORY = self.OFFICIAL_CONTENT_REPO_NAME
         else:
             self.CURRENT_REPOSITORY = repo_name
-        # DO NOT USE os.path.join on URLs, it may cause errors
-        if self.GITLAB_ID is None:
+        if not self.GITLAB_ID:
+            # DO NOT USE os.path.join on URLs, it may cause errors
             self.CONTENT_GITHUB_LINK = urljoin(self.BASE_RAW_GITHUB_LINK, self.CURRENT_REPOSITORY)
             self.CONTENT_GITHUB_MASTER_LINK = urljoin(self.CONTENT_GITHUB_LINK, r'master')
-        else:
-            self.BASE_RAW_GITLAB_LINK = self.BASE_RAW_GITLAB_LINK.format(GITLAB_URL=self.GITLAB_URL,
-                                                                         GITLAB_ID=self.GITLAB_ID)
 
     def _get_repository_properties(self, urls: Iterable) -> Optional[giturlparse.result.GitUrlParsed]:
         """Returns the git repository of the cwd.
@@ -944,7 +941,7 @@ class GitContentConfig:
                 return parsed_git
         return None
 
-    def _set_repo_properties(self, parsed_git: Optional[giturlparse.result.GitUrlParsed]):
+    def _set_repo_config(self, parsed_git: Optional[giturlparse.result.GitUrlParsed]):
         if parsed_git is None:
             # default to content repo if the repo is not found
             click.secho('Could not find the repository name - defaulting to demisto/content', fg='yellow')
@@ -960,9 +957,12 @@ class GitContentConfig:
                 click.secho('Could not repository id in gitlab - defaulting to demisto/content', fg='yellow')
                 self.CURRENT_REPOSITORY = GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
                 return
+            self.GITLAB_HOST = gitlab_host
             self.GITLAB_ID = gitlab_id
-            self.GITLAB_URL = gitlab_host
             self.CURRENT_REPOSITORY = parsed_git.repo
+            self.BASE_RAW_GITLAB_LINK = self.BASE_RAW_GITLAB_LINK.format(GITLAB_URL=gitlab_host,
+                                                                         GITLAB_ID=gitlab_id)
+
         else:
             # default to content repo if the id is not found
             click.secho('Not in gitlab or github - defaulting to demisto/content', fg='yellow')

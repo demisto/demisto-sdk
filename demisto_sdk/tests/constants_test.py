@@ -275,10 +275,10 @@ class TestGitContentConfig:
         git_config = constants.GitContentConfig()
         parsed_git = git_config._get_repository_properties([url])
         assert host in parsed_git.host  # it parse the domain with user and password
-        git_config._set_repo_properties(parsed_git)
+        git_config._set_repo_config(parsed_git)
         assert git_config.CURRENT_REPOSITORY == repo_name
         if 'code.pan.run' in url:
-            assert git_config.GITLAB_URL == 'code.pan.run'
+            assert git_config.GITLAB_HOST == 'code.pan.run'
 
     def test_get_repo_name_gitlab_invalid(self, mocker):
         """
@@ -296,7 +296,7 @@ class TestGitContentConfig:
                             return_value=None)
         # for invalid response should return the official content repo
         parsed_git = git_config._get_repository_properties([url])
-        git_config._set_repo_properties(parsed_git)
+        git_config._set_repo_config(parsed_git)
         assert git_config.CURRENT_REPOSITORY == constants.GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
 
     def test_get_repo_name_empty_case(self):
@@ -310,7 +310,7 @@ class TestGitContentConfig:
         """
         git_config = constants.GitContentConfig()
         parsed_git = git_config._get_repository_properties([])
-        git_config._set_repo_properties(parsed_git)
+        git_config._set_repo_config(parsed_git)
         assert git_config.CURRENT_REPOSITORY == constants.GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
 
     def test_search_gitlab_id_valid(self, requests_mock):

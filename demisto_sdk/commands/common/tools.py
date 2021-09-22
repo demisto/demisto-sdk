@@ -227,7 +227,7 @@ def get_remote_file(
 
     """
     git_config = GitContentConfig(github_repo)
-    if git_config.GITLAB_ID is not None:
+    if git_config.GITLAB_ID:
         full_file_path_quote_plus = urllib.parse.quote_plus(full_file_path)
         git_path = urljoin(git_config.BASE_RAW_GITLAB_LINK, 'files', full_file_path_quote_plus, 'raw')
         tag = tag.replace('origin/', '')

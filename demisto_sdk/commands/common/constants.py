@@ -913,7 +913,7 @@ class GitContentConfig:
 
     GITLAB_HOST: Optional[str] = None
     GITLAB_ID: Optional[int] = None
-    BASE_RAW_GITLAB_LINK = "https://{GITLAB_URL}/api/v4/projects/{GITLAB_ID}/repository"
+    BASE_RAW_GITLAB_LINK = "https://{GITLAB_HOST}/api/v4/projects/{GITLAB_ID}/repository"
 
     def __init__(self, repo_name: Optional[str] = None):
         self.Credentials = GitCredentials()
@@ -960,7 +960,7 @@ class GitContentConfig:
             self.GITLAB_HOST = gitlab_host
             self.GITLAB_ID = gitlab_id
             self.CURRENT_REPOSITORY = parsed_git.repo
-            self.BASE_RAW_GITLAB_LINK = self.BASE_RAW_GITLAB_LINK.format(GITLAB_URL=gitlab_host,
+            self.BASE_RAW_GITLAB_LINK = self.BASE_RAW_GITLAB_LINK.format(GITLAB_HOST=gitlab_host,
                                                                          GITLAB_ID=gitlab_id)
 
         else:

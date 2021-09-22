@@ -23,6 +23,8 @@ from demisto_sdk.commands.format.update_indicatortype import \
     IndicatorTypeJSONFormat
 from demisto_sdk.commands.format.update_layout import LayoutBaseFormat
 from demisto_sdk.commands.format.update_mapper import MapperJSONFormat
+from demisto_sdk.commands.format.update_pre_process_rules import \
+    PreProcessRulesFormat
 from demisto_sdk.commands.format.update_report import ReportJSONFormat
 from demisto_sdk.commands.format.update_widget import WidgetJSONFormat
 from demisto_sdk.tests.constants_test import (
@@ -35,16 +37,19 @@ from demisto_sdk.tests.constants_test import (
     DESTINATION_FORMAT_INDICATORTYPE_COPY, DESTINATION_FORMAT_LAYOUT_COPY,
     DESTINATION_FORMAT_LAYOUT_INVALID_NAME_COPY,
     DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY, DESTINATION_FORMAT_MAPPER,
+    DESTINATION_FORMAT_PRE_PROCESS_RULES_COPY,
+    DESTINATION_FORMAT_PRE_PROCESS_RULES_INVALID_NAME_COPY,
     DESTINATION_FORMAT_REPORT, DESTINATION_FORMAT_WIDGET, INCIDENTFIELD_PATH,
     INCIDENTTYPE_PATH, INDICATORFIELD_PATH, INDICATORTYPE_PATH,
     INVALID_OUTPUT_PATH, LAYOUT_PATH, LAYOUT_SCHEMA_PATH,
     LAYOUTS_CONTAINER_PATH, LAYOUTS_CONTAINER_SCHEMA_PATH, MAPPER_PATH,
-    MAPPER_SCHEMA_PATH, REPORT_PATH, SOURCE_FORMAT_CLASSIFIER,
-    SOURCE_FORMAT_CLASSIFIER_5_9_9, SOURCE_FORMAT_DASHBOARD_COPY,
-    SOURCE_FORMAT_INCIDENTFIELD_COPY, SOURCE_FORMAT_INCIDENTTYPE_COPY,
-    SOURCE_FORMAT_INDICATORFIELD_COPY, SOURCE_FORMAT_INDICATORTYPE_COPY,
-    SOURCE_FORMAT_LAYOUT_COPY, SOURCE_FORMAT_LAYOUTS_CONTAINER,
-    SOURCE_FORMAT_LAYOUTS_CONTAINER_COPY, SOURCE_FORMAT_MAPPER,
+    MAPPER_SCHEMA_PATH, PRE_PROCESS_RULES_PATH, PRE_PROCESS_RULES_SCHEMA_PATH,
+    REPORT_PATH, SOURCE_FORMAT_CLASSIFIER, SOURCE_FORMAT_CLASSIFIER_5_9_9,
+    SOURCE_FORMAT_DASHBOARD_COPY, SOURCE_FORMAT_INCIDENTFIELD_COPY,
+    SOURCE_FORMAT_INCIDENTTYPE_COPY, SOURCE_FORMAT_INDICATORFIELD_COPY,
+    SOURCE_FORMAT_INDICATORTYPE_COPY, SOURCE_FORMAT_LAYOUT_COPY,
+    SOURCE_FORMAT_LAYOUTS_CONTAINER, SOURCE_FORMAT_LAYOUTS_CONTAINER_COPY,
+    SOURCE_FORMAT_MAPPER, SOURCE_FORMAT_PRE_PROCESS_RULES_COPY,
     SOURCE_FORMAT_REPORT, SOURCE_FORMAT_WIDGET, WIDGET_PATH)
 
 
@@ -638,6 +643,50 @@ class TestFormattingLayout:
         invalid_path_layouts_formatter.layout__set_output_path()
         assert invalid_output_path != invalid_path_layouts_formatter.output_file
         assert expected_path == invalid_path_layouts_formatter.output_file
+
+
+class TestFormattingPreProcessRule:
+
+    @pytest.fixture(autouse=True)
+    def pre_process_rules_copy(self):
+        os.makedirs(PRE_PROCESS_RULES_PATH, exist_ok=True)
+        yield shutil.copyfile(SOURCE_FORMAT_PRE_PROCESS_RULES_COPY, DESTINATION_FORMAT_PRE_PROCESS_RULES_COPY)
+        os.remove(DESTINATION_FORMAT_PRE_PROCESS_RULES_COPY)
+        os.rmdir(PRE_PROCESS_RULES_PATH)
+
+    @pytest.fixture(autouse=True)
+    def pre_process_rules_formatter(self, pre_process_rules_copy):
+        yield PreProcessRulesFormat(input=pre_process_rules_copy, output=DESTINATION_FORMAT_PRE_PROCESS_RULES_COPY)
+
+    @pytest.fixture(autouse=True)
+    def invalid_path_pre_process_rules_formatter(self, pre_process_rules_copy):
+        yield PreProcessRulesFormat(input=pre_process_rules_copy, output=DESTINATION_FORMAT_PRE_PROCESS_RULES_INVALID_NAME_COPY)
+
+    def test_remove_unnecessary_keys(self, pre_process_rules_formatter):
+        """
+        Given
+            - A pre_process_rule file with fields that dont exit in pre_process_rule schema.
+        When
+            - Run format on pre_process_rule file
+        Then
+            - Ensure that unnecessary keys were removed
+        """
+        pre_process_rules_formatter.schema_path = PRE_PROCESS_RULES_SCHEMA_PATH
+        pre_process_rules_formatter.remove_unnecessary_keys()
+        for field in ['quickView', 'sortValues', 'someFieldName']:
+            assert field not in pre_process_rules_formatter.data
+
+    def test_set_description(self, pre_process_rules_formatter):
+        """
+        Given
+            - A pre_process_rule file without a description field
+        When
+            - Run format on pre_process_rule file
+        Then
+            - Ensure that description field was updated successfully with '' value
+        """
+        pre_process_rules_formatter.set_description()
+        assert 'description' in pre_process_rules_formatter.data
 
 
 class TestFormattingClassifier:

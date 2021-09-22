@@ -153,6 +153,7 @@ ERROR_CODE = {
     "missing_release_notes_entry": {'code': "RN107", 'ui_applicable': False, 'related_field': ''},
     "added_release_notes_for_new_pack": {'code': "RN108", 'ui_applicable': False, 'related_field': ''},
     "modified_existing_release_notes": {'code': "RN109", 'ui_applicable': False, 'related_field': ''},
+    "release_notes_config_file_missing_release_notes": {'code': "RN110", 'ui_applicable': False, 'related_field': ''},
     "playbook_cant_have_rolename": {'code': "PB100", 'ui_applicable': True, 'related_field': 'rolename'},
     "playbook_unreachable_condition": {'code': "PB101", 'ui_applicable': True, 'related_field': 'tasks'},
     "playbook_unhandled_condition": {'code': "PB102", 'ui_applicable': True, 'related_field': 'conditions'},
@@ -198,6 +199,7 @@ ERROR_CODE = {
     "indicator_field_type_grid_minimal_version": {'code': "IF112", 'ui_applicable': False,
                                                   'related_field': 'fromVersion'},
     "invalid_incident_field_prefix": {'code': "IF113", 'ui_applicable': False, 'related_field': 'name'},
+    "incident_field_non_existent_script_id": {'code': "IF114", 'ui_applicable': False, 'related_field': ''},
     "incident_type_integer_field": {'code': "IT100", 'ui_applicable': True, 'related_field': ''},
     "incident_type_invalid_playbook_id_field": {'code': "IT101", 'ui_applicable': False, 'related_field': 'playbookId'},
     "incident_type_auto_extract_fields_invalid": {'code': "IT102", 'ui_applicable': False,
@@ -285,11 +287,17 @@ ERROR_CODE = {
     "invalid_file_path_layout": {'code': "LO102", 'ui_applicable': False, 'related_field': ''},
     "invalid_file_path_layoutscontainer": {'code': "LO103", 'ui_applicable': False, 'related_field': ''},
     "invalid_incident_field_in_layout": {'code': "LO104", 'ui_applicable': False, 'related_field': ''},
+    "layouts_container_non_existent_script_id": {'code': "LO105", 'ui_applicable': False, 'related_field': ''},
+    "layout_non_existent_script_id": {'code': "LO106", 'ui_applicable': False, 'related_field': ''},
+    "invalid_from_server_version_in_pre_process_rules": {'code': "PP100", 'ui_applicable': False, 'related_field': 'fromServerVersion'},
+    "invalid_incident_field_in_pre_process_rules": {'code': "PP101", 'ui_applicable': False, 'related_field': ''},
     "xsoar_config_file_is_not_json": {'code': "XC100", 'ui_applicable': False, 'related_field': ''},
     "xsoar_config_file_malformed": {'code': "XC101", 'ui_applicable': False, 'related_field': ''},
     "invalid_readme_image_error": {'code': "RM108", 'ui_applicable': False, 'related_field': ''},
     "invalid_generic_field_group_value": {'code': "GF100", 'ui_applicable': False, 'related_field': 'group'},
-    "invalid_generic_field_id": {'code': "GF101", 'ui_applicable': False, 'related_field': 'id'}
+    "invalid_generic_field_id": {'code': "GF101", 'ui_applicable': False, 'related_field': 'id'},
+    "non_default_additional_info": {'code': "IN142", 'ui_applicable': True, 'related_field': 'additionalinfo'},
+    "missing_default_additional_info": {'code': "IN143", 'ui_applicable': True, 'related_field': 'additionalinfo'}
 }
 
 
@@ -994,6 +1002,12 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def release_notes_config_file_missing_release_notes(config_rn_path: str):
+        return f'Release notes config file {config_rn_path} is missing corresponding release notes file.\n' \
+               f'''Please add release notes file: {config_rn_path.replace('json', 'md')}'''
+
+    @staticmethod
+    @error_code_decorator
     def playbook_cant_have_rolename():
         return "Playbook can not have a rolename."
 
@@ -1239,6 +1253,30 @@ class Errors:
                f"1 - The right playbook name is set and the spelling is correct.\n" \
                f"2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
                f" rerun the command."
+
+    @staticmethod
+    @error_code_decorator
+    def incident_field_non_existent_script_id(incident_field, scripts):
+        return f"In incident field {incident_field} the following scripts were not found in the id_set.json file:" \
+               f" {scripts}"
+
+    @staticmethod
+    @error_code_decorator
+    def layouts_container_non_existent_script_id(layouts_container, scripts):
+        return f"In layouts container {layouts_container} the following scripts were not found in the id_set.json " \
+               f"file: {scripts}"
+
+    @staticmethod
+    @error_code_decorator
+    def layout_non_existent_script_id(layout, scripts):
+        return f"In layout {layout} the following scripts were not found in the id_set.json file: {scripts}"
+
+    @staticmethod
+    def suggest_fix_non_existent_script_id() -> str:
+        return "Please make sure:\n" \
+               "1 - The right script name is set and the spelling is correct.\n" \
+               "2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
+               " rerun the command with the --create-id-set option."
 
     @staticmethod
     @error_code_decorator
@@ -1591,6 +1629,25 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def invalid_from_server_version_in_pre_process_rules(version_field):
+        return f'{version_field} field in Pre Process Rule needs to be at least 6.5.0'
+
+    @staticmethod
+    @error_code_decorator
+    def unknown_fields_in_pre_process_rules(fields_names: str):
+        return f'Unknown field(s) in Pre Process Rule: {fields_names}'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_incident_field_in_pre_process_rules(invalid_inc_fields_list):
+        return f"The Pre Process Rules contains incident fields that do not exist in the content: {invalid_inc_fields_list}.\n" \
+               "Please make sure:\n" \
+               "1 - The right incident field is set and the spelling is correct.\n" \
+               "2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
+               " rerun the command."
+
+    @staticmethod
+    @error_code_decorator
     def invalid_incident_field_in_layout(invalid_inc_fields_list):
         return f"The layout contains incident fields that do not exist in the content: {invalid_inc_fields_list}.\n" \
                "Please make sure:\n" \
@@ -1721,10 +1778,11 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def all_entity_test_playbooks_are_skipped(entity_id):
-        return f"All test playbooks for {entity_id} in this pack are currently skipped. " \
-               f"Please unskip at least one of the relevant test playbooks.\n " \
-               f"You can do this by deleting the line relevant to one of the test playbooks " \
-               f"in the 'skipped_tests' section inside the conf.json file and deal " \
+        return f"Either {entity_id} does not have any test playbooks or that all test playbooks in this " \
+               f"pack are currently skipped.\n" \
+               f"Please create a test playbook or un-skip at least one of the relevant test playbooks.\n " \
+               f"You can un-skip a playbook by deleting the line relevant to one of the test playbooks from " \
+               f"the 'skipped_tests' section inside the conf.json file and deal " \
                f"with the matching issue,\n  or create a new active test playbook " \
                f"and add the id to the 'tests' field in the yml."
 
@@ -1836,3 +1894,13 @@ class Errors:
     @error_code_decorator
     def spaces_in_the_end_of_name(name: str):
         return f'Content item name "{name}" should not have trailing spaces. Please remove.'
+
+    @staticmethod
+    @error_code_decorator
+    def non_default_additional_info(params: List[str]):
+        return f'The additionalinfo of params {params} is not the default value, please consider changing it.'
+
+    @staticmethod
+    @error_code_decorator
+    def missing_default_additional_info(params: List[str]):
+        return f'The additionalinfo of params {params} is empty.'

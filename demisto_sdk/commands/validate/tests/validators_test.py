@@ -627,7 +627,7 @@ class TestValidators:
     def test_create_ignored_errors_list(self):
         validate_manager = ValidateManager()
         errors_to_check = ["IN", "SC", "CJ", "DA", "DB", "DO", "ID", "DS", "IM", "IF", "IT", "RN", "RM", "PA", "PB",
-                           "WD", "RP", "BA100", "BC100", "ST", "CL", "MP", "LO", "XC", "GF"]
+                           "WD", "RP", "BA100", "BC100", "ST", "CL", "MP", "LO", "XC", "GF", "PP"]
         ignored_list = validate_manager.create_ignored_errors_list(errors_to_check)
         assert ignored_list == ["BA101", "BA102", "BA103", "BA104", "BA105", "BA106", "BA107", "BA108", "BA109",
                                 "BA110", 'BA111', "BA112", "BA113", "BC101", "BC102", "BC103", "BC104"]
@@ -670,7 +670,7 @@ class TestValidators:
                 - return a False
         """
         files_path = os.path.normpath(
-            os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
+            os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files', 'Packs'))
         test_file = os.path.join(files_path, 'CortexXDR',
                                  'Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR.yml')
         validate_manager = ValidateManager()
@@ -1008,6 +1008,24 @@ class TestValidators:
         validate_manager = ValidateManager(skip_conf_json=True)
         validate_manager.new_packs = {'CortexXDR'}
         assert validate_manager.validate_release_notes(file_path, {file_path}, modified_files, None, False) is False
+
+    def test_run_validations_on_file_release_notes_config(self, pack):
+        """
+        Sanity test for running validation on RN config file
+
+        Given:
+        - Valid RN config file.
+
+        When:
+        - Checking if file is valid.
+
+        Then:
+        - Ensure true is returned.
+        """
+        rn = pack.create_release_notes('1_0_1', is_bc=True)
+        rn_config_path: str = str(rn.path).replace('md', 'json')
+        validate_manager: ValidateManager = ValidateManager()
+        assert validate_manager.run_validations_on_file(rn_config_path, list())
 
     @pytest.mark.parametrize('answer, integration_id', [(True, 'MyIntegration'), (False, 'MyIntegration  ')])
     def test_is_there_spaces_in_the_end_of_id_yml(self, pack: Pack, answer, integration_id):

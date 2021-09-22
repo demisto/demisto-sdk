@@ -3,7 +3,7 @@ import re
 from enum import Enum
 from functools import lru_cache, reduce
 from typing import Dict, Iterable, List, Optional
-
+import giturlparse
 import click
 # dirs
 import requests
@@ -882,10 +882,12 @@ def urljoin(*args: str):
 class GitCredentials:
     ENV_GITHUB_TOKEN_NAME = 'DEMISTO_SDK_GITHUB_TOKEN'
     ENV_GITLAB_TOKEN_NAME = 'DEMISTO_SDK_GITLAB_TOKEN'
-    TOKEN: Optional[str]
+    GITHUB_TOKEN: Optional[str]
+    GITLAB_TOKEN: Optional[str]
 
     def __init__(self):
-        self.TOKEN = os.getenv(self.ENV_GITHUB_TOKEN_NAME) or os.getenv(self.ENV_GITLAB_TOKEN_NAME)
+        self.GITHUB_TOKEN = os.getenv(self.ENV_GITHUB_TOKEN_NAME)
+        self.GITLAB_TOKEN = os.getenv(self.ENV_GITLAB_TOKEN_NAME)
 
 
 class GitContentConfig:
@@ -907,8 +909,9 @@ class GitContentConfig:
     CONTENT_GITHUB_LINK: str
     CONTENT_GITHUB_MASTER_LINK: str
 
+    GITLAB_URL: Optional[str] = None
     GITLAB_ID: Optional[int] = None
-    BASE_RAW_GITLAB_LINK = "https://code.pan.run/api/v4/projects/{GITLAB_ID}/repository"
+    BASE_RAW_GITLAB_LINK = "https://{GITLAB_URL}/api/v4/projects/{GITLAB_ID}/repository"
 
     def __init__(self, repo_name: Optional[str] = None):
         self.Credentials = GitCredentials()
@@ -925,7 +928,8 @@ class GitContentConfig:
             self.CONTENT_GITHUB_LINK = urljoin(self.BASE_RAW_GITHUB_LINK, self.CURRENT_REPOSITORY)
             self.CONTENT_GITHUB_MASTER_LINK = urljoin(self.CONTENT_GITHUB_LINK, r'master')
         else:
-            self.BASE_RAW_GITLAB_LINK = self.BASE_RAW_GITLAB_LINK.format(GITLAB_ID=self.GITLAB_ID)
+            self.BASE_RAW_GITLAB_LINK = self.BASE_RAW_GITLAB_LINK.format(GITLAB_URL=self.GITLAB_URL,
+                                                                         GITLAB_ID=self.GITLAB_ID)
 
     def _get_repository_name(self, urls: Iterable) -> str:
         """Returns the git repository of the cwd.
@@ -933,14 +937,15 @@ class GitContentConfig:
         """
         try:
             for url in urls:
-                if 'github' in url:
-                    return re.findall(r'.com[/:](.*)', url)[0].replace('.git', '')
+                parsed_url = giturlparse.parse(url)
+                if 'github' in parsed_url.host:
+                    return f'{parsed_url.owner}/{parsed_url.repo}'
                 else:  # gitlab
-                    repo = re.findall(r'code\.pan\.run/xsoar[/:](.*)', url)[0].replace('.git', '')
-                    self.GITLAB_ID = self._search_gitlab_id(repo)
+                    self.GITLAB_ID = self._search_gitlab_id(parsed_url.host, parsed_url.repo)
                     if self.GITLAB_ID is None:
                         continue
-                    return repo
+                    self.GITLAB_URL = parsed_url.host
+                    return parsed_url.repo
         except (AttributeError, IndexError):
             pass
 
@@ -948,11 +953,11 @@ class GitContentConfig:
         click.secho('Could not find the repository name - defaulting to demisto/content', fg='yellow')
         return GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
 
-    @lru_cache(maxsize=128)
-    def _search_gitlab_id(self, repo: str) -> Optional[int]:
-        res = requests.get("https://code.pan.run/api/v4/projects",
+    @lru_cache(maxsize=10)
+    def _search_gitlab_id(self, github_hostname: str, repo: str) -> Optional[int]:
+        res = requests.get(f"https://{github_hostname}/api/v4/projects",
                            params={'search': repo},
-                           headers={'PRIVATE-TOKEN': self.Credentials.TOKEN},
+                           headers={'PRIVATE-TOKEN': self.Credentials.GITHUB_TOKEN},
                            timeout=10,
                            verify=False)
         res.raise_for_status()

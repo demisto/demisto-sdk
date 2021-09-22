@@ -321,10 +321,11 @@ class TestGitContentConfig:
         with open(VALID_GITLAB_RESPONSE) as f:
             gitlab_response = json.load(f)
         repo = 'content-internal-dist'
-        url = f'https://code.pan.run/api/v4/projects?search={repo}'
+        host = 'code.pan.run'
+        url = f'https://{host}/api/v4/projects?search={repo}'
         requests_mock.get(url, json=gitlab_response)
         git_config = constants.GitContentConfig()
-        assert git_config._search_gitlab_id(repo) == 3606
+        assert git_config._search_gitlab_id(host, repo) == 3606
 
     def test_search_gitlab_id_invalid(self, requests_mock):
         """
@@ -337,7 +338,8 @@ class TestGitContentConfig:
         """
 
         repo = "no-real-repo"
+        host = 'code.pan.run'
         url = f'https://code.pan.run/api/v4/projects?search={repo}'
         requests_mock.get(url, json=[])
         git_config = constants.GitContentConfig()
-        assert git_config._search_gitlab_id(repo) is None
+        assert git_config._search_gitlab_id(host, repo) is None

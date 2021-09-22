@@ -238,29 +238,31 @@ def get_remote_file(
 
     local_content = '{}'
 
-    git_token: Optional[str] = None
+    github_token: Optional[str] = None
+    gitlab_token: Optional[str] = None
     try:
         external_repo = is_external_repository()
         if external_repo:
-            git_token = git_config.Credentials.TOKEN
-            if git_token:
-                if git_config.GITLAB_ID is not None:
-                    res = requests.get(git_path,
-                                       params={'ref': tag},
-                                       headers={'PRIVATE-TOKEN': git_token},
-                                       verify=False)
-                else:
-                    res = requests.get(git_path, verify=False, timeout=10, headers={
-                        'Authorization': f"Bearer {git_token}",
-                        'Accept': f'application/vnd.github.VERSION.raw',
-                    })  # Sometime we need headers
-                    if not res.ok:  # sometime we need param token
-                        res = requests.get(
-                            git_path,
-                            verify=False,
-                            timeout=10,
-                            params={'token': git_token}
-                        )
+            github_token = git_config.Credentials.GITHUB_TOKEN
+            gitlab_token = git_config.Credentials.GITLAB_TOKEN
+            if gitlab_token and git_config.GITLAB_ID:
+                res = requests.get(git_path,
+                                   params={'ref': tag},
+                                   headers={'PRIVATE-TOKEN': gitlab_token},
+                                   verify=False)
+                res.raise_for_status()
+            elif github_token:
+                res = requests.get(git_path, verify=False, timeout=10, headers={
+                    'Authorization': f"Bearer {github_token}",
+                    'Accept': f'application/vnd.github.VERSION.raw',
+                })  # Sometime we need headers
+                if not res.ok:  # sometime we need param token
+                    res = requests.get(
+                        git_path,
+                        verify=False,
+                        timeout=10,
+                        params={'token': github_token}
+                    )
                 res.raise_for_status()
             else:
                 # If no token defined, maybe it's a open repo. 🤷‍♀️
@@ -288,7 +290,8 @@ def get_remote_file(
             res.raise_for_status()
     except Exception as exc:
         # Replace token secret if needed
-        err_msg: str = str(exc).replace(git_token, 'XXX') if git_token else str(exc)
+        err_msg: str = str(exc).replace(github_token, 'XXX') if github_token else str(exc)
+        err_msg: str = err_msg.replace(gitlab_token, 'XXX') if gitlab_token else err_msg
         if not suppress_print:
             click.secho(
                 f'Could not find the old entity file under "{git_path}".\n'

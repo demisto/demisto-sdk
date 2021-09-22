@@ -3,10 +3,10 @@ import re
 from enum import Enum
 from functools import lru_cache, reduce
 from typing import Dict, Iterable, List, Optional
+from urllib.parse import urlparse
 
 import click
 import giturlparse
-from urllib.parse import urlparse
 # dirs
 import requests
 from git import InvalidGitRepositoryError

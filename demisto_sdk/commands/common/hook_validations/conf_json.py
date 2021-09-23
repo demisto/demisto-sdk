@@ -78,7 +78,7 @@ class ConfJsonValidator(BaseValidator):
             return False
         return True
 
-    def is_valid_file_in_conf_json(self, current_file, file_type, file_path, id_test_list):
+    def is_valid_file_in_conf_json(self, current_file, file_type, file_path, id_test_list: list = []):
         """Check if the file is valid in the conf.json"""
         entity_id = _get_file_id(file_type.value, current_file)
         if file_type in {FileType.INTEGRATION, FileType.BETA_INTEGRATION}:

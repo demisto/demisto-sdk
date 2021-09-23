@@ -1250,7 +1250,8 @@ def test_quite_bc_flag(repo):
 
 
 data_test_filted_dirs_in_format_file_path = [
-    ('Packs/PackName/Integrations/IntegrationName/IntegrationName.yml', 'Packs/PackName/Integrations/IntegrationName/IntegrationName.yml'),
+    ('Packs/PackName/Integrations/IntegrationName/IntegrationName.yml',
+     'Packs/PackName/Integrations/IntegrationName/IntegrationName.yml'),
     ('.circleci/config.yml', None),
     ('.github/workflows/check-contribution-form-filled.yml', None),
     ('.gitlab/ci/.gitlab-ci.yml', None),

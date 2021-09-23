@@ -715,7 +715,7 @@ class IDSetValidations(BaseValidator):
 
     def get_tests_from_id_set_for_file(self, file_type, file_content):
         """
-        for a given file (integration or script) return all test playbooks that use the script\ integration commands
+        for a given file (integration or script) return all test playbooks that use the script or integration commands
         Args:
             file_type: the type of file
             file_content: the content of the file

@@ -1090,11 +1090,6 @@ class Integration:
             'outgoingMapperId': configuration.get('defaultMapperOut', '')
         }
 
-        self.build_context.logging_module.info(f'Integration {self}: mapper: '
-                                               f'{configuration.get("defaultMapperIn", "")}, classifier: '
-                                               f'{configuration.get("defaultClassifier", "")}, outgoing: '
-                                               f'{configuration.get("defaultMapperOut", "")}')
-
         # set server keys
         self._set_server_keys(client, server_context)
 

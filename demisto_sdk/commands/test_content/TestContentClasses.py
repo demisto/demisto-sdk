@@ -1084,8 +1084,16 @@ class Integration:
             'isIntegrationScript': self.configuration.is_byoi,  # type: ignore
             'name': instance_name,
             'passwordProtected': False,
-            'version': 0
+            'version': 0,
+            'incomingMapperId': configuration.get('defaultMapperIn', ''),
+            'mappingId': configuration.get('defaultClassifier', ''),
+            'outgoingMapperId': configuration.get('defaultMapperOut', '')
         }
+
+        self.build_context.logging_module.info(f'Integration {self}: mapper: '
+                                               f'{configuration.get("defaultMapperIn", "")}, classifier: '
+                                               f'{configuration.get("defaultClassifier", "")}, outgoing: '
+                                               f'{configuration.get("defaultMapperOut", "")}')
 
         # set server keys
         self._set_server_keys(client, server_context)

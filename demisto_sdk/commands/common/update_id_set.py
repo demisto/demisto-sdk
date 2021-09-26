@@ -1879,7 +1879,7 @@ def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=
         if object_type == 'Layouts':
             if dict1.get('kind', '') != dict2.get('kind', ''):
                 return False
-            if dict1.get('typeId', '') != dict2.get('typeId', ''):
+            if dict1.get('typeID', '') != dict2.get('typeID', ''):
                 return False
 
         # A: 3.0.0 - 3.6.0

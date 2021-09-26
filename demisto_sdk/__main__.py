@@ -911,40 +911,105 @@ def run_playbook(**kwargs):
     return playbook_runner.run_playbook()
 
 
-# ====================== json-to-outputs ====================== #
-@main.command('json-to-outputs')  # To no shadow json_to_outputs import
+# ====================== generate-outputs ====================== #
+@main.command()
 @click.help_option(
     '-h', '--help'
 )
 @click.option(
-    "-c", "--command", help="Command name (e.g. xdr-get-incidents)", required=True)
+    "-c", "--command", help="Specific command name (e.g. xdr-get-incidents)",
+    required=False)
 @click.option(
-    "-i", "--input",
+    "-j", "--json",
     help="Valid JSON file path. If not specified, the script will wait for user input in the terminal. "
          "The response can be obtained by running the command with `raw-response=true` argument.",
     required=False)
 @click.option(
-    "-p", "--prefix", help="Output prefix like Jira.Ticket, VirusTotal.IP, the base path for the outputs that the "
-                           "script generates", required=True)
+    "-p", "--prefix",
+    help="Output prefix like Jira.Ticket, VirusTotal.IP, the base path for the outputs that the "
+         "script generates", required=False)
 @click.option(
-    "-o", "--output", help="Output file path, if not specified then will print to stdout", required=False)
+    "-o", "--output",
+    help="Output file path, if not specified then will print to stdout",
+    required=False)
 @click.option(
-    "-v", "--verbose", is_flag=True, help="Verbose output - mainly for debugging purposes")
+    "-v", "--verbose", is_flag=True,
+    help="Verbose output - mainly for debugging purposes")
 @click.option(
-    "--interactive", help="If passed, then for each output field will ask user interactively to enter the "
-                          "description. By default is interactive mode is disabled", is_flag=True)
+    "--interactive",
+    help="If passed, then for each output field will ask user interactively to enter the "
+         "description. By default is interactive mode is disabled",
+    is_flag=True)
 @click.option(
     "-d", "--descriptions",
     help="A JSON or a path to a JSON file, mapping field names to their descriptions. "
          "If not specified, the script prompt the user to input the JSON content.",
     is_flag=True)
-def json_to_outputs_command(**kwargs):
+@click.option(
+    "-i", "--input",
+    help="Valid YAML integration file path.",
+    required=False)
+@click.option(
+    "-e", "--examples",
+    help="Integrations: path for file containing command examples."
+         " Each command should be in a separate line."
+         " Scripts: the script example surrounded by quotes."
+         " For example: -e '!ConvertFile entry_id=<entry_id>'")
+@click.option(
+    "--insecure",
+    help="Skip certificate validation to run the commands in order to generate the docs.",
+    is_flag=True)
+def generate_outputs(**kwargs):
     """Demisto integrations/scripts have a YAML file that defines them.
     Creating the YAML file is a tedious and error-prone task of manually copying outputs from the API result to the
     file/UI/PyCharm. This script auto generates the YAML for a command from the JSON result of the relevant API call
     """
-    check_configuration_file('json-to-outputs', kwargs)
-    json_to_outputs(**kwargs)
+
+    # Examples
+    # demisto-sdk generate-outputs -e <example> -o integration.yml - generating outputs from the example file
+    # demisto-sdk generate-outputs -e <example> -o script.yml -t script - specify the output type (script or integration (default))
+    # demisto-sdk generate-outputs -e <example> -o script.yml -c some-command-here - specify the specific command to run
+    # demisto-sdk generate-outputs -j <json_input> -o integration.yml - generating outputs from the json input file (exactly like json-to-outputs)
+
+    # Do the same flow like previously in json-to-outputs
+    if kwargs.get('json', False):
+        if not kwargs.get('command'):
+            print_error(
+                'To use the json-to-outputs version of this command please include a `command` argument.')
+        if not kwargs.get('prefix'):
+            print_error(
+                'To use the json-to-outputs version of this command please include a `prefix` argument.')
+        check_configuration_file('json-to-outputs', kwargs)
+        args = [kwargs.get('command'), kwargs.get('json'), kwargs.get('prefix'),
+                kwargs.get('output'),
+                kwargs.get('verbose'), kwargs.get('interactive'),
+                kwargs.get('descriptions')]
+        json_to_outputs(*args)
+        return
+
+    input_path: str = kwargs.get('input', '')
+    examples: str = kwargs.get('examples', '')
+    insecure: bool = kwargs.get('insecure', False)
+
+    # validate inputs
+    if input_path and not os.path.isfile(input_path):
+        print_error(F'Input file {input_path} was not found.')
+        return 1
+
+    if not input_path.lower().endswith('.yml'):
+        print_error(F'Input {input_path} is not a valid yml file.')
+        return 1
+
+    file_type = find_type(kwargs.get('input', ''), ignore_sub_categories=True)
+    if file_type is not FileType.INTEGRATION:
+        print_error('File is not an Integration.')
+        return 1
+
+    if file_type == FileType.INTEGRATION:
+        generate_integration_context(input_path, examples, insecure)
+    else:
+        print_error(f'File type {file_type.value} is not supported.')
+        return 1
 
 
 # ====================== generate-test-playbook ====================== #
@@ -1054,50 +1119,6 @@ def init(**kwargs):
     initiator.init()
     return 0
 
-# ====================== generate-context ====================== #
-@main.command()
-@click.help_option(
-    '-h', '--help'
-)
-@click.option(
-    "-i", "--input", help="Path of the yml file.", required=True)
-@click.option(
-    "-e", "--examples",
-    help="Integrations: path for file containing command examples."
-         " Each command should be in a separate line."
-         " Scripts: the script example surrounded by quotes."
-         " For example: -e '!ConvertFile entry_id=<entry_id>'")
-@click.option(
-    "--insecure",
-    help="Skip certificate validation to run the commands in order to generate the docs.",
-    is_flag=True)
-def generate_context(**kwargs):
-    input_path: str = kwargs.get('input', '')
-    examples: str = kwargs.get('examples', '')
-    insecure: bool = kwargs.get('insecure', False)
-
-
-    # validate inputs
-    if input_path and not os.path.isfile(input_path):
-        print_error(F'Input file {input_path} was not found.')
-        return 1
-
-    if not input_path.lower().endswith('.yml'):
-        print_error(F'Input {input_path} is not a valid yml file.')
-        return 1
-
-    file_type = find_type(kwargs.get('input', ''), ignore_sub_categories=True)
-    if file_type is not FileType.INTEGRATION:
-        print_error('File is not an Integration.')
-        return 1
-
-    if file_type == FileType.INTEGRATION:
-        generate_integration_context(input_path, examples, insecure)
-    else:
-        print_error(f'File type {file_type.value} is not supported.')
-        return 1
-
-    print(input_path, examples, insecure)
 
 # ====================== generate-context ====================== #
 @main.command()

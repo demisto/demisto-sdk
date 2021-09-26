@@ -25,16 +25,16 @@ class JobValidator(ContentEntityValidator):
 
     def is_valid_feed_fields(self):
         is_feed = self.current_file.get('is_feed')
-        selected_fields = self.current_file.get('selectedFeeds')
+        selected_feeds = self.current_file.get('selectedFeeds')
         is_all_feeds = self.current_file.get('isAllFeeds')
 
         if is_feed:
-            if selected_fields and is_all_feeds:
+            if selected_feeds and is_all_feeds:
                 error_message, error_code = Errors.invalid_both_selected_and_all_feeds_in_job()
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
 
-            elif selected_fields:
+            elif selected_feeds:
                 pass  # todo validate feeds somehow?
 
             elif is_all_feeds:
@@ -46,8 +46,9 @@ class JobValidator(ContentEntityValidator):
                     return False
 
         else:  # is_feed=false
-            if selected_fields or is_all_feeds:
-                error_message, error_code = Errors.unexpected_field_values_in_non_feed_job()
+            if selected_feeds or is_all_feeds:
+                error_message, error_code = \
+                    Errors.unexpected_field_values_in_non_feed_job(bool(selected_feeds), bool(is_all_feeds))
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
 

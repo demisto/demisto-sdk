@@ -13,7 +13,7 @@ from demisto_sdk.commands.common.constants import (
     GENERIC_TYPES_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
     INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, INTEGRATIONS_DIR, LAYOUTS_DIR,
     PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR, REPORTS_DIR, SCRIPTS_DIR,
-    TEST_PLAYBOOKS_DIR, WIDGETS_DIR)
+    TEST_PLAYBOOKS_DIR, WIDGETS_DIR, JOBS_DIR)
 from demisto_sdk.commands.common.tools import (get_child_files, get_json,
                                                get_yaml)
 from demisto_sdk.commands.download.downloader import Downloader
@@ -52,6 +52,9 @@ class Environment:
         self.PLAYBOOK_PACK_OBJECT = None
         self.LAYOUT_PACK_OBJECT = None
         self.PRE_PROCESS_RULES_PACK_OBJECT = None
+        self.PRE_PROCESS_RULES_INSTANCE_PATH = None
+        self.JOBS_PACK_OBJECT = None
+        self.JOBS_INSTANCE_PATH = None
         self.PACK_CONTENT = None
         self.INTEGRATION_CUSTOM_CONTENT_OBJECT = None
         self.SCRIPT_CUSTOM_CONTENT_OBJECT = None
@@ -79,6 +82,7 @@ class Environment:
         self.PLAYBOOK_INSTANCE_PATH = f'{self.PACK_INSTANCE_PATH}/Playbooks/playbook-DummyPlaybook.yml'
         self.LAYOUT_INSTANCE_PATH = f'{self.PACK_INSTANCE_PATH}/Layouts/layout-details-TestLayout.json'
         self.PRE_PROCESS_RULES_INSTANCE_PATH = f'{self.PACK_INSTANCE_PATH}/PreProcessRules/preprocessrule-dummy.json'
+        self.JOBS_INSTANCE_PATH = f'{self.PACK_INSTANCE_PATH}/Jobs/job-sample.json'
 
         self.CUSTOM_CONTENT_SCRIPT_PATH = f'{self.CUSTOM_CONTENT_BASE_PATH}/automation-TestScript.yml'
         self.CUSTOM_CONTENT_INTEGRATION_PATH = f'{self.CUSTOM_CONTENT_BASE_PATH}/integration-Test_Integration.yml'
@@ -124,6 +128,10 @@ class Environment:
             {'name': 'DummyPreProcessRule', 'id': 'DummyPreProcessRule',
              'path': self.PRE_PROCESS_RULES_INSTANCE_PATH, 'file_ending': 'yml'}
         ]}
+        self.JOBS_PACK_OBJECT = {'DummyJob': [
+            {'name': 'DummyJob', 'id': 'DummyJobID',
+             'path': self.JOBS_INSTANCE_PATH, 'file_ending': 'json'}
+        ]}
 
         self.PACK_CONTENT = {
             INTEGRATIONS_DIR: [self.INTEGRATION_PACK_OBJECT],
@@ -131,6 +139,7 @@ class Environment:
             PLAYBOOKS_DIR: [self.PLAYBOOK_PACK_OBJECT],
             LAYOUTS_DIR: [self.LAYOUT_PACK_OBJECT],
             PRE_PROCESS_RULES_DIR: [],
+            JOBS_DIR: [],
             TEST_PLAYBOOKS_DIR: [], REPORTS_DIR: [], DASHBOARDS_DIR: [], WIDGETS_DIR: [], INCIDENT_FIELDS_DIR: [],
             INDICATOR_FIELDS_DIR: [], INCIDENT_TYPES_DIR: [], CLASSIFIERS_DIR: [], CONNECTIONS_DIR: [],
             INDICATOR_TYPES_DIR: [], GENERIC_TYPES_DIR: [], GENERIC_FIELDS_DIR: [], GENERIC_MODULES_DIR: [],
@@ -305,6 +314,7 @@ class TestBuildPackContent:
             {'entity': LAYOUTS_DIR, 'path': env.LAYOUT_INSTANCE_PATH, 'out': env.LAYOUT_PACK_OBJECT},
             {'entity': LAYOUTS_DIR, 'path': 'demisto_sdk/commands/download/tests/downloader_testt.py', 'out': {}},
             {'entity': PRE_PROCESS_RULES_DIR, 'path': env.PRE_PROCESS_RULES_INSTANCE_PATH, 'out': []},
+            {'entity': JOBS_DIR, 'path': env.JOBS_INSTANCE_PATH, 'out': []},
         ]
         downloader = Downloader(output='', input='')
         for param in parameters:

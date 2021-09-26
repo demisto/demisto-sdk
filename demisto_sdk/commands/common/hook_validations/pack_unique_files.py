@@ -114,10 +114,16 @@ class PackUniqueFilesValidator(BaseValidator):
         """Returns the full file path to pack's file"""
         return os.path.join(self.pack_path, file_name)
 
-    def _is_pack_file_exists(self, file_name: str):
-        """Check if a file with given name exists in pack root"""
+    def _is_pack_file_exists(self, file_name: str, is_required: bool = False):
+        """
+        Check if a file with given name exists in pack root.
+        is_required is True means that absence of the file should block other tests from running.
+            (remember to implement the blocking accordingly)
+        """
         if not os.path.isfile(self._get_pack_file_path(file_name)):
-            if self._add_error(Errors.pack_file_does_not_exist(file_name), file_name):
+            error_function = \
+                Errors.required_pack_file_does_not_exist if is_required else Errors.pack_file_does_not_exist
+            if self._add_error(error_function(file_name), file_name):
                 return False
 
         return True
@@ -582,11 +588,13 @@ class PackUniqueFilesValidator(BaseValidator):
 
     def are_valid_files(self, id_set_validations) -> str:
         """Main Execution Method"""
-        self._is_pack_file_exists(self.pack_meta_file)
         self.validate_secrets_file()
         self.validate_pack_ignore_file()
-        # We don't want to check the metadata file for this pack
+        # metadata file is not validated for API_MODULES_PACK
         if API_MODULES_PACK not in self.pack:
+            if not self._is_pack_file_exists(self.pack_meta_file, True):
+                # missing/invalid pack metadata prevents all other validations from running
+                return self.get_errors()
             self.validate_pack_meta_file()
 
         self.validate_pack_readme_file_is_not_empty()

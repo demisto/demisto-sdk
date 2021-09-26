@@ -197,6 +197,12 @@ class Repo:
         generic_definition.write_json({'id': f'generic_{name} - generic_definition'})
         generic_definition.update({'name': f'generic_{name} - generic_definition'})
         generic_definition.update({'auditable': False})
+
+        job = pack.create_job(f'{name}-job')
+        job.write_json({'id': f'{name}-job-id'})
+        job.update({'name': f'{name}-job'})
+        # todo more required fields
+
         return pack
 
     def setup_content_repo(self, number_of_packs):

@@ -1648,12 +1648,12 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_both_selected_and_all_feeds_in_job():
-        return f'Job cannot have non-empty selectedFeeds values when isAllFields is set to true.'
+        return 'Job cannot have non-empty selectedFeeds values when isAllFields is set to true.'
 
     @staticmethod
     @error_code_decorator
     def unexpected_field_values_in_non_feed_job(found_selected_fields: bool, found_is_all_fields: bool):
-        found = []
+        found: List[str] = []
         for key, value in {found_selected_fields: 'selectedFeeds', found_is_all_fields: 'isAllFields'}.items():
             if key:
                 found += value
@@ -1662,8 +1662,8 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def missing_field_values_in_feed_job():
-        return f'Job must either have non-empty selectedFeeds OR have isAllFields set to true ' \
-               f'when isFeed is set to true.'
+        return 'Job must either have non-empty selectedFeeds OR have isAllFields set to true ' \
+               'when isFeed is set to true.'
 
     @staticmethod
     @error_code_decorator

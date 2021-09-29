@@ -967,7 +967,6 @@ def generate_outputs(**kwargs):
 
     # Examples
     # demisto-sdk generate-outputs -e <example> -o integration.yml - generating outputs from the example file
-    # demisto-sdk generate-outputs -e <example> -o script.yml -t script - specify the output type (script or integration (default))
     # demisto-sdk generate-outputs -e <example> -o script.yml -c some-command-here - specify the specific command to run
     # demisto-sdk generate-outputs -j <json_input> -o integration.yml - generating outputs from the json input file (exactly like json-to-outputs)
 

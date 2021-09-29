@@ -243,7 +243,7 @@ def test_json_to_outputs__description_dictionary(tmpdir, description_argument: O
     temp_json_input_path.write(json.dumps(dummy_integration_output))
 
     json_to_outputs(command='jsonToOutputs',
-                    input=str(temp_json_input_path),
+                    json=str(temp_json_input_path),
                     prefix='Test',
                     output=output,
                     descriptions=description_argument)
@@ -282,7 +282,7 @@ def test_json_to_outputs__description_file(tmpdir):
     temp_description_file.write(json.dumps(dummy_description_dictionary))
 
     json_to_outputs(command='jsonToOutputs',
-                    input=str(temp_json_input_path),
+                    json=str(temp_json_input_path),
                     prefix='Test',
                     output=output,
                     descriptions=temp_description_file)

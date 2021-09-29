@@ -13,6 +13,7 @@ from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (CONF_PATH,
                                                    PACKS_PACK_META_FILE_NAME,
                                                    TEST_PLAYBOOK, FileType)
+from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
@@ -468,21 +469,18 @@ class TestValidators:
             Then
                 Ensure required_pack_file_does_not_exist fails if and only if PACKS_PACK_META_FILE_NAME doesn't exist
         """
-        from demisto_sdk.commands.common.errors import Errors
-        err_msg, err_code = Errors.required_pack_file_does_not_exist(PACKS_PACK_META_FILE_NAME)
         pack = repo.create_pack('pack')
-
         validate_manager = ValidateManager(skip_conf_json=True)
-        validate_manager.validate_pack_unique_files(pack.repo_path, pack_error_ignore_list={})
+        err_msg, err_code = Errors.required_pack_file_does_not_exist(PACKS_PACK_META_FILE_NAME)
 
-        # META_FILE does not exist, error is raised
-        captured = capsys.readouterr().out
-        assert err_msg in captured and err_code in captured
+        validate_manager.validate_pack_unique_files(pack.path, pack_error_ignore_list={})
+        stdout = capsys.readouterr().out
+        assert (err_msg not in stdout) and (err_code not in stdout)
 
-        # META_FILE does exist, error is not raised
-        captured = capsys.readouterr().out
-        validate_manager.validate_pack_unique_files(pack.repo_path, pack_error_ignore_list={})
-        assert (err_msg not in captured) and (err_code not in captured)
+        os.remove(pack.pack_metadata.path)
+        validate_manager.validate_pack_unique_files(pack.path, pack_error_ignore_list={})
+        stdout = capsys.readouterr().out
+        assert err_msg in stdout and err_code in stdout
 
     def test_validate_pack_dependencies(self, mocker):
         """

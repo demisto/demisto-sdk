@@ -344,25 +344,25 @@ class PackUniqueFilesValidator(BaseValidator):
             metadata = self._read_metadata_content()
             if not metadata:
                 if self._add_error(Errors.pack_metadata_empty(), self.pack_meta_file):
-                    return False
+                    raise BlockingValidationFailureException()
 
             if not isinstance(metadata, dict):
                 if self._add_error(Errors.pack_metadata_should_be_dict(self.pack_meta_file), self.pack_meta_file):
-                    return False
+                    raise BlockingValidationFailureException()
 
             missing_fields = [field for field in PACK_METADATA_FIELDS if field not in metadata.keys()]
             if missing_fields:
                 if self._add_error(Errors.missing_field_iin_pack_metadata(self.pack_meta_file, missing_fields),
                                    self.pack_meta_file):
-                    return False
+                    raise BlockingValidationFailureException()
 
             elif not self.validate_pack_name(metadata):
-                return False
+                raise BlockingValidationFailureException()
 
             description_name = metadata.get(PACK_METADATA_DESC, '').lower()
             if not description_name or 'fill mandatory field' in description_name:
                 if self._add_error(Errors.pack_metadata_field_invalid(), self.pack_meta_file):
-                    return False
+                    raise BlockingValidationFailureException()
 
             if not self.is_pack_metadata_desc_too_long(description_name):
                 return False
@@ -404,7 +404,7 @@ class PackUniqueFilesValidator(BaseValidator):
 
         except (ValueError, TypeError):
             if self._add_error(Errors.pack_metadata_isnt_json(self.pack_meta_file), self.pack_meta_file):
-                return False
+                raise BlockingValidationFailureException()
 
         return True
 

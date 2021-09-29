@@ -976,9 +976,11 @@ def generate_outputs(**kwargs):
         if not kwargs.get('command'):
             print_error(
                 'To use the json-to-outputs version of this command please include a `command` argument.')
+            return
         if not kwargs.get('prefix'):
             print_error(
                 'To use the json-to-outputs version of this command please include a `prefix` argument.')
+            return
         check_configuration_file('json-to-outputs', kwargs)
         args = [kwargs.get('command'), kwargs.get('json'), kwargs.get('prefix'),
                 kwargs.get('output'),

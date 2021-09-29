@@ -53,8 +53,10 @@ INCORRECT_PACK_NAME_PATTERN = '[^a-zA-Z]pack[^a-z]|^pack$|^pack[^a-z]|[^a-zA-Z]p
 
 
 class BlockingValidationFailureException(BaseException):
-    # This should block other validations from being run.
-    # For example, raise it when a required file is missing, and there's no reason to keep validating other files.
+    """
+    Used for blocking other validations from being run, force-stopping the validation process.
+    For example, when a required file is missing. Raise it after adding a suitable error to self._errors.
+    """
     pass
 
 

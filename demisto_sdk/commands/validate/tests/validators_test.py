@@ -10,8 +10,9 @@ from mock import patch
 
 import demisto_sdk.commands.validate.validate_manager
 from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.common.constants import (CONF_PATH, TEST_PLAYBOOK,
-                                                   FileType, PACKS_PACK_META_FILE_NAME)
+from demisto_sdk.commands.common.constants import (CONF_PATH,
+                                                   PACKS_PACK_META_FILE_NAME,
+                                                   TEST_PLAYBOOK, FileType)
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator

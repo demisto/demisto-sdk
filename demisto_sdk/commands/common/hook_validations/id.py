@@ -544,7 +544,8 @@ class IDSetValidations(BaseValidator):
                 # not set or main playbook fromversion is below 6.0.0, fail the validation
                 if not is_version_valid and not skip_unavailable:
                     invalid_version_entities.append(entity_name)
-                implemented_entities.remove(entity_name)
+                if entity_name in implemented_entities:
+                    implemented_entities.remove(entity_name)
 
         if invalid_version_entities:
             error_message, error_code = Errors.content_entity_version_not_match_playbook_version(

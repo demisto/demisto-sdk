@@ -1,4 +1,5 @@
 # Changelog
+* Fixed an issue where **validate** command didn't look for test playbooks properly and updated the test search to include id_set.json.
 * Fixed an issue were the **validate** command was falsely recognizing image paths in readme files.
 * Fixed an issue where the **upload** command error message upon upload failure pointed to wrong file rather than to the pack metadata.
 * Added a validation that verifies that each script which appears in incident fields, layouts or layout containers exists in the id_set.json.

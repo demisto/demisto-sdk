@@ -10,8 +10,8 @@ from distutils.version import LooseVersion
 from typing import Optional, Tuple, Union
 
 from demisto_sdk.commands.common.constants import (
-    ALL_FILES_VALIDATION_IGNORE_WHITELIST, DEFAULT_ID_SET_PATH,
-    IGNORED_PACK_NAMES, RN_HEADER_BY_FILE_TYPE, FileType)
+    ALL_FILES_VALIDATION_IGNORE_WHITELIST, AUTHOR_IMAGE_FILE_NAME,
+    DEFAULT_ID_SET_PATH, IGNORED_PACK_NAMES, RN_HEADER_BY_FILE_TYPE, FileType)
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
@@ -65,7 +65,7 @@ class UpdateRN:
             :return
                 The new file path if was changed
         """
-        if file_path.endswith('_image.png'):
+        if file_path.endswith('_image.png') and file_path != AUTHOR_IMAGE_FILE_NAME:
             return file_path.replace('_image.png', '.yml')
 
         elif file_path.endswith('_description.md'):

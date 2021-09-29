@@ -1198,8 +1198,11 @@ class ValidateManager:
             return 'demisto/master'
 
         # default to 'origin' and main or master if none of the above apply, per the repo
-        _, branch = self.git_util.handle_prev_ver()
-        return 'origin/' + branch
+        if self.git_util:
+            _, branch = self.git_util.handle_prev_ver()
+            return 'origin/' + branch
+
+        return 'origin/master'
 
     def setup_git_params(self):
         """Setting up the git relevant params"""

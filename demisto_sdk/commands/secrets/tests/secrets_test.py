@@ -98,9 +98,7 @@ class TestSecrets:
         - file contains 2 secrets:
             - email
             - password
-
         - run validate secrets with --ignore-entropy=True
-
         - ensure email found
         - ensure entropy code was not executed - no secrets have found
         """
@@ -125,9 +123,7 @@ class TestSecrets:
         - no items in the whitelist
         - file contains 1 secret:
             - email
-
         - run validate secrets with --ignore-entropy=True
-
         - ensure secret is found in two files from different directories with the same base name
         """
         create_empty_whitelist_secrets_file(os.path.join(TestSecrets.TEMP_DIR, TestSecrets.WHITE_LIST_FILE_NAME))
@@ -147,10 +143,7 @@ class TestSecrets:
             with io.open(file_path, 'w') as f:
                 f.write('''
 print('This is our dummy code')
-
 my_email = "fooo@someorg.com"
-
-
 ''')
         secrets_found = validator.search_potential_secrets([file1_path, file2_path], True)
         assert secrets_found[os.path.join(dir1_path, file_name)] == {4: ['fooo@someorg.com']}
@@ -171,10 +164,8 @@ my_email = "fooo@someorg.com"
         Given
         - White list with a term that can be regex (***.).
         - String with no content
-
         When
         - Removing terms containing that regex
-
         Then
         - Ensure secrets that the secret isn't in the output.
         - Ensure no error raised
@@ -289,12 +280,12 @@ my_email = "fooo@someorg.com"
         validator = SecretsValidator(is_circle=True, white_list_path=os.path.join(TestSecrets.TEMP_DIR,
                                                                                   TestSecrets.WHITE_LIST_FILE_NAME))
 
-        assert validator.get_all_diff_text_files() == ['Packs/Integrations/integration/testing.py']
-        assert validator.get_all_diff_text_files() == ['Packs/Integrations/integration/testing.py']
+        assert validator.get_all_diff_text_files('master', True) == ['Packs/Integrations/integration/testing.py']
+        assert validator.get_all_diff_text_files('master', False) == ['Packs/Integrations/integration/testing.py']
 
         validator.prev_ver = 'Testing_branch'
-        assert validator.get_all_diff_text_files() == ['Packs/Integrations/integration/testing.py']
-        assert validator.get_all_diff_text_files() == ['Packs/Integrations/integration/testing.py']
+        assert validator.get_all_diff_text_files('master', True) == ['Packs/Integrations/integration/testing.py']
+        assert validator.get_all_diff_text_files('master', False) == ['Packs/Integrations/integration/testing.py']
 
     def test_remove_secrets_disabled_line(self):
         """
@@ -335,6 +326,7 @@ my_email = "fooo@someorg.com"
         Then
             Ensure we are looking for secrets in this branch
         """
+        mocker.patch("demisto_sdk.commands.secrets.secrets.SecretsValidator.get_branch_name", return_value='pull/123')
         mocker.patch("demisto_sdk.commands.secrets.secrets.SecretsValidator.get_secrets", return_value=True)
         result = self.validator.find_secrets()
         assert result

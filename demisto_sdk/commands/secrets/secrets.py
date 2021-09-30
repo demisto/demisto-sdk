@@ -9,13 +9,12 @@ from typing import DefaultDict
 import PyPDF2
 from bs4 import BeautifulSoup
 
+# secrets settings
+# Entropy score is determined by shanon's entropy algorithm, most English words will score between 1.5 and 3.5
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     PACKS_DIR, PACKS_INTEGRATION_README_REGEX, PACKS_WHITELIST_FILE_NAME,
     FileType, re)
-# secrets settings
-# Entropy score is determined by shanon's entropy algorithm, most English words will score between 1.5 and 3.5
-from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                get_pack_name,
                                                is_file_path_in_pack,
@@ -73,20 +72,21 @@ class SecretsValidator(object):
     def __init__(
             self,
             configuration=Configuration(), is_circle=False, ignore_entropy=False, white_list_path='',
-            input_path=''
+            input_path='', prev_ver=None
     ):
         self.input_paths = input_path.split(',') if input_path else None
         self.configuration = configuration
         self.is_circle = is_circle
         self.white_list_path = white_list_path
         self.ignore_entropy = ignore_entropy
+        self.prev_ver = prev_ver if prev_ver is not None else 'origin/master'
 
-    def get_secrets(self):
+    def get_secrets(self, branch_name, is_circle):
         secret_to_location_mapping = {}
         if self.input_paths:
             secrets_file_paths = self.input_paths
         else:
-            secrets_file_paths = self.get_all_diff_text_files()
+            secrets_file_paths = self.get_all_diff_text_files(branch_name, is_circle)
         # If a input path supplied, should not run on git. If not supplied make sure not in middle of merge.
         if not run_command('git rev-parse -q --verify MERGE_HEAD') or self.input_paths:
             secret_to_location_mapping = self.search_potential_secrets(secrets_file_paths, self.ignore_entropy)
@@ -100,11 +100,16 @@ class SecretsValidator(object):
                         else:
                             secrets_found_string += f'Secrets found: {secret_to_location_mapping[file_name][line]}\n'
 
-                secrets_found_string += '\n\nThe secrets were exposed in public repository,'\
-                                        ' remove the files asap and report it.\n'\
-                                        'For more information about whitelisting visit: ' \
-                                        'https://pull-request-696--demisto-content-docs.netlify.app/docs' \
-                                        '/concepts/demisto-sdk#secrets'
+                if not is_circle:
+                    secrets_found_string += '\n\nRemove or whitelist secrets in order to proceed, then re-commit\n'
+
+                else:
+                    secrets_found_string += '\n\nThe secrets were exposed in public repository,' \
+                                            ' remove the files asap and report it.\n'
+
+                secrets_found_string += 'For more information about whitelisting visit: ' \
+                                        'https://pull-request-696--demisto-content-docs.netlify.app/docs/concepts/demisto-sdk' \
+                                        '#secrets'
                 print_error(secrets_found_string)
         return secret_to_location_mapping
 
@@ -116,14 +121,23 @@ class SecretsValidator(object):
         """
         return '\n'.join(secrets_list) if secrets_list else ''
 
-    def get_all_diff_text_files(self):
+    def get_all_diff_text_files(self, branch_name, is_circle):
         """
         Get all new/modified text files that need to be searched for secrets
+        :param branch_name: current branch being worked on
+        :param is_circle: boolean to check if being ran from circle
         :return: list: list of text files
         """
-        git_util = GitUtil()
-        all_changed_files = git_util.get_all_changed_files()
-        return list(self.get_diff_text_files(all_changed_files))
+        if is_circle:
+            if not self.prev_ver.startswith('origin'):
+                self.prev_ver = 'origin/' + self.prev_ver
+            print(f"Running secrets validation against {self.prev_ver}")
+
+            changed_files_string = run_command(f"git diff --name-status {self.prev_ver}...{branch_name}")
+        else:
+            print("Running secrets validation on all changes")
+            changed_files_string = run_command("git diff --name-status --no-merges HEAD")
+        return list(self.get_diff_text_files(changed_files_string))
 
     def get_diff_text_files(self, files_string):
         """Filter out only added/modified text files from git diff
@@ -399,8 +413,8 @@ class SecretsValidator(object):
                 file_contents = self.extract_text_from_md_html(file_path)
             else:
                 # Open each file, read its contents in UTF-8 encoding to avoid unicode characters
-                with io.open(file_path, mode="r", encoding="utf-8", errors='ignore') as committed_file:
-                    file_contents = committed_file.read()
+                with io.open(file_path, mode="r", encoding="utf-8", errors='ignore') as commited_file:
+                    file_contents = commited_file.read()
             file_contents = self.ignore_base64(file_contents)
             return file_contents
         except Exception as ex:
@@ -463,9 +477,19 @@ class SecretsValidator(object):
                 file_contents = file_contents.replace(base64_string, '')
         return file_contents
 
+    @staticmethod
+    def get_branch_name() -> str:
+        branches = run_command('git branch')
+        branch_name_reg = re.search(r'\* (.*)', branches)
+        if not branch_name_reg:
+            return ''
+        return branch_name_reg.group(1)
+
     def find_secrets(self):
         print_color('Starting secrets detection', LOG_COLORS.GREEN)
-        secrets_found = self.get_secrets()
+        is_circle = self.is_circle
+        branch_name = self.get_branch_name()
+        secrets_found = self.get_secrets(branch_name, is_circle)
         if secrets_found:
             return True
         else:

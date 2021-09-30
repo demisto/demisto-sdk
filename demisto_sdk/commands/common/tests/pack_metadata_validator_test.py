@@ -129,9 +129,10 @@ class TestPackMetadataValidator:
         - Validating metadata structure.
 
         Then:
-        - Ensure false is returned.
+        - Ensure false is returned, and a BlockingValidationFailureException is raised.
         """
         mocker.patch.object(PackUniqueFilesValidator, '_read_metadata_content', return_value={'a', 'b'})
         validator = PackUniqueFilesValidator('fake')
         mocker.patch.object(validator, '_add_error')
-        assert not validator._is_pack_meta_file_structure_valid()
+        with pytest.raises(BlockingValidationFailureException):
+            assert not validator._is_pack_meta_file_structure_valid()

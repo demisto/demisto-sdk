@@ -1186,7 +1186,7 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
         if 'auditable' in _dict:
             return FileType.GENERIC_DEFINITION
 
-        if 'lastJobRunTime' in _dict:
+        if all(k in _dict for k in ('isAllFields', 'selectedFeeds', 'isFeeds')):  # todo
             return FileType.JOB
 
         # When using it for all files validation- sometimes 'id' can be integer

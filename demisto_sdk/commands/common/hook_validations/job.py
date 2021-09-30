@@ -55,3 +55,9 @@ class JobValidator(ContentEntityValidator):
                     return False
 
         return True
+
+    def is_valid_file(self, validate_rn=True):
+        return all((
+            self.is_valid_feed_fields(),
+            super().is_valid_file(validate_rn),  # includes is_fromversion_valid()
+        ))

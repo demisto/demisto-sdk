@@ -234,6 +234,7 @@ ERROR_CODE = {
     "pack_name_is_not_in_xsoar_standards": {'code': "PA125", 'ui_applicable': False, 'related_field': ''},
     "pack_metadata_long_description": {'code': "PA126", 'ui_applicable': False, 'related_field': ''},
     "metadata_url_invalid": {'code': "PA127", 'ui_applicable': False, 'related_field': ''},
+    "required_pack_file_does_not_exist": {'code': "PA128", 'ui_applicable': False, 'related_field': ''},
     "readme_error": {'code': "RM100", 'ui_applicable': False, 'related_field': ''},
     "image_path_error": {'code': "RM101", 'ui_applicable': False, 'related_field': ''},
     "readme_missing_output_context": {'code': "RM102", 'ui_applicable': False, 'related_field': ''},
@@ -1305,6 +1306,12 @@ class Errors:
     @error_code_decorator
     def pack_file_does_not_exist(file_name):
         return f'"{file_name}" file does not exist, create one in the root of the pack'
+
+    @staticmethod
+    @error_code_decorator
+    def required_pack_file_does_not_exist(file_name):
+        return f'The required "{file_name}" file does not exist in the pack root.\n ' \
+               f'Its absence may prevent other tests from being run! Create it and run validate again.'
 
     @staticmethod
     @error_code_decorator

@@ -37,7 +37,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_README_FILE_NAME, PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR,
     RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR,
-    XSOAR_CONFIG_FILE, FileType, GithubContentConfig, urljoin)
+    XSOAR_CONFIG_FILE, FileType, GithubContentConfig, urljoin, JOBS_DIR)
 from demisto_sdk.commands.common.git_util import GitUtil
 
 urllib3.disable_warnings()
@@ -1065,7 +1065,8 @@ def find_type_by_path(path: str = '') -> Optional[FileType]:
     if path.endswith('.json'):
         if RELEASE_NOTES_DIR in path:
             return FileType.RELEASE_NOTES_CONFIG
-
+        if JOBS_DIR in path:
+            return FileType.JOB
     # integration image
     if path.endswith('_image.png') and not path.endswith("Author_image.png"):
         return FileType.IMAGE

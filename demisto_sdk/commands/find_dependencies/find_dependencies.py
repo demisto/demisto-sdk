@@ -1208,6 +1208,63 @@ class PackDependencies:
         return dependencies_packs
 
     @staticmethod
+    def _collect_jobs_dependencies(pack_jobs: list, id_set: dict, verbose: bool,
+                                   exclude_ignored_dependencies: bool = True) -> set:
+        """
+        Collects integrations dependencies.
+        Args:
+            pack_jobs (list): collection of pack integrations data.
+            id_set (dict): id set json.
+            verbose (bool): Whether to log the dependencies to the console.
+            exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
+
+        Returns:
+            set: dependencies data that includes pack id and whether is mandatory or not.
+        """
+        dependencies_packs = set()
+        if verbose:
+            click.secho('### Jobs', fg='white')
+
+        for job in pack_jobs:
+            job_data = next(iter(job.values()))
+            job_dependencies: set = set()
+
+            playbook_id = job_data.get('playbookId', '')  # todo what if it's empty?
+
+            packs_found_from_playbooks = PackDependencies._search_packs_by_items_names_or_ids(
+                [playbook_id], id_set['playbooks'], exclude_ignored_dependencies)
+
+            if packs_found_from_playbooks:
+                pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_playbooks)
+                job_dependencies.update(pack_dependencies_data)
+
+            related_incident_types = job_data.get('incident_types', [])
+            packs_found_from_incident_types = PackDependencies._search_packs_by_items_names(
+                related_incident_types, id_set['IncidentTypes'], exclude_ignored_dependencies)
+
+            if packs_found_from_incident_types:
+                pack_dependencies_data = PackDependencies. \
+                    _label_as_mandatory(packs_found_from_incident_types)
+                dependencies_packs.update(pack_dependencies_data)
+
+            related_indicator_fields = job_data.get('indicator_fields')
+
+            if related_indicator_fields:
+                pack_dependencies_data = PackDependencies. \
+                    _label_as_mandatory({related_indicator_fields})
+                dependencies_packs.update(pack_dependencies_data)
+
+            if job_dependencies:
+                # do not trim spaces from the end of the string, they are required for the MD structure.
+                if verbose:
+                    click.secho(
+                        f'{os.path.basename(job_data.get("file_path", ""))} depends on: {job_dependencies}',
+                        fg='white')
+            dependencies_packs.update(job_dependencies)
+
+        return dependencies_packs
+
+    @staticmethod
     def _collect_pack_items(pack_id: str, id_set: dict) -> dict:
         """
         Collects script and playbook content items inside specific pack.
@@ -1239,6 +1296,7 @@ class PackDependencies:
         pack_items['generic_modules'] = PackDependencies._search_for_pack_items(pack_id, id_set['GenericModules'])
         pack_items['generic_definitions'] = PackDependencies._search_for_pack_items(pack_id,
                                                                                     id_set['GenericDefinitions'])
+        pack_items['jobs'] = PackDependencies._search_for_pack_items(pack_id, id_set['Jobs'])
 
         if not sum(pack_items.values(), []):
             click.secho(f"Couldn't find any items for pack '{pack_id}'. Please make sure:\n"
@@ -1359,12 +1417,19 @@ class PackDependencies:
             verbose,
             exclude_ignored_dependencies,
         )
+        jobs_dependencies = PackDependencies._collect_generic_modules_dependencies(
+            pack_items['generic_modules'],
+            id_set,
+            verbose,
+            exclude_ignored_dependencies,
+        )
 
         pack_dependencies = (
             scripts_dependencies | playbooks_dependencies | layouts_dependencies | incidents_fields_dependencies |
             indicators_types_dependencies | integrations_dependencies | incidents_types_dependencies |
             classifiers_dependencies | mappers_dependencies | widget_dependencies | dashboards_dependencies |
-            reports_dependencies | generic_types_dependencies | generic_modules_dependencies | generic_fields_dependencies
+            reports_dependencies | generic_types_dependencies | generic_modules_dependencies | generic_fields_dependencies |
+            jobs_dependencies
         )
 
         return pack_dependencies

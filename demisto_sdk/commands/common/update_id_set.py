@@ -1384,23 +1384,23 @@ def get_generic_field_data(path, generic_types_list):
 
 
 def get_job_data(path, job_list):
-    raise NotImplementedError()
-    # json_data = get_json(path)
-    # #
-    # id_ = json_data.get('id')
+    raise NotImplementedError() # todo
+    json_data = get_json(path)
+    #
+    id_ = json_data.get('id')
     # name = json_data.get('name', '')
-    # fromversion = json_data.get('fromVersion')  # todo fromServerVersion??
-    # toversion = json_data.get('toVersion')  # todo fromServerVersion??
-    # pack = get_pack_name(path)
-    #
-    # data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
-    #
+    from_version = json_data.get('fromServerVersion')  # todo fromServerVersion??
+    to_version = json_data.get('fromServerVersion')  # todo fromServerVersion??
+    pack = get_pack_name(path)
+
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
+
     # definitionId = json_data.get('definitionId')
     #
     # if definitionId:
     #     data['definitionId'] = definitionId
     #
-    # return {id_: data}
+    return {id_: data}
 
 
 def get_generic_module_data(path):

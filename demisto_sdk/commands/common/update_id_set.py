@@ -1135,7 +1135,7 @@ def process_generic_items(file_path: str, print_logs: bool,
     return res
 
 
-def process_jobs(file_path: str, print_logs: bool, jobs_list: list = None) -> list:
+def process_jobs(file_path: str, print_logs: bool) -> list:
     """
     Process a JSON file representing a Job object.
     Args:
@@ -1151,8 +1151,7 @@ def process_jobs(file_path: str, print_logs: bool, jobs_list: list = None) -> li
         if find_type(file_path) == FileType.JOB:
             if print_logs:
                 print(f'adding {file_path} to id_set')
-            result.append(get_job_data(file_path, jobs_list))  # todo
-        # todo else?
+            result.append(get_job_data(file_path))  # todo
     except Exception as exp:  # noqa
         print_error(f'failed to process job {file_path}, Error: {str(exp)}')
         raise
@@ -1383,24 +1382,16 @@ def get_generic_field_data(path, generic_types_list):
     return {id_: data}
 
 
-def get_job_data(path, job_list):
-    raise NotImplementedError() # todo
+def get_job_data(path):
     json_data = get_json(path)
-    #
-    id_ = json_data.get('id')
-    # name = json_data.get('name', '')
-    from_version = json_data.get('fromServerVersion')  # todo fromServerVersion??
-    to_version = json_data.get('fromServerVersion')  # todo fromServerVersion??
-    pack = get_pack_name(path)
+    data = create_common_entity_data(path=path,
+                                     name=json_data.get('name'),
+                                     to_version=json_data.get('toServerVersion'),
+                                     from_version=json_data.get('fromServerVersion'),
+                                     pack=get_pack_name(path))
+    data['playbooks'] = json_data['playbookId']
 
-    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
-
-    # definitionId = json_data.get('definitionId')
-    #
-    # if definitionId:
-    #     data['definitionId'] = definitionId
-    #
-    return {id_: data}
+    return {json_data.get('id'): data}
 
 
 def get_generic_module_data(path):

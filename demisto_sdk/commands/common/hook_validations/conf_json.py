@@ -78,18 +78,15 @@ class ConfJsonValidator(BaseValidator):
             return False
         return True
 
-    def is_valid_file_in_conf_json(self, current_file, file_type, file_path, id_test_list=None):
+    def is_valid_file_in_conf_json(self, current_file, file_type, file_path):
         """Check if the file is valid in the conf.json"""
-        if id_test_list is None:
-            id_test_list = []
         entity_id = _get_file_id(file_type.value, current_file)
         if file_type in {FileType.INTEGRATION, FileType.BETA_INTEGRATION}:
-            return self.integration_has_unskipped_test_playbook(current_file, entity_id, file_path, id_test_list)
+            return self.integration_has_unskipped_test_playbook(current_file, entity_id, file_path)
         if file_type == FileType.SCRIPT:
             return self.has_unskipped_test_playbook(current_file=current_file,
                                                     entity_id=entity_id,
-                                                    file_path=file_path,
-                                                    test_playbook_ids=id_test_list)
+                                                    file_path=file_path)
         return True
 
     def has_unskipped_test_playbook(self, current_file, entity_id, file_path, test_playbook_ids=None):
@@ -132,9 +129,9 @@ class ConfJsonValidator(BaseValidator):
                 self._is_valid = False
         return self._is_valid
 
-    def integration_has_unskipped_test_playbook(self, integration_data, integration_id, file_path, id_test_list):
+    def integration_has_unskipped_test_playbook(self, integration_data, integration_id, file_path):
         """Validate there is at least one unskipped test playbook."""
-        test_playbook_ids = id_test_list
+        test_playbook_ids = []
         conf_tests = self.conf_data.get('tests', [])
         for test in conf_tests:
             if 'integrations' in test:

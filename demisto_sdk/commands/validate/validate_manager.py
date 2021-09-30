@@ -458,17 +458,15 @@ class ValidateManager:
             return True
 
         # id_set validation
-        id_test_list = []
-        if self.id_set_validations:
-            if not self.id_set_validations.is_file_valid_in_set(file_path, file_type, pack_error_ignore_list):
-                return False
-            id_test_list = self.id_set_validations.get_tests_from_id_set_for_file(file_type, structure_validator.current_file)
+        if self.id_set_validations and not self.id_set_validations.is_file_valid_in_set(file_path, file_type,
+                                                                                        pack_error_ignore_list):
+            return False
 
         # conf.json validation
         valid_in_conf = True
         if self.check_is_unskipped and file_type in {FileType.INTEGRATION, FileType.SCRIPT, FileType.BETA_INTEGRATION}:
             if not self.conf_json_validator.is_valid_file_in_conf_json(structure_validator.current_file, file_type,
-                                                                       file_path, id_test_list):
+                                                                       file_path):
                 valid_in_conf = False
 
         # Note: these file are not ignored but there are no additional validators for connections

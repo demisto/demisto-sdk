@@ -4,9 +4,8 @@ import itertools
 import os
 import re
 
-from demisto_sdk.commands.common.constants import (PACKS_DIR,
-                                                   RN_HEADER_BY_FILE_TYPE,
-                                                   SKIP_RELEASE_NOTES_FOR_TYPES)
+from demisto_sdk.commands.common.constants import (
+    PACKS_DIR, RN_HEADER_BY_FILE_TYPE, SKIP_RELEASE_NOTES_FOR_TYPES)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator

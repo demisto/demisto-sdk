@@ -416,7 +416,8 @@ def test_update_release_notes_master_ahead_of_current(demisto_client, mocker, re
 
     with ChangeCWD(repo.path):
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", join('Packs', 'FeedAzureValid')])
+        result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", join('Packs', 'FeedAzureValid'),
+                                      "--prev-ver", "demisto/master"])
     assert result.exit_code == 0
     assert not result.exception
     assert 'Changes were detected. Bumping FeedAzureValid to version: 2.0.1' in result.stdout
@@ -446,7 +447,8 @@ def test_update_release_notes_master_unavailable(demisto_client, mocker, repo):
     mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
     with ChangeCWD(repo.path):
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", join('Packs', 'FeedAzureValid')])
+        result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", join('Packs', 'FeedAzureValid'),
+                                      "--prev-ver", "demisto/master"])
     assert result.exit_code == 0
     assert not result.exception
     assert 'Changes were detected. Bumping FeedAzureValid to version: 1.1.1' in result.stdout

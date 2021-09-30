@@ -351,6 +351,7 @@ def test_are_release_notes_with_author_image(mocker, repo):
     validator = get_validator('', modified_files=[pack.author_image.path])
     assert validator.are_release_notes_complete()
 
+
 TEST_RELEASE_NOTES_TEST_BANK_2 = [
     ('', False),  # Completely Empty
     ('### Integrations\n#### HelloWorld\n- Grammar correction for code '  # Missing Items

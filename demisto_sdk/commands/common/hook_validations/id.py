@@ -12,7 +12,7 @@ from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.tools import (
-    _get_file_id, get_script_or_sub_playbook_tasks_from_playbook, get_yaml)
+     get_script_or_sub_playbook_tasks_from_playbook, get_yaml)
 from demisto_sdk.commands.common.update_id_set import (
     get_classifier_data, get_incident_field_data, get_incident_type_data,
     get_integration_data, get_layout_data, get_layouts_scripts_ids,
@@ -694,54 +694,4 @@ class IDSetValidations(BaseValidator):
 
         return is_valid, error
 
-    def get_test_playbooks_for_ids(self, ids_for_search, field_name):
-        """
-        for a list of ids (integration commands or script id) return all test playbooks who use them
-        Args:
-            ids_for_search: list of ids for search
-            field_name: the name of field the ids are connected to in the test playbook dict -
-            'command_to_integration' for integration
-             'implementing_scripts' for script
 
-        Returns:a list of all test playbooks ids
-
-        """
-        playbook_list = []
-        for playbook in self.test_playbook_set:
-            playbook_dict = list(playbook.values())[0]
-            playbook_commands_or_scripts = playbook_dict.get(field_name, [])
-            if any([cur_id in playbook_commands_or_scripts for cur_id in ids_for_search]):
-                playbook_list.append(playbook_dict.get('name'))
-        return playbook_list
-
-    def get_tests_from_id_set_for_file(self, file_type, file_content):
-        """
-        for a given file (integration or script) return all test playbooks that use the script or integration commands
-        Args:
-            file_type: the type of file
-            file_content: the content of the file
-
-        Returns: a list of testPlaybooks ids
-
-        """
-        if not self.is_circle:
-            return []
-
-        file_id = _get_file_id(file_type.value, file_content)
-        if file_type in {constants.FileType.INTEGRATION, constants.FileType.BETA_INTEGRATION}:
-            file_data = get_file_dict_by_id(file_id, self.integration_set)
-            return self.get_test_playbooks_for_ids(file_data.get('commands', []), 'command_to_integration')
-
-        if file_type == constants.FileType.SCRIPT:
-            return self.get_test_playbooks_for_ids([file_id], 'implementing_scripts')
-
-
-def get_file_dict_by_id(file_id, file_dict_list):
-    """
-    given a list of file dicts return the relevant dict by the file id parameter
-    """
-    for file_dict in file_dict_list:
-        if file_id in file_dict:
-            return file_dict[file_id]
-
-    return {}

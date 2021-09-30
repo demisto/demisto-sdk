@@ -9,7 +9,8 @@ from demisto_sdk.commands.common.constants import EXCLUDED_DISPLAY_NAME_WORDS
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.pack_unique_files import (
-    PACK_METADATA_NAME, PACK_METADATA_SUPPORT, PackUniqueFilesValidator)
+    PACK_METADATA_NAME, PACK_METADATA_SUPPORT,
+    BlockingValidationFailureException, PackUniqueFilesValidator)
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 
 
@@ -28,20 +29,15 @@ class TestPackMetadataValidator:
         validator = PackUniqueFilesValidator('fake')
         assert validator.validate_pack_meta_file()
 
-    @pytest.mark.parametrize('metadata', [os.path.join(FILES_PATH, 'pack_metadata_missing_fields.json'),
-                                          os.path.join(FILES_PATH, 'pack_metadata_invalid_price.json'),
-                                          os.path.join(FILES_PATH, 'pack_metadata_invalid_dependencies.json'),
-                                          os.path.join(FILES_PATH, 'pack_metadata_list_dependencies.json'),
-                                          os.path.join(FILES_PATH, 'pack_metadata_empty_category.json'),
-                                          os.path.join(FILES_PATH, 'pack_metadata_invalid_keywords.json'),
-                                          os.path.join(FILES_PATH, 'pack_metadata_invalid_tags.json'),
-                                          os.path.join(FILES_PATH, 'pack_metadata_list.json'),
-                                          os.path.join(FILES_PATH, 'pack_metadata_short_name.json'),
-                                          os.path.join(FILES_PATH, 'pack_metadata_name_start_lower.json'),
-                                          os.path.join(FILES_PATH, 'pack_metadata_name_start_incorrect.json'),
-                                          os.path.join(FILES_PATH, 'pack_metadata_pack_in_name.json'),
-                                          ])
-    def test_metadata_validator_invalid(self, mocker, metadata):
+    @pytest.mark.parametrize('metadata', [
+        os.path.join(FILES_PATH, 'pack_metadata_invalid_price.json'),
+        os.path.join(FILES_PATH, 'pack_metadata_invalid_dependencies.json'),
+        os.path.join(FILES_PATH, 'pack_metadata_list_dependencies.json'),
+        os.path.join(FILES_PATH, 'pack_metadata_empty_category.json'),
+        os.path.join(FILES_PATH, 'pack_metadata_invalid_keywords.json'),
+        os.path.join(FILES_PATH, 'pack_metadata_invalid_tags.json'),
+    ])
+    def test_metadata_validator_invalid__non_breaking(self, mocker, metadata):
         mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
         mocker.patch.object(PackUniqueFilesValidator, '_read_file_content',
                             return_value=TestPackMetadataValidator.read_file(metadata))
@@ -50,6 +46,33 @@ class TestPackMetadataValidator:
 
         validator = PackUniqueFilesValidator('fake')
         assert not validator.validate_pack_meta_file()
+
+    @pytest.mark.parametrize('metadata', [
+        os.path.join(FILES_PATH, 'pack_metadata_missing_fields.json'),
+        os.path.join(FILES_PATH, 'pack_metadata_list.json'),
+        os.path.join(FILES_PATH, 'pack_metadata_short_name.json'),
+        os.path.join(FILES_PATH, 'pack_metadata_name_start_lower.json'),
+        os.path.join(FILES_PATH, 'pack_metadata_name_start_incorrect.json'),
+        os.path.join(FILES_PATH, 'pack_metadata_pack_in_name.json'),
+    ])
+    def test_metadata_validator_invalid__breaking(self, mocker, metadata):
+        """
+        Given
+                A pack metadata file with invalid contents that should halt validations
+        When
+                Calling validate_pack_meta_file
+        Then
+                Ensure BlockingValidationFailureException is raised
+        """
+        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
+        mocker.patch.object(PackUniqueFilesValidator, '_read_file_content',
+                            return_value=TestPackMetadataValidator.read_file(metadata))
+        mocker.patch.object(PackUniqueFilesValidator, '_is_pack_file_exists', return_value=True)
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
+
+        validator = PackUniqueFilesValidator('fake')
+        with pytest.raises(BlockingValidationFailureException):
+            assert not validator.validate_pack_meta_file()
 
     VALIDATE_PACK_NAME_INPUTS = [({PACK_METADATA_NAME: 'fill mandatory field'}, False),
                                  ({PACK_METADATA_NAME: 'A'}, False),
@@ -106,9 +129,10 @@ class TestPackMetadataValidator:
         - Validating metadata structure.
 
         Then:
-        - Ensure false is returned.
+        - Ensure false is returned, and a BlockingValidationFailureException is raised.
         """
         mocker.patch.object(PackUniqueFilesValidator, '_read_metadata_content', return_value={'a', 'b'})
         validator = PackUniqueFilesValidator('fake')
         mocker.patch.object(validator, '_add_error')
-        assert not validator._is_pack_meta_file_structure_valid()
+        with pytest.raises(BlockingValidationFailureException):
+            assert not validator._is_pack_meta_file_structure_valid()

@@ -10,8 +10,10 @@ from mock import patch
 
 import demisto_sdk.commands.validate.validate_manager
 from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.common.constants import (CONF_PATH, TEST_PLAYBOOK,
-                                                   FileType)
+from demisto_sdk.commands.common.constants import (CONF_PATH,
+                                                   PACKS_PACK_META_FILE_NAME,
+                                                   TEST_PLAYBOOK, FileType)
+from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
@@ -457,6 +459,28 @@ class TestValidators:
         validate_manager = ValidateManager(skip_conf_json=True)
         result = validate_manager.validate_pack_unique_files(VALID_PACK, pack_error_ignore_list={})
         assert result
+
+    def test_files_validator_missing_meta_file(self, repo, capsys):
+        """
+            Given
+                A path of a pack folder
+            When
+                Running  validate_pack_unique_files
+            Then
+                Ensure required_pack_file_does_not_exist fails if and only if PACKS_PACK_META_FILE_NAME doesn't exist
+        """
+        pack = repo.create_pack('pack')
+        validate_manager = ValidateManager(skip_conf_json=True)
+        err_msg, err_code = Errors.required_pack_file_does_not_exist(PACKS_PACK_META_FILE_NAME)
+
+        validate_manager.validate_pack_unique_files(pack.path, pack_error_ignore_list={})
+        stdout = capsys.readouterr().out
+        assert (err_msg not in stdout) and (err_code not in stdout)
+
+        os.remove(pack.pack_metadata.path)
+        validate_manager.validate_pack_unique_files(pack.path, pack_error_ignore_list={})
+        stdout = capsys.readouterr().out
+        assert err_msg in stdout and err_code in stdout
 
     def test_validate_pack_dependencies(self, mocker):
         """

@@ -9,7 +9,7 @@ Also supports converting JSON format to demisto entry context yaml format.
 **Arguments**:
 * *-c, --command*
   Command name (e.g. xdr-get-incidents)
-* *-i, --input*
+* *-j, --json*
   A JSON file path. If not specified then script will wait for user input in the terminal.
 * *-p, --prefix*
   Output prefix like Jira.Ticket, VirusTotal.IP

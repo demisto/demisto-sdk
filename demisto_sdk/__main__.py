@@ -878,7 +878,7 @@ def run_playbook(**kwargs):
 
 
 # ====================== generate-outputs ====================== #
-@main.command()
+@main.command(short_help='''Generates a outputs (from json or examples).''')
 @click.help_option(
     '-h', '--help'
 )
@@ -931,6 +931,9 @@ def generate_outputs(**kwargs):
     file/UI/PyCharm. This script auto generates the YAML for a command from the JSON result of the relevant API call
     In addition you can supply examples files and generate the context description directly in the YML from those examples.
     """
+
+    if kwargs.get('json', False):
+        check_configuration_file('json-to-outputs', kwargs)
     return run_generate_outputs(**kwargs)
 
 

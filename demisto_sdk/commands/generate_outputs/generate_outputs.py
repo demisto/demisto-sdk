@@ -1,11 +1,10 @@
 import os
 
 from demisto_sdk.commands.common.tools import FileType, find_type, print_error
-from demisto_sdk.commands.generate_context.generate_integration_context import \
+from demisto_sdk.commands.generate_outputs.generate_context.generate_integration_context import \
     generate_integration_context
-from demisto_sdk.commands.json_to_outputs.json_to_outputs import \
+from demisto_sdk.commands.generate_outputs.json_to_outputs.json_to_outputs import \
     json_to_outputs
-from demisto_sdk.utils.config import check_configuration_file
 
 
 def run_generate_outputs(**kwargs):
@@ -18,7 +17,6 @@ def run_generate_outputs(**kwargs):
             print_error(
                 'To use the json-to-outputs version of this command please include a `prefix` argument.')
             return 1
-        check_configuration_file('json-to-outputs', kwargs)
         args = [kwargs.get('command'), kwargs.get('json'), kwargs.get('prefix'),
                 kwargs.get('output'),
                 kwargs.get('verbose'), kwargs.get('interactive'),

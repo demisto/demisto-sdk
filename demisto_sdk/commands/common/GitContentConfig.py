@@ -8,8 +8,18 @@ import giturlparse
 import requests
 from git import InvalidGitRepositoryError
 
-from demisto_sdk.commands.common.constants import GitCredentials
 from demisto_sdk.commands.common.git_util import GitUtil
+
+
+class GitCredentials:
+    ENV_GITHUB_TOKEN_NAME = 'DEMISTO_SDK_GITHUB_TOKEN'
+    ENV_GITLAB_TOKEN_NAME = 'DEMISTO_SDK_GITLAB_TOKEN'
+    GITHUB_TOKEN: Optional[str]
+    GITLAB_TOKEN: Optional[str]
+
+    def __init__(self):
+        self.GITHUB_TOKEN = os.getenv(self.ENV_GITHUB_TOKEN_NAME)
+        self.GITLAB_TOKEN = os.getenv(self.ENV_GITLAB_TOKEN_NAME)
 
 
 class GitContentConfig:

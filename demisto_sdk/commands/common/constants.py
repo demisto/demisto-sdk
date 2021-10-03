@@ -874,17 +874,6 @@ def urljoin(*args: str):
     return reduce(lambda a, b: str(a).rstrip('/') + '/' + str(b).lstrip('/'), args).rstrip("/")
 
 
-class GitCredentials:
-    ENV_GITHUB_TOKEN_NAME = 'DEMISTO_SDK_GITHUB_TOKEN'
-    ENV_GITLAB_TOKEN_NAME = 'DEMISTO_SDK_GITLAB_TOKEN'
-    GITHUB_TOKEN: Optional[str]
-    GITLAB_TOKEN: Optional[str]
-
-    def __init__(self):
-        self.GITHUB_TOKEN = os.getenv(self.ENV_GITHUB_TOKEN_NAME)
-        self.GITLAB_TOKEN = os.getenv(self.ENV_GITLAB_TOKEN_NAME)
-
-
 OFFICIAL_CONTENT_ID_SET_PATH = 'https://storage.googleapis.com/marketplace-dist/content/id_set.json'
 
 # Run all test signal

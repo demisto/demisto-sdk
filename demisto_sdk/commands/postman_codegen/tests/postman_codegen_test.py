@@ -549,7 +549,8 @@ class TestPostmanCodeGen:
         pass
 
     GENERATE_COMMAND_OUTPUTS_INPUTS = [({'id': 1}, [IntegrationGeneratorOutput('id', '', 'Number')]),
-                                       ([{'id': 1}], [IntegrationGeneratorOutput('id', '', 'Number')])]
+                                       ([{'id': 1}], [IntegrationGeneratorOutput('id', '', 'Number')]),
+                                       ([{'a': [{'b': 2}]}], [IntegrationGeneratorOutput('a.b', '', 'Number')])]
 
     @pytest.mark.parametrize('body, expected', GENERATE_COMMAND_OUTPUTS_INPUTS)
     def test_generate_command_outputs(self, body: Union[List, Dict], expected: List[IntegrationGeneratorOutput]):

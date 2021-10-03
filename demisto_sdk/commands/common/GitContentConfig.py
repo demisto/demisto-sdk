@@ -1,7 +1,7 @@
 import os
 from functools import lru_cache
 from typing import Iterable, Optional
-from urllib.parse import urlparse
+from urllib.parse import urljoin, urlparse
 
 import click
 import giturlparse

@@ -2,6 +2,7 @@
 * Fixed an issue were the **validate** command was falsely recognizing image paths in readme files.
 * Fixed an issue where the **upload** command error message upon upload failure pointed to wrong file rather than to the pack metadata.
 * Added a validation that verifies that each script which appears in incident fields, layouts or layout containers exists in the id_set.json.
+* Added a validation to ensure reputation command's default argument is set as an array input.
 
 # 1.5.0
 * Fixed an issue where **upload** command failed to upload packs not under content structure.

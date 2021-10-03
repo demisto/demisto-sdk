@@ -37,9 +37,30 @@ Also supports converting JSON format to demisto entry context yaml format.
 ```
 demisto-sdk generate-outputs -i Packs/MyPack/Integrations/MyInt/MyInt.yml -e Packs/MyPack/Integrations/MyInt/command_exmaple.txt
 ```
-> This will generate the outputs contexts for all the commands in the example file.
+Before:
+```
+ commands:
+    ...
+  name: guardicore-get-incident
+  outputs: []
+    ...
+```
+After:
+```
+commands:
+  ...
+  name: guardicore-get-incident
+  outputs:
+  - contextPath: Guardicore.Incident._cls
+    description: ''
+    type: String
+  - contextPath: Guardicore.Incident.affected_assets.ip
+    description: ''
+    type: String
+    ...
+```
 
-<br/>`demisto-sdk generate-outputs -c jira-get-ticket -p Jira.Ticket -i path/to/valid.json`
+<br/>`demisto-sdk generate-outputs -c jira-get-ticket -p Jira.Ticket -j path/to/valid.json`
 <br/>if valid.json looks like
 ```json
 {

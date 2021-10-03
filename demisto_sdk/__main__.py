@@ -4,6 +4,7 @@ import logging
 import os
 import sys
 import tempfile
+from configparser import ConfigParser, MissingSectionHeaderError
 from pathlib import Path
 from typing import IO
 
@@ -70,7 +71,6 @@ from demisto_sdk.commands.upload.uploader import Uploader
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.commands.zip_packs.packs_zipper import (EX_FAIL, EX_SUCCESS,
                                                          PacksZipper)
-from demisto_sdk.utils.config import check_configuration_file
 
 
 class PathsParamType(click.Path):
@@ -104,6 +104,38 @@ class DemistoSDK:
 
 
 pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
+
+
+def check_configuration_file(command, args):
+    config_file_path = '.demisto-sdk-conf'
+    true_synonyms = ['true', 'True', 't', '1']
+    if os.path.isfile(config_file_path):
+        try:
+            config = ConfigParser(allow_no_value=True)
+            config.read(config_file_path)
+
+            if command in config.sections():
+                for key in config[command]:
+                    if key in args:
+                        # if the key exists in the args we will run it over if it is either:
+                        # a - a flag currently not set and is defined in the conf file
+                        # b - not a flag but an arg that is currently None and there is a value for it in the conf file
+                        if args[key] is False and config[command][key] in true_synonyms:
+                            args[key] = True
+
+                        elif args[key] is None and config[command][key] is not None:
+                            args[key] = config[command][key]
+
+                    # if the key does not exist in the current args, add it
+                    else:
+                        if config[command][key] in true_synonyms:
+                            args[key] = True
+
+                        else:
+                            args[key] = config[command][key]
+
+        except MissingSectionHeaderError:
+            pass
 
 
 @click.group(invoke_without_command=True, no_args_is_help=True, context_settings=dict(max_content_width=100), )

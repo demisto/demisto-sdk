@@ -1375,7 +1375,7 @@ def find_dependencies(**kwargs):
     try:
         PackDependencies.find_dependencies(
             pack_name=pack_name,
-            id_set_path=str(id_set_path),
+            id_set_path=id_set_path,
             verbose=verbose,
             update_pack_metadata=update_pack_metadata,
             use_pack_metadata=use_pack_metadata

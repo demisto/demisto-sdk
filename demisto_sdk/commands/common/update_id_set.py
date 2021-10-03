@@ -1251,7 +1251,7 @@ def get_playbooks_paths(pack_to_create):
             ['Packs', '*', 'Playbooks', '*.yml']
         ]
 
-    playbook_files = list(pack_to_create)
+    playbook_files = list(pack_to_create) if pack_to_create else []
     for path in path_list:
         playbook_files.extend(glob.glob(os.path.join(*path)))
 

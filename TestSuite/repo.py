@@ -69,7 +69,8 @@ class Repo:
             'GenericTypes': [],
             'GenericFields': [],
             'GenericModules': [],
-            'GenericDefinitions': []
+            'GenericDefinitions': [],
+            'Jobs': []
         })
 
     def __del__(self):

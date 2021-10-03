@@ -1417,8 +1417,8 @@ class PackDependencies:
             verbose,
             exclude_ignored_dependencies,
         )
-        jobs_dependencies = PackDependencies._collect_generic_modules_dependencies(
-            pack_items['generic_modules'],
+        jobs_dependencies = PackDependencies._collect_jobs_dependencies(
+            pack_items['jobs'],
             id_set,
             verbose,
             exclude_ignored_dependencies,

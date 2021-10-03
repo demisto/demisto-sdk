@@ -12,7 +12,7 @@ from demisto_sdk.commands.common.update_id_set import re_create_id_set
 
 class IDSetCreator:
 
-    def __init__(self, output: Optional[str] = '', input: str = '', print_logs: bool = True,
+    def __init__(self, output: Optional[str] = '', input: str = None, print_logs: bool = True,
                  fail_duplicates: bool = False):
         """IDSetCreator
 

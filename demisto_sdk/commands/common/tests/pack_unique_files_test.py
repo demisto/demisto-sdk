@@ -120,6 +120,7 @@ class TestPackUniqueFilesValidator:
         pack_metadata_no_email_and_url['url'] = ''
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         mocker.patch.object(PackUniqueFilesValidator, '_is_pack_file_exists', return_value=True)
+        mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_name', return_value=True)
         mocker.patch.object(PackUniqueFilesValidator, 'get_master_private_repo_meta_file', return_value=None)
         mocker.patch.object(PackUniqueFilesValidator, '_read_file_content',
                             return_value=json.dumps(pack_metadata_no_email_and_url))
@@ -153,6 +154,7 @@ class TestPackUniqueFilesValidator:
 
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         mocker.patch.object(PackUniqueFilesValidator, '_is_pack_file_exists', return_value=True)
+        mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_name', return_value=True)
         mocker.patch.object(PackUniqueFilesValidator, 'get_master_private_repo_meta_file', return_value=None)
         mocker.patch.object(PackUniqueFilesValidator, '_read_file_content',
                             return_value=json.dumps(pack_metadata_changed_url))
@@ -185,6 +187,7 @@ class TestPackUniqueFilesValidator:
         pack_metadata_price_changed['price'] = 3
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         mocker.patch.object(PackUniqueFilesValidator, '_is_pack_file_exists', return_value=True)
+        mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_name', return_value=True)
         mocker.patch.object(PackUniqueFilesValidator, 'get_master_private_repo_meta_file',
                             return_value=PACK_METADATA_PARTNER)
         mocker.patch.object(PackUniqueFilesValidator, '_read_file_content',

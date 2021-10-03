@@ -28,7 +28,7 @@ Options:
     Do NOT run flake8 linter
 *  **--no-bandit**
     Do NOT run bandit linter
-*  ** --no-xsoar-linter**
+*  **--no-xsoar-linter**
     Do NOT run XSOAR linter
 *  **--no-mypy**
     Do NOT run mypy static type checking

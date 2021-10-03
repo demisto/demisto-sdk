@@ -4,7 +4,7 @@ from enum import Enum
 from functools import reduce
 from typing import Dict, List, Optional
 
-from GitContentConfig import GitContentConfig
+from demisto_sdk.commands.common.GitContentConfig import GitContentConfig  # pylint: disable=unused-importt
 
 CAN_START_WITH_DOT_SLASH = '(?:./)?'
 NOT_TEST = '(?!Test)'

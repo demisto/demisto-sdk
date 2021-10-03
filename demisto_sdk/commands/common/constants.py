@@ -1,10 +1,10 @@
-import os
 import re
 from enum import Enum
 from functools import reduce
-from typing import Dict, List, Optional
+from typing import Dict, List
 
-from demisto_sdk.commands.common.GitContentConfig import GitContentConfig  # pylint: disable=unused-importt
+from demisto_sdk.commands.common.GitContentConfig import \
+    GitContentConfig  # flake8: noqa
 
 CAN_START_WITH_DOT_SLASH = '(?:./)?'
 NOT_TEST = '(?!Test)'

@@ -2,6 +2,7 @@
 * Fixed an issue were the **validate** command was falsely recognizing image paths in readme files.
 * Fixed an issue where the **upload** command error message upon upload failure pointed to wrong file rather than to the pack metadata.
 * Added a validation that verifies that each script which appears in incident fields, layouts or layout containers exists in the id_set.json.
+* Fixed an issue where the **postman code-gen** command generated double dots for context outputs when it was not needed.
 * Fixed an issue where there **validate** command on release notes file crashed when author image was added or modified.
 
 # 1.5.0

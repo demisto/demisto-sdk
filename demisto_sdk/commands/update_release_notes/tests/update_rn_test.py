@@ -2,6 +2,7 @@ import json
 import os
 import shutil
 import unittest
+from typing import Dict, Optional
 
 import mock
 import pytest
@@ -655,6 +656,29 @@ class TestRNUpdate(unittest.TestCase):
             'Packs/Test/Integrations/Test.yml'}, added_files=set('Packs/Test/some_added_file.py'))
         assert client.is_bump_required() is False
 
+    def test_filter_to_relevant_files_pack_not_found(self):
+        """
+        Given:
+        - Pack input.
+        - File difference of a file outside of Packs structure.
+
+        When:
+        - Executing filter relevant files from given pack.
+
+        Then:
+        - Ensure file is filtered.
+        """
+        from demisto_sdk.commands.update_release_notes.update_rn_manager import \
+            UpdateReleaseNotesManager
+        from demisto_sdk.commands.validate.validate_manager import \
+            ValidateManager
+        manager = UpdateReleaseNotesManager(user_input='BitcoinAbuse')
+        validate_manager: ValidateManager = ValidateManager(check_is_unskipped=False)
+        filtered_set, old_format_files = manager.filter_to_relevant_files(
+            {'.gitlab/ci/.gitlab-ci.yml'}, validate_manager)
+        assert filtered_set == set()
+        assert old_format_files == set()
+
 
 class TestRNUpdateUnit:
     META_BACKUP = ""
@@ -1261,6 +1285,52 @@ class TestRNUpdateUnit:
          '#### Integrations\n##### BitcoinAbuse Feed\n- %%UPDATE_RN%%\n- Updated the Docker image '
          'to: *demisto/python3:3.9.1.149616*.\n', True)
     ]
+
+    BUILD_RN_CONFIG_FILE_INPUTS = [(False, None, None),
+                                   (True, None, {'breakingChanges': True, 'breakingChangesNotes': None}),
+                                   (True, {'breakingChanges': True},
+                                    {'breakingChanges': True, 'breakingChangesNotes': None}),
+                                   (True, {'breakingChanges': True, 'breakingChangesNotes': 'bc notes'},
+                                    {'breakingChanges': True, 'breakingChangesNotes': 'bc notes'})
+                                   ]
+
+    @pytest.mark.parametrize('is_bc, existing_conf_data, expected_conf_data', BUILD_RN_CONFIG_FILE_INPUTS)
+    def test_build_rn_config_file(self, pack, is_bc: bool, existing_conf_data: Optional[Dict],
+                                  expected_conf_data: Optional[Dict]):
+        """
+        Given:
+        - BC flag - indicating whether new version introduced has breaking changes.
+
+        When:
+        - Generating conf file for new RN.
+        Case a: BC flag was not specified.
+        Case b: BC flag was specified, no conf exists.
+        Case c: BC flag was specified, conf exists, breakingChanges field is false.
+        Case c: BC flag was specified, conf exists, breakingChangesNotes field is not empty.
+
+        Then:
+        - Ensure expected results happen.
+        Case a: No conf JSON file generated.
+        Case b: Conf JSON file generated with null value for breakingChangesNotes, and true value for breakingChanges.
+        Case c: Conf JSON file generated with null value for breakingChangesNotes, and true value for breakingChanges.
+        Case d: Conf JSON file generated with old value for breakingChangesNotes, and true value for breakingChanges.
+
+        """
+        from demisto_sdk.commands.update_release_notes.update_rn import \
+            UpdateRN
+        client = UpdateRN(pack_path=pack.path, update_type=None, modified_files_in_pack=set(), added_files=set(),
+                          is_bc=is_bc)
+        conf_path: str = f'{pack.path}/ReleaseNotes/1_0_1.json'
+        if existing_conf_data:
+            with open(conf_path, 'w') as f:
+                f.write(json.dumps(existing_conf_data))
+        client.build_rn_config_file('1.0.1')
+        if expected_conf_data:
+            assert os.path.exists(conf_path)
+            with open(conf_path, 'r') as f:
+                assert json.loads(f.read()) == expected_conf_data
+        else:
+            assert not os.path.exists(conf_path)
 
 
 def test_get_from_version_at_update_rn(integration):

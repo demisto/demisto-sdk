@@ -34,7 +34,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                print_color,
                                                retrieve_file_ending)
 from demisto_sdk.commands.format.format_module import format_manager
-from demisto_sdk.commands.split_yml.extractor import Extractor
+from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 
 
 class Downloader:
@@ -184,10 +184,15 @@ class Downloader:
         custom_content_file_paths: list = get_child_files(self.custom_content_temp_dir)
         custom_content_objects: List = list()
         for file_path in custom_content_file_paths:
-            custom_content_object: Dict = self.build_custom_content_object(file_path)
-            if custom_content_object['type']:
-                # If custom content object's type is empty it means the file isn't of support content entity
-                custom_content_objects.append(custom_content_object)
+            try:
+                custom_content_object: Dict = self.build_custom_content_object(file_path)
+                if custom_content_object['type']:
+                    # If custom content object's type is empty it means the file isn't of support content entity
+                    custom_content_objects.append(custom_content_object)
+            # Do not add file to custom_content_objects if it has an invalid format
+            except ValueError as e:
+                print_color(f"Error when loading {file_path}, skipping", LOG_COLORS.RED)
+                print_color(f"{e}", LOG_COLORS.RED)
         return custom_content_objects
 
     def handle_list_files_flag(self) -> bool:
@@ -504,9 +509,9 @@ class Downloader:
         base_name: str = self.create_dir_name(file_name)
         temp_dir = mkdtemp()
 
-        extractor = Extractor(input=file_path, output=temp_dir, file_type=file_type, base_name=base_name,
-                              no_logging=not self.log_verbose, no_pipenv=True, no_readme=True,
-                              no_auto_create_dir=True)
+        extractor = YmlSplitter(input=file_path, output=temp_dir, file_type=file_type, base_name=base_name,
+                                no_logging=not self.log_verbose, no_pipenv=True, no_readme=True,
+                                no_auto_create_dir=True)
         extractor.extract_to_package_format()
 
         extracted_file_paths: list = get_child_files(temp_dir)
@@ -594,8 +599,8 @@ class Downloader:
         dir_name: str = self.create_dir_name(file_name)
         dir_output_path = os.path.join(dir_output_path, dir_name)
 
-        extractor = Extractor(input=file_path, output=dir_output_path, file_type=file_type, base_name=dir_name,
-                              no_auto_create_dir=True, no_logging=not self.log_verbose, no_pipenv=True)
+        extractor = YmlSplitter(input=file_path, output=dir_output_path, file_type=file_type, base_name=dir_name,
+                                no_auto_create_dir=True, no_logging=not self.log_verbose, no_pipenv=True)
         extractor.extract_to_package_format()
 
         for file_path in get_child_files(dir_output_path):

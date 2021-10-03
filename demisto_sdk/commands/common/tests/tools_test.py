@@ -26,9 +26,9 @@ from demisto_sdk.commands.common.tools import (
     get_last_remote_release_version, get_latest_release_notes_text,
     get_pack_metadata, get_relative_path_from_packs_dir,
     get_release_note_entries, get_release_notes_file_path, get_ryaml,
-    get_to_version, has_remote_configured, is_origin_content_repo,
-    is_pack_path, is_uuid, retrieve_file_ending, run_command_os,
-    server_version_compare)
+    get_test_playbook_id, get_to_version, has_remote_configured,
+    is_origin_content_repo, is_pack_path, is_uuid, retrieve_file_ending,
+    run_command_os, server_version_compare)
 from demisto_sdk.tests.constants_test import (IGNORED_PNG,
                                               INDICATORFIELD_EXTRA_FIELDS,
                                               SOURCE_FORMAT_INTEGRATION_COPY,
@@ -583,7 +583,7 @@ def test_get_ignore_pack_tests__no_pack():
     - returns an empty set
     """
     nonexistent_pack = 'NonexistentFakeTestPack'
-    ignore_test_set = get_ignore_pack_skipped_tests(nonexistent_pack)
+    ignore_test_set = get_ignore_pack_skipped_tests(nonexistent_pack, {nonexistent_pack}, {})
     assert len(ignore_test_set) == 0
 
 
@@ -608,7 +608,7 @@ def test_get_ignore_pack_tests__no_ignore_pack(tmpdir):
     if os.path.exists(pack_ignore_path):
         os.remove(pack_ignore_path)
 
-    ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name)
+    ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name, {fake_pack_name}, {})
     assert len(ignore_test_set) == 0
 
 
@@ -633,7 +633,7 @@ def test_get_ignore_pack_tests__test_not_ignored(tmpdir):
     # prepare .pack-ignore
     open(pack_ignore_path, 'a').close()
 
-    ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name)
+    ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name, {fake_pack_name}, {})
     assert len(ignore_test_set) == 0
 
 
@@ -642,6 +642,7 @@ def test_get_ignore_pack_tests__ignore_test(tmpdir, mocker):
     Given
     - Pack have .pack-ignore file
     - There are skipped tests in .pack-ignore
+    - Set of modified packs.
     When
     - Collecting packs' ignored tests - running `get_ignore_pack_tests()`
     Then:
@@ -667,8 +668,9 @@ def test_get_ignore_pack_tests__ignore_test(tmpdir, mocker):
     # prepare mocks
     mocker.patch.object(tools, "get_pack_ignore_file_path", return_value=pack_ignore_path)
     mocker.patch.object(os.path, "join", return_value=str(test_playbook_path / (test_playbook.name + ".yml")))
+    mocker.patch.object(tools, "get_test_playbook_id", return_value=('SamplePlaybookTest', 'FakeTestPack'))
 
-    ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name)
+    ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name, {fake_pack_name}, {})
     assert len(ignore_test_set) == 1
     assert expected_id in ignore_test_set
 
@@ -702,8 +704,9 @@ def test_get_ignore_pack_tests__ignore_missing_test(tmpdir, mocker):
     # prepare mocks
     mocker.patch.object(tools, "get_pack_ignore_file_path", return_value=pack_ignore_path)
     mocker.patch.object(os.path, "join", return_value=str(test_playbook_path / fake_test_name))
+    mocker.patch.object(tools, "get_test_playbook_id", return_value=(None, 'FakeTestPack'))
 
-    ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name)
+    ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name, {fake_pack_name}, {})
     assert len(ignore_test_set) == 0
 
 
@@ -1410,3 +1413,65 @@ def test_is_iron_bank_pack(mocker, metadata, expected):
     mocker.patch.object(tools, 'get_pack_metadata', return_value=metadata)
     res = tools.is_iron_bank_pack('example_path')
     assert res == expected
+
+
+def test_get_test_playbook_id():
+    """
+    Given:
+        - A list of test playbooks from id_set
+        - Test playbook file name
+
+    When:
+        - trying to get the pack and name of the test playbook - via running get_test_playbook_id command
+
+    Then:
+        - Ensure that the currect pack name returned.
+        - Ensure that the currect test name returned.
+
+    """
+    test_playbook_id_set = [
+        {
+            "HelloWorld-Test": {
+                "name": "HelloWorld-Test",
+                "file_path": "Packs/HelloWorld/TestPlaybooks/playbook-HelloWorld-Test.yml",
+                "fromversion": "5.0.0",
+                "implementing_scripts": [
+                    "HelloWorldScript",
+                    "DeleteContext",
+                    "FetchFromInstance"
+                ],
+                "command_to_integration": {
+                    "helloworld-say-hello": "",
+                    "helloworld-search-alerts": ""
+                },
+                "pack": "HelloWorld"
+            }
+        },
+        {
+            "HighlightWords_Test": {
+                "name": "HighlightWords - Test",
+                "file_path": "Packs/CommonScripts/TestPlaybooks/playbook-HighlightWords_-_Test.yml",
+                "implementing_scripts": [
+                    "VerifyHumanReadableContains",
+                    "HighlightWords"
+                ],
+                "pack": "CommonScripts"
+            }
+        },
+        {
+            "HTTPListRedirects - Test SSL": {
+                "name": "HTTPListRedirects - Test SSL",
+                "file_path": "Packs/CommonScripts/TestPlaybooks/playbook-HTTPListRedirects_-_Test_SSL.yml",
+                "implementing_scripts": [
+                    "PrintErrorEntry",
+                    "HTTPListRedirects",
+                    "DeleteContext"
+                ],
+                "pack": "CommonScripts"
+            }
+        }]
+
+    test_name = 'playbook-HelloWorld-Test.yml'
+    test_playbook_name, test_playbook_pack = get_test_playbook_id(test_playbook_id_set, test_name)
+    assert test_playbook_name == 'HelloWorld-Test'
+    assert test_playbook_pack == 'HelloWorld'

@@ -50,8 +50,9 @@ README_INPUT_RESULTS_LIST = [
 
 
 class TestPackUniqueFilesValidator:
-    FILES_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
-    FAKE_PACK_PATH = os.path.join(FILES_PATH, 'fake_pack')
+    FILES_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files', 'Packs'))
+    FAKE_PACK_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files',
+                                                   'fake_pack'))
     FAKE_PATH_NAME = 'fake_pack'
     validator = PackUniqueFilesValidator(FAKE_PATH_NAME)
     validator.pack_path = FAKE_PACK_PATH
@@ -119,6 +120,7 @@ class TestPackUniqueFilesValidator:
         pack_metadata_no_email_and_url['url'] = ''
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         mocker.patch.object(PackUniqueFilesValidator, '_is_pack_file_exists', return_value=True)
+        mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_name', return_value=True)
         mocker.patch.object(PackUniqueFilesValidator, 'get_master_private_repo_meta_file', return_value=None)
         mocker.patch.object(PackUniqueFilesValidator, '_read_file_content',
                             return_value=json.dumps(pack_metadata_no_email_and_url))
@@ -152,6 +154,7 @@ class TestPackUniqueFilesValidator:
 
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         mocker.patch.object(PackUniqueFilesValidator, '_is_pack_file_exists', return_value=True)
+        mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_name', return_value=True)
         mocker.patch.object(PackUniqueFilesValidator, 'get_master_private_repo_meta_file', return_value=None)
         mocker.patch.object(PackUniqueFilesValidator, '_read_file_content',
                             return_value=json.dumps(pack_metadata_changed_url))
@@ -184,6 +187,7 @@ class TestPackUniqueFilesValidator:
         pack_metadata_price_changed['price'] = 3
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         mocker.patch.object(PackUniqueFilesValidator, '_is_pack_file_exists', return_value=True)
+        mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_name', return_value=True)
         mocker.patch.object(PackUniqueFilesValidator, 'get_master_private_repo_meta_file',
                             return_value=PACK_METADATA_PARTNER)
         mocker.patch.object(PackUniqueFilesValidator, '_read_file_content',
@@ -537,7 +541,7 @@ class TestPackUniqueFilesValidator:
         Then:
             - Ensure result is False for empty README.md file and True otherwise.
         """
-        self.validator = PackUniqueFilesValidator(os.path.join(self.FILES_PATH, 'fake_pack'))
+        self.validator = PackUniqueFilesValidator(self.FAKE_PACK_PATH)
         self.validator.support = 'partner'
         mocker.patch.object(PackUniqueFilesValidator, '_read_file_content', return_value=text)
         assert self.validator.validate_pack_readme_file_is_not_empty() == result
@@ -629,6 +633,8 @@ class TestPackUniqueFilesValidator:
         assert 'please repair it:\n![Identity with High Risk Score](https://github.com/demisto/content/raw/test1.png)' in errors
         assert 'please repair it:\n![Identity with High Risk Score](https://raw.githubusercontent.com/demisto/content/raw/test1.png)' in errors
         assert 'please repair it:\n(https://raw.githubusercontent.com/demisto/content/raw/test1.jpg)' in errors
+        # this path is not an image path and should not be shown.
+        assert 'https://github.com/demisto/content/raw/test3.png' not in errors
 
     @pytest.mark.parametrize('readme_content, is_valid', [
         ('Hey there, just testing', True),

@@ -198,7 +198,6 @@ jobs:
               demisto-sdk -v
               export ARTIFACTS_FOLDER="/home/circleci/project/artifacts"
 
-              CI_COMMIT_BRANCH="master" python3 ./Tests/scripts/update_conf_json.py
               CI_COMMIT_BRANCH="master" ./Tests/scripts/validate.sh
   test-lint:
       docker:

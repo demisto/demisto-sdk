@@ -35,8 +35,9 @@ class IntegrationYMLFormat(BaseUpdateYML):
                  no_validate: bool = False,
                  verbose: bool = False,
                  update_docker: bool = False,
+                 add_tests: bool = False,
                  **kwargs):
-        super().__init__(input, output, path, from_version, no_validate, verbose=verbose, **kwargs)
+        super().__init__(input, output, path, from_version, no_validate, verbose=verbose, add_tests=add_tests, **kwargs)
         self.update_docker = update_docker
         if not from_version and self.data.get("script", {}).get("type") == TYPE_PWSH:
             self.from_version = '5.5.0'
@@ -54,6 +55,18 @@ class IntegrationYMLFormat(BaseUpdateYML):
                 if integration_argument.get('required', False):
                     integration_argument['required'] = False
                 integration_argument['type'] = 8
+
+    def set_params_default_additional_info(self):
+        from demisto_sdk.commands.common.default_additional_info_loader import \
+            load_default_additional_info_dict
+        default_additional_info = load_default_additional_info_dict()
+
+        if self.verbose:
+            click.echo('Updating params with an empty additionalnifo, to the default (if exists)')
+
+        for param in self.data.get('configuration', {}):
+            if param['name'] in default_additional_info and not param.get('additionalinfo'):
+                param['additionalinfo'] = default_additional_info[param['name']]
 
     def set_reputation_commands_basic_argument_as_needed(self):
         """Sets basic arguments of reputation commands to be default, isArray and required."""
@@ -141,6 +154,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
             self.update_tests()
             self.update_conf_json('integration')
             self.update_proxy_insecure_param_to_default()
+            self.set_params_default_additional_info()
             self.set_reputation_commands_basic_argument_as_needed()
             self.set_fetch_params_in_config()
             self.set_feed_params_in_config()

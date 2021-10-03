@@ -4,6 +4,42 @@ from TestSuite.test_tools import ChangeCWD
 
 CONFIG = Configuration()
 
+# Layouts tests consts:
+LAYOUTS_CONTAINER_DATA = {'my_layoutscontainer': {
+    'id': 'my_layoutscontainer',
+    'name': 'my_layoutscontainer',
+    'indicatorsDetails': {
+            "tabs": [
+                {
+                    "id": "tjlpilelnw",
+                    "name": "Profile",
+                    "sections": [
+                        {
+                            "description": "Incidents that affected the user profile.",
+                            "h": 2,
+                            "i": "tjlpilelnw-978b0c1e-6739-432d-82d1-3b6641eed99f-tjlpilelnw",
+                            "maxW": 3,
+                            "minH": 1,
+                            "minW": 2,
+                            "moved": False,
+                            "name": "User incidents",
+                            "static": False,
+                            "query": "script_to_test",
+                            "queryType": "script",
+                            "type": "dynamicIndicator",
+                            "w": 1,
+                            "x": 0,
+                            "y": 0
+                        }
+                    ]
+                }
+            ]
+    }}}
+LAYOUT_DATA = {'my-layout': {
+    'typename': 'my-layout',
+    'scripts': ['script_to_test']
+}}
+
 
 def test_is_incident_type_using_real_playbook__happy_flow():
     """
@@ -60,6 +96,357 @@ def test_is_incident_type_using_real_playbook__no_matching_playbook_id():
     }]
 
     assert validator._is_incident_type_default_playbook_found(incident_type_data=incident_type_data) is False
+
+
+def test_is_incident_field_using_existing_script_positive():
+    """
+    Given
+        - incident field which has an existing script id.
+        - id_set.json
+
+    When
+        - is_incident_field_scripts_found is called with an id_set.json
+
+    Then
+        - Ensure that the script is in the id set - i.e is_incident_field_scripts_found returns True.
+    """
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+
+    incident_field_data = {'Incident_field_test': {
+        'id': 'Incident_field_test',
+        'name': 'Incident_field_test',
+        'scripts': ['script_to_test']
+    }
+    }
+    validator.script_set = [{"script_to_test": {
+        "name": "script_to_test",
+                "file_path": "Packs/DeveloperTools/TestPlaybooks/script-script_to_test.yml",
+                "fromversion": "5.0.0",
+                "pack": "DeveloperTools"
+    }
+    }]
+
+    assert validator._is_incident_field_scripts_found(incident_field_data=incident_field_data) is True, \
+        "The incident field's script id is in the id set thus result should be True."
+
+
+def test_is_incident_field_using_existing_script_negative():
+    """
+    Given
+        - incident field which has a script id that doesn't exist.
+        - id_set.json
+
+    When
+        - is_incident_field_scripts_found is called with an id_set.json
+
+    Then
+        - Ensure that the script is not in the id set - i.e is_incident_field_scripts_found returns False.
+    """
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+
+    incident_field_data = {'Incident_field_test': {
+        'id': 'Incident_field_test',
+        'name': 'Incident_field_test',
+        'scripts': ['a fake script id']
+    }
+    }
+
+    validator.script_set = [{"script_to_test": {
+        "name": "script_to_test",
+                "file_path": "Packs/DeveloperTools/TestPlaybooks/script-script_to_test.yml",
+                "fromversion": "5.0.0",
+                "pack": "DeveloperTools"
+    }
+    }]
+
+    assert validator._is_incident_field_scripts_found(incident_field_data=incident_field_data) is False, \
+        "The incident field's script id is not in the id set thus result should be False."
+
+
+def test_is_incident_field_using_existing_script_no_scripts():
+    """
+    Given
+        - incident field without scripts.
+        - id_set.json
+
+    When
+        - is_incident_field_scripts_found is called with an id_set.json
+
+    Then
+        - Ensure is_incident_field_scripts_found returns True.
+    """
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+
+    incident_field_data = {'Incident_field_test': {
+        'id': 'Incident_field_test',
+        'name': 'Incident_field_test'
+    }
+    }
+
+    validator.script_set = [{"script_to_test": {
+        "name": "script_to_test",
+                "file_path": "Packs/DeveloperTools/TestPlaybooks/script-script_to_test.yml",
+                "fromversion": "5.0.0",
+                "pack": "DeveloperTools"
+    }
+    }]
+
+    assert validator._is_incident_field_scripts_found(incident_field_data=incident_field_data) is True, \
+        "The incident field doesn't have any scripts thus the result should be True."
+
+
+def test_is_layouts_container_using_existing_script_positive():
+    """
+    Given
+        - layouts container which has an existing script id.
+        - id_set.json
+
+    When
+        - is_layouts_container_scripts_found is called with an id_set.json
+
+    Then
+        - Ensure that the script is in the id set - i.e is_layouts_container_scripts_found returns True.
+    """
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+
+    validator.script_set = [{"script_to_test": {
+        "name": "script_to_test",
+                "file_path": "Packs/DeveloperTools/TestPlaybooks/script-script_to_test.yml",
+                "fromversion": "6.0.0",
+                "pack": "DeveloperTools"
+    }
+    }]
+
+    assert validator._is_layouts_container_scripts_found(layouts_container_data=LAYOUTS_CONTAINER_DATA) is True, \
+        "The layouts container's script id is in the id set thus result should be True."
+
+
+def test_is_layouts_container_using_existing_script_negative():
+    """
+    Given
+        - layouts container which has a script that doesn't exist.
+        - id_set.json
+
+    When
+        - is_layouts_container_scripts_found is called with an id_set.json
+
+    Then
+        - Ensure that the script is not in the id set - i.e is_layouts_container_scripts_found returns False.
+    """
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+
+    validator.script_set = [{"other_script_id": {
+        "name": "other_script_id",
+                "file_path": "Packs/DeveloperTools/TestPlaybooks/script-other_script_id.yml",
+                "fromversion": "6.0.0",
+                "pack": "DeveloperTools"
+    }
+    }]
+
+    assert validator._is_layouts_container_scripts_found(layouts_container_data=LAYOUTS_CONTAINER_DATA) is False, \
+        "The layouts container's script id is not in the id set thus result should be False."
+
+
+def test_is_layouts_container_using_existing_script_no_scripts():
+    """
+    Given
+        - layouts container which has no scripts.
+        - id_set.json
+
+    When
+        - is_layouts_container_scripts_found is called with an id_set.json
+
+    Then
+        - Ensure that is_layouts_container_scripts_found returns True.
+    """
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+
+    layouts_container_data_without_scripts = {'my_layoutscontainer': {
+        'id': 'my_layoutscontainer',
+        'name': 'my_layoutscontainer',
+        'indicatorsDetails': {
+            "tabs": [
+                {
+                    "id": "tjlpilelnw",
+                    "name": "Profile",
+                    "sections": [
+                        {
+                            "description": "Incidents that affected the user profile.",
+                            "h": 2,
+                            "i": "tjlpilelnw-978b0c1e-6739-432d-82d1-3b6641eed99f-tjlpilelnw",
+                            "maxW": 3,
+                            "minH": 1,
+                            "minW": 2,
+                            "moved": False,
+                            "name": "User incidents",
+                            "static": False,
+                            "type": "dynamicIndicator",
+                            "w": 1,
+                            "x": 0,
+                            "y": 0
+                        }
+                    ]
+                }
+            ]
+        }}}
+
+    validator.script_set = [{"script_to_test": {
+        "name": "script_to_test",
+                "file_path": "Packs/DeveloperTools/TestPlaybooks/script-script_to_test.yml",
+                "fromversion": "6.0.0",
+                "pack": "DeveloperTools"
+    }
+    }]
+
+    assert validator._is_layouts_container_scripts_found(layouts_container_data=layouts_container_data_without_scripts)\
+        is True, "The layouts container's doesn't have any scripts thus result should be False."
+
+
+def test_is_layout_using_existing_script_positive():
+    """
+    Given
+        - layout which has an existing script id.
+        - id_set.json
+
+    When
+        - is_layout_scripts_found is called with an id_set.json
+
+    Then
+        - Ensure that the script is in the id set - i.e is_layout_scripts_found returns True.
+    """
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+
+    validator.script_set = [{"script_to_test": {
+        "name": "script_to_test",
+                "file_path": "Packs/DeveloperTools/TestPlaybooks/script-script_to_test.yml",
+                "fromversion": "6.0.0",
+                "pack": "DeveloperTools"
+    }
+    }]
+
+    assert validator._is_layout_scripts_found(layout_data=LAYOUT_DATA) is True, \
+        "The layout's script id is in the id set thus result should be True."
+
+
+def test_is_layout_using_existing_script_negative():
+    """
+    Given
+        - layout which has has a script that doesn't exist.
+        - id_set.json
+
+    When
+        - is_layout_scripts_found is called with an id_set.json
+
+    Then
+        - Ensure that the script is not in the id set - i.e is_layout_scripts_found returns False.
+    """
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+
+    validator.script_set = [{"other_script_id": {
+        "name": "other_script_id",
+                "file_path": "Packs/DeveloperTools/TestPlaybooks/script-other_script_id.yml",
+                "fromversion": "6.0.0",
+                "pack": "DeveloperTools"
+    }
+    }]
+
+    assert validator._is_layout_scripts_found(layout_data=LAYOUT_DATA) is False, \
+        "The layout's script id is not in the id set thus result should be False."
+
+
+def test_is_layout_using_existing_script_no_scripts():
+    """
+    Given
+        - layout which has no scripts.
+        - id_set.json
+
+    When
+        - is_layout_scripts_found is called with an id_set.json
+
+    Then
+        - Ensure that is_layout_scripts_found returns True.
+    """
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+
+    layout_data_without_scripts = {'my-layout': {
+        'typename': 'my-layout',
+        'scripts': []
+    }}
+
+    validator.script_set = [{"script_to_test": {
+        "name": "script_to_test",
+                "file_path": "Packs/DeveloperTools/TestPlaybooks/script-script_to_test.yml",
+                "fromversion": "6.0.0",
+                "pack": "DeveloperTools"
+    }
+    }]
+
+    assert validator._is_layout_scripts_found(layout_data=layout_data_without_scripts) is True, \
+        "The layout doesn't have any scripts thus result should be True."
+
+
+def test_is_layout_using_existing_script_ignore_builtin_scripts():
+    """
+    Given
+        - layout which has a builtin script id.
+        - id_set.json
+
+    When
+        - is_layout_scripts_found is called with an id_set.json
+
+    Then
+        - Ensure that the builtin script is ignored - i.e is_layout_scripts_found returns True.
+    """
+
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+
+    validator.script_set = [{"script_to_test": {
+        "name": "script_to_test",
+        "file_path": "Packs/DeveloperTools/TestPlaybooks/script-script_to_test.yml",
+        "fromversion": "6.0.0",
+        "pack": "DeveloperTools"
+    }
+    }]
+
+    layout_data = {'my-layout': {
+        'typename': 'my-layout',
+        'scripts': ['Builtin|||removeIndicatorField']
+    }}
+
+    assert validator._is_layout_scripts_found(layout_data=layout_data) is True, \
+        "The layout's script id is a builtin script therefore ignored and thus the result should be True."
+
+
+def test_is_layout_using_existing_script_ignore_integration_commands_scripts():
+    """
+    Given
+        - layout which has an integration command script id .
+        - id_set.json
+
+    When
+        - is_layout_scripts_found is called with an id_set.json
+
+    Then
+        - Ensure that the integration command script is ignored - i.e is_layout_scripts_found returns True.
+    """
+
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+
+    validator.script_set = [{"script_to_test": {
+        "name": "script_to_test",
+        "file_path": "Packs/DeveloperTools/TestPlaybooks/script-script_to_test.yml",
+        "fromversion": "6.0.0",
+        "pack": "DeveloperTools"
+    }
+    }]
+
+    layout_data = {'my-layout': {
+        'typename': 'my-layout',
+        'scripts': ['SlackV2|||send-notification', 'Mail Sender (New)|||send-mail']
+    }}
+
+    assert validator._is_layout_scripts_found(layout_data=layout_data) is True, \
+        "The layout's script id is an integration command script therefore ignored and thus the result should be True."
 
 
 def test_is_non_real_command_found__happy_flow():
@@ -800,7 +1187,7 @@ class TestPlaybookEntitiesVersionsValid:
             "Script_version_5_5"
         ]
     }}
-    playbook_with_invalid_sub_playbook_version = {"Example Playbook": {
+    playbook_with_invalid_sub_playbook_version_from_version_5_0_0 = {"Example Playbook": {
         "name": "Example Playbook",
         "file_path": playbook_path,
         "fromversion": "5.0.0",
@@ -809,17 +1196,14 @@ class TestPlaybookEntitiesVersionsValid:
             "SubPlaybook_version_5_5"
         ]
     }}
-    playbook_with_invalid_integration_version = {"Example Playbook": {
+    playbook_with_invalid_sub_playbook_version_from_version_6_0_0 = {"Example Playbook": {
         "name": "Example Playbook",
         "file_path": playbook_path,
-        "fromversion": "3.0.0",
+        "fromversion": "6.0.0",
         "pack": "Example",
-        "command_to_integration": {
-            "test-command": [
-                "Integration_version_4",
-                "Integration_version_5"
-            ]
-        }
+        "implementing_playbooks": [
+            "SubPlaybook_version_6_5"
+        ]
     }}
     playbook_with_sub_playbook_not_in_id_set = {"Example Playbook": {
         "name": "Example Playbook",
@@ -872,6 +1256,13 @@ class TestPlaybookEntitiesVersionsValid:
                 }
             },
             {
+                'SubPlaybook_version_6_5': {
+                    'name': 'SubPlaybook_version_6_5',
+                    'fromversion': "6.5.0",
+                    "file_path": playbook_path,
+                }
+            },
+            {
                 'Example Playbook': {
                     'name': 'test',
                     'fromversion': "5.5.0",
@@ -916,7 +1307,7 @@ class TestPlaybookEntitiesVersionsValid:
         ],
     }
 
-    def test_are_playbook_entities_versions_valid(self, repo, mocker):
+    def test_are_playbook_entities_versions_valid_scripts_and_subplaybooks(self, repo, mocker):
         """
 
         Given
@@ -924,7 +1315,6 @@ class TestPlaybookEntitiesVersionsValid:
             - a Playbook those entities:
                 * implementing_scripts
                 * implementing_playbooks
-                * command_to_integration
 
         When
             - _are_playbook_entities_versions_valid is called
@@ -934,38 +1324,181 @@ class TestPlaybookEntitiesVersionsValid:
 
         """
         pack = repo.create_pack("Pack1")
+        playbook = pack.create_playbook('MyPlay')
+        playbook.create_default_playbook()
         self.validator.playbook_set = self.id_set["playbooks"]
         self.validator.integration_set = self.id_set["integrations"]
         self.validator.script_set = self.id_set["scripts"]
 
         with ChangeCWD(repo.path):
-
             is_sub_playbook_invalid, error = self.validator._are_playbook_entities_versions_valid(
-                self.playbook_with_sub_playbook_not_in_id_set, pack.path)
+                self.playbook_with_sub_playbook_not_in_id_set, playbook.yml.path)
             assert not is_sub_playbook_invalid
             assert "do not exist in the id_set" in error
 
             # all playbook's entities has valid versions
             is_playbook_version_valid, error = self.validator._are_playbook_entities_versions_valid(
-                self.playbook_with_valid_versions, pack.path)
+                self.playbook_with_valid_versions, playbook.yml.path)
             assert is_playbook_version_valid
             assert error is None
 
             # playbook uses scripts with invalid versions
             is_script_version_invalid, error = self.validator._are_playbook_entities_versions_valid(
-                self.playbook_with_invalid_scripts_version, pack.path)
+                self.playbook_with_invalid_scripts_version, playbook.yml.path)
             assert not is_script_version_invalid
 
             # playbook uses sub playbooks with invalid versions
             is_sub_playbook_version_invalid, error = self.validator._are_playbook_entities_versions_valid(
-                self.playbook_with_invalid_sub_playbook_version, pack.path)
+                self.playbook_with_invalid_sub_playbook_version_from_version_5_0_0, playbook.yml.path)
             assert not is_sub_playbook_version_invalid
 
+    def test_are_playbook_entities_versions_valid_skip_unavailable(self, repo, mocker):
+        """
+        Given
+            - an id_set file
+            - a Playbook that is implemented by sub-playbooks with mismatched fromversions:
+                - once with skipunavailable, and from version 5.0.0 - should fail
+                - once with skipunavailable, and from version 6.0.0 - shouldn't fail
+                - once without skipunavailable - should fail
+
+        When
+            - _are_playbook_entities_versions_valid is called
+
+        Then
+            - Validates that validation fails when skipunavailable is not set and passes otherwise
+        """
+        pack = repo.create_pack("Pack1")
+        playbook = pack.create_playbook('MyPlay')
+        playbook.create_default_playbook()
+        playbook_data = playbook.yml.read_dict()
+
+        self.validator.playbook_set = self.id_set["playbooks"]
+        self.validator.integration_set = self.id_set["integrations"]
+        self.validator.script_set = self.id_set["scripts"]
+
+        with ChangeCWD(repo.path):
+            # playbook uses sub playbooks with invalid versions, skipunavailable is set but
+            # mainplaybook fromversion is 5.0.0 - should fail
+            playbook_data['tasks'] = {
+                '0': {
+                    'id': '0',
+                    'task': {
+                        'playbookName': 'SubPlaybook_version_5_5'
+                    },
+                    'skipunavailable': True
+                }
+            }
+            playbook.yml.write_dict(playbook_data)
+            is_sub_playbook_version_invalid, error = self.validator._are_playbook_entities_versions_valid(
+                self.playbook_with_invalid_sub_playbook_version_from_version_5_0_0, playbook.yml.path)
+            assert not is_sub_playbook_version_invalid
+
+            # playbook uses sub playbooks with invalid versions, skipunavailable is set and
+            # mainplaybook fromversion is 6.0.0 - shouldn't fail
+            playbook_data['tasks'] = {
+                '0': {
+                    'id': '0',
+                    'task': {
+                        'playbookName': 'SubPlaybook_version_6_5'
+                    },
+                    'skipunavailable': True
+                }
+            }
+            playbook.yml.write_dict(playbook_data)
+            is_sub_playbook_version_invalid, error = self.validator._are_playbook_entities_versions_valid(
+                self.playbook_with_invalid_sub_playbook_version_from_version_6_0_0, playbook.yml.path)
+            assert is_sub_playbook_version_invalid
+
+            # playbook uses sub playbooks with invalid versions but no skipunavailable
+            playbook_data['tasks'] = {
+                '0': {
+                    'id': '0',
+                    'task': {
+                        'playbookName': 'SubPlaybook_version_5_5'
+                    },
+                    'skipunavailable': False
+                }
+            }
+            playbook.yml.write_dict(playbook_data)
+            is_sub_playbook_version_invalid, error = self.validator._are_playbook_entities_versions_valid(
+                self.playbook_with_invalid_sub_playbook_version_from_version_5_0_0, playbook.yml.path)
+            assert not is_sub_playbook_version_invalid
+
+    def test_are_playbook_entities_versions_valid_integration_commands(self, repo, mocker):
+        """
+
+        Given
+            - an id_set file
+            - a Playbook those entities:
+                * command_to_integration
+
+        When
+            - _are_playbook_entities_versions_valid is called
+
+        Then
+            - Validates that integrations version match the playbook version.
+        """
+        pack = repo.create_pack("Pack1")
+        playbook = pack.create_playbook('MyPlay')
+        playbook.create_default_playbook()
+
+        # setup validator
+        validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+        validator.playbook_set = [{
+            playbook.name: {
+                'name': playbook.name,
+                'fromversion': "5.5.0",
+                "file_path": playbook.yml.path,
+                "command_to_integration": {
+                    "test-command": [
+                        "Integration_version_4",
+                        "Integration_version_5"
+                    ]
+                }
+            }
+        }]
+
+        validator.integration_set = self.id_set["integrations"]
+        validator.script_set = self.id_set["scripts"]
+
+        playbook_with_invalid_integration_version = {playbook.name: {
+            "name": playbook.name,
+            "file_path": playbook.yml.path,
+            "fromversion": "3.0.0",
+            "pack": "Example",
+            "command_to_integration": {
+                "test-command": [
+                    "Integration_version_4",
+                    "Integration_version_5"
+                ]
+            }
+        }}
+
+        playbook_with_valid_integration_version = {playbook.name: {
+            "name": playbook.name,
+            "file_path": playbook.yml.path,
+            "fromversion": "5.0.0",
+            "pack": "Example",
+            "command_to_integration": {
+                "test-command": [
+                    "Integration_version_4",
+                    "Integration_version_5"
+                ]
+            }
+        }}
+
+        with ChangeCWD(repo.path):
             # playbook uses integration's commands with invalid versions
-            mocker.patch.object(self.validator, 'handle_error', return_value=True)
-            is_integration_version_invalid, error = self.validator._are_playbook_entities_versions_valid(
-                self.playbook_with_invalid_integration_version, self.playbook_path)
+            mocker.patch.object(validator, 'handle_error', return_value=True)
+            is_integration_version_invalid, error = validator._are_playbook_entities_versions_valid(
+                playbook_with_invalid_integration_version, playbook.yml.path)
             assert not is_integration_version_invalid
+
+            # playbook uses integration's commands with valid versions
+            mocker.patch.object(validator, 'handle_error', return_value=True)
+            is_integration_version_invalid, error = validator._are_playbook_entities_versions_valid(
+                playbook_with_valid_integration_version, playbook.yml.path)
+            assert is_integration_version_invalid
 
     def test_playbook_sub_playbook_exist(self, repo, mocker):
         """
@@ -984,7 +1517,6 @@ class TestPlaybookEntitiesVersionsValid:
         self.validator.playbook_set = self.id_set["playbooks"]
 
         with ChangeCWD(repo.path):
-
             # playbook uses existing sub playbooks
             is_subplaybook_name_exist = self.validator.is_subplaybook_name_valid(
                 self.playbook_with_valid_sub_playbook_name, pack.path)
@@ -1007,7 +1539,6 @@ class TestPlaybookEntitiesVersionsValid:
         self.validator.playbook_set = self.id_set["playbooks"]
 
         with ChangeCWD(repo.path):
-
             # playbook uses existing sub playbooks
             is_subplaybook_name_exist = self.validator.is_subplaybook_name_valid(
                 self.playbook_with_invalid_sub_playbook_name, pack.path)

@@ -1255,7 +1255,8 @@ FEATURE_BRANCHES = ['v4.5.0']
 
 
 SKIP_RELEASE_NOTES_FOR_TYPES = (FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK,
-                                FileType.TEST_SCRIPT, FileType.DOC_IMAGE, FileType.AUTHOR_IMAGE)
+                                FileType.TEST_SCRIPT, FileType.DOC_IMAGE, FileType.AUTHOR_IMAGE, None,
+                                FileType.RELEASE_NOTES_CONFIG)
 
 LAYOUT_AND_MAPPER_BUILT_IN_FIELDS = ['indicatortype', 'source', 'comment', 'aggregatedreliability', 'detectedips',
                                      'detectedhosts', 'modified', 'expiration', 'timestamp', 'shortdesc',

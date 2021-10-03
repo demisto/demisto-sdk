@@ -785,6 +785,7 @@ class TestValidators:
         mocker.patch.object(BaseValidator, "update_checked_flags_by_support_level", return_value="")
         pack1 = repo.create_pack('ApiModules')
         api_script1 = pack1.create_script('APIScript')
+        api_script1.create_default_script(name='APIScript')
         pack2_name = 'ApiDependent'
         pack2 = repo.create_pack(pack2_name)
         integration2 = pack2.create_integration(pack2_name)
@@ -803,7 +804,7 @@ class TestValidators:
         id_set_f = tmpdir / "id_set.json"
         id_set_f.write(json.dumps(id_set_content))
         validate_manager = ValidateManager(id_set_path=id_set_f.strpath)
-        modified_files = {api_script1.yml.rel_path}
+        modified_files = {api_script1.yml.path}
         added_files = {'Packs/ApiModules/ReleaseNotes/1_0_0.md'}
         with ChangeCWD(repo.path):
             assert validate_manager.validate_no_missing_release_notes(modified_files=modified_files,

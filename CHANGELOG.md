@@ -5,6 +5,7 @@
 * Added a validation that verifies that each script which appears in incident fields, layouts or layout containers exists in the id_set.json.
 * Fixed an issue where the **postman code-gen** command generated double dots for context outputs when it was not needed.
 * Fixed an issue where there **validate** command on release notes file crashed when author image was added or modified.
+* Added input handling when running **find-dependencies**, replacing string manipulations.
 
 # 1.5.0
 * Fixed an issue where **upload** command failed to upload packs not under content structure.

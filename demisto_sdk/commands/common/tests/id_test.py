@@ -1194,7 +1194,8 @@ class TestPlaybookEntitiesVersionsValid:
         "fromversion": "5.0.0",
         "pack": "Example",
         "implementing_playbooks": [
-            "SubPlaybook_version_5_5"
+            "SubPlaybook_version_5_5",
+            "playbook_dup"
         ]
     }}
     playbook_with_invalid_sub_playbook_version_from_version_6_0_0 = {"Example Playbook": {
@@ -1239,7 +1240,7 @@ class TestPlaybookEntitiesVersionsValid:
                 'playbook_dup': {
                     'name': 'test',
                     'fromversion': "5.0.0",
-                    'toversion': "5.4.9",
+                    'toversion': "5.9.9",
                     "file_path": playbook_path,
                     "command_to_integration": {
                         "test-command": [
@@ -1252,7 +1253,7 @@ class TestPlaybookEntitiesVersionsValid:
             {
                 'playbook_dup': {
                     'name': 'test',
-                    'fromversion': "5.5.0",
+                    'fromversion': "6.0.0",
                     "file_path": playbook_path,
                     "command_to_integration": {
                         "test-command": [

@@ -6,6 +6,7 @@ import os
 import re
 import shlex
 import sys
+import urllib.parse
 from configparser import ConfigParser, MissingSectionHeaderError
 from contextlib import contextmanager
 from distutils.version import LooseVersion
@@ -37,7 +38,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_README_FILE_NAME, PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR,
     RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR,
-    XSOAR_CONFIG_FILE, FileType, GithubContentConfig, urljoin)
+    XSOAR_CONFIG_FILE, FileType, GitContentConfig, urljoin)
 from demisto_sdk.commands.common.git_util import GitUtil
 
 urllib3.disable_warnings()
@@ -198,7 +199,7 @@ def get_core_pack_list() -> list:
         return core_pack_list
     if not is_external_repository():
         core_pack_list = get_remote_file(
-            'Tests/Marketplace/core_packs_list.json', github_repo=GithubContentConfig.OFFICIAL_CONTENT_REPO_NAME
+            'Tests/Marketplace/core_packs_list.json', github_repo=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
         ) or []
     else:
         # no core packs in external repos.
@@ -225,26 +226,39 @@ def get_remote_file(
         The file content in the required format.
 
     """
-    github_config = GithubContentConfig(github_repo)
-    # 'origin/' prefix is used to compared with remote branches but it is not a part of the github url.
-    github_tag = tag.replace('origin/', '').replace('demisto/', '')
+    git_config = GitContentConfig(github_repo)
+    if git_config.GITLAB_ID:
+        full_file_path_quote_plus = urllib.parse.quote_plus(full_file_path)
+        git_path = urljoin(git_config.BASE_RAW_GITLAB_LINK, 'files', full_file_path_quote_plus, 'raw')
+        tag = tag.replace('origin/', '')
+    else:  # github
+        # 'origin/' prefix is used to compared with remote branches but it is not a part of the github url.
+        tag = tag.replace('origin/', '').replace('demisto/', '')
+        git_path = urljoin(git_config.CONTENT_GITHUB_LINK, tag, full_file_path)
+
     local_content = '{}'
 
-    github_path = urljoin(github_config.CONTENT_GITHUB_LINK, github_tag, full_file_path)
     github_token: Optional[str] = None
+    gitlab_token: Optional[str] = None
     try:
         external_repo = is_external_repository()
         if external_repo:
-            githhub_config = GithubContentConfig()
-            github_token = githhub_config.Credentials.TOKEN
-            if github_token:
-                res = requests.get(github_path, verify=False, timeout=10, headers={
+            github_token = git_config.Credentials.GITHUB_TOKEN
+            gitlab_token = git_config.Credentials.GITLAB_TOKEN
+            if gitlab_token and git_config.GITLAB_ID:
+                res = requests.get(git_path,
+                                   params={'ref': tag},
+                                   headers={'PRIVATE-TOKEN': gitlab_token},
+                                   verify=False)
+                res.raise_for_status()
+            elif github_token:
+                res = requests.get(git_path, verify=False, timeout=10, headers={
                     'Authorization': f"Bearer {github_token}",
                     'Accept': f'application/vnd.github.VERSION.raw',
                 })  # Sometime we need headers
                 if not res.ok:  # sometime we need param token
                     res = requests.get(
-                        github_path,
+                        git_path,
                         verify=False,
                         timeout=10,
                         params={'token': github_token}
@@ -252,33 +266,35 @@ def get_remote_file(
                 res.raise_for_status()
             else:
                 # If no token defined, maybe it's a open repo. 🤷‍♀️
-                res = requests.get(github_path, verify=False, timeout=10)
+                res = requests.get(git_path, verify=False, timeout=10)
                 # And maybe it's just not defined. 😢
                 if not res.ok:
                     if not suppress_print:
                         click.secho(
-                            f'You are working in a private repository: "{githhub_config.CURRENT_REPOSITORY}".\n'
+                            f'You are working in a private repository: "{git_config.CURRENT_REPOSITORY}".\n'
                             f'The github token in your environment is undefined.\n'
                             f'Getting file from local repository instead. \n'
                             f'If you wish to get the file from the remote repository, \n'
-                            f'Please define your github token in your environment.\n'
-                            f'`export {githhub_config.Credentials.ENV_TOKEN_NAME}=<TOKEN>`\n', fg='yellow'
+                            f'Please define your github or gitlab token in your environment.\n'
+                            f'`export {git_config.Credentials.ENV_GITHUB_TOKEN_NAME}=<TOKEN> or`\n'
+                            f'export {git_config.Credentials.ENV_GITLAB_TOKEN_NAME}=<TOKEN>', fg='yellow'
                         )
                         click.echo("Getting file from local environment")
                     # Get from local git origin/master instead
                     repo = git.Repo(os.path.dirname(full_file_path), search_parent_directories=True)
                     repo_git_util = GitUtil(repo)
-                    github_path = repo_git_util.get_local_remote_file_path(full_file_path, github_tag)
-                    local_content = repo_git_util.get_local_remote_file_content(github_path)
+                    git_path = repo_git_util.get_local_remote_file_path(full_file_path, tag)
+                    local_content = repo_git_util.get_local_remote_file_content(git_path)
         else:
-            res = requests.get(github_path, verify=False, timeout=10)
+            res = requests.get(git_path, verify=False, timeout=10)
             res.raise_for_status()
     except Exception as exc:
         # Replace token secret if needed
         err_msg: str = str(exc).replace(github_token, 'XXX') if github_token else str(exc)
+        err_msg = err_msg.replace(gitlab_token, 'XXX') if gitlab_token else err_msg
         if not suppress_print:
             click.secho(
-                f'Could not find the old entity file under "{github_path}".\n'
+                f'Could not find the old entity file under "{git_path}".\n'
                 'please make sure that you did not break backward compatibility.\n'
                 f'Reason: {err_msg}', fg='yellow'
             )
@@ -401,7 +417,7 @@ def has_remote_configured():
     :return: bool : True if remote is configured, False if not.
     """
     remotes = run_command('git remote -v')
-    if re.search(GithubContentConfig().CONTENT_GITHUB_UPSTREAM, remotes):
+    if re.search(GitContentConfig.CONTENT_GITHUB_UPSTREAM, remotes):
         return True
     else:
         return False
@@ -414,7 +430,7 @@ def is_origin_content_repo():
     :return: bool : True if remote is configured, False if not.
     """
     remotes = run_command('git remote -v')
-    if re.search(GithubContentConfig().CONTENT_GITHUB_ORIGIN, remotes):
+    if re.search(GitContentConfig.CONTENT_GITHUB_ORIGIN, remotes):
         return True
     else:
         return False
@@ -1918,7 +1934,7 @@ def get_approved_usecases() -> list:
     """
     return get_remote_file(
         'Tests/Marketplace/approved_usecases.json',
-        github_repo=GithubContentConfig.OFFICIAL_CONTENT_REPO_NAME
+        github_repo=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
     ).get('approved_list', [])
 
 
@@ -1930,7 +1946,7 @@ def get_approved_tags() -> list:
     """
     return get_remote_file(
         'Tests/Marketplace/approved_tags.json',
-        github_repo=GithubContentConfig.OFFICIAL_CONTENT_REPO_NAME
+        github_repo=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
     ).get('approved_list', [])
 
 

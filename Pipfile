@@ -50,6 +50,7 @@ Jinja2 = "<3.0,>=2.11.1"
 Pebble = "*"
 PyPDF2 = "*"
 PyYAML = "*"
+giturlparse = "*"
 
 [dev-packages]
 mitmproxy = "==5.1.0"

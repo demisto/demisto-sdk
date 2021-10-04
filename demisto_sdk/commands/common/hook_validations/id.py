@@ -518,7 +518,12 @@ class IDSetValidations(BaseValidator):
             bool. Whether the playbook's version match playbook's entities.
         """
         invalid_version_entities = []
-        found_versions: dict = {}
+        # the following dict holds the playbook IDs as keys and the smallest 'fromversion' found as value.
+        # it handles the case where multiple playbook IDs appear in the id_set and each one of them support different versions.
+        # for example:
+        # id_set = [{'name': 'pb1', 'fromversion': '5.0.0', 'toversion': '5.4.9'}, {'name': 'pb1' - 'fromversion': '5.5.0'}]
+        # found_entity_versions will look like that: { 'pb1': '5.0.0'}
+        found_entity_versions: dict = {}
         implemented_entities = implemented_entity_list_from_playbook.copy()
         is_valid = True, None
         for entity_data_dict in entity_set_from_id_set:
@@ -536,12 +541,12 @@ class IDSetValidations(BaseValidator):
                                                                             main_playbook_data=main_playbook_data)
 
                 entity_version = all_entity_fields.get("fromversion", "")
-                if entity_id in found_versions:
-                    if entity_version < found_versions[entity_id]:
-                        found_versions[entity_id] = entity_version
+                if entity_id in found_entity_versions:
+                    if entity_version < found_entity_versions[entity_id]:
+                        found_entity_versions[entity_id] = entity_version
                 else:
-                    found_versions[entity_id] = entity_version
-                is_version_valid = not entity_version or (LooseVersion(found_versions[entity_id]) <= LooseVersion(
+                    found_entity_versions[entity_id] = entity_version
+                is_version_valid = not entity_version or (LooseVersion(found_entity_versions[entity_id]) <= LooseVersion(
                     main_playbook_version))
                 skip_unavailable = all(task_data.get('skipunavailable', False) for task_data in tasks_data) \
                     if tasks_data and LooseVersion(main_playbook_version) >= LooseVersion('6.0.0') else False

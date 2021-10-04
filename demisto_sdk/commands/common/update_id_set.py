@@ -1084,7 +1084,7 @@ def process_indicator_types(file_path: str, print_logs: bool, all_integrations: 
     Args:
         file_path: The file path from indicator type folder
         print_logs: Whether to print logs to stdout
-        all_integrations: The integrations section in the id set
+        all_integrations: The integrations section in the id-set
 
     Returns:
         a list of indicator type data.
@@ -1151,7 +1151,7 @@ def process_general_items(file_path: str, print_logs: bool, expected_file_types:
         file_path: The file path from an item folder
         print_logs: Whether to print logs to stdout
         expected_file_types: specific file type to parse, will ignore the rest
-        data_extraction_func: a function that given a file path will returns an ID set data dict.
+        data_extraction_func: a function that given a file path will returns an id-set data dict.
 
     Returns:
         a list of item data.
@@ -1175,7 +1175,7 @@ def process_test_playbook_path(file_path: str, print_logs: bool) -> tuple:
 
     Arguments:
         file_path {string} -- path to yaml file
-        print_logs {bool} -- whether to print logs to stdoud
+        print_logs {bool} -- whether to print logs to stdout
 
     Returns:
         pair -- first element is a playbook second is a script. each may be None
@@ -1426,7 +1426,7 @@ class IDSet:
 
 def merge_id_sets_from_files(first_id_set_path, second_id_set_path, output_id_set_path, print_logs: bool = True):
     """
-    Merges two id sets. Loads them from files and saves the merged unified id_set into output_id_set_path.
+    Merges two id-sets. Loads them from files and saves the merged unified id_set into output_id_set_path.
     """
     with open(first_id_set_path, mode='r') as f1:
         first_id_set = json.load(f1)
@@ -1478,16 +1478,16 @@ def merge_id_sets(first_id_set_dict: dict, second_id_set_dict: dict, print_logs:
 
 def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_create=None,  # noqa : C901
                      objects_to_create: list = None, print_logs: bool = True, fail_on_duplicates: bool = False):
-    """Re create the id set
+    """Re create the id-set
 
     Args:
-        id_set_path (str, optional): If passed an empty string will use default path. Pass in None to avoid saving the id set.
+        id_set_path (str, optional): If passed an empty string will use default path. Pass in None to avoid saving the id-set.
             Defaults to DEFAULT_ID_SET_PATH.
         pack_to_create: The input path. the default is the content repo.
         objects_to_create (list, optional): [description]. Defaults to None.
         fail_on_duplicates: If value is True an error will be raised if duplicates are found
 
-    Returns: id set object
+    Returns: id-set object
     """
     if id_set_path == "":
         id_set_path = DEFAULT_ID_SET_PATH
@@ -1502,7 +1502,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                 f"{os.getenv('DEMISTO_SDK_ID_SET_REFRESH_INTERVAL')} which is an illegal integer."
                 "\nPlease modify or unset env var.", LOG_COLORS.YELLOW
             )
-        if refresh_interval > 0:  # if file is newer than refersh interval use it as is
+        if refresh_interval > 0:  # if the file is newer than the refresh interval, use it as is
             mtime = os.path.getmtime(id_set_path)
             mtime_dt = datetime.fromtimestamp(mtime)
             target_time = time.time() - (refresh_interval * 60)
@@ -1510,20 +1510,22 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                 print_color(
                     f"DEMISTO_SDK_ID_SET_REFRESH_INTERVAL env var is set and detected that current id_set: {id_set_path}"
                     f" modify time: {mtime_dt} "
-                    "doesn't require a refresh. Will use current id set. "
-                    "If you want to force an id set referesh unset DEMISTO_SDK_ID_SET_REFRESH_INTERVAL or set to -1.",
+                    "doesn't require a refresh. Will use current id-set. "
+                    "If you rather force an id-set refresh, unset DEMISTO_SDK_ID_SET_REFRESH_INTERVAL or set it to -1.",
                     LOG_COLORS.GREEN)
                 with open(id_set_path, mode="r") as f:
                     return json.load(f)
             else:
-                print_color(f"DEMISTO_SDK_ID_SET_REFRESH_INTERVAL env var is set but current id_set: {id_set_path} "
-                            f"modify time: {mtime_dt} is older than refresh interval. "
-                            "Will re-generate the id set.", LOG_COLORS.GREEN)
+                print_color(
+                    f"The DEMISTO_SDK_ID_SET_REFRESH_INTERVAL env var is set, but current id_set: {id_set_path} "
+                    f"modify time: {mtime_dt} is older than the refresh interval. "
+                    "Re-generating id-set.", LOG_COLORS.GREEN)
         else:
             print_color("Note: DEMISTO_SDK_ID_SET_REFRESH_INTERVAL env var is not enabled. "
-                        f"Will re-generate the id set even though file exists: {id_set_path}. "
-                        "If you would like to avoid re-generating the id set every run, you can set the env var "
-                        "DEMISTO_SDK_ID_SET_REFRESH_INTERVAL to a refresh interval in minutes.", LOG_COLORS.GREEN)
+                        f"Will re-generate the id-set and overwrite the existing file: {id_set_path}. "
+                        "To avoid re-generating the id-set on every run, you can set the "
+                        "DEMISTO_SDK_ID_SET_REFRESH_INTERVAL env var to any refresh interval (in minutes).",
+                        LOG_COLORS.GREEN)
         print("")  # add an empty line for clarity
 
     if objects_to_create is None:
@@ -1555,7 +1557,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
 
     print_color("Starting the creation of the id_set", LOG_COLORS.GREEN)
 
-    with click.progressbar(length=len(objects_to_create), label="Progress of id set creation") as progress_bar:
+    with click.progressbar(length=len(objects_to_create), label="Creating id-set") as progress_bar:
 
         if 'Packs' in objects_to_create:
             print_color("\nStarting iteration over Packs", LOG_COLORS.GREEN)
@@ -1883,7 +1885,7 @@ def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=
                 return False
 
         # If they have the same pack name they actually the same entity.
-        # Added to support merge between two ID sets that contain the same pack.
+        # Added to support merge between two id-sets that contain the same pack.
         if dict1.get('pack') == dict2.get('pack'):
             return False
 

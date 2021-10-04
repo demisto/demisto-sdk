@@ -518,6 +518,7 @@ class IDSetValidations(BaseValidator):
             bool. Whether the playbook's version match playbook's entities.
         """
         invalid_version_entities = []
+        found_versions: dict = {}
         implemented_entities = implemented_entity_list_from_playbook.copy()
         is_valid = True, None
         for entity_data_dict in entity_set_from_id_set:
@@ -535,8 +536,13 @@ class IDSetValidations(BaseValidator):
                                                                             main_playbook_data=main_playbook_data)
 
                 entity_version = all_entity_fields.get("fromversion", "")
-                is_version_valid = not entity_version or LooseVersion(entity_version) <= LooseVersion(
-                    main_playbook_version)
+                if entity_id in found_versions:
+                    if entity_version < found_versions[entity_id]:
+                        found_versions[entity_id] = entity_version
+                else:
+                    found_versions[entity_id] = entity_version
+                is_version_valid = not entity_version or (LooseVersion(found_versions[entity_id]) <= LooseVersion(
+                    main_playbook_version))
                 skip_unavailable = all(task_data.get('skipunavailable', False) for task_data in tasks_data) \
                     if tasks_data and LooseVersion(main_playbook_version) >= LooseVersion('6.0.0') else False
 

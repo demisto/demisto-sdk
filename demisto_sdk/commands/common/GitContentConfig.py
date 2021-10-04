@@ -103,7 +103,7 @@ class GitContentConfig:
     def _search_gitlab_id(self, github_hostname: str, repo: str) -> Optional[int]:
         res = requests.get(f"https://{github_hostname}/api/v4/projects",
                            params={'search': repo},
-                           headers={'PRIVATE-TOKEN': self.Credentials.GITHUB_TOKEN},
+                           headers={'PRIVATE-TOKEN': self.Credentials.GITLAB_TOKEN},
                            timeout=10,
                            verify=False)
         res.raise_for_status()

@@ -13,7 +13,8 @@ from enum import Enum
 from functools import lru_cache, partial
 from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen, check_output
-from typing import Callable, Dict, List, Match, Optional, Tuple, Type, Union
+from typing import (Callable, Dict, List, Match, Optional, Set, Tuple, Type,
+                    Union)
 
 import click
 import colorama
@@ -30,14 +31,13 @@ from demisto_sdk.commands.common.constants import (
     DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH, DOC_FILES_DIR,
     ID_IN_COMMONFIELDS, ID_IN_ROOT, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
     INDICATOR_FIELDS_DIR, INTEGRATIONS_DIR, LAYOUTS_DIR,
-    OFFICIAL_CONTENT_ID_SET_PATH, PACK_IGNORE_TEST_FLAG,
-    PACK_METADATA_IRON_BANK_TAG, PACKAGE_SUPPORTING_DIRECTORIES,
-    PACKAGE_YML_FILE_REGEX, PACKS_DIR, PACKS_DIR_REGEX,
-    PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
-    PACKS_README_FILE_NAME, PLAYBOOKS_DIR, RELEASE_NOTES_DIR,
-    RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR,
-    TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, XSOAR_CONFIG_FILE,
-    FileType, GithubContentConfig, urljoin)
+    OFFICIAL_CONTENT_ID_SET_PATH, PACK_METADATA_IRON_BANK_TAG,
+    PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
+    PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
+    PACKS_README_FILE_NAME, PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR,
+    RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR,
+    TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR,
+    XSOAR_CONFIG_FILE, FileType, GithubContentConfig, urljoin)
 from demisto_sdk.commands.common.git_util import GitUtil
 
 urllib3.disable_warnings()
@@ -535,12 +535,17 @@ def get_entity_id_by_entity_type(data: dict, content_entity: str):
     :param content_entity: The content entity type
     :return: The file id
     """
-    if content_entity in (INTEGRATIONS_DIR, SCRIPTS_DIR):
-        return data.get('commonfields', {}).get('id', '')
-    elif content_entity == LAYOUTS_DIR:
-        return data.get('typeId', '')
-    else:
-        return data.get('id', '')
+    try:
+        if content_entity in (INTEGRATIONS_DIR, SCRIPTS_DIR):
+            return data.get('commonfields', {}).get('id', '')
+        elif content_entity == LAYOUTS_DIR:
+            return data.get('typeId', '')
+        else:
+            return data.get('id', '')
+
+    except AttributeError:
+        raise ValueError(f"Could not retrieve id from file of type {content_entity} - make sure the file structure is "
+                         f"valid")
 
 
 def get_entity_name_by_entity_type(data: dict, content_entity: str):
@@ -550,11 +555,17 @@ def get_entity_name_by_entity_type(data: dict, content_entity: str):
     :param content_entity: The content entity type
     :return: The file name
     """
-    if content_entity == LAYOUTS_DIR:
-        if 'typeId' in data:
-            return data.get('typeId', '')
-        return data.get('name', '')  # for layoutscontainer
-    return data.get('name', '')
+    try:
+        if content_entity == LAYOUTS_DIR:
+            if 'typeId' in data:
+                return data.get('typeId', '')
+            return data.get('name', '')  # for layoutscontainer
+        return data.get('name', '')
+
+    except AttributeError:
+        raise ValueError(
+            f"Could not retrieve name from file of type {content_entity} - make sure the file structure is "
+            f"valid")
 
 
 def collect_ids(file_path):
@@ -831,7 +842,29 @@ def get_pack_ignore_file_path(pack_name):
     return os.path.join(PACKS_DIR, pack_name, PACKS_PACK_IGNORE_FILE_NAME)
 
 
-def get_ignore_pack_skipped_tests(pack_name: str) -> set:
+def get_test_playbook_id(test_playbooks_list: list, tpb_path: str) -> Tuple:  # type: ignore
+    """
+
+    Args:
+        test_playbooks_list: The test playbook list from id_set
+        tpb_path: test playbook path.
+
+    Returns (Tuple): test playbook name and pack.
+
+    """
+    for test_playbook_dict in test_playbooks_list:
+        test_playbook_id = list(test_playbook_dict.keys())[0]
+        test_playbook_path = test_playbook_dict[test_playbook_id].get('file_path')
+        test_playbook_pack = test_playbook_dict[test_playbook_id].get('pack')
+        if not test_playbook_path or not test_playbook_pack:
+            continue
+
+        if tpb_path in test_playbook_path:
+            return test_playbook_id, test_playbook_pack
+    return None, None
+
+
+def get_ignore_pack_skipped_tests(pack_name: str, modified_packs: set, id_set: dict) -> set:
     """
     Retrieve the skipped tests of a given pack, as detailed in the .pack-ignore file
 
@@ -840,16 +873,22 @@ def get_ignore_pack_skipped_tests(pack_name: str) -> set:
         ignore=auto-test
 
     Arguments:
-        pack name (str): name of the pack
+        pack_name (str): name of the pack
+        modified_packs (set): Set of modified packs
+        id_set (dict): ID set
 
     Returns:
         ignored_tests_set (set[str]): set of ignored test ids
 
     """
+    if not modified_packs:
+        modified_packs = {pack_name}
     ignored_tests_set = set()
-    if pack_name:
-        pack_ignore_path = get_pack_ignore_file_path(pack_name)
+    file_name_to_ignore_dict: Dict[str, List[str]] = {}
+    test_playbooks = id_set.get('TestPlaybooks', {})
 
+    pack_ignore_path = get_pack_ignore_file_path(pack_name)
+    if pack_name in modified_packs:
         if os.path.isfile(pack_ignore_path):
             try:
                 # read pack_ignore using ConfigParser
@@ -860,21 +899,19 @@ def get_ignore_pack_skipped_tests(pack_name: str) -> set:
                 for section in config.sections():
                     if section.startswith("file:"):
                         # given section is of type file
-                        file_name = section[5:]
+                        file_name: str = section[5:]
                         for key in config[section]:
                             if key == 'ignore':
                                 # group ignore codes to a list
-                                ignore_list = str(config[section][key]).split(',')
-                                if PACK_IGNORE_TEST_FLAG in ignore_list:
-                                    # given file is to be ignored, try to get its id directly from yaml
-                                    path = os.path.join(PACKS_DIR, pack_name, TEST_PLAYBOOKS_DIR, file_name)
-                                    if os.path.isfile(path):
-                                        test_yaml = get_yaml(path)
-                                        if 'id' in test_yaml:
-                                            ignored_tests_set.add(test_yaml['id'])
+                                file_name_to_ignore_dict[file_name] = str(config[section][key]).split(',')
             except MissingSectionHeaderError:
                 pass
 
+    for file_name, ignore_list in file_name_to_ignore_dict.items():
+        if any(ignore_code == 'auto-test' for ignore_code in ignore_list):
+            test_id, test_pack = get_test_playbook_id(test_playbooks, file_name)
+            if test_id:
+                ignored_tests_set.add(test_id)
     return ignored_tests_set
 
 
@@ -1024,6 +1061,11 @@ def find_type_by_path(path: str = '') -> Optional[FileType]:
             return FileType.DESCRIPTION
 
         return FileType.CHANGELOG
+
+    if path.endswith('.json'):
+        if RELEASE_NOTES_DIR in path:
+            return FileType.RELEASE_NOTES_CONFIG
+
     # integration image
     if path.endswith('_image.png') and not path.endswith("Author_image.png"):
         return FileType.IMAGE
@@ -1132,6 +1174,10 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
 
         if 'group' in _dict and LAYOUT_CONTAINER_FIELDS.intersection(_dict):
             return FileType.LAYOUTS_CONTAINER
+
+        if 'scriptName' in _dict and 'existingEventsFilters' in _dict and 'readyExistingEventsFilters' in _dict and \
+                'newEventFilters' in _dict and 'readyNewEventFilters' in _dict:
+            return FileType.PRE_PROCESS_RULES
 
         if 'definitionIds' in _dict and 'views' in _dict:
             return FileType.GENERIC_MODULE
@@ -1508,6 +1554,12 @@ def is_path_of_layout_directory(path: str) -> bool:
     return os.path.basename(path) == LAYOUTS_DIR
 
 
+def is_path_of_pre_process_rules_directory(path: str) -> bool:
+    """Returns true if directory is pre-processing rules directory, false if not.
+    """
+    return os.path.basename(path) == PRE_PROCESS_RULES_DIR
+
+
 def is_path_of_classifier_directory(path: str) -> bool:
     """Returns true if directory is integration directory false if not.
     """
@@ -1724,7 +1776,8 @@ def get_file_displayed_name(file_path):
     elif file_type in [FileType.SCRIPT, FileType.TEST_SCRIPT, FileType.PLAYBOOK, FileType.TEST_PLAYBOOK]:
         return get_yaml(file_path).get('name')
     elif file_type in [FileType.MAPPER, FileType.CLASSIFIER, FileType.INCIDENT_FIELD, FileType.INCIDENT_TYPE,
-                       FileType.INDICATOR_FIELD, FileType.LAYOUTS_CONTAINER, FileType.DASHBOARD, FileType.WIDGET,
+                       FileType.INDICATOR_FIELD, FileType.LAYOUTS_CONTAINER, FileType.PRE_PROCESS_RULES,
+                       FileType.DASHBOARD, FileType.WIDGET,
                        FileType.REPORT]:
         return get_json(file_path).get('name')
     elif file_type == FileType.OLD_CLASSIFIER:
@@ -2007,6 +2060,61 @@ def suppress_stdout():
             sys.stdout = old_stdout
 
 
+def get_definition_name(path: str, pack_path: str) -> Optional[str]:
+    r"""
+        param:
+            path (str): path to the file which needs a definition name (generic field\generic type file)
+            pack_path (str): relevant pack path
+
+        :rtype: ``str``
+        :return:
+            for generic type and generic field return associated generic definition name folder
+
+    """
+
+    try:
+        file_dictionary = get_json(path)
+        definition_id = file_dictionary['definitionId']
+        generic_def_path = os.path.join(pack_path, 'GenericDefinitions')
+        file_names_lst = os.listdir(generic_def_path)
+        for file in file_names_lst:
+            if str.find(file, definition_id):
+                def_file_path = os.path.join(generic_def_path, file)
+                def_file_dictionary = get_json(def_file_path)
+                cur_id = def_file_dictionary["id"]
+                if cur_id == definition_id:
+                    return def_file_dictionary["name"]
+
+        print("Was unable to find the file for definitionId " + definition_id)
+        return None
+
+    except FileNotFoundError or AttributeError:
+        print("Error while retrieving definition name for definitionId " + definition_id +
+              "\n Check file structure and make sure all relevant fields are entered properly")
+        return None
+
+
 def is_iron_bank_pack(file_path):
     metadata = get_pack_metadata(file_path)
     return PACK_METADATA_IRON_BANK_TAG in metadata.get('tags', [])
+
+
+def get_script_or_sub_playbook_tasks_from_playbook(searched_entity_name: str, main_playbook_data: Dict) -> List[Dict]:
+    """Get the tasks data for a task running the searched_entity_name (script/playbook).
+
+    Returns:
+        List. A list of dicts representing tasks running the searched_entity_name.
+    """
+    searched_tasks: List = []
+    tasks = main_playbook_data.get('tasks', {})
+    if not tasks:
+        return searched_tasks
+
+    for task_data in tasks.values():
+        task_details = task_data.get('task', {})
+        found_entity = searched_entity_name in {task_details.get('scriptName'), task_details.get('playbookName')}
+
+        if found_entity:
+            searched_tasks.append(task_data)
+
+    return searched_tasks

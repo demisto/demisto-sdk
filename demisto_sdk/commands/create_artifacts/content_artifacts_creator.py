@@ -18,9 +18,9 @@ from demisto_sdk.commands.common.constants import (
     DOCUMENTATION_DIR, GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR,
     GENERIC_MODULES_DIR, GENERIC_TYPES_DIR, INCIDENT_FIELDS_DIR,
     INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR,
-    INTEGRATIONS_DIR, LAYOUTS_DIR, PACKS_DIR, PLAYBOOKS_DIR, RELEASE_NOTES_DIR,
-    REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, TOOLS_DIR, WIDGETS_DIR,
-    ContentItems)
+    INTEGRATIONS_DIR, LAYOUTS_DIR, PACKS_DIR, PLAYBOOKS_DIR,
+    PRE_PROCESS_RULES_DIR, RELEASE_NOTES_DIR, REPORTS_DIR, SCRIPTS_DIR,
+    TEST_PLAYBOOKS_DIR, TOOLS_DIR, WIDGETS_DIR, ContentItems)
 from demisto_sdk.commands.common.content import (Content, ContentError,
                                                  ContentFactoryError, Pack)
 from demisto_sdk.commands.common.content.objects.pack_objects import (
@@ -161,6 +161,7 @@ class ContentItemsHandler:
             ContentItems.REPORTS: [],
             ContentItems.INDICATOR_TYPES: [],
             ContentItems.LAYOUTS: [],
+            ContentItems.PRE_PROCESS_RULES: [],
             ContentItems.CLASSIFIERS: [],
             ContentItems.WIDGETS: [],
             ContentItems.GENERIC_FIELDS: [],
@@ -179,6 +180,7 @@ class ContentItemsHandler:
             INDICATOR_TYPES_DIR: self.add_indicator_type_as_content_item,
             REPORTS_DIR: self.add_report_as_content_item,
             LAYOUTS_DIR: self.add_layout_as_content_item,
+            PRE_PROCESS_RULES_DIR: self.add_pre_process_rules_as_content_item,
             CLASSIFIERS_DIR: self.add_classifier_as_content_item,
             WIDGETS_DIR: self.add_widget_as_content_item,
             GENERIC_TYPES_DIR: self.add_generic_type_as_content_item,
@@ -293,6 +295,12 @@ class ContentItemsHandler:
             self.content_items[ContentItems.LAYOUTS].append({
                 'name': content_object.get('name', '')
             })
+
+    def add_pre_process_rules_as_content_item(self, content_object: ContentObject):
+        self.content_items[ContentItems.PRE_PROCESS_RULES].append({
+            'name': content_object.get('name') or content_object.get('id', ''),
+            'description': content_object.get('description', ''),
+        })
 
     def add_classifier_as_content_item(self, content_object: ContentObject):
         self.content_items[ContentItems.CLASSIFIERS].append({
@@ -582,7 +590,7 @@ def dump_packs(artifact_manager: ArtifactsManager, pool: ProcessPool) -> List[Pr
     return futures
 
 
-def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport:
+def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport:  # noqa: C901
     """ Dumping content/Packs/<pack_id>/ into:
             1. content_test
             2. content_new
@@ -630,6 +638,9 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
     for layout in pack.layouts:
         content_items_handler.handle_content_item(layout)
         pack_report += dump_pack_conditionally(artifact_manager, layout)
+    for pre_process_rule in pack.pre_process_rules:
+        content_items_handler.handle_content_item(pre_process_rule)
+        pack_report += dump_pack_conditionally(artifact_manager, pre_process_rule)
     for dashboard in pack.dashboards:
         content_items_handler.handle_content_item(dashboard)
         pack_report += dump_pack_conditionally(artifact_manager, dashboard)
@@ -668,6 +679,9 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
     for release_note in pack.release_notes:
         pack_report += ObjectReport(release_note, content_packs=True)
         release_note.dump(artifact_manager.content_packs_path / pack.id / RELEASE_NOTES_DIR)
+    for release_note_config in pack.release_notes_config:
+        pack_report += ObjectReport(release_note_config, content_packs=True)
+        release_note_config.dump(artifact_manager.content_packs_path / pack.id / RELEASE_NOTES_DIR)
 
     for tool in pack.tools:
         object_report = ObjectReport(tool, content_packs=True)

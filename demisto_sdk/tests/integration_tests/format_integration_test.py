@@ -27,6 +27,12 @@ from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     GENERIC_DEFINITION, GENERIC_FIELD, GENERIC_MODULE, GENERIC_TYPE)
 from TestSuite.test_tools import ChangeCWD
 
+with open(SOURCE_FORMAT_INTEGRATION_COPY) as of:
+    SOURCE_FORMAT_INTEGRATION_YML = of.read()  # prevents overriding by other `format` calls.
+with open(SOURCE_FORMAT_PLAYBOOK_COPY) as of:
+    SOURCE_FORMAT_PLAYBOOK_YML = of.read()  # prevents overriding by other `format` calls.
+BASIC_YML_CONTENTS = (SOURCE_FORMAT_INTEGRATION_YML, SOURCE_FORMAT_PLAYBOOK_YML)
+
 BASIC_YML_TEST_PACKS = [
     (SOURCE_FORMAT_INTEGRATION_COPY, DESTINATION_FORMAT_INTEGRATION_COPY, IntegrationYMLFormat, 'New Integration_copy',
      'integration'),
@@ -68,18 +74,15 @@ CONF_JSON_ORIGINAL_CONTENT = {
 }
 
 
-@pytest.mark.parametrize('source_path,destination_path,formatter,yml_title,file_type', BASIC_YML_TEST_PACKS)
-def test_integration_format_yml_with_no_test_positive(tmp_path: PosixPath,
-                                                      source_path: str,
-                                                      destination_path: str,
-                                                      formatter: BaseUpdateYML,
-                                                      yml_title: str,
-                                                      file_type: str):
+@pytest.mark.parametrize('source_yml', BASIC_YML_CONTENTS)
+def test_integration_format_yml_with_no_test_positive(tmp_path: PosixPath, source_yml: str):
     """
         Given
         - A yml file (integration, playbook or script) with no 'tests' configured
 
         When
+        - Entering '-at' so the prompt message about asking the user if he wants to add 'No tests' to the file will
+            appear.
         - Entering 'Y' into the prompt message about that asks the user if he wants to add 'No tests' to the file
 
         Then
@@ -87,59 +90,56 @@ def test_integration_format_yml_with_no_test_positive(tmp_path: PosixPath,
         -  Ensure 'No tests' is added in the first time
         -  Ensure message is not prompt in the second time
     """
-    saved_file_path = str(tmp_path / os.path.basename(destination_path))
-    runner = CliRunner()
+    source_file, output_file = tmp_path / 'source.yml', tmp_path / 'output.yml'
+    source_path, output_path = str(source_file), str(output_file)
+    source_file.write_text(source_yml)
+
     # Running format in the first time
-    result = runner.invoke(main, [FORMAT_CMD, '-i', source_path, '-o', saved_file_path], input='Y')
-    prompt = f'The file {source_path} has no test playbooks configured. Do you want to configure it with "No tests"'
+    runner = CliRunner()
+    result = runner.invoke(main, [FORMAT_CMD, '-i', source_path, '-o', output_path, '-at'], input='Y')
+    prompt = f'The file {source_path} has no test playbooks configured. ' \
+             f'Do you want to configure it with "No tests"'
     assert not result.exception
     assert prompt in result.output
-    yml_content = get_dict_from_file(saved_file_path)
-    assert yml_content[0].get('tests') == ['No tests (auto formatted)']
+    output_yml = get_dict_from_file(output_path)
+    assert output_yml[0].get('tests') == ['No tests (auto formatted)']
 
     # Running format for the second time should raise no exception and should raise no prompt to the user
-    result = runner.invoke(main, [FORMAT_CMD, '-i', saved_file_path], input='Y')
+    result = runner.invoke(main, [FORMAT_CMD, '-i', output_path], input='Y')
     assert not result.exception
     assert prompt not in result.output
-    os.remove(saved_file_path)
 
 
-@pytest.mark.parametrize('source_path,destination_path,formatter,yml_title,file_type', BASIC_YML_TEST_PACKS)
-def test_integration_format_yml_with_no_test_negative(tmp_path: PosixPath,
-                                                      source_path: str,
-                                                      destination_path: str,
-                                                      formatter: BaseUpdateYML,
-                                                      yml_title: str,
-                                                      file_type: str):
+@pytest.mark.parametrize('source_yml', BASIC_YML_CONTENTS)
+def test_integration_format_yml_with_no_test_negative(tmp_path: PosixPath, source_yml: str):
     """
         Given
         - A yml file (integration, playbook or script) with no 'tests' configured
 
         When
+        - Entering '-at' so the prompt message about asking the user if he wants to add 'No tests' to the file will
+            appear.
         - Entering 'N' into the prompt message about that asks the user if he wants to add 'No tests' to the file
 
         Then
         -  Ensure no exception is raised
         -  Ensure 'No tests' is not added
     """
-    saved_file_path = str(tmp_path / os.path.basename(destination_path))
+    source_file, output_file = tmp_path / 'source.yml', tmp_path / 'output.yml'
+    source_path, output_path = str(source_file), str(output_file)
+    source_file.write_text(source_yml)
+
     runner = CliRunner()
-    result = runner.invoke(main, [FORMAT_CMD, '-i', source_path, '-o', saved_file_path], input='N')
+    result = runner.invoke(main, [FORMAT_CMD, '-i', source_path, '-o', output_path, '-at'], input='N')
     assert not result.exception
     prompt = f'The file {source_path} has no test playbooks configured. Do you want to configure it with "No tests"'
     assert prompt in result.output
-    yml_content = get_dict_from_file(saved_file_path)
+    yml_content = get_dict_from_file(output_path)
     assert not yml_content[0].get('tests')
-    os.remove(saved_file_path)
 
 
-@pytest.mark.parametrize('source_path,destination_path,formatter,yml_title,file_type', BASIC_YML_TEST_PACKS)
-def test_integration_format_yml_with_no_test_no_interactive_positive(tmp_path: PosixPath,
-                                                                     source_path: str,
-                                                                     destination_path: str,
-                                                                     formatter: BaseUpdateYML,
-                                                                     yml_title: str,
-                                                                     file_type: str):
+@pytest.mark.parametrize('source_yml', BASIC_YML_CONTENTS)
+def test_integration_format_yml_with_no_test_no_interactive_positive(tmp_path: PosixPath, source_yml: str):
     """
         Given
         - A yml file (integration, playbook or script) with no 'tests' configured
@@ -151,12 +151,15 @@ def test_integration_format_yml_with_no_test_no_interactive_positive(tmp_path: P
         -  Ensure no exception is raised
         -  Ensure 'No tests' is added in the first time
     """
-    saved_file_path = str(tmp_path / os.path.basename(destination_path))
+    source_file, output_file = tmp_path / 'source.yml', tmp_path / 'output.yml'
+    source_path, output_path = str(source_file), str(output_file)
+    source_file.write_text(source_yml)
+
     runner = CliRunner()
     # Running format in the first time
-    result = runner.invoke(main, [FORMAT_CMD, '-i', source_path, '-o', saved_file_path, '-y'])
+    result = runner.invoke(main, [FORMAT_CMD, '-i', source_path, '-o', output_path, '-y'])
     assert not result.exception
-    yml_content = get_dict_from_file(saved_file_path)
+    yml_content = get_dict_from_file(output_path)
     assert yml_content[0].get('tests') == ['No tests (auto formatted)']
 
 
@@ -314,6 +317,8 @@ def test_integration_format_remove_playbook_sourceplaybookid(tmp_path):
 
     When
     - Running the format command.
+    - Entering '-at' so the prompt message about asking the user if he wants to add 'No tests' to the file will
+        appear.
 
     Then
     - Ensure 'sourceplaybookid' was deleted from the yml file.
@@ -321,7 +326,7 @@ def test_integration_format_remove_playbook_sourceplaybookid(tmp_path):
     source_playbook_path = SOURCE_FORMAT_PLAYBOOK_COPY
     playbook_path = str(tmp_path / 'format_new_playbook_copy.yml')
     runner = CliRunner()
-    result = runner.invoke(main, [FORMAT_CMD, '-i', source_playbook_path, '-o', playbook_path], input='N')
+    result = runner.invoke(main, [FORMAT_CMD, '-i', source_playbook_path, '-o', playbook_path, '-at'], input='N')
     prompt = f'The file {source_playbook_path} has no test playbooks configured. Do you want to configure it with "No tests"'
     assert result.exit_code == 0
     assert prompt in result.output
@@ -1093,3 +1098,246 @@ def test_format_generic_definition_missing_from_version_key(mocker, repo):
         with open(generic_definition_path) as f:
             updated_generic_definition = json.load(f)
         assert updated_generic_definition['fromVersion'] == GENERIC_DEFINITION['fromVersion']
+
+
+class TestFormatWithoutAddTestsFlag:
+
+    def test_format_integrations_folder_with_add_tests(self, pack):
+        """
+            Given
+            - An integration folder.
+
+            When
+            - Running format command on it
+
+            Then
+            -  Ensure no exception is raised.
+            -  Ensure message asking to add tests is prompt.
+        """
+        runner = CliRunner()
+        integration = pack.create_integration()
+        integration.create_default_integration()
+        integration.yml.update({'fromversion': '5.5.0'})
+        integration_path = integration.yml.path
+        result = runner.invoke(main, [FORMAT_CMD, '-i', integration_path, '-at'])
+        prompt = f'The file {integration_path} has no test playbooks configured.' \
+                 f' Do you want to configure it with "No tests"?'
+        message = f'Formatting {integration_path} with "No tests"'
+        assert not result.exception
+        assert prompt in result.output
+        assert message not in result.output
+
+    def test_format_integrations_folder(self, pack):
+        """
+            Given
+            - An integration folder.
+
+            When
+            - Running format command on it
+
+            Then
+            -  Ensure no exception is raised.
+            -  Ensure 'No tests' is added to the yaml file.
+            -  Ensure message asking to add tests is not prompt.
+            -  Ensure a message for formatting automatically the yaml file is added.
+        """
+        runner = CliRunner()
+        integration = pack.create_integration()
+        integration.create_default_integration()
+        integration_path = integration.yml.path
+        result = runner.invoke(main, [FORMAT_CMD, '-i', integration_path], input='Y')
+        prompt = f'The file {integration_path} has no test playbooks configured.' \
+                 f' Do you want to configure it with "No tests"?'
+        message = f'Formatting {integration_path} with "No tests"'
+        assert not result.exception
+        assert prompt not in result.output
+        assert message in result.output
+
+    def test_format_script_without_test_flag(self, pack):
+        """
+            Given
+            - An script folder.
+
+            When
+            - Running format command on it
+
+            Then
+            -  Ensure no exception is raised.
+            -  Ensure 'No tests' is added to the yaml file.
+            -  Ensure message asking to add tests is not prompt.
+            -  Ensure a message for formatting automatically the yaml file is added.
+        """
+        runner = CliRunner()
+        script = pack.create_script()
+        script.create_default_script()
+        script.yml.update({'fromversion': '5.5.0'})
+        script_path = script.yml.path
+
+        result = runner.invoke(main, [FORMAT_CMD, '-i', script_path])
+        prompt = f'The file {script_path} has no test playbooks configured.' \
+                 f' Do you want to configure it with "No tests"?'
+        message = f'Formatting {script_path} with "No tests"'
+        assert not result.exception
+        assert prompt not in result.output
+        assert message in result.output
+
+    def test_format_playbooks_folder(self, pack):
+        """
+            Given
+            - A playbooks folder.
+
+            When
+            - Running format command on it
+
+            Then
+            -  Ensure no exception is raised.
+            -  Ensure 'No tests' is added to the yaml file.
+            -  Ensure message asking to add tests is not prompt.
+            -  Ensure a message for formatting automatically the yaml file is added.
+        """
+        runner = CliRunner()
+        playbook = pack.create_playbook()
+        playbook.create_default_playbook()
+        playbook.yml.update({'fromversion': '5.5.0'})
+        playbooks_path = playbook.yml.path
+        playbook.yml.delete_key('tests')
+        result = runner.invoke(main, [FORMAT_CMD, '-i', playbooks_path], input='N')
+        prompt = f'The file {playbooks_path} has no test playbooks configured.' \
+                 f' Do you want to configure it with "No tests"?'
+        message = f'Formatting {playbooks_path} with "No tests"'
+        assert not result.exception
+        assert prompt not in result.output
+        assert message in result.output
+
+        assert playbook.yml.read_dict().get('tests')[0] == 'No tests (auto formatted)'
+
+    def test_format_testplaybook_folder_without_add_tests_flag(self, pack):
+        """
+            Given
+            - An TestPlaybook folder.
+
+            When
+            - Running format command on it
+
+            Then
+            -  Ensure no exception is raised.
+            -  Ensure 'No tests' is NOT added to the yaml file.
+            -  Ensure NO message for formatting automatically the yaml file is added.
+
+        """
+        runner = CliRunner()
+        test_playbook = pack.create_test_playbook()
+        test_playbook.create_default_test_playbook()
+        test_playbook.yml.update({'fromversion': '5.5.0'})
+        test_playbooks_path = test_playbook.yml.path
+        test_playbook.yml.delete_key('tests')
+        result = runner.invoke(main, [FORMAT_CMD, '-i', test_playbooks_path], input='N')
+        prompt = f'The file {test_playbooks_path} has no test playbooks configured.' \
+                 f' Do you want to configure it with "No tests"?'
+        message = f'Formatting {test_playbooks_path} with "No tests"'
+        assert not result.exception
+        assert prompt not in result.output
+        assert message not in result.output
+
+        assert not test_playbook.yml.read_dict().get('tests')
+
+    def test_format_test_playbook_folder_with_add_tests_flag(self, pack):
+        """
+            Given
+            - An TestPlaybook folder.
+
+            When
+            - Running format command on it
+
+            Then
+            -  Ensure no exception is raised.
+            -  Ensure 'No tests' is NOT added to the yaml file.
+            -  Ensure NO message for formatting automatically the yaml file is added.
+
+        """
+        runner = CliRunner()
+        test_playbook = pack.create_test_playbook()
+        test_playbook.create_default_test_playbook()
+        test_playbook.yml.update({'fromversion': '5.5.0'})
+        test_playbooks_path = test_playbook.yml.path
+        test_playbook.yml.delete_key('tests')
+        result = runner.invoke(main, [FORMAT_CMD, '-i', test_playbooks_path, '-at'], input='N')
+        prompt = f'The file {test_playbooks_path} has no test playbooks configured.' \
+                 f' Do you want to configure it with "No tests"?'
+        message = f'Formatting {test_playbooks_path} with "No tests"'
+        assert not result.exception
+        assert prompt not in result.output
+        assert message not in result.output
+
+        assert not test_playbook.yml.read_dict().get('tests')
+
+    def test_format_layouts_folder_without_add_tests_flag(self, repo):
+        """
+            Given
+            - An Layouts folder.
+
+            When
+            - Running format command on it
+
+            Then
+            -  Ensure no exception is raised.
+            -  Ensure 'No tests' is NOT added to the yaml file.
+            -  Ensure NO message for formatting automatically the yaml file is added.
+        """
+        runner = CliRunner()
+        pack = repo.create_pack('PackName')
+        layout = pack.create_layoutcontainer(
+            name='layout',
+            content={
+                'id': '8f503eb3-883d-4626-8a45-16f56995bd43',
+                'name': 'IncidentLayout',
+                'group': 'incident',
+                'detailsV2': {"tabs": []}
+            }
+        )
+        layouts_path = layout.path
+        result = runner.invoke(main, [FORMAT_CMD, '-i', layouts_path])
+        prompt = f'The file {layouts_path} has no test playbooks configured.' \
+                 f' Do you want to configure it with "No tests" '
+        message = f'Formatting {layouts_path} with "No tests"'
+        message1 = f'Format Status   on file: {layouts_path} - Success'
+
+        assert not result.exception
+        assert prompt not in result.output
+        assert message not in result.output
+        assert message1 in result.output
+
+    def test_format_layouts_folder_with_add_tests_flag(self, repo):
+        """
+            Given
+            - An Layouts folder.
+
+            When
+            - Running format command on it
+
+            Then
+            -  Ensure no exception is raised.
+            -  Ensure 'No tests' is NOT added to the yaml file.
+            -  Ensure NO message for formatting automatically the yaml file is added.
+        """
+        runner = CliRunner()
+        pack = repo.create_pack('PackName')
+        layout = pack.create_layoutcontainer(
+            name='layout',
+            content={
+                'id': '8f503eb3-883d-4626-8a45-16f56995bd43',
+                'name': 'IncidentLayout',
+                'group': 'incident',
+                'detailsV2': {"tabs": []}
+            }
+        )
+        layouts_path = layout.path
+        result = runner.invoke(main, [FORMAT_CMD, '-i', layouts_path, '-at'])
+        prompt = f'The file {layouts_path} has no test playbooks configured.' \
+                 f' Do you want to configure it with "No tests" '
+        message = f'Formatting {layouts_path} with "No tests"'
+        message1 = f'Format Status   on file: {layouts_path} - Success'
+        assert not result.exception
+        assert prompt not in result.output
+        assert message not in result.output
+        assert message1 in result.output

@@ -119,23 +119,25 @@ def jsonise(context_key, value, description=''):
     }
 
 
+def _is_min_date(val: str):
+    # catches `0001-01-01Z00:00:00`, `0001-01-01T00:00:00`, `0001-01-01 00:00`, etc
+    return '0001-01-01' in val and '00:00' in val
+
+
 def is_date(val):
     """
     Determines if val is Date, if yes returns True otherwise False
     """
     if isinstance(val, (int, float)) and val > 15737548065 and val < 2573754806500:
-        # 15737548065 is the lowest timestamp that exist year - 1970
-        # 2573754806500 is the year 2050 - I believe no json will contain date time over this time
+        # 15737548065 is Jul 02 1970 (milliseconds)
+        # 2573754806500 is the year 2050 (milliseconds)
         # if number is between these two numbers it probably is timestamp=date
         return True
 
-    if isinstance(val, str) and len(val) >= 10 and len(val) <= 30 and dateparser.parse(val):
+    if isinstance(val, str) and len(val) >= 10 and len(val) <= 30 and (_is_min_date(val) or dateparser.parse(val)):
         # the shortest date string is => len(2019-10-10) = 10
         # The longest date string I could think of wasn't of length over len=30 '2019-10-10T00:00:00.000 +0900'
-        # To reduce in performance of using dateparser.parse,I
         return True
-
-    return False
 
 
 def determine_type(val):
@@ -155,7 +157,7 @@ def determine_type(val):
     return 'Unknown'
 
 
-def parse_json(data, command_name, prefix, verbose=False, interactive=False, descriptions: Optional[Dict] = None):
+def parse_json(data, command_name, prefix, verbose=False, interactive=False, descriptions: Optional[Dict] = None, return_object=False):
     if data == '':
         raise ValueError('Invalid input JSON - got empty string')
 
@@ -193,14 +195,16 @@ def parse_json(data, command_name, prefix, verbose=False, interactive=False, des
     if verbose:
         print(f'JSON before converting to YAML: {arg_json}')
 
-    yaml_output = yaml.safe_dump(
-        {
-            'name': command_name.lstrip('!'),
-            'arguments': [],
-            'outputs': arg_json
-        },
-        default_flow_style=False
-    )
+    outputs = {
+        'name': command_name.lstrip('!'),
+        'arguments': [],
+        'outputs': arg_json
+    }
+
+    if return_object:
+        return outputs
+
+    yaml_output = yaml.safe_dump(outputs, default_flow_style=False)
     return yaml_output
 
 

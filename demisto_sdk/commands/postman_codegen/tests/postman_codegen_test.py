@@ -1,16 +1,17 @@
 import json
 import os
 from pathlib import Path
-from typing import Optional
+from typing import Dict, List, Optional, Union
 
 import pytest
 import yaml
 
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.generate_integration.code_generator import \
-    IntegrationGeneratorConfig
+from demisto_sdk.commands.generate_integration.code_generator import (
+    IntegrationGeneratorConfig, IntegrationGeneratorOutput)
 from demisto_sdk.commands.postman_codegen.postman_codegen import (
-    create_body_format, flatten_collections, postman_to_autogen_configuration)
+    create_body_format, flatten_collections, generate_command_outputs,
+    postman_to_autogen_configuration)
 
 
 class TestPostmanHelpers:
@@ -546,6 +547,29 @@ class TestPostmanCodeGen:
         - integration yml, file-download should return File standard context outputs
         """
         pass
+
+    GENERATE_COMMAND_OUTPUTS_INPUTS = [({'id': 1}, [IntegrationGeneratorOutput('id', '', 'Number')]),
+                                       ([{'id': 1}], [IntegrationGeneratorOutput('id', '', 'Number')]),
+                                       ([{'a': [{'b': 2}]}], [IntegrationGeneratorOutput('a.b', '', 'Number')])]
+
+    @pytest.mark.parametrize('body, expected', GENERATE_COMMAND_OUTPUTS_INPUTS)
+    def test_generate_command_outputs(self, body: Union[List, Dict], expected: List[IntegrationGeneratorOutput]):
+        """
+        Given:
+        - Body of postman generator command.
+
+        When:
+        - Building corresponding command for Cortex XSOAR.
+
+        Then:
+        - Ensure outputs are flattened correctly.
+        """
+        outputs: List[IntegrationGeneratorOutput] = generate_command_outputs(body)
+        for i in range(len(outputs)):
+            assert outputs[i].name == expected[i].name
+            assert outputs[i].description == expected[i].description
+            assert outputs[i].type_ == expected[i].type_
+        assert len(outputs) == len(expected)
 
 
 def _testutil_create_postman_collection(dest_path, with_request: Optional[dict] = None, no_auth: bool = False):

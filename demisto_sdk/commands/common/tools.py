@@ -1089,8 +1089,7 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
     if path.name.endswith('_image.png'):
         if path.name.endswith("Author_image.png"):
             return FileType.AUTHOR_IMAGE
-        else:
-            return FileType.IMAGE
+        return FileType.IMAGE
 
     # doc files images
     if path.suffix == ".png" and DOC_FILES_DIR in path.parts:

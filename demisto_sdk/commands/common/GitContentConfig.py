@@ -100,10 +100,10 @@ class GitContentConfig:
             self.CURRENT_REPOSITORY = GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
 
     @lru_cache(maxsize=10)
-    def _search_gitlab_id(self, github_hostname: str, repo: str) -> Optional[int]:
-        res = requests.get(f"https://{github_hostname}/api/v4/projects",
+    def _search_gitlab_id(self, gitlab_hostname: str, repo: str) -> Optional[int]:
+        res = requests.get(f"https://{gitlab_hostname}/api/v4/projects",
                            params={'search': repo},
-                           headers={'PRIVATE-TOKEN': self.Credentials.GITHUB_TOKEN},
+                           headers={'PRIVATE-TOKEN': self.Credentials.GITLAB_TOKEN},
                            timeout=10,
                            verify=False)
         res.raise_for_status()

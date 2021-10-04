@@ -23,5 +23,5 @@ class TestJob:
 
     def test_files_detection(self, datadir):
         obj = Job(datadir[sample_file_path])
-        assert obj.readme.path == Path(datadir[f"{sample_job_name}_README.md"])
-        assert obj.changelog.path == Path(datadir[f"{sample_job_name}_CHANGELOG.md"])
+        assert obj.readme.path == Path(datadir[f"Jobs/{sample_job_name}_README.md"])
+        assert obj.changelog.path == Path(datadir[f"Jobs/{sample_job_name}_CHANGELOG.md"])

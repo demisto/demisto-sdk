@@ -1,4 +1,6 @@
 # Changelog
+
+# 1.5.1
 * Fixed an issue where **validate** command failed to recognized test playbooks for beta integrations as valid tests.
 * Fixed an issue were the **validate** command was falsely recognizing image paths in readme files.
 * Fixed an issue where the **upload** command error message upon upload failure pointed to wrong file rather than to the pack metadata.

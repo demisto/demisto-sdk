@@ -5,7 +5,8 @@ from demisto_sdk.commands.common.content.objects.pack_objects.job.job import \
 from demisto_sdk.commands.common.content.objects_factory import \
     path_to_pack_object
 
-sample_file_path = "Jobs/sample-job.json"
+sample_job_name = "sample-job"
+sample_file_path = f"Jobs/{sample_job_name}.json"
 
 
 class TestJob:
@@ -22,5 +23,5 @@ class TestJob:
 
     def test_files_detection(self, datadir):
         obj = Job(datadir[sample_file_path])
-        assert obj.readme.path == Path(datadir[f"{sample_file_path}_README.md"])
-        assert obj.changelog.path == Path(datadir[f"{sample_file_path}_CHANGELOG.md"])
+        assert obj.readme.path == Path(datadir[f"{sample_job_name}_README.md"])
+        assert obj.changelog.path == Path(datadir[f"{sample_job_name}_CHANGELOG.md"])

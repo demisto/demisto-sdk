@@ -1055,7 +1055,7 @@ def get_dict_from_file(path: str, use_ryaml: bool = False,
 
 
 @lru_cache()
-def find_type_by_path(path: str = '') -> Optional[FileType]:
+def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
     """Find docstring by file path only
     This function is here as we want to implement lru_cache and we can do it on `find_type`
     as dict is not hashable.
@@ -1066,44 +1066,46 @@ def find_type_by_path(path: str = '') -> Optional[FileType]:
     Returns:
         FileType: The file type if found. else None;
     """
-    if path.endswith('.md'):
-        if 'README' in path:
+    path = Path(path)
+    if path.suffix == '.md':
+        if 'README' in path.name:
             return FileType.README
 
-        if RELEASE_NOTES_DIR in path:  # [-2] is the file's dir name
+        if RELEASE_NOTES_DIR in path.parts:
             return FileType.RELEASE_NOTES
 
-        if 'description' in path:
+        if 'description' in path.name:
             return FileType.DESCRIPTION
 
         return FileType.CHANGELOG
 
-    if path.endswith('.json'):
-        if RELEASE_NOTES_DIR in path:
+    if path.suffix == '.json':
+        if RELEASE_NOTES_DIR in path.parts:
             return FileType.RELEASE_NOTES_CONFIG
-        if JOBS_DIR in path:
+        if JOBS_DIR in path.parts:
             return FileType.JOB
-    # integration image
-    if path.endswith('_image.png') and not path.endswith("Author_image.png"):
-        return FileType.IMAGE
 
-    if path.endswith("Author_image.png"):
-        return FileType.AUTHOR_IMAGE
+    # integration image
+    if path.name.endswith('_image.png'):
+        if path.name.endswith("Author_image.png"):
+            return FileType.AUTHOR_IMAGE
+        else:
+            return FileType.IMAGE
 
     # doc files images
-    if path.endswith('.png') and DOC_FILES_DIR in path:
+    if path.suffix == ".png" and DOC_FILES_DIR in path.parts:
         return FileType.DOC_IMAGE
 
-    if path.endswith('.ps1'):
+    if path.suffix == '.ps1':
         return FileType.POWERSHELL_FILE
 
-    if path.endswith('.py'):
+    if path.suffix == '.py':
         return FileType.PYTHON_FILE
 
-    if path.endswith('.js'):
+    if path.suffix == '.js':
         return FileType.JAVASCRIPT_FILE
 
-    if path.endswith(XSOAR_CONFIG_FILE):
+    if path.name == XSOAR_CONFIG_FILE:
         return FileType.XSOAR_CONFIG
 
     return None

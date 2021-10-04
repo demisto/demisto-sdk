@@ -1,14 +1,10 @@
-import os
 import re
 from enum import Enum
 from functools import reduce
-from typing import Dict, Iterable, List, Optional
+from typing import Dict, List
 
-import click
-# dirs
-from git import InvalidGitRepositoryError
-
-from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.GitContentConfig import \
+    GitContentConfig  # noqa
 
 CAN_START_WITH_DOT_SLASH = '(?:./)?'
 NOT_TEST = '(?!Test)'
@@ -527,6 +523,7 @@ API_MODULE_REGEXES = [
 
 ID_IN_COMMONFIELDS = [  # entities in which 'id' key is under 'commonfields'
     'integration',
+    'betaintegration',
     'script'
 ]
 ID_IN_ROOT = [  # entities in which 'id' key is in the root
@@ -878,64 +875,6 @@ def urljoin(*args: str):
     return reduce(lambda a, b: str(a).rstrip('/') + '/' + str(b).lstrip('/'), args).rstrip("/")
 
 
-class GithubCredentials:
-    ENV_TOKEN_NAME = 'DEMISTO_SDK_GITHUB_TOKEN'
-    TOKEN: Optional[str]
-
-    def __init__(self):
-        self.TOKEN = os.getenv(self.ENV_TOKEN_NAME)
-
-
-class GithubContentConfig:
-    """Holds links, credentials and other content related github configuration
-
-    Attributes:
-        CURRENT_REPOSITORY: The current repository in the cwd
-        CONTENT_GITHUB_LINK: Link to the raw content git repository
-        CONTENT_GITHUB_MASTER_LINK: Link to the content git repository's master branch
-        Credentials: Credentials to the git.
-    """
-    BASE_RAW_GITHUB_LINK = r'https://raw.githubusercontent.com/'
-    SDK_API_GITHUB_RELEASES = r'https://api.github.com/repos/demisto/demisto-sdk/releases'
-    OFFICIAL_CONTENT_REPO_NAME = 'demisto/content'
-    CONTENT_GITHUB_UPSTREAM = r'upstream.*demisto/content'
-    CONTENT_GITHUB_ORIGIN = r'origin.*demisto/content'
-
-    CURRENT_REPOSITORY: str
-    CONTENT_GITHUB_LINK: str
-    CONTENT_GITHUB_MASTER_LINK: str
-
-    def __init__(self, repo_name: Optional[str] = None):
-        if not repo_name:
-            try:
-                urls = list(GitUtil().repo.remote().urls)
-                self.CURRENT_REPOSITORY = self._get_repository_name(urls)
-            except (InvalidGitRepositoryError, AttributeError):  # No repository
-                self.CURRENT_REPOSITORY = self.OFFICIAL_CONTENT_REPO_NAME
-        else:
-            self.CURRENT_REPOSITORY = repo_name
-        # DO NOT USE os.path.join on URLs, it may cause errors
-        self.CONTENT_GITHUB_LINK = urljoin(self.BASE_RAW_GITHUB_LINK, self.CURRENT_REPOSITORY)
-        self.CONTENT_GITHUB_MASTER_LINK = urljoin(self.CONTENT_GITHUB_LINK, r'master')
-        self.Credentials = GithubCredentials()
-
-    @staticmethod
-    def _get_repository_name(urls: Iterable) -> str:
-        """Returns the git repository of the cwd.
-        if not running in a git repository, will return an empty string
-        """
-        try:
-            for url in urls:
-                repo = re.findall(r'.com[/:](.*)', url)[0].replace('.git', '')
-                return repo
-        except (AttributeError, IndexError):
-            pass
-
-        # default to content repo if the repo is not found
-        click.secho('Could not find the repository name - defaulting to demisto/content', fg='yellow')
-        return GithubContentConfig.OFFICIAL_CONTENT_REPO_NAME
-
-
 OFFICIAL_CONTENT_ID_SET_PATH = 'https://storage.googleapis.com/marketplace-dist/content/id_set.json'
 
 # Run all test signal
@@ -1252,7 +1191,6 @@ OLDEST_SUPPORTED_VERSION = '5.0.0'
 GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION = '6.5.0'
 
 FEATURE_BRANCHES = ['v4.5.0']
-
 
 SKIP_RELEASE_NOTES_FOR_TYPES = (FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK,
                                 FileType.TEST_SCRIPT, FileType.DOC_IMAGE, FileType.AUTHOR_IMAGE, None,

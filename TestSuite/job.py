@@ -52,13 +52,14 @@ class Job:
             'description': "",
             'playbookId': "",  # todo
             'id': self.pure_name,  # todo
+            'fromServerVersion': '6.5.0',
             'currentIncidentId': 1,
-            'lastRunTime': "",  # todo
-            'nextRunTime': "",  # todo
-            'displayNextRunTime': "",  # todo
-            'disabledNextRunTime': "",  # todo
-            'schedulingStatus': "enabled",
-            'previousRunStatus': "idle",  # todo
+            'lastRunTime': '',  # todo
+            'nextRunTime': '',  # todo
+            'displayNextRunTime': '',  # todo
+            'disabledNextRunTime': '',  # todo
+            'schedulingStatus': 'enabled',
+            'previousRunStatus': 'idle',  # todo
             'tags': [],
             'shouldTriggerNew': False,
             'closePrevRun': False,

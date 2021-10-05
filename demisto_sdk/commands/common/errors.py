@@ -1661,9 +1661,10 @@ class Errors:
     @error_code_decorator
     def unexpected_field_values_in_non_feed_job(found_selected_fields: bool, found_is_all_fields: bool):
         found: List[str] = []
-        for key, value in {found_selected_fields: 'selectedFeeds', found_is_all_fields: 'isAllFields'}.items():
+        for key, value in {found_selected_fields: 'selectedFeeds',
+                           found_is_all_fields: 'isAllFields'}.items():
             if key:
-                found += value
+                found.append(value)
         return f'Job objects cannot have non-empty {" or ".join(found)} when isFeed is set to false.'
 
     @staticmethod

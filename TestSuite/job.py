@@ -17,7 +17,7 @@ class Job:
 
         self._repo = repo
         self._tmpdir_path = tmpdir / "Jobs"
-        self._tmpdir_path.mkdir()
+        self._tmpdir_path.mkdir(exist_ok=True)
         self.path = str(self._tmpdir_path)
 
         self.json = JSONBased(self._tmpdir_path, pure_name, 'job')

@@ -11,7 +11,7 @@ from demisto_sdk.commands.generate_integration.code_generator import (
     IntegrationGeneratorArg, IntegrationGeneratorCommand,
     IntegrationGeneratorConfig, IntegrationGeneratorOutput,
     IntegrationGeneratorParam, ParameterType)
-from demisto_sdk.commands.json_to_outputs.json_to_outputs import (
+from demisto_sdk.commands.generate_outputs.json_to_outputs.json_to_outputs import (
     determine_type, flatten_json)
 
 logger: logging.Logger = logging.getLogger('demisto-sdk')

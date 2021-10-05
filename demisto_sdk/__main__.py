@@ -964,8 +964,7 @@ def generate_outputs(**kwargs):
     In addition you can supply examples files and generate the context description directly in the YML from those examples.
     """
 
-    if kwargs.get('json', False):
-        check_configuration_file('json-to-outputs', kwargs)
+    check_configuration_file('generate-outputs', kwargs)
     return run_generate_outputs(**kwargs)
 
 

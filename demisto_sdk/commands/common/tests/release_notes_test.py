@@ -331,6 +331,27 @@ def test_are_release_notes_complete_rn_config(pack):
     assert validator.are_release_notes_complete()
 
 
+def test_are_release_notes_with_author_image(mocker, repo):
+    """
+    Given:
+    - Added/modified author image.
+
+    When:
+    - Validating RN are complete.
+
+    Then:
+    - Ensure File is skipped from check.
+    """
+    mocker.patch.object(ReleaseNotesValidator, '__init__', lambda a, b: None)
+    mocker.patch.object(StructureValidator, 'scheme_of_file_by_path', return_value='integration')
+    mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
+    pack = repo.create_pack('CortexXDR')
+    integration_outside_pack = pack.create_integration(name='CortexXDR')
+    integration_outside_pack.create_default_integration('CortexXDR')
+    validator = get_validator('', modified_files=[pack.author_image.path])
+    assert validator.are_release_notes_complete()
+
+
 TEST_RELEASE_NOTES_TEST_BANK_2 = [
     ('', False),  # Completely Empty
     ('### Integrations\n#### HelloWorld\n- Grammar correction for code '  # Missing Items

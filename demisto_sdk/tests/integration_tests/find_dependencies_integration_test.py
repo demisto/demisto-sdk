@@ -243,5 +243,5 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
                 [FIND_DEPENDENCIES_CMD, '-i', path]
             )
             assert result.exit_code == 1
-            assert "Input path is not a pack" in result.stdout
+            assert "must be formatted as 'Packs/<some pack name>" in result.stdout
             assert result.stderr == ""

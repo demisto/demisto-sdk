@@ -910,7 +910,7 @@ def run_playbook(**kwargs):
 
 
 # ====================== generate-outputs ====================== #
-@main.command(short_help='''Generates a outputs (from json or examples).''')
+@main.command(short_help='''Generates outputs (from json or examples).''')
 @click.help_option(
     '-h', '--help'
 )

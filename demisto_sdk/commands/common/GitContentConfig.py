@@ -85,7 +85,7 @@ class GitContentConfig:
             gitlab_id = self._search_gitlab_id(gitlab_host, parsed_git.repo)
             if gitlab_id is None:
                 # default to content repo if the id is not found
-                click.secho('Could not find repository id in gitlab - defaulting to demisto/content', fg='yellow')
+                click.secho('Could not find repository id - defaulting to demisto/content', fg='yellow')
                 self.CURRENT_REPOSITORY = GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
                 return
             self.GITLAB_HOST = gitlab_host
@@ -106,6 +106,7 @@ class GitContentConfig:
                            headers={'PRIVATE-TOKEN': self.Credentials.GITLAB_TOKEN},
                            timeout=10,
                            verify=False)
-        res.raise_for_status()
+        if not res.ok:
+            return None
         res = res.json()
         return res[0].get('id', None) if res else None

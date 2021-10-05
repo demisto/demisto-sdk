@@ -3,13 +3,12 @@ from typing import List, Optional
 
 from TestSuite.file import File
 from TestSuite.json_based import JSONBased
-from TestSuite.repo import Repo
 
 
 class Job:
     def __init__(self, tmpdir: Path,
                  pure_name: str,
-                 repo: Repo,
+                 repo,
                  is_feed: bool,
                  selected_feeds: Optional[List[str]] = None):
         self.pure_name = pure_name

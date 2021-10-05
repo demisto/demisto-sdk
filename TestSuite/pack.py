@@ -4,6 +4,7 @@ from typing import List, Optional
 from demisto_sdk.commands.common.constants import DEFAULT_IMAGE_BASE64
 from TestSuite.file import File
 from TestSuite.integration import Integration
+from TestSuite.job import Job
 from TestSuite.json_based import JSONBased
 from TestSuite.playbook import Playbook
 from TestSuite.script import Script
@@ -54,7 +55,7 @@ class Pack:
         self.test_playbooks: List[Playbook] = list()
         self.release_notes: List[TextBased] = list()
         self.release_notes_config: List[JSONBased] = list()
-        self.jobs: List[JSONBased] = list()
+        self.jobs: List[Job] = list()
 
         # Create base pack
         self._pack_path = packs_dir / name
@@ -337,9 +338,9 @@ class Pack:
     def create_job(
             self,
             name,
-            content: dict = None) -> JSONBased:
-        prefix = 'job'
-        job = self._create_json_based(name, prefix, content, dir_path=self._jobs_path)
+            is_feed: bool,
+            selected_feeds: Optional[List[str]] = None) -> Job:
+        job = Job(self._jobs_path, name, self._repo, is_feed, selected_feeds)
         self.jobs.append(job)
         return job
 

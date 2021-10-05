@@ -199,14 +199,8 @@ class Repo:
         generic_definition.update({'name': f'generic_{name} - generic_definition'})
         generic_definition.update({'auditable': False})
 
-        job = pack.create_job(f'{name}-job')
-        job.write_json({
-            'id': f'{name}-job-id',
-            'fromServerVersion': '6.5.0',
-            'name': f'{name}-job',
-            'playbookId': f'{name}_playbook'
-        })
-        # todo more required fields
+        pack.create_job(f'{name}-job', is_feed=False)
+        pack.create_job(f'{name}-job_all_feeds', is_feed=True)
 
         return pack
 

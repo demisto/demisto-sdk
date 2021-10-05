@@ -6,7 +6,8 @@ from TestSuite.json_based import JSONBased
 
 
 class Job:
-    def __init__(self, tmpdir: Path,
+    def __init__(self,
+                 jobs_path: Path,
                  pure_name: str,
                  repo,
                  is_feed: bool,
@@ -16,14 +17,16 @@ class Job:
         self.selected_feeds = selected_feeds
 
         self._repo = repo
-        self._tmpdir_path = tmpdir / "Jobs"
-        self._tmpdir_path.mkdir(exist_ok=True)
-        self.path = str(self._tmpdir_path)
+        self.jobs_path = jobs_path
+        self.jobs_path.mkdir(exist_ok=True)
+        self.path = str(self.jobs_path)
 
-        self.json = JSONBased(self._tmpdir_path, pure_name, 'job')
-        self.readme = File(self._tmpdir_path / f'{self.pure_name}_README.md', self._repo.path)
-        self.description = File(self._tmpdir_path / f'{self.pure_name}_description.md', self._repo.path)
-        self.changelog = File(self._tmpdir_path / f'{self.pure_name}_CHANGELOG.md', self._repo.path)
+        self.json = JSONBased(self.jobs_path, pure_name, 'job')
+        self.readme = File(self.jobs_path / f'{self.pure_name}_README.md', self._repo.path)
+        self.description = File(self.jobs_path / f'{self.pure_name}_description.md', self._repo.path)
+        self.changelog = File(self.jobs_path / f'{self.pure_name}_CHANGELOG.md', self._repo.path)
+
+        self.create_default_job()
 
     def build(
             self,
@@ -47,6 +50,8 @@ class Job:
             'name': self.pure_name,
             'minutesToTimeout': 0,  # todo
             'description': "",
+            'playbookId': "",  # todo
+            'id': self.pure_name,  # todo
             'currentIncidentId': 1,
             'lastRunTime': "",  # todo
             'nextRunTime': "",  # todo

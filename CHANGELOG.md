@@ -1,4 +1,6 @@
 # Changelog
+# 1.5.2
+* Fixed an issue in **validate** in repositories which are not in GitHub or GitLab
 
 # 1.5.1
 * Fixed an issue where **validate** command failed to recognized test playbooks for beta integrations as valid tests.
@@ -8,6 +10,7 @@
 * Fixed an issue where the **postman code-gen** command generated double dots for context outputs when it was not needed.
 * Fixed an issue where there **validate** command on release notes file crashed when author image was added or modified.
 * Added input handling when running **find-dependencies**, replacing string manipulations.
+* Added support for GitLab repositories in **validate**
 
 # 1.5.0
 * Fixed an issue where **upload** command failed to upload packs not under content structure.

@@ -1354,20 +1354,17 @@ def find_dependencies(**kwargs):
     """Find pack dependencies and update pack metadata."""
     check_configuration_file('find-dependencies', kwargs)
     update_pack_metadata = not kwargs.get('no_update')
-    input_path: Path = kwargs["input"]  # To not shadow python builtin `input`
+    input_path: Path = Path(kwargs["input"])  # To not shadow python builtin `input`
     verbose = kwargs.get('verbose', False)
     id_set_path = kwargs.get('id_set_path', '')
     use_pack_metadata = kwargs.get('use_pack_metadata', False)
-    try:
-        assert "Packs/" in str(input_path)
-        pack_name = str(input_path).replace("Packs/", "")
-        assert "/" not in str(pack_name)
-    except AssertionError:
-        print_error("Input path is not a pack. For example: Packs/HelloWorld")
+    if len(input_path.parts) != 2 or input_path.parts[-2] != "Packs":
+        print_error(f"Input path ({input_path}) must be formatted as 'Packs/<some pack name>'. "
+                    f"For example, Packs/HelloWorld")
         sys.exit(1)
     try:
         PackDependencies.find_dependencies(
-            pack_name=pack_name,
+            pack_name=input_path.name,
             id_set_path=str(id_set_path),
             verbose=verbose,
             update_pack_metadata=update_pack_metadata,

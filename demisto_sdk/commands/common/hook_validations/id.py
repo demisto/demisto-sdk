@@ -517,7 +517,7 @@ class IDSetValidations(BaseValidator):
         Returns:
             bool. Whether the playbook's version match playbook's entities.
         """
-        # the following dict holds the playbook names as keys and the true/false whether the version is valid.
+        # the following dict holds the playbook names as keys and true/false whether the version is valid.
         # it handles the case where multiple playbook IDs appear in the id_set and each one of them support different versions.
         # for example:
         # main_playbook_version = '5.0.0'

@@ -1248,7 +1248,7 @@ class TestPlaybookEntitiesVersionsValid:
                             "Integration_version_5"
                         ]
                     }
-                },
+                }
             },
             {
                 'playbook_dup': {
@@ -1302,8 +1302,8 @@ class TestPlaybookEntitiesVersionsValid:
                             "Integration_version_5"
                         ]
                     }
-                },
-            },
+                }
+            }
         ],
         'integrations': [
             {

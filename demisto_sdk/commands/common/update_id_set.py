@@ -1141,7 +1141,6 @@ def process_jobs(file_path: str, print_logs: bool) -> list:
     Args:
         file_path: The file path from object field folder
         print_logs: Whether to print logs to stdout.
-        jobs_list: List of all Jobs objects in the system.
 
     Returns:
         a list of Job data.
@@ -1151,7 +1150,7 @@ def process_jobs(file_path: str, print_logs: bool) -> list:
         if find_type(file_path) == FileType.JOB:
             if print_logs:
                 print(f'adding {file_path} to id_set')
-            result.append(get_job_data(file_path))  # todo
+            result.append(get_job_data(file_path, print_logs))  # todo
     except Exception as exp:  # noqa
         print_error(f'failed to process job {file_path}, Error: {str(exp)}')
         raise
@@ -1382,15 +1381,18 @@ def get_generic_field_data(path, generic_types_list):
     return {id_: data}
 
 
-def get_job_data(path):
+def get_job_data(path: str, print_logs: bool):
     json_data = get_json(path)
     data = create_common_entity_data(path=path,
                                      name=json_data.get('name'),
                                      to_version=json_data.get('toServerVersion'),
                                      from_version=json_data.get('fromServerVersion'),  # todo here or below?
                                      pack=get_pack_name(path))
-    data['playbooks'] = json_data['playbookId']
+    data['playbooks'] = json_data.get('playbookId')
     data['fromServerVersion'] = json_data.get('fromServerVersion')  # todo here or above?
+
+    if print_logs:
+        print(f'adding {path} to id_set')
 
     return {json_data.get('id'): data}
 

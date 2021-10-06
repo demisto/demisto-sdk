@@ -199,8 +199,8 @@ class Repo:
         generic_definition.update({'name': f'generic_{name} - generic_definition'})
         generic_definition.update({'auditable': False})
 
-        pack.create_job(f'{name}-job', is_feed=False)
-        pack.create_job(f'{name}-job_all_feeds', is_feed=True)
+        pack.create_job(is_feed=False, name=f'{name}-job')
+        pack.create_job(is_feed=True, name=f'{name}-job_all_feeds')
 
         return pack
 

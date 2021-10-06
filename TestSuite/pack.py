@@ -336,12 +336,9 @@ class Pack:
         self.generic_definitions.append(generic_definition)
         return generic_definition
 
-    def create_job(
-            self,
-            name,
-            is_feed: bool,
-            selected_feeds: Optional[List[str]] = None) -> Job:
-        job = Job(pure_name=name, jobs_dir_path=self._jobs_path, is_feed=is_feed, selected_feeds=selected_feeds)
+    def create_job(self, is_feed: bool, name: Optional[str] = None, selected_feeds: Optional[List[str]] = None) -> Job:
+        job = Job(pure_name=name or str(len(self.jobs)), jobs_dir_path=self._jobs_path, is_feed=is_feed,
+                  selected_feeds=selected_feeds)
         self.jobs.append(job)
         return job
 

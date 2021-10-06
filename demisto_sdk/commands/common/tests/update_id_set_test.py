@@ -22,7 +22,7 @@ from demisto_sdk.commands.common.update_id_set import (
     get_playbook_data, get_report_data, get_script_data,
     get_values_for_keys_recursively, get_widget_data, has_duplicate,
     merge_id_sets, process_general_items, process_incident_fields,
-    process_integration, process_script, re_create_id_set)
+    process_integration, process_jobs, process_script, re_create_id_set)
 from TestSuite.utils import IsEqualFunctions
 
 TESTS_DIR = f'{git_path()}/demisto_sdk/tests'
@@ -2170,18 +2170,16 @@ class TestGenericModule:
 class TestJob:
     @staticmethod
     @pytest.mark.parametrize('is_feed', (True, False))
-    def test_job(repo, is_feed):
-        job_name = 'test-job'
-
+    def test_job(repo, is_feed):  # todo is this duplicate to test_process_jobs() ?
         pack = repo.create_pack()
-        job = pack.create_job(job_name, is_feed)
-        data = get_job_data(job.path)
+        job = pack.create_job(is_feed)
+        data = get_job_data(job.path, print_logs=False)
         assert len(data) == 1
 
-        datum = data[job_name]
-        assert datum['name'] == job_name
+        datum = data[job.pure_name]
+        assert datum['name'] == job.pure_name
         path = Path(datum['file_path'])
-        assert path.name == f'job-{job_name}.json'
+        assert path.name == f'job-{job.pure_name}.json'
         assert path.exists()
         assert path.is_file()
         assert path.suffix == '.json'
@@ -2190,6 +2188,40 @@ class TestJob:
 
         assert datum['fromServerVersion'] == '6.5.0'
         assert datum['pack'] == pack.name
+
+    @staticmethod
+    @pytest.mark.parametrize('print_logs', (True, False))
+    @pytest.mark.parametrize('is_feed', (True, False))
+    def test_process_jobs(capsys, repo, is_feed: bool, print_logs: bool):
+        """
+        Given
+            - A Job file path.
+            - Whether to print logs.
+        When
+            - Parsing job files.
+        Then
+            - Verify output to logs.
+        """
+        pack = repo.create_pack()
+        job = pack.create_job(is_feed)
+        res = process_jobs(job.path, print_logs)
+
+        captured = capsys.readouterr()
+        assert len(res) == 1
+        datum = res[0][job.pure_name]
+        assert datum['name'] == job.pure_name
+        path = Path(datum['file_path'])
+        assert path.name == f'job-{job.pure_name}.json'
+        assert path.exists()
+        assert path.is_file()
+        assert path.suffix == '.json'
+        assert path.parts[-2] == JOBS_DIR
+        assert path.parts[-3] == pack.name
+
+        assert datum['fromServerVersion'] == '6.5.0'
+        assert datum['pack'] == pack.name
+
+        assert (f'adding {job.path} to id_set' in captured.out) == print_logs
 
 
 def test_merge_id_sets(tmp_path):

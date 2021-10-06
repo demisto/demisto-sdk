@@ -1387,9 +1387,10 @@ def get_job_data(path):
     data = create_common_entity_data(path=path,
                                      name=json_data.get('name'),
                                      to_version=json_data.get('toServerVersion'),
-                                     from_version=json_data.get('fromServerVersion'),
+                                     from_version=json_data.get('fromServerVersion'),  # todo here or below?
                                      pack=get_pack_name(path))
     data['playbooks'] = json_data['playbookId']
+    data['fromServerVersion'] = json_data.get('fromServerVersion')  # todo here or above?
 
     return {json_data.get('id'): data}
 

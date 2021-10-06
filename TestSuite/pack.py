@@ -32,6 +32,7 @@ class Pack:
 
     def __init__(self, packs_dir: Path, name: str, repo):
         # Initiate lists:
+        self.name = name
         self._repo = repo
         self.repo_path = repo.path
         self.integrations: List[Integration] = list()
@@ -58,7 +59,7 @@ class Pack:
         self.jobs: List[Job] = list()
 
         # Create base pack
-        self._pack_path = packs_dir / name
+        self._pack_path = packs_dir / self.name
         self._pack_path.mkdir()
         self.path = str(self._pack_path)
         self.relative_path = str(Path("Packs") / self._pack_path.name)

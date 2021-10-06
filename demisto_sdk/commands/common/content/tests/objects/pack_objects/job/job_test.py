@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from demisto_sdk.commands.common.content.objects.pack_objects.job.job import \
     Job
 from demisto_sdk.commands.common.content.objects_factory import \
@@ -20,8 +18,3 @@ class TestJob:
         """
         obj = Job(datadir[sample_file_path])
         assert obj.normalize_file_name() == f'job-{sample_job_name}.json'
-
-    def test_files_detection(self, datadir):
-        obj = Job(datadir[sample_file_path])
-        assert obj.readme.path == Path(datadir[f"Jobs/{sample_job_name}_README.md"])
-        assert obj.changelog.path == Path(datadir[f"Jobs/{sample_job_name}_CHANGELOG.md"])

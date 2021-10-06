@@ -340,7 +340,7 @@ class Pack:
             name,
             is_feed: bool,
             selected_feeds: Optional[List[str]] = None) -> Job:
-        job = Job(self._jobs_path, name, self._repo, is_feed, selected_feeds)
+        job = Job(pure_name=name, jobs_dir_path=self._jobs_path, is_feed=is_feed, selected_feeds=selected_feeds)
         self.jobs.append(job)
         return job
 

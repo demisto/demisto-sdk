@@ -1280,10 +1280,10 @@ def test_job_sanity(repo, is_feed: bool):
     """
     pack = repo.create_pack()
     job = pack.create_job('job_name', is_feed=is_feed)
-    validate_manager = ValidateManager(check_is_unskipped=False, file_path=job.json.path, skip_conf_json=True)
+    validate_manager = ValidateManager(check_is_unskipped=False, file_path=job.path, skip_conf_json=True)
 
     with ChangeCWD(repo.path):
-        assert validate_manager.validate_job(StructureValidator(job.json.path, is_new_file=True),
+        assert validate_manager.validate_job(StructureValidator(job.path, is_new_file=True),
                                              pack_error_ignore_list=list())
 
 
@@ -1300,11 +1300,11 @@ def test_job_from_version(repo, capsys, is_feed: bool, version: Optional[str]):
     """
     pack = repo.create_pack()
     job = pack.create_job('job_name', is_feed)
-    job.json.update({'fromServerVersion': version})
-    validate_manager = ValidateManager(check_is_unskipped=False, file_path=job.json.path, skip_conf_json=True)
+    job.update({'fromServerVersion': version})
+    validate_manager = ValidateManager(check_is_unskipped=False, file_path=job.path, skip_conf_json=True)
 
     with ChangeCWD(repo.path):
-        assert not validate_manager.validate_job(StructureValidator(job.json.path, is_new_file=True),
+        assert not validate_manager.validate_job(StructureValidator(job.path, is_new_file=True),
                                                  pack_error_ignore_list=list())
     stdout = capsys.readouterr().out
     assert f"fromServerVersion field in Job needs to be at least 6.5.0 (found {version})" in stdout
@@ -1321,10 +1321,10 @@ def test_job_non_feed_with_selected_feeds(repo, capsys):
     """
     pack = repo.create_pack()
     job = pack.create_job('job_name', is_feed=False, selected_feeds=['field_name'])
-    validate_manager = ValidateManager(check_is_unskipped=False, file_path=job.json.path, skip_conf_json=True)
+    validate_manager = ValidateManager(check_is_unskipped=False, file_path=job.path, skip_conf_json=True)
 
     with ChangeCWD(repo.path):
-        assert not validate_manager.validate_job(StructureValidator(job.json.path, is_new_file=True),
+        assert not validate_manager.validate_job(StructureValidator(job.path, is_new_file=True),
                                                  pack_error_ignore_list=list())
     stdout = capsys.readouterr().out
     assert "Job objects cannot have non-empty selectedFeeds when isFeed is set to false" in stdout
@@ -1341,11 +1341,11 @@ def test_job_both_selected_and_all_feeds_in_job(repo, capsys):
     """
     pack = repo.create_pack()
     job = pack.create_job('job_name', is_feed=True, selected_feeds=['field_name'])
-    job.json.update({'isAllFeeds': True})
-    validate_manager = ValidateManager(check_is_unskipped=False, file_path=job.json.path, skip_conf_json=True)
+    job.update({'isAllFeeds': True})
+    validate_manager = ValidateManager(check_is_unskipped=False, file_path=job.path, skip_conf_json=True)
 
     with ChangeCWD(repo.path):
-        assert not validate_manager.validate_job(StructureValidator(job.json.path, is_new_file=True),
+        assert not validate_manager.validate_job(StructureValidator(job.path, is_new_file=True),
                                                  pack_error_ignore_list=list())
     stdout = capsys.readouterr().out
     assert "Job cannot have non-empty selectedFeeds values when isAllFields is set to true" in stdout
@@ -1370,11 +1370,11 @@ def test_job_unexpected_field_values_in_non_feed_job(repo, capsys,
     """
     pack = repo.create_pack()
     job = pack.create_job('job_name', is_feed=True)
-    job.json.update({'isAllFeeds': False})
-    validate_manager = ValidateManager(check_is_unskipped=False, file_path=job.json.path, skip_conf_json=True)
+    job.update({'isAllFeeds': False})
+    validate_manager = ValidateManager(check_is_unskipped=False, file_path=job.path, skip_conf_json=True)
 
     with ChangeCWD(repo.path):
-        assert not validate_manager.validate_job(StructureValidator(job.json.path, is_new_file=True),
+        assert not validate_manager.validate_job(StructureValidator(job.path, is_new_file=True),
                                                  pack_error_ignore_list=list())
     stdout = capsys.readouterr().out
     assert "Job must either have non-empty selectedFeeds OR have isAllFields set to true when isFeed is set to true" \

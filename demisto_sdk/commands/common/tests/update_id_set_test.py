@@ -2223,6 +2223,48 @@ class TestJob:
 
         assert (f'adding {job.path} to id_set' in captured.out) == print_logs
 
+    @staticmethod
+    @pytest.mark.parametrize('is_feed', (True, False))
+    def test_process_jobs_non_job_extension(capsys, repo, is_feed: bool):
+        """
+        Given
+            - A file that isn't a valid Job (wrong filetype)
+            - Whether to print logs.
+        When
+            - Parsing job files.
+        Then
+            - Verify output to logs.
+        """
+        pack = repo.create_pack()
+        job = pack.create_job(is_feed)
+        job_path = Path(job.path)
+        new_path = job_path.rename(job_path.with_suffix('.yml'))
+        res = process_jobs(str(new_path), False)
+        assert not res
+
+    @staticmethod
+    @pytest.mark.parametrize('print_logs', (True, False))
+    @pytest.mark.parametrize('is_feed', (True, False))
+    def test_process_jobs_file_nonexistent(capsys, repo, is_feed: bool, print_logs: bool):
+        """
+        Given
+            - A file that isn't a valid Job (missing file)
+            - Whether to print logs.
+        When
+            - Parsing job files.
+        Then
+            - Verify output to logs.
+        """
+        pack = repo.create_pack()
+        job = pack.create_job(is_feed)
+        job_json_path = Path(job.path)
+        job_json_path_as_yml = job_json_path.with_suffix('.yml')
+
+        job_json_path.rename(job_json_path_as_yml)
+        with pytest.raises(FileNotFoundError):
+            assert not process_jobs(str(job_json_path), print_logs)
+        assert f"failed to process job {job_json_path}" in capsys.readouterr().out
+
 
 def test_merge_id_sets(tmp_path):
     """

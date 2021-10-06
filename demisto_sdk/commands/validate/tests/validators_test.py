@@ -1288,7 +1288,7 @@ def test_job_sanity(repo, is_feed: bool):
 
 
 @pytest.mark.parametrize('is_feed', (True, False))
-@pytest.mark.parametrize('version', ('6.4.9', None))
+@pytest.mark.parametrize('version', ('6.4.9', None, ''))
 def test_job_from_version(repo, capsys, is_feed: bool, version: Optional[str]):
     """
     Given

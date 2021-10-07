@@ -2,7 +2,7 @@ type: map
 mapping:
   id:
     type: str
-    required: false
+    required: true
   version:
     type: int
     required: false
@@ -10,7 +10,7 @@ mapping:
     type: str
     required: false
   sortValues:
-    type: seq
+    type: any
     allowempty: true
     required: false
   roles:
@@ -28,11 +28,11 @@ mapping:
         type: bool
         required: false
       NestedRoles:
-        type: seq
+        type: any
         required: false
         allowempty: true
       PagesAccess:
-        type: seq
+        type: any
         required: false
         allowempty: true
       flattenedRoles:
@@ -48,7 +48,7 @@ mapping:
         required: false
         allowempty: true
       flattenedPermissionsArr:
-        type: seq
+        type: any
         required: false
         allowempty: true
       ADGroups:
@@ -71,7 +71,7 @@ mapping:
         required: false
         allowempty: true
       DefaultDashboards:
-        type: seq
+        type: any
         required: false
         allowempty: true
     allowempty: true
@@ -83,7 +83,7 @@ mapping:
     type: bool
     required: false
   previousRoles:
-    type: seq
+    type: any
     allowempty: true
     required: false
   previousAllRead:
@@ -121,7 +121,7 @@ mapping:
     required: false
   name:
     type: str
-    required: false
+    required: true
   rawName:
     type: str
     required: false
@@ -152,7 +152,7 @@ mapping:
     allowempty: true
     required: false
   labels:
-    type: seq
+    type: any
     allowempty: true
     required: false
   attachment:
@@ -231,7 +231,7 @@ mapping:
     type: str
     required: false
   linkedIncidents:
-    type: seq
+    type: any
     allowempty: true
     required: false
   linkedCount:
@@ -249,7 +249,7 @@ mapping:
     allowempty: true
     required: false
   canvases:
-    type: seq
+    type: any
     allowempty: true
     required: false
   lastJobRunTime:
@@ -271,7 +271,7 @@ mapping:
     allowempty: true
     required: false
   dbotDirtyFields:
-    type: seq
+    type: any
     allowempty: true
     required: false
   dbotCurrentDirtyFields:
@@ -333,16 +333,16 @@ mapping:
   fromServerVersion:
     type: str
     allowempty: true
-    required: false
+    required: true
   toServerVersion:
     type: str
     allowempty: true
     required: false
   propagationLabels:
-    type: list
+    type: any
     required: false
   packPropagationLabels:
-    type: list
+    type: any
     required: false
   definitionId:
     type: str
@@ -390,8 +390,10 @@ mapping:
     type: str
     required: false
   tags:
-    type: list
+    type: seq
     required: false
+    sequence:
+      - type: str
   shouldTriggerNew:
     type: bool
     required: false
@@ -403,13 +405,15 @@ mapping:
     required: false
   isFeed:
     type: bool
-    required: false
+    required: true
   selectedFeeds:
-    type: list
-    required: false
+    type: seq
+    required: True
+    sequence:
+      - type: str
   isAllFeeds:
     type: bool
-    required: false
+    required: true
   locked:
     type: bool
     required: false

@@ -11,7 +11,6 @@ mapping:
     required: false
   sortValues:
     type: any
-    allowempty: true
     required: false
   roles:
     type: map
@@ -19,62 +18,48 @@ mapping:
       CommonFields:
         type: any
         required: false
-        allowempty: true
       Name:
         type: str
         required: false
-        allowempty: true
       Locked:
         type: bool
         required: false
       NestedRoles:
         type: any
         required: false
-        allowempty: true
       PagesAccess:
         type: any
         required: false
-        allowempty: true
       flattenedRoles:
         type: str
         required: false
-        allowempty: true
       Permissions:
         type: any
         required: false
-        allowempty: true
       flattenedPermissions:
         type: any
         required: false
-        allowempty: true
       flattenedPermissionsArr:
         type: any
         required: false
-        allowempty: true
       ADGroups:
         type: any
         required: false
-        allowempty: true
       SAMLGroups:
         type: any
         required: false
-        allowempty: true
       flattened:
         type: bool
         required: false
       Shifts:
         type: any
         required: false
-        allowempty: true
       DefaultPreferences:
         type: any
         required: false
-        allowempty: true
       DefaultDashboards:
         type: any
         required: false
-        allowempty: true
-    allowempty: true
     required: false
   allRead:
     type: bool
@@ -84,7 +69,6 @@ mapping:
     required: false
   previousRoles:
     type: any
-    allowempty: true
     required: false
   previousAllRead:
     type: bool
@@ -97,18 +81,15 @@ mapping:
     required: false
   dbotCreatedBy:
     type: str
-    allowempty: true
     required: false
   ShardID:
     type: int
     required: false
   CustomFields:
     type: any
-    allowempty: true
     required: false
   account:
     type: str
-    allowempty: true
     required: false
   autime:
     type: int
@@ -130,7 +111,6 @@ mapping:
     required: false
   reason:
     type: str
-    allowempty: true
     required: false
   created:
     type: str
@@ -149,19 +129,15 @@ mapping:
     required: false
   investigationId:
     type: str
-    allowempty: true
     required: false
   labels:
     type: any
-    allowempty: true
     required: false
   attachment:
     type: map
-    allowempty: true
     required: false
   details:
     type: str
-    allowempty: true
     required: false
   openDuration:
     type: int
@@ -171,7 +147,6 @@ mapping:
     required: false
   closingUserId:
     type: str
-    allowempty: true
     required: false
   owner:
     type: str
@@ -181,15 +156,12 @@ mapping:
     required: false
   closeReason:
     type: str
-    allowempty: true
     required: false
   rawCloseReason:
     type: str
-    allowempty: true
     required: false
   closeNotes:
     type: str
-    allowempty: true
     required: false
   playbookId:
     type: str
@@ -208,18 +180,15 @@ mapping:
     required: false
   phase:
     type: str
-    allowempty: true
     required: false
   rawPhase:
     type: str
-    allowempty: true
     required: false
   isPlayground:
     type: bool
     required: false
   rawJSON:
     type: str
-    allowempty: true
     required: false
   parent:
     type: str
@@ -232,7 +201,6 @@ mapping:
     required: false
   linkedIncidents:
     type: any
-    allowempty: true
     required: false
   linkedCount:
     type: int
@@ -242,15 +210,12 @@ mapping:
     required: false
   sourceInstance:
     type: str
-    allowempty: true
     required: false
   sourceBrand:
     type: str
-    allowempty: true
     required: false
   canvases:
     type: any
-    allowempty: true
     required: false
   lastJobRunTime:
     type: str
@@ -260,27 +225,21 @@ mapping:
     required: false
   dbotMirrorId:
     type: str
-    allowempty: true
     required: false
   dbotMirrorInstance:
     type: str
-    allowempty: true
     required: false
   dbotMirrorDirection:
     type: str
-    allowempty: true
     required: false
   dbotDirtyFields:
     type: any
-    allowempty: true
     required: false
   dbotCurrentDirtyFields:
     type: any
-    allowempty: true
     required: false
   dbotMirrorTags:
     type: any
-    allowempty: true
     required: false
   dbotMirrorLastSync:
     type: str
@@ -332,11 +291,9 @@ mapping:
     required: false
   fromServerVersion:
     type: str
-    allowempty: true
     required: true
   toServerVersion:
     type: str
-    allowempty: true
     required: false
   propagationLabels:
     type: any
@@ -346,7 +303,6 @@ mapping:
     required: false
   definitionId:
     type: str
-    allowempty: true
     required: false
   vcShouldIgnore:
     type: bool
@@ -356,7 +312,6 @@ mapping:
     required: false
   commitMessage:
     type: str
-    allowempty: true
     required: false
   shouldCommit:
     type: bool
@@ -366,7 +321,6 @@ mapping:
     required: false
   description:
     type: str
-    allowempty: true
     required: false
   currentIncidentId:
     type: str

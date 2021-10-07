@@ -285,7 +285,7 @@ class TestStructureValidator:
 
     @pytest.mark.parametrize('is_feed', (True, False))
     @pytest.mark.parametrize('missing_field',
-                             ('isFeed', 'selectedFeeds', 'isAllFeeds', 'name', 'id'))  # todo more? less?
+                             ('isFeed', 'selectedFeeds', 'isAllFeeds', 'name', 'id', 'fromServerVersion'))  # todo more? less?
     def test_job_missing_field(repo, capsys, is_feed: bool, missing_field: str):
         """
         Given

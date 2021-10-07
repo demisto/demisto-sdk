@@ -9,7 +9,7 @@ from demisto_sdk.commands.generate_outputs.json_to_outputs.json_to_outputs impor
     determine_type, json_to_outputs, parse_json)
 
 DUMMY_FIELD_DESCRIPTION = "dummy field description"
-TEST_PATH = Path('demisto_sdk.commands.generate_outputs.json_to_outputs/tests')
+TEST_PATH = Path('demisto_sdk/commands/generate_outputs/json_to_outputs/tests')
 
 
 def git_path() -> str:

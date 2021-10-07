@@ -548,10 +548,10 @@ class IDSetValidations(BaseValidator):
 
                 # if entities with miss-matched versions were found and skipunavailable is
                 # not set or main playbook fromversion is below 6.0.0, fail the validation
-                if not is_version_valid and not skip_unavailable:
-                    entity_status[entity_id] = entity_status.get(entity_id, False)
+                if is_version_valid or skip_unavailable:
+                    entity_status[entity_id] = True
                 else:
-                    entity_status[entity_id] = True  # valid or skipped
+                    entity_status.setdefault(entity_id, False)
                 if entity_name in implemented_entities:
                     implemented_entities.remove(entity_name)
         invalid_version_entities = [entity_name for entity_name, status in entity_status.items() if status is False]

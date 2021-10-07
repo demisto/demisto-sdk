@@ -134,7 +134,7 @@ mapping:
     type: any
     required: false
   attachment:
-    type: map
+    type: any
     required: false
   details:
     type: str

@@ -1168,7 +1168,8 @@ class TestPlaybookEntitiesVersionsValid:
         "implementing_playbooks": [
             "SubPlaybook_version_5",
             "SubPlaybook_no_version",
-            "SubPlaybook_version_5_5"
+            "SubPlaybook_version_5_5",
+            "playbook_dup"
         ],
         "command_to_integration": {
             "test-command": [
@@ -1193,7 +1194,8 @@ class TestPlaybookEntitiesVersionsValid:
         "fromversion": "5.0.0",
         "pack": "Example",
         "implementing_playbooks": [
-            "SubPlaybook_version_5_5"
+            "SubPlaybook_version_5_5",
+            "playbook_dup"
         ]
     }}
     playbook_with_invalid_sub_playbook_version_from_version_6_0_0 = {"Example Playbook": {
@@ -1234,6 +1236,33 @@ class TestPlaybookEntitiesVersionsValid:
     }}
     id_set = {
         'playbooks': [
+            {
+                'playbook_dup': {
+                    'name': 'test',
+                    'fromversion': "5.0.0",
+                    'toversion': "5.9.9",
+                    "file_path": playbook_path,
+                    "command_to_integration": {
+                        "test-command": [
+                            "Integration_version_4",
+                            "Integration_version_5"
+                        ]
+                    }
+                }
+            },
+            {
+                'playbook_dup': {
+                    'name': 'test',
+                    'fromversion': "6.0.0",
+                    "file_path": playbook_path,
+                    "command_to_integration": {
+                        "test-command": [
+                            "Integration_version_4",
+                            "Integration_version_5"
+                        ]
+                    }
+                }
+            },
             {
                 'SubPlaybook_version_5': {
                     'name': 'SubPlaybook_version_5',

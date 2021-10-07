@@ -6,6 +6,7 @@ import sys
 import pytest
 import requests_mock
 
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from TestSuite.test_tools import ChangeCWD
@@ -397,7 +398,7 @@ def test_verify_template_not_in_readme(repo):
         assert not readme_validator.verify_template_not_in_readme()
 
 
-def test_verify_readme_image_paths():
+def test_verify_readme_image_paths(mocker):
     """
     Given
         - A README file (not pack README) with valid/invalid relative image
@@ -414,6 +415,7 @@ def test_verify_readme_image_paths():
     sys.stdout = captured_output  # redirect stdout.
 
     readme_validator = ReadMeValidator(IMAGES_MD)
+    mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='branch_name')
     with requests_mock.Mocker() as m:
         # Mock get requests
         m.get('https://github.com/demisto/test1.png',
@@ -431,7 +433,10 @@ def test_verify_readme_image_paths():
            '![Identity with High Risk Score](../../default.png)' in captured_output
     assert 'The following image relative path is not valid, please recheck it:\n' \
            '![Identity with High Risk Score](default.png)' not in captured_output
-
+    assert 'Branch name was found in the URL, please change it to the commit hash:\n' \
+           '![branch in url]' in captured_output
+    assert 'Branch name was found in the URL, please change it to the commit hash:\n' \
+           '![commit hash in url]' not in captured_output
     assert 'please repair it:\n' \
            '![Identity with High Risk Score](https://github.com/demisto/test1.png)' in captured_output
     assert 'please repair it:\n(https://github.com/demisto/content/raw/test2.png)' in captured_output

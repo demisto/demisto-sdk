@@ -12,6 +12,7 @@ from urllib.parse import urlparse
 
 import click
 import requests
+from git import InvalidGitRepositoryError
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 
@@ -290,7 +291,11 @@ class ReadMeValidator(BaseValidator):
             list: List of the errors found
         """
         error_list = []
-        working_branch_name = GitUtil().get_current_working_branch()
+        working_branch_name: str = ''
+        try:
+            working_branch_name = GitUtil().get_current_working_branch()
+        except InvalidGitRepositoryError:
+            pass
         should_print_error = not is_pack_readme  # pack readme errors are handled and printed during the pack unique
         # files validation.
         absolute_links = re.findall(

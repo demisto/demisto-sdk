@@ -41,6 +41,7 @@ from demisto_sdk.tests.constants_test import (
     WIDGET_TARGET)
 from TestSuite.json_based import JSONBased
 from TestSuite.pack import Pack
+from TestSuite.test_tools import ChangeCWD
 
 
 class TestStructureValidator:
@@ -281,6 +282,28 @@ class TestStructureValidator:
         )
         structure = StructureValidator(incident_field.path)
         assert structure.is_valid_scheme()
+
+    @pytest.mark.parametrize('is_feed', (True, False))
+    @pytest.mark.parametrize('missing_field',
+                             ('isFeed', 'selectedFeeds', 'isAllFeeds', 'name', 'id'))  # todo more? less?
+    def test_job_missing_field(repo, capsys, is_feed: bool, missing_field: str):
+        """
+        Given
+                A Job object in a repo, with one of the required fields missing
+        When
+                Validating the file
+        Then
+                Ensure the structure validator raises a suitable error
+        """
+        pack = repo.create_pack()
+        job = pack.create_job(is_feed=is_feed, name='job_name')
+        job.remove(missing_field)
+
+        validator = StructureValidator(job.path, is_new_file=True)
+        with ChangeCWD(repo.path):
+            assert not validator.is_valid_file()
+        captured = capsys.readouterr().out
+        assert f'Missing the field "{missing_field}" in root' in captured
 
 
 class TestGetMatchingRegex:

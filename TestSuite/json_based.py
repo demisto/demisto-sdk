@@ -45,3 +45,8 @@ class JSONBased:
         file_content = self.read_json_as_dict()
         file_content.update(obj)
         self.write_json(file_content)
+
+    def remove(self, key: str):
+        file_content = self.read_json_as_dict()
+        del file_content[key]
+        self.write_json(file_content)

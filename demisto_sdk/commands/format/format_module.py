@@ -32,6 +32,7 @@ from demisto_sdk.commands.format.update_indicatorfields import \
 from demisto_sdk.commands.format.update_indicatortype import \
     IndicatorTypeJSONFormat
 from demisto_sdk.commands.format.update_integration import IntegrationYMLFormat
+from demisto_sdk.commands.format.update_job import JobJSONFormat
 from demisto_sdk.commands.format.update_layout import LayoutBaseFormat
 from demisto_sdk.commands.format.update_mapper import MapperJSONFormat
 from demisto_sdk.commands.format.update_playbook import (PlaybookYMLFormat,
@@ -69,7 +70,8 @@ FILE_TYPE_AND_LINKED_CLASS = {
     'genericfield': GenericFieldJSONFormat,
     'generictype': GenericTypeJSONFormat,
     'genericmodule': GenericModuleJSONFormat,
-    'genericdefinition': GenericDefinitionJSONFormat
+    'genericdefinition': GenericDefinitionJSONFormat,
+    'job': JobJSONFormat
 }
 
 UNFORMATTED_FILES = ['readme',

@@ -8,7 +8,7 @@
 * Fixed an issue where the **postman code-gen** command generated double dots for context outputs when it was not needed.
 * Fixed an issue where there **validate** command on release notes file crashed when author image was added or modified.
 * Added input handling when running **find-dependencies**, replacing string manipulations.
-
+* Fixed an issue where the **validate** command did not handle multiple playbooks with the same name in the id_set.
 # 1.5.0
 * Fixed an issue where **upload** command failed to upload packs not under content structure.
 * Added support for **init** command to run from non-content repo.

@@ -298,8 +298,13 @@ ERROR_CODE = {
     "invalid_generic_field_group_value": {'code': "GF100", 'ui_applicable': False, 'related_field': 'group'},
     "invalid_generic_field_id": {'code': "GF101", 'ui_applicable': False, 'related_field': 'id'},
     "non_default_additional_info": {'code': "IN142", 'ui_applicable': True, 'related_field': 'additionalinfo'},
-    "missing_default_additional_info": {'code': "IN143", 'ui_applicable': True, 'related_field': 'additionalinfo'}
+    "missing_default_additional_info": {'code': "IN143", 'ui_applicable': True, 'related_field': 'additionalinfo'},
+    "invalid_from_server_version_in_lists": {'code': "L100", 'ui_applicable': False,
+                                             'related_field': 'fromServerVersion'},
+
 }
+
+# TODO: add errors
 
 
 def get_all_error_codes() -> List:
@@ -1643,6 +1648,11 @@ class Errors:
     @error_code_decorator
     def unknown_fields_in_pre_process_rules(fields_names: str):
         return f'Unknown field(s) in Pre Process Rule: {fields_names}'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_from_server_version_in_lists(version_field):
+        return f'{version_field} field in a list item needs to be at least 6.5.0'
 
     @staticmethod
     @error_code_decorator

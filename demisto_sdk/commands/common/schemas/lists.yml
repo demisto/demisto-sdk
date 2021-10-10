@@ -1,0 +1,73 @@
+type: map
+mapping:
+  allRead:
+    type: bool
+    required: True
+  allReadWrite:
+    type: bool
+    required: True
+  data:
+    type: str
+  dbotCreatedBy:
+      type: str
+  description:
+    type: str
+  fromServerVersion:
+    type: str
+    required: True
+  hasRole:
+    type: bool
+  id:
+    type: str
+    required: True
+  itemVersion:
+    type: str
+    required: True
+  locked:
+    type: bool
+    required: True
+  name:
+    type: str
+    required: True
+  nameLocked:
+    type: bool
+    required: True
+  packID:
+    type: str
+    required: True
+  previousAllRead:
+    type: bool
+  previousAllWrite:
+    type: bool
+  previousRoles:
+    type: seq
+    sequence:
+      - includes: previousRoles_schema
+  roles:
+    type: seq
+    sequence:
+      - includes: roles_schema
+  system:
+    type: bool
+    required: True
+  tags:
+    type: seq
+    sequence:
+      - type: str
+  toServerVersion:
+    type: str
+    required: True
+  truncated:
+    type: bool
+  type:
+    type: str
+    required: True
+  version:
+    type: number
+    required: True
+
+schema;previousRoles_schema:
+  type: any
+
+schema;roles_schema:
+  type: any

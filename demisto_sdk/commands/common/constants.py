@@ -34,6 +34,7 @@ TESTS_DIR = 'Tests'
 DOC_FILES_DIR = 'doc_files'
 DOCUMENTATION_DIR = 'Documentation'
 PRE_PROCESS_RULES_DIR = 'PreProcessRules'
+LISTS_DIR = 'Lists'
 
 SCRIPT = 'script'
 AUTOMATION = 'automation'
@@ -43,6 +44,7 @@ TEST_PLAYBOOK = 'testplaybook'
 LAYOUT = 'layout'
 LAYOUTS_CONTAINER = 'layoutscontainer'
 PRE_PROCESS_RULES = 'pre-process-rules'
+LISTS = 'list'
 INCIDENT_TYPE = 'incidenttype'
 INCIDENT_FIELD = 'incidentfield'
 INDICATOR_FIELD = 'indicatorfield'
@@ -110,6 +112,7 @@ class FileType(Enum):
     GENERIC_TYPE = 'generictype'
     GENERIC_DEFINITION = 'genericdefinition'
     PRE_PROCESS_RULES = 'pre-process-rule'
+    LISTS = 'list'
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -134,7 +137,8 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.GENERIC_DEFINITION: 'Objects',
     FileType.GENERIC_MODULE: 'Modules',
     FileType.GENERIC_TYPE: 'Object Types',
-    FileType.GENERIC_FIELD: 'Object Fields'
+    FileType.GENERIC_FIELD: 'Object Fields',
+    FileType.LISTS: 'Lists'
 }
 
 ENTITY_TYPE_TO_DIR = {
@@ -159,7 +163,9 @@ ENTITY_TYPE_TO_DIR = {
     FileType.GENERIC_DEFINITION.value: GENERIC_DEFINITIONS_DIR,
     FileType.GENERIC_MODULE.value: GENERIC_MODULES_DIR,
     FileType.GENERIC_FIELD.value: GENERIC_FIELDS_DIR,
-    FileType.GENERIC_TYPE.value: GENERIC_TYPES_DIR
+    FileType.GENERIC_TYPE.value: GENERIC_TYPES_DIR,
+    FileType.LISTS.value: LISTS_DIR
+
 }
 
 CONTENT_FILE_ENDINGS = ['py', 'yml', 'png', 'json', 'md']
@@ -186,6 +192,7 @@ CONTENT_ENTITIES_DIRS = [
     GENERIC_MODULES_DIR,
     GENERIC_DEFINITIONS_DIR,
     PRE_PROCESS_RULES_DIR,
+    LISTS_DIR
 ]
 
 CONTENT_ENTITY_UPLOAD_ORDER = [
@@ -202,6 +209,7 @@ CONTENT_ENTITY_UPLOAD_ORDER = [
     LAYOUTS_DIR,
     DASHBOARDS_DIR,
     PRE_PROCESS_RULES_DIR,
+    LISTS_DIR
 ]
 
 DEFAULT_IMAGE_PREFIX = 'data:image/png;base64,'
@@ -407,6 +415,10 @@ PACKS_LAYOUTS_CONTAINER_JSON_REGEX = fr'{PACKS_LAYOUTS_DIR_REGEX}\/layoutscontai
 PACKS_PRE_PROCESS_RULES_DIR_REGEX = fr'{PACK_DIR_REGEX}/{PRE_PROCESS_RULES_DIR}'
 PACKS_PRE_PROCESS_RULES_JSON_REGEX = fr'{PACKS_PRE_PROCESS_RULES_DIR_REGEX}/(?:preprocessrule-)?([^/]+)\.json'
 
+# TODO: Add regex
+PACK_LISTS_DIR_REGEX = ''
+PACKS_LISTS_JSON_REGEX = ''
+
 PACKS_WIDGETS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{WIDGETS_DIR}'
 PACKS_WIDGET_JSON_REGEX = fr'{PACKS_WIDGETS_DIR_REGEX}\/([^/]+)\.json'
 
@@ -532,7 +544,7 @@ ID_IN_ROOT = [  # entities in which 'id' key is in the root
     'incident_type',
     'layoutscontainer',
     'mapper',
-    'pre_process_rule',
+    'pre_process_rule'
 ]
 
 INTEGRATION_PREFIX = 'integration'
@@ -787,6 +799,7 @@ DIR_LIST_FOR_REGULAR_ENTETIES = [
     INDICATOR_TYPES_DIR,
     CONNECTIONS_DIR,
     INDICATOR_FIELDS_DIR,
+    LISTS_DIR
 ]
 PACKS_DIRECTORIES = [
     SCRIPTS_DIR,
@@ -1180,6 +1193,7 @@ VALIDATED_PACK_ITEM_TYPES = [
     'Classifiers',
     'Layouts',
     'PreProcessRules',
+    'Lists'
 ]
 
 FIRST_FETCH = 'first_fetch'
@@ -1243,6 +1257,7 @@ class ContentItems(Enum):
     GENERIC_FIELDS = 'genericfield'
     GENERIC_TYPES = 'generictype'
     PRE_PROCESS_RULES = 'pre-process-rule'
+    LISTS = 'list'
 
 
 YML_SUPPORTED_FOLDERS = {
@@ -1279,7 +1294,8 @@ CONTENT_ITEMS_DISPLAY_FOLDERS = {
     LAYOUTS_DIR,
     PRE_PROCESS_RULES_DIR,
     CLASSIFIERS_DIR,
-    WIDGETS_DIR
+    WIDGETS_DIR,
+    LISTS_DIR
 }
 
 

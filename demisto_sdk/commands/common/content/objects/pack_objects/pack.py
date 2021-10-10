@@ -22,6 +22,7 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    PACK_VERIFY_KEY,
                                                    PLAYBOOKS_DIR,
                                                    PRE_PROCESS_RULES_DIR,
+                                                   LISTS_DIR,
                                                    RELEASE_NOTES_DIR,
                                                    REPORTS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
@@ -31,7 +32,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     Contributors, Dashboard, DocFile, GenericDefinition, GenericField,
     GenericModule, GenericType, IncidentField, IncidentType, IndicatorField,
     IndicatorType, Integration, LayoutObject, OldClassifier, PackIgnore,
-    PackMetaData, Playbook, PreProcessRule, Readme, ReleaseNote,
+    PackMetaData, Playbook, PreProcessRule, List, Readme, ReleaseNote,
     ReleaseNoteConfig, Report, Script, SecretIgnore, Widget)
 from demisto_sdk.commands.common.content.objects_factory import \
     path_to_pack_object
@@ -128,6 +129,11 @@ class Pack:
     @property
     def pre_process_rules(self) -> Iterator[PreProcessRule]:
         return self._content_files_list_generator_factory(dir_name=PRE_PROCESS_RULES_DIR,
+                                                          suffix="json")
+
+    @property
+    def lists(self) -> Iterator[List]:
+        return self._content_files_list_generator_factory(dir_name=LISTS_DIR,
                                                           suffix="json")
 
     @property

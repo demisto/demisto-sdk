@@ -6,6 +6,7 @@ import inspect
 from .abstract_pack_objects.json_content_object import *  # lgtm [py/polluting-import]
 from .abstract_pack_objects.yaml_content_object import *  # lgtm [py/polluting-import]
 from .abstract_pack_objects.yaml_unify_content_object import *  # lgtm [py/polluting-import]
+from .abstract_pack_objects.json_unify_content_object import *  # lgtm [py/polluting-import]
 from .author_image.author_image import *  # lgtm [py/polluting-import]
 from .change_log.change_log import *  # lgtm [py/polluting-import]
 from .classifier.classifier import *  # lgtm [py/polluting-import]

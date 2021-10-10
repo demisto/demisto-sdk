@@ -25,7 +25,7 @@ from demisto_sdk.commands.common.content import (Content, ContentError,
                                                  ContentFactoryError, Pack)
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     JSONContentObject, Script, TextObject, YAMLContentObject,
-    YAMLContentUnifiedObject)
+    YAMLContentUnifiedObject, JsonContentUnifiedObject)
 from demisto_sdk.commands.common.tools import arg_to_list
 
 from .artifacts_report import ArtifactsReport, ObjectReport
@@ -38,7 +38,7 @@ FIRST_MARKETPLACE_VERSION = parse('6.0.0')
 IGNORED_PACKS = ['ApiModules']
 IGNORED_TEST_PLAYBOOKS_DIR = 'Deprecated'
 
-ContentObject = Union[YAMLContentUnifiedObject, YAMLContentObject, JSONContentObject, TextObject]
+ContentObject = Union[YAMLContentUnifiedObject, JsonContentUnifiedObject, YAMLContentObject, JSONContentObject, TextObject]
 logger = logging.getLogger('demisto-sdk')
 EX_SUCCESS = 0
 EX_FAIL = 1
@@ -638,12 +638,9 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
     for layout in pack.layouts:
         content_items_handler.handle_content_item(layout)
         pack_report += dump_pack_conditionally(artifact_manager, layout)
-    for pre_process_rule in pack.pre_process_rules:
-        content_items_handler.handle_content_item(pre_process_rule)
-        pack_report += dump_pack_conditionally(artifact_manager, pre_process_rule)
-    for dashboard in pack.dashboards:
-        content_items_handler.handle_content_item(dashboard)
-        pack_report += dump_pack_conditionally(artifact_manager, dashboard)
+    # for dashboard in pack.dashboards:
+    #     content_items_handler.handle_content_item(dashboard)
+    #     pack_report += dump_pack_conditionally(artifact_manager, dashboard)
     for incident_field in pack.incident_fields:
         content_items_handler.handle_content_item(incident_field)
         pack_report += dump_pack_conditionally(artifact_manager, incident_field)
@@ -668,8 +665,13 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
         content_items_handler.handle_content_item(generic_definition)
         pack_report += dump_pack_conditionally(artifact_manager, generic_definition)
     for generic_module in pack.generic_modules:
-        content_items_handler.handle_content_item(generic_module)
-        pack_report += dump_pack_conditionally(artifact_manager, generic_module)
+        if generic_module:
+            content_items_handler.handle_content_item(generic_module)
+            pack_report += dump_pack_conditionally(artifact_manager, generic_module)
+        else:
+            for dashboard in pack.dashboards:
+                content_items_handler.handle_content_item(dashboard)
+                pack_report += dump_pack_conditionally(artifact_manager, dashboard)
     for generic_type in pack.generic_types:
         content_items_handler.handle_content_item(generic_type)
         pack_report += dump_pack_conditionally(artifact_manager, generic_type)

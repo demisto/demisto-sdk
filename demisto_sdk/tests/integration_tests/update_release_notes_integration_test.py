@@ -445,7 +445,7 @@ def test_update_release_notes_master_unavailable(demisto_client, mocker, repo):
     mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value={'currentVersion': '1.1.0'})
     mocker.patch('demisto_sdk.commands.common.tools.get_pack_name', return_value='FeedAzureValid')
     mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
-    mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='master')
+    mocker.patch.object(GitUtil, 'handle_prev_ver', return_value='master')
     with ChangeCWD(repo.path):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", join('Packs', 'FeedAzureValid'),

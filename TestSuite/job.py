@@ -22,10 +22,10 @@ class Job(JSONBased):
             'isFeed': self.is_feed,
             'selectedFeeds': self.selected_feeds or [],
             'isAllFeeds': self.is_feed and not self.selected_feeds,
+            'playbookId': f'{self.pure_name}_playbookId',  # todo
 
             # 'minutesToTimeout': 0,  # todo
             # 'description': "",
-            # 'playbookId': "",  # todo
             # 'currentIncidentId': 1,
             # 'lastRunTime': '',  # todo
             # 'nextRunTime': '',  # todo

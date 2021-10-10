@@ -15,7 +15,7 @@ IS_FEED = 'isFeed'
 
 
 class JobJSONFormat(BaseUpdateJSON):
-    def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = DEFAULT_JOB_FROM_VERSION,
+    def __init__(self, input: str = '', output: str = '', path: str = '', from_version: str = '',
                  no_validate: bool = False, verbose: bool = False, **kwargs):
         super().__init__(input, output, path, from_version, no_validate, verbose, **kwargs)
         self.is_feed_defined = IS_FEED in self.data

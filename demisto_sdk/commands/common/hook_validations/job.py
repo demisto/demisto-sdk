@@ -1,10 +1,9 @@
 from distutils.version import LooseVersion
 
+from demisto_sdk.commands.common.constants import DEFAULT_JOB_FROM_VERSION
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
-
-MIN_FROM_VERSION = LooseVersion("6.5.0")
 
 
 class JobValidator(ContentEntityValidator):
@@ -20,11 +19,11 @@ class JobValidator(ContentEntityValidator):
         return "\n".join(self._errors)
 
     def is_valid_version(self):
-        # todo do we want to validate this?
+        # not validated
         return True
 
     def is_valid_fromversion(self):
-        if not self.from_version or LooseVersion(self.from_version) < MIN_FROM_VERSION:
+        if not self.from_version or LooseVersion(self.from_version) < LooseVersion(DEFAULT_JOB_FROM_VERSION):
             error_message, error_code = Errors.invalid_from_server_version_in_job(self.from_version)
             formatted_error = self.handle_error(error_message, error_code, file_path=self.file_path)
             if formatted_error:
@@ -49,7 +48,7 @@ class JobValidator(ContentEntityValidator):
                 pass  # todo validate feeds somehow?
 
             elif is_all_feeds:
-                pass  # todo anything to validate?
+                return True
 
             else:  # neither selected_fields nor is_all_fields
                 error_message, error_code = Errors.missing_field_values_in_feed_job()

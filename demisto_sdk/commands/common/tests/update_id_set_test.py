@@ -8,7 +8,8 @@ from pathlib import Path
 
 import pytest
 
-from demisto_sdk.commands.common.constants import JOBS_DIR, FileType
+from demisto_sdk.commands.common.constants import (DEFAULT_JOB_FROM_VERSION,
+                                                   JOBS_DIR, FileType)
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.update_id_set import (
     find_duplicates, get_classifier_data, get_dashboard_data,
@@ -17,12 +18,12 @@ from demisto_sdk.commands.common.update_id_set import (
     get_filters_and_transformers_from_playbook, get_general_data,
     get_generic_field_data, get_generic_module_data, get_generic_type_data,
     get_incident_fields_by_playbook_input, get_incident_type_data,
-    get_indicator_type_data, get_job_data, get_layout_data,
-    get_layoutscontainer_data, get_mapper_data, get_pack_metadata_data,
-    get_playbook_data, get_report_data, get_script_data,
-    get_values_for_keys_recursively, get_widget_data, has_duplicate,
-    merge_id_sets, process_general_items, process_incident_fields,
-    process_integration, process_jobs, process_script, re_create_id_set)
+    get_indicator_type_data, get_layout_data, get_layoutscontainer_data,
+    get_mapper_data, get_pack_metadata_data, get_playbook_data,
+    get_report_data, get_script_data, get_values_for_keys_recursively,
+    get_widget_data, has_duplicate, merge_id_sets, process_general_items,
+    process_incident_fields, process_integration, process_jobs, process_script,
+    re_create_id_set)
 from TestSuite.utils import IsEqualFunctions
 
 TESTS_DIR = f'{git_path()}/demisto_sdk/tests'
@@ -2169,27 +2170,6 @@ class TestGenericModule:
 
 class TestJob:
     @staticmethod
-    @pytest.mark.parametrize('is_feed', (True, False))
-    def test_job(repo, is_feed):  # todo is this duplicate to test_process_jobs() ?
-        pack = repo.create_pack()
-        job = pack.create_job(is_feed)
-        data = get_job_data(job.path, print_logs=False)
-        assert len(data) == 1
-
-        datum = data[job.pure_name]
-        assert datum['name'] == job.pure_name
-        path = Path(datum['file_path'])
-        assert path.name == f'job-{job.pure_name}.json'
-        assert path.exists()
-        assert path.is_file()
-        assert path.suffix == '.json'
-        assert path.parts[-2] == JOBS_DIR
-        assert path.parts[-3] == pack.name
-
-        assert datum['fromServerVersion'] == '6.5.0'
-        assert datum['pack'] == pack.name
-
-    @staticmethod
     @pytest.mark.parametrize('print_logs', (True, False))
     @pytest.mark.parametrize('is_feed', (True, False))
     def test_process_jobs(capsys, repo, is_feed: bool, print_logs: bool):
@@ -2218,7 +2198,7 @@ class TestJob:
         assert path.parts[-2] == JOBS_DIR
         assert path.parts[-3] == pack.name
 
-        assert datum['fromServerVersion'] == '6.5.0'
+        assert datum['fromServerVersion'] == DEFAULT_JOB_FROM_VERSION
         assert datum['pack'] == pack.name
 
         assert (f'adding {job.path} to id_set' in captured.out) == print_logs

@@ -4,7 +4,8 @@ from typing import Dict, List, Tuple
 
 import click
 
-from demisto_sdk.commands.common.constants import TESTS_AND_DOC_DIRECTORIES
+from demisto_sdk.commands.common.constants import (JOB,
+                                                   TESTS_AND_DOC_DIRECTORIES)
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.tools import (find_type, get_files_in_dir,
                                                print_error, print_success,
@@ -71,7 +72,7 @@ FILE_TYPE_AND_LINKED_CLASS = {
     'generictype': GenericTypeJSONFormat,
     'genericmodule': GenericModuleJSONFormat,
     'genericdefinition': GenericDefinitionJSONFormat,
-    'job': JobJSONFormat
+    JOB: JobJSONFormat
 }
 
 UNFORMATTED_FILES = ['readme',

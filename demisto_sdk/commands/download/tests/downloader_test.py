@@ -129,7 +129,7 @@ class Environment:
              'path': self.PRE_PROCESS_RULES_INSTANCE_PATH, 'file_ending': 'yml'}
         ]}
         self.JOBS_PACK_OBJECT = {'DummyJob': [
-            {'name': 'DummyJob', 'id': 'DummyJobID',
+            {'name': 'DummyJob', 'id': 'DummyJob',
              'path': self.JOBS_INSTANCE_PATH, 'file_ending': 'json'}
         ]}
 

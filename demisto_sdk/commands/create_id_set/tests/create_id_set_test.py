@@ -162,6 +162,8 @@ def test_create_id_set_flow(repo, mocker):
 
         # Since Layouts folder contains both layouts and layoutcontainers then this folder has 2 * amount objects
         # And since there is a test playbook for each integration and script.
+
+        # The default test suite pack has two jobs (is_feed=true, is_feed=false), so two jobs are expected.
         if id_set_entity not in {'Layouts', 'TestPlaybooks', 'Jobs'}:
             assert len(entity_content_in_id_set) == number_of_packs_to_create
         else:

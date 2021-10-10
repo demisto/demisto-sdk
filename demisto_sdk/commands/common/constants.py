@@ -544,7 +544,7 @@ ID_IN_ROOT = [  # entities in which 'id' key is in the root
     'layoutscontainer',
     'mapper',
     'pre_process_rule',
-    'job'
+    JOB
 ]
 
 INTEGRATION_PREFIX = 'integration'
@@ -960,7 +960,7 @@ SCHEMA_TO_REGEX = {
     'generictype': JSON_ALL_GENERIC_TYPES_REGEXES,
     'genericmodule': JSON_ALL_GENERIC_MODULES_REGEXES,
     'genericdefinition': JSON_ALL_GENERIC_DEFINITIONS_REGEXES,
-    'job': JSON_ALL_JOB_REGEXES
+    JOB: JSON_ALL_JOB_REGEXES
 }
 
 EXTERNAL_PR_REGEX = r'^pull/(\d+)$'
@@ -1033,6 +1033,7 @@ XSOAR_SUPPORT_URL = "https://www.paloaltonetworks.com/cortex"
 MARKETPLACE_LIVE_DISCUSSIONS = \
     'https://live.paloaltonetworks.com/t5/cortex-xsoar-discussions/bd-p/Cortex_XSOAR_Discussions'
 MARKETPLACE_MIN_VERSION = '6.0.0'
+DEFAULT_JOB_FROM_VERSION = '6.5.0'
 EXCLUDED_DISPLAY_NAME_WORDS = ['partner', 'community']
 
 BASE_PACK = "Base"
@@ -1266,28 +1267,6 @@ class ContentItems(Enum):
     PRE_PROCESS_RULES = 'pre-process-rule'
     JOB = 'job'
 
-
-YML_SUPPORTED_FOLDERS = {
-    INTEGRATIONS_DIR,
-    SCRIPTS_DIR,
-    PLAYBOOKS_DIR,
-    TEST_PLAYBOOKS_DIR
-}
-
-JSON_SUPPORTED_FOLDERS = {
-    CLASSIFIERS_DIR,
-    CONNECTIONS_DIR,
-    DASHBOARDS_DIR,
-    INCIDENT_FIELDS_DIR,
-    INCIDENT_TYPES_DIR,
-    INDICATOR_FIELDS_DIR,
-    LAYOUTS_DIR,
-    PRE_PROCESS_RULES_DIR,
-    INDICATOR_TYPES_DIR,
-    REPORTS_DIR,
-    WIDGETS_DIR,
-    JOBS_DIR
-}
 
 CONTENT_ITEMS_DISPLAY_FOLDERS = {
     SCRIPTS_DIR,

@@ -2,12 +2,11 @@ import traceback
 
 import click
 
+from demisto_sdk.commands.common.constants import DEFAULT_JOB_FROM_VERSION
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
-
-DEFAULT_JOB_FROM_VERSION = '6.5.0'
 
 SELECTED_FEEDS = 'selectedFeeds'
 IS_ALL_FEEDS = 'isAllFeeds'
@@ -66,10 +65,8 @@ class JobJSONFormat(BaseUpdateJSON):
             click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
             self.update_id()
             self.attempt_infer_feed_fields()
-            super().update_json()
-            self.remove_unnecessary_keys()
             self.set_from_server_version_to_default()
-
+            super().update_json()
             self.save_json_to_destination_file()
             return SUCCESS_RETURN_CODE
 

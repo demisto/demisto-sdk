@@ -1229,7 +1229,7 @@ class PackDependencies:
             job_data = next(iter(job.values()))
             job_dependencies: set = set()
 
-            playbook_id = job_data.get('playbookId', '')  # todo what if it's empty?
+            playbook_id = job_data.get('playbookId', '')
 
             packs_found_from_playbooks = PackDependencies._search_packs_by_items_names_or_ids(
                 [playbook_id], id_set['playbooks'], exclude_ignored_dependencies)
@@ -1237,22 +1237,6 @@ class PackDependencies:
             if packs_found_from_playbooks:
                 pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_playbooks)
                 job_dependencies.update(pack_dependencies_data)
-
-            related_incident_types = job_data.get('incident_types', [])
-            packs_found_from_incident_types = PackDependencies._search_packs_by_items_names(
-                related_incident_types, id_set['IncidentTypes'], exclude_ignored_dependencies)
-
-            if packs_found_from_incident_types:
-                pack_dependencies_data = PackDependencies. \
-                    _label_as_mandatory(packs_found_from_incident_types)
-                dependencies_packs.update(pack_dependencies_data)
-
-            related_indicator_fields = job_data.get('indicator_fields')
-
-            if related_indicator_fields:
-                pack_dependencies_data = PackDependencies. \
-                    _label_as_mandatory({related_indicator_fields})
-                dependencies_packs.update(pack_dependencies_data)
 
             if job_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
@@ -1278,25 +1262,30 @@ class PackDependencies:
         """
         pack_items = dict()
 
-        pack_items['scripts'] = PackDependencies._search_for_pack_items(pack_id, id_set['scripts'])
-        pack_items['playbooks'] = PackDependencies._search_for_pack_items(pack_id, id_set['playbooks'])
-        pack_items['layouts'] = PackDependencies._search_for_pack_items(pack_id, id_set['Layouts'])
-        pack_items['incidents_fields'] = PackDependencies._search_for_pack_items(pack_id, id_set['IncidentFields'])
-        pack_items['indicators_fields'] = PackDependencies._search_for_pack_items(pack_id, id_set['IndicatorFields'])
-        pack_items['indicators_types'] = PackDependencies._search_for_pack_items(pack_id, id_set['IndicatorTypes'])
-        pack_items['integrations'] = PackDependencies._search_for_pack_items(pack_id, id_set['integrations'])
-        pack_items['incidents_types'] = PackDependencies._search_for_pack_items(pack_id, id_set['IncidentTypes'])
-        pack_items['classifiers'] = PackDependencies._search_for_pack_items(pack_id, id_set['Classifiers'])
-        pack_items['mappers'] = PackDependencies._search_for_pack_items(pack_id, id_set['Mappers'])
-        pack_items['widgets'] = PackDependencies._search_for_pack_items(pack_id, id_set['Widgets'])
-        pack_items['dashboards'] = PackDependencies._search_for_pack_items(pack_id, id_set['Dashboards'])
-        pack_items['reports'] = PackDependencies._search_for_pack_items(pack_id, id_set['Reports'])
-        pack_items['generic_types'] = PackDependencies._search_for_pack_items(pack_id, id_set['GenericTypes'])
-        pack_items['generic_fields'] = PackDependencies._search_for_pack_items(pack_id, id_set['GenericFields'])
-        pack_items['generic_modules'] = PackDependencies._search_for_pack_items(pack_id, id_set['GenericModules'])
-        pack_items['generic_definitions'] = PackDependencies._search_for_pack_items(pack_id,
-                                                                                    id_set['GenericDefinitions'])
-        pack_items['jobs'] = PackDependencies._search_for_pack_items(pack_id, id_set['Jobs'])
+        for pack_key, id_set_key in (('scripts', 'scripts',),
+                                     ('playbooks', 'playbooks'),
+                                     ('layouts', 'Layouts'),
+                                     ('incidents_fields', 'IncidentFields'),
+                                     ('indicators_fields', 'IndicatorFields'),
+                                     ('indicators_types', 'IndicatorTypes'),
+                                     ('integrations', 'integrations'),
+                                     ('incidents_types', 'IncidentTypes'),
+                                     ('classifiers', 'Classifiers'),
+                                     ('mappers', 'Mappers'),
+                                     ('widgets', 'Widgets'),
+                                     ('dashboards', 'Dashboards'),
+                                     ('reports', 'Reports'),
+                                     ('generic_types', 'GenericTypes'),
+                                     ('generic_fields', 'GenericFields'),
+                                     ('generic_modules', 'GenericModules'),
+                                     ('generic_definitions', 'GenericDefinitions'),
+                                     ('jobs', 'Jobs')):
+            if id_set_key not in id_set:
+                click.secho("\n".join((f"Warning: {id_set_key} had not been previously collected into the id_set.",
+                                       "This may mean you're using an outdated version of the Demisto SDK.",
+                                       "Please upgrade it and run demisto-sdk find-dependencies.")),
+                            fg="yellow")  # todo halt run here?
+            pack_items[pack_key] = PackDependencies._search_for_pack_items(pack_id, id_set[id_set_key])
 
         if not sum(pack_items.values(), []):
             click.secho(f"Couldn't find any items for pack '{pack_id}'. Please make sure:\n"

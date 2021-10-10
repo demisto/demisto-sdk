@@ -1203,7 +1203,7 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
         if 'auditable' in _dict:
             return FileType.GENERIC_DEFINITION
 
-        if all(k in _dict for k in ('isAllFields', 'selectedFeeds', 'isFeed')):  # todo
+        if {'isAllFields', 'selectedFeeds', 'isFeed'}.issubset(_dict.keys()):
             return FileType.JOB
 
         # When using it for all files validation- sometimes 'id' can be integer

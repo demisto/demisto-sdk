@@ -1,9 +1,8 @@
 from pathlib import Path
 from typing import List, Optional
 
+from demisto_sdk.commands.format.update_job import DEFAULT_JOB_FROM_VERSION
 from TestSuite.json_based import JSONBased
-
-DEFAULT_JOB_FROM_VERSION = '6.5.0'
 
 
 class Job(JSONBased):

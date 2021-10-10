@@ -94,7 +94,9 @@ class BaseUpdateJSON(BaseUpdate):
         if field not in self.data:
             print_error(f'Missing {field} field in file {self.source_file} - add this field manually')
             return None
-        if is_uuid(self.data['id']):
+        if 'id' not in self.data:  # Missing field id, adding it automatically
+            self.data['id'] = ''
+        elif is_uuid(self.data['id']):  # only happens if id had been defined
             updated_integration_id_dict[self.data['id']] = self.data[field]
         self.data['id'] = self.data[field]
 

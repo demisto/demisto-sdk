@@ -34,8 +34,11 @@ class JobJSONFormat(BaseUpdateJSON):
             When the job certainly shouldn't have any values there. (not isFeed, OR feed and allFeeds)
             """
             if self.is_feed_defined:
-                if (not self.selected_feeds_defined) \
-                        and (self.is_all_feeds or (not self.is_feed)):
+                if (not self.selected_feeds_defined) and (
+                        self.is_all_feeds or  # all feeds -> selectedFeeds should be empty
+                        (not self.is_feed)  # not related to feed -> selectedFeeds should be empty
+                ):
+                    self.selected_feeds_defined = True
                     self.data['selectedFeeds'] = []
 
         def _attempt_infer_is_feed():
@@ -53,7 +56,7 @@ class JobJSONFormat(BaseUpdateJSON):
 
         # order matters
         _set_default_selected_feeds_when_applicable()
-        _attempt_infer_is_feed()
+        # _attempt_infer_is_feed() # todo decide whether to use
 
     def run_format(self):
         try:

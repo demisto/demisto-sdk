@@ -108,8 +108,7 @@ class SecretsValidator(object):
                                             ' remove the files asap and report it.\n'
 
                 secrets_found_string += 'For more information about whitelisting visit: ' \
-                                        'https://pull-request-696--demisto-content-docs.netlify.app/docs/concepts/demisto-sdk' \
-                                        '#secrets'
+                                        'https://xsoar.pan.dev/docs/concepts/demisto-sdk#secrets'
                 print_error(secrets_found_string)
         return secret_to_location_mapping
 

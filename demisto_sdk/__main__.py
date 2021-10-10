@@ -34,8 +34,6 @@ from demisto_sdk.commands.error_code_info.error_code_info import \
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
 from demisto_sdk.commands.format.format_module import format_manager
-from demisto_sdk.commands.generate_context.generate_integration_context import \
-    generate_integration_context
 from demisto_sdk.commands.generate_docs.generate_integration_doc import \
     generate_integration_doc
 from demisto_sdk.commands.generate_docs.generate_playbook_doc import \
@@ -44,13 +42,13 @@ from demisto_sdk.commands.generate_docs.generate_script_doc import \
     generate_script_doc
 from demisto_sdk.commands.generate_integration.code_generator import \
     IntegrationGeneratorConfig
+from demisto_sdk.commands.generate_outputs.generate_outputs import \
+    run_generate_outputs
 from demisto_sdk.commands.generate_test_playbook.test_playbook_generator import \
     PlaybookTestsGenerator
 from demisto_sdk.commands.init.initiator import Initiator
 from demisto_sdk.commands.integration_diff.integration_diff_detector import \
     IntegrationDiffDetector
-from demisto_sdk.commands.json_to_outputs.json_to_outputs import \
-    json_to_outputs
 from demisto_sdk.commands.lint.lint_manager import LintManager
 from demisto_sdk.commands.openapi_codegen.openapi_codegen import \
     OpenAPIIntegration
@@ -911,40 +909,63 @@ def run_playbook(**kwargs):
     return playbook_runner.run_playbook()
 
 
-# ====================== json-to-outputs ====================== #
-@main.command('json-to-outputs')  # To no shadow json_to_outputs import
+# ====================== generate-outputs ====================== #
+@main.command(short_help='''Generates outputs (from json or examples).''')
 @click.help_option(
     '-h', '--help'
 )
 @click.option(
-    "-c", "--command", help="Command name (e.g. xdr-get-incidents)", required=True)
+    "-c", "--command", help="Specific command name (e.g. xdr-get-incidents)",
+    required=False)
 @click.option(
-    "-i", "--input",
+    "-j", "--json",
     help="Valid JSON file path. If not specified, the script will wait for user input in the terminal. "
          "The response can be obtained by running the command with `raw-response=true` argument.",
     required=False)
 @click.option(
-    "-p", "--prefix", help="Output prefix like Jira.Ticket, VirusTotal.IP, the base path for the outputs that the "
-                           "script generates", required=True)
+    "-p", "--prefix",
+    help="Output prefix like Jira.Ticket, VirusTotal.IP, the base path for the outputs that the "
+         "script generates", required=False)
 @click.option(
-    "-o", "--output", help="Output file path, if not specified then will print to stdout", required=False)
+    "-o", "--output",
+    help="Output file path, if not specified then will print to stdout",
+    required=False)
 @click.option(
-    "-v", "--verbose", is_flag=True, help="Verbose output - mainly for debugging purposes")
+    "-v", "--verbose", is_flag=True,
+    help="Verbose output - mainly for debugging purposes")
 @click.option(
-    "--interactive", help="If passed, then for each output field will ask user interactively to enter the "
-                          "description. By default is interactive mode is disabled", is_flag=True)
+    "--interactive",
+    help="If passed, then for each output field will ask user interactively to enter the "
+         "description. By default is interactive mode is disabled",
+    is_flag=True)
 @click.option(
     "-d", "--descriptions",
     help="A JSON or a path to a JSON file, mapping field names to their descriptions. "
          "If not specified, the script prompt the user to input the JSON content.",
     is_flag=True)
-def json_to_outputs_command(**kwargs):
+@click.option(
+    "-i", "--input",
+    help="Valid YAML integration file path.",
+    required=False)
+@click.option(
+    "-e", "--examples",
+    help="Integrations: path for file containing command examples."
+         " Each command should be in a separate line."
+         " Scripts: the script example surrounded by quotes."
+         " For example: -e '!ConvertFile entry_id=<entry_id>'")
+@click.option(
+    "--insecure",
+    help="Skip certificate validation to run the commands in order to generate the docs.",
+    is_flag=True)
+def generate_outputs(**kwargs):
     """Demisto integrations/scripts have a YAML file that defines them.
     Creating the YAML file is a tedious and error-prone task of manually copying outputs from the API result to the
     file/UI/PyCharm. This script auto generates the YAML for a command from the JSON result of the relevant API call
+    In addition you can supply examples files and generate the context description directly in the YML from those examples.
     """
-    check_configuration_file('json-to-outputs', kwargs)
-    json_to_outputs(**kwargs)
+
+    check_configuration_file('generate-outputs', kwargs)
+    return run_generate_outputs(**kwargs)
 
 
 # ====================== generate-test-playbook ====================== #
@@ -1053,52 +1074,6 @@ def init(**kwargs):
     initiator = Initiator(**kwargs)
     initiator.init()
     return 0
-
-
-# ====================== generate-context ====================== #
-@main.command()
-@click.help_option(
-    '-h', '--help'
-)
-@click.option(
-    "-i", "--input", help="Path of the yml file (will change it in-place).",
-    required=True)
-@click.option(
-    "-e", "--examples",
-    help="Integrations: path for file containing command examples."
-         " Each command should be in a separate line.")
-@click.option(
-    "--insecure",
-    help="Skip certificate validation to run the commands in order to generate the docs.",
-    is_flag=True)
-@click.option(
-    "-v", "--verbose", is_flag=True,
-    help="Verbose output - mainly for debugging purposes.")
-def generate_context(**kwargs):
-    input_path: str = kwargs.get('input', '')
-    examples: str = kwargs.get('examples', '')
-    insecure: bool = kwargs.get('insecure', False)
-    verbose: bool = kwargs.get('verbose', False)
-
-    # validate inputs
-    if input_path and not os.path.isfile(input_path):
-        print_error(F'Input file {input_path} was not found.')
-        return 1
-
-    if not input_path.lower().endswith('.yml'):
-        print_error(F'Input {input_path} is not a valid yml file.')
-        return 1
-
-    file_type = find_type(kwargs.get('input', ''), ignore_sub_categories=True)
-
-    if not examples or not os.path.isfile(examples):
-        print_error(f'Command examples file was not found {examples}.')
-
-    if file_type == FileType.INTEGRATION:
-        return generate_integration_context(input_path, examples, insecure, verbose)
-    else:
-        print_error(f'File type {file_type.value} is not supported.')
-        return 1
 
 
 # ====================== generate-docs ====================== #
@@ -1368,20 +1343,17 @@ def find_dependencies(**kwargs):
     """Find pack dependencies and update pack metadata."""
     check_configuration_file('find-dependencies', kwargs)
     update_pack_metadata = not kwargs.get('no_update')
-    input_path: Path = kwargs["input"]  # To not shadow python builtin `input`
+    input_path: Path = Path(kwargs["input"])  # To not shadow python builtin `input`
     verbose = kwargs.get('verbose', False)
     id_set_path = kwargs.get('id_set_path', '')
     use_pack_metadata = kwargs.get('use_pack_metadata', False)
-    try:
-        assert "Packs/" in str(input_path)
-        pack_name = str(input_path).replace("Packs/", "")
-        assert "/" not in str(pack_name)
-    except AssertionError:
-        print_error("Input path is not a pack. For example: Packs/HelloWorld")
+    if len(input_path.parts) != 2 or input_path.parts[-2] != "Packs":
+        print_error(f"Input path ({input_path}) must be formatted as 'Packs/<some pack name>'. "
+                    f"For example, Packs/HelloWorld")
         sys.exit(1)
     try:
         PackDependencies.find_dependencies(
-            pack_name=pack_name,
+            pack_name=input_path.name,
             id_set_path=str(id_set_path),
             verbose=verbose,
             update_pack_metadata=update_pack_metadata,

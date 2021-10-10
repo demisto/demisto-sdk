@@ -234,6 +234,7 @@ ERROR_CODE = {
     "pack_name_is_not_in_xsoar_standards": {'code': "PA125", 'ui_applicable': False, 'related_field': ''},
     "pack_metadata_long_description": {'code': "PA126", 'ui_applicable': False, 'related_field': ''},
     "metadata_url_invalid": {'code': "PA127", 'ui_applicable': False, 'related_field': ''},
+    "required_pack_file_does_not_exist": {'code': "PA128", 'ui_applicable': False, 'related_field': ''},
     "readme_error": {'code': "RM100", 'ui_applicable': False, 'related_field': ''},
     "image_path_error": {'code': "RM101", 'ui_applicable': False, 'related_field': ''},
     "readme_missing_output_context": {'code': "RM102", 'ui_applicable': False, 'related_field': ''},
@@ -1295,6 +1296,12 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def required_pack_file_does_not_exist(file_name):
+        return f'The required "{file_name}" file does not exist in the pack root.\n ' \
+               f'Its absence may prevent other tests from being run! Create it and run validate again.'
+
+    @staticmethod
+    @error_code_decorator
     def cant_open_pack_file(file_name):
         return f'Could not open "{file_name}" file'
 
@@ -1489,6 +1496,10 @@ class Errors:
         return f'The following image link seems to be broken, please repair it:\n{path}'
 
     @staticmethod
+    def branch_name_in_readme_image_absolute_path_error(path):
+        return f'Branch name was found in the URL, please change it to the commit hash:\n{path}'
+
+    @staticmethod
     def invalid_readme_insert_image_link_error(path):
         return f'Image link was not found, either insert it or remove it:\n{path}'
 
@@ -1499,6 +1510,7 @@ class Errors:
             'pack_readme_relative_error': Errors.pack_readme_image_relative_path_error,
             'general_readme_relative_error': Errors.invalid_readme_image_relative_path_error,
             'general_readme_absolute_error': Errors.invalid_readme_image_absolute_path_error,
+            'branch_name_readme_absolute_error': Errors.branch_name_in_readme_image_absolute_path_error,
             'insert_image_link_error': Errors.invalid_readme_insert_image_link_error
         }.get(error_type, lambda x: f'Something went wrong when testing {x}')(path)
 

@@ -4,17 +4,14 @@ import os
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_json, get_yaml, write_yml
 
-FILES_PATH = os.path.normpath(
-    os.path.join(__file__, git_path(), 'demisto_sdk', 'tests', 'test_files'))
-
 # Test data files
 FAKE_INTEGRATION_YML = get_yaml(
-    f'{git_path()}/demisto_sdk/commands/generate_context/tests/test_data/fake_integration_empty_output.yml')
+    f'{git_path()}/demisto_sdk/commands/generate_outputs/generate_context/tests/test_data/fake_integration_empty_output.yml')
 FAKE_OUTPUT_CONTEXTS = get_json(
-    f'{git_path()}/demisto_sdk/commands/generate_context/tests/test_data/fake_outputs_with_contexts.json')
+    f'{git_path()}/demisto_sdk/commands/generate_outputs/generate_context/tests/test_data/fake_outputs_with_contexts.json')
 FAKE_OUTPUTS = get_json(
-    f'{git_path()}/demisto_sdk/commands/generate_context/tests/test_data/fake_outputs.json')
-FAKE_EXAMPLES_FILE = f'{git_path()}/commands/demisto_sdk/generate_context/tests/test_data/fake_examples.txt'
+    f'{git_path()}/demisto_sdk/commands/generate_outputs/generate_context/tests/test_data/fake_outputs.json')
+FAKE_EXAMPLES_FILE = f'{git_path()}/commands/demisto_sdk/generate_outputs/generate_context/tests/test_data/fake_examples.txt'
 
 
 def test_generate_context_from_outputs():
@@ -26,7 +23,7 @@ def test_generate_context_from_outputs():
     Then
         - Ensure the outputs are correct
     """
-    from demisto_sdk.commands.generate_context.generate_integration_context import \
+    from demisto_sdk.commands.generate_outputs.generate_context.generate_integration_context import \
         dict_from_outputs_str
 
     EXAMPLE_INT_OUTPUTS = '''{"Guardicore": {"Endpoint": {"asset_id": "1-2-3-4-5",
@@ -71,7 +68,7 @@ def test_generate_example_dict(mocker):
     Then
        - Ensure the outputs are correct
     """
-    from demisto_sdk.commands.generate_context import \
+    from demisto_sdk.commands.generate_outputs.generate_context import \
         generate_integration_context
     mocker.patch.object(generate_integration_context,
                         'build_example_dict',
@@ -90,7 +87,7 @@ def test_insert_outputs(mocker):
     Then
       - Ensure the outputs are inserted correctly
     """
-    from demisto_sdk.commands.generate_context import \
+    from demisto_sdk.commands.generate_outputs.generate_context import \
         generate_integration_context
     command_name = 'zoom-fetch-recording'
     mocker.patch.object(generate_integration_context,
@@ -120,7 +117,7 @@ def test_generate_integration_context(mocker, tmpdir):
     Then
       - Ensure the outputs are inserted correctly
     """
-    from demisto_sdk.commands.generate_context import \
+    from demisto_sdk.commands.generate_outputs.generate_context import \
         generate_integration_context
 
     command_name = 'zoom-fetch-recording'

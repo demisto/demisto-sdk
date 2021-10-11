@@ -1213,7 +1213,7 @@ class PackDependencies:
         """
         Collects integrations dependencies.
         Args:
-            pack_jobs (list): collection of pack integrations data.
+            pack_jobs (list): collection of pack job data.
             id_set (dict): id set json.
             verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
@@ -1221,22 +1221,30 @@ class PackDependencies:
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
         """
-        dependencies_packs = set()
+        all_job_dependencies = set()
         if verbose:
             click.secho('### Jobs', fg='white')
 
         for job in pack_jobs:
             job_data = next(iter(job.values()))
-            job_dependencies: set = set()
+            job_dependencies = set()
 
-            playbook_id = job_data.get('playbookId', '')
+            # Playbook dependency
+            job_dependencies.update(
+                PackDependencies._label_as_mandatory(
+                    PackDependencies._search_packs_by_items_names_or_ids(
+                        job_data.get('playbookId', ''), id_set['playbooks'], exclude_ignored_dependencies)
+                )
+            )
 
-            packs_found_from_playbooks = PackDependencies._search_packs_by_items_names_or_ids(
-                [playbook_id], id_set['playbooks'], exclude_ignored_dependencies)
-
-            if packs_found_from_playbooks:
-                pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_playbooks)
-                job_dependencies.update(pack_dependencies_data)
+            # Specified feeds dependencies
+            job_dependencies.update(
+                PackDependencies._label_as_mandatory(
+                    PackDependencies._search_packs_by_items_names_or_ids(
+                        job_data.get('selectedFeeds', []), id_set['integrations'], exclude_ignored_dependencies
+                    )
+                )
+            )
 
             if job_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
@@ -1244,9 +1252,8 @@ class PackDependencies:
                     click.secho(
                         f'{os.path.basename(job_data.get("file_path", ""))} depends on: {job_dependencies}',
                         fg='white')
-            dependencies_packs.update(job_dependencies)
-
-        return dependencies_packs
+            all_job_dependencies.update(job_dependencies)
+        return all_job_dependencies
 
     @staticmethod
     def _collect_pack_items(pack_id: str, id_set: dict) -> dict:

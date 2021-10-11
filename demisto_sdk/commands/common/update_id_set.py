@@ -1388,8 +1388,9 @@ def get_job_data(path: str, print_logs: bool):
                                      to_version=json_data.get('toServerVersion'),
                                      from_version=json_data.get('fromServerVersion'),  # todo here or below?
                                      pack=get_pack_name(path))
-    data['playbooks'] = json_data.get('playbookId')
     data['fromServerVersion'] = json_data.get('fromServerVersion')  # todo here or above?
+    data['playbooks'] = json_data.get('playbookId')  # todo reconsider key `playbooks` vs `playbookId`
+    data['selectedFeeds'] = json_data.get('selectedFeeds', [])  # todo reconsider key, pascal vs flat case
 
     if print_logs:
         print(f'adding {path} to id_set')

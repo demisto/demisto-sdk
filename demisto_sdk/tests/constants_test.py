@@ -153,6 +153,12 @@ DESTINATION_FORMAT_PRE_PROCESS_RULES_INVALID_NAME_COPY = "PreProcessRules/prepro
 PRE_PROCESS_RULES_PATH = "PreProcessRules"
 PRE_PROCESS_RULES_SCHEMA_PATH = f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/pre-process-rules.yml"
 
+DESTINATION_FORMAT_LISTS_COPY = "Lists/list-copy.json"
+DESTINATION_FORMAT_LISTS_INVALID_NAME_COPY = "Lists/list-invalid.json"
+SOURCE_FORMAT_LISTS_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_list-copy.json"
+LISTS_PATH = "Lists"
+LISTS_SCHEMA_PATH = f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/lists.yml"
+
 SOURCE_FORMAT_LAYOUTS_CONTAINER = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_layoutscontainer-for-class-test.json"
 SOURCE_FORMAT_LAYOUTS_CONTAINER_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_layoutscontainer-test.json"
 DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY = "Layouts/formatted_layoutscontainer-test.json"

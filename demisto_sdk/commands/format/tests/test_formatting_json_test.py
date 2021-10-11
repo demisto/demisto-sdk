@@ -42,18 +42,19 @@ from demisto_sdk.tests.constants_test import (
     DESTINATION_FORMAT_PRE_PROCESS_RULES_COPY,
     DESTINATION_FORMAT_PRE_PROCESS_RULES_INVALID_NAME_COPY,
     DESTINATION_FORMAT_LISTS_COPY,
-    DESTINATION_FORMAT_LISTS_COPY,
+    DESTINATION_FORMAT_LISTS_INVALID_NAME_COPY,
     DESTINATION_FORMAT_REPORT, DESTINATION_FORMAT_WIDGET, INCIDENTFIELD_PATH,
     INCIDENTTYPE_PATH, INDICATORFIELD_PATH, INDICATORTYPE_PATH,
     INVALID_OUTPUT_PATH, LAYOUT_PATH, LAYOUT_SCHEMA_PATH,
     LAYOUTS_CONTAINER_PATH, LAYOUTS_CONTAINER_SCHEMA_PATH, MAPPER_PATH,
     MAPPER_SCHEMA_PATH, PRE_PROCESS_RULES_PATH, PRE_PROCESS_RULES_SCHEMA_PATH,
+    LISTS_PATH, LISTS_SCHEMA_PATH,
     REPORT_PATH, SOURCE_FORMAT_CLASSIFIER, SOURCE_FORMAT_CLASSIFIER_5_9_9,
     SOURCE_FORMAT_DASHBOARD_COPY, SOURCE_FORMAT_INCIDENTFIELD_COPY,
     SOURCE_FORMAT_INCIDENTTYPE_COPY, SOURCE_FORMAT_INDICATORFIELD_COPY,
     SOURCE_FORMAT_INDICATORTYPE_COPY, SOURCE_FORMAT_LAYOUT_COPY,
     SOURCE_FORMAT_LAYOUTS_CONTAINER, SOURCE_FORMAT_LAYOUTS_CONTAINER_COPY,
-    SOURCE_FORMAT_MAPPER, SOURCE_FORMAT_PRE_PROCESS_RULES_COPY,
+    SOURCE_FORMAT_MAPPER, SOURCE_FORMAT_PRE_PROCESS_RULES_COPY,  SOURCE_FORMAT_LISTS_COPY,
     SOURCE_FORMAT_REPORT, SOURCE_FORMAT_WIDGET, WIDGET_PATH)
 
 
@@ -691,6 +692,46 @@ class TestFormattingPreProcessRule:
         """
         pre_process_rules_formatter.set_description()
         assert 'description' in pre_process_rules_formatter.data
+
+
+class TestFormattingList:
+
+    @pytest.fixture(autouse=True)
+    def lists_copy(self):
+        os.makedirs(LISTS_PATH, exist_ok=True)
+        yield shutil.copyfile(SOURCE_FORMAT_LISTS_COPY, DESTINATION_FORMAT_LISTS_COPY)
+        os.remove(DESTINATION_FORMAT_LISTS_COPY)
+        os.rmdir(LISTS_PATH)
+
+    @pytest.fixture(autouse=True)
+    def lists_formatter(self, lists_copy):
+        yield ListsFormat(input=lists_copy, output=DESTINATION_FORMAT_LISTS_COPY)
+
+    def test_remove_unnecessary_keys(self, lists_formatter):
+        """
+        Given
+            - A list file with fields that don't exit in list's schema.
+        When
+            - Run format on list file
+        Then
+            - Ensure that unnecessary keys were removed
+        """
+        lists_formatter.schema_path = LISTS_SCHEMA_PATH
+        lists_formatter.remove_unnecessary_keys()
+        for field in ['quickView', 'sortValues']:
+            assert field not in lists_formatter.data
+
+    def test_set_description(self, lists_formatter):
+        """
+        Given
+            - A list file without a description field
+        When
+            - Run format on list file
+        Then
+            - Ensure that description field was updated successfully with '' value
+        """
+        lists_formatter.set_description()
+        assert 'description' in lists_formatter.data
 
 
 class TestFormattingClassifier:

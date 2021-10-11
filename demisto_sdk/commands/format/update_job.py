@@ -25,46 +25,24 @@ class JobJSONFormat(BaseUpdateJSON):
         self.selected_feeds = self.data.get(SELECTED_FEEDS)
         self.is_all_feeds = self.data.get(IS_ALL_FEEDS)
 
-    def attempt_infer_feed_fields(self):
+    def attempt_infer_selected_feeds(self):
         """
-        Calls inferring methods by their preferred order, correcting them if possible (in obvious cases)
+        Sets missing selectedFeeds field with an empty list as default,
+        When the job certainly shouldn't have any values there. (not isFeed, OR isfeed and allFeeds)
         """
-
-        def _set_default_selected_feeds_when_applicable():  # todo better name?
-            """
-            Sets missing selectedFeeds field with an empty list as default,
-            When the job certainly shouldn't have any values there. (not isFeed, OR feed and allFeeds)
-            """
-            if self.is_feed_defined:
-                if (not self.selected_feeds_defined) and (
-                        self.is_all_feeds or  # all feeds -> selectedFeeds should be empty
-                        (not self.is_feed)  # not related to feed -> selectedFeeds should be empty
-                ):
-                    self.selected_feeds_defined = True
-                    self.data['selectedFeeds'] = []
-
-        def _attempt_infer_is_feed():
-            """
-            uses isAllFeeds and selectedFeed values (when exist) to determine isFeed and set it
-            better call after set_default_selected_feeds_when_applicable
-            """
-            if not self.is_feed_defined:
-                if self.is_all_feeds or self.selected_feeds:
-                    self.is_feed = True
-
-                elif self.selected_feeds_defined and self.is_all_feeds_defined \
-                        and not any((self.selected_feeds, self.is_all_feeds)):
-                    self.is_feed = False
-
-        # order matters
-        _set_default_selected_feeds_when_applicable()
-        # _attempt_infer_is_feed() # todo decide whether to use
+        if self.is_feed_defined:
+            if (not self.selected_feeds_defined) and (
+                    self.is_all_feeds or  # all feeds -> selectedFeeds should be empty
+                    (not self.is_feed)  # not related to feed -> selectedFeeds should be empty
+            ):
+                self.selected_feeds_defined = True
+                self.data['selectedFeeds'] = []
 
     def run_format(self) -> int:
         try:
             click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
             self.update_id()
-            self.attempt_infer_feed_fields()
+            self.attempt_infer_selected_feeds()
             self.set_from_server_version_to_default()
             super().update_json()
             self.save_json_to_destination_file()

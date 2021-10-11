@@ -25,6 +25,8 @@ from demisto_sdk.commands.format.update_layout import LayoutBaseFormat
 from demisto_sdk.commands.format.update_mapper import MapperJSONFormat
 from demisto_sdk.commands.format.update_pre_process_rules import \
     PreProcessRulesFormat
+from demisto_sdk.commands.format.update_lists import \
+    ListsFormat
 from demisto_sdk.commands.format.update_report import ReportJSONFormat
 from demisto_sdk.commands.format.update_widget import WidgetJSONFormat
 from demisto_sdk.tests.constants_test import (
@@ -39,6 +41,8 @@ from demisto_sdk.tests.constants_test import (
     DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY, DESTINATION_FORMAT_MAPPER,
     DESTINATION_FORMAT_PRE_PROCESS_RULES_COPY,
     DESTINATION_FORMAT_PRE_PROCESS_RULES_INVALID_NAME_COPY,
+    DESTINATION_FORMAT_LISTS_COPY,
+    DESTINATION_FORMAT_LISTS_COPY,
     DESTINATION_FORMAT_REPORT, DESTINATION_FORMAT_WIDGET, INCIDENTFIELD_PATH,
     INCIDENTTYPE_PATH, INDICATORFIELD_PATH, INDICATORTYPE_PATH,
     INVALID_OUTPUT_PATH, LAYOUT_PATH, LAYOUT_SCHEMA_PATH,

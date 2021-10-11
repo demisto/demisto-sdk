@@ -1992,7 +1992,7 @@ class TestDependsOnJob:
                     "pack": "pack0",
                     "playbookId": "Pentera Run Scan",
                     "selectedFeeds": selected_feeds,
-                    "fromServerVersion": DEFAULT_JOB_FROM_VERSION
+                    "fromServerVersion": DEFAULT_JOB_FROM_VERSION  # todo handle redundancy
                 }
             }
         ]

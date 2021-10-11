@@ -2,9 +2,9 @@ from demisto_sdk.commands.common.hook_validations.pre_process_rule import \
     PreProcessRuleValidator
 
 
-class TestListsValidator:
+class TestPreProcessRuleValidator:
 
-    def test_(self):
+    def test_get_field_name(self):
         """
         Given
         - A context field name

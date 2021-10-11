@@ -660,7 +660,7 @@
                 "sha256:dd7e8012af25737e6aa7bc26568a319508dca789f13e62afa09798dccc7798b5"
             ],
             "index": "pypi",
-            "version": "==3.6.4"
+            "version": "==3.6.3"
         },
         "numpy": {
             "hashes": [

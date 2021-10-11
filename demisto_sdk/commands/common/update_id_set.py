@@ -432,7 +432,6 @@ def get_dependent_incident_and_indicator_fields(data_dictionary):
         if input_value_dict and isinstance(input_value_dict, dict):  # deprecated playbooks bug
             dependent_incident_fields.update(get_incident_fields_by_playbook_input(input_value_dict))
 
-    # todo anything job-related here?
     return dependent_incident_fields, dependent_indicator_fields
 
 
@@ -1150,7 +1149,7 @@ def process_jobs(file_path: str, print_logs: bool) -> list:
         if find_type(file_path) == FileType.JOB:
             if print_logs:
                 print(f'adding {file_path} to id_set')
-            result.append(get_job_data(file_path, print_logs))  # todo
+            result.append(get_job_data(file_path, print_logs))
     except Exception as exp:  # noqa
         print_error(f'failed to process job {file_path}, Error: {str(exp)}')
         raise

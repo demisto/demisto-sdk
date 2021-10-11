@@ -306,7 +306,7 @@ class ContentItemsHandler:
 
     def add_jobs_as_content_item(self, content_object: ContentObject):
         self.content_items[ContentItems.JOB].append({
-            'name': content_object.get('name') or content_object.get('id', ''),  # todo use ['name'] instead?
+            'name': content_object.get('name') or content_object.get('id', ''),
             'description': content_object.get('description', ''),
         })
 

@@ -1,3 +1,6 @@
+from collections import Counter
+
+
 class IsEqualFunctions:
     @staticmethod
     def is_dicts_equal(dict1: dict, dict2: dict):
@@ -28,28 +31,12 @@ class IsEqualFunctions:
 
     @staticmethod
     def is_lists_equal(list1: list, list2: list):
-        if not isinstance(list1, list) or not isinstance(list2, list):
-            return False
-
-        if not len(list1) == len(list2):
-            return False
-
-        for item in list1:
-            if item not in list2:
-                return False
-
-        return True
+        return isinstance(list1, list) \
+            and isinstance(list2, list) \
+            and Counter(list1) == Counter(list2)  # regardless of order
 
     @staticmethod
     def is_sets_equal(set1: set, set2: set):
-        if not isinstance(set1, set) or not isinstance(set2, set):
-            return False
-
-        if not len(set1) == len(set2):
-            return False
-
-        for item in set1:
-            if item not in set2:
-                return False
-
-        return True
+        return isinstance(set1, set) \
+            and isinstance(set2, set) \
+            and set1 == set2

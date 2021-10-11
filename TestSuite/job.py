@@ -22,7 +22,7 @@ class Job(JSONBased):
             'isFeed': self.is_feed,
             'selectedFeeds': self.selected_feeds or [],
             'isAllFeeds': self.is_feed and not self.selected_feeds,
-            'playbookId': f'{self.pure_name}_playbookId',  # todo
+            'playbookId': f'{self.pure_name}_playbookId',  # todo can we assume it exists? otherwise, tests may fail
 
             # 'minutesToTimeout': 0,  # todo
             # 'description': "",
@@ -33,7 +33,7 @@ class Job(JSONBased):
             # 'disabledNextRunTime': '',  # todo
             # 'schedulingStatus': 'enabled',
             # 'previousRunStatus': 'idle',  # todo
-            'tags': [],
+            'tags': [],  # todo is required?
             # 'shouldTriggerNew': False, # todo
             # 'closePrevRun': False, # todo
             # 'notifyOwner': False, # todo

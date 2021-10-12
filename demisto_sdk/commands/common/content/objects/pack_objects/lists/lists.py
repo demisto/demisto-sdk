@@ -25,4 +25,4 @@ class Lists(JSONContentObject):
         pass
 
     def type(self):
-        return FileType.LIST
+        return FileType.LISTS

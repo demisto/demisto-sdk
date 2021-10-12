@@ -32,7 +32,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     Contributors, Dashboard, DocFile, GenericDefinition, GenericField,
     GenericModule, GenericType, IncidentField, IncidentType, IndicatorField,
     IndicatorType, Integration, LayoutObject, OldClassifier, PackIgnore,
-    PackMetaData, Playbook, PreProcessRule, List, Readme, ReleaseNote,
+    PackMetaData, Playbook, PreProcessRule, Lists, Readme, ReleaseNote,
     ReleaseNoteConfig, Report, Script, SecretIgnore, Widget)
 from demisto_sdk.commands.common.content.objects_factory import \
     path_to_pack_object
@@ -132,7 +132,7 @@ class Pack:
                                                           suffix="json")
 
     @property
-    def lists(self) -> Iterator[List]:
+    def lists(self) -> Iterator[Lists]:
         return self._content_files_list_generator_factory(dir_name=LISTS_DIR,
                                                           suffix="json")
 

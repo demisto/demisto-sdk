@@ -48,8 +48,3 @@ class TestListValidator:
         structure = mock_structure(file_path=list_path)
         list_item = ListsValidator(structure, json_file_path=list_path)
         assert list_item.is_valid_list() == is_valid
-
-
-
-
-

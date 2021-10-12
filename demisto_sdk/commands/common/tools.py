@@ -1195,8 +1195,8 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
                 'newEventFilters' in _dict and 'readyNewEventFilters' in _dict:
             return FileType.PRE_PROCESS_RULES
 
-        if 'allRead' in _dict and 'truncated' in _dict and 'data' in _dict:
-            return FileType.LISTS  # TODO: verify
+        if 'allRead' in _dict and 'truncated' in _dict:
+            return FileType.LISTS
 
         if 'definitionIds' in _dict and 'views' in _dict:
             return FileType.GENERIC_MODULE

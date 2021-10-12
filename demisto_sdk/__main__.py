@@ -24,6 +24,8 @@ from demisto_sdk.commands.common.tools import (find_type,
                                                print_error, print_warning)
 from demisto_sdk.commands.common.update_id_set import merge_id_sets_from_files
 from demisto_sdk.commands.convert.convert_manager import ConvertManager
+from demisto_sdk.commands.coverage_analyze.coverage_report import \
+    CoverageReport
 from demisto_sdk.commands.create_artifacts.content_artifacts_creator import \
     ArtifactsManager
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
@@ -668,6 +670,63 @@ def lint(**kwargs):
         coverage_report=kwargs.get('coverage_report'),  # type: ignore[arg-type]
         docker_timeout=kwargs.get('docker_timeout'),  # type: ignore[arg-type]
     )
+
+
+# ====================== coverage-analyze ====================== #
+@main.command()
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    "-i", "--input", help="",
+    default=os.path.join('coverage_report', '.coverage'),
+    type=PathsParamType(exists=True, resolve_path=True)
+)
+@click.option(
+    "--default-min-coverage", help="",
+    default=70.0, type=click.FloatRange(0.0, 100.0)
+)
+@click.option(
+    "--allowed-coverage-degradation-percentage", help="",
+    default=1.0, type=click.FloatRange(0.0, 100.0)
+)
+@click.option(
+    "--no-cache", help="",
+    is_flag=True, type=bool)
+@click.option(
+    "--report-dir", help="",
+    default='coverage_report', type=PathsParamType(resolve_path=True))
+@click.option(
+    "--report-type", help="", type=str)
+@click.option("--no-min-coverage-enforcement", help="", is_flag=True)
+@click.option(
+    "--previous-coverage-report-url", help="",
+    default='https://storage.googleapis.com/marketplace-dist-dev/code-coverage/coverage-min.json', type=str
+)
+def coverage_analyze(**kwargs):
+    """
+    """
+    try:
+        no_degradation_check = kwargs['allowed_coverage_degradation_percentage'] == 100.0
+        no_min_coverage_enforcement = kwargs['no_min_coverage_enforcement']
+
+        cov_report = CoverageReport(
+            default_min_coverage=kwargs['default_min_coverage'],
+            allowed_coverage_degradation_percentage=kwargs['allowed_coverage_degradation_percentage'],
+            coverage_file=kwargs['input'],
+            no_cache=kwargs.get('no_cache', False),
+            report_dir=kwargs['report_dir'],
+            report_type=kwargs['report_type'],
+            no_degradation_check=no_degradation_check,
+            previous_coverage_report_url=kwargs['previous_coverage_report_url']
+        )
+        cov_report.coverage_report()
+        if no_degradation_check or cov_report.coverage_diff_report() or no_min_coverage_enforcement:
+            return 0
+    except Exception as error:
+        logging.getLogger('demisto-sdk').error(error)
+
+    return 1
 
 
 # ====================== format ====================== #

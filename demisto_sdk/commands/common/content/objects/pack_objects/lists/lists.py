@@ -21,7 +21,8 @@ class Lists(JSONContentObject):
         Returns:
             The result of the upload command from demisto_client
         """
-        return client.import_lists(file=self.path)  # TODO: verify
+        # return client.import_lists(file=self.path)
+        pass
 
     def type(self):
         return FileType.LIST

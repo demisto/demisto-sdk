@@ -51,6 +51,7 @@ Pebble = "*"
 PyPDF2 = "*"
 PyYAML = "*"
 giturlparse = "*"
+pytest-freezegun = "*"
 
 [dev-packages]
 mitmproxy = "==5.1.0"

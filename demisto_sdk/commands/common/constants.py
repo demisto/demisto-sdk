@@ -44,7 +44,7 @@ TEST_PLAYBOOK = 'testplaybook'
 LAYOUT = 'layout'
 LAYOUTS_CONTAINER = 'layoutscontainer'
 PRE_PROCESS_RULES = 'pre-process-rules'
-LISTS = 'list'
+LISTS = 'list'  # singular, as it is the prefix of the file
 INCIDENT_TYPE = 'incidenttype'
 INCIDENT_FIELD = 'incidentfield'
 INDICATOR_FIELD = 'indicatorfield'
@@ -1257,7 +1257,7 @@ class ContentItems(Enum):
     GENERIC_FIELDS = 'genericfield'
     GENERIC_TYPES = 'generictype'
     PRE_PROCESS_RULES = 'pre-process-rule'
-    LISTS = 'list'
+    LISTS = 'lists'
 
 
 YML_SUPPORTED_FOLDERS = {

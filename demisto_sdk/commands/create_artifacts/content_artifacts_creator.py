@@ -167,7 +167,8 @@ class ContentItemsHandler:
             ContentItems.GENERIC_FIELDS: [],
             ContentItems.GENERIC_TYPES: [],
             ContentItems.GENERIC_MODULES: [],
-            ContentItems.GENERIC_DEFINITIONS: []
+            ContentItems.GENERIC_DEFINITIONS: [],
+            ContentItems.LISTS: []
         }
         self.content_folder_name_to_func: Dict[str, Callable] = {
             SCRIPTS_DIR: self.add_script_as_content_item,

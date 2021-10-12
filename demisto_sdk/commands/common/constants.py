@@ -112,7 +112,7 @@ class FileType(Enum):
     GENERIC_TYPE = 'generictype'
     GENERIC_DEFINITION = 'genericdefinition'
     PRE_PROCESS_RULES = 'pre-process-rule'
-    LISTS = 'lists'
+    LISTS = 'list'
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -1257,7 +1257,7 @@ class ContentItems(Enum):
     GENERIC_FIELDS = 'genericfield'
     GENERIC_TYPES = 'generictype'
     PRE_PROCESS_RULES = 'pre-process-rule'
-    LISTS = 'lists'
+    LISTS = 'list'
 
 
 YML_SUPPORTED_FOLDERS = {

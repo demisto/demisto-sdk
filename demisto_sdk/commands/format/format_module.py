@@ -58,7 +58,7 @@ FILE_TYPE_AND_LINKED_CLASS = {
     'layout': LayoutBaseFormat,
     'layoutscontainer': LayoutBaseFormat,
     'pre-process-rule': PreProcessRulesFormat,
-    'lists': ListsFormat,
+    'list': ListsFormat,
     'dashboard': DashboardJSONFormat,
     'classifier': ClassifierJSONFormat,
     'classifier_5_9_9': OldClassifierJSONFormat,

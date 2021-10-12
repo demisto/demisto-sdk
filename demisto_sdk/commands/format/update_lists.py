@@ -16,7 +16,7 @@ class ListsFormat(BaseUpdateJSON):
     def __init__(self,
                  input: str = '',
                  output: str = '',
-                 path: str = 'lists',
+                 path: str = 'list',
                  from_version: str = '',
                  no_validate: bool = False,
                  verbose: bool = False,

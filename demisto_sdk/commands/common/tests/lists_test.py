@@ -21,7 +21,7 @@ def mock_structure(file_path=None, current_file=None, old_file=None):
     with patch.object(StructureValidator, '__init__', lambda a, b: None):
         structure = StructureValidator(file_path)
         structure.is_valid = True
-        structure.scheme_name = 'lists'
+        structure.scheme_name = 'list'
         structure.file_path = file_path
         file = open(file_path, "r")
         structure.current_file = json.loads(file.read())

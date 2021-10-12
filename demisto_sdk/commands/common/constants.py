@@ -112,7 +112,7 @@ class FileType(Enum):
     GENERIC_TYPE = 'generictype'
     GENERIC_DEFINITION = 'genericdefinition'
     PRE_PROCESS_RULES = 'pre-process-rule'
-    LISTS = 'list'
+    LISTS = 'lists'
 
 
 RN_HEADER_BY_FILE_TYPE = {

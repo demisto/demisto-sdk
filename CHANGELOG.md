@@ -1,5 +1,6 @@
 # Changelog
 * Added a validation that verifies that readme image absolute links do not contain the working branch name.
+* Added support for List content item in the **format**, **validate**, **download**, and **create-content-artifacts** commands.
 
 # 1.5.1
 * Fixed an issue where **validate** command failed to recognized test playbooks for beta integrations as valid tests.

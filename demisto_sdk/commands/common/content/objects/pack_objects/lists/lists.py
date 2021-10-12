@@ -14,7 +14,7 @@ class Lists(JSONContentObject):
 
     def upload(self, client: demisto_client):
         """
-        Upload the pre_process_rules to demisto_client
+        Upload the lists item to demisto_client
         Args:
             client: The demisto_client object of the desired XSOAR machine to upload to.
 

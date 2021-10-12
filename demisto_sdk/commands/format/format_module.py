@@ -177,7 +177,6 @@ def format_manager(input: str = None,
                 log_list.append(([f"Ignoring format for {file_path} as {file_type.value} is currently not "
                                   f"supported by format command"], print_warning))
             else:
-                print('here')
                 log_list.append(([f"Was unable to identify the file type for the following file: {file_path}"],
                                  print_error))
 

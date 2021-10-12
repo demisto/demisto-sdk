@@ -123,6 +123,7 @@ def format_manager(input: str = None,
     Returns:
         int 0 in case of success 1 otherwise
     """
+
     prev_ver = prev_ver if prev_ver else 'demisto/master'
     supported_file_types = ['json', 'yml', 'py', 'md']
     use_git = use_git or not input
@@ -176,6 +177,7 @@ def format_manager(input: str = None,
                 log_list.append(([f"Ignoring format for {file_path} as {file_type.value} is currently not "
                                   f"supported by format command"], print_warning))
             else:
+                print('here')
                 log_list.append(([f"Was unable to identify the file type for the following file: {file_path}"],
                                  print_error))
 

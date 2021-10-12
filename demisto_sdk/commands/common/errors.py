@@ -1501,6 +1501,10 @@ class Errors:
         return f'The following image link seems to be broken, please repair it:\n{path}'
 
     @staticmethod
+    def branch_name_in_readme_image_absolute_path_error(path):
+        return f'Branch name was found in the URL, please change it to the commit hash:\n{path}'
+
+    @staticmethod
     def invalid_readme_insert_image_link_error(path):
         return f'Image link was not found, either insert it or remove it:\n{path}'
 
@@ -1511,6 +1515,7 @@ class Errors:
             'pack_readme_relative_error': Errors.pack_readme_image_relative_path_error,
             'general_readme_relative_error': Errors.invalid_readme_image_relative_path_error,
             'general_readme_absolute_error': Errors.invalid_readme_image_absolute_path_error,
+            'branch_name_readme_absolute_error': Errors.branch_name_in_readme_image_absolute_path_error,
             'insert_image_link_error': Errors.invalid_readme_insert_image_link_error
         }.get(error_type, lambda x: f'Something went wrong when testing {x}')(path)
 

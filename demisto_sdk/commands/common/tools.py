@@ -1578,8 +1578,10 @@ def is_path_of_pre_process_rules_directory(path: str) -> bool:
     """
     return os.path.basename(path) == PRE_PROCESS_RULES_DIR
 
+
 def is_path_of_lists_directory(path: str) -> bool:
     return os.path.basename(path) == LISTS_DIR
+
 
 def is_path_of_classifier_directory(path: str) -> bool:
     """Returns true if directory is integration directory false if not.

@@ -79,7 +79,7 @@ class IntegrationValidator(ContentEntityValidator):
         answers = [
             super().is_valid_file(validate_rn),
             self.is_valid_subtype(),
-            self.is_valid_default_argument_in_reputation_command(),
+            self.is_valid_default_array_argument_in_reputation_command(),
             self.is_valid_default_argument(),
             self.is_proxy_configured_correctly(),
             self.is_insecure_configured_correctly(),
@@ -314,13 +314,13 @@ class IntegrationValidator(ContentEntityValidator):
 
         return True
 
-    def is_valid_default_argument_in_reputation_command(self):
+    def is_valid_default_array_argument_in_reputation_command(self):
         # type: () -> bool
         """Check if a reputation command (domain/email/file/ip/url/cve)
-            has a default non required argument.
+            has a default non required argument and make sure the default value can accept array of inputs.
 
         Returns:
-            bool. Whether a reputation command hold a valid argument
+            bool. Whether a reputation command hold a valid argument which support array.
         """
         commands = self.current_file.get('script', {}).get('commands', [])
         if commands is None:
@@ -338,6 +338,12 @@ class IntegrationValidator(ContentEntityValidator):
                         if arg.get('default') is False:
                             error_message, error_code = Errors.wrong_default_argument(arg_name,
                                                                                       command_name)
+                            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                                self.is_valid = False
+                                flag = False
+                        if not arg.get('isArray'):
+                            error_message, error_code = Errors.wrong_is_array_argument(arg_name,
+                                                                                       command_name)
                             if self.handle_error(error_message, error_code, file_path=self.file_path):
                                 self.is_valid = False
                                 flag = False

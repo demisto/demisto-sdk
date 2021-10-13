@@ -69,6 +69,9 @@ def get_coverage_obj(coverage_file: Optional[str], report_dir: Optional[str], lo
 
 
 def coverage_files() -> Iterable[str]:
+    """
+    iterate over the '.coverage' files in content repo.
+    """
     packs_path = Path('Packs')
     for cov_path in packs_path.glob('*/Integrations/*/.coverage'):
         yield str(cov_path)
@@ -134,6 +137,12 @@ class CoverageSummary:
 
     @staticmethod
     def create(original_summary_path: str, min_summary_path: str):
+        """
+        Create a coverage-min.json file
+        Args:
+            original_summary_path(str): The path to the original coverage.json file.
+            min_summary_path(str): The path to the coverage-min.json
+        """
         with open(original_summary_path, 'r') as original_summary_file:
             original_summary = json.load(original_summary_file)
 
@@ -153,6 +162,10 @@ class CoverageSummary:
             json.dump(min_summary, min_summary_file)
 
     def get_files_summary(self) -> Dict[str, float]:
+        """
+        Getes the summary file
+        based on the cache policy and the summary creation time.
+        """
         json_path = os.path.join(self.cache_dir, 'coverage-min.json') if self.cache_dir else ''
         if self.use_cache and self.cache_dir:
             try:

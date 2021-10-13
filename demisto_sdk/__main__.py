@@ -678,29 +678,29 @@ def lint(**kwargs):
     '-h', '--help'
 )
 @click.option(
-    "-i", "--input", help="",
+    "-i", "--input", help="The .coverage file to analyze.",
     default=os.path.join('coverage_report', '.coverage'),
     type=PathsParamType(exists=True, resolve_path=True)
 )
 @click.option(
-    "--default-min-coverage", help="",
+    "--default-min-coverage", help="Default minimum coverage (for new files).",
     default=70.0, type=click.FloatRange(0.0, 100.0)
 )
 @click.option(
-    "--allowed-coverage-degradation-percentage", help="",
+    "--allowed-coverage-degradation-percentage", help="Allowed coverage degradation percentage (for modified files).",
     default=1.0, type=click.FloatRange(0.0, 100.0)
 )
 @click.option(
-    "--no-cache", help="",
+    "--no-cache", help="Force download of the previous coverage report file.",
     is_flag=True, type=bool)
 @click.option(
-    "--report-dir", help="",
+    "--report-dir", help="Directory of the coverage report files.",
     default='coverage_report', type=PathsParamType(resolve_path=True))
 @click.option(
-    "--report-type", help="", type=str)
-@click.option("--no-min-coverage-enforcement", help="", is_flag=True)
+    "--report-type", help="The type of coverage report (posible values: 'text', 'html', 'xml', 'json' or 'all').", type=str)
+@click.option("--no-min-coverage-enforcement", help="Do no enforce minimum coverage.", is_flag=True)
 @click.option(
-    "--previous-coverage-report-url", help="",
+    "--previous-coverage-report-url", help="URL of the previous coverage report.",
     default='https://storage.googleapis.com/marketplace-dist-dev/code-coverage/coverage-min.json', type=str
 )
 def coverage_analyze(**kwargs):

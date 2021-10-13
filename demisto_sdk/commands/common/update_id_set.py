@@ -31,6 +31,7 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    LAYOUTS_DIR, MAPPERS_DIR,
                                                    REPORTS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
+                                                   LISTS_DIR,
                                                    WIDGETS_DIR, FileType)
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type, get_json,
                                                get_pack_name, get_yaml,
@@ -41,12 +42,12 @@ from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
 CONTENT_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
                     'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
                     'Layouts', 'Reports', 'Widgets', 'Mappers', 'Packs', 'GenericTypes',
-                    'GenericFields', 'GenericModules', 'GenericDefinitions']
+                    'GenericFields', 'GenericModules', 'GenericDefinitions', 'Lists']
 
 ID_SET_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Classifiers',
                    'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
                    'Layouts', 'Reports', 'Widgets', 'Mappers', 'GenericTypes', 'GenericFields', 'GenericModules',
-                   'GenericDefinitions']
+                   'GenericDefinitions', 'Lists']
 
 BUILT_IN_FIELDS = [
     "name",
@@ -1108,7 +1109,7 @@ def process_generic_items(file_path: str, print_logs: bool,
     """
     Process a generic field JSON file
     Args:
-        file_path: The file path from pbject field folder
+        file_path: The file path from object field folder
         print_logs: Whether to print logs to stdout.
         generic_types_list: List of all the generic types in the system.
         generic_modules_list: List of all the generic modules in the system.
@@ -1135,7 +1136,7 @@ def process_generic_items(file_path: str, print_logs: bool,
 def process_general_items(file_path: str, print_logs: bool, expected_file_types: Tuple[FileType],
                           data_extraction_func: Callable) -> list:
     """
-    Process a generic item file.
+    Process a general item file.
     expected file in one of the following:
     * classifier
     * incident type
@@ -1146,6 +1147,7 @@ def process_general_items(file_path: str, print_logs: bool, expected_file_types:
     * playbook
     * report
     * widget
+    * list
 
     Args:
         file_path: The file path from an item folder
@@ -1378,6 +1380,20 @@ def get_generic_module_data(path):
     return {id_: data}
 
 
+def get_list_data(path: str, print_logs: bool):
+    json_data = get_json(path)
+    data = create_common_entity_data(path=path,
+                                     name=json_data.get('name'),
+                                     to_version=json_data.get('toServerVersion'),
+                                     from_version=json_data.get('fromServerVersion'),
+                                     pack=get_pack_name(path))
+
+    if print_logs:
+        print(f'adding {path} to id_set')
+
+    return {json_data.get('id'): data}
+
+
 class IDSetType(Enum):
     PLAYBOOK = 'playbooks'
     INTEGRATION = 'integrations'
@@ -1551,6 +1567,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     generic_fields_list = []
     generic_modules_list = []
     generic_definitions_list = []
+    lists_list = []
     packs_dict: Dict[str, Dict] = {}
 
     pool = Pool(processes=int(cpu_count()))
@@ -1789,6 +1806,19 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
 
         progress_bar.update(1)
 
+        if 'Lists' in objects_to_create:
+            print_color("\nStarting iteration over Lists", LOG_COLORS.GREEN)
+            print_color(f"pack to create: {pack_to_create}", LOG_COLORS.YELLOW)
+            for arr in pool.map(partial(process_general_items,
+                                        print_logs=print_logs,
+                                        expected_file_types=(FileType.LISTS,),
+                                        data_extraction_func=get_list_data,
+                                        ),
+                                get_general_paths(LISTS_DIR, pack_to_create)):
+                lists_list.extend(arr)
+
+        progress_bar.update(1)
+
     new_ids_dict = OrderedDict()
     # we sort each time the whole set in case someone manually changed something
     # it shouldn't take too much time
@@ -1811,6 +1841,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     new_ids_dict['GenericFields'] = sort(generic_fields_list)
     new_ids_dict['GenericModules'] = sort(generic_modules_list)
     new_ids_dict['GenericDefinitions'] = sort(generic_definitions_list)
+    new_ids_dict['Lists'] = sort(lists_list)
 
     exec_time = time.time() - start_time
     print_color("Finished the creation of the id_set. Total time: {} seconds".format(exec_time), LOG_COLORS.GREEN)

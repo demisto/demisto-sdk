@@ -1254,10 +1254,11 @@ def merge_id_sets(**kwargs):
         second_id_set_path=second,
         output_id_set_path=output
     )
-    if duplicates and fail_duplicates:
+    if duplicates:
         print_error(f'Failed to merge ID sets: {first} with {second}, '
                     f'there are entities with ID: {duplicates} that exist in both ID sets')
-        sys.exit(1)
+        if fail_duplicates:
+            sys.exit(1)
 
 
 # ====================== update-release-notes =================== #

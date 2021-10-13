@@ -1,6 +1,8 @@
 # Changelog
 * Added a validation that verifies that readme image absolute links do not contain the working branch name.
 * Added a validation to ensure reputation command's default argument is set as an array input.
+* Added the `--fail-duplicates` flag for the **merge-id-set** command which will fail the command if duplicates are found.
+* Added the `--fail-duplicates` flag for the **create-id-set** command which will fail the command if duplicates are found.
 
 # 1.5.1
 * Fixed an issue where **validate** command failed to recognized test playbooks for beta integrations as valid tests.
@@ -25,9 +27,7 @@
 * Fixed an issue where **validate** command failed to recognize files inside validated pack when validation release notes, resulting in a false error message for missing entity in release note.
 * Fixed an issue where the **download** command failed when downloading an invalid YML, instead of skipping it.
 * Enhanced the `is_valid_file` validation for scripts and integrations in the **validate** command to check for every versioned script or integration, and not only v2.
-* Added the `--fail-duplicates` flag for the **create-id-set** command which will fail the command if duplicates are found.
 * Added to the **generate-docs** command automatic addition to git when a new readme file is created.
-* Added the `--fail-duplicates` flag for the **merge-id-set** command which will fail the command if duplicates are found.
 
 # 1.4.9
 * Added validation that the support URL in partner contribution pack metadata does not lead to a GitHub repo.

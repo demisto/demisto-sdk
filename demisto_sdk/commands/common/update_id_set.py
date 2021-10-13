@@ -145,6 +145,30 @@ def build_tasks_graph(playbook_data):
     return graph
 
 
+def get_lists_names_from_playbook(data_dictionary: dict, graph: networkx.DiGraph) -> tuple:
+    lists_names = set()
+    lists_names_skippable = set()
+    tasks = data_dictionary.get('tasks', {})
+    lists_tasks_scripts = ['Builtin|||setList', 'Builtin|||getList']
+    for task_id, task in tasks.items():
+        script = task.get('task', {}).get('script')
+        if script in lists_tasks_scripts:
+            list_name = task.get('scriptarguments', {}).get('listName', {}).get('simple')
+
+            try:
+                skippable = not graph.nodes[task_id]['mandatory']
+            except KeyError:
+                # if task id not in the graph - the task is unreachable.
+                print_error(f'{data_dictionary["id"]}: task {task_id} is not connected')
+                continue
+            if list_name:
+                lists_names.add(list_name)
+                if skippable:
+                    lists_names_skippable.add(list_name)
+
+    return list(lists_names), list(lists_names_skippable)
+
+
 def get_task_ids_from_playbook(param_to_enrich_by: str, data_dict: dict, graph: networkx.DiGraph) -> tuple:
     implementing_ids = set()
     implementing_ids_skippable = set()
@@ -448,14 +472,15 @@ def get_playbook_data(file_path: str) -> dict:
     implementing_scripts, implementing_scripts_skippable = get_task_ids_from_playbook('scriptName',
                                                                                       data_dictionary,
                                                                                       graph
-                                                                                      )  # script = getList - add dependency on list, get name by argument, setList, getListRow
+                                                                                      )
     implementing_playbooks, implementing_playbooks_skippable = get_task_ids_from_playbook('playbookName',
                                                                                           data_dictionary,
                                                                                           graph
                                                                                           )
+    implementing_lists, implementing_lists_skippable = get_lists_names_from_playbook(data_dictionary, graph)
     command_to_integration, command_to_integration_skippable = get_commands_from_playbook(data_dictionary)
     skippable_tasks = (implementing_scripts_skippable + implementing_playbooks_skippable +
-                       command_to_integration_skippable)
+                       command_to_integration_skippable + implementing_lists_skippable)
     pack = get_pack_name(file_path)
     dependent_incident_fields, dependent_indicator_fields = get_dependent_incident_and_indicator_fields(data_dictionary)
 
@@ -484,6 +509,8 @@ def get_playbook_data(file_path: str) -> dict:
         playbook_data['filters'] = filters
     if transformers:
         playbook_data['transformers'] = transformers
+    if implementing_lists:
+        playbook_data['lists'] = implementing_lists
     return {id_: playbook_data}
 
 

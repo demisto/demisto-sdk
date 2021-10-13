@@ -448,7 +448,7 @@ def get_playbook_data(file_path: str) -> dict:
     implementing_scripts, implementing_scripts_skippable = get_task_ids_from_playbook('scriptName',
                                                                                       data_dictionary,
                                                                                       graph
-                                                                                      )
+                                                                                      )  # script = getList - add dependency on list, get name by argument, setList, getListRow
     implementing_playbooks, implementing_playbooks_skippable = get_task_ids_from_playbook('playbookName',
                                                                                           data_dictionary,
                                                                                           graph

@@ -10,6 +10,7 @@ import pytest
 import requests
 from freezegun import freeze_time
 
+from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.coverage_analyze.helpers import (CoverageSummary,
                                                            InvalidReportType,
                                                            coverage_files,
@@ -24,6 +25,7 @@ TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 JSON_MIN_DATA_FILE = os.path.join(TEST_DATA_DIR, 'coverage-min.json')
 COVERAGE_FILES_DIR = os.path.join(TEST_DATA_DIR, 'coverage_data_files')
 PYTHON_FILE_PATH = os.path.join(TEST_DATA_DIR, 'HealthCheckAnalyzeLargeInvestigations_py')
+logging_setup(3)
 
 
 def read_file(file_path):

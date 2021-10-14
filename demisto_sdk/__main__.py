@@ -67,7 +67,7 @@ from demisto_sdk.commands.unify.generic_module_unifier import \
 from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
 from demisto_sdk.commands.update_release_notes.update_rn_manager import \
     UpdateReleaseNotesManager
-from demisto_sdk.commands.upload.uploader import Uploader, ParseConfigFile
+from demisto_sdk.commands.upload.uploader import ParseConfigFile, Uploader
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.commands.zip_packs.packs_zipper import (EX_FAIL, EX_SUCCESS,
                                                          PacksZipper)
@@ -790,6 +790,7 @@ def upload(**kwargs):
     if kwargs['zip'] or kwargs['input_config_file']:
         if kwargs.pop('zip', False):
             pack_path = kwargs['input']
+            kwargs.pop('input_config_file')
 
         else:
             config_file_path = kwargs['input_config_file']
@@ -807,7 +808,9 @@ def upload(**kwargs):
         kwargs['input'] = packs_zip_path
         kwargs['pack_names'] = pack_names
     else:
+        kwargs.pop('zip')
         kwargs.pop('keep_zip')
+        kwargs.pop('input_config_file')
 
     check_configuration_file('upload', kwargs)
     return Uploader(**kwargs).upload()

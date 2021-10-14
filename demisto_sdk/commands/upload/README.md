@@ -59,10 +59,9 @@ Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up.
     Verbose output
     
 * **--input-config-file**
-
+    
     The path to the config file to download all the custom packs from
-
-
+    
 ### Examples
 ```
 demisto-sdk upload -i Packs/HelloWorld/Integrations/HelloWorld/

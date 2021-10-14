@@ -542,7 +542,7 @@ class PackDependencies:
             playbook_dependencies.update(PackDependencies._differentiate_playbook_implementing_objects(
                 playbook_data.get('lists', []),
                 skippable_tasks,
-                id_set['lists'],
+                id_set['Lists'],
                 exclude_ignored_dependencies
             ))
 

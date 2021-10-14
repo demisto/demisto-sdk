@@ -1,4 +1,6 @@
 # Changelog
+# 1.5.2
+* Fixed an issue in **validate** in repositories which are not in GitHub or GitLab
 * Added a validation that verifies that readme image absolute links do not contain the working branch name.
 * Added a validation to ensure reputation command's default argument is set as an array input.
 
@@ -11,6 +13,8 @@
 * Fixed an issue where there **validate** command on release notes file crashed when author image was added or modified.
 * Added input handling when running **find-dependencies**, replacing string manipulations.
 * Fixed an issue where the **validate** command did not handle multiple playbooks with the same name in the id_set.
+* Added support for GitLab repositories in **validate**
+
 # 1.5.0
 * Fixed an issue where **upload** command failed to upload packs not under content structure.
 * Added support for **init** command to run from non-content repo.

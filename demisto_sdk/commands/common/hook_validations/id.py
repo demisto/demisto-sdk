@@ -517,7 +517,13 @@ class IDSetValidations(BaseValidator):
         Returns:
             bool. Whether the playbook's version match playbook's entities.
         """
-        invalid_version_entities = []
+        # the following dict holds the playbook names as keys and true/false whether the version is valid.
+        # it handles the case where multiple playbook IDs appear in the id_set and each one of them support different versions.
+        # for example:
+        # main_playbook_version = '5.0.0'
+        # id_set = [{'name': 'pb1', 'fromversion': '5.0.0', 'toversion': '5.4.9'}, {'name': 'pb1' - 'fromversion': '5.5.0'}]
+        # entity_status will look like that: { 'pb1': True}
+        entity_status: dict = {}
         implemented_entities = implemented_entity_list_from_playbook.copy()
         is_valid = True, None
         for entity_data_dict in entity_set_from_id_set:
@@ -542,10 +548,13 @@ class IDSetValidations(BaseValidator):
 
                 # if entities with miss-matched versions were found and skipunavailable is
                 # not set or main playbook fromversion is below 6.0.0, fail the validation
-                if not is_version_valid and not skip_unavailable:
-                    invalid_version_entities.append(entity_name)
+                if is_version_valid or skip_unavailable:
+                    entity_status[entity_id] = True
+                else:
+                    entity_status.setdefault(entity_id, False)
                 if entity_name in implemented_entities:
                     implemented_entities.remove(entity_name)
+        invalid_version_entities = [entity_name for entity_name, status in entity_status.items() if status is False]
 
         if invalid_version_entities:
             error_message, error_code = Errors.content_entity_version_not_match_playbook_version(

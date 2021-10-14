@@ -1,6 +1,8 @@
 # Changelog
 # 1.5.2
 * Fixed an issue in **validate** in repositories which are not in GitHub or GitLab
+* Added a validation that verifies that readme image absolute links do not contain the working branch name.
+* Added a validation to ensure reputation command's default argument is set as an array input.
 
 # 1.5.1
 * Fixed an issue where **validate** command failed to recognized test playbooks for beta integrations as valid tests.

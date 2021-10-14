@@ -1368,19 +1368,12 @@ class PackDependencies:
             exclude_ignored_dependencies,
         )
 
-        lists_dependencies = PackDependencies._collect_lists_dependencies(
-            pack_items['lists'],
-            id_set,
-            verbose,
-            exclude_ignored_dependencies,
-        )
-
         pack_dependencies = (
             scripts_dependencies | playbooks_dependencies | layouts_dependencies | incidents_fields_dependencies |
             indicators_types_dependencies | integrations_dependencies | incidents_types_dependencies |
             classifiers_dependencies | mappers_dependencies | widget_dependencies | dashboards_dependencies |
             reports_dependencies | generic_types_dependencies | generic_modules_dependencies |
-            generic_fields_dependencies | lists_dependencies
+            generic_fields_dependencies
         )
 
         return pack_dependencies

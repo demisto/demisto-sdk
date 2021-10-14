@@ -669,7 +669,6 @@ TEST_PACK = 'Packs/TestPack'
 INVALID_ZIP = 'invalid_zip'
 INVALID_ZIP_ERROR = 'Error: Given input path: {path} does not exist'
 API_CLIENT = DefaultApi()
-UPLOADER = Uploader(input='')
 
 
 def mock_api_client(mocker):
@@ -909,7 +908,7 @@ class TestZippedPackUpload:
         assert isinstance(result.exception, SystemExit)
         assert f"Invalid value for '-i' / '--input': Path '{invalid_zip_path}' does not exist" in result.stderr
 
-    def test_upload_zipped_packs(self, mocker):
+    def test_upload_custom_packs_from_config_file(self, mocker):
         """
         Given:
             - zipped pack or zip of pack zips to upload

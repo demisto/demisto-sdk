@@ -911,12 +911,13 @@ class TestZippedPackUpload:
     def test_upload_custom_packs_from_config_file(self, mocker):
         """
         Given:
-            - zipped pack or zip of pack zips to upload
+            - Configuration file with custom packs (zipped packs and unzipped packs) to upload
         When:
             - call to upload command
         Then:
             - validate the upload_content_packs in the api client was called correct
               and the pack verification ws turned on and off
+              ans status code is 0 (Ok)
         """
         # prepare
         mock_api_client(mocker)
@@ -925,7 +926,8 @@ class TestZippedPackUpload:
         mocker.patch.object(Uploader, 'notify_user_should_override_packs', return_value=True)
 
         # run
-        status_code = click.Context(command=upload).invoke(upload, input_config_file='./data/xsoar_config.json')
+        status_code = click.Context(command=upload).invoke(
+            upload, input_config_file=f'{git_path()}/demisto_sdk/commands/upload/tests/data/xsoar_config.json')
 
         # validate
         disable_verification_call_args = tools.update_server_configuration.call_args_list[0][1]

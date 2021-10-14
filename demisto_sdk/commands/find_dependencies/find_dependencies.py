@@ -539,6 +539,13 @@ class PackDependencies:
                     packs_found_from_indicator_fields)
                 playbook_dependencies.update(pack_dependencies_data)
 
+            playbook_dependencies.update(PackDependencies._differentiate_playbook_implementing_objects(
+                playbook_data.get('lists', []),
+                skippable_tasks,
+                id_set['lists'],
+                exclude_ignored_dependencies
+            ))
+
             if playbook_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
                 if verbose:

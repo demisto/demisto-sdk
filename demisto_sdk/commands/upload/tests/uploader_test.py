@@ -669,6 +669,7 @@ TEST_PACK = 'Packs/TestPack'
 INVALID_ZIP = 'invalid_zip'
 INVALID_ZIP_ERROR = 'Error: Given input path: {path} does not exist'
 API_CLIENT = DefaultApi()
+UPLOADER = Uploader(input='')
 
 
 def mock_api_client(mocker):
@@ -907,6 +908,36 @@ class TestZippedPackUpload:
         assert result.exit_code == 2
         assert isinstance(result.exception, SystemExit)
         assert f"Invalid value for '-i' / '--input': Path '{invalid_zip_path}' does not exist" in result.stderr
+
+    def test_upload_zipped_packs(self, mocker):
+        """
+        Given:
+            - zipped pack or zip of pack zips to upload
+        When:
+            - call to upload command
+        Then:
+            - validate the upload_content_packs in the api client was called correct
+              and the pack verification ws turned on and off
+        """
+        # prepare
+        mock_api_client(mocker)
+        mocker.patch.object(API_CLIENT, 'upload_content_packs')
+        mocker.patch.object(tools, 'update_server_configuration', return_value=(None, None, {}))
+        mocker.patch.object(Uploader, 'notify_user_should_override_packs', return_value=True)
+
+        # run
+        status_code = click.Context(command=upload).invoke(upload, input_config_file='./data/xsoar_config.json')
+
+        # validate
+        disable_verification_call_args = tools.update_server_configuration.call_args_list[0][1]
+        enable_verification_call_args = tools.update_server_configuration.call_args_list[1][1]
+
+        assert disable_verification_call_args['server_configuration'][constants.PACK_VERIFY_KEY] == 'false'
+        assert constants.PACK_VERIFY_KEY in enable_verification_call_args['config_keys_to_delete']
+        assert status_code == 0
+
+        uploaded_file_path = API_CLIENT.upload_content_packs.call_args[1]['file']
+        assert 'uploadable_packs.zip' in str(uploaded_file_path)
 
 
 def exception_raiser(**kwargs):

@@ -386,3 +386,26 @@ def sort_directories_based_on_dependencies(dir_list: list) -> list:
         key=lambda item: srt.get(os.path.basename(item))  # type: ignore[arg-type, return-value]
     )
     return dir_list
+
+
+class ParseConfigFile:
+
+    def __init__(self, config_file_path: str):
+        self.config_file_path = config_file_path
+
+    def parse_config_file(self):
+        if not self.config_file_path:
+            return
+        config_file_data = self.get_config_file_data()
+        custom_packs_paths = self.get_custom_packs_paths(config_file_data)
+        return custom_packs_paths
+
+    def get_config_file_data(self):
+        with open(self.config_file_path) as cfp:
+            config_file_data = json.load(cfp)
+        return config_file_data
+
+    def get_custom_packs_paths(self, config_file_data):
+        custom_packs = config_file_data.get('custom_packs', [])
+        custom_packs_paths = [pack.get('url') for pack in custom_packs]
+        return custom_packs_paths

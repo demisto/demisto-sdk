@@ -1,0 +1,31 @@
+
+## coverage-analyze
+Print and analyze coverage reports.
+
+**Use-Cases**:
+Generating and printing the coverage reports.
+
+**Arguments**:
+* **-i COVERAGE_PATH, --input COVERAGE_PATH**
+The .coverage file to analyze.
+* **--default-min-coverage**
+Default minimum coverage (for new files). The default value is 70.
+* **--allowed-coverage-degradation-percentage**
+Allowed coverage degradation percentage (for modified files). The default value is 1.0.
+* **--no-cache**
+Force download of the previous coverage report file.
+* **--report-dir**
+Directory of the coverage report files. The default value is ./coverage_report
+* **--cpus CPUS_NUMBER**
+Number of cpus/vcpus availble - only required when os not reflect number of cpus
+> CircleCI always show 32, but for example medium has 3.
+* **--report-type**
+The type of coverage report (posible values: 'text', 'html', 'xml', 'json' or 'all').
+* **---no-min-coverage-enforcement**
+Do not enforce minimum coverage.
+* **--previous-coverage-report-url**
+URL of the previous coverage report. The default value is https://storage.googleapis.com/marketplace-dist-dev/code-coverage/coverage-min.json
+
+**Examples**:
+1. print report of .coverge file - `demisto-sdk coverage-analyze -i .coverage`
+2. create report of .coverge file - `demisto-sdk coverage-analyze -i .coverage --report-type html`

@@ -138,7 +138,7 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.GENERIC_MODULE: 'Modules',
     FileType.GENERIC_TYPE: 'Object Types',
     FileType.GENERIC_FIELD: 'Object Fields',
-    FileType.LISTS: 'Lists'
+    FileType.LISTS: 'Lists',
 }
 
 ENTITY_TYPE_TO_DIR = {

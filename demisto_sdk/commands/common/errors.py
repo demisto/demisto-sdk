@@ -300,7 +300,7 @@ ERROR_CODE = {
     "invalid_generic_field_id": {'code': "GF101", 'ui_applicable': False, 'related_field': 'id'},
     "non_default_additional_info": {'code': "IN142", 'ui_applicable': True, 'related_field': 'additionalinfo'},
     "missing_default_additional_info": {'code': "IN143", 'ui_applicable': True, 'related_field': 'additionalinfo'},
-    "invalid_from_server_version_in_lists": {'code': "L100", 'ui_applicable': False,
+    "invalid_from_server_version_in_lists": {'code': "LI100", 'ui_applicable': False,
                                              'related_field': 'fromServerVersion'},
 
 }

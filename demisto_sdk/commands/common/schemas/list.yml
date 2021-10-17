@@ -54,7 +54,7 @@ mapping:
     type: seq
     sequence:
       - type: str
-  toServerVersion:
+  toVersion:
     type: str
     required: True
   truncated:

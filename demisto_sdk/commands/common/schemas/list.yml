@@ -12,7 +12,7 @@ mapping:
       type: str
   description:
     type: str
-  fromServerVersion:
+  fromVersion:
     type: str
     required: True
   hasRole:

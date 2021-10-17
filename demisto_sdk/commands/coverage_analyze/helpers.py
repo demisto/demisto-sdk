@@ -70,7 +70,7 @@ def get_coverage_obj(coverage_file: Optional[str], report_dir: Optional[str], lo
 
 def coverage_files() -> Iterable[str]:
     """
-    iterate over the '.coverage' files in content repo.
+    iterate over the '.coverage' files in the repo.
     """
     packs_path = Path('Packs')
     for cov_path in packs_path.glob('*/Integrations/*/.coverage'):

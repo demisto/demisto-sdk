@@ -47,6 +47,7 @@ class ListsValidator(ContentEntityValidator):
         if self.from_version:
             if LooseVersion(self.from_version) < LooseVersion(FROM_VERSION_LISTS):
                 error_message, error_code = Errors.invalid_from_server_version_in_lists('fromServerVersion')
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                if self.handle_error(error_message, error_code, suggested_fix=Errors.suggest_fix(self.file_path),
+                                     file_path=self.file_path):
                     return False
         return False

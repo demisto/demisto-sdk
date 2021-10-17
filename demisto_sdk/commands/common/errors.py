@@ -305,8 +305,6 @@ ERROR_CODE = {
 
 }
 
-# TODO: add errors
-
 
 def get_all_error_codes() -> List:
     error_codes = []

@@ -543,7 +543,8 @@ ID_IN_ROOT = [  # entities in which 'id' key is in the root
     'incident_type',
     'layoutscontainer',
     'mapper',
-    'pre_process_rule'
+    'pre_process_rule',
+    'lists',
 ]
 
 INTEGRATION_PREFIX = 'integration'

@@ -49,4 +49,4 @@ class ListsValidator(ContentEntityValidator):
                 error_message, error_code = Errors.invalid_from_server_version_in_lists('fromServerVersion')
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
-        return True
+        return False

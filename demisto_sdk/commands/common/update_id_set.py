@@ -478,7 +478,6 @@ def get_playbook_data(file_path: str) -> dict:
                                                                                           graph
                                                                                           )
     implementing_lists, implementing_lists_skippable = get_lists_names_from_playbook(data_dictionary, graph)
-    print(implementing_lists)
     command_to_integration, command_to_integration_skippable = get_commands_from_playbook(data_dictionary)
     skippable_tasks = (implementing_scripts_skippable + implementing_playbooks_skippable +
                        command_to_integration_skippable + implementing_lists_skippable)
@@ -1408,16 +1407,13 @@ def get_generic_module_data(path):
     return {id_: data}
 
 
-def get_list_data(path: str, print_logs: bool):
+def get_list_data(path: str):
     json_data = get_json(path)
     data = create_common_entity_data(path=path,
                                      name=json_data.get('name'),
                                      to_version=json_data.get('toServerVersion'),
                                      from_version=json_data.get('fromServerVersion'),
                                      pack=get_pack_name(path))
-
-    if print_logs:
-        print(f'adding {path} to id_set')
 
     return {json_data.get('id'): data}
 
@@ -1786,6 +1782,18 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
 
         progress_bar.update(1)
 
+        if 'Lists' in objects_to_create:
+            print_color("\nStarting iteration over Lists", LOG_COLORS.GREEN)
+            for arr in pool.map(partial(process_general_items,
+                                        print_logs=print_logs,
+                                        expected_file_types=(FileType.LISTS,),
+                                        data_extraction_func=get_list_data,
+                                        ),
+                                get_general_paths(LISTS_DIR, pack_to_create)):
+                lists_list.extend(arr)
+
+        progress_bar.update(1)
+
         if 'GenericDefinitions' in objects_to_create:
             print_color("\nStarting iteration over Generic Definitions", LOG_COLORS.GREEN)
             print_color(f"pack to create: {pack_to_create}", LOG_COLORS.YELLOW)
@@ -1834,18 +1842,6 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
 
         progress_bar.update(1)
 
-        if 'Lists' in objects_to_create:
-            print_color("\nStarting iteration over Lists", LOG_COLORS.GREEN)
-            print_color(f"pack to create: {pack_to_create}", LOG_COLORS.YELLOW)
-            for arr in pool.map(partial(process_general_items,
-                                        print_logs=print_logs,
-                                        expected_file_types=(FileType.LISTS,),
-                                        data_extraction_func=get_list_data,
-                                        ),
-                                get_general_paths(LISTS_DIR, pack_to_create)):
-                lists_list.extend(arr)
-
-        progress_bar.update(1)
 
     new_ids_dict = OrderedDict()
     # we sort each time the whole set in case someone manually changed something

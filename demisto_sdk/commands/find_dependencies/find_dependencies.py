@@ -517,7 +517,6 @@ class PackDependencies:
                 exclude_ignored_dependencies
             ))
 
-            print(playbook_dependencies)
 
             playbook_dependencies.update(PackDependencies._differentiate_playbook_implementing_objects(
                 playbook_data.get('lists', []),
@@ -525,8 +524,7 @@ class PackDependencies:
                 id_set['Lists'],
                 exclude_ignored_dependencies
             ))
-            print("------------------------------------------------")
-            print(playbook_dependencies)
+
 
             # ---- incident fields packs ----
             # playbook dependencies from incident fields should be marked as optional unless CommonTypes pack,

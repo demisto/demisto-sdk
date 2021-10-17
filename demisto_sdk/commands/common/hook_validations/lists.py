@@ -13,8 +13,8 @@ class ListsValidator(ContentEntityValidator):
                  json_file_path=None, **kwargs):
         super().__init__(structure_validator, ignored_errors, print_as_warnings,
                          json_file_path=json_file_path, **kwargs)
-        self.from_version = self.current_file.get('fromServerVersion')
-        self.to_version = self.current_file.get('toServerVersion')
+        self.from_version = self.current_file.get('fromVersion')
+        self.to_version = self.current_file.get('toVersion')
 
     def is_valid_list(self) -> bool:
         """Check whether the list is valid or not.

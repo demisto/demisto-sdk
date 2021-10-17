@@ -478,6 +478,7 @@ def get_playbook_data(file_path: str) -> dict:
                                                                                           graph
                                                                                           )
     implementing_lists, implementing_lists_skippable = get_lists_names_from_playbook(data_dictionary, graph)
+    print(implementing_lists)
     command_to_integration, command_to_integration_skippable = get_commands_from_playbook(data_dictionary)
     skippable_tasks = (implementing_scripts_skippable + implementing_playbooks_skippable +
                        command_to_integration_skippable + implementing_lists_skippable)

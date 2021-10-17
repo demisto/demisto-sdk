@@ -164,7 +164,7 @@ ENTITY_TYPE_TO_DIR = {
     FileType.GENERIC_MODULE.value: GENERIC_MODULES_DIR,
     FileType.GENERIC_FIELD.value: GENERIC_FIELDS_DIR,
     FileType.GENERIC_TYPE.value: GENERIC_TYPES_DIR,
-    FileType.LISTS.value: LISTS_DIR
+    FileType.LISTS.value: LISTS_DIR,
 
 }
 

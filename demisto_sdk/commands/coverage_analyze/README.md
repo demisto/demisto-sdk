@@ -16,9 +16,6 @@ Allowed coverage degradation percentage (for modified files). The default value 
 Force download of the previous coverage report file.
 * **--report-dir**
 Directory of the coverage report files. The default value is ./coverage_report
-* **--cpus CPUS_NUMBER**
-Number of cpus/vcpus availble - only required when os not reflect number of cpus
-> CircleCI always show 32, but for example medium has 3.
 * **--report-type**
 The type of coverage report (posible values: 'text', 'html', 'xml', 'json' or 'all').
 * **---no-min-coverage-enforcement**

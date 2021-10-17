@@ -698,14 +698,12 @@ def lint(**kwargs):
     default='coverage_report', type=PathsParamType(resolve_path=True))
 @click.option(
     "--report-type", help="The type of coverage report (posible values: 'text', 'html', 'xml', 'json' or 'all').", type=str)
-@click.option("--no-min-coverage-enforcement", help="Do no enforce minimum coverage.", is_flag=True)
+@click.option("--no-min-coverage-enforcement", help="Do not enforce minimum coverage.", is_flag=True)
 @click.option(
     "--previous-coverage-report-url", help="URL of the previous coverage report.",
     default='https://storage.googleapis.com/marketplace-dist-dev/code-coverage/coverage-min.json', type=str
 )
 def coverage_analyze(**kwargs):
-    """
-    """
     try:
         no_degradation_check = kwargs['allowed_coverage_degradation_percentage'] == 100.0
         no_min_coverage_enforcement = kwargs['no_min_coverage_enforcement']
@@ -721,6 +719,7 @@ def coverage_analyze(**kwargs):
             previous_coverage_report_url=kwargs['previous_coverage_report_url']
         )
         cov_report.coverage_report()
+        # if no_degradation_check=True we will suppress the minimum coverage check
         if no_degradation_check or cov_report.coverage_diff_report() or no_min_coverage_enforcement:
             return 0
     except Exception as error:

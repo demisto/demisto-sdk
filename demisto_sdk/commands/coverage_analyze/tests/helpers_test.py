@@ -96,7 +96,7 @@ class TestParseReportType:
     def test_with_all_and_other_values(self):
         with pytest.raises(InvalidReportType) as invalid_report_type:
             parse_report_type('xml,all')
-            assert str(invalid_report_type) == 'ou may not use the "all" report type in addition to other report types.'
+            assert str(invalid_report_type) == 'You may not use the "all" report type in addition to other report types.'
 
     class TestInvalidReportType:
 

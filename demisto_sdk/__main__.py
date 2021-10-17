@@ -691,7 +691,8 @@ def lint(**kwargs):
     default=1.0, type=click.FloatRange(0.0, 100.0)
 )
 @click.option(
-    "--no-cache", help="Force download of the previous coverage report file.",
+    "--no-cache", help="Force download of the previous coverage report file. (when you will use this flag we will not "
+    "try to check the local cache (stored in the report-dir) and also not create a new cache.)",
     is_flag=True, type=bool)
 @click.option(
     "--report-dir", help="Directory of the coverage report files.",

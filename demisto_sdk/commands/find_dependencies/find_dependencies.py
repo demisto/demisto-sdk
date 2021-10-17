@@ -517,6 +517,17 @@ class PackDependencies:
                 exclude_ignored_dependencies
             ))
 
+            print(playbook_dependencies)
+
+            playbook_dependencies.update(PackDependencies._differentiate_playbook_implementing_objects(
+                playbook_data.get('lists', []),
+                skippable_tasks,
+                id_set['Lists'],
+                exclude_ignored_dependencies
+            ))
+            print("------------------------------------------------")
+            print(playbook_dependencies)
+
             # ---- incident fields packs ----
             # playbook dependencies from incident fields should be marked as optional unless CommonTypes pack,
             # as customers do not have to use the OOTB inputs.
@@ -538,13 +549,6 @@ class PackDependencies:
                 pack_dependencies_data = PackDependencies._update_optional_commontypes_pack_dependencies(
                     packs_found_from_indicator_fields)
                 playbook_dependencies.update(pack_dependencies_data)
-
-            playbook_dependencies.update(PackDependencies._differentiate_playbook_implementing_objects(
-                playbook_data.get('lists', []),
-                skippable_tasks,
-                id_set['Lists'],
-                exclude_ignored_dependencies
-            ))
 
             if playbook_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.

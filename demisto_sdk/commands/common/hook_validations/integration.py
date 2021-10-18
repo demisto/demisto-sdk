@@ -1374,7 +1374,8 @@ class IntegrationValidator(ContentEntityValidator):
         return True
 
     def has_no_fromlicense_key_in_contributions_integration(self):
-        if pack_name := get_pack_name(self.file_path):
+        pack_name = get_pack_name(self.file_path)
+        if pack_name:
             metadata_path = Path(PACKS_DIR, pack_name, PACKS_PACK_META_FILE_NAME)
             metadata_content = self.get_metadata_file_content(metadata_path)
 

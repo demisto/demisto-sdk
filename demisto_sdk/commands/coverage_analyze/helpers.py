@@ -10,6 +10,7 @@ from typing import Dict, Iterable, List, Optional
 import coverage
 import requests
 
+EXCLUDED_LINES = ['pragma: no cover', r'if __name__ in (\(|\[)[\W\w]+(\)|\]):']
 logger = logging.getLogger('demisto-sdk')
 
 
@@ -51,6 +52,7 @@ def get_coverage_obj(coverage_file: Optional[str], report_dir: Optional[str], lo
     """
     coverage_obj = coverage.Coverage(config_file=False, auto_data=False)
     coverage_obj.set_option('report:precision', precision)
+    coverage_obj.set_option('report:exclude_lines', EXCLUDED_LINES)
 
     if coverage_file:
         coverage_obj.set_option('run:data_file', coverage_file)

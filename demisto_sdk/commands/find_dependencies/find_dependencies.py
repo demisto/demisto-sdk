@@ -514,17 +514,15 @@ class PackDependencies:
                 playbook_data.get('implementing_playbooks', []),
                 skippable_tasks,
                 id_set['playbooks'],
-                exclude_ignored_dependencies
+                exclude_ignored_dependencies,
             ))
-
 
             playbook_dependencies.update(PackDependencies._differentiate_playbook_implementing_objects(
                 playbook_data.get('lists', []),
                 skippable_tasks,
                 id_set['Lists'],
-                exclude_ignored_dependencies
+                exclude_ignored_dependencies,
             ))
-
 
             # ---- incident fields packs ----
             # playbook dependencies from incident fields should be marked as optional unless CommonTypes pack,

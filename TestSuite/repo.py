@@ -202,7 +202,6 @@ class Repo:
         generic_definition.update({'name': f'generic_{name} - generic_definition'})
         generic_definition.update({'auditable': False})
 
-
         return pack
 
     def setup_content_repo(self, number_of_packs):

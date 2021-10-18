@@ -1374,16 +1374,20 @@ class IntegrationValidator(ContentEntityValidator):
         return True
 
     def has_no_fromlicense_key_in_contributions_integration(self):
-        metadata_path = Path(PACKS_DIR, get_pack_name(self.file_path), PACKS_PACK_META_FILE_NAME)
-        metadata_content = self.get_metadata_file_content(metadata_path)
-        if metadata_content.get('support') == XSOAR_SUPPORT:
-            return True
+        if pack_name := get_pack_name(self.file_path):
+            metadata_path = Path(PACKS_DIR, pack_name, PACKS_PACK_META_FILE_NAME)
+            metadata_content = self.get_metadata_file_content(metadata_path)
+
+            if metadata_content.get('support') == XSOAR_SUPPORT:
+                return True
 
         conf_params = self.current_file.get('configuration', [])
         for param_name in conf_params:
             if 'fromlicense' in param_name.keys():
                 error_message, error_code = Errors.fromlicense_in_parameters(param_name)
+
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self.is_valid = False
                     return False
+
         return True

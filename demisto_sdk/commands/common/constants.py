@@ -1193,7 +1193,7 @@ VALIDATED_PACK_ITEM_TYPES = [
     'Classifiers',
     'Layouts',
     'PreProcessRules',
-    'Lists'
+    'Lists',
 ]
 
 FIRST_FETCH = 'first_fetch'

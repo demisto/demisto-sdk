@@ -1,5 +1,6 @@
 import os
 import re
+from pathlib import Path
 from typing import Dict, Optional
 
 import yaml
@@ -9,8 +10,8 @@ from demisto_sdk.commands.common.constants import (
     DEPRECATED_REGEXES, ENDPOINT_COMMAND_NAME, ENDPOINT_FLEXIBLE_REQUIRED_ARGS,
     FEED_REQUIRED_PARAMS, FETCH_REQUIRED_PARAMS, FIRST_FETCH,
     FIRST_FETCH_PARAM, INTEGRATION_CATEGORIES, IOC_OUTPUTS_DICT, MAX_FETCH,
-    MAX_FETCH_PARAM, PYTHON_SUBTYPES, REPUTATION_COMMAND_NAMES, TYPE_PWSH,
-    XSOAR_CONTEXT_STANDARD_URL)
+    MAX_FETCH_PARAM, PACKS_DIR, PACKS_PACK_META_FILE_NAME, PYTHON_SUBTYPES,
+    REPUTATION_COMMAND_NAMES, TYPE_PWSH, XSOAR_CONTEXT_STANDARD_URL)
 from demisto_sdk.commands.common.default_additional_info_loader import \
     load_default_additional_info_dict
 from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
@@ -28,6 +29,7 @@ from demisto_sdk.commands.common.tools import (
     get_file_version_suffix_if_exists, get_files_in_dir, get_pack_name,
     is_iron_bank_pack, print_error, server_version_compare)
 
+XSOAR_SUPPORT = 'XSOAR'
 default_additional_info = load_default_additional_info_dict()
 
 
@@ -103,6 +105,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_there_separators_in_names(),
             self.name_not_contain_the_type(),
             self.is_valid_endpoint_command(),
+            self.has_no_fromlicense_key_in_contributions_integration(),
         ]
 
         return all(answers)
@@ -1368,4 +1371,19 @@ class IntegrationValidator(ContentEntityValidator):
             self.handle_error(missing_error_message, missing_error_code, self.current_file,
                               suggested_fix=Errors.suggest_fix(self.file_path))
             return False
+        return True
+
+    def has_no_fromlicense_key_in_contributions_integration(self):
+        metadata_path = Path(PACKS_DIR, get_pack_name(self.file_path), PACKS_PACK_META_FILE_NAME)
+        metadata_content = self.get_metadata_file_content(metadata_path)
+        if metadata_content.get('support') == XSOAR_SUPPORT:
+            return True
+
+        conf_params = self.current_file.get('configuration', [])
+        for param_name in conf_params:
+            if 'fromlicense' in param_name.keys():
+                error_message, error_code = Errors.fromlicense_in_parameters(param_name)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    self.is_valid = False
+                    return False
         return True

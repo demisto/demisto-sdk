@@ -1881,13 +1881,8 @@ def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=
         if object_type == 'Layouts':
             if dict1.get('kind', '') != dict2.get('kind', ''):
                 return False
-            if dict1.get('typeId', '') != dict2.get('typeId', ''):
+            if dict1.get('typeID', '') != dict2.get('typeID', ''):
                 return False
-
-        # If they have the same pack name they actually the same entity.
-        # Added to support merge between two id-sets that contain the same pack.
-        if dict1.get('pack') == dict2.get('pack'):
-            return False
 
         # A: 3.0.0 - 3.6.0
         # B: 3.5.0 - 4.5.0
@@ -1899,9 +1894,9 @@ def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=
             dict2_from_version <= dict1_from_version < dict2_to_version,  # will catch (C, B), (B, A), (C, A)
             dict2_from_version < dict1_to_version <= dict2_to_version,  # will catch (C, B), (C, A)
         ]):
-            print_warning('The following {} have the same ID ({}) and their versions overlap: '
-                          '"1.{}-{}", "2.{}-{}".'.format(object_type, id_to_check, dict1_from_version, dict1_to_version,
-                                                         dict2_from_version, dict2_to_version))
+            print_warning(f'The following {object_type} have the same ID ({id_to_check}) and their versions overlap: '
+                          f'1) "{dict1_from_version}-{dict1_to_version}", '
+                          f'2) "{dict2_from_version}-{dict2_to_version}".')
             return True
 
         if print_logs and dict1.get('name') != dict2.get('name'):

@@ -3,6 +3,8 @@
 * Fixed an issue in **validate** in repositories which are not in GitHub or GitLab
 * Added a validation that verifies that readme image absolute links do not contain the working branch name.
 * Added a validation to ensure reputation command's default argument is set as an array input.
+* Added the `--fail-duplicates` flag for the **merge-id-set** command which will fail the command if duplicates are found.
+* Added the `--fail-duplicates` flag for the **create-id-set** command which will fail the command if duplicates are found.
 
 # 1.5.1
 * Fixed an issue where **validate** command failed to recognized test playbooks for beta integrations as valid tests.

@@ -1411,8 +1411,8 @@ def get_list_data(path: str):
     json_data = get_json(path)
     data = create_common_entity_data(path=path,
                                      name=json_data.get('name'),
-                                     to_version=json_data.get('toServerVersion'),
-                                     from_version=json_data.get('fromServerVersion'),
+                                     to_version=json_data.get('toVersion'),
+                                     from_version=json_data.get('fromVersion'),
                                      pack=get_pack_name(path))
 
     return {json_data.get('id'): data}

@@ -50,4 +50,5 @@ class ListsValidator(ContentEntityValidator):
                 if self.handle_error(error_message, error_code, suggested_fix=Errors.suggest_fix(self.file_path),
                                      file_path=self.file_path):
                     return False
+            return True
         return False

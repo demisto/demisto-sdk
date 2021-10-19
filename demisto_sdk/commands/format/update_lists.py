@@ -8,7 +8,7 @@ from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
 
-FROM_VERSION_LISTS = '6.5.0'
+MIN_FROM_VERSION_LISTS = '6.5.0'
 
 
 class ListsFormat(BaseUpdateJSON):
@@ -51,8 +51,8 @@ class ListsFormat(BaseUpdateJSON):
     def set_from_server_version_to_default(self, location=None):
         """Replaces the fromVersion of the YML to default."""
         if self.verbose:
-            click.echo(f'Trying to set JSON fromVersion to default: {FROM_VERSION_LISTS}')
+            click.echo(f'Trying to set JSON fromVersion to default: {MIN_FROM_VERSION_LISTS}')
         if location and not location.get('fromVersion'):
-            location['fromVersion'] = FROM_VERSION_LISTS
+            location['fromVersion'] = MIN_FROM_VERSION_LISTS
         else:
-            self.data.setdefault('fromVersion', FROM_VERSION_LISTS)
+            self.data.setdefault('fromVersion', MIN_FROM_VERSION_LISTS)

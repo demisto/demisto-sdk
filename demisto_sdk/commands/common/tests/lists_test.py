@@ -12,6 +12,8 @@ from demisto_sdk.commands.common.tools import src_root
 TEST_DATA = src_root() / 'tests' / 'test_files'
 TEST_CONTENT_REPO = TEST_DATA / 'content_slim'
 LIST_GOOD = TEST_CONTENT_REPO / PACKS_DIR / 'Sample01' / LISTS_DIR / 'list-checked_integrations.json'
+LIST_BAD_FROM_VERSION = TEST_CONTENT_REPO / PACKS_DIR / 'Sample01' / LISTS_DIR / 'bad_from_version.json'
+LIST_BAD_VERSION = TEST_CONTENT_REPO / PACKS_DIR / 'Sample01' / LISTS_DIR / 'bad_version.json'
 
 
 def mock_structure(file_path=None, current_file=None, old_file=None):
@@ -32,16 +34,19 @@ def mock_structure(file_path=None, current_file=None, old_file=None):
 
 class TestListValidator:
 
-    @pytest.mark.parametrize('list_path, is_valid', [(LIST_GOOD, True)])
+    @pytest.mark.parametrize('list_path, is_valid', [(LIST_GOOD, True), (LIST_BAD_VERSION, False),
+                                                     (LIST_BAD_FROM_VERSION, False)])
     def test_is_valid_list(self, list_path, is_valid):
         """
         Given
-        - A list with fromServerVersion of 6.5.0 and version of -1
+        - A list with fromVersion of 6.5.0 and version of -1 OR A list with fromVersion of 1 and version of 1
         When
         - Validating a list
         Then
         - Return that the list is valid
         """
-        structure = mock_structure(file_path=list_path)
-        list_item = ListsValidator(structure, json_file_path=list_path)
+        structure = mock_structure(file_path=str(list_path))
+        list_item = ListsValidator(structure, json_file_path=str(list_path))
         assert list_item.is_valid_list() == is_valid
+
+

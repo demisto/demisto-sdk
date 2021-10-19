@@ -126,7 +126,7 @@ class Environment:
         ]}
         self.PRE_PROCESS_RULES_PACK_OBJECT = {'DummyPreProcessRule': [
             {'name': 'DummyPreProcessRule', 'id': 'DummyPreProcessRule',
-             'path': self.PRE_PROCESS_RULES_INSTANCE_PATH, 'file_ending': 'yml'}  # TODO: shouldnt be json?
+             'path': self.PRE_PROCESS_RULES_INSTANCE_PATH, 'file_ending': 'json'}
         ]}
         self.LISTS_PACK_OBJECT = {'DummyList': [
             {'name': 'DummyList', 'id': 'DummyList',

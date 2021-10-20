@@ -58,6 +58,7 @@ UPLOAD_SUPPORTED_ENTITIES = [
     FileType.DASHBOARD,
     FileType.LAYOUT,
     FileType.LAYOUTS_CONTAINER,
+    FileType.LISTS,
 ]
 
 
@@ -179,6 +180,7 @@ class Uploader:
         file_name = upload_object.path.name  # type: ignore
 
         entity_type = find_type(str(upload_object.path))
+        print(entity_type)
         if entity_type in UPLOAD_SUPPORTED_ENTITIES:
             if upload_object.from_version <= self.demisto_version <= upload_object.to_version:  # type: ignore
                 try:

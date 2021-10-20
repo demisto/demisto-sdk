@@ -7,8 +7,8 @@ from demisto_sdk.commands.common.tools import src_root
 TEST_DATA = src_root() / 'tests' / 'test_files'
 TEST_CONTENT_REPO = TEST_DATA / 'content_slim'
 LIST_GOOD = TEST_CONTENT_REPO / PACKS_DIR / 'Sample01' / LISTS_DIR / 'list-checked_integrations.json'
-LIST_BAD = TEST_CONTENT_REPO / PACKS_DIR / 'Sample01' / LISTS_DIR / 'sample_bad.json'
-LIST_BAD_NORMALIZED = TEST_CONTENT_REPO / PACKS_DIR / 'Sample01' / LISTS_DIR / 'list-sample_bad.json'
+LIST_BAD = TEST_CONTENT_REPO / PACKS_DIR / 'Sample01' / LISTS_DIR / 'bad_name.json'
+LIST_BAD_NORMALIZED = TEST_CONTENT_REPO / PACKS_DIR / 'Sample01' / LISTS_DIR / 'list-bad_name.json'
 
 
 def test_objects_factory():

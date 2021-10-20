@@ -167,6 +167,7 @@ class Uploader:
         """
         try:
             upload_object: Union[YAMLObject, JSONObject] = path_to_pack_object(path)
+            print(upload_object)
         except ContentFactoryError:
             file_name = os.path.split(path)[-1]
             message = f"Cannot upload {path} as the file type is not supported for upload."

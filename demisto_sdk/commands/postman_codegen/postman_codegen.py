@@ -449,4 +449,3 @@ def duplicate_requests_check(commands_names_dict: dict) -> None:
     assert len(duplicates_list) == 0, f'There are requests with non-unique names:{duplicates_list}.' \
                                       f' \n you should give a unique name to each request. ' \
                                       f' names are not case sensitive and whitespaces are ignored.'
-

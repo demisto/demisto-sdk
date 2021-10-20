@@ -6,13 +6,14 @@ from typing import Dict, List, Optional, Union
 import pytest
 import yaml
 
-from demisto_sdk.commands.common.legacy_git_tools import git_path
 import demisto_sdk.commands.common.tools as tools
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.generate_integration.code_generator import (
     IntegrationGeneratorConfig, IntegrationGeneratorOutput)
 from demisto_sdk.commands.postman_codegen.postman_codegen import (
-    create_body_format, flatten_collections, generate_command_outputs,
-    postman_to_autogen_configuration, build_commands_names_dict, duplicate_requests_check)
+    build_commands_names_dict, create_body_format, duplicate_requests_check,
+    flatten_collections, generate_command_outputs,
+    postman_to_autogen_configuration)
 
 
 class TestPostmanHelpers:

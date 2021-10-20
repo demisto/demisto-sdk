@@ -31,6 +31,14 @@ class ListsValidator(ContentEntityValidator):
 
         return all(validations)
 
+    def is_valid_version(self) -> bool:
+        """Checks if the version field is valid.
+
+        Returns:
+            bool. True if version field is valid, else False.
+        """
+        return self._is_valid_version()
+
     def is_valid_from_server_version(self) -> bool:
         """Checks if from version field is valid.
 

@@ -1,5 +1,6 @@
-from typing import Union
 import json
+from typing import Union
+
 import demisto_client
 from wcmatch.pathlib import Path
 

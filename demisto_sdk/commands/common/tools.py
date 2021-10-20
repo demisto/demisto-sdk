@@ -1081,8 +1081,6 @@ def find_type_by_path(path: str = '') -> Optional[FileType]:
     if path.endswith('.json'):
         if RELEASE_NOTES_DIR in path:
             return FileType.RELEASE_NOTES_CONFIG
-        elif LISTS_DIR in path:
-            return FileType.LISTS
 
     # integration image
     if path.endswith('_image.png') and not path.endswith("Author_image.png"):

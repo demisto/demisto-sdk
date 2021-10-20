@@ -25,21 +25,11 @@ class ListsValidator(ContentEntityValidator):
         """
         # Lists files have fromServerVersion instead of fromVersion
         validations: List = [
-            self.is_valid_version(),
+            self._is_valid_version(),
             self.is_valid_from_server_version(),
         ]
 
         return all(validations)
-
-    def is_valid_version(self) -> bool:
-        """Checks if the version field is valid.
-
-        Returns:
-            bool. True if version field is valid, else False.
-        """
-        if self.version != DEFAULT_VERSION:
-            return False
-        return True
 
     def is_valid_from_server_version(self) -> bool:
         """Checks if from version field is valid.

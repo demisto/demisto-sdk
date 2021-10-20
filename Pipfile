@@ -52,6 +52,7 @@ PyPDF2 = "*"
 PyYAML = "*"
 giturlparse = "*"
 pytest-freezegun = "*"
+demisto-sdk = {editable = true, path = "."}
 
 [dev-packages]
 mitmproxy = "==5.1.0"

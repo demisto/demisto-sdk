@@ -56,7 +56,6 @@ mapping:
       - type: str
   toVersion:
     type: str
-    required: True
   truncated:
     type: bool
   type:

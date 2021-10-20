@@ -1,12 +1,11 @@
 from typing import Union
-
+import json
 import demisto_client
 from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import LISTS, FileType
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import \
     JSONContentObject
-import json
 
 
 class Lists(JSONContentObject):

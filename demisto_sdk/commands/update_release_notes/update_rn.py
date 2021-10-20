@@ -407,7 +407,7 @@ class UpdateRN:
             'currentVersion', '99.99.99')
         if specific_version:
             if not is_valid_version_format(specific_version, current_version):
-                raise ValueError(f"Version number should be in x.y.z format and be consecutive with the latest version.")
+                raise ValueError("Version number should be in x.y.z format and be consecutive to the current version.")
             print_color(f"Bumping {self.pack} to the version {specific_version}. If you need to update"
                         f" the release notes a second time, please remove the -v flag.", LOG_COLORS.NATIVE)
             data_dictionary['currentVersion'] = specific_version
@@ -826,6 +826,16 @@ def get_from_version_at_update_rn(path: str) -> Optional[str]:
 
 
 def is_legal_version_format(specific_version: list) -> bool:
+    """ Checks whether the specified version is 'x.y.z' format, and contains only digits.
+
+        :param
+            specific_version: The specified version as a list
+
+        :rtype: ``bool``
+        :return
+        True if the specified version is in the right format, False otherwise
+
+    """
     if len(specific_version) == 3:
         if specific_version[0].isdigit()\
                 and specific_version[1].isdigit() \
@@ -835,7 +845,19 @@ def is_legal_version_format(specific_version: list) -> bool:
 
 
 def is_valid_version_format(specific_version: str, current_version: str) -> bool:
-    print("here")
+    """ Checks whether the specified version is a valid version:
+            - if it is in the right format
+            - if it is a consecutive version
+
+        :params
+            specific_version: The specified version as a list
+            current_version: The current version of tha pack, as a list
+
+        :rtype: ``bool``
+        :return
+        True if the specified version is in the right format, False otherwise
+
+    """
     specific_version = specific_version.split('.')
     current_version = current_version.split('.')
     if is_legal_version_format(specific_version):
@@ -846,6 +868,17 @@ def is_valid_version_format(specific_version: str, current_version: str) -> bool
 
 
 def is_valid_major_bump(specific_version: list, current_version: list) -> bool:
+    """ Checks whether the specified version is a valid 'major bump' version.
+
+        :params
+            specific_version: The specified version as a list
+            current_version: The current version of tha pack, as a list
+
+        :rtype: ``bool``
+        :return
+        True if the specified version is in the right format, False otherwise
+
+    """
     if int(specific_version[0]) == int(current_version[0]) + 1 and \
             int(specific_version[1]) == 0 and \
             int(specific_version[2]) == 0:
@@ -854,14 +887,36 @@ def is_valid_major_bump(specific_version: list, current_version: list) -> bool:
 
 
 def is_valid_minor_bump(specific_version: list, current_version: list) -> bool:
+    """ Checks whether the specified version is a valid 'minor bump' version.
+
+        :params
+            specific_version: The specified version as a list
+            current_version: The current version of tha pack, as a list
+
+        :rtype: ``bool``
+        :return
+        True if the specified version is in the right format, False otherwise
+
+    """
     if int(specific_version[0]) == int(current_version[0]) and \
-            int(specific_version[1]) == int(current_version[1] + 1) and \
+            int(specific_version[1]) == int(current_version[1]) + 1 and \
             int(specific_version[2]) == 0:
         return True
     return False
 
 
 def is_valid_revision_bump(specific_version: list, current_version: list) -> bool:
+    """ Checks whether the specified version is a valid 'revision bump' version.
+
+        :params
+            specific_version: The specified version as a list
+            current_version: The current version of tha pack, as a list
+
+        :rtype: ``bool``
+        :return
+        True if the specified version is in the right format, False otherwise
+
+    """
     if int(specific_version[0]) == int(current_version[0]) and \
             int(specific_version[1]) == int(current_version[1]) and \
             int(specific_version[2]) == int(current_version[2]) + 1:

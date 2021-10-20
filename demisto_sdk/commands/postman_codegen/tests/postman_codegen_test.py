@@ -7,11 +7,12 @@ import pytest
 import yaml
 
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+import demisto_sdk.commands.common.tools as tools
 from demisto_sdk.commands.generate_integration.code_generator import (
     IntegrationGeneratorConfig, IntegrationGeneratorOutput)
 from demisto_sdk.commands.postman_codegen.postman_codegen import (
     create_body_format, flatten_collections, generate_command_outputs,
-    postman_to_autogen_configuration)
+    postman_to_autogen_configuration, build_commands_names_dict, duplicate_requests_check)
 
 
 class TestPostmanHelpers:
@@ -76,6 +77,128 @@ class TestPostmanHelpers:
     ])
     def test_flatten_collections(self, collection: list, outputs: list):
         assert flatten_collections(collection) == outputs
+
+    def test_build_commands_names_dict_duplicate_names(self):
+        """
+        Given
+        - dictionary containing names of requests from a collection
+
+        When
+        - There are requests with names which have the same kebab case
+
+        Then
+        - returns names' dictionary with an entry of the matching kebab-case which has a list with the problematic names
+        """
+        requests = [
+            {
+                "name": "Test Number One"
+            },
+            {
+                "name": "Test number  one"
+            },
+            {
+                "name": "Test number two"
+            }
+        ]
+        names_dict = build_commands_names_dict(requests)
+        assert len(names_dict[tools.to_kebab_case("Test Number One")]) == 2
+        assert len(names_dict[tools.to_kebab_case("Test number two")]) == 1
+        assert len(names_dict) == 2
+
+    def test_build_commands_names_dict_no_duplicate_names(self):
+        """
+        Given
+        - dictionary containing names of requests from a collection
+
+        When
+        - There are no requests with names which have the same kebab case
+
+        Then
+        - returns names' dictionary with an entry for each request's name kebab case and the original name
+        """
+        requests = [
+            {
+                "name": "Test Number One"
+            },
+            {
+                "name": "Test number two"
+            }
+        ]
+        names_dict = build_commands_names_dict(requests)
+        assert len(names_dict[tools.to_kebab_case("Test Number One")]) == 1
+        assert len(names_dict[tools.to_kebab_case("Test number two")]) == 1
+        assert len(names_dict) == 2
+
+    def test_build_commands_names_dict_none_names(self):
+        """
+        Given
+        - dictionary containing names of requests from a collection
+
+        When
+        - There's a request with no name key
+
+        Then
+        - returns names' dictionary with an entry for each request's name kebab case and the original name and just them
+        """
+        requests = [
+            {
+                "None": None
+            },
+            {
+                "name": "Test number  one"
+            },
+            {
+                "name": "Test number two"
+            }
+        ]
+        names_dict = build_commands_names_dict(requests)
+        assert len(names_dict[tools.to_kebab_case("Test Number One")]) == 1
+        assert len(names_dict[tools.to_kebab_case("Test number two")]) == 1
+        assert len(names_dict) == 2
+
+    def test_duplicate_requests_check_duplicates_exist(self):
+        """
+        Given
+        - dictionary containing names in kebab case of requests and a list with their original names
+
+        When
+        - There are requests with the same kebab case
+
+        Then
+        - throw assertion error with the problematic requests' names
+        """
+        with pytest.raises(Exception):
+            names_dict = {
+                'test-number-one': [
+                    "Test number  one",
+                    "Test Number One"
+                ],
+                'test-number-two': [
+                    "Test number two"
+                ]
+            }
+            duplicate_requests_check(names_dict)
+
+    def test_duplicate_requests_check_duplicates_dont_exist(self):
+        """
+        Given
+        - dictionary containing names in kebab case of requests and a list with their original names
+
+        When
+        - There are no requests with the same kebab case
+
+        Then
+        - don't throw assertion error
+        """
+        names_dict = {
+            'test-number-one': [
+                "Test number  one",
+            ],
+            'test-number-two': [
+                "Test number two"
+            ]
+        }
+        duplicate_requests_check(names_dict)
 
 
 class TestPostmanCodeGen:

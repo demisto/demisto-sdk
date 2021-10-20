@@ -168,7 +168,6 @@ class Uploader:
         """
         try:
             upload_object: Union[YAMLObject, JSONObject] = path_to_pack_object(path)
-            print(upload_object)
         except ContentFactoryError:
             file_name = os.path.split(path)[-1]
             message = f"Cannot upload {path} as the file type is not supported for upload."
@@ -180,7 +179,6 @@ class Uploader:
         file_name = upload_object.path.name  # type: ignore
 
         entity_type = find_type(str(upload_object.path))
-        print(entity_type)
         if entity_type in UPLOAD_SUPPORTED_ENTITIES:
             if upload_object.from_version <= self.demisto_version <= upload_object.to_version:  # type: ignore
                 try:

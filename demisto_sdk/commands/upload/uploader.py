@@ -400,7 +400,8 @@ class ConfigFileParser:
     def parse_file(self):
         config_file_data = self.get_file_data()
         custom_packs_paths = self.get_custom_packs_paths(config_file_data)
-        return custom_packs_paths
+        csv_custom_packs_paths = ",".join(path for path in custom_packs_paths)
+        return csv_custom_packs_paths
 
     def get_file_data(self):
         with open(self.config_file_path) as config_file:

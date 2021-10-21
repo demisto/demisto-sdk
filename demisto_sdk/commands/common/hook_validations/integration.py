@@ -103,6 +103,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_there_separators_in_names(),
             self.name_not_contain_the_type(),
             self.is_valid_endpoint_command(),
+            self.is_api_token_in_credential_type(),
         ]
 
         return all(answers)
@@ -1368,4 +1369,14 @@ class IntegrationValidator(ContentEntityValidator):
             self.handle_error(missing_error_message, missing_error_code, self.current_file,
                               suggested_fix=Errors.suggest_fix(self.file_path))
             return False
+        return True
+
+    def is_api_token_in_credential_type(self):
+        conf_params = self.current_file.get('configuration', [])
+        for param in conf_params:
+            if param.get('type') == 4:
+                error_message, error_code = Errors.api_token_is_not_in_credential_type(param.get('name'))
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    return False
+
         return True

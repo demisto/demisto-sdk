@@ -957,6 +957,31 @@ class TestIntegrationValidator:
 
         assert validator.name_not_contain_the_type()
 
+    @pytest.mark.parametrize('configuration, expected_result', [(4, 9), (False, True)])
+    def test_is_api_token_in_credential_type(self, integration, parameter_type, expected_result):
+        """
+        Given
+            - An integration with API token parameter in non credential type.
+        When
+            - Running is_api_token_in_credential_type.
+        Then
+            - Ensure the validate failed on invalid type, the type of the parameter should be 9 (credentials).
+        """
+
+        integration.yml.write_dict({'configuration': [
+            {
+                'display': 'API token',
+                'name': 'token',
+                'type': parameter_type  # Encrypted text field
+            }
+        ]})
+
+        with ChangeCWD(integration.repo_path):
+            structure_validator = StructureValidator(integration.yml.path, predefined_scheme='integration')
+            validator = IntegrationValidator(structure_validator)
+
+            assert validator.is_api_token_in_credential_type() == expected_result
+
     IS_SKIPPED_INPUTS = [
         ({'skipped_integrations': {"SomeIntegration": "No instance"}}, False),
         ({'skipped_integrations': {"SomeOtherIntegration": "No instance"}}, True)

@@ -5,7 +5,8 @@ from typing import Dict, List, Optional
 import pytest
 from mock import mock_open, patch
 
-from demisto_sdk.commands.common.constants import (FEED_REQUIRED_PARAMS,
+from demisto_sdk.commands.common.constants import (DBOT_SCORE_CONTEXT_PATH,
+                                                   FEED_REQUIRED_PARAMS,
                                                    FETCH_REQUIRED_PARAMS,
                                                    FIRST_FETCH_PARAM,
                                                    MAX_FETCH_PARAM)
@@ -410,21 +411,33 @@ class TestIntegrationValidator:
         assert validator.is_valid_default_argument() is answer
 
     MOCK_REPUTATIONS_1 = [{"contextPath": "Int.lol", "description": "desc", "type": "number"},
-                          {"contextPath": "DBotScore.lives.matter"}]
+                          {"contextPath": f"{DBOT_SCORE_CONTEXT_PATH}lives.matter"}]
     MOCK_REPUTATIONS_2 = [{"name": "panorama-commit-status", "outputs": 1}]
     MOCK_REPUTATIONS_INVALID_EMAIL = [
-        {"contextPath": "DBotScore.Indicator", "description": "The indicator that was tested.", "type": "string"},
-        {"contextPath": "DBotScore.Type", "description": "The indicator type.", "type": "string"},
-        {"contextPath": "DBotScore.Vendor", "description": "Vendor used to calculate the score.", "type": "string"},
-        {"contextPath": "DBotScore.Sc0re", "description": "The actual score.", "type": "int"},
+        {"contextPath": f"{DBOT_SCORE_CONTEXT_PATH}.Indicator", "description": "The indicator that was tested.", "type": "string"},
+        {"contextPath": f"{DBOT_SCORE_CONTEXT_PATH}.Type", "description": "The indicator type.", "type": "string"},
+        {"contextPath": f"{DBOT_SCORE_CONTEXT_PATH}.Vendor", "description": "Vendor used to calculate the score.", "type": "string"},
+        {"contextPath": f"{DBOT_SCORE_CONTEXT_PATH}.Sc0re", "description": "The actual score.", "type": "int"},
         {"contextPath": "Email.To", "description": "email to", "type": "string"}]
     MOCK_REPUTATIONS_INVALID_FILE = [
+        {"contextPath": f"{DBOT_SCORE_CONTEXT_PATH}.Indicator", "description": "The indicator that was tested.", "type": "string"},
+        {"contextPath": f"{DBOT_SCORE_CONTEXT_PATH}.Type", "description": "The indicator type.", "type": "string"},
+        {"contextPath": f"{DBOT_SCORE_CONTEXT_PATH}.Vendor", "description": "Vendor used to calculate the score.", "type": "string"},
+        {"contextPath": f"{DBOT_SCORE_CONTEXT_PATH}.Score", "description": "The actual score.", "type": "int"},
+        {"contextPath": "File.Md5", "description": "The MD5 hash of the file.", "type": "string"}]
+    MOCK_REPUTATIONS_INVALID_FILE_OLD_DBOTSCORE_PATH = [
         {"contextPath": "DBotScore.Indicator", "description": "The indicator that was tested.", "type": "string"},
         {"contextPath": "DBotScore.Type", "description": "The indicator type.", "type": "string"},
         {"contextPath": "DBotScore.Vendor", "description": "Vendor used to calculate the score.", "type": "string"},
         {"contextPath": "DBotScore.Score", "description": "The actual score.", "type": "int"},
         {"contextPath": "File.Md5", "description": "The MD5 hash of the file.", "type": "string"}]
     MOCK_REPUTATIONS_VALID_IP = [
+        {"contextPath": f"{DBOT_SCORE_CONTEXT_PATH}.Indicator", "description": "The indicator that was tested.", "type": "string"},
+        {"contextPath": f"{DBOT_SCORE_CONTEXT_PATH}.Type", "description": "The indicator type.", "type": "string"},
+        {"contextPath": f"{DBOT_SCORE_CONTEXT_PATH}.Vendor", "description": "Vendor used to calculate the score.", "type": "string"},
+        {"contextPath": f"{DBOT_SCORE_CONTEXT_PATH}.Score", "description": "The actual score.", "type": "int"},
+        {"contextPath": "IP.Address", "description": "IP address", "type": "string"}]
+    MOCK_REPUTATIONS_INVALID_IP_OLD_DBOTSCORE_PATH = [
         {"contextPath": "DBotScore.Indicator", "description": "The indicator that was tested.", "type": "string"},
         {"contextPath": "DBotScore.Type", "description": "The indicator type.", "type": "string"},
         {"contextPath": "DBotScore.Vendor", "description": "Vendor used to calculate the score.", "type": "string"},
@@ -440,6 +453,8 @@ class TestIntegrationValidator:
         (MOCK_REPUTATIONS_2, "not bang", True),
         (MOCK_REPUTATIONS_INVALID_EMAIL, "email", False),
         (MOCK_REPUTATIONS_INVALID_FILE, "file", False),
+        (MOCK_REPUTATIONS_INVALID_FILE_OLD_DBOTSCORE_PATH, "file", False),
+        (MOCK_REPUTATIONS_INVALID_IP_OLD_DBOTSCORE_PATH, "ip", False),
         (MOCK_REPUTATIONS_VALID_IP, "ip", True),
         (MOCK_REPUTATIONS_VALID_ENDPOINT, "endpoint", True)
     ]

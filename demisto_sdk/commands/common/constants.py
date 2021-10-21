@@ -989,11 +989,13 @@ ENDPOINT_FLEXIBLE_REQUIRED_ARGS = ["ip", "id", "hostname"]
 
 GENERIC_COMMANDS_NAMES = BANG_COMMAND_NAMES.union({'send-mail', 'send-notification', 'cve-latest', 'cve-search'})
 
+DBOT_SCORE_CONTEXT_PATH = 'DBotScore(val.Indicator && val.Indicator == obj.Indicator && val.Vendor == obj.Vendor ' \
+                          '&& val.Type == obj.Type)'  # matches CommonServerPython.Common.DBotScore.CONTEXT_PATH
 DBOT_SCORES_DICT = {
-    'DBotScore.Indicator': 'The indicator that was tested.',
-    'DBotScore.Type': 'The indicator type.',
-    'DBotScore.Vendor': 'The vendor used to calculate the score.',
-    'DBotScore.Score': 'The actual score.'
+    f'{DBOT_SCORE_CONTEXT_PATH}.Indicator': 'The indicator that was tested.',
+    f'{DBOT_SCORE_CONTEXT_PATH}.Type': 'The indicator type.',
+    f'{DBOT_SCORE_CONTEXT_PATH}.Vendor': 'The vendor used to calculate the score.',
+    f'{DBOT_SCORE_CONTEXT_PATH}.Score': 'The actual score.'
 }
 
 IOC_OUTPUTS_DICT = {

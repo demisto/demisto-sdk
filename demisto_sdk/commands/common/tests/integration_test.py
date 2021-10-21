@@ -957,7 +957,7 @@ class TestIntegrationValidator:
 
         assert validator.name_not_contain_the_type()
 
-    @pytest.mark.parametrize('configuration, expected_result', [(4, 9), (False, True)])
+    @pytest.mark.parametrize('parameter_type, expected_result', [(4, False), (9, True)])
     def test_is_api_token_in_credential_type(self, integration, parameter_type, expected_result):
         """
         Given

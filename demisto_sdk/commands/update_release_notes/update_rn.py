@@ -862,8 +862,8 @@ def is_valid_version_format(specific_version: str, current_version: str) -> bool
     current_version = current_version.split('.')
     if is_legal_version_format(specific_version):
         return is_valid_major_bump(specific_version, current_version) or \
-               is_valid_minor_bump(specific_version, current_version) or \
-               is_valid_revision_bump(specific_version, current_version)
+            is_valid_minor_bump(specific_version, current_version) or \
+            is_valid_revision_bump(specific_version, current_version)
     return False
 
 

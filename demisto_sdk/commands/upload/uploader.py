@@ -409,6 +409,5 @@ class ConfigFileParser:
 
     def get_custom_packs_paths(self, config_file_data):
         custom_packs = config_file_data.get('custom_packs', [])
-        custom_packs_paths = [pack.get('url') for pack in custom_packs]
-        csv_custom_packs_paths = ",".join(path for path in custom_packs_paths)
-        return csv_custom_packs_paths
+        custom_packs_paths = ",".join(pack.get('url') for pack in custom_packs)
+        return custom_packs_paths

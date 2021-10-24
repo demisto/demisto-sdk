@@ -1379,7 +1379,7 @@ class IntegrationValidator(ContentEntityValidator):
             metadata_path = Path(PACKS_DIR, pack_name, PACKS_PACK_META_FILE_NAME)
             metadata_content = self.get_metadata_file_content(metadata_path)
 
-            if metadata_content.get('support') not in XSOAR_SUPPORT:
+            if metadata_content.get('support') != XSOAR_SUPPORT:
                 return True
 
         conf_params = self.current_file.get('configuration', [])

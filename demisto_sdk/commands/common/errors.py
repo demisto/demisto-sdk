@@ -439,7 +439,10 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def api_token_is_not_in_credential_type(param_name):
-        return f'The type field of the {param_name} parameter should be 9'
+        return f"In order to allow fetching the {param_name} from an external vault, the type of the {param_name} " \
+               f"parameter should be changed from 'Encrypted' (type 4), to 'Credentials' (type 9)'. For more details" \
+               f"check the convention for credentials - " \
+               f"https://xsoar.pan.dev/docs/integrations/code-conventions#credentials"
 
     @staticmethod
     @error_code_decorator

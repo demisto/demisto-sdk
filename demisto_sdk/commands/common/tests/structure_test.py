@@ -282,6 +282,24 @@ class TestStructureValidator:
         structure = StructureValidator(incident_field.path)
         assert structure.is_valid_scheme()
 
+    def test_is_indicator_with_open_ended(self, pack: Pack):
+        from demisto_sdk.commands.common.hook_validations.incident_field import \
+            TypeFields
+        field_content = {
+            'cliName': 'sanityname',
+            'name': 'sanity name',
+            'id': 'incident',
+            'content': True,
+            'type': TypeFields.IncidentFieldTypeMultiSelect.value,
+            'openEnded': True
+        }
+        incident_field: JSONBased = pack.create_indicator_field(
+            'incident-field-test',
+            content=field_content
+        )
+        structure = StructureValidator(incident_field.path)
+        assert structure.is_valid_scheme()
+
 
 class TestGetMatchingRegex:
     INPUTS = [

@@ -1,5 +1,6 @@
 import os
 import re
+from pathlib import Path
 from typing import Dict, Optional
 
 import yaml
@@ -9,8 +10,9 @@ from demisto_sdk.commands.common.constants import (
     DEPRECATED_REGEXES, ENDPOINT_COMMAND_NAME, ENDPOINT_FLEXIBLE_REQUIRED_ARGS,
     FEED_REQUIRED_PARAMS, FETCH_REQUIRED_PARAMS, FIRST_FETCH,
     FIRST_FETCH_PARAM, INTEGRATION_CATEGORIES, IOC_OUTPUTS_DICT, MAX_FETCH,
-    MAX_FETCH_PARAM, PYTHON_SUBTYPES, REPUTATION_COMMAND_NAMES, TYPE_PWSH,
-    XSOAR_CONTEXT_STANDARD_URL)
+    MAX_FETCH_PARAM, PACKS_DIR, PACKS_PACK_META_FILE_NAME, PYTHON_SUBTYPES,
+    REPUTATION_COMMAND_NAMES, TYPE_PWSH, XSOAR_CONTEXT_STANDARD_URL,
+    XSOAR_SUPPORT)
 from demisto_sdk.commands.common.default_additional_info_loader import \
     load_default_additional_info_dict
 from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
@@ -1372,6 +1374,14 @@ class IntegrationValidator(ContentEntityValidator):
         return True
 
     def is_api_token_in_credential_type(self):
+        pack_name = get_pack_name(self.file_path)
+        if pack_name:
+            metadata_path = Path(PACKS_DIR, pack_name, PACKS_PACK_META_FILE_NAME)
+            metadata_content = self.get_metadata_file_content(metadata_path)
+
+            if metadata_content.get('support') not in XSOAR_SUPPORT:
+                return True
+
         conf_params = self.current_file.get('configuration', [])
         for param in conf_params:
             if param.get('type') == 4:

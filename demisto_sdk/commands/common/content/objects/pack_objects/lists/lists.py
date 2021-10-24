@@ -22,8 +22,11 @@ class Lists(JSONContentObject):
         Returns:
             The result of the upload command from demisto_client
         """
-        return demisto_client.generic_request_func(self=client, path='lists/save',
-                                                   body=json.dumps(self._as_dict), method='POST')
+        return client.generic_request_func(
+            method='POST',
+            path='lists/save',
+            body=json.dumps(self._as_dict),
+        )
 
     def type(self):
         return FileType.LISTS

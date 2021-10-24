@@ -173,7 +173,7 @@ class LintManager:
             input(str): dir pack specified as argument.
             git(bool): Perform lint and test only on changed packs.
             all_packs(bool): Whether to run on all packages.
-            base_branch (str): Name of the branch to run the diff on.
+            base_branch (str): Name of the branch or sha1 commit to run the diff on.
 
         Returns:
             List[Path]: Pkgs to run lint
@@ -226,7 +226,7 @@ class LintManager:
 
         Args:
             pkgs(List[Path]): pkgs to check
-            base_branch (str): Name of the branch to run the diff on.
+            base_branch (str): Name of the branch or sha1 commit to run the diff on.
 
         Returns:
             List[Path]: A list of names of packages that should run.
@@ -236,11 +236,19 @@ class LintManager:
             f"{content_repo.active_branch}{Colors.reset}")
         staged_files = {content_repo.working_dir / Path(item.b_path).parent for item in
                         content_repo.active_branch.commit.tree.diff(None, paths=pkgs)}
-        if content_repo.active_branch == 'master':
+        if content_repo.active_branch == 'master' and base_branch == 'master':  # TODO: because this is the default value. this should be changed to something that makes more sense
+            # case 1: comparing master against the latest previous commit
             last_common_commit = content_repo.remote().refs.master.commit.parents[0]
         else:
-            last_common_commit = content_repo.merge_base(content_repo.active_branch.commit,
-                                                         f'{content_repo.remote()}/{base_branch}')
+            # case 2: comparing master against a different commit, not necissarry the latest
+            # case 3: comparing a different branch (not master) to a different branch (that can be master)
+            if re.compile(r'\b[0-9a-f]{40}\b', flags=re.IGNORECASE).match(base_branch):
+                # if the given different branch is given as a commit hash
+                last_common_commit = base_branch
+            else:
+                # if the given different branch is given as a branch name
+                last_common_commit = content_repo.merge_base(content_repo.active_branch.commit,
+                                                             f'{content_repo.remote()}/{base_branch}')
         changed_from_base = {content_repo.working_dir / Path(item.b_path).parent for item in
                              content_repo.active_branch.commit.tree.diff(last_common_commit, paths=pkgs)}
         all_changed = staged_files.union(changed_from_base)

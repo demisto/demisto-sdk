@@ -908,6 +908,38 @@ class TestZippedPackUpload:
         assert isinstance(result.exception, SystemExit)
         assert f"Invalid value for '-i' / '--input': Path '{invalid_zip_path}' does not exist" in result.stderr
 
+    def test_upload_custom_packs_from_config_file(self, mocker):
+        """
+        Given:
+            - Configuration file with custom packs (zipped packs and unzipped packs) to upload
+        When:
+            - call to upload command
+        Then:
+            - validate the upload_content_packs in the api client was called correct
+              and the pack verification ws turned on and off
+              ans status code is 0 (Ok)
+        """
+        # prepare
+        mock_api_client(mocker)
+        mocker.patch.object(API_CLIENT, 'upload_content_packs')
+        mocker.patch.object(tools, 'update_server_configuration', return_value=(None, None, {}))
+        mocker.patch.object(Uploader, 'notify_user_should_override_packs', return_value=True)
+
+        # run
+        status_code = click.Context(command=upload).invoke(
+            upload, input_config_file=f'{git_path()}/demisto_sdk/commands/upload/tests/data/xsoar_config.json')
+
+        # validate
+        disable_verification_call_args = tools.update_server_configuration.call_args_list[0][1]
+        enable_verification_call_args = tools.update_server_configuration.call_args_list[1][1]
+
+        assert disable_verification_call_args['server_configuration'][constants.PACK_VERIFY_KEY] == 'false'
+        assert constants.PACK_VERIFY_KEY in enable_verification_call_args['config_keys_to_delete']
+        assert status_code == 0
+
+        uploaded_file_path = API_CLIENT.upload_content_packs.call_args[1]['file']
+        assert 'uploadable_packs.zip' in str(uploaded_file_path)
+
 
 def exception_raiser(**kwargs):
     raise Exception()

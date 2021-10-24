@@ -24,6 +24,8 @@ from demisto_sdk.commands.common.tools import (find_type,
                                                print_error, print_warning)
 from demisto_sdk.commands.common.update_id_set import merge_id_sets_from_files
 from demisto_sdk.commands.convert.convert_manager import ConvertManager
+from demisto_sdk.commands.coverage_analyze.coverage_report import \
+    CoverageReport
 from demisto_sdk.commands.create_artifacts.content_artifacts_creator import \
     ArtifactsManager
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
@@ -670,6 +672,62 @@ def lint(**kwargs):
     )
 
 
+# ====================== coverage-analyze ====================== #
+@main.command()
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    "-i", "--input", help="The .coverage file to analyze.",
+    default=os.path.join('coverage_report', '.coverage'),
+    type=PathsParamType(exists=True, resolve_path=True)
+)
+@click.option(
+    "--default-min-coverage", help="Default minimum coverage (for new files).",
+    default=70.0, type=click.FloatRange(0.0, 100.0)
+)
+@click.option(
+    "--allowed-coverage-degradation-percentage", help="Allowed coverage degradation percentage (for modified files).",
+    default=1.0, type=click.FloatRange(0.0, 100.0)
+)
+@click.option(
+    "--no-cache", help="Force download of the previous coverage report file.",
+    is_flag=True, type=bool)
+@click.option(
+    "--report-dir", help="Directory of the coverage report files.",
+    default='coverage_report', type=PathsParamType(resolve_path=True))
+@click.option(
+    "--report-type", help="The type of coverage report (posible values: 'text', 'html', 'xml', 'json' or 'all').", type=str)
+@click.option("--no-min-coverage-enforcement", help="Do not enforce minimum coverage.", is_flag=True)
+@click.option(
+    "--previous-coverage-report-url", help="URL of the previous coverage report.",
+    default='https://storage.googleapis.com/marketplace-dist-dev/code-coverage/coverage-min.json', type=str
+)
+def coverage_analyze(**kwargs):
+    try:
+        no_degradation_check = kwargs['allowed_coverage_degradation_percentage'] == 100.0
+        no_min_coverage_enforcement = kwargs['no_min_coverage_enforcement']
+
+        cov_report = CoverageReport(
+            default_min_coverage=kwargs['default_min_coverage'],
+            allowed_coverage_degradation_percentage=kwargs['allowed_coverage_degradation_percentage'],
+            coverage_file=kwargs['input'],
+            no_cache=kwargs.get('no_cache', False),
+            report_dir=kwargs['report_dir'],
+            report_type=kwargs['report_type'],
+            no_degradation_check=no_degradation_check,
+            previous_coverage_report_url=kwargs['previous_coverage_report_url']
+        )
+        cov_report.coverage_report()
+        # if no_degradation_check=True we will suppress the minimum coverage check
+        if no_degradation_check or cov_report.coverage_diff_report() or no_min_coverage_enforcement:
+            return 0
+    except Exception as error:
+        logging.getLogger('demisto-sdk').error(error)
+
+    return 1
+
+
 # ====================== format ====================== #
 @main.command()
 @click.help_option(
@@ -1251,12 +1309,19 @@ def create_id_set(**kwargs):
     help='File path of the united id_set',
     required=True
 )
+@click.option(
+    '-fd',
+    '--fail-duplicates',
+    help="Fails the process if any duplicates are found.",
+    is_flag=True
+)
 def merge_id_sets(**kwargs):
     """Merge two id_sets"""
     check_configuration_file('merge-id-sets', kwargs)
     first = kwargs['id_set1']
     second = kwargs['id_set2']
     output = kwargs['output']
+    fail_duplicates = kwargs['fail_duplicates']
 
     _, duplicates = merge_id_sets_from_files(
         first_id_set_path=first,
@@ -1266,7 +1331,8 @@ def merge_id_sets(**kwargs):
     if duplicates:
         print_error(f'Failed to merge ID sets: {first} with {second}, '
                     f'there are entities with ID: {duplicates} that exist in both ID sets')
-        sys.exit(1)
+        if fail_duplicates:
+            sys.exit(1)
 
 
 # ====================== update-release-notes =================== #

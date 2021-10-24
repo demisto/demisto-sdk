@@ -460,8 +460,8 @@ class TestRNUpdate(unittest.TestCase):
         update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json')
         with pytest.raises(ValueError) as execinfo:
             update_rn.bump_version_number(pre_release=False,
-                                          specific_version='3.0.0')
-        assert 'Version number should be in x.y.z format and be consecutive to the current version.' in execinfo.value.args[0]
+                                          specific_version='3.w.0')
+        assert 'Version number should be in x.y.z format and contain only numbers.' in execinfo.value.args[0]
 
     @mock.patch.object(UpdateRN, 'get_master_version')
     def test_bump_version_number_revision_overflow(self, mock_master):

@@ -109,7 +109,8 @@ class VersionParamType(click.ParamType):
                 all(version_section.isdigit() for version_section in version_sections):
             return value
         else:
-            self.fail("Version number should be in x.y.z format, e.g: <2.1.3>", param, ctx)
+            self.fail(f"Version {value} is not according to the expected format. "
+                      f"The format of version should be in x.y.z format, e.g: <2.1.3>", param, ctx)
 
 
 class DemistoSDK:

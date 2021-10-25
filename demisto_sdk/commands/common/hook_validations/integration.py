@@ -119,7 +119,7 @@ class IntegrationValidator(ContentEntityValidator):
                 validate_rn (bool): Whether to validate release notes (changelog) or not.
                 skip_test_conf (bool): If true then will skip test playbook configuration validation
                 check_is_unskipped (bool): Whether to check if the integration is unskipped.
-                conf_file (dict):
+                conf_json_data (dict):
 
             Returns:
                 bool: True if integration is valid, False otherwise.

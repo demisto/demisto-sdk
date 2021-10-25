@@ -961,6 +961,7 @@ class TestIntegrationValidator:
         ('xsoar', 4, False),
         ('xsoar', 9, True),
         ('community', 4, True),
+        ('partner', 4, True),
     ])
     def test_is_api_token_in_credential_type(self, pack, support, parameter_type, expected_result):
         """
@@ -981,7 +982,7 @@ class TestIntegrationValidator:
             'configuration': [{
                 'display': 'API token',
                 'name': 'token',
-                'type': parameter_type  # Encrypted text field
+                'type': parameter_type  # Encrypted text failed
             }]
         })
 

@@ -514,7 +514,14 @@ class PackDependencies:
                 playbook_data.get('implementing_playbooks', []),
                 skippable_tasks,
                 id_set['playbooks'],
-                exclude_ignored_dependencies
+                exclude_ignored_dependencies,
+            ))
+
+            playbook_dependencies.update(PackDependencies._differentiate_playbook_implementing_objects(
+                playbook_data.get('lists', []),
+                skippable_tasks,
+                id_set['Lists'],
+                exclude_ignored_dependencies,
             ))
 
             # ---- incident fields packs ----
@@ -1239,6 +1246,7 @@ class PackDependencies:
         pack_items['generic_modules'] = PackDependencies._search_for_pack_items(pack_id, id_set['GenericModules'])
         pack_items['generic_definitions'] = PackDependencies._search_for_pack_items(pack_id,
                                                                                     id_set['GenericDefinitions'])
+        pack_items['lists'] = PackDependencies._search_for_pack_items(pack_id, id_set['Lists'])
 
         if not sum(pack_items.values(), []):
             click.secho(f"Couldn't find any items for pack '{pack_id}'. Please make sure:\n"
@@ -1364,7 +1372,8 @@ class PackDependencies:
             scripts_dependencies | playbooks_dependencies | layouts_dependencies | incidents_fields_dependencies |
             indicators_types_dependencies | integrations_dependencies | incidents_types_dependencies |
             classifiers_dependencies | mappers_dependencies | widget_dependencies | dashboards_dependencies |
-            reports_dependencies | generic_types_dependencies | generic_modules_dependencies | generic_fields_dependencies
+            reports_dependencies | generic_types_dependencies | generic_modules_dependencies |
+            generic_fields_dependencies
         )
 
         return pack_dependencies

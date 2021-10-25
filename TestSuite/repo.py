@@ -159,6 +159,12 @@ class Repo:
         widget.update({'name': f'{name} - widget'})
         widget.update({'widgetType': ''})
 
+        list_item = pack.create_list(f'{name}_list')
+        list_item.write_json({'id': f'{name} - list'})
+        list_item.update({'name': f'{name} - list'})
+        list_item.update({'allRead': 'True'})
+        list_item.update({'truncated': 'True'})
+
         playbook = pack.create_playbook(f'{name}_playbook')
         playbook.create_default_playbook()
         playbook.yml.update({'id': f'{name}_playbook'})
@@ -197,6 +203,7 @@ class Repo:
         generic_definition.write_json({'id': f'generic_{name} - generic_definition'})
         generic_definition.update({'name': f'generic_{name} - generic_definition'})
         generic_definition.update({'auditable': False})
+
         return pack
 
     def setup_content_repo(self, number_of_packs):

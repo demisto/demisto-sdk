@@ -96,6 +96,31 @@ class PathsParamType(click.Path):
         return value
 
 
+def valid_version_format(specific_version: str):
+    """ Checks whether the specified version is 'x.y.z' format, and contains only digits.
+        If so, returns the specific version as a string, else raises ValueError
+
+        :param
+            specific_version: The specified version as a list
+    """
+    ver_sections = specific_version.split('.')
+    if len(ver_sections) == 3 and \
+            all(ver_section.isdigit() for ver_section in ver_sections):
+        return specific_version
+    raise ValueError
+
+
+class VersionParamType(click.ParamType):
+    """
+    """
+
+    def convert(self, value, param, ctx):
+        try:
+            return valid_version_format(value)
+        except ValueError:
+            self.fail(f"Version number should be in x.y.z format, e.g: <2.1.3>", param, ctx)
+
+
 class DemistoSDK:
     """
     The core class for the SDK.
@@ -1348,7 +1373,7 @@ def merge_id_sets(**kwargs):
     type=click.Choice(['major', 'minor', 'revision', 'maintenance', 'documentation'])
 )
 @click.option(
-    '-v', '--version', help="Bump to a specific version."
+    '-v', '--version', help="Bump to a specific version.", type=VersionParamType()
 )
 @click.option(
     '-g', '--use-git',

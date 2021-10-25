@@ -443,27 +443,6 @@ class TestRNUpdate(unittest.TestCase):
                     dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack/pack_metadata.json'))
 
     @mock.patch.object(UpdateRN, 'get_master_version')
-    def test_bump_version_specific_version_returns_error(self, mock_master):
-        """
-            Given:
-                - a pack name and a version before a wrong version format condition
-            When:
-                - bumping the version number in the metadata.json
-            Then:
-                - return ValueError
-        """
-        from demisto_sdk.commands.update_release_notes.update_rn import \
-            UpdateRN
-        mock_master.return_value = '1.0.0'
-        update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type=None, modified_files_in_pack={'HelloWorld'},
-                             added_files=set())
-        update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json')
-        with pytest.raises(ValueError) as execinfo:
-            update_rn.bump_version_number(pre_release=False,
-                                          specific_version='3.w.0')
-        assert 'Version number should be in x.y.z format and contain only numbers.' in execinfo.value.args[0]
-
-    @mock.patch.object(UpdateRN, 'get_master_version')
     def test_bump_version_number_revision_overflow(self, mock_master):
         """
             Given:

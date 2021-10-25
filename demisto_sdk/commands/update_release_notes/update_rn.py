@@ -406,8 +406,6 @@ class UpdateRN:
         current_version = self.master_version if self.master_version != '0.0.0' else self.get_pack_metadata().get(
             'currentVersion', '99.99.99')
         if specific_version:
-            if not is_valid_version_format(specific_version):
-                raise ValueError("Version number should be in x.y.z format and contain only numbers.")
             print_color(f"Bumping {self.pack} to the version {specific_version}. If you need to update"
                         f" the release notes a second time, please remove the -v flag.", LOG_COLORS.NATIVE)
             data_dictionary['currentVersion'] = specific_version
@@ -823,25 +821,3 @@ def get_from_version_at_update_rn(path: str) -> Optional[str]:
         print_warning(f'Cannot get file fromversion: "{path}" file does not exist')
         return None
     return get_from_version(path)
-
-
-def is_valid_version_format(specific_version: str) -> bool:
-    """ Checks whether the specified version is 'x.y.z' format, and contains only digits.
-
-        :param
-            specific_version: The specified version as a list
-
-        :rtype: ``bool``
-        :return
-        True if the specified version is in the right format, False otherwise
-
-    """
-    version = specific_version.split('.')
-    if len(version) == 3:
-        if version[0].isdigit()\
-                and version[1].isdigit() \
-                and version[2].isdigit():
-            return True
-    return False
-
-

@@ -104,9 +104,9 @@ class VersionParamType(click.ParamType):
     """
 
     def convert(self, value, param, ctx):
-        ver_sections = value.split('.')
-        if len(ver_sections) == 3 and \
-                all(ver_section.isdigit() for ver_section in ver_sections):
+        version_sections = value.split('.')
+        if len(version_sections) == 3 and \
+                all(version_section.isdigit() for version_section in version_sections):
             return value
         else:
             self.fail("Version number should be in x.y.z format, e.g: <2.1.3>", param, ctx)

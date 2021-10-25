@@ -118,7 +118,7 @@ class VersionParamType(click.ParamType):
         try:
             return valid_version_format(value)
         except ValueError:
-            self.fail(f"Version number should be in x.y.z format, e.g: <2.1.3>", param, ctx)
+            self.fail("Version number should be in x.y.z format, e.g: <2.1.3>", param, ctx)
 
 
 class DemistoSDK:

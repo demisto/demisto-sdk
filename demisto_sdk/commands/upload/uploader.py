@@ -58,6 +58,7 @@ UPLOAD_SUPPORTED_ENTITIES = [
     FileType.DASHBOARD,
     FileType.LAYOUT,
     FileType.LAYOUTS_CONTAINER,
+    FileType.LISTS,
 ]
 
 

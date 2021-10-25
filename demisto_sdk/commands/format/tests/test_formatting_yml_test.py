@@ -614,13 +614,13 @@ class TestFormatting:
             - Run format on TPB file
         Then
             - Ensure run_format return value is 0
-            - Ensure `fromversion` field set to 5.5.0
+            - Ensure `fromversion` field set to 6.0.0
         """
         os.makedirs(TEST_PLAYBOOK_PATH, exist_ok=True)
         formatter = TestPlaybookYMLFormat(input=SOURCE_FORMAT_TEST_PLAYBOOK, output=DESTINATION_FORMAT_TEST_PLAYBOOK)
         res = formatter.run_format()
         assert res == 0
-        assert formatter.data.get('fromversion') == '5.5.0'
+        assert formatter.data.get('fromversion') == '6.0.0'
         os.remove(DESTINATION_FORMAT_TEST_PLAYBOOK)
         os.rmdir(TEST_PLAYBOOK_PATH)
 
@@ -930,23 +930,23 @@ class TestFormatting:
             bs.set_fromVersion()
             assert bs.data['fromversion'] == '6.0.0', path
 
-    def test_set_fromversion_not_changed_new_contributor_pack(self, pack):
+    def test_set_fromversion_changed_new_contributor_pack(self, pack):
         """
         Given
             - An integration from new contributed pack with fromversion key at yml,
         When
             - Run format command
         Then
-            - Ensure that the integration fromversion is not set to 6.0.0
-            if it is new contributed pack, this is integration, and its version is 5.5.0 do not change it
+            - Ensure that the integration fromversion is set to 6.0.0
+            if it is new contributed pack, this is integration, and its version is 6.0.0 do not change it
         """
         pack.pack_metadata.update({'support': 'partner', 'currentVersion': '1.0.0'})
         integration = pack.create_integration(yml={'fromversion': '5.5.0'})
         bs = BaseUpdate(input=integration.yml.path)
         bs.set_fromVersion(file_type=INTEGRATION)
-        assert bs.data['fromversion'] == '5.5.0', integration.yml.path
+        assert bs.data['fromversion'] == '6.0.0', integration.yml.path
 
-    @pytest.mark.parametrize('user_input,result_fromversion', [('Y', '5.5.0'), ('N', '5.0.0')])
+    @pytest.mark.parametrize('user_input,result_fromversion', [('Y', '6.0.0'), ('N', '5.0.0')])
     def test_set_fromversion_new_pack(self, monkeypatch, pack, user_input, result_fromversion):
         """
         Args: monkeypatch (MagicMock): Patch of the user input

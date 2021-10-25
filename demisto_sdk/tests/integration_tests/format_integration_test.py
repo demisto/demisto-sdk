@@ -587,7 +587,7 @@ def test_format_playbook_without_fromversion_no_preset_flag(repo):
     runner = CliRunner(mix_stderr=False)
     format_result = runner.invoke(main, [FORMAT_CMD, '-i', str(playbook.yml.path), '--assume-yes', '-v'])
     assert 'Success' in format_result.stdout
-    assert playbook.yml.read_dict().get('fromversion') == '5.5.0'
+    assert playbook.yml.read_dict().get('fromversion') == '6.0.0'
 
 
 def test_format_playbook_without_fromversion_with_preset_flag(repo):
@@ -1117,7 +1117,7 @@ class TestFormatWithoutAddTestsFlag:
         runner = CliRunner()
         integration = pack.create_integration()
         integration.create_default_integration()
-        integration.yml.update({'fromversion': '5.5.0'})
+        integration.yml.update({'fromversion': '6.0.0'})
         integration_path = integration.yml.path
         result = runner.invoke(main, [FORMAT_CMD, '-i', integration_path, '-at'])
         prompt = f'The file {integration_path} has no test playbooks configured.' \
@@ -1170,7 +1170,7 @@ class TestFormatWithoutAddTestsFlag:
         runner = CliRunner()
         script = pack.create_script()
         script.create_default_script()
-        script.yml.update({'fromversion': '5.5.0'})
+        script.yml.update({'fromversion': '6.0.0'})
         script_path = script.yml.path
 
         result = runner.invoke(main, [FORMAT_CMD, '-i', script_path])

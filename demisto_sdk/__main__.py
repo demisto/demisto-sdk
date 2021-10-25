@@ -1473,7 +1473,7 @@ def find_dependencies(**kwargs):
 @click.option(
     '--verbose', help='Print debug level logs', is_flag=True)
 @click.option(
-    '-s', '--split-yml',
+    '-p', '--package',
     help='Generated integration will be split to package format instead of a yml file.',
     is_flag=True
 )
@@ -1487,7 +1487,7 @@ def postman_codegen(
         command_prefix: str,
         config_out: bool,
         verbose: bool,
-        split_yml: bool
+        package: bool
 ):
     """Generates a Cortex XSOAR integration given a Postman collection 2.1 JSON file."""
     if verbose:
@@ -1510,7 +1510,7 @@ def postman_codegen(
     else:
         # generate integration yml
         yml_path = postman_config.generate_integration_package(output, is_unified=True)
-        if split_yml:
+        if package:
             yml_splitter = YmlSplitter(configuration=config.configuration, file_type=FileType.INTEGRATION.value,
                                        input=yml_path.name, output=str(output))
             yml_splitter.extract_to_package_format()

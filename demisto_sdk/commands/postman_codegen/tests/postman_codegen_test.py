@@ -5,6 +5,7 @@ from typing import Dict, List, Optional, Union
 
 import pytest
 import yaml
+import shutil
 
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.generate_integration.code_generator import (
@@ -12,6 +13,8 @@ from demisto_sdk.commands.generate_integration.code_generator import (
 from demisto_sdk.commands.postman_codegen.postman_codegen import (
     create_body_format, flatten_collections, generate_command_outputs,
     postman_to_autogen_configuration)
+from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
+from demisto_sdk.commands.common.constants import FileType
 
 
 class TestPostmanHelpers:
@@ -570,6 +573,45 @@ class TestPostmanCodeGen:
             assert outputs[i].description == expected[i].description
             assert outputs[i].type_ == expected[i].type_
         assert len(outputs) == len(expected)
+
+    def test_package_integration_generation(self, tmp_path):
+        """
+        Given
+        - postman collection
+        When
+        - generating an integration in a package format
+        Then
+        - package should be created with the integration files.
+        """
+        package_path = 'test_files/package'
+        yml_path = 'test_files/test-integration.yml'
+        _testutil_remove_generated_files(package_path, yml_path)
+        try:
+            autogen_config = postman_to_autogen_configuration(
+                collection=self.postman_collection,
+                name='VirusTotal Test',
+                command_prefix='vt-test',
+                context_path_prefix='VirusTotalTest'
+            )
+            integration_obj = autogen_config.generate_integration_yml()
+            integration_yml = yaml.dump(integration_obj.to_dict())
+            f = open(yml_path, "w")
+            f.write(integration_yml)
+            f.close()
+            yml_splitter = YmlSplitter(file_type=FileType.INTEGRATION.value, input=yml_path, output=str(package_path))
+            yml_splitter.extract_to_package_format()
+            assert os.listdir(package_path) == ['package.py', 'README.md', 'Pipfile', 'Pipfile.lock', 'package.yml']
+        except Exception as e:
+            raise e
+        finally:
+            _testutil_remove_generated_files(package_path, yml_path)
+
+
+def _testutil_remove_generated_files(package_path: str, yml_path: str):
+    if os.path.exists(yml_path):
+        os.remove(yml_path)
+    if os.path.exists(package_path):
+        shutil.rmtree(package_path)
 
 
 def _testutil_create_postman_collection(dest_path, with_request: Optional[dict] = None, no_auth: bool = False):

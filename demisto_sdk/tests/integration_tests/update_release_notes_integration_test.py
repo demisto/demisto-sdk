@@ -482,7 +482,7 @@ def test_update_release_notes_specific_version_invalid(demisto_client, repo):
     """
     runner = CliRunner(mix_stderr=True)
     result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", join('Packs', 'ThinkCanary'), "-v", "3.x.t"])
-    assert 'Version number should be in x.y.z format' in result.stdout
+    assert 'The format of version should be in x.y.z format, e.g: <2.1.3>' in result.stdout
 
 
 def test_update_release_notes_specific_version_valid(demisto_client, mocker, repo):

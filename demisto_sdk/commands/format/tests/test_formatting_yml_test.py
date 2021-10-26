@@ -10,7 +10,8 @@ from ruamel.yaml import YAML
 
 from demisto_sdk.commands.common.constants import (FEED_REQUIRED_PARAMS,
                                                    FETCH_REQUIRED_PARAMS,
-                                                   INTEGRATION)
+                                                   INTEGRATION,
+                                                   OLDEST_SUPPORTED_VERSION)
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
@@ -614,13 +615,13 @@ class TestFormatting:
             - Run format on TPB file
         Then
             - Ensure run_format return value is 0
-            - Ensure `fromversion` field set to 6.0.0
+            - Ensure `fromversion` field set to OLDEST_SUPPORTED_VERSION
         """
         os.makedirs(TEST_PLAYBOOK_PATH, exist_ok=True)
         formatter = TestPlaybookYMLFormat(input=SOURCE_FORMAT_TEST_PLAYBOOK, output=DESTINATION_FORMAT_TEST_PLAYBOOK)
         res = formatter.run_format()
         assert res == 0
-        assert formatter.data.get('fromversion') == '6.0.0'
+        assert formatter.data.get('fromversion') == OLDEST_SUPPORTED_VERSION
         os.remove(DESTINATION_FORMAT_TEST_PLAYBOOK)
         os.rmdir(TEST_PLAYBOOK_PATH)
 
@@ -937,14 +938,14 @@ class TestFormatting:
         When
             - Run format command
         Then
-            - Ensure that the integration fromversion is set to 6.0.0
+            - Ensure that the integration fromversion is set to OLDEST_SUPPORTED_VERSION
             if it is new contributed pack, this is integration, and its version is 6.0.0 do not change it
         """
         pack.pack_metadata.update({'support': 'partner', 'currentVersion': '1.0.0'})
         integration = pack.create_integration(yml={'fromversion': '5.5.0'})
         bs = BaseUpdate(input=integration.yml.path)
         bs.set_fromVersion(file_type=INTEGRATION)
-        assert bs.data['fromversion'] == '6.0.0', integration.yml.path
+        assert bs.data['fromversion'] == OLDEST_SUPPORTED_VERSION, integration.yml.path
 
     @pytest.mark.parametrize('user_input,result_fromversion', [('Y', '6.0.0'), ('N', '5.0.0')])
     def test_set_fromversion_new_pack(self, monkeypatch, pack, user_input, result_fromversion):

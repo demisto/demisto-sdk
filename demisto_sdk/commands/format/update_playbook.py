@@ -7,15 +7,15 @@ from typing import Tuple
 import click
 from git import InvalidGitRepositoryError
 
-from demisto_sdk.commands.common.constants import PLAYBOOK, FileType
+from demisto_sdk.commands.common.constants import (OLDEST_SUPPORTED_VERSION,
+                                                   PLAYBOOK, FileType)
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.tools import (find_type, get_yaml,
                                                is_string_uuid, write_yml)
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SCHEMAS_PATH,
                                                           SKIP_RETURN_CODE,
-                                                          SUCCESS_RETURN_CODE,
-                                                          VERSION_6_0_0)
+                                                          SUCCESS_RETURN_CODE)
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 
 
@@ -68,9 +68,9 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
                         click.echo(f"Adding `fromversion: {self.from_version}`")
 
                     else:
-                        click.echo(f"Adding `fromversion: {VERSION_6_0_0}`")
+                        click.echo(f"Adding `fromversion: {OLDEST_SUPPORTED_VERSION}`")
                 self.data[
-                    'fromversion'] = self.from_version if self.from_version else VERSION_6_0_0
+                    'fromversion'] = self.from_version if self.from_version else OLDEST_SUPPORTED_VERSION
                 return
 
             click.secho('No fromversion is specified for this playbook, would you like me to update for you? [Y/n]',
@@ -97,15 +97,15 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
                     click.secho('Version format is not valid', fg='red')
 
         elif not self.old_file and LooseVersion(self.data.get('fromversion', '0.0.0')) < \
-                LooseVersion(VERSION_6_0_0):
+                LooseVersion(OLDEST_SUPPORTED_VERSION):
             if self.assume_yes:
-                self.data['fromversion'] = VERSION_6_0_0
+                self.data['fromversion'] = OLDEST_SUPPORTED_VERSION
             else:
                 set_from_version = str(
                     input(f"\nYour current fromversion is: '{self.data.get('fromversion')}'. Do you want "
-                          f"to set it to '6.0.0'? Y/N ")).lower()
+                          f"to set it to oldest supported version '6.0.0'? Y/N ")).lower()
                 if set_from_version in ['y', 'yes']:
-                    self.data['fromversion'] = VERSION_6_0_0
+                    self.data['fromversion'] = OLDEST_SUPPORTED_VERSION
 
     def update_task_uuid(self):
         """If taskid field and the id under the task field are not from uuid type, generate uuid instead"""

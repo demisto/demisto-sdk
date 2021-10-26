@@ -18,9 +18,9 @@ from demisto_sdk.commands.common.constants import (
     GENERIC_TYPES_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
     INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, INTEGRATION_CATEGORIES,
     INTEGRATIONS_DIR, LAYOUTS_DIR, MARKETPLACE_LIVE_DISCUSSIONS,
-    PACK_INITIAL_VERSION, PACK_SUPPORT_OPTIONS, PLAYBOOKS_DIR, REPORTS_DIR,
-    SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR, XSOAR_AUTHOR, XSOAR_SUPPORT,
-    XSOAR_SUPPORT_URL, GitContentConfig)
+    OLDEST_SUPPORTED_VERSION, PACK_INITIAL_VERSION, PACK_SUPPORT_OPTIONS,
+    PLAYBOOKS_DIR, REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR,
+    XSOAR_AUTHOR, XSOAR_SUPPORT, XSOAR_SUPPORT_URL, GitContentConfig)
 from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                get_common_server_path,
                                                get_pack_name, print_error,
@@ -113,7 +113,6 @@ class Initiator:
 
     DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
     PACK_INITIAL_VERSION = "1.0.0"
-    SUPPORTED_FROM_VERSION = "6.0.0"
 
     DIR_LIST = [INTEGRATIONS_DIR, SCRIPTS_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
                 PLAYBOOKS_DIR, LAYOUTS_DIR, TEST_PLAYBOOKS_DIR, CLASSIFIERS_DIR, CONNECTIONS_DIR, DASHBOARDS_DIR,
@@ -543,8 +542,8 @@ class Initiator:
         if from_version:
             yml_dict['fromversion'] = from_version
 
-        if LooseVersion(yml_dict.get('fromversion', '0.0.0')) < LooseVersion(self.SUPPORTED_FROM_VERSION):
-            yml_dict['fromversion'] = self.SUPPORTED_FROM_VERSION
+        if LooseVersion(yml_dict.get('fromversion', '0.0.0')) < LooseVersion(OLDEST_SUPPORTED_VERSION):
+            yml_dict['fromversion'] = OLDEST_SUPPORTED_VERSION
 
         if integration:
             yml_dict["display"] = self.id

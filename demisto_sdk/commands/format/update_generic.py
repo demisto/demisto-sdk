@@ -8,7 +8,9 @@ import click
 import yaml
 from ruamel.yaml import YAML
 
-from demisto_sdk.commands.common.constants import INTEGRATION, PLAYBOOK
+from demisto_sdk.commands.common.constants import (INTEGRATION,
+                                                   OLDEST_SUPPORTED_VERSION,
+                                                   PLAYBOOK)
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_dict_from_file,
                                                get_pack_metadata,
                                                get_remote_file,
@@ -258,7 +260,7 @@ class BaseUpdate:
                     self.data[self.from_version_key] = from_version
                 # if it is new contributed pack = setting version to 6.0.0
                 elif should_set_from_version:
-                    self.data[self.from_version_key] = VERSION_6_0_0
+                    self.data[self.from_version_key] = OLDEST_SUPPORTED_VERSION
                 # Otherwise add fromversion key to current file and set to default 6.0.0
                 # Now it is same as contributed, but this might change
                 else:
@@ -269,21 +271,22 @@ class BaseUpdate:
             # if it is new contributed pack, this is integration, and its version is 5.5.0 do not change it
             # if it is new contributed pack = setting version to 6.0.0
             elif should_set_from_version:
-                if self.data.get(self.from_version_key) != '6.0.0' or file_type != INTEGRATION:
-                    self.data[self.from_version_key] = VERSION_6_0_0
+                if self.data.get(self.from_version_key) != OLDEST_SUPPORTED_VERSION or file_type != INTEGRATION:
+                    self.data[self.from_version_key] = OLDEST_SUPPORTED_VERSION
 
-            # If it is new pack, and it has from version lower than 6.0.0, ask to set it to 6.0.0
+            # If it is new pack, and it has from version lower than OLDEST_SUPPORTED_VERSION, ask to set it to
+            # OLDEST_SUPPORTED_VERSION.
             # Playbook has its own validation in update_fromversion_by_user() function in update_playbook.py
             elif LooseVersion(self.data.get(self.from_version_key, '0.0.0')) < \
-                    LooseVersion(VERSION_6_0_0) and file_type != PLAYBOOK:
+                    LooseVersion(OLDEST_SUPPORTED_VERSION) and file_type != PLAYBOOK:
                 if self.assume_yes:
-                    self.data[self.from_version_key] = VERSION_6_0_0
+                    self.data[self.from_version_key] = OLDEST_SUPPORTED_VERSION
                 else:
                     set_from_version = str(
                         input(f"\nYour current fromversion is: '{self.data.get(self.from_version_key)}'. Do you want "
-                              f"to set it to '6.0.0'? Y/N ")).lower()
+                              f"to set it to the minimal supported version '6.0.0'? Y/N ")).lower()
                     if set_from_version in ['y', 'yes']:
-                        self.data[self.from_version_key] = VERSION_6_0_0
+                        self.data[self.from_version_key] = OLDEST_SUPPORTED_VERSION
 
         # If there is an existing file in content repo
         else:

@@ -584,7 +584,7 @@ class TestPostmanCodeGen:
         - package should be created with the integration files.
         """
         package_path = 'test_files/package'
-        yml_path = 'test_files/test-integration.yml'
+        yml_path = 'test-integration.yml'
         _testutil_remove_generated_files(package_path, yml_path)
         try:
             autogen_config = postman_to_autogen_configuration(

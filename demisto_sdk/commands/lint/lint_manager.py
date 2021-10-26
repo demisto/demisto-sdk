@@ -37,6 +37,7 @@ from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, PWSH_CHECKS,
 from demisto_sdk.commands.lint.linter import Linter
 
 logger = logging.getLogger('demisto-sdk')
+sha1Regex = re.compile(r'\b[0-9a-fA-F]{40}\b', re.M)
 
 
 class LintManager:
@@ -242,8 +243,9 @@ class LintManager:
         else:
             # case 2: comparing master against a different commit, not necissarry the latest
             # case 3: comparing a different branch (not master) to a different branch (that can be master)
-            if re.compile(r'\b[0-9a-f]{40}\b', flags=re.IGNORECASE).match(base_branch):
+            if sha1Regex.match(base_branch):
                 # if the given different branch is given as a commit hash
+                print('working')
                 last_common_commit = base_branch
             else:
                 # if the given different branch is given as a branch name

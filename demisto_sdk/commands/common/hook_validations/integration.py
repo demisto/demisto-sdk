@@ -29,7 +29,7 @@ from demisto_sdk.commands.common.tools import (
     get_file_version_suffix_if_exists, get_files_in_dir, get_pack_name,
     is_iron_bank_pack, print_error, server_version_compare)
 
-XSOAR_SUPPORT = 'XSOAR'
+XSOAR_SUPPORT = 'xsoar'
 default_additional_info = load_default_additional_info_dict()
 
 
@@ -1379,13 +1379,13 @@ class IntegrationValidator(ContentEntityValidator):
             metadata_path = Path(PACKS_DIR, pack_name, PACKS_PACK_META_FILE_NAME)
             metadata_content = self.get_metadata_file_content(metadata_path)
 
-            if metadata_content.get('support') == XSOAR_SUPPORT:
+            if metadata_content.get('support').lower() == XSOAR_SUPPORT:
                 return True
 
         conf_params = self.current_file.get('configuration', [])
         for param_name in conf_params:
             if 'fromlicense' in param_name.keys():
-                error_message, error_code = Errors.fromlicense_in_parameters(param_name)
+                error_message, error_code = Errors.fromlicense_in_parameters(param_name.get('name'))
 
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self.is_valid = False

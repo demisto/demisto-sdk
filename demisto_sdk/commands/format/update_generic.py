@@ -18,7 +18,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, get_dict_from_file,
 from demisto_sdk.commands.format.format_constants import (
     DEFAULT_VERSION, ERROR_RETURN_CODE, GENERIC_OBJECTS_DEFAULT_FROMVERSION,
     GENERIC_OBJECTS_FILE_TYPES, OLD_FILE_DEFAULT_1_FROMVERSION,
-    SKIP_RETURN_CODE, SUCCESS_RETURN_CODE, VERSION_6_0_0)
+    SKIP_RETURN_CODE, SUCCESS_RETURN_CODE)
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
 ryaml = YAML()
@@ -264,7 +264,7 @@ class BaseUpdate:
                 # Otherwise add fromversion key to current file and set to default 6.0.0
                 # Now it is same as contributed, but this might change
                 else:
-                    self.data[self.from_version_key] = VERSION_6_0_0
+                    self.data[self.from_version_key] = OLDEST_SUPPORTED_VERSION
             # If user wants to modify fromversion key and the key already existed
             elif from_version:
                 self.data[self.from_version_key] = from_version

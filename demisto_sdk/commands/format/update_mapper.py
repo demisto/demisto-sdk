@@ -2,10 +2,10 @@ from typing import Tuple
 
 import click
 
+from demisto_sdk.commands.common.constants import OLDEST_SUPPORTED_VERSION
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
-                                                          SUCCESS_RETURN_CODE,
-                                                          VERSION_6_0_0)
+                                                          SUCCESS_RETURN_CODE)
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
 
 
@@ -31,7 +31,7 @@ class MapperJSONFormat(BaseUpdateJSON):
     def run_format(self) -> int:
         try:
             click.secho(f'\n================= Updating file {self.source_file} =================', fg='bright_blue')
-            self.set_fromVersion(VERSION_6_0_0)
+            self.set_fromVersion(OLDEST_SUPPORTED_VERSION)
             self.update_json()
             self.set_description()
             self.set_mapping()

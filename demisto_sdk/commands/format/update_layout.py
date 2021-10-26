@@ -6,11 +6,12 @@ from typing import Tuple
 import click
 import yaml
 
+from demisto_sdk.commands.common.constants import OLDEST_SUPPORTED_VERSION
 from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
                                                print_error)
 from demisto_sdk.commands.format.format_constants import (
     DEFAULT_VERSION, ERROR_RETURN_CODE, NEW_FILE_DEFAULT_5_FROMVERSION,
-    SKIP_RETURN_CODE, SUCCESS_RETURN_CODE, VERSION_6_0_0)
+    SKIP_RETURN_CODE, SUCCESS_RETURN_CODE)
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
 
 LAYOUTS_CONTAINER_KINDS = ['edit',
@@ -101,7 +102,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
 
     def layoutscontainer__run_format(self) -> None:
         """fromVersion 6.0.0 layout (container) format"""
-        self.set_fromVersion(from_version=VERSION_6_0_0)
+        self.set_fromVersion(from_version=OLDEST_SUPPORTED_VERSION)
         self.set_group_field()
         self.layoutscontainer__set_output_path()
         self.update_id(field='name')

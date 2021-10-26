@@ -53,13 +53,13 @@ class LintManager:
     """
 
     def __init__(self, input: str, git: bool, all_packs: bool, quiet: bool, verbose: int, prev_ver: str,
-                 json_file_path: str = ''):
+                 json_file_path: str = '', id_set_pat: str = None, check_dependent_packs: bool = False):
 
         # Verbosity level
         self._verbose = not quiet if quiet else verbose
         # Gather facts for manager
         self._facts: dict = self._gather_facts()
-        self._prev_ver = prev_ver
+        self._prev_ver = prev_ver  # None if not inserted (and not master as was the default value)
         self._all_packs = all_packs
         # Set 'git' to true if no packs have been specified, 'lint' should operate as 'lint -g'
         lint_no_packs_command = not git and not all_packs and not input
@@ -71,6 +71,12 @@ class LintManager:
                                                     git=git,
                                                     all_packs=all_packs,
                                                     base_branch=self._prev_ver)
+        self._id_set_path = id_set_path
+        self._check_dependent_packs = check_dependent_packs
+        if self._check_dependent_packs:
+            # TODO: check cases where this shouldnt hit
+            self._pkgs = self._pkgs.extend(get_packs_dependent_on_given_packs(self._pkgs, self._id_set_path))
+
         if json_file_path:
             if os.path.isdir(json_file_path):
                 json_file_path = os.path.join(json_file_path, 'lint_outputs.json')
@@ -233,7 +239,7 @@ class LintManager:
             List[Path]: A list of names of packages that should run.
         """
         print(
-            f"Comparing to {Colors.Fg.cyan}{content_repo.remote()}/{base_branch}{Colors.reset} using branch {Colors.Fg.cyan}"
+            f"Comparing to {Colors.Fg.cyan}{base_branch}{Colors.reset} using branch {Colors.Fg.cyan}"
             f"{content_repo.active_branch}{Colors.reset}")
         staged_files = {content_repo.working_dir / Path(item.b_path).parent for item in
                         content_repo.active_branch.commit.tree.diff(None, paths=pkgs)}
@@ -245,7 +251,6 @@ class LintManager:
             # case 3: comparing a different branch (not master) to a different branch (that can be master)
             if sha1Regex.match(base_branch):
                 # if the given different branch is given as a commit hash
-                print('working')
                 last_common_commit = base_branch
             else:
                 # if the given different branch is given as a branch name

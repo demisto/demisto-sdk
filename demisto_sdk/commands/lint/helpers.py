@@ -12,6 +12,8 @@ from contextlib import contextmanager
 from functools import lru_cache
 from pathlib import Path
 from typing import Dict, Generator, List, Optional, Union
+from pebble import ProcessPool, ProcessFuture
+
 
 # Third party packages
 import coverage
@@ -25,6 +27,7 @@ from docker.models.containers import Container
 from demisto_sdk.commands.common.constants import (TYPE_PWSH, TYPE_PYTHON,
                                                    DemistoException)
 from demisto_sdk.commands.common.tools import print_warning, run_command_os
+from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
 
 # Python2 requirements
 PYTHON2_REQ = ["flake8", "vulture"]
@@ -546,3 +549,33 @@ def generate_coverage_report(html=False, xml=False, report=True, cov_dir='covera
         except coverage.misc.CoverageException as warning:
             logger.warning(str(warning))
             return
+
+def ProcessPoolHandler() -> ProcessPool:
+    """ Process pool Handler which terminate all processes in case of Exception.
+
+    Yields:
+        ProcessPool: Pebble process pool.
+    """
+    with ProcessPool(max_workers=3) as pool:
+        try:
+            yield pool
+        except Exception:
+            logging.exception("Gracefully release all resources due to Error...")
+            raise
+        finally:
+            pool.close()
+            pool.join()
+
+def get_packs_dependent_on_given_packs(packs, id_set_path):
+    dependent_packs = []
+
+    # Get Id set and turn to dict
+    # get keys and insert to:
+    dependency_graph = PackDependencies.build_all_dependencies_graph(packs, id_set=id_set, verbose=False)
+    # revert graph
+    with ProcessPoolHandler() as pool:
+        futures = []
+        for pack in dependency_graph:
+            futures.append(pool.schedule(calculate_single_pack_dependencies, args=(pack, dependency_graph), timeout=10))
+        wait_futures_complete(futures=futures, done_fn=add_pack_metadata_results)
+    # implement ending func to return a set of their dependents

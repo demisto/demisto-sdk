@@ -600,7 +600,7 @@ class TestPostmanCodeGen:
             f.close()
             yml_splitter = YmlSplitter(file_type=FileType.INTEGRATION.value, input=yml_path, output=str(package_path))
             yml_splitter.extract_to_package_format()
-            assert os.listdir(package_path) == ['package.py', 'README.md', 'Pipfile', 'Pipfile.lock', 'package.yml']
+            assert all(elem in os.listdir(package_path) for elem in ['package.py', 'README.md', 'package.yml'])
         except Exception as e:
             raise e
         finally:

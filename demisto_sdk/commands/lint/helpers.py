@@ -1,5 +1,6 @@
 # STD python packages
 import io
+import json
 import logging
 import os
 import re
@@ -13,7 +14,8 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Dict, Generator, List, Optional, Union
 from pebble import ProcessPool, ProcessFuture
-
+from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
+import networkx as nx
 
 # Third party packages
 import coverage
@@ -27,7 +29,7 @@ from docker.models.containers import Container
 from demisto_sdk.commands.common.constants import (TYPE_PWSH, TYPE_PYTHON,
                                                    DemistoException)
 from demisto_sdk.commands.common.tools import print_warning, run_command_os
-from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
+from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies, parse_for_pack_metadata
 
 # Python2 requirements
 PYTHON2_REQ = ["flake8", "vulture"]
@@ -567,15 +569,35 @@ def ProcessPoolHandler() -> ProcessPool:
             pool.join()
 
 def get_packs_dependent_on_given_packs(packs, id_set_path):
-    dependent_packs = []
 
-    # Get Id set and turn to dict
-    # get keys and insert to:
-    dependency_graph = PackDependencies.build_all_dependencies_graph(packs, id_set=id_set, verbose=False)
-    # revert graph
+    def collect_dependent_packs(results: Tuple) -> None:
+        first_level_dependencies = results
+        dependent_packs.extend(first_level_dependencies.keys())
+
+    dependent_packs = []
+    id_set = get_id_set(id_set_path)
+
+    dependency_graph = PackDependencies.build_all_dependencies_graph(id_set.keys(), id_set=id_set, verbose=False)
+    revert_dependency_graph = nx.DiGraph.reverse(dependency_graph)
+
     with ProcessPoolHandler() as pool:
         futures = []
-        for pack in dependency_graph:
-            futures.append(pool.schedule(calculate_single_pack_dependencies, args=(pack, dependency_graph), timeout=10))
-        wait_futures_complete(futures=futures, done_fn=add_pack_metadata_results)
-    # implement ending func to return a set of their dependents
+        for pack in packs:
+            futures.append(pool.schedule(calculate_single_pack_dependencies, args=(pack, revert_dependency_graph), timeout=10))
+        wait_futures_complete(futures=futures, done_fn=collect_dependent_packs)
+
+    return dependent_packs
+
+def calculate_single_pack_dependencies(pack: str, dependency_graph: object):
+    subgraph = PackDependencies.get_dependencies_subgraph_by_dfs(dependency_graph, pack)
+    #for dependency_pack, additional_data in subgraph.nodes(data=True):
+    first_level_dependencies, _ = parse_for_pack_metadata(subgraph, pack)
+    return first_level_dependencies
+
+def get_id_set(id_set_path: str):
+    if id_set_path:
+        with open(id_set_path, 'r') as id_set_file:
+            id_set = json.load(id_set_file)
+    else:
+        id_set = IDSetCreator(print_logs=False).create_id_set()
+        return id_set

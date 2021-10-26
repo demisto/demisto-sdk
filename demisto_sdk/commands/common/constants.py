@@ -1,14 +1,10 @@
-import os
 import re
 from enum import Enum
 from functools import reduce
-from typing import Dict, Iterable, List, Optional
+from typing import Dict, List
 
-import click
-# dirs
-from git import InvalidGitRepositoryError
-
-from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.GitContentConfig import \
+    GitContentConfig  # noqa
 
 CAN_START_WITH_DOT_SLASH = '(?:./)?'
 NOT_TEST = '(?!Test)'
@@ -38,6 +34,7 @@ TESTS_DIR = 'Tests'
 DOC_FILES_DIR = 'doc_files'
 DOCUMENTATION_DIR = 'Documentation'
 PRE_PROCESS_RULES_DIR = 'PreProcessRules'
+LISTS_DIR = 'Lists'
 
 SCRIPT = 'script'
 AUTOMATION = 'automation'
@@ -47,6 +44,7 @@ TEST_PLAYBOOK = 'testplaybook'
 LAYOUT = 'layout'
 LAYOUTS_CONTAINER = 'layoutscontainer'
 PRE_PROCESS_RULES = 'pre-process-rules'
+LISTS = 'list'  # singular, as it is the prefix of the file
 INCIDENT_TYPE = 'incidenttype'
 INCIDENT_FIELD = 'incidentfield'
 INDICATOR_FIELD = 'indicatorfield'
@@ -114,6 +112,7 @@ class FileType(Enum):
     GENERIC_TYPE = 'generictype'
     GENERIC_DEFINITION = 'genericdefinition'
     PRE_PROCESS_RULES = 'pre-process-rule'
+    LISTS = 'list'
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -138,7 +137,8 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.GENERIC_DEFINITION: 'Objects',
     FileType.GENERIC_MODULE: 'Modules',
     FileType.GENERIC_TYPE: 'Object Types',
-    FileType.GENERIC_FIELD: 'Object Fields'
+    FileType.GENERIC_FIELD: 'Object Fields',
+    FileType.LISTS: 'Lists',
 }
 
 ENTITY_TYPE_TO_DIR = {
@@ -163,7 +163,9 @@ ENTITY_TYPE_TO_DIR = {
     FileType.GENERIC_DEFINITION.value: GENERIC_DEFINITIONS_DIR,
     FileType.GENERIC_MODULE.value: GENERIC_MODULES_DIR,
     FileType.GENERIC_FIELD.value: GENERIC_FIELDS_DIR,
-    FileType.GENERIC_TYPE.value: GENERIC_TYPES_DIR
+    FileType.GENERIC_TYPE.value: GENERIC_TYPES_DIR,
+    FileType.LISTS.value: LISTS_DIR,
+
 }
 
 CONTENT_FILE_ENDINGS = ['py', 'yml', 'png', 'json', 'md']
@@ -190,6 +192,7 @@ CONTENT_ENTITIES_DIRS = [
     GENERIC_MODULES_DIR,
     GENERIC_DEFINITIONS_DIR,
     PRE_PROCESS_RULES_DIR,
+    LISTS_DIR,
 ]
 
 CONTENT_ENTITY_UPLOAD_ORDER = [
@@ -206,6 +209,7 @@ CONTENT_ENTITY_UPLOAD_ORDER = [
     LAYOUTS_DIR,
     DASHBOARDS_DIR,
     PRE_PROCESS_RULES_DIR,
+    LISTS_DIR,
 ]
 
 DEFAULT_IMAGE_PREFIX = 'data:image/png;base64,'
@@ -527,6 +531,7 @@ API_MODULE_REGEXES = [
 
 ID_IN_COMMONFIELDS = [  # entities in which 'id' key is under 'commonfields'
     'integration',
+    'betaintegration',
     'script'
 ]
 ID_IN_ROOT = [  # entities in which 'id' key is in the root
@@ -536,6 +541,7 @@ ID_IN_ROOT = [  # entities in which 'id' key is in the root
     'layoutscontainer',
     'mapper',
     'pre_process_rule',
+    'lists',
 ]
 
 INTEGRATION_PREFIX = 'integration'
@@ -790,6 +796,7 @@ DIR_LIST_FOR_REGULAR_ENTETIES = [
     INDICATOR_TYPES_DIR,
     CONNECTIONS_DIR,
     INDICATOR_FIELDS_DIR,
+    LISTS_DIR,
 ]
 PACKS_DIRECTORIES = [
     SCRIPTS_DIR,
@@ -876,64 +883,6 @@ def urljoin(*args: str):
         'https://www.example.com/suffix/suffix2/suffix/file.json'
     """
     return reduce(lambda a, b: str(a).rstrip('/') + '/' + str(b).lstrip('/'), args).rstrip("/")
-
-
-class GithubCredentials:
-    ENV_TOKEN_NAME = 'DEMISTO_SDK_GITHUB_TOKEN'
-    TOKEN: Optional[str]
-
-    def __init__(self):
-        self.TOKEN = os.getenv(self.ENV_TOKEN_NAME)
-
-
-class GithubContentConfig:
-    """Holds links, credentials and other content related github configuration
-
-    Attributes:
-        CURRENT_REPOSITORY: The current repository in the cwd
-        CONTENT_GITHUB_LINK: Link to the raw content git repository
-        CONTENT_GITHUB_MASTER_LINK: Link to the content git repository's master branch
-        Credentials: Credentials to the git.
-    """
-    BASE_RAW_GITHUB_LINK = r'https://raw.githubusercontent.com/'
-    SDK_API_GITHUB_RELEASES = r'https://api.github.com/repos/demisto/demisto-sdk/releases'
-    OFFICIAL_CONTENT_REPO_NAME = 'demisto/content'
-    CONTENT_GITHUB_UPSTREAM = r'upstream.*demisto/content'
-    CONTENT_GITHUB_ORIGIN = r'origin.*demisto/content'
-
-    CURRENT_REPOSITORY: str
-    CONTENT_GITHUB_LINK: str
-    CONTENT_GITHUB_MASTER_LINK: str
-
-    def __init__(self, repo_name: Optional[str] = None):
-        if not repo_name:
-            try:
-                urls = list(GitUtil().repo.remote().urls)
-                self.CURRENT_REPOSITORY = self._get_repository_name(urls)
-            except (InvalidGitRepositoryError, AttributeError):  # No repository
-                self.CURRENT_REPOSITORY = self.OFFICIAL_CONTENT_REPO_NAME
-        else:
-            self.CURRENT_REPOSITORY = repo_name
-        # DO NOT USE os.path.join on URLs, it may cause errors
-        self.CONTENT_GITHUB_LINK = urljoin(self.BASE_RAW_GITHUB_LINK, self.CURRENT_REPOSITORY)
-        self.CONTENT_GITHUB_MASTER_LINK = urljoin(self.CONTENT_GITHUB_LINK, r'master')
-        self.Credentials = GithubCredentials()
-
-    @staticmethod
-    def _get_repository_name(urls: Iterable) -> str:
-        """Returns the git repository of the cwd.
-        if not running in a git repository, will return an empty string
-        """
-        try:
-            for url in urls:
-                repo = re.findall(r'.com[/:](.*)', url)[0].replace('.git', '')
-                return repo
-        except (AttributeError, IndexError):
-            pass
-
-        # default to content repo if the repo is not found
-        click.secho('Could not find the repository name - defaulting to demisto/content', fg='yellow')
-        return GithubContentConfig.OFFICIAL_CONTENT_REPO_NAME
 
 
 OFFICIAL_CONTENT_ID_SET_PATH = 'https://storage.googleapis.com/marketplace-dist/content/id_set.json'
@@ -1241,6 +1190,7 @@ VALIDATED_PACK_ITEM_TYPES = [
     'Classifiers',
     'Layouts',
     'PreProcessRules',
+    'Lists',
 ]
 
 FIRST_FETCH = 'first_fetch'
@@ -1253,9 +1203,9 @@ GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION = '6.5.0'
 
 FEATURE_BRANCHES = ['v4.5.0']
 
-
 SKIP_RELEASE_NOTES_FOR_TYPES = (FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK,
-                                FileType.TEST_SCRIPT, FileType.DOC_IMAGE, FileType.AUTHOR_IMAGE)
+                                FileType.TEST_SCRIPT, FileType.DOC_IMAGE, FileType.AUTHOR_IMAGE, None,
+                                FileType.RELEASE_NOTES_CONFIG)
 
 LAYOUT_AND_MAPPER_BUILT_IN_FIELDS = ['indicatortype', 'source', 'comment', 'aggregatedreliability', 'detectedips',
                                      'detectedhosts', 'modified', 'expiration', 'timestamp', 'shortdesc',
@@ -1304,6 +1254,7 @@ class ContentItems(Enum):
     GENERIC_FIELDS = 'genericfield'
     GENERIC_TYPES = 'generictype'
     PRE_PROCESS_RULES = 'pre-process-rule'
+    LISTS = 'list'
 
 
 YML_SUPPORTED_FOLDERS = {
@@ -1340,7 +1291,8 @@ CONTENT_ITEMS_DISPLAY_FOLDERS = {
     LAYOUTS_DIR,
     PRE_PROCESS_RULES_DIR,
     CLASSIFIERS_DIR,
-    WIDGETS_DIR
+    WIDGETS_DIR,
+    LISTS_DIR,
 }
 
 

@@ -8,15 +8,18 @@ from functools import lru_cache
 from pathlib import Path
 from threading import Lock
 from typing import Callable, List, Optional
+from urllib.parse import urlparse
 
 import click
 import requests
+from git import InvalidGitRepositoryError
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 
 from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
                                                 Errors)
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.tools import (
@@ -250,7 +253,7 @@ class ReadMeValidator(BaseValidator):
         should_print_error = not is_pack_readme
         relative_images = re.findall(r'(\!\[.*?\])\(((?!http).*?)\)$', self.readme_content, re.IGNORECASE | re.MULTILINE)
         relative_images += re.findall(  # HTML image tag
-            r'(src\s*=\s*"((?!http).*?)")', self.readme_content,
+            r'(<img.*?src\s*=\s*"((?!http).*?)")', self.readme_content,
             re.IGNORECASE | re.MULTILINE)
 
         for img in relative_images:
@@ -288,23 +291,41 @@ class ReadMeValidator(BaseValidator):
             list: List of the errors found
         """
         error_list = []
+        working_branch_name: str = ''
+        try:
+            working_branch_name = GitUtil().get_current_working_branch()
+        except InvalidGitRepositoryError:
+            pass
         should_print_error = not is_pack_readme  # pack readme errors are handled and printed during the pack unique
         # files validation.
         absolute_links = re.findall(
             r'(!\[.*\])\((https://.*)\)$', self.readme_content, re.IGNORECASE | re.MULTILINE)
-        absolute_links += re.findall(  # image tag
-            r'(src\s*=\s*"(https://.*?)")', self.readme_content, re.IGNORECASE | re.MULTILINE)
+        absolute_links += re.findall(
+            r'(<img.*?src\s*=\s*"(https://.*?)")', self.readme_content, re.IGNORECASE | re.MULTILINE)
         for link in absolute_links:
+            error_message: str = ''
+            error_code: str = ''
             prefix = '' if 'src' in link[0] else link[0].strip()
             img_url = link[1].strip()  # striping in case there are whitespaces at the beginning/ending of url.
             try:
-                response = requests.get(img_url, verify=False, timeout=10)
+                # a link that contains a branch name (other than master) is invalid since the branch will be deleted
+                # after merge to master. in the url path (after '.com'), the third element should be the branch name.
+                # example 'https://raw.githubusercontent.com/demisto/content/<branch-name>/Packs/.../image.png'
+                url_path_elem_list = urlparse(img_url).path.split('/')[1:]
+                if len(url_path_elem_list) >= 3 and \
+                        (url_path_elem_list[2] == working_branch_name and working_branch_name != 'master'):
+                    error_message, error_code = Errors.invalid_readme_image_error(prefix + f'({img_url})',
+                                                                                  error_type='branch_name_readme_absolute_error')
+                else:
+                    response = requests.get(img_url, verify=False, timeout=10)
+                    if response.status_code != 200:
+                        error_message, error_code = Errors.invalid_readme_image_error(prefix + f'({img_url})',
+                                                                                      error_type='general_readme_absolute_error')
             except Exception as ex:
                 click.secho(f"Could not validate the image link: {img_url}\n {ex}", fg='yellow')
                 continue
-            if response.status_code != 200:
-                error_message, error_code = Errors.invalid_readme_image_error(prefix + f'({img_url})',
-                                                                              error_type='general_readme_absolute_error')
+
+            if error_message and error_code:
                 formatted_error = \
                     self.handle_error(error_message, error_code, file_path=self.file_path,
                                       should_print=should_print_error)

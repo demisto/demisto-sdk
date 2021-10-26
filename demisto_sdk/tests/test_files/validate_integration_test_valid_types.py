@@ -707,3 +707,25 @@ GENERIC_DEFINITION = {
     "auditable": False,
     "rbacSupport": True
 }
+
+EMPTY_ID_SET = {
+    'scripts': [],
+    'integrations': [],
+    'playbooks': [],
+    'TestPlaybooks': [],
+    'Classifiers': [],
+    'Dashboards': [],
+    'IncidentFields': [],
+    'IncidentTypes': [],
+    'IndicatorFields': [],
+    'IndicatorTypes': [],
+    'Layouts': [],
+    'Reports': [],
+    'Widgets': [],
+    'Mappers': [],
+    'GenericTypes': [],
+    'GenericFields': [],
+    'GenericModules': [],
+    'GenericDefinitions': [],
+    'Packs': []
+}

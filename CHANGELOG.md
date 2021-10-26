@@ -1,4 +1,25 @@
 # Changelog
+
+* added a new command **coverage-analyze** to generate and print coverage reports.
+* Fixed an issue in **validate** in repositories which are not in GitHub or GitLab
+* Added a validation that verifies that readme image absolute links do not contain the working branch name.
+* Added support for List content item in the **format**, **validate**, **download**, **upload**, **create-id-set**, **find-dependecies** and **create-content-artifacts** commands.
+* Added a validation to ensure reputation command's default argument is set as an array input.
+* Added the `--fail-duplicates` flag for the **merge-id-set** command which will fail the command if duplicates are found.
+* Added the `--fail-duplicates` flag for the **create-id-set** command which will fail the command if duplicates are found.
+
+# 1.5.1
+* Fixed an issue where **validate** command failed to recognized test playbooks for beta integrations as valid tests.
+* Fixed an issue were the **validate** command was falsely recognizing image paths in readme files.
+* Fixed an issue where the **upload** command error message upon upload failure pointed to wrong file rather than to the pack metadata.
+* Added a validation that verifies that each script which appears in incident fields, layouts or layout containers exists in the id_set.json.
+* Fixed an issue where the **postman code-gen** command generated double dots for context outputs when it was not needed.
+* Fixed an issue where there **validate** command on release notes file crashed when author image was added or modified.
+* Added input handling when running **find-dependencies**, replacing string manipulations.
+* Fixed an issue where the **validate** command did not handle multiple playbooks with the same name in the id_set.
+* Added support for GitLab repositories in **validate**
+
+# 1.5.0
 * Fixed an issue where **upload** command failed to upload packs not under content structure.
 * Added support for **init** command to run from non-content repo.
 * The **split-yml** has been renamed to **split** and now supports splitting Dashboards from unified Generic Modules.
@@ -10,6 +31,7 @@
 * Fixed an issue where **validate** failed on release notes configuration files.
 * Fixed an issue where the **validate** command failed on pack input if git detected changed files outside of `Packs` directory.
 * Fixed an issue where **validate** command failed to recognize files inside validated pack when validation release notes, resulting in a false error message for missing entity in release note.
+* Fixed an issue where the **download** command failed when downloading an invalid YML, instead of skipping it.
 
 # 1.4.9
 * Added validation that the support URL in partner contribution pack metadata does not lead to a GitHub repo.

@@ -1,6 +1,6 @@
 import os
 from copy import deepcopy
-from typing import Optional
+from typing import Dict, List, Optional
 
 import pytest
 from mock import mock_open, patch
@@ -9,12 +9,16 @@ from demisto_sdk.commands.common.constants import (FEED_REQUIRED_PARAMS,
                                                    FETCH_REQUIRED_PARAMS,
                                                    FIRST_FETCH_PARAM,
                                                    MAX_FETCH_PARAM)
+from demisto_sdk.commands.common.default_additional_info_loader import \
+    load_default_additional_info_dict
 from demisto_sdk.commands.common.hook_validations.integration import \
     IntegrationValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from TestSuite.test_tools import ChangeCWD
+
+default_additional_info = load_default_additional_info_dict()
 
 FEED_REQUIRED_PARAMS_STRUCTURE = [dict(required_param.get('must_equal'), **required_param.get('must_contain'),
                                        name=required_param.get('name')) for required_param in FEED_REQUIRED_PARAMS]
@@ -246,6 +250,28 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         assert validator.has_no_duplicate_args() is answer
 
+    WITH_DEFAULT_INFO = [{"name": "API key", "additionalinfo": default_additional_info['API key']}]
+    MISSING_DEFAULT_INFO = [{"name": "API key", "additionalinfo": ""}]
+    NON_DEFAULT_INFO = [{"name": "API key", "additionalinfo": "you know, the API key"}]
+
+    DEFAULT_INFO_INPUTS = [
+        (WITH_DEFAULT_INFO, True, False),
+        (MISSING_DEFAULT_INFO, False, False),
+        (NON_DEFAULT_INFO, True, True)]
+
+    @pytest.mark.parametrize("args, answer, expecting_warning", DEFAULT_INFO_INPUTS)
+    def test_default_params_default_info(self, capsys, args: List[Dict], answer: str, expecting_warning: bool):
+        validator = IntegrationValidator(mock_structure("", {"configuration": args}))
+        assert validator.default_params_have_default_additional_info() is answer
+
+        if expecting_warning:
+            from demisto_sdk.commands.common.errors import Errors
+            warning_message, warning_code = Errors.non_default_additional_info(['API key'])
+            expected_warning = f"[{warning_code}] - {warning_message}"
+            captured = capsys.readouterr()
+            assert captured.out.lstrip("\":").strip() == expected_warning
+            assert not captured.err
+
     NO_INCIDENT_INPUT = [
         ({"script": {"commands": [{"name": "command1", "arguments": [{"name": "arg1"}]}]}}, True),
         ({"script": {"commands": [{"name": "command_incident", "arguments": [{"name": "arg1"}]}]}}, False),
@@ -310,18 +336,22 @@ class TestIntegrationValidator:
         assert validator.is_valid_subtype() is answer
 
     DEFAULT_ARGS_DIFFERENT_ARG_NAME = [
-        {"name": "cve", "arguments": [{"name": "cve_id", "required": False, "default": True}]}]
+        {"name": "cve", "arguments": [{"name": "cve_id", "required": False, "default": True, 'isArray': True}]}]
     DEFAULT_ARGS_MISSING_UNREQUIRED_DEFAULT_FIELD = [
-        {"name": "email", "arguments": [{"name": "email", "required": False, "default": True}, {"name": "verbose"}]}]
+        {"name": "email", "arguments": [{"name": "email", "required": False, "default": True, 'isArray': True},
+                                        {"name": "verbose"}]}]
     DEFAULT_ARGS_MISSING_DEFAULT_PARAM_WHEN_ALLOWED = [
         {"name": "endpoint", "arguments": [{"name": "id", "required": False, "default": False}]}]
-    DEFAULT_ARGS_INVALID_PARMA_MISSING_DEFAULT = [{"name": "file", "required": True, "default": True},
+    DEFAULT_ARGS_INVALID_PARMA_MISSING_DEFAULT = [{"name": "file", "required": True, "default": True, 'isArray': True},
                                                   {"name": "verbose"}]
     DEFAULT_ARGS_INVALID_NOT_DEFAULT = [
         {"name": "email", "arguments": [{"name": "email", "required": False, "default": False}, {"name": "verbose"}]}]
     DEFAULT_ARGS_INVALID_COMMAND = [{"name": "file", "required": True, "default": False}, {"name": "verbose"}]
     DEFAULT_ARGS_MISSING_DEFAULT_PARAM_WHEN_NOT_ALLOWED = [
-        {"name": "email", "arguments": [{"name": "verbose", "required": False, "default": False}]}]
+        {"name": "email", "arguments": [{"name": "verbose", "required": False, "default": False, "isArray": True}]}]
+    DEFAULT_ARGS_NOT_ARRAY = [
+        {"name": "email", "arguments": [{"name": "email", "required": False, "default": True, "isArray": False},
+                                        {"name": "verbose"}]}]
     DEFAULT_ARGS_INPUTS = [
         (DEFAULT_ARGS_DIFFERENT_ARG_NAME, True),
         (DEFAULT_ARGS_MISSING_UNREQUIRED_DEFAULT_FIELD, True),
@@ -329,11 +359,12 @@ class TestIntegrationValidator:
         (DEFAULT_ARGS_INVALID_PARMA_MISSING_DEFAULT, False),
         (DEFAULT_ARGS_INVALID_NOT_DEFAULT, False),
         (DEFAULT_ARGS_INVALID_COMMAND, False),
-        (DEFAULT_ARGS_MISSING_DEFAULT_PARAM_WHEN_NOT_ALLOWED, False)
+        (DEFAULT_ARGS_MISSING_DEFAULT_PARAM_WHEN_NOT_ALLOWED, False),
+        (DEFAULT_ARGS_NOT_ARRAY, False)
     ]
 
     @pytest.mark.parametrize("current, answer", DEFAULT_ARGS_INPUTS)
-    def test_is_valid_default_argument_in_reputation_command(self, current, answer):
+    def test_is_valid_default_array_argument_in_reputation_command(self, current, answer):
         """
         Given: Integration reputation command with arguments.
 
@@ -345,7 +376,7 @@ class TestIntegrationValidator:
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
         validator.current_file = current
-        assert validator.is_valid_default_argument_in_reputation_command() is answer
+        assert validator.is_valid_default_array_argument_in_reputation_command() is answer
 
     MULTIPLE_DEFAULT_ARGS_1 = [
         {"name": "msgraph-list-users",
@@ -356,6 +387,7 @@ class TestIntegrationValidator:
     MULTIPLE_DEFAULT_ARGS_INVALID_1 = [
         {"name": "msgraph-list-users",
          "arguments": [{"name": "users", "required": False, "default": True}, {"name": "verbose", "default": True}]}]
+
     DEFAULT_ARGS_INPUTS = [
         (MULTIPLE_DEFAULT_ARGS_1, True),
         (MULTIPLE_DEFAULT_ARGS_2, True),
@@ -1165,7 +1197,7 @@ class TestIsFeedParamsExist:
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
         validator.current_file = current
-        assert validator.is_valid_default_argument_in_reputation_command() is True
+        assert validator.is_valid_default_array_argument_in_reputation_command() is True
 
     @pytest.mark.parametrize('param', [
         {'commands': ['something']},

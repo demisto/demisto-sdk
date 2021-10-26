@@ -6,7 +6,8 @@ from demisto_sdk.commands.common.tools import (get_yaml, print_error,
 from demisto_sdk.commands.generate_docs.common import build_example_dict
 from demisto_sdk.commands.generate_docs.generate_integration_doc import \
     get_command_examples
-from demisto_sdk.commands.json_to_outputs.json_to_outputs import parse_json
+from demisto_sdk.commands.generate_outputs.json_to_outputs.json_to_outputs import \
+    parse_json
 
 
 def dict_from_outputs_str(command: str, outputs: str, verbose=False):

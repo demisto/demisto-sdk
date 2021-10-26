@@ -14,7 +14,7 @@ ALLOWED_IGNORE_ERRORS = [
     'BA101', 'BA106', 'BA108', 'BA109', 'BA110', 'BA111', 'BA112', 'BA113',
     'DS107',
     'IF100', 'IF106',
-    'IN109', 'IN110', 'IN122', 'IN126', 'IN128', 'IN135', 'IN136', 'IN139',
+    'IN109', 'IN110', 'IN122', 'IN126', 'IN128', 'IN135', 'IN136', 'IN139', 'IN144',
     'MP106',
     'PA113', 'PA116', 'PA124', 'PA125', 'PA127',
     'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112', 'PB114', 'PB115', 'PB116',
@@ -97,6 +97,7 @@ ERROR_CODE = {
                                          'related_field': 'script.commands.name'},
     "integration_is_skipped": {'code': "IN140", 'ui_applicable': False, 'related_field': ''},
     "reputation_missing_argument": {'code': "IN141", 'ui_applicable': True, 'related_field': '<argument-name>.default'},
+    "wrong_is_array_argument": {'code': "IN144", 'ui_applicable': True, 'related_field': '<argument-name>.default'},
     "invalid_version_script_name": {'code': "SC100", 'ui_applicable': True, 'related_field': 'name'},
     "invalid_deprecated_script": {'code': "SC101", 'ui_applicable': False, 'related_field': 'comment'},
     "invalid_command_name_in_script": {'code': "SC102", 'ui_applicable': False, 'related_field': ''},
@@ -199,6 +200,7 @@ ERROR_CODE = {
     "indicator_field_type_grid_minimal_version": {'code': "IF112", 'ui_applicable': False,
                                                   'related_field': 'fromVersion'},
     "invalid_incident_field_prefix": {'code': "IF113", 'ui_applicable': False, 'related_field': 'name'},
+    "incident_field_non_existent_script_id": {'code': "IF114", 'ui_applicable': False, 'related_field': ''},
     "incident_type_integer_field": {'code': "IT100", 'ui_applicable': True, 'related_field': ''},
     "incident_type_invalid_playbook_id_field": {'code': "IT101", 'ui_applicable': False, 'related_field': 'playbookId'},
     "incident_type_auto_extract_fields_invalid": {'code': "IT102", 'ui_applicable': False,
@@ -233,6 +235,7 @@ ERROR_CODE = {
     "pack_name_is_not_in_xsoar_standards": {'code': "PA125", 'ui_applicable': False, 'related_field': ''},
     "pack_metadata_long_description": {'code': "PA126", 'ui_applicable': False, 'related_field': ''},
     "metadata_url_invalid": {'code': "PA127", 'ui_applicable': False, 'related_field': ''},
+    "required_pack_file_does_not_exist": {'code': "PA128", 'ui_applicable': False, 'related_field': ''},
     "readme_error": {'code': "RM100", 'ui_applicable': False, 'related_field': ''},
     "image_path_error": {'code': "RM101", 'ui_applicable': False, 'related_field': ''},
     "readme_missing_output_context": {'code': "RM102", 'ui_applicable': False, 'related_field': ''},
@@ -286,13 +289,20 @@ ERROR_CODE = {
     "invalid_file_path_layout": {'code': "LO102", 'ui_applicable': False, 'related_field': ''},
     "invalid_file_path_layoutscontainer": {'code': "LO103", 'ui_applicable': False, 'related_field': ''},
     "invalid_incident_field_in_layout": {'code': "LO104", 'ui_applicable': False, 'related_field': ''},
+    "layouts_container_non_existent_script_id": {'code': "LO105", 'ui_applicable': False, 'related_field': ''},
+    "layout_non_existent_script_id": {'code': "LO106", 'ui_applicable': False, 'related_field': ''},
     "invalid_from_server_version_in_pre_process_rules": {'code': "PP100", 'ui_applicable': False, 'related_field': 'fromServerVersion'},
     "invalid_incident_field_in_pre_process_rules": {'code': "PP101", 'ui_applicable': False, 'related_field': ''},
     "xsoar_config_file_is_not_json": {'code': "XC100", 'ui_applicable': False, 'related_field': ''},
     "xsoar_config_file_malformed": {'code': "XC101", 'ui_applicable': False, 'related_field': ''},
     "invalid_readme_image_error": {'code': "RM108", 'ui_applicable': False, 'related_field': ''},
     "invalid_generic_field_group_value": {'code': "GF100", 'ui_applicable': False, 'related_field': 'group'},
-    "invalid_generic_field_id": {'code': "GF101", 'ui_applicable': False, 'related_field': 'id'}
+    "invalid_generic_field_id": {'code': "GF101", 'ui_applicable': False, 'related_field': 'id'},
+    "non_default_additional_info": {'code': "IN142", 'ui_applicable': True, 'related_field': 'additionalinfo'},
+    "missing_default_additional_info": {'code': "IN143", 'ui_applicable': True, 'related_field': 'additionalinfo'},
+    "invalid_from_server_version_in_lists": {'code': "LI100", 'ui_applicable': False,
+                                             'related_field': 'fromVersion'},
+
 }
 
 
@@ -445,6 +455,12 @@ class Errors:
     @error_code_decorator
     def wrong_default_argument(arg_name, command_name):
         return "The argument '{}' of the command '{}' is not configured as default" \
+            .format(arg_name, command_name)
+
+    @staticmethod
+    @error_code_decorator
+    def wrong_is_array_argument(arg_name, command_name):
+        return "The argument '{}' of the command '{}' is not configured as array input." \
             .format(arg_name, command_name)
 
     @staticmethod
@@ -1251,6 +1267,30 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def incident_field_non_existent_script_id(incident_field, scripts):
+        return f"In incident field {incident_field} the following scripts were not found in the id_set.json file:" \
+               f" {scripts}"
+
+    @staticmethod
+    @error_code_decorator
+    def layouts_container_non_existent_script_id(layouts_container, scripts):
+        return f"In layouts container {layouts_container} the following scripts were not found in the id_set.json " \
+               f"file: {scripts}"
+
+    @staticmethod
+    @error_code_decorator
+    def layout_non_existent_script_id(layout, scripts):
+        return f"In layout {layout} the following scripts were not found in the id_set.json file: {scripts}"
+
+    @staticmethod
+    def suggest_fix_non_existent_script_id() -> str:
+        return "Please make sure:\n" \
+               "1 - The right script name is set and the spelling is correct.\n" \
+               "2 - The id_set.json file is up to date. Delete the file by running: rm -rf Tests/id_set.json and" \
+               " rerun the command with the --create-id-set option."
+
+    @staticmethod
+    @error_code_decorator
     def invalid_generic_field_group_value(group, generic_field_group):
         return f"Group {group} is not a valid generic field group. Please set group = {generic_field_group} instead."
 
@@ -1263,6 +1303,12 @@ class Errors:
     @error_code_decorator
     def pack_file_does_not_exist(file_name):
         return f'"{file_name}" file does not exist, create one in the root of the pack'
+
+    @staticmethod
+    @error_code_decorator
+    def required_pack_file_does_not_exist(file_name):
+        return f'The required "{file_name}" file does not exist in the pack root.\n ' \
+               f'Its absence may prevent other tests from being run! Create it and run validate again.'
 
     @staticmethod
     @error_code_decorator
@@ -1460,6 +1506,10 @@ class Errors:
         return f'The following image link seems to be broken, please repair it:\n{path}'
 
     @staticmethod
+    def branch_name_in_readme_image_absolute_path_error(path):
+        return f'Branch name was found in the URL, please change it to the commit hash:\n{path}'
+
+    @staticmethod
     def invalid_readme_insert_image_link_error(path):
         return f'Image link was not found, either insert it or remove it:\n{path}'
 
@@ -1470,6 +1520,7 @@ class Errors:
             'pack_readme_relative_error': Errors.pack_readme_image_relative_path_error,
             'general_readme_relative_error': Errors.invalid_readme_image_relative_path_error,
             'general_readme_absolute_error': Errors.invalid_readme_image_absolute_path_error,
+            'branch_name_readme_absolute_error': Errors.branch_name_in_readme_image_absolute_path_error,
             'insert_image_link_error': Errors.invalid_readme_insert_image_link_error
         }.get(error_type, lambda x: f'Something went wrong when testing {x}')(path)
 
@@ -1607,6 +1658,11 @@ class Errors:
     @error_code_decorator
     def unknown_fields_in_pre_process_rules(fields_names: str):
         return f'Unknown field(s) in Pre Process Rule: {fields_names}'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_from_server_version_in_lists(version_field):
+        return f'{version_field} field in a list item needs to be at least 6.5.0'
 
     @staticmethod
     @error_code_decorator
@@ -1865,3 +1921,13 @@ class Errors:
     @error_code_decorator
     def spaces_in_the_end_of_name(name: str):
         return f'Content item name "{name}" should not have trailing spaces. Please remove.'
+
+    @staticmethod
+    @error_code_decorator
+    def non_default_additional_info(params: List[str]):
+        return f'The additionalinfo of params {params} is not the default value, please consider changing it.'
+
+    @staticmethod
+    @error_code_decorator
+    def missing_default_additional_info(params: List[str]):
+        return f'The additionalinfo of params {params} is empty.'

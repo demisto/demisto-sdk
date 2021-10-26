@@ -53,6 +53,7 @@ from demisto_sdk.commands.common.hook_validations.integration import \
     IntegrationValidator
 from demisto_sdk.commands.common.hook_validations.layout import (
     LayoutsContainerValidator, LayoutValidator)
+from demisto_sdk.commands.common.hook_validations.lists import ListsValidator
 from demisto_sdk.commands.common.hook_validations.mapper import MapperValidator
 from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
     PackUniqueFilesValidator
@@ -296,13 +297,13 @@ class ValidateManager:
             all_packs_valid.add(self.conf_json_validator.is_valid_conf_json())
 
         count = 1
-        all_packs = os.listdir(PACKS_DIR) if os.listdir(PACKS_DIR) else []
+        # Filter non-pack files that might exist locally (e.g, .DS_STORE on MacOS)
+        all_packs = list(filter(os.path.isdir, [os.path.join(PACKS_DIR, p) for p in os.listdir(PACKS_DIR)]))
         num_of_packs = len(all_packs)
         all_packs.sort(key=str.lower)
 
-        for pack_name in all_packs:
+        for pack_path in all_packs:
             self.completion_percentage = format((count / num_of_packs) * 100, ".2f")  # type: ignore
-            pack_path = os.path.join(PACKS_DIR, pack_name)
             all_packs_valid.add(self.run_validations_on_pack(pack_path))
             count += 1
 
@@ -532,6 +533,9 @@ class ValidateManager:
 
         elif file_type == FileType.PRE_PROCESS_RULES:
             return self.validate_pre_process_rule(structure_validator, pack_error_ignore_list)
+
+        elif file_type == FileType.LISTS:
+            return self.validate_lists(structure_validator, pack_error_ignore_list)
 
         elif file_type == FileType.DASHBOARD:
             return self.validate_dashboard(structure_validator, pack_error_ignore_list)
@@ -888,6 +892,12 @@ class ValidateManager:
                                                               json_file_path=self.json_file_path)
         return pre_process_rules_validator.is_valid_pre_process_rule(validate_rn=False, id_set_file=self.id_set_file,
                                                                      is_ci=self.is_circle)
+
+    def validate_lists(self, structure_validator, pack_error_ignore_list):
+        lists_validator = ListsValidator(structure_validator, ignored_errors=pack_error_ignore_list,
+                                         print_as_warnings=self.print_ignored_errors,
+                                         json_file_path=self.json_file_path)
+        return lists_validator.is_valid_list()
 
     def validate_dashboard(self, structure_validator, pack_error_ignore_list):
         dashboard_validator = DashboardValidator(structure_validator, ignored_errors=pack_error_ignore_list,

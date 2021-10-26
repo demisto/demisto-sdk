@@ -10,8 +10,10 @@ from mock import patch
 
 import demisto_sdk.commands.validate.validate_manager
 from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.common.constants import (CONF_PATH, TEST_PLAYBOOK,
-                                                   FileType)
+from demisto_sdk.commands.common.constants import (CONF_PATH,
+                                                   PACKS_PACK_META_FILE_NAME,
+                                                   TEST_PLAYBOOK, FileType)
+from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
@@ -458,6 +460,28 @@ class TestValidators:
         result = validate_manager.validate_pack_unique_files(VALID_PACK, pack_error_ignore_list={})
         assert result
 
+    def test_files_validator_missing_meta_file(self, repo, capsys):
+        """
+            Given
+                A path of a pack folder
+            When
+                Running  validate_pack_unique_files
+            Then
+                Ensure required_pack_file_does_not_exist fails if and only if PACKS_PACK_META_FILE_NAME doesn't exist
+        """
+        pack = repo.create_pack('pack')
+        validate_manager = ValidateManager(skip_conf_json=True)
+        err_msg, err_code = Errors.required_pack_file_does_not_exist(PACKS_PACK_META_FILE_NAME)
+
+        validate_manager.validate_pack_unique_files(pack.path, pack_error_ignore_list={})
+        stdout = capsys.readouterr().out
+        assert (err_msg not in stdout) and (err_code not in stdout)
+
+        os.remove(pack.pack_metadata.path)
+        validate_manager.validate_pack_unique_files(pack.path, pack_error_ignore_list={})
+        stdout = capsys.readouterr().out
+        assert err_msg in stdout and err_code in stdout
+
     def test_validate_pack_dependencies(self, mocker):
         """
             Given:
@@ -627,7 +651,7 @@ class TestValidators:
     def test_create_ignored_errors_list(self):
         validate_manager = ValidateManager()
         errors_to_check = ["IN", "SC", "CJ", "DA", "DB", "DO", "ID", "DS", "IM", "IF", "IT", "RN", "RM", "PA", "PB",
-                           "WD", "RP", "BA100", "BC100", "ST", "CL", "MP", "LO", "XC", "GF", "PP"]
+                           "WD", "RP", "BA100", "BC100", "ST", "CL", "MP", "LO", "XC", "GF", "PP", "LI100"]
         ignored_list = validate_manager.create_ignored_errors_list(errors_to_check)
         assert ignored_list == ["BA101", "BA102", "BA103", "BA104", "BA105", "BA106", "BA107", "BA108", "BA109",
                                 "BA110", 'BA111', "BA112", "BA113", "BC101", "BC102", "BC103", "BC104"]
@@ -761,6 +785,7 @@ class TestValidators:
         mocker.patch.object(BaseValidator, "update_checked_flags_by_support_level", return_value="")
         pack1 = repo.create_pack('ApiModules')
         api_script1 = pack1.create_script('APIScript')
+        api_script1.create_default_script(name='APIScript')
         pack2_name = 'ApiDependent'
         pack2 = repo.create_pack(pack2_name)
         integration2 = pack2.create_integration(pack2_name)
@@ -779,7 +804,7 @@ class TestValidators:
         id_set_f = tmpdir / "id_set.json"
         id_set_f.write(json.dumps(id_set_content))
         validate_manager = ValidateManager(id_set_path=id_set_f.strpath)
-        modified_files = {api_script1.yml.rel_path}
+        modified_files = {api_script1.yml.path}
         added_files = {'Packs/ApiModules/ReleaseNotes/1_0_0.md'}
         with ChangeCWD(repo.path):
             assert validate_manager.validate_no_missing_release_notes(modified_files=modified_files,
@@ -1226,7 +1251,8 @@ def test_quite_bc_flag(repo):
 
 
 data_test_filted_dirs_in_format_file_path = [
-    ('Packs/PackName/Integrations/IntegrationName/IntegrationName.yml', 'Packs/PackName/Integrations/IntegrationName/IntegrationName.yml'),
+    ('Packs/PackName/Integrations/IntegrationName/IntegrationName.yml',
+     'Packs/PackName/Integrations/IntegrationName/IntegrationName.yml'),
     ('.circleci/config.yml', None),
     ('.github/workflows/check-contribution-form-filled.yml', None),
     ('.gitlab/ci/.gitlab-ci.yml', None),

@@ -181,7 +181,11 @@ class PlaybookValidator(ContentEntityValidator):
         for next_task_branch, next_task_id in next_tasks.items():
             try:
                 if next_task_id:
-                    unhandled_reply_options.remove(next_task_branch.upper())
+                    if next_task_branch == 'True Positive':
+                        position = 'YES'
+                    else:
+                        position = 'NO'
+                    unhandled_reply_options.remove(position)
             except KeyError:
                 error_message, error_code = Errors.playbook_unreachable_condition(task.get('id'), next_task_branch)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):

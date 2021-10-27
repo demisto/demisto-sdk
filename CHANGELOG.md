@@ -6,6 +6,7 @@
 * Added a validation to ensure reputation command's default argument is set as an array input.
 * Added the `--fail-duplicates` flag for the **merge-id-set** command which will fail the command if duplicates are found.
 * Added the `--fail-duplicates` flag for the **create-id-set** command which will fail the command if duplicates are found.
+* Removed a validation that DBotRole should be set for scripts that requires elevated permissions to the `XSOAR-linter` in the **lint** command.
 
 # 1.5.1
 * Fixed an issue where **validate** command failed to recognized test playbooks for beta integrations as valid tests.

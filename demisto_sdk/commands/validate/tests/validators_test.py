@@ -382,9 +382,11 @@ class TestValidators:
         mocker.patch.object(ScriptValidator, 'is_valid_script_file_path', return_value=True)
         mocker.patch.object(ScriptValidator, 'is_there_separators_in_names', return_value=True)
         mocker.patch.object(ScriptValidator, 'is_docker_image_valid', return_value=True)
+        mocker.patch.object(ScriptValidator, 'is_valid_version', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_valid_integration_file_path', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_there_separators_in_names', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_docker_image_valid', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'is_valid_version', return_value=True)
         validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
         assert validate_manager.run_validation_on_specific_files()
 

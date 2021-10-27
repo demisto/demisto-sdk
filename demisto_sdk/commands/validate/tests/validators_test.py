@@ -1103,6 +1103,45 @@ class TestValidators:
         res_validator = IntegrationValidator(structure)
         assert res_validator.is_there_spaces_in_the_end_of_name() is answer
 
+    def test_ignore_test_doc_non_pack_file_should_not_ignore(self):
+        """
+        Given
+            - File path
+        When
+            - File should not be ignored
+        Then
+            - File is not ignored and False is returned
+        """
+        file_path = 'Packs/SomeIntegration/IntegrationName/file.py'
+        validate_manager = ValidateManager(check_is_unskipped=False)
+        assert not validate_manager.ignore_test_doc_non_pack_file(file_path)
+
+    def test_ignore_test_doc_non_pack_file_test_file(self):
+        """
+        Given
+            - File path
+        When
+            - File is part of the test_data directory
+        Then
+            - File is ignored and True is returned
+        """
+        file_path = 'Packs/SomeIntegration/IntegrationName/test_data/file.json'
+        validate_manager = ValidateManager(check_is_unskipped=False)
+        assert validate_manager.ignore_test_doc_non_pack_file(file_path)
+
+    def test_ignore_test_doc_non_pack_file_non_pack(self):
+        """
+        Given
+            - File path
+        When
+            - File is not part of the Packs directory
+        Then
+            - File is ignored and True is returned
+        """
+        file_path = 'OtherDir/Integration/file.json'
+        validate_manager = ValidateManager(check_is_unskipped=False)
+        assert validate_manager.ignore_test_doc_non_pack_file(file_path)
+
 
 @pytest.mark.parametrize('pack_name, expected', [
     ('NonSupported', False),

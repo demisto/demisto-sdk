@@ -1368,14 +1368,14 @@ class ValidateManager:
 
         if file_path.split(os.path.sep)[0] in ('.gitlab', '.circleci', '.github'):
             return None
-
         file_type = find_type(file_path)
-        # ignore unrecognized file types, unified.yml, doc data and test_data
-        if not file_type or file_path.endswith('_unified.yml') or \
-                any(test_dir in str(file_path) for test_dir in TESTS_AND_DOC_DIRECTORIES):
-            if self.print_ignored_files:
-                click.secho(f"ignoring file {file_path}", fg='yellow')
-            self.ignored_files.add(file_path)
+
+        if self.ignore_test_doc_non_pack_file(file_path):
+            return None
+
+        if not file_type:
+            error_message, error_code = Errors.file_type_not_supported()
+            self.handle_error(error_message, error_code, file_path=file_path)
             return None
 
         # redirect non-test code files to the associated yml file
@@ -1401,6 +1401,15 @@ class ValidateManager:
         # else return the file path
         else:
             return file_path
+
+    def ignore_test_doc_non_pack_file(self, file_path) -> bool:
+        # ignore doc data, test_data and non pack files
+        if any(test_dir in str(file_path) for test_dir in TESTS_AND_DOC_DIRECTORIES) or PACKS_DIR not in file_path:
+            if self.print_ignored_files:
+                click.secho(f"ignoring file {file_path}", fg='yellow')
+            self.ignored_files.add(file_path)
+            return True
+        return False
 
     """ ######################################## Validate Tools ############################################### """
 

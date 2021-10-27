@@ -64,12 +64,11 @@ from demisto_sdk.tests.constants_test import (
     SCRIPT_RELEASE_NOTES_TARGET, SCRIPT_TARGET, VALID_BETA_INTEGRATION,
     VALID_BETA_PLAYBOOK_PATH, VALID_DASHBOARD_PATH, VALID_INCIDENT_FIELD_PATH,
     VALID_INCIDENT_TYPE_PATH, VALID_INDICATOR_FIELD_PATH,
-    VALID_INTEGRATION_ID_PATH, VALID_INTEGRATION_TEST_PATH,
-    VALID_LAYOUT_CONTAINER_PATH, VALID_LAYOUT_PATH, VALID_MD,
-    VALID_MULTI_LINE_CHANGELOG_PATH, VALID_MULTI_LINE_LIST_CHANGELOG_PATH,
-    VALID_ONE_LINE_CHANGELOG_PATH, VALID_ONE_LINE_LIST_CHANGELOG_PATH,
-    VALID_PACK, VALID_PLAYBOOK_CONDITION, VALID_REPUTATION_PATH,
-    VALID_SCRIPT_PATH, VALID_TEST_PLAYBOOK_PATH, VALID_WIDGET_PATH,
+    VALID_INTEGRATION_ID_PATH, VALID_INTEGRATION_TEST_PATH, VALID_LAYOUT_PATH,
+    VALID_MD, VALID_MULTI_LINE_CHANGELOG_PATH,
+    VALID_MULTI_LINE_LIST_CHANGELOG_PATH, VALID_ONE_LINE_CHANGELOG_PATH,
+    VALID_ONE_LINE_LIST_CHANGELOG_PATH, VALID_PACK, VALID_PLAYBOOK_CONDITION,
+    VALID_REPUTATION_PATH, VALID_SCRIPT_PATH, VALID_TEST_PLAYBOOK_PATH,
     WIDGET_TARGET)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import \
     INCIDENT_FIELD
@@ -96,20 +95,13 @@ class TestValidators:
                 os.rmdir(dir_to_delete)
 
     INPUTS_IS_VALID_VERSION = [
-        (VALID_LAYOUT_PATH, LAYOUT_TARGET, True, LayoutValidator),
         (INVALID_LAYOUT_PATH, LAYOUT_TARGET, False, LayoutValidator),
-        (VALID_LAYOUT_CONTAINER_PATH, LAYOUTS_CONTAINER_TARGET, True, LayoutsContainerValidator),
         (INVALID_LAYOUT_CONTAINER_PATH, LAYOUTS_CONTAINER_TARGET, False, LayoutsContainerValidator),
-        (VALID_WIDGET_PATH, WIDGET_TARGET, True, WidgetValidator),
         (INVALID_WIDGET_PATH, WIDGET_TARGET, False, WidgetValidator),
-        (VALID_DASHBOARD_PATH, DASHBOARD_TARGET, True, DashboardValidator),
         (INVALID_DASHBOARD_PATH, DASHBOARD_TARGET, False, DashboardValidator),
-        (VALID_INCIDENT_FIELD_PATH, INCIDENT_FIELD_TARGET, True, IncidentFieldValidator),
         (INVALID_INCIDENT_FIELD_PATH, INCIDENT_FIELD_TARGET, False, IncidentFieldValidator),
         (INVALID_DASHBOARD_PATH, DASHBOARD_TARGET, False, DashboardValidator),
-        (VALID_SCRIPT_PATH, SCRIPT_TARGET, True, ScriptValidator),
         (INVALID_SCRIPT_PATH, SCRIPT_TARGET, False, ScriptValidator),
-        (VALID_TEST_PLAYBOOK_PATH, PLAYBOOK_TARGET, True, PlaybookValidator),
         (INVALID_PLAYBOOK_PATH, PLAYBOOK_TARGET, False, PlaybookValidator)
     ]
 
@@ -215,6 +207,7 @@ class TestValidators:
             mocker.patch.object(ScriptValidator, 'is_valid_script_file_path', return_value=True)
             mocker.patch.object(ScriptValidator, 'is_there_separators_in_names', return_value=True)
             mocker.patch.object(ScriptValidator, 'is_docker_image_valid', return_value=True)
+            mocker.patch.object(ScriptValidator, 'is_valid_version', return_value=True)
             assert res_validator.is_valid_file(validate_rn=False) is answer
         finally:
             os.remove(target)
@@ -789,18 +782,19 @@ class TestValidators:
         pack2_name = 'ApiDependent'
         pack2 = repo.create_pack(pack2_name)
         integration2 = pack2.create_integration(pack2_name)
-        id_set_content = {'integrations':
-                          [
-                              {'ApiDependent':
-                               {
-                                   'name': integration2.name,
-                                   'file_path': integration2.path,
-                                   'pack': pack2_name,
-                                   'api_modules': api_script1.name
-                               }
-                               }
-                          ]
-                          }
+        id_set_content = {
+            'integrations': [
+                {
+                    'ApiDependent':
+                        {
+                            'name': integration2.name,
+                            'file_path': integration2.path,
+                            'pack': pack2_name,
+                            'api_modules': api_script1.name
+                        }
+                }
+            ]
+        }
         id_set_f = tmpdir / "id_set.json"
         id_set_f.write(json.dumps(id_set_content))
         validate_manager = ValidateManager(id_set_path=id_set_f.strpath)

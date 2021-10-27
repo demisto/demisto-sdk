@@ -7,6 +7,7 @@
 * Added a validation to ensure reputation command's default argument is set as an array input.
 * Added the `--fail-duplicates` flag for the **merge-id-set** command which will fail the command if duplicates are found.
 * Added the `--fail-duplicates` flag for the **create-id-set** command which will fail the command if duplicates are found.
+* Fixed an issue in **Validate** in playbooks with conditional tasks
 
 # 1.5.1
 * Fixed an issue where **validate** command failed to recognized test playbooks for beta integrations as valid tests.

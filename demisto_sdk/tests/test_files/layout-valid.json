@@ -1,8 +1,8 @@
 {
 	"typeId": "ExtraHop Detection",
 	"kind": "close",
-	"toVersion": "6.9.9",
-	"fromVersion": "6.0.0",
+	"toVersion": "5.9.9",
+	"fromVersion": "5.0.0",
 	"layout": {
 		"id": "ExtraHop Detection",
 		"version": -1,

@@ -1,5 +1,6 @@
 # Changelog
 
+* Added a validation to **update-release-notes** command to ensure that the `--version` flag argument is in the right format.
 * added a new command **coverage-analyze** to generate and print coverage reports.
 * Fixed an issue in **validate** in repositories which are not in GitHub or GitLab
 * Added a validation that verifies that readme image absolute links do not contain the working branch name.

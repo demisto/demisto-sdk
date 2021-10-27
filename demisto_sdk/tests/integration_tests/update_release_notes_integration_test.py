@@ -481,14 +481,14 @@ def test_update_release_notes_specific_version_invalid(demisto_client, repo):
         - Ensure that an error is printed.
     """
     runner = CliRunner(mix_stderr=True)
-    result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", join('Packs', 'ThinkCanary'), "-v", "3.x.t"])
+    result = runner.invoke(main, [UPDATE_RN_COMMAND, '-i', join('Packs', 'ThinkCanary'), '-v', '3.x.t'])
     assert 'The format of version should be in x.y.z format, e.g: <2.1.3>' in result.stdout
 
 
 def test_update_release_notes_specific_version_valid(demisto_client, mocker, repo):
     """
     Given
-    - Azure feed pack path.
+    - Azure feed pack path has changed.
 
     When
     - Running demisto-sdk update-release-notes command with --version flag.
@@ -508,7 +508,7 @@ def test_update_release_notes_specific_version_valid(demisto_client, mocker, rep
     mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
     with ChangeCWD(repo.path):
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", join('Packs', 'FeedAzureValid'), "-v", '4.0.0'])
+        result = runner.invoke(main, [UPDATE_RN_COMMAND, '-i', join('Packs', 'FeedAzureValid'), '-v', '4.0.0'])
     assert result.exit_code == 0
     assert not result.exception
     assert 'Changes were detected. Bumping FeedAzureValid to version: 4.0.0' in result.stdout

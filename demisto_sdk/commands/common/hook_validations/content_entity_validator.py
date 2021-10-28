@@ -326,3 +326,15 @@ class ContentEntityValidator(BaseValidator):
                 return False
 
         return True
+
+    def is_valid_unsearchable_field(self):
+        # type: () -> bool
+        """Validate that the unsearchable field is true
+        (relevant to incident_field and generic_field)"""
+        indicator_field_unsearchable = self.current_file.get('unsearchable', True)
+        if indicator_field_unsearchable:
+            return True
+        error_message, error_code = Errors.fields_unsearchable_should_be_true()
+        if self.handle_error(error_message, error_code, file_path=self.file_path):
+            return False
+        return True

@@ -33,7 +33,9 @@ from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, PWSH_CHECKS,
                                                PY_CHCEKS,
                                                build_skipped_exit_code,
                                                generate_coverage_report,
-                                               get_test_modules, validate_env)
+                                               get_test_modules, validate_env,
+                                               get_packs_dependent_on_given_packs,
+                                               get_full_pack_path_by_name)
 from demisto_sdk.commands.lint.linter import Linter
 
 logger = logging.getLogger('demisto-sdk')
@@ -53,7 +55,7 @@ class LintManager:
     """
 
     def __init__(self, input: str, git: bool, all_packs: bool, quiet: bool, verbose: int, prev_ver: str,
-                 json_file_path: str = '', id_set_pat: str = None, check_dependent_packs: bool = False):
+                 json_file_path: str = '', id_set_path: str = None, check_dependent_packs: bool = False):
 
         # Verbosity level
         self._verbose = not quiet if quiet else verbose
@@ -73,15 +75,23 @@ class LintManager:
                                                     base_branch=self._prev_ver)
         self._id_set_path = id_set_path
         self._check_dependent_packs = check_dependent_packs
+        print(check_dependent_packs)
         if self._check_dependent_packs:
+            print(self._pkgs)
             # TODO: check cases where this shouldnt hit
-            self._pkgs = self._pkgs.extend(get_packs_dependent_on_given_packs(self._pkgs, self._id_set_path))
+            dependent = []
+            get_packs_dependent_on_given_packs(self._pkgs, self._id_set_path, dependent)
+            dependent = [get_full_pack_path_by_name(pack, self._pkgs) for pack in dependent]
+            self._pkgs = self._pkgs + dependent
+            self._pkgs = list(set(self._pkgs)) # remove dups
+            print(self._pkgs)
 
         if json_file_path:
             if os.path.isdir(json_file_path):
                 json_file_path = os.path.join(json_file_path, 'lint_outputs.json')
         self.json_file_path = json_file_path
         self.linters_error_list: list = []
+
 
     @staticmethod
     def _gather_facts() -> Dict[str, Any]:

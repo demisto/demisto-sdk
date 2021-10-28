@@ -630,6 +630,11 @@ def secrets(config, **kwargs):
 )
 @click.option("-dt", "--docker-timeout", default=60,
               help="The timeout (in seconds) for requests done by the docker client.", type=int)
+@click.option("--check-dependent", help="Run unit tests and lint on all packages that are dependent on the found"
+                                        " modified packages.", type=bool)
+@click.option("--id-set-path", help="Path to id_set.json, relevant for when using the --check-dependent flag.",
+              type=str)
+
 def lint(**kwargs):
     """Lint command will perform:
         1. Package in host checks - flake8, bandit, mypy, vulture.
@@ -650,7 +655,9 @@ def lint(**kwargs):
         verbose=kwargs.get('verbose'),  # type: ignore[arg-type]
         quiet=kwargs.get('quiet'),  # type: ignore[arg-type]
         prev_ver=kwargs.get('prev_ver'),  # type: ignore[arg-type]
-        json_file_path=kwargs.get('json_file')  # type: ignore[arg-type]
+        json_file_path=kwargs.get('json_file'), # type: ignore[arg-type]
+        id_set_path='Tests/id_set.json',  # type: ignore[arg-type] # TODO: fix
+        check_dependent_packs=True,  # type: ignore[arg-type] # TODO: fix
     )
     return lint_manager.run_dev_packages(
         parallel=kwargs.get('parallel'),  # type: ignore[arg-type]

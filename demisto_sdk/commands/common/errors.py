@@ -13,7 +13,7 @@ FOUND_FILES_AND_IGNORED_ERRORS: list = []
 ALLOWED_IGNORE_ERRORS = [
     'BA101', 'BA106', 'BA108', 'BA109', 'BA110', 'BA111', 'BA112', 'BA113',
     'DS107',
-    'IF100', 'IF106',
+    'IF100', 'IF106', 'IF115',
     'IN109', 'IN110', 'IN122', 'IN126', 'IN128', 'IN135', 'IN136', 'IN139', 'IN144',
     'MP106',
     'PA113', 'PA116', 'PA124', 'PA125', 'PA127',
@@ -201,6 +201,7 @@ ERROR_CODE = {
                                                   'related_field': 'fromVersion'},
     "invalid_incident_field_prefix": {'code': "IF113", 'ui_applicable': False, 'related_field': 'name'},
     "incident_field_non_existent_script_id": {'code': "IF114", 'ui_applicable': False, 'related_field': ''},
+    "fields_unsearchable_should_be_true": {'code': "IF115", 'ui_applicable': False, 'related_field': 'unsearchable'},
     "incident_type_integer_field": {'code': "IT100", 'ui_applicable': True, 'related_field': ''},
     "incident_type_invalid_playbook_id_field": {'code': "IT101", 'ui_applicable': False, 'related_field': 'playbookId'},
     "incident_type_auto_extract_fields_invalid": {'code': "IT102", 'ui_applicable': False,
@@ -412,6 +413,11 @@ class Errors:
     @error_code_decorator
     def indicator_field_type_grid_minimal_version(fromversion):
         return f"The indicator field has a fromVersion of: {fromversion} but the minimal fromVersion is 5.5.0."
+
+    @staticmethod
+    @error_code_decorator
+    def fields_unsearchable_should_be_true():
+        return 'The unsearchable field in indicator, incident and generic field should be set to true.'
 
     @staticmethod
     @error_code_decorator

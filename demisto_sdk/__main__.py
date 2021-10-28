@@ -69,7 +69,7 @@ from demisto_sdk.commands.unify.generic_module_unifier import \
 from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
 from demisto_sdk.commands.update_release_notes.update_rn_manager import \
     UpdateReleaseNotesManager
-from demisto_sdk.commands.upload.uploader import Uploader
+from demisto_sdk.commands.upload.uploader import ConfigFileParser, Uploader
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.commands.zip_packs.packs_zipper import (EX_FAIL, EX_SUCCESS,
                                                          PacksZipper)
@@ -94,6 +94,23 @@ class PathsParamType(click.Path):
         # check the validity of each of the paths
         _ = [super(PathsParamType, self).convert(path, param, ctx) for path in split_paths]
         return value
+
+
+class VersionParamType(click.ParamType):
+    """
+    Defines a click options type for use with the @click.option decorator
+
+    The type accepts a string represents a version number.
+    """
+
+    def convert(self, value, param, ctx):
+        version_sections = value.split('.')
+        if len(version_sections) == 3 and \
+                all(version_section.isdigit() for version_section in version_sections):
+            return value
+        else:
+            self.fail(f"Version {value} is not according to the expected format. "
+                      f"The format of version should be in x.y.z format, e.g: <2.1.3>", param, ctx)
 
 
 class DemistoSDK:
@@ -817,7 +834,12 @@ def format(
          "- A content entity directory that is inside a pack. For example: an Integrations "
          "directory or a Layouts directory.\n"
          "- Valid file that can be imported to Cortex XSOAR manually. For example a playbook: "
-         "helloWorld.yml", required=True
+         "helloWorld.yml", required=False
+)
+@click.option(
+    "--input-config-file",
+    type=PathsParamType(exists=True, resolve_path=True),
+    help="The path to the config file to download all the custom packs from", required=False
 )
 @click.option(
     "-z", "--zip",
@@ -840,8 +862,17 @@ def upload(**kwargs):
     DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
     * Note: Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up. *
     """
-    if kwargs.pop('zip', False):
-        pack_path = kwargs['input']
+    if kwargs['zip'] or kwargs['input_config_file']:
+        if kwargs.pop('zip', False):
+            pack_path = kwargs['input']
+            kwargs.pop('input_config_file')
+
+        else:
+            config_file_path = kwargs['input_config_file']
+            config_file_to_parse = ConfigFileParser(config_file_path=config_file_path)
+            pack_path = config_file_to_parse.parse_file()
+            kwargs.pop('input_config_file')
+
         output_zip_path = kwargs.pop('keep_zip') or tempfile.gettempdir()
         packs_unifier = PacksZipper(pack_paths=pack_path, output=output_zip_path,
                                     content_version='0.0.0', zip_all=True, quiet_mode=True)
@@ -852,7 +883,9 @@ def upload(**kwargs):
         kwargs['input'] = packs_zip_path
         kwargs['pack_names'] = pack_names
     else:
+        kwargs.pop('zip')
         kwargs.pop('keep_zip')
+        kwargs.pop('input_config_file')
 
     check_configuration_file('upload', kwargs)
     return Uploader(**kwargs).upload()
@@ -1332,7 +1365,7 @@ def merge_id_sets(**kwargs):
     type=click.Choice(['major', 'minor', 'revision', 'maintenance', 'documentation'])
 )
 @click.option(
-    '-v', '--version', help="Bump to a specific version."
+    '-v', '--version', help="Bump to a specific version.", type=VersionParamType()
 )
 @click.option(
     '-g', '--use-git',

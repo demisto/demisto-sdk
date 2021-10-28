@@ -98,3 +98,5 @@ mapping:
   genericModuleId:
     type: str
     required: true
+  template:
+    type: str

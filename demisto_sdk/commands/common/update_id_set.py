@@ -28,8 +28,9 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    INCIDENT_TYPES_DIR,
                                                    INDICATOR_FIELDS_DIR,
                                                    INDICATOR_TYPES_DIR,
-                                                   LAYOUTS_DIR, MAPPERS_DIR,
-                                                   REPORTS_DIR, SCRIPTS_DIR,
+                                                   LAYOUTS_DIR, LISTS_DIR,
+                                                   MAPPERS_DIR, REPORTS_DIR,
+                                                   SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
                                                    WIDGETS_DIR, FileType)
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type, get_json,
@@ -41,12 +42,12 @@ from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
 CONTENT_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
                     'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
                     'Layouts', 'Reports', 'Widgets', 'Mappers', 'Packs', 'GenericTypes',
-                    'GenericFields', 'GenericModules', 'GenericDefinitions']
+                    'GenericFields', 'GenericModules', 'GenericDefinitions', 'Lists']
 
 ID_SET_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Classifiers',
                    'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
                    'Layouts', 'Reports', 'Widgets', 'Mappers', 'GenericTypes', 'GenericFields', 'GenericModules',
-                   'GenericDefinitions']
+                   'GenericDefinitions', 'Lists']
 
 BUILT_IN_FIELDS = [
     "name",
@@ -142,6 +143,30 @@ def build_tasks_graph(playbook_data):
         found_new_tasks = graph.number_of_nodes() > current_number_of_nodes
 
     return graph
+
+
+def get_lists_names_from_playbook(data_dictionary: dict, graph: networkx.DiGraph) -> tuple:
+    lists_names = set()
+    lists_names_skippable = set()
+    tasks = data_dictionary.get('tasks', {})
+    lists_tasks_scripts = ['Builtin|||setList', 'Builtin|||getList']
+    for task_id, task in tasks.items():
+        script = task.get('task', {}).get('script')
+        if script in lists_tasks_scripts:
+            list_name = task.get('scriptarguments', {}).get('listName', {}).get('simple')
+
+            try:
+                skippable = not graph.nodes[task_id]['mandatory']
+            except KeyError:
+                # if task id not in the graph - the task is unreachable.
+                print_error(f'{data_dictionary["id"]}: task {task_id} is not connected')
+                continue
+            if list_name:
+                lists_names.add(list_name)
+                if skippable:
+                    lists_names_skippable.add(list_name)
+
+    return list(lists_names), list(lists_names_skippable)
 
 
 def get_task_ids_from_playbook(param_to_enrich_by: str, data_dict: dict, graph: networkx.DiGraph) -> tuple:
@@ -452,9 +477,10 @@ def get_playbook_data(file_path: str) -> dict:
                                                                                           data_dictionary,
                                                                                           graph
                                                                                           )
+    implementing_lists, implementing_lists_skippable = get_lists_names_from_playbook(data_dictionary, graph)
     command_to_integration, command_to_integration_skippable = get_commands_from_playbook(data_dictionary)
     skippable_tasks = (implementing_scripts_skippable + implementing_playbooks_skippable +
-                       command_to_integration_skippable)
+                       command_to_integration_skippable + implementing_lists_skippable)
     pack = get_pack_name(file_path)
     dependent_incident_fields, dependent_indicator_fields = get_dependent_incident_and_indicator_fields(data_dictionary)
 
@@ -483,6 +509,8 @@ def get_playbook_data(file_path: str) -> dict:
         playbook_data['filters'] = filters
     if transformers:
         playbook_data['transformers'] = transformers
+    if implementing_lists:
+        playbook_data['lists'] = implementing_lists
     return {id_: playbook_data}
 
 
@@ -595,6 +623,8 @@ def get_layout_data(path):
     incident_indicator_types_dependency = {id_}
     incident_indicator_fields_dependency = get_values_for_keys_recursively(json_data, ['fieldId'])
     definition_id = json_data.get('definitionId')
+    tabs = layout.get('tabs', [])
+    scripts = get_layouts_scripts_ids(tabs)
 
     data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
     if type_:
@@ -609,7 +639,45 @@ def get_layout_data(path):
         data['incident_and_indicator_fields'] = incident_indicator_fields_dependency['fieldId']
     if definition_id:
         data['definitionId'] = definition_id
+    if scripts:
+        data['scripts'] = scripts
+
     return {id_: data}
+
+
+def get_layouts_scripts_ids(layout_tabs):
+    """
+    Finds all scripts IDs of a certain layout or layouts container.
+
+    Args:
+        layout_tabs: (List) Tabs list of a layout or a layouts container
+
+    Returns:
+        A list of all scripts IDs in a certain layout or layouts container
+    """
+    scripts = []
+
+    for tab in layout_tabs:
+        if isinstance(tab, dict):
+            tab_sections = tab.get('sections', [])
+            for section in tab_sections:
+
+                # Find dynamic sections scripts:
+                query_type = section.get('queryType')
+                if query_type == 'script':
+                    script_id = section.get('query')
+                    if script_id:
+                        scripts.append(script_id)
+
+                # Find Buttons scripts:
+                items = section.get('items', [])
+                if items:
+                    for item in items:
+                        script_id = item.get('scriptId')
+                        if script_id:
+                            scripts.append(script_id)
+
+    return scripts
 
 
 def get_layoutscontainer_data(path):
@@ -1044,7 +1112,7 @@ def process_indicator_types(file_path: str, print_logs: bool, all_integrations: 
     Args:
         file_path: The file path from indicator type folder
         print_logs: Whether to print logs to stdout
-        all_integrations: The integrations section in the id set
+        all_integrations: The integrations section in the id-set
 
     Returns:
         a list of indicator type data.
@@ -1068,7 +1136,7 @@ def process_generic_items(file_path: str, print_logs: bool,
     """
     Process a generic field JSON file
     Args:
-        file_path: The file path from pbject field folder
+        file_path: The file path from object field folder
         print_logs: Whether to print logs to stdout.
         generic_types_list: List of all the generic types in the system.
         generic_modules_list: List of all the generic modules in the system.
@@ -1095,7 +1163,7 @@ def process_generic_items(file_path: str, print_logs: bool,
 def process_general_items(file_path: str, print_logs: bool, expected_file_types: Tuple[FileType],
                           data_extraction_func: Callable) -> list:
     """
-    Process a generic item file.
+    Process a general item file.
     expected file in one of the following:
     * classifier
     * incident type
@@ -1106,12 +1174,13 @@ def process_general_items(file_path: str, print_logs: bool, expected_file_types:
     * playbook
     * report
     * widget
+    * list
 
     Args:
         file_path: The file path from an item folder
         print_logs: Whether to print logs to stdout
         expected_file_types: specific file type to parse, will ignore the rest
-        data_extraction_func: a function that given a file path will returns an ID set data dict.
+        data_extraction_func: a function that given a file path will returns an id-set data dict.
 
     Returns:
         a list of item data.
@@ -1135,7 +1204,7 @@ def process_test_playbook_path(file_path: str, print_logs: bool) -> tuple:
 
     Arguments:
         file_path {string} -- path to yaml file
-        print_logs {bool} -- whether to print logs to stdoud
+        print_logs {bool} -- whether to print logs to stdout
 
     Returns:
         pair -- first element is a playbook second is a script. each may be None
@@ -1338,6 +1407,17 @@ def get_generic_module_data(path):
     return {id_: data}
 
 
+def get_list_data(path: str):
+    json_data = get_json(path)
+    data = create_common_entity_data(path=path,
+                                     name=json_data.get('name'),
+                                     to_version=json_data.get('toVersion'),
+                                     from_version=json_data.get('fromVersion'),
+                                     pack=get_pack_name(path))
+
+    return {json_data.get('id'): data}
+
+
 class IDSetType(Enum):
     PLAYBOOK = 'playbooks'
     INTEGRATION = 'integrations'
@@ -1386,7 +1466,7 @@ class IDSet:
 
 def merge_id_sets_from_files(first_id_set_path, second_id_set_path, output_id_set_path, print_logs: bool = True):
     """
-    Merges two id sets. Loads them from files and saves the merged unified id_set into output_id_set_path.
+    Merges two id-sets. Loads them from files and saves the merged unified id_set into output_id_set_path.
     """
     with open(first_id_set_path, mode='r') as f1:
         first_id_set = json.load(f1)
@@ -1438,16 +1518,16 @@ def merge_id_sets(first_id_set_dict: dict, second_id_set_dict: dict, print_logs:
 
 def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_create=None,  # noqa : C901
                      objects_to_create: list = None, print_logs: bool = True, fail_on_duplicates: bool = False):
-    """Re create the id set
+    """Re create the id-set
 
     Args:
-        id_set_path (str, optional): If passed an empty string will use default path. Pass in None to avoid saving the id set.
+        id_set_path (str, optional): If passed an empty string will use default path. Pass in None to avoid saving the id-set.
             Defaults to DEFAULT_ID_SET_PATH.
         pack_to_create: The input path. the default is the content repo.
         objects_to_create (list, optional): [description]. Defaults to None.
         fail_on_duplicates: If value is True an error will be raised if duplicates are found
 
-    Returns: id set object
+    Returns: id-set object
     """
     if id_set_path == "":
         id_set_path = DEFAULT_ID_SET_PATH
@@ -1462,7 +1542,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                 f"{os.getenv('DEMISTO_SDK_ID_SET_REFRESH_INTERVAL')} which is an illegal integer."
                 "\nPlease modify or unset env var.", LOG_COLORS.YELLOW
             )
-        if refresh_interval > 0:  # if file is newer than refersh interval use it as is
+        if refresh_interval > 0:  # if the file is newer than the refresh interval, use it as is
             mtime = os.path.getmtime(id_set_path)
             mtime_dt = datetime.fromtimestamp(mtime)
             target_time = time.time() - (refresh_interval * 60)
@@ -1470,20 +1550,22 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                 print_color(
                     f"DEMISTO_SDK_ID_SET_REFRESH_INTERVAL env var is set and detected that current id_set: {id_set_path}"
                     f" modify time: {mtime_dt} "
-                    "doesn't require a refresh. Will use current id set. "
-                    "If you want to force an id set referesh unset DEMISTO_SDK_ID_SET_REFRESH_INTERVAL or set to -1.",
+                    "doesn't require a refresh. Will use current id-set. "
+                    "If you rather force an id-set refresh, unset DEMISTO_SDK_ID_SET_REFRESH_INTERVAL or set it to -1.",
                     LOG_COLORS.GREEN)
                 with open(id_set_path, mode="r") as f:
                     return json.load(f)
             else:
-                print_color(f"DEMISTO_SDK_ID_SET_REFRESH_INTERVAL env var is set but current id_set: {id_set_path} "
-                            f"modify time: {mtime_dt} is older than refresh interval. "
-                            "Will re-generate the id set.", LOG_COLORS.GREEN)
+                print_color(
+                    f"The DEMISTO_SDK_ID_SET_REFRESH_INTERVAL env var is set, but current id_set: {id_set_path} "
+                    f"modify time: {mtime_dt} is older than the refresh interval. "
+                    "Re-generating id-set.", LOG_COLORS.GREEN)
         else:
             print_color("Note: DEMISTO_SDK_ID_SET_REFRESH_INTERVAL env var is not enabled. "
-                        f"Will re-generate the id set even though file exists: {id_set_path}. "
-                        "If you would like to avoid re-generating the id set every run, you can set the env var "
-                        "DEMISTO_SDK_ID_SET_REFRESH_INTERVAL to a refresh interval in minutes.", LOG_COLORS.GREEN)
+                        f"Will re-generate the id-set and overwrite the existing file: {id_set_path}. "
+                        "To avoid re-generating the id-set on every run, you can set the "
+                        "DEMISTO_SDK_ID_SET_REFRESH_INTERVAL env var to any refresh interval (in minutes).",
+                        LOG_COLORS.GREEN)
         print("")  # add an empty line for clarity
 
     if objects_to_create is None:
@@ -1509,13 +1591,14 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     generic_fields_list = []
     generic_modules_list = []
     generic_definitions_list = []
+    lists_list = []
     packs_dict: Dict[str, Dict] = {}
 
     pool = Pool(processes=int(cpu_count()))
 
     print_color("Starting the creation of the id_set", LOG_COLORS.GREEN)
 
-    with click.progressbar(length=len(objects_to_create), label="Progress of id set creation") as progress_bar:
+    with click.progressbar(length=len(objects_to_create), label="Creating id-set") as progress_bar:
 
         if 'Packs' in objects_to_create:
             print_color("\nStarting iteration over Packs", LOG_COLORS.GREEN)
@@ -1699,6 +1782,18 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
 
         progress_bar.update(1)
 
+        if 'Lists' in objects_to_create:
+            print_color("\nStarting iteration over Lists", LOG_COLORS.GREEN)
+            for arr in pool.map(partial(process_general_items,
+                                        print_logs=print_logs,
+                                        expected_file_types=(FileType.LISTS,),
+                                        data_extraction_func=get_list_data,
+                                        ),
+                                get_general_paths(LISTS_DIR, pack_to_create)):
+                lists_list.extend(arr)
+
+        progress_bar.update(1)
+
         if 'GenericDefinitions' in objects_to_create:
             print_color("\nStarting iteration over Generic Definitions", LOG_COLORS.GREEN)
             print_color(f"pack to create: {pack_to_create}", LOG_COLORS.YELLOW)
@@ -1769,6 +1864,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     new_ids_dict['GenericFields'] = sort(generic_fields_list)
     new_ids_dict['GenericModules'] = sort(generic_modules_list)
     new_ids_dict['GenericDefinitions'] = sort(generic_definitions_list)
+    new_ids_dict['Lists'] = sort(lists_list)
 
     exec_time = time.time() - start_time
     print_color("Finished the creation of the id_set. Total time: {} seconds".format(exec_time), LOG_COLORS.GREEN)
@@ -1839,11 +1935,8 @@ def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=
         if object_type == 'Layouts':
             if dict1.get('kind', '') != dict2.get('kind', ''):
                 return False
-
-        # If they have the same pack name they actually the same entity.
-        # Added to support merge between two ID sets that contain the same pack.
-        if dict1.get('pack') == dict2.get('pack'):
-            return False
+            if dict1.get('typeID', '') != dict2.get('typeID', ''):
+                return False
 
         # A: 3.0.0 - 3.6.0
         # B: 3.5.0 - 4.5.0
@@ -1855,9 +1948,9 @@ def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=
             dict2_from_version <= dict1_from_version < dict2_to_version,  # will catch (C, B), (B, A), (C, A)
             dict2_from_version < dict1_to_version <= dict2_to_version,  # will catch (C, B), (C, A)
         ]):
-            print_warning('The following {} have the same ID ({}) and their versions overlap: '
-                          '"1.{}-{}", "2.{}-{}".'.format(object_type, id_to_check, dict1_from_version, dict1_to_version,
-                                                         dict2_from_version, dict2_to_version))
+            print_warning(f'The following {object_type} have the same ID ({id_to_check}) and their versions overlap: '
+                          f'1) "{dict1_from_version}-{dict1_to_version}", '
+                          f'2) "{dict2_from_version}-{dict2_to_version}".')
             return True
 
         if print_logs and dict1.get('name') != dict2.get('name'):

@@ -13,7 +13,7 @@ In order to run the README validator:
     To set the environment variables, run the following shell commands:
     export DEMISTO_README_VALIDATION=True
 
-In case of a private repo and an un-configured 'DEMISTO_SDK_GITHUB_TOKEN' validation of version bumps in files will be done with the local remote git branch.
+In case of a private repo and an un-configured 'DEMISTO_SDK_GITHUB_TOKEN' or 'DEMISTO_SDK_GITLAB_TOKEN' validation of version bumps in files will be done with the local remote git branch.
 
 **Use Cases**
 This command is used to make sure that the content repo files are valid and are able to be processed by Demisto.

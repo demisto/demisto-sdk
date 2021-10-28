@@ -20,7 +20,7 @@ from demisto_sdk.commands.common.constants import (
     INTEGRATIONS_DIR, LAYOUTS_DIR, MARKETPLACE_LIVE_DISCUSSIONS,
     PACK_INITIAL_VERSION, PACK_SUPPORT_OPTIONS, PLAYBOOKS_DIR, REPORTS_DIR,
     SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR, XSOAR_AUTHOR, XSOAR_SUPPORT,
-    XSOAR_SUPPORT_URL, GithubContentConfig)
+    XSOAR_SUPPORT_URL, GitContentConfig)
 from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                get_common_server_path,
                                                get_pack_name, print_error,
@@ -717,7 +717,7 @@ class Initiator:
                     os.path.join(path, filename),
                     return_content=True,
                     # Templates available only in the official repo
-                    github_repo=GithubContentConfig.OFFICIAL_CONTENT_REPO_NAME
+                    github_repo=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
                 )
                 with open(os.path.join(self.full_output_path, file), 'wb') as f:
                     f.write(file_content)

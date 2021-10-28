@@ -184,10 +184,15 @@ class Downloader:
         custom_content_file_paths: list = get_child_files(self.custom_content_temp_dir)
         custom_content_objects: List = list()
         for file_path in custom_content_file_paths:
-            custom_content_object: Dict = self.build_custom_content_object(file_path)
-            if custom_content_object['type']:
-                # If custom content object's type is empty it means the file isn't of support content entity
-                custom_content_objects.append(custom_content_object)
+            try:
+                custom_content_object: Dict = self.build_custom_content_object(file_path)
+                if custom_content_object['type']:
+                    # If custom content object's type is empty it means the file isn't of support content entity
+                    custom_content_objects.append(custom_content_object)
+            # Do not add file to custom_content_objects if it has an invalid format
+            except ValueError as e:
+                print_color(f"Error when loading {file_path}, skipping", LOG_COLORS.RED)
+                print_color(f"{e}", LOG_COLORS.RED)
         return custom_content_objects
 
     def handle_list_files_flag(self) -> bool:

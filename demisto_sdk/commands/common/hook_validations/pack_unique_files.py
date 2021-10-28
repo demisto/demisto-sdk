@@ -62,6 +62,14 @@ INCORRECT_PACK_NAME_PATTERN = '[^a-zA-Z]pack[^a-z]|^pack$|^pack[^a-z]|[^a-zA-Z]p
                               '^A-Z]|[^A-Z]SCRIPT$|[^A-Z]Script[^a-z]|^Script$|^Script[^a-z]|[^A-Z]Script$ '
 
 
+class BlockingValidationFailureException(BaseException):
+    """
+    Used for blocking other validations from being run, force-stopping the validation process.
+    For example, when a required file is missing. Raise it after adding a suitable error to self._errors.
+    """
+    pass
+
+
 class PackUniqueFilesValidator(BaseValidator):
     """PackUniqueFilesValidator is designed to validate the correctness of content pack's files structure.
     Existence and validity of this files is essential."""
@@ -124,12 +132,18 @@ class PackUniqueFilesValidator(BaseValidator):
         """Returns the full file path to pack's file"""
         return os.path.join(self.pack_path, file_name)
 
-    def _is_pack_file_exists(self, file_name):
-        """Check if .secrets-ignore exists"""
+    def _is_pack_file_exists(self, file_name: str, is_required: bool = False):
+        """
+        Check if a file with given name exists in pack root.
+        is_required is True means that absence of the file should block other tests from running
+            (see BlockingValidationFailureException).
+        """
         if not os.path.isfile(self._get_pack_file_path(file_name)):
-            if self._add_error(Errors.pack_file_does_not_exist(file_name), file_name):
+            error_function = Errors.required_pack_file_does_not_exist if is_required else Errors.pack_file_does_not_exist
+            if self._add_error(error_function(file_name), file_name):
+                if is_required:
+                    raise BlockingValidationFailureException()
                 return False
-
         return True
 
     def _read_file_content(self, file_name):
@@ -272,7 +286,7 @@ class PackUniqueFilesValidator(BaseValidator):
     # pack metadata validation
     def validate_pack_meta_file(self):
         """Validate everything related to pack_metadata.json file"""
-        if self._is_pack_file_exists(self.pack_meta_file) and all([
+        if self._is_pack_file_exists(self.pack_meta_file, is_required=True) and all([
             self._is_pack_meta_file_structure_valid(),
             self._is_valid_contributor_pack_support_details(),
             self._is_approved_usecases(),
@@ -342,25 +356,25 @@ class PackUniqueFilesValidator(BaseValidator):
             metadata = self._read_metadata_content()
             if not metadata:
                 if self._add_error(Errors.pack_metadata_empty(), self.pack_meta_file):
-                    return False
+                    raise BlockingValidationFailureException()
 
             if not isinstance(metadata, dict):
                 if self._add_error(Errors.pack_metadata_should_be_dict(self.pack_meta_file), self.pack_meta_file):
-                    return False
+                    raise BlockingValidationFailureException()
 
             missing_fields = [field for field in PACK_METADATA_FIELDS if field not in metadata.keys()]
             if missing_fields:
                 if self._add_error(Errors.missing_field_iin_pack_metadata(self.pack_meta_file, missing_fields),
                                    self.pack_meta_file):
-                    return False
+                    raise BlockingValidationFailureException()
 
             elif not self.validate_pack_name(metadata):
-                return False
+                raise BlockingValidationFailureException()
 
             description_name = metadata.get(PACK_METADATA_DESC, '').lower()
             if not description_name or 'fill mandatory field' in description_name:
                 if self._add_error(Errors.pack_metadata_field_invalid(), self.pack_meta_file):
-                    return False
+                    raise BlockingValidationFailureException()
 
             if not self.is_pack_metadata_desc_too_long(description_name):
                 return False
@@ -402,7 +416,7 @@ class PackUniqueFilesValidator(BaseValidator):
 
         except (ValueError, TypeError):
             if self._add_error(Errors.pack_metadata_isnt_json(self.pack_meta_file), self.pack_meta_file):
-                return False
+                raise BlockingValidationFailureException()
 
         return True
 
@@ -592,26 +606,31 @@ class PackUniqueFilesValidator(BaseValidator):
 
     def are_valid_files(self, id_set_validations) -> str:
         """Main Execution Method"""
-        self.validate_secrets_file()
-        self.validate_pack_ignore_file()
-        # We don't want to check the metadata file for this pack
-        if API_MODULES_PACK not in self.pack:
-            self.validate_pack_meta_file()
+        try:
+            self.validate_secrets_file()
+            self.validate_pack_ignore_file()
+            # metadata file is not validated for API_MODULES_PACK
+            if API_MODULES_PACK not in self.pack:
+                self.validate_pack_meta_file()
 
-        self.validate_pack_readme_file_is_not_empty()
-        self.validate_pack_readme_and_pack_description()
-        self.validate_pack_readme_images()
-        self.validate_author_image_exists()
+            self.validate_pack_readme_file_is_not_empty()
+            self.validate_pack_readme_and_pack_description()
+            self.validate_pack_readme_images()
+            self.validate_author_image_exists()
 
-        # We only check pack dependencies for -g flag
-        if self.validate_dependencies:
-            self.validate_pack_dependencies()
+            # We only check pack dependencies for -g flag
+            if self.validate_dependencies:
+                self.validate_pack_dependencies()
 
-        # Check if unique files are valid against the rest of the files, using the ID set.
-        if id_set_validations:
-            is_valid, error = id_set_validations.is_unique_file_valid_in_set(self.pack_path, self.ignored_errors)
-            if not is_valid:
-                self._add_error(error, self.pack_path)
+            # Check if unique files are valid against the rest of the files, using the ID set.
+            if id_set_validations:
+                is_valid, error = id_set_validations.is_unique_file_valid_in_set(self.pack_path, self.ignored_errors)
+                if not is_valid:
+                    self._add_error(error, self.pack_path)
+        except BlockingValidationFailureException:
+            # note that raising this should happen after adding the error to self._errors,
+            # so no special handling is required on this `except` block
+            pass
 
         return self.get_errors()
 

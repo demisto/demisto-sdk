@@ -125,7 +125,7 @@ https://xsoar.pan.dev/docs/integrations/code-conventions#outputs
 https://xsoar.pan.dev/docs/integrations/context-and-outputs
 https://xsoar.pan.dev/docs/integrations/context-standards
 https://xsoar.pan.dev/docs/integrations/dbot
-https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/json_to_outputs/README.md
+https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk.commands.generate_outputs.json_to_outputs/README.md
 https://xsoar.pan.dev/docs/integrations/context-and-outputs
 https://xsoar.pan.dev/docs/integrations/code-conventions#outputs
 https://xsoar.pan.dev/docs/integrations/dt

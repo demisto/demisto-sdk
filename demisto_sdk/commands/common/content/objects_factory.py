@@ -8,7 +8,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     Connection, Contributors, Dashboard, DocFile, GenericDefinition,
     GenericField, GenericModule, GenericType, IncidentField, IncidentType,
     IndicatorField, IndicatorType, Integration, Layout, LayoutsContainer,
-    OldClassifier, OldIndicatorType, PackIgnore, PackMetaData, Playbook,
+    Lists, OldClassifier, OldIndicatorType, PackIgnore, PackMetaData, Playbook,
     PreProcessRule, Readme, ReleaseNote, ReleaseNoteConfig, Report, Script,
     SecretIgnore, Widget)
 from demisto_sdk.commands.common.content.objects.root_objects import \
@@ -33,6 +33,7 @@ TYPE_CONVERSION_BY_FileType = {
     FileType.LAYOUT: Layout,
     FileType.LAYOUTS_CONTAINER: LayoutsContainer,
     FileType.PRE_PROCESS_RULES: PreProcessRule,
+    FileType.LISTS: Lists,
     FileType.REPUTATION: IndicatorType,
     FileType.INDICATOR_FIELD: IndicatorField,
     FileType.INCIDENT_FIELD: IncidentField,

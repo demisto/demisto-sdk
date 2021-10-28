@@ -121,6 +121,7 @@ class TestPackUniqueFilesValidator:
         pack_metadata_no_email_and_url['url'] = ''
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         mocker.patch.object(PackUniqueFilesValidator, '_is_pack_file_exists', return_value=True)
+        mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_name', return_value=True)
         mocker.patch.object(PackUniqueFilesValidator, 'get_master_private_repo_meta_file', return_value=None)
         mocker.patch.object(PackUniqueFilesValidator, '_read_file_content',
                             return_value=json.dumps(pack_metadata_no_email_and_url))
@@ -154,6 +155,7 @@ class TestPackUniqueFilesValidator:
 
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         mocker.patch.object(PackUniqueFilesValidator, '_is_pack_file_exists', return_value=True)
+        mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_name', return_value=True)
         mocker.patch.object(PackUniqueFilesValidator, 'get_master_private_repo_meta_file', return_value=None)
         mocker.patch.object(PackUniqueFilesValidator, '_read_file_content',
                             return_value=json.dumps(pack_metadata_changed_url))
@@ -186,6 +188,7 @@ class TestPackUniqueFilesValidator:
         pack_metadata_price_changed['price'] = 3
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         mocker.patch.object(PackUniqueFilesValidator, '_is_pack_file_exists', return_value=True)
+        mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_name', return_value=True)
         mocker.patch.object(PackUniqueFilesValidator, 'get_master_private_repo_meta_file',
                             return_value=PACK_METADATA_PARTNER)
         mocker.patch.object(PackUniqueFilesValidator, '_read_file_content',
@@ -639,6 +642,8 @@ class TestPackUniqueFilesValidator:
         assert 'please repair it:\n![Identity with High Risk Score](' \
                'https://raw.githubusercontent.com/demisto/content/raw/test1.png)' in errors
         assert 'please repair it:\n(https://raw.githubusercontent.com/demisto/content/raw/test1.jpg)' in errors
+        # this path is not an image path and should not be shown.
+        assert 'https://github.com/demisto/content/raw/test3.png' not in errors
 
     @pytest.mark.parametrize('readme_content, is_valid', [
         ('Hey there, just testing', True),

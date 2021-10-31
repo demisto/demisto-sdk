@@ -1,6 +1,6 @@
 {
-    "name": "AWS Feed",
-    "description": "Indicators feed from AWS",
+    "name": "Test",
+    "description": "Test",
     "support": "xsoar",
     "serverMinVersion": "5.5.0",
     "currentVersion": "1.0.0",
@@ -16,8 +16,8 @@
     "certification": "certified",
     "useCases": [],
     "keywords": [
-        "AWS",
-        "Feed"
+        "Test",
+        "Test"
     ],
     "price": 0,
     "dependencies": {

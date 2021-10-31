@@ -139,7 +139,7 @@ class ValidateManager:
 
         try:
             self.git_util = GitUtil(repo=Content.git())
-            self.branch_name = self.git_util.get_current_working_branch()
+            self.branch_name = self.git_util.get_current_git_branch_or_hash()
         except (InvalidGitRepositoryError, TypeError):
             # if we are using git - fail the validation by raising the exception.
             if self.use_git:
@@ -1213,7 +1213,7 @@ class ValidateManager:
 
     def setup_git_params(self):
         """Setting up the git relevant params"""
-        self.branch_name = self.git_util.get_current_working_branch() if (self.git_util and not self.branch_name) \
+        self.branch_name = self.git_util.get_current_git_branch_or_hash() if (self.git_util and not self.branch_name) \
             else self.branch_name
 
         # check remote validity

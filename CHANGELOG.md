@@ -1,5 +1,7 @@
 # Changelog
+* Removed a validation that DBotRole should be set for automation that requires elevated permissions to the `XSOAR-linter` in the **lint** command.
 
+# 1.5.2
 * Added a validation to **update-release-notes** command to ensure that the `--version` flag argument is in the right format.
 * added a new command **coverage-analyze** to generate and print coverage reports.
 * Fixed an issue in **validate** in repositories which are not in GitHub or GitLab

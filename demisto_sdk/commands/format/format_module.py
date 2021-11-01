@@ -33,6 +33,7 @@ from demisto_sdk.commands.format.update_indicatortype import \
     IndicatorTypeJSONFormat
 from demisto_sdk.commands.format.update_integration import IntegrationYMLFormat
 from demisto_sdk.commands.format.update_layout import LayoutBaseFormat
+from demisto_sdk.commands.format.update_lists import ListsFormat
 from demisto_sdk.commands.format.update_mapper import MapperJSONFormat
 from demisto_sdk.commands.format.update_playbook import (PlaybookYMLFormat,
                                                          TestPlaybookYMLFormat)
@@ -56,6 +57,7 @@ FILE_TYPE_AND_LINKED_CLASS = {
     'layout': LayoutBaseFormat,
     'layoutscontainer': LayoutBaseFormat,
     'pre-process-rule': PreProcessRulesFormat,
+    'list': ListsFormat,
     'dashboard': DashboardJSONFormat,
     'classifier': ClassifierJSONFormat,
     'classifier_5_9_9': OldClassifierJSONFormat,
@@ -120,6 +122,7 @@ def format_manager(input: str = None,
     Returns:
         int 0 in case of success 1 otherwise
     """
+
     prev_ver = prev_ver if prev_ver else 'demisto/master'
     supported_file_types = ['json', 'yml', 'py', 'md']
     use_git = use_git or not input

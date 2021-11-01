@@ -14,7 +14,7 @@ ALLOWED_IGNORE_ERRORS = [
     'BA101', 'BA106', 'BA108', 'BA109', 'BA110', 'BA111', 'BA112', 'BA113',
     'DS107',
     'IF100', 'IF106',
-    'IN109', 'IN110', 'IN122', 'IN126', 'IN128', 'IN135', 'IN136', 'IN139',
+    'IN109', 'IN110', 'IN122', 'IN126', 'IN128', 'IN135', 'IN136', 'IN139', 'IN144',
     'MP106',
     'PA113', 'PA116', 'PA124', 'PA125', 'PA127',
     'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112', 'PB114', 'PB115', 'PB116',
@@ -97,6 +97,7 @@ ERROR_CODE = {
                                          'related_field': 'script.commands.name'},
     "integration_is_skipped": {'code': "IN140", 'ui_applicable': False, 'related_field': ''},
     "reputation_missing_argument": {'code': "IN141", 'ui_applicable': True, 'related_field': '<argument-name>.default'},
+    "wrong_is_array_argument": {'code': "IN144", 'ui_applicable': True, 'related_field': '<argument-name>.default'},
     "invalid_version_script_name": {'code': "SC100", 'ui_applicable': True, 'related_field': 'name'},
     "invalid_deprecated_script": {'code': "SC101", 'ui_applicable': False, 'related_field': 'comment'},
     "invalid_command_name_in_script": {'code': "SC102", 'ui_applicable': False, 'related_field': ''},
@@ -298,7 +299,10 @@ ERROR_CODE = {
     "invalid_generic_field_group_value": {'code': "GF100", 'ui_applicable': False, 'related_field': 'group'},
     "invalid_generic_field_id": {'code': "GF101", 'ui_applicable': False, 'related_field': 'id'},
     "non_default_additional_info": {'code': "IN142", 'ui_applicable': True, 'related_field': 'additionalinfo'},
-    "missing_default_additional_info": {'code': "IN143", 'ui_applicable': True, 'related_field': 'additionalinfo'}
+    "missing_default_additional_info": {'code': "IN143", 'ui_applicable': True, 'related_field': 'additionalinfo'},
+    "invalid_from_server_version_in_lists": {'code': "LI100", 'ui_applicable': False,
+                                             'related_field': 'fromVersion'},
+
 }
 
 
@@ -451,6 +455,12 @@ class Errors:
     @error_code_decorator
     def wrong_default_argument(arg_name, command_name):
         return "The argument '{}' of the command '{}' is not configured as default" \
+            .format(arg_name, command_name)
+
+    @staticmethod
+    @error_code_decorator
+    def wrong_is_array_argument(arg_name, command_name):
+        return "The argument '{}' of the command '{}' is not configured as array input." \
             .format(arg_name, command_name)
 
     @staticmethod
@@ -1496,6 +1506,10 @@ class Errors:
         return f'The following image link seems to be broken, please repair it:\n{path}'
 
     @staticmethod
+    def branch_name_in_readme_image_absolute_path_error(path):
+        return f'Branch name was found in the URL, please change it to the commit hash:\n{path}'
+
+    @staticmethod
     def invalid_readme_insert_image_link_error(path):
         return f'Image link was not found, either insert it or remove it:\n{path}'
 
@@ -1506,6 +1520,7 @@ class Errors:
             'pack_readme_relative_error': Errors.pack_readme_image_relative_path_error,
             'general_readme_relative_error': Errors.invalid_readme_image_relative_path_error,
             'general_readme_absolute_error': Errors.invalid_readme_image_absolute_path_error,
+            'branch_name_readme_absolute_error': Errors.branch_name_in_readme_image_absolute_path_error,
             'insert_image_link_error': Errors.invalid_readme_insert_image_link_error
         }.get(error_type, lambda x: f'Something went wrong when testing {x}')(path)
 
@@ -1643,6 +1658,11 @@ class Errors:
     @error_code_decorator
     def unknown_fields_in_pre_process_rules(fields_names: str):
         return f'Unknown field(s) in Pre Process Rule: {fields_names}'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_from_server_version_in_lists(version_field):
+        return f'{version_field} field in a list item needs to be at least 6.5.0'
 
     @staticmethod
     @error_code_decorator

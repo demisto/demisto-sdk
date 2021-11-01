@@ -24,6 +24,8 @@ from demisto_sdk.commands.common.tools import (find_type,
                                                print_error, print_warning)
 from demisto_sdk.commands.common.update_id_set import merge_id_sets_from_files
 from demisto_sdk.commands.convert.convert_manager import ConvertManager
+from demisto_sdk.commands.coverage_analyze.coverage_report import \
+    CoverageReport
 from demisto_sdk.commands.create_artifacts.content_artifacts_creator import \
     ArtifactsManager
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
@@ -34,8 +36,6 @@ from demisto_sdk.commands.error_code_info.error_code_info import \
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
 from demisto_sdk.commands.format.format_module import format_manager
-from demisto_sdk.commands.generate_context.generate_integration_context import \
-    generate_integration_context
 from demisto_sdk.commands.generate_docs.generate_integration_doc import \
     generate_integration_doc
 from demisto_sdk.commands.generate_docs.generate_playbook_doc import \
@@ -44,13 +44,13 @@ from demisto_sdk.commands.generate_docs.generate_script_doc import \
     generate_script_doc
 from demisto_sdk.commands.generate_integration.code_generator import \
     IntegrationGeneratorConfig
+from demisto_sdk.commands.generate_outputs.generate_outputs import \
+    run_generate_outputs
 from demisto_sdk.commands.generate_test_playbook.test_playbook_generator import \
     PlaybookTestsGenerator
 from demisto_sdk.commands.init.initiator import Initiator
 from demisto_sdk.commands.integration_diff.integration_diff_detector import \
     IntegrationDiffDetector
-from demisto_sdk.commands.json_to_outputs.json_to_outputs import \
-    json_to_outputs
 from demisto_sdk.commands.lint.lint_manager import LintManager
 from demisto_sdk.commands.openapi_codegen.openapi_codegen import \
     OpenAPIIntegration
@@ -69,7 +69,7 @@ from demisto_sdk.commands.unify.generic_module_unifier import \
 from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
 from demisto_sdk.commands.update_release_notes.update_rn_manager import \
     UpdateReleaseNotesManager
-from demisto_sdk.commands.upload.uploader import Uploader
+from demisto_sdk.commands.upload.uploader import ConfigFileParser, Uploader
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.commands.zip_packs.packs_zipper import (EX_FAIL, EX_SUCCESS,
                                                          PacksZipper)
@@ -93,6 +93,23 @@ class PathsParamType(click.Path):
         # check the validity of each of the paths
         _ = [super(PathsParamType, self).convert(path, param, ctx) for path in split_paths]
         return value
+
+
+class VersionParamType(click.ParamType):
+    """
+    Defines a click options type for use with the @click.option decorator
+
+    The type accepts a string represents a version number.
+    """
+
+    def convert(self, value, param, ctx):
+        version_sections = value.split('.')
+        if len(version_sections) == 3 and \
+                all(version_section.isdigit() for version_section in version_sections):
+            return value
+        else:
+            self.fail(f"Version {value} is not according to the expected format. "
+                      f"The format of version should be in x.y.z format, e.g: <2.1.3>", param, ctx)
 
 
 class DemistoSDK:
@@ -665,6 +682,62 @@ def lint(**kwargs):
     )
 
 
+# ====================== coverage-analyze ====================== #
+@main.command()
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    "-i", "--input", help="The .coverage file to analyze.",
+    default=os.path.join('coverage_report', '.coverage'),
+    type=PathsParamType(exists=True, resolve_path=True)
+)
+@click.option(
+    "--default-min-coverage", help="Default minimum coverage (for new files).",
+    default=70.0, type=click.FloatRange(0.0, 100.0)
+)
+@click.option(
+    "--allowed-coverage-degradation-percentage", help="Allowed coverage degradation percentage (for modified files).",
+    default=1.0, type=click.FloatRange(0.0, 100.0)
+)
+@click.option(
+    "--no-cache", help="Force download of the previous coverage report file.",
+    is_flag=True, type=bool)
+@click.option(
+    "--report-dir", help="Directory of the coverage report files.",
+    default='coverage_report', type=PathsParamType(resolve_path=True))
+@click.option(
+    "--report-type", help="The type of coverage report (posible values: 'text', 'html', 'xml', 'json' or 'all').", type=str)
+@click.option("--no-min-coverage-enforcement", help="Do not enforce minimum coverage.", is_flag=True)
+@click.option(
+    "--previous-coverage-report-url", help="URL of the previous coverage report.",
+    default='https://storage.googleapis.com/marketplace-dist-dev/code-coverage/coverage-min.json', type=str
+)
+def coverage_analyze(**kwargs):
+    try:
+        no_degradation_check = kwargs['allowed_coverage_degradation_percentage'] == 100.0
+        no_min_coverage_enforcement = kwargs['no_min_coverage_enforcement']
+
+        cov_report = CoverageReport(
+            default_min_coverage=kwargs['default_min_coverage'],
+            allowed_coverage_degradation_percentage=kwargs['allowed_coverage_degradation_percentage'],
+            coverage_file=kwargs['input'],
+            no_cache=kwargs.get('no_cache', False),
+            report_dir=kwargs['report_dir'],
+            report_type=kwargs['report_type'],
+            no_degradation_check=no_degradation_check,
+            previous_coverage_report_url=kwargs['previous_coverage_report_url']
+        )
+        cov_report.coverage_report()
+        # if no_degradation_check=True we will suppress the minimum coverage check
+        if no_degradation_check or cov_report.coverage_diff_report() or no_min_coverage_enforcement:
+            return 0
+    except Exception as error:
+        logging.getLogger('demisto-sdk').error(error)
+
+    return 1
+
+
 # ====================== format ====================== #
 @main.command()
 @click.help_option(
@@ -754,7 +827,12 @@ def format(
          "- A content entity directory that is inside a pack. For example: an Integrations "
          "directory or a Layouts directory.\n"
          "- Valid file that can be imported to Cortex XSOAR manually. For example a playbook: "
-         "helloWorld.yml", required=True
+         "helloWorld.yml", required=False
+)
+@click.option(
+    "--input-config-file",
+    type=PathsParamType(exists=True, resolve_path=True),
+    help="The path to the config file to download all the custom packs from", required=False
 )
 @click.option(
     "-z", "--zip",
@@ -777,8 +855,17 @@ def upload(**kwargs):
     DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
     * Note: Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up. *
     """
-    if kwargs.pop('zip', False):
-        pack_path = kwargs['input']
+    if kwargs['zip'] or kwargs['input_config_file']:
+        if kwargs.pop('zip', False):
+            pack_path = kwargs['input']
+            kwargs.pop('input_config_file')
+
+        else:
+            config_file_path = kwargs['input_config_file']
+            config_file_to_parse = ConfigFileParser(config_file_path=config_file_path)
+            pack_path = config_file_to_parse.parse_file()
+            kwargs.pop('input_config_file')
+
         output_zip_path = kwargs.pop('keep_zip') or tempfile.gettempdir()
         packs_unifier = PacksZipper(pack_paths=pack_path, output=output_zip_path,
                                     content_version='0.0.0', zip_all=True, quiet_mode=True)
@@ -789,7 +876,9 @@ def upload(**kwargs):
         kwargs['input'] = packs_zip_path
         kwargs['pack_names'] = pack_names
     else:
+        kwargs.pop('zip')
         kwargs.pop('keep_zip')
+        kwargs.pop('input_config_file')
 
     check_configuration_file('upload', kwargs)
     return Uploader(**kwargs).upload()
@@ -904,40 +993,63 @@ def run_playbook(**kwargs):
     return playbook_runner.run_playbook()
 
 
-# ====================== json-to-outputs ====================== #
-@main.command('json-to-outputs')  # To no shadow json_to_outputs import
+# ====================== generate-outputs ====================== #
+@main.command(short_help='''Generates outputs (from json or examples).''')
 @click.help_option(
     '-h', '--help'
 )
 @click.option(
-    "-c", "--command", help="Command name (e.g. xdr-get-incidents)", required=True)
+    "-c", "--command", help="Specific command name (e.g. xdr-get-incidents)",
+    required=False)
 @click.option(
-    "-i", "--input",
+    "-j", "--json",
     help="Valid JSON file path. If not specified, the script will wait for user input in the terminal. "
          "The response can be obtained by running the command with `raw-response=true` argument.",
     required=False)
 @click.option(
-    "-p", "--prefix", help="Output prefix like Jira.Ticket, VirusTotal.IP, the base path for the outputs that the "
-                           "script generates", required=True)
+    "-p", "--prefix",
+    help="Output prefix like Jira.Ticket, VirusTotal.IP, the base path for the outputs that the "
+         "script generates", required=False)
 @click.option(
-    "-o", "--output", help="Output file path, if not specified then will print to stdout", required=False)
+    "-o", "--output",
+    help="Output file path, if not specified then will print to stdout",
+    required=False)
 @click.option(
-    "-v", "--verbose", is_flag=True, help="Verbose output - mainly for debugging purposes")
+    "-v", "--verbose", is_flag=True,
+    help="Verbose output - mainly for debugging purposes")
 @click.option(
-    "--interactive", help="If passed, then for each output field will ask user interactively to enter the "
-                          "description. By default is interactive mode is disabled", is_flag=True)
+    "--interactive",
+    help="If passed, then for each output field will ask user interactively to enter the "
+         "description. By default is interactive mode is disabled",
+    is_flag=True)
 @click.option(
     "-d", "--descriptions",
     help="A JSON or a path to a JSON file, mapping field names to their descriptions. "
          "If not specified, the script prompt the user to input the JSON content.",
     is_flag=True)
-def json_to_outputs_command(**kwargs):
+@click.option(
+    "-i", "--input",
+    help="Valid YAML integration file path.",
+    required=False)
+@click.option(
+    "-e", "--examples",
+    help="Integrations: path for file containing command examples."
+         " Each command should be in a separate line."
+         " Scripts: the script example surrounded by quotes."
+         " For example: -e '!ConvertFile entry_id=<entry_id>'")
+@click.option(
+    "--insecure",
+    help="Skip certificate validation to run the commands in order to generate the docs.",
+    is_flag=True)
+def generate_outputs(**kwargs):
     """Demisto integrations/scripts have a YAML file that defines them.
     Creating the YAML file is a tedious and error-prone task of manually copying outputs from the API result to the
     file/UI/PyCharm. This script auto generates the YAML for a command from the JSON result of the relevant API call
+    In addition you can supply examples files and generate the context description directly in the YML from those examples.
     """
-    check_configuration_file('json-to-outputs', kwargs)
-    json_to_outputs(**kwargs)
+
+    check_configuration_file('generate-outputs', kwargs)
+    return run_generate_outputs(**kwargs)
 
 
 # ====================== generate-test-playbook ====================== #
@@ -1046,52 +1158,6 @@ def init(**kwargs):
     initiator = Initiator(**kwargs)
     initiator.init()
     return 0
-
-
-# ====================== generate-context ====================== #
-@main.command()
-@click.help_option(
-    '-h', '--help'
-)
-@click.option(
-    "-i", "--input", help="Path of the yml file (will change it in-place).",
-    required=True)
-@click.option(
-    "-e", "--examples",
-    help="Integrations: path for file containing command examples."
-         " Each command should be in a separate line.")
-@click.option(
-    "--insecure",
-    help="Skip certificate validation to run the commands in order to generate the docs.",
-    is_flag=True)
-@click.option(
-    "-v", "--verbose", is_flag=True,
-    help="Verbose output - mainly for debugging purposes.")
-def generate_context(**kwargs):
-    input_path: str = kwargs.get('input', '')
-    examples: str = kwargs.get('examples', '')
-    insecure: bool = kwargs.get('insecure', False)
-    verbose: bool = kwargs.get('verbose', False)
-
-    # validate inputs
-    if input_path and not os.path.isfile(input_path):
-        print_error(F'Input file {input_path} was not found.')
-        return 1
-
-    if not input_path.lower().endswith('.yml'):
-        print_error(F'Input {input_path} is not a valid yml file.')
-        return 1
-
-    file_type = find_type(kwargs.get('input', ''), ignore_sub_categories=True)
-
-    if not examples or not os.path.isfile(examples):
-        print_error(f'Command examples file was not found {examples}.')
-
-    if file_type == FileType.INTEGRATION:
-        return generate_integration_context(input_path, examples, insecure, verbose)
-    else:
-        print_error(f'File type {file_type.value} is not supported.')
-        return 1
 
 
 # ====================== generate-docs ====================== #
@@ -1253,12 +1319,19 @@ def create_id_set(**kwargs):
     help='File path of the united id_set',
     required=True
 )
+@click.option(
+    '-fd',
+    '--fail-duplicates',
+    help="Fails the process if any duplicates are found.",
+    is_flag=True
+)
 def merge_id_sets(**kwargs):
     """Merge two id_sets"""
     check_configuration_file('merge-id-sets', kwargs)
     first = kwargs['id_set1']
     second = kwargs['id_set2']
     output = kwargs['output']
+    fail_duplicates = kwargs['fail_duplicates']
 
     _, duplicates = merge_id_sets_from_files(
         first_id_set_path=first,
@@ -1268,7 +1341,8 @@ def merge_id_sets(**kwargs):
     if duplicates:
         print_error(f'Failed to merge ID sets: {first} with {second}, '
                     f'there are entities with ID: {duplicates} that exist in both ID sets')
-        sys.exit(1)
+        if fail_duplicates:
+            sys.exit(1)
 
 
 # ====================== update-release-notes =================== #
@@ -1284,7 +1358,7 @@ def merge_id_sets(**kwargs):
     type=click.Choice(['major', 'minor', 'revision', 'maintenance', 'documentation'])
 )
 @click.option(
-    '-v', '--version', help="Bump to a specific version."
+    '-v', '--version', help="Bump to a specific version.", type=VersionParamType()
 )
 @click.option(
     '-g', '--use-git',

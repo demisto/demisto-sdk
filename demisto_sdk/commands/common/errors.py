@@ -302,6 +302,7 @@ ERROR_CODE = {
     "missing_default_additional_info": {'code': "IN143", 'ui_applicable': True, 'related_field': 'additionalinfo'},
     "invalid_from_server_version_in_lists": {'code': "LI100", 'ui_applicable': False,
                                              'related_field': 'fromVersion'},
+    "missing_brand_name_in_script": {'code': "RAZ", 'ui_applicable': False, 'related_field': ''},
 
 }
 
@@ -1931,3 +1932,9 @@ class Errors:
     @error_code_decorator
     def missing_default_additional_info(params: List[str]):
         return f'The additionalinfo of params {params} is empty.'
+
+    @staticmethod
+    @error_code_decorator
+    def missing_brand_name_in_script(task_id: str, script_name: str):
+        return f"Task {task_id} is using {script_name} but is missing the brand name." \
+               f"Please add a brand name to the script's name."

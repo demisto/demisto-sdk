@@ -43,6 +43,7 @@ class PlaybookValidator(ContentEntityValidator):
             self.verify_condition_tasks_has_else_path(),
             self.name_not_contain_the_type(),
             self.is_valid_with_indicators_input(),
+            self.check_task_brand(),
         ]
         answers = all(playbook_checks)
 
@@ -475,3 +476,16 @@ class PlaybookValidator(ContentEntityValidator):
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True
+
+    def check_task_brand(self):
+        is_valid = True
+        tasks: dict = self.current_file.get('tasks', {})
+        for task_key, task in tasks.items():
+            task_script = task.get('task').get('script')  # TODO: Will it always have these keys?, should I add checks?
+            if task_script is not None and '|||' in task_script:
+                brand_name = task_script[:task_script.find('|||')]
+                if not brand_name:
+                    is_valid = False
+                    error_message, error_code = Errors.missing_brand_name_in_script(task_key, task_script)
+                    self.handle_error(error_message, error_code, file_path=self.file_path)
+        return is_valid

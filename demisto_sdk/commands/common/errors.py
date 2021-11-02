@@ -236,6 +236,7 @@ ERROR_CODE = {
     "pack_metadata_long_description": {'code': "PA126", 'ui_applicable': False, 'related_field': ''},
     "metadata_url_invalid": {'code': "PA127", 'ui_applicable': False, 'related_field': ''},
     "required_pack_file_does_not_exist": {'code': "PA128", 'ui_applicable': False, 'related_field': ''},
+    "pack_metadata_missing_categories": {'code': "PA129", 'ui_applicable': False, 'related_field': ''},
     "readme_error": {'code': "RM100", 'ui_applicable': False, 'related_field': ''},
     "image_path_error": {'code': "RM101", 'ui_applicable': False, 'related_field': ''},
     "readme_missing_output_context": {'code': "RM102", 'ui_applicable': False, 'related_field': ''},
@@ -1410,6 +1411,11 @@ class Errors:
     @error_code_decorator
     def pack_metadata_price_change(old_price, new_price) -> str:
         return f"The pack price was changed from {old_price} to {new_price} - revert the change"
+
+    @staticmethod
+    @error_code_decorator
+    def pack_metadata_missing_categories() -> str:
+        return "pack metadata categories can't be empty"
 
     @staticmethod
     @error_code_decorator

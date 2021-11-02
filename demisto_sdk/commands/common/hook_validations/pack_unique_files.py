@@ -15,25 +15,15 @@ from dateutil import parser
 from git import GitCommandError, Repo
 
 from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.common.constants import (API_MODULES_PACK,
-                                                   EXCLUDED_DISPLAY_NAME_WORDS,
-                                                   PACK_METADATA_CATEGORIES,
-                                                   PACK_METADATA_CERTIFICATION,
-                                                   PACK_METADATA_CREATED,
-                                                   PACK_METADATA_DEPENDENCIES,
-                                                   PACK_METADATA_DESC,
-                                                   PACK_METADATA_EMAIL,
-                                                   PACK_METADATA_FIELDS,
-                                                   PACK_METADATA_KEYWORDS,
-                                                   PACK_METADATA_NAME,
-                                                   PACK_METADATA_SUPPORT,
-                                                   PACK_METADATA_TAGS,
-                                                   PACK_METADATA_URL,
-                                                   PACK_METADATA_USE_CASES,
-                                                   PACKS_PACK_IGNORE_FILE_NAME,
-                                                   PACKS_PACK_META_FILE_NAME,
-                                                   PACKS_README_FILE_NAME,
-                                                   PACKS_WHITELIST_FILE_NAME)
+from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
+    API_MODULES_PACK, EXCLUDED_DISPLAY_NAME_WORDS, PACK_METADATA_CATEGORIES,
+    PACK_METADATA_CERTIFICATION, PACK_METADATA_CREATED,
+    PACK_METADATA_DEPENDENCIES, PACK_METADATA_DESC, PACK_METADATA_EMAIL,
+    PACK_METADATA_FIELDS, PACK_METADATA_KEYWORDS, PACK_METADATA_NAME,
+    PACK_METADATA_SUPPORT, PACK_METADATA_TAGS, PACK_METADATA_URL,
+    PACK_METADATA_USE_CASES, PACKS_PACK_IGNORE_FILE_NAME,
+    PACKS_PACK_META_FILE_NAME, PACKS_README_FILE_NAME,
+    PACKS_WHITELIST_FILE_NAME)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator

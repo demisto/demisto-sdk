@@ -53,11 +53,13 @@ class TestPackUniqueFilesValidator:
     FILES_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files', 'Packs'))
     FAKE_PACK_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files',
                                                    'fake_pack'))
-    validator = PackUniqueFilesValidator(FAKE_PACK_PATH)
+    FAKE_PATH_NAME = 'fake_pack'
+    validator = PackUniqueFilesValidator(FAKE_PATH_NAME)
     validator.pack_path = FAKE_PACK_PATH
 
     def restart_validator(self):
-        self.validator = PackUniqueFilesValidator(self.FAKE_PACK_PATH)
+        self.validator.pack_path = ''
+        self.validator = PackUniqueFilesValidator(self.FAKE_PATH_NAME)
         self.validator.pack_path = self.FAKE_PACK_PATH
 
     def test_is_error_added_name_only(self):

@@ -90,8 +90,9 @@ class TestPackUniqueFilesValidator:
         mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_readme_images', return_value=True)
         mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
         assert not self.validator.are_valid_files(id_set_validations=False)
-        mocker.patch.object(self.validator, '_read_metadata_content', return_value=dict())
-        assert self.validator.are_valid_files(id_set_validations=False)
+        fake_validator = PackUniqueFilesValidator('fake')
+        mocker.patch.object(fake_validator, '_read_metadata_content', return_value=dict())
+        assert fake_validator.are_valid_files(id_set_validations=False)
 
     def test_validate_pack_metadata(self, mocker):
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
@@ -99,8 +100,9 @@ class TestPackUniqueFilesValidator:
         mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_readme_images', return_value=True)
         mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
         assert not self.validator.are_valid_files(id_set_validations=False)
-        mocker.patch.object(self.validator, '_read_metadata_content', return_value=dict())
-        assert self.validator.are_valid_files(id_set_validations=False)
+        fake_validator = PackUniqueFilesValidator('fake')
+        mocker.patch.object(fake_validator, '_read_metadata_content', return_value=dict())
+        assert fake_validator.are_valid_files(id_set_validations=False)
 
     def test_validate_partner_contribute_pack_metadata_no_mail_and_url(self, mocker, repo):
         """

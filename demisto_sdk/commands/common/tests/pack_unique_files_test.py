@@ -53,14 +53,11 @@ class TestPackUniqueFilesValidator:
     FILES_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files', 'Packs'))
     FAKE_PACK_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files',
                                                    'fake_pack'))
-    FAKE_PATH_NAME = 'fake_pack'
-    FAKE_PACK_PATH = os.path.join(FILES_PATH, FAKE_PATH_NAME)
-    validator = PackUniqueFilesValidator(FAKE_PATH_NAME)
+    validator = PackUniqueFilesValidator(FAKE_PACK_PATH)
     validator.pack_path = FAKE_PACK_PATH
 
     def restart_validator(self):
-        self.validator.pack_path = ''
-        self.validator = PackUniqueFilesValidator(self.FAKE_PATH_NAME)
+        self.validator = PackUniqueFilesValidator(self.FAKE_PACK_PATH)
         self.validator.pack_path = self.FAKE_PACK_PATH
 
     def test_is_error_added_name_only(self):
@@ -91,9 +88,8 @@ class TestPackUniqueFilesValidator:
         mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_readme_images', return_value=True)
         mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
         assert not self.validator.are_valid_files(id_set_validations=False)
-        fake_validator = PackUniqueFilesValidator('fake')
-        mocker.patch.object(fake_validator, '_read_metadata_content', return_value=dict())
-        assert fake_validator.are_valid_files(id_set_validations=False)
+        mocker.patch.object(self.validator, '_read_metadata_content', return_value=dict())
+        assert self.validator.are_valid_files(id_set_validations=False)
 
     def test_validate_pack_metadata(self, mocker):
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
@@ -101,9 +97,8 @@ class TestPackUniqueFilesValidator:
         mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_readme_images', return_value=True)
         mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
         assert not self.validator.are_valid_files(id_set_validations=False)
-        fake_validator = PackUniqueFilesValidator('fake')
-        mocker.patch.object(fake_validator, '_read_metadata_content', return_value=dict())
-        assert fake_validator.are_valid_files(id_set_validations=False)
+        mocker.patch.object(self.validator, '_read_metadata_content', return_value=dict())
+        assert self.validator.are_valid_files(id_set_validations=False)
 
     def test_validate_partner_contribute_pack_metadata_no_mail_and_url(self, mocker, repo):
         """
@@ -596,10 +591,8 @@ class TestPackUniqueFilesValidator:
             result = self.validator.validate_pack_readme_images()
             errors = self.validator.get_errors()
         assert result
-        assert 'please repair it:\n![Identity with High Risk Score](https://github.com/demisto/content/raw/test1.png)'\
-               not in errors
-        assert 'please repair it:\n![Identity with High Risk Score](' \
-               'https://raw.githubusercontent.com/demisto/content/raw/test1.png)' not in errors
+        assert 'please repair it:\n![Identity with High Risk Score](https://github.com/demisto/content/raw/test1.png)' not in errors
+        assert 'please repair it:\n![Identity with High Risk Score](https://raw.githubusercontent.com/demisto/content/raw/test1.png)' not in errors
         assert 'please repair it:\n(https://raw.githubusercontent.com/demisto/content/raw/test1.jpg)' not in errors
 
     def test_validate_pack_readme_invalid_images(self):
@@ -628,19 +621,13 @@ class TestPackUniqueFilesValidator:
             result = self.validator.validate_pack_readme_images()
             errors = self.validator.get_errors()
         assert not result
-        assert 'Detected the following image relative path: ![Identity with High Risk Score](' \
-               'doc_files/High_Risk_User.png)' in errors
-        assert 'Detected the following image relative path: ![Identity with High Risk Score](' \
-               'home/test1/test2/doc_files/High_Risk_User.png)' in errors
-        assert 'Detected the following image relative path: (../../doc_files/Access_investigation_-_Generic_4_5.png)' \
-               in errors
-        assert 'Image link was not found, either insert it or remove it:\n![Account Enrichment](Insert the link to ' \
-               'your image here)' in errors
+        assert 'Detected the following image relative path: ![Identity with High Risk Score](doc_files/High_Risk_User.png)' in errors
+        assert 'Detected the following image relative path: ![Identity with High Risk Score](home/test1/test2/doc_files/High_Risk_User.png)' in errors
+        assert 'Detected the following image relative path: (../../doc_files/Access_investigation_-_Generic_4_5.png)' in errors
+        assert 'Image link was not found, either insert it or remove it:\n![Account Enrichment](Insert the link to your image here)' in errors
 
-        assert 'please repair it:\n![Identity with High Risk Score](https://github.com/demisto/content/raw/test1.png)'\
-               in errors
-        assert 'please repair it:\n![Identity with High Risk Score](' \
-               'https://raw.githubusercontent.com/demisto/content/raw/test1.png)' in errors
+        assert 'please repair it:\n![Identity with High Risk Score](https://github.com/demisto/content/raw/test1.png)' in errors
+        assert 'please repair it:\n![Identity with High Risk Score](https://raw.githubusercontent.com/demisto/content/raw/test1.png)' in errors
         assert 'please repair it:\n(https://raw.githubusercontent.com/demisto/content/raw/test1.jpg)' in errors
         # this path is not an image path and should not be shown.
         assert 'https://github.com/demisto/content/raw/test3.png' not in errors

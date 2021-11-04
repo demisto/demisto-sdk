@@ -10,6 +10,7 @@ from typing import IO
 
 # Third party packages
 import click
+import dotenv
 import git
 from pkg_resources import get_distribution
 
@@ -171,7 +172,9 @@ def check_configuration_file(command, args):
 )
 @pass_config
 def main(config, version, release_notes):
+    dotenv.load_dotenv()
     config.configuration = Configuration()
+    print(os.getenv('DEMISTO_SDK_SKIP_VERSION_CHECK'))
     if not os.getenv('DEMISTO_SDK_SKIP_VERSION_CHECK') or version:  # If the key exists/called to version
         cur_version = get_distribution('demisto-sdk').version
         last_release = get_last_remote_release_version()

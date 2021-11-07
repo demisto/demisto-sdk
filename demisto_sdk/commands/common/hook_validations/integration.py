@@ -1374,6 +1374,11 @@ class IntegrationValidator(ContentEntityValidator):
         return True
 
     def has_no_fromlicense_key_in_contributions_integration(self):
+        """Checks if there is no `fromlicense` key in integration configuration in integrations with no `xsoar` support.
+
+        Returns:
+            bool: True if the key does not exist or if the support level of the integration is `xsoar`, False otherwise.
+        """
         pack_name = get_pack_name(self.file_path)
         if pack_name:
             metadata_path = Path(PACKS_DIR, pack_name, PACKS_PACK_META_FILE_NAME)

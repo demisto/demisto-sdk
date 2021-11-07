@@ -1,5 +1,6 @@
 # Changelog
 * Removed a validation that DBotRole should be set for automation that requires elevated permissions to the `XSOAR-linter` in the **lint** command.
+* Added a validation to prevent contributors from using the `fromlicense` key as a configuration parameter in an integration's YML
 
 # 1.5.2
 * Added a validation to **update-release-notes** command to ensure that the `--version` flag argument is in the right format.
@@ -10,7 +11,6 @@
 * Added a validation to ensure reputation command's default argument is set as an array input.
 * Added the `--fail-duplicates` flag for the **merge-id-set** command which will fail the command if duplicates are found.
 * Added the `--fail-duplicates` flag for the **create-id-set** command which will fail the command if duplicates are found.
-* Added a validation to avoid contributors using fromlicense key in configuration parameters in integration yml.
 
 # 1.5.1
 * Fixed an issue where **validate** command failed to recognized test playbooks for beta integrations as valid tests.

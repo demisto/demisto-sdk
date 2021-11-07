@@ -293,7 +293,7 @@ class ReadMeValidator(BaseValidator):
         error_list = []
         working_branch_name: str = ''
         try:
-            working_branch_name = GitUtil().get_current_working_branch()
+            working_branch_name = GitUtil().get_current_git_branch_or_hash()
         except InvalidGitRepositoryError:
             pass
         should_print_error = not is_pack_readme  # pack readme errors are handled and printed during the pack unique

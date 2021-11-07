@@ -22,6 +22,8 @@ from demisto_sdk.commands.common.hook_validations.content_entity_validator impor
 from demisto_sdk.commands.common.hook_validations.dashboard import \
     DashboardValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
+from demisto_sdk.commands.common.hook_validations.generic_field import \
+    GenericFieldValidator
 from demisto_sdk.commands.common.hook_validations.incident_field import \
     IncidentFieldValidator
 from demisto_sdk.commands.common.hook_validations.integration import \
@@ -1102,6 +1104,40 @@ class TestValidators:
         structure = StructureValidator(dashboard.path)
         res_validator = IntegrationValidator(structure)
         assert res_validator.is_there_spaces_in_the_end_of_name() is answer
+
+    @pytest.mark.parametrize('answer, unsearchable', [(True, True), (False, False)])
+    def test_is_valid_unsearchable_field_incident_field(self, pack: Pack, answer, unsearchable):
+        """
+                Given
+                    - An incident field which unsearchable is true
+                    - An incident field which unsearchable is false
+                When
+                    - Run the validate command.
+                Then
+                    - validate that is_valid_unsearchable_field expected answer
+        """
+        incident_field = pack.create_incident_field('MyIncidentField')
+        incident_field.update({"unsearchable": unsearchable})
+        structure = StructureValidator(incident_field.path)
+        res_validator = IncidentFieldValidator(structure)
+        assert res_validator.is_valid_unsearchable_field() is answer
+
+    @pytest.mark.parametrize('answer, unsearchable', [(True, True), (False, False)])
+    def test_is_valid_unsearchable_field_generic_field(self, pack: Pack, answer, unsearchable):
+        """
+                Given
+                    - An incident field which unsearchable is true
+                    - An incident field which unsearchable is false
+                When
+                    - Run the validate command.
+                Then
+                    - validate that is_valid_unsearchable_field expected answer
+        """
+        incident_field = pack.create_incident_field('MyIncidentField')
+        incident_field.update({"unsearchable": unsearchable})
+        structure = StructureValidator(incident_field.path)
+        res_validator = GenericFieldValidator(structure)
+        assert res_validator.is_valid_unsearchable_field() is answer
 
 
 @pytest.mark.parametrize('pack_name, expected', [

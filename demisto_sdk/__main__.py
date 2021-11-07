@@ -1512,7 +1512,7 @@ def postman_codegen(
         yml_path = postman_config.generate_integration_package(output, is_unified=True)
         if package:
             yml_splitter = YmlSplitter(configuration=config.configuration, file_type=FileType.INTEGRATION.value,
-                                       input=yml_path.name, output=str(output))
+                                       input=str(yml_path), output=str(output))
             yml_splitter.extract_to_package_format()
 
 

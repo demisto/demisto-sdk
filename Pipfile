@@ -52,6 +52,7 @@ PyPDF2 = "*"
 PyYAML = "*"
 giturlparse = "*"
 pytest-freezegun = "*"
+python-dotenv = "*"
 
 [dev-packages]
 mitmproxy = "==5.1.0"

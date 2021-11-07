@@ -1374,6 +1374,12 @@ class IntegrationValidator(ContentEntityValidator):
         return True
 
     def is_api_token_in_credential_type(self):
+        """Checks if there are no keys with the `encrypted` type,
+            The best practice is to use the `credential` type instead of `encrypted`.
+
+        Returns:
+            bool: True if there is no a key with type encrypted False otherwise.
+        """
         pack_name = get_pack_name(self.file_path)
         if pack_name:
             metadata_path = Path(PACKS_DIR, pack_name, PACKS_PACK_META_FILE_NAME)

@@ -1,4 +1,5 @@
 # Changelog
+* Added a validation to the **validate** command that verifies that `unsearchable` field in incident, indicator and generic fields is set to true.
 * Removed a validation that DBotRole should be set for automation that requires elevated permissions to the `XSOAR-linter` in the **lint** command.
 
 # 1.5.2

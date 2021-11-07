@@ -1125,7 +1125,7 @@ class TestValidators:
         Then
             - File is ignored and True is returned
         """
-        file_path = 'Packs/SomeIntegration/IntegrationName/test_data/file.json'
+        file_path = 'Packs/pack_id/Integrations/integration_id/test_data/file.json'
         validate_manager = ValidateManager(check_is_unskipped=False)
         assert validate_manager.ignore_test_doc_non_pack_file(file_path)
 

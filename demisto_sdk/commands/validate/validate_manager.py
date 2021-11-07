@@ -1368,6 +1368,7 @@ class ValidateManager:
 
         if file_path.split(os.path.sep)[0] in ('.gitlab', '.circleci', '.github'):
             return None
+
         file_type = find_type(file_path)
 
         if self.ignore_test_doc_non_pack_file(file_path):
@@ -1402,7 +1403,7 @@ class ValidateManager:
         else:
             return file_path
 
-    def ignore_test_doc_non_pack_file(self, file_path) -> bool:
+    def ignore_test_doc_non_pack_file(self, file_path: str) -> bool:
         # ignore doc data, test_data and non pack files
         if any(test_dir in str(file_path) for test_dir in TESTS_AND_DOC_DIRECTORIES) or PACKS_DIR not in file_path:
             if self.print_ignored_files:

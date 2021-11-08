@@ -1,5 +1,9 @@
 # Changelog
+* Removed a validation that DBotRole should be set for automation that requires elevated permissions to the `XSOAR-linter` in the **lint** command.
+* Fixed an issue in **Validate** command where playbooks conditional tasks were mishandeled.
 
+# 1.5.2
+* Added a validation to **update-release-notes** command to ensure that the `--version` flag argument is in the right format.
 * added a new command **coverage-analyze** to generate and print coverage reports.
 * Fixed an issue in **validate** in repositories which are not in GitHub or GitLab
 * Added a validation that verifies that readme image absolute links do not contain the working branch name.
@@ -7,7 +11,6 @@
 * Added a validation to ensure reputation command's default argument is set as an array input.
 * Added the `--fail-duplicates` flag for the **merge-id-set** command which will fail the command if duplicates are found.
 * Added the `--fail-duplicates` flag for the **create-id-set** command which will fail the command if duplicates are found.
-* Fixed an issue in **Validate** in playbooks with conditional tasks
 
 # 1.5.1
 * Fixed an issue where **validate** command failed to recognized test playbooks for beta integrations as valid tests.

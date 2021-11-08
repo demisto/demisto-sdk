@@ -462,11 +462,11 @@ class TestFormatting:
         assert 'description' not in base_yml.data['tasks']['3']['task']
 
     FORMAT_FILES_FETCH = [
-        (SOURCE_FORMAT_INTEGRATION_VALID, f'Packs/A/{DESTINATION_FORMAT_INTEGRATION}', f'Packs/A/{INTEGRATION_PATH}', 0),
-        (SOURCE_FORMAT_INTEGRATION_INVALID, f'Packs/A/{DESTINATION_FORMAT_INTEGRATION}', f'Packs/A/{INTEGRATION_PATH}', 0)]
+        (SOURCE_FORMAT_INTEGRATION_VALID, DESTINATION_FORMAT_INTEGRATION, INTEGRATION_PATH, 0),
+        (SOURCE_FORMAT_INTEGRATION_INVALID, DESTINATION_FORMAT_INTEGRATION, INTEGRATION_PATH, 0)]
 
     @pytest.mark.parametrize('source, target, path, answer', FORMAT_FILES_FETCH)
-    def test_set_fetch_params_in_config(self, source, target, path, answer, monkeypatch):
+    def test_set_fetch_params_in_config(self, mocker, source, target, path, answer, monkeypatch):
         """
         Given
         - Integration yml with isfetch field labeled as true and correct fetch params.
@@ -479,6 +479,8 @@ class TestFormatting:
         - Ensure the file was created.
         - Ensure that the isfetch and incidenttype params were added to the yml of the integration.
         """
+        mocker.patch.object(IntegrationValidator, 'has_no_fromlicense_key_in_contributions_integration', return_value=True)
+
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
         monkeypatch.setattr(

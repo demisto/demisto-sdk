@@ -3,18 +3,18 @@ import os
 import shutil
 from pathlib import Path
 from typing import Dict, List, Optional, Union
-from click.testing import CliRunner
 
 import pytest
 import yaml
+from click.testing import CliRunner
 
+from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.generate_integration.code_generator import (
     IntegrationGeneratorConfig, IntegrationGeneratorOutput)
 from demisto_sdk.commands.postman_codegen.postman_codegen import (
     create_body_format, flatten_collections, generate_command_outputs,
     postman_to_autogen_configuration)
-from demisto_sdk.__main__ import main
 
 
 class TestPostmanHelpers:

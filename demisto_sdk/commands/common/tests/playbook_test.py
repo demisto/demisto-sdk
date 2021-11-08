@@ -109,6 +109,12 @@ class TestPlaybookValidator:
                                                          {'1': {'type': 'condition',
                                                                 'message': {'replyOptions': ['yes']},
                                                                 'nexttasks': {'YES': ['1']}}}}
+    CONDITIONAL_TASK_EXISTS_WITH_TRUE_AND_FALSE_POSITIVE = {"id": "Intezer - scan host", "version": -1,
+                                                            "tasks":
+                                                                {'1': {'type': 'condition',
+                                                                       'message': {'replyOptions': ['yes', 'NO']},
+                                                                       'nexttasks': {"False Positive": ["29"],
+                                                                                     "True Positive": ["45"]}}}}
     CONDITIONAL_SCRPT_WITHOUT_NXT_TASK = {"id": "Intezer - scan host", "version": -1,
                                           "tasks":
                                               {'1': {'type': 'condition',
@@ -158,6 +164,7 @@ class TestPlaybookValidator:
         (CONDITIONAL_ASK_EXISTS_WITH_DFLT_NXT_TASK, True),
         (CONDITIONAL_ASK_EXISTS_WITH_NXT_TASK, True),
         (CONDITIONAL_ASK_EXISTS_WITH_NXT_TASK_CASE_DIF, True),
+        (CONDITIONAL_TASK_EXISTS_WITH_TRUE_AND_FALSE_POSITIVE, True),
         (CONDITIONAL_SCRPT_WITHOUT_NXT_TASK, False),
         (CONDITIONAL_SCRPT_WITH_DFLT_NXT_TASK, False),
         (CONDITIONAL_SCRPT_WITH_MULTI_NXT_TASK, True),

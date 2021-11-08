@@ -417,8 +417,7 @@ class TestValidators:
     ]
 
     @pytest.mark.parametrize('file_path', INVALID_FILES_PATHS_FOR_ALL_VALIDATIONS)
-    @patch.object(ImageValidator, 'is_valid', return_value=True)
-    def test_run_all_validations_on_file_failed(self, _, file_path):
+    def test_run_all_validations_on_file_failed(self, mocker, file_path):
         """
         Given
         - An invalid file inside a pack
@@ -429,6 +428,9 @@ class TestValidators:
         Then
         -  The file will be validated and failed
         """
+        mocker.patch.object(ImageValidator, 'is_valid', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'has_no_fromlicense_key_in_contributions_integration', return_value=True)
+
         validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
         assert not validate_manager.run_validation_on_specific_files()
 

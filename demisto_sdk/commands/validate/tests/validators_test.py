@@ -1105,25 +1105,61 @@ class TestValidators:
         res_validator = IntegrationValidator(structure)
         assert res_validator.is_there_spaces_in_the_end_of_name() is answer
 
-    @pytest.mark.parametrize('answer, unsearchable', [(True, True), (False, False)])
-    def test_is_valid_unsearchable_field_incident_field(self, pack: Pack, answer, unsearchable):
+    @pytest.mark.parametrize('file_path',
+                             ['Packs/SomeIntegration/IntegrationName/file.py',
+                              'Packs/pack_id/Integrations/integration_id/file.yml'])
+    def test_ignore_test_doc_non_pack_file_should_not_ignore(self, file_path: str):
         """
-                Given
-                    - An incident field which unsearchable is true
-                    - An incident field which unsearchable is false
-                When
-                    - Run the validate command.
-                Then
-                    - validate that is_valid_unsearchable_field expected answer
+        Given
+            - File path
+        When
+            - File should not be ignored
+        Then
+            - File is not ignored and False is returned
         """
-        incident_field = pack.create_incident_field('MyIncidentField')
-        incident_field.update({"unsearchable": unsearchable})
-        structure = StructureValidator(incident_field.path)
-        res_validator = IncidentFieldValidator(structure)
-        assert res_validator.is_valid_unsearchable_field() is answer
+        validate_manager = ValidateManager(check_is_unskipped=False)
+        assert not validate_manager.ignore_test_doc_non_pack_file(file_path)
 
-    @pytest.mark.parametrize('answer, unsearchable', [(True, True), (False, False)])
-    def test_is_valid_unsearchable_field_generic_field(self, pack: Pack, answer, unsearchable):
+    @pytest.mark.parametrize('file_path',
+                             ['Packs/pack_id/Integrations/integration_id/test_data/file.json',
+                              'Packs/pack_id/test_data/file.json',
+                              'Packs/pack_id/Scripts/script_id/test_data/file.json',
+                              'Packs/pack_id/TestPlaybooks/test_data/file.json'])
+    def test_ignore_test_doc_non_pack_file_test_file(self, file_path: str):
+        """
+        Given
+            - File path
+        When
+            - File is part of the test_data directory
+        Then
+            - File is ignored and True is returned
+        """
+        validate_manager = ValidateManager(check_is_unskipped=False)
+        assert validate_manager.ignore_test_doc_non_pack_file(file_path)
+
+    @pytest.mark.parametrize('file_path',
+                             ['OtherDir/Integration/file.json',
+                              'TestData/file.json',
+                              'TestPlaybooks/file.yml',
+                              'docs/dbot/README.md'])
+    def test_ignore_test_doc_non_pack_file_non_pack(self, file_path: str):
+        """
+        Given
+            - File path
+        When
+            - File is not part of the Packs directory
+        Then
+            - File is ignored and True is returned
+        """
+        validate_manager = ValidateManager(check_is_unskipped=False)
+        assert validate_manager.ignore_test_doc_non_pack_file(file_path)
+
+    @pytest.mark.parametrize('answer, unsearchable, validator', [(True, True, IncidentFieldValidator),
+                                                                 (False, False, IncidentFieldValidator),
+                                                                 (True, True, GenericFieldValidator),
+                                                                 (True, True, GenericFieldValidator)]
+                             )
+    def test_is_valid_unsearchable_field(self, pack: Pack, answer, unsearchable, validator):
         """
                 Given
                     - An incident field which unsearchable is true
@@ -1136,7 +1172,7 @@ class TestValidators:
         incident_field = pack.create_incident_field('MyIncidentField')
         incident_field.update({"unsearchable": unsearchable})
         structure = StructureValidator(incident_field.path)
-        res_validator = GenericFieldValidator(structure)
+        res_validator = validator(structure)
         assert res_validator.is_valid_unsearchable_field() is answer
 
 

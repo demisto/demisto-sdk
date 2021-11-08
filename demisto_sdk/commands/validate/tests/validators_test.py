@@ -416,7 +416,6 @@ class TestValidators:
     ]
 
     @pytest.mark.parametrize('file_path', INVALID_FILES_PATHS_FOR_ALL_VALIDATIONS)
-    @patch.object(ImageValidator, 'is_valid', return_value=True)
     def test_run_all_validations_on_file_failed(self, mocker, file_path):
         """
         Given

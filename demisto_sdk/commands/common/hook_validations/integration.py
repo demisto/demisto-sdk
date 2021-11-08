@@ -1380,7 +1380,6 @@ class IntegrationValidator(ContentEntityValidator):
             bool: True if the key does not exist or if the support level of the integration is `xsoar`, False otherwise.
         """
         pack_name = get_pack_name(self.file_path)
-        print("hi")
         if pack_name:
             metadata_path = Path(PACKS_DIR, pack_name, PACKS_PACK_META_FILE_NAME)
             metadata_content = self.get_metadata_file_content(metadata_path)
@@ -1398,5 +1397,7 @@ class IntegrationValidator(ContentEntityValidator):
                         return False
 
             return True
+
         else:
-            raise
+            raise Exception('Could not find the pack name of the integration '
+                            'it\'s looks like that the integration is not in a pack')

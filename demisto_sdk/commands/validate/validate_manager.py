@@ -858,13 +858,14 @@ class ValidateManager:
         incident_field_validator = IncidentFieldValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                                           print_as_warnings=self.print_ignored_errors,
                                                           json_file_path=self.json_file_path)
-        validate_results = [incident_field_validator.is_valid_file(validate_rn=False, is_new_file=not is_modified,
-                                                                   use_git=self.use_git)]
-        if not self.validate_all:
-            validate_results.append(incident_field_validator.is_valid_unsearchable_field())
         if is_modified and self.is_backward_check:
-            validate_results.append(incident_field_validator.is_backward_compatible())
-        return all(validate_results)
+            return all([incident_field_validator.is_valid_file(validate_rn=False, is_new_file=not is_modified,
+                                                               use_git=self.use_git),
+                        incident_field_validator.is_backward_compatible(),
+                        incident_field_validator.is_valid_unsearchable_field()])
+        else:
+            return incident_field_validator.is_valid_file(validate_rn=False, is_new_file=not is_modified,
+                                                          use_git=self.use_git)
 
     def validate_reputation(self, structure_validator, pack_error_ignore_list):
         reputation_validator = ReputationValidator(structure_validator, ignored_errors=pack_error_ignore_list,

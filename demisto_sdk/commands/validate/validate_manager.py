@@ -861,8 +861,8 @@ class ValidateManager:
         if is_modified and self.is_backward_check:
             return all([incident_field_validator.is_valid_file(validate_rn=False, is_new_file=not is_modified,
                                                                use_git=self.use_git),
-                        incident_field_validator.is_backward_compatible(),
-                        incident_field_validator.is_valid_unsearchable_field()])
+                        incident_field_validator.is_backward_compatible(),])
+                        # incident_field_validator.is_valid_unsearchable_field()])
         else:
             return incident_field_validator.is_valid_file(validate_rn=False, is_new_file=not is_modified,
                                                           use_git=self.use_git)

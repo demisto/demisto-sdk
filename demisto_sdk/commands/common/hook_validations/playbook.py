@@ -481,7 +481,7 @@ class PlaybookValidator(ContentEntityValidator):
         is_valid = True
         tasks: dict = self.current_file.get('tasks', {})
         for task_key, task in tasks.items():
-            task_script = task.get('task').get('script')  # TODO: Will it always have these keys?, should I add checks?
+            task_script = task.get('task', {}).get('script', None)  # TODO: Will it always have these keys?, should I add checks?
             if task_script is not None and '|||' in task_script:
                 brand_name = task_script[:task_script.find('|||')]
                 if not brand_name:

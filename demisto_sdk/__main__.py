@@ -104,6 +104,8 @@ class VersionParamType(click.ParamType):
     The type accepts a string represents a version number.
     """
 
+    name = "version"
+
     def convert(self, value, param, ctx):
         version_sections = value.split('.')
         if len(version_sections) == 3 and \

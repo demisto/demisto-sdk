@@ -10,6 +10,7 @@ from typing import IO
 
 # Third party packages
 import click
+import dotenv
 import git
 from pkg_resources import get_distribution
 
@@ -103,6 +104,8 @@ class VersionParamType(click.ParamType):
     The type accepts a string represents a version number.
     """
 
+    name = "version"
+
     def convert(self, value, param, ctx):
         version_sections = value.split('.')
         if len(version_sections) == 3 and \
@@ -171,6 +174,7 @@ def check_configuration_file(command, args):
 )
 @pass_config
 def main(config, version, release_notes):
+    dotenv.load_dotenv()  # Load a .env file from the cwd.
     config.configuration = Configuration()
     if not os.getenv('DEMISTO_SDK_SKIP_VERSION_CHECK') or version:  # If the key exists/called to version
         cur_version = get_distribution('demisto-sdk').version
@@ -1150,6 +1154,10 @@ def generate_test_playbook(**kwargs):
     "-t", "--template", help="Create an Integration/Script based on a specific template.\n"
                              "Integration template options: HelloWorld, HelloIAMWorld, FeedHelloWorld.\n"
                              "Script template options: HelloWorldScript")
+@click.option(
+    "-a", "--author-image", help="Path of the file 'Author_image.png'. \n "
+    "Image will be presented in marketplace under PUBLISHER section. File should be up to 4kb and dimensions of 120x50"
+)
 @click.option(
     '--demisto_mock', is_flag=True,
     help="Copy the demistomock. Relevant for initialization of Scripts and Integrations within a Pack.")

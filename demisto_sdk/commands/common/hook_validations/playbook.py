@@ -177,11 +177,18 @@ class PlaybookValidator(ContentEntityValidator):
         # ADD all replyOptions to unhandled_reply_options (UPPER)
         unhandled_reply_options = set(map(str.upper, task.get('message', {}).get('replyOptions', [])))
 
+        # Rename the keys in dictionary to upper case
+        next_tasks_upper = {k.upper(): v for k, v in next_tasks.items()}
+
+        # Rename the dictionary keys from 'True Positive\False Positive' to 'YES\NO'
+        next_tasks_upper['YES'] = next_tasks_upper.pop('TRUE POSITIVE', next_tasks_upper.get('YES'))
+        next_tasks_upper['NO'] = next_tasks_upper.pop('FALSE POSITIVE', next_tasks_upper.get('NO'))
+
         # Remove all nexttasks from unhandled_reply_options (UPPER)
-        for next_task_branch, next_task_id in next_tasks.items():
+        for next_task_branch, next_task_id in next_tasks_upper.items():
             try:
                 if next_task_id:
-                    unhandled_reply_options.remove(next_task_branch.upper())
+                    unhandled_reply_options.remove(next_task_branch)
             except KeyError:
                 error_message, error_code = Errors.playbook_unreachable_condition(task.get('id'), next_task_branch)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):

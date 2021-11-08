@@ -53,6 +53,7 @@ from demisto_sdk.commands.common.hook_validations.integration import \
     IntegrationValidator
 from demisto_sdk.commands.common.hook_validations.layout import (
     LayoutsContainerValidator, LayoutValidator)
+from demisto_sdk.commands.common.hook_validations.lists import ListsValidator
 from demisto_sdk.commands.common.hook_validations.mapper import MapperValidator
 from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
     PackUniqueFilesValidator
@@ -138,7 +139,7 @@ class ValidateManager:
 
         try:
             self.git_util = GitUtil(repo=Content.git())
-            self.branch_name = self.git_util.get_current_working_branch()
+            self.branch_name = self.git_util.get_current_git_branch_or_hash()
         except (InvalidGitRepositoryError, TypeError):
             # if we are using git - fail the validation by raising the exception.
             if self.use_git:
@@ -533,6 +534,9 @@ class ValidateManager:
         elif file_type == FileType.PRE_PROCESS_RULES:
             return self.validate_pre_process_rule(structure_validator, pack_error_ignore_list)
 
+        elif file_type == FileType.LISTS:
+            return self.validate_lists(structure_validator, pack_error_ignore_list)
+
         elif file_type == FileType.DASHBOARD:
             return self.validate_dashboard(structure_validator, pack_error_ignore_list)
 
@@ -889,6 +893,12 @@ class ValidateManager:
         return pre_process_rules_validator.is_valid_pre_process_rule(validate_rn=False, id_set_file=self.id_set_file,
                                                                      is_ci=self.is_circle)
 
+    def validate_lists(self, structure_validator, pack_error_ignore_list):
+        lists_validator = ListsValidator(structure_validator, ignored_errors=pack_error_ignore_list,
+                                         print_as_warnings=self.print_ignored_errors,
+                                         json_file_path=self.json_file_path)
+        return lists_validator.is_valid_list()
+
     def validate_dashboard(self, structure_validator, pack_error_ignore_list):
         dashboard_validator = DashboardValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                                  print_as_warnings=self.print_ignored_errors,
@@ -975,6 +985,7 @@ class ValidateManager:
         * .pack-ignore: Validates that the file exists and that all regexes in it can be compiled
         * README.md file: Validates that the file exists and image links are valid
         * 2.pack_metadata.json: Validates that the file exists and that it has a valid structure
+        * Author_image.png: Validates that the file isn't empty, dimension of 120*50 and that image size is up to 4kb
         Runs validation on the pack dependencies
         Args:
             should_version_raise: Whether we should check if the version of the metadata was raised
@@ -1202,7 +1213,7 @@ class ValidateManager:
 
     def setup_git_params(self):
         """Setting up the git relevant params"""
-        self.branch_name = self.git_util.get_current_working_branch() if (self.git_util and not self.branch_name) \
+        self.branch_name = self.git_util.get_current_git_branch_or_hash() if (self.git_util and not self.branch_name) \
             else self.branch_name
 
         # check remote validity

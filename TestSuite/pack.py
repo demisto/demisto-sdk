@@ -31,6 +31,7 @@ class Pack:
 
     def __init__(self, packs_dir: Path, name: str, repo):
         # Initiate lists:
+        self.name = name
         self._repo = repo
         self.repo_path = repo.path
         self.integrations: List[Integration] = list()
@@ -50,6 +51,7 @@ class Pack:
         self.layoutcontainers: List[JSONBased] = list()
         self.reports: List[JSONBased] = list()
         self.widgets: List[JSONBased] = list()
+        self.lists: List[JSONBased] = list()
         self.playbooks: List[Playbook] = list()
         self.test_playbooks: List[Playbook] = list()
         self.release_notes: List[TextBased] = list()
@@ -115,6 +117,9 @@ class Pack:
 
         self._release_notes = self._pack_path / 'ReleaseNotes'
         self._release_notes.mkdir()
+
+        self._lists_path = self._pack_path / 'Lists'
+        self._lists_path.mkdir()
 
         self.secrets = Secrets(self._pack_path)
 
@@ -367,6 +372,16 @@ class Pack:
         widget = self._create_json_based(name, prefix, content, dir_path=self._widget_path)
         self.widgets.append(widget)
         return widget
+
+    def create_list(
+            self,
+            name,
+            content: dict = None
+    ) -> JSONBased:
+        prefix = 'list'
+        list_item = self._create_json_based(name, prefix, content, dir_path=self._lists_path)
+        self.lists.append(list_item)
+        return list_item
 
     def create_playbook(
             self,

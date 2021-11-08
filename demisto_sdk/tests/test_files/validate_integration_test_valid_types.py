@@ -578,7 +578,8 @@ GENERIC_FIELD = {
     "unsearchable": False,
     "useAsKpi": False,
     "version": -1,
-    "fromVersion": "6.5.0"
+    "fromVersion": "6.5.0",
+    "openEnded": False
 }
 
 GENERIC_TYPE = {

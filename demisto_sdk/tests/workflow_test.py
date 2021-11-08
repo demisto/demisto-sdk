@@ -12,6 +12,7 @@ from click.testing import CliRunner
 from ruamel import yaml
 
 from demisto_sdk.__main__ import main
+from demisto_sdk.commands.common.constants import AUTHOR_IMAGE_FILE_NAME
 from TestSuite.test_tools import ChangeCWD
 
 
@@ -202,7 +203,7 @@ def function_setup():
     content_git_repo.create_branch()
 
 
-def init_pack(content_repo: ContentGitRepo, _):
+def init_pack(content_repo: ContentGitRepo, monkeypatch: MonkeyPatch):
     """
     Given: Instruction to create a new pack using the sdk.
         Fill metadata: y
@@ -216,12 +217,17 @@ def init_pack(content_repo: ContentGitRepo, _):
 
     Then: Validate lint, secrets and validate exit code is 0
     """
+    author_image_rel_path = \
+        r"demisto_sdk/tests/test_files/artifacts/content/content_packs/AuthorImageTest/SanityCheck"
+    author_image_abs_path = os.path.abspath(f"./{author_image_rel_path}/{AUTHOR_IMAGE_FILE_NAME}")
+    monkeypatch.chdir(content_repo.content)
     runner = CliRunner(mix_stderr=False)
     res = runner.invoke(
-        main, "init --pack --name Sample",
+        main, f"init -a {author_image_abs_path} --pack --name Sample",
         input="\n".join(["y", "Sample", "description", "1", "1", "n", "6.0.0"])
     )
-    assert res.exit_code == 0, f"Could not run the init command.\nstdout={res.stdout}\nstderr={res.stderr}"
+    assert res.exit_code == 0, f"Could not run the init command.\nstdout={res.stdout}\nstderr={res.stderr}\n" \
+                               f"author_image_abs_path={author_image_abs_path}"
     content_repo.run_validations()
 
 
@@ -278,7 +284,7 @@ def modify_entity(content_repo: ContentGitRepo, monkeypatch: MonkeyPatch):
     content_repo.run_validations()
 
 
-def all_files_renamed(content_repo: ContentGitRepo, _):
+def all_files_renamed(content_repo: ContentGitRepo, monkeypatch: MonkeyPatch):
     """
     Given: HelloWorld Integration
 
@@ -286,6 +292,7 @@ def all_files_renamed(content_repo: ContentGitRepo, _):
 
     Then: Validate lint, secrets and validate exit code is 0
     """
+    monkeypatch.chdir(content_git_repo.content)  # type: ignore
     path_to_hello_world_pack = Path("Packs") / "HelloWorld" / "Integrations" / "HelloWorld"
     hello_world_path = content_repo.content / path_to_hello_world_pack
     # rename all files in dir
@@ -305,7 +312,7 @@ def all_files_renamed(content_repo: ContentGitRepo, _):
     content_repo.run_validations()
 
 
-def rename_incident_field(content_repo: ContentGitRepo, _):
+def rename_incident_field(content_repo: ContentGitRepo, monkeypatch: MonkeyPatch):
     """
     Given: Incident field in HelloWorld pack.
 
@@ -314,6 +321,7 @@ def rename_incident_field(content_repo: ContentGitRepo, _):
     Then: Validate lint, secrets and validate exit code is 0
 
     """
+    monkeypatch.chdir(content_git_repo.content)  # type: ignore
     hello_world_incidentfields_path = Path("Packs/HelloWorld/IncidentFields/")
     curr_incident_field = hello_world_incidentfields_path / "incidentfield-Hello_World_ID.json"
 
@@ -359,5 +367,4 @@ def test_workflow_by_sequence(function: Callable, monkeypatch: MonkeyPatch):
             * validate -g
     """
     global content_git_repo
-    monkeypatch.chdir(content_git_repo.content)  # type: ignore
     function(content_git_repo, monkeypatch)

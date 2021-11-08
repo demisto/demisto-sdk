@@ -1388,11 +1388,14 @@ class IntegrationValidator(ContentEntityValidator):
             if metadata_content.get('support') != XSOAR_SUPPORT:
                 return True
 
-        conf_params = self.current_file.get('configuration', [])
-        for param in conf_params:
-            if param.get('type') == 4:
-                error_message, error_code = Errors.api_token_is_not_in_credential_type(param.get('name'))
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
-                    return False
+            conf_params = self.current_file.get('configuration', [])
+            for param in conf_params:
+                if param.get('type') == 4:
+                    error_message, error_code = Errors.api_token_is_not_in_credential_type(param.get('name'))
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                        return False
 
-        return True
+            return True
+
+        raise Exception('Could not find the pack name of the integration '
+                        'it looks like that the integration is not in a pack')

@@ -13,6 +13,8 @@ from demisto_sdk.commands.common.constants import (FEED_REQUIRED_PARAMS,
                                                    INTEGRATION)
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
+from demisto_sdk.commands.common.hook_validations.integration import \
+    IntegrationValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import LOG_COLORS, is_string_uuid
 from demisto_sdk.commands.format.format_module import format_manager
@@ -460,11 +462,11 @@ class TestFormatting:
         assert 'description' not in base_yml.data['tasks']['3']['task']
 
     FORMAT_FILES_FETCH = [
-        (SOURCE_FORMAT_INTEGRATION_VALID, f'Packs/A/{DESTINATION_FORMAT_INTEGRATION}', f'Packs/A/{INTEGRATION_PATH}', 0),
-        (SOURCE_FORMAT_INTEGRATION_INVALID, f'Packs/A/{DESTINATION_FORMAT_INTEGRATION}', f'Packs/A/{INTEGRATION_PATH}', 0)]
+        (SOURCE_FORMAT_INTEGRATION_VALID, DESTINATION_FORMAT_INTEGRATION, INTEGRATION_PATH, 0),
+        (SOURCE_FORMAT_INTEGRATION_INVALID, DESTINATION_FORMAT_INTEGRATION, INTEGRATION_PATH, 0)]
 
     @pytest.mark.parametrize('source, target, path, answer', FORMAT_FILES_FETCH)
-    def test_set_fetch_params_in_config(self, source, target, path, answer, monkeypatch):
+    def test_set_fetch_params_in_config(self, mocker, source, target, path, answer, monkeypatch):
         """
         Given
         - Integration yml with isfetch field labeled as true and correct fetch params.
@@ -477,6 +479,8 @@ class TestFormatting:
         - Ensure the file was created.
         - Ensure that the isfetch and incidenttype params were added to the yml of the integration.
         """
+        mocker.patch.object(IntegrationValidator, 'is_api_token_in_credential_type', return_value=True)
+
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
         monkeypatch.setattr(
@@ -501,7 +505,7 @@ class TestFormatting:
         (FEED_INTEGRATION_INVALID, DESTINATION_FORMAT_INTEGRATION, INTEGRATION_PATH, 0)]
 
     @pytest.mark.parametrize('source, target, path, answer', FORMAT_FILES_FEED)
-    def test_set_feed_params_in_config(self, source, target, path, answer):
+    def test_set_feed_params_in_config(self, mocker, source, target, path, answer):
         """
         Given
         - Integration yml with feed field labeled as true and all necessary params exist.
@@ -515,6 +519,8 @@ class TestFormatting:
         - Ensure that the feedBypassExclusionList, Fetch indicators , feedReputation, feedReliability ,
          feedExpirationPolicy, feedExpirationInterval ,feedFetchInterval params were added to the yml of the integration.
         """
+        mocker.patch.object(IntegrationValidator, 'is_api_token_in_credential_type', return_value=True)
+
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
         res = format_manager(input=target, verbose=True)

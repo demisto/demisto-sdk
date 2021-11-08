@@ -1380,6 +1380,7 @@ class IntegrationValidator(ContentEntityValidator):
             bool: True if the key does not exist or if the support level of the integration is `xsoar`, False otherwise.
         """
         pack_name = get_pack_name(self.file_path)
+        print("hi")
         if pack_name:
             metadata_path = Path(PACKS_DIR, pack_name, PACKS_PACK_META_FILE_NAME)
             metadata_content = self.get_metadata_file_content(metadata_path)
@@ -1387,13 +1388,15 @@ class IntegrationValidator(ContentEntityValidator):
             if metadata_content.get('support', '').lower() == XSOAR_SUPPORT:
                 return True
 
-        conf_params = self.current_file.get('configuration', [])
-        for param_name in conf_params:
-            if 'fromlicense' in param_name.keys():
-                error_message, error_code = Errors.fromlicense_in_parameters(param_name.get('name'))
+            conf_params = self.current_file.get('configuration', [])
+            for param_name in conf_params:
+                if 'fromlicense' in param_name.keys():
+                    error_message, error_code = Errors.fromlicense_in_parameters(param_name.get('name'))
 
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
-                    self.is_valid = False
-                    return False
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                        self.is_valid = False
+                        return False
 
-        return True
+            return True
+        else:
+            raise

@@ -1103,7 +1103,10 @@ class TestValidators:
         res_validator = IntegrationValidator(structure)
         assert res_validator.is_there_spaces_in_the_end_of_name() is answer
 
-    def test_ignore_test_doc_non_pack_file_should_not_ignore(self):
+    @pytest.mark.parametrize('file_path',
+                             ['Packs/SomeIntegration/IntegrationName/file.py',
+                              'Packs/pack_id/Integrations/integration_id/file.yml'])
+    def test_ignore_test_doc_non_pack_file_should_not_ignore(self, file_path: str):
         """
         Given
             - File path
@@ -1112,11 +1115,15 @@ class TestValidators:
         Then
             - File is not ignored and False is returned
         """
-        file_path = 'Packs/SomeIntegration/IntegrationName/file.py'
         validate_manager = ValidateManager(check_is_unskipped=False)
         assert not validate_manager.ignore_test_doc_non_pack_file(file_path)
 
-    def test_ignore_test_doc_non_pack_file_test_file(self):
+    @pytest.mark.parametrize('file_path',
+                             ['Packs/pack_id/Integrations/integration_id/test_data/file.json',
+                              'Packs/pack_id/test_data/file.json',
+                              'Packs/pack_id/Scripts/script_id/test_data/file.json',
+                              'Packs/pack_id/TestPlaybooks/test_data/file.json'])
+    def test_ignore_test_doc_non_pack_file_test_file(self, file_path: str):
         """
         Given
             - File path
@@ -1125,11 +1132,15 @@ class TestValidators:
         Then
             - File is ignored and True is returned
         """
-        file_path = 'Packs/pack_id/Integrations/integration_id/test_data/file.json'
         validate_manager = ValidateManager(check_is_unskipped=False)
         assert validate_manager.ignore_test_doc_non_pack_file(file_path)
 
-    def test_ignore_test_doc_non_pack_file_non_pack(self):
+    @pytest.mark.parametrize('file_path',
+                             ['OtherDir/Integration/file.json',
+                              'TestData/file.json',
+                              'TestPlaybooks/file.yml',
+                              'docs/dbot/README.md'])
+    def test_ignore_test_doc_non_pack_file_non_pack(self, file_path: str):
         """
         Given
             - File path
@@ -1138,7 +1149,6 @@ class TestValidators:
         Then
             - File is ignored and True is returned
         """
-        file_path = 'OtherDir/Integration/file.json'
         validate_manager = ValidateManager(check_is_unskipped=False)
         assert validate_manager.ignore_test_doc_non_pack_file(file_path)
 

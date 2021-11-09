@@ -812,7 +812,7 @@ class TestIntegrationValidator:
 
             result = validator.has_no_fromlicense_key_in_contributions_integration()
 
-            assert result == expected_result
+        assert result == expected_result
 
     def test_valid_integration_path(self, integration):
         """

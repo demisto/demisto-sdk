@@ -11,7 +11,8 @@ from demisto_sdk.commands.common.constants import (
     FEED_REQUIRED_PARAMS, FETCH_REQUIRED_PARAMS, FIRST_FETCH,
     FIRST_FETCH_PARAM, INTEGRATION_CATEGORIES, IOC_OUTPUTS_DICT, MAX_FETCH,
     MAX_FETCH_PARAM, PACKS_DIR, PACKS_PACK_META_FILE_NAME, PYTHON_SUBTYPES,
-    REPUTATION_COMMAND_NAMES, TYPE_PWSH, XSOAR_CONTEXT_STANDARD_URL)
+    REPUTATION_COMMAND_NAMES, TYPE_PWSH, XSOAR_CONTEXT_STANDARD_URL,
+    XSOAR_SUPPORT)
 from demisto_sdk.commands.common.default_additional_info_loader import \
     load_default_additional_info_dict
 from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
@@ -29,7 +30,6 @@ from demisto_sdk.commands.common.tools import (
     get_file_version_suffix_if_exists, get_files_in_dir, get_pack_name,
     is_iron_bank_pack, print_error, server_version_compare)
 
-XSOAR_SUPPORT = 'xsoar'
 default_additional_info = load_default_additional_info_dict()
 
 

@@ -788,6 +788,33 @@ class TestIntegrationValidator:
 
             assert not validator.is_valid_parameters_display_name()
 
+    @pytest.mark.parametrize('support_level, expected_result', [('XSOAR', True), ('community', False)])
+    def test_fromlicense_in_integration_parameters_fields(self, pack, support_level, expected_result):
+        """
+        Given
+            - An integration from a contributor with not allowed key ('fromlicense') in parameters.
+        When
+            - Running is_valid_param.
+        Then
+            - an integration with an invalid parameters display name is invalid.
+        """
+        pack.pack_metadata.write_json({"support": support_level})
+        integration = pack.create_integration('contributor')
+
+        integration.yml.write_dict({'configuration': [{
+            'name': 'token',
+            'display': 'token',
+            'fromlicense': 'encrypted'
+        }]})
+
+        with ChangeCWD(pack.repo_path):
+            structure_validator = StructureValidator(integration.yml.path, predefined_scheme='integration')
+            validator = IntegrationValidator(structure_validator)
+
+            result = validator.has_no_fromlicense_key_in_contributions_integration()
+
+        assert result == expected_result
+
     def test_valid_integration_path(self, integration):
         """
         Given

@@ -392,6 +392,8 @@ class TestValidators:
         mocker.patch.object(IntegrationValidator, 'is_valid_integration_file_path', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_there_separators_in_names', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_docker_image_valid', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'has_no_fromlicense_key_in_contributions_integration',
+                            return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_api_token_in_credential_type', return_value=True)
         validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
         assert validate_manager.run_validation_on_specific_files()
@@ -428,6 +430,7 @@ class TestValidators:
         -  The file will be validated and failed
         """
         mocker.patch.object(ImageValidator, 'is_valid', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'has_no_fromlicense_key_in_contributions_integration', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_api_token_in_credential_type', return_value=True)
 
         validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
@@ -451,7 +454,9 @@ class TestValidators:
         mocker.patch.object(ImageValidator, 'is_valid', return_value=True)
         mocker.patch('demisto_sdk.commands.common.hook_validations.structure.is_file_path_in_pack', return_value=True)
         mocker.patch('demisto_sdk.commands.common.hook_validations.structure.get_remote_file', return_value=old)
-
+        mocker.patch.object(IntegrationValidator, 'has_no_fromlicense_key_in_contributions_integration',
+                            return_value=True)
+        mocker.patch.object(IntegrationValidator, 'is_api_token_in_credential_type', return_value=True)
         with ChangeCWD(integration.repo_path):
             validate_manager = ValidateManager(skip_conf_json=True)
             assert not validate_manager.run_validations_on_file(file_path=integration.yml.path,

@@ -99,6 +99,8 @@ ERROR_CODE = {
     "reputation_missing_argument": {'code': "IN141", 'ui_applicable': True, 'related_field': '<argument-name>.default'},
     "wrong_is_array_argument": {'code': "IN144", 'ui_applicable': True, 'related_field': '<argument-name>.default'},
     "api_token_is_not_in_credential_type": {'code': "IN145", 'ui_applicable': True, 'related_field': '<argument-name>.type'},
+    "fromlicense_in_parameters": {'code': "IN146", 'ui_applicable': True,
+                                  'related_field': '<parameter-name>.fromlicense'},
     "invalid_version_script_name": {'code': "SC100", 'ui_applicable': True, 'related_field': 'name'},
     "invalid_deprecated_script": {'code': "SC101", 'ui_applicable': False, 'related_field': 'comment'},
     "invalid_command_name_in_script": {'code': "SC102", 'ui_applicable': False, 'related_field': ''},
@@ -446,6 +448,11 @@ class Errors:
                f"parameter should be changed from 'Encrypted' (type 4), to 'Credentials' (type 9)'. For more details" \
                f"check the convention for credentials - " \
                f"https://xsoar.pan.dev/docs/integrations/code-conventions#credentials"
+
+    @staticmethod
+    @error_code_decorator
+    def fromlicense_in_parameters(param_name):
+        return 'The "fromlicense" field of the {} parameter is not allowed for contributors'.format(param_name)
 
     @staticmethod
     @error_code_decorator

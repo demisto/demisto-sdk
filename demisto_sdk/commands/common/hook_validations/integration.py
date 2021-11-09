@@ -1373,6 +1373,35 @@ class IntegrationValidator(ContentEntityValidator):
             return False
         return True
 
+    def has_no_fromlicense_key_in_contributions_integration(self):
+        """Verifies that only xsoar supported integration can contain the `fromlicense` key in the configuration.
+
+        Returns:
+            bool: True if the key does not exist or if the support level of the integration is `xsoar`, False otherwise.
+        """
+        pack_name = get_pack_name(self.file_path)
+        if pack_name:
+            metadata_path = Path(PACKS_DIR, pack_name, PACKS_PACK_META_FILE_NAME)
+            metadata_content = self.get_metadata_file_content(metadata_path)
+
+            if metadata_content.get('support', '').lower() == XSOAR_SUPPORT:
+                return True
+
+            conf_params = self.current_file.get('configuration', [])
+            for param_name in conf_params:
+                if 'fromlicense' in param_name.keys():
+                    error_message, error_code = Errors.fromlicense_in_parameters(param_name.get('name'))
+
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                        self.is_valid = False
+                        return False
+
+            return True
+
+        else:
+            raise Exception('Could not find the pack name of the integration, '
+                            'please verify the integration is in a pack')
+
     def is_api_token_in_credential_type(self):
         """Checks if there are no keys with the `encrypted` type,
             The best practice is to use the `credential` type instead of `encrypted`.

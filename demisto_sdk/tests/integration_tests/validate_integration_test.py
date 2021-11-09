@@ -843,6 +843,7 @@ class TestIntegrationValidation:
         - Ensure validation fails.
         - Ensure failure message on hidden params.
         """
+        mocker.patch.object(IntegrationValidator, 'has_no_fromlicense_key_in_contributions_integration', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_api_token_in_credential_type', return_value=True)
 
         integration_path = join(TEST_FILES_PATH, 'integration-invalid-no-hidden-params.yml')

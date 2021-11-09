@@ -1399,5 +1399,5 @@ class IntegrationValidator(ContentEntityValidator):
             return True
 
         else:
-            raise Exception('Could not find the pack name of the integration '
+            raise Exception('Could not find the pack name of the integration, '
                             'please verify the integration is in a pack')

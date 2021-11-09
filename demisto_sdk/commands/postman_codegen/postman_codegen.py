@@ -1,6 +1,7 @@
 import json
 import logging
 import re
+from collections import defaultdict
 from typing import Dict, List, Union
 
 import demisto_sdk.commands.common.tools as tools
@@ -147,6 +148,8 @@ def postman_to_autogen_configuration(
 
     commands = []
     items = flatten_collections(items)  # in case of nested collections
+    commands_names = build_commands_names_dict(items)
+    duplicate_requests_check(commands_names)
 
     for item in items:
         command = convert_request_to_command(item)
@@ -423,3 +426,24 @@ def generate_command_outputs(body: Union[Dict, List]) -> List[IntegrationGenerat
         description='',
         type_=determine_type(value)
     ) for key, value in flattened_body.items()]
+
+
+def build_commands_names_dict(items: list) -> dict:
+    names_dict = defaultdict(list)
+    for item in items:
+        request_name = item.get('name', None)
+        if request_name:
+            command_name = tools.to_kebab_case(request_name)
+            names_dict[command_name].append(request_name)
+    return names_dict
+
+
+def duplicate_requests_check(commands_names_dict: dict) -> None:
+    duplicates_list = []
+    for key in commands_names_dict:
+        if len(commands_names_dict[key]) > 1:
+            duplicates_list.extend(commands_names_dict[key])
+
+    assert len(duplicates_list) == 0, f'There are requests with non-unique names: {duplicates_list}.\n' \
+                                      f'You should give a unique name to each request.\n' \
+                                      f'Names are case-insensitive and whitespaces are ignored.'

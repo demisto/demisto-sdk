@@ -20,7 +20,7 @@ ALLOWED_IGNORE_ERRORS = [
     'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112', 'PB114', 'PB115', 'PB116',
     'RM100', 'RM102', 'RM104', 'RM106',
     'RP102', 'RP104',
-    'SC100', 'SC101', 'SC105',
+    'SC100', 'SC101', 'SC105', 'RAZ'
 ]
 
 PRESET_ERROR_TO_IGNORE = {
@@ -302,7 +302,7 @@ ERROR_CODE = {
     "missing_default_additional_info": {'code': "IN143", 'ui_applicable': True, 'related_field': 'additionalinfo'},
     "invalid_from_server_version_in_lists": {'code': "LI100", 'ui_applicable': False,
                                              'related_field': 'fromVersion'},
-    "missing_brand_name_in_script": {'code': "RAZ", 'ui_applicable': False, 'related_field': ''},
+    "missing_brand_name_in_script": {'code': 'RAZ', 'ui_applicable': False, 'related_field': ''},
 
 }
 

@@ -13,6 +13,7 @@ from demisto_sdk.commands.generate_integration.code_generator import (
     IntegrationGeneratorParam, ParameterType)
 from demisto_sdk.commands.generate_outputs.json_to_outputs.json_to_outputs import (
     determine_type, flatten_json)
+from collections import defaultdict
 
 logger: logging.Logger = logging.getLogger('demisto-sdk')
 
@@ -428,15 +429,12 @@ def generate_command_outputs(body: Union[Dict, List]) -> List[IntegrationGenerat
 
 
 def build_commands_names_dict(items: list) -> dict:
-    names_dict = {}
+    names_dict = defaultdict(list)
     for item in items:
         request_name = item.get('name', None)
         if request_name:
             command_name = tools.to_kebab_case(request_name)
-            if command_name not in names_dict:
-                names_dict[command_name] = [request_name]
-            else:
-                names_dict[command_name].append(request_name)
+            names_dict[command_name].append(request_name)
     return names_dict
 
 
@@ -446,6 +444,6 @@ def duplicate_requests_check(commands_names_dict: dict) -> None:
         if len(commands_names_dict[key]) > 1:
             duplicates_list.extend(commands_names_dict[key])
 
-    assert len(duplicates_list) == 0, f'There are requests with non-unique names:{duplicates_list}.' \
-                                      f' \n you should give a unique name to each request. ' \
-                                      f' names are not case sensitive and whitespaces are ignored.'
+    assert len(duplicates_list) == 0, f'There are requests with non-unique names: {duplicates_list}.\n' \
+                                      f'You should give a unique name to each request.\n' \
+                                      f'Names are case-insensitive and whitespaces are ignored.'

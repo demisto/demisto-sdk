@@ -98,6 +98,8 @@ ERROR_CODE = {
     "integration_is_skipped": {'code': "IN140", 'ui_applicable': False, 'related_field': ''},
     "reputation_missing_argument": {'code': "IN141", 'ui_applicable': True, 'related_field': '<argument-name>.default'},
     "wrong_is_array_argument": {'code': "IN144", 'ui_applicable': True, 'related_field': '<argument-name>.default'},
+    "fromlicense_in_parameters": {'code': "IN146", 'ui_applicable': True,
+                                  'related_field': '<parameter-name>.fromlicense'},
     "invalid_version_script_name": {'code': "SC100", 'ui_applicable': True, 'related_field': 'name'},
     "invalid_deprecated_script": {'code': "SC101", 'ui_applicable': False, 'related_field': 'comment'},
     "invalid_command_name_in_script": {'code': "SC102", 'ui_applicable': False, 'related_field': ''},
@@ -443,6 +445,11 @@ class Errors:
     @error_code_decorator
     def wrong_required_type(param_name):
         return 'The type field of the {} parameter should be 8'.format(param_name)
+
+    @staticmethod
+    @error_code_decorator
+    def fromlicense_in_parameters(param_name):
+        return 'The "fromlicense" field of the {} parameter is not allowed for contributors'.format(param_name)
 
     @staticmethod
     @error_code_decorator

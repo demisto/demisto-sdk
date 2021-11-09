@@ -1,6 +1,8 @@
 # Changelog
+* Fixed an issue where the **update-release-notes** command crashes with `--help` flag.
 * Removed a validation that DBotRole should be set for automation that requires elevated permissions to the `XSOAR-linter` in the **lint** command.
-Added a validation to ensure that the type for **API token** (and similar) parameters are configured correctly as a `credential` type in the integration configuration YML.
+* Fixed an issue in **Validate** command where playbooks conditional tasks were mishandeled.
+* Added a validation to ensure that the type for **API token** (and similar) parameters are configured correctly as a `credential` type in the integration configuration YML
 
 # 1.5.2
 * Added a validation to **update-release-notes** command to ensure that the `--version` flag argument is in the right format.

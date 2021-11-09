@@ -119,7 +119,7 @@ class IntegrationValidator(ContentEntityValidator):
                 validate_rn (bool): Whether to validate release notes (changelog) or not.
                 skip_test_conf (bool): If true then will skip test playbook configuration validation
                 check_is_unskipped (bool): Whether to check if the integration is unskipped.
-                conf_json_data (dict) The conf.json file data:
+                conf_json_data (dict): The conf.json file data.
 
             Returns:
                 bool: True if integration is valid, False otherwise.
@@ -1426,5 +1426,5 @@ class IntegrationValidator(ContentEntityValidator):
 
             return True
 
-        raise Exception('Could not find the pack name of the integration '
-                        'it looks like that the integration is not in a pack')
+        raise Exception('Could not find the pack name of the integration, '
+                        'please verify the integration is in a pack')

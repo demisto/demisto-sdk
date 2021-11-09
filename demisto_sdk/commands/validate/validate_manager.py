@@ -831,7 +831,7 @@ class ValidateManager:
     def validate_beta_integration(self, structure_validator, pack_error_ignore_list):
         integration_validator = IntegrationValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                                      print_as_warnings=self.print_ignored_errors,
-                                                     skip_docker_check=self.skip_docker_checks,
+                                                     skip_docker_check=True,
                                                      json_file_path=self.json_file_path)
         return integration_validator.is_valid_beta_integration()
 

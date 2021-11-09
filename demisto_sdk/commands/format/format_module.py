@@ -80,7 +80,7 @@ UNFORMATTED_FILES = ['readme',
                      'image',
                      'javascriptfile',
                      'powershellfile',
-                     'betaintegration',
+                     'betaintegration',  # merit: if we want to allow formatting beta, delete
                      'doc_image',
                      'author_image'
                      ]

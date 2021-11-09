@@ -4,6 +4,8 @@
 * Fixed an issue in **Validate** command where playbooks conditional tasks were mishandeled.
 * Added a validation to prevent contributors from using the `fromlicense` key as a configuration parameter in an integration's YML
 * Added a validation to ensure that the type for **API token** (and similar) parameters are configured correctly as a `credential` type in the integration configuration YML.
+* Added an assertion that checks for duplicated requests' names when generating an integration from a postman collection.
+
 # 1.5.2
 * Added a validation to **update-release-notes** command to ensure that the `--version` flag argument is in the right format.
 * added a new command **coverage-analyze** to generate and print coverage reports.

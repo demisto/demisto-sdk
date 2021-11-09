@@ -4,6 +4,7 @@
 * Fixed an issue in **Validate** command where playbooks conditional tasks were mishandeled.
 * Added a validation to prevent contributors from using the `fromlicense` key as a configuration parameter in an integration's YML
 * Added an assertion that checks for duplicated requests' names when generating an integration from a postman collection.
+* Skipped docker validation for beta integrations.
 
 # 1.5.2
 * Added a validation to **update-release-notes** command to ensure that the `--version` flag argument is in the right format.

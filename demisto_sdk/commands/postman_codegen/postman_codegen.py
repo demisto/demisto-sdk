@@ -1,6 +1,7 @@
 import json
 import logging
 import re
+from collections import defaultdict
 from typing import Dict, List, Union
 
 import demisto_sdk.commands.common.tools as tools
@@ -13,7 +14,6 @@ from demisto_sdk.commands.generate_integration.code_generator import (
     IntegrationGeneratorParam, ParameterType)
 from demisto_sdk.commands.generate_outputs.json_to_outputs.json_to_outputs import (
     determine_type, flatten_json)
-from collections import defaultdict
 
 logger: logging.Logger = logging.getLogger('demisto-sdk')
 

@@ -723,7 +723,7 @@ class ValidateManager:
                                                         ignored_errors=pack_error_ignore_list,
                                                         print_as_warnings=self.print_ignored_errors,
                                                         json_file_path=self.json_file_path)
-        return test_playbook_validator.is_valid_test_playbook(validate_rn=False)
+        return test_playbook_validator.is_valid_test_playbook(validate_rn=False, id_set_file=self.id_set_file)
 
     def validate_release_notes(self, file_path, added_files, modified_files, pack_error_ignore_list, is_modified):
         pack_name = get_pack_name(file_path)

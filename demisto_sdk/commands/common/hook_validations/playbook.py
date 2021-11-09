@@ -8,13 +8,7 @@ from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 from demisto_sdk.commands.common.tools import LOG_COLORS, is_string_uuid
-
-
-def is_associated(brand_name: str, id_set_file: dict) -> bool:
-    for integration_data in id_set_file.get('integrations'):
-        if brand_name in integration_data:
-            return True
-    return False
+from demisto_sdk.commands.common.hook_validations import common_playbook_validations
 
 
 class PlaybookValidator(ContentEntityValidator):
@@ -50,7 +44,8 @@ class PlaybookValidator(ContentEntityValidator):
             self.verify_condition_tasks_has_else_path(),
             self.name_not_contain_the_type(),
             self.is_valid_with_indicators_input(),
-            self.check_task_brand(id_set_file),
+            common_playbook_validations.check_task_brand(
+                self.current_file, id_set_file, self.file_path, self.handle_error),
         ]
         answers = all(playbook_checks)
 
@@ -483,21 +478,3 @@ class PlaybookValidator(ContentEntityValidator):
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True
-
-    def check_task_brand(self, id_set_file):
-        is_valid = True
-
-        if not id_set_file:
-            click.secho("Skipping playbook script id validation. Could not read id_set.json.", fg="yellow")
-            return is_valid
-
-        tasks: dict = self.current_file.get('tasks', {})
-        for task_key, task in tasks.items():
-            task_script = task.get('task', {}).get('script', None)  # TODO: Will it always have these keys?, should I add checks?
-            if task_script is not None and '|||' in task_script:
-                brand_name = task_script[:task_script.find('|||')]
-                if not is_associated(brand_name, id_set_file):
-                    is_valid = False
-                    error_message, error_code = Errors.missing_brand_name_in_script(task_key, task_script)
-                    self.handle_error(error_message, error_code, file_path=self.file_path)
-        return is_valid

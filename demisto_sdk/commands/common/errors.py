@@ -1936,5 +1936,5 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def missing_brand_name_in_script(task_id: str, script_name: str):
-        return f"Task {task_id} is using {script_name} but is missing a valid brand name." \
-               f"Please add a brand name to the script's name."
+        return f"Task {task_id} is using {script_name} which is missing a valid brand name." \
+               f"Please add a valid brand name to the script's name."

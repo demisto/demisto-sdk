@@ -1103,6 +1103,55 @@ class TestValidators:
         res_validator = IntegrationValidator(structure)
         assert res_validator.is_there_spaces_in_the_end_of_name() is answer
 
+    @pytest.mark.parametrize('file_path',
+                             ['Packs/SomeIntegration/IntegrationName/file.py',
+                              'Packs/pack_id/Integrations/integration_id/file.yml'])
+    def test_ignore_test_doc_non_pack_file_should_not_ignore(self, file_path: str):
+        """
+        Given
+            - File path
+        When
+            - File should not be ignored
+        Then
+            - File is not ignored and False is returned
+        """
+        validate_manager = ValidateManager(check_is_unskipped=False)
+        assert not validate_manager.ignore_test_doc_non_pack_file(file_path)
+
+    @pytest.mark.parametrize('file_path',
+                             ['Packs/pack_id/Integrations/integration_id/test_data/file.json',
+                              'Packs/pack_id/test_data/file.json',
+                              'Packs/pack_id/Scripts/script_id/test_data/file.json',
+                              'Packs/pack_id/TestPlaybooks/test_data/file.json'])
+    def test_ignore_test_doc_non_pack_file_test_file(self, file_path: str):
+        """
+        Given
+            - File path
+        When
+            - File is part of the test_data directory
+        Then
+            - File is ignored and True is returned
+        """
+        validate_manager = ValidateManager(check_is_unskipped=False)
+        assert validate_manager.ignore_test_doc_non_pack_file(file_path)
+
+    @pytest.mark.parametrize('file_path',
+                             ['OtherDir/Integration/file.json',
+                              'TestData/file.json',
+                              'TestPlaybooks/file.yml',
+                              'docs/dbot/README.md'])
+    def test_ignore_test_doc_non_pack_file_non_pack(self, file_path: str):
+        """
+        Given
+            - File path
+        When
+            - File is not part of the Packs directory
+        Then
+            - File is ignored and True is returned
+        """
+        validate_manager = ValidateManager(check_is_unskipped=False)
+        assert validate_manager.ignore_test_doc_non_pack_file(file_path)
+
 
 @pytest.mark.parametrize('pack_name, expected', [
     ('NonSupported', False),

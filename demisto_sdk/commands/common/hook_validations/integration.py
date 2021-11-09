@@ -1374,7 +1374,7 @@ class IntegrationValidator(ContentEntityValidator):
         return True
 
     def has_no_fromlicense_key_in_contributions_integration(self):
-        """Checks if there is no `fromlicense` key in integration configuration in integrations with no `xsoar` support.
+        """Verifies that only xsoar supported integration can contain the `fromlicense` key in the configuration.
 
         Returns:
             bool: True if the key does not exist or if the support level of the integration is `xsoar`, False otherwise.
@@ -1400,4 +1400,4 @@ class IntegrationValidator(ContentEntityValidator):
 
         else:
             raise Exception('Could not find the pack name of the integration '
-                            'it\'s looks like that the integration is not in a pack')
+                            'please verify the integration is in a pack')

@@ -24,8 +24,8 @@ class TestPlaybookValidator(ContentEntityValidator):
             self.is_valid_file(validate_rn),
             self._is_id_uuid(),
             self._is_taskid_equals_id(),
-            common_playbook_validations.check_task_brand(
-                self.current_file, id_set_file, self.file_path,self.handle_error)
+            common_playbook_validations.check_tasks_brands(
+                self.current_file, id_set_file, self.file_path, self.handle_error)
         ]
         return all(test_playbooks_check)
 

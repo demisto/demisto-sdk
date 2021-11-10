@@ -44,7 +44,7 @@ class PlaybookValidator(ContentEntityValidator):
             self.verify_condition_tasks_has_else_path(),
             self.name_not_contain_the_type(),
             self.is_valid_with_indicators_input(),
-            common_playbook_validations.check_task_brand(
+            common_playbook_validations.check_tasks_brands(
                 self.current_file, id_set_file, self.file_path, self.handle_error),
         ]
         answers = all(playbook_checks)

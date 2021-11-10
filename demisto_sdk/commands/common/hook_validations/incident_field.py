@@ -179,7 +179,7 @@ class IncidentFieldValidator(ContentEntityValidator):
 
         return not is_bc_broke
 
-    def is_valid_file(self, validate_rn=True, is_new_file=False, use_git=False,is_added_file=False):
+    def is_valid_file(self, validate_rn=True, is_new_file=False, use_git=False, is_added_file=False):
         """Check whether the Incident Field is valid or not
         """
         answers = [

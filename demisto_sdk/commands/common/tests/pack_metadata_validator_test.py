@@ -18,7 +18,7 @@ class TestPackMetadataValidator:
     FILES_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
 
     @pytest.mark.parametrize('metadata', [os.path.join(FILES_PATH, 'pack_metadata__valid.json'),
-                                          os.path.join(FILES_PATH, 'pack_metadata__valid__community.json'),
+                                          os.path.join(FILES_PATH, 'pack_metadata__valid__community.json')
                                           ])
     def test_metadata_validator_valid(self, mocker, metadata):
         mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
@@ -30,12 +30,13 @@ class TestPackMetadataValidator:
         assert validator.validate_pack_meta_file()
 
     @pytest.mark.parametrize('metadata', [
-        os.path.join(FILES_PATH, 'pack_metadata_invalid_price.json'),
-        os.path.join(FILES_PATH, 'pack_metadata_invalid_dependencies.json'),
-        os.path.join(FILES_PATH, 'pack_metadata_list_dependencies.json'),
-        os.path.join(FILES_PATH, 'pack_metadata_empty_category.json'),
-        os.path.join(FILES_PATH, 'pack_metadata_invalid_keywords.json'),
-        os.path.join(FILES_PATH, 'pack_metadata_invalid_tags.json'),
+        # os.path.join(FILES_PATH, 'pack_metadata_invalid_price.json'),
+        # os.path.join(FILES_PATH, 'pack_metadata_invalid_dependencies.json'),
+        # os.path.join(FILES_PATH, 'pack_metadata_list_dependencies.json'),
+        os.path.join(FILES_PATH, 'pack_metadata_empty_categories.json'),
+        # os.path.join(FILES_PATH, 'pack_metadata_invalid_category.json'),
+        # os.path.join(FILES_PATH, 'pack_metadata_invalid_keywords.json'),
+        # os.path.join(FILES_PATH, 'pack_metadata_invalid_tags.json'),
     ])
     def test_metadata_validator_invalid__non_breaking(self, mocker, metadata):
         mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
@@ -136,3 +137,17 @@ class TestPackMetadataValidator:
         mocker.patch.object(validator, '_add_error')
         with pytest.raises(BlockingValidationFailureException):
             assert not validator._is_pack_meta_file_structure_valid()
+
+    @pytest.mark.parametrize('metadata', [
+        os.path.join(FILES_PATH, 'pack_metadata_empty_categories.json')
+    ])
+    def test_metadata_validator_empty_categories(self, mocker, metadata):
+        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
+        mocker.patch.object(PackUniqueFilesValidator, '_read_file_content',
+                            return_value=TestPackMetadataValidator.read_file(metadata))
+        mocker.patch.object(PackUniqueFilesValidator, '_is_pack_file_exists', return_value=True)
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
+
+        validator = PackUniqueFilesValidator('fake')
+        assert not validator.validate_pack_meta_file()
+        assert "[PA129] - pack_metadata.json - Missing categories" in validator.get_errors()

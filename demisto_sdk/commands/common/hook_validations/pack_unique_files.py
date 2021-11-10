@@ -247,19 +247,6 @@ class PackUniqueFilesValidator(BaseValidator):
 
         return True
 
-    def validate_pack_missing_categories(self):
-        """
-        Validates that .pack_metadata::categories isn't empty
-        Returns False if the pack readme is different than the pack description.
-        """
-        metadata = self._read_metadata_content()
-        metadata_categories = metadata.get(PACK_METADATA_CATEGORIES)
-        if not metadata_categories:
-            if self._add_error(Errors.pack_metadata_missing_categories(), self.readme_file):
-                return False
-
-        return True
-
     def _is_secrets_file_structure_valid(self):
         """Check if .secrets-ignore structure is parse-able"""
         if self._parse_file_into_list(self.secrets_file):
@@ -409,6 +396,12 @@ class PackUniqueFilesValidator(BaseValidator):
                         if self._add_error(Errors.empty_field_in_pack_metadata(self.pack_meta_file, list_field),
                                            self.pack_meta_file):
                             return False
+
+            # check metadata categories isn't an empty list
+            if not metadata[PACK_METADATA_CATEGORIES]:
+                if self._add_error(Errors.pack_metadata_missing_categories(self.pack_meta_file),
+                                   self.pack_meta_file):
+                    return False
 
             # if the field 'certification' exists, check that its value is set to 'certified' or 'verified'
             certification = metadata.get(PACK_METADATA_CERTIFICATION)

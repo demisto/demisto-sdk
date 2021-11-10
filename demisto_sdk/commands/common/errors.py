@@ -1421,8 +1421,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def pack_metadata_missing_categories() -> str:
-        return "pack metadata categories can't be empty"
+    def pack_metadata_missing_categories(pack_meta_file) -> str:
+        return f'{pack_meta_file} - Missing categories'
 
     @staticmethod
     @error_code_decorator

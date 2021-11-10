@@ -251,14 +251,19 @@ class ContributionConverter:
                 # replace dst folder with src folder
                 shutil.move(src_path, dst_path)
 
-    def format_converted_pack(self) -> None:
+    def format_converted_pack(self, dir_path) -> None:
         """Runs the demisto-sdk's format command on the pack converted from the contribution zipfile"""
         click.echo(
             f'Executing \'format\' on the restructured contribution zip new/modified files at {self.pack_dir_path}'
         )
         from_version = '6.0.0' if self.create_new else ''
         format_manager(
-            from_version=from_version, no_validate=True, update_docker=True, verbose=True, assume_yes=True
+            input=dir_path,
+            from_version=from_version,
+            no_validate=True,
+            update_docker=True,
+            verbose=True,
+            assume_yes=True
         )
 
     def generate_readme_for_pack_content_item(self, yml_path: str) -> None:
@@ -345,7 +350,7 @@ class ContributionConverter:
                 self.generate_readmes_for_new_content_pack()
 
             # format
-            self.format_converted_pack()
+            self.format_converted_pack(self.pack_dir_path)
         except Exception as e:
             click.echo(
                 f'Creating a Pack from the contribution zip failed with error: {e}\n {traceback.format_exc()}',

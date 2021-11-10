@@ -14,7 +14,7 @@ def _is_valid_brand(brand_name: str, id_set_file: dict) -> bool:
     Returns:
         True if the brand_name exists in id_set_file, False otherwise
     """
-    for integration_data in id_set_file.get('integrations'):
+    for integration_data in id_set_file['integrations']:
         if brand_name in integration_data:
             return True
     return False

@@ -3,13 +3,14 @@ import json
 from functools import wraps
 from unittest.mock import MagicMock, patch
 
+
 import demisto_client
 import pytest
+import click
 from click.testing import CliRunner
 from demisto_client.demisto_api import DefaultApi
 from demisto_client.demisto_api.rest import ApiException
 from packaging.version import parse
-from pipenv.patched.piptools import click
 
 from demisto_sdk.__main__ import main, upload
 from demisto_sdk.commands.common import constants

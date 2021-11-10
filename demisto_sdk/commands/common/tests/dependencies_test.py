@@ -946,7 +946,7 @@ def run_find_dependencies(mocker, repo_path, pack_name):
         # and not the maximum amount.
         import demisto_sdk.commands.common.update_id_set as uis
         mocker.patch.object(uis, 'cpu_count', return_value=1)
-        PackDependencies.find_dependencies(pack_name, silent_mode=True)
+        PackDependencies.find_dependencies(pack_name, silent_mode=True, update_pack_metadata=True)
 
 
 @pytest.mark.parametrize('test_number', range(5))

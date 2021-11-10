@@ -1,6 +1,8 @@
-import click
-from demisto_sdk.commands.common.errors import Errors
 from typing import Callable, Optional
+
+import click
+
+from demisto_sdk.commands.common.errors import Errors
 
 
 def _is_valid_brand(brand_name: str, id_set_file: dict) -> bool:

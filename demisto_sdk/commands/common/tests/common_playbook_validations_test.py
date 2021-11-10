@@ -1,5 +1,7 @@
 import unittest
-from demisto_sdk.commands.common.hook_validations.common_playbook_validations import check_tasks_brands, _is_valid_brand
+
+from demisto_sdk.commands.common.hook_validations.common_playbook_validations import (
+    _is_valid_brand, check_tasks_brands)
 
 
 def handle_error(error_message, error_code, file_path):

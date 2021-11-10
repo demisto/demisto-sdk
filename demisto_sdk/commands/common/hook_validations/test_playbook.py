@@ -1,8 +1,9 @@
 from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.hook_validations import \
+    common_playbook_validations
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 from demisto_sdk.commands.common.tools import is_string_uuid
-from demisto_sdk.commands.common.hook_validations import common_playbook_validations
 
 
 class TestPlaybookValidator(ContentEntityValidator):

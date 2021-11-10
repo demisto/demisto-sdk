@@ -1246,7 +1246,7 @@ class PackDependencies:
         pack_items['generic_modules'] = PackDependencies._search_for_pack_items(pack_id, id_set['GenericModules'])
         pack_items['generic_definitions'] = PackDependencies._search_for_pack_items(pack_id,
                                                                                     id_set['GenericDefinitions'])
-        # pack_items['lists'] = PackDependencies._search_for_pack_items(pack_id, id_set['Lists'])
+        pack_items['lists'] = PackDependencies._search_for_pack_items(pack_id, id_set['Lists'])
 
         if not sum(pack_items.values(), []):
             click.secho(f"Couldn't find any items for pack '{pack_id}'. Please make sure:\n"

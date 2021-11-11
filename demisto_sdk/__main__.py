@@ -722,7 +722,7 @@ def lint(**kwargs):
 @click.option("--no-min-coverage-enforcement", help="Do not enforce minimum coverage.", is_flag=True)
 @click.option(
     "--previous-coverage-report-url", help="URL of the previous coverage report.",
-    default='https://storage.googleapis.com/marketplace-dist-dev/code-coverage/coverage-min.json', type=str
+    default='https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-min.json', type=str
 )
 def coverage_analyze(**kwargs):
     try:

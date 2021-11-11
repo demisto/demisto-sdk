@@ -11,6 +11,10 @@
         {
             "integrations": "TestCreateDuplicates",
             "playbookID": "PagerDuty Test"
+        },
+        {
+            "integrations": "Signal Sciences WAF",
+            "playbookID": "SignalSciences-Test"
         }
     ]
 }

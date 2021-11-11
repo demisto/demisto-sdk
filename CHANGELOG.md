@@ -1,5 +1,243 @@
 # Changelog
+* Fixed an issue where the **update-release-notes** command crashes with `--help` flag.
+* Removed a validation that DBotRole should be set for automation that requires elevated permissions to the `XSOAR-linter` in the **lint** command.
+* Fixed an issue in **Validate** command where playbooks conditional tasks were mishandeled.
+* Added a validation to prevent contributors from using the `fromlicense` key as a configuration parameter in an integration's YML
+* Added an assertion that checks for duplicated requests' names when generating an integration from a postman collection.
+
+# 1.5.2
+* Added a validation to **update-release-notes** command to ensure that the `--version` flag argument is in the right format.
+* added a new command **coverage-analyze** to generate and print coverage reports.
+* Fixed an issue in **validate** in repositories which are not in GitHub or GitLab
+* Added a validation that verifies that readme image absolute links do not contain the working branch name.
+* Added support for List content item in the **format**, **validate**, **download**, **upload**, **create-id-set**, **find-dependecies** and **create-content-artifacts** commands.
+* Added a validation to ensure reputation command's default argument is set as an array input.
+* Added the `--fail-duplicates` flag for the **merge-id-set** command which will fail the command if duplicates are found.
+* Added the `--fail-duplicates` flag for the **create-id-set** command which will fail the command if duplicates are found.
+
+# 1.5.1
+* Fixed an issue where **validate** command failed to recognized test playbooks for beta integrations as valid tests.
+* Fixed an issue were the **validate** command was falsely recognizing image paths in readme files.
+* Fixed an issue where the **upload** command error message upon upload failure pointed to wrong file rather than to the pack metadata.
+* Added a validation that verifies that each script which appears in incident fields, layouts or layout containers exists in the id_set.json.
+* Fixed an issue where the **postman code-gen** command generated double dots for context outputs when it was not needed.
+* Fixed an issue where there **validate** command on release notes file crashed when author image was added or modified.
+* Added input handling when running **find-dependencies**, replacing string manipulations.
+* Fixed an issue where the **validate** command did not handle multiple playbooks with the same name in the id_set.
+* Added support for GitLab repositories in **validate**
+
+# 1.5.0
+* Fixed an issue where **upload** command failed to upload packs not under content structure.
+* Added support for **init** command to run from non-content repo.
+* The **split-yml** has been renamed to **split** and now supports splitting Dashboards from unified Generic Modules.
+* Fixed an issue where the skipped tests validation ran on the `ApiModules` pack in the **validate** command.
+* The **init** command will now create the `Generic Object` entities directories.
+* Fixed an issue where the **format** command failed to recognize changed files from git.
+* Fixed an issue where the **json-to-outputs** command failed checking whether `0001-01-01T00:00:00` is of type `Date`
+* Added to the **generate context** command to generate context paths for integrations from an example file.
+* Fixed an issue where **validate** failed on release notes configuration files.
+* Fixed an issue where the **validate** command failed on pack input if git detected changed files outside of `Packs` directory.
+* Fixed an issue where **validate** command failed to recognize files inside validated pack when validation release notes, resulting in a false error message for missing entity in release note.
+* Fixed an issue where the **download** command failed when downloading an invalid YML, instead of skipping it.
+
+# 1.4.9
+* Added validation that the support URL in partner contribution pack metadata does not lead to a GitHub repo.
+* Enhanced ***generate-docs*** with default `additionalinformation` (description) for common parameters.
+* Added to **validate** command a validation that a content item's id and name will not end with spaces.
+* The **format** command will now remove trailing whitespaces from content items' id and name fields.
+* Fixed an issue where **update-release-notes** could fail on files outside the user given pack.
+* Fixed an issue where the **generate-test-playbook** command would not place the playbook in the proper folder.
+* Added to **validate** command a validation that packs with `Iron Bank` uses the latest docker from Iron Bank.
+* Added to **update-release-notes** command support for `Generic Object` entities.
+* Fixed an issue where playbook `fromversion` mismatch validation failed even if `skipunavailable` was set to true.
+* Added to the **create artifacts** command support for release notes configuration file.
+* Added validation to **validate** for release notes config file.
+* Added **isoversize** and **isautoswitchedtoquietmode** fields to the playbook schema.
+* Added to the **update-release-notes** command `-bc` flag to generate template for breaking changes version.
+* Fixed an issue where **validate** did not search description files correctly, leading to a wrong warning message.
+
+# 1.4.8
+* Fixed an issue where yml files with `!reference` failed to load properly.
+* Fixed an issue when `View Integration Documentation` button was added twice during the download and re-upload.
+* Fixed an issue when `(Partner Contribution)` was added twice to the display name during the download and re-upload.
+* Added the following enhancements in the **generate-test-playbook** command:
+    * Added the *--commands* argument to generate tasks for specific commands.
+    * Added the *--examples* argument to get the command examples file path and generate tasks from the commands and arguments specified there.
+    * Added the *--upload* flag to specify whether to upload the test playbook after the generation.
+    * Fixed the output condition generation for outputs of type `Boolean`.
+
+# 1.4.7
+* Fixed an issue where an empty list for a command context didn't produce an indication other than an empty table.
+* Fixed an issue where the **format** command has incorrectly recognized on which files to run when running using git.
+* Fixed an issue where author image validations were not checked properly.
+* Fixed an issue where new old-formatted scripts and integrations were not validated.
+* Fixed an issue where the wording in the from version validation error for subplaybooks was incorrect.
+* Fixed an issue where the **update-release-notes** command used the old docker image version instead of the new when detecting a docker change.
+* Fixed an issue where the **generate-test-playbook** command used an incorrect argument name as default
+* Fixed an issue where the **json-to-outputs** command used an incorrect argument name as default when using `-d`.
+* Fixed an issue where validations failed while trying to validate non content files.
+* Fixed an issue where README validations did not work post VS Code formatting.
+* Fixed an issue where the description validations were inconsistent when running through an integration file or a description file.
+
+# 1.4.6
+* Fixed an issue where **validate** suggests, with no reason, running **format** on missing mandatory keys in yml file.
+* Skipped existence of TestPlaybook check on community and contribution integrations.
+* Fixed an issue where pre-commit didn't run on the demisto_sdk/commands folder.
+* The **init** command will now change the script template name in the code to the given script name.
+* Expanded the validations performed on beta integrations.
+* Added support for PreProcessRules in the **format**, **validate**, **download**, and **create-content-artifacts** commands.
+* Improved the error messages in **generate-docs**, if an example was not provided.
+* Added to **validate** command a validation that a content entity or a pack name does not contain the words "partner" and "community".
+* Fixed an issue where **update-release-notes** ignores *--text* flag while using *-f*
+* Fixed the outputs validations in **validate** so enrichment commands will not be checked to have DBotScore outputs.
+* Added a new validation to require the dockerimage key to exist in an integration and script yml files.
+* Enhanced the **generate-test-playbook** command to use only integration tested on commands, rather than (possibly) other integrations implementing them.
+* Expanded unify command to support GenericModules - Unifies a GenericModule object with its Dashboards.
+* Added validators for generic objects:
+  - Generic Field validator - verify that the 'fromVersion' field is above 6.5.0, 'group' field equals 4 and 'id' field starts with the prefix 'generic_'.
+  - Generic Type validator - verify that the 'fromVersion' field is above 6.5.0
+  - Generic Module validator - verify that the 'fromVersion' field is above 6.5.0
+  - Generic Definition validator - verify that the 'fromVersion' field is above 6.5.0
+ * Expanded Format command to support Generic Objects - Fixes generic objects according to their validations.
+* Fixed an issue where the **update-release-notes** command did not handle ApiModules properly.
+* Added option to enter a dictionary or json of format `[{field_name:description}]` in the **json-to-outputs** command,
+  with the `-d` flag.
+* Improved the outputs for the **format** command.
+* Fixed an issue where the validations performed after the **format** command were inconsistent with **validate**.
+* Added to the **validate** command a validation for the author image.
+* Updated the **create-content-artifacts** command to support generic modules, definitions, fields and types.
+* Added an option to ignore errors for file paths and not only file name in .pack-ignore file.
+
+# 1.4.5
+* Enhanced the **postman-codegen** command to name all generated arguments with lower case.
+* Fixed an issue where the **find-dependencies** command miscalculated the dependencies for playbooks that use generic commands.
+* Fixed an issue where the **validate** command failed in external repositories in case the DEMISTO_SDK_GITHUB_TOKEN was not set.
+* Fixed an issue where **openapi-codegen** corrupted the swagger file by overwriting configuration to swagger file.
+* Updated the **upload** command to support uploading zipped packs to the marketplace.
+* Added to the **postman-codegen** command support of path variables.
+* Fixed an issue where **openapi-codegen** entered into an infinite loop on circular references in the swagger file.
+* The **format** command will now set `fromVersion: 6.2.0` for widgets with 'metrics' data type.
+* Updated the **find-dependencies** command to support generic modules, definitions, fields and types.
+* Fixed an issue where **openapi-codegen** tried to extract reference example outputs, leading to an exception.
+* Added an option to ignore secrets automatically when using the **init** command to create a pack.
+* Added a tool that gives the ability to temporarily suppress console output.
+
+# 1.4.4
+* When formatting incident types with Auto-Extract rules and without mode field, the **format** command will now add the user selected mode.
+* Added new validation that DBotRole is set for scripts that requires elevated permissions to the `XSOAR-linter` in the **lint** command.
+* Added url escaping to markdown human readable section in generate docs to avoid autolinking.
+* Added a validation that mapper's id and name are matching. Updated the format of mapper to include update_id too.
+* Added a validation to ensure that image paths in the README files are valid.
+* Fixed **find_type** function to correctly find test files, such as, test script and test playbook.
+* Added scheme validations for the new Generic Object Types, Fields, and Modules.
+* Renamed the flag *--input-old-version* to *--old-version* in the **generate-docs** command.
+* Refactored the **update-release-notes** command:
+  - Replaced the *--all* flag with *--use-git* or *-g*.
+  - Added the *--force* flag to update the pack release notes without changes in the pack.
+  - The **update-release-notes** command will now update all dependent integrations on ApiModule change, even if not specified.
+  - If more than one pack has changed, the full list of updated packs will be printed at the end of **update-release-notes** command execution.
+  - Fixed an issue where the **update-release-notes** command did not add docker image release notes entry for release notes file if a script was changed.
+  - Fixed an issue where the **update-release-notes** command did not detect changed files that had the same name.
+  - Fixed an issue in the **update-release-notes** command where the version support of JSON files was mishandled.
+* Fixed an issue where **format** did not skip files in test and documentation directories.
+* Updated the **create-id-set** command to support generic modules, definitions, fields and types.
+* Changed the **convert** command to generate old layout fromversion to 5.0.0 instead of 4.1.0
+* Enhanced the command **postman-codegen** with type hints for templates.
+
+# 1.4.3
+* Fixed an issue where **json-to-outputs** command returned an incorrect output when json is a list.
+* Fixed an issue where if a pack README.md did not exist it could cause an error in the validation process.
+* Fixed an issue where the *--name* was incorrectly required in the **init** command.
+* Adding the option to run **validate** on a specific path while using git (*-i* & *-g*).
+* The **format** command will now change UUIDs in .yml and .json files to their respective content entity name.
+* Added a playbook validation to check if a task sub playbook exists in the id set in the **validate** command.
+* Added the option to add new tags/usecases to the approved list and to the pack metadata on the same pull request.
+* Fixed an issue in **test_content** where when different servers ran tests for the same integration, the server URL parameters were not set correctly.
+* Added a validation in the **validate** command to ensure that the ***endpoint*** command is configured correctly in yml file.
+* Added a warning when pack_metadata's description field is longer than 130 characters.
+* Fixed an issue where a redundant print occurred on release notes validation.
+* Added new validation in the **validate** command to ensure that the minimal fromVersion in a widget of type metrics will be 6.2.0.
+* Added the *--release-notes* flag to demisto-sdk to get the current version release notes entries.
+
+# 1.4.2
+* Added to `pylint` summary an indication if a test was skipped.
+* Added to the **init** command the option to specify fromversion.
+* Fixed an issue where running **init** command without filling the metadata file.
+* Added the *--docker-timeout* flag in the **lint** command to control the request timeout for the Docker client.
+* Fixed an issue where **update-release-notes** command added only one docker image release notes entry for release notes file, and not for every entity whom docker image was updated.
+* Added a validation to ensure that incident/indicator fields names starts with their pack name in the **validate** command. (Checked only for new files and only when using git *-g*)
+* Updated the **find-dependencies** command to return the 'dependencies' according the layout type ('incident', 'indicator').
+* Enhanced the "vX" display name validation for scripts and integrations in the **validate** command to check for every versioned script or integration, and not only v2.
+* Added the *--fail-duplicates* flag for the **create-id-set** command which will fail the command if duplicates are found.
+* Added to the **generate-docs** command automatic addition to git when a new readme file is created.
+
+# 1.4.1
+* When in private repo without `DEMSITO_SDK_GITHUB_TOKEN` configured, get_remote_file will take files from the local origin/master.
+* Enhanced the **unify** command when giving input of a file and not a directory return a clear error message.
+* Added a validation to ensure integrations are not skipped and at least one test playbook is not skipped for each integration or script.
+* Added to the Content Tests support for `context_print_dt`, which queries the incident context and prints the result as a json.
+* Added new validation for the `xsoar_config.json` file in the **validate** command.
+* Added a version differences section to readme in **generate-docs** command.
+* Added the *--docs-format* flag in the **integration-diff** command to get the output in README format.
+* Added the *--input-old-version* and *--skip-breaking-changes* flags in the **generate-docs** command to get the details for the breaking section and to skip the breaking changes section.
+
+# 1.4.0
+* Enable passing a comma-separated list of paths for the `--input` option of the **lint** command.
+* Added new validation of unimplemented test-module command in the code to the `XSOAR-linter` in the **lint** command.
+* Fixed the **generate-docs** to handle integration authentication parameter.
+* Added a validation to ensure that description and README do not contain the word 'Demisto'.
+* Improved the deprecated message validation required from playbooks and scripts.
+* Added the `--quite-bc-validation` flag for the **validate** command to run the backwards compatibility validation in quite mode (errors is treated like warnings).
+* Fixed the **update release notes** command to display a name for old layouts.
+* Added the ability to append to the pack README credit to contributors.
+* Added identification for parameter differences in **integration-diff** command.
+* Fixed **format** to use git as a default value.
+* Updated the **upload** command to support reports.
+* Fixed an issue where **generate-docs** command was displaying 'None' when credentials parameter display field configured was not configured.
+* Fixed an issue where **download** did not return exit code 1 on failure.
+* Updated the validation that incident fields' names do not contain the word incident will aplly to core packs only.
+* Added a playbook validation to verify all conditional tasks have an 'else' path in **validate** command.
+* Renamed the GitHub authentication token environment variable `GITHUB_TOKEN` to `DEMITO_SDK_GITHUB_TOKEN`.
+* Added to the **update-release-notes** command automatic addition to git when new release notes file is created.
+* Added validation to ensure that integrations, scripts, and playbooks do not contain the entity type in their names.
+* Added the **convert** command to convert entities between XSOAR versions.
+* Added the *--deprecate* flag in **format** command to deprecate integrations, scripts, and playbooks.
+* Fixed an issue where ignoring errors did not work when running the **validate** command on specific files (-i).
+
+# 1.3.9
+* Added a validation verifying that the pack's README.md file is not equal to pack description.
+* Fixed an issue where the **Assume yes** flag did not work properly for some entities in the **format** command.
+* Improved the error messages for separators in folder and file names in the **validate** command.
+* Removed the **DISABLE_SDK_VERSION_CHECK** environment variable. To disable new version checks, use the **DEMISTO_SDK_SKIP_VERSION_CHECK** envirnoment variable.
+* Fixed an issue where the demisto-sdk version check failed due to a rate limit.
+* Fixed an issue with playbooks scheme validation.
+
+# 1.3.8
+* Updated the **secrets** command to work on forked branches.
+
+# 1.3.7
+* Added a validation to ensure correct image and description file names.
+* Fixed an issue where the **validate** command failed when 'display' field in credentials param in yml is empty but 'displaypassword' was provided.
+* Added the **integration-diff** command to check differences between two versions of an integration and to return a report of missing and changed elements in the new version.
+* Added a validation verifying that the pack's README.md file is not missing or empty for partner packs or packs contains use cases.
+* Added a validation to ensure that the integration and script folder and file names will not contain separators (`_`, `-`, ` `).
+* When formatting new pack, the **format** command will set the *fromversion* key to 5.5.0 in the new files without fromversion.
+
+# 1.3.6
+* Added a validation that core packs are not dependent on non-core packs.
+* Added a validation that a pack name follows XSOAR standards.
 * Fixed an issue where in some cases the `get_remote_file` function failed due to an invalid path.
+* Fixed an issue where running **update-release-notes** with updated integration logo, did not detect any file changes.
+* Fixed an issue where the **create-id-set** command did not identify unified integrations correctly.
+* Fixed an issue where the `CommonTypes` pack was not identified as a dependency for all feed integrations.
+* Added support for running SDK commands in private repositories.
+* Fixed an issue where running the **init** command did not set the correct category field in an integration .yml file for a newly created pack.
+* When formatting new contributed pack, the **format** command will set the *fromversion* key to 6.0.0 in the relevant files.
+* If the environment variable "DISABLE_SDK_VERSION_CHECK" is define, the demisto-sdk will no longer check for newer version when running a command.
+* Added the `--use-pack-metadata` flag for the **find-dependencies** command to update the calculated dependencies using the the packs metadata files.
+* Fixed an issue where **validate** failed on scripts in case the `outputs` field was set to `None`.
+* Fixed an issue where **validate** was failing on editing existing release notes.
+* Added a validation for README files verifying that the file doesn't contain template text copied from HelloWorld or HelloWorldPremium README.
 
 # 1.3.5
 * Added a validation that layoutscontainer's id and name are matching. Updated the format of layoutcontainer to include update_id too.
@@ -35,7 +273,6 @@
 * Added the *--include-untracked* flag to the **validate** command to include files which are untracked by git in the validation process.
 * Improved the `pykwalify` error outputs in the **validate** command.
 * Added the *--print-pykwalify* flag to the **validate** command to print the unchanged output from `pykwalify`.
-* Fixed an issue where **validate** was failing on editing existing release notes.
 
 # 1.3.2
 * Updated the format of the outputs when using the *--json-file* flag to create a JSON file output for the **validate** and **lint** commands.
@@ -53,7 +290,8 @@
 * Fixed an issue where **validate** failed when comparing branch against commit hash.
 * Added the *--no-pipenv* flag to the **split-yml** command.
 * Added a validation that incident fields and incident types are not removed from mappers.
-* Fixed an issue where the *create-id-set* flag in the *validate* command did not work while not using git.
+* Fixed an issue where the *c
+reate-id-set* flag in the *validate* command did not work while not using git.
 * Added the *hiddenusername* field to the integration schema.
 * Added a validation that images that are not integration images, do not ask for a new version or RN
 
@@ -700,35 +938,28 @@
 * Added **json-to-outputs** command which generates the yaml section for outputs from an API raw response.
 
 # 0.2.6
-
 * Fixed an issue with locating release notes for beta integrations in **validate**.
 
 # 0.2.5
-
 * Fixed an issue with locating release notes for beta integrations in **validate**.
 
 # 0.2.4
-
 * Adding image validation to Beta_Integration and Packs in **validate**.
 
 # 0.2.3
-
 * Adding Beta_Integration to the structure validation process.
 * Fixing bug where **validate** did checks on TestPlaybooks.
 * Added requirements parameter to **lint**.
 
 # 0.2.2
-
 * Fixing bug where **lint** did not return exit code 1 on failure.
 * Fixing bug where **validate** did not print error message in case no release notes were give.
 
 # 0.2.1
-
 * **Validate** now checks that the id and name fields are identical in yml files.
 * Fixed a bug where sdk did not return any exit code.
 
 # 0.2.0
-
 * Added Release Notes Validator.
 * Fixed the Unifier selection of your python file to use as the code.
 * **Validate** now supports Indicator fields.
@@ -736,7 +967,6 @@
 * **Validate** now runs on newly added scripts.
 
 # 0.1.8
-
 * Added support for `--version`.
 * Fixed an issue in file_validator when calling `checked_type` method with script regex.
 
@@ -747,13 +977,11 @@
 * Added lint and unit test run.
 
 # 0.1.1
-
 * Added new logic to the unifier.
 * Added detailed README.
 * Some small adjustments and fixes.
 
 # 0.1.0
-
 Capabilities:
 * **Extract** components(code, image, description etc.) from a Demisto YAML file into a directory.
 * **Unify** components(code, image, description etc.) to a single Demisto YAML file.

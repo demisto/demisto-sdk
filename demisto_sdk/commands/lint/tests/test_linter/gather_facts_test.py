@@ -1,7 +1,17 @@
 from typing import Callable
 
-from demisto_sdk.commands.lint import linter
 from wcmatch.pathlib import Path
+
+from demisto_sdk.commands.lint import linter
+
+
+def initiate_linter(demisto_content, integration_path, docker_engine=False):
+    return linter.Linter(content_repo=demisto_content,
+                         pack_dir=integration_path,
+                         req_2=[],
+                         req_3=[],
+                         docker_engine=docker_engine,
+                         docker_timeout=60)
 
 
 class TestYamlParse:
@@ -9,32 +19,20 @@ class TestYamlParse:
         integration_path: Path = create_integration(content_path=demisto_content,
                                                     type_script_key=True)
         mocker.patch.object(linter.Linter, '_update_support_level')
-        runner = linter.Linter(content_repo=demisto_content,
-                               pack_dir=integration_path,
-                               req_2=[],
-                               req_3=[],
-                               docker_engine=False)
+        runner = initiate_linter(demisto_content, integration_path)
         assert not runner._gather_facts(modules={})
 
     def test_valid_yaml_key_script_is_not_dict(self, demisto_content: Callable, create_integration: Callable, mocker):
         integration_path: Path = create_integration(content_path=demisto_content,
                                                     type_script_key=False)
         mocker.patch.object(linter.Linter, '_update_support_level')
-        runner = linter.Linter(content_repo=demisto_content,
-                               pack_dir=integration_path,
-                               req_2=[],
-                               req_3=[],
-                               docker_engine=False)
+        runner = initiate_linter(demisto_content, integration_path)
         assert not runner._gather_facts(modules={})
 
     def test_not_valid_yaml(self, demisto_content: Callable, create_integration: Callable):
         integration_path: Path = create_integration(content_path=demisto_content,
                                                     yml=True)
-        runner = linter.Linter(content_repo=demisto_content,
-                               pack_dir=integration_path,
-                               req_2=[],
-                               req_3=[],
-                               docker_engine=False)
+        runner = initiate_linter(demisto_content, integration_path)
         assert runner._gather_facts(modules={})
 
     def test_checks_common_server_python(self, repo):
@@ -50,11 +48,7 @@ class TestYamlParse:
         script = pack.create_script('CommonServerPython')
         script.create_default_script()
         script_path = Path(script.path)
-        runner = linter.Linter(content_repo=pack.path,
-                               pack_dir=script_path,
-                               req_2=[],
-                               req_3=[],
-                               docker_engine=False)
+        runner = initiate_linter(pack.path, script_path)
         runner._gather_facts(modules={})
         common_server_python_path = runner._facts.get('lint_files')[0]
         assert 'Packs/Base/Scripts/CommonServerPython/CommonServerPython.py' in str(
@@ -66,21 +60,13 @@ class TestPythonPack:
         integration_path: Path = create_integration(content_path=demisto_content,
                                                     js_type=False)
         mocker.patch.object(linter.Linter, '_update_support_level')
-        runner = linter.Linter(content_repo=demisto_content,
-                               pack_dir=integration_path,
-                               req_2=[],
-                               req_3=[],
-                               docker_engine=False)
+        runner = initiate_linter(demisto_content, integration_path)
         assert not runner._gather_facts(modules={})
 
     def test_package_is_not_python_pack(self, demisto_content: Callable, create_integration: Callable):
         integration_path: Path = create_integration(content_path=demisto_content,
                                                     js_type=True)
-        runner = linter.Linter(content_repo=demisto_content,
-                               pack_dir=integration_path,
-                               req_2=[],
-                               req_3=[],
-                               docker_engine=False)
+        runner = initiate_linter(demisto_content, integration_path)
         assert runner._gather_facts(modules={})
 
 
@@ -94,11 +80,7 @@ class TestDockerImagesCollection:
         integration_path: Path = create_integration(content_path=demisto_content,
                                                     image=exp_image,
                                                     image_py_num=exp_py_num)
-        runner = linter.Linter(content_repo=demisto_content,
-                               pack_dir=integration_path,
-                               req_2=[],
-                               req_3=[],
-                               docker_engine=True)
+        runner = initiate_linter(demisto_content, integration_path, True)
         runner._gather_facts(modules={})
 
         assert runner._facts["images"][0][0] == exp_image
@@ -113,12 +95,7 @@ class TestDockerImagesCollection:
         integration_path: Path = create_integration(content_path=demisto_content,
                                                     image="",
                                                     image_py_num=exp_py_num)
-        runner = linter.Linter(content_repo=demisto_content,
-                               pack_dir=integration_path,
-                               req_2=[],
-                               req_3=[],
-                               docker_engine=True)
-
+        runner = initiate_linter(demisto_content, integration_path, True)
         runner._gather_facts(modules={})
 
         assert runner._facts["images"][0][0] == exp_image
@@ -132,11 +109,7 @@ class TestTestsCollection:
         linter.Linter._docker_login.return_value = False
         integration_path: Path = create_integration(content_path=demisto_content,
                                                     no_tests=False)
-        runner = linter.Linter(content_repo=demisto_content,
-                               pack_dir=integration_path,
-                               req_2=[],
-                               req_3=[],
-                               docker_engine=True)
+        runner = initiate_linter(demisto_content, integration_path, True)
         runner._gather_facts(modules={})
         assert runner._facts["test"]
 
@@ -146,11 +119,7 @@ class TestTestsCollection:
         linter.Linter._docker_login.return_value = False
         integration_path: Path = create_integration(content_path=demisto_content,
                                                     no_tests=True)
-        runner = linter.Linter(content_repo=demisto_content,
-                               pack_dir=integration_path,
-                               req_2=[],
-                               req_3=[],
-                               docker_engine=True)
+        runner = initiate_linter(demisto_content, integration_path, True)
         runner._gather_facts(modules={})
         assert not runner._facts["test"]
 
@@ -162,11 +131,7 @@ class TestLintFilesCollection:
         linter.Linter._docker_login.return_value = False
         integration_path: Path = create_integration(content_path=demisto_content,
                                                     no_lint_file=False)
-        runner = linter.Linter(content_repo=demisto_content,
-                               pack_dir=integration_path,
-                               req_2=[],
-                               req_3=[],
-                               docker_engine=True)
+        runner = initiate_linter(demisto_content, integration_path, True)
         runner._gather_facts(modules={})
         assert runner._facts["lint_files"][0] == integration_path / f'{integration_path.name}.py'
         assert runner._facts['lint_unittest_files'][0] == integration_path / f'{integration_path.name}_test.py'
@@ -177,11 +142,7 @@ class TestLintFilesCollection:
         linter.Linter._docker_login.return_value = False
         integration_path: Path = create_integration(content_path=demisto_content,
                                                     no_lint_file=True)
-        runner = linter.Linter(content_repo=demisto_content,
-                               pack_dir=integration_path,
-                               req_2=[],
-                               req_3=[],
-                               docker_engine=True)
+        runner = initiate_linter(demisto_content, integration_path, True)
         runner._gather_facts(modules={})
         assert not runner._facts["lint_files"]
 
@@ -193,11 +154,7 @@ class TestTestRequirementsCollection:
         mocker.patch.object(linter.Linter, '_update_support_level')
         linter.Linter._docker_login.return_value = False
         integration_path: Path = create_integration(content_path=demisto_content, test_reqs=True)
-        runner = linter.Linter(content_repo=demisto_content,
-                               pack_dir=integration_path,
-                               req_2=[],
-                               req_3=[],
-                               docker_engine=True)
+        runner = initiate_linter(demisto_content, integration_path, True)
         runner._gather_facts(modules={})
         assert runner._facts["additional_requirements"]
         test_requirements = ['mock', 'pre-commit', 'pytest']
@@ -210,10 +167,36 @@ class TestTestRequirementsCollection:
 
         linter.Linter._docker_login.return_value = False
         integration_path: Path = create_integration(content_path=demisto_content)
-        runner = linter.Linter(content_repo=demisto_content,
-                               pack_dir=integration_path,
-                               req_2=[],
-                               req_3=[],
-                               docker_engine=True)
+        runner = initiate_linter(demisto_content, integration_path, True)
         runner._gather_facts(modules={})
         assert not runner._facts["additional_requirements"]
+
+
+files_strings = ['/Users/user/dev/demisto/content/Packs/EDL/Integrations/EDL/EDL_test.py',
+                 '/Users/user/dev/demisto/content/Packs/EDL/Integrations/EDL/EDL.py',
+                 '/Users/user/dev/demisto/content/Packs/EDL/Integrations/EDL/NGINXApiModule.py']
+files_paths = [Path(i) for i in files_strings]
+
+
+def test_remove_gitignore_files(mocker, demisto_content):
+    """
+    Given:
+    - Linter module with files to ignore.
+
+    When:
+    - Calling _remove_gitignore_files method.
+
+    Then:
+    - Remove the ignored files from self._facts['lint_files'].
+
+    """
+    class GitMock:
+        def ignored(self, files):
+            return files[-1:]
+
+    mocker.patch("git.Repo", return_value=GitMock())
+    runner = initiate_linter(demisto_content, "")
+    runner._facts['lint_files'] = files_paths
+    assert files_paths[-1] in runner._facts['lint_files']
+    runner._remove_gitignore_files("prompt")
+    assert files_paths[-1] not in runner._facts['lint_files']

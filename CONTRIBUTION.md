@@ -5,15 +5,15 @@ We build `demisto-sdk` to support python 3.7 and 3.8.
 
 ## Getting started
 
-1. [Clone demisto-sdk repository](#1-Clone-demisto-sdk-repository)
-2. [Install demisto sdk dev environment](#2-Install-demisto-sdk-dev-environment)
-3. [Pre-commit hooks setup](#3-Pre-commit-hooks-setup)
-4. [DemistoContentPython Libary](#4-DemistoContentPython-Libary)
-5. [Develop new command](#5-Develop-new-command)
+1. [Clone demisto-sdk repository](#1-clone-demisto-sdk-repository)
+2. [Install demisto sdk dev environment](#2-install-demisto-sdk-dev-environment)
+3. [Pre-commit hooks setup](#3-pre-commit-hooks-setup)
+4. [DemistoContentPython Library](#4-demistocontentpython-library)
+5. [Develop new command](#5-develop-new-command)
 6. [Running unit-tests using tox](#6-running-unit-tests-using-tox)
-7. [Push changes to GitHub (External PRs)](#6-push-changes-to-github-relevant-only-for-exernal-prs)
+7. [Push changes to GitHub (External PRs)](#7-push-changes-to-github-relevant-only-for-external-prs)
 8. [Review Process](#8-review-process)
-9. [Contributor License Agreement (External PRs)](#8-contributor-license-agreement-relevant-only-for-exernal-prs)
+9. [Contributor License Agreement (External PRs)](#9-contributor-license-agreement-relevant-only-for-external-prs)
 
 ---
 
@@ -33,33 +33,33 @@ This will be used as your testing environment, you do not need to update it agai
 
 1. Make sure you have python3 installed.
 
-2. Add executable permissions to our setup script by running `chmod a+x ~/dev/demisto/demisto-sdk/demisto-sdk-development.sh`.
+2. Make sure you have pipenv installed.
 
-3. Run the script: `~/dev/demisto/demisto-sdk/demisto-sdk-development.sh`.
-   * You might need to setup your SHELL env variable by running `export SHELL=/bin/zsh` or `export SHELL=/bin/bash`.
+3. run `pipenv install --dev`
 
-4. Restart your terminal.
+4. To install local version of demisto-sdk, run `pipenv install --keep-outdated -e <path to your demisto-sdk repo>`
 
-You have now setup the your `demisto-sdk-dev` env!
+5. For further reading about pipenv, you can refer to [pipenv documentation](https://pipenv.pypa.io/en/latest/).
 
-To activate it simply run: `workon demisto-sdk-dev`
+You have now setup the your `demisto-sdk` dev environment!
+
+To activate it simply run: `pipenv shell`.
    * Check that the demisto-sdk installed is your local version by running `demisto-sdk -v` - you will should see something similar to `demisto-sdk 1.X.X.dev`.
-     If not, while your current working directory is the `demisto-sdk` root repo by runnning `cd ~/dev/demisto/demisto-sdk` and then run `pip3 install -e .`.
 
-To deactivate the virtual environment and return simply run: `deactivate`.
+To deactivate the virtual environment and return simply run: `exit`.
    * Note that your local `demisto-sdk` version should remain unchanged.
 
 ---
 
 ### 3. Pre-commit hooks setup
 We use are using [pre-commit](https://pre-commit.com/) to run hooks on our build. To use it run:
-1. Install hook to be performed as a hook before commiting changes - `pre-commit install`
+1. Install hook to be performed as a hook before commit changes - `pre-commit install`
 2. Enable auto update of pre-commit hooks - `pre-commit autoupdate`
-3. In order to run pre-commit without commiting - `pre-commit run -a` (on all files), `pre-commit run` (on staged files)
+3. In order to run pre-commit without commit- `pre-commit run -a` (on all files), `pre-commit run` (on staged files)
 
 ---
 
-### 4. DemistoContentPython Libary
+### 4. DemistoContentPython Library
 ContentPython is a python library used to interact with Demisto Content repository, high-level abstraction.
 For more information read the following [guide](demisto_sdk/commands/common/content/README.md).
 
@@ -152,6 +152,8 @@ Before merging any PRs, we need all contributors to sign a contributor license a
 When you contribute a new pull request, a bot will evaluate whether you have signed the CLA. If required, the bot will comment on the pull request, including a link to accept the agreement. The CLA document is available for review as a [PDF](docs/cla.pdf).
 
 If the `license/cla` status check remains on *Pending*, even though all contributors have accepted the CLA, you can recheck the CLA status by visiting the following link (replace **[PRID]** with the ID of your PR): https://cla-assistant.io/check/demisto/demisto-sdk?pullRequest=[PRID] .
+
+---
 
 If you have a suggestion or an opportunity for improvement that you've identified, please open an issue in this repo.
 Enjoy and feel free to reach out to us on the [DFIR Community Slack channel](http://go.demisto.com/join-our-slack-community), or at [info@demisto.com](mailto:info@demisto.com).

@@ -1,3 +1,7 @@
+import json
+
+import pytest
+
 import demisto_sdk.commands.common.constants as constants
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 
@@ -84,6 +88,7 @@ INTEGRATION_TARGET = f"{PACK_TARGET}/Integrations/integration-test.yml"
 INCIDENT_FIELD_TARGET = f"{PACK_TARGET}/IncidentFields/incidentfield-test.json"
 INCIDENT_TYPE_TARGET = f"{PACK_TARGET}/IncidentTypes/incidenttype-valid.json"
 PLAYBOOK_PACK_TARGET = "Packs/Int/Playbooks/playbook-test.yml"
+CONTENT_REPO_EXAMPLE_ROOT = f'{GIT_ROOT}/demisto_sdk/tests/test_files/content_repo_example/'
 INVALID_TEST_PLAYBOOK_UNHANDLED_CONDITION = f'{GIT_ROOT}/demisto_sdk/tests/test_files/content_repo_example/Packs/' \
                                             f'FeedAzure/TestPlaybooks/playbook-FeedAzure_test_copy_no_prefix.yml'
 INVALID_PLAYBOOK_UNHANDLED_CONDITION = f'{GIT_ROOT}/demisto_sdk/tests/test_files/content_repo_example/Packs/' \
@@ -113,9 +118,6 @@ INVALID_INTEGRATION_YML_3 = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integratio
 INVALID_INTEGRATION_YML_4 = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-invalid-yml4.yml"
 VALID_REPUTATION_FILE = f"{GIT_ROOT}/demisto_sdk/tests/test_files/reputation-cidr-valid.json"
 INVALID_REPUTATION_FILE = f"{GIT_ROOT}/demisto_sdk/tests/test_files/reputation-cidr-invalid.json"
-EQUAL_VAL_FORMAT_PLAYBOOK_SOURCE = f"{GIT_ROOT}/demisto_sdk/tests/test_files/playbook-invalid-equal.yml"
-EQUAL_VAL_FORMAT_PLAYBOOK_DESTINATION = "Playbooks/playbook-invalid-equal.yml"
-EQUAL_VAL_PATH = 'Playbooks'
 INVALID_NO_HIDDEN_PARAMS = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-invalid-no-hidden-params.yml"
 VALID_NO_HIDDEN_PARAMS = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-valid-no-unallowed-hidden-params.yml"
 GIT_HAVE_MODIFIED_AND_NEW_FILES = f"{GIT_ROOT}/demisto_sdk/tests/test_files/git_have_modified_and_new_files.json"
@@ -125,7 +127,7 @@ INCIDENTFIELD_PATH = "IncidentFields"
 SOURCE_FORMAT_INCIDENTTYPE_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_incidenttype-copy.json"
 SOURCE_DESCRIPTION_WITH_CONTRIB_DETAILS = f"{GIT_ROOT}/demisto_sdk/tests/test_files/description_with_contrib_details.md"
 SOURCE_DESCRIPTION_FORMATTED_CONTRIB_DETAILS = f"{GIT_ROOT}/demisto_sdk/tests/test_files/" \
-    f"description_formatted_contrib_details.md"
+                                               f"description_formatted_contrib_details.md"
 DESTINATION_FORMAT_DESCRIPTION_COPY = "Description/formatted_description-test.md"
 DESCRIPTION_PATH = "Description"
 DESTINATION_FORMAT_INCIDENTTYPE_COPY = "IncidentTypes/incidenttype-copy.json"
@@ -144,6 +146,17 @@ DESTINATION_FORMAT_LAYOUT_COPY = "Layouts/layout-copy.json"
 DESTINATION_FORMAT_LAYOUT_INVALID_NAME_COPY = "Layouts/layoutt-copy.json"
 LAYOUT_PATH = "Layouts"
 LAYOUT_SCHEMA_PATH = f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/layout.yml"
+
+SOURCE_FORMAT_PRE_PROCESS_RULES_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_pre_process_rules-copy.json"
+DESTINATION_FORMAT_PRE_PROCESS_RULES_COPY = "PreProcessRules/preprocessrule-copy.json"
+DESTINATION_FORMAT_PRE_PROCESS_RULES_INVALID_NAME_COPY = "PreProcessRules/preprocessrules-invalid.json"
+PRE_PROCESS_RULES_PATH = "PreProcessRules"
+PRE_PROCESS_RULES_SCHEMA_PATH = f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/pre-process-rules.yml"
+
+DESTINATION_FORMAT_LISTS_COPY = "Lists/list-copy.json"
+SOURCE_FORMAT_LISTS_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_list-copy.json"
+LISTS_PATH = "Lists"
+LISTS_SCHEMA_PATH = f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/list.yml"
 
 SOURCE_FORMAT_LAYOUTS_CONTAINER = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_layoutscontainer-for-class-test.json"
 SOURCE_FORMAT_LAYOUTS_CONTAINER_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_layoutscontainer-test.json"
@@ -212,6 +225,13 @@ XSOAR_LINTER_PY3_INVALID_WARNINGS_PARTNER = f"{GIT_ROOT}/demisto_sdk/tests/test_
 DESTINATION_FORMAT_INTEGRATION = "Integrations/integration.yml"
 INTEGRATION_PATH = "Integrations"
 CONNECTION_SCHEMA_PATH = f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/canvas-context-connections.yml"
+VALID_GENERIC_TYPE_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/generic-type-valid.json"
+VALID_GENERIC_FIELD_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/generic-field-valid.json"
+VALID_GENERIC_MODULE_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/generic-module-valid.json"
+VALID_GENERIC_DEFINITION_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/generic-definitions-valid.json"
+
+VALID_GITLAB_RESPONSE = f"{GIT_ROOT}/demisto_sdk/tests/test_files/valid_gitlab_search_response.json"
+
 DIR_LIST = [
     f'{PACK_TARGET}/{constants.INTEGRATIONS_DIR}',
     f'{PACK_TARGET}/{constants.SCRIPTS_DIR}',
@@ -228,3 +248,108 @@ DIR_LIST = [
     f'{PACK_TARGET}/{constants.INDICATOR_FIELDS_DIR}',
     constants.TESTS_DIR
 ]
+
+
+class TestGitContentConfig:
+    @pytest.mark.parametrize(
+        'url, host, repo_name',
+        [
+            ('ssh://git@github.com/demisto/content-dist.git', 'github.com', 'demisto/content-dist'),
+            ('git@github.com:demisto/content-dist.git', 'github.com', 'demisto/content-dist'),
+            # clone using github ssh example
+            ('https://github.com/demisto/content-dist.git', 'github.com', 'demisto/content-dist'),
+            # clone using github https example
+            ('https://github.com/demisto/content-dist', 'github.com', 'demisto/content-dist'),
+            ('https://code.pan.run/xsoar/content-dist', 'code.pan.run', 'content-dist'),  # gitlab
+            ('https://code.pan.run/xsoar/content-dist.git', 'code.pan.run', 'content-dist'),
+            ('https://gitlab-ci-token:token@code.pan.run/xsoar/content-dist.git', 'code.pan.run', 'content-dist')
+        ]
+    )
+    def test_get_properties(self, mocker, url: str, host: str, repo_name):
+        """
+        Given:
+            No repository (not running in git)
+        When:
+            A known output of git.Repo().remotes().url
+        Then:
+            Validate the correct repo got back (demisto/content)
+        """
+        mocker.patch.object(constants.GitContentConfig,
+                            '_search_gitlab_id',
+                            return_value=0)
+        git_config = constants.GitContentConfig()
+        parsed_git = git_config._get_repository_properties([url])
+        assert host in parsed_git.host  # it parse the domain with user and password
+        git_config._set_repo_config(parsed_git)
+        assert git_config.CURRENT_REPOSITORY == repo_name
+        if 'code.pan.run' in url:
+            assert git_config.GITLAB_HOST == 'code.pan.run'
+
+    def test_get_repo_name_gitlab_invalid(self, mocker):
+        """
+        Given:
+            No repository (not running in git)
+        When:
+            A known output of git.Repo().remotes().url, but this url not found in GitLab API
+        Then:
+            Ignore gitlab and get back to content (demisto/content)
+        """
+        url = 'https://code.pan.run/xsoar/very-private-repo'
+        git_config = constants.GitContentConfig()
+        mocker.patch.object(constants.GitContentConfig,
+                            '_search_gitlab_id',
+                            return_value=None)
+        # for invalid response should return the official content repo
+        parsed_git = git_config._get_repository_properties([url])
+        git_config._set_repo_config(parsed_git)
+        assert git_config.CURRENT_REPOSITORY == constants.GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
+
+    def test_get_repo_name_empty_case(self):
+        """
+        Given:
+            No repository (not running in git)
+        When:
+            Searching for repository name
+        Then:
+            Validate the correct repo got back - demisto/content
+        """
+        git_config = constants.GitContentConfig()
+        parsed_git = git_config._get_repository_properties([])
+        git_config._set_repo_config(parsed_git)
+        assert git_config.CURRENT_REPOSITORY == constants.GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
+
+    def test_search_gitlab_id_valid(self, requests_mock):
+        """
+        Given:
+            A valid repo name
+        When:
+            Searching for the id of the repo
+        Then:
+            The id of the repo should be returned
+        """
+
+        with open(VALID_GITLAB_RESPONSE) as f:
+            gitlab_response = json.load(f)
+        repo = 'content-internal-dist'
+        host = 'code.pan.run'
+        url = f'https://{host}/api/v4/projects?search={repo}'
+        requests_mock.get(url, json=gitlab_response)
+        git_config = constants.GitContentConfig()
+        assert git_config._search_gitlab_id(host, repo) == 3606
+
+    def test_search_gitlab_id_invalid(self, requests_mock):
+        """
+        Given:
+            An invalid repo name
+        When:
+            Searching for the id of the repo
+        Then:
+            None should be returned
+        """
+
+        repo = "no-real-repo"
+        host = 'code.pan.run'
+        url = f'https://code.pan.run/api/v4/projects?search={repo}'
+        requests_mock.get(url, json=[])
+        git_config = constants.GitContentConfig()
+        assert git_config._search_gitlab_id(host, repo) is None

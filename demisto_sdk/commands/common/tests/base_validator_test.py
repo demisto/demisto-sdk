@@ -55,6 +55,56 @@ def test_handle_error():
     assert 'path/to/file_name - [ST109]' in FOUND_FILES_AND_ERRORS
 
 
+def test_handle_error_file_with_path(pack):
+    """
+    Given
+    - An ignore errors list associated with a file_path.
+    - An error, message, code and file paths.
+
+    When
+    - Running handle_error method.
+
+    Then
+    _ Ensure ignoring right file when full path mentioned in .pack-ignore.
+    - Ensure the resulting error messages are correctly formatted.
+    - Ensure ignored error codes return None.
+    - Ensure non ignored errors are in FOUND_FILES_AND_ERRORS list.
+    - Ensure ignored error are not in FOUND_FILES_AND_ERRORS and in FOUND_FILES_AND_IGNORED_ERRORS
+    """
+    integration = pack.create_integration("TestIntegration")
+    rel_path_integration_readme = integration.readme.path[integration.readme.path.find("Packs"):]
+    rel_path_pack_readme = pack.readme.path[pack.readme.path.find("Packs"):]
+
+    pack_ignore_text = f"""[file:{rel_path_integration_readme}]
+    ignore=ST109
+
+    [file:{rel_path_pack_readme}]
+    ignore=BA101"""
+    pack.pack_ignore.write_text(pack_ignore_text)
+
+    base_validator = BaseValidator(ignored_errors={rel_path_pack_readme: ["BA101"],
+                                                   rel_path_integration_readme: ["ST109"]},
+                                   print_as_warnings=True)
+
+    formatted_error = base_validator.handle_error("Error-message", "BA101", integration.readme.path)
+    assert formatted_error == f'{integration.readme.path}: [BA101] - Error-message\n'
+    assert f'{integration.readme.path} - [BA101]' in FOUND_FILES_AND_ERRORS
+
+    formatted_error = base_validator.handle_error("Error-message", "ST109", integration.readme.path)
+    assert formatted_error is None
+    assert f'{integration.readme.path} - [ST109]' not in FOUND_FILES_AND_ERRORS
+    assert f'{integration.readme.path} - [ST109]' in FOUND_FILES_AND_IGNORED_ERRORS
+
+    formatted_error = base_validator.handle_error("Error-message", "ST109", pack.readme.path)
+    assert formatted_error == f'{pack.readme.path}: [ST109] - Error-message\n'
+    assert f'{pack.readme.path} - [ST109]' in FOUND_FILES_AND_ERRORS
+
+    formatted_error = base_validator.handle_error("Error-message", "BA101", pack.readme.path)
+    assert formatted_error is None
+    assert f'{pack.readme.path} - [BA101]' not in FOUND_FILES_AND_ERRORS
+    assert f'{pack.readme.path} - [BA101]' in FOUND_FILES_AND_IGNORED_ERRORS
+
+
 def test_check_deprecated_where_ignored_list_exists(repo):
     """
     Given
@@ -242,174 +292,177 @@ def test_check_support_status_community_file(repo, mocker):
         assert base_validator.ignored_errors['integration.yml'] == PRESET_ERROR_TO_IGNORE['community']
 
 
-def test_json_output(repo):
-    """
-    Given
-    - Scenario 1:
-      - A ui applicable error.
-      - No pre existing json_outputs file.
+class TestJsonOutput:
+    def test_json_output(self, repo):
+        """
+        Given
+        - Scenario 1:
+        - A ui applicable error.
+        - No pre existing json_outputs file.
 
-    - Scenario 2:
-      - A non ui applicable warning.
-      - A pre existing json_outputs file.
+        - Scenario 2:
+        - A non ui applicable warning.
+        - A pre existing json_outputs file.
 
-    When
-    - Running json_output method.
+        When
+        - Running json_output method.
 
-    Then
-    - Scenario 1:
-      - Ensure the json outputs file is created and it hold the json error in the `outputs` field.
-    - Scenario 2:
-      - Ensure the json outputs file is modified and holds the json warning in the `outputs` field.
-    """
-    pack = repo.create_pack('PackName')
-    integration = pack.create_integration('MyInt')
-    integration.create_default_integration()
-    json_path = os.path.join(repo.path, 'valid_json.json')
-    base = BaseValidator(json_file_path=json_path)
-    ui_applicable_error_message, ui_applicable_error_code = Errors.wrong_display_name('param1', 'param2')
-    non_ui_applicable_error_message, non_ui_applicable_error_code = Errors.wrong_subtype()
-    expected_json_1 = [
-        {
-            'filePath': integration.yml.path,
-            'fileType': 'yml',
-            'entityType': 'integration',
-            'errorType': 'Settings',
-            'name': 'Sample',
-            'severity': 'error',
-            'errorCode': ui_applicable_error_code,
-            'message': ui_applicable_error_message,
-            'ui': True,
-            'relatedField': '<parameter-name>.display'
-        }
-    ]
+        Then
+        - Scenario 1:
+        - Ensure the json outputs file is created and it hold the json error in the `outputs` field.
+        - Scenario 2:
+        - Ensure the json outputs file is modified and holds the json warning in the `outputs` field.
+        """
+        pack = repo.create_pack('PackName')
+        integration = pack.create_integration('MyInt')
+        integration.create_default_integration()
+        json_path = os.path.join(repo.path, 'valid_json.json')
+        base = BaseValidator(json_file_path=json_path)
+        ui_applicable_error_message, ui_applicable_error_code = Errors.wrong_display_name('param1', 'param2')
+        non_ui_applicable_error_message, non_ui_applicable_error_code = Errors.wrong_subtype()
+        expected_json_1 = [
+            {
+                'filePath': integration.yml.path,
+                'fileType': 'yml',
+                'entityType': 'integration',
+                'errorType': 'Settings',
+                'name': 'Sample',
+                'severity': 'error',
+                'errorCode': ui_applicable_error_code,
+                'message': ui_applicable_error_message,
+                'ui': True,
+                'relatedField': '<parameter-name>.display'
+            }
+        ]
 
-    expected_json_2 = [
-        {
-            'filePath': integration.yml.path,
-            'fileType': 'yml',
-            'entityType': 'integration',
-            'errorType': 'Settings',
-            'name': 'Sample',
-            'severity': 'error',
-            'errorCode': ui_applicable_error_code,
-            'message': ui_applicable_error_message,
-            'ui': True,
-            'relatedField': '<parameter-name>.display'
-        },
-        {
-            'filePath': integration.yml.path,
-            'fileType': 'yml',
-            'entityType': 'integration',
-            'errorType': 'Settings',
-            'name': 'Sample',
-            'severity': 'warning',
-            'errorCode': non_ui_applicable_error_code,
-            'message': non_ui_applicable_error_message,
-            'ui': False,
-            'relatedField': 'subtype'
-        }
-    ]
+        expected_json_2 = [
+            {
+                'filePath': integration.yml.path,
+                'fileType': 'yml',
+                'entityType': 'integration',
+                'errorType': 'Settings',
+                'name': 'Sample',
+                'severity': 'error',
+                'errorCode': ui_applicable_error_code,
+                'message': ui_applicable_error_message,
+                'ui': True,
+                'relatedField': '<parameter-name>.display',
+                'linter': 'validate'
+            },
+            {
+                'filePath': integration.yml.path,
+                'fileType': 'yml',
+                'entityType': 'integration',
+                'errorType': 'Settings',
+                'name': 'Sample',
+                'severity': 'warning',
+                'errorCode': non_ui_applicable_error_code,
+                'message': non_ui_applicable_error_message,
+                'ui': False,
+                'relatedField': 'subtype',
+                'linter': 'validate'
+            }
+        ]
 
-    with ChangeCWD(repo.path):
-        # create new file
-        base.json_output(integration.yml.path, ui_applicable_error_code, ui_applicable_error_message, False)
-        with open(base.json_file_path, 'r') as f:
-            json_output = json.load(f)
+        with ChangeCWD(repo.path):
+            # create new file
+            base.json_output(integration.yml.path, ui_applicable_error_code, ui_applicable_error_message, False)
+            with open(base.json_file_path) as f:
+                json_output = json.load(f)
 
-        assert json_output == expected_json_1
+            assert json_output.sort() == expected_json_1.sort()
 
-        # update existing file
-        base.json_output(integration.yml.path, non_ui_applicable_error_code, non_ui_applicable_error_message, True)
-        with open(base.json_file_path, 'r') as f:
-            json_output = json.load(f)
+            # update existing file
+            base.json_output(integration.yml.path, non_ui_applicable_error_code, non_ui_applicable_error_message, True)
+            with open(base.json_file_path) as f:
+                json_output = json.load(f)
 
-        assert json_output == expected_json_2
+            assert json_output == expected_json_2
 
+    def test_json_output_with_json_file(self, repo):
+        """
+        Given
+        - A ui applicable error.
+        - An existing and an empty json_outputs file.
 
-def test_json_output_with_json_file(repo):
-    """
-    Given
-    - A ui applicable error.
-    - An existing and an empty json_outputs file.
+        When
+        - Running json_output method.
 
-    When
-    - Running json_output method.
+        Then
+        - Ensure the json outputs file is created and it hold the json error in the `outputs` field.
+        - Ensure it's not failing because the file is empty.
+        """
+        pack = repo.create_pack('PackName')
+        integration = pack.create_integration('MyInt')
+        integration.create_default_integration()
+        json_path = os.path.join(repo.path, 'valid_json.json')
+        open(json_path, "x")
+        base = BaseValidator(json_file_path=json_path)
+        ui_applicable_error_message, ui_applicable_error_code = Errors.wrong_display_name('param1', 'param2')
+        expected_json_1 = [
+            {
+                'filePath': integration.yml.path,
+                'fileType': 'yml',
+                'entityType': 'integration',
+                'errorType': 'Settings',
+                'name': 'Sample',
+                'severity': 'error',
+                'errorCode': ui_applicable_error_code,
+                'message': ui_applicable_error_message,
+                'ui': True,
+                'relatedField': '<parameter-name>.display',
+                'linter': 'validate'
+            }
+        ]
 
-    Then
-    - Ensure the json outputs file is created and it hold the json error in the `outputs` field.
-    - Ensure it's not failing because the file is empty.
-    """
-    pack = repo.create_pack('PackName')
-    integration = pack.create_integration('MyInt')
-    integration.create_default_integration()
-    json_path = os.path.join(repo.path, 'valid_json.json')
-    open(json_path, "x")
-    base = BaseValidator(json_file_path=json_path)
-    ui_applicable_error_message, ui_applicable_error_code = Errors.wrong_display_name('param1', 'param2')
-    expected_json_1 = [
-        {
-            'filePath': integration.yml.path,
-            'fileType': 'yml',
-            'entityType': 'integration',
-            'errorType': 'Settings',
-            'name': 'Sample',
-            'severity': 'error',
-            'errorCode': ui_applicable_error_code,
-            'message': ui_applicable_error_message,
-            'ui': True,
-            'relatedField': '<parameter-name>.display'
-        }
-    ]
+        with ChangeCWD(repo.path):
+            # create new file
+            base.json_output(integration.yml.path, ui_applicable_error_code, ui_applicable_error_message, False)
+            with open(base.json_file_path, 'r') as f:
+                json_output = json.load(f)
 
-    with ChangeCWD(repo.path):
-        # create new file
-        base.json_output(integration.yml.path, ui_applicable_error_code, ui_applicable_error_message, False)
-        with open(base.json_file_path, 'r') as f:
-            json_output = json.load(f)
+            assert json_output.sort() == expected_json_1.sort()
 
-        assert json_output == expected_json_1
+    def test_json_output_with_unified_yml_image_error(self, repo):
+        """
+        Given
+        - A ui applicable image error that occurred in a unified yml.
+        - An existing and an empty json_outputs file.
 
+        When
+        - Running json_output method.
 
-def test_json_output_with_unified_yml_image_error(repo):
-    """
-    Given
-    - A ui applicable image error that occurred in a unified yml.
-    - An existing and an empty json_outputs file.
+        Then
+        - Ensure the json outputs file is created and it hold the json error in the `outputs` field.
+        - Ensure the entityType is 'image'.
+        """
+        pack = repo.create_pack('PackName')
+        integration = pack.create_integration('MyInt')
+        integration.create_default_integration()
+        json_path = os.path.join(repo.path, 'valid_json.json')
+        open(json_path, "x")
+        base = BaseValidator(json_file_path=json_path)
+        ui_applicable_error_message, ui_applicable_error_code = Errors.image_too_large()
+        expected_json_1 = [
+            {
+                'filePath': integration.yml.path,
+                'fileType': 'yml',
+                'entityType': 'image',
+                'errorType': 'Settings',
+                'name': 'Sample',
+                'severity': 'error',
+                'errorCode': ui_applicable_error_code,
+                'message': ui_applicable_error_message,
+                'ui': True,
+                'relatedField': 'image',
+                'validate': 'linter'
+            }
+        ]
 
-    When
-    - Running json_output method.
+        with ChangeCWD(repo.path):
+            # create new file
+            base.json_output(integration.yml.path, ui_applicable_error_code, ui_applicable_error_message, False)
+            with open(base.json_file_path, 'r') as f:
+                json_output = json.load(f)
 
-    Then
-    - Ensure the json outputs file is created and it hold the json error in the `outputs` field.
-    - Ensure the entityType is 'image'.
-    """
-    pack = repo.create_pack('PackName')
-    integration = pack.create_integration('MyInt')
-    integration.create_default_integration()
-    json_path = os.path.join(repo.path, 'valid_json.json')
-    open(json_path, "x")
-    base = BaseValidator(json_file_path=json_path)
-    ui_applicable_error_message, ui_applicable_error_code = Errors.image_too_large()
-    expected_json_1 = [
-        {
-            'filePath': integration.yml.path,
-            'fileType': 'yml',
-            'entityType': 'image',
-            'errorType': 'Settings',
-            'name': 'Sample',
-            'severity': 'error',
-            'errorCode': ui_applicable_error_code,
-            'message': ui_applicable_error_message,
-            'ui': True,
-            'relatedField': 'image'
-        }
-    ]
-
-    with ChangeCWD(repo.path):
-        # create new file
-        base.json_output(integration.yml.path, ui_applicable_error_code, ui_applicable_error_message, False)
-        with open(base.json_file_path, 'r') as f:
-            json_output = json.load(f)
-
-        assert json_output == expected_json_1
+            assert json_output.sort() == expected_json_1.sort()

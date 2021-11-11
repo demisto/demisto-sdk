@@ -1,0 +1,48 @@
+type: map
+mapping:
+  id:
+    type: str
+    required: true
+  version:
+    type: int
+    required: true
+  locked:
+    type: bool
+  system:
+    type: bool
+  name:
+    type: str
+    required: true
+  fromVersion:
+    type: str
+  definitionIds:
+    type: seq
+    sequence:
+      - type: str
+    required: true
+  views:
+    type: seq
+    sequence:
+      - type: map
+        mapping:
+          icon:
+            type: str
+          name:
+            type: str
+          title:
+            type: str
+          id:
+            type: str
+            required: true
+          tabs:
+            type: seq
+            sequence:
+              - type: map
+                mapping:
+                  name:
+                    type: str
+                  newButtonDefinitionId:
+                    type: str
+                  dashboard:
+                    type: any
+    required: true

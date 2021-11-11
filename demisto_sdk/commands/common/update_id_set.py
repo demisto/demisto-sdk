@@ -11,34 +11,43 @@ from distutils.version import LooseVersion
 from enum import Enum
 from functools import partial
 from multiprocessing import Pool, cpu_count
-from typing import Callable, Dict, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 import click
 import networkx
+
 from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
+                                                   COMMON_TYPES_PACK,
                                                    DASHBOARDS_DIR,
                                                    DEFAULT_ID_SET_PATH,
+                                                   GENERIC_DEFINITIONS_DIR,
+                                                   GENERIC_FIELDS_DIR,
+                                                   GENERIC_MODULES_DIR,
+                                                   GENERIC_TYPES_DIR,
                                                    INCIDENT_FIELDS_DIR,
                                                    INCIDENT_TYPES_DIR,
                                                    INDICATOR_FIELDS_DIR,
                                                    INDICATOR_TYPES_DIR,
-                                                   LAYOUTS_DIR, MAPPERS_DIR,
-                                                   REPORTS_DIR, SCRIPTS_DIR,
+                                                   LAYOUTS_DIR, LISTS_DIR,
+                                                   MAPPERS_DIR, REPORTS_DIR,
+                                                   SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
                                                    WIDGETS_DIR, FileType)
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type, get_json,
                                                get_pack_name, get_yaml,
                                                print_color, print_error,
                                                print_warning)
-from demisto_sdk.commands.unify.unifier import Unifier
+from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
 
 CONTENT_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
                     'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
-                    'Layouts', 'Reports', 'Widgets', 'Mappers', 'Packs']
+                    'Layouts', 'Reports', 'Widgets', 'Mappers', 'Packs', 'GenericTypes',
+                    'GenericFields', 'GenericModules', 'GenericDefinitions', 'Lists']
 
 ID_SET_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Classifiers',
                    'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
-                   'Layouts', 'Reports', 'Widgets', 'Mappers']
+                   'Layouts', 'Reports', 'Widgets', 'Mappers', 'GenericTypes', 'GenericFields', 'GenericModules',
+                   'GenericDefinitions', 'Lists']
 
 BUILT_IN_FIELDS = [
     "name",
@@ -136,6 +145,30 @@ def build_tasks_graph(playbook_data):
     return graph
 
 
+def get_lists_names_from_playbook(data_dictionary: dict, graph: networkx.DiGraph) -> tuple:
+    lists_names = set()
+    lists_names_skippable = set()
+    tasks = data_dictionary.get('tasks', {})
+    lists_tasks_scripts = ['Builtin|||setList', 'Builtin|||getList']
+    for task_id, task in tasks.items():
+        script = task.get('task', {}).get('script')
+        if script in lists_tasks_scripts:
+            list_name = task.get('scriptarguments', {}).get('listName', {}).get('simple')
+
+            try:
+                skippable = not graph.nodes[task_id]['mandatory']
+            except KeyError:
+                # if task id not in the graph - the task is unreachable.
+                print_error(f'{data_dictionary["id"]}: task {task_id} is not connected')
+                continue
+            if list_name:
+                lists_names.add(list_name)
+                if skippable:
+                    lists_names_skippable.add(list_name)
+
+    return list(lists_names), list(lists_names_skippable)
+
+
 def get_task_ids_from_playbook(param_to_enrich_by: str, data_dict: dict, graph: networkx.DiGraph) -> tuple:
     implementing_ids = set()
     implementing_ids_skippable = set()
@@ -180,8 +213,63 @@ def get_commands_from_playbook(data_dict: dict) -> tuple:
     return command_to_integration, list(command_to_integration_skippable)
 
 
+def get_filters_and_transformers_from_complex_value(complex_value: dict) -> Tuple[list, list]:
+    all_filters = set()
+    all_transformers = set()
+
+    # add the filters to all_filters set
+    filters = complex_value.get('filters', [])
+    for tmp_filter in filters:
+        if tmp_filter:
+            operator = tmp_filter[0].get('operator')
+            all_filters.add(operator)
+
+    # add the transformers to all_transformers set
+    transformers = complex_value.get('transformers', [])
+    for tmp_transformer in transformers:
+        if tmp_transformer:
+            operator = tmp_transformer.get('operator')
+            all_transformers.add(operator)
+
+    return list(all_transformers), list(all_filters)
+
+
+def get_filters_and_transformers_from_playbook(data_dict: dict) -> Tuple[list, list]:
+    all_filters = set()
+    all_transformers = set()
+
+    # collect complex values from playbook inputs
+    inputs = data_dict.get('inputs', [])
+    complex_values = [_input.get('value', {}).get('complex', {}) for _input in inputs]
+
+    # gets the playbook tasks
+    tasks = data_dict.get('tasks', {})
+
+    # collect complex values from playbook tasks
+    for task in tasks.values():
+        # gets the task value
+        if task.get('type') == 'condition':
+            for condition_entry in task.get('conditions', []):
+                for inner_condition in condition_entry.get('condition', []):
+                    if inner_condition:
+                        for condition in inner_condition:
+                            complex_values.append(condition.get('left', {}).get('value', {}).get('complex', {}))
+                            complex_values.append(condition.get('right', {}).get('value', {}).get('complex', {}))
+        else:
+            complex_values.append(task.get('scriptarguments', {}).get('value', {}).get('complex', {}))
+
+    # get transformers and filters from the values
+    for complex_value in complex_values:
+        if complex_value:
+            transformers, filters = get_filters_and_transformers_from_complex_value(complex_value)
+            all_transformers.update(transformers)
+            all_filters.update(filters)
+
+    return list(all_transformers), list(all_filters)
+
+
 def get_integration_api_modules(file_path, data_dictionary, is_unified_integration):
-    unifier = Unifier(os.path.dirname(file_path))
+    unifier = YmlUnifier(os.path.dirname(file_path))
     if is_unified_integration:
         integration_script_code = data_dictionary.get('script', {}).get('script', '')
     else:
@@ -194,7 +282,7 @@ def get_integration_data(file_path):
     integration_data = OrderedDict()
     data_dictionary = get_yaml(file_path)
 
-    is_unified_integration = data_dictionary.get('script', {}).get('script', '') != '-'
+    is_unified_integration = data_dictionary.get('script', {}).get('script', '') not in ['-', '']
 
     id_ = data_dictionary.get('commonfields', {}).get('id', '-')
     name = data_dictionary.get('name', '-')
@@ -203,13 +291,14 @@ def get_integration_data(file_path):
     tests = data_dictionary.get('tests')
     toversion = data_dictionary.get('toversion')
     fromversion = data_dictionary.get('fromversion')
+    docker_image = data_dictionary.get('script', {}).get('dockerimage')
     commands = data_dictionary.get('script', {}).get('commands', [])
     cmd_list = [command.get('name') for command in commands]
     pack = get_pack_name(file_path)
     integration_api_modules = get_integration_api_modules(file_path, data_dictionary, is_unified_integration)
     default_classifier = data_dictionary.get('defaultclassifier')
     default_incident_type = data_dictionary.get('defaultIncidentType')
-    is_feed = data_dictionary.get('feed')
+    is_feed = data_dictionary.get('script', {}).get('feed', False)
     mappers = set()
 
     deprecated_commands = []
@@ -227,6 +316,8 @@ def get_integration_data(file_path):
         integration_data['toversion'] = toversion
     if fromversion:
         integration_data['fromversion'] = fromversion
+    if docker_image:
+        integration_data['docker_image'] = docker_image
     if cmd_list:
         integration_data['commands'] = cmd_list
     if tests:
@@ -246,8 +337,9 @@ def get_integration_data(file_path):
     if default_incident_type and default_incident_type != '':
         integration_data['incident_types'] = default_incident_type
     if is_feed:
-        integration_data['indicator_fields'] = "CommonTypes"
-        integration_data['indicator_types'] = "CommonTypes"
+        # if the integration is a feed it should be dependent on CommonTypes
+        integration_data['indicator_fields'] = COMMON_TYPES_PACK
+        integration_data['indicator_types'] = COMMON_TYPES_PACK
 
     return {id_: integration_data}
 
@@ -385,14 +477,18 @@ def get_playbook_data(file_path: str) -> dict:
                                                                                           data_dictionary,
                                                                                           graph
                                                                                           )
+    implementing_lists, implementing_lists_skippable = get_lists_names_from_playbook(data_dictionary, graph)
     command_to_integration, command_to_integration_skippable = get_commands_from_playbook(data_dictionary)
     skippable_tasks = (implementing_scripts_skippable + implementing_playbooks_skippable +
-                       command_to_integration_skippable)
+                       command_to_integration_skippable + implementing_lists_skippable)
     pack = get_pack_name(file_path)
     dependent_incident_fields, dependent_indicator_fields = get_dependent_incident_and_indicator_fields(data_dictionary)
 
     playbook_data = create_common_entity_data(path=file_path, name=name, to_version=toversion,
                                               from_version=fromversion, pack=pack)
+
+    transformers, filters = get_filters_and_transformers_from_playbook(data_dictionary)
+
     if implementing_scripts:
         playbook_data['implementing_scripts'] = implementing_scripts
     if implementing_playbooks:
@@ -409,6 +505,12 @@ def get_playbook_data(file_path: str) -> dict:
         playbook_data['incident_fields'] = list(dependent_incident_fields)
     if dependent_indicator_fields:
         playbook_data['indicator_fields'] = list(dependent_indicator_fields)
+    if filters:
+        playbook_data['filters'] = filters
+    if transformers:
+        playbook_data['transformers'] = transformers
+    if implementing_lists:
+        playbook_data['lists'] = implementing_lists
     return {id_: playbook_data}
 
 
@@ -424,6 +526,7 @@ def get_script_data(file_path, script_code=None):
     toversion = data_dictionary.get('toversion')
     deprecated = data_dictionary.get('deprecated', False)
     fromversion = data_dictionary.get('fromversion')
+    docker_image = data_dictionary.get('dockerimage')
     depends_on, command_to_integration = get_depends_on(data_dictionary)
     script_executions = sorted(list(set(re.findall(r"demisto.executeCommand\(['\"](\w+)['\"].*", script_code))))
     pack = get_pack_name(file_path)
@@ -438,6 +541,8 @@ def get_script_data(file_path, script_code=None):
         script_data['script_executions'] = script_executions
     if command_to_integration:
         script_data['command_to_integration'] = command_to_integration
+    if docker_image:
+        script_data['docker_image'] = docker_image
     if tests:
         script_data['tests'] = tests
 
@@ -517,6 +622,9 @@ def get_layout_data(path):
     pack = get_pack_name(path)
     incident_indicator_types_dependency = {id_}
     incident_indicator_fields_dependency = get_values_for_keys_recursively(json_data, ['fieldId'])
+    definition_id = json_data.get('definitionId')
+    tabs = layout.get('tabs', [])
+    scripts = get_layouts_scripts_ids(tabs)
 
     data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
     if type_:
@@ -529,8 +637,47 @@ def get_layout_data(path):
     data['incident_and_indicator_types'] = list(incident_indicator_types_dependency)
     if incident_indicator_fields_dependency['fieldId']:
         data['incident_and_indicator_fields'] = incident_indicator_fields_dependency['fieldId']
+    if definition_id:
+        data['definitionId'] = definition_id
+    if scripts:
+        data['scripts'] = scripts
 
     return {id_: data}
+
+
+def get_layouts_scripts_ids(layout_tabs):
+    """
+    Finds all scripts IDs of a certain layout or layouts container.
+
+    Args:
+        layout_tabs: (List) Tabs list of a layout or a layouts container
+
+    Returns:
+        A list of all scripts IDs in a certain layout or layouts container
+    """
+    scripts = []
+
+    for tab in layout_tabs:
+        if isinstance(tab, dict):
+            tab_sections = tab.get('sections', [])
+            for section in tab_sections:
+
+                # Find dynamic sections scripts:
+                query_type = section.get('queryType')
+                if query_type == 'script':
+                    script_id = section.get('query')
+                    if script_id:
+                        scripts.append(script_id)
+
+                # Find Buttons scripts:
+                items = section.get('items', [])
+                if items:
+                    for item in items:
+                        script_id = item.get('scriptId')
+                        if script_id:
+                            scripts.append(script_id)
+
+    return scripts
 
 
 def get_layoutscontainer_data(path):
@@ -543,6 +690,7 @@ def get_layoutscontainer_data(path):
     pack = get_pack_name(path)
     incident_indicator_types_dependency = {id_}
     incident_indicator_fields_dependency = get_values_for_keys_recursively(json_data, ['fieldId'])
+    definition_id = json_data.get('definitionId')
 
     if data.get('name'):
         incident_indicator_types_dependency.add(data['name'])
@@ -556,6 +704,8 @@ def get_layoutscontainer_data(path):
     data['incident_and_indicator_types'] = list(incident_indicator_types_dependency)
     if incident_indicator_fields_dependency['fieldId']:
         data['incident_and_indicator_fields'] = incident_indicator_fields_dependency['fieldId']
+    if definition_id:
+        data['definitionId'] = definition_id
 
     return {id_: data}
 
@@ -665,6 +815,9 @@ def get_classifier_data(path):
     toversion = json_data.get('toVersion')
     pack = get_pack_name(path)
     incidents_types = set()
+    transformers: List[str] = []
+    filters: List[str] = []
+    definition_id = json_data.get('definitionId')
 
     default_incident_type = json_data.get('defaultIncidentType')
     if default_incident_type and default_incident_type != '':
@@ -673,9 +826,21 @@ def get_classifier_data(path):
     for key, value in key_type_map.items():
         incidents_types.add(value)
 
+    transformer = json_data.get('transformer', {})
+    if transformer is dict:
+        complex_value = transformer.get('complex', {})
+        if complex_value:
+            transformers, filters = get_filters_and_transformers_from_complex_value(complex_value)
+
     data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
     if incidents_types:
         data['incident_types'] = list(incidents_types)
+    if filters:
+        data['filters'] = filters
+    if transformers:
+        data['transformers'] = transformers
+    if definition_id:
+        data['definitionId'] = definition_id
 
     return {id_: data}
 
@@ -729,6 +894,9 @@ def get_mapper_data(path):
     pack = get_pack_name(path)
     incidents_types = set()
     incidents_fields: set = set()
+    all_transformers = set()
+    all_filters = set()
+    definition_id = json_data.get('definitionId')
 
     default_incident_type = json_data.get('defaultIncidentType')
     if default_incident_type and default_incident_type != '':
@@ -755,12 +923,26 @@ def get_mapper_data(path):
             # all the incident fields are the keys of the mapping
             incidents_fields = incidents_fields.union(set(internal_mapping.keys()))
 
+        # get_filters_and_transformers_from_complex_value(list(value.get('internalMapping', {}).values())[0]['complex'])
+        for internal_mapping in internal_mapping.values():
+            incident_field_complex = internal_mapping.get('complex', {})
+            if incident_field_complex:
+                transformers, filters = get_filters_and_transformers_from_complex_value(incident_field_complex)
+                all_transformers.update(transformers)
+                all_filters.update(filters)
+
     incidents_fields = {incident_field for incident_field in incidents_fields if incident_field not in BUILT_IN_FIELDS}
     data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
     if incidents_types:
         data['incident_types'] = list(incidents_types)
     if incidents_fields:
         data['incident_fields'] = list(incidents_fields)
+    if all_filters:
+        data['filters'] = list(all_filters)
+    if all_transformers:
+        data['transformers'] = list(all_transformers)
+    if definition_id:
+        data['definitionId'] = definition_id
 
     return {id_: data}
 
@@ -889,7 +1071,7 @@ def process_script(file_path: str, print_logs: bool) -> list:
                 res.append(get_script_data(file_path))
         else:
             # package script
-            unifier = Unifier(file_path)
+            unifier = YmlUnifier(file_path)
             yml_path, code = unifier.get_script_or_integration_package_data()
             if print_logs:
                 print(f'adding {file_path} to id_set')
@@ -930,7 +1112,7 @@ def process_indicator_types(file_path: str, print_logs: bool, all_integrations: 
     Args:
         file_path: The file path from indicator type folder
         print_logs: Whether to print logs to stdout
-        all_integrations: The integrations section in the id set
+        all_integrations: The integrations section in the id-set
 
     Returns:
         a list of indicator type data.
@@ -949,10 +1131,39 @@ def process_indicator_types(file_path: str, print_logs: bool, all_integrations: 
     return res
 
 
+def process_generic_items(file_path: str, print_logs: bool,
+                          generic_types_list: list = None) -> list:
+    """
+    Process a generic field JSON file
+    Args:
+        file_path: The file path from object field folder
+        print_logs: Whether to print logs to stdout.
+        generic_types_list: List of all the generic types in the system.
+        generic_modules_list: List of all the generic modules in the system.
+
+    Returns:
+        a list of generic items data: fields or types.
+    """
+    res = []
+    try:
+        if find_type(file_path) == FileType.GENERIC_FIELD:
+            if print_logs:
+                print(f'adding {file_path} to id_set')
+            res.append(get_generic_field_data(file_path, generic_types_list))
+        elif find_type(file_path) == FileType.GENERIC_TYPE:
+            if print_logs:
+                print(f'adding {file_path} to id_set')
+            res.append(get_generic_type_data(file_path))
+    except Exception as exp:  # noqa
+        print_error(f'failed to process {file_path}, Error: {str(exp)}')
+        raise
+    return res
+
+
 def process_general_items(file_path: str, print_logs: bool, expected_file_types: Tuple[FileType],
                           data_extraction_func: Callable) -> list:
     """
-    Process a generic item file.
+    Process a general item file.
     expected file in one of the following:
     * classifier
     * incident type
@@ -963,12 +1174,13 @@ def process_general_items(file_path: str, print_logs: bool, expected_file_types:
     * playbook
     * report
     * widget
+    * list
 
     Args:
         file_path: The file path from an item folder
         print_logs: Whether to print logs to stdout
         expected_file_types: specific file type to parse, will ignore the rest
-        data_extraction_func: a function that given a file path will returns an ID set data dict.
+        data_extraction_func: a function that given a file path will returns an id-set data dict.
 
     Returns:
         a list of item data.
@@ -992,7 +1204,7 @@ def process_test_playbook_path(file_path: str, print_logs: bool) -> tuple:
 
     Arguments:
         file_path {string} -- path to yaml file
-        print_logs {bool} -- whether to print logs to stdoud
+        print_logs {bool} -- whether to print logs to stdout
 
     Returns:
         pair -- first element is a playbook second is a script. each may be None
@@ -1078,6 +1290,134 @@ def get_general_paths(path, pack_to_create):
     return files
 
 
+def get_generic_entities_paths(path, pack_to_create):
+    """
+    get paths of genericTypes, genericFields
+
+    """
+    if pack_to_create:
+        path_list = [
+            [pack_to_create, path, '*', '*.json']
+        ]
+
+    else:
+        path_list = [
+            [path, '*'],
+            ['Packs', '*', path, '*', '*.json']
+        ]
+
+    files = list()
+    for path in path_list:
+        files.extend(glob.glob(os.path.join(*path)))
+
+    return files
+
+
+def get_generic_type_data(path):
+    json_data = get_json(path)
+
+    id_ = json_data.get('id')
+    name = json_data.get('name', '')
+    fromversion = json_data.get('fromVersion')
+    toversion = json_data.get('toVersion')
+    playbook_id = json_data.get('playbookId')
+    pack = get_pack_name(path)
+    definitionId = json_data.get('definitionId')
+    layout = json_data.get('layout')
+
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
+    if playbook_id and playbook_id != '':
+        data['playbooks'] = playbook_id
+    if definitionId:
+        data['definitionId'] = definitionId
+    if layout:
+        data['layout'] = layout
+    return {id_: data}
+
+
+def get_module_id_from_definition_id(definition_id: str, generic_modules_list: list):
+    for module in generic_modules_list:
+        module_id = list(module.keys())[0]
+        if definition_id in module.get(module_id, {}).get('definitionIds', []):
+            return module_id
+
+
+def get_generic_field_data(path, generic_types_list):
+    json_data = get_json(path)
+
+    id_ = json_data.get('id')
+    name = json_data.get('name', '')
+    fromversion = json_data.get('fromVersion')
+    toversion = json_data.get('toVersion')
+    pack = get_pack_name(path)
+    all_associated_types: set = set()
+    all_scripts = set()
+    definitionId = json_data.get('definitionId')
+
+    associated_types = json_data.get('associatedTypes')
+    if associated_types:
+        all_associated_types = set(associated_types)
+
+    system_associated_types = json_data.get('systemAssociatedTypes')
+    if system_associated_types:
+        all_associated_types = all_associated_types.union(set(system_associated_types))
+
+    if 'all' in all_associated_types:
+        all_associated_types = {list(generic_type.keys())[0] for generic_type in generic_types_list}
+
+    scripts = json_data.get('script')
+    if scripts:
+        all_scripts = {scripts}
+
+    field_calculations_scripts = json_data.get('fieldCalcScript')
+    if field_calculations_scripts:
+        all_scripts = all_scripts.union({field_calculations_scripts})
+
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
+
+    if all_associated_types:
+        data['generic_types'] = list(all_associated_types)
+    if all_scripts:
+        data['scripts'] = list(all_scripts)
+    if definitionId:
+        data['definitionId'] = definitionId
+
+    return {id_: data}
+
+
+def get_generic_module_data(path):
+    json_data = get_json(path)
+    id_ = json_data.get('id')
+    name = json_data.get('name', '')
+    pack = get_pack_name(path)
+    fromversion = json_data.get('fromVersion')
+    toversion = json_data.get('toVersion')
+    definitionIds = json_data.get('definitionIds', [])
+    views = json_data.get('views', [])
+    views = {view.get('name'): {
+        'title': view.get('title'),
+        'dashboards': [tab.get('dashboard', {}).get('id') for tab in view.get('tabs', [])]} for view in views}
+
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
+    if definitionIds:
+        data['definitionIds'] = definitionIds
+    if views:
+        data['views'] = views
+
+    return {id_: data}
+
+
+def get_list_data(path: str):
+    json_data = get_json(path)
+    data = create_common_entity_data(path=path,
+                                     name=json_data.get('name'),
+                                     to_version=json_data.get('toVersion'),
+                                     from_version=json_data.get('fromVersion'),
+                                     pack=get_pack_name(path))
+
+    return {json_data.get('id'): data}
+
+
 class IDSetType(Enum):
     PLAYBOOK = 'playbooks'
     INTEGRATION = 'integrations'
@@ -1094,6 +1434,10 @@ class IDSetType(Enum):
     INDICATOR_TYPE = 'IndicatorTypes'
     LAYOUTS = 'Layouts'
     PACKS = 'Packs'
+    GENERIC_TYPE = 'GenericTypes'
+    GENERIC_FIELD = 'GenericFields'
+    GENERIC_MODULE = 'GenericModules'
+    GENERIC_DEFINITION = 'GenericDefinitions'
 
     @classmethod
     def has_value(cls, value):
@@ -1122,7 +1466,7 @@ class IDSet:
 
 def merge_id_sets_from_files(first_id_set_path, second_id_set_path, output_id_set_path, print_logs: bool = True):
     """
-    Merges two id sets. Loads them from files and saves the merged unified id_set into output_id_set_path.
+    Merges two id-sets. Loads them from files and saves the merged unified id_set into output_id_set_path.
     """
     with open(first_id_set_path, mode='r') as f1:
         first_id_set = json.load(f1)
@@ -1173,16 +1517,17 @@ def merge_id_sets(first_id_set_dict: dict, second_id_set_dict: dict, print_logs:
 
 
 def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_create=None,  # noqa : C901
-                     objects_to_create: list = None, print_logs: bool = True):
-    """Re create the id set
+                     objects_to_create: list = None, print_logs: bool = True, fail_on_duplicates: bool = False):
+    """Re create the id-set
 
     Args:
-        id_set_path (str, optional): If passed an empty string will use default path. Pass in None to avoid saving the id set.
+        id_set_path (str, optional): If passed an empty string will use default path. Pass in None to avoid saving the id-set.
             Defaults to DEFAULT_ID_SET_PATH.
         pack_to_create: The input path. the default is the content repo.
         objects_to_create (list, optional): [description]. Defaults to None.
+        fail_on_duplicates: If value is True an error will be raised if duplicates are found
 
-    Returns: id set object
+    Returns: id-set object
     """
     if id_set_path == "":
         id_set_path = DEFAULT_ID_SET_PATH
@@ -1197,7 +1542,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                 f"{os.getenv('DEMISTO_SDK_ID_SET_REFRESH_INTERVAL')} which is an illegal integer."
                 "\nPlease modify or unset env var.", LOG_COLORS.YELLOW
             )
-        if refresh_interval > 0:  # if file is newer than refersh interval use it as is
+        if refresh_interval > 0:  # if the file is newer than the refresh interval, use it as is
             mtime = os.path.getmtime(id_set_path)
             mtime_dt = datetime.fromtimestamp(mtime)
             target_time = time.time() - (refresh_interval * 60)
@@ -1205,20 +1550,22 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                 print_color(
                     f"DEMISTO_SDK_ID_SET_REFRESH_INTERVAL env var is set and detected that current id_set: {id_set_path}"
                     f" modify time: {mtime_dt} "
-                    "doesn't require a refresh. Will use current id set. "
-                    "If you want to force an id set referesh unset DEMISTO_SDK_ID_SET_REFRESH_INTERVAL or set to -1.",
+                    "doesn't require a refresh. Will use current id-set. "
+                    "If you rather force an id-set refresh, unset DEMISTO_SDK_ID_SET_REFRESH_INTERVAL or set it to -1.",
                     LOG_COLORS.GREEN)
                 with open(id_set_path, mode="r") as f:
                     return json.load(f)
             else:
-                print_color(f"DEMISTO_SDK_ID_SET_REFRESH_INTERVAL env var is set but current id_set: {id_set_path} "
-                            f"modify time: {mtime_dt} is older than refresh interval. "
-                            "Will re-generate the id set.", LOG_COLORS.GREEN)
+                print_color(
+                    f"The DEMISTO_SDK_ID_SET_REFRESH_INTERVAL env var is set, but current id_set: {id_set_path} "
+                    f"modify time: {mtime_dt} is older than the refresh interval. "
+                    "Re-generating id-set.", LOG_COLORS.GREEN)
         else:
             print_color("Note: DEMISTO_SDK_ID_SET_REFRESH_INTERVAL env var is not enabled. "
-                        f"Will re-generate the id set even though file exists: {id_set_path}. "
-                        "If you would like to avoid re-generating the id set every run, you can set the env var "
-                        "DEMISTO_SDK_ID_SET_REFRESH_INTERVAL to a refresh interval in minutes.", LOG_COLORS.GREEN)
+                        f"Will re-generate the id-set and overwrite the existing file: {id_set_path}. "
+                        "To avoid re-generating the id-set on every run, you can set the "
+                        "DEMISTO_SDK_ID_SET_REFRESH_INTERVAL env var to any refresh interval (in minutes).",
+                        LOG_COLORS.GREEN)
         print("")  # add an empty line for clarity
 
     if objects_to_create is None:
@@ -1240,13 +1587,18 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     reports_list = []
     widgets_list = []
     mappers_list = []
+    generic_types_list = []
+    generic_fields_list = []
+    generic_modules_list = []
+    generic_definitions_list = []
+    lists_list = []
     packs_dict: Dict[str, Dict] = {}
 
     pool = Pool(processes=int(cpu_count()))
 
     print_color("Starting the creation of the id_set", LOG_COLORS.GREEN)
 
-    with click.progressbar(length=len(objects_to_create), label="Progress of id set creation") as progress_bar:
+    with click.progressbar(length=len(objects_to_create), label="Creating id-set") as progress_bar:
 
         if 'Packs' in objects_to_create:
             print_color("\nStarting iteration over Packs", LOG_COLORS.GREEN)
@@ -1430,6 +1782,66 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
 
         progress_bar.update(1)
 
+        if 'Lists' in objects_to_create:
+            print_color("\nStarting iteration over Lists", LOG_COLORS.GREEN)
+            for arr in pool.map(partial(process_general_items,
+                                        print_logs=print_logs,
+                                        expected_file_types=(FileType.LISTS,),
+                                        data_extraction_func=get_list_data,
+                                        ),
+                                get_general_paths(LISTS_DIR, pack_to_create)):
+                lists_list.extend(arr)
+
+        progress_bar.update(1)
+
+        if 'GenericDefinitions' in objects_to_create:
+            print_color("\nStarting iteration over Generic Definitions", LOG_COLORS.GREEN)
+            print_color(f"pack to create: {pack_to_create}", LOG_COLORS.YELLOW)
+            for arr in pool.map(partial(process_general_items,
+                                        expected_file_types=(FileType.GENERIC_DEFINITION,),
+                                        data_extraction_func=get_general_data,
+                                        print_logs=print_logs,
+                                        ),
+                                get_general_paths(GENERIC_DEFINITIONS_DIR, pack_to_create)):
+                generic_definitions_list.extend(arr)
+
+        progress_bar.update(1)
+
+        if 'GenericModules' in objects_to_create:
+            print_color("\nStarting iteration over Generic Modules", LOG_COLORS.GREEN)
+            for arr in pool.map(partial(process_general_items,
+                                        print_logs=print_logs,
+                                        expected_file_types=(FileType.GENERIC_MODULE,),
+                                        data_extraction_func=get_generic_module_data,
+                                        ),
+                                get_general_paths(GENERIC_MODULES_DIR, pack_to_create)):
+                generic_modules_list.extend(arr)
+
+        progress_bar.update(1)
+
+        if 'GenericTypes' in objects_to_create:
+            print_color("\nStarting iteration over Generic Types", LOG_COLORS.GREEN)
+            print_color(f"pack to create: {pack_to_create}", LOG_COLORS.YELLOW)
+            for arr in pool.map(partial(process_generic_items,
+                                        print_logs=print_logs,
+                                        ),
+                                get_generic_entities_paths(GENERIC_TYPES_DIR, pack_to_create)):
+                generic_types_list.extend(arr)
+
+        progress_bar.update(1)
+
+        # Has to be called after 'GenericTypes' is called
+        if 'GenericFields' in objects_to_create:
+            print_color("\nStarting iteration over Generic Fields", LOG_COLORS.GREEN)
+            for arr in pool.map(partial(process_generic_items,
+                                        print_logs=print_logs,
+                                        generic_types_list=generic_types_list,
+                                        ),
+                                get_generic_entities_paths(GENERIC_FIELDS_DIR, pack_to_create)):
+                generic_fields_list.extend(arr)
+
+        progress_bar.update(1)
+
     new_ids_dict = OrderedDict()
     # we sort each time the whole set in case someone manually changed something
     # it shouldn't take too much time
@@ -1448,14 +1860,17 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     new_ids_dict['Widgets'] = sort(widgets_list)
     new_ids_dict['Mappers'] = sort(mappers_list)
     new_ids_dict['Packs'] = packs_dict
+    new_ids_dict['GenericTypes'] = sort(generic_types_list)
+    new_ids_dict['GenericFields'] = sort(generic_fields_list)
+    new_ids_dict['GenericModules'] = sort(generic_modules_list)
+    new_ids_dict['GenericDefinitions'] = sort(generic_definitions_list)
+    new_ids_dict['Lists'] = sort(lists_list)
 
     exec_time = time.time() - start_time
     print_color("Finished the creation of the id_set. Total time: {} seconds".format(exec_time), LOG_COLORS.GREEN)
     duplicates = find_duplicates(new_ids_dict, print_logs)
-    if any(duplicates) and print_logs:
-        print_error(
-            f'The following ids were found duplicates\n{json.dumps(duplicates, indent=4)}\n'
-        )
+    if any(duplicates) and fail_on_duplicates:
+        raise Exception(f'The following ids were found duplicates\n{json.dumps(duplicates, indent=4)}\n')
 
     return new_ids_dict
 
@@ -1516,19 +1931,12 @@ def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=
         dict1_to_version = LooseVersion(dict1.get('toversion', '99.99.99'))
         dict2_to_version = LooseVersion(dict2.get('toversion', '99.99.99'))
 
-        if print_logs and dict1.get('name') != dict2.get('name'):
-            print_warning('The following {} have the same ID ({}) but different names: '
-                          '"{}", "{}".'.format(object_type, id_to_check, dict1.get('name'), dict2.get('name')))
-
         # Checks if the Layouts kind is different then they are not duplicates
         if object_type == 'Layouts':
             if dict1.get('kind', '') != dict2.get('kind', ''):
                 return False
-
-        # If they have the same pack name they actually the same entity.
-        # Added to support merge between two ID sets that contain the same pack.
-        if dict1.get('pack') == dict2.get('pack'):
-            return False
+            if dict1.get('typeID', '') != dict2.get('typeID', ''):
+                return False
 
         # A: 3.0.0 - 3.6.0
         # B: 3.5.0 - 4.5.0
@@ -1540,7 +1948,14 @@ def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=
             dict2_from_version <= dict1_from_version < dict2_to_version,  # will catch (C, B), (B, A), (C, A)
             dict2_from_version < dict1_to_version <= dict2_to_version,  # will catch (C, B), (C, A)
         ]):
+            print_warning(f'The following {object_type} have the same ID ({id_to_check}) and their versions overlap: '
+                          f'1) "{dict1_from_version}-{dict1_to_version}", '
+                          f'2) "{dict2_from_version}-{dict2_to_version}".')
             return True
+
+        if print_logs and dict1.get('name') != dict2.get('name'):
+            print_warning('The following {} have the same ID ({}) but different names: '
+                          '"{}", "{}".'.format(object_type, id_to_check, dict1.get('name'), dict2.get('name')))
 
     return False
 

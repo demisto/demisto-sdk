@@ -8,6 +8,7 @@ from typing import Any, List, Optional, Union
 
 import autopep8
 import yaml
+
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.tools import camel_to_snake, print_error
@@ -20,7 +21,7 @@ from demisto_sdk.commands.generate_integration.XSOARIntegration import \
     XSOARIntegration
 
 ILLEGAL_DESCRIPTION_CHARS = ['\n', 'br', '*', '\r', '\t', 'para', 'span', '«', '»', '<', '>']
-ILLEGAL_CODE_CHARS = ILLEGAL_DESCRIPTION_CHARS + [' ', '.', ',', '(', ')', '`', ':', "'", '"', '[', ']']
+ILLEGAL_CODE_CHARS = ILLEGAL_DESCRIPTION_CHARS + [' ', '.', ',', '(', ')', '`', ':', "'", '"', '[', ']', '-']
 ILLEGAL_CODE_NAMES = ['type', 'from', 'id', 'filter', 'list']
 NAME_FIX = '_'
 OUTPUT_TYPES = {
@@ -160,13 +161,18 @@ class OpenAPIIntegration:
             command['headers'] = headers
 
             for arg in function['arguments']:
+                arg_name = arg.get('name', '')
+                arg_ref = arg.get('ref', '')
+                for char in ILLEGAL_CODE_CHARS:
+                    arg_name = arg_name.replace(char, '_')
+                    arg_ref = arg_ref.replace(char, '_')
                 command['arguments'].append({
-                    'name': str(arg.get('name', '')),
+                    'name': arg_name,
                     'description': arg.get('description', ''),
                     'required': arg.get('required'),
                     'default': arg.get('default', ''),
                     'in': arg.get('in', ''),
-                    'ref': arg.get('ref', ''),
+                    'ref': arg_ref,
                     'type': arg.get('type', 'string'),
                     'options': arg.get('enums'),
                     'properties': arg.get('properties', {})
@@ -219,7 +225,7 @@ class OpenAPIIntegration:
 
         code = code.replace('$FUNCTIONS$', '\n'.join(functions))
         code = code.replace('$BASEURL$', self.base_path)
-        client = BASE_CLIENT.replace('$REQUESTFUNCS$', ''.join(req_functions))
+        client = BASE_CLIENT.replace('$REQUESTFUNCS$', '\n'.join(req_functions))
         code = code.replace('$CLIENT$', client).replace('$CLIENT_API_KEY$', '')
 
         if BEARER_AUTH_TYPE in self.configuration['auth']:
@@ -374,6 +380,8 @@ class OpenAPIIntegration:
             if arg.get('ref'):
                 ref_arg_name = f'{arg["ref"]}_{ref_arg_name}'.lower()
                 code_arg_name = f'{arg["ref"]}_{code_arg_name}'.lower()
+            if ref_arg_name in ILLEGAL_CODE_NAMES:
+                ref_arg_name = f'{ref_arg_name}{NAME_FIX}'
             if code_arg_name in ILLEGAL_CODE_NAMES:
                 code_arg_name = f'{code_arg_name}{NAME_FIX}'
             if arg['properties']:
@@ -534,6 +542,8 @@ class OpenAPIIntegration:
                 arg_name = arg['name']
                 if arg.get('ref'):
                     arg_name = f"{arg['ref']}_{arg_name}".lower()
+                if arg_name in ILLEGAL_CODE_NAMES:
+                    arg_name = f'{arg_name}{NAME_FIX}'
                 required = True if arg['required'] else False
                 description = arg.get('description', '')
                 is_array = True if arg['type'] == 'array' else False
@@ -623,14 +633,16 @@ class OpenAPIIntegration:
                                          'description': extracted_object.get('description', '')})
                 elif extracted_object.get('type') and type(extracted_object.get('type')) == dict:
                     for k, v in extracted_object.items():
-                        current_context.append(k)
-                        prop_arr = extract(v, prop_arr, current_context)
-                        current_context.pop()
+                        if k not in current_context:
+                            current_context.append(k)
+                            prop_arr = extract(v, prop_arr, current_context)
+                            current_context.pop()
                 else:
                     for k, v in extracted_object.items():
-                        current_context.append(k)
-                        prop_arr = extract(v, prop_arr, current_context)
-                        current_context.pop()
+                        if k not in current_context:
+                            current_context.append(k)
+                            prop_arr = extract(v, prop_arr, current_context)
+                            current_context.pop()
 
             return prop_arr
 
@@ -670,6 +682,9 @@ class OpenAPIIntegration:
                     for ref in refs:
                         ref = ref.split('/')[-1]
                         ref_props = self.extract_values(self.reference.get(ref, {}), 'properties')
+                        # Addition of filtering dicts only was added because some swaggers contain example files
+                        # Which are written in string and caused errors on ref_props[0].items()
+                        ref_props = [ref_prop for ref_prop in ref_props if isinstance(ref_prop, dict)]
                         if ref_props:
                             for k, prop in ref_props[0].items():
                                 if k in self.root_objects:
@@ -717,6 +732,9 @@ class OpenAPIIntegration:
                 for ref in refs:
                     ref = ref.split('/')[-1]
                     ref_args = self.extract_values(self.reference.get(ref, {}), 'properties')
+                    # Addition of filtering dicts only was added because some swaggers contain example files
+                    # Which are written in string and caused errors on ref_props[0].items()
+                    ref_args = [ref_arg for ref_arg in ref_args if isinstance(ref_arg, dict)]
                     for ref_arg in ref_args:
                         for k, v in ref_arg.items():
                             new_ref_arg = {'name': k, 'in': arg.get('in'),
@@ -836,7 +854,7 @@ class OpenAPIIntegration:
             config_file: The path to the configuration file.
         """
         self.print_with_verbose('Creating configuration file...')
-        config_file = os.path.join(directory, f'{self.base_name}.json')
+        config_file = os.path.join(directory, f'{self.base_name}_config.json')
         try:
             with open(config_file, 'w') as fp:
                 json.dump(config, fp, indent=4)
@@ -941,7 +959,6 @@ class OpenAPIIntegration:
                 for item in extracted_object:
                     extract(item, values, key_to_extract)
             return values
-
         results = extract(obj, arr, key)
         return results
 

@@ -1,6 +1,7 @@
 from distutils.version import LooseVersion
 
 import click
+
 from demisto_sdk.commands.common.constants import \
     LAYOUT_AND_MAPPER_BUILT_IN_FIELDS
 from demisto_sdk.commands.common.errors import Errors
@@ -72,17 +73,20 @@ class ClassifierValidator(ContentEntityValidator):
             if self.new_classifier_version:
                 if LooseVersion(from_version) < LooseVersion(FROM_VERSION_FOR_NEW_CLASSIFIER):
                     error_message, error_code = Errors.invalid_from_version_in_new_classifiers()
-                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                         suggested_fix=Errors.suggest_fix(self.file_path)):
                         return False
             else:
                 if LooseVersion(from_version) >= LooseVersion(FROM_VERSION_FOR_NEW_CLASSIFIER):
                     error_message, error_code = Errors.invalid_from_version_in_old_classifiers()
-                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                         suggested_fix=Errors.suggest_fix(self.file_path)):
                         return False
 
         elif not from_version and self.new_classifier_version:
             error_message, error_code = Errors.missing_from_version_in_new_classifiers()
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
+            if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                 suggested_fix=Errors.suggest_fix(self.file_path)):
                 return False
         return True
 
@@ -103,12 +107,14 @@ class ClassifierValidator(ContentEntityValidator):
             else:
                 if LooseVersion(to_version) > LooseVersion(TO_VERSION_FOR_OLD_CLASSIFIER):
                     error_message, error_code = Errors.invalid_to_version_in_old_classifiers()
-                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                         suggested_fix=Errors.suggest_fix(self.file_path)):
                         return False
 
         elif not to_version and not self.new_classifier_version:
             error_message, error_code = Errors.missing_to_version_in_old_classifiers()
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
+            if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                 suggested_fix=Errors.suggest_fix(self.file_path)):
                 return False
         return True
 

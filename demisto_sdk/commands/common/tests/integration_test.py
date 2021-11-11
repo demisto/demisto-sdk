@@ -1,24 +1,30 @@
 import os
 from copy import deepcopy
-from typing import Optional
+from typing import Dict, List, Optional
 
 import pytest
+from mock import mock_open, patch
+
 from demisto_sdk.commands.common.constants import (FEED_REQUIRED_PARAMS,
                                                    FETCH_REQUIRED_PARAMS,
                                                    FIRST_FETCH_PARAM,
                                                    MAX_FETCH_PARAM)
+from demisto_sdk.commands.common.default_additional_info_loader import \
+    load_default_additional_info_dict
 from demisto_sdk.commands.common.hook_validations.integration import \
     IntegrationValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from mock import mock_open, patch
+from TestSuite.test_tools import ChangeCWD
+
+default_additional_info = load_default_additional_info_dict()
 
 FEED_REQUIRED_PARAMS_STRUCTURE = [dict(required_param.get('must_equal'), **required_param.get('must_contain'),
                                        name=required_param.get('name')) for required_param in FEED_REQUIRED_PARAMS]
 
 
-def mock_structure(file_path=None, current_file=None, old_file=None):
+def mock_structure(file_path=None, current_file=None, old_file=None, quite_bc=False):
     # type: (Optional[str], Optional[dict], Optional[dict]) -> StructureValidator
     with patch.object(StructureValidator, '__init__', lambda a, b: None):
         structure = StructureValidator(file_path)
@@ -29,6 +35,7 @@ def mock_structure(file_path=None, current_file=None, old_file=None):
         structure.old_file = old_file
         structure.prev_ver = 'master'
         structure.branch_name = ''
+        structure.quite_bc = quite_bc
         return structure
 
 
@@ -59,6 +66,8 @@ class TestIntegrationValidator:
         structure = mock_structure("", current_file, old_file)
         validator = IntegrationValidator(structure)
         assert validator.is_added_required_fields() is answer
+        structure.quite_bc = True
+        assert validator.is_added_required_fields() is False  # if quite_bc is true should always succeed
 
     IS_CHANGED_REMOVED_YML_FIELDS_INPUTS = [
         ({"script": {"isfetch": True, "feed": False}}, {"script": {"isfetch": True, "feed": False}}, False),
@@ -86,6 +95,8 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         assert validator.is_changed_removed_yml_fields() is answer
         assert validator.is_valid is not answer
+        structure.quite_bc = True
+        assert validator.is_changed_removed_yml_fields() is False  # if quite_bc is true should always succeed
 
     IS_REMOVED_INTEGRATION_PARAMETERS_INPUTS = [
         ({"configuration": [{"name": "test"}]}, {"configuration": [{"name": "test"}]}, False),
@@ -111,6 +122,8 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         assert validator.is_removed_integration_parameters() is answer
         assert validator.is_valid is not answer
+        structure.quite_bc = True
+        assert validator.is_removed_integration_parameters() is False  # if quite_bc is true should always succeed
 
     CONFIGURATION_JSON_1 = {"configuration": [{"name": "test", "required": False}, {"name": "test1", "required": True}]}
     EXPECTED_JSON_1 = {"test": False, "test1": True}
@@ -146,6 +159,8 @@ class TestIntegrationValidator:
         structure = mock_structure("", current, old)
         validator = IntegrationValidator(structure)
         assert validator.is_changed_context_path() is answer
+        structure.quite_bc = True
+        assert validator.is_changed_context_path() is False  # if quite_bc is true should always succeed
 
     CHANGED_COMMAND_INPUT_1 = [{"name": "test", "arguments": [{"name": "test"}]}]
     CHANGED_COMMAND_INPUT_2 = [{"name": "test", "arguments": [{"name": "test1"}]}]
@@ -172,6 +187,8 @@ class TestIntegrationValidator:
         structure = mock_structure("", current, old)
         validator = IntegrationValidator(structure)
         assert validator.is_changed_command_name_or_arg() is answer
+        structure.quite_bc = True
+        assert validator.is_changed_command_name_or_arg() is False  # if quite_bc is true should always succeed
 
     WITHOUT_DUP = [{"name": "test"}, {"name": "test1"}]
     DUPLICATE_PARAMS_INPUTS = [
@@ -216,9 +233,14 @@ class TestIntegrationValidator:
 
     WITHOUT_DUP_ARGS = [{"name": "testing", "arguments": [{"name": "test1"}, {"name": "test2"}]}]
     WITH_DUP_ARGS = [{"name": "testing", "arguments": [{"name": "test1"}, {"name": "test1"}]}]
+    WITH_DUP_ARGS_NON_IDENTICAL = [
+        {"name": "testing", "arguments": [{"name": "test1", "desc": "hello"}, {"name": "test1", "desc": "hello1"}]},
+    ]
+
     DUPLICATE_ARGS_INPUTS = [
         (WITHOUT_DUP_ARGS, True),
-        (WITH_DUP_ARGS, False)
+        (WITH_DUP_ARGS, False),
+        (WITH_DUP_ARGS_NON_IDENTICAL, False),
     ]
 
     @pytest.mark.parametrize("current, answer", DUPLICATE_ARGS_INPUTS)
@@ -227,6 +249,28 @@ class TestIntegrationValidator:
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
         assert validator.has_no_duplicate_args() is answer
+
+    WITH_DEFAULT_INFO = [{"name": "API key", "additionalinfo": default_additional_info['API key']}]
+    MISSING_DEFAULT_INFO = [{"name": "API key", "additionalinfo": ""}]
+    NON_DEFAULT_INFO = [{"name": "API key", "additionalinfo": "you know, the API key"}]
+
+    DEFAULT_INFO_INPUTS = [
+        (WITH_DEFAULT_INFO, True, False),
+        (MISSING_DEFAULT_INFO, False, False),
+        (NON_DEFAULT_INFO, True, True)]
+
+    @pytest.mark.parametrize("args, answer, expecting_warning", DEFAULT_INFO_INPUTS)
+    def test_default_params_default_info(self, capsys, args: List[Dict], answer: str, expecting_warning: bool):
+        validator = IntegrationValidator(mock_structure("", {"configuration": args}))
+        assert validator.default_params_have_default_additional_info() is answer
+
+        if expecting_warning:
+            from demisto_sdk.commands.common.errors import Errors
+            warning_message, warning_code = Errors.non_default_additional_info(['API key'])
+            expected_warning = f"[{warning_code}] - {warning_message}"
+            captured = capsys.readouterr()
+            assert captured.out.lstrip("\":").strip() == expected_warning
+            assert not captured.err
 
     NO_INCIDENT_INPUT = [
         ({"script": {"commands": [{"name": "command1", "arguments": [{"name": "arg1"}]}]}}, True),
@@ -275,6 +319,8 @@ class TestIntegrationValidator:
         structure = mock_structure("", current, old)
         validator = IntegrationValidator(structure)
         assert validator.is_changed_subtype() is answer
+        structure.quite_bc = True
+        assert validator.is_changed_subtype() is False  # if quite_bc is true should always succeed
 
     INPUTS_VALID_SUBTYPE_TEST = [
         (PYTHON2_SUBTYPE, True),
@@ -289,24 +335,36 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         assert validator.is_valid_subtype() is answer
 
-    DEFAULT_ARGS_1 = [
-        {"name": "cve", "arguments": [{"name": "cve_id", "required": False, "default": True}]}]
-    DEFAULT_ARGS_2 = [
-        {"name": "email", "arguments": [{"name": "email", "required": False, "default": True}, {"name": "verbose"}]}]
-    DEFAULT_ARGS_INVALID_1 = [{"name": "file", "required": True, "default": True}, {"name": "verbose"}]
-    DEFAULT_ARGS_INVALID_2 = [
+    DEFAULT_ARGS_DIFFERENT_ARG_NAME = [
+        {"name": "cve", "arguments": [{"name": "cve_id", "required": False, "default": True, 'isArray': True}]}]
+    DEFAULT_ARGS_MISSING_UNREQUIRED_DEFAULT_FIELD = [
+        {"name": "email", "arguments": [{"name": "email", "required": False, "default": True, 'isArray': True},
+                                        {"name": "verbose"}]}]
+    DEFAULT_ARGS_MISSING_DEFAULT_PARAM_WHEN_ALLOWED = [
+        {"name": "endpoint", "arguments": [{"name": "id", "required": False, "default": False}]}]
+    DEFAULT_ARGS_INVALID_PARMA_MISSING_DEFAULT = [{"name": "file", "required": True, "default": True, 'isArray': True},
+                                                  {"name": "verbose"}]
+    DEFAULT_ARGS_INVALID_NOT_DEFAULT = [
         {"name": "email", "arguments": [{"name": "email", "required": False, "default": False}, {"name": "verbose"}]}]
-    DEFAULT_ARGS_INVALID_3 = [{"name": "file", "required": True, "default": False}, {"name": "verbose"}]
+    DEFAULT_ARGS_INVALID_COMMAND = [{"name": "file", "required": True, "default": False}, {"name": "verbose"}]
+    DEFAULT_ARGS_MISSING_DEFAULT_PARAM_WHEN_NOT_ALLOWED = [
+        {"name": "email", "arguments": [{"name": "verbose", "required": False, "default": False, "isArray": True}]}]
+    DEFAULT_ARGS_NOT_ARRAY = [
+        {"name": "email", "arguments": [{"name": "email", "required": False, "default": True, "isArray": False},
+                                        {"name": "verbose"}]}]
     DEFAULT_ARGS_INPUTS = [
-        (DEFAULT_ARGS_1, True),
-        (DEFAULT_ARGS_2, True),
-        (DEFAULT_ARGS_INVALID_1, False),
-        (DEFAULT_ARGS_INVALID_2, False),
-        (DEFAULT_ARGS_INVALID_3, False),
+        (DEFAULT_ARGS_DIFFERENT_ARG_NAME, True),
+        (DEFAULT_ARGS_MISSING_UNREQUIRED_DEFAULT_FIELD, True),
+        (DEFAULT_ARGS_MISSING_DEFAULT_PARAM_WHEN_ALLOWED, True),
+        (DEFAULT_ARGS_INVALID_PARMA_MISSING_DEFAULT, False),
+        (DEFAULT_ARGS_INVALID_NOT_DEFAULT, False),
+        (DEFAULT_ARGS_INVALID_COMMAND, False),
+        (DEFAULT_ARGS_MISSING_DEFAULT_PARAM_WHEN_NOT_ALLOWED, False),
+        (DEFAULT_ARGS_NOT_ARRAY, False)
     ]
 
     @pytest.mark.parametrize("current, answer", DEFAULT_ARGS_INPUTS)
-    def test_is_valid_default_argument_in_reputation_command(self, current, answer):
+    def test_is_valid_default_array_argument_in_reputation_command(self, current, answer):
         """
         Given: Integration reputation command with arguments.
 
@@ -318,7 +376,7 @@ class TestIntegrationValidator:
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
         validator.current_file = current
-        assert validator.is_valid_default_argument_in_reputation_command() is answer
+        assert validator.is_valid_default_array_argument_in_reputation_command() is answer
 
     MULTIPLE_DEFAULT_ARGS_1 = [
         {"name": "msgraph-list-users",
@@ -329,6 +387,7 @@ class TestIntegrationValidator:
     MULTIPLE_DEFAULT_ARGS_INVALID_1 = [
         {"name": "msgraph-list-users",
          "arguments": [{"name": "users", "required": False, "default": True}, {"name": "verbose", "default": True}]}]
+
     DEFAULT_ARGS_INPUTS = [
         (MULTIPLE_DEFAULT_ARGS_1, True),
         (MULTIPLE_DEFAULT_ARGS_2, True),
@@ -371,12 +430,18 @@ class TestIntegrationValidator:
         {"contextPath": "DBotScore.Vendor", "description": "Vendor used to calculate the score.", "type": "string"},
         {"contextPath": "DBotScore.Score", "description": "The actual score.", "type": "int"},
         {"contextPath": "IP.Address", "description": "IP address", "type": "string"}]
+    MOCK_REPUTATIONS_VALID_ENDPOINT = [
+        {"contextPath": 'Endpoint.Hostname', "description": "The endpoint's hostname.", "type": "string"},
+        {"contextPath": 'Endpoint.IPAddress', "description": "The endpoint's IP address.", "type": "string"},
+        {"contextPath": 'Endpoint.ID', "description": "The endpoint's ID.", "type": "string"}]
+
     IS_OUTPUT_FOR_REPUTATION_INPUTS = [
         (MOCK_REPUTATIONS_1, "not bang", True),
         (MOCK_REPUTATIONS_2, "not bang", True),
         (MOCK_REPUTATIONS_INVALID_EMAIL, "email", False),
         (MOCK_REPUTATIONS_INVALID_FILE, "file", False),
-        (MOCK_REPUTATIONS_VALID_IP, "ip", True)
+        (MOCK_REPUTATIONS_VALID_IP, "ip", True),
+        (MOCK_REPUTATIONS_VALID_ENDPOINT, "endpoint", True)
     ]
 
     @pytest.mark.parametrize("current, name, answer", IS_OUTPUT_FOR_REPUTATION_INPUTS)
@@ -386,6 +451,47 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         validator.current_file = current
         assert validator.is_outputs_for_reputations_commands_valid() is answer
+        structure.quite_bc = True
+        assert validator.is_outputs_for_reputations_commands_valid() is True  # if quite_bc is true should succeed
+
+    CASE_EXISTS_WITH_DEFAULT_TRUE = [
+        {"name": "endpoint", "arguments": [{"name": "ip", "required": False, "default": True}],
+         "outputs": [{'contextPath': 'Endpoint.ID'}, {'contextPath': 'Endpoint.IPAddress'},
+                     {'contextPath': 'Endpoint.Hostname'}]}]
+    CASE_REQUIRED_ARG_WITH_DEFAULT_FALSE = [
+        {"name": "endpoint", "arguments": [{"name": "id", "required": False, "default": False}],
+         "outputs": [{'contextPath': 'Endpoint.ID'}, {'contextPath': 'Endpoint.IPAddress'},
+                     {'contextPath': 'Endpoint.Hostname'}]}]
+    CASE_INVALID_MISSING_REQUIRED_ARGS = [
+        {"name": "endpoint", "arguments": [{"name": "url", "required": False, "default": True}]}]
+    CASE_INVALID_NON_DEFAULT_ARG_WITH_DEFAULT_TRUE = [
+        {"name": "endpoint", "arguments": [{"name": "id", "required": False, "default": True}]}]
+    CASE_INVALID_MISSING_OUTPUT = [
+        {"name": "endpoint", "arguments": [{"name": "ip", "required": False, "default": True}],
+         "outputs": [{'contextPath': 'Endpoint.IPAddress'}, {'contextPath': 'Endpoint.Hostname'},
+                     {'contextPath': 'Endpoint.Test'}]}]
+    ENDPOINT_CASES = [
+        (CASE_EXISTS_WITH_DEFAULT_TRUE, True),
+        (CASE_REQUIRED_ARG_WITH_DEFAULT_FALSE, True),
+        (CASE_INVALID_MISSING_REQUIRED_ARGS, False),
+        (CASE_INVALID_NON_DEFAULT_ARG_WITH_DEFAULT_TRUE, False)
+    ]
+
+    @pytest.mark.parametrize("current, answer", ENDPOINT_CASES)
+    def test_is_valid_endpoint_command(self, current, answer):
+        """
+        Given: Endpoint command with arguments and outputs in yml.
+
+        When: running is_valid_endpoint_command.
+
+        Then: Validate that at least one of the required input exists (with correct deafult field)
+         and the relevant outputs are correct.
+        """
+        current = {"script": {"commands": current}}
+        structure = mock_structure("", current)
+        validator = IntegrationValidator(structure)
+        validator.current_file = current
+        assert validator.is_valid_endpoint_command() is answer
 
     VALID_BETA = {"commonfields": {"id": "newIntegration"}, "name": "newIntegration",
                   "display": "newIntegration (Beta)", "beta": True}
@@ -513,14 +619,18 @@ class TestIntegrationValidator:
         {"name": "unsecure", "type": 17, "required": False, "hidden": False}]
     INVALID_DISPLAY_TYPE_EXPIRATION = [
         {"name": "unsecure", "type": 17, "display": "some display", "required": False, "hidden": False}]
+    INVALID_DISPLAY_BUT_VALID_DISPLAYPASSWORD = [
+        {"name": "credentials", "type": 9, "display": "", "displaypassword": "some display password", "required": True,
+         "hiddenusername": True}]
     IS_VALID_DISPLAY_INPUTS = [
         (VALID_DISPLAY_NON_HIDDEN, True),
         (VALID_DISPLAY_HIDDEN, True),
         (INVALID_DISPLAY_NON_HIDDEN, False),
-        (INVALID_DISPLAY_NON_HIDDEN, False),
+        (INVALID_NO_DISPLAY_NON_HIDDEN, False),
         (VALID_NO_DISPLAY_TYPE_EXPIRATION, True),
         (INVALID_DISPLAY_TYPE_EXPIRATION, False),
         (FEED_REQUIRED_PARAMS_STRUCTURE, True),
+        (INVALID_DISPLAY_BUT_VALID_DISPLAYPASSWORD, True)
     ]
 
     @pytest.mark.parametrize("configuration_setting, answer", IS_VALID_DISPLAY_INPUTS)
@@ -530,6 +640,8 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         validator.current_file = current
         assert validator.is_not_valid_display_configuration() is not answer
+        structure.quite_bc = True
+        assert validator.is_not_valid_display_configuration() is False  # if quite_bc is true should always succeed
 
     VALID_FEED = [
         # Valid feed
@@ -668,10 +780,39 @@ class TestIntegrationValidator:
             {'display': 'token'},
             {'display': 'User_name'}
         ]})
-        structure_validator = StructureValidator(integration.yml.path, predefined_scheme='integration')
-        validator = IntegrationValidator(structure_validator)
 
-        assert not validator.is_valid_parameters_display_name()
+        with ChangeCWD(integration.repo_path):
+            structure_validator = StructureValidator(integration.yml.path, predefined_scheme='integration')
+            validator = IntegrationValidator(structure_validator)
+
+            assert not validator.is_valid_parameters_display_name()
+
+    @pytest.mark.parametrize('support_level, expected_result', [('XSOAR', True), ('community', False)])
+    def test_fromlicense_in_integration_parameters_fields(self, pack, support_level, expected_result):
+        """
+        Given
+            - An integration from a contributor with not allowed key ('fromlicense') in parameters.
+        When
+            - Running is_valid_param.
+        Then
+            - an integration with an invalid parameters display name is invalid.
+        """
+        pack.pack_metadata.write_json({"support": support_level})
+        integration = pack.create_integration('contributor')
+
+        integration.yml.write_dict({'configuration': [{
+            'name': 'token',
+            'display': 'token',
+            'fromlicense': 'encrypted'
+        }]})
+
+        with ChangeCWD(pack.repo_path):
+            structure_validator = StructureValidator(integration.yml.path, predefined_scheme='integration')
+            validator = IntegrationValidator(structure_validator)
+
+            result = validator.has_no_fromlicense_key_in_contributions_integration()
+
+        assert result == expected_result
 
     def test_valid_integration_path(self, integration):
         """
@@ -720,6 +861,150 @@ class TestIntegrationValidator:
         mocker.patch.object(validator, "handle_error", return_value=True)
 
         assert not validator.is_valid_integration_file_path()
+
+    def test_folder_name_without_separators(self, pack):
+        """
+        Given
+            - An integration without separators in folder name.
+        When
+            - running check_separators_in_folder.
+        Then
+            - Ensure the validate passes.
+        """
+
+        integration = pack.create_integration('myInt')
+
+        structure_validator = StructureValidator(integration.yml.path)
+        validator = IntegrationValidator(structure_validator)
+
+        assert validator.check_separators_in_folder()
+
+    def test_files_names_without_separators(self, pack):
+        """
+        Given
+            - An integration without separators in files names.
+        When
+            - running check_separators_in_files.
+        Then
+            - Ensure the validate passes.
+        """
+
+        integration = pack.create_integration('myInt')
+
+        structure_validator = StructureValidator(integration.yml.path)
+        validator = IntegrationValidator(structure_validator)
+
+        assert validator.check_separators_in_files()
+
+    def test_folder_name_with_separators(self, pack):
+        """
+        Given
+            - An integration with separators in folder name.
+        When
+            - running check_separators_in_folder.
+        Then
+            - Ensure the validate failed.
+        """
+
+        integration = pack.create_integration('my_Int')
+
+        with ChangeCWD(integration.repo_path):
+            structure_validator = StructureValidator(integration.yml.path)
+            validator = IntegrationValidator(structure_validator)
+
+            assert not validator.check_separators_in_folder()
+
+    def test_files_names_with_separators(self, pack):
+        """
+        Given
+            - An integration with separators in files names.
+        When
+            - running check_separators_in_files.
+        Then
+            - Ensure the validate failed.
+        """
+
+        integration = pack.create_integration('my_Int')
+
+        with ChangeCWD(integration.repo_path):
+            structure_validator = StructureValidator(integration.yml.path)
+            validator = IntegrationValidator(structure_validator)
+
+            assert not validator.check_separators_in_files()
+
+    def test_name_contains_the_type(self, pack):
+        """
+        Given
+            - An integration with a name that contains the word "integration".
+        When
+            - running name_not_contain_the_type.
+        Then
+            - Ensure the validate failed.
+        """
+        integration = pack.create_integration(yml={"name": "test_integration"})
+
+        with ChangeCWD(pack.repo_path):
+            structure_validator = StructureValidator(integration.yml.path)
+            validator = IntegrationValidator(structure_validator)
+
+            assert not validator.name_not_contain_the_type()
+
+    def test_display_name_contains_the_type(self, pack):
+        """
+        Given
+            - An integration with a display name that contains the word "integration".
+        When
+            - running name_not_contain_the_type.
+        Then
+            - Ensure the validate failed.
+        """
+
+        integration = pack.create_integration(yml={"display": "test_integration"})
+
+        with ChangeCWD(pack.repo_path):
+            structure_validator = StructureValidator(integration.yml.path)
+            validator = IntegrationValidator(structure_validator)
+
+            assert not validator.name_not_contain_the_type()
+
+    def test_name_does_not_contains_the_type(self, pack):
+        """
+        Given
+            - An integration with a name that does not contains "integration" string.
+        When
+            - running name_not_contain_the_type.
+        Then
+            - Ensure the validate passes.
+        """
+
+        integration = pack.create_integration(yml={"name": "test", "display": "test"})
+
+        structure_validator = StructureValidator(integration.yml.path)
+        validator = IntegrationValidator(structure_validator)
+
+        assert validator.name_not_contain_the_type()
+
+    IS_SKIPPED_INPUTS = [
+        ({'skipped_integrations': {"SomeIntegration": "No instance"}}, False),
+        ({'skipped_integrations': {"SomeOtherIntegration": "No instance"}}, True)
+    ]
+
+    @pytest.mark.parametrize("conf_dict, answer", IS_SKIPPED_INPUTS)
+    def test_is_unskipped_integration(self, conf_dict, answer):
+        """
+        Given:
+            - An integration.
+            - conf file with configurations for the integration.
+
+        When: running validate specifically on integration.
+
+        Then: Validate the integration is not skipped.
+        """
+        current = {"commonfields": {"id": "SomeIntegration"}}
+        structure = mock_structure("", current)
+        validator = IntegrationValidator(structure)
+        validator.current_file = current
+        assert validator.is_unskipped_integration(conf_dict) is answer
 
 
 class TestIsFetchParamsExist:
@@ -939,7 +1224,7 @@ class TestIsFeedParamsExist:
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
         validator.current_file = current
-        assert validator.is_valid_default_argument_in_reputation_command() is True
+        assert validator.is_valid_default_array_argument_in_reputation_command() is True
 
     @pytest.mark.parametrize('param', [
         {'commands': ['something']},
@@ -1046,12 +1331,10 @@ class TestisContextChanged:
     ]
 
     @pytest.mark.parametrize('readme, current_yml, expected', TEST_CASE)
-    def test_is_context_change_in_readme(self, readme, current_yml, expected):
+    def test_is_context_correct_in_readme(self, readme, current_yml, expected):
         """
         Given: a changed YML file
-
         When: running validate on integration with at least one command
-
         Then: Validate it's synced with the README.
         """
         patcher = patch('os.path.exists')
@@ -1062,6 +1345,6 @@ class TestisContextChanged:
             structure = mock_structure("Pack/Test", current)
             validator = IntegrationValidator(structure)
             validator.current_file = current_yml
-            res = validator.is_context_change_in_readme()
+            res = validator.is_context_correct_in_readme()
             assert res == expected
         patcher.stop()

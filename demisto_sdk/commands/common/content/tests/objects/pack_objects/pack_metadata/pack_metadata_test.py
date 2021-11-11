@@ -4,6 +4,8 @@ from datetime import datetime
 from shutil import rmtree
 
 import pytest
+from packaging.version import parse
+
 from demisto_sdk.commands.common.constants import (PACKS_DIR, XSOAR_AUTHOR,
                                                    XSOAR_SUPPORT,
                                                    XSOAR_SUPPORT_URL)
@@ -14,7 +16,6 @@ from demisto_sdk.commands.common.content.objects_factory import \
     path_to_pack_object
 from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.common.tools import src_root
-from packaging.version import parse
 from TestSuite.test_tools import ChangeCWD
 
 TEST_DATA = src_root() / 'tests' / 'test_files'
@@ -149,8 +150,8 @@ def test_dump_with_price(mocker):
         assert file_content['vendorId']
         assert file_content['vendorName']
 
-    import json
     import builtins
+    import json
 
     obj = PackMetaData(PACK_METADATA)
     obj.price = 1
@@ -176,7 +177,8 @@ def test_load_user_metadata_basic(repo):
         - Verify that pack's metadata information was loaded successfully.
 
     """
-    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (ArtifactsManager)
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import \
+        ArtifactsManager
 
     pack_1 = repo.setup_one_pack('Pack1')
     pack_1.pack_metadata.write_json(
@@ -234,7 +236,8 @@ def test_load_user_metadata_advanced(repo):
         - Verify that pack's metadata information was loaded successfully.
 
     """
-    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (ArtifactsManager)
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import \
+        ArtifactsManager
 
     pack_1 = repo.setup_one_pack('Pack1')
     pack_1.pack_metadata.write_json(
@@ -302,7 +305,7 @@ def test_load_user_metadata_no_metadata_file(repo, capsys):
     pack_1_metadata.load_user_metadata('Pack1', 'Pack Number 1', pack_1.path, logging_setup(3))
 
     captured = capsys.readouterr()
-    assert 'Pack Number 1 pack is missing pack_metadata.json file.' in captured.err
+    assert 'Pack Number 1 pack is missing pack_metadata.json file.' in captured.out
 
 
 def test_load_user_metadata_invalid_price(repo, capsys):
@@ -338,7 +341,7 @@ def test_load_user_metadata_invalid_price(repo, capsys):
     pack_1_metadata.load_user_metadata('Pack1', 'Pack Number 1', pack_1.path, logging_setup(3))
     captured = capsys.readouterr()
 
-    assert 'Pack Number 1 pack price is not valid. The price was set to 0.' in captured.err
+    assert 'Pack Number 1 pack price is not valid. The price was set to 0.' in captured.out
 
 
 def test_load_user_metadata_bad_pack_metadata_file(repo, capsys):
@@ -365,4 +368,4 @@ def test_load_user_metadata_bad_pack_metadata_file(repo, capsys):
     pack_1_metadata.load_user_metadata('Pack1', 'Pack Number 1', pack_1.path, logging_setup(3))
 
     captured = capsys.readouterr()
-    assert 'Failed loading Pack Number 1 user metadata.' in captured.err
+    assert 'Failed loading Pack Number 1 user metadata.' in captured.out

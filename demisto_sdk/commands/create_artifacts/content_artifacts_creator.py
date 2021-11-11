@@ -9,11 +9,17 @@ from contextlib import contextmanager
 from shutil import make_archive, rmtree
 from typing import Callable, Dict, List, Optional, Union
 
+from packaging.version import parse
+from pebble import ProcessFuture, ProcessPool
+from wcmatch.pathlib import BRACE, EXTMATCH, NEGATE, NODIR, SPLIT, Path
+
 from demisto_sdk.commands.common.constants import (
     BASE_PACK, CLASSIFIERS_DIR, CONTENT_ITEMS_DISPLAY_FOLDERS, DASHBOARDS_DIR,
-    DOCUMENTATION_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
-    INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, INTEGRATIONS_DIR, LAYOUTS_DIR,
-    PACKS_DIR, PLAYBOOKS_DIR, RELEASE_NOTES_DIR, REPORTS_DIR, SCRIPTS_DIR,
+    DOCUMENTATION_DIR, GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR,
+    GENERIC_MODULES_DIR, GENERIC_TYPES_DIR, INCIDENT_FIELDS_DIR,
+    INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR,
+    INTEGRATIONS_DIR, LAYOUTS_DIR, LISTS_DIR, PACKS_DIR, PLAYBOOKS_DIR,
+    PRE_PROCESS_RULES_DIR, RELEASE_NOTES_DIR, REPORTS_DIR, SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR, TOOLS_DIR, WIDGETS_DIR, ContentItems)
 from demisto_sdk.commands.common.content import (Content, ContentError,
                                                  ContentFactoryError, Pack)
@@ -21,9 +27,6 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     JSONContentObject, Script, TextObject, YAMLContentObject,
     YAMLContentUnifiedObject)
 from demisto_sdk.commands.common.tools import arg_to_list
-from packaging.version import parse
-from pebble import ProcessFuture, ProcessPool
-from wcmatch.pathlib import BRACE, EXTMATCH, NEGATE, NODIR, SPLIT, Path
 
 from .artifacts_report import ArtifactsReport, ObjectReport
 
@@ -88,6 +91,8 @@ class ArtifactsManager:
         # inits
         self.content = Content.from_cwd()
         self.execution_start = time.time()
+
+        self.packs = self.content.packs
         self.exit_code = EX_SUCCESS
 
     def create_content_artifacts(self) -> int:
@@ -113,6 +118,34 @@ class ArtifactsManager:
 
         return self.exit_code
 
+    def get_relative_pack_path(self, content_object: ContentObject):
+        """
+
+        Args:
+            content_object: the object to get the relative path for
+
+        Returns:
+            the path of the given object relative from the pack directory, for example HelloWorld/Scripts/some_script
+
+        """
+        return content_object.path.relative_to(self.content.path / PACKS_DIR)
+
+    def get_base_path(self) -> Path:
+        """
+
+        Returns:
+            the path that all artifacts are relative to
+        """
+        return self.content.path
+
+    def get_dir_to_delete(self):
+        """
+
+        Returns:
+            list of directories to delete after artifacts was created
+        """
+        return [self.content_test_path, self.content_new_path, self.content_packs_path, self.content_all_path]
+
 
 class ContentItemsHandler:
     def __init__(self):
@@ -128,8 +161,14 @@ class ContentItemsHandler:
             ContentItems.REPORTS: [],
             ContentItems.INDICATOR_TYPES: [],
             ContentItems.LAYOUTS: [],
+            ContentItems.PRE_PROCESS_RULES: [],
             ContentItems.CLASSIFIERS: [],
-            ContentItems.WIDGETS: []
+            ContentItems.WIDGETS: [],
+            ContentItems.GENERIC_FIELDS: [],
+            ContentItems.GENERIC_TYPES: [],
+            ContentItems.GENERIC_MODULES: [],
+            ContentItems.GENERIC_DEFINITIONS: [],
+            ContentItems.LISTS: []
         }
         self.content_folder_name_to_func: Dict[str, Callable] = {
             SCRIPTS_DIR: self.add_script_as_content_item,
@@ -142,8 +181,14 @@ class ContentItemsHandler:
             INDICATOR_TYPES_DIR: self.add_indicator_type_as_content_item,
             REPORTS_DIR: self.add_report_as_content_item,
             LAYOUTS_DIR: self.add_layout_as_content_item,
+            PRE_PROCESS_RULES_DIR: self.add_pre_process_rules_as_content_item,
+            LISTS_DIR: self.add_lists_as_content_item,
             CLASSIFIERS_DIR: self.add_classifier_as_content_item,
-            WIDGETS_DIR: self.add_widget_as_content_item
+            WIDGETS_DIR: self.add_widget_as_content_item,
+            GENERIC_TYPES_DIR: self.add_generic_type_as_content_item,
+            GENERIC_FIELDS_DIR: self.add_generic_field_as_content_item,
+            GENERIC_MODULES_DIR: self.add_generic_module_as_content_item,
+            GENERIC_DEFINITIONS_DIR: self.add_generic_definition_as_content_item
         }
 
     def handle_content_item(self, content_object: ContentObject):
@@ -253,6 +298,17 @@ class ContentItemsHandler:
                 'name': content_object.get('name', '')
             })
 
+    def add_pre_process_rules_as_content_item(self, content_object: ContentObject):
+        self.content_items[ContentItems.PRE_PROCESS_RULES].append({
+            'name': content_object.get('name') or content_object.get('id', ''),
+            'description': content_object.get('description', ''),
+        })
+
+    def add_lists_as_content_item(self, content_object: ContentObject):
+        self.content_items[ContentItems.LISTS].append({
+            'name': content_object.get('name') or content_object.get('id', '')
+        })
+
     def add_classifier_as_content_item(self, content_object: ContentObject):
         self.content_items[ContentItems.CLASSIFIERS].append({
             'name': content_object.get('name') or content_object.get('id', ''),
@@ -264,6 +320,31 @@ class ContentItemsHandler:
             'name': content_object.get('name', ''),
             'dataType': content_object.get('dataType', ''),
             'widgetType': content_object.get('widgetType', '')
+        })
+
+    def add_generic_field_as_content_item(self, content_object: ContentObject):
+        self.content_items[ContentItems.GENERIC_FIELDS].append({
+            'name': content_object.get('name', ''),
+            'type': content_object.get('type', ''),
+            'description': content_object.get('description', '')
+        })
+
+    def add_generic_type_as_content_item(self, content_object: ContentObject):
+        self.content_items[ContentItems.GENERIC_TYPES].append({
+            'name': content_object.get('name', ''),
+            'details': content_object.get('details', ''),
+        })
+
+    def add_generic_definition_as_content_item(self, content_object: ContentObject):
+        self.content_items[ContentItems.GENERIC_DEFINITIONS].append({
+            'name': content_object.get('name', ''),
+            'description': content_object.get('description', '')
+        })
+
+    def add_generic_module_as_content_item(self, content_object: ContentObject):
+        self.content_items[ContentItems.GENERIC_MODULES].append({
+            'name': content_object.get('name', ''),
+            'description': content_object.get('description', '')
         })
 
 
@@ -315,7 +396,7 @@ def wait_futures_complete(futures: List[ProcessFuture], artifact_manager: Artifa
         try:
             result = future.result()
             if isinstance(result, ArtifactsReport):
-                logger.info(result.to_str(artifact_manager.content.path))
+                logger.info(result.to_str(artifact_manager.get_base_path()))
         except (ContentError, DuplicateFiles, ContentFactoryError) as e:
             logger.error(e.msg)
             raise
@@ -502,21 +583,21 @@ def dump_packs(artifact_manager: ArtifactsManager, pool: ProcessPool) -> List[Pr
     """
     futures = []
     if 'all' in artifact_manager.pack_names:
-        for pack_name, pack in artifact_manager.content.packs.items():
+        for pack_name, pack in artifact_manager.packs.items():
             if pack_name not in IGNORED_PACKS:
                 futures.append(pool.schedule(dump_pack, args=(artifact_manager, pack)))
 
     else:
         for pack_name in artifact_manager.pack_names:
-            if pack_name not in IGNORED_PACKS and pack_name in artifact_manager.content.packs:
+            if pack_name not in IGNORED_PACKS and pack_name in artifact_manager.packs:
                 futures.append(pool.schedule(dump_pack,
-                                             args=(artifact_manager, artifact_manager.content.packs[pack_name])
+                                             args=(artifact_manager, artifact_manager.packs[pack_name])
                                              ))
 
     return futures
 
 
-def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport:
+def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport:  # noqa: C901
     """ Dumping content/Packs/<pack_id>/ into:
             1. content_test
             2. content_new
@@ -539,7 +620,6 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
         ArtifactsReport: ArtifactsReport object.
     """
     global logger
-
     pack_report = ArtifactsReport(f"Pack {pack.id}:")
 
     pack.metadata.load_user_metadata(pack.id, pack.path.name, pack.path, logger)
@@ -565,6 +645,12 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
     for layout in pack.layouts:
         content_items_handler.handle_content_item(layout)
         pack_report += dump_pack_conditionally(artifact_manager, layout)
+    for pre_process_rule in pack.pre_process_rules:
+        content_items_handler.handle_content_item(pre_process_rule)
+        pack_report += dump_pack_conditionally(artifact_manager, pre_process_rule)
+    for list_item in pack.lists:
+        content_items_handler.handle_content_item(list_item)
+        pack_report += dump_pack_conditionally(artifact_manager, list_item)
     for dashboard in pack.dashboards:
         content_items_handler.handle_content_item(dashboard)
         pack_report += dump_pack_conditionally(artifact_manager, dashboard)
@@ -588,9 +674,25 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
     for widget in pack.widgets:
         content_items_handler.handle_content_item(widget)
         pack_report += dump_pack_conditionally(artifact_manager, widget)
+    for generic_definition in pack.generic_definitions:
+        content_items_handler.handle_content_item(generic_definition)
+        pack_report += dump_pack_conditionally(artifact_manager, generic_definition)
+    for generic_module in pack.generic_modules:
+        content_items_handler.handle_content_item(generic_module)
+        pack_report += dump_pack_conditionally(artifact_manager, generic_module)
+    for generic_type in pack.generic_types:
+        content_items_handler.handle_content_item(generic_type)
+        pack_report += dump_pack_conditionally(artifact_manager, generic_type)
+    for generic_field in pack.generic_fields:
+        content_items_handler.handle_content_item(generic_field)
+        pack_report += dump_pack_conditionally(artifact_manager, generic_field)
     for release_note in pack.release_notes:
         pack_report += ObjectReport(release_note, content_packs=True)
         release_note.dump(artifact_manager.content_packs_path / pack.id / RELEASE_NOTES_DIR)
+    for release_note_config in pack.release_notes_config:
+        pack_report += ObjectReport(release_note_config, content_packs=True)
+        release_note_config.dump(artifact_manager.content_packs_path / pack.id / RELEASE_NOTES_DIR)
+
     for tool in pack.tools:
         object_report = ObjectReport(tool, content_packs=True)
         created_files = tool.dump(artifact_manager.content_packs_path / pack.id / TOOLS_DIR)
@@ -615,9 +717,14 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
         if is_feed_pack and 'TIM' not in pack.metadata.tags:
             pack.metadata.tags.append('TIM')
         pack.metadata.dump_metadata_file(artifact_manager.content_packs_path / pack.id)
-    if pack.readme:
-        pack_report += ObjectReport(pack.readme, content_packs=True)
-        pack.readme.dump(artifact_manager.content_packs_path / pack.id)
+    if pack.readme or pack.contributors:
+        if not pack.readme:
+            readme_file = os.path.join(pack.path, 'README.md')
+            open(readme_file, 'a+').close()
+        readme_obj = pack.readme
+        readme_obj.contributors = pack.contributors
+        pack_report += ObjectReport(readme_obj, content_packs=True)
+        readme_obj.dump(artifact_manager.content_packs_path / pack.id)
     if pack.author_image:
         pack_report += ObjectReport(pack.author_image, content_packs=True)
         pack.author_image.dump(artifact_manager.content_packs_path / pack.id)
@@ -825,7 +932,7 @@ def dump_link_files(artifact_manager: ArtifactsManager, content_object: ContentO
 
 
 def calc_relative_packs_dir(artifact_manager: ArtifactsManager, content_object: ContentObject) -> Path:
-    relative_pack_path = content_object.path.relative_to(artifact_manager.content.path / PACKS_DIR)
+    relative_pack_path = artifact_manager.get_relative_pack_path(content_object)
     if ((INTEGRATIONS_DIR in relative_pack_path.parts and relative_pack_path.parts[-2] != INTEGRATIONS_DIR) or
             (SCRIPTS_DIR in relative_pack_path.parts and relative_pack_path.parts[-2] != SCRIPTS_DIR)):
         relative_pack_path = relative_pack_path.parent.parent
@@ -882,8 +989,7 @@ def ArtifactsDirsHandler(artifact_manager: ArtifactsManager):
 
 def delete_dirs(artifact_manager: ArtifactsManager):
     """Delete artifacts directories"""
-    for artifact_dir in [artifact_manager.content_test_path, artifact_manager.content_new_path,
-                         artifact_manager.content_packs_path, artifact_manager.content_all_path]:
+    for artifact_dir in artifact_manager.get_dir_to_delete():
         if artifact_dir.exists():
             rmtree(artifact_dir)
 
@@ -912,7 +1018,7 @@ def zip_dirs(artifact_manager: ArtifactsManager):
 def zip_packs(artifact_manager: ArtifactsManager):
     """Zip packs directories"""
     with ProcessPoolHandler(artifact_manager) as pool:
-        for pack_name, pack in artifact_manager.content.packs.items():
+        for pack_name, pack in artifact_manager.packs.items():
             dumped_pack_dir = os.path.join(artifact_manager.content_packs_path, pack.id)
             zip_path = os.path.join(artifact_manager.content_uploadable_zips_path, pack.id)
 
@@ -951,15 +1057,15 @@ def sign_packs(artifact_manager: ArtifactsManager):
 
             futures: List[ProcessFuture] = []
             if 'all' in artifact_manager.pack_names:
-                for pack_name, pack in artifact_manager.content.packs.items():
+                for pack_name, pack in artifact_manager.packs.items():
                     dumped_pack_dir = os.path.join(artifact_manager.content_packs_path, pack.id)
                     futures.append(pool.schedule(pack.sign_pack, args=(logger, dumped_pack_dir,
                                                                        artifact_manager.signDirectory,
                                                                        )))
             else:
                 for pack_name in artifact_manager.pack_names:
-                    if pack_name in artifact_manager.content.packs:
-                        pack = artifact_manager.content.packs[pack_name]
+                    if pack_name in artifact_manager.packs:
+                        pack = artifact_manager.packs[pack_name]
                         dumped_pack_dir = os.path.join(artifact_manager.content_packs_path, pack.id)
                         futures.append(pool.schedule(pack.sign_pack, args=(logger, dumped_pack_dir,
                                                                            artifact_manager.signDirectory,

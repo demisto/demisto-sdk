@@ -197,7 +197,7 @@ https://xsoar.pan.dev/docs/integrations/code-conventions#outputs
 https://xsoar.pan.dev/docs/integrations/context-and-outputs
 https://xsoar.pan.dev/docs/integrations/context-standards
 https://xsoar.pan.dev/docs/integrations/dbot
-https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/json_to_outputs/README.md
+https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk.commands.generate_outputs.json_to_outputs/README.md
 
 Also, when you write data in the Context, you want to make sure that if you
 return updated information for an entity, to update it and not append to
@@ -1515,5 +1515,5 @@ def main() -> None:
         return_error(f'Failed to execute {demisto.command()} command.\nError:\n{str(e)}')
 
 
-if __name__ in ('__main__', '__builtin__', 'builtins'):
+if __name__ in ('__main__', '__builtin__', 'builtins'):  # pragma: no cover
     main()

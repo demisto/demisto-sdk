@@ -5,18 +5,29 @@ from unittest.mock import MagicMock, patch
 
 import demisto_client
 import pytest
+from click.testing import CliRunner
+from demisto_client.demisto_api import DefaultApi
 from demisto_client.demisto_api.rest import ApiException
+from packaging.version import parse
+from pipenv.patched.piptools import click
+
+from demisto_sdk.__main__ import main, upload
+from demisto_sdk.commands.common import constants
 from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    INTEGRATIONS_DIR,
                                                    LAYOUTS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
                                                    FileType)
+from demisto_sdk.commands.common.content.objects.pack_objects.pack import (
+    DELETE_VERIFY_KEY_ACTION, TURN_VERIFICATION_ERROR_MSG)
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.tools import get_yml_paths_in_dir
+from demisto_sdk.commands.common.tools import get_yml_paths_in_dir, src_root
+from demisto_sdk.commands.test_content import tools
+from demisto_sdk.commands.upload import uploader
 from demisto_sdk.commands.upload.uploader import (
     Uploader, parse_error_response, print_summary,
     sort_directories_based_on_dependencies)
-from packaging.version import parse
+from TestSuite.test_tools import ChangeCWD
 
 DATA = ''
 
@@ -88,7 +99,7 @@ def test_upload_playbook_positive(demisto_client_configure, mocker):
     mocker.patch.object(demisto_client, 'configure', return_value="object")
 
     playbook_name = "Cortex_XDR_Incident_Handling.yml"
-    playbook_path = f"{git_path()}/demisto_sdk/tests/test_files/CortexXDR/Playbooks/{playbook_name}"
+    playbook_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/CortexXDR/Playbooks/{playbook_name}"
     uploader = Uploader(input=playbook_path, insecure=False, verbose=False)
     mocker.patch.object(uploader, 'client')
     uploader.upload()
@@ -222,7 +233,7 @@ def test_upload_incident_field_positive(demisto_client_configure, mocker):
     """
     mocker.patch.object(demisto_client, 'configure', return_value="object")
     incident_field_name = "XDR_Alert_Count.json"
-    incident_field_path = f"{git_path()}/demisto_sdk/tests/test_files/CortexXDR/IncidentFields/{incident_field_name}"
+    incident_field_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/CortexXDR/IncidentFields/{incident_field_name}"
     uploader = Uploader(input=incident_field_path, insecure=False, verbose=False)
     mocker.patch.object(uploader, 'client')
     uploader.upload()
@@ -242,12 +253,35 @@ def test_upload_indicator_field_positive(demisto_client_configure, mocker):
     """
     mocker.patch.object(demisto_client, 'configure', return_value='object')
     indicator_field_name = 'dns.json'
-    indicator_field_path = f'{git_path()}/demisto_sdk/tests/test_files/CortexXDR/IndicatorFields/{indicator_field_name}'
+    indicator_field_path = f'{git_path()}/demisto_sdk/tests/test_files/Packs/CortexXDR/IndicatorFields/{indicator_field_name}'
     uploader = Uploader(input=indicator_field_path, insecure=False, verbose=False)
     mocker.patch.object(uploader, 'client')
     uploader.upload()
 
     assert [(indicator_field_name, FileType.INDICATOR_FIELD.value)] == uploader.successfully_uploaded_files
+
+
+def test_upload_report_positive(demisto_client_configure, mocker, repo):
+    """
+    Given
+        - A report to upload
+
+    When
+        - Uploading a report
+
+    Then
+        - Ensure report is uploaded successfully
+        - Ensure success upload message is printed as expected
+    """
+    mocker.patch.object(demisto_client, 'configure', return_value="object")
+    pack = repo.create_pack('pack')
+    report = pack.create_report('test-report')
+    report.write_json({"id": "dummy-report", "orientation": "portrait"})
+    with ChangeCWD(repo.path):
+        uploader = Uploader(input=report.path, insecure=False, verbose=False)
+        mocker.patch.object(uploader, 'client')
+        uploader.upload()
+    assert [(report.name, FileType.REPORT.value)] == uploader.successfully_uploaded_files
 
 
 def test_upload_incident_type_correct_file_change(demisto_client_configure, mocker):
@@ -297,6 +331,7 @@ def test_upload_incident_field_correct_file_change(demisto_client_configure, moc
     Then
         - Ensure incident field is in the correct format for upload
     """
+
     def save_file(file):
         global DATA
         with open(file, 'r') as f:
@@ -309,7 +344,7 @@ def test_upload_incident_field_correct_file_change(demisto_client_configure, moc
 
     mocker.patch.object(demisto_client, 'configure', return_value=demisto_client_mocker)
     incident_field_name = "XDR_Alert_Count.json"
-    incident_field_path = f"{git_path()}/demisto_sdk/tests/test_files/CortexXDR/IncidentFields/{incident_field_name}"
+    incident_field_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/CortexXDR/IncidentFields/{incident_field_name}"
     uploader = Uploader(input=incident_field_path, insecure=False, verbose=False)
     uploader.client.import_incident_fields = MagicMock(side_effect=save_file)
     uploader.upload()
@@ -625,3 +660,286 @@ def test_print_summary_unuploaded_files(demisto_client_configure, mocker):
     assert secho.call_args_list[0][0][0] == expected_upload_summary_title
     assert secho.call_args_list[1][0][0] == expected_failed_uploaded_files_title
     assert secho.call_args_list[2][0][0] == expected_failed_uploaded_files
+
+
+TEST_DATA = src_root() / 'commands' / 'upload' / 'tests' / 'data'
+CONTENT_PACKS_ZIP = str(TEST_DATA / 'content_packs.zip')
+TEST_PACK_ZIP = str(TEST_DATA / 'TestPack.zip')
+TEST_PACK = 'Packs/TestPack'
+INVALID_ZIP = 'invalid_zip'
+INVALID_ZIP_ERROR = 'Error: Given input path: {path} does not exist'
+API_CLIENT = DefaultApi()
+
+
+def mock_api_client(mocker):
+    mocker.patch.object(demisto_client, 'configure', return_value=API_CLIENT)
+    mocker.patch.object(uploader, 'get_demisto_version', return_value=parse('6.0.0'))
+
+
+class TestZippedPackUpload:
+    """
+    Happy path tests:
+        1. Upload one zipped pack
+        2. Upload content_artifacts.zip with multiple packs
+        3. Upload with compile flag
+        4. Server configs return to the previous value after upload
+
+    Edge cases tests:
+        1. Invalid zip path
+        2. Error in disable pack verification
+        3. Error in enable pack verification
+        4. Error in upload to marketplace
+
+    """
+
+    @pytest.mark.parametrize(argnames='input', argvalues=[TEST_PACK_ZIP, CONTENT_PACKS_ZIP])
+    def test_upload_zipped_packs(self, mocker, input):
+        """
+        Given:
+            - zipped pack or zip of pack zips to upload
+        When:
+            - call to upload command
+        Then:
+            - validate the upload_content_packs in the api client was called correct
+              and the pack verification ws turned on and off
+        """
+        # prepare
+        mock_api_client(mocker)
+        mocker.patch.object(API_CLIENT, 'upload_content_packs')
+        mocker.patch.object(tools, 'update_server_configuration', return_value=(None, None, {}))
+        mocker.patch.object(Uploader, 'notify_user_should_override_packs', return_value=True)
+
+        # run
+        click.Context(command=upload).invoke(upload, input=input)
+
+        # validate
+        disable_verification_call_args = tools.update_server_configuration.call_args_list[0][1]
+        enable_verification_call_args = tools.update_server_configuration.call_args_list[1][1]
+
+        assert disable_verification_call_args['server_configuration'][constants.PACK_VERIFY_KEY] == 'false'
+        assert constants.PACK_VERIFY_KEY in enable_verification_call_args['config_keys_to_delete']
+        uploaded_file_path = API_CLIENT.upload_content_packs.call_args[1]['file']
+        assert str(uploaded_file_path) == input
+
+    def test_zip_and_upload(self, mocker):
+        """
+        Given:
+            - name of pack in content and the zip flag is on
+        When:
+            - call to upload command
+        Then:
+            - validate the zip file was created and pass to the zipped_pack_uploader method
+        """
+        # prepare
+        mock_api_client(mocker)
+        mocker.patch.object(Uploader, 'zipped_pack_uploader')
+
+        # run
+        click.Context(command=upload).invoke(upload, input=TEST_PACK, zip=True)
+
+        # validate
+        assert 'uploadable_packs.zip' in Uploader.zipped_pack_uploader.call_args[1]['path']
+
+    def test_server_config_after_upload(self, mocker):
+        """
+        Given:
+            - zipped pack to upload
+        When:
+            - call to update server configuration
+        Then:
+            - validate the origin configs are set to server configuration after upload
+        """
+        # prepare
+        mock_api_client(mocker)
+        mocker.patch.object(API_CLIENT, 'upload_content_packs')
+        mocker.patch.object(tools, 'update_server_configuration',
+                            return_value=(None, None, {constants.PACK_VERIFY_KEY: 'prev_val'}))
+        mocker.patch.object(Uploader, 'notify_user_should_override_packs', return_value=True)
+
+        # run
+        click.Context(command=upload).invoke(upload, input=TEST_PACK_ZIP)
+
+        # validate
+        disable_verification_call_args = tools.update_server_configuration.call_args_list[0][1]
+        enable_verification_call_args = tools.update_server_configuration.call_args_list[1][1]
+
+        assert disable_verification_call_args['server_configuration'][constants.PACK_VERIFY_KEY] == 'false'
+        assert enable_verification_call_args['server_configuration'][constants.PACK_VERIFY_KEY] == 'prev_val'
+
+    @pytest.mark.parametrize(argnames='input', argvalues=[INVALID_ZIP, None])
+    def test_upload_invalid_zip_path(self, mocker, input):
+        """
+        Given:
+            - invalid path in the input argument
+        When:
+            - run the upload zipped pack
+        Then:
+            - validate the error msg
+        """
+        # prepare
+        mock_api_client(mocker)
+        mocker.patch('click.secho')
+
+        # run
+        status = click.Context(command=upload).invoke(upload, input=input)
+
+        # validate
+        status == 1
+        uploader.click.secho.call_args_list[1].args == INVALID_ZIP_ERROR.format(path=input)
+
+    def test_error_in_disable_pack_verification(self, mocker):
+        """
+        Given:
+            - error occurred when try to disable the pack verification
+        When:
+            - upload zipped pack
+        Then:
+            - validate the result status are 1 (error) and the upload_content_packs was not called
+        """
+
+        # prepare
+        mock_api_client(mocker)
+        mocker.patch.object(tools, 'update_server_configuration', new=exception_raiser)
+        mocker.patch.object(API_CLIENT, 'upload_content_packs')
+
+        # run
+        status = click.Context(command=upload).invoke(upload, input=TEST_PACK_ZIP)
+
+        # validate
+        assert status == 1
+        assert API_CLIENT.upload_content_packs.call_count == 0
+
+    def test_error_in_enable_pack_verification(self, mocker):
+        """
+        Given:
+            - error occurred when try to enable again the pack verification
+        When:
+            - run the upload for zipped pack
+        Then:
+            - validate DefaultApi.upload_content_packs was called (as the error occurred after that)
+              and validate the detailed error message
+        """
+
+        # prepare
+        def conditional_exception_raiser(**kwargs):
+            # raise exception only when try to enable again the pack verification
+            if kwargs.pop('config_keys_to_delete', None):
+                raise Exception()
+            return None, None, {}
+
+        mock_api_client(mocker)
+        mocker.patch.object(uploader, 'parse_error_response')
+        mocker.patch.object(tools, 'update_server_configuration', new=conditional_exception_raiser)
+        mocker.patch.object(Uploader, 'notify_user_should_override_packs', return_value=True)
+        mocker.patch.object(API_CLIENT, 'upload_content_packs')
+
+        # run
+        status = click.Context(command=upload).invoke(upload, input=TEST_PACK_ZIP)
+
+        # validate
+        assert status == 1
+        assert API_CLIENT.upload_content_packs.call_count == 1
+        exp_err_msg = TURN_VERIFICATION_ERROR_MSG.format(action=DELETE_VERIFY_KEY_ACTION)
+        assert str(uploader.parse_error_response.call_args[0][0]) == exp_err_msg
+
+    def test_error_in_upload_to_marketplace(self, mocker):
+        """
+        Given:
+            - error occurred when try to upload the zip to marketplace
+        When:
+            - run the upload for zipped pack
+        Then:
+            - validate the status result are 1 (error) and the pack verification was enabled again
+        """
+        mock_api_client(mocker)
+        mocker.patch.object(tools, 'update_server_configuration', return_value=(None, None, {}))
+        mocker.patch.object(API_CLIENT, 'upload_content_packs', new=exception_raiser)
+        mocker.patch.object(Uploader, 'notify_user_should_override_packs', return_value=True)
+
+        # run
+        status = click.Context(command=upload).invoke(upload, input=TEST_PACK_ZIP)
+
+        # validate
+
+        disable_verification_call_args = tools.update_server_configuration.call_args_list[0][1]
+        enable_verification_call_args = tools.update_server_configuration.call_args_list[1][1]
+        assert status == 1
+        assert disable_verification_call_args['server_configuration'][constants.PACK_VERIFY_KEY] == 'false'
+        assert constants.PACK_VERIFY_KEY in enable_verification_call_args['config_keys_to_delete']
+
+    @pytest.mark.parametrize(argnames='user_answer, exp_call_count', argvalues=[('y', 1), ('n', 0)])
+    def test_notify_user_about_overwrite_pack(self, mocker, user_answer, exp_call_count):
+        """
+        Given:
+            - Zip of pack to upload where this pack already installed
+        Where:
+            - Upload this pack
+        Then:
+            - Validate user asked if sure to overwrite this pack
+        """
+        mock_api_client(mocker)
+        mocker.patch('builtins.input', return_value=user_answer)
+        mocker.patch.object(tools, 'update_server_configuration', return_value=(None, None, {}))
+        mocker.patch.object(API_CLIENT, 'generic_request', return_value=[json.dumps([{'name': 'TestPack'}])])
+        mocker.patch.object(API_CLIENT, 'upload_content_packs')
+
+        # run
+        click.Context(command=upload).invoke(upload, input=TEST_PACK_ZIP)
+
+        # validate
+        tools.update_server_configuration.call_count == exp_call_count
+
+    def test_upload_zip_does_not_exist(self):
+        """
+        Given:
+            - Zip path which does not exist.
+
+        When:
+            - Uploading the zipped pack.
+
+        Then:
+            - Ensure upload fails.
+            - Ensure failure upload message is printed to the stderr as the failure caused by click.Path.convert check.
+        """
+        invalid_zip_path = 'not_exist_dir/not_exist_zip'
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, ['upload', "-i", invalid_zip_path, "--insecure"])
+        assert result.exit_code == 2
+        assert isinstance(result.exception, SystemExit)
+        assert f"Invalid value for '-i' / '--input': Path '{invalid_zip_path}' does not exist" in result.stderr
+
+    def test_upload_custom_packs_from_config_file(self, mocker):
+        """
+        Given:
+            - Configuration file with custom packs (zipped packs and unzipped packs) to upload
+        When:
+            - call to upload command
+        Then:
+            - validate the upload_content_packs in the api client was called correct
+              and the pack verification ws turned on and off
+              ans status code is 0 (Ok)
+        """
+        # prepare
+        mock_api_client(mocker)
+        mocker.patch.object(API_CLIENT, 'upload_content_packs')
+        mocker.patch.object(tools, 'update_server_configuration', return_value=(None, None, {}))
+        mocker.patch.object(Uploader, 'notify_user_should_override_packs', return_value=True)
+
+        # run
+        status_code = click.Context(command=upload).invoke(
+            upload, input_config_file=f'{git_path()}/demisto_sdk/commands/upload/tests/data/xsoar_config.json')
+
+        # validate
+        disable_verification_call_args = tools.update_server_configuration.call_args_list[0][1]
+        enable_verification_call_args = tools.update_server_configuration.call_args_list[1][1]
+
+        assert disable_verification_call_args['server_configuration'][constants.PACK_VERIFY_KEY] == 'false'
+        assert constants.PACK_VERIFY_KEY in enable_verification_call_args['config_keys_to_delete']
+        assert status_code == 0
+
+        uploaded_file_path = API_CLIENT.upload_content_packs.call_args[1]['file']
+        assert 'uploadable_packs.zip' in str(uploaded_file_path)
+
+
+def exception_raiser(**kwargs):
+    raise Exception()

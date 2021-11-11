@@ -30,6 +30,8 @@ mapping:
     required: true
   hidden:
     type: bool
+  deprecated:
+    type: bool
   starttaskid:
     type: str
     required: true
@@ -103,6 +105,12 @@ mapping:
           ignoreworker:
             type: bool
           skipunavailable:
+            type: bool
+            required: false
+          isoversize:
+            type: bool
+            required: false
+          isautoswitchedtoquietmode:
             type: bool
             required: false
           quiet:
@@ -321,7 +329,6 @@ schema;arg_filter_schema:
           required: true
         iscontext:
           type: bool
-          required: true
     right:
       type: map
       mapping:

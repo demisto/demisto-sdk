@@ -1,8 +1,7 @@
 from typing import Tuple
 
 import click
-from demisto_sdk.commands.common.hook_validations.incident_field import \
-    IncidentFieldValidator
+
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
@@ -25,11 +24,11 @@ class IndicatorFieldJSONFormat(BaseUpdateJSON):
                  no_validate: bool = False,
                  verbose: bool = False,
                  **kwargs):
-        super().__init__(input, output, path, from_version, no_validate, verbose=verbose)
+        super().__init__(input, output, path, from_version, no_validate, verbose=verbose, **kwargs)
 
     def run_format(self) -> int:
         try:
-            click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
+            click.secho(f'\n================= Updating file {self.source_file} =================', fg='bright_blue')
             super().update_json()
             self.set_default_values_as_needed()
             self.save_json_to_destination_file()
@@ -42,8 +41,8 @@ class IndicatorFieldJSONFormat(BaseUpdateJSON):
 
     def format_file(self) -> Tuple[int, int]:
         """Manager function for the indicator fields JSON updater."""
-        format = self.run_format()
-        if format:
-            return format, SKIP_RETURN_CODE
+        format_rs = self.run_format()
+        if format_rs:
+            return format_rs, SKIP_RETURN_CODE
         else:
-            return format, self.initiate_file_validator(IncidentFieldValidator)
+            return format_rs, self.initiate_file_validator()

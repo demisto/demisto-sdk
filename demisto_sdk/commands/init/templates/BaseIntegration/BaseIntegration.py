@@ -15,23 +15,19 @@ https://github.com/demisto/content/blob/master/Packs/HelloWorld/Integrations/Hel
 """
 
 import traceback
-from typing import Any, Dict
-
-import requests
+from typing import Any, Optional, Dict
 
 import demistomock as demisto
+import urllib3
 from CommonServerPython import *  # noqa # pylint: disable=unused-wildcard-import
 from CommonServerUserPython import *  # noqa
 
 # Disable insecure warnings
-requests.packages.urllib3.disable_warnings()  # pylint: disable=no-member
-
+urllib3.disable_warnings()
 
 ''' CONSTANTS '''
 
-
 DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'  # ISO8601 format with UTC, default in XSOAR
-
 
 ''' CLIENT CLASS '''
 
@@ -47,18 +43,18 @@ class Client(BaseClient):
     """
 
     # TODO: REMOVE the following dummy function:
-    def baseintegration_dummy(self, dummy: str) -> Dict[str, str]:
+    def baseintegration_dummy(self, dummy: str, dummy2: Optional[int]) -> Dict[str, str]:
         """Returns a simple python dict with the information provided
         in the input (dummy).
 
-        :type dummy: ``str``
-        :param dummy: string to add in the dummy dict that is returned
+        Args:
+            dummy: string to add in the dummy dict that is returned. This is a required argument.
+            dummy2: int to limit the number of results. This is an optional argument.
 
-        :return: dict as {"dummy": dummy}
-        :rtype: ``str``
+        Returns:
+            The dict with the arguments
         """
-
-        return {"dummy": dummy}
+        return {'dummy': dummy, 'dummy2': dummy2}
     # TODO: ADD HERE THE FUNCTIONS TO INTERACT WITH YOUR PRODUCT API
 
 
@@ -74,103 +70,89 @@ def test_module(client: Client) -> str:
 
     Returning 'ok' indicates that the integration works like it is supposed to.
     Connection to the service is successful.
-    Raises exceptions if something goes wrong.
+    Raises:
+     exceptions if something goes wrong.
 
-    :type client: ``Client``
-    :param Client: client to use
+    Args:
+        Client: client to use
 
-    :return: 'ok' if test passed, anything else will fail the test.
-    :rtype: ``str``
+    Returns:
+        'ok' if test passed, anything else will fail the test.
     """
 
-    message: str = ''
-    try:
-        # TODO: ADD HERE some code to test connectivity and authentication to your service.
-        # This  should validate all the inputs given in the integration configuration panel,
-        # either manually or by using an API that uses them.
-        message = 'ok'
-    except DemistoException as e:
-        if 'Forbidden' in str(e) or 'Authorization' in str(e):  # TODO: make sure you capture authentication errors
-            message = 'Authorization Error: make sure API Key is correctly set'
-        else:
-            raise e
-    return message
+    # TODO: ADD HERE some code to test connectivity and authentication to your service.
+    # This  should validate all the inputs given in the integration configuration panel,
+    # either manually or by using an API that uses them.
+    client.baseintegration_dummy('dummy', 10)  # No errors, the api is working
+    return 'ok'
 
 
 # TODO: REMOVE the following dummy command function
 def baseintegration_dummy_command(client: Client, args: Dict[str, Any]) -> CommandResults:
-
-    dummy = args.get('dummy', None)
-    if not dummy:
-        raise ValueError('dummy not specified')
+    dummy = args.get('dummy')  # dummy is a required argument, no default
+    dummy2 = args.get('dummy2')  # dummy2 is not a required argument
 
     # Call the Client function and get the raw response
-    result = client.baseintegration_dummy(dummy)
+    result = client.baseintegration_dummy(dummy, dummy2)
 
     return CommandResults(
         outputs_prefix='BaseIntegration',
         outputs_key_field='',
         outputs=result,
     )
+
+
 # TODO: ADD additional command functions that translate XSOAR inputs/outputs to Client
 
 
-''' MAIN FUNCTION '''
-
-
-def main() -> None:
-    """main function, parses params and runs command functions
-
-    :return:
-    :rtype:
-    """
+def main():
+    """main function, parses params and runs command functions"""
 
     # TODO: make sure you properly handle authentication
-    # api_key = demisto.params().get('apikey')
+    # api_key = params.get('apikey')
 
+    params = demisto.params()
     # get the service API url
-    base_url = urljoin(demisto.params()['url'], '/api/v1')
+    base_url = urljoin(params.get('url'), '/api/v1')
 
     # if your Client class inherits from BaseClient, SSL verification is
     # handled out of the box by it, just pass ``verify_certificate`` to
     # the Client constructor
-    verify_certificate = not demisto.params().get('insecure', False)
+    verify_certificate = not argToBoolean(params('insecure', False))
 
     # if your Client class inherits from BaseClient, system proxy is handled
     # out of the box by it, just pass ``proxy`` to the Client constructor
-    proxy = demisto.params().get('proxy', False)
+    proxy = argToBoolean(params.get('proxy', False))
 
-    demisto.debug(f'Command being called is {demisto.command()}')
+    command = demisto.command()
+    demisto.debug(f'Command being called is {command}')
     try:
 
         # TODO: Make sure you add the proper headers for authentication
         # (i.e. "Authorization": {api key})
-        headers: Dict = {}
+        headers = {}
 
         client = Client(
             base_url=base_url,
             verify=verify_certificate,
             headers=headers,
-            proxy=proxy)
-
-        if demisto.command() == 'test-module':
+            proxy=proxy
+        )
+        args = demisto.args()
+        if command == 'test-module':
             # This is the call made when pressing the integration Test button.
             result = test_module(client)
-            return_results(result)
-
         # TODO: REMOVE the following dummy command case:
-        elif demisto.command() == 'baseintegration-dummy':
-            return_results(baseintegration_dummy_command(client, demisto.args()))
-        # TODO: ADD command cases for the commands you will implement
-
+        elif command == 'baseintegration-dummy':
+            result = baseintegration_dummy_command(client, args)
+        else:
+            raise NotImplementedError(f'Command {command} is not implemented')
+        return_results(result)  # Returns either str, CommandResults and a list of CommandResults
     # Log exceptions and return errors
     except Exception as e:
         demisto.error(traceback.format_exc())  # print the traceback
-        return_error(f'Failed to execute {demisto.command()} command.\nError:\n{str(e)}')
+        return_error(f'Failed to execute {command} command.\nError:\n{str(e)}')
 
 
-''' ENTRY POINT '''
-
-
-if __name__ in ('__main__', '__builtin__', 'builtins'):
+if __name__ in ('__main__', '__builtin__', 'builtins'):  # pragma: no cover
     main()

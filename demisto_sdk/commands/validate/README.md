@@ -3,6 +3,7 @@
 Makes sure your content repository files are in order and have valid yml file scheme.
 
 **Notes**
+
 In order to run the README validator:
 - Node should be installed on you machine
 - The modules '@mdx-js/mdx', 'fs-extra', 'commander' should be installed in node-modules folder.
@@ -12,6 +13,8 @@ In order to run the README validator:
     To set the environment variables, run the following shell commands:
     export DEMISTO_README_VALIDATION=True
 
+In case of a private repo and an un-configured 'DEMISTO_SDK_GITHUB_TOKEN' or 'DEMISTO_SDK_GITLAB_TOKEN' validation of version bumps in files will be done with the local remote git branch.
+
 **Use Cases**
 This command is used to make sure that the content repo files are valid and are able to be processed by Demisto.
 This is used in our validation process both locally and in Circle CI.
@@ -19,8 +22,8 @@ This is used in our validation process both locally and in Circle CI.
 **Arguments**:
 * **--no-backward-comp**
 Whether to check backward compatibility or not.
-* **-j, --conf-json**
-Validate the conf.json file.
+* **--no-conf-json**
+Skip conf.json validation.
 * **-s, --id-set**
 Perform validations using the id_set file.
 * **-idp, --id-set-path**
@@ -31,22 +34,44 @@ Previous branch or SHA1 commit to run checks against.
 Validate changes using git - this will check the current branch's changes against origin/master.
 If the **--post-commit** flag is supplied: validation will run only on the current branch's changed files that have been committed.
 If the **--post-commit** flag is not supplied: validation will run on all changed files in the current branch, both committed and not committed.
-* **--post-commit**
+* **-pc, --post-commit**
 Whether the validation should run only on the current branch's committed changed files. This applies only when the **-g** flag is supplied.
-* **--staged**
+* **-st, --staged**
 Whether the validation should run only on the current branch's staged files. This applies only when the **-g** flag is supplied.
-* **-p, --path**
+* **-iu, --include-untracked**
+Whether to include untracked files in the validation. This applies only when the **-g** flag is supplied.
+* **-i, --input**
 Path of file to validate specifically.
 * **-a, --validate-all**
 Whether to run all validation on all files or not.
 * **-i, --input**
-The path of a pack or a file to validate specifically.
+The path of the content pack/file to validate specifically.
 * **---skip-pack-release-notes**
 Validation will not not be performed using the updated pack release notes format.
 * **--print-ignored-errors**
 Whether to print ignored errors as warnings.
+* **--print-ignored-files**
+Print which files were ignored by the command.
+* **--no-docker-checks**
+Whether to run docker image validation.
+* **--silence-init-prints**
+Whether to skip the initialization prints.
+* **--skip-pack-dependencies**
+Skip validation of pack dependencies.
 * **create-id-set**
 Whether to create the id_set.json file.
+* **-j, --json-file**
+The JSON file path to which to output the command results.
+* **--skip-schema-check**
+Whether to skip the file schema check.
+* **--debug-git**
+Whether to print debug logs for git statuses.
+* **--print-pykwalify**
+Whether to print the pykwalify log errors.
+* **--quite-bc-validation**
+Set backwards compatibility validation's errors as warnings.
+* **--allow-skipped**
+Don't fail on skipped integrations or when all test playbooks are skipped.
 
 **Examples**:
 `demisto-sdk validate -g --no-backwards-comp`

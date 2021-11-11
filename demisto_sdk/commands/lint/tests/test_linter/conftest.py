@@ -1,10 +1,11 @@
 from typing import Callable, List, Optional
 
 import pytest
-from demisto_sdk.commands.lint import linter
-from demisto_sdk.commands.lint.linter import Linter
 from ruamel.yaml import YAML
 from wcmatch.pathlib import Path
+
+from demisto_sdk.commands.lint import linter
+from demisto_sdk.commands.lint.linter import Linter
 
 
 @pytest.fixture
@@ -14,7 +15,8 @@ def linter_obj(mocker) -> Linter:
                   content_repo=Path(__file__).parent / 'data',
                   req_3=["pytest==3.0"],
                   req_2=["pytest==2.0"],
-                  docker_engine=True)
+                  docker_engine=True,
+                  docker_timeout=60)
 
 
 @pytest.fixture(scope='session')
@@ -25,6 +27,7 @@ def lint_files() -> List[Path]:
 @pytest.fixture
 def demisto_content() -> Callable:
     import shutil
+
     # Init git repo
     content_path = Path(__file__).parent / 'content'
 
@@ -122,7 +125,8 @@ def create_integration(mocker) -> Callable:
 @pytest.fixture
 def docker_mock(mocker):
     def _docker_mock(BuildException: Optional[Exception] = None, image_id: str = "image-id"):
-        from demisto_sdk.commands.lint import linter
         import docker
+
+        from demisto_sdk.commands.lint import linter
         mocker.patch.object(docker, 'from_env')
         mocker.patch.object(linter, '')

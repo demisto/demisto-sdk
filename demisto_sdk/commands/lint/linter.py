@@ -14,8 +14,13 @@ from typing import Any, Dict, List, Optional, Tuple
 import docker
 import docker.errors
 import docker.models.containers
+import git
 import requests.exceptions
 import urllib3.exceptions
+from jinja2 import Environment, FileSystemLoader, exceptions
+from ruamel.yaml import YAML
+from wcmatch.pathlib import NEGATE, Path
+
 from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    PACKS_PACK_META_FILE_NAME,
                                                    TYPE_PWSH, TYPE_PYTHON)
@@ -30,14 +35,12 @@ from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, RERUN, RL,
                                                SUCCESS, WARNING,
                                                add_tmp_lint_files,
                                                add_typing_module,
+                                               coverage_report_editor,
                                                get_file_from_container,
                                                get_python_version_from_image,
                                                pylint_plugin,
                                                split_warnings_errors,
                                                stream_docker_container_output)
-from jinja2 import Environment, FileSystemLoader, exceptions
-from ruamel.yaml import YAML
-from wcmatch.pathlib import NEGATE, Path
 
 logger = logging.getLogger('demisto-sdk')
 
@@ -53,15 +56,17 @@ class Linter:
             docker_engine(bool):  Whether docker engine detected by docker-sdk.
     """
 
-    def __init__(self, pack_dir: Path, content_repo: Path, req_3: list, req_2: list, docker_engine: bool):
+    def __init__(self, pack_dir: Path, content_repo: Path, req_3: list, req_2: list, docker_engine: bool,
+                 docker_timeout: int):
         self._req_3 = req_3
         self._req_2 = req_2
         self._content_repo = content_repo
         self._pack_abs_dir = pack_dir
         self._pack_name = None
+        self.docker_timeout = docker_timeout
         # Docker client init
         if docker_engine:
-            self._docker_client: docker.DockerClient = docker.from_env()
+            self._docker_client: docker.DockerClient = docker.from_env(timeout=docker_timeout)
             self._docker_hub_login = self._docker_login()
         # Facts gathered regarding pack lint and test
         self._facts: Dict[str, Any] = {
@@ -76,7 +81,7 @@ class Linter:
             "additional_requirements": [],
             "docker_engine": docker_engine,
             "is_script": False,
-            "commands": None
+            "commands": None,
         }
         # Pack lint status object - visualize it
         self._pkg_lint_status: Dict = {
@@ -101,7 +106,7 @@ class Linter:
 
     def run_dev_packages(self, no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool, no_vulture: bool,
                          no_xsoar_linter: bool, no_pwsh_analyze: bool, no_pwsh_test: bool, no_test: bool, modules: dict,
-                         keep_container: bool, test_xml: str) -> dict:
+                         keep_container: bool, test_xml: str, no_coverage: bool) -> dict:
         """ Run lint and tests on single package
         Performing the follow:
             1. Run the lint on OS - flake8, bandit, mypy.
@@ -119,6 +124,7 @@ class Linter:
             modules(dict): Mandatory modules to locate in pack path (CommonServerPython.py etc)
             keep_container(bool): Whether to keep the test container
             test_xml(str): Path for saving pytest xml results
+            no_coverage(bool): Run pytest without coverage report
 
         Returns:
             dict: lint and test all status, pkg status)
@@ -150,7 +156,8 @@ class Linter:
                                                    no_pwsh_analyze=no_pwsh_analyze,
                                                    no_pwsh_test=no_pwsh_test,
                                                    keep_container=keep_container,
-                                                   test_xml=test_xml)
+                                                   test_xml=test_xml,
+                                                   no_coverage=no_coverage)
         except Exception as ex:
             err = f'{self._pack_abs_dir}: Unexpected fatal exception: {str(ex)}'
             logger.error(f"{err}. Traceback: {traceback.format_exc()}")
@@ -218,7 +225,7 @@ class Linter:
             if self._facts["docker_engine"]:
                 # Getting python version from docker image - verifying if not valid docker image configured
                 for image in self._facts["images"]:
-                    py_num: float = get_python_version_from_image(image=image[0])
+                    py_num: float = get_python_version_from_image(image=image[0], timeout=self.docker_timeout, log_prompt=log_prompt)
                     image[1] = py_num
                     logger.info(f"{self._pack_name} - Facts - {image[0]} - Python {py_num}")
                     if not self._facts["python_version"]:
@@ -266,14 +273,37 @@ class Linter:
             test_modules = {self._pack_abs_dir / module.name for module in modules.keys()}
             lint_files = lint_files.difference(test_modules)
             self._facts["lint_files"] = list(lint_files)
+
         if self._facts["lint_files"]:
+            self._remove_gitignore_files(log_prompt)
             for lint_file in self._facts["lint_files"]:
                 logger.info(f"{log_prompt} - Lint file {lint_file}")
         else:
             logger.info(f"{log_prompt} - Lint files not found")
 
+        # Remove files that are in gitignore
+
         self._split_lint_files()
         return False
+
+    def _remove_gitignore_files(self, log_prompt: str) -> None:
+        """
+        Skipping files that matches gitignore patterns.
+        Args:
+            log_prompt(str): log prompt string
+
+        Returns:
+
+        """
+        try:
+            repo = git.Repo(self._content_repo)
+            files_to_ignore = repo.ignored(self._facts['lint_files'])
+            for file in files_to_ignore:
+                logger.info(f"{log_prompt} - Skipping gitignore file {file}")
+            self._facts["lint_files"] = [path for path in self._facts['lint_files'] if path not in files_to_ignore]
+
+        except (git.InvalidGitRepositoryError, git.NoSuchPathError):
+            logger.debug("No gitignore files is available")
 
     def _split_lint_files(self):
         """ Remove unit test files from _facts['lint_files'] and put into their own list _facts['lint_unittest_files']
@@ -411,6 +441,8 @@ class Linter:
         # if pylint did not run and failure exit code has been returned from run commnad
         elif exit_code & FAIL:
             status = FAIL
+            logger.debug(f"{log_prompt} - Actual XSOAR linter error -")
+            logger.debug(f"{log_prompt} - Full format stdout: {RL if stdout else ''}{stdout}")
             # for contrib prs which are not merged from master and do not have pylint in dev-requirements-py2.
             if os.environ.get('CI'):
                 stdout = "Xsoar linter could not run, Please merge from master"
@@ -518,7 +550,7 @@ class Linter:
         return SUCCESS, ""
 
     def _run_lint_on_docker_image(self, no_pylint: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
-                                  keep_container: bool, test_xml: str):
+                                  keep_container: bool, test_xml: str, no_coverage: bool):
         """ Run lint check on docker image
 
         Args:
@@ -528,6 +560,8 @@ class Linter:
             no_pwsh_test(bool): whether to skip powershell tests
             keep_container(bool): Whether to keep the test container
             test_xml(str): Path for saving pytest xml results
+            no_coverage(bool): Run pytest without coverage report
+
         """
         for image in self._facts["images"]:
             # Docker image status - visualize
@@ -563,7 +597,8 @@ class Linter:
                             elif not no_test and self._facts["test"] and check == "pytest":
                                 exit_code, output, test_json = self._docker_run_pytest(test_image=image_id,
                                                                                        keep_container=keep_container,
-                                                                                       test_xml=test_xml)
+                                                                                       test_xml=test_xml,
+                                                                                       no_coverage=no_coverage)
                                 status["pytest_json"] = test_json
                         elif self._pkg_lint_status["pack_type"] == TYPE_PWSH:
                             # Perform powershell analyze
@@ -673,7 +708,8 @@ class Linter:
                                 self._docker_client.images.push(test_image_name)
                                 logger.info(f"{log_prompt} - Image {test_image_name} pushed to repository")
                                 break
-                            except (requests.exceptions.ConnectionError, urllib3.exceptions.ReadTimeoutError):
+                            except (requests.exceptions.ConnectionError, urllib3.exceptions.ReadTimeoutError,
+                                    requests.exceptions.ReadTimeout):
                                 logger.info(f"{log_prompt} - Unable to push image {test_image_name} to repository")
 
             except (docker.errors.BuildError, docker.errors.APIError, Exception) as e:
@@ -794,14 +830,14 @@ class Linter:
             output = str(e)
         return exit_code, output
 
-    def _docker_run_pytest(self, test_image: str, keep_container: bool, test_xml: str) -> Tuple[int, str, dict]:
+    def _docker_run_pytest(self, test_image: str, keep_container: bool, test_xml: str, no_coverage: bool = False) -> Tuple[int, str, dict]:
         """ Run Pytest in created test image
 
         Args:
             test_image(str): Test image id/name
             keep_container(bool): True if to keep container after execution finished
             test_xml(str): Xml saving path
-
+            no_coverage(bool): Run pytest without coverage report
         Returns:
             int: 0 on successful, errors 1, need to retry 2
             str: Unit test json report
@@ -817,9 +853,13 @@ class Linter:
         test_json = {}
         try:
             # Running pytest container
+            cov = '' if no_coverage else self._pack_abs_dir.stem
+            uid = os.getuid() or 4000
+            logger.debug(f'{log_prompt} - user uid for running lint/test: {uid}')  # lgtm[py/clear-text-logging-sensitive-data]
             container_obj: docker.models.containers.Container = self._docker_client.containers.run(
-                name=container_name, image=test_image, command=[build_pytest_command(test_xml=test_xml, json=True)],
-                user=f"{os.getuid()}:4000", detach=True, environment=self._facts["env_vars"])
+                name=container_name, image=test_image, command=[build_pytest_command(test_xml=test_xml, json=True,
+                                                                                     cov=cov)],
+                user=f"{uid}:4000", detach=True, environment=self._facts["env_vars"])
             stream_docker_container_output(container_obj.logs(stream=True))
             # Waiting for container to be finished
             container_status: dict = container_obj.wait(condition="exited")
@@ -838,6 +878,15 @@ class Linter:
                     xml_apth = Path(test_xml) / f'{self._pack_name}_pytest.xml'
                     with open(file=xml_apth, mode='bw') as f:
                         f.write(test_data_xml)  # type: ignore
+
+                if not no_coverage:
+                    cov_file_path = os.path.join(self._pack_abs_dir, '.coverage')
+                    cov_data = get_file_from_container(container_obj=container_obj,
+                                                       container_path="/devwork/.coverage")
+                    cov_data = cov_data if isinstance(cov_data, bytes) else cov_data.encode()
+                    with open(cov_file_path, 'wb') as coverage_file:
+                        coverage_file.write(cov_data)
+                    coverage_report_editor(cov_file_path, os.path.join(self._pack_abs_dir, f'{self._pack_abs_dir.stem}.py'))
 
                 test_json = json.loads(get_file_from_container(container_obj=container_obj,
                                                                container_path="/devwork/report_pytest.json",
@@ -900,11 +949,13 @@ class Linter:
         exit_code = SUCCESS
         output = ""
         try:
+            uid = os.getuid() or 4000
+            logger.debug(f'{log_prompt} - user uid for running lint/test: {uid}')  # lgtm[py/clear-text-logging-sensitive-data]
             container_obj = self._docker_client.containers.run(name=container_name,
                                                                image=test_image,
                                                                command=build_pwsh_analyze_command(
                                                                    self._facts["lint_files"][0]),
-                                                               user=f"{os.getuid()}:4000",
+                                                               user=f"{uid}:4000",
                                                                detach=True,
                                                                environment=self._facts["env_vars"])
             stream_docker_container_output(container_obj.logs(stream=True))
@@ -931,7 +982,7 @@ class Linter:
                     container_obj.remove(force=True)
                 except docker.errors.NotFound as e:
                     logger.critical(f"{log_prompt} - Unable to delete container - {e}")
-        except (docker.errors.ImageNotFound, docker.errors.APIError) as e:
+        except (docker.errors.ImageNotFound, docker.errors.APIError, requests.exceptions.ReadTimeout) as e:
             logger.critical(f"{log_prompt} - Unable to run powershell test - {e}")
             exit_code = RERUN
 
@@ -966,9 +1017,11 @@ class Linter:
         exit_code = SUCCESS
         output = ""
         try:
+            uid = os.getuid() or 4000
+            logger.debug(f'{log_prompt} - user uid for running lint/test: {uid}')  # lgtm[py/clear-text-logging-sensitive-data]
             container_obj: docker.models.containers.Container = self._docker_client.containers.run(
                 name=container_name, image=test_image, command=build_pwsh_test_command(),
-                user=f"{os.getuid()}:4000", detach=True, environment=self._facts["env_vars"])
+                user=f"{uid}:4000", detach=True, environment=self._facts["env_vars"])
             stream_docker_container_output(container_obj.logs(stream=True))
             # wait for container to finish
             container_status = container_obj.wait(condition="exited")
@@ -993,7 +1046,7 @@ class Linter:
                     container_obj.remove(force=True)
                 except docker.errors.NotFound as e:
                     logger.critical(f"{log_prompt} - Unable to delete container - {e}")
-        except (docker.errors.ImageNotFound, docker.errors.APIError) as e:
+        except (docker.errors.ImageNotFound, docker.errors.APIError, requests.exceptions.ReadTimeout) as e:
             logger.critical(f"{log_prompt} - Unable to run powershell test - {e}")
             exit_code = RERUN
 

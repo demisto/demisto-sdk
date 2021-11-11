@@ -1,12 +1,13 @@
 from copy import deepcopy
 from typing import List, Union
 
-from demisto_sdk.commands.common.content.objects.pack_objects import (
-    JSONContentObject, TextObject, YAMLContentObject, YAMLContentUnifiedObject)
-from demisto_sdk.commands.common.logger import Colors
 from pandas import DataFrame
 from tabulate import tabulate
 from wcmatch.pathlib import Path
+
+from demisto_sdk.commands.common.content.objects.pack_objects import (
+    JSONContentObject, TextObject, YAMLContentObject, YAMLContentUnifiedObject)
+from demisto_sdk.commands.common.logger import Colors
 
 ContentObject = Union[YAMLContentUnifiedObject, YAMLContentObject, JSONContentObject, TextObject]
 

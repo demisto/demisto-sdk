@@ -264,7 +264,6 @@ class TestPlaybook:
             instance_created = integration.create_integration_instance(client,
                                                                        self.configuration.playbook_id,
                                                                        self.is_mockable,
-                                                                       self.integrations,
                                                                        server_context
                                                                        )
             if not instance_created:

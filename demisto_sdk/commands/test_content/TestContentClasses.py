@@ -256,6 +256,7 @@ class TestPlaybook:
             True if all integrations was configured else False
         """
         configured_integrations: List[Integration] = []
+        logging.info(f"self.integrations is - {self.integrations}")
         for integration in self.integrations:
             instance_created = integration.create_integration_instance(client,
                                                                        self.configuration.playbook_id,
@@ -997,7 +998,7 @@ class Integration:
         """
         server_url = self.build_context.get_public_ip_from_server_url(client.api_client.configuration.host)
         _, added_integrations = self._set_integration_params(server_url, playbook_id, is_mockable)
-        integrations.append(added_integrations)
+        integrations.extend(added_integrations)
         configuration = self._get_integration_config(client.api_client.configuration.host)
         if not configuration:
             self.build_context.logging_module.error(f'Could not find configuration for integration {self}')

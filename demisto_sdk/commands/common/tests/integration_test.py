@@ -524,11 +524,10 @@ class TestIntegrationValidator:
     @pytest.mark.parametrize("current, old, answer", IS_VALID_BETA_INPUTS)
     def test_is_valid_beta_integration(self, current, old, answer):
         structure = mock_structure("", current, old)
-        validator = IntegrationValidator(structure, skip_docker_check=True)
+        validator = IntegrationValidator(structure)
         validator.current_file = current
         validator.old_file = old
         assert validator.is_valid_beta() is answer
-        assert validator.is_docker_image_valid() is True
 
     PROXY_VALID = [{"name": "proxy", "type": 8, "display": "Use system proxy settings", "required": False}]
     PROXY_WRONG_TYPE = [{"name": "proxy", "type": 9, "display": "Use system proxy settings", "required": False}]

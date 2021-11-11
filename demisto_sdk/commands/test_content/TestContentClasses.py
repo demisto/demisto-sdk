@@ -259,7 +259,7 @@ class TestPlaybook:
             True if all integrations was configured else False
         """
         configured_integrations: List[Integration] = []
-        logging.info(f"self.integrations is - {self.integrations}")
+        self.build_context.logging_module.info(f"self.integrations is - {self.integrations}")
         for integration in self.integrations:
             instance_created = integration.create_integration_instance(client,
                                                                        self.configuration.playbook_id,
@@ -865,6 +865,7 @@ class Integration:
         self.integration_configuration_from_server: dict = {}
         self.integration_type: str = ""
         self.module_instance: dict = {}
+        self.additional_instances: list = []
 
     @staticmethod
     def _change_placeholders_to_values(server_url: str,
@@ -887,7 +888,7 @@ class Integration:
         config_item.params = json.loads(item_as_string)
         return config_item
 
-    def _set_integration_params(self, server_url: str, playbook_id: str, is_mockable: bool) -> Tuple[bool, List]:
+    def _set_integration_params(self, server_url: str, playbook_id: str, is_mockable: bool) -> bool:
         """
         Finds the matching configuration for the integration in content-test-data conf.json file
         in accordance with the configured instance name if exist and configures the proxy parameter if needed
@@ -900,7 +901,6 @@ class Integration:
             True if found a matching configuration else False if found more that one configuration candidate returns False
         """
         self.build_context.logging_module.debug(f'Searching integration configuration for {self}')
-        added_multiple_instances: List[Integration] = []
 
         # Finding possible configuration matches
         integration_params: List[IntegrationConfiguration] = [
@@ -930,7 +930,7 @@ class Integration:
                                                                  self.name,
                                                                  '\n'.join(optional_instance_names))
                     self.build_context.logging_module.error(error_msg)
-                    return False, []
+                    return False
             else:
                 self.configuration = integration_params[0]
 
@@ -953,14 +953,9 @@ class Integration:
                     for item in integration_params:
                         logging.info(f"Instance names in conf are: {self.instance_names}")
                         if item.instance_name == instance_name:
-                            integration_copy = Integration(self.build_context, self.name, [item.instance_name])
-                            integration_copy.configuration = item.params
-                            integration_copy.instance_name = item.instance_name
-                            added_multiple_instances.append(integration_copy)
-        if len(added_multiple_instances) > 0:
-            return True, added_multiple_instances
-        else:
-            return True, []
+                            additional_instance = {'configuration': item.params, 'instance_name': item.instance_name}
+                            self.additional_instances.append(additional_instance)
+        return True
 
     def _get_integration_config(self, server_url: str) -> Optional[dict]:
         """
@@ -1057,7 +1052,6 @@ class Integration:
                                     client: DefaultApi,
                                     playbook_id: str,
                                     is_mockable: bool,
-                                    integrations: List,
                                     server_context: 'ServerContext',
                                    ) -> bool:
         """
@@ -1073,8 +1067,7 @@ class Integration:
             The integration configuration as it exists on the server after it was configured
         """
         server_url = self.build_context.get_public_ip_from_server_url(client.api_client.configuration.host)
-        _, added_integrations = self._set_integration_params(server_url, playbook_id, is_mockable)
-        integrations.extend(added_integrations)
+        self._set_integration_params(server_url, playbook_id, is_mockable)
         configuration = self._get_integration_config(client.api_client.configuration.host)
         if not configuration:
             self.build_context.logging_module.error(f'Could not find configuration for integration {self}')
@@ -1143,6 +1136,14 @@ class Integration:
             res = demisto_client.generic_request_func(self=client, method='PUT',
                                                       path='/settings/integration',
                                                       body=module_instance)
+
+            if len(self.additional_instances) > 1:
+                for additional_instance in self.additional_instances:
+                    module_instance['name'] = additional_instance['instance_name']
+                    module_instance['configuration'] = additional_instance['configuration']
+                    res = demisto_client.generic_request_func(self=client, method='PUT',
+                                                              path='/settings/integration',
+                                                              body=module_instance)
         except ApiException:
             self.build_context.logging_module.exception(f'Error trying to create instance for integration: {self}')
             return False

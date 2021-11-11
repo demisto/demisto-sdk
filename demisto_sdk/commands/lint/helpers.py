@@ -588,17 +588,19 @@ def get_packs_dependent_on_given_packs(packs, id_set_path, dependent_packs):
 
     def collect_dependent_packs(results) -> None:
         first_level_dependencies = results
+        print(f'First Level Dependencies: {first_level_dependencies.keys()}')
+        print(f'Dependent Packs: {dependent_packs}')
         dependent_packs.extend(first_level_dependencies.keys())
 
     id_set = get_id_set(id_set_path)
     all_packs = select_packs_for_calculation()
     dependency_graph = PackDependencies.build_all_dependencies_graph(all_packs, id_set=id_set, verbose=False)
-    revert_dependency_graph = nx.DiGraph.reverse(dependency_graph)
-    pack_names = [str(x).split('/')[7] for x in packs]
+    reverse_dependency_graph = nx.DiGraph.reverse(dependency_graph)
+    pack_names = [str(x).split('/')[7] for x in packs] # TODO: improve
     with ProcessPoolHandler() as pool:
         futures = []
         for pack in pack_names:
-            futures.append(pool.schedule(calculate_single_pack_dependencies, args=(str(pack), revert_dependency_graph), timeout=10))
+            futures.append(pool.schedule(calculate_single_pack_dependencies, args=(str(pack), reverse_dependency_graph), timeout=10))
         wait_futures_complete(futures=futures, done_fn=collect_dependent_packs)
     return dependent_packs
 
@@ -614,7 +616,6 @@ def select_packs_for_calculation() -> list:
             logging.warning(f"Skipping dependency calculation of {pack.name} pack.")
             continue  # skipping ignored packs
         packs.append(pack.name)
-    print(len(packs))
     return packs
 
 def wait_futures_complete(futures: List[ProcessFuture], done_fn):
@@ -651,4 +652,4 @@ def get_id_set(id_set_path: str):
 
 def get_full_pack_path_by_name(pack, content_packs_paths):
     content_pack_path = str(content_packs_paths[0]).split('Packs')[0]
-    return PosixPath(content_pack_path + pack)
+    return PosixPath(content_pack_path + 'Packs/' + pack)  # TODO: make less stupid

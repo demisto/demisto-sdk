@@ -630,8 +630,8 @@ def secrets(config, **kwargs):
 )
 @click.option("-dt", "--docker-timeout", default=60,
               help="The timeout (in seconds) for requests done by the docker client.", type=int)
-@click.option("--check-dependent", help="Run unit tests and lint on all packages that are dependent on the found"
-                                        " modified packages.", type=bool)
+@click.option("--check-dependent", is_flag=True, help="Run unit tests and lint on all packages that are dependent on the found"
+                                        " modified packages.")
 @click.option("--id-set-path", help="Path to id_set.json, relevant for when using the --check-dependent flag.",
               type=str)
 

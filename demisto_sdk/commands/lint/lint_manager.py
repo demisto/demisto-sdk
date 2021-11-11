@@ -14,8 +14,9 @@ import docker.errors
 import git
 import requests.exceptions
 import urllib3.exceptions
-from wcmatch.pathlib import Path
+from pathlib import PosixPath
 
+from wcmatch.pathlib import Path
 from demisto_sdk.commands.common.constants import (PACKS_PACK_META_FILE_NAME,
                                                    TYPE_PWSH, TYPE_PYTHON,
                                                    DemistoException)
@@ -28,7 +29,7 @@ from demisto_sdk.commands.common.tools import (find_file, find_type,
                                                is_external_repository,
                                                print_error, print_v,
                                                print_warning,
-                                               retrieve_file_ending)
+                                               retrieve_file_ending, pack_name_to_path)
 from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, PWSH_CHECKS,
                                                PY_CHCEKS,
                                                build_skipped_exit_code,
@@ -75,16 +76,16 @@ class LintManager:
                                                     base_branch=self._prev_ver)
         self._id_set_path = id_set_path
         self._check_dependent_packs = check_dependent_packs
-        print(check_dependent_packs)
         if self._check_dependent_packs:
-            print(self._pkgs)
             # TODO: check cases where this shouldnt hit
             dependent = []
-            get_packs_dependent_on_given_packs(self._pkgs, self._id_set_path, dependent)
-            dependent = [get_full_pack_path_by_name(pack, self._pkgs) for pack in dependent]
+            print(self._pkgs)
+            print(len(self._pkgs))
+            dependent = [PosixPath(pack_name_to_path(pack)) for pack in
+                         get_packs_dependent_on_given_packs(self._pkgs, self._id_set_path, dependent)]
             self._pkgs = self._pkgs + dependent
             self._pkgs = list(set(self._pkgs)) # remove dups
-            print(self._pkgs)
+            print(len(self._pkgs))
 
         if json_file_path:
             if os.path.isdir(json_file_path):

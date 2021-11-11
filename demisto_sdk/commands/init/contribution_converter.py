@@ -258,7 +258,7 @@ class ContributionConverter:
         )
         from_version = '6.0.0' if self.create_new else ''
         format_manager(
-            from_version=from_version, no_validate=True, update_docker=True, verbose=True, assume_yes=True
+            from_version=from_version, no_validate=True, update_docker=True, verbose=True, assume_yes=True, prev_ver='xsoar-contrib/master'
         )
 
     def generate_readme_for_pack_content_item(self, yml_path: str) -> None:

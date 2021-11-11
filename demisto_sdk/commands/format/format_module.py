@@ -127,14 +127,11 @@ def format_manager(input: str = None,
     supported_file_types = ['json', 'yml', 'py', 'md']
     use_git = use_git or not input
 
-    print(f'Hi this is the input: {input}')
-    print(f'Hi this is the use_git {use_git}')
     if input:
         files = get_files_in_dir(input, supported_file_types)
 
     elif use_git:
         files = get_files_to_format_from_git(supported_file_types, prev_ver, include_untracked)
-        print(f'Hi this is the files: {files}')
 
     if output and not output.endswith(('yml', 'json', 'py')):
         raise Exception("The given output path is not a specific file path.\n"
@@ -218,7 +215,7 @@ def get_files_to_format_from_git(supported_file_types: List[str], prev_ver: str,
 
         # get the file extension without the '.'
         file_extension = os.path.splitext(str_file_path)[1][1:]
-        if file_extension in supported_file_types:
+        if file_extension in supported_file_types and os.path.exists(str_file_path):
             filtered_files.append(str_file_path)
 
     if filtered_files:

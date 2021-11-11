@@ -66,6 +66,10 @@ class Repo:
             'Reports': [],
             'Widgets': [],
             'Mappers': [],
+            'GenericTypes': [],
+            'GenericFields': [],
+            'GenericModules': [],
+            'GenericDefinitions': []
         })
 
     def __del__(self):
@@ -133,7 +137,7 @@ class Repo:
 
         indicator_type = pack.create_indicator_type(f'{name}_indicator-type')
         indicator_type.write_json({'id': f'{name} - indicator_type'})
-        indicator_type.update({'name': f'{name} - indicator_type'})
+        indicator_type.update({'details': f'{name} - indicator_type'})
         indicator_type.update({'regex': ''})
 
         indicator_field = pack.create_indicator_field(f'{name}_indicator-field')
@@ -155,15 +159,50 @@ class Repo:
         widget.update({'name': f'{name} - widget'})
         widget.update({'widgetType': ''})
 
+        list_item = pack.create_list(f'{name}_list')
+        list_item.write_json({'id': f'{name} - list'})
+        list_item.update({'name': f'{name} - list'})
+        list_item.update({'allRead': 'True'})
+        list_item.update({'truncated': 'True'})
+
         playbook = pack.create_playbook(f'{name}_playbook')
         playbook.create_default_playbook()
         playbook.yml.update({'id': f'{name}_playbook'})
         playbook.yml.update({'name': f'{name}_playbook'})
 
-        test_playbook = pack.create_test_playbook(f'{name}_test_playbook')
+        test_playbook = pack.create_test_playbook(f'{name}_integration_test_playbook')
         test_playbook.create_default_playbook()
-        test_playbook.yml.update({'id': f'{name}_test_playbook'})
-        test_playbook.yml.update({'name': f'{name}_test_playbook'})
+        test_playbook.yml.update({'id': f'{name}_integration_test_playbook'})
+        test_playbook.yml.update({'name': f'{name}_integration_test_playbook'})
+        integration.yml.update({'tests': [f'{name}_integration_test_playbook']})
+
+        test_playbook = pack.create_test_playbook(f'{name}_script_test_playbook')
+        test_playbook.create_default_playbook()
+        test_playbook.yml.update({'id': f'{name}_script_test_playbook'})
+        test_playbook.yml.update({'name': f'{name}_script_test_playbook'})
+        script.yml.update({'tests': [f'{name}_script_test_playbook']})
+
+        generic_type = pack.create_generic_type(f'{name}_generic-type')
+        generic_type.write_json({'id': f'{name} - _generic_type'})
+        generic_type.update({'name': f'{name} - _generic_type'})
+        generic_type.update({'definitionId': 'definitionId'})
+        generic_type.update({'color': 'test'})
+
+        generic_field = pack.create_generic_field(f'{name}_generic-field')
+        generic_field.write_json({'id': f'generic_{name} - generic_field'})
+        generic_field.update({'name': f'generic_{name} - generic_field'})
+        generic_field.update({'definitionId': 'definitionId'})
+
+        generic_module = pack.create_generic_module(f'{name}_generic-module')
+        generic_module.write_json({'id': f'generic_{name} - generic_module'})
+        generic_module.update({'name': f'generic_{name} - generic_module'})
+        generic_module.update({'views': [{'name': 'name'}]})
+        generic_module.update({'definitionIds': ['definitionId']})
+
+        generic_definition = pack.create_generic_definition(f'{name}_generic-definition')
+        generic_definition.write_json({'id': f'generic_{name} - generic_definition'})
+        generic_definition.update({'name': f'generic_{name} - generic_definition'})
+        generic_definition.update({'auditable': False})
 
         return pack
 

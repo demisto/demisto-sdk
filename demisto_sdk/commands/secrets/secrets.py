@@ -8,12 +8,13 @@ from typing import DefaultDict
 
 import PyPDF2
 from bs4 import BeautifulSoup
+
 # secrets settings
 # Entropy score is determined by shanon's entropy algorithm, most English words will score between 1.5 and 3.5
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
-    EXTERNAL_PR_REGEX, PACKS_DIR, PACKS_INTEGRATION_README_REGEX,
-    PACKS_WHITELIST_FILE_NAME, FileType, re)
+    PACKS_DIR, PACKS_INTEGRATION_README_REGEX, PACKS_WHITELIST_FILE_NAME,
+    FileType, re)
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                get_pack_name,
                                                is_file_path_in_pack,
@@ -107,8 +108,7 @@ class SecretsValidator(object):
                                             ' remove the files asap and report it.\n'
 
                 secrets_found_string += 'For more information about whitelisting visit: ' \
-                                        'https://github.com/demisto/demisto-sdk/tree/master/demisto_sdk/' \
-                                        'commands/secrets'
+                                        'https://xsoar.pan.dev/docs/concepts/demisto-sdk#secrets'
                 print_error(secrets_found_string)
         return secret_to_location_mapping
 
@@ -251,7 +251,7 @@ class SecretsValidator(object):
             except re.error as err:
                 error_string = f"Could not use secrets with item: {item}"
                 print_error(error_string)
-                raise re.error(error_string, err)
+                raise re.error(error_string, str(err))
         return file_content
 
     @staticmethod
@@ -295,7 +295,7 @@ class SecretsValidator(object):
         dates = re.findall(DATES_REGEX, line)
         if dates:
             false_positives += [date[0].lower() for date in dates]
-        # UUID REGEX
+        # UUID REGEX - for false positives
         uuids = re.findall(UUID_REGEX, line)
         if uuids:
             false_positives += uuids
@@ -367,19 +367,20 @@ class SecretsValidator(object):
         final_white_list = []
         ioc_white_list = []
         files_while_list = []
-        with io.open(whitelist_path, mode="r", encoding="utf-8") as secrets_white_list_file:
-            secrets_white_list_file = json.load(secrets_white_list_file)
-            for name, white_list in secrets_white_list_file.items():  # type: ignore
-                if name == 'iocs':
-                    for sublist in white_list:
-                        ioc_white_list += [white_item for white_item in white_list[sublist] if len(white_item) > 4]
-                    final_white_list += ioc_white_list
-                elif name == 'files':
-                    files_while_list = white_list
-                else:
-                    final_white_list += [white_item for white_item in white_list if len(white_item) > 4]
+        if os.path.isfile(whitelist_path):
+            with io.open(whitelist_path, mode="r", encoding="utf-8") as secrets_white_list_file:
+                secrets_white_list_file = json.load(secrets_white_list_file)
+                for name, white_list in secrets_white_list_file.items():  # type: ignore
+                    if name == 'iocs':
+                        for sublist in white_list:
+                            ioc_white_list += [white_item for white_item in white_list[sublist] if len(white_item) > 4]
+                        final_white_list += ioc_white_list
+                    elif name == 'files':
+                        files_while_list = white_list
+                    else:
+                        final_white_list += [white_item for white_item in white_list if len(white_item) > 4]
 
-            return final_white_list, ioc_white_list, files_while_list
+        return final_white_list, ioc_white_list, files_while_list
 
     @staticmethod
     def get_packs_white_list(whitelist_path, pack_name=None):
@@ -490,14 +491,12 @@ class SecretsValidator(object):
         print_color('Starting secrets detection', LOG_COLORS.GREEN)
         is_circle = self.is_circle
         branch_name = self.get_branch_name()
-        is_forked = re.match(EXTERNAL_PR_REGEX, branch_name) is not None
-        if not is_forked:
-            secrets_found = self.get_secrets(branch_name, is_circle)
-            if secrets_found:
-                return True
-            else:
-                print_color('Finished validating secrets, no secrets were found.', LOG_COLORS.GREEN)
-                return False
+        secrets_found = self.get_secrets(branch_name, is_circle)
+        if secrets_found:
+            return True
+        else:
+            print_color('Finished validating secrets, no secrets were found.', LOG_COLORS.GREEN)
+            return False
 
     def remove_secrets_disabled_line(self, file_content: str) -> str:
         """Removes lines that have "disable-secrets-detection" from file content

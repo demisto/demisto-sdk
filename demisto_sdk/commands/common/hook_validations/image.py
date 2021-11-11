@@ -51,18 +51,27 @@ class ImageValidator(BaseValidator):
             return self._is_valid
 
         is_existing_image = False
-        self.oversize_image()
+        self.validate_size(allow_empty_image_file=True)
         if '.png' not in self.file_path:
             is_existing_image = self.is_existing_image()
         if is_existing_image or '.png' in self.file_path:
             self.is_not_default_image()
+        if '.png' in self.file_path:
+            self.is_valid_image_name()
 
         return self._is_valid
 
-    def oversize_image(self):
-        """Check if the image if over sized, bigger than IMAGE_MAX_SIZE"""
+    def validate_size(self, allow_empty_image_file: bool, maximum_size: int = IMAGE_MAX_SIZE) -> None:
+        """
+        Checks if image has a valid size.
+        if 'allow_empty_image_file' is true, checks that the image file is not empty.
+        Args:
+            allow_empty_image_file (bool): Whether empty image file is an error.
+            maximum_size (int): Maximum allowed size.
+        """
         if re.match(IMAGE_REGEX, self.file_path, re.IGNORECASE):
-            if os.path.getsize(self.file_path) > self.IMAGE_MAX_SIZE:  # disable-secrets-detection
+            image_size = os.path.getsize(self.file_path)
+            if image_size > maximum_size:  # disable-secrets-detection
                 error_message, error_code = Errors.image_too_large()
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self._is_valid = False
@@ -74,11 +83,16 @@ class ImageValidator(BaseValidator):
                 return
 
             image = data_dictionary.get('image', '')
-
-            if ((len(image) - 22) / 4.0) * 3 > self.IMAGE_MAX_SIZE:  # disable-secrets-detection
+            image_size = int(((len(image) - 22) / 4) * 3)
+            if image_size > self.IMAGE_MAX_SIZE:  # disable-secrets-detection
                 error_message, error_code = Errors.image_too_large()
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self._is_valid = False
+
+        if not allow_empty_image_file and image_size == 0:
+            error_message, error_code = Errors.image_is_empty(self.file_path)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self._is_valid = False
 
     def is_existing_image(self):
         """Check if the integration has an image."""
@@ -157,4 +171,17 @@ class ImageValidator(BaseValidator):
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False
                 return False
+        return True
+
+    def is_valid_image_name(self):
+        """Check if the image name is valid"""
+        image_path = self.file_path
+
+        if not image_path.endswith("_image.png"):
+            error_message, error_code = Errors.invalid_image_name()
+
+            if self.handle_error(error_message, error_code, file_path=image_path):
+                self._is_valid = False
+                return False
+
         return True

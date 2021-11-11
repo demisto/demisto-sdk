@@ -8,8 +8,9 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 import autopep8
-import demisto_sdk.commands.common.tools as tools
 import ruamel.yaml
+
+import demisto_sdk.commands.common.tools as tools
 from demisto_sdk.commands.generate_integration.base_code import (
     BASE_ARGUMENT, BASE_BASIC_AUTH, BASE_BEARER_TOKEN, BASE_CLIENT,
     BASE_CLIENT_API_KEY, BASE_CODE_TEMPLATE, BASE_CREDENTIALS, BASE_FUNCTION,
@@ -38,7 +39,7 @@ def json_body_to_code(request_json_body):
     s = json.dumps(request_json_body, sort_keys=True)
     pattern = re.compile(r'\"\{[a-zA-Z0-9_]+\}\"')
     for leaf in re.findall(pattern, s):
-        s = s.replace(leaf, leaf.replace('"{', '').replace('}"', ''), 1)
+        s = s.replace(leaf, leaf.replace('"{', '').replace('}"', '').lower(), 1)
 
     return f'data={s}'
 
@@ -231,7 +232,7 @@ class IntegrationGeneratorConfig:
         for arg in command.arguments:
             arguments_found = True
             code_arg_name = arg.name
-            ref_arg_name = arg.name
+            ref_arg_name = arg.name.lower()
             if arg.ref:
                 ref_arg_name = f'{arg.ref}_{ref_arg_name}'.lower()
                 code_arg_name = f'{arg.ref}_{code_arg_name}'.lower()
@@ -263,6 +264,7 @@ class IntegrationGeneratorConfig:
             else:
                 this_argument = this_argument.replace('$ARGTYPE$', '')
 
+            code_arg_name = code_arg_name.lower()
             this_argument = this_argument.replace('$SARGNAME$', code_arg_name)
             argument_names.append(code_arg_name)
             arguments.append(this_argument)
@@ -306,6 +308,7 @@ class IntegrationGeneratorConfig:
         for param in re.findall(r'{([^}]+)}', command.url_path):  # get content inside curly brackets
             if param in ILLEGAL_CODE_NAMES:
                 command.url_path = command.url_path.replace(param, f'{param}{NAME_FIX}')
+            command.url_path = command.url_path.replace(param, param.lower())
 
         req_function = req_function.replace('$PATH$', command.url_path)
 
@@ -487,7 +490,7 @@ class IntegrationGeneratorConfig:
                     options = arg.predefined_values
 
                 args.append(XSOARIntegration.Script.Command.Argument(
-                    name=arg.name,
+                    name=arg.name.lower(),
                     description=arg.description or '',
                     required=required,
                     auto=auto,

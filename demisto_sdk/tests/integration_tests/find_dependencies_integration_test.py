@@ -1,6 +1,7 @@
 import os
 
 from click.testing import CliRunner
+
 from demisto_sdk.__main__ import main
 from TestSuite.test_tools import ChangeCWD
 
@@ -21,11 +22,23 @@ EMPTY_ID_SET = {
     'Reports': [],
     'Widgets': [],
     'Mappers': [],
+    'GenericTypes': [],
+    'GenericFields': [],
+    'GenericModules': [],
+    'GenericDefinitions': [],
+    'Lists': []
 }
 
 
+def mock_is_external_repo(mocker, is_external_repo_return):
+    return mocker.patch(
+        'demisto_sdk.commands.find_dependencies.find_dependencies.is_external_repository',
+        return_value=is_external_repo_return
+    )
+
+
 class TestFindDependencies:  # Use classes to speed up test - multi threaded py pytest
-    def test_integration_find_dependencies__sanity(self, mocker, repo):
+    def test_integration_find_dependencies_sanity(self, mocker, repo):
         """
         Given
         - Valid pack folder
@@ -39,10 +52,12 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
         - Ensure no error occurs.
         - Ensure debug file is created.
         """
+        mock_is_external_repo(mocker, False)
         # Note: if DEMISTO_SDK_ID_SET_REFRESH_INTERVAL is set it can fail the test
         mocker.patch.dict(os.environ, {'DEMISTO_SDK_ID_SET_REFRESH_INTERVAL': '-1'})
         pack = repo.create_pack('FindDependencyPack')
         integration = pack.create_integration('integration')
+        integration.create_default_integration()
         mocker.patch(
             "demisto_sdk.commands.find_dependencies.find_dependencies.update_pack_metadata_with_dependencies",
         )
@@ -75,11 +90,14 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
         assert secho.call_args_list[10][0][0] == '### Widgets'
         assert secho.call_args_list[11][0][0] == '### Dashboards'
         assert secho.call_args_list[12][0][0] == '### Reports'
-        assert secho.call_args_list[13][0][0] == 'All level dependencies are: []'  # last log is regarding all the deps
+        assert secho.call_args_list[13][0][0] == '### Generic Types'
+        assert secho.call_args_list[14][0][0] == '### Generic Fields'
+        assert secho.call_args_list[15][0][0] == '### Generic Modules'
+        assert secho.call_args_list[16][0][0] == 'All level dependencies are: []'  # last log is regarding all the deps
         assert result.exit_code == 0
         assert result.stderr == ""
 
-    def test_integration_find_dependencies__sanity_with_id_set(self, repo):
+    def test_integration_find_dependencies_sanity_with_id_set(self, repo, mocker):
         """
         Given
         - Valid pack folder
@@ -91,6 +109,7 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
         - Ensure find-dependencies passes.
         - Ensure no error occurs.
         """
+        mock_is_external_repo(mocker, False)
         pack = repo.create_pack('FindDependencyPack')
         integration = pack.create_integration('integration')
         id_set = EMPTY_ID_SET.copy()
@@ -118,7 +137,7 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
         assert result.exit_code == 0
         assert result.stderr == ""
 
-    def test_integration_find_dependencies__not_a_pack(self, repo):
+    def test_integration_find_dependencies_not_a_pack(self, repo):
         """
         Given
         - Valid pack folder
@@ -167,6 +186,7 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
         - Ensure find-dependencies passes.
         - Ensure dependency is printed.
         """
+        mock_is_external_repo(mocker, False)
         pack1 = repo.create_pack('FindDependencyPack1')
         integration = pack1.create_integration('integration1')
         integration.create_default_integration()
@@ -225,5 +245,5 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
                 [FIND_DEPENDENCIES_CMD, '-i', path]
             )
             assert result.exit_code == 1
-            assert "Input path is not a pack" in result.stdout
+            assert "must be formatted as 'Packs/<some pack name>" in result.stdout
             assert result.stderr == ""

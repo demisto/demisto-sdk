@@ -92,3 +92,5 @@ mapping:
     type: str
   toServerVersion:
     type: str
+  openEnded:
+    type: bool

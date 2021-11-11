@@ -99,6 +99,8 @@ tasks:
         }
       }
     note: false
+    isoversize: false
+    isautoswitchedtoquietmode: false
   "3":
     id: "3"
     taskid: 561f7e3c-e8cf-4f68-8bbe-64c7cb608995

@@ -1,74 +1,240 @@
 import json
 import os
 from pathlib import Path
+from typing import Dict, List, Optional, Union
 
+import pytest
 import yaml
+
+import demisto_sdk.commands.common.tools as tools
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.generate_integration.code_generator import \
-    IntegrationGeneratorConfig
+from demisto_sdk.commands.generate_integration.code_generator import (
+    IntegrationGeneratorConfig, IntegrationGeneratorOutput)
 from demisto_sdk.commands.postman_codegen.postman_codegen import (
-    create_body_format, postman_to_autogen_configuration)
+    build_commands_names_dict, create_body_format, duplicate_requests_check,
+    flatten_collections, generate_command_outputs,
+    postman_to_autogen_configuration)
 
 
-def test_create_body_format():
-    request_body = {
-        "key1": "val1",
-        "key2": {
-            "key3": "val3"
-        },
-        "key4": [
+class TestPostmanHelpers:
+    def test_create_body_format(self):
+        request_body = {
+            "key1": "val1",
+            "key2": {
+                "key3": "val3"
+            },
+            "key4": [
+                {
+                    "key5": "val5"
+                },
+                {
+                    "key5": "val51"
+                },
+            ],
+            "key7": [
+                "a",
+                "b",
+                "c"
+            ]
+        }
+        body_format = create_body_format(request_body)
+
+        assert body_format == {
+            "key1": "{key1}",
+            "key2": {
+                "key3": "{key3}"
+            },
+            "key4": [
+                {
+                    "key5": "{key5}"
+                }
+            ],
+            "key7": "{key7}"
+        }
+
+    def test_create_body_format_list_of_dicts(self):
+        request_body = [
             {
-                "key5": "val5"
+                "key1": "val1"
             },
             {
-                "key5": "val51"
-            },
-        ],
-        "key7": [
-            "a",
-            "b",
-            "c"
-        ]
-    }
-    body_format = create_body_format(request_body)
-
-    assert body_format == {
-        "key1": "{key1}",
-        "key2": {
-            "key3": "{key3}"
-        },
-        "key4": [
-            {
-                "key5": "{key5}"
+                "key1": "val11"
             }
-        ],
-        "key7": "{key7}"
-    }
+        ]
 
+        body_format = create_body_format(request_body)
 
-def test_create_body_format_list_of_dicts():
-    request_body = [
-        {
-            "key1": "val1"
-        },
-        {
-            "key1": "val11"
+        assert body_format == [
+            {
+                "key1": "{key1}"
+            }
+        ]
+
+    @pytest.mark.parametrize('collection, outputs', [
+        ([], []),
+        ([[], []], []),
+        ([{}, [], [{}]], [{}, {}]),
+        ([{'item': [{}]}, [], [{}]], [{}, {}])
+    ])
+    def test_flatten_collections(self, collection: list, outputs: list):
+        assert flatten_collections(collection) == outputs
+
+    def test_build_commands_names_dict_duplicate_names(self):
+        """
+        Given
+        - dictionary containing names of requests from a collection
+
+        When
+        - There are requests with names which have the same kebab case
+
+        Then
+        - returns names' dictionary with an entry of the matching kebab-case which has a list with the problematic names
+        """
+        requests = [
+            {
+                "name": "Test Number One"
+            },
+            {
+                "name": "Test number  one"
+            },
+            {
+                "name": "Test number two"
+            }
+        ]
+        names_dict = build_commands_names_dict(requests)
+        assert len(names_dict[tools.to_kebab_case("Test Number One")]) == 2
+        assert len(names_dict[tools.to_kebab_case("Test number two")]) == 1
+        assert len(names_dict) == 2
+
+    def test_build_commands_names_dict_no_duplicate_names(self):
+        """
+        Given
+        - dictionary containing names of requests from a collection
+
+        When
+        - There are no requests with names which have the same kebab case
+
+        Then
+        - returns names' dictionary with an entry for each request's name kebab case and the original name
+        """
+        requests = [
+            {
+                "name": "Test Number One"
+            },
+            {
+                "name": "Test number two"
+            }
+        ]
+        names_dict = build_commands_names_dict(requests)
+        assert len(names_dict[tools.to_kebab_case("Test Number One")]) == 1
+        assert len(names_dict[tools.to_kebab_case("Test number two")]) == 1
+        assert len(names_dict) == 2
+
+    def test_build_commands_names_dict_none_names(self):
+        """
+        Given
+        - dictionary containing names of requests from a collection
+
+        When
+        - There's a request with no name key
+
+        Then
+        - returns names' dictionary with an entry for each request's name kebab case and the original name and just them
+        """
+        requests = [
+            {
+                "None": None
+            },
+            {
+                "name": "Test number  one"
+            },
+            {
+                "name": "Test number two"
+            }
+        ]
+        names_dict = build_commands_names_dict(requests)
+        assert len(names_dict[tools.to_kebab_case("Test Number One")]) == 1
+        assert len(names_dict[tools.to_kebab_case("Test number two")]) == 1
+        assert len(names_dict) == 2
+
+    def test_duplicate_requests_check_duplicates_exist(self):
+        """
+        Given
+        - dictionary containing names in kebab case of requests and a list with their original names
+
+        When
+        - There are requests with the same kebab case
+
+        Then
+        - throw assertion error with the problematic requests' names
+        """
+        with pytest.raises(Exception):
+            names_dict = {
+                'test-number-one': [
+                    "Test number  one",
+                    "Test Number One"
+                ],
+                'test-number-two': [
+                    "Test number two"
+                ]
+            }
+            duplicate_requests_check(names_dict)
+
+    def test_duplicate_requests_check_duplicates_dont_exist(self):
+        """
+        Given
+        - dictionary containing names in kebab case of requests and a list with their original names
+
+        When
+        - There are no requests with the same kebab case
+
+        Then
+        - don't throw assertion error
+        """
+        names_dict = {
+            'test-number-one': [
+                "Test number  one",
+            ],
+            'test-number-two': [
+                "Test number two"
+            ]
         }
-    ]
-
-    body_format = create_body_format(request_body)
-
-    assert body_format == [
-        {
-            "key1": "{key1}"
-        }
-    ]
+        duplicate_requests_check(names_dict)
 
 
 class TestPostmanCodeGen:
     test_files_path = os.path.join(git_path(), 'demisto_sdk', 'commands', 'postman_codegen', 'tests', 'test_files')
-    postman_collection_path = os.path.join(test_files_path, 'VirusTotal.postman_collection.json')
-    autogen_config_path = os.path.join(test_files_path, 'VirusTotal-autogen-config.json')
+    postman_collection_stream = None
+    autogen_config_stream = None
+    postman_collection: dict
+    autogen_config: dict
+
+    @classmethod
+    def setup_class(cls):
+        collection_path = os.path.join(cls.test_files_path, 'VirusTotal.postman_collection.json')
+        autogen_config_path = os.path.join(cls.test_files_path, 'VirusTotal-autogen-config.json')
+        with open(collection_path) as f:
+            cls.postman_collection = json.load(f)
+
+        with open(autogen_config_path) as f:
+            cls.autogen_config = json.load(f)
+
+        cls.postman_collection_stream = open(collection_path)
+        cls.autogen_config_stream = open(autogen_config_path)
+
+    @classmethod
+    def teardown_class(cls):
+        cls.postman_collection_stream.close()
+        cls.autogen_config_stream.close()
+
+    @classmethod
+    @pytest.fixture(autouse=True)
+    def function_setup(cls):
+        """
+        Cleaning the content repo before every function
+        """
+        cls.postman_collection_stream.seek(0)
+        cls.autogen_config_stream.seek(0)
 
     def test_config_generated_successfully(self, mocker):
         """
@@ -94,14 +260,13 @@ class TestPostmanCodeGen:
         mocker.patch.object(DockerImageValidator, 'get_docker_image_latest_tag_request', return_value='3.8.6.12176')
 
         autogen_config = postman_to_autogen_configuration(
-            collection_path=self.postman_collection_path,
+            collection=self.postman_collection,
             name='VirusTotal Test',
             command_prefix='vt-test',
             context_path_prefix='VirusTotalTest'
         )
 
-        with open(self.autogen_config_path, 'r') as config_file:
-            expected_config = json.load(config_file)
+        expected_config = json.load(self.autogen_config_stream)
 
         assert expected_config == autogen_config.to_dict()
 
@@ -118,7 +283,7 @@ class TestPostmanCodeGen:
 
         """
         autogen_config = postman_to_autogen_configuration(
-            collection_path=self.postman_collection_path,
+            collection=self.postman_collection,
             command_prefix=None,
 
             name=None,
@@ -140,7 +305,7 @@ class TestPostmanCodeGen:
         - ensure context_output_path of the whole integration is VirusTotal
         """
         autogen_config = postman_to_autogen_configuration(
-            collection_path=self.postman_collection_path,
+            collection=self.postman_collection,
             context_path_prefix=None,
 
             command_prefix=None,
@@ -154,7 +319,8 @@ class TestPostmanCodeGen:
         """
         Given
         - postman collection
-        - with request Test Report which has variable {{foo}} in the url like: {{url}}/vtapi/v2/test/{{foo}}?resource=https://www.cobaltstrike.com/
+        - with request Test Report which has variable {{foo}} in the url like:
+        {{url}}/vtapi/v2/:Virus_name/test/{{foo}}?resource=https://www.cobaltstrike.com/
 
         When
         - generating config file
@@ -162,6 +328,7 @@ class TestPostmanCodeGen:
         Then
         - integration code, the command test-report will contain foo argument passed to the url
         - integration yml, the command test-report will contain foo arg
+        - integration yml, the command test-report will contain virus_name arg.
         """
         path = tmp_path / 'test-collection.json'
         _testutil_create_postman_collection(dest_path=path, with_request={
@@ -170,15 +337,22 @@ class TestPostmanCodeGen:
                 "method": "GET",
                 "header": [],
                 "url": {
-                    "raw": "{{url}}/vtapi/v2/test/{{foo}}?resource=https://www.cobaltstrike.com/",
+                    "raw": "{{url}}/vtapi/v2/:Virus_name/test/{{foo}}?resource=https://www.cobaltstrike.com/",
                     "host": [
                         "{{url}}"
                     ],
                     "path": [
                         "vtapi",
                         "v2",
+                        ":Virus_name",
                         "test",
                         "{{foo}}"
+                    ],
+                    "variable": [
+                        {
+                            "key": "Virus_name",
+                            "value": ""
+                        }
                     ],
                     "query": [
                         {
@@ -192,7 +366,7 @@ class TestPostmanCodeGen:
         })
 
         config = postman_to_autogen_configuration(
-            collection_path=path,
+            collection=json.load(open(path)),
             name='VirusTotal',
             context_path_prefix=None,
             command_prefix=None
@@ -203,10 +377,79 @@ class TestPostmanCodeGen:
         integration_yml = yaml.dump(integration_obj.to_dict())
 
         assert "foo = args.get('foo')" in integration_code
-        assert "def test_report_request(self, foo, resource):" in integration_code
-        assert "'GET', f'vtapi/v2/test/{foo}', params=params, headers=headers)" in integration_code
+        assert "virus_name = args.get('virus_name')" in integration_code
+        assert "def test_report_request(self, foo, virus_name, resource):" in integration_code
+        assert "'GET', f'vtapi/v2/{virus_name}/test/{foo}', params=params, headers=headers)" in integration_code
 
         assert 'name: foo' in integration_yml
+        assert 'name: virus_name' in integration_yml
+
+    def test_args_lowercase(self, tmp_path):
+        """
+        Given
+        - Postman collection.
+        - Test report request which has variables with upper case.
+
+        When
+        - Generating config file.
+
+        Then
+        - Integration code has arguments as lowercase, but sends the arguments to requests as given.
+        - Integration yml, the arguments are lower case.
+        """
+        path = tmp_path / 'test-collection.json'
+        _testutil_create_postman_collection(dest_path=path, with_request={
+            "name": "Test Report",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"A\": 2,\n    \"B\": 3,\n    \"c\": 4\n}"
+                },
+                "url": {
+                    "raw": "{{url}}/vtapi/v2/test/{{FOO_A}}?RESOURCE_B=https://www.cobaltstrike.com/",
+                    "host": [
+                        "{{url}}"
+                    ],
+                    "path": [
+                        "vtapi",
+                        "v2",
+                        "test",
+                        "{{FOO_A}}"
+                    ],
+                    "query": [
+                        {
+                            "key": "RESOURCE_B",
+                            "value": "https://www.cobaltstrike.com/"
+                        }
+                    ]
+                },
+                "description": "Test Report description"
+            }
+        })
+
+        config = postman_to_autogen_configuration(
+            collection=json.load(open(path)),
+            name='VirusTotal',
+            context_path_prefix=None,
+            command_prefix=None
+        )
+
+        integration_code = config.generate_integration_python_code()
+        integration_obj = config.generate_integration_yml()
+        integration_yml = yaml.dump(integration_obj.to_dict())
+
+        assert "foo_a = args.get('foo_a')" in integration_code
+        assert "def test_report_request(self, foo_a, resource_b, a, b, c)" in integration_code
+        assert 'assign_params(RESOURCE_B=resource_b' in integration_code
+        assert "('GET', f'vtapi/v2/test/{foo_a}', params=params, json_data=data, headers=headers)" in integration_code
+
+        assert 'name: foo_a' in integration_yml
+        assert 'name: resource_b' in integration_yml
+        assert 'name: a\n' in integration_yml
+        assert 'name: b\n' in integration_yml
+        assert 'name: c\n' in integration_yml
 
     def test_apikey_passed_as_header(self, tmpdir):
         """
@@ -262,7 +505,7 @@ class TestPostmanCodeGen:
         )
 
         config = postman_to_autogen_configuration(
-            collection_path=path,
+            collection=json.load(open(path)),
             name=None,
             command_prefix=None,
             context_path_prefix=None,
@@ -375,7 +618,7 @@ class TestPostmanCodeGen:
         )
 
         config = postman_to_autogen_configuration(
-            collection_path=path,
+            collection=json.load(open(path)),
             name=None,
             command_prefix=None,
             context_path_prefix=None,
@@ -429,11 +672,41 @@ class TestPostmanCodeGen:
         """
         pass
 
+    GENERATE_COMMAND_OUTPUTS_INPUTS = [({'id': 1}, [IntegrationGeneratorOutput('id', '', 'Number')]),
+                                       ([{'id': 1}], [IntegrationGeneratorOutput('id', '', 'Number')]),
+                                       ([{'a': [{'b': 2}]}], [IntegrationGeneratorOutput('a.b', '', 'Number')])]
 
-def _testutil_create_postman_collection(dest_path, with_request: dict = None, no_auth: bool = False):
-    default_collection_path = os.path.join(git_path(), 'demisto_sdk', 'commands', 'postman_codegen', 'tests', 'test_files',
-                                           'VirusTotal.postman_collection.json')
-    with open(default_collection_path, mode='r') as f:
+    @pytest.mark.parametrize('body, expected', GENERATE_COMMAND_OUTPUTS_INPUTS)
+    def test_generate_command_outputs(self, body: Union[List, Dict], expected: List[IntegrationGeneratorOutput]):
+        """
+        Given:
+        - Body of postman generator command.
+
+        When:
+        - Building corresponding command for Cortex XSOAR.
+
+        Then:
+        - Ensure outputs are flattened correctly.
+        """
+        outputs: List[IntegrationGeneratorOutput] = generate_command_outputs(body)
+        for i in range(len(outputs)):
+            assert outputs[i].name == expected[i].name
+            assert outputs[i].description == expected[i].description
+            assert outputs[i].type_ == expected[i].type_
+        assert len(outputs) == len(expected)
+
+
+def _testutil_create_postman_collection(dest_path, with_request: Optional[dict] = None, no_auth: bool = False):
+    default_collection_path = os.path.join(
+        git_path(),
+        'demisto_sdk',
+        'commands',
+        'postman_codegen',
+        'tests',
+        'test_files',
+        'VirusTotal.postman_collection.json'
+    )
+    with open(default_collection_path) as f:
         collection = json.load(f)
 
     if with_request:
@@ -447,22 +720,17 @@ def _testutil_create_postman_collection(dest_path, with_request: dict = None, no
 
 
 def _testutil_get_param(config: IntegrationGeneratorConfig, param_name: str):
-    if config.params is None:
-        return None
-
-    for param in config.params:
-        if param.name == param_name:
-            return param
+    if config.params is not None:
+        for param in config.params:
+            if param.name == param_name:
+                return param
 
     return None
 
 
 def _testutil_get_command(config: IntegrationGeneratorConfig, command_name: str):
-    if config.commands is None:
-        return None
-
-    for command in config.commands:
-        if command.name == command_name:
-            return command
-
+    if config.commands is not None:
+        for command in config.commands:
+            if command.name == command_name:
+                return command
     return None

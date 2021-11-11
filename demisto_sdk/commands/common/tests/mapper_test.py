@@ -1,8 +1,9 @@
 import pytest
+from mock import patch
+
 from demisto_sdk.commands.common.hook_validations.mapper import MapperValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
-from mock import patch
 
 
 def mock_structure(file_path=None, current_file=None, old_file=None):
@@ -58,3 +59,24 @@ class TestMapperValidator:
         structure = mock_structure("", mapper_json)
         validator = MapperValidator(structure)
         assert validator.is_incident_field_exist(id_set_json, is_circle) == expected_result
+
+    IS_MATCHING_NAME_ID_INPUT = [
+        ({"id": "name", "name": "name"}, True),
+        ({"id": "id_field", "name": "name_field"}, False)
+    ]
+
+    @pytest.mark.parametrize("mapper, result", IS_MATCHING_NAME_ID_INPUT)
+    def test_is_name_id_equal(self, repo, mapper, result):
+        """
+        Given
+        - A mapper with name and id
+        When
+        - validating mapper
+        Then
+        - validating that the mapper name and id are equal.
+        """
+
+        structure = mock_structure("", mapper)
+        validator = MapperValidator(structure)
+
+        assert validator.is_id_equals_name() == result

@@ -5,10 +5,11 @@ from unittest.mock import MagicMock, mock_open
 
 import mitmproxy
 import pytest
-from demisto_sdk.commands.test_content.timestamp_replacer import \
-    TimestampReplacer
 from mitmproxy.http import HTTPFlow, HTTPRequest
 from mitmproxy.net.http import Headers
+
+from demisto_sdk.commands.test_content.timestamp_replacer import \
+    TimestampReplacer
 
 
 @pytest.fixture()
@@ -275,3 +276,19 @@ class TestTimeStampReplacer:
         time_stamp_replacer = TimestampReplacer()
         time_stamp_replacer.request(flow)
         assert flow.live is False
+
+    def test_fixed_boundary(self, flow):
+        """
+           Given:
+               - A multipart/form-data flow with a random boundary
+           Then:
+               - Ensure that the boundary will be replaced to 'fixed_boundary'
+       """
+        original_boundary = 'original_boundary'
+        flow.request.headers['Content-Type'] = f'multipart/form-data; boundary={original_boundary}'
+        flow.request.content = f'--{original_boundary}\nContent-Disposision: form-data; ' \
+                               f'name="test"\n\nsomething\n--{original_boundary}--'.encode()
+        time_stamp_replacer = TimestampReplacer()
+        time_stamp_replacer.request(flow)
+        assert flow.request.content == b'--fixed_boundary\nContent-Disposision: form-data; ' \
+                                       b'name="test"\n\nsomething\n--fixed_boundary--'

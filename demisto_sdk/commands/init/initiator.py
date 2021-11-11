@@ -1,3 +1,4 @@
+import glob
 import json
 import os
 import shutil
@@ -8,19 +9,40 @@ from typing import Dict, List
 import click
 import yaml
 import yamlordereddictloader
+
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     CLASSIFIERS_DIR, CONNECTIONS_DIR, DASHBOARDS_DIR, DOC_FILES_DIR,
-    INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
-    INDICATOR_TYPES_DIR, INTEGRATION_CATEGORIES, INTEGRATIONS_DIR, LAYOUTS_DIR,
-    MARKETPLACE_LIVE_DISCUSSIONS, PACK_INITIAL_VERSION, PACK_SUPPORT_OPTIONS,
-    PLAYBOOKS_DIR, REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR,
-    XSOAR_AUTHOR, XSOAR_SUPPORT, XSOAR_SUPPORT_URL)
+    GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR, GENERIC_MODULES_DIR,
+    GENERIC_TYPES_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
+    INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, INTEGRATION_CATEGORIES,
+    INTEGRATIONS_DIR, LAYOUTS_DIR, MARKETPLACE_LIVE_DISCUSSIONS,
+    PACK_INITIAL_VERSION, PACK_SUPPORT_OPTIONS, PLAYBOOKS_DIR, REPORTS_DIR,
+    SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR, XSOAR_AUTHOR, XSOAR_SUPPORT,
+    XSOAR_SUPPORT_URL, GitContentConfig)
 from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                get_common_server_path,
-                                               print_error, print_v,
-                                               print_warning)
+                                               get_pack_name, print_error,
+                                               print_v, print_warning)
+from demisto_sdk.commands.secrets.secrets import SecretsValidator
+
+
+def extract_values_from_nested_dict_to_a_set(given_dictionary: dict, return_set: set):
+    """Recursively extracts values from a nested dictionary to a set.
+
+    Args:
+        given_dictionary: The nested dictionary to extract the values from.
+        return_set: the set with the extracted values.
+
+    """
+
+    for value in given_dictionary.values():
+        if isinstance(value, dict):  # value can be a dictionary
+            extract_values_from_nested_dict_to_a_set(value, return_set)
+        else:
+            for secret in value:  # value is a list
+                return_set.add(secret)
 
 
 class Initiator:
@@ -95,18 +117,22 @@ class Initiator:
 
     DIR_LIST = [INTEGRATIONS_DIR, SCRIPTS_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
                 PLAYBOOKS_DIR, LAYOUTS_DIR, TEST_PLAYBOOKS_DIR, CLASSIFIERS_DIR, CONNECTIONS_DIR, DASHBOARDS_DIR,
-                INDICATOR_TYPES_DIR, REPORTS_DIR, WIDGETS_DIR, DOC_FILES_DIR]
+                INDICATOR_TYPES_DIR, REPORTS_DIR, WIDGETS_DIR, DOC_FILES_DIR, GENERIC_MODULES_DIR,
+                GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR, GENERIC_TYPES_DIR]
 
     def __init__(self, output: str, name: str = '', id: str = '', integration: bool = False, template: str = '',
-                 script: bool = False, pack: bool = False, demisto_mock: bool = False, common_server: bool = False):
+                 category: str = '', script: bool = False, pack: bool = False, author_image: str = '', demisto_mock: bool = False,
+                 common_server: bool = False):
         self.output = output if output else ''
         self.id = id
 
         self.is_integration = integration
         self.is_script = script
         self.is_pack = pack
+        self.author_image = author_image
         self.demisto_mock = demisto_mock
         self.common_server = common_server
+        self.category = category
         self.configuration = Configuration()
 
         # if no flag given automatically create a pack.
@@ -116,9 +142,9 @@ class Initiator:
         self.template = self.get_selected_template(template)
 
         self.full_output_path = ''
-
-        while ' ' in name:
-            name = str(input("The directory and file name cannot have spaces in it, Enter a different name: "))
+        if name:
+            while ' ' in name:
+                name = str(input("The directory and file name cannot have spaces in it, Enter a different name: "))
 
         self.dir_name = name
 
@@ -209,6 +235,14 @@ class Initiator:
         elif os.path.isfile('content-descriptor.json'):
             self.full_output_path = os.path.join("Packs", self.dir_name)
 
+        # if in an external repo check for the existence of Packs directory
+        # if it does not exist create it
+        elif tools.is_external_repository():
+            if not os.path.isdir("Packs"):
+                print("Creating 'Packs' directory")
+                os.mkdir('Packs')
+            self.full_output_path = os.path.join("Packs", self.dir_name)
+
         # if non of the above conditions apply - create the pack in current directory
         else:
             self.full_output_path = self.dir_name
@@ -220,7 +254,6 @@ class Initiator:
             os.mkdir(path=path)
 
         self.create_pack_base_files()
-
         click.echo(
             f"Successfully created the pack {self.dir_name} in: {self.full_output_path}",
             color=LOG_COLORS.GREEN
@@ -228,26 +261,32 @@ class Initiator:
 
         metadata_path = os.path.join(self.full_output_path, 'pack_metadata.json')
         with open(metadata_path, 'a') as fp:
-            user_response = input("\nWould you like fill pack's metadata file? Y/N ").lower()
+            user_response = str(input("\nWould you like fill pack's metadata file? Y/N ")).lower()
             fill_manually = user_response in ['y', 'yes']
 
             pack_metadata = Initiator.create_metadata(fill_manually)
+            self.category = pack_metadata['categories'][0] if pack_metadata['categories'] else 'Utilities'
             json.dump(pack_metadata, fp, indent=4)
 
             click.echo(f"Created pack metadata at path : {metadata_path}", color=LOG_COLORS.GREEN)
 
         create_integration = str(input("\nDo you want to create an integration in the pack? Y/N ")).lower()
         if create_integration in ['y', 'yes']:
+            is_same_category = str(input("\nDo you want to set the integration category as you defined in the pack "
+                                         "metadata? Y/N ")).lower()
+
+            integration_category = self.category if is_same_category in ['y', 'yes'] else ''
             integration_init = Initiator(output=os.path.join(self.full_output_path, 'Integrations'),
                                          integration=True, common_server=self.common_server,
-                                         demisto_mock=self.demisto_mock, template=self.template)
+                                         demisto_mock=self.demisto_mock, template=self.template,
+                                         category=integration_category)
             return integration_init.init()
 
         return True
 
     def create_pack_base_files(self):
         """
-        Create empty 'README.md', '.secrets-ignore', and '.pack-ignore' files that are expected
+        Create empty 'README.md', '.secrets-ignore', '.pack-ignore' and 'Author_image.png' files that are expected
         to be in the base directory of a pack
         """
         click.echo('Creating pack base files', color=LOG_COLORS.NATIVE)
@@ -259,6 +298,14 @@ class Initiator:
 
         fp = open(os.path.join(self.full_output_path, '.pack-ignore'), 'a')
         fp.close()
+
+        # if an `Author_image.png` file was given - replace the default file with it
+        author_image_path = os.path.join(self.full_output_path, 'Author_image.png')
+        if self.author_image:
+            shutil.copyfile(self.author_image, author_image_path)
+        else:
+            fp = open(author_image_path, 'a')
+            fp.close()
 
     @staticmethod
     def create_metadata(fill_manually: bool, data: Dict = {}) -> Dict:
@@ -362,6 +409,31 @@ class Initiator:
             except ValueError:
                 user_input = input("\nThe option must be number, please enter valid choice: ")
 
+    def find_secrets(self):
+        files_and_directories = glob.glob(f'{self.full_output_path}/**/*', recursive=True)
+
+        sv = SecretsValidator(white_list_path='./Tests/secrets_white_list.json', ignore_entropy=True)
+        # remove directories and irrelevant files
+        files = [file for file in files_and_directories if os.path.isfile(file) and sv.is_text_file(file)]
+        # The search_potential_secrets method returns a nested dict with values of type list. The values are the secrets
+        # {'a': {'b': ['secret1', 'secret2'], 'e': ['secret1']}, 'g': ['secret3']}
+        nested_dict_of_secrets = sv.search_potential_secrets(files)
+        set_of_secrets: set = set()
+
+        extract_values_from_nested_dict_to_a_set(nested_dict_of_secrets, set_of_secrets)
+
+        return set_of_secrets
+
+    def ignore_secrets(self, secrets):
+        pack_dir = get_pack_name(self.full_output_path)
+        try:
+            with open(f'Packs/{pack_dir}/.secrets-ignore', 'a') as f:
+                for secret in secrets:
+                    f.write(secret)
+                    f.write('\n')
+        except FileNotFoundError:
+            print_warning("Could not find the .secrets-ignore file - make sure your path is correct")
+
     def integration_init(self) -> bool:
         """Creates a new integration according to a template.
 
@@ -397,6 +469,17 @@ class Initiator:
         self.copy_common_server_python()
         self.copy_demistotmock()
 
+        if self.template != self.DEFAULT_INTEGRATION_TEMPLATE:  # DEFAULT_INTEGRATION_TEMPLATE there are no secrets
+            secrets = self.find_secrets()
+            if secrets:
+                new_line = '\n'
+                click.echo(f"\nThe following secrets were detected:\n"
+                           f"{new_line.join(secret for secret in secrets)}", color=LOG_COLORS.GREEN)
+
+                ignore_secrets = input("\nWould you like ignore them automatically? Y/N ").lower()
+                if ignore_secrets in ['y', 'yes']:
+                    self.ignore_secrets(secrets)
+
         click.echo(f"Finished creating integration: {self.full_output_path}.", color=LOG_COLORS.GREEN)
 
         return True
@@ -422,6 +505,7 @@ class Initiator:
         if not self.create_new_directory():
             return False
 
+        used_template = self.template
         script_template_files = self.get_template_files()
         if not self.get_remote_templates(script_template_files, dir=SCRIPTS_DIR):
             local_template_path = os.path.normpath(os.path.join(__file__, "..", 'templates', self.template))
@@ -429,12 +513,23 @@ class Initiator:
 
         if self.id != self.template:
             # note rename does not work on the yml file - that is done in the yml_reformatting function.
+            self.change_template_name_script_py(current_suffix=self.template, current_template=used_template)
             self.rename(current_suffix=self.template)
             self.yml_reformatting(current_suffix=self.template)
             self.fix_test_file_import(name_to_change=self.template)
 
         self.copy_common_server_python()
         self.copy_demistotmock()
+
+        secrets = self.find_secrets()
+        if secrets:
+            new_line = '\n'
+            click.echo(f"\nThe following secrets were detected in the pack:\n"
+                       f"{new_line.join(secret for secret in secrets)}", color=LOG_COLORS.GREEN)
+
+            ignore_secrets = input("\nWould you like ignore them automatically? Y/N ").lower()
+            if ignore_secrets in ['y', 'yes']:
+                self.ignore_secrets(secrets)
 
         click.echo(f"Finished creating script: {self.full_output_path}", color=LOG_COLORS.GREEN)
 
@@ -452,11 +547,17 @@ class Initiator:
         yml_dict["commonfields"]["id"] = self.id
         yml_dict['name'] = self.id
 
+        from_version = input("\nThe fromversion value that will be used (optional): ")
+        if from_version:
+            yml_dict['fromversion'] = from_version
+
         if LooseVersion(yml_dict.get('fromversion', '0.0.0')) < LooseVersion(self.SUPPORTED_FROM_VERSION):
             yml_dict['fromversion'] = self.SUPPORTED_FROM_VERSION
 
         if integration:
             yml_dict["display"] = self.id
+            yml_dict["category"] = self.category if self.category else Initiator.get_valid_user_input(
+                options_list=INTEGRATION_CATEGORIES, option_message="\nIntegration category options: \n")
 
         with open(os.path.join(self.full_output_path, f"{self.dir_name}.yml"), 'w') as f:
             yaml.dump(
@@ -466,6 +567,20 @@ class Initiator:
                 default_flow_style=False)
 
         os.remove(os.path.join(self.full_output_path, f"{current_suffix}.yml"))
+
+    def change_template_name_script_py(self, current_suffix: str, current_template: str):
+        """Change all script template name appearances with the real script name in the script python file.
+
+        Args:
+            current_suffix (str): The py file name
+            current_template (str): The script template being used.
+        """
+        with open(os.path.join(self.full_output_path, f"{current_suffix}.py"), "r+") as f:
+            py_file_data = f.read()
+            py_file_data = py_file_data.replace(current_template, self.id)
+            f.seek(0)
+            f.write(py_file_data)
+            f.truncate()
 
     def rename(self, current_suffix: str):
         """Renames the python, description, test and image file in the path to fit the newly created integration/script
@@ -575,7 +690,7 @@ class Initiator:
             bool. True if the files were downloaded and saved successfully, False otherwise.
         """
         # create test_data dir
-        if self.template in [self.HELLO_WORLD_INTEGRATION] + self.DEFAULT_TEMPLATES\
+        if self.template in [self.HELLO_WORLD_INTEGRATION] + self.DEFAULT_TEMPLATES \
                 + [self.HELLO_WORLD_FEED_INTEGRATION]:
             os.mkdir(os.path.join(self.full_output_path, self.TEST_DATA_DIR))
 
@@ -598,7 +713,12 @@ class Initiator:
                     # is `README_example.md` - which happens when we do not want the readme
                     # files to appear in https://xsoar.pan.dev/docs/reference/index.
                     filename = file.replace('README.md', 'README_example.md')
-                file_content = tools.get_remote_file(os.path.join(path, filename), return_content=True)
+                file_content = tools.get_remote_file(
+                    os.path.join(path, filename),
+                    return_content=True,
+                    # Templates available only in the official repo
+                    github_repo=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
+                )
                 with open(os.path.join(self.full_output_path, file), 'wb') as f:
                     f.write(file_content)
             except Exception:

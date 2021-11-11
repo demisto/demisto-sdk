@@ -1,15 +1,19 @@
 import json
 import os
 from collections import OrderedDict
+from typing import Optional
+
 from genericpath import exists
 
-from demisto_sdk.commands.common.constants import DEFAULT_ID_SET_PATH
+from demisto_sdk.commands.common.constants import (DEFAULT_ID_SET_PATH,
+                                                   GENERIC_COMMANDS_NAMES)
 from demisto_sdk.commands.common.update_id_set import re_create_id_set
 
 
 class IDSetCreator:
 
-    def __init__(self, output: str = '', input: str = '', print_logs: bool = True):
+    def __init__(self, output: Optional[str] = '', input: str = '', print_logs: bool = True,
+                 fail_duplicates: bool = False):
         """IDSetCreator
 
         Args:
@@ -17,14 +21,22 @@ class IDSetCreator:
             output (str, optional): The output path. Set to None to avoid creation of a file. '' means the default path.
              Defaults to 'Tests/id_set.json'.
             print_logs (bool, optional): Print log output. Defaults to True.
+            fail_duplicates(bool, optional): Flag which marks whether create_id_set fails when duplicates
+             are found or not
         """
         self.output = output
         self.input = input
         self.print_logs = print_logs
+        self.fail_duplicates = fail_duplicates
         self.id_set = OrderedDict()  # type: ignore
 
     def create_id_set(self):
-        self.id_set = re_create_id_set(id_set_path=self.output, pack_to_create=self.input, print_logs=self.print_logs)
+        self.id_set = re_create_id_set(
+            id_set_path=self.output,
+            pack_to_create=self.input,
+            print_logs=self.print_logs,
+            fail_on_duplicates=self.fail_duplicates
+        )
         self.add_command_to_implementing_integrations_mapping()
         self.save_id_set()
         return self.id_set
@@ -43,8 +55,11 @@ class IDSetCreator:
             playbook_data = playbook_dict[playbook_name]
             commands_to_integration = playbook_data.get("command_to_integration", {})
             for command in commands_to_integration:
+                if commands_to_integration[command]:
+                    # only apply this logic when there is no specific brand
+                    continue
                 is_command_implemented_in_integration = command in command_name_to_implemented_integration_map
-                if is_command_implemented_in_integration:
+                if is_command_implemented_in_integration and command not in GENERIC_COMMANDS_NAMES:
                     implemented_integration = command_name_to_implemented_integration_map[command]
                     commands_to_integration[command] = implemented_integration
 

@@ -4,19 +4,21 @@ from collections import OrderedDict
 from distutils.version import LooseVersion
 
 import click
+
 import demisto_sdk.commands.common.constants as constants
 from demisto_sdk.commands.common.configuration import Configuration
+from demisto_sdk.commands.common.constants import GENERIC_COMMANDS_NAMES
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
-from demisto_sdk.commands.common.update_id_set import (get_classifier_data,
-                                                       get_incident_type_data,
-                                                       get_integration_data,
-                                                       get_mapper_data,
-                                                       get_pack_metadata_data,
-                                                       get_playbook_data,
-                                                       get_script_data)
-from demisto_sdk.commands.unify.unifier import Unifier
+from demisto_sdk.commands.common.tools import (
+    get_script_or_sub_playbook_tasks_from_playbook, get_yaml)
+from demisto_sdk.commands.common.update_id_set import (
+    get_classifier_data, get_incident_field_data, get_incident_type_data,
+    get_integration_data, get_layout_data, get_layouts_scripts_ids,
+    get_layoutscontainer_data, get_mapper_data, get_pack_metadata_data,
+    get_playbook_data, get_script_data)
+from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
 
 
 class IDSetValidations(BaseValidator):
@@ -89,6 +91,200 @@ class IDSetValidations(BaseValidator):
                     is_valid = True
 
         return is_valid
+
+    def _is_incident_field_scripts_found(self, incident_field_data, incident_field_file_path=None):
+        """Check if scripts and field calculations scripts of an incident field is in the id_set
+
+        Args:
+            incident_field_data (dict): Dictionary that holds the extracted details from the given incident field.
+            incident_field_file_path (str): Path to the file.
+
+        Returns:
+            bool. Whether the scripts are in the id_set or not.
+        """
+        is_valid = True
+        scripts_not_in_id_set = set()
+
+        incident_field_id = list(incident_field_data.keys())[0]
+        incident_field = incident_field_data.get(incident_field_id, {})
+        incident_field_name = incident_field.get('name', incident_field_id)
+        scripts_set = set(incident_field.get('scripts', []))
+
+        # Check if the incident field scripts are in the id_set:
+        if scripts_set:
+            scripts_not_in_id_set = self._get_scripts_that_are_not_in_id_set(scripts_set)
+
+        # Add error message if there are scripts that aren't in the id_set:
+        if scripts_not_in_id_set:
+            is_valid = False
+            scripts_not_in_id_set_str = ', '.join(scripts_not_in_id_set)
+            error_message, error_code = Errors.incident_field_non_existent_script_id(incident_field_name,
+                                                                                     scripts_not_in_id_set_str)
+            if not self.handle_error(error_message, error_code, file_path=incident_field_file_path,
+                                     suggested_fix=Errors.suggest_fix_non_existent_script_id()):
+                is_valid = True
+
+        return is_valid
+
+    def _is_layouts_container_scripts_found(self, layouts_container_data, layouts_container_file_path=None):
+        """Check if scripts of a layouts container is in the id_set
+
+        Args:
+            layouts_container_data (dict): Dictionary that holds the extracted details from the given layouts container.
+            layouts_container_file_path (str): Path to the file.
+
+        Returns:
+            bool. Whether the scripts are in the id_set or not.
+        """
+        is_valid = True
+        scripts_not_in_id_set = set()
+
+        layouts_container_id = list(layouts_container_data.keys())[0]
+        layouts_container = layouts_container_data.get(layouts_container_id, {})
+        layouts_container_name = layouts_container.get('name', layouts_container_id)
+        layouts_container_tabs = self._get_layouts_container_tabs(layouts_container)
+        scripts_set = set(get_layouts_scripts_ids(layouts_container_tabs))
+
+        # Check if the layouts container's scripts are in the id_set:
+        if scripts_set:
+            scripts_not_in_id_set = self._get_scripts_that_are_not_in_id_set(scripts_set)
+
+        # Add error message if there are scripts that aren't in the id_set:
+        if scripts_not_in_id_set:
+            is_valid = False
+            scripts_not_in_id_set_str = ', '.join(scripts_not_in_id_set)
+            error_message, error_code = Errors.layouts_container_non_existent_script_id(layouts_container_name,
+                                                                                        scripts_not_in_id_set_str)
+            if not self.handle_error(error_message, error_code, file_path=layouts_container_file_path,
+                                     suggested_fix=Errors.suggest_fix_non_existent_script_id()):
+                is_valid = True
+
+        return is_valid
+
+    def _is_layout_scripts_found(self, layout_data, layout_file_path=None):
+        """Check if scripts of a layout  is in the id_set
+
+        Args:
+            layout_data (dict): Dictionary that holds the extracted details from the given layout.
+            layout_file_path (str): Path to the file.
+
+        Returns:
+            bool. Whether the scripts are in the id_set or not.
+        """
+        is_valid = True
+        scripts_not_in_id_set = set()
+
+        layout_id = list(layout_data.keys())[0]
+        layout = layout_data.get(layout_id, {})
+        layout_name = layout.get('typename', layout_id)
+        scripts = layout.get('scripts', [])
+        scripts_set = set(scripts)
+
+        # Check if the layouts container's scripts are in the id_set:
+        if scripts_set:
+            scripts_not_in_id_set = self._get_scripts_that_are_not_in_id_set(scripts_set)
+
+        # Add error message if there are scripts that aren't in the id_set:
+        if scripts_not_in_id_set:
+            is_valid = False
+            scripts_not_in_id_set_str = ', '.join(scripts_not_in_id_set)
+            error_message, error_code = Errors.layout_non_existent_script_id(layout_name,
+                                                                             scripts_not_in_id_set_str)
+            if not self.handle_error(error_message, error_code, file_path=layout_file_path,
+                                     suggested_fix=Errors.suggest_fix_non_existent_script_id()):
+                is_valid = True
+
+        return is_valid
+
+    def _get_scripts_that_are_not_in_id_set(self, scripts_in_entity):
+        """
+        For each script ID in the given scripts set checks if it is exist in the id set.
+        If a script is in the id set removes it from the input scripts set.
+
+        Args:
+            scripts_set: A set of scripts IDs
+
+        Returns:
+            A sub set of the input scripts set which contains only scripts that are not in the id set.
+        """
+        for checked_script in self.script_set:
+            checked_script_id = list(checked_script.keys())[0]
+            if checked_script_id in scripts_in_entity:
+                scripts_in_entity.remove(checked_script_id)
+
+        # Ignore Builtin scripts because they are implemented on the server side and thus not in the id_set.json
+        scripts_in_entity = self._remove_builtin_scripts(scripts_in_entity)
+
+        # Ignore integration commands scripts because they are not in the id_set.json
+        # Ignoring integration commands is temporary. Validate command should verify that each integration command
+        # called from a layout, a layoutscontainer or an incident field is really exist.
+        # will be fixed in: https://github.com/demisto/etc/issues/41246
+        scripts_in_entity = self._remove_integration_commands_scripts(scripts_in_entity)
+
+        return scripts_in_entity
+
+    def _remove_builtin_scripts(self, scripts_set):
+        """
+        For each script ID in the given scripts set checks if it is a Builtin script (implemented on the server side)
+        by checking if it starts with the string: 'Builtin|||'.
+        If a script is not a Builtin script add it to a new scripts set.
+
+        Args:
+            scripts_set: A set of scripts IDs
+
+        Returns:
+            A new set which includes all scripts of the input scripts set which are not Builtin scripts.
+        """
+        not_builtin_scripts_set = set()
+
+        for script_id in scripts_set:
+            if not script_id.startswith('Builtin|||'):
+                not_builtin_scripts_set.add(script_id)
+
+        return not_builtin_scripts_set
+
+    def _remove_integration_commands_scripts(self, scripts_set):
+        """
+        For each script ID in the given scripts set checks if it is an integration command by checking if it contains
+        '|||'.  If a script is not an integration command add it to a new scripts set.
+        TODO: Ignoring integration commands is temporary. Validate command should verify that each integration command
+         called from a layout, a layoutscontainer or an incident field is really exist.
+         will be fixed in: https://github.com/demisto/etc/issues/41246
+
+        Args:
+            scripts_set: A set of scripts IDs
+
+        Returns:
+            A new set which includes all scripts of the input scripts set which are not integration commands.
+        """
+        not_integration_commands_scripts_set = set()
+
+        for script_id in scripts_set:
+            if '|||' not in script_id:
+                not_integration_commands_scripts_set.add(script_id)
+
+        return not_integration_commands_scripts_set
+
+    def _get_layouts_container_tabs(self, layouts_container):
+        """
+        Finds all tabs of the given layouts container
+
+        Args:
+            layouts_container: A layout container
+
+        Returns: A list of all the given layouts container's tabs
+
+        """
+        all_tabs = []
+        layouts_container_fields_with_tabs = ["edit", "indicatorsDetails", "indicatorsQuickView", "quickView",
+                                              "details", "detailsV2", "mobile"]
+        for field in layouts_container_fields_with_tabs:
+            field_content = layouts_container.get(field)
+            if field_content:
+                tabs = field_content.get('tabs', [])
+                all_tabs.extend(tabs)
+
+        return all_tabs
 
     def _is_non_real_command_found(self, script_data):
         """Check if the script depend-on section has a non real command
@@ -231,18 +427,49 @@ class IDSetValidations(BaseValidator):
         playbook_scripts_list = playbook_data_2nd_level.get("implementing_scripts", [])
         sub_playbooks_list = playbook_data_2nd_level.get("implementing_playbooks", [])
         playbook_integration_commands = self.get_commands_to_integration(playbook_name, file_path)
+        main_playbook_data = get_yaml(file_path)
 
-        if not self.is_entity_version_match_playbook_version(sub_playbooks_list, playbook_version, self.playbook_set,
-                                                             playbook_name, file_path):
-            return False
+        result, error = self.is_entity_version_match_playbook_version(sub_playbooks_list, playbook_version,
+                                                                      self.playbook_set, playbook_name, file_path,
+                                                                      main_playbook_data)
+        if not result:
+            return False, error
+        result, error = self.is_entity_version_match_playbook_version(playbook_scripts_list, playbook_version,
+                                                                      self.script_set, playbook_name, file_path,
+                                                                      main_playbook_data)
+        if not result:
+            return False, error
 
-        if not self.is_entity_version_match_playbook_version(playbook_scripts_list, playbook_version, self.script_set,
-                                                             playbook_name, file_path):
-            return False
+        result, error = self.is_playbook_integration_version_valid(playbook_integration_commands, playbook_version,
+                                                                   playbook_name, file_path)
+        if not result:
+            return False, error
 
-        if not self.is_playbook_integration_version_valid(playbook_integration_commands,
-                                                          playbook_version, playbook_name, file_path):
-            return False
+        return True, None
+
+    def is_subplaybook_name_valid(self, playbook_data, file_path):
+        """Checks whether a sub playbook name is valid (i.e id exists in set_id)
+        Args:
+            playbook_data (dict): Dictionary that holds the extracted details from the given playbook.
+             {playbook name: playbook data (dict)}
+            file_path (string): Path to the file (current playbook).
+
+        Return:
+            bool. if all sub playbooks names of this playbook are valid.
+        """
+        # Get a dict with all playbook fields from the playbook data dict.
+        playbook_data_2nd_level = playbook_data.get(list(playbook_data.keys())[0])
+        main_playbook_name = playbook_data_2nd_level.get("name")
+        sub_playbooks_list = playbook_data_2nd_level.get("implementing_playbooks", [])
+        for playbook_dict in self.playbook_set:
+            playbook_name = list(playbook_dict.values())[0].get('name')
+            if playbook_name in sub_playbooks_list:
+                sub_playbooks_list.remove(playbook_name)
+
+        if sub_playbooks_list:
+            error_message, error_code = Errors.invalid_subplaybook_name(sub_playbooks_list, main_playbook_name)
+            if self.handle_error(error_message, error_code, file_path):
+                return False
 
         return True
 
@@ -269,7 +496,7 @@ class IDSetValidations(BaseValidator):
 
     def is_entity_version_match_playbook_version(self, implemented_entity_list_from_playbook,
                                                  main_playbook_version, entity_set_from_id_set,
-                                                 playbook_name, file_path):
+                                                 playbook_name, file_path, main_playbook_data):
         """Check if the playbook's version match playbook's entities (script or sub-playbook)
         Goes over the relevant entity set from id_set and check if the version of this entity match is equal or lower
         to the main playbook's version.
@@ -285,35 +512,63 @@ class IDSetValidations(BaseValidator):
             entity_set_from_id_set (dict) : Entity's data set (scripts or playbooks) from id_set file.
             playbook_name (str) : Playbook's name.
             file_path (string): Path to the file (current playbook).
+            main_playbook_data (dict): Data of the main playbook.
 
         Returns:
             bool. Whether the playbook's version match playbook's entities.
         """
+        # the following dict holds the playbook names as keys and true/false whether the version is valid.
+        # it handles the case where multiple playbook IDs appear in the id_set and each one of them support different versions.
+        # for example:
+        # main_playbook_version = '5.0.0'
+        # id_set = [{'name': 'pb1', 'fromversion': '5.0.0', 'toversion': '5.4.9'}, {'name': 'pb1' - 'fromversion': '5.5.0'}]
+        # entity_status will look like that: { 'pb1': True}
+        entity_status: dict = {}
+        implemented_entities = implemented_entity_list_from_playbook.copy()
+        is_valid = True, None
         for entity_data_dict in entity_set_from_id_set:
-            if not implemented_entity_list_from_playbook:
-                return True
+            if not implemented_entities:
+                break
 
             entity_id = list(entity_data_dict.keys())[0]
             all_entity_fields = entity_data_dict[entity_id]
             entity_name = entity_id if entity_id in implemented_entity_list_from_playbook else all_entity_fields.get(
                 "name")
-
             is_entity_used_in_playbook = entity_name in implemented_entity_list_from_playbook
 
             if is_entity_used_in_playbook:
+                tasks_data = get_script_or_sub_playbook_tasks_from_playbook(searched_entity_name=entity_name,
+                                                                            main_playbook_data=main_playbook_data)
+
                 entity_version = all_entity_fields.get("fromversion", "")
                 is_version_valid = not entity_version or LooseVersion(entity_version) <= LooseVersion(
                     main_playbook_version)
-                if is_version_valid:
-                    implemented_entity_list_from_playbook.remove(entity_name)
+                skip_unavailable = all(task_data.get('skipunavailable', False) for task_data in tasks_data) \
+                    if tasks_data and LooseVersion(main_playbook_version) >= LooseVersion('6.0.0') else False
 
-        if implemented_entity_list_from_playbook:
+                # if entities with miss-matched versions were found and skipunavailable is
+                # not set or main playbook fromversion is below 6.0.0, fail the validation
+                if is_version_valid or skip_unavailable:
+                    entity_status[entity_id] = True
+                else:
+                    entity_status.setdefault(entity_id, False)
+                if entity_name in implemented_entities:
+                    implemented_entities.remove(entity_name)
+        invalid_version_entities = [entity_name for entity_name, status in entity_status.items() if status is False]
+
+        if invalid_version_entities:
             error_message, error_code = Errors.content_entity_version_not_match_playbook_version(
-                playbook_name, implemented_entity_list_from_playbook, main_playbook_version)
+                playbook_name, invalid_version_entities, main_playbook_version)
             if self.handle_error(error_message, error_code, file_path):
-                return False
+                is_valid = False, error_message
 
-        return True
+        if implemented_entities:
+            error_message, error_code = Errors.content_entity_is_not_in_id_set(
+                playbook_name, implemented_entities)
+            if self.handle_error(error_message, error_code, file_path):
+                is_valid = False, error_message
+
+        return is_valid
 
     def is_playbook_integration_version_valid(self, playbook_integration_commands, playbook_version, playbook_name,
                                               file_path):
@@ -335,6 +590,9 @@ class IDSetValidations(BaseValidator):
 
         for command in playbook_integration_commands:
             implemented_integrations_list = playbook_integration_commands[command]
+            # Ignore the error for PB with generic commands that do not depend on specific integration
+            if command in GENERIC_COMMANDS_NAMES and not implemented_integrations_list:
+                continue
             integration_from_valid_version_found = False
             for integration in implemented_integrations_list:
                 integration_version = self.get_integration_version(integration)
@@ -349,9 +607,9 @@ class IDSetValidations(BaseValidator):
                                                                                                   command,
                                                                                                   playbook_version)
                 if self.handle_error(error_message, error_code, file_path):
-                    return False
+                    return False, error_message
 
-        return True
+        return True, None
 
     def get_integration_version(self, integration_to_search):
         general_version = ""  # i.e integration has no specific version
@@ -379,13 +637,22 @@ class IDSetValidations(BaseValidator):
             click.echo(f"id set validations for: {file_path}")
 
             if re.match(constants.PACKS_SCRIPT_YML_REGEX, file_path, re.IGNORECASE):
-                unifier = Unifier(os.path.dirname(file_path))
+                unifier = YmlUnifier(os.path.dirname(file_path))
                 yml_path, code = unifier.get_script_or_integration_package_data()
                 script_data = get_script_data(yml_path, script_code=code)
                 is_valid = self._is_non_real_command_found(script_data)
             elif file_type == constants.FileType.INCIDENT_TYPE:
                 incident_type_data = OrderedDict(get_incident_type_data(file_path))
                 is_valid = self._is_incident_type_default_playbook_found(incident_type_data)
+            elif file_type == constants.FileType.INCIDENT_FIELD:
+                incident_field_data = OrderedDict(get_incident_field_data(file_path, []))
+                is_valid = self._is_incident_field_scripts_found(incident_field_data, file_path)
+            elif file_type == constants.FileType.LAYOUTS_CONTAINER:
+                layouts_container_data = OrderedDict(get_layoutscontainer_data(file_path))
+                is_valid = self._is_layouts_container_scripts_found(layouts_container_data, file_path)
+            elif file_type == constants.FileType.LAYOUT:
+                layout_data = OrderedDict(get_layout_data(file_path))
+                is_valid = self._is_layout_scripts_found(layout_data, file_path)
             elif file_type == constants.FileType.INTEGRATION:
                 integration_data = get_integration_data(file_path)
                 is_valid = self._is_integration_classifier_and_mapper_found(integration_data)
@@ -397,8 +664,9 @@ class IDSetValidations(BaseValidator):
                 is_valid = self._is_mapper_incident_types_found(mapper_data)
             elif file_type == constants.FileType.PLAYBOOK:
                 playbook_data = get_playbook_data(file_path)
-                is_valid = self._are_playbook_entities_versions_valid(playbook_data, file_path)
-
+                playbook_answers = [self._are_playbook_entities_versions_valid(playbook_data, file_path),
+                                    self.is_subplaybook_name_valid(playbook_data, file_path)]
+                is_valid = all(playbook_answers)
         return is_valid
 
     def _is_pack_display_name_already_exist(self, pack_metadata_data):

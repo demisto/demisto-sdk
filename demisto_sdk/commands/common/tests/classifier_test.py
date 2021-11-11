@@ -1,10 +1,11 @@
 import pytest
+from mock import patch
+
 from demisto_sdk.commands.common.hook_validations.classifier import \
     ClassifierValidator
 from demisto_sdk.commands.common.hook_validations.mapper import MapperValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
-from mock import patch
 
 
 def mock_structure(file_path=None, current_file=None, old_file=None):
@@ -17,11 +18,11 @@ def mock_structure(file_path=None, current_file=None, old_file=None):
         structure.old_file = old_file
         structure.prev_ver = 'master'
         structure.branch_name = ''
+        structure.quite_bc = False
         return structure
 
 
 class TestClassifierValidator:
-
     CLASSIFIER_WITH_VALID_INCIDENT_FIELD = {"mapping": {"0": {"internalMapping": {"Incident Field": "incident field"}}}}
 
     ID_SET_WITH_INCIDENT_FIELD = {"IncidentFields": [{"name": {"name": "Incident Field"}}],
@@ -80,3 +81,5 @@ class TestClassifierValidator:
 
         assert validator.is_field_mapping_removed() == answer
         assert validator.is_valid != answer
+        structure.quite_bc = True
+        assert validator.is_field_mapping_removed() is False

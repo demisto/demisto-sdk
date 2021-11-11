@@ -4,10 +4,11 @@ import re
 import tempfile
 
 import demisto_client
+
 from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
                                                print_error, print_v,
                                                print_warning)
-from demisto_sdk.commands.json_to_outputs.json_to_outputs import \
+from demisto_sdk.commands.generate_outputs.json_to_outputs.json_to_outputs import \
     json_to_outputs
 
 
@@ -80,7 +81,7 @@ class Runner:
                         f.seek(0)
                         file_path = f.name
                         command = self.query.split(' ')[0]
-                        json_to_outputs(command, file_path, self.prefix)
+                        json_to_outputs(command, json=file_path, prefix=self.prefix)
                 else:
                     print_error("Could not extract raw output as JSON from command")
                     return 1
@@ -130,9 +131,9 @@ class Runner:
             if entry.contents:
                 print_color('## Readable Output', LOG_COLORS.YELLOW)
                 if entry.type == self.ERROR_ENTRY_TYPE:
-                    print_error(entry.contents + '\n')
+                    print_error(f'{entry.contents}\n')
                 else:
-                    print(entry.contents + '\n')
+                    print(f'{entry.contents}\n')
 
             # and entries with `file_id`s defined, that is the fileID of the debug log file
             if entry.type == self.DEBUG_FILE_ENTRY_TYPE:

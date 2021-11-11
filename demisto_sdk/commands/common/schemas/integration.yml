@@ -49,6 +49,8 @@ mapping:
     type: str
   detaileddescription:
     type: str
+  autoconfiginstance:
+    type: bool
   configuration:
     type: seq
     required: true
@@ -114,6 +116,8 @@ mapping:
     - type: str
   scriptNotVisible:
     type: bool
+  autoUpdateDockerImage:
+    type: bool
 
 # integration->configuration
 schema;configuration_schema:
@@ -144,6 +148,8 @@ schema;configuration_schema:
       type: str
     hiddenusername:
       type: bool
+    fromlicense:
+      type: str
 
 # integration->script->command
 schema;command_schema:

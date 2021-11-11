@@ -3,9 +3,10 @@ from distutils.version import LooseVersion
 import click
 import ujson
 import yaml
-from demisto_sdk.commands.common.tools import print_error
+
+from demisto_sdk.commands.common.tools import find_type, is_uuid, print_error
 from demisto_sdk.commands.format.format_constants import (
-    ARGUMENTS_DEFAULT_VALUES, TO_VERSION_5_9_9)
+    ARGUMENTS_DEFAULT_VALUES, GENERIC_OBJECTS_FILE_TYPES, TO_VERSION_5_9_9)
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 
 
@@ -14,7 +15,7 @@ class BaseUpdateJSON(BaseUpdate):
         Attributes:
             input (str): the path to the file we are updating at the moment.
             output (str): the desired file name to save the updated version of the YML to.
-            data (Dict): JSON file data arranged in a Dict.
+            data (dict): JSON file data arranged in a Dict.
     """
 
     def __init__(self,
@@ -26,7 +27,7 @@ class BaseUpdateJSON(BaseUpdate):
                  verbose: bool = False,
                  **kwargs):
         super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
-                         verbose=verbose)
+                         verbose=verbose, **kwargs)
 
     def set_default_values_as_needed(self):
         """Sets basic arguments of reputation commands to be default, isArray and required."""
@@ -49,7 +50,12 @@ class BaseUpdateJSON(BaseUpdate):
         self.set_version_to_default()
         self.remove_null_fields()
         self.remove_unnecessary_keys()
-        self.set_fromVersion(from_version=self.from_version)
+        self.remove_spaces_end_of_id_and_name()
+        source_file_type = find_type(self.source_file)
+        if source_file_type in GENERIC_OBJECTS_FILE_TYPES:
+            self.set_fromVersion(from_version=self.from_version, file_type=source_file_type)
+        else:
+            self.set_fromVersion(from_version=self.from_version)
 
     def set_toVersion(self):
         """
@@ -79,12 +85,27 @@ class BaseUpdateJSON(BaseUpdate):
                     not schema_data.get('mapping', {}).get(field, {}).get('required'):
                 self.data.pop(field)
 
-    def update_id(self, field='name'):
+    def update_id(self, field='name') -> None:
         """Updates the id to be the same as the provided field ."""
+        updated_integration_id_dict = {}
 
         if self.verbose:
             click.echo('Updating ID')
         if field not in self.data:
             print_error(f'Missing {field} field in file {self.source_file} - add this field manually')
-            return
+            return None
+        if is_uuid(self.data['id']):
+            updated_integration_id_dict[self.data['id']] = self.data[field]
         self.data['id'] = self.data[field]
+
+        if updated_integration_id_dict:
+            self.updated_ids.update(updated_integration_id_dict)
+
+    def remove_spaces_end_of_id_and_name(self):
+        """Updates the id and name of the json to have no spaces on its end
+                """
+        if not self.old_file:
+            if self.verbose:
+                click.echo('Updating YML ID and name to be without spaces at the end')
+            self.data['name'] = self.data['name'].strip()
+            self.data['id'] = self.data['id'].strip()

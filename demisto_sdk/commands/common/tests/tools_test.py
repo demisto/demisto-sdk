@@ -1,10 +1,13 @@
 import glob
-import json
 import os
+import shutil
 from pathlib import Path
 from typing import List, Union
 
+import git
 import pytest
+import requests
+
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    LAYOUTS_DIR, PACKS_DIR,
@@ -13,33 +16,28 @@ from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
                                                    FileType)
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.tools import (LOG_COLORS, arg_to_list,
-                                               filter_files_by_type,
-                                               filter_files_on_pack,
-                                               filter_packagify_changes,
-                                               find_type, get_code_lang,
-                                               get_dict_from_file,
-                                               get_entity_id_by_entity_type,
-                                               get_entity_name_by_entity_type,
-                                               get_file,
-                                               get_file_displayed_name,
-                                               get_files_in_dir,
-                                               get_ignore_pack_skipped_tests,
-                                               get_last_release_version,
-                                               get_latest_release_notes_text,
-                                               get_release_notes_file_path,
-                                               get_ryaml, get_to_version,
-                                               has_remote_configured,
-                                               is_origin_content_repo,
-                                               is_v2_file,
-                                               retrieve_file_ending,
-                                               run_command_os,
-                                               server_version_compare)
+from demisto_sdk.commands.common.tools import (
+    LOG_COLORS, arg_to_list, compare_context_path_in_yml_and_readme,
+    filter_files_by_type, filter_files_on_pack, filter_packagify_changes,
+    find_type, get_code_lang, get_dict_from_file, get_entity_id_by_entity_type,
+    get_entity_name_by_entity_type, get_file_displayed_name,
+    get_file_version_suffix_if_exists, get_files_in_dir,
+    get_ignore_pack_skipped_tests, get_last_release_version,
+    get_last_remote_release_version, get_latest_release_notes_text,
+    get_pack_metadata, get_relative_path_from_packs_dir,
+    get_release_note_entries, get_release_notes_file_path, get_ryaml,
+    get_test_playbook_id, get_to_version, has_remote_configured,
+    is_origin_content_repo, is_pack_path, is_uuid, retrieve_file_ending,
+    run_command_os, server_version_compare)
 from demisto_sdk.tests.constants_test import (IGNORED_PNG,
                                               INDICATORFIELD_EXTRA_FIELDS,
                                               SOURCE_FORMAT_INTEGRATION_COPY,
                                               VALID_BETA_INTEGRATION_PATH,
                                               VALID_DASHBOARD_PATH,
+                                              VALID_GENERIC_DEFINITION_PATH,
+                                              VALID_GENERIC_FIELD_PATH,
+                                              VALID_GENERIC_MODULE_PATH,
+                                              VALID_GENERIC_TYPE_PATH,
                                               VALID_INCIDENT_FIELD_PATH,
                                               VALID_INCIDENT_TYPE_PATH,
                                               VALID_INTEGRATION_TEST_PATH,
@@ -67,10 +65,6 @@ class TestGenericFunctions:
     def test_get_file(self, file_path, func):
         assert func(file_path)
 
-    def test_get_file_exception(self):
-        path_to_here = f'{git_path()}/demisto_sdk/tests/test_files/'
-        assert get_file(json.load, os.path.join(path_to_here, 'fake_integration.yml'), ('yml', 'yaml')) == {}
-
     @pytest.mark.parametrize('dir_path', ['demisto_sdk', f'{git_path()}/demisto_sdk/tests/test_files'])
     def test_get_yml_paths_in_dir(self, dir_path):
         yml_paths, first_yml_path = tools.get_yml_paths_in_dir(dir_path, error_msg='')
@@ -82,15 +76,16 @@ class TestGenericFunctions:
             assert not first_yml_path
 
     data_test_get_dict_from_file = [
-        (VALID_REPUTATION_FILE, 'json'),
-        (VALID_SCRIPT_PATH, 'yml'),
-        ('test', None),
-        (None, None)
+        (VALID_REPUTATION_FILE, True, 'json'),
+        (VALID_SCRIPT_PATH, True, 'yml'),
+        ('test', True, None),
+        (None, True, None),
+        ('invalid-path.json', False, None)
     ]
 
-    @pytest.mark.parametrize('path, _type', data_test_get_dict_from_file)
-    def test_get_dict_from_file(self, path, _type):
-        output = get_dict_from_file(str(path))[1]
+    @pytest.mark.parametrize('path, raises_error, _type', data_test_get_dict_from_file)
+    def test_get_dict_from_file(self, path, raises_error, _type):
+        output = get_dict_from_file(str(path), raises_error=raises_error)[1]
         assert output == _type, f'get_dict_from_file({path}) returns: {output} instead {_type}'
 
     data_test_find_type = [
@@ -104,9 +99,13 @@ class TestGenericFunctions:
         (VALID_REPUTATION_FILE, FileType.REPUTATION),
         (VALID_SCRIPT_PATH, FileType.SCRIPT),
         (VALID_WIDGET_PATH, FileType.WIDGET),
+        (VALID_GENERIC_TYPE_PATH, FileType.GENERIC_TYPE),
+        (VALID_GENERIC_FIELD_PATH, FileType.GENERIC_FIELD),
+        (VALID_GENERIC_MODULE_PATH, FileType.GENERIC_MODULE),
+        (VALID_GENERIC_DEFINITION_PATH, FileType.GENERIC_DEFINITION),
         (IGNORED_PNG, None),
         ('', None),
-        ('Author_image.png', None),
+        ('Author_image.png', FileType.AUTHOR_IMAGE),
     ]
 
     @pytest.mark.parametrize('path, _type', data_test_find_type)
@@ -208,19 +207,30 @@ class TestGenericFunctions:
 
 
 class TestGetRemoteFile:
+    content_repo = 'demisto/content'
+
     def test_get_remote_file_sanity(self):
-        hello_world_yml = tools.get_remote_file('Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml')
+        hello_world_yml = tools.get_remote_file(
+            'Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml',
+            github_repo=self.content_repo
+        )
         assert hello_world_yml
         assert hello_world_yml['commonfields']['id'] == 'HelloWorld'
 
     def test_get_remote_file_content_sanity(self):
-        hello_world_py = tools.get_remote_file('Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.py',
-                                               return_content=True)
+        hello_world_py = tools.get_remote_file(
+            'Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.py',
+            return_content=True,
+            github_repo=self.content_repo
+        )
         assert hello_world_py
 
     def test_get_remote_file_content(self):
-        hello_world_py = tools.get_remote_file('Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.py',
-                                               return_content=True)
+        hello_world_py = tools.get_remote_file(
+            'Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.py',
+            return_content=True,
+            github_repo=self.content_repo
+        )
         hello_world_text = hello_world_py.decode()
         assert isinstance(hello_world_py, bytes)
         assert hello_world_py
@@ -228,39 +238,68 @@ class TestGetRemoteFile:
         assert hello_world_text.startswith('"""HelloWorld Integration for Cortex XSOAR (aka Demisto)')
 
     def test_get_remote_file_origin(self):
-        hello_world_yml = tools.get_remote_file('Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml',
-                                                'demisto/master')
+        hello_world_yml = tools.get_remote_file(
+            'Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml',
+            'master',
+            github_repo=self.content_repo
+        )
         assert hello_world_yml
         assert hello_world_yml['commonfields']['id'] == 'HelloWorld'
 
     def test_get_remote_file_tag(self):
-        gmail_yml = tools.get_remote_file('Integrations/Gmail/Gmail.yml', '19.10.0')
+        gmail_yml = tools.get_remote_file(
+            'Integrations/Gmail/Gmail.yml',
+            '19.10.0',
+            github_repo=self.content_repo
+        )
         assert gmail_yml
         assert gmail_yml['commonfields']['id'] == 'Gmail'
 
     def test_get_remote_file_origin_tag(self):
-        gmail_yml = tools.get_remote_file('Integrations/Gmail/Gmail.yml', 'origin/19.10.0')
+        gmail_yml = tools.get_remote_file(
+            'Integrations/Gmail/Gmail.yml',
+            'origin/19.10.0',
+            github_repo=self.content_repo
+        )
         assert gmail_yml
         assert gmail_yml['commonfields']['id'] == 'Gmail'
 
     def test_get_remote_file_invalid(self):
-        invalid_yml = tools.get_remote_file('Integrations/File/File.yml', '19.10.0')
+        invalid_yml = tools.get_remote_file(
+            'Integrations/File/File.yml',
+            '19.10.0',
+            github_repo=self.content_repo
+        )
         assert not invalid_yml
 
     def test_get_remote_file_invalid_branch(self):
-        invalid_yml = tools.get_remote_file('Integrations/Gmail/Gmail.yml', 'NoSuchBranch')
+        invalid_yml = tools.get_remote_file(
+            'Integrations/Gmail/Gmail.yml',
+            'NoSuchBranch',
+            github_repo=self.content_repo
+        )
         assert not invalid_yml
 
     def test_get_remote_file_invalid_origin_branch(self):
-        invalid_yml = tools.get_remote_file('Integrations/Gmail/Gmail.yml', 'origin/NoSuchBranch')
+        invalid_yml = tools.get_remote_file(
+            'Integrations/Gmail/Gmail.yml',
+            'origin/NoSuchBranch',
+            github_repo=self.content_repo
+        )
         assert not invalid_yml
 
     def test_get_remote_md_file_origin(self):
-        hello_world_readme = tools.get_remote_file('Packs/HelloWorld/README.md', 'master')
+        hello_world_readme = tools.get_remote_file(
+            'Packs/HelloWorld/README.md',
+            'master',
+            github_repo=self.content_repo
+        )
         assert hello_world_readme == {}
 
     def test_should_file_skip_validation_negative(self):
-        should_skip = tools.should_file_skip_validation('Packs/HelloWorld/Integrations/HelloWorld/search_alerts.json')
+        should_skip = tools.should_file_skip_validation(
+            'Packs/HelloWorld/Integrations/HelloWorld/search_alerts.json'
+        )
         assert not should_skip
 
     SKIPPED_FILE_PATHS = [
@@ -285,6 +324,40 @@ class TestGetRemoteFile:
     def test_should_file_skip_validation_positive(self, file_path):
         should_skip = tools.should_file_skip_validation(file_path)
         assert should_skip
+
+
+class TestGetRemoteFileLocally:
+    REPO_NAME = 'example_repo'
+    FILE_NAME = 'somefile.json'
+    FILE_CONTENT = '{"id": "some_file"}'
+
+    def setup_method(self):
+        # create local git repo
+        example_repo = git.Repo.init(self.REPO_NAME)
+        example_repo.git.checkout('-b', 'origin/master')
+        with open(os.path.join(self.REPO_NAME, self.FILE_NAME), 'w+') as somefile:
+            somefile.write(self.FILE_CONTENT)
+        example_repo.git.add(self.FILE_NAME)
+        example_repo.git.config('user.email', 'automatic@example.com')
+        example_repo.git.config('user.name', 'AutomaticTest')
+        example_repo.git.commit('-m', 'test_commit', '-a')
+        example_repo.git.checkout('-b', 'master')
+
+    def test_get_file_from_master_when_in_private_repo(self, mocker):
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+
+        class Response:
+            ok = False
+
+        mocker.patch.object(requests, 'get', return_value=Response)
+        mocker.patch.object(os, 'getenv', return_value=False)
+        some_file_json = tools.get_remote_file(os.path.join(self.REPO_NAME, self.FILE_NAME),
+                                               github_repo=self.REPO_NAME)
+        assert some_file_json
+        assert some_file_json['id'] == 'some_file'
+
+    def teardown_method(self):
+        shutil.rmtree(self.REPO_NAME)
 
 
 class TestServerVersionCompare:
@@ -510,7 +583,7 @@ def test_get_ignore_pack_tests__no_pack():
     - returns an empty set
     """
     nonexistent_pack = 'NonexistentFakeTestPack'
-    ignore_test_set = get_ignore_pack_skipped_tests(nonexistent_pack)
+    ignore_test_set = get_ignore_pack_skipped_tests(nonexistent_pack, {nonexistent_pack}, {})
     assert len(ignore_test_set) == 0
 
 
@@ -535,7 +608,7 @@ def test_get_ignore_pack_tests__no_ignore_pack(tmpdir):
     if os.path.exists(pack_ignore_path):
         os.remove(pack_ignore_path)
 
-    ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name)
+    ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name, {fake_pack_name}, {})
     assert len(ignore_test_set) == 0
 
 
@@ -560,7 +633,7 @@ def test_get_ignore_pack_tests__test_not_ignored(tmpdir):
     # prepare .pack-ignore
     open(pack_ignore_path, 'a').close()
 
-    ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name)
+    ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name, {fake_pack_name}, {})
     assert len(ignore_test_set) == 0
 
 
@@ -569,6 +642,7 @@ def test_get_ignore_pack_tests__ignore_test(tmpdir, mocker):
     Given
     - Pack have .pack-ignore file
     - There are skipped tests in .pack-ignore
+    - Set of modified packs.
     When
     - Collecting packs' ignored tests - running `get_ignore_pack_tests()`
     Then:
@@ -576,7 +650,7 @@ def test_get_ignore_pack_tests__ignore_test(tmpdir, mocker):
     """
     fake_pack_name = 'FakeTestPack'
     fake_test_name = 'FakeTestPlaybook'
-    expected_id = 'sample playbook'
+    expected_id = 'SamplePlaybookTest'
 
     # prepare repo
     repo = Repo(tmpdir)
@@ -594,8 +668,9 @@ def test_get_ignore_pack_tests__ignore_test(tmpdir, mocker):
     # prepare mocks
     mocker.patch.object(tools, "get_pack_ignore_file_path", return_value=pack_ignore_path)
     mocker.patch.object(os.path, "join", return_value=str(test_playbook_path / (test_playbook.name + ".yml")))
+    mocker.patch.object(tools, "get_test_playbook_id", return_value=('SamplePlaybookTest', 'FakeTestPack'))
 
-    ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name)
+    ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name, {fake_pack_name}, {})
     assert len(ignore_test_set) == 1
     assert expected_id in ignore_test_set
 
@@ -629,8 +704,9 @@ def test_get_ignore_pack_tests__ignore_missing_test(tmpdir, mocker):
     # prepare mocks
     mocker.patch.object(tools, "get_pack_ignore_file_path", return_value=pack_ignore_path)
     mocker.patch.object(os.path, "join", return_value=str(test_playbook_path / fake_test_name))
+    mocker.patch.object(tools, "get_test_playbook_id", return_value=(None, 'FakeTestPack'))
 
-    ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name)
+    ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name, {fake_pack_name}, {})
     assert len(ignore_test_set) == 0
 
 
@@ -666,32 +742,62 @@ V2_WRONG_DISPLAY = {"display": "integrationname V2", "name": "integrationname v2
 NOT_V2_VIA_DISPLAY_NOR_NAME = {"display": "integrationname", "name": "integrationv2name", "id": "integrationv2name"}
 NOT_V2_VIA_DISPLAY = {"display": "integrationname", "name": "integrationname v2", "id": "integrationv2name"}
 NOT_V2_VIA_NAME = {"display": "integrationname V2", "name": "integrationname", "id": "integrationv2name"}
-V2_NAME_INPUTS = [
-    (V2_VALID, True),
-    (V2_WRONG_DISPLAY, True),
-    (NOT_V2_VIA_DISPLAY_NOR_NAME, False),
-    (NOT_V2_VIA_NAME, False),
-    (NOT_V2_VIA_DISPLAY, True)
+V3_VALID = {"display": "integrationname v3", "name": "integrationname v3", "id": "integrationname v3"}
+V3_WRONG_DISPLAY = {"display": "integrationname V3", "name": "integrationname v3", "id": "integrationname V3"}
+NOT_V3_VIA_DISPLAY_NOR_NAME = {"display": "integrationname", "name": "integrationv3name", "id": "integrationv3name"}
+NOT_V3_VIA_DISPLAY = {"display": "integrationname", "name": "integrationname v3", "id": "integrationv3name"}
+NOT_V3_VIA_NAME = {"display": "integrationname V3", "name": "integrationname", "id": "integrationv3Gname"}
+GET_FILE_VERSION_SUFFIX_IF_EXISTS_NAME_INPUTS = [
+    (V2_VALID, '2'),
+    (V2_WRONG_DISPLAY, '2'),
+    (NOT_V2_VIA_DISPLAY_NOR_NAME, None),
+    (NOT_V2_VIA_NAME, None),
+    (NOT_V2_VIA_DISPLAY, '2'),
+    (V3_VALID, '3'),
+    (V3_WRONG_DISPLAY, '3'),
+    (NOT_V3_VIA_DISPLAY_NOR_NAME, None),
+    (NOT_V3_VIA_NAME, None),
+    (NOT_V3_VIA_DISPLAY, '3')
 ]
 
 
-@pytest.mark.parametrize("current, answer", V2_NAME_INPUTS)
-def test_is_v2_file_via_name(current, answer):
-    assert is_v2_file(current) is answer
+@pytest.mark.parametrize("current, answer", GET_FILE_VERSION_SUFFIX_IF_EXISTS_NAME_INPUTS)
+def test_get_file_version_suffix_if_exists_via_name(current, answer):
+    assert get_file_version_suffix_if_exists(current) is answer
 
 
-V2_DISPLAY_INPUTS = [
-    (V2_VALID, True),
-    (V2_WRONG_DISPLAY, True),
-    (NOT_V2_VIA_DISPLAY, False),
-    (NOT_V2_VIA_NAME, True),
-    (NOT_V2_VIA_DISPLAY_NOR_NAME, False)
+GET_FILE_VERSION_SUFFIX_IF_EXIST_INPUTS = [
+    (V2_VALID, '2'),
+    (V2_WRONG_DISPLAY, '2'),
+    (NOT_V2_VIA_DISPLAY, None),
+    (NOT_V2_VIA_NAME, '2'),
+    (NOT_V2_VIA_DISPLAY_NOR_NAME, None),
+    (V3_VALID, '3'),
+    (V3_WRONG_DISPLAY, '3'),
+    (NOT_V3_VIA_DISPLAY, None),
+    (NOT_V3_VIA_NAME, '3'),
+    (NOT_V3_VIA_DISPLAY_NOR_NAME, None),
 ]
 
 
-@pytest.mark.parametrize("current, answer", V2_DISPLAY_INPUTS)
-def test_is_v2_file_via_display(current, answer):
-    assert is_v2_file(current, check_in_display=True) is answer
+@pytest.mark.parametrize("current, answer", GET_FILE_VERSION_SUFFIX_IF_EXIST_INPUTS)
+def test_get_file_version_suffix_if_exists_via_display(current, answer):
+    assert get_file_version_suffix_if_exists(current, check_in_display=True) is answer
+
+
+def test_test_get_file_version_suffix_if_exists_no_name_and_no_display():
+    """
+    Given:
+    - 'current_file': Dict representing YML data of an integration or script.
+
+    When:
+    - Invalid dict given, not containing display and name values.
+
+    Then:
+    - Ensure None is returned.
+    """
+    assert get_file_version_suffix_if_exists(dict(), check_in_display=True) is None
+    assert get_file_version_suffix_if_exists(dict(), check_in_display=False) is None
 
 
 def test_get_to_version_with_to_version(repo):
@@ -879,3 +985,493 @@ def test_get_file_displayed_name__image(repo):
     with ChangeCWD(repo.path):
         display_name = get_file_displayed_name(integration.image.path)
         assert display_name == os.path.basename(integration.image.rel_path)
+
+
+def test_get_pack_metadata(repo):
+    """
+    Given
+    - The path to some file in the repo.
+
+    When
+    - Running get_pack_metadata.
+
+    Then:
+    - Ensure the returned pack metadata of the file's pack.
+    """
+    metadata_json = {"name": "MyPack", "support": "xsoar", "currentVersion": "1.1.0"}
+
+    pack = repo.create_pack('MyPack')
+    pack_metadata = pack.pack_metadata
+    pack_metadata.update(metadata_json)
+
+    result = get_pack_metadata(pack.path)
+
+    assert metadata_json == result
+
+
+def test_get_last_remote_release_version(requests_mock):
+    """
+    When
+    - Get latest release tag from remote pypi api
+
+    Then:
+    - Ensure the returned version is as expected
+    """
+    os.environ['DEMISTO_SDK_SKIP_VERSION_CHECK'] = ''
+    os.environ['CI'] = ''
+    expected_version = '1.3.8'
+    requests_mock.get(r"https://pypi.org/pypi/demisto-sdk/json", json={'info': {'version': expected_version}})
+    assert get_last_remote_release_version() == expected_version
+
+
+IS_PACK_PATH_INPUTS = [('Packs/BitcoinAbuse', True),
+                       ('Packs/BitcoinAbuse/Layouts', False),
+                       ('Packs/BitcoinAbuse/Classifiers', False),
+                       ('Unknown', False)]
+
+
+@pytest.mark.parametrize('input_path, expected', IS_PACK_PATH_INPUTS)
+def test_is_pack_path(input_path: str, expected: bool):
+    """
+    Given:
+        - 'input_path': Path to some file or directory
+
+    When:
+        - Checking whether pack is to a pack directory.
+
+    Then:
+        - Ensure expected boolean is returned.
+
+    """
+    assert is_pack_path(input_path) == expected
+
+
+@pytest.mark.parametrize('s, is_valid_uuid', [
+    ('', False),
+    ('ffc9fbb0-1a73-448c-89a8-fe979e0f0c3e', True),
+    ('somestring', False)
+])
+def test_is_uuid(s, is_valid_uuid):
+    """
+    Given:
+        - Case A: Empty string
+        - Case B: Valid UUID
+        - Case C: Invalid UUID
+
+    When:
+        - Checking if the string is a valid UUID
+
+    Then:
+        - Case A: False as it is an empty string
+        - Case B: True as it is a valid UUID
+        - Case C: False as it is a string which is not a valid UUID
+    """
+    if is_valid_uuid:
+        assert is_uuid(s)
+    else:
+        assert not is_uuid(s)
+
+
+def test_get_relative_path_from_packs_dir():
+    """
+    Given:
+        - 'input_path': Path to some file or directory
+
+    When:
+        - Running get_relative_path_from_packs_dir
+
+    Then:
+        - Ensure that:
+          - If it is an absolute path to a pack related object - it returns the relative path from Packs dir.
+          - If it is a relative path from Packs dir or an unrelated path - return the path unchanged.
+
+    """
+    abs_path = '/Users/who/dev/demisto/content/Packs/Accessdata/Integrations/Accessdata/Accessdata.yml'
+    rel_path = 'Packs/Accessdata/Integrations/Accessdata/Accessdata.yml'
+    unrelated_path = '/Users/who/dev/demisto'
+
+    assert get_relative_path_from_packs_dir(abs_path) == rel_path
+    assert get_relative_path_from_packs_dir(rel_path) == rel_path
+    assert get_relative_path_from_packs_dir(unrelated_path) == unrelated_path
+
+
+@pytest.mark.parametrize('version,expected_result', [
+    ('1.3.8', ['* Updated the **secrets** command to work on forked branches.']),
+    ('1.3', [])
+])
+def test_get_release_note_entries(version, expected_result):
+    """
+    Given:
+        - Version of the demisto-sdk.
+
+    When:
+        - Running get_release_note_entries.
+
+    Then:
+        - Ensure that the result as expected.
+    """
+
+    assert get_release_note_entries(version) == expected_result
+
+
+def test_suppress_stdout(capsys):
+    """
+        Given:
+            - Messages to print.
+
+        When:
+            - Printing a message inside the suppress_stdout context manager.
+            - Printing message after the suppress_stdout context manager is used.
+        Then:
+            - Ensure that messages are not printed to console while suppress_stdout is enabled.
+            - Ensure that messages are printed to console when suppress_stdout is disabled.
+    """
+    print('You can see this')
+    captured = capsys.readouterr()
+    assert captured.out == 'You can see this\n'
+    with tools.suppress_stdout():
+        print('You cannot see this')
+        captured = capsys.readouterr()
+    assert captured.out == ''
+    print('And you can see this again')
+    captured = capsys.readouterr()
+    assert captured.out == 'And you can see this again\n'
+
+
+def test_suppress_stdout_exception(capsys):
+    """
+        Given:
+            - Messages to print.
+
+        When:
+            - Performing an operation which throws an exception inside the suppress_stdout context manager.
+            - Printing something after the suppress_stdout context manager is used.
+        Then:
+            - Ensure that the context manager do not not effect exception handling.
+            - Ensure that messages are printed to console when suppress_stdout is disabled.
+
+    """
+    with pytest.raises(Exception) as excinfo:
+        with tools.suppress_stdout():
+            2 / 0
+    assert str(excinfo.value) == 'division by zero'
+    print('After error prints are enabled again.')
+    captured = capsys.readouterr()
+    assert captured.out == 'After error prints are enabled again.\n'
+
+
+def test_compare_context_path_in_yml_and_readme_non_vs_code_format_valid():
+    """
+        Given:
+            - a yml for an integration.
+            - a valid readme in a non-vs code format
+
+        When:
+            - running compare_context_path_in_yml_and_readme.
+
+        Then:
+            - Ensure that no differences are found.
+    """
+    yml_dict = {"script": {
+        "commands": [
+            {
+                "name": "servicenow-create-ticket",
+                "outputs": [
+                    {
+                        "contextPath": "ServiceNow.Ticket.ID",
+                        "description": "Ticket ID.",
+                        "type": "string"
+                    },
+                    {
+                        "contextPath": "ServiceNow.Ticket.OpenedBy",
+                        "description": "Ticket opener ID.",
+                        "type": "string"
+                    }
+                ]
+            }
+        ]
+    }}
+    readme_content = "### servicenow-create-ticket\n" \
+                     "***\n" \
+                     "Creates new ServiceNow ticket.\n\n\n" \
+                     "#### Base Command\n\n" \
+                     "`servicenow-create-ticket`\n" \
+                     "#### Input\n\n" \
+                     "| **Argument Name** | **Description** | **Required** |\n" \
+                     "| --- | --- | --- |\n" \
+                     "| short_description | Short description of the ticket. | Optional |\n\n\n" \
+                     " #### Context Output\n\n" \
+                     "| **Path** | **Type** | **Description** |\n" \
+                     "| --- | --- | --- |\n" \
+                     "| ServiceNow.Ticket.ID | string | ServiceNow ticket ID. |\n" \
+                     "| ServiceNow.Ticket.OpenedBy | string | ServiceNow ticket opener ID. |\n"
+
+    diffs = compare_context_path_in_yml_and_readme(yml_dict, readme_content)
+    assert not diffs
+
+
+def test_compare_context_path_in_yml_and_readme_non_vs_code_format_invalid():
+    """
+        Given:
+            - a yml for an integration.
+            - an invalid readme in a non-vs code format
+
+        When:
+            - running compare_context_path_in_yml_and_readme.
+
+        Then:
+            - Ensure that differences are found.
+    """
+    yml_dict = {"script": {
+        "commands": [
+            {
+                "name": "servicenow-create-ticket",
+                "outputs": [
+                    {
+                        "contextPath": "ServiceNow.Ticket.ID",
+                        "description": "Ticket ID.",
+                        "type": "string"
+                    },
+                    {
+                        "contextPath": "ServiceNow.Ticket.OpenedBy",
+                        "description": "Ticket opener ID.",
+                        "type": "string"
+                    }
+                ]
+            }
+        ]
+    }}
+    readme_content = "### servicenow-create-ticket\n" \
+                     "***\n" \
+                     "Creates new ServiceNow ticket.\n\n\n" \
+                     "#### Base Command\n\n" \
+                     "`servicenow-create-ticket`\n" \
+                     "#### Input\n\n" \
+                     "| **Argument Name** | **Description** | **Required** |\n" \
+                     "| --- | --- | --- |\n" \
+                     "| short_description | Short description of the ticket. | Optional |\n\n\n" \
+                     " #### Context Output\n\n" \
+                     "| **Path** | **Type** | **Description** |\n" \
+                     "| --- | --- | --- |\n" \
+                     "| ServiceNow.Ticket.ID | string | ServiceNow ticket ID. |\n"
+
+    diffs = compare_context_path_in_yml_and_readme(yml_dict, readme_content)
+    assert 'ServiceNow.Ticket.OpenedBy' in diffs.get('servicenow-create-ticket').get('only in yml')
+
+
+def test_compare_context_path_in_yml_and_readme_vs_code_format_valid():
+    """
+        Given:
+            - a yml for an integration.
+            - a valid readme in a vs code format
+
+        When:
+            - running compare_context_path_in_yml_and_readme.
+
+        Then:
+            - Ensure that no differences are found.
+    """
+    yml_dict = {"script": {
+        "commands": [
+            {
+                "name": "servicenow-create-ticket",
+                "outputs": [
+                    {
+                        "contextPath": "ServiceNow.Ticket.ID",
+                        "description": "Ticket ID.",
+                        "type": "string"
+                    },
+                    {
+                        "contextPath": "ServiceNow.Ticket.OpenedBy",
+                        "description": "Ticket opener ID.",
+                        "type": "string"
+                    }
+                ]
+            }
+        ]
+    }}
+    readme_content = "### servicenow-create-ticket\n" \
+                     "***\n" \
+                     "Creates new ServiceNow ticket.\n\n\n" \
+                     "#### Base Command\n\n" \
+                     "`servicenow-create-ticket`\n" \
+                     "#### Input\n\n" \
+                     "| **Argument Name** | **Description**                  | **Required** |\n" \
+                     "| ----------------- | -------------------------------- | ------------ |\n" \
+                     "| short_description | Short description of the ticket. | Optional     |\n\n\n" \
+                     " #### Context Output\n\n" \
+                     "| **Path**                   | **Type** | **Description**              |\n" \
+                     "| -------------------------- | -------- | ---------------------------- |\n" \
+                     "| ServiceNow.Ticket.ID       | string   | ServiceNow ticket ID.        |\n" \
+                     "| ServiceNow.Ticket.OpenedBy | string   | ServiceNow ticket opener ID. |\n"
+
+    diffs = compare_context_path_in_yml_and_readme(yml_dict, readme_content)
+    assert not diffs
+
+
+def test_compare_context_path_in_yml_and_readme_vs_code_format_invalid():
+    """
+        Given:
+            - a yml for an integration.
+            - an invalid readme in a vs code format
+
+        When:
+            - running compare_context_path_in_yml_and_readme.
+
+        Then:
+            - Ensure that differences are found.
+    """
+    yml_dict = {"script": {
+        "commands": [
+            {
+                "name": "servicenow-create-ticket",
+                "outputs": [
+                    {
+                        "contextPath": "ServiceNow.Ticket.ID",
+                        "description": "Ticket ID.",
+                        "type": "string"
+                    },
+                    {
+                        "contextPath": "ServiceNow.Ticket.OpenedBy",
+                        "description": "Ticket opener ID.",
+                        "type": "string"
+                    }
+                ]
+            }
+        ]
+    }}
+    readme_content = "### servicenow-create-ticket\n" \
+                     "***\n" \
+                     "Creates new ServiceNow ticket.\n\n\n" \
+                     "#### Base Command\n\n" \
+                     "`servicenow-create-ticket`\n" \
+                     "#### Input\n\n" \
+                     "| **Argument Name** | **Description**                  | **Required** |\n" \
+                     "| ----------------- | -------------------------------- | ------------ |\n" \
+                     "| short_description | Short description of the ticket. | Optional     |\n\n\n" \
+                     " #### Context Output\n\n" \
+                     "| **Path**             | **Type** | **Description**       |\n" \
+                     "| -------------------- | -------- | --------------------- |\n" \
+                     "| ServiceNow.Ticket.ID | string   | ServiceNow ticket ID. |\n"
+
+    diffs = compare_context_path_in_yml_and_readme(yml_dict, readme_content)
+    assert 'ServiceNow.Ticket.OpenedBy' in diffs.get('servicenow-create-ticket').get('only in yml')
+
+
+def test_get_definition_name():
+    """
+    Given
+    - The path to a generic field/generic type file.
+
+    When
+    - the file has a connected generic definition
+
+    Then:
+    - Ensure the returned name is the connected definitions name.
+    """
+
+    pack_path = f'{git_path()}/demisto_sdk/tests/test_files/generic_testing'
+    field_path = pack_path + "/GenericFields/Object/genericfield-Sample.json"
+    type_path = pack_path + "/GenericTypes/Object/generictype-Sample.json"
+
+    assert tools.get_definition_name(field_path, pack_path) == 'Object'
+    assert tools.get_definition_name(type_path, pack_path) == 'Object'
+
+
+def test_gitlab_ci_yml_load():
+    """
+        Given:
+            - a yml file with gitlab ci data
+
+        When:
+            - trying to load it to the sdk  - like via find_type
+
+        Then:
+            - Ensure that the load does not fail.
+            - Ensure the file has no identification
+    """
+    test_file = f'{git_path()}/demisto_sdk/tests/test_files/gitlab_ci_test_file.yml'
+    try:
+        res = find_type(test_file)
+    except Exception:
+        # if we got here an error has occurred when trying to load the file
+        assert False
+
+    assert res is None
+
+
+IRON_BANK_CASES = [
+    ({'tags': []}, False),  # case no tags
+    ({'tags': ['iron bank']}, False),  # case some other tags than "Iron Bank"
+    ({'tags': ['Iron Bank', 'other_tag']}, True),  # case Iron Bank tag exist
+    ({}, False)  # case no tags
+]
+
+
+@pytest.mark.parametrize('metadata, expected', IRON_BANK_CASES)
+def test_is_iron_bank_pack(mocker, metadata, expected):
+    mocker.patch.object(tools, 'get_pack_metadata', return_value=metadata)
+    res = tools.is_iron_bank_pack('example_path')
+    assert res == expected
+
+
+def test_get_test_playbook_id():
+    """
+    Given:
+        - A list of test playbooks from id_set
+        - Test playbook file name
+
+    When:
+        - trying to get the pack and name of the test playbook - via running get_test_playbook_id command
+
+    Then:
+        - Ensure that the currect pack name returned.
+        - Ensure that the currect test name returned.
+
+    """
+    test_playbook_id_set = [
+        {
+            "HelloWorld-Test": {
+                "name": "HelloWorld-Test",
+                "file_path": "Packs/HelloWorld/TestPlaybooks/playbook-HelloWorld-Test.yml",
+                "fromversion": "5.0.0",
+                "implementing_scripts": [
+                    "HelloWorldScript",
+                    "DeleteContext",
+                    "FetchFromInstance"
+                ],
+                "command_to_integration": {
+                    "helloworld-say-hello": "",
+                    "helloworld-search-alerts": ""
+                },
+                "pack": "HelloWorld"
+            }
+        },
+        {
+            "HighlightWords_Test": {
+                "name": "HighlightWords - Test",
+                "file_path": "Packs/CommonScripts/TestPlaybooks/playbook-HighlightWords_-_Test.yml",
+                "implementing_scripts": [
+                    "VerifyHumanReadableContains",
+                    "HighlightWords"
+                ],
+                "pack": "CommonScripts"
+            }
+        },
+        {
+            "HTTPListRedirects - Test SSL": {
+                "name": "HTTPListRedirects - Test SSL",
+                "file_path": "Packs/CommonScripts/TestPlaybooks/playbook-HTTPListRedirects_-_Test_SSL.yml",
+                "implementing_scripts": [
+                    "PrintErrorEntry",
+                    "HTTPListRedirects",
+                    "DeleteContext"
+                ],
+                "pack": "CommonScripts"
+            }
+        }]
+
+    test_name = 'playbook-HelloWorld-Test.yml'
+    test_playbook_name, test_playbook_pack = get_test_playbook_id(test_playbook_id_set, test_name)
+    assert test_playbook_name == 'HelloWorld-Test'
+    assert test_playbook_pack == 'HelloWorld'

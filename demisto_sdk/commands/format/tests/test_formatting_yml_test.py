@@ -5,10 +5,16 @@ import sys
 import click
 import pytest
 import yaml
+from mock import Mock, patch
+from ruamel.yaml import YAML
+
 from demisto_sdk.commands.common.constants import (FEED_REQUIRED_PARAMS,
-                                                   FETCH_REQUIRED_PARAMS)
+                                                   FETCH_REQUIRED_PARAMS,
+                                                   INTEGRATION)
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
+from demisto_sdk.commands.common.hook_validations.integration import \
+    IntegrationValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import LOG_COLORS, is_string_uuid
 from demisto_sdk.commands.format.format_module import format_manager
@@ -22,28 +28,26 @@ from demisto_sdk.tests.constants_test import (
     DESTINATION_FORMAT_INTEGRATION, DESTINATION_FORMAT_INTEGRATION_COPY,
     DESTINATION_FORMAT_PLAYBOOK, DESTINATION_FORMAT_PLAYBOOK_COPY,
     DESTINATION_FORMAT_SCRIPT_COPY, DESTINATION_FORMAT_TEST_PLAYBOOK,
-    EQUAL_VAL_FORMAT_PLAYBOOK_DESTINATION, EQUAL_VAL_FORMAT_PLAYBOOK_SOURCE,
-    EQUAL_VAL_PATH, FEED_INTEGRATION_EMPTY_VALID, FEED_INTEGRATION_INVALID,
+    FEED_INTEGRATION_EMPTY_VALID, FEED_INTEGRATION_INVALID,
     FEED_INTEGRATION_VALID, GIT_ROOT, INTEGRATION_PATH, PLAYBOOK_PATH,
     PLAYBOOK_WITH_INCIDENT_INDICATOR_SCRIPTS, SOURCE_FORMAT_INTEGRATION_COPY,
     SOURCE_FORMAT_INTEGRATION_INVALID, SOURCE_FORMAT_INTEGRATION_VALID,
     SOURCE_FORMAT_PLAYBOOK, SOURCE_FORMAT_PLAYBOOK_COPY,
     SOURCE_FORMAT_SCRIPT_COPY, SOURCE_FORMAT_TEST_PLAYBOOK, TEST_PLAYBOOK_PATH)
-from mock import Mock, patch
-from ruamel.yaml import YAML
 from TestSuite.test_tools import ChangeCWD
 
 ryaml = YAML()
 ryaml.preserve_quotes = True
 ryaml.allow_duplicate_keys = True
 
-BASIC_YML_TEST_PACKS = [
-    (SOURCE_FORMAT_INTEGRATION_COPY, DESTINATION_FORMAT_INTEGRATION_COPY, IntegrationYMLFormat, 'New Integration_copy',
-     'integration'),
-    (SOURCE_FORMAT_SCRIPT_COPY, DESTINATION_FORMAT_SCRIPT_COPY, ScriptYMLFormat, 'New_script_copy', 'script'),
-    (SOURCE_FORMAT_PLAYBOOK_COPY, DESTINATION_FORMAT_PLAYBOOK_COPY, PlaybookYMLFormat, 'File Enrichment-GenericV2_copy',
-     'playbook')
-]
+INTEGRATION_TEST_ARGS = (SOURCE_FORMAT_INTEGRATION_COPY, DESTINATION_FORMAT_INTEGRATION_COPY, IntegrationYMLFormat,
+                         'New Integration_copy', 'integration')
+SCRIPT_TEST_ARGS = (SOURCE_FORMAT_SCRIPT_COPY, DESTINATION_FORMAT_SCRIPT_COPY, ScriptYMLFormat,
+                    'New_script_copy', 'script')
+PLAYBOOK_TEST_ARGS = (SOURCE_FORMAT_PLAYBOOK_COPY, DESTINATION_FORMAT_PLAYBOOK_COPY, PlaybookYMLFormat,
+                      'File Enrichment-GenericV2_copy', 'playbook')
+
+BASIC_YML_TEST_PACKS = [INTEGRATION_TEST_ARGS, SCRIPT_TEST_ARGS, PLAYBOOK_TEST_ARGS]
 
 
 class TestFormatting:
@@ -71,9 +75,26 @@ class TestFormatting:
         schema_path = os.path.normpath(
             os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format(file_type)))
         base_yml = formatter(source_path, path=schema_path)
-        base_yml.update_yml()
+        base_yml.update_yml(file_type=file_type)
         assert yml_title not in str(base_yml.data)
         assert -1 == base_yml.id_and_version_location['version']
+
+    @pytest.mark.parametrize('source_path, destination_path, formatter, yml_title, file_type', [INTEGRATION_TEST_ARGS])
+    def test_default_additional_info_filled(self, source_path, destination_path, formatter, yml_title, file_type):
+        schema_path = os.path.normpath(
+            os.path.join(__file__, "..", "..", "..", "common", "schemas", f'{file_type}.yml'))
+        base_yml = IntegrationYMLFormat(source_path, path=schema_path)
+        base_yml.set_params_default_additional_info()
+
+        from demisto_sdk.commands.common.default_additional_info_loader import \
+            load_default_additional_info_dict
+        default_additional_info = load_default_additional_info_dict()
+
+        api_key_param = base_yml.data['configuration'][4]
+
+        tested_api_key_name = 'API key'
+        assert api_key_param['name'] == tested_api_key_name
+        assert api_key_param.get('additionalinfo') == default_additional_info[tested_api_key_name]
 
     @pytest.mark.parametrize('source_path, destination_path, formatter, yml_title, file_type', BASIC_YML_TEST_PACKS)
     def test_save_output_file(self, source_path, destination_path, formatter, yml_title, file_type):
@@ -234,25 +255,6 @@ class TestFormatting:
 
         assert 'sourceplaybookid' not in base_yml.data
 
-    EQUAL_TEST = [
-        (EQUAL_VAL_FORMAT_PLAYBOOK_SOURCE, EQUAL_VAL_FORMAT_PLAYBOOK_DESTINATION, EQUAL_VAL_PATH),
-    ]
-
-    @pytest.mark.parametrize('input, output, path', EQUAL_TEST)
-    @patch('builtins.input', lambda *args: '5.0.0')
-    def test_equal_value_in_file(self, input, output, path):
-        os.makedirs(path, exist_ok=True)
-        shutil.copyfile(input, output)
-        format_ = format_manager(input=output)
-        check = True
-        with open(output, 'r') as f:
-            if 'simple: =' in f:
-                check = False
-        os.remove(output)
-        os.rmdir(path)
-        assert check
-        assert not format_
-
     @pytest.mark.parametrize('yml_file, yml_type', [
         ('format_pwsh_script.yml', 'script'),
         ('format_pwsh_integration.yml', 'integration')
@@ -272,11 +274,7 @@ class TestFormatting:
         assert data['fromversion'] == '5.5.0'
         assert data['commonfields']['version'] == -1
 
-    PLAYBOOK_TEST = [
-        (SOURCE_FORMAT_PLAYBOOK_COPY, DESTINATION_FORMAT_PLAYBOOK_COPY, PlaybookYMLFormat,
-         'File Enrichment-GenericV2_copy',
-         'playbook')
-    ]
+    PLAYBOOK_TEST = [PLAYBOOK_TEST_ARGS]
 
     @pytest.mark.parametrize('source_path, destination_path, formatter, yml_title, file_type', PLAYBOOK_TEST)
     def test_string_condition_in_playbook(self, source_path, destination_path, formatter, yml_title, file_type):
@@ -468,7 +466,7 @@ class TestFormatting:
         (SOURCE_FORMAT_INTEGRATION_INVALID, DESTINATION_FORMAT_INTEGRATION, INTEGRATION_PATH, 0)]
 
     @pytest.mark.parametrize('source, target, path, answer', FORMAT_FILES_FETCH)
-    def test_set_fetch_params_in_config(self, source, target, path, answer):
+    def test_set_fetch_params_in_config(self, mocker, source, target, path, answer, monkeypatch):
         """
         Given
         - Integration yml with isfetch field labeled as true and correct fetch params.
@@ -481,8 +479,14 @@ class TestFormatting:
         - Ensure the file was created.
         - Ensure that the isfetch and incidenttype params were added to the yml of the integration.
         """
+        mocker.patch.object(IntegrationValidator, 'has_no_fromlicense_key_in_contributions_integration', return_value=True)
+
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
+        monkeypatch.setattr(
+            'builtins.input',
+            lambda _: 'N'
+        )
         res = format_manager(input=target, verbose=True)
         with open(target, 'r') as f:
             yaml_content = yaml.safe_load(f)
@@ -501,7 +505,7 @@ class TestFormatting:
         (FEED_INTEGRATION_INVALID, DESTINATION_FORMAT_INTEGRATION, INTEGRATION_PATH, 0)]
 
     @pytest.mark.parametrize('source, target, path, answer', FORMAT_FILES_FEED)
-    def test_set_feed_params_in_config(self, source, target, path, answer):
+    def test_set_feed_params_in_config(self, mocker, source, target, path, answer):
         """
         Given
         - Integration yml with feed field labeled as true and all necessary params exist.
@@ -515,6 +519,8 @@ class TestFormatting:
         - Ensure that the feedBypassExclusionList, Fetch indicators , feedReputation, feedReliability ,
          feedExpirationPolicy, feedExpirationInterval ,feedFetchInterval params were added to the yml of the integration.
         """
+        mocker.patch.object(IntegrationValidator, 'has_no_fromlicense_key_in_contributions_integration', return_value=True)
+
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
         res = format_manager(input=target, verbose=True)
@@ -609,18 +615,18 @@ class TestFormatting:
     def test_run_format_on_tpb(self):
         """
         Given
-            - A Test Playbook file.
+            - A Test Playbook file, that does not have fromversion key
         When
             - Run format on TPB file
         Then
             - Ensure run_format return value is 0
-            - Ensure `fromversion` field set to 5.0.0
+            - Ensure `fromversion` field set to 5.5.0
         """
         os.makedirs(TEST_PLAYBOOK_PATH, exist_ok=True)
         formatter = TestPlaybookYMLFormat(input=SOURCE_FORMAT_TEST_PLAYBOOK, output=DESTINATION_FORMAT_TEST_PLAYBOOK)
         res = formatter.run_format()
         assert res == 0
-        assert formatter.data.get('fromversion') == '5.0.0'
+        assert formatter.data.get('fromversion') == '5.5.0'
         os.remove(DESTINATION_FORMAT_TEST_PLAYBOOK)
         os.rmdir(TEST_PLAYBOOK_PATH)
 
@@ -644,7 +650,7 @@ class TestFormatting:
         assert res is None
         assert formatter.data.get('tests') == ['VMWare Test']
 
-    def test_update_docker_format(self, tmpdir, mocker):
+    def test_update_docker_format(self, tmpdir, mocker, monkeypatch):
         """Test that script and integration formatter update docker image tag
         """
         test_tag = '1.0.0-test-tag'
@@ -663,6 +669,11 @@ class TestFormatting:
             'dockerimage45')  # make sure for the test that dockerimage45 is not set (so we can verify that we set it in format)
         format_obj = ScriptYMLFormat(src_file, output=dest, path=f'{schema_dir}/script.yml', no_validate=True,
                                      update_docker=True)
+        monkeypatch.setattr(
+            'builtins.input',
+            lambda _: 'N'
+        )
+
         assert format_obj.run_format() == 0
         with open(dest) as f:
             data = yaml.safe_load(f)
@@ -768,7 +779,7 @@ class TestFormatting:
         click.echo.assert_called_once_with('Could not find sub-schema for input_schema', LOG_COLORS.YELLOW)
 
     @staticmethod
-    def exception_raise():
+    def exception_raise(file_type=''):
         raise ValueError("MY ERROR")
 
     FORMAT_OBJECT = [
@@ -891,3 +902,168 @@ class TestFormatting:
 
         playbook_data = playbook.yml.read_dict()
         assert playbook_data['tasks']['1']['task']['playbookId'] == "my-sub-playbook"
+
+    def test_set_fromversion_six_new_contributor_pack_no_fromversion(self, pack):
+        """
+        Given
+            - An integration from new contributed pack, with no fromversion key at yml
+        When
+            - Run format command
+        Then
+            - Ensure that the integration fromversion is set to 6.0.0
+        """
+        pack.pack_metadata.update({'support': 'partner', 'currentVersion': '1.0.0'})
+        integration = pack.create_integration()
+        bs = BaseUpdate(input=integration.yml.path)
+        bs.set_fromVersion()
+        assert bs.data['fromversion'] == '6.0.0'
+
+    def test_set_fromversion_six_new_contributor_pack(self, pack):
+        """
+        Given
+            - A script, playbook and integration from new contributed pack with fromversion key at the yml
+        When
+            - Run format command
+        Then
+            - Ensure that the integration fromversion is set to 6.0.0
+        """
+        pack.pack_metadata.update({'support': 'partner', 'currentVersion': '1.0.0'})
+        script = pack.create_script(yml={'fromversion': '5.0.0'})
+        playbook = pack.create_playbook(yml={'fromversion': '5.0.0'})
+        integration = pack.create_integration(yml={'fromversion': '5.0.0'})
+        for path in [script.yml.path, playbook.yml.path, integration.yml.path]:
+            bs = BaseUpdate(input=path)
+            bs.set_fromVersion()
+            assert bs.data['fromversion'] == '6.0.0', path
+
+    def test_set_fromversion_not_changed_new_contributor_pack(self, pack):
+        """
+        Given
+            - An integration from new contributed pack with fromversion key at yml,
+        When
+            - Run format command
+        Then
+            - Ensure that the integration fromversion is not set to 6.0.0
+            if it is new contributed pack, this is integration, and its version is 5.5.0 do not change it
+        """
+        pack.pack_metadata.update({'support': 'partner', 'currentVersion': '1.0.0'})
+        integration = pack.create_integration(yml={'fromversion': '5.5.0'})
+        bs = BaseUpdate(input=integration.yml.path)
+        bs.set_fromVersion(file_type=INTEGRATION)
+        assert bs.data['fromversion'] == '5.5.0', integration.yml.path
+
+    @pytest.mark.parametrize('user_input,result_fromversion', [('Y', '5.5.0'), ('N', '5.0.0')])
+    def test_set_fromversion_new_pack(self, monkeypatch, pack, user_input, result_fromversion):
+        """
+        Args: monkeypatch (MagicMock): Patch of the user input
+
+        Given
+            - An integration from new pack with fromversion: 5.0.0 at yml,
+            - User answer - update fromversion or not
+        When
+            - Run format command
+        Then
+            - Ensure that the integration fromversion is set to 5.5.0 if user answers Y,
+            and the integration fromversion is reminds 5.0.0 if user answers N
+        """
+        monkeypatch.setattr(
+            'builtins.input',
+            lambda _: user_input
+        )
+        integration = pack.create_integration(yml={'fromversion': '5.0.0'})
+        bs = BaseUpdate(input=integration.yml.path)
+        bs.set_fromVersion(file_type=INTEGRATION)
+        assert bs.data['fromversion'] == result_fromversion
+
+    @pytest.mark.parametrize('user_input, description_result',
+                             [('', 'Deprecated. No available replacement.'),
+                              ('Replacement entity', 'Deprecated. Use Replacement entity instead.')])
+    def test_update_deprecate_in_integration(self, pack, mocker, monkeypatch, user_input, description_result):
+        """
+        Given
+            - An integration yml to deprecate.
+        When
+            - Running update_deprecate.
+        Then
+            - Ensure that the yaml fields that need to be changed are changed.
+        """
+        integration = pack.create_integration('my_integration')
+        monkeypatch.setattr(
+            'builtins.input',
+            lambda _: user_input
+        )
+        mocker.patch.object(BaseUpdateYML, 'get_id_and_version_path_object', return_value={})
+        base_update_yml = BaseUpdateYML(input=integration.yml.path, deprecate=True)
+        base_update_yml.update_deprecate(file_type='integration')
+
+        assert base_update_yml.data['deprecated']
+        assert base_update_yml.data['tests'] == 'No test'
+        assert base_update_yml.data['description'] == description_result
+
+    @pytest.mark.parametrize('user_input, description_result',
+                             [('', 'Deprecated. No available replacement.'),
+                              ('Replacement entity', 'Deprecated. Use Replacement entity instead.')])
+    def test_update_deprecate_in_script(self, pack, mocker, monkeypatch, user_input, description_result):
+        """
+        Given
+            - An script yml to deprecate.
+        When
+            - Running update_deprecate.
+        Then
+            - Ensure that the yaml fields that need to be changed are changed.
+        """
+        script = pack.create_integration('my_script')
+        monkeypatch.setattr(
+            'builtins.input',
+            lambda _: user_input
+        )
+        mocker.patch.object(BaseUpdateYML, 'get_id_and_version_path_object', return_value={})
+        base_update_yml = BaseUpdateYML(input=script.yml.path, deprecate=True)
+        base_update_yml.update_deprecate(file_type='script')
+
+        assert base_update_yml.data['deprecated']
+        assert base_update_yml.data['tests'] == 'No test'
+        assert base_update_yml.data['comment'] == description_result
+
+    @pytest.mark.parametrize('user_input, description_result',
+                             [('', 'Deprecated. No available replacement.'),
+                              ('Replacement entity', 'Deprecated. Use Replacement entity instead.')])
+    def test_update_deprecate_in_playbook(self, pack, mocker, monkeypatch, user_input, description_result):
+        """
+        Given
+            - An playbook yml to deprecate.
+        When
+            - Running update_deprecate.
+        Then
+            - Ensure that the yaml fields that need to be changed are changed.
+        """
+        playbook = pack.create_playbook('my_playbook')
+        monkeypatch.setattr(
+            'builtins.input',
+            lambda _: user_input
+        )
+        mocker.patch.object(BaseUpdateYML, 'get_id_and_version_path_object', return_value={})
+        base_update_yml = BaseUpdateYML(input=playbook.yml.path, deprecate=True)
+        base_update_yml.update_deprecate(file_type='playbook')
+
+        assert base_update_yml.data['deprecated']
+        assert base_update_yml.data['tests'] == 'No test'
+        assert base_update_yml.data['description'] == description_result
+
+    @pytest.mark.parametrize('name', ['MyIntegration', 'MyIntegration ', ' MyIntegration '])
+    def test_remove_spaces_end_of_id_and_name(self, pack, mocker, name):
+        """
+        Given
+            - An integration which id doesn't ends with whitespaces.
+            - An integration which id ends with spaces.
+        When
+            - Running format.
+        Then
+            - Ensure that the yaml fields (name, id) that need to be changed are changed.
+        """
+        integration = pack.create_integration(name)
+        integration.yml.write_dict({'commonfields': {'id': name}, 'name': name})
+        mocker.patch.object(BaseUpdateYML, 'get_id_and_version_path_object', return_value={'id': name})
+        base_update_yml = BaseUpdateYML(input=integration.yml.path)
+        base_update_yml.remove_spaces_end_of_id_and_name()
+        assert base_update_yml.data['name'] == 'MyIntegration'

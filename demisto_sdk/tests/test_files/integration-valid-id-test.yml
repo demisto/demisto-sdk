@@ -11,10 +11,9 @@ configuration:
   defaultvalue: ""
   type: 0
   required: true
-- display: Token
-  name: Token
-  defaultvalue: ""
-  type: 4
+- display: Username
+  name: credentials
+  type: 9
   required: true
 - display: Corporation Name
   name: corpName

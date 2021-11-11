@@ -98,6 +98,8 @@ ERROR_CODE = {
     "integration_is_skipped": {'code': "IN140", 'ui_applicable': False, 'related_field': ''},
     "reputation_missing_argument": {'code': "IN141", 'ui_applicable': True, 'related_field': '<argument-name>.default'},
     "wrong_is_array_argument": {'code': "IN144", 'ui_applicable': True, 'related_field': '<argument-name>.default'},
+    "fromlicense_in_parameters": {'code': "IN146", 'ui_applicable': True,
+                                  'related_field': '<parameter-name>.fromlicense'},
     "invalid_version_script_name": {'code': "SC100", 'ui_applicable': True, 'related_field': 'name'},
     "invalid_deprecated_script": {'code': "SC101", 'ui_applicable': False, 'related_field': 'comment'},
     "invalid_command_name_in_script": {'code': "SC102", 'ui_applicable': False, 'related_field': ''},
@@ -299,7 +301,10 @@ ERROR_CODE = {
     "invalid_generic_field_group_value": {'code': "GF100", 'ui_applicable': False, 'related_field': 'group'},
     "invalid_generic_field_id": {'code': "GF101", 'ui_applicable': False, 'related_field': 'id'},
     "non_default_additional_info": {'code': "IN142", 'ui_applicable': True, 'related_field': 'additionalinfo'},
-    "missing_default_additional_info": {'code': "IN143", 'ui_applicable': True, 'related_field': 'additionalinfo'}
+    "missing_default_additional_info": {'code': "IN143", 'ui_applicable': True, 'related_field': 'additionalinfo'},
+    "invalid_from_server_version_in_lists": {'code': "LI100", 'ui_applicable': False,
+                                             'related_field': 'fromVersion'},
+
 }
 
 
@@ -434,6 +439,11 @@ class Errors:
     @error_code_decorator
     def wrong_required_type(param_name):
         return 'The type field of the {} parameter should be 8'.format(param_name)
+
+    @staticmethod
+    @error_code_decorator
+    def fromlicense_in_parameters(param_name):
+        return 'The "fromlicense" field of the {} parameter is not allowed for contributors'.format(param_name)
 
     @staticmethod
     @error_code_decorator
@@ -1655,6 +1665,11 @@ class Errors:
     @error_code_decorator
     def unknown_fields_in_pre_process_rules(fields_names: str):
         return f'Unknown field(s) in Pre Process Rule: {fields_names}'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_from_server_version_in_lists(version_field):
+        return f'{version_field} field in a list item needs to be at least 6.5.0'
 
     @staticmethod
     @error_code_decorator

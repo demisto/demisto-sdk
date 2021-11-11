@@ -392,6 +392,8 @@ class TestValidators:
         mocker.patch.object(IntegrationValidator, 'is_valid_integration_file_path', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_there_separators_in_names', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_docker_image_valid', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'has_no_fromlicense_key_in_contributions_integration',
+                            return_value=True)
         validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
         assert validate_manager.run_validation_on_specific_files()
 
@@ -415,8 +417,7 @@ class TestValidators:
     ]
 
     @pytest.mark.parametrize('file_path', INVALID_FILES_PATHS_FOR_ALL_VALIDATIONS)
-    @patch.object(ImageValidator, 'is_valid', return_value=True)
-    def test_run_all_validations_on_file_failed(self, _, file_path):
+    def test_run_all_validations_on_file_failed(self, mocker, file_path):
         """
         Given
         - An invalid file inside a pack
@@ -427,6 +428,9 @@ class TestValidators:
         Then
         -  The file will be validated and failed
         """
+        mocker.patch.object(ImageValidator, 'is_valid', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'has_no_fromlicense_key_in_contributions_integration', return_value=True)
+
         validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
         assert not validate_manager.run_validation_on_specific_files()
 
@@ -448,7 +452,8 @@ class TestValidators:
         mocker.patch.object(ImageValidator, 'is_valid', return_value=True)
         mocker.patch('demisto_sdk.commands.common.hook_validations.structure.is_file_path_in_pack', return_value=True)
         mocker.patch('demisto_sdk.commands.common.hook_validations.structure.get_remote_file', return_value=old)
-
+        mocker.patch.object(IntegrationValidator, 'has_no_fromlicense_key_in_contributions_integration',
+                            return_value=True)
         with ChangeCWD(integration.repo_path):
             validate_manager = ValidateManager(skip_conf_json=True)
             assert not validate_manager.run_validations_on_file(file_path=integration.yml.path,
@@ -651,7 +656,7 @@ class TestValidators:
     def test_create_ignored_errors_list(self):
         validate_manager = ValidateManager()
         errors_to_check = ["IN", "SC", "CJ", "DA", "DB", "DO", "ID", "DS", "IM", "IF", "IT", "RN", "RM", "PA", "PB",
-                           "WD", "RP", "BA100", "BC100", "ST", "CL", "MP", "LO", "XC", "GF", "PP"]
+                           "WD", "RP", "BA100", "BC100", "ST", "CL", "MP", "LO", "XC", "GF", "PP", "LI100"]
         ignored_list = validate_manager.create_ignored_errors_list(errors_to_check)
         assert ignored_list == ["BA101", "BA102", "BA103", "BA104", "BA105", "BA106", "BA107", "BA108", "BA109",
                                 "BA110", 'BA111', "BA112", "BA113", "BC101", "BC102", "BC103", "BC104"]
@@ -1102,6 +1107,55 @@ class TestValidators:
         structure = StructureValidator(dashboard.path)
         res_validator = IntegrationValidator(structure)
         assert res_validator.is_there_spaces_in_the_end_of_name() is answer
+
+    @pytest.mark.parametrize('file_path',
+                             ['Packs/SomeIntegration/IntegrationName/file.py',
+                              'Packs/pack_id/Integrations/integration_id/file.yml'])
+    def test_ignore_test_doc_non_pack_file_should_not_ignore(self, file_path: str):
+        """
+        Given
+            - File path
+        When
+            - File should not be ignored
+        Then
+            - File is not ignored and False is returned
+        """
+        validate_manager = ValidateManager(check_is_unskipped=False)
+        assert not validate_manager.ignore_test_doc_non_pack_file(file_path)
+
+    @pytest.mark.parametrize('file_path',
+                             ['Packs/pack_id/Integrations/integration_id/test_data/file.json',
+                              'Packs/pack_id/test_data/file.json',
+                              'Packs/pack_id/Scripts/script_id/test_data/file.json',
+                              'Packs/pack_id/TestPlaybooks/test_data/file.json'])
+    def test_ignore_test_doc_non_pack_file_test_file(self, file_path: str):
+        """
+        Given
+            - File path
+        When
+            - File is part of the test_data directory
+        Then
+            - File is ignored and True is returned
+        """
+        validate_manager = ValidateManager(check_is_unskipped=False)
+        assert validate_manager.ignore_test_doc_non_pack_file(file_path)
+
+    @pytest.mark.parametrize('file_path',
+                             ['OtherDir/Integration/file.json',
+                              'TestData/file.json',
+                              'TestPlaybooks/file.yml',
+                              'docs/dbot/README.md'])
+    def test_ignore_test_doc_non_pack_file_non_pack(self, file_path: str):
+        """
+        Given
+            - File path
+        When
+            - File is not part of the Packs directory
+        Then
+            - File is ignored and True is returned
+        """
+        validate_manager = ValidateManager(check_is_unskipped=False)
+        assert validate_manager.ignore_test_doc_non_pack_file(file_path)
 
 
 @pytest.mark.parametrize('pack_name, expected', [

@@ -79,8 +79,6 @@ class LintManager:
         if self._check_dependent_packs:
             # TODO: check cases where this shouldnt hit
             dependent = []
-            print(self._pkgs)
-            print(len(self._pkgs))
             dependent = [PosixPath(pack_name_to_path(pack)) for pack in
                          get_packs_dependent_on_given_packs(self._pkgs, self._id_set_path, dependent)]
             self._pkgs = self._pkgs + dependent

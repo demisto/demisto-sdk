@@ -677,8 +677,8 @@ def lint(**kwargs):
         quiet=kwargs.get('quiet'),  # type: ignore[arg-type]
         prev_ver=kwargs.get('prev_ver'),  # type: ignore[arg-type]
         json_file_path=kwargs.get('json_file'), # type: ignore[arg-type]
-        id_set_path='Tests/id_set.json',  # type: ignore[arg-type] # TODO: fix
-        check_dependent_packs=True,  # type: ignore[arg-type] # TODO: fix
+        id_set_path=kwargs.get('id-set-path'),  # type: ignore[arg-type]
+        check_dependent_packs=kwargs.get('check-dependent'),  # type: ignore[arg-type]
     )
     return lint_manager.run_dev_packages(
         parallel=kwargs.get('parallel'),  # type: ignore[arg-type]

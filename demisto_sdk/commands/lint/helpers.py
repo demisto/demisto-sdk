@@ -39,7 +39,7 @@ from pebble import ProcessPool, ProcessFuture
 # Local packages
 from demisto_sdk.commands.common.constants import (TYPE_PWSH, TYPE_PYTHON,
                                                    DemistoException)
-from demisto_sdk.commands.common.tools import print_warning, run_command_os
+from demisto_sdk.commands.common.tools import print_warning, run_command_os, get_pack_name
 from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies, parse_for_pack_metadata
 
 CONTENT_ROOT_PATH = '/Users/nmaimon/dev/demisto/content'  # full path to content root repo TODO: fix
@@ -596,7 +596,7 @@ def get_packs_dependent_on_given_packs(packs, id_set_path, dependent_packs):
     all_packs = select_packs_for_calculation()
     dependency_graph = PackDependencies.build_all_dependencies_graph(all_packs, id_set=id_set, verbose=False)
     reverse_dependency_graph = nx.DiGraph.reverse(dependency_graph)
-    pack_names = [str(x).split('/')[7] for x in packs] # TODO: improve
+    pack_names = [get_pack_name(pack_path) for pack_path in packs]
     with ProcessPoolHandler() as pool:
         futures = []
         for pack in pack_names:

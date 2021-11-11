@@ -170,6 +170,10 @@ ENTITY_TYPE_TO_DIR = {
 
 CONTENT_FILE_ENDINGS = ['py', 'yml', 'png', 'json', 'md']
 
+CONTENT_ROOT_PATH = os.path.abspath(os.path.join(__file__, '../../..'))  # full path to content root repo TODO: verify
+PACKS_FULL_PATH = os.path.join(CONTENT_ROOT_PATH, PACKS_DIR)  # full path to Packs folder in content repo
+IGNORED_FILES = ['__init__.py', 'ApiModules', 'NonSupported']  # files to ignore inside Packs folder
+
 CUSTOM_CONTENT_FILE_ENDINGS = ['yml', 'json']
 
 CONTENT_ENTITIES_DIRS = [

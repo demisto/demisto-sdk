@@ -424,7 +424,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def unsearchable_key_should_be_true_if():
-        return 'The unsearchable key in indicator and incident field should be set to true.'
+        return 'The unsearchable key in indicator and incident fields should be set to true.'
 
     @staticmethod
     @error_code_decorator

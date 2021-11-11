@@ -1,9 +1,25 @@
+from typing import Optional
+
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.hook_validations import \
-    common_playbook_validations
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 from demisto_sdk.commands.common.tools import is_string_uuid
+import click
+
+
+def _is_valid_brand(brand_name: str, id_set_file: dict) -> bool:
+    """
+    Goes over the id_set_file and searches for the given brand_name
+    Args:
+        brand_name: name of the brand
+        id_set_file: dict containing all entities information
+    Returns:
+        True if the brand_name exists in id_set_file, False otherwise
+    """
+    for integration_data in id_set_file['integrations']:
+        if brand_name in integration_data:
+            return True
+    return False
 
 
 class TestPlaybookValidator(ContentEntityValidator):
@@ -25,8 +41,7 @@ class TestPlaybookValidator(ContentEntityValidator):
             self.is_valid_file(validate_rn),
             self._is_id_uuid(),
             self._is_taskid_equals_id(),
-            common_playbook_validations.check_tasks_brands(
-                self.current_file, id_set_file, self.file_path, self.handle_error)
+            self.check_tasks_brands(id_set_file)
         ]
         return all(test_playbooks_check)
 
@@ -85,4 +100,29 @@ class TestPlaybookValidator(ContentEntityValidator):
                 self.handle_error(error_message, error_code, file_path=self.file_path)  # Does not break after one
                 # invalid task in order to raise error for all the invalid tasks at the file
 
+        return is_valid
+
+    def check_tasks_brands(self, id_set_file: Optional[dict]) -> bool:
+        """
+        Checks that all the tasks' in a playbook which have a script also a have a valid brand name,
+        Args:
+            id_set_file: id set file
+        Returns:
+            True if all tasks who have a brand use a valid brand, False otherwise
+        """
+        is_valid = True
+
+        if not id_set_file:
+            click.secho("Skipping playbook brand name validation. Could not read id_set.json.", fg="yellow")
+            return is_valid
+
+        tasks: dict = self.current_file.get('tasks', {})
+        for task_key, task in tasks.items():
+            task_script = task.get('task', {}).get('script', None)
+            if task_script is not None and '|||' in task_script:
+                brand_name = task_script[:task_script.find('|||')]
+                if not _is_valid_brand(brand_name, id_set_file):
+                    is_valid = False
+                    error_message, error_code = Errors.missing_brand_name_in_script(task_key, task_script)
+                    self.handle_error(error_message, error_code, file_path=self.file_path)
         return is_valid

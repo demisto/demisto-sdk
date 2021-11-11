@@ -5,8 +5,6 @@ import click
 
 from demisto_sdk.commands.common.constants import DEPRECATED_REGEXES
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.hook_validations import \
-    common_playbook_validations
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 from demisto_sdk.commands.common.tools import LOG_COLORS, is_string_uuid
@@ -45,8 +43,6 @@ class PlaybookValidator(ContentEntityValidator):
             self.verify_condition_tasks_has_else_path(),
             self.name_not_contain_the_type(),
             self.is_valid_with_indicators_input(),
-            common_playbook_validations.check_tasks_brands(
-                self.current_file, id_set_file, self.file_path, self.handle_error),
         ]
         answers = all(playbook_checks)
 

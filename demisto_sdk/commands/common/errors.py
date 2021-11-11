@@ -20,7 +20,7 @@ ALLOWED_IGNORE_ERRORS = [
     'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112', 'PB114', 'PB115', 'PB116',
     'RM100', 'RM102', 'RM104', 'RM106',
     'RP102', 'RP104',
-    'SC100', 'SC101', 'SC105', 'PB118'
+    'SC100', 'SC101', 'SC105', 'TP100'
 ]
 
 PRESET_ERROR_TO_IGNORE = {
@@ -175,7 +175,7 @@ ERROR_CODE = {
     "playbook_tasks_not_quiet_mode": {'code': "PB115", 'ui_applicable': False, 'related_field': 'tasks'},
     "playbook_tasks_continue_on_error": {'code': "PB116", 'ui_applicable': False, 'related_field': 'tasks'},
     "content_entity_is_not_in_id_set": {'code': "PB117", 'ui_applicable': False, 'related_field': ''},
-    "missing_brand_name_in_script": {'code': 'PB118', 'ui_applicable': False, 'related_field': ''},
+    "missing_brand_name_in_script": {'code': 'TP100', 'ui_applicable': False, 'related_field': ''},
     "description_missing_in_beta_integration": {'code': "DS100", 'ui_applicable': False, 'related_field': ''},
     "no_beta_disclaimer_in_description": {'code': "DS101", 'ui_applicable': False, 'related_field': ''},
     "no_beta_disclaimer_in_yml": {'code': "DS102", 'ui_applicable': False, 'related_field': ''},

@@ -1,18 +1,26 @@
 import unittest
-
-from demisto_sdk.commands.common.hook_validations.common_playbook_validations import (
-    _is_valid_brand, check_tasks_brands)
-
-
-def handle_error(error_message, error_code, file_path):
-    """
-    handle error stub to simulate function passed
-    """
-    return None
+from mock import patch
+from typing import Optional
+from demisto_sdk.commands.common.hook_validations.test_playbook import TestPlaybookValidator, _is_valid_brand
+from demisto_sdk.commands.common.hook_validations.structure import \
+    StructureValidator
 
 
-class MyTestCase(unittest.TestCase):
+def mock_structure(file_path=None, current_file=None, old_file=None):
+    # type: (Optional[str], Optional[dict], Optional[dict]) -> StructureValidator
+    with patch.object(StructureValidator, '__init__', lambda a, b: None):
+        structure = StructureValidator(file_path)
+        structure.is_valid = True
+        structure.scheme_name = 'playbook'
+        structure.file_path = file_path
+        structure.current_file = current_file
+        structure.old_file = old_file
+        structure.prev_ver = 'master'
+        structure.branch_name = ''
+        return structure
 
+
+class TestTestPlaybookValidator:
     ASSOCIATED_PLAYBOOK = {
         "tasks": {
             "1": {
@@ -92,26 +100,28 @@ class MyTestCase(unittest.TestCase):
             - Playbook with a task
             - Id set file
             - some path
-            - Dummy error handler
         When
             - Playbook's task has a valid brand name
         Then
             - return True
         """
-        assert check_tasks_brands(self.ASSOCIATED_PLAYBOOK, self.ID_SET, "some path", handle_error)
+        structure = mock_structure("some_path", self.ASSOCIATED_PLAYBOOK)
+        validator = TestPlaybookValidator(structure)
+        assert validator.check_tasks_brands(self.ID_SET)
 
     def test_check_tasks_brands_no_id_set(self):
         """
         Given
             - Playbook with a task
             - some path
-            - Dummy error handler
         When
             - ID set file is missing
         Then
             - returns true
         """
-        assert check_tasks_brands(self.ASSOCIATED_PLAYBOOK, None, "some path", handle_error)
+        structure = mock_structure("some_path", self.ASSOCIATED_PLAYBOOK)
+        validator = TestPlaybookValidator(structure)
+        assert validator.check_tasks_brands(None)
 
     def test_check_tasks_brands_no_tasks(self):
         """
@@ -119,13 +129,14 @@ class MyTestCase(unittest.TestCase):
             - Playbook
             - id set
             - some path
-            - Dummy error handler
         When
             - Playbook has no tasks
         Then
             - return true
         """
-        assert check_tasks_brands(self.NO_TASKS_PLAYBOOK, self.ID_SET, "some path", handle_error)
+        structure = mock_structure("some_path", self.NO_TASKS_PLAYBOOK)
+        validator = TestPlaybookValidator(structure)
+        assert validator.check_tasks_brands(self.ID_SET)
 
     def test_check_tasks_brands_no_specific_task(self):
         """
@@ -133,13 +144,14 @@ class MyTestCase(unittest.TestCase):
             - Playbook with a task
             - id set
             - some path
-            - Dummy error handler
         When
             - Playbook's task is missing a task entry
         Then
             - returns true
         """
-        assert check_tasks_brands(self.TASK_MISSING_PLAYBOOK, self.ID_SET, "some path", handle_error)
+        structure = mock_structure("some_path", self.TASK_MISSING_PLAYBOOK)
+        validator = TestPlaybookValidator(structure)
+        assert validator.check_tasks_brands(self.ID_SET)
 
     def test_check_tasks_brands_no_script(self):
         """
@@ -147,13 +159,14 @@ class MyTestCase(unittest.TestCase):
             - Playbook with a task
             - id set
             - some path
-            - Dummy error handler
         When
             - Playbook's task is missing script entry
         Then
             - returns true
         """
-        assert check_tasks_brands(self.SCRIPT_MISSING_PLAYBOOK, self.ID_SET, "some path", handle_error)
+        structure = mock_structure("some_path", self.SCRIPT_MISSING_PLAYBOOK)
+        validator = TestPlaybookValidator(structure)
+        assert validator.check_tasks_brands(self.ID_SET)
 
     def test_check_tasks_brands_no_pipes(self):
         """
@@ -161,13 +174,14 @@ class MyTestCase(unittest.TestCase):
             - Playbook with a task
             - id set
             - some path
-            - Dummy error handler
         When
             - Task's script is missing ||| before the script's name
         Then
             - returns true
         """
-        assert check_tasks_brands(self.PIPES_MISSING_PLAYBOOK, self.ID_SET, "some path", handle_error)
+        structure = mock_structure("some_path", self.PIPES_MISSING_PLAYBOOK)
+        validator = TestPlaybookValidator(structure)
+        assert validator.check_tasks_brands(self.ID_SET)
 
     def test_check_tasks_brands_bad_brand(self):
         """
@@ -175,13 +189,14 @@ class MyTestCase(unittest.TestCase):
             - Playbook with a task
             - id set
             - some path
-            - Dummy error handler
         When
             - Playbook's task has a script with an invalid brand name
         Then
             - return False
         """
-        assert not check_tasks_brands(self.NOT_ASSOCIATED_PLAYBOOK, self.ID_SET, "some path", handle_error)
+        structure = mock_structure("some_path", self.NOT_ASSOCIATED_PLAYBOOK)
+        validator = TestPlaybookValidator(structure)
+        assert not validator.check_tasks_brands(self.ID_SET)
 
     def test_check_tasks_brands_no_brand(self):
         """
@@ -189,13 +204,14 @@ class MyTestCase(unittest.TestCase):
             - Playbook with a task
             - id set
             - some path
-            - Dummy error handler
         When
             - Playbook's task has a script with no brand name
         Then
             - return False
         """
-        assert not check_tasks_brands(self.NO_NAME_ASSOCIATED_PLAYBOOK, self.ID_SET, "some path", handle_error)
+        structure = mock_structure("some_path", self.NO_NAME_ASSOCIATED_PLAYBOOK)
+        validator = TestPlaybookValidator(structure)
+        assert not validator.check_tasks_brands(self.ID_SET)
 
     def test_is_valid_brand_found_brand(self):
         """

@@ -984,6 +984,41 @@ class TestIntegrationValidator:
 
         assert validator.name_not_contain_the_type()
 
+    @pytest.mark.parametrize('support, parameter_type, expected_result', [
+        ('xsoar', 4, False),
+        ('xsoar', 9, True),
+        ('community', 4, True),
+        ('partner', 4, True),
+    ])
+    def test_is_api_token_in_credential_type(self, pack, support, parameter_type, expected_result):
+        """
+        Given
+            - An integration with API token parameter in non credential type.
+        When
+            - Running is_api_token_in_credential_type on `xsoar` support integration and non `xsoar` integration.
+        Then
+            - Ensure the validate on `xsoar` integration support failed on invalid type,
+            the type of the parameter should be 9 (credentials).
+        """
+
+        pack.pack_metadata.write_json({
+            'support': support
+        })
+
+        integration = pack.create_integration(yml={
+            'configuration': [{
+                'display': 'API token',
+                'name': 'token',
+                'type': parameter_type  # Encrypted text failed
+            }]
+        })
+
+        with ChangeCWD(pack.repo_path):
+            structure_validator = StructureValidator(integration.yml.path, predefined_scheme='integration')
+            validator = IntegrationValidator(structure_validator)
+
+            assert validator.is_api_token_in_credential_type() == expected_result
+
     IS_SKIPPED_INPUTS = [
         ({'skipped_integrations': {"SomeIntegration": "No instance"}}, False),
         ({'skipped_integrations': {"SomeOtherIntegration": "No instance"}}, True)

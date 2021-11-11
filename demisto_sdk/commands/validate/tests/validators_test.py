@@ -431,7 +431,8 @@ class TestValidators:
         -  The file will be validated and failed
         """
         mocker.patch.object(ImageValidator, 'is_valid', return_value=True)
-        mocker.patch.object(IntegrationValidator, 'has_no_fromlicense_key_in_contributions_integration', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'has_no_fromlicense_key_in_contributions_integration',
+                            return_value=True)
 
         validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
         assert not validate_manager.run_validation_on_specific_files()
@@ -797,17 +798,17 @@ class TestValidators:
         pack2 = repo.create_pack(pack2_name)
         integration2 = pack2.create_integration(pack2_name)
         id_set_content = {'integrations':
-                          [
-                              {'ApiDependent':
-                               {
-                                   'name': integration2.name,
-                                   'file_path': integration2.path,
-                                   'pack': pack2_name,
-                                   'api_modules': api_script1.name
-                               }
-                               }
-                          ]
-                          }
+            [
+                {'ApiDependent':
+                    {
+                        'name': integration2.name,
+                        'file_path': integration2.path,
+                        'pack': pack2_name,
+                        'api_modules': api_script1.name
+                    }
+                }
+            ]
+        }
         id_set_f = tmpdir / "id_set.json"
         id_set_f.write(json.dumps(id_set_content))
         validate_manager = ValidateManager(id_set_path=id_set_f.strpath)
@@ -837,15 +838,15 @@ class TestValidators:
         pack2 = repo.create_pack(pack2_name)
         integration2 = pack2.create_integration(pack2_name)
         id_set_content = {'integrations':
-                          [
-                              {'ApiDependent':
-                               {'name': integration2.name,
-                                'file_path': integration2.path,
-                                'pack': pack2_name,
-                                'api_modules': api_script1.name
-                                }
-                               }
-                          ]}
+            [
+                {'ApiDependent':
+                     {'name': integration2.name,
+                      'file_path': integration2.path,
+                      'pack': pack2_name,
+                      'api_modules': api_script1.name
+                      }
+                 }
+            ]}
         id_set_f = tmpdir / "id_set.json"
         id_set_f.write(json.dumps(id_set_content))
         validate_manager = ValidateManager(id_set_path=id_set_f.strpath)
@@ -1159,12 +1160,10 @@ class TestValidators:
         validate_manager = ValidateManager(check_is_unskipped=False)
         assert validate_manager.ignore_test_doc_non_pack_file(file_path)
 
-    @pytest.mark.parametrize('answer, unsearchable, validator', [(True, True, IncidentFieldValidator),
-                                                                 (False, False, IncidentFieldValidator),
-                                                                 (True, True, GenericFieldValidator),
-                                                                 (True, True, GenericFieldValidator)]
+    @pytest.mark.parametrize('expected_result, unsearchable', [(True, True),
+                                                               (False, False)]
                              )
-    def test_is_valid_unsearchable_field(self, pack: Pack, answer, unsearchable, validator):
+    def test_is_valid_unsearchable_key_if(self, pack: Pack, expected_result, unsearchable):
         """
                 Given
                     - An incident field which unsearchable is true
@@ -1172,13 +1171,32 @@ class TestValidators:
                 When
                     - Run the validate command.
                 Then
-                    - validate that is_valid_unsearchable_field expected answer
+                    - validate that is_valid_unsearchable_key expected answer
         """
         incident_field = pack.create_incident_field('MyIncidentField')
         incident_field.update({"unsearchable": unsearchable})
         structure = StructureValidator(incident_field.path)
-        res_validator = validator(structure)
-        assert res_validator.is_valid_unsearchable_field() is answer
+        res_validator = IncidentFieldValidator(structure)
+        assert res_validator.is_valid_unsearchable_key() is expected_result
+
+    @pytest.mark.parametrize('expected_result, unsearchable', [(True, True),
+                                                               (False, False)]
+                             )
+    def test_is_valid_unsearchable_key_gf(self, pack: Pack, expected_result, unsearchable):
+        """
+                Given
+                    - A generic field which unsearchable is true
+                    - A generic field which unsearchable is false
+                When
+                    - Run the validate command.
+                Then
+                    - validate that is_valid_unsearchable_key expected answer
+        """
+        generic_field = pack.create_generic_field('MyGenericField')
+        generic_field.update({"unsearchable": unsearchable})
+        structure = StructureValidator(generic_field.path)
+        res_validator = GenericFieldValidator(structure)
+        assert res_validator.is_valid_unsearchable_key() is expected_result
 
 
 @pytest.mark.parametrize('pack_name, expected', [

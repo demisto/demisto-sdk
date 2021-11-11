@@ -25,7 +25,7 @@ class GenericFieldValidator(ContentEntityValidator):
         ]
 
         if is_added_file:
-            answers.append(self.is_valid_unsearchable_field())
+            answers.append(self.is_valid_unsearchable_key())
 
         return all(answers)
 
@@ -59,17 +59,16 @@ class GenericFieldValidator(ContentEntityValidator):
 
         return True
 
-    def is_valid_unsearchable_field(self):
+    def is_valid_unsearchable_key(self):
         # type: () -> bool
-        """Validate that the unsearchable field is true
-        (relevant to incident_field and generic_field)
+        """Validate that the unsearchable key is set to true
         Returns:
-            bool. Whether the file's unsearchable field is se to true.
+            bool. Whether the file's unsearchable key is set to true.
         """
         indicator_field_unsearchable = self.current_file.get('unsearchable', True)
         if indicator_field_unsearchable:
             return True
-        error_message, error_code = Errors.fields_unsearchable_should_be_true_gf()
+        error_message, error_code = Errors.unsearchable_key_should_be_true_gf()
         if self.handle_error(error_message, error_code, file_path=self.file_path):
             return False
         return True

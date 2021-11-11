@@ -866,7 +866,7 @@ class ValidateManager:
                                                                use_git=self.use_git,
                                                                is_added_file=is_added_file),
                         incident_field_validator.is_backward_compatible(),
-                        incident_field_validator.is_valid_unsearchable_field()])
+                        incident_field_validator.is_valid_unsearchable_key()])
         else:
             return incident_field_validator.is_valid_file(validate_rn=False, is_new_file=not is_modified,
                                                           use_git=self.use_git,

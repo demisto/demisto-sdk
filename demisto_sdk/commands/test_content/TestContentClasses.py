@@ -259,7 +259,7 @@ class TestPlaybook:
         for integration in self.integrations:
             instance_created = integration.create_integration_instance(client,
                                                                        self.configuration.playbook_id,
-                                                                       self.is_mockable)
+                                                                       self.is_mockable, self.integrations)
             if not instance_created:
                 self.build_context.logging_module.error(
                     f'Cannot run playbook {self}, integration {integration} failed to configure')
@@ -824,7 +824,7 @@ class Integration:
         config_item.params = json.loads(item_as_string)
         return config_item
 
-    def _set_integration_params(self, server_url: str, playbook_id: str, is_mockable: bool) -> bool:
+    def _set_integration_params(self, server_url: str, playbook_id: str, is_mockable: bool) -> Tuple[bool, List]:
         """
         Finds the matching configuration for the integration in content-test-data conf.json file
         in accordance with the configured instance name if exist and configures the proxy parameter if needed
@@ -837,6 +837,7 @@ class Integration:
             True if found a matching configuration else False if found more that one configuration candidate returns False
         """
         self.build_context.logging_module.debug(f'Searching integration configuration for {self}')
+        added_multiple_instances: List[Integration] = []
 
         # Finding possible configuration matches
         integration_params: List[IntegrationConfiguration] = [conf for conf in
@@ -864,7 +865,7 @@ class Integration:
                                                                  self.name,
                                                                  '\n'.join(optional_instance_names))
                     self.build_context.logging_module.error(error_msg)
-                    return False
+                    return False, []
             else:
                 self.configuration = integration_params[0]
 
@@ -878,7 +879,23 @@ class Integration:
             self.build_context.logging_module.debug(f'configuring {self} with proxy params')
             for param in ('proxy', 'useProxy', 'useproxy', 'insecure', 'unsecure'):
                 self.configuration.params[param] = True  # type: ignore
-        return True
+
+        if len(self.instance_names) > 1:
+            for instance_name in self.instance_names:
+                if self.instance_name == instance_name:
+                    logging.info(f"Found {instance_name} in the integration dict object.")
+                else:
+                    for item in integration_params:
+                        logging.info(f"Instance names in conf are: {self.instance_names}")
+                        if item.instance_name == instance_name:
+                            integration_copy = Integration(self.build_context, self.name, [item.instance_name])
+                            integration_copy.configuration = item.params
+                            integration_copy.instance_name = item.instance_name
+                            added_multiple_instances.append(integration_copy)
+        if len(added_multiple_instances) > 0:
+            return True, added_multiple_instances
+        else:
+            return True, []
 
     def _get_integration_config(self, server_url: str) -> Optional[dict]:
         """
@@ -966,19 +983,21 @@ class Integration:
             logging_manager=self.build_context.logging_module
         )
 
-    def create_integration_instance(self, client: DefaultApi, playbook_id: str, is_mockable: bool) -> bool:
+    def create_integration_instance(self, client: DefaultApi, playbook_id: str, is_mockable: bool, integrations: List) -> bool:
         """
         Create an instance of the integration in the server specified in the demisto client instance.
         Args:
             client: The demisto_client instance to use
             playbook_id: The playbook id for which the instance should be created
             is_mockable: Indicates whether the integration should be configured with proxy=True or not
+            integrations: The current list of integrations inherited from the TestPlaybook Class
 
         Returns:
             The integration configuration as it exists on the server after it was configured
         """
         server_url = self.build_context.get_public_ip_from_server_url(client.api_client.configuration.host)
-        self._set_integration_params(server_url, playbook_id, is_mockable)
+        _, added_integrations = self._set_integration_params(server_url, playbook_id, is_mockable)
+        integrations.append(added_integrations)
         configuration = self._get_integration_config(client.api_client.configuration.host)
         if not configuration:
             self.build_context.logging_module.error(f'Could not find configuration for integration {self}')

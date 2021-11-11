@@ -15,8 +15,10 @@ def _is_valid_brand(brand_name: str, id_set_file: dict) -> bool:
         brand_name: name of the brand
         id_set_file: dict containing all entities information
     Returns:
-        True if the brand_name exists in id_set_file, False otherwise
+        True if the brand_name exists in id_set_file or if it's Builtin, False otherwise
     """
+    if brand_name == 'Builtin':
+        return True
     for integration_data in id_set_file['integrations']:
         if brand_name in integration_data:
             return True

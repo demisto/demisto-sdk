@@ -252,6 +252,18 @@ class TestTestPlaybookValidator:
         """
         assert not _is_valid_brand("", self.ID_SET)
 
+    def test_is_valid_brand_builtin_brand(self):
+        """
+        Given
+            - brand name
+            - id set
+        When
+            - brand_name is Builtin
+        Then
+            - return False
+        """
+        assert _is_valid_brand("Builtin", self.ID_SET)
+
 
 if __name__ == '__main__':
     unittest.main()

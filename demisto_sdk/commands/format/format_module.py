@@ -218,7 +218,7 @@ def get_files_to_format_from_git(supported_file_types: List[str], prev_ver: str,
 
         # get the file extension without the '.'
         file_extension = os.path.splitext(str_file_path)[1][1:]
-        if file_extension in supported_file_types and os.path.exists(str_file_path):
+        if file_extension in supported_file_types:
             filtered_files.append(str_file_path)
 
     if filtered_files:

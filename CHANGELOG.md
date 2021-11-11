@@ -3,6 +3,7 @@
 * Removed a validation that DBotRole should be set for automation that requires elevated permissions to the `XSOAR-linter` in the **lint** command.
 * Fixed an issue in **Validate** command where playbooks conditional tasks were mishandeled.
 * Added a validation to prevent contributors from using the `fromlicense` key as a configuration parameter in an integration's YML
+* Added a validation to ensure that the type for **API token** (and similar) parameters are configured correctly as a `credential` type in the integration configuration YML.
 * Added an assertion that checks for duplicated requests' names when generating an integration from a postman collection.
 
 # 1.5.2

@@ -438,7 +438,7 @@ class IncidentFieldValidator(ContentEntityValidator):
         unsearchable = self.current_file.get('unsearchable', True)
         if unsearchable:
             return True
-        error_message, error_code = Errors.unsearchable_key_should_be_true_if()
+        error_message, error_code = Errors.unsearchable_key_should_be_true_incident_field()
         if self.handle_error(error_message, error_code, file_path=self.file_path):
             return False
         return True

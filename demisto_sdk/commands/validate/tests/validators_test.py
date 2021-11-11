@@ -1165,7 +1165,7 @@ class TestValidators:
     @pytest.mark.parametrize('expected_result, unsearchable', [(True, True),
                                                                (False, False)]
                              )
-    def test_is_valid_unsearchable_key_if(self, pack: Pack, expected_result, unsearchable):
+    def test_is_valid_unsearchable_key_incident_field(self, pack: Pack, expected_result, unsearchable):
         """
                 Given
                     - An incident field which unsearchable is true
@@ -1184,7 +1184,7 @@ class TestValidators:
     @pytest.mark.parametrize('expected_result, unsearchable', [(True, True),
                                                                (False, False)]
                              )
-    def test_is_valid_unsearchable_key_gf(self, pack: Pack, expected_result, unsearchable):
+    def test_is_valid_unsearchable_key_generic_field(self, pack: Pack, expected_result, unsearchable):
         """
                 Given
                     - A generic field which unsearchable is true

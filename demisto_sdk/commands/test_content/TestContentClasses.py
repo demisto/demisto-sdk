@@ -899,7 +899,7 @@ class Integration:
         Returns:
             True if found a matching configuration else False if found more that one configuration candidate returns False
         """
-        self.build_context.logging_module.debug(f'Searching integration configuration for {self}')
+        self.build_context.logging_module.info(f'Searching integration configuration for {self}')
 
         # Finding possible configuration matches
         integration_params: List[IntegrationConfiguration] = [
@@ -940,17 +940,17 @@ class Integration:
                 'insecure': True,
             }
         if is_mockable:
-            self.build_context.logging_module.debug(f'configuring {self} with proxy params')
+            self.build_context.logging_module.info(f'configuring {self} with proxy params')
             for param in ('proxy', 'useProxy', 'useproxy', 'insecure', 'unsecure'):
                 self.configuration.params[param] = True  # type: ignore
 
         if len(self.instance_names) > 1:
             for instance_name in self.instance_names:
                 if self.instance_name == instance_name:
-                    logging.info(f"Found {instance_name} in the integration dict object.")
+                    self.build_context.logging_module.info(f"Found {instance_name} in the integration dict object.")
                 else:
                     for item in integration_params:
-                        logging.info(f"Instance names in conf are: {self.instance_names}")
+                        self.build_context.logging_module.info(f"Instance names in conf are: {self.instance_names}")
                         if item.instance_name == instance_name:
                             additional_instance = {'configuration': item.params, 'instance_name': item.instance_name}
                             self.additional_instances.append(additional_instance)
@@ -1052,7 +1052,7 @@ class Integration:
                                     playbook_id: str,
                                     is_mockable: bool,
                                     server_context: 'ServerContext',
-                                   ) -> bool:
+                                    ) -> bool:
         """
         Create an instance of the integration in the server specified in the demisto client instance.
         Args:
@@ -1132,17 +1132,22 @@ class Integration:
                 param_conf['value'] = param_conf['defaultValue']
             module_instance['data'].append(param_conf)
         try:
-            res = demisto_client.generic_request_func(self=client, method='PUT',
-                                                      path='/settings/integration',
-                                                      body=module_instance)
-
             if len(self.additional_instances) > 1:
+                self.build_context.logging_module.info(f"Attempting to configure additional instances")
                 for additional_instance in self.additional_instances:
+                    self.build_context.logging_module.info(f"Configuring - {additional_instance}")
                     module_instance['name'] = additional_instance['instance_name']
                     module_instance['configuration'] = additional_instance['configuration']
                     res = demisto_client.generic_request_func(self=client, method='PUT',
                                                               path='/settings/integration',
                                                               body=module_instance)
+            else:
+                self.build_context.logging_module.info(f"Configuring Module Instance - {module_instance}")
+                res = demisto_client.generic_request_func(self=client, method='PUT',
+                                                          path='/settings/integration',
+                                                          body=module_instance)
+
+
         except ApiException:
             self.build_context.logging_module.exception(f'Error trying to create instance for integration: {self}')
             return False

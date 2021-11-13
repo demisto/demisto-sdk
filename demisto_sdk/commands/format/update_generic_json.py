@@ -83,7 +83,9 @@ class BaseUpdateJSON(BaseUpdate):
             # We want to keep 'false' and 0 values, and avoid removing fields that are required in the schema.
             if field in self.data and self.data[field] in (None, '', [], {}) and \
                     not schema_data.get('mapping', {}).get(field, {}).get('required'):
-                self.data.pop(field)
+                # We don't want to remove the defaultRows key in grid, even if it is empty
+                if not (field == 'defaultRows' and self.data.get('type', '') == 'grid'):
+                    self.data.pop(field)
 
     def update_id(self, field='name') -> None:
         """Updates the id to be the same as the provided field ."""
@@ -109,3 +111,6 @@ class BaseUpdateJSON(BaseUpdate):
                 click.echo('Updating YML ID and name to be without spaces at the end')
             self.data['name'] = self.data['name'].strip()
             self.data['id'] = self.data['id'].strip()
+
+    def is_grid_type_file(self):
+        return self.data['type'] == 'grid'

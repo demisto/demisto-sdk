@@ -6,7 +6,7 @@
 * Added a validation to ensure that the type for **API token** (and similar) parameters are configured correctly as a `credential` type in the integration configuration YML.
 * Added an assertion that checks for duplicated requests' names when generating an integration from a postman collection.
 * Added support for [.env files](https://pypi.org/project/python-dotenv/). You can now add a `.env` file to your repository with the logging information instead of setting a global environment variables.
-* Skipped docker validation for beta integrations.
+* Added support for format command to beta integration.
 
 # 1.5.2
 * Added a validation to **update-release-notes** command to ensure that the `--version` flag argument is in the right format.

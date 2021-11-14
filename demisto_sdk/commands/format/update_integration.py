@@ -43,7 +43,10 @@ class IntegrationYMLFormat(BaseUpdateYML):
         self.update_docker = update_docker
         if not from_version and self.data.get("script", {}).get("type") == TYPE_PWSH:
             self.from_version = '5.5.0'
-        self.is_beta = True if find_type(input).value == 'betaintegration' else False
+        self.is_beta = False
+        integration_type = find_type(input)
+        if integration_type:
+            self.is_beta = True if find_type(input).value == 'betaintegration' else False
 
     def update_proxy_insecure_param_to_default(self):
         """Updates important integration arguments names and description."""

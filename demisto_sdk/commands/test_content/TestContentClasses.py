@@ -1140,7 +1140,6 @@ class Integration:
                                                               path='/settings/integration',
                                                               body=module_instance)
             else:
-                self.build_context.logging_module.info(f"Configuring Module Instance - {module_instance}")
                 res = demisto_client.generic_request_func(self=client, method='PUT',
                                                           path='/settings/integration',
                                                           body=module_instance)

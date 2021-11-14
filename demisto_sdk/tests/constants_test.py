@@ -132,7 +132,7 @@ SOURCE_DESCRIPTION_FORMATTED_CONTRIB_DETAILS = f"{GIT_ROOT}/demisto_sdk/tests/te
 SOURCE_DESCRIPTION_WITHOUT_BETA_DESCRIPTION = f"{GIT_ROOT}/demisto_sdk/tests/test_files/" \
                                               f"description_without_beta_description-test.md"
 SOURCE_DESCRIPTION_FORMATTED_WITH_BETA_DESCRIPTION = f"{GIT_ROOT}/demisto_sdk/tests/test_files/" \
-                                               f"description_formatted_with_beta_description-test.md"
+    f"description_formatted_with_beta_description-test.md"
 DESTINATION_FORMAT_DESCRIPTION_COPY = "Description/formatted_description-test.md"
 DESCRIPTION_PATH = "Description"
 DESTINATION_FORMAT_INCIDENTTYPE_COPY = "IncidentTypes/incidenttype-copy.json"

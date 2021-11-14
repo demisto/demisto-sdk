@@ -2,6 +2,7 @@ import re
 from typing import Dict
 
 import click
+
 from demisto_sdk.commands.common.constants import DEPRECATED_REGEXES
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
@@ -40,7 +41,8 @@ class PlaybookValidator(ContentEntityValidator):
             self._is_id_uuid(),
             self._is_taskid_equals_id(),
             self.verify_condition_tasks_has_else_path(),
-            self.name_not_contain_the_type()
+            self.name_not_contain_the_type(),
+            self.is_valid_with_indicators_input(),
         ]
         answers = all(playbook_checks)
 
@@ -175,11 +177,18 @@ class PlaybookValidator(ContentEntityValidator):
         # ADD all replyOptions to unhandled_reply_options (UPPER)
         unhandled_reply_options = set(map(str.upper, task.get('message', {}).get('replyOptions', [])))
 
+        # Rename the keys in dictionary to upper case
+        next_tasks_upper = {k.upper(): v for k, v in next_tasks.items()}
+
+        # Rename the dictionary keys from 'True Positive\False Positive' to 'YES\NO'
+        next_tasks_upper['YES'] = next_tasks_upper.pop('TRUE POSITIVE', next_tasks_upper.get('YES'))
+        next_tasks_upper['NO'] = next_tasks_upper.pop('FALSE POSITIVE', next_tasks_upper.get('NO'))
+
         # Remove all nexttasks from unhandled_reply_options (UPPER)
-        for next_task_branch, next_task_id in next_tasks.items():
+        for next_task_branch, next_task_id in next_tasks_upper.items():
             try:
                 if next_task_id:
-                    unhandled_reply_options.remove(next_task_branch.upper())
+                    unhandled_reply_options.remove(next_task_branch)
             except KeyError:
                 error_message, error_code = Errors.playbook_unreachable_condition(task.get('id'), next_task_branch)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
@@ -427,5 +436,49 @@ class PlaybookValidator(ContentEntityValidator):
             error_message, error_code = Errors.field_contain_forbidden_word(field_names=['name'], word='playbook')
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
+                return False
+        return True
+
+    def is_valid_with_indicators_input(self):
+        input_data = self.current_file.get('inputs', [])
+        for item in input_data:
+            entity = item['playbookInputQuery'].get('queryEntity', '') if item.get('playbookInputQuery', None) else None
+            if entity == 'indicators':
+                answer = [
+                    self.is_playbook_quiet_mode(),
+                    self.is_tasks_quiet_mode(),
+                    self.is_stopping_on_error(),
+                ]
+                return all(answer)
+        return True
+
+    def is_playbook_quiet_mode(self):
+        if not self.current_file.get('quiet', False):
+            error_message, error_code = Errors.playbook_not_quiet_mode()
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+        return True
+
+    def is_tasks_quiet_mode(self):
+        not_quiet = []
+        tasks: dict = self.current_file.get('tasks', {})
+        for task_key, task in tasks.items():
+            if task.get('quietmode', 0) == 2:
+                not_quiet.append(task_key)
+        if not_quiet:
+            error_message, error_code = Errors.playbook_tasks_not_quiet_mode(not_quiet)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+        return True
+
+    def is_stopping_on_error(self):
+        continue_tasks = []
+        tasks: dict = self.current_file.get('tasks', {})
+        for task_key, task in tasks.items():
+            if task.get('continueonerror', False):
+                continue_tasks.append(task_key)
+        if continue_tasks:
+            error_message, error_code = Errors.playbook_tasks_continue_on_error(continue_tasks)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True

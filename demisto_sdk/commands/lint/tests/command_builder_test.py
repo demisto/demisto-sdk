@@ -27,7 +27,8 @@ def test_build_flak8_command(files):
 @pytest.mark.parametrize(argnames="files", argvalues=values)
 def test_build_xsoar_linter_py3_command(files):
     """Build xsoar linter command"""
-    from demisto_sdk.commands.lint.commands_builder import build_xsoar_linter_command
+    from demisto_sdk.commands.lint.commands_builder import \
+        build_xsoar_linter_command
     output = build_xsoar_linter_command(files, 3.8, "base")
     files = [str(file) for file in files]
     expected = f"python3 -m pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py," \
@@ -40,7 +41,8 @@ def test_build_xsoar_linter_py3_command(files):
 @pytest.mark.parametrize(argnames="files", argvalues=values)
 def test_build_xsoar_linter_py2_command(files):
     """Build xsoar linter command"""
-    from demisto_sdk.commands.lint.commands_builder import build_xsoar_linter_command
+    from demisto_sdk.commands.lint.commands_builder import \
+        build_xsoar_linter_command
     output = build_xsoar_linter_command(files, 2.7, "base")
     files = [str(file) for file in files]
     expected = f"python2 -m pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py," \
@@ -53,7 +55,8 @@ def test_build_xsoar_linter_py2_command(files):
 @pytest.mark.parametrize(argnames="files", argvalues=values)
 def test_build_xsoar_linter_no_base_command(files):
     """Build xsoar linter command"""
-    from demisto_sdk.commands.lint.commands_builder import build_xsoar_linter_command
+    from demisto_sdk.commands.lint.commands_builder import \
+        build_xsoar_linter_command
     output = build_xsoar_linter_command(files, 2.7, "unsupported")
     files = [str(file) for file in files]
     expected = "python2 -m pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py," \
@@ -91,8 +94,9 @@ def test_build_mypy_command(files, py_num):
 @pytest.mark.parametrize(argnames="files", argvalues=values)
 def test_build_vulture_command(files, mocker):
     """Build bandit command"""
-    from demisto_sdk.commands.lint.commands_builder import build_vulture_command
     from demisto_sdk.commands.lint import commands_builder
+    from demisto_sdk.commands.lint.commands_builder import \
+        build_vulture_command
     mocker.patch.object(commands_builder, 'os')
     commands_builder.os.environ.get.return_value = 20
     output = build_vulture_command(files, Path('~/dev/content/'), 2.7)
@@ -128,14 +132,14 @@ def test_build_pylint_command_3_9_docker():
 def test_build_pytest_command_1():
     """Build Pytest command without json"""
     from demisto_sdk.commands.lint.commands_builder import build_pytest_command
-    command = "python -m pytest --junitxml=/devwork/report_pytest.xml"
+    command = "python -m pytest -ra --junitxml=/devwork/report_pytest.xml"
     assert command == build_pytest_command(test_xml="test")
 
 
 def test_build_pytest_command_2():
     """Build Pytest command with json"""
     from demisto_sdk.commands.lint.commands_builder import build_pytest_command
-    command = "python -m pytest --junitxml=/devwork/report_pytest.xml --json=/devwork/report_pytest.json"
+    command = "python -m pytest -ra --junitxml=/devwork/report_pytest.xml --json=/devwork/report_pytest.json"
     assert command == build_pytest_command(test_xml="test",
                                            json=True)
 
@@ -143,13 +147,14 @@ def test_build_pytest_command_2():
 def test_build_pytest_command_3():
     """Build Pytest command with cov"""
     from demisto_sdk.commands.lint.commands_builder import build_pytest_command
-    command = "python -m pytest --junitxml=/devwork/report_pytest.xml --cov-report= --cov=test"
+    command = "python -m pytest -ra --junitxml=/devwork/report_pytest.xml --cov-report= --cov=test"
     assert command == build_pytest_command(test_xml="test", cov="test")
 
 
 def test_build_pwsh_analyze():
     """Build Pytest command with json"""
-    from demisto_sdk.commands.lint.commands_builder import build_pwsh_analyze_command
+    from demisto_sdk.commands.lint.commands_builder import \
+        build_pwsh_analyze_command
     file = MagicMock()
     command = f"pwsh -Command Invoke-ScriptAnalyzer -EnableExit -Path {file.name}"
     assert command == build_pwsh_analyze_command(file)
@@ -157,6 +162,7 @@ def test_build_pwsh_analyze():
 
 def test_build_pwsh_test():
     """Build Pytest command with json"""
-    from demisto_sdk.commands.lint.commands_builder import build_pwsh_test_command
+    from demisto_sdk.commands.lint.commands_builder import \
+        build_pwsh_test_command
     command = 'pwsh -Command Invoke-Pester -Configuration \'@{Run=@{Exit=$true}; Output=@{Verbosity="Detailed"}}\''
     assert command == build_pwsh_test_command()

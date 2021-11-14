@@ -86,3 +86,5 @@ mapping:
     type: str
   propagationLabels:
     type: any
+  openEnded:
+    type: bool

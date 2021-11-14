@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import List, Optional
 
+from demisto_sdk.commands.common.constants import DEFAULT_IMAGE_BASE64
 from TestSuite.file import File
 from TestSuite.integration import Integration
 from TestSuite.json_based import JSONBased
@@ -30,6 +31,7 @@ class Pack:
 
     def __init__(self, packs_dir: Path, name: str, repo):
         # Initiate lists:
+        self.name = name
         self._repo = repo
         self.repo_path = repo.path
         self.integrations: List[Integration] = list()
@@ -41,14 +43,19 @@ class Pack:
         self.incident_fields: List[JSONBased] = list()
         self.indicator_fields: List[JSONBased] = list()
         self.indicator_types: List[JSONBased] = list()
+        self.generic_fields: List[JSONBased] = list()
+        self.generic_types: List[JSONBased] = list()
+        self.generic_modules: List[JSONBased] = list()
+        self.generic_definitions: List[JSONBased] = list()
         self.layouts: List[JSONBased] = list()
         self.layoutcontainers: List[JSONBased] = list()
         self.reports: List[JSONBased] = list()
         self.widgets: List[JSONBased] = list()
+        self.lists: List[JSONBased] = list()
         self.playbooks: List[Playbook] = list()
         self.test_playbooks: List[Playbook] = list()
         self.release_notes: List[TextBased] = list()
-
+        self.release_notes_config: List[JSONBased] = list()
         # Create base pack
         self._pack_path = packs_dir / name
         self._pack_path.mkdir()
@@ -87,6 +94,18 @@ class Pack:
         self._indicator_types = self._pack_path / 'IndicatorTypes'
         self._indicator_types.mkdir()
 
+        self._generic_fields_path = self._pack_path / 'GenericFields'
+        self._generic_fields_path.mkdir()
+
+        self._generic_types_path = self._pack_path / 'GenericTypes'
+        self._generic_types_path.mkdir()
+
+        self._generic_modules_path = self._pack_path / 'GenericModules'
+        self._generic_modules_path.mkdir()
+
+        self._generic_definitions_path = self._pack_path / 'GenericDefinitions'
+        self._generic_definitions_path.mkdir()
+
         self._layout_path = self._pack_path / 'Layouts'
         self._layout_path.mkdir()
 
@@ -99,6 +118,9 @@ class Pack:
         self._release_notes = self._pack_path / 'ReleaseNotes'
         self._release_notes.mkdir()
 
+        self._lists_path = self._pack_path / 'Lists'
+        self._lists_path.mkdir()
+
         self.secrets = Secrets(self._pack_path)
 
         self.pack_ignore = TextBased(self._pack_path, '.pack-ignore')
@@ -106,6 +128,9 @@ class Pack:
         self.readme = TextBased(self._pack_path, 'README.md')
 
         self.pack_metadata = JSONBased(self._pack_path, 'pack_metadata', '')
+
+        self.author_image = File(tmp_path=self._pack_path / 'Author_image.png', repo_path=repo.path)
+        self.author_image.write(DEFAULT_IMAGE_BASE64)
 
     def create_integration(
             self,
@@ -268,6 +293,46 @@ class Pack:
         self.indicator_types.append(indicator_type)
         return indicator_type
 
+    def create_generic_field(
+            self,
+            name,
+            content: dict = None) -> JSONBased:
+        dir_path = self._generic_fields_path / name
+        dir_path.mkdir()
+        prefix = 'genericfield'
+        generic_field = self._create_json_based(name, prefix, content, dir_path=dir_path)
+        self.generic_fields.append(generic_field)
+        return generic_field
+
+    def create_generic_type(
+            self,
+            name,
+            content: dict = None) -> JSONBased:
+        dir_path = self._generic_types_path / name
+        dir_path.mkdir()
+        prefix = 'generictype'
+        generic_type = self._create_json_based(name, prefix, content, dir_path=dir_path)
+        self.generic_types.append(generic_type)
+        return generic_type
+
+    def create_generic_module(
+            self,
+            name,
+            content: dict = None) -> JSONBased:
+        prefix = 'genericmodule'
+        generic_module = self._create_json_based(name, prefix, content, dir_path=self._generic_modules_path)
+        self.generic_modules.append(generic_module)
+        return generic_module
+
+    def create_generic_definition(
+            self,
+            name,
+            content: dict = None) -> JSONBased:
+        prefix = 'genericdefinition'
+        generic_definition = self._create_json_based(name, prefix, content, dir_path=self._generic_definitions_path)
+        self.generic_definitions.append(generic_definition)
+        return generic_definition
+
     def create_layout(
             self,
             name,
@@ -283,7 +348,7 @@ class Pack:
             name,
             content: dict = None
     ) -> JSONBased:
-        prefix = 'layoutcontainer'
+        prefix = 'layoutscontainer'
         layoutcontainer = self._create_json_based(name, prefix, content, dir_path=self._layout_path)
         self.layoutcontainers.append(layoutcontainer)
         return layoutcontainer
@@ -307,6 +372,16 @@ class Pack:
         widget = self._create_json_based(name, prefix, content, dir_path=self._widget_path)
         self.widgets.append(widget)
         return widget
+
+    def create_list(
+            self,
+            name,
+            content: dict = None
+    ) -> JSONBased:
+        prefix = 'list'
+        list_item = self._create_json_based(name, prefix, content, dir_path=self._lists_path)
+        self.lists.append(list_item)
+        return list_item
 
     def create_playbook(
             self,
@@ -345,10 +420,17 @@ class Pack:
         self.test_playbooks.append(playbook)
         return playbook
 
-    def create_release_notes(self, version: str, content: str = ''):
+    def create_release_notes(self, version: str, content: str = '', is_bc: bool = False):
         rn = self._create_text_based(f'{version}.md', content, dir_path=self._release_notes)
         self.release_notes.append(rn)
+        if is_bc:
+            self.create_release_notes_config(version, {'breakingChanges': True})
         return rn
+
+    def create_release_notes_config(self, version: str, content: dict):
+        rn_config = self._create_json_based(f'{version}', '', content, dir_path=self._release_notes)
+        self.release_notes_config.append(rn_config)
+        return rn_config
 
     def create_doc_file(self, name: str = 'image') -> File:
         doc_file_dir = self._pack_path / 'doc_files'

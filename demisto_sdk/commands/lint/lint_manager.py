@@ -14,6 +14,8 @@ import docker.errors
 import git
 import requests.exceptions
 import urllib3.exceptions
+from wcmatch.pathlib import Path
+
 from demisto_sdk.commands.common.constants import (PACKS_PACK_META_FILE_NAME,
                                                    TYPE_PWSH, TYPE_PYTHON,
                                                    DemistoException)
@@ -33,7 +35,6 @@ from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, PWSH_CHECKS,
                                                generate_coverage_report,
                                                get_test_modules, validate_env)
 from demisto_sdk.commands.lint.linter import Linter
-from wcmatch.pathlib import Path
 
 logger = logging.getLogger('demisto-sdk')
 
@@ -251,7 +252,7 @@ class LintManager:
                          no_pylint: bool, no_coverage: bool, coverage_report: str,
                          no_vulture: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
                          keep_container: bool,
-                         test_xml: str, failure_report: str) -> int:
+                         test_xml: str, failure_report: str, docker_timeout: int) -> int:
         """ Runs the Lint command on all given packages.
 
         Args:
@@ -270,6 +271,7 @@ class LintManager:
             keep_container(bool): Whether to keep the test container
             test_xml(str): Path for saving pytest xml results
             failure_report(str): Path for store failed packs report
+            docker_timeout(int): timeout for docker requests
 
         Returns:
             int: exit code by fail exit codes by var EXIT_CODES
@@ -314,13 +316,14 @@ class LintManager:
             return_warning_code: int = 0
             results = []
             # Executing lint checks in different threads
-            for pack in self._pkgs:
+            for pack in sorted(self._pkgs):
                 linter: Linter = Linter(pack_dir=pack,
                                         content_repo="" if not self._facts["content_repo"] else
                                         Path(self._facts["content_repo"].working_dir),
                                         req_2=self._facts["requirements_2"],
                                         req_3=self._facts["requirements_3"],
-                                        docker_engine=self._facts["docker_engine"])
+                                        docker_engine=self._facts["docker_engine"],
+                                        docker_timeout=docker_timeout)
                 results.append(executor.submit(linter.run_dev_packages,
                                                no_flake8=no_flake8,
                                                no_bandit=no_bandit,
@@ -416,12 +419,13 @@ class LintManager:
         self.report_failed_image_creation(return_exit_code=return_exit_code,
                                           pkgs_status=pkgs_status,
                                           lint_status=lint_status)
-        self.report_summary(pkg=self._pkgs, lint_status=lint_status, all_packs=self._all_packs)
         if not no_coverage:
             if coverage_report:
                 generate_coverage_report(html=True, xml=True, cov_dir=coverage_report)
             else:
                 generate_coverage_report()
+
+        self.report_summary(pkg=self._pkgs, lint_status=lint_status, all_packs=self._all_packs)
         self.create_json_output()
 
     @staticmethod
@@ -568,10 +572,13 @@ class LintManager:
                             if tests:
                                 print_v(wrapper_docker_image.fill(image['image']), log_verbose=self._verbose)
                                 for test_case in tests:
-                                    if test_case.get("call", {}).get("outcome") != "failed":
+                                    outcome = test_case.get("call", {}).get("outcome")
+                                    if outcome != "failed":
                                         name = re.sub(pattern=r"\[.*\]",
                                                       repl="",
                                                       string=test_case.get("name"))
+                                        if outcome and outcome != "passed":
+                                            name = f'{name} ({outcome.upper()})'
                                         print_v(wrapper_test.fill(name), log_verbose=self._verbose)
 
         # Log failed unit-tests
@@ -744,7 +751,6 @@ class LintManager:
                 self.vulture_error_formatter(check, json_contents)
             elif check.get('linter') == 'XSOAR_linter':
                 self.xsoar_linter_error_formatter(check, json_contents)
-
         with open(self.json_file_path, 'w+') as f:
             json.dump(json_contents, f, indent=4)
 
@@ -910,7 +916,7 @@ class LintManager:
                 self.add_to_json_outputs(output, file_path, json_contents)
 
     @staticmethod
-    def add_to_json_outputs(output: Dict, file_path: str, json_contents: List) -> None:
+    def add_to_json_outputs(output: Dict, file_path: str, json_contents: List):
         """Adds an error entry to the JSON file contents
 
         Args:
@@ -925,7 +931,7 @@ class LintManager:
             'fileType': os.path.splitext(file_path)[1].replace('.', ''),
             'entityType': file_type.value if file_type else '',
             'errorType': 'Code',
-            'name': get_file_displayed_name(yml_file_path),
+            'name': get_file_displayed_name(yml_file_path),  # type: ignore[arg-type]
             **output
         }
         json_contents.append(full_error_output)

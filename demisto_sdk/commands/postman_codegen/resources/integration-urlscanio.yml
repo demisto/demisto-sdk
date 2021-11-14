@@ -157,7 +157,7 @@ script:
   isfetch: false
   commands:
   - name: urlscanio-submit-url
-    description:
+    description: ''
     arguments:
     - name: url
       description: ''
@@ -194,7 +194,7 @@ script:
       contextPath: urlscanio.SubmitUrl.url
       description: ''
   - name: urlscanio-search
-    description:
+    description: ''
     arguments:
     - name: q
       description: ''
@@ -296,7 +296,7 @@ script:
       contextPath: urlscanio.Search.has_more
       description: ''
   - name: urlscanio-scan-results
-    description:
+    description: ''
     arguments:
     - name: uuid
       description: ''

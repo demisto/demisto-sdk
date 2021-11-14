@@ -2,12 +2,11 @@ import json
 from typing import Tuple
 
 import click
+
 from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
                                                    FEED_REQUIRED_PARAMS,
                                                    FETCH_REQUIRED_PARAMS,
                                                    INTEGRATION, TYPE_PWSH)
-from demisto_sdk.commands.common.hook_validations.integration import \
-    IntegrationValidator
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
@@ -36,8 +35,9 @@ class IntegrationYMLFormat(BaseUpdateYML):
                  no_validate: bool = False,
                  verbose: bool = False,
                  update_docker: bool = False,
+                 add_tests: bool = False,
                  **kwargs):
-        super().__init__(input, output, path, from_version, no_validate, verbose=verbose, **kwargs)
+        super().__init__(input, output, path, from_version, no_validate, verbose=verbose, add_tests=add_tests, **kwargs)
         self.update_docker = update_docker
         if not from_version and self.data.get("script", {}).get("type") == TYPE_PWSH:
             self.from_version = '5.5.0'
@@ -52,6 +52,21 @@ class IntegrationYMLFormat(BaseUpdateYML):
 
             if argument_name in self.ARGUMENTS_DESCRIPTION:
                 integration_argument['display'] = self.ARGUMENTS_DESCRIPTION[argument_name]
+                if integration_argument.get('required', False):
+                    integration_argument['required'] = False
+                integration_argument['type'] = 8
+
+    def set_params_default_additional_info(self):
+        from demisto_sdk.commands.common.default_additional_info_loader import \
+            load_default_additional_info_dict
+        default_additional_info = load_default_additional_info_dict()
+
+        if self.verbose:
+            click.echo('Updating params with an empty additionalnifo, to the default (if exists)')
+
+        for param in self.data.get('configuration', {}):
+            if param['name'] in default_additional_info and not param.get('additionalinfo'):
+                param['additionalinfo'] = default_additional_info[param['name']]
 
     def set_reputation_commands_basic_argument_as_needed(self):
         """Sets basic arguments of reputation commands to be default, isArray and required."""
@@ -129,15 +144,17 @@ class IntegrationYMLFormat(BaseUpdateYML):
 
     def update_docker_image(self):
         if self.update_docker:
-            ScriptYMLFormat.update_docker_image_in_script(self.data['script'], self.data.get(self.from_version_key))
+            ScriptYMLFormat.update_docker_image_in_script(self.data['script'], self.source_file,
+                                                          self.data.get(self.from_version_key))
 
     def run_format(self) -> int:
         try:
-            click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
+            click.secho(f'\n================= Updating file {self.source_file} =================', fg='bright_blue')
             super().update_yml(file_type=INTEGRATION)
             self.update_tests()
             self.update_conf_json('integration')
             self.update_proxy_insecure_param_to_default()
+            self.set_params_default_additional_info()
             self.set_reputation_commands_basic_argument_as_needed()
             self.set_fetch_params_in_config()
             self.set_feed_params_in_config()
@@ -151,8 +168,8 @@ class IntegrationYMLFormat(BaseUpdateYML):
 
     def format_file(self) -> Tuple[int, int]:
         """Manager function for the integration YML updater."""
-        format = self.run_format()
-        if format:
-            return format, SKIP_RETURN_CODE
+        format_res = self.run_format()
+        if format_res:
+            return format_res, SKIP_RETURN_CODE
         else:
-            return format, self.initiate_file_validator(IntegrationValidator)
+            return format_res, self.initiate_file_validator()

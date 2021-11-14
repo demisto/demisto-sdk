@@ -14,6 +14,7 @@ from typing import Dict, Iterator
 
 import demisto_client.demisto_api
 import urllib3
+
 from demisto_sdk.commands.test_content.constants import SSH_USER
 
 VALID_FILENAME_CHARS = f'-_.() {string.ascii_letters}{string.digits}'

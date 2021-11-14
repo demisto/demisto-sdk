@@ -1,5 +1,6 @@
 import astroid
 import pylint.testutils
+
 from demisto_sdk.commands.lint.resources.pylint_plugins import base_checker
 
 # You can find documentation about adding new test checker here:

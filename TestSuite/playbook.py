@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Optional
 
 import yaml
+
 from TestSuite.file import File
 from TestSuite.test_tools import suite_join_path
 from TestSuite.yml import YAML
@@ -40,14 +41,22 @@ class Playbook:
         if not self.is_test_playbook and readme is not None:
             self.readme.write(readme)
 
-    def create_default_playbook(self):
-        default_playbook_dir = 'assets/default_playbook'
-        with open(suite_join_path(default_playbook_dir, 'playbook-sample.yml')) as yml:
-            self.build(yml=yaml.safe_load(yml))
+    def create_default_playbook(self, name: str = 'sample playbook'):
+        """Creates a new playbook with basic data.
 
-    def create_default_test_playbook(self):
+        Args:
+            name: The name and ID of the new playbook, default is "sample playbook".
+
+        """
+        default_playbook_dir = 'assets/default_playbook'
+        with open(suite_join_path(default_playbook_dir, 'playbook-sample.yml')) as yml_file:
+            yml = yaml.safe_load(yml_file)
+            yml['id'] = yml['name'] = name
+            self.build(yml=yml)
+
+    def create_default_test_playbook(self, name: str = 'SamplePlaybookTest'):
         default_test_playbook_dir = 'assets/default_playbook'
-        with open(suite_join_path(default_test_playbook_dir, 'playbook-sample.yml')) as yml:
-            self.build(
-                yml=yaml.safe_load(yml)
-            )
+        with open(suite_join_path(default_test_playbook_dir, 'playbook-sample.yml')) as yml_file:
+            yml = yaml.safe_load(yml_file)
+            yml['id'] = yml['name'] = name
+            self.build(yml=yml)

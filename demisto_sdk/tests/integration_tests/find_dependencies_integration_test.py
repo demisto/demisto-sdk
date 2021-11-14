@@ -1,6 +1,7 @@
 import os
 
 from click.testing import CliRunner
+
 from demisto_sdk.__main__ import main
 from TestSuite.test_tools import ChangeCWD
 
@@ -21,6 +22,11 @@ EMPTY_ID_SET = {
     'Reports': [],
     'Widgets': [],
     'Mappers': [],
+    'GenericTypes': [],
+    'GenericFields': [],
+    'GenericModules': [],
+    'GenericDefinitions': [],
+    'Lists': []
 }
 
 
@@ -51,6 +57,7 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
         mocker.patch.dict(os.environ, {'DEMISTO_SDK_ID_SET_REFRESH_INTERVAL': '-1'})
         pack = repo.create_pack('FindDependencyPack')
         integration = pack.create_integration('integration')
+        integration.create_default_integration()
         mocker.patch(
             "demisto_sdk.commands.find_dependencies.find_dependencies.update_pack_metadata_with_dependencies",
         )
@@ -83,7 +90,10 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
         assert secho.call_args_list[10][0][0] == '### Widgets'
         assert secho.call_args_list[11][0][0] == '### Dashboards'
         assert secho.call_args_list[12][0][0] == '### Reports'
-        assert secho.call_args_list[13][0][0] == 'All level dependencies are: []'  # last log is regarding all the deps
+        assert secho.call_args_list[13][0][0] == '### Generic Types'
+        assert secho.call_args_list[14][0][0] == '### Generic Fields'
+        assert secho.call_args_list[15][0][0] == '### Generic Modules'
+        assert secho.call_args_list[16][0][0] == 'All level dependencies are: []'  # last log is regarding all the deps
         assert result.exit_code == 0
         assert result.stderr == ""
 
@@ -235,5 +245,5 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
                 [FIND_DEPENDENCIES_CMD, '-i', path]
             )
             assert result.exit_code == 1
-            assert "Input path is not a pack" in result.stdout
+            assert "must be formatted as 'Packs/<some pack name>" in result.stdout
             assert result.stderr == ""

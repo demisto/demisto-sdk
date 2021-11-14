@@ -3,9 +3,10 @@ from datetime import datetime, timedelta
 from functools import lru_cache
 from typing import Optional
 
+import requests
 from pkg_resources import parse_version
 
-import requests
+from demisto_sdk.commands.common.constants import IronBankDockers
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
@@ -28,7 +29,7 @@ DEFAULT_REGISTRY = 'registry-1.docker.io'
 class DockerImageValidator(BaseValidator):
 
     def __init__(self, yml_file_path, is_modified_file, is_integration, ignored_errors=None, print_as_warnings=False,
-                 suppress_print: bool = False, json_file_path: Optional[str] = None):
+                 suppress_print: bool = False, json_file_path: Optional[str] = None, is_iron_bank: bool = False):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          suppress_print=suppress_print, json_file_path=json_file_path)
         self.is_valid = True
@@ -42,19 +43,24 @@ class DockerImageValidator(BaseValidator):
         self.from_version = self.yml_file.get('fromversion', '0')
         self.docker_image_name, self.docker_image_tag = self.parse_docker_image(self.yml_docker_image)
         self.is_latest_tag = True
-        self.docker_image_latest_tag = self.get_docker_image_latest_tag(self.docker_image_name, self.yml_docker_image)
-        if not self.docker_image_latest_tag:
-            error_message, error_code = Errors.non_existing_docker(self.yml_docker_image)
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
-                self.is_valid = False
+        self.is_iron_bank = is_iron_bank
+        self.docker_image_latest_tag = self.get_docker_image_latest_tag(self.docker_image_name, self.yml_docker_image,
+                                                                        self.is_iron_bank)
 
     def is_docker_image_valid(self):
         # javascript code should not check docker
         if self.code_type == 'javascript':
             return True
 
+        if not self.yml_docker_image:
+            error_message, error_code = Errors.dockerimage_not_in_yml_file(self.file_path)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+
         if not self.docker_image_latest_tag:
-            self.is_valid = False
+            error_message, error_code = Errors.non_existing_docker(self.yml_docker_image)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
 
         elif not self.is_docker_image_latest_tag():
             self.is_valid = False
@@ -85,8 +91,8 @@ class DockerImageValidator(BaseValidator):
             # If docker image tag is not the most updated one that exists in docker-hub
             error_message, error_code = Errors.docker_not_on_the_latest_tag(self.docker_image_tag,
                                                                             self.docker_image_latest_tag,
-                                                                            )
-            suggested_fix = Errors.suggest_docker_fix(self.docker_image_name, self.file_path)
+                                                                            self.is_iron_bank)
+            suggested_fix = Errors.suggest_docker_fix(self.docker_image_name, self.file_path, self.is_iron_bank)
             if self.handle_error(error_message, error_code, file_path=self.file_path, suggested_fix=suggested_fix):
                 self.is_latest_tag = False
 
@@ -272,7 +278,7 @@ class DockerImageValidator(BaseValidator):
                 tag = DockerImageValidator.lexical_find_latest_tag(tags)
         return tag
 
-    def get_docker_image_latest_tag(self, docker_image_name, yml_docker_image):
+    def get_docker_image_latest_tag(self, docker_image_name, yml_docker_image, is_iron_bank=False):
         """Returns the docker image latest tag of the given docker image
 
         Args:
@@ -289,11 +295,13 @@ class DockerImageValidator(BaseValidator):
                     return ''
                 return "no-tag-required"
         try:
+            if is_iron_bank:
+                return self.get_docker_image_latest_tag_from_iron_bank_request(docker_image_name)
             return self.get_docker_image_latest_tag_request(docker_image_name)
-        except (requests.exceptions.RequestException, Exception):
+        except (requests.exceptions.RequestException, Exception) as e:
             if not docker_image_name:
                 docker_image_name = yml_docker_image
-            error_message, error_code = Errors.docker_tag_not_fetched(docker_image_name)
+            error_message, error_code = Errors.docker_tag_not_fetched(docker_image_name, str(e))
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return ''
 
@@ -334,3 +342,68 @@ class DockerImageValidator(BaseValidator):
                 return 'demisto/python', self.get_docker_image_latest_tag('demisto/python', None)
             else:
                 return 'demisto/python3', self.get_docker_image_latest_tag('demisto/python3', None)
+
+    @staticmethod
+    def get_docker_image_latest_tag_from_iron_bank_request(docker_image_name):
+        """
+        Get the latest tag for a docker image by request to Iron Bank Repo.
+        Args:
+            docker_image_name: The docker image name.
+
+        Returns:
+            The latest tag for the docker image.
+        """
+        project_name = docker_image_name.replace('demisto/', '')
+        commits_url = f'{IronBankDockers.API_LINK}{project_name}/pipelines'
+        manifest_url = f'{IronBankDockers.API_LINK}{project_name}/repository/files/hardening_manifest.yaml/raw'
+
+        try:
+            last_commit = DockerImageValidator._get_latest_commit(commits_url, docker_image_name)
+            if not last_commit:
+                return ''
+            manifest_file_content = DockerImageValidator._get_manifest_from_commit(manifest_url, last_commit)
+            if not manifest_file_content:
+                return ''
+        except Exception as e:
+            raise(e)
+
+        version_pattern = 'tags:\n- (.*)\n'
+        latest_version = re.findall(version_pattern, manifest_file_content)
+
+        # If manifest file does not contain the tag:
+        if not latest_version:
+            raise Exception('(Iron Bank) Manifest file does not contain tag in expected format.')
+
+        return latest_version[0].strip('"')
+
+    @staticmethod
+    def _get_manifest_from_commit(manifest_url, commit_id):
+        # gets the manifest file from the specified commit in Iron Bank:
+        res = requests.get(url=manifest_url, params={'ref': commit_id}, verify=False, timeout=TIMEOUT)
+
+        # If file does not exists in the last commit:
+        if res.status_code != 200:
+            raise Exception("Missing manifest file in the latest successful commit.")
+
+        return res.text
+
+    @staticmethod
+    def _get_latest_commit(commits_url, docker_image_name):
+        # Get latest commit in master which passed the pipeline of the project in Iron Bank:
+        res = requests.get(url=commits_url, params={'ref': 'master', 'status': 'success',
+                                                    'order_by': 'updated_at', 'per_page': '1'},
+                           verify=False, timeout=TIMEOUT)
+
+        # Project may not be existing and needs to be created.
+        if res.status_code != 200:
+            raise Exception('The docker image in your integration/script cannot be found in Iron Bank. '
+                            f'Please create the image: {docker_image_name} in Iron Bank.')
+
+        last_successful_pipelines = res.json()
+
+        # Project seems to have no succeed pipeline for master branch, meaning the image is not in Iron Bank.
+        if not last_successful_pipelines:
+            raise Exception('The docker image in your integration/script does not have a tag in Iron Bank. '
+                            'Please use only images that are already in Iron Bank, or upload your image to it.')
+
+        return last_successful_pipelines[0]['sha']

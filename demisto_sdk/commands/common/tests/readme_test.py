@@ -4,6 +4,9 @@ import os
 import sys
 
 import pytest
+import requests_mock
+
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from TestSuite.test_tools import ChangeCWD
@@ -12,6 +15,7 @@ VALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-valid.md'
 INVALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-invalid.md'
 INVALID2_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-invalid2.md'
 INVALID3_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-short-invalid.md'
+IMAGES_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-images.md'
 EMPTY_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-empty.md'
 FAKE_INTEGRATION_README = f'{git_path()}/demisto_sdk/tests/test_files/fake_integration/fake_README.md'
 
@@ -34,9 +38,17 @@ def test_is_file_valid(mocker, current, answer):
     if not valid:
         pytest.skip('skipping mdx test. ' + MDX_SKIP_NPM_MESSAGE)
         return
-    mocker.patch.dict(os.environ, {'DEMISTO_README_VALIDATION': 'yes', 'DEMISTO_MDX_CMD_VERIFY': 'yes'})
-    assert readme_validator.is_valid_file() is answer
-    assert not ReadMeValidator._MDX_SERVER_PROCESS
+    with requests_mock.Mocker() as m:
+        # Mock get requests
+        m.get('https://github.com/demisto/content/blob/123/Packs/AutoFocus/doc_files/AutoFocusPolling.png',
+              status_code=200, text="Test1")
+        m.get('https://github.com/demisto/content/blob/123/Packs/FeedOffice365/doc_files/test.png',
+              status_code=200, text="Test2")
+        m.get('https://github.com/demisto/content/raw/123/Packs/valid/doc_files/test.png',
+              status_code=200, text="Test3")
+        mocker.patch.dict(os.environ, {'DEMISTO_README_VALIDATION': 'yes', 'DEMISTO_MDX_CMD_VERIFY': 'yes'})
+        assert readme_validator.is_valid_file() is answer
+        assert not ReadMeValidator._MDX_SERVER_PROCESS
 
 
 @pytest.mark.parametrize("current, answer", README_INPUTS)
@@ -358,3 +370,76 @@ def test_demisto_not_in_readme(repo):
     readme_validator = ReadMeValidator(integration.readme.path)
 
     assert readme_validator.verify_demisto_in_readme_content()
+
+
+def test_verify_template_not_in_readme(repo):
+    """
+        Given
+            - An integration README contains the generic sentence '%%FILL HERE%%'.
+
+        When
+            - Running verify_template_not_in_readme.
+
+        Then
+            - Ensure that the validation fails.
+    """
+
+    pack = repo.create_pack('PackName')
+    integration = pack.create_integration('IntName')
+
+    readme_path = glob.glob(os.path.join(os.path.dirname(integration.yml.path), '*README.md'))[0]
+
+    with open(readme_path, 'w') as f:
+        f.write('This checks if we have the sentence %%FILL HERE%% in the README.')
+
+    with ChangeCWD(repo.path):
+        readme_validator = ReadMeValidator(integration.readme.path)
+
+        assert not readme_validator.verify_template_not_in_readme()
+
+
+def test_verify_readme_image_paths(mocker):
+    """
+    Given
+        - A README file (not pack README) with valid/invalid relative image
+         paths and valid/invalid absolute image paths in it.
+    When
+        - Run validate on README file
+    Then
+        - Ensure:
+            - Validation fails
+            - Image paths were caught correctly
+            - Valid paths are not caught
+    """
+    captured_output = io.StringIO()
+    sys.stdout = captured_output  # redirect stdout.
+
+    readme_validator = ReadMeValidator(IMAGES_MD)
+    mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='branch_name')
+    with requests_mock.Mocker() as m:
+        # Mock get requests
+        m.get('https://github.com/demisto/test1.png',
+              status_code=404, text="Test1")
+        m.get('https://github.com/demisto/content/raw/test2.png',
+              status_code=404, text="Test2")
+        m.get('https://github.com/demisto/test3.png',
+              status_code=200, text="Test3")
+
+        result = readme_validator.verify_readme_image_paths()
+    sys.stdout = sys.__stdout__  # reset stdout.
+    captured_output = captured_output.getvalue()
+    assert not result
+    assert 'The following image relative path is not valid, please recheck it:\n' \
+           '![Identity with High Risk Score](../../default.png)' in captured_output
+    assert 'The following image relative path is not valid, please recheck it:\n' \
+           '![Identity with High Risk Score](default.png)' not in captured_output
+    assert 'Branch name was found in the URL, please change it to the commit hash:\n' \
+           '![branch in url]' in captured_output
+    assert 'Branch name was found in the URL, please change it to the commit hash:\n' \
+           '![commit hash in url]' not in captured_output
+    assert 'please repair it:\n' \
+           '![Identity with High Risk Score](https://github.com/demisto/test1.png)' in captured_output
+    assert 'please repair it:\n(https://github.com/demisto/content/raw/test2.png)' in captured_output
+    assert 'please repair it:\n' \
+           '![Identity with High Risk Score](https://github.com/demisto/test3.png)' \
+           not in captured_output

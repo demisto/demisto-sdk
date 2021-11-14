@@ -1,8 +1,7 @@
 from typing import Tuple
 
 import click
-from demisto_sdk.commands.common.hook_validations.dashboard import \
-    DashboardValidator
+
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
@@ -30,7 +29,7 @@ class DashboardJSONFormat(BaseUpdateJSON):
 
     def run_format(self) -> int:
         try:
-            click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
+            click.secho(f'\n================= Updating file {self.source_file} =================', fg='bright_blue')
             super().update_json()
             self.default_description()
             self.update_id()
@@ -49,8 +48,8 @@ class DashboardJSONFormat(BaseUpdateJSON):
 
     def format_file(self) -> Tuple[int, int]:
         """Manager function for the Dashboard JSON updater."""
-        format = self.run_format()
-        if format:
-            return format, SKIP_RETURN_CODE
+        format_res = self.run_format()
+        if format_res:
+            return format_res, SKIP_RETURN_CODE
         else:
-            return format, self.initiate_file_validator(DashboardValidator)
+            return format_res, self.initiate_file_validator()

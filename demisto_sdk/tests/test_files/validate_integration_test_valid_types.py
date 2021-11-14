@@ -51,7 +51,7 @@ NEW_CLASSIFIER = {
 
 MAPPER = {
     "defaultIncidentType": "test",
-    "id": "testing",
+    "id": "test Mapper",
     "type": "mapping-incoming",
     "name": "test Mapper",
     "description": "Mapper test",
@@ -547,4 +547,186 @@ INCIDENT_FIELD = {
     "validationRegex": "",
     "version": -1,
     "fromVersion": "5.0.0"
+}
+
+GENERIC_FIELD = {
+    "associatedToAll": False,
+    "associatedTypes": [
+        "Workstation"
+    ],
+    "caseInsensitive": True,
+    "cliName": "operatingsystem",
+    "id": "generic_asset_operatingsystem",
+    "name": "Operating System",
+    "closeForm": False,
+    "content": True,
+    "editForm": True,
+    "group": 4,
+    "definitionId": "asset",
+    "genericModuleId": "rbvm",
+    "hidden": False,
+    "isReadOnly": False,
+    "locked": False,
+    "neverSetAsRequired": False,
+    "ownerOnly": False,
+    "required": False,
+    "sla": 0,
+    "system": False,
+    "threshold": 72,
+    "type": "shortText",
+    "unmapped": False,
+    "unsearchable": False,
+    "useAsKpi": False,
+    "version": -1,
+    "fromVersion": "6.5.0",
+    "openEnded": False
+}
+
+GENERIC_TYPE = {
+    "id": "Workstation",
+    "layout": "Workstation Layout",
+    "locked": False,
+    "name": "Workstation",
+    "color": "#8052f4",
+    "definitionId": "asset",
+    "genericModuleId": "rbvm",
+    "system": False,
+    "version": -1,
+    "fromVersion": "6.5.0"
+}
+
+GENERIC_MODULE = {
+    "id": "rbvm",
+    "version": -1,
+    "name": "Risk Based Vulnerability Management",
+    "fromVersion": "6.5.0",
+    "definitionIds": [
+        "asset"
+    ],
+    "views": [{
+        "icon": "icon-widget-infinity-24-s",
+        "name": "RBVM",
+        "title": "Risk Base Vulnerability Management",
+        "id": "RBVM",
+        "tabs": [
+            {
+                "name": "Assets",
+                "newButtonDefinitionId": "asset",
+                "dashboard": {
+                    "id": "asset_dashboard"
+                }
+            }]
+    }]
+}
+
+UNIFIED_GENERIC_MODULE = {
+    "id": "rbvm",
+    "version": -1,
+    "name": "Risk Based Vulnerability Management",
+    "fromVersion": "6.5.0",
+    "definitionIds": [
+        "asset"
+    ],
+    "views": [{
+        "icon": "icon-widget-infinity-24-s",
+        "name": "RBVM",
+        "title": "Risk Base Vulnerability Management",
+        "id": "RBVM",
+        "tabs": [
+            {
+                "name": "Assets",
+                "newButtonDefinitionId": "asset",
+                "dashboard": {
+                    "id": "asset_dashboard",
+                    "version": -1,
+                    "fromVersion": "5.0.0",
+                    "description": "",
+                    "period": {
+                        "byTo": "",
+                        "byFrom": "days",
+                        "toValue": None,
+                        "fromValue": 7,
+                        "field": ""
+                    },
+                    "fromDateLicense": "0001-01-01T00:00:00Z",
+                    "name": "my-dashboard",
+                    "layout": [{
+                        "id": "a0e381e0-1c86-11e8-8581-45a91cd24d8e",
+                        "forceRange": True,
+                        "x": 8,
+                        "y": 0,
+                        "i": "a0e381e0-1c86-11e8-8581-45a91cd24d8e",
+                        "w": 4,
+                        "h": 4,
+                        "widget": {
+                            "id": "my-tasks",
+                            "version": 1,
+                            "modified": "2018-02-28T14:55:09.423998+02:00",
+                            "name": "My Tasks",
+                            "dataType": "tasks",
+                            "widgetType": "list",
+                            "query": "assignee:\"{me}\" and (state:Waiting or state:inprogress or state:error)",
+                            "sort": [
+                                {
+                                    "field": "dueDate",
+                                    "asc": True
+                                }
+                            ],
+                            "isPredefined": True,
+                            "dateRange": {
+                                "fromDate": "0001-01-01T00:00:00Z",
+                                "toDate": "0001-01-01T00:00:00Z",
+                                "period": {
+                                    "byTo": "",
+                                    "byFrom": "days",
+                                    "toValue": None,
+                                    "fromValue": None,
+                                    "field": ""
+                                },
+                                "fromDateLicense": "0001-01-01T00:00:00Z"
+                            },
+                            "params": None,
+                            "size": 10,
+                            "category": ""
+                        }
+                    },
+                    ],
+                    "isPredefined": True
+                }
+            }]
+    }]
+}
+
+GENERIC_DEFINITION = {
+    "version": -1,
+    "locked": False,
+    "system": False,
+    "fromVersion": "6.5.0",
+    "id": "assets",
+    "name": "Assets",
+    "partitioned": True,
+    "auditable": False,
+    "rbacSupport": True
+}
+
+EMPTY_ID_SET = {
+    'scripts': [],
+    'integrations': [],
+    'playbooks': [],
+    'TestPlaybooks': [],
+    'Classifiers': [],
+    'Dashboards': [],
+    'IncidentFields': [],
+    'IncidentTypes': [],
+    'IndicatorFields': [],
+    'IndicatorTypes': [],
+    'Layouts': [],
+    'Reports': [],
+    'Widgets': [],
+    'Mappers': [],
+    'GenericTypes': [],
+    'GenericFields': [],
+    'GenericModules': [],
+    'GenericDefinitions': [],
+    'Packs': []
 }

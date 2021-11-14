@@ -2,6 +2,8 @@ import subprocess
 from shutil import copy
 from typing import Tuple
 
+import click
+
 from demisto_sdk.commands.common.tools import LOG_COLORS, print_color
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE, SKIP_VALIDATE_PY_RETURN_CODE, SUCCESS_RETURN_CODE)
@@ -56,7 +58,7 @@ class PythonFileFormat(BaseUpdate):
         copy(str(self.source_file), str(self.output_file))
 
     def run_format(self) -> int:
-        print_color(f'\n======= Updating file: {self.source_file} =======', LOG_COLORS.WHITE)
+        click.secho(f'\n================= Updating file {self.source_file} =================', fg='bright_blue')
         py_file_path = self.source_file
         if self.output_file != self.source_file:
             self.create_output_file()
@@ -69,5 +71,5 @@ class PythonFileFormat(BaseUpdate):
 
     def format_file(self) -> Tuple[int, int]:
         """Manager function for the integration python updater."""
-        format = self.run_format()
-        return format, SKIP_VALIDATE_PY_RETURN_CODE
+        format_res = self.run_format()
+        return format_res, SKIP_VALIDATE_PY_RETURN_CODE

@@ -3,6 +3,8 @@ import os
 import shutil
 
 import pytest
+from mock import patch
+
 from demisto_sdk.commands.format import (update_dashboard, update_incidenttype,
                                          update_indicatortype)
 from demisto_sdk.commands.format.format_module import format_manager
@@ -20,7 +22,10 @@ from demisto_sdk.commands.format.update_indicatorfields import \
 from demisto_sdk.commands.format.update_indicatortype import \
     IndicatorTypeJSONFormat
 from demisto_sdk.commands.format.update_layout import LayoutBaseFormat
+from demisto_sdk.commands.format.update_lists import ListsFormat
 from demisto_sdk.commands.format.update_mapper import MapperJSONFormat
+from demisto_sdk.commands.format.update_pre_process_rules import \
+    PreProcessRulesFormat
 from demisto_sdk.commands.format.update_report import ReportJSONFormat
 from demisto_sdk.commands.format.update_widget import WidgetJSONFormat
 from demisto_sdk.tests.constants_test import (
@@ -32,19 +37,22 @@ from demisto_sdk.tests.constants_test import (
     DESTINATION_FORMAT_INDICATORFIELD_COPY,
     DESTINATION_FORMAT_INDICATORTYPE_COPY, DESTINATION_FORMAT_LAYOUT_COPY,
     DESTINATION_FORMAT_LAYOUT_INVALID_NAME_COPY,
-    DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY, DESTINATION_FORMAT_MAPPER,
+    DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY, DESTINATION_FORMAT_LISTS_COPY,
+    DESTINATION_FORMAT_MAPPER, DESTINATION_FORMAT_PRE_PROCESS_RULES_COPY,
+    DESTINATION_FORMAT_PRE_PROCESS_RULES_INVALID_NAME_COPY,
     DESTINATION_FORMAT_REPORT, DESTINATION_FORMAT_WIDGET, INCIDENTFIELD_PATH,
     INCIDENTTYPE_PATH, INDICATORFIELD_PATH, INDICATORTYPE_PATH,
     INVALID_OUTPUT_PATH, LAYOUT_PATH, LAYOUT_SCHEMA_PATH,
-    LAYOUTS_CONTAINER_PATH, LAYOUTS_CONTAINER_SCHEMA_PATH, MAPPER_PATH,
-    MAPPER_SCHEMA_PATH, REPORT_PATH, SOURCE_FORMAT_CLASSIFIER,
+    LAYOUTS_CONTAINER_PATH, LAYOUTS_CONTAINER_SCHEMA_PATH, LISTS_PATH,
+    LISTS_SCHEMA_PATH, MAPPER_PATH, MAPPER_SCHEMA_PATH, PRE_PROCESS_RULES_PATH,
+    PRE_PROCESS_RULES_SCHEMA_PATH, REPORT_PATH, SOURCE_FORMAT_CLASSIFIER,
     SOURCE_FORMAT_CLASSIFIER_5_9_9, SOURCE_FORMAT_DASHBOARD_COPY,
     SOURCE_FORMAT_INCIDENTFIELD_COPY, SOURCE_FORMAT_INCIDENTTYPE_COPY,
     SOURCE_FORMAT_INDICATORFIELD_COPY, SOURCE_FORMAT_INDICATORTYPE_COPY,
     SOURCE_FORMAT_LAYOUT_COPY, SOURCE_FORMAT_LAYOUTS_CONTAINER,
-    SOURCE_FORMAT_LAYOUTS_CONTAINER_COPY, SOURCE_FORMAT_MAPPER,
+    SOURCE_FORMAT_LAYOUTS_CONTAINER_COPY, SOURCE_FORMAT_LISTS_COPY,
+    SOURCE_FORMAT_MAPPER, SOURCE_FORMAT_PRE_PROCESS_RULES_COPY,
     SOURCE_FORMAT_REPORT, SOURCE_FORMAT_WIDGET, WIDGET_PATH)
-from mock import patch
 
 
 class TestFormattingJson:
@@ -106,6 +114,154 @@ class TestFormattingJson:
         except Exception as e:
             assert str(e) == "The given output path is not a specific file path.\nOnly file path can be a output path." \
                              "  Please specify a correct output."
+
+
+class TestFormattingIncidentTypes:
+    EXTRACTION_MODE_VARIATIONS = [
+        ('All', '', 'All'),
+        ('Specific', '', 'Specific'),
+        ('', 'Specific', 'Specific'),
+        ('specific', 'Specific', 'Specific')
+    ]
+
+    @pytest.mark.parametrize("existing_extract_mode, user_answer, expected", EXTRACTION_MODE_VARIATIONS)
+    def test_format_autoextract_mode(self, mocker, existing_extract_mode, user_answer, expected):
+        """
+        Given
+        - An incident type without auto extract mode or with a valid/invalid auto extract mode.
+
+        When
+        - Running format_auto_extract_mode on it.
+
+        Then
+        - If the auto extract mode is valid, then no format is needed.
+        - If the auto extract mode is invalid or doesn't exist, the user will choose between the two options.
+        """
+        mock_dict = {
+            'extractSettings': {
+                'mode': existing_extract_mode,
+                'fieldCliNameToExtractSettings': {
+                    "incident_field": {
+                        "extractAsIsIndicatorTypeId": "",
+                        "isExtractingAllIndicatorTypes": False,
+                        "extractIndicatorTypesIDs": []
+                    }
+                }
+            }
+        }
+        mocker.patch('demisto_sdk.commands.format.update_generic.get_dict_from_file', return_value=(mock_dict, 'mock_type'))
+        mocker.patch('demisto_sdk.commands.format.update_incidenttype.click.prompt', return_value=user_answer)
+        formatter = IncidentTypesJSONFormat("test")
+        formatter.format_auto_extract_mode()
+        current_mode = formatter.data.get('extractSettings', {}).get('mode')
+        assert current_mode == expected
+
+    def test_format_autoextract_mode_bad_user_input(self, mocker):
+        """
+        Given
+        - An incident type without auto extract mode.
+
+        When
+        - Running format_auto_extract_mode on it.
+
+        Then
+        - If user's input is invalid, prompt will keep on asking for a valid input.
+        """
+        mock_dict = {
+            'extractSettings': {
+                'fieldCliNameToExtractSettings': {
+                    "incident_field": {
+                        "extractAsIsIndicatorTypeId": "",
+                        "isExtractingAllIndicatorTypes": False,
+                        "extractIndicatorTypesIDs": []
+                    }
+                }
+            }
+        }
+        mocker.patch('demisto_sdk.commands.format.update_generic.get_dict_from_file',
+                     return_value=(mock_dict, 'mock_type'))
+        mock_func = mocker.patch('demisto_sdk.commands.format.update_incidenttype.click.prompt')
+        mock_func.side_effect = ['all', 'a', 'g', 'Specific']
+
+        formatter = IncidentTypesJSONFormat("test")
+        formatter.format_auto_extract_mode()
+        current_mode = formatter.data.get('extractSettings', {}).get('mode')
+        assert mock_func.call_count == 4
+        assert current_mode == 'Specific'
+
+    EXTRACTION_MODE_ALL_CONFLICT = [
+        ('All', None),
+        ('Specific', 'Specific'),
+    ]
+
+    @pytest.mark.parametrize("user_answer, expected", EXTRACTION_MODE_ALL_CONFLICT)
+    def test_format_autoextract_all_mode_conflict(self, mocker, user_answer, expected, capsys):
+        """
+        Given
+        - An incident type without auto extract mode with specific types under fieldCliNameToExtractSettings.
+
+        When
+        - Running format_auto_extract_mode on it.
+
+        Then
+        - If the user selected 'All', he will get an warning message and the mode will not be changed.
+        - If the user selected 'Specific', the mode will be changed.
+        """
+        mock_dict = {
+            'extractSettings': {
+                'mode': None,
+                'fieldCliNameToExtractSettings': {
+                    "incident_field": {
+                        "extractAsIsIndicatorTypeId": "",
+                        "isExtractingAllIndicatorTypes": False,
+                        "extractIndicatorTypesIDs": []
+                    }
+                }
+            }
+        }
+        mocker.patch('demisto_sdk.commands.format.update_generic.get_dict_from_file', return_value=(mock_dict, 'mock_type'))
+        mocker.patch('demisto_sdk.commands.format.update_incidenttype.click.prompt', return_value=user_answer)
+        formatter = IncidentTypesJSONFormat("test")
+        formatter.format_auto_extract_mode()
+        stdout, _ = capsys.readouterr()
+        current_mode = formatter.data.get('extractSettings', {}).get('mode')
+        assert current_mode == expected
+        if user_answer == 'All':
+            assert 'Cannot set mode to "All" since there are specific types' in stdout
+
+    EXTRACTION_MODE_SPECIFIC_CONFLICT = [
+        ('All', 'All'),
+        ('Specific', 'Specific'),
+    ]
+
+    @pytest.mark.parametrize("user_answer, expected", EXTRACTION_MODE_SPECIFIC_CONFLICT)
+    def test_format_autoextract_specific_mode_conflict(self, mocker, user_answer, expected, capsys):
+        """
+        Given
+        - An incident type without auto extract mode and without specific types under fieldCliNameToExtractSettings.
+
+        When
+        - Running format_auto_extract_mode on it.
+
+        Then
+        - If the user selected 'Specific', the mode will be changed but he will get a warning that no specific types were found.
+        - If the user selected 'All', the mode will be changed.
+        """
+        mock_dict = {
+            'extractSettings': {
+                'mode': None,
+                'fieldCliNameToExtractSettings': {}
+            }
+        }
+        mocker.patch('demisto_sdk.commands.format.update_generic.get_dict_from_file', return_value=(mock_dict, 'mock_type'))
+        mocker.patch('demisto_sdk.commands.format.update_incidenttype.click.prompt', return_value=user_answer)
+        formatter = IncidentTypesJSONFormat("test")
+        formatter.format_auto_extract_mode()
+        stdout, _ = capsys.readouterr()
+        current_mode = formatter.data.get('extractSettings', {}).get('mode')
+        assert current_mode == expected
+        if user_answer == 'Specific':
+            assert 'Please notice that mode was set to "Specific" but there are no specific types' in stdout
 
 
 def test_update_connection_removes_unnecessary_keys(tmpdir, monkeypatch):
@@ -283,6 +439,24 @@ def test_update_id_dashboard_negative(mocker, tmpdir):
         dashboard_formater.update_id()
     except Exception as error:
         assert error.args[0] == 'Missing "name" field in file test - add this field manually'
+
+
+@pytest.mark.parametrize('name', ['MyDashboard', 'MyDashboard ', ' MyDashboard '])
+def test_remove_spaces_end_of_id_and_name(pack, name):
+    """
+    Given
+        - An dashboard which id doesn't ends with whitespaces.
+        - An dashboard which id ends with spaces.
+    When
+        - Running format.
+    Then
+        - Ensure that the json fields (name, id) that need to be changed are changed.
+    """
+    dashboard = pack.create_dashboard(name)
+    dashboard.write_json({'id': name, 'name': name})
+    base_update_json = BaseUpdateJSON(input=dashboard.path)
+    base_update_json.remove_spaces_end_of_id_and_name()
+    assert base_update_json.data['name'] == 'MyDashboard'
 
 
 class TestFormattingLayoutscontainer:
@@ -473,6 +647,90 @@ class TestFormattingLayout:
         assert expected_path == invalid_path_layouts_formatter.output_file
 
 
+class TestFormattingPreProcessRule:
+
+    @pytest.fixture(autouse=True)
+    def pre_process_rules_copy(self):
+        os.makedirs(PRE_PROCESS_RULES_PATH, exist_ok=True)
+        yield shutil.copyfile(SOURCE_FORMAT_PRE_PROCESS_RULES_COPY, DESTINATION_FORMAT_PRE_PROCESS_RULES_COPY)
+        os.remove(DESTINATION_FORMAT_PRE_PROCESS_RULES_COPY)
+        os.rmdir(PRE_PROCESS_RULES_PATH)
+
+    @pytest.fixture(autouse=True)
+    def pre_process_rules_formatter(self, pre_process_rules_copy):
+        yield PreProcessRulesFormat(input=pre_process_rules_copy, output=DESTINATION_FORMAT_PRE_PROCESS_RULES_COPY)
+
+    @pytest.fixture(autouse=True)
+    def invalid_path_pre_process_rules_formatter(self, pre_process_rules_copy):
+        yield PreProcessRulesFormat(input=pre_process_rules_copy, output=DESTINATION_FORMAT_PRE_PROCESS_RULES_INVALID_NAME_COPY)
+
+    def test_remove_unnecessary_keys(self, pre_process_rules_formatter):
+        """
+        Given
+            - A pre_process_rule file with fields that dont exit in pre_process_rule schema.
+        When
+            - Run format on pre_process_rule file
+        Then
+            - Ensure that unnecessary keys were removed
+        """
+        pre_process_rules_formatter.schema_path = PRE_PROCESS_RULES_SCHEMA_PATH
+        pre_process_rules_formatter.remove_unnecessary_keys()
+        for field in ['quickView', 'sortValues', 'someFieldName']:
+            assert field not in pre_process_rules_formatter.data
+
+    def test_set_description(self, pre_process_rules_formatter):
+        """
+        Given
+            - A pre_process_rule file without a description field
+        When
+            - Run format on pre_process_rule file
+        Then
+            - Ensure that description field was updated successfully with '' value
+        """
+        pre_process_rules_formatter.set_description()
+        assert 'description' in pre_process_rules_formatter.data
+
+
+class TestFormattingList:
+
+    @pytest.fixture(autouse=True)
+    def lists_copy(self):
+        os.makedirs(LISTS_PATH, exist_ok=True)
+        yield shutil.copyfile(SOURCE_FORMAT_LISTS_COPY, DESTINATION_FORMAT_LISTS_COPY)
+        os.remove(DESTINATION_FORMAT_LISTS_COPY)
+        os.rmdir(LISTS_PATH)
+
+    @pytest.fixture(autouse=True)
+    def lists_formatter(self, lists_copy):
+        yield ListsFormat(input=lists_copy, output=DESTINATION_FORMAT_LISTS_COPY)
+
+    def test_remove_unnecessary_keys(self, lists_formatter):
+        """
+        Given
+            - A list file with fields that don't exit in list's schema.
+        When
+            - Run format on list file
+        Then
+            - Ensure that unnecessary keys were removed
+        """
+        lists_formatter.schema_path = LISTS_SCHEMA_PATH
+        lists_formatter.remove_unnecessary_keys()
+        for field in ['quickView', 'sortValues']:
+            assert field not in lists_formatter.data
+
+    def test_set_description(self, lists_formatter):
+        """
+        Given
+            - A list file without a description field
+        When
+            - Run format on list file
+        Then
+            - Ensure that description field was updated successfully with '' value
+        """
+        lists_formatter.set_description()
+        assert 'description' in lists_formatter.data
+
+
 class TestFormattingClassifier:
 
     @pytest.fixture(autouse=True)
@@ -646,6 +904,20 @@ class TestFormattingMapper:
         mapper_formatter.set_fromVersion('6.0.0')
         assert mapper_formatter.data.get('fromVersion') == '6.0.0'
 
+    def test_update_id(self, mapper_formatter):
+        """
+        Given
+            - A layoutscontainer file with non matching name and id.
+        When
+            - Run format on layout file
+        Then
+            - Ensure that name and id are  matching
+        """
+        mapper_formatter.data['name'] = "name"
+        mapper_formatter.data['id'] = "id"
+        mapper_formatter.update_id()
+        assert mapper_formatter.data['name'] == mapper_formatter.data['id']
+
 
 class TestFormattingWidget:
 
@@ -683,6 +955,29 @@ class TestFormattingWidget:
         """
         widget_formatter.set_isPredefined()
         assert widget_formatter.data.get('isPredefined') is True
+
+    @pytest.mark.parametrize('widget_data', [{'dataType': 'metrics', 'fromVersion': '6.2.0'},
+                                             {'dataType': 'metrics', 'fromVersion': '5.5.0'},
+                                             {'dataType': 'incidents', 'fromVersion': '5.5.0'},
+                                             {'dataType': 'incidents', 'fromVersion': '6.2.0'}])
+    def test_set_from_version_for_type_metrics(self, widget_formatter, widget_data):
+        """
+        Given
+            - A widget file with dataType and fromVersion fields.
+        When
+            - Run format on widget file.
+        Then
+            - Ensure that fromVersion field was updated to minimum 6.2.0 if dataType is 'metrics'.
+        """
+
+        widget_formatter.data = widget_data
+        widget_formatter.set_from_version_for_type_metrics()
+
+        if widget_formatter.data.get('dataType') == 'metrics':
+            assert widget_formatter.data.get('fromVersion') == widget_formatter.WIDGET_TYPE_METRICS_MIN_VERSION
+
+        else:
+            assert widget_formatter.data.get('fromVersion') == widget_data.get('fromVersion')
 
 
 class TestFormattingReport:

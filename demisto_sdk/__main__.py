@@ -3,34 +3,37 @@ import json
 import logging
 import os
 import sys
+import tempfile
 from configparser import ConfigParser, MissingSectionHeaderError
 from pathlib import Path
 from typing import IO
 
-from pkg_resources import get_distribution
-
 # Third party packages
 import click
+import dotenv
 import git
+from pkg_resources import get_distribution
+
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 # Common tools
-from demisto_sdk.commands.common.constants import (
-    API_MODULES_PACK, SKIP_RELEASE_NOTES_FOR_TYPES, FileType)
-from demisto_sdk.commands.common.legacy_git_tools import get_packs
+from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.logger import logging_setup
-from demisto_sdk.commands.common.tools import (filter_files_by_type,
-                                               filter_files_on_pack, find_type,
+from demisto_sdk.commands.common.tools import (find_type,
                                                get_last_remote_release_version,
-                                               get_pack_name, print_error,
-                                               print_warning)
+                                               get_release_note_entries,
+                                               print_error, print_warning)
 from demisto_sdk.commands.common.update_id_set import merge_id_sets_from_files
 from demisto_sdk.commands.convert.convert_manager import ConvertManager
+from demisto_sdk.commands.coverage_analyze.coverage_report import \
+    CoverageReport
 from demisto_sdk.commands.create_artifacts.content_artifacts_creator import \
     ArtifactsManager
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from demisto_sdk.commands.doc_reviewer.doc_reviewer import DocReviewer
 from demisto_sdk.commands.download.downloader import Downloader
+from demisto_sdk.commands.error_code_info.error_code_info import \
+    generate_error_code_information
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
 from demisto_sdk.commands.format.format_module import format_manager
@@ -42,13 +45,13 @@ from demisto_sdk.commands.generate_docs.generate_script_doc import \
     generate_script_doc
 from demisto_sdk.commands.generate_integration.code_generator import \
     IntegrationGeneratorConfig
+from demisto_sdk.commands.generate_outputs.generate_outputs import \
+    run_generate_outputs
 from demisto_sdk.commands.generate_test_playbook.test_playbook_generator import \
     PlaybookTestsGenerator
 from demisto_sdk.commands.init.initiator import Initiator
 from demisto_sdk.commands.integration_diff.integration_diff_detector import \
     IntegrationDiffDetector
-from demisto_sdk.commands.json_to_outputs.json_to_outputs import \
-    json_to_outputs
 from demisto_sdk.commands.lint.lint_manager import LintManager
 from demisto_sdk.commands.openapi_codegen.openapi_codegen import \
     OpenAPIIntegration
@@ -58,14 +61,19 @@ from demisto_sdk.commands.postman_codegen.postman_codegen import \
 from demisto_sdk.commands.run_cmd.runner import Runner
 from demisto_sdk.commands.run_playbook.playbook_runner import PlaybookRunner
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
-from demisto_sdk.commands.split_yml.extractor import Extractor
+from demisto_sdk.commands.split.jsonsplitter import JsonSplitter
+from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 from demisto_sdk.commands.test_content.execute_test_content import \
     execute_test_content
-from demisto_sdk.commands.unify.unifier import Unifier
-from demisto_sdk.commands.update_release_notes.update_rn import (
-    UpdateRN, update_api_modules_dependents_rn)
-from demisto_sdk.commands.upload.uploader import Uploader
+from demisto_sdk.commands.unify.generic_module_unifier import \
+    GenericModuleUnifier
+from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
+from demisto_sdk.commands.update_release_notes.update_rn_manager import \
+    UpdateReleaseNotesManager
+from demisto_sdk.commands.upload.uploader import ConfigFileParser, Uploader
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
+from demisto_sdk.commands.zip_packs.packs_zipper import (EX_FAIL, EX_SUCCESS,
+                                                         PacksZipper)
 
 
 class PathsParamType(click.Path):
@@ -87,6 +95,25 @@ class PathsParamType(click.Path):
         # check the validity of each of the paths
         _ = [super(PathsParamType, self).convert(path, param, ctx) for path in split_paths]
         return value
+
+
+class VersionParamType(click.ParamType):
+    """
+    Defines a click options type for use with the @click.option decorator
+
+    The type accepts a string represents a version number.
+    """
+
+    name = "version"
+
+    def convert(self, value, param, ctx):
+        version_sections = value.split('.')
+        if len(version_sections) == 3 and \
+                all(version_section.isdigit() for version_section in version_sections):
+            return value
+        else:
+            self.fail(f"Version {value} is not according to the expected format. "
+                      f"The format of version should be in x.y.z format, e.g: <2.1.3>", param, ctx)
 
 
 class DemistoSDK:
@@ -141,8 +168,13 @@ def check_configuration_file(command, args):
     '-v', '--version', help='Get the demisto-sdk version.',
     is_flag=True, default=False, show_default=True
 )
+@click.option(
+    '-rn', '--release-notes', help='Get the release notes of the current demisto-sdk version.',
+    is_flag=True, default=False, show_default=True
+)
 @pass_config
-def main(config, version):
+def main(config, version, release_notes):
+    dotenv.load_dotenv()  # Load a .env file from the cwd.
     config.configuration = Configuration()
     if not os.getenv('DEMISTO_SDK_SKIP_VERSION_CHECK') or version:  # If the key exists/called to version
         cur_version = get_distribution('demisto-sdk').version
@@ -151,56 +183,82 @@ def main(config, version):
         if last_release and cur_version != last_release:
             print_warning(f'however version {last_release} is available.\n'
                           f'You should consider upgrading via "pip3 install --upgrade demisto-sdk" command.')
+        if release_notes:
+            rn_entries = get_release_note_entries(cur_version)
+
+            if not rn_entries:
+                print_warning('\nCould not get the release notes for this version.')
+            else:
+                click.echo('\nThe following are the release note entries for the current version:\n')
+                for rn in rn_entries:
+                    click.echo(rn)
+                click.echo('')
 
 
-# ====================== split-yml ====================== #
+# ====================== split ====================== #
 @main.command()
 @click.help_option(
     '-h', '--help'
 )
 @click.option(
-    '-i', '--input', help='The yml file to extract from', required=True
+    '-i', '--input', help='The yml/json file to extract from', required=True
 )
 @click.option(
-    '-o', '--output', required=True,
-    help="The output dir to write the extracted code/description/image to."
+    '-o', '--output',
+    help="The output dir to write the extracted code/description/image/json to."
 )
 @click.option(
     '--no-demisto-mock',
-    help="Don't add an import for demisto mock.",
+    help="Don't add an import for demisto mock. (only for yml files)",
     is_flag=True,
     show_default=True
 )
 @click.option(
     '--no-common-server',
-    help="Don't add an import for CommonServerPython.",
+    help="Don't add an import for CommonServerPython. (only for yml files)",
     is_flag=True,
     show_default=True
 )
 @click.option(
     '--no-auto-create-dir',
-    help="Don't auto create the directory if the target directory ends with *Integrations/*Scripts.",
+    help="Don't auto create the directory if the target directory ends with *Integrations/*Scripts/*Dashboards"
+         "/*GenericModules.",
     is_flag=True,
     show_default=True
 )
 @click.option(
     '--no-pipenv',
-    help="Don't auto create pipenv for requirements installation.",
+    help="Don't auto create pipenv for requirements installation. (only for yml files)",
+    is_flag=True,
+    show_default=True
+)
+@click.option(
+    '--new-module-file',
+    help="Create a new module file instead of editing the existing file. (only for json files)",
     is_flag=True,
     show_default=True
 )
 @pass_config
-def split_yml(config, **kwargs):
+def split(config, **kwargs):
     """Split the code, image and description files from a Demisto integration or script yaml file
     to multiple files(To a package format - https://demisto.pan.dev/docs/package-dir).
     """
-    check_configuration_file('split-yml', kwargs)
+    check_configuration_file('split', kwargs)
     file_type: FileType = find_type(kwargs.get('input', ''), ignore_sub_categories=True)
-    if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
-        print_error('File is not an Integration or Script.')
+    if file_type not in [FileType.INTEGRATION, FileType.SCRIPT, FileType.GENERIC_MODULE]:
+        print_error('File is not an Integration, Script or Generic Module.')
         return 1
-    extractor = Extractor(configuration=config.configuration, file_type=file_type.value, **kwargs)
-    return extractor.extract_to_package_format()
+
+    if file_type in [FileType.INTEGRATION, FileType.SCRIPT]:
+        yml_splitter = YmlSplitter(configuration=config.configuration, file_type=file_type.value, **kwargs)
+        return yml_splitter.extract_to_package_format()
+
+    else:
+        json_splitter = JsonSplitter(input=kwargs.get('input'), output=kwargs.get('output'),  # type: ignore[arg-type]
+                                     no_auto_create_dir=kwargs.get('no_auto_create_dir'),  # type: ignore[arg-type]
+                                     no_logging=kwargs.get('no_logging'),  # type: ignore[arg-type]
+                                     new_module_file=kwargs.get('new_module_file'))  # type: ignore[arg-type]
+        return json_splitter.split_json()
 
 
 # ====================== extract-code ====================== #
@@ -239,7 +297,7 @@ def extract_code(config, **kwargs):
     if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
         print_error('File is not an Integration or Script.')
         return 1
-    extractor = Extractor(configuration=config.configuration, file_type=file_type.value, **kwargs)
+    extractor = YmlSplitter(configuration=config.configuration, file_type=file_type.value, **kwargs)
     return extractor.extract_code(kwargs['outfile'])
 
 
@@ -260,16 +318,64 @@ def extract_code(config, **kwargs):
     show_default=False
 )
 def unify(**kwargs):
-    """Unify code, image, description and yml files to a single Demisto yml file. Note that
-       this should be used on a single integration/script and not a pack
-       not multiple scripts/integrations
     """
+    This command has two main functions:
+
+    1. YML Unifier - Unifies integration/script code, image, description and yml files to a single XSOAR yml file.
+     * Note that this should be used on a single integration/script and not a pack, not multiple scripts/integrations.
+     * To use this function - set as input a path to the *directory* of the integration/script to unify.
+
+    2. GenericModule Unifier - Unifies a GenericModule with its Dashboards to a single JSON object.
+     * To use this function - set as input a path to a GenericModule *file*.
+    """
+
     check_configuration_file('unify', kwargs)
     # Input is of type Path.
     kwargs['input'] = str(kwargs['input'])
-    unifier = Unifier(**kwargs)
-    unifier.merge_script_package_to_yml()
+    file_type = find_type(kwargs['input'])
+    if file_type == FileType.GENERIC_MODULE:
+        # pass arguments to GenericModule unifier and call the command
+        generic_module_unifier = GenericModuleUnifier(**kwargs)
+        generic_module_unifier.merge_generic_module_with_its_dashboards()
+
+    else:
+        # pass arguments to YML unifier and call the command
+        yml_unifier = YmlUnifier(**kwargs)
+        yml_unifier.merge_script_package_to_yml()
+
     return 0
+
+
+# ====================== zip-packs ====================== #
+@main.command()
+@click.help_option(
+    '-h', '--help'
+)
+@click.option('-i', '--input',
+              help="The packs to be zipped as csv list of pack paths.",
+              type=PathsParamType(exists=True, resolve_path=True),
+              required=True)
+@click.option('-o', '--output', help='The destination directory to create the packs.',
+              type=click.Path(file_okay=False, resolve_path=True), required=True)
+@click.option('-v', '--content-version', help='The content version in CommonServerPython.', default='0.0.0')
+@click.option('-u', '--upload', is_flag=True, help='Upload the unified packs to the marketplace.', default=False)
+@click.option('--zip-all', is_flag=True, help='Zip all the packs in one zip file.', default=False)
+def zip_packs(**kwargs) -> int:
+    """Generating zipped packs that are ready to be uploaded to Cortex XSOAR machine."""
+    logging_setup(3)
+    check_configuration_file('zip-packs', kwargs)
+
+    # if upload is true - all zip packs will be compressed to one zip file
+    should_upload = kwargs.pop('upload', False)
+    zip_all = kwargs.pop('zip_all', False) or should_upload
+
+    packs_zipper = PacksZipper(zip_all=zip_all, pack_paths=kwargs.pop('input'), quiet_mode=zip_all, **kwargs)
+    zip_path, unified_pack_names = packs_zipper.zip_packs()
+
+    if should_upload and zip_path:
+        return Uploader(input=zip_path, pack_names=unified_pack_names).upload()
+
+    return EX_SUCCESS if zip_path is not None else EX_FAIL
 
 
 # ====================== validate ====================== #
@@ -279,7 +385,7 @@ def unify(**kwargs):
 )
 @click.option(
     '--no-conf-json', is_flag=True,
-    default=False, show_default=True, help='Skip conf.json validation')
+    default=False, show_default=True, help='Skip conf.json validation.')
 @click.option(
     '-s', '--id-set', is_flag=True,
     default=False, show_default=True, help='Perform validations using the id_set file.')
@@ -300,13 +406,13 @@ def unify(**kwargs):
          'If the --post-commit flag is not supplied: validation will run on all changed files in the current branch, '
          'both committed and not committed. ')
 @click.option(
-    '--post-commit',
+    '-pc', '--post-commit',
     is_flag=True,
     help='Whether the validation should run only on the current branch\'s committed changed files. '
          'This applies only when the -g flag is supplied.'
 )
 @click.option(
-    '--staged',
+    '-st', '--staged',
     is_flag=True,
     help='Whether the validation should ignore unstaged files.'
          'This applies only when the -g flag is supplied.'
@@ -314,7 +420,8 @@ def unify(**kwargs):
 @click.option(
     '-iu', '--include-untracked',
     is_flag=True,
-    help='Whether to include untracked files in the validation.'
+    help='Whether to include untracked files in the validation. '
+         'This applies only when the -g flag is supplied.'
 )
 @click.option(
     '-a', '--validate-all', is_flag=True, show_default=True, default=False,
@@ -358,7 +465,11 @@ def unify(**kwargs):
     help='Whether to print the pykwalify log errors.')
 @click.option(
     "--quite-bc-validation",
-    help="Set backwards compatibility validation's errors as warnings",
+    help="Set backwards compatibility validation's errors as warnings.",
+    is_flag=True)
+@click.option(
+    "--allow-skipped",
+    help="Don't fail on skipped integrations or when all test playbooks are skipped.",
     is_flag=True)
 @pass_config
 def validate(config, **kwargs):
@@ -398,7 +509,8 @@ def validate(config, **kwargs):
             skip_schema_check=kwargs.get('skip_schema_check'),
             debug_git=kwargs.get('debug_git'),
             include_untracked=kwargs.get('include_untracked'),
-            quite_bc=kwargs.get('quite_bc_validation')
+            quite_bc=kwargs.get('quite_bc_validation'),
+            check_is_unskipped=not kwargs.get('allow_skipped', False),
         )
         return validator.run_validation()
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:
@@ -416,7 +528,8 @@ def validate(config, **kwargs):
 @click.option('-a', '--artifacts_path', help='Destination directory to create the artifacts.',
               type=click.Path(file_okay=False, resolve_path=True), required=True)
 @click.option('--zip/--no-zip', help='Zip content artifacts folders', default=True)
-@click.option('--packs', help='Create only content_packs artifacts.', is_flag=True)
+@click.option('--packs', help='Create only content_packs artifacts. '
+                              'Used for server version 5.5.0 and earlier.', is_flag=True)
 @click.option('-v', '--content_version', help='The content version in CommonServerPython.', default='0.0.0')
 @click.option('-s', '--suffix', help='Suffix to add all yaml/json/yml files in the created artifacts.')
 @click.option('--cpus',
@@ -468,7 +581,7 @@ def create_content_artifacts(**kwargs) -> int:
 @click.option(
     '-ie', '--ignore-entropy',
     is_flag=True,
-    help='Ignore entropy algorithm that finds secret strings (passwords/api keys)'
+    help='Ignore entropy algorithm that finds secret strings (passwords/api keys).'
 )
 @click.option(
     '-wl', '--whitelist',
@@ -478,7 +591,7 @@ def create_content_artifacts(**kwargs) -> int:
 )
 @click.option(
     '--prev-ver',
-    help='The branch against which to run secrets validation'
+    help='The branch against which to run secrets validation.'
 )
 @pass_config
 def secrets(config, **kwargs):
@@ -536,6 +649,8 @@ def secrets(config, **kwargs):
     "--coverage-report", help="Specify directory for the coverage report files",
     type=PathsParamType()
 )
+@click.option("-dt", "--docker-timeout", default=60,
+              help="The timeout (in seconds) for requests done by the docker client.", type=int)
 def lint(**kwargs):
     """Lint command will perform:
         1. Package in host checks - flake8, bandit, mypy, vulture.
@@ -572,9 +687,66 @@ def lint(**kwargs):
         keep_container=kwargs.get('keep_container'),  # type: ignore[arg-type]
         test_xml=kwargs.get('test_xml'),  # type: ignore[arg-type]
         failure_report=kwargs.get('failure_report'),  # type: ignore[arg-type]
-        no_coverage=kwargs.get('no_coverage'),     # type: ignore[arg-type]
+        no_coverage=kwargs.get('no_coverage'),  # type: ignore[arg-type]
         coverage_report=kwargs.get('coverage_report'),  # type: ignore[arg-type]
+        docker_timeout=kwargs.get('docker_timeout'),  # type: ignore[arg-type]
     )
+
+
+# ====================== coverage-analyze ====================== #
+@main.command()
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    "-i", "--input", help="The .coverage file to analyze.",
+    default=os.path.join('coverage_report', '.coverage'),
+    type=PathsParamType(exists=True, resolve_path=True)
+)
+@click.option(
+    "--default-min-coverage", help="Default minimum coverage (for new files).",
+    default=70.0, type=click.FloatRange(0.0, 100.0)
+)
+@click.option(
+    "--allowed-coverage-degradation-percentage", help="Allowed coverage degradation percentage (for modified files).",
+    default=1.0, type=click.FloatRange(0.0, 100.0)
+)
+@click.option(
+    "--no-cache", help="Force download of the previous coverage report file.",
+    is_flag=True, type=bool)
+@click.option(
+    "--report-dir", help="Directory of the coverage report files.",
+    default='coverage_report', type=PathsParamType(resolve_path=True))
+@click.option(
+    "--report-type", help="The type of coverage report (posible values: 'text', 'html', 'xml', 'json' or 'all').", type=str)
+@click.option("--no-min-coverage-enforcement", help="Do not enforce minimum coverage.", is_flag=True)
+@click.option(
+    "--previous-coverage-report-url", help="URL of the previous coverage report.",
+    default='https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-min.json', type=str
+)
+def coverage_analyze(**kwargs):
+    try:
+        no_degradation_check = kwargs['allowed_coverage_degradation_percentage'] == 100.0
+        no_min_coverage_enforcement = kwargs['no_min_coverage_enforcement']
+
+        cov_report = CoverageReport(
+            default_min_coverage=kwargs['default_min_coverage'],
+            allowed_coverage_degradation_percentage=kwargs['allowed_coverage_degradation_percentage'],
+            coverage_file=kwargs['input'],
+            no_cache=kwargs.get('no_cache', False),
+            report_dir=kwargs['report_dir'],
+            report_type=kwargs['report_type'],
+            no_degradation_check=no_degradation_check,
+            previous_coverage_report_url=kwargs['previous_coverage_report_url']
+        )
+        cov_report.coverage_report()
+        # if no_degradation_check=True we will suppress the minimum coverage check
+        if no_degradation_check or cov_report.coverage_diff_report() or no_min_coverage_enforcement:
+            return 0
+    except Exception as error:
+        logging.getLogger('demisto-sdk').error(error)
+
+    return 1
 
 
 # ====================== format ====================== #
@@ -603,6 +775,22 @@ def lint(**kwargs):
     is_flag=True)
 @click.option(
     "-d", "--deprecate", help="Set if you want to deprecate the integration/script/playbook", is_flag=True)
+@click.option(
+    "-g", "--use-git",
+    help="Use git to automatically recognize which files changed and run format on them.",
+    is_flag=True)
+@click.option(
+    '--prev-ver', help='Previous branch or SHA1 commit to run checks against.')
+@click.option(
+    '-iu', '--include-untracked',
+    is_flag=True,
+    help='Whether to include untracked files in the formatting.'
+)
+@click.option(
+    '-at', '--add-tests',
+    is_flag=True,
+    help='Whether to answer manually to add tests configuration prompt when running interactively.'
+)
 def format(
         input: Path,
         output: Path,
@@ -611,10 +799,15 @@ def format(
         update_docker: bool,
         verbose: bool,
         assume_yes: bool,
-        deprecate: bool
+        deprecate: bool,
+        use_git: bool,
+        prev_ver: str,
+        include_untracked: bool,
+        add_tests: bool
 ):
     """Run formatter on a given script/playbook/integration/incidentfield/indicatorfield/
-    incidenttype/indicatortype/layout/dashboard/classifier/mapper/widget/report file.
+    incidenttype/indicatortype/layout/dashboard/classifier/mapper/widget/report file/genericfield/generictype/
+    genericmodule/genericdefinition.
     """
     return format_manager(
         str(input) if input else None,
@@ -624,7 +817,11 @@ def format(
         update_docker=update_docker,
         assume_yes=assume_yes,
         verbose=verbose,
-        deprecate=deprecate
+        deprecate=deprecate,
+        use_git=use_git,
+        prev_ver=prev_ver,
+        include_untracked=include_untracked,
+        add_tests=add_tests,
     )
 
 
@@ -635,13 +832,26 @@ def format(
 )
 @click.option(
     "-i", "--input",
+    type=PathsParamType(exists=True, resolve_path=True),
     help="The path of file or a directory to upload. The following are supported:\n"
          "- Pack\n"
          "- A content entity directory that is inside a pack. For example: an Integrations "
          "directory or a Layouts directory.\n"
          "- Valid file that can be imported to Cortex XSOAR manually. For example a playbook: "
-         "helloWorld.yml", required=True
+         "helloWorld.yml", required=False
 )
+@click.option(
+    "--input-config-file",
+    type=PathsParamType(exists=True, resolve_path=True),
+    help="The path to the config file to download all the custom packs from", required=False
+)
+@click.option(
+    "-z", "--zip",
+    help="Compress the pack to zip before upload, this flag is relevant only for packs.", is_flag=True
+)
+@click.option(
+    "--keep-zip", help="Directory where to store the zip after creation, this argument is relevant only for packs "
+                       "and in case the --zip flag is used.", required=False, type=click.Path(exists=True))
 @click.option(
     "--insecure",
     help="Skip certificate validation", is_flag=True
@@ -651,14 +861,38 @@ def format(
     help="Verbose output", is_flag=True
 )
 def upload(**kwargs):
-    """Upload integration to Demisto instance.
+    """Upload integration or pack to Demisto instance.
     DEMISTO_BASE_URL environment variable should contain the Demisto server base URL.
     DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
     * Note: Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up. *
     """
+    if kwargs['zip'] or kwargs['input_config_file']:
+        if kwargs.pop('zip', False):
+            pack_path = kwargs['input']
+            kwargs.pop('input_config_file')
+
+        else:
+            config_file_path = kwargs['input_config_file']
+            config_file_to_parse = ConfigFileParser(config_file_path=config_file_path)
+            pack_path = config_file_to_parse.parse_file()
+            kwargs.pop('input_config_file')
+
+        output_zip_path = kwargs.pop('keep_zip') or tempfile.gettempdir()
+        packs_unifier = PacksZipper(pack_paths=pack_path, output=output_zip_path,
+                                    content_version='0.0.0', zip_all=True, quiet_mode=True)
+        packs_zip_path, pack_names = packs_unifier.zip_packs()
+        if packs_zip_path is None:
+            return EX_FAIL
+
+        kwargs['input'] = packs_zip_path
+        kwargs['pack_names'] = pack_names
+    else:
+        kwargs.pop('zip')
+        kwargs.pop('keep_zip')
+        kwargs.pop('input_config_file')
+
     check_configuration_file('upload', kwargs)
-    uploader = Uploader(**kwargs)
-    return uploader.upload()
+    return Uploader(**kwargs).upload()
 
 
 # ====================== download ====================== #
@@ -758,7 +992,7 @@ def run(**kwargs):
     help="Timeout for the command. The playbook will continue to run in Demisto"
 )
 @click.option(
-    "--insecure", help="Skip certificate validation", is_flag=True)
+    "--insecure", help="Skip certificate validation.", is_flag=True)
 def run_playbook(**kwargs):
     """Run a playbook in Demisto.
     DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
@@ -770,35 +1004,63 @@ def run_playbook(**kwargs):
     return playbook_runner.run_playbook()
 
 
-# ====================== json-to-outputs ====================== #
-@main.command('json-to-outputs')  # To no shadow json_to_outputs import
+# ====================== generate-outputs ====================== #
+@main.command(short_help='''Generates outputs (from json or examples).''')
 @click.help_option(
     '-h', '--help'
 )
 @click.option(
-    "-c", "--command", help="Command name (e.g. xdr-get-incidents)", required=True)
+    "-c", "--command", help="Specific command name (e.g. xdr-get-incidents)",
+    required=False)
 @click.option(
-    "-i", "--input",
+    "-j", "--json",
     help="Valid JSON file path. If not specified, the script will wait for user input in the terminal. "
          "The response can be obtained by running the command with `raw-response=true` argument.",
     required=False)
 @click.option(
-    "-p", "--prefix", help="Output prefix like Jira.Ticket, VirusTotal.IP, the base path for the outputs that the "
-                           "script generates", required=True)
+    "-p", "--prefix",
+    help="Output prefix like Jira.Ticket, VirusTotal.IP, the base path for the outputs that the "
+         "script generates", required=False)
 @click.option(
-    "-o", "--output", help="Output file path, if not specified then will print to stdout", required=False)
+    "-o", "--output",
+    help="Output file path, if not specified then will print to stdout",
+    required=False)
 @click.option(
-    "-v", "--verbose", is_flag=True, help="Verbose output - mainly for debugging purposes")
+    "-v", "--verbose", is_flag=True,
+    help="Verbose output - mainly for debugging purposes")
 @click.option(
-    "--interactive", help="If passed, then for each output field will ask user interactively to enter the "
-                          "description. By default is interactive mode is disabled", is_flag=True)
-def json_to_outputs_command(**kwargs):
+    "--interactive",
+    help="If passed, then for each output field will ask user interactively to enter the "
+         "description. By default is interactive mode is disabled",
+    is_flag=True)
+@click.option(
+    "-d", "--descriptions",
+    help="A JSON or a path to a JSON file, mapping field names to their descriptions. "
+         "If not specified, the script prompt the user to input the JSON content.",
+    is_flag=True)
+@click.option(
+    "-i", "--input",
+    help="Valid YAML integration file path.",
+    required=False)
+@click.option(
+    "-e", "--examples",
+    help="Integrations: path for file containing command examples."
+         " Each command should be in a separate line."
+         " Scripts: the script example surrounded by quotes."
+         " For example: -e '!ConvertFile entry_id=<entry_id>'")
+@click.option(
+    "--insecure",
+    help="Skip certificate validation to run the commands in order to generate the docs.",
+    is_flag=True)
+def generate_outputs(**kwargs):
     """Demisto integrations/scripts have a YAML file that defines them.
     Creating the YAML file is a tedious and error-prone task of manually copying outputs from the API result to the
     file/UI/PyCharm. This script auto generates the YAML for a command from the JSON result of the relevant API call
+    In addition you can supply examples files and generate the context description directly in the YML from those examples.
     """
-    check_configuration_file('json-to-outputs', kwargs)
-    json_to_outputs(**kwargs)
+
+    check_configuration_file('generate-outputs', kwargs)
+    return run_generate_outputs(**kwargs)
 
 
 # ====================== generate-test-playbook ====================== #
@@ -813,17 +1075,43 @@ def json_to_outputs_command(**kwargs):
 @click.option(
     '-o', '--output',
     required=False,
-    help='Specify output directory')
+    help='Specify output directory or path to an output yml file. '
+         'If a path to a yml file is specified - it will be the output path.\n'
+         'If a folder path is specified - a yml output will be saved in the folder.\n'
+         'If not specified, and the input is located at `.../Packs/<pack_name>/Integrations`, '
+         'the output will be saved under `.../Packs/<pack_name>/TestPlaybooks`.\n'
+         'Otherwise (no folder in the input hierarchy is named `Packs`), '
+         'the output will be saved in the current directory.')
 @click.option(
     '-n', '--name',
     required=True,
-    help='Specify test playbook name')
+    help='Specify test playbook name. The output file name will be `playbook-<name>_Test.yml')
 @click.option(
     '--no-outputs', is_flag=True,
     help='Skip generating verification conditions for each output contextPath. Use when you want to decide which '
          'outputs to verify and which not')
 @click.option(
     "-v", "--verbose", help="Verbose output for debug purposes - shows full exception stack trace", is_flag=True)
+@click.option(
+    "-ab", "--all-brands", "use_all_brands",
+    help="Generate a test-playbook which calls commands using integrations of all available brands. "
+         "When not used, the generated playbook calls commands using instances of the provided integration brand.",
+    is_flag=True
+)
+@click.option(
+    "-c", "--commands", help="A comma-separated command names to generate playbook tasks for, "
+                             "will ignore the rest of the commands."
+                             "e.g xdr-get-incidents,xdr-update-incident",
+    required=False
+)
+@click.option(
+    "-e", "--examples", help="For integrations: path for file containing command examples."
+                             " Each command should be in a separate line."
+                             " For scripts: the script example surrounded by quotes."
+                             " For example: -e '!ConvertFile entry_id=<entry_id>'"
+)
+@click.option(
+    "-u", "--upload", help="Whether to upload the test playbook after the generation.", is_flag=True)
 def generate_test_playbook(**kwargs):
     """Generate test playbook from integration or script"""
     check_configuration_file('generate-test-playbook', kwargs)
@@ -831,17 +1119,25 @@ def generate_test_playbook(**kwargs):
     if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
         print_error('Generating test playbook is possible only for an Integration or a Script.')
         return 1
-    generator = PlaybookTestsGenerator(file_type=file_type.value, **kwargs)
-    generator.run()
 
+    try:
+        generator = PlaybookTestsGenerator(file_type=file_type.value, **kwargs)
+        if generator.run():
+            sys.exit(0)
+        sys.exit(1)
+    except PlaybookTestsGenerator.InvalidOutputPathError as e:
+        print_error(str(e))
+        return 1
 
 # ====================== init ====================== #
+
+
 @main.command()
 @click.help_option(
     '-h', '--help'
 )
 @click.option(
-    "-n", "--name", help="The name of the directory and file you want to create", required=True)
+    "-n", "--name", help="The name of the directory and file you want to create")
 @click.option(
     "--id", help="The id used in the yml file of the integration or script"
 )
@@ -859,10 +1155,14 @@ def generate_test_playbook(**kwargs):
                              "Integration template options: HelloWorld, HelloIAMWorld, FeedHelloWorld.\n"
                              "Script template options: HelloWorldScript")
 @click.option(
+    "-a", "--author-image", help="Path of the file 'Author_image.png'. \n "
+    "Image will be presented in marketplace under PUBLISHER section. File should be up to 4kb and dimensions of 120x50"
+)
+@click.option(
     '--demisto_mock', is_flag=True,
     help="Copy the demistomock. Relevant for initialization of Scripts and Integrations within a Pack.")
 @click.option(
-    '--common_server', is_flag=True,
+    '--common-server', is_flag=True,
     help="Copy the CommonServerPython. Relevant for initialization of Scripts and Integrations within a Pack.")
 def init(**kwargs):
     """Initialize a new Pack, Integration or Script.
@@ -891,7 +1191,7 @@ def init(**kwargs):
     required=False)
 @click.option(
     "-c", "--command", help="A comma-separated command names to generate doc for, will ignore the rest of the commands."
-                            "e.g (xdr-get-incidents,xdr-update-incident",
+                            "e.g xdr-get-incidents,xdr-update-incident",
     required=False
 )
 @click.option(
@@ -903,7 +1203,7 @@ def init(**kwargs):
     "-p", "--permissions", type=click.Choice(["none", "general", "per-command"]), help="Permissions needed.",
     required=True, default='none')
 @click.option(
-    "-cp", "--command_permissions", help="Path for file containing commands permissions"
+    "-cp", "--command-permissions", help="Path for file containing commands permissions"
                                          " Each command permissions should be in a separate line."
                                          " (i.e. '<command-name> Administrator READ-WRITE')", required=False)
 @click.option(
@@ -913,17 +1213,23 @@ def init(**kwargs):
     is_flag=True)
 @click.option(
     "-v", "--verbose", is_flag=True, help="Verbose output - mainly for debugging purposes.")
+@click.option(
+    "--old-version", help="Path of the old integration version yml file.")
+@click.option(
+    "--skip-breaking-changes", is_flag=True, help="Skip generating of breaking changes section.")
 def generate_docs(**kwargs):
     """Generate documentation for integration, playbook or script from yaml file."""
     check_configuration_file('generate-docs', kwargs)
     input_path: str = kwargs.get('input', '')
     output_path = kwargs.get('output')
     command = kwargs.get('command')
-    examples = str(kwargs.get('examples', ''))
+    examples: str = kwargs.get('examples', '')
     permissions = kwargs.get('permissions')
     limitations = kwargs.get('limitations')
     insecure: bool = kwargs.get('insecure', False)
     verbose: bool = kwargs.get('verbose', False)
+    old_version: str = kwargs.get('old_version', '')
+    skip_breaking_changes: bool = kwargs.get('skip_breaking_changes', False)
 
     # validate inputs
     if input_path and not os.path.isfile(input_path):
@@ -950,6 +1256,14 @@ def generate_docs(**kwargs):
         print_error('File is not an Integration, Script or a Playbook.')
         return 1
 
+    if old_version and not os.path.isfile(old_version):
+        print_error(F'Input old version file {old_version} was not found.')
+        return 1
+
+    if old_version and not old_version.lower().endswith('.yml'):
+        print_error(F'Input old version {old_version} is not a valid yml file.')
+        return 1
+
     print(f'Start generating {file_type.value} documentation...')
     if file_type == FileType.INTEGRATION:
         use_cases = kwargs.get('use_cases')
@@ -957,7 +1271,9 @@ def generate_docs(**kwargs):
         return generate_integration_doc(input_path=input_path, output=output_path, use_cases=use_cases,
                                         examples=examples, permissions=permissions,
                                         command_permissions=command_permissions, limitations=limitations,
-                                        insecure=insecure, verbose=verbose, command=command)
+                                        insecure=insecure, verbose=verbose, command=command,
+                                        old_version=old_version,
+                                        skip_breaking_changes=skip_breaking_changes)
     elif file_type == FileType.SCRIPT:
         return generate_script_doc(input_path=input_path, output=output_path, examples=examples,
                                    permissions=permissions,
@@ -984,6 +1300,12 @@ def generate_docs(**kwargs):
     "-o", "--output",
     help="Output file path, the default is the Tests directory.",
     default=''
+)
+@click.option(
+    '-fd',
+    '--fail-duplicates',
+    help="Fails the process if any duplicates are found.",
+    is_flag=True
 )
 def create_id_set(**kwargs):
     """Create the content dependency tree by ids."""
@@ -1012,12 +1334,19 @@ def create_id_set(**kwargs):
     help='File path of the united id_set',
     required=True
 )
+@click.option(
+    '-fd',
+    '--fail-duplicates',
+    help="Fails the process if any duplicates are found.",
+    is_flag=True
+)
 def merge_id_sets(**kwargs):
     """Merge two id_sets"""
     check_configuration_file('merge-id-sets', kwargs)
     first = kwargs['id_set1']
     second = kwargs['id_set2']
     output = kwargs['output']
+    fail_duplicates = kwargs['fail_duplicates']
 
     _, duplicates = merge_id_sets_from_files(
         first_id_set_path=first,
@@ -1027,7 +1356,8 @@ def merge_id_sets(**kwargs):
     if duplicates:
         print_error(f'Failed to merge ID sets: {first} with {second}, '
                     f'there are entities with ID: {duplicates} that exist in both ID sets')
-        sys.exit(1)
+        if fail_duplicates:
+            sys.exit(1)
 
 
 # ====================== update-release-notes =================== #
@@ -1039,17 +1369,22 @@ def merge_id_sets(**kwargs):
     "-i", "--input", help="The relative path of the content pack. For example Packs/Pack_Name"
 )
 @click.option(
-    '-u', '--update_type', help="The type of update being done. [major, minor, revision, maintenance, documentation]",
+    '-u', '--update-type', help="The type of update being done. [major, minor, revision, maintenance, documentation]",
     type=click.Choice(['major', 'minor', 'revision', 'maintenance', 'documentation'])
 )
 @click.option(
-    '-v', '--version', help="Bump to a specific version."
+    '-v', '--version', help="Bump to a specific version.", type=VersionParamType()
 )
 @click.option(
-    '--all', help="Update all changed packs", is_flag=True
+    '-g', '--use-git',
+    help="Use git to identify the relevant changed files, will be used by default if '-i' is not set",
+    is_flag=True
 )
 @click.option(
-    '--text', help="Text to add to all of the release notes files",
+    '-f', '--force', help="Force update release notes for a pack (even if not required).", is_flag=True
+)
+@click.option(
+    '--text', help="Text to add to all of the release notes files.",
 )
 @click.option(
     '--prev-ver', help='Previous branch or SHA1 commit to run checks against.'
@@ -1060,96 +1395,38 @@ def merge_id_sets(**kwargs):
 @click.option(
     "-idp", "--id-set-path", help="The path of the id-set.json used for APIModule updates.",
     type=click.Path(resolve_path=True))
+@click.option(
+    '-bc', '--breaking-changes', help='If new version contains breaking changes.',
+    is_flag=True)
 def update_release_notes(**kwargs):
     """Auto-increment pack version and generate release notes template."""
     check_configuration_file('update-release-notes', kwargs)
-    _pack = kwargs.get('input')
-    update_type = kwargs.get('update_type')
-    pre_release: bool = kwargs.get('pre_release', False)
-    is_all = kwargs.get('all')
-    text: str = kwargs.get('text', '')
-    specific_version = kwargs.get('version')
-    id_set_path = kwargs.get('id_set_path')
-    prev_ver = kwargs.get('prev_ver')
-    existing_rn_version = ''
-    # _pack can be both path or pack name thus, we extract the pack name from the path if beeded.
-    if _pack and is_all:
-        print_error("Please remove the --all flag when specifying only one pack.")
+    if kwargs.get('force') and not kwargs.get('input'):
+        print_error('Please add a specific pack in order to force a release notes update.')
         sys.exit(0)
-    print("Starting to update release notes.")
-    if _pack and '/' in _pack:
-        _pack = get_pack_name(_pack)
+
+    if not kwargs.get('use_git') and not kwargs.get('input'):
+        click.confirm('No specific pack was given, do you want to update all changed packs?', abort=True)
+
     try:
-        validate_manager = ValidateManager(skip_pack_rn_validation=True, prev_ver=prev_ver, silence_init_prints=True)
-        validate_manager.setup_git_params()
-        modified, added, changed_meta_files, old = validate_manager.get_changed_files_from_git()
-        _packs = get_packs(modified).union(get_packs(old)).union(
-            get_packs(added))
-    except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError):
-        print_error("You are not running `demisto-sdk update-release-notes` command in the content repository.\n"
-                    "Please run `cd content` from your terminal and run the command again")
-        sys.exit(1)
-
-    packs_existing_rn = {}
-    for file_path in added:
-        if 'ReleaseNotes' in file_path:
-            packs_existing_rn[get_pack_name(file_path)] = file_path
-
-    filtered_modified = filter_files_by_type(modified, skip_file_types=SKIP_RELEASE_NOTES_FOR_TYPES)
-    filtered_added = filter_files_by_type(added, skip_file_types=SKIP_RELEASE_NOTES_FOR_TYPES)
-
-    if _pack and API_MODULES_PACK in _pack:
-        # case: ApiModules
-        update_api_modules_dependents_rn(_pack, pre_release, update_type, added, modified,
-                                         id_set_path=id_set_path, text=text)
-
-    # create release notes:
-    if _pack:
-        _packs = {_pack}
-    elif not is_all and len(_packs) > 1:
-        # case: multiple packs
-        pack_list = ' ,'.join(_packs)
-        print_error(f"Detected changes in the following packs: {pack_list.rstrip(', ')}\n"
-                    f"To update release notes in a specific pack, please use the -i parameter "
-                    f"along with the pack name.")
+        rn_mng = UpdateReleaseNotesManager(user_input=kwargs.get('input'), update_type=kwargs.get('update_type'),
+                                           pre_release=kwargs.get('pre_release', False), is_all=kwargs.get('use_git'),
+                                           text=kwargs.get('text'), specific_version=kwargs.get('version'),
+                                           id_set_path=kwargs.get('id_set_path'), prev_ver=kwargs.get('prev_ver'),
+                                           is_force=kwargs.get('force', False),
+                                           is_bc=kwargs.get('breaking_changes', False))
+        rn_mng.manage_rn_update()
         sys.exit(0)
-    if _packs:
-        for pack in _packs:
-            if pack in packs_existing_rn and update_type is None:
-                existing_rn_version = packs_existing_rn[pack]
-            elif pack in packs_existing_rn and update_type is not None:
-                print_error(f"New release notes file already found for {pack}. "
-                            f"Please update manually or run `demisto-sdk update-release-notes "
-                            f"-i {pack}` without specifying the update_type.")
-                continue
-
-            pack_modified = filter_files_on_pack(pack, filtered_modified)
-            pack_added = filter_files_on_pack(pack, filtered_added)
-            pack_old = filter_files_on_pack(pack, old)
-
-            # default case:
-            if pack_modified or pack_added or pack_old:
-                update_pack_rn = UpdateRN(pack_path=f'Packs/{pack}', update_type=update_type,
-                                          modified_files_in_pack=pack_modified.union(pack_old), pre_release=pre_release,
-                                          added_files=pack_added, specific_version=specific_version, text=text,
-                                          existing_rn_version_path=existing_rn_version)
-                updated = update_pack_rn.execute_update()
-                # if new release notes were created and if previous release notes existed, remove previous
-                if updated and update_pack_rn.should_delete_existing_rn:
-                    os.unlink(packs_existing_rn[pack])
-
-            else:
-                print_warning(f'Either no changes were found in {pack} pack '
-                              f'or the changes found should not be documented in the release notes file '
-                              f'If relevant changes were made, please commit the changes and rerun the command')
-    else:
-        print_warning('No changes that require release notes were detected. If such changes were made, '
-                      'please commit the changes and rerun the command')
-    sys.exit(0)
+    except Exception as e:
+        print_error(f'An error occurred while updating the release notes: {str(e)}')
+        sys.exit(1)
 
 
 # ====================== find-dependencies ====================== #
 @main.command()
+@click.help_option(
+    '-h', '--help'
+)
 @click.option(
     "-i", "--input", help="Pack path to find dependencies. For example: Pack/HelloWorld", required=True,
     type=click.Path(exists=True, dir_okay=True))
@@ -1166,20 +1443,17 @@ def find_dependencies(**kwargs):
     """Find pack dependencies and update pack metadata."""
     check_configuration_file('find-dependencies', kwargs)
     update_pack_metadata = not kwargs.get('no_update')
-    input_path: Path = kwargs["input"]  # To not shadow python builtin `input`
+    input_path: Path = Path(kwargs["input"])  # To not shadow python builtin `input`
     verbose = kwargs.get('verbose', False)
     id_set_path = kwargs.get('id_set_path', '')
     use_pack_metadata = kwargs.get('use_pack_metadata', False)
-    try:
-        assert "Packs/" in str(input_path)
-        pack_name = str(input_path).replace("Packs/", "")
-        assert "/" not in str(pack_name)
-    except AssertionError:
-        print_error("Input path is not a pack. For example: Packs/HelloWorld")
+    if len(input_path.parts) != 2 or input_path.parts[-2] != "Packs":
+        print_error(f"Input path ({input_path}) must be formatted as 'Packs/<some pack name>'. "
+                    f"For example, Packs/HelloWorld")
         sys.exit(1)
     try:
         PackDependencies.find_dependencies(
-            pack_name=pack_name,
+            pack_name=input_path.name,
             id_set_path=str(id_set_path),
             verbose=verbose,
             update_pack_metadata=update_pack_metadata,
@@ -1385,7 +1659,7 @@ def openapi_codegen(**kwargs):
         integration.save_config(integration.configuration, output_dir)
         tools.print_success(f'Created configuration file in {output_dir}')
         if not kwargs.get('use_default', False):
-            config_path = os.path.join(output_dir, f'{base_name}.json')
+            config_path = os.path.join(output_dir, f'{base_name}_config.json')
             command_to_run = f'demisto-sdk openapi-codegen -i "{input_file}" -cf "{config_path}" -n "{base_name}" ' \
                              f'-o "{output_dir}" -pr "{command_prefix}" -c "{context_path}"'
             if unique_keys:
@@ -1522,13 +1796,20 @@ def doc_review(**kwargs):
     '-n', '--new', type=str, help='The path to the new version of the integration', required=True)
 @click.option(
     '-o', '--old', type=str, help='The path to the old version of the integration', required=True)
+@click.option(
+    '--docs-format', is_flag=True,
+    help='Whether output should be in the format for the version differences section in README.')
 def integration_diff(**kwargs):
     """
     Checks for differences between two versions of an integration, and verified that the new version covered the old version.
     """
 
-    integration_diff_detector = IntegrationDiffDetector(kwargs.get('new', ''), kwargs.get('old', ''))
-    result = integration_diff_detector.check_diff()
+    integration_diff_detector = IntegrationDiffDetector(
+        new=kwargs.get('new', ''),
+        old=kwargs.get('old', ''),
+        docs_format=kwargs.get('docs_format', False)
+    )
+    result = integration_diff_detector.check_different()
 
     if result:
         sys.exit(0)
@@ -1568,13 +1849,34 @@ def convert(config, **kwargs):
     sys.exit(0)
 
 
+@main.command(
+    name='error-code',
+    help='Quickly find relevant information regarding an error code.',
+    hidden=True,
+)
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    '-i', '--input', required=True,
+    help='The error code to search for.',
+)
+@pass_config
+def error_code(config, **kwargs):
+    check_configuration_file('error-code-info', kwargs)
+    sys.path.append(config.configuration.env_dir)
+
+    result = generate_error_code_information(kwargs.get('input'))
+
+    sys.exit(result)
+
+
 @main.resultcallback()
 def exit_from_program(result=0, **kwargs):
     sys.exit(result)
-
 
 # todo: add download from demisto command
 
 
 if __name__ == '__main__':
-    sys.exit(main())
+    main()

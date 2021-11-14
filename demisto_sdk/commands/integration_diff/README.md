@@ -15,6 +15,10 @@ exist in the new version. Running this command will give you a detailed report a
 
     The path to the old integration yml file.
 
+* **--docs-format**
+
+    Whether output should be in the format for the version differences section in README
+
 ### Examples
 `demisto-sdk integration-diff -n Packs/MyPack/Integrations/MyIntegration_v2/MyIntegration_v2.yml -o Packs/MyPack/Integrations/MyIntegration/MyIntegration.yml`
 This will return you a report of all the missing commands/arguments/outputs in the new integration version, and 'The integrations are backward compatible' if no missing details were found.

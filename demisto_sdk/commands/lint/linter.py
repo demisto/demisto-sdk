@@ -14,8 +14,13 @@ from typing import Any, Dict, List, Optional, Tuple
 import docker
 import docker.errors
 import docker.models.containers
+import git
 import requests.exceptions
 import urllib3.exceptions
+from jinja2 import Environment, FileSystemLoader, exceptions
+from ruamel.yaml import YAML
+from wcmatch.pathlib import NEGATE, Path
+
 from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    PACKS_PACK_META_FILE_NAME,
                                                    TYPE_PWSH, TYPE_PYTHON)
@@ -36,9 +41,6 @@ from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, RERUN, RL,
                                                pylint_plugin,
                                                split_warnings_errors,
                                                stream_docker_container_output)
-from jinja2 import Environment, FileSystemLoader, exceptions
-from ruamel.yaml import YAML
-from wcmatch.pathlib import NEGATE, Path
 
 logger = logging.getLogger('demisto-sdk')
 
@@ -54,15 +56,17 @@ class Linter:
             docker_engine(bool):  Whether docker engine detected by docker-sdk.
     """
 
-    def __init__(self, pack_dir: Path, content_repo: Path, req_3: list, req_2: list, docker_engine: bool):
+    def __init__(self, pack_dir: Path, content_repo: Path, req_3: list, req_2: list, docker_engine: bool,
+                 docker_timeout: int):
         self._req_3 = req_3
         self._req_2 = req_2
         self._content_repo = content_repo
         self._pack_abs_dir = pack_dir
         self._pack_name = None
+        self.docker_timeout = docker_timeout
         # Docker client init
         if docker_engine:
-            self._docker_client: docker.DockerClient = docker.from_env()
+            self._docker_client: docker.DockerClient = docker.from_env(timeout=docker_timeout)
             self._docker_hub_login = self._docker_login()
         # Facts gathered regarding pack lint and test
         self._facts: Dict[str, Any] = {
@@ -77,7 +81,7 @@ class Linter:
             "additional_requirements": [],
             "docker_engine": docker_engine,
             "is_script": False,
-            "commands": None
+            "commands": None,
         }
         # Pack lint status object - visualize it
         self._pkg_lint_status: Dict = {
@@ -221,7 +225,7 @@ class Linter:
             if self._facts["docker_engine"]:
                 # Getting python version from docker image - verifying if not valid docker image configured
                 for image in self._facts["images"]:
-                    py_num: float = get_python_version_from_image(image=image[0])
+                    py_num: float = get_python_version_from_image(image=image[0], timeout=self.docker_timeout, log_prompt=log_prompt)
                     image[1] = py_num
                     logger.info(f"{self._pack_name} - Facts - {image[0]} - Python {py_num}")
                     if not self._facts["python_version"]:
@@ -269,14 +273,37 @@ class Linter:
             test_modules = {self._pack_abs_dir / module.name for module in modules.keys()}
             lint_files = lint_files.difference(test_modules)
             self._facts["lint_files"] = list(lint_files)
+
         if self._facts["lint_files"]:
+            self._remove_gitignore_files(log_prompt)
             for lint_file in self._facts["lint_files"]:
                 logger.info(f"{log_prompt} - Lint file {lint_file}")
         else:
             logger.info(f"{log_prompt} - Lint files not found")
 
+        # Remove files that are in gitignore
+
         self._split_lint_files()
         return False
+
+    def _remove_gitignore_files(self, log_prompt: str) -> None:
+        """
+        Skipping files that matches gitignore patterns.
+        Args:
+            log_prompt(str): log prompt string
+
+        Returns:
+
+        """
+        try:
+            repo = git.Repo(self._content_repo)
+            files_to_ignore = repo.ignored(self._facts['lint_files'])
+            for file in files_to_ignore:
+                logger.info(f"{log_prompt} - Skipping gitignore file {file}")
+            self._facts["lint_files"] = [path for path in self._facts['lint_files'] if path not in files_to_ignore]
+
+        except (git.InvalidGitRepositoryError, git.NoSuchPathError):
+            logger.debug("No gitignore files is available")
 
     def _split_lint_files(self):
         """ Remove unit test files from _facts['lint_files'] and put into their own list _facts['lint_unittest_files']
@@ -414,6 +441,8 @@ class Linter:
         # if pylint did not run and failure exit code has been returned from run commnad
         elif exit_code & FAIL:
             status = FAIL
+            logger.debug(f"{log_prompt} - Actual XSOAR linter error -")
+            logger.debug(f"{log_prompt} - Full format stdout: {RL if stdout else ''}{stdout}")
             # for contrib prs which are not merged from master and do not have pylint in dev-requirements-py2.
             if os.environ.get('CI'):
                 stdout = "Xsoar linter could not run, Please merge from master"
@@ -679,7 +708,8 @@ class Linter:
                                 self._docker_client.images.push(test_image_name)
                                 logger.info(f"{log_prompt} - Image {test_image_name} pushed to repository")
                                 break
-                            except (requests.exceptions.ConnectionError, urllib3.exceptions.ReadTimeoutError):
+                            except (requests.exceptions.ConnectionError, urllib3.exceptions.ReadTimeoutError,
+                                    requests.exceptions.ReadTimeout):
                                 logger.info(f"{log_prompt} - Unable to push image {test_image_name} to repository")
 
             except (docker.errors.BuildError, docker.errors.APIError, Exception) as e:
@@ -825,10 +855,12 @@ class Linter:
         try:
             # Running pytest container
             cov = '' if no_coverage else self._pack_abs_dir.stem
+            uid = os.getuid() or 4000
+            logger.debug(f'{log_prompt} - user uid for running lint/test: {uid}')  # lgtm[py/clear-text-logging-sensitive-data]
             container_obj: docker.models.containers.Container = self._docker_client.containers.run(
                 name=container_name, image=test_image, command=[build_pytest_command(test_xml=test_xml, json=True,
                                                                                      cov=cov)],
-                user=f"{os.getuid()}:4000", detach=True, environment=self._facts["env_vars"])
+                user=f"{uid}:4000", detach=True, environment=self._facts["env_vars"])
             stream_docker_container_output(container_obj.logs(stream=True))
             # Waiting for container to be finished
             container_status: dict = container_obj.wait(condition="exited")
@@ -919,11 +951,13 @@ class Linter:
         exit_code = SUCCESS
         output = ""
         try:
+            uid = os.getuid() or 4000
+            logger.debug(f'{log_prompt} - user uid for running lint/test: {uid}')  # lgtm[py/clear-text-logging-sensitive-data]
             container_obj = self._docker_client.containers.run(name=container_name,
                                                                image=test_image,
                                                                command=build_pwsh_analyze_command(
                                                                    self._facts["lint_files"][0]),
-                                                               user=f"{os.getuid()}:4000",
+                                                               user=f"{uid}:4000",
                                                                detach=True,
                                                                environment=self._facts["env_vars"])
             stream_docker_container_output(container_obj.logs(stream=True))
@@ -951,7 +985,7 @@ class Linter:
                     container_obj.remove(force=True)
                 except docker.errors.NotFound as e:
                     logger.critical(f"{log_prompt} - Unable to delete container - {e}")
-        except (docker.errors.ImageNotFound, docker.errors.APIError) as e:
+        except (docker.errors.ImageNotFound, docker.errors.APIError, requests.exceptions.ReadTimeout) as e:
             logger.critical(f"{log_prompt} - Unable to run powershell test - {e}")
             exit_code = RERUN
 
@@ -986,9 +1020,11 @@ class Linter:
         exit_code = SUCCESS
         output = ""
         try:
+            uid = os.getuid() or 4000
+            logger.debug(f'{log_prompt} - user uid for running lint/test: {uid}')  # lgtm[py/clear-text-logging-sensitive-data]
             container_obj: docker.models.containers.Container = self._docker_client.containers.run(
                 name=container_name, image=test_image, command=build_pwsh_test_command(),
-                user=f"{os.getuid()}:4000", detach=True, environment=self._facts["env_vars"])
+                user=f"{uid}:4000", detach=True, environment=self._facts["env_vars"])
             stream_docker_container_output(container_obj.logs(stream=True))
             # wait for container to finish
             container_status = container_obj.wait(condition="exited")
@@ -1014,7 +1050,7 @@ class Linter:
                     container_obj.remove(force=True)
                 except docker.errors.NotFound as e:
                     logger.critical(f"{log_prompt} - Unable to delete container - {e}")
-        except (docker.errors.ImageNotFound, docker.errors.APIError) as e:
+        except (docker.errors.ImageNotFound, docker.errors.APIError, requests.exceptions.ReadTimeout) as e:
             logger.critical(f"{log_prompt} - Unable to run powershell test - {e}")
             exit_code = RERUN
 

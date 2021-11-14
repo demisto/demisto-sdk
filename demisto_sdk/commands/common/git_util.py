@@ -1,7 +1,7 @@
 import os
 import re
 from pathlib import Path
-from typing import Set, Tuple
+from typing import Set, Tuple, Union
 
 import click
 import gitdb
@@ -33,6 +33,7 @@ class GitUtil:
             Set: A set of Paths to the modified files.
         """
         remote, branch = self._handle_prev_ver(prev_ver)
+        current_branch_or_hash = self.get_current_git_branch_or_hash()
 
         # when checking branch against itself only return the last commit.
         last_commit = self._only_last_commit(prev_ver, requested_status='M')
@@ -42,7 +43,7 @@ class GitUtil:
 
         # get all renamed files - some of these can be identified as modified by git,
         # but we want to identify them as renamed - so will remove them from the returned files.
-        renamed = {item[0] for item in self.renamed_files(prev_ver, committed_only, staged_only)}
+        renamed = {item[0] for item in self.renamed_files(prev_ver, committed_only, staged_only)}  # type: ignore[index]
 
         # handle a case where a file is wrongly recognized as renamed (not 100% score) and
         # is actually of modified status
@@ -61,12 +62,12 @@ class GitUtil:
             if remote:
                 committed = {Path(os.path.join(item.a_path)) for item
                              in self.repo.remote(name=remote).refs[branch].commit.diff(
-                    self.repo.active_branch).iter_change_type('M')}.union(untrue_rename_committed)
+                    current_branch_or_hash).iter_change_type('M')}.union(untrue_rename_committed)
 
             # if remote does not exist we are checking against the commit sha1
             else:
                 committed = {Path(os.path.join(item.a_path)) for item in self.repo.commit(rev=prev_ver).diff(
-                    self.repo.active_branch).iter_change_type('M')}.union(untrue_rename_committed)
+                    current_branch_or_hash).iter_change_type('M')}.union(untrue_rename_committed)
 
             # identify all files that were touched on this branch regardless of status
             # intersect these with all the committed files to identify the committed modified files.
@@ -97,12 +98,12 @@ class GitUtil:
         if remote:
             committed_added = {Path(os.path.join(item.a_path)) for item in
                                self.repo.remote(name=remote).refs[branch].commit.
-                               diff(self.repo.active_branch).iter_change_type('A')}
+                               diff(current_branch_or_hash).iter_change_type('A')}
 
         # if remote does not exist we are checking against the commit sha1
         else:
             committed_added = {Path(os.path.join(item.a_path)) for item in
-                               self.repo.commit(rev=prev_ver).diff(self.repo.active_branch).iter_change_type('A')}
+                               self.repo.commit(rev=prev_ver).diff(current_branch_or_hash).iter_change_type('A')}
 
         staged = staged - committed_added - renamed - deleted
 
@@ -127,6 +128,7 @@ class GitUtil:
             Set: A set of Paths to the added files.
         """
         remote, branch = self._handle_prev_ver(prev_ver)
+        current_branch_or_hash = self.get_current_git_branch_or_hash()
 
         # when checking branch against itself only return the last commit.
         last_commit = self._only_last_commit(prev_ver, requested_status='A')
@@ -147,13 +149,13 @@ class GitUtil:
         if remote:
             committed = {Path(os.path.join(item.a_path)) for item
                          in self.repo.remote(name=remote).refs[branch].commit.diff(
-                self.repo.active_branch).iter_change_type('A')}.union(untrue_rename_committed)
+                current_branch_or_hash).iter_change_type('A')}.union(untrue_rename_committed)
 
         # if remote does not exist we are checking against the commit sha1
         else:
             committed = {Path(os.path.join(item.a_path)) for item
                          in self.repo.commit(rev=prev_ver).diff(
-                self.repo.active_branch).iter_change_type('A')}.union(untrue_rename_committed)
+                current_branch_or_hash).iter_change_type('A')}.union(untrue_rename_committed)
 
         # identify all files that were touched on this branch regardless of status
         # intersect these with all the committed files to identify the committed added files.
@@ -214,6 +216,7 @@ class GitUtil:
             Set: A set of Paths to the deleted files.
         """
         remote, branch = self._handle_prev_ver(prev_ver)
+        current_branch_or_hash = self.get_current_git_branch_or_hash()
 
         # when checking branch against itself only return the last commit.
         last_commit = self._only_last_commit(prev_ver, requested_status='D')
@@ -228,13 +231,13 @@ class GitUtil:
             if remote:
                 committed = {Path(os.path.join(item.a_path)) for item
                              in self.repo.remote(name=remote).refs[branch].commit.diff(
-                    self.repo.active_branch).iter_change_type('D')}
+                    current_branch_or_hash).iter_change_type('D')}
 
             # if remote does not exist we are checking against the commit sha1
             else:
                 committed = {Path(os.path.join(item.a_path)) for item
                              in self.repo.commit(rev=prev_ver).diff(
-                    self.repo.active_branch).iter_change_type('D')}
+                    current_branch_or_hash).iter_change_type('D')}
 
             # identify all files that were touched on this branch regardless of status
             # intersect these with all the committed files to identify the committed added files.
@@ -260,7 +263,8 @@ class GitUtil:
 
     def renamed_files(self, prev_ver: str = 'master', committed_only: bool = False,
                       staged_only: bool = False, debug: bool = False,
-                      include_untracked: bool = False) -> Set[Tuple[Path, Path]]:
+                      include_untracked: bool = False,
+                      get_only_current_file_names: bool = False) -> Union[Set[Tuple[Path, Path]], Set[Path]]:
         """Gets all the files that are recognized by git as renamed against the prev_ver.
         Args:
             prev_ver (str): The base branch against which the comparison is made.
@@ -268,11 +272,13 @@ class GitUtil:
             staged_only (bool): Whether to return only staged files.
             debug (bool): Whether to print the debug logs.
             include_untracked (bool): Whether to include untracked files.
+            get_only_current_file_names (bool): Whether to get only the current file names and not the old file names.
         Returns:
             Set: A set of Tuples of Paths to the renamed files -
             first element being the old file path and the second is the new.
         """
         remote, branch = self._handle_prev_ver(prev_ver)
+        current_branch_or_hash = self.get_current_git_branch_or_hash()
 
         # when checking branch against itself only return the last commit.
         last_commit = self._only_last_commit(prev_ver, requested_status='R')
@@ -289,13 +295,13 @@ class GitUtil:
             if remote:
                 committed = {(Path(item.a_path), Path(item.b_path)) for item
                              in self.repo.remote(name=remote).refs[branch].commit.diff(
-                    self.repo.active_branch).iter_change_type('R') if item.score == 100}
+                    current_branch_or_hash).iter_change_type('R') if item.score == 100}
 
             # if remote does not exist we are checking against the commit sha1
             else:
                 committed = {(Path(item.a_path), Path(item.b_path)) for item
                              in self.repo.commit(rev=prev_ver).diff(
-                    self.repo.active_branch).iter_change_type('R') if item.score == 100}
+                    current_branch_or_hash).iter_change_type('R') if item.score == 100}
 
             # identify all files that were touched on this branch regardless of status
             # intersect these with all the committed files to identify the committed added files.
@@ -305,6 +311,10 @@ class GitUtil:
 
         if committed_only:
             self.debug_print(debug=debug, status='Renamed', staged=set(), committed=committed)
+            if get_only_current_file_names:
+                committed_only_new = {file[1] for file in committed}
+                return committed_only_new
+
             return committed
 
         untracked = set()  # type:Set
@@ -318,11 +328,20 @@ class GitUtil:
 
         if staged_only:
             self.debug_print(debug=debug, status='Renamed', staged=staged, committed=set())
+            if get_only_current_file_names:
+                staged_only_new = {file[1] for file in staged}
+                return staged_only_new
+
             return staged
 
         self.debug_print(debug=debug, status='Renamed', staged=staged, committed=committed)
 
-        return staged.union(committed)
+        all_renamed_files = staged.union(committed)
+        if get_only_current_file_names:
+            all_renamed_files_only_new = {file[1] for file in all_renamed_files}
+            return all_renamed_files_only_new
+
+        return all_renamed_files
 
     def _get_untracked_files(self, requested_status: str) -> set:
         """return all untracked files of the given requested status.
@@ -358,17 +377,18 @@ class GitUtil:
             Set: of Paths to files changed in the current branch.
         """
         remote, branch = self._handle_prev_ver(prev_ver)
+        current_branch_or_hash = self.get_current_git_branch_or_hash()
 
         if remote:
             return {Path(os.path.join(item)) for item
                     in self.repo.git.diff('--name-only',
-                                          f'{remote}/{branch}...{self.repo.active_branch}').split('\n')}
+                                          f'{remote}/{branch}...{current_branch_or_hash}').split('\n')}
 
         # if remote does not exist we are checking against the commit sha1
         else:
             return {Path(os.path.join(item)) for item
                     in self.repo.git.diff('--name-only',
-                                          f'{prev_ver}...{self.repo.active_branch}').split('\n')}
+                                          f'{prev_ver}...{current_branch_or_hash}').split('\n')}
 
     def _only_last_commit(self, prev_ver: str, requested_status: str) -> Set:
         """Get all the files that were changed in the last commit of a given type when checking a branch against itself.
@@ -419,8 +439,17 @@ class GitUtil:
 
         return remote, branch
 
+    def get_current_git_branch_or_hash(self) -> str:
+        try:
+            return self.get_current_working_branch()
+        except TypeError:
+            return self.get_current_commit_hash()
+
     def get_current_working_branch(self) -> str:
         return str(self.repo.active_branch)
+
+    def get_current_commit_hash(self) -> str:
+        return str(self.repo.head.object.hexsha)
 
     def git_path(self) -> str:
         git_path = self.repo.git.rev_parse('--show-toplevel')
@@ -445,6 +474,8 @@ class GitUtil:
         Returns:
             Set: of Paths to non 100% renamed files which are of a given status.
         """
+        current_branch_or_hash = self.get_current_git_branch_or_hash()
+
         if staged_only:
             return {Path(item.b_path) for item
                     in self.repo.head.commit.diff().iter_change_type('R') if item.score < 100 and
@@ -452,13 +483,13 @@ class GitUtil:
 
         if remote:
             return {Path(item.b_path) for item in self.repo.remote(name=remote).refs[branch].commit.diff(
-                self.repo.active_branch).iter_change_type('R') if item.score < 100 and
+                current_branch_or_hash).iter_change_type('R') if item.score < 100 and
                 self._check_file_status(file_path=str(item.b_path), remote=remote, branch=branch) == status}
 
         # if remote does not exist we are checking against the commit sha1
         return {Path(item.b_path) for item in self.repo.commit(rev=branch).diff(
-                self.repo.active_branch).iter_change_type('R') if item.score < 100 and
-                self._check_file_status(file_path=str(item.b_path), remote=remote, branch=branch) == status}
+            current_branch_or_hash).iter_change_type('R') if item.score < 100 and
+            self._check_file_status(file_path=str(item.b_path), remote=remote, branch=branch) == status}
 
     def _check_file_status(self, file_path: str, remote: str, branch: str) -> str:
         """Get the git status of a given file path
@@ -469,15 +500,17 @@ class GitUtil:
         Returns:
             str: the git status of the file (M, A, R, D).
         """
+        current_branch_or_hash = self.get_current_git_branch_or_hash()
+
         if remote:
             diff_line = self.repo.git.diff('--name-status',
-                                           f'{remote}/{branch}...{self.repo.active_branch}',
+                                           f'{remote}/{branch}...{current_branch_or_hash}',
                                            '--', file_path)
 
         # if remote does not exist we are checking against the commit sha1
         else:
             diff_line = self.repo.git.diff('--name-status',
-                                           f'{branch}...{self.repo.active_branch}',
+                                           f'{branch}...{current_branch_or_hash}',
                                            '--', file_path)
 
         if not diff_line:
@@ -509,10 +542,36 @@ class GitUtil:
         """
         relative_file_path = os.path.relpath(full_file_path, self.git_path())
         try:
-            remote_name = self.repo.remote().name
+            remote_name = self.repo.remote()
         except ValueError as exc:
             if "Remote named 'origin' didn't exist" in str(exc):
                 remote_name = 'origin'
             else:
                 raise exc
         return f'{remote_name}/{tag}:{relative_file_path}'
+
+    def get_all_changed_files(self, prev_ver: str = 'master', committed_only: bool = False,
+                              staged_only: bool = False, debug: bool = False,
+                              include_untracked: bool = False) -> Set[Path]:
+        """Get a set of all changed files in the branch (modified, added and renamed)
+
+        Args:
+            prev_ver (str): The base branch against which the comparison is made.
+            committed_only (bool): Whether to return only committed files.
+            staged_only (bool): Whether to return only staged files.
+            debug (bool): Whether to print the debug logs.
+            include_untracked (bool): Whether to include untracked files.
+        Returns:
+            Set. A set of all the changed files in the given branch when comparing to prev_ver
+        """
+        modified_files: Set[Path] = self.modified_files(prev_ver=prev_ver, committed_only=committed_only,
+                                                        staged_only=staged_only, debug=debug,
+                                                        include_untracked=include_untracked)
+        added_files: Set[Path] = self.added_files(prev_ver=prev_ver, committed_only=committed_only,
+                                                  staged_only=staged_only, debug=debug,
+                                                  include_untracked=include_untracked)
+        renamed_files: Set[Path] = self.renamed_files(prev_ver=prev_ver, committed_only=committed_only,  # type: ignore[assignment]
+                                                      staged_only=staged_only, debug=debug,
+                                                      include_untracked=include_untracked,
+                                                      get_only_current_file_names=True)
+        return modified_files.union(added_files).union(renamed_files)

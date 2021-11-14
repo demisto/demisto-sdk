@@ -12,10 +12,8 @@
   folder.
 
 Options:
-*  **-h, --help**
-    Show this message and exit.
 *  **-i, --input PATH**
-    Specify directory of integration/script
+    Specify directory(s) of integration/script
 *  **-g, --git**
     Will run only on changed packages
 *  **-a, --all-packs**
@@ -30,6 +28,8 @@ Options:
     Do NOT run flake8 linter
 *  **--no-bandit**
     Do NOT run bandit linter
+*  **--no-xsoar-linter**
+    Do NOT run XSOAR linter
 *  **--no-mypy**
     Do NOT run mypy static type checking
 *  **--no-vulture**
@@ -44,16 +44,22 @@ Options:
     Do NOT run powershell test
 *  **-kc, --keep-container**
     Keep the test container
+*  **--prev-ver**
+    Previous branch or SHA1 commit to run checks against
 *  **--test-xml PATH**
     Path to store pytest xml results
-*  **--json-report PATH**
-    Path to store json results
+*  **--failure-report PATH**
+    Path to store failed packs report
 *  **-lp, --log-path PATH**
     Path to store all levels of logs
+*  **-j, --json-file**
+    The JSON file path to which to output the command results
 *  **--no-coverage**
     Do NOT report coverage
 *  **--coverage-report**
     Specify directory for the coverage report files
+*  **-dt, --docker-timeout**
+    The timeout (in seconds) for requests done by the docker client
 
 
 **Examples**:

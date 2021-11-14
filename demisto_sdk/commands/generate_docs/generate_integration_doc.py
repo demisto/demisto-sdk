@@ -1,15 +1,23 @@
+import json
 import os.path
 import re
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+
+from requests.structures import CaseInsensitiveDict
 
 from demisto_sdk.commands.common.constants import (
     CONTEXT_OUTPUT_README_TABLE_HEADER, DOCS_COMMAND_SECTION_REGEX)
+from demisto_sdk.commands.common.default_additional_info_loader import \
+    load_default_additional_info_dict
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_yaml,
                                                print_color, print_error,
                                                print_warning)
 from demisto_sdk.commands.generate_docs.common import (
     add_lines, build_example_dict, generate_numbered_section, generate_section,
     generate_table_section, save_output, string_escape_md)
+from demisto_sdk.commands.integration_diff.integration_diff_detector import \
+    IntegrationDiffDetector
 
 CREDENTIALS = 9
 
@@ -54,7 +62,9 @@ def generate_integration_doc(
         limitations: Optional[str] = None,
         insecure: bool = False,
         verbose: bool = False,
-        command: Optional[str] = None):
+        command: Optional[str] = None,
+        old_version: str = '',
+        skip_breaking_changes: bool = False):
     """ Generate integration documentation.
 
     Args:
@@ -114,7 +124,14 @@ def generate_integration_doc(
         else:
             docs = []  # type: list
             docs.extend(add_lines(yml_data.get('description')))
-            docs.extend(['This integration was integrated and tested with version xx of {}'.format(yml_data['name'])])
+            docs.extend(['This integration was integrated and tested with version xx of {}'.format(yml_data['name']), ''])
+            # Checks if the integration is a new version
+            integration_version = re.findall("[vV][2-9]$", yml_data.get("display", ""))
+            if integration_version and not skip_breaking_changes:
+                docs.extend(['Some changes have been made that might affect your existing content. '
+                             '\nIf you are upgrading from a previous of this integration, see [Breaking Changes]'
+                             '(#breaking-changes-from-the-previous-version-of-this-integration-'
+                             f'{yml_data.get("display", "").replace(" ", "-").lower()}).', ''])
             # Integration use cases
             if use_cases:
                 docs.extend(generate_numbered_section('Use Cases', use_cases))
@@ -122,13 +139,18 @@ def generate_integration_doc(
             if permissions == 'general':
                 docs.extend(generate_section('Permissions', ''))
             # Setup integration to work with Demisto
-            docs.extend(generate_section('Configure {} on Cortex XSOAR'.format(yml_data['name']), ''))
+            docs.extend(generate_section('Configure {} on Cortex XSOAR'.format(yml_data['display']), ''))
             # Setup integration on Demisto
             docs.extend(generate_setup_section(yml_data))
             # Commands
             command_section, command_errors = generate_commands_section(yml_data, example_dict,
                                                                         command_permissions_dict, command=command)
             docs.extend(command_section)
+            # breaking changes
+            if integration_version and not skip_breaking_changes:
+                docs.extend(generate_versions_differences_section(input_path, old_version,
+                                                                  yml_data.get("display", "")))
+
             errors.extend(command_errors)
             # Known limitations
             if limitations:
@@ -152,10 +174,18 @@ def generate_integration_doc(
 
 
 # Setup integration on Demisto
+
+with (Path(__file__).parent / 'default_additional_information.json').open() as f:
+    # Case insensitive to catch both `API key` and `API Key`, giving both the same value.
+    default_additional_information: CaseInsensitiveDict = CaseInsensitiveDict(json.load(f))
+
+
 def generate_setup_section(yaml_data: dict):
+    default_additional_info: CaseInsensitiveDict = load_default_additional_info_dict()
+
     section = [
         '1. Navigate to **Settings** > **Integrations** > **Servers & Services**.',
-        '2. Search for {}.'.format(yaml_data['name']),
+        '2. Search for {}.'.format(yaml_data['display']),
         '3. Click **Add instance** to create and configure a new integration instance.'
     ]
     access_data: List[Dict] = []
@@ -164,10 +194,12 @@ def generate_setup_section(yaml_data: dict):
         if conf['type'] == CREDENTIALS:
             add_access_data_of_type_credentials(access_data, conf)
         else:
-            access_data.append(
-                {'Parameter': conf.get('display'),
-                 'Description': string_escape_md(conf.get('additionalinfo', '')),
-                 'Required': conf.get('required', '')})
+            access_data.append({
+                'Parameter': conf.get('display'),
+                'Description': string_escape_md(conf.get('additionalinfo', '') or
+                                                default_additional_info.get(conf.get('name', ''), '')),
+                'Required': conf.get('required', '')
+            })
 
     # Check if at least one parameter has additional info field.
     # If not, remove the description column from the access data table section.
@@ -285,7 +317,7 @@ def generate_single_command_section(cmd: dict, example_dict: dict, command_permi
         '',
     ])
     outputs = cmd.get('outputs')
-    if outputs is None:
+    if outputs is None or len(outputs) == 0:
         section.append('There is no context output for this command.')
     else:
         section.extend([
@@ -308,6 +340,118 @@ def generate_single_command_section(cmd: dict, example_dict: dict, command_permi
     errors.extend(example_errors)
 
     return section, errors
+
+
+def generate_versions_differences_section(input_path, old_version, display_name) -> list:
+    """
+    Generate the version differences section to the README.md file.
+
+    Arguments:
+        input_path : The integration file path.
+
+    Returns:
+        List of the section lines.
+    """
+
+    differences_section = [
+        f'## Breaking changes from the previous version of this integration - {display_name}',
+        '%%FILL HERE%%',
+        'The following sections list the changes in this version.',
+        ''
+    ]
+
+    if not old_version:
+        user_response = str(input('Enter the path of the previous integration version file if any. Press Enter to skip.\n'))
+
+        if user_response:
+            old_version = user_response
+
+    if old_version:
+        differences = get_previous_version_differences(input_path, old_version)
+
+        if differences[0] != '':
+            differences_section.extend(differences)
+
+        else:
+            # If there are no differences, remove the headers.
+            differences_section = []
+
+    else:
+
+        differences_section.extend(['### Commands',
+                                    '#### The following commands were removed in this version:',
+                                    '* *commandName* - this command was replaced by XXX.',
+                                    '* *commandName* - this command was replaced by XXX.',
+                                    '',
+                                    '### Arguments',
+                                    '#### The following arguments were removed in this version:',
+                                    '',
+                                    'In the *commandName* command:',
+                                    '* *argumentName* - this argument was replaced by XXX.',
+                                    '* *argumentName* - this argument was replaced by XXX.',
+                                    '',
+                                    '#### The behavior of the following arguments was changed:',
+                                    '',
+                                    'In the *commandName* command:',
+                                    '* *argumentName* - is now required.',
+                                    '* *argumentName* - supports now comma separated values.',
+                                    '',
+                                    '### Outputs',
+                                    '#### The following outputs were removed in this version:',
+                                    '',
+                                    'In the *commandName* command:',
+                                    '* *outputPath* - this output was replaced by XXX.',
+                                    '* *outputPath* - this output was replaced by XXX.',
+                                    '',
+                                    'In the *commandName* command:',
+                                    '* *outputPath* - this output was replaced by XXX.',
+                                    '* *outputPath* - this output was replaced by XXX.',
+                                    ''])
+
+    differences_section.extend(['## Additional Considerations for this version', '%%FILL HERE%%',
+                                '* Insert any API changes, any behavioral changes, limitations, or restrictions '
+                                'that would be new to this version.', ''])
+
+    return differences_section
+
+
+def get_previous_version_differences(new_integration_path, previous_integration_path) -> list:
+    """
+    Gets the section of the previous integration version differences.
+
+    Args:
+        new_integration_path: The new integration path.
+        previous_integration_path: The old integration path.
+
+    Return:
+        List of the differences section lines.
+    """
+
+    differences_detector = IntegrationDiffDetector(new=new_integration_path, old=previous_integration_path)
+    differences_detector.missing_items_report = differences_detector.get_differences()
+
+    differences_section = [differences_detector.print_items_in_docs_format(secho_result=False)]
+
+    return differences_section
+
+
+def disable_md_autolinks(markdown: str) -> str:
+    """Disable auto links that markdown clients (such as xosar.pan.dev) auto create. This behaviour is more
+    consistent with how the Server works were links are only created for explicitly defined links.
+    We take: https//lgtm.com/rules/9980089 and change to: https:<span>//</span>lgtm.com/rules/9980089
+    Note that we don't want to change legitimate md links of the form: (link)[http://test.com]. We avoid
+    legitimate md links by using a negative lookbehind in the regex to make sure before the http match
+    we don't have ")[".
+
+    Args:
+        markdown (str): markdown to process
+
+    Returns:
+        str: processed markdown
+    """
+    if not markdown:
+        return markdown
+    return re.sub(r'\b(?<!\)\[)(https?)://([\w\d]+?\.[\w\d]+?)\b', r'\1:<span>//</span>\2', markdown, flags=re.IGNORECASE)
 
 
 def generate_command_example(cmd, cmd_example=None):
@@ -336,7 +480,7 @@ def generate_command_example(cmd, cmd_example=None):
         ])
     example.extend([
         '#### Human Readable Output',
-        '{}'.format('>'.join(f'\n{md_example}'.splitlines(True))),  # prefix human readable with quote
+        '{}'.format('>'.join(f'\n{disable_md_autolinks(md_example)}'.splitlines(True))),  # prefix human readable with quote
         '',
     ])
 
@@ -380,7 +524,9 @@ def get_command_examples(commands_file_path, specific_commands):
 
 
 def command_example_filter(command):
-    if command.startswith('#'):
+    if not command:
+        return
+    elif command.startswith('#'):
         return
     elif not command.startswith('!'):
         return f'!{command}'

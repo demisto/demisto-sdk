@@ -7,6 +7,9 @@ from typing import Dict, Set
 
 import click
 import nltk
+from nltk.corpus import brown, webtext
+from spellchecker import SpellChecker
+
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.content import (Integration, Playbook,
                                                  ReleaseNote, Script,
@@ -19,8 +22,6 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.tools import find_type
 from demisto_sdk.commands.doc_reviewer.known_words import KNOWN_WORDS
 from demisto_sdk.commands.doc_reviewer.rn_checker import ReleaseNotesChecker
-from nltk.corpus import brown, webtext
-from spellchecker import SpellChecker
 
 
 class DocReviewer:
@@ -90,13 +91,9 @@ class DocReviewer:
     def gather_all_changed_files(self):
         modified = self.git_util.modified_files(prev_ver=self.prev_ver)  # type: ignore[union-attr]
         added = self.git_util.added_files(prev_ver=self.prev_ver)  # type: ignore[union-attr]
-        renamed = self.git_util.renamed_files(prev_ver=self.prev_ver)  # type: ignore[union-attr]
-        filtered_renamed = set()  # type:Set
+        renamed = self.git_util.renamed_files(prev_ver=self.prev_ver, get_only_current_file_names=True)  # type: ignore[union-attr]
 
-        for file_tuple in renamed:
-            filtered_renamed.add(file_tuple[1])
-
-        return modified.union(added).union(filtered_renamed)
+        return modified.union(added).union(renamed)  # type: ignore[arg-type]
 
     def get_files_from_git(self):
         click.secho('Gathering all changed files from git', fg='bright_cyan')

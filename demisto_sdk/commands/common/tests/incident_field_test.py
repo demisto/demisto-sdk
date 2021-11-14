@@ -1,9 +1,10 @@
 import pytest
+from mock import patch
+
 from demisto_sdk.commands.common.hook_validations.incident_field import (
     GroupFieldTypes, IncidentFieldValidator)
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
-from mock import patch
 
 
 class TestIncidentFieldsValidator:
@@ -352,3 +353,49 @@ class TestIncidentFieldsValidator:
         validator = IncidentFieldValidator(structure)
         assert validator.is_valid_indicator_grid_fromversion() == is_valid, \
             f'is_valid_grid_fromVersion({field_type}, {from_version} returns {not is_valid}'
+
+    FIELD_NAME1 = {
+        'name': 'pack name field',
+    }
+    FIELD_NAME2 = {
+        'name': 'pack prefix field',
+    }
+    FIELD_NAME3 = {
+        'name': 'field',
+    }
+    PACK_METADATA1 = {'name': 'pack name', 'itemPrefix': ['pack prefix']}
+    PACK_METADATA2 = {'name': 'pack name'}
+
+    INPUTS_NAMES2 = [
+        (FIELD_NAME1, PACK_METADATA1, False),
+        (FIELD_NAME1, PACK_METADATA2, True),
+        (FIELD_NAME2, PACK_METADATA1, True),
+        (FIELD_NAME2, PACK_METADATA2, False),
+        (FIELD_NAME3, PACK_METADATA1, False)
+    ]
+
+    @pytest.mark.parametrize('current_file,pack_metadata, answer', INPUTS_NAMES2)
+    def test_is_valid_name_prefix(self, current_file, pack_metadata, answer, mocker):
+        """
+            Given
+            - A set of indicator fields
+
+            When
+            - Running is_valid_incident_field_name_prefix on it.
+
+            Then
+            - Ensure validate fails when the field name does not start with the pack name prefix.
+        """
+        from demisto_sdk.commands.common.hook_validations import incident_field
+        with patch.object(StructureValidator, '__init__', lambda a, b: None):
+            structure = StructureValidator("")
+            structure.current_file = current_file
+            structure.old_file = None
+            structure.file_path = "random_path"
+            structure.is_valid = True
+            structure.prev_ver = 'master'
+            structure.branch_name = ''
+            validator = IncidentFieldValidator(structure, )
+            validator.current_file = current_file
+            mocker.patch.object(incident_field, 'get_pack_metadata', return_value=pack_metadata)
+            assert validator.is_valid_incident_field_name_prefix() == answer

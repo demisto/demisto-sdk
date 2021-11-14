@@ -1,7 +1,8 @@
 import json
 import logging
 import re
-from typing import Union
+from collections import defaultdict
+from typing import Dict, List, Union
 
 import demisto_sdk.commands.common.tools as tools
 from demisto_sdk.commands.common.constants import DemistoException
@@ -11,7 +12,7 @@ from demisto_sdk.commands.generate_integration.code_generator import (
     IntegrationGeneratorArg, IntegrationGeneratorCommand,
     IntegrationGeneratorConfig, IntegrationGeneratorOutput,
     IntegrationGeneratorParam, ParameterType)
-from demisto_sdk.commands.json_to_outputs.json_to_outputs import (
+from demisto_sdk.commands.generate_outputs.json_to_outputs.json_to_outputs import (
     determine_type, flatten_json)
 
 logger: logging.Logger = logging.getLogger('demisto-sdk')
@@ -147,6 +148,8 @@ def postman_to_autogen_configuration(
 
     commands = []
     items = flatten_collections(items)  # in case of nested collections
+    commands_names = build_commands_names_dict(items)
+    duplicate_requests_check(commands_names)
 
     for item in items:
         command = convert_request_to_command(item)
@@ -299,7 +302,9 @@ def convert_request_to_command(item: dict):
     command_name = tools.to_kebab_case(name)
     context_prefix = tools.to_pascal_case(name)
 
-    request = item.get('request', {})
+    request = item.get('request')
+    if request is None:
+        raise DemistoException('Could not find request in the collection. Is it a valid postman collection?')
 
     logger.debug(f'converting postman headers of request: {name}')
     headers = postman_headers_to_conf_headers(request.get('header'), skip_authorization_header=True)
@@ -309,9 +314,6 @@ def convert_request_to_command(item: dict):
     returns_file = False
 
     logger.debug(f'creating url arguments of request: {name}')
-    request = item.get('request')
-    if request is None:
-        raise DemistoException('Could not find request in the collection. Is it a valid postman collection?')
     request_url_object = request.get('url')
 
     if not request_url_object:
@@ -328,6 +330,18 @@ def convert_request_to_command(item: dict):
                 in_='url'
             )
             args.append(arg)
+
+    for url_path_variable in request_url_object.get('variable', []):
+        variable_name = url_path_variable.get('key')
+        if not variable_name:
+            continue
+        arg = IntegrationGeneratorArg(
+            name=variable_name,
+            description='',
+            in_='url'
+        )
+        args.append(arg)
+        url_path = url_path.replace(f'/:{variable_name}', f'/{{{variable_name}}}')
 
     logger.debug(f'creating query arguments of request: {name}')
     for q in request_url_object.get('query', []):
@@ -369,14 +383,7 @@ def convert_request_to_command(item: dict):
         try:
             response = item.get('response')[0]  # type: ignore[index]  # It will be catched in the except
             if response.get('_postman_previewlanguage') == 'json':
-                body = json.loads(response.get('body'))
-                for key, value in flatten_json(body).items():
-                    output = IntegrationGeneratorOutput(
-                        name=key,
-                        description='',
-                        type_=determine_type(value)
-                    )
-                    outputs.append(output)
+                outputs = generate_command_outputs(json.loads(response.get('body')))
             elif response.get('_postman_previewlanguage') == 'raw':
                 returns_file = True
 
@@ -388,7 +395,7 @@ def convert_request_to_command(item: dict):
         url_path=url_path,
         http_method=request.get('method'),
         headers=headers,
-        description=request.get('description'),
+        description=request.get('description') or '',
         arguments=args,
         outputs=outputs,
         context_path=context_prefix,
@@ -399,3 +406,44 @@ def convert_request_to_command(item: dict):
     )
 
     return command
+
+
+def generate_command_outputs(body: Union[Dict, List]) -> List[IntegrationGeneratorOutput]:
+    """
+    Parses postman body to list of command outputs.
+    Args:
+        body (Union[Dict, List]): Body returned from HTTP request.
+
+    Returns:
+        (List[IntegrationGeneratorOutput]): List of outputs returned from the HTTP request.
+    """
+    flattened_body = flatten_json(body)
+    # If body is list, remove first item of every key as it generates additional not needed dot.
+    if isinstance(body, list):
+        flattened_body = {k[1:]: v for k, v in flattened_body.items()}
+    return [IntegrationGeneratorOutput(
+        name=key,
+        description='',
+        type_=determine_type(value)
+    ) for key, value in flattened_body.items()]
+
+
+def build_commands_names_dict(items: list) -> dict:
+    names_dict = defaultdict(list)
+    for item in items:
+        request_name = item.get('name', None)
+        if request_name:
+            command_name = tools.to_kebab_case(request_name)
+            names_dict[command_name].append(request_name)
+    return names_dict
+
+
+def duplicate_requests_check(commands_names_dict: dict) -> None:
+    duplicates_list = []
+    for key in commands_names_dict:
+        if len(commands_names_dict[key]) > 1:
+            duplicates_list.extend(commands_names_dict[key])
+
+    assert len(duplicates_list) == 0, f'There are requests with non-unique names: {duplicates_list}.\n' \
+                                      f'You should give a unique name to each request.\n' \
+                                      f'Names are case-insensitive and whitespaces are ignored.'

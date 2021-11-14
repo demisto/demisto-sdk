@@ -4,6 +4,7 @@ import random
 from typing import List
 
 import pytest
+
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
@@ -64,7 +65,7 @@ def get_new_task_number(playbook: Playbook):
         playbook_tasks = list(playbook.yml.read_dict().get('tasks').keys())
 
         if playbook_tasks:
-            return max([int(task_num) for task_num in playbook_tasks]) + 1
+            return max(int(task_num) for task_num in playbook_tasks) + 1
 
         playbook.yml.update({'starttaskid': '0'})
         return 0
@@ -884,11 +885,19 @@ def create_inputs_for_method(repo, current_pack, inputs_arguments):
                 pack_to_take_entity_from = random.choice(range(1, number_of_packs))
                 input_argument.append(get_entity_by_pack_number_and_entity_type(repo, pack_to_take_entity_from,
                                                                                 LIST_ARGUMENTS_TO_METHODS[arg_type]))
+
+                # The pack is not depend on packs with indicator_field because the Layout is of type incident
+                if arg_type == 'indicators_fields':
+                    continue
                 dependencies.add(f'pack_{pack_to_take_entity_from}')
 
         else:
             pack_to_take_entity_from = random.choice(range(1, number_of_packs))
             input_argument = get_entity_by_pack_number_and_entity_type(repo, pack_to_take_entity_from, arg_type)
+
+            # The pack is not depend on packs with indicator_type because the Layout is of type incident
+            if arg_type == 'indicator_type':
+                continue
             dependencies.add(f'pack_{pack_to_take_entity_from}')
 
         inputs_values[arg] = input_argument

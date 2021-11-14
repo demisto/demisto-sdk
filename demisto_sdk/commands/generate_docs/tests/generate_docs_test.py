@@ -3,13 +3,15 @@ import os
 from typing import Dict, List
 
 import pytest
+
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_json, get_yaml
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from demisto_sdk.commands.generate_docs.generate_integration_doc import (
-    append_or_replace_command_in_docs, generate_commands_section,
-    generate_integration_doc, generate_setup_section,
-    generate_single_command_section, get_command_examples)
+    append_or_replace_command_in_docs, disable_md_autolinks,
+    generate_commands_section, generate_integration_doc,
+    generate_setup_section, generate_single_command_section,
+    get_command_examples)
 from demisto_sdk.commands.generate_docs.generate_script_doc import \
     generate_script_doc
 
@@ -424,6 +426,38 @@ def test_generate_command_section_with_empty_cotext_example():
     assert '\n'.join(section) == '\n'.join(expected_section)
 
 
+def test_generate_command_section_with_empty_cotext_list():
+    """
+    When given an empty outputs list,
+    the 'Context Outputs' sections should indicate they are empty without empty tables.
+
+    Given
+    - An empty command context (as an empty list)
+
+    When
+    - Running generate_single_command_section
+
+    Then
+    -  Ensure that there is no blank table but a proper error that there is no output
+    """
+    command = {'deprecated': False, 'name': 'test1', 'outputs': []}
+
+    section, errors = generate_single_command_section(command,
+                                                      example_dict={},
+                                                      command_permissions_dict={})
+
+    expected_section = ['### test1', '***', ' ', '#### Required Permissions',
+                        '**FILL IN REQUIRED PERMISSIONS HERE**',
+                        '#### Base Command', '', '`test1`', '#### Input', '',
+                        'There are no input arguments for this command.', '',
+                        '#### Context Output', '',
+                        'There is no context output for this command.', '',
+                        '#### Command Example', '``` ```', '',
+                        '#### Human Readable Output', '\n', '']
+
+    assert '\n'.join(section) == '\n'.join(expected_section)
+
+
 def test_generate_commands_section_human_readable():
     yml_data = {
         'script': {
@@ -579,12 +613,14 @@ class TestGenerateIntegrationDoc:
         fake_readme = os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), 'fake_README.md')
         # Generate doc
         generate_integration_doc(TEST_INTEGRATION_PATH)
-        assert open(fake_readme).read() == open(
-            os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), 'README.md')).read()
+        with open(fake_readme) as fake_file:
+            with open(os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), 'README.md')) as real_file:
+                fake_data = fake_file.read()
+                assert fake_data == real_file.read()
 
-        assert "The type of the newly created user. Possible values are: Basic, Pro, Corporate. Default is Basic." \
-               in open(fake_readme).read()
-        assert "Number of users to return. Max 300. Default is 30." in open(fake_readme).read()
+                assert "The type of the newly created user. Possible values are: Basic, Pro, " \
+                       "Corporate. Default is Basic." in fake_data
+                assert "Number of users to return. Max 300. Default is 30." in fake_data
 
     def test_integration_doc_credentials_display_missing(self):
         """
@@ -600,62 +636,90 @@ class TestGenerateIntegrationDoc:
     """
         readme = os.path.join(os.path.dirname(TEST_INTEGRATION_2_PATH), 'README.md')
         # Generate doc
-        generate_integration_doc(TEST_INTEGRATION_2_PATH)
-        readme_data = open(readme).read()
-        assert readme_data == open(
-            os.path.join(os.path.dirname(TEST_INTEGRATION_2_PATH), 'README.md')).read()
-        assert '| None | The API key to use for the connection. | False |' not in readme_data
-        assert '| API Token | The API key to use for the connection. | False |' in readme_data
+        generate_integration_doc(TEST_INTEGRATION_2_PATH, skip_breaking_changes=True)
+        with open(readme) as readme_file:
+            with open(os.path.join(os.path.dirname(TEST_INTEGRATION_2_PATH), 'README.md')) as new_readme:
+                readme_data = readme_file.read()
+                assert readme_data == new_readme.read()
+                assert '| None | The API key to use for the connection. | False |' not in readme_data
+                assert '| API Token | The API key to use for the connection. | False |' in readme_data
 
 
-def test_get_command_examples_with_exclamation_mark(tmp_path):
-    """
-        Given
-            - command_examples file with exclamation mark.
-            - list of specific commands
-        When
-            - Running get_command_examples with the given command examples and specific commands.
-        Then
-            - Verify that the returned commands from the examples are only the specific sommands
-    """
-    command_examples = tmp_path / "command_examples"
+class TestGetCommandExamples:
+    @staticmethod
+    def test_examples_with_exclamation_mark(tmp_path):
+        """
+            Given
+                - command_examples file with exclamation mark.
+                - list of specific commands.
+            When
+                - Running get_command_examples with the given command examples and specific commands.
+            Then
+                - Verify that the returned commands from the examples are only the specific commands.
+        """
+        command_examples = tmp_path / "command_examples"
 
-    with open(command_examples, 'w+') as ce:
-        ce.write('!zoom-create-user\n!zoom-create-meeting\n!zoom-fetch-recording\n!zoom-list-users\n!zoom-delete-user')
+        with open(command_examples, 'w+') as ce:
+            ce.write('!zoom-create-user\n!zoom-create-meeting\n!zoom-fetch-recording\n!zoom-list-users\n!zoom-delete-user')
 
-    command_example_a = 'zoom-create-user'
-    command_example_b = 'zoom-list-users'
+        command_example_a = 'zoom-create-user'
+        command_example_b = 'zoom-list-users'
 
-    specific_commands = [command_example_a, command_example_b]
+        specific_commands = [command_example_a, command_example_b]
 
-    commands = get_command_examples(commands_file_path=command_examples, specific_commands=specific_commands)
+        commands = get_command_examples(commands_file_path=command_examples, specific_commands=specific_commands)
 
-    assert commands == [f'!{command_example_a}', f'!{command_example_b}']
+        assert commands == [f'!{command_example_a}', f'!{command_example_b}']
 
+    @staticmethod
+    def test_examples_without_exclamation_mark(tmp_path):
+        """
+            Given
+                - command_examples file without exclamation mark.
+                - list of specific commands.
+            When
+                - Running get_command_examples with the given command examples and specific commands.
+            Then
+                - Verify that the returned commands from the examples are only the specific commands.
+        """
+        command_examples = tmp_path / "command_examples"
 
-def test_get_command_examples_without_exclamation_mark(tmp_path):
-    """
-        Given
-            - command_examples file without exclamation mark.
-            - list of specific commands
-        When
-            - Running get_command_examples with the given command examples and specific commands.
-        Then
-            - Verify that the returned commands from the examples are only the specific sommands
-    """
-    command_examples = tmp_path / "command_examples"
+        with open(command_examples, 'w+') as ce:
+            ce.write('zoom-create-user\nzoom-create-meeting\nzoom-fetch-recording\nzoom-list-users\nzoom-delete-user')
 
-    with open(command_examples, 'w+') as ce:
-        ce.write('zoom-create-user\nzoom-create-meeting\nzoom-fetch-recording\nzoom-list-users\nzoom-delete-user')
+        command_example_a = 'zoom-create-user'
+        command_example_b = 'zoom-list-users'
 
-    command_example_a = 'zoom-create-user'
-    command_example_b = 'zoom-list-users'
+        specific_commands = [command_example_a, command_example_b]
 
-    specific_commands = [command_example_a, command_example_b]
+        commands = get_command_examples(commands_file_path=command_examples, specific_commands=specific_commands)
 
-    commands = get_command_examples(commands_file_path=command_examples, specific_commands=specific_commands)
+        assert commands == [f'!{command_example_a}', f'!{command_example_b}']
 
-    assert commands == [f'!{command_example_a}', f'!{command_example_b}']
+    @staticmethod
+    def test_ignored_lines(tmp_path):
+        """
+            Given
+                - command_examples file with comments and empty lines.
+            When
+                - Running get_command_examples with the given command examples.
+            Then
+                - Verify that the returned commands from the examples are only the specific commands
+        """
+        command_examples = tmp_path / "command_examples"
+
+        with open(command_examples, 'w+') as ce:
+            ce.write(
+                '# comment before command\n'
+                'zoom-create-user\n'
+                '\n'
+                '# this is a comment line\n'
+                'zoom-create-meeting\n'
+            )
+
+        commands = get_command_examples(command_examples, None)
+
+        assert commands == ['!zoom-create-user', '!zoom-create-meeting']
 
 
 def test_generate_table_section_numbered_section():
@@ -668,7 +732,8 @@ def test_generate_table_section_numbered_section():
             - Validate that the generated table has \t at the beginning of each line.
     """
 
-    from demisto_sdk.commands.generate_docs.common import generate_table_section
+    from demisto_sdk.commands.generate_docs.common import \
+        generate_table_section
 
     expected_section = ['', '    | **Type** | **Docker Image** |', '    | --- | --- |',
                         '    | python2 | demisto/python2 |', '']
@@ -679,7 +744,7 @@ def test_generate_table_section_numbered_section():
 
 
 yml_data_cases = [(
-    {"name": "test", "configuration": [
+    {'name': 'test', 'display': 'test', 'configuration': [
         {'defaultvalue': '', 'display': 'test1', 'name': 'test1', 'required': True, 'type': 8},
         {'defaultvalue': '', 'display': 'test2', 'name': 'test2', 'required': True, 'type': 8}
     ]},  # case no param with additional info field
@@ -689,7 +754,7 @@ yml_data_cases = [(
      '', '4. Click **Test** to validate the URLs, token, and connection.']  # expected
 ),
     (
-        {"name": "test", "configuration": [
+        {'name': 'test', 'display': 'test', 'configuration': [
             {'display': 'test1', 'name': 'test1', 'additionalinfo': 'More info', 'required': True, 'type': 8},
             {'display': 'test2', 'name': 'test2', 'required': True, 'type': 8}
         ]},  # case some params with additional info field
@@ -700,7 +765,7 @@ yml_data_cases = [(
          '4. Click **Test** to validate the URLs, token, and connection.']  # expected
 ),
     (
-        {"name": "test", "configuration": [
+        {'name': 'test', 'display': 'test', 'configuration': [
             {'display': 'test1', 'name': 'test1', 'additionalinfo': 'More info', 'required': True, 'type': 8},
             {'display': 'test2', 'name': 'test2', 'additionalinfo': 'Some more data', 'required': True, 'type': 8}
         ]},  # case all params with additional info field
@@ -711,7 +776,7 @@ yml_data_cases = [(
          '4. Click **Test** to validate the URLs, token, and connection.']  # expected
 ),
     (
-        {"name": "test", "configuration": [
+        {'name': 'test', 'display': 'test', 'configuration': [
             {'display': 'userName', 'displaypassword': 'password', 'name': 'userName', 'additionalinfo': 'Credentials',
              'required': True, 'type': 9},
         ]},  # case credentials parameter have displaypassword
@@ -722,7 +787,7 @@ yml_data_cases = [(
          '4. Click **Test** to validate the URLs, token, and connection.']  # expected
 ),
     (
-        {"name": "test", "configuration": [
+        {'name': 'test', 'display': 'test', 'configuration': [
             {'display': 'userName', 'name': 'userName', 'additionalinfo': 'Credentials',
              'required': True, 'type': 9},
         ]},  # case credentials parameter have no displaypassword
@@ -731,8 +796,24 @@ yml_data_cases = [(
          '', '    | **Parameter** | **Description** | **Required** |', '    | --- | --- | --- |',
          '    | userName | Credentials | True |', '    | Password |  | True |', '',
          '4. Click **Test** to validate the URLs, token, and connection.']  # expected
+),
+    (
+        {'name': 'test', 'display': 'test', 'configuration': [
+            {'display': 'test1', 'name': 'test1', 'additionalinfo': 'More info', 'required': True, 'type': 8},
+            {'display': 'API key', 'name': 'API key', 'additionalinfo': '', 'required': True, 'type': 8},
+            {'display': 'Proxy', 'name': 'Proxy', 'additionalinfo': 'non-default info.', 'required': True, 'type': 8}
+        ]},  # case some param with additional information, one that should take default, and one overriding default
+        ['1. Navigate to **Settings** > **Integrations** > **Servers & Services**.',
+         '2. Search for test.', '3. Click **Add instance** to create and configure a new integration instance.',
+         '',
+         '    | **Parameter** | **Description** | **Required** |',
+         '    | --- | --- | --- |',
+         '    | test1 | More info | True |',
+         '    | API key | The API Key to use for the connection. | True |',
+         '    | Proxy | non-default info. | True |',
+         '',
+         '4. Click **Test** to validate the URLs, token, and connection.']  # expected
 )
-
 ]
 
 
@@ -872,6 +953,90 @@ def test_add_access_data_of_type_credentials(access_data: List[Dict], credential
     Case b: 'Password' is added as default for display password name missing.
     Case c: Both display name and display password name are added.
     """
-    from demisto_sdk.commands.generate_docs.generate_integration_doc import add_access_data_of_type_credentials
+    from demisto_sdk.commands.generate_docs.generate_integration_doc import \
+        add_access_data_of_type_credentials
     add_access_data_of_type_credentials(access_data, credentials_conf)
     assert access_data == expected
+
+
+def test_generate_versions_differences_section(monkeypatch):
+    """
+        Given
+            - A new version of an integration.
+        When
+            - Running the generate_versions_differences_section command.
+        Then
+            - Add a section of differences between versions in README.
+    """
+
+    from demisto_sdk.commands.generate_docs.generate_integration_doc import \
+        generate_versions_differences_section
+    monkeypatch.setattr(
+        'builtins.input',
+        lambda _: ''
+    )
+    section = generate_versions_differences_section('', '', 'Integration_Display_Name')
+
+    expected_section = [
+        '## Breaking changes from the previous version of this integration - Integration_Display_Name',
+        '%%FILL HERE%%',
+        'The following sections list the changes in this version.',
+        '',
+        '### Commands',
+        '#### The following commands were removed in this version:',
+        '* *commandName* - this command was replaced by XXX.',
+        '* *commandName* - this command was replaced by XXX.',
+        '',
+        '### Arguments',
+        '#### The following arguments were removed in this version:',
+        '',
+        'In the *commandName* command:',
+        '* *argumentName* - this argument was replaced by XXX.',
+        '* *argumentName* - this argument was replaced by XXX.',
+        '',
+        '#### The behavior of the following arguments was changed:',
+        '',
+        'In the *commandName* command:',
+        '* *argumentName* - is now required.',
+        '* *argumentName* - supports now comma separated values.',
+        '',
+        '### Outputs',
+        '#### The following outputs were removed in this version:',
+        '',
+        'In the *commandName* command:',
+        '* *outputPath* - this output was replaced by XXX.',
+        '* *outputPath* - this output was replaced by XXX.',
+        '',
+        'In the *commandName* command:',
+        '* *outputPath* - this output was replaced by XXX.',
+        '* *outputPath* - this output was replaced by XXX.',
+        '',
+        '## Additional Considerations for this version',
+        '%%FILL HERE%%',
+        '* Insert any API changes, any behavioral changes, limitations, or '
+        'restrictions that would be new to this version.',
+        ''
+    ]
+
+    assert section == expected_section
+
+
+def test_disable_md_autolinks():
+    """
+        Given
+            - Markdown with http link.
+        When
+            - Run disable_md_autolinks.
+        Then
+            - Make sure non-md links are escaped. MD links should remain in place.
+    """
+    assert disable_md_autolinks('http://test.com') == 'http:<span>//</span>test.com'
+    no_replace_str = '(link)[http://test.com]'
+    assert disable_md_autolinks(no_replace_str) == no_replace_str
+    no_replace_str = 'nohttp://test.com'
+    assert disable_md_autolinks(no_replace_str) == no_replace_str
+    # taken from here: https://github.com/demisto/content/pull/13423/files
+    big_str = """{'language': 'python', 'status': 'success', 'status-message': '11 fixed alerts', 'new': 0, 'fixed': 11, 'alerts': [{'query': {'id': 9980089, 'pack': 'com.lgtm/python-queries', 'name': 'Statement has no effect', 'language': 'python', 'properties': {'id': 'py/ineffectual-statement', 'name': 'Statement has no effect', 'severity': 'recommendation', 'tags': ['maintainability', 'useless-code', 'external/cwe/cwe-561']}, 'url': 'https://lgtm.com/rules/9980089'}, 'new': 0, 'fixed': 0}, {'query': {'id': 1510006386081, 'pack': 'com.lgtm/python-queries', 'name': 'Clear-text storage of sensitive information', 'language': 'python', 'properties': {'id': 'py/clear-text-storage-sensitive-data', 'name': 'Clear-text storage of sensitive information', 'severity': 'error', 'tags': ['security', 'external/cwe/cwe-312', 'external/cwe/cwe-315', 'external/cwe/cwe-359']}, 'url': 'https://lgtm.com/rules/1510006386081'}, 'new': 0, 'fixed': 1}, {'query': {'id': 6780086, 'pack': 'com.lgtm/python-queries', 'name': 'Unused local variable', 'language': 'python', 'properties': {'id': 'py/unused-local-variable', 'name': 'Unused local variable', 'severity': 'recommendation', 'tags': ['maintainability', 'useless-code', 'external/cwe/cwe-563']}, 'url': 'https://lgtm.com/rules/6780086'}, 'new': 0, 'fixed': 4}, {'query': {'id': 1800095, 'pack': 'com.lgtm/python-queries', 'name': 'Variable defined multiple times', 'language': 'python', 'properties': {'id': 'py/multiple-definition', 'name': 'Variable defined multiple times', 'severity': 'warning', 'tags': ['maintainability', 'useless-code', 'external/cwe/cwe-563']}, 'url': 'https://lgtm.com/rules/1800095'}, 'new': 0, 'fixed': 4}, {'query': {'id': 3960089, 'pack': 'com.lgtm/python-queries', 'name': 'Explicit returns mixed with implicit (fall through) returns', 'language': 'python', 'properties': {'id': 'py/mixed-returns', 'name': 'Explicit returns mixed with implicit (fall through) returns', 'severity': 'recommendation', 'tags': ['reliability', 'maintainability']}, 'url': 'https://lgtm.com/rules/3960089'}, 'new': 0, 'fixed': 0}, {'query': {'id': 1780094, 'pack': 'com.lgtm/python-queries', 'name': 'Wrong number of arguments in a call', 'language': 'python', 'properties': {'id': 'py/call/wrong-arguments', 'name': 'Wrong number of arguments in a call', 'severity': 'error', 'tags': ['reliability', 'correctness', 'external/cwe/cwe-685']}, 'url': 'https://lgtm.com/rules/1780094'}, 'new': 0, 'fixed': 2}, {'query': {'id': 10030095, 'pack': 'com.lgtm/python-queries', 'name': 'File is not always closed', 'language': 'python', 'properties': {'id': 'py/file-not-closed', 'name': 'File is not always closed', 'severity': 'warning', 'tags': ['efficiency', 'correctness', 'resources', 'external/cwe/cwe-772']}, 'url': 'https://lgtm.com/rules/10030095'}, 'new': 0, 'fixed': 0}]} | https://lgtm.com/projects/g/my-devsecops/moon/rev/pr- """  # noqa
+    res = disable_md_autolinks(big_str)
+    assert 'http://' not in res
+    assert res.count('https:<span>//</span>') == 8

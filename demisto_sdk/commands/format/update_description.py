@@ -2,8 +2,9 @@ import re
 from typing import Tuple
 
 import click
-from demisto_sdk.commands.common.tools import find_type
+
 from demisto_sdk.commands.common.constants import BETA_INTEGRATION_DISCLAIMER
+from demisto_sdk.commands.common.tools import find_type
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
@@ -30,8 +31,10 @@ class DescriptionFormat(BaseUpdate):
                  **kwargs):
         super().__init__(input, output, path, from_version, no_validate, verbose=verbose, **kwargs)
         description_type = input.replace('_description.md', '.yml')
-
-        self.is_beta = True if find_type(description_type).value == 'betaintegration' else False
+        self.is_beta = False
+        file_type = find_type(description_type)
+        if file_type:
+            self.is_beta = True if find_type(description_type).value == 'betaintegration' else False
         with open(self.source_file, 'r') as f:
             self.description_content = f.read()
 

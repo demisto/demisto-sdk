@@ -4,9 +4,10 @@ from typing import Tuple
 import click
 
 from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
+                                                   BETA_INTEGRATION,
                                                    FEED_REQUIRED_PARAMS,
                                                    FETCH_REQUIRED_PARAMS,
-                                                   INTEGRATION,BETA_INTEGRATION, TYPE_PWSH)
+                                                   INTEGRATION, TYPE_PWSH)
 from demisto_sdk.commands.common.tools import find_type
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,

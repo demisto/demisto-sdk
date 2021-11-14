@@ -67,6 +67,7 @@ class LintManager:
         # Gather facts for manager
         self._facts: dict = self._gather_facts()
         self._prev_ver = prev_ver  # None if not inserted (and not master as was the default value)
+        print(self._prev_ver)
         self._all_packs = all_packs
         # Set 'git' to true if no packs have been specified, 'lint' should operate as 'lint -g'
         lint_no_packs_command = not git and not all_packs and not input

@@ -636,7 +636,7 @@ def secrets(config, **kwargs):
 @click.option("--no-pwsh-analyze", is_flag=True, help="Do NOT run powershell analyze")
 @click.option("--no-pwsh-test", is_flag=True, help="Do NOT run powershell test")
 @click.option("-kc", "--keep-container", is_flag=True, help="Keep the test container")
-@click.option("--prev-ver", help="Previous branch or SHA1 commit to run checks against") # was: default = master
+@click.option("--prev-ver", help="Previous branch or SHA1 commit to run checks against")
 @click.option("--test-xml", help="Path to store pytest xml results", type=click.Path(exists=True, resolve_path=True))
 @click.option("--failure-report", help="Path to store failed packs report",
               type=click.Path(exists=True, resolve_path=True))
@@ -651,10 +651,10 @@ def secrets(config, **kwargs):
 )
 @click.option("-dt", "--docker-timeout", default=60,
               help="The timeout (in seconds) for requests done by the docker client.", type=int)
-@click.option("--check-dependent", is_flag=True, help="Run unit tests and lint on all packages that are dependent on the found"
-                                        " modified packages.")
 @click.option("--id-set-path", help="Path to id_set.json, relevant for when using the --check-dependent flag.",
               type=str)
+@click.option("--check-dependent", is_flag=True, help="Run unit tests and lint on all packages that are dependent on the found"
+                                        " modified packages.")
 
 def lint(**kwargs):
     """Lint command will perform:

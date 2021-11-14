@@ -35,7 +35,7 @@ from demisto_sdk.commands.download.downloader import Downloader
 from demisto_sdk.commands.error_code_info.error_code_info import \
     generate_error_code_information
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
-    PackDependencies
+    PackDependencies, get_packs_dependent_on_given_packs, calculate_all_packs_dependencies
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.generate_docs.generate_integration_doc import \
     generate_integration_doc
@@ -636,7 +636,7 @@ def secrets(config, **kwargs):
 @click.option("--no-pwsh-analyze", is_flag=True, help="Do NOT run powershell analyze")
 @click.option("--no-pwsh-test", is_flag=True, help="Do NOT run powershell test")
 @click.option("-kc", "--keep-container", is_flag=True, help="Keep the test container")
-@click.option("--prev-ver", help="Previous branch or SHA1 commit to run checks against")
+@click.option("--prev-ver", help="Previous branch or SHA1 commit to run checks against") # was: default = master
 @click.option("--test-xml", help="Path to store pytest xml results", type=click.Path(exists=True, resolve_path=True))
 @click.option("--failure-report", help="Path to store failed packs report",
               type=click.Path(exists=True, resolve_path=True))
@@ -1435,7 +1435,7 @@ def update_release_notes(**kwargs):
     '-h', '--help'
 )
 @click.option(
-    "-i", "--input", help="Pack path to find dependencies. For example: Pack/HelloWorld", required=True,
+    "-i", "--input", help="Pack path to find dependencies. For example: Pack/HelloWorld", required=False,
     type=click.Path(exists=True, dir_okay=True))
 @click.option(
     "-idp", "--id-set-path", help="Path to id set json file.", required=False)
@@ -1446,28 +1446,62 @@ def update_release_notes(**kwargs):
               is_flag=True)
 @click.option("--use-pack-metadata", help="Whether to update the dependencies from the pack metadata.", required=False,
               is_flag=True)
+@click.option("--all-packs-dependencies", help="Return a json file with ALL content packs dependencies. "
+                                               "The json file will be saved under the path given in the "
+                                               "'--output-path' argument", required=False, is_flag=True)
+@click.option("--output-path", help="The destination path for the packs dependencies json file. This argument is "
+                                    "only relevant for when using the '--all-packs-dependecies' flag.", required=False)
+@click.option("--get-depndent-on", help="Get only the packs dependent ON the given pack.", required=False,
+              is_flag=True)
+
 def find_dependencies(**kwargs):
     """Find pack dependencies and update pack metadata."""
     check_configuration_file('find-dependencies', kwargs)
     update_pack_metadata = not kwargs.get('no_update')
-    input_path: Path = Path(kwargs["input"])  # To not shadow python builtin `input`
+    input_path = Path(kwargs.get('input')) # TODO: verify
+    #input_path: Path = Path(kwargs["input"])  # To not shadow python builtin `input`
     verbose = kwargs.get('verbose', False)
     id_set_path = kwargs.get('id_set_path', '')
     use_pack_metadata = kwargs.get('use_pack_metadata', False)
-    if len(input_path.parts) != 2 or input_path.parts[-2] != "Packs":
-        print_error(f"Input path ({input_path}) must be formatted as 'Packs/<some pack name>'. "
-                    f"For example, Packs/HelloWorld")
-        sys.exit(1)
+    all_packs_dependencies = kwargs.get('all-packs-dependencies', False)
+    get_dependent_on = kwargs.get('get-depndent-on', False)
+    output_path = kwargs.get('output-path')
+
     try:
-        PackDependencies.find_dependencies(
-            pack_name=input_path.name,
-            id_set_path=str(id_set_path),
-            verbose=verbose,
-            update_pack_metadata=update_pack_metadata,
-            use_pack_metadata=use_pack_metadata
-        )
+        if all_packs_dependencies:
+            pack_dependencies_result = {} # TODO: check if can do without
+            calculate_all_packs_dependencies(pack_dependencies_result, id_set_path, output_path)
+            print_success(f"The packs dependencies json was succesfully saved to {output_path}")
+
+        elif get_dependent_on:
+            dependent_on = []
+            get_packs_dependent_on_given_packs(input_path.name, id_set_path, dependent_on, False)
+
+        else:
+            if not input_path:
+                print_error(f"Please provide an input path. The path should be formatted as 'Packs/<some pack name>'. "
+                            f"For example, Packs/HelloWorld")
+                sys.exit(1)
+            elif len(input_path.parts) != 2 or input_path.parts[-2] != "Packs":
+                print_error(f"Input path ({input_path}) must be formatted as 'Packs/<some pack name>'. "
+                            f"For example, Packs/HelloWorld")
+                sys.exit(1)
+            if output_path:
+                print_warning(f"You used the '--outputs-path' argument, which is only relevant for when using the"
+                              f" '--all-packs-dependencies' flag. Ignoring this argument.")
+
+                PackDependencies.find_dependencies(
+                    pack_name=input_path.name,
+                    id_set_path=str(id_set_path),
+                    verbose=verbose,
+                    update_pack_metadata=update_pack_metadata,
+                    use_pack_metadata=use_pack_metadata,
+                )
+
     except ValueError as exp:
         print_error(str(exp))
+
+
 
 
 # ====================== postman-codegen ====================== #
@@ -1881,8 +1915,6 @@ def error_code(config, **kwargs):
 @main.resultcallback()
 def exit_from_program(result=0, **kwargs):
     sys.exit(result)
-
-# todo: add download from demisto command
 
 
 if __name__ == '__main__':

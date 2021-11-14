@@ -29,16 +29,16 @@ from demisto_sdk.commands.common.tools import (find_file, find_type,
                                                is_external_repository,
                                                print_error, print_v,
                                                print_warning,
-                                               retrieve_file_ending, pack_name_to_path)
+                                               retrieve_file_ending,
+                                               pack_name_to_path)
 from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, PWSH_CHECKS,
                                                PY_CHCEKS,
                                                build_skipped_exit_code,
                                                generate_coverage_report,
                                                get_test_modules, validate_env,
-                                               get_packs_dependent_on_given_packs,
-                                               get_full_pack_path_by_name)
+                                               )
 from demisto_sdk.commands.lint.linter import Linter
-
+from demisto_sdk.commands.find_dependencies.find_dependencies import get_packs_dependent_on_given_packs
 logger = logging.getLogger('demisto-sdk')
 sha1Regex = re.compile(r'\b[0-9a-fA-F]{40}\b', re.M)
 
@@ -53,6 +53,10 @@ class LintManager:
         verbose(int): Whether to output a detailed response.
         quiet(bool): Whether to output a quiet response.
         log_path(str): Path to all levels of logs.
+        prev_ver(str): Previous branch or SHA1 commit to run checks against.
+        json_file_path(str): Path to a json file to write the run resutls to.
+        id_set_path(str): Path to an existing id_set.json.
+        check_dependent_packs(bool): Whether to run lint also on the packs dependent on the given packs.
     """
 
     def __init__(self, input: str, git: bool, all_packs: bool, quiet: bool, verbose: int, prev_ver: str,
@@ -76,14 +80,17 @@ class LintManager:
                                                     base_branch=self._prev_ver)
         self._id_set_path = id_set_path
         self._check_dependent_packs = check_dependent_packs
+        print(self._check_dependent_packs)
         if self._check_dependent_packs:
-            # TODO: check cases where this shouldnt hit
-            dependent = []
+            dependent = [] # TODO: check if i can insert it
             dependent = [PosixPath(pack_name_to_path(pack)) for pack in
                          get_packs_dependent_on_given_packs(self._pkgs, self._id_set_path, dependent)]
+            if True:
+                print(f"Found {Colors.Fg.cyan}{len(dependent)}{Colors.reset} dependent packages. Executing lint and "
+                      f"test on dependent packages as well.")
+
             self._pkgs = self._pkgs + dependent
             self._pkgs = list(set(self._pkgs)) # remove dups
-            print(len(self._pkgs))
 
         if json_file_path:
             if os.path.isdir(json_file_path):
@@ -237,8 +244,12 @@ class LintManager:
 
     @staticmethod
     def _filter_changed_packages(content_repo: git.Repo, pkgs: List[Path], base_branch: str) -> List[Path]:
-        """ Checks which packages had changes using git (working tree, index, diff between HEAD and master in them and should
-        run on Lint.
+        """ Checks which packages had changes in them and should run on Lint.
+        The diff is calculated using git, and is done by the follwing cases:
+        - case 1: If the active branch is 'master', the diff is between master and the previous commit.
+        - case 2: If the active branch is not master, and no other base branch is specified to comapre to,
+         the diff is between the active branch and master.
+        - case 3: If the base branch is specified, the diff is between the active branch and the given base branch.
 
         Args:
             pkgs(List[Path]): pkgs to check
@@ -252,17 +263,20 @@ class LintManager:
             f"{content_repo.active_branch}{Colors.reset}")
         staged_files = {content_repo.working_dir / Path(item.b_path).parent for item in
                         content_repo.active_branch.commit.tree.diff(None, paths=pkgs)}
-        if content_repo.active_branch == 'master' and base_branch == 'master':  # TODO: because this is the default value. this should be changed to something that makes more sense
-            # case 1: comparing master against the latest previous commit
-            last_common_commit = content_repo.remote().refs.master.commit.parents[0]
-        else:
-            # case 2: comparing master against a different commit, not necissarry the latest
-            # case 3: comparing a different branch (not master) to a different branch (that can be master)
-            if sha1Regex.match(base_branch):
-                # if the given different branch is given as a commit hash
-                last_common_commit = base_branch
+
+        if not base_branch:
+            if content_repo.active_branch == 'master':
+                # case 1: comparing master against the latest previous commit
+                last_common_commit = content_repo.remote().refs.master.commit.parents[0]
             else:
-                # if the given different branch is given as a branch name
+                # case 2: active branch is not master, compaire against master since no other base branch is specified
+                last_common_commit = content_repo.merge_base(content_repo.active_branch.commit,
+                                                             f'{content_repo.remote()}/master')
+        else:
+            # case 3: comparing the active branch (either master or another branch) against a specific commit or branch
+            if sha1Regex.match(base_branch): # if the base branch is given as a commit hash
+                last_common_commit = base_branch
+            else: # if the base branch is given as a branch name
                 last_common_commit = content_repo.merge_base(content_repo.active_branch.commit,
                                                              f'{content_repo.remote()}/{base_branch}')
         changed_from_base = {content_repo.working_dir / Path(item.b_path).parent for item in

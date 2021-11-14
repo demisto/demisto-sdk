@@ -11,16 +11,18 @@ import networkx as nx
 from requests import RequestException
 
 from demisto_sdk.commands.common import constants
-from demisto_sdk.commands.common.constants import GENERIC_COMMANDS_NAMES, BASE_PACK, PACKS_DIR, PACKS_FULL_PATH,\
-    IGNORED_FILES
+from demisto_sdk.commands.common.constants import GENERIC_COMMANDS_NAMES, BASE_PACK, PACKS_DIR, \
+    IGNORED_FILES, ALL_PACKS_DEPENDENCIES_DEFAULT_PATH
 from demisto_sdk.commands.common.tools import (get_content_id_set,
                                                is_external_repository,
-                                               print_error, print_warning)
+                                               print_error, print_warning,
+                                               get_content_path)
 from demisto_sdk.commands.common.update_id_set import merge_id_sets
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 MINIMUM_DEPENDENCY_VERSION = LooseVersion('6.0.0')
 COMMON_TYPES_PACK = 'CommonTypes'
+PACKS_FULL_PATH = os.path.join(get_content_path(), PACKS_DIR)  # full path to Packs folder in content repo
 
 import argparse
 import logging
@@ -1635,8 +1637,7 @@ def calculate_single_pack_dependencies(pack: str, dependency_graph: object) -> T
         pack: The pack name
     """
     install_logging('Calculate_Packs_Dependencies.log', include_process_name=True) # TODO: fix
-    first_level_dependencies = {}
-    all_level_dependencies = []
+
     try:
         logging.info(f"Calculating {pack} pack dependencies.")
         subgraph = PackDependencies.get_dependencies_subgraph_by_dfs(dependency_graph, pack)
@@ -1644,7 +1645,7 @@ def calculate_single_pack_dependencies(pack: str, dependency_graph: object) -> T
             logging.debug(f'Iterating dependency {dependency_pack} for pack {pack}')
             additional_data['mandatory'] = pack in additional_data['mandatory_for_packs']
             del additional_data['mandatory_for_packs']
-            first_level_dependencies, all_level_dependencies = parse_for_pack_metadata(subgraph, pack)
+        first_level_dependencies, all_level_dependencies = parse_for_pack_metadata(subgraph, pack) # TODO: verify out of loop
     except Exception:
         logging.exception(f"Failed calculating {pack} pack dependencies")
         raise
@@ -1696,12 +1697,14 @@ def get_id_set(id_set_path: str) -> dict:
     Returns:
         The parsed content of id_set
     """
-    with open(id_set_path, 'r') as id_set_file:
-        id_set = json.load(id_set_file)
+    if id_set_path:
+        with open(id_set_path, 'r') as id_set_file:
+            id_set = json.load(id_set_file)
+    else:
+        id_set = IDSetCreator(print_logs=False).create_id_set()
     return id_set
 
-
-def calculate_all_packs_dependencies(pack_dependencies_result: dict, id_set: dict, packs: list) -> None:
+def calculate_all_packs_dependencies(pack_dependencies_result: dict, id_set_path: str, output_path: str = ALL_PACKS_DEPENDENCIES_DEFAULT_PATH) -> None:
     """
     Calculates the pack dependencies and adds them to 'pack_dependencies_result' in parallel.
     First - the method generates the full dependency graph.
@@ -1733,6 +1736,9 @@ def calculate_all_packs_dependencies(pack_dependencies_result: dict, id_set: dic
             logging.exception('Failed to collect pack dependencies results')
             raise
 
+    id_set = get_id_set(id_set_path)
+    packs = select_packs_for_calculation()
+
     # Generating one graph with dependencies for all packs
     dependency_graph = get_all_packs_dependency_graph(id_set, packs)
 
@@ -1741,3 +1747,53 @@ def calculate_all_packs_dependencies(pack_dependencies_result: dict, id_set: dic
         for pack in dependency_graph:
             futures.append(pool.schedule(calculate_single_pack_dependencies, args=(pack, dependency_graph), timeout=10))
         wait_futures_complete(futures=futures, done_fn=add_pack_metadata_results)
+        logging.info(f"Number of created pack dependencies entries: {len(pack_dependencies_result.keys())}")
+        # finished iteration over pack folders
+        logging.success("Finished dependencies calculation")
+
+        with open(output_path, 'w') as pack_dependencies_file:
+            json.dump(pack_dependencies_result, pack_dependencies_file, indent=4) # TODO: verify this part is working
+
+        logging.success(f"Created packs dependencies file at: {output_path}")
+
+def get_packs_dependent_on_given_packs(packs, id_set_path, dependent_packs, silent_mode=True):
+    """
+
+    Args:
+        packs: A pack or a list of packs of interest, to resulted packs will be dependent on these packs.
+        id_set_path: Path to id_set.json file.
+        dependent_packs:  The list to which the results should be added.
+        silent_mode: When True, will not print logs. False will print logs.
+
+    Returns:
+        A list with the packs dependent on the given packs.
+    """
+
+    def collect_dependent_packs(results) -> None:
+        first_level_dependencies = results
+        print(f'First Level Dependencies: {first_level_dependencies.keys()}')
+        print(f'Dependent Packs: {dependent_packs}')
+        dependent_packs.extend(first_level_dependencies.keys())
+
+    if type(packs) is not list:
+        packs = [packs]
+
+    id_set = get_id_set(id_set_path)
+    all_packs = select_packs_for_calculation()
+    dependency_graph = PackDependencies.build_all_dependencies_graph(all_packs, id_set=id_set, verbose=False)
+    reverse_dependency_graph = nx.DiGraph.reverse(dependency_graph)
+    pack_names = [get_pack_name(pack_path) for pack_path in packs]
+    with ProcessPoolHandler() as pool:
+        futures = []
+        for pack in pack_names:
+            futures.append(
+                pool.schedule(calculate_single_pack_dependencies, args=(str(pack), reverse_dependency_graph),
+                              timeout=10))
+        wait_futures_complete(futures=futures, done_fn=collect_dependent_packs)
+
+    if not silent_mode:
+        # print the found pack dependency results
+        click.echo(click.style(f"Found {len(dependent_packs)} dependent packs:", bold=True))
+        click.echo(click.style(dependent_packs, bold=True))
+
+    return dependent_packs

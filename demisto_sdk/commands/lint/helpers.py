@@ -1,6 +1,5 @@
 # STD python packages
 import io
-import json
 import logging
 import os
 import re
@@ -11,12 +10,8 @@ import tarfile
 import textwrap
 from contextlib import contextmanager
 from functools import lru_cache
-from pathlib import Path, PosixPath
+from pathlib import Path
 from typing import Dict, Generator, List, Optional, Union
-from pebble import ProcessPool, ProcessFuture
-from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
-import networkx as nx
-from concurrent.futures import as_completed
 
 # Third party packages
 import coverage
@@ -25,27 +20,11 @@ import docker.errors
 import git
 import requests
 from docker.models.containers import Container
-import argparse
-import json
-import logging
-import os
-from concurrent.futures import as_completed
-from contextlib import contextmanager
-from pprint import pformat
-from typing import Tuple, Iterable, List, Callable
-
-from pebble import ProcessPool, ProcessFuture
 
 # Local packages
 from demisto_sdk.commands.common.constants import (TYPE_PWSH, TYPE_PYTHON,
                                                    DemistoException)
-from demisto_sdk.commands.common.tools import print_warning, run_command_os, get_pack_name
-from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies, parse_for_pack_metadata
-
-CONTENT_ROOT_PATH = '/Users/nmaimon/dev/demisto/content'  # full path to content root repo TODO: fix
-PACKS_FOLDER = "Packs"  # name of base packs folder inside content repo
-PACKS_FULL_PATH = os.path.join(CONTENT_ROOT_PATH, PACKS_FOLDER)  # full path to Packs folder in content repo
-LANDING_PAGE_SECTIONS_PATH = os.path.abspath(os.path.join(__file__, '../landingPage_sections.json'))
+from demisto_sdk.commands.common.tools import print_warning, run_command_os
 
 # Python2 requirements
 PYTHON2_REQ = ["flake8", "vulture"]
@@ -567,89 +546,3 @@ def generate_coverage_report(html=False, xml=False, report=True, cov_dir='covera
         except coverage.misc.CoverageException as warning:
             logger.warning(str(warning))
             return
-@contextmanager
-def ProcessPoolHandler() -> ProcessPool:
-    """ Process pool Handler which terminate all processes in case of Exception.
-
-    Yields:
-        ProcessPool: Pebble process pool.
-    """
-    with ProcessPool(max_workers=3) as pool:
-        try:
-            yield pool
-        except Exception:
-            logging.exception("Gracefully release all resources due to Error...")
-            raise
-        finally:
-            pool.close()
-            pool.join()
-
-def get_packs_dependent_on_given_packs(packs, id_set_path, dependent_packs):
-
-    def collect_dependent_packs(results) -> None:
-        first_level_dependencies = results
-        print(f'First Level Dependencies: {first_level_dependencies.keys()}')
-        print(f'Dependent Packs: {dependent_packs}')
-        dependent_packs.extend(first_level_dependencies.keys())
-
-    id_set = get_id_set(id_set_path)
-    all_packs = select_packs_for_calculation()
-    dependency_graph = PackDependencies.build_all_dependencies_graph(all_packs, id_set=id_set, verbose=False)
-    reverse_dependency_graph = nx.DiGraph.reverse(dependency_graph)
-    pack_names = [get_pack_name(pack_path) for pack_path in packs]
-    with ProcessPoolHandler() as pool:
-        futures = []
-        for pack in pack_names:
-            futures.append(pool.schedule(calculate_single_pack_dependencies, args=(str(pack), reverse_dependency_graph), timeout=10))
-        wait_futures_complete(futures=futures, done_fn=collect_dependent_packs)
-    return dependent_packs
-
-def select_packs_for_calculation() -> list:
-    """
-    Select the packs on which the dependencies will be calculated on
-    Returns:
-        A list of packs
-    """
-    packs = []
-    for pack in os.scandir(PACKS_FULL_PATH):
-        if not pack.is_dir():
-            logging.warning(f"Skipping dependency calculation of {pack.name} pack.")
-            continue  # skipping ignored packs
-        packs.append(pack.name)
-    return packs
-
-def wait_futures_complete(futures: List[ProcessFuture], done_fn):
-    """Wait for all futures to complete, Raise exception if occurred.
-
-    Args:
-        futures: futures to wait for.
-        done_fn: Function to run on result.
-    Raises:
-        Exception: Raise caught exception for further cleanups.
-    """
-    for future in as_completed(futures):
-        try:
-            result = future.result()
-            done_fn(result)
-        except Exception as e:
-            logging.exception(e)
-            raise
-
-
-def calculate_single_pack_dependencies(pack: str, dependency_graph):
-    subgraph = PackDependencies.get_dependencies_subgraph_by_dfs(dependency_graph, pack)
-    # for dependency_pack, additional_data in subgraph.nodes(data=True):
-    first_level_dependencies, _ = parse_for_pack_metadata(subgraph, pack)
-    return first_level_dependencies
-
-def get_id_set(id_set_path: str):
-    if id_set_path:
-        with open(id_set_path, 'r') as id_set_file:
-            id_set = json.load(id_set_file)
-    else:
-        id_set = IDSetCreator(print_logs=False).create_id_set()
-    return id_set
-
-def get_full_pack_path_by_name(pack, content_packs_paths):
-    content_pack_path = str(content_packs_paths[0]).split('Packs')[0]
-    return PosixPath(content_pack_path + 'Packs/' + pack)  # TODO: make less stupid

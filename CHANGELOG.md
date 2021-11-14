@@ -5,6 +5,8 @@
 * Added a validation to prevent contributors from using the `fromlicense` key as a configuration parameter in an integration's YML
 * Added a validation to ensure that the type for **API token** (and similar) parameters are configured correctly as a `credential` type in the integration configuration YML.
 * Added an assertion that checks for duplicated requests' names when generating an integration from a postman collection.
+* Added support for [.env files](https://pypi.org/project/python-dotenv/). You can now add a `.env` file to your repository with the logging information instead of setting a global environment variables.
+* When running **lint** command with --keep-container flag, the docker images are committed.
 
 # 1.5.2
 * Added a validation to **update-release-notes** command to ensure that the `--version` flag argument is in the right format.

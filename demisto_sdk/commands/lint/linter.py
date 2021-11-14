@@ -788,7 +788,7 @@ class Linter:
                 ],
                 user=f"{os.getuid()}:4000",
                 detach=True,
-                environment=self._facts["env_vars"]
+                environment=self._facts["env_vars"],
             )
             stream_docker_container_output(container_obj.logs(stream=True))
             # wait for container to finish
@@ -819,6 +819,7 @@ class Linter:
             # Keeping container if needed or remove it
             if keep_container:
                 print(f"{log_prompt} - container name {container_name}")
+                container_obj.commit(repository=container_name.lower(), tag="pylint")
             else:
                 try:
                     container_obj.remove(force=True)
@@ -912,6 +913,7 @@ class Linter:
             # Remove container if not needed
             if keep_container:
                 print(f"{log_prompt} - Container name {container_name}")
+                container_obj.commit(repository=container_name.lower(), tag="pytest")
             else:
                 try:
                     container_obj.remove(force=True)
@@ -977,6 +979,7 @@ class Linter:
             # Keeping container if needed or remove it
             if keep_container:
                 print(f"{log_prompt} - container name {container_name}")
+                container_obj.commit(repository=container_name.lower(), tag="pwsh_analyze")
             else:
                 try:
                     container_obj.remove(force=True)
@@ -1041,6 +1044,7 @@ class Linter:
             # Keeping container if needed or remove it
             if keep_container:
                 print(f"{log_prompt} - container name {container_name}")
+                container_obj.commit(repository=container_name.lower(), tag='pwsh_test')
             else:
                 try:
                     container_obj.remove(force=True)

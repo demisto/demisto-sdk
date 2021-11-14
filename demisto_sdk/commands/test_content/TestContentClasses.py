@@ -946,11 +946,8 @@ class Integration:
 
         if len(self.instance_names) > 1:
             for instance_name in self.instance_names:
-                if self.instance_name == instance_name:
-                    self.build_context.logging_module.info(f"Found {instance_name} in the integration dict object.")
-                else:
+                if self.instance_name is not instance_name:
                     for item in integration_params:
-                        self.build_context.logging_module.info(f"Instance names in conf are: {self.instance_names}")
                         if item.instance_name == instance_name:
                             additional_instance = {'configuration': item.params, 'instance_name': item.instance_name}
                             self.additional_instances.append(additional_instance)
@@ -1133,7 +1130,8 @@ class Integration:
             module_instance['data'].append(param_conf)
         try:
             if len(self.additional_instances) > 1:
-                self.build_context.logging_module.info(f"Attempting to configure additional instances")
+                # This step allows for create_integration_instances to install any additional instances as defined in
+                # the instance_name list.
                 for additional_instance in self.additional_instances:
                     self.build_context.logging_module.info(f"Configuring - {additional_instance}")
                     module_instance['name'] = additional_instance['instance_name']
@@ -1146,7 +1144,6 @@ class Integration:
                 res = demisto_client.generic_request_func(self=client, method='PUT',
                                                           path='/settings/integration',
                                                           body=module_instance)
-
 
         except ApiException:
             self.build_context.logging_module.exception(f'Error trying to create instance for integration: {self}')

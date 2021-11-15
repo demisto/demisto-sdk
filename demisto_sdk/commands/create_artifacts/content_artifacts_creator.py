@@ -18,7 +18,7 @@ from demisto_sdk.commands.common.constants import (
     DOCUMENTATION_DIR, GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR,
     GENERIC_MODULES_DIR, GENERIC_TYPES_DIR, INCIDENT_FIELDS_DIR,
     INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR,
-    INTEGRATIONS_DIR, JOBS_DIR, LAYOUTS_DIR, PACKS_DIR, PLAYBOOKS_DIR,
+    INTEGRATIONS_DIR, LAYOUTS_DIR, LISTS_DIR, PACKS_DIR, PLAYBOOKS_DIR, JOBS_DIR,
     PRE_PROCESS_RULES_DIR, RELEASE_NOTES_DIR, REPORTS_DIR, SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR, TOOLS_DIR, WIDGETS_DIR, ContentItems)
 from demisto_sdk.commands.common.content import (Content, ContentError,
@@ -168,7 +168,8 @@ class ContentItemsHandler:
             ContentItems.GENERIC_FIELDS: [],
             ContentItems.GENERIC_TYPES: [],
             ContentItems.GENERIC_MODULES: [],
-            ContentItems.GENERIC_DEFINITIONS: []
+            ContentItems.GENERIC_DEFINITIONS: [],
+            ContentItems.LISTS: []
         }
         self.content_folder_name_to_func: Dict[str, Callable] = {
             SCRIPTS_DIR: self.add_script_as_content_item,
@@ -182,6 +183,7 @@ class ContentItemsHandler:
             REPORTS_DIR: self.add_report_as_content_item,
             LAYOUTS_DIR: self.add_layout_as_content_item,
             PRE_PROCESS_RULES_DIR: self.add_pre_process_rules_as_content_item,
+            LISTS_DIR: self.add_lists_as_content_item,
             JOBS_DIR: self.add_jobs_as_content_item,
             CLASSIFIERS_DIR: self.add_classifier_as_content_item,
             WIDGETS_DIR: self.add_widget_as_content_item,
@@ -308,6 +310,11 @@ class ContentItemsHandler:
         self.content_items[ContentItems.JOB].append({
             'name': content_object.get('name') or content_object.get('id', ''),
             'description': content_object.get('description', ''),
+        })
+
+    def add_lists_as_content_item(self, content_object: ContentObject):
+        self.content_items[ContentItems.LISTS].append({
+            'name': content_object.get('name') or content_object.get('id', '')
         })
 
     def add_classifier_as_content_item(self, content_object: ContentObject):
@@ -649,6 +656,9 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
     for pre_process_rule in pack.pre_process_rules:
         content_items_handler.handle_content_item(pre_process_rule)
         pack_report += dump_pack_conditionally(artifact_manager, pre_process_rule)
+    for list_item in pack.lists:
+        content_items_handler.handle_content_item(list_item)
+        pack_report += dump_pack_conditionally(artifact_manager, list_item)
     for job in pack.jobs:
         content_items_handler.handle_content_item(job)
         pack_report += dump_pack_conditionally(artifact_manager, job)

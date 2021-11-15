@@ -2411,15 +2411,14 @@ def test_merged_id_sets_with_legal_duplicates(caplog):
     Given
     - first_id_set.json
     - second_id_set.json
-    - they both has the same pack
+    - they both have the same playbook
 
     When
     - merged
 
     Then
-    - ensure output id_set contains items from both id_sets
-    - ensure merge not fails
-    - ensure duplicate not added to id_set
+    - ensure merge fails
+    - ensure duplicate playbook_foo1 found
 
     """
     caplog.set_level(logging.DEBUG)
@@ -2457,26 +2456,8 @@ def test_merged_id_sets_with_legal_duplicates(caplog):
 
     output_id_set, duplicates = merge_id_sets(first_id_set, second_id_set)
 
-    assert output_id_set.get_dict() == {
-        'playbooks': [
-            {
-                'playbook_foo1': {
-                    'name': 'playbook_foo1',
-                    'pack': 'foo_1'
-                }
-            }
-        ],
-        'scripts': [
-            {
-                'Script_Foo1': {
-                    'name': 'ScriptFoo',
-                    'pack': 'foo_1'
-                }
-            }
-        ]
-    }
-
-    assert not duplicates
+    assert output_id_set is None
+    assert duplicates == ['playbook_foo1']
 
 
 def test_get_filters_and_transformers_from_complex_value():

@@ -514,7 +514,14 @@ class PackDependencies:
                 playbook_data.get('implementing_playbooks', []),
                 skippable_tasks,
                 id_set['playbooks'],
-                exclude_ignored_dependencies
+                exclude_ignored_dependencies,
+            ))
+
+            playbook_dependencies.update(PackDependencies._differentiate_playbook_implementing_objects(
+                playbook_data.get('lists', []),
+                skippable_tasks,
+                id_set['Lists'],
+                exclude_ignored_dependencies,
             ))
 
             # ---- incident fields packs ----
@@ -1286,6 +1293,7 @@ class PackDependencies:
                                      ('generic_fields', 'GenericFields'),
                                      ('generic_modules', 'GenericModules'),
                                      ('generic_definitions', 'GenericDefinitions'),
+                                     ('lists', 'Lists'),
                                      ('jobs', 'Jobs')):
             if id_set_key not in id_set:
                 click.secho("\n".join((f"Warning: {id_set_key} had not been previously collected into the id_set.",
@@ -1424,8 +1432,8 @@ class PackDependencies:
             scripts_dependencies | playbooks_dependencies | layouts_dependencies | incidents_fields_dependencies |
             indicators_types_dependencies | integrations_dependencies | incidents_types_dependencies |
             classifiers_dependencies | mappers_dependencies | widget_dependencies | dashboards_dependencies |
-            reports_dependencies | generic_types_dependencies | generic_modules_dependencies | generic_fields_dependencies |
-            jobs_dependencies
+            reports_dependencies | generic_types_dependencies | generic_modules_dependencies |
+            generic_fields_dependencies | jobs_dependencies
         )
 
         return pack_dependencies
@@ -1523,7 +1531,7 @@ class PackDependencies:
             pack_name: str,
             id_set_path: str = '',
             exclude_ignored_dependencies: bool = True,
-            update_pack_metadata: bool = True,
+            update_pack_metadata: bool = False,
             silent_mode: bool = False,
             verbose: bool = False,
             debug_file_path: str = '',
@@ -1548,14 +1556,16 @@ class PackDependencies:
             Dict: first level dependencies of a given pack.
 
         """
-        if not id_set_path or not os.path.isfile(id_set_path):
-            if not skip_id_set_creation:
-                id_set = IDSetCreator(print_logs=False).create_id_set()
-            else:
-                return {}
-        else:
+
+        if id_set_path and os.path.isfile(id_set_path):
             with open(id_set_path, 'r') as id_set_file:
                 id_set = json.load(id_set_file)
+        else:
+            if skip_id_set_creation:
+                return {}
+
+            id_set = IDSetCreator(print_logs=False).create_id_set()
+
         if is_external_repository():
             print_warning('Running in a private repository, will download the id set from official content')
             id_set = get_merged_official_and_local_id_set(id_set, silent_mode=silent_mode)
@@ -1573,17 +1583,17 @@ class PackDependencies:
             complete_data=complete_data,
             id_set_data=id_set,
         )
+        if use_pack_metadata:
+            first_level_dependencies = PackDependencies.update_dependencies_from_pack_metadata(pack_name,
+                                                                                               first_level_dependencies)
         if update_pack_metadata:
             update_pack_metadata_with_dependencies(pack_name, first_level_dependencies)
+
         if not silent_mode:
             # print the found pack dependency results
             click.echo(click.style(f"Found dependencies result for {pack_name} pack:", bold=True))
             dependency_result = json.dumps(first_level_dependencies, indent=4)
             click.echo(click.style(dependency_result, bold=True))
-
-        if use_pack_metadata:
-            first_level_dependencies = PackDependencies.update_dependencies_from_pack_metadata(pack_name,
-                                                                                               first_level_dependencies)
 
         return first_level_dependencies
 

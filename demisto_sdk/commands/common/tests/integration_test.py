@@ -336,18 +336,22 @@ class TestIntegrationValidator:
         assert validator.is_valid_subtype() is answer
 
     DEFAULT_ARGS_DIFFERENT_ARG_NAME = [
-        {"name": "cve", "arguments": [{"name": "cve_id", "required": False, "default": True}]}]
+        {"name": "cve", "arguments": [{"name": "cve_id", "required": False, "default": True, 'isArray': True}]}]
     DEFAULT_ARGS_MISSING_UNREQUIRED_DEFAULT_FIELD = [
-        {"name": "email", "arguments": [{"name": "email", "required": False, "default": True}, {"name": "verbose"}]}]
+        {"name": "email", "arguments": [{"name": "email", "required": False, "default": True, 'isArray': True},
+                                        {"name": "verbose"}]}]
     DEFAULT_ARGS_MISSING_DEFAULT_PARAM_WHEN_ALLOWED = [
         {"name": "endpoint", "arguments": [{"name": "id", "required": False, "default": False}]}]
-    DEFAULT_ARGS_INVALID_PARMA_MISSING_DEFAULT = [{"name": "file", "required": True, "default": True},
+    DEFAULT_ARGS_INVALID_PARMA_MISSING_DEFAULT = [{"name": "file", "required": True, "default": True, 'isArray': True},
                                                   {"name": "verbose"}]
     DEFAULT_ARGS_INVALID_NOT_DEFAULT = [
         {"name": "email", "arguments": [{"name": "email", "required": False, "default": False}, {"name": "verbose"}]}]
     DEFAULT_ARGS_INVALID_COMMAND = [{"name": "file", "required": True, "default": False}, {"name": "verbose"}]
     DEFAULT_ARGS_MISSING_DEFAULT_PARAM_WHEN_NOT_ALLOWED = [
-        {"name": "email", "arguments": [{"name": "verbose", "required": False, "default": False}]}]
+        {"name": "email", "arguments": [{"name": "verbose", "required": False, "default": False, "isArray": True}]}]
+    DEFAULT_ARGS_NOT_ARRAY = [
+        {"name": "email", "arguments": [{"name": "email", "required": False, "default": True, "isArray": False},
+                                        {"name": "verbose"}]}]
     DEFAULT_ARGS_INPUTS = [
         (DEFAULT_ARGS_DIFFERENT_ARG_NAME, True),
         (DEFAULT_ARGS_MISSING_UNREQUIRED_DEFAULT_FIELD, True),
@@ -355,11 +359,12 @@ class TestIntegrationValidator:
         (DEFAULT_ARGS_INVALID_PARMA_MISSING_DEFAULT, False),
         (DEFAULT_ARGS_INVALID_NOT_DEFAULT, False),
         (DEFAULT_ARGS_INVALID_COMMAND, False),
-        (DEFAULT_ARGS_MISSING_DEFAULT_PARAM_WHEN_NOT_ALLOWED, False)
+        (DEFAULT_ARGS_MISSING_DEFAULT_PARAM_WHEN_NOT_ALLOWED, False),
+        (DEFAULT_ARGS_NOT_ARRAY, False)
     ]
 
     @pytest.mark.parametrize("current, answer", DEFAULT_ARGS_INPUTS)
-    def test_is_valid_default_argument_in_reputation_command(self, current, answer):
+    def test_is_valid_default_array_argument_in_reputation_command(self, current, answer):
         """
         Given: Integration reputation command with arguments.
 
@@ -371,7 +376,7 @@ class TestIntegrationValidator:
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
         validator.current_file = current
-        assert validator.is_valid_default_argument_in_reputation_command() is answer
+        assert validator.is_valid_default_array_argument_in_reputation_command() is answer
 
     MULTIPLE_DEFAULT_ARGS_1 = [
         {"name": "msgraph-list-users",
@@ -382,6 +387,7 @@ class TestIntegrationValidator:
     MULTIPLE_DEFAULT_ARGS_INVALID_1 = [
         {"name": "msgraph-list-users",
          "arguments": [{"name": "users", "required": False, "default": True}, {"name": "verbose", "default": True}]}]
+
     DEFAULT_ARGS_INPUTS = [
         (MULTIPLE_DEFAULT_ARGS_1, True),
         (MULTIPLE_DEFAULT_ARGS_2, True),
@@ -781,6 +787,33 @@ class TestIntegrationValidator:
 
             assert not validator.is_valid_parameters_display_name()
 
+    @pytest.mark.parametrize('support_level, expected_result', [('XSOAR', True), ('community', False)])
+    def test_fromlicense_in_integration_parameters_fields(self, pack, support_level, expected_result):
+        """
+        Given
+            - An integration from a contributor with not allowed key ('fromlicense') in parameters.
+        When
+            - Running is_valid_param.
+        Then
+            - an integration with an invalid parameters display name is invalid.
+        """
+        pack.pack_metadata.write_json({"support": support_level})
+        integration = pack.create_integration('contributor')
+
+        integration.yml.write_dict({'configuration': [{
+            'name': 'token',
+            'display': 'token',
+            'fromlicense': 'encrypted'
+        }]})
+
+        with ChangeCWD(pack.repo_path):
+            structure_validator = StructureValidator(integration.yml.path, predefined_scheme='integration')
+            validator = IntegrationValidator(structure_validator)
+
+            result = validator.has_no_fromlicense_key_in_contributions_integration()
+
+        assert result == expected_result
+
     def test_valid_integration_path(self, integration):
         """
         Given
@@ -950,6 +983,41 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure_validator)
 
         assert validator.name_not_contain_the_type()
+
+    @pytest.mark.parametrize('support, parameter_type, expected_result', [
+        ('xsoar', 4, False),
+        ('xsoar', 9, True),
+        ('community', 4, True),
+        ('partner', 4, True),
+    ])
+    def test_is_api_token_in_credential_type(self, pack, support, parameter_type, expected_result):
+        """
+        Given
+            - An integration with API token parameter in non credential type.
+        When
+            - Running is_api_token_in_credential_type on `xsoar` support integration and non `xsoar` integration.
+        Then
+            - Ensure the validate on `xsoar` integration support failed on invalid type,
+            the type of the parameter should be 9 (credentials).
+        """
+
+        pack.pack_metadata.write_json({
+            'support': support
+        })
+
+        integration = pack.create_integration(yml={
+            'configuration': [{
+                'display': 'API token',
+                'name': 'token',
+                'type': parameter_type  # Encrypted text failed
+            }]
+        })
+
+        with ChangeCWD(pack.repo_path):
+            structure_validator = StructureValidator(integration.yml.path, predefined_scheme='integration')
+            validator = IntegrationValidator(structure_validator)
+
+            assert validator.is_api_token_in_credential_type() == expected_result
 
     IS_SKIPPED_INPUTS = [
         ({'skipped_integrations': {"SomeIntegration": "No instance"}}, False),
@@ -1191,7 +1259,7 @@ class TestIsFeedParamsExist:
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
         validator.current_file = current
-        assert validator.is_valid_default_argument_in_reputation_command() is True
+        assert validator.is_valid_default_array_argument_in_reputation_command() is True
 
     @pytest.mark.parametrize('param', [
         {'commands': ['something']},

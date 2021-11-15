@@ -10,6 +10,7 @@ from typing import IO
 
 # Third party packages
 import click
+import dotenv
 import git
 from pkg_resources import get_distribution
 
@@ -24,6 +25,8 @@ from demisto_sdk.commands.common.tools import (find_type,
                                                print_error, print_warning)
 from demisto_sdk.commands.common.update_id_set import merge_id_sets_from_files
 from demisto_sdk.commands.convert.convert_manager import ConvertManager
+from demisto_sdk.commands.coverage_analyze.coverage_report import \
+    CoverageReport
 from demisto_sdk.commands.create_artifacts.content_artifacts_creator import \
     ArtifactsManager
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
@@ -67,7 +70,7 @@ from demisto_sdk.commands.unify.generic_module_unifier import \
 from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
 from demisto_sdk.commands.update_release_notes.update_rn_manager import \
     UpdateReleaseNotesManager
-from demisto_sdk.commands.upload.uploader import Uploader
+from demisto_sdk.commands.upload.uploader import ConfigFileParser, Uploader
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.commands.zip_packs.packs_zipper import (EX_FAIL, EX_SUCCESS,
                                                          PacksZipper)
@@ -92,6 +95,25 @@ class PathsParamType(click.Path):
         # check the validity of each of the paths
         _ = [super(PathsParamType, self).convert(path, param, ctx) for path in split_paths]
         return value
+
+
+class VersionParamType(click.ParamType):
+    """
+    Defines a click options type for use with the @click.option decorator
+
+    The type accepts a string represents a version number.
+    """
+
+    name = "version"
+
+    def convert(self, value, param, ctx):
+        version_sections = value.split('.')
+        if len(version_sections) == 3 and \
+                all(version_section.isdigit() for version_section in version_sections):
+            return value
+        else:
+            self.fail(f"Version {value} is not according to the expected format. "
+                      f"The format of version should be in x.y.z format, e.g: <2.1.3>", param, ctx)
 
 
 class DemistoSDK:
@@ -152,6 +174,7 @@ def check_configuration_file(command, args):
 )
 @pass_config
 def main(config, version, release_notes):
+    dotenv.load_dotenv()  # Load a .env file from the cwd.
     config.configuration = Configuration()
     if not os.getenv('DEMISTO_SDK_SKIP_VERSION_CHECK') or version:  # If the key exists/called to version
         cur_version = get_distribution('demisto-sdk').version
@@ -670,6 +693,62 @@ def lint(**kwargs):
     )
 
 
+# ====================== coverage-analyze ====================== #
+@main.command()
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    "-i", "--input", help="The .coverage file to analyze.",
+    default=os.path.join('coverage_report', '.coverage'),
+    type=PathsParamType(exists=True, resolve_path=True)
+)
+@click.option(
+    "--default-min-coverage", help="Default minimum coverage (for new files).",
+    default=70.0, type=click.FloatRange(0.0, 100.0)
+)
+@click.option(
+    "--allowed-coverage-degradation-percentage", help="Allowed coverage degradation percentage (for modified files).",
+    default=1.0, type=click.FloatRange(0.0, 100.0)
+)
+@click.option(
+    "--no-cache", help="Force download of the previous coverage report file.",
+    is_flag=True, type=bool)
+@click.option(
+    "--report-dir", help="Directory of the coverage report files.",
+    default='coverage_report', type=PathsParamType(resolve_path=True))
+@click.option(
+    "--report-type", help="The type of coverage report (posible values: 'text', 'html', 'xml', 'json' or 'all').", type=str)
+@click.option("--no-min-coverage-enforcement", help="Do not enforce minimum coverage.", is_flag=True)
+@click.option(
+    "--previous-coverage-report-url", help="URL of the previous coverage report.",
+    default='https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-min.json', type=str
+)
+def coverage_analyze(**kwargs):
+    try:
+        no_degradation_check = kwargs['allowed_coverage_degradation_percentage'] == 100.0
+        no_min_coverage_enforcement = kwargs['no_min_coverage_enforcement']
+
+        cov_report = CoverageReport(
+            default_min_coverage=kwargs['default_min_coverage'],
+            allowed_coverage_degradation_percentage=kwargs['allowed_coverage_degradation_percentage'],
+            coverage_file=kwargs['input'],
+            no_cache=kwargs.get('no_cache', False),
+            report_dir=kwargs['report_dir'],
+            report_type=kwargs['report_type'],
+            no_degradation_check=no_degradation_check,
+            previous_coverage_report_url=kwargs['previous_coverage_report_url']
+        )
+        cov_report.coverage_report()
+        # if no_degradation_check=True we will suppress the minimum coverage check
+        if no_degradation_check or cov_report.coverage_diff_report() or no_min_coverage_enforcement:
+            return 0
+    except Exception as error:
+        logging.getLogger('demisto-sdk').error(error)
+
+    return 1
+
+
 # ====================== format ====================== #
 @main.command()
 @click.help_option(
@@ -759,7 +838,12 @@ def format(
          "- A content entity directory that is inside a pack. For example: an Integrations "
          "directory or a Layouts directory.\n"
          "- Valid file that can be imported to Cortex XSOAR manually. For example a playbook: "
-         "helloWorld.yml", required=True
+         "helloWorld.yml", required=False
+)
+@click.option(
+    "--input-config-file",
+    type=PathsParamType(exists=True, resolve_path=True),
+    help="The path to the config file to download all the custom packs from", required=False
 )
 @click.option(
     "-z", "--zip",
@@ -782,8 +866,17 @@ def upload(**kwargs):
     DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
     * Note: Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up. *
     """
-    if kwargs.pop('zip', False):
-        pack_path = kwargs['input']
+    if kwargs['zip'] or kwargs['input_config_file']:
+        if kwargs.pop('zip', False):
+            pack_path = kwargs['input']
+            kwargs.pop('input_config_file')
+
+        else:
+            config_file_path = kwargs['input_config_file']
+            config_file_to_parse = ConfigFileParser(config_file_path=config_file_path)
+            pack_path = config_file_to_parse.parse_file()
+            kwargs.pop('input_config_file')
+
         output_zip_path = kwargs.pop('keep_zip') or tempfile.gettempdir()
         packs_unifier = PacksZipper(pack_paths=pack_path, output=output_zip_path,
                                     content_version='0.0.0', zip_all=True, quiet_mode=True)
@@ -794,7 +887,9 @@ def upload(**kwargs):
         kwargs['input'] = packs_zip_path
         kwargs['pack_names'] = pack_names
     else:
+        kwargs.pop('zip')
         kwargs.pop('keep_zip')
+        kwargs.pop('input_config_file')
 
     check_configuration_file('upload', kwargs)
     return Uploader(**kwargs).upload()
@@ -1060,6 +1155,10 @@ def generate_test_playbook(**kwargs):
                              "Integration template options: HelloWorld, HelloIAMWorld, FeedHelloWorld.\n"
                              "Script template options: HelloWorldScript")
 @click.option(
+    "-a", "--author-image", help="Path of the file 'Author_image.png'. \n "
+    "Image will be presented in marketplace under PUBLISHER section. File should be up to 4kb and dimensions of 120x50"
+)
+@click.option(
     '--demisto_mock', is_flag=True,
     help="Copy the demistomock. Relevant for initialization of Scripts and Integrations within a Pack.")
 @click.option(
@@ -1235,12 +1334,19 @@ def create_id_set(**kwargs):
     help='File path of the united id_set',
     required=True
 )
+@click.option(
+    '-fd',
+    '--fail-duplicates',
+    help="Fails the process if any duplicates are found.",
+    is_flag=True
+)
 def merge_id_sets(**kwargs):
     """Merge two id_sets"""
     check_configuration_file('merge-id-sets', kwargs)
     first = kwargs['id_set1']
     second = kwargs['id_set2']
     output = kwargs['output']
+    fail_duplicates = kwargs['fail_duplicates']
 
     _, duplicates = merge_id_sets_from_files(
         first_id_set_path=first,
@@ -1250,7 +1356,8 @@ def merge_id_sets(**kwargs):
     if duplicates:
         print_error(f'Failed to merge ID sets: {first} with {second}, '
                     f'there are entities with ID: {duplicates} that exist in both ID sets')
-        sys.exit(1)
+        if fail_duplicates:
+            sys.exit(1)
 
 
 # ====================== update-release-notes =================== #
@@ -1266,7 +1373,7 @@ def merge_id_sets(**kwargs):
     type=click.Choice(['major', 'minor', 'revision', 'maintenance', 'documentation'])
 )
 @click.option(
-    '-v', '--version', help="Bump to a specific version."
+    '-v', '--version', help="Bump to a specific version.", type=VersionParamType()
 )
 @click.option(
     '-g', '--use-git',

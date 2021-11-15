@@ -26,6 +26,7 @@ EMPTY_ID_SET = {
     'GenericFields': [],
     'GenericModules': [],
     'GenericDefinitions': [],
+    'Lists': [],
     'Jobs': []
 }
 

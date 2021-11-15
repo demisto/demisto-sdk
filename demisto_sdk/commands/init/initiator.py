@@ -121,7 +121,7 @@ class Initiator:
                 GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR, GENERIC_TYPES_DIR, JOBS_DIR]
 
     def __init__(self, output: str, name: str = '', id: str = '', integration: bool = False, template: str = '',
-                 category: str = '', script: bool = False, pack: bool = False, demisto_mock: bool = False,
+                 category: str = '', script: bool = False, pack: bool = False, author_image: str = '', demisto_mock: bool = False,
                  common_server: bool = False):
         self.output = output if output else ''
         self.id = id
@@ -129,6 +129,7 @@ class Initiator:
         self.is_integration = integration
         self.is_script = script
         self.is_pack = pack
+        self.author_image = author_image
         self.demisto_mock = demisto_mock
         self.common_server = common_server
         self.category = category
@@ -253,7 +254,6 @@ class Initiator:
             os.mkdir(path=path)
 
         self.create_pack_base_files()
-
         click.echo(
             f"Successfully created the pack {self.dir_name} in: {self.full_output_path}",
             color=LOG_COLORS.GREEN
@@ -286,7 +286,7 @@ class Initiator:
 
     def create_pack_base_files(self):
         """
-        Create empty 'README.md', '.secrets-ignore', and '.pack-ignore' files that are expected
+        Create empty 'README.md', '.secrets-ignore', '.pack-ignore' and 'Author_image.png' files that are expected
         to be in the base directory of a pack
         """
         click.echo('Creating pack base files', color=LOG_COLORS.NATIVE)
@@ -298,6 +298,14 @@ class Initiator:
 
         fp = open(os.path.join(self.full_output_path, '.pack-ignore'), 'a')
         fp.close()
+
+        # if an `Author_image.png` file was given - replace the default file with it
+        author_image_path = os.path.join(self.full_output_path, 'Author_image.png')
+        if self.author_image:
+            shutil.copyfile(self.author_image, author_image_path)
+        else:
+            fp = open(author_image_path, 'a')
+            fp.close()
 
     @staticmethod
     def create_metadata(fill_manually: bool, data: Dict = {}) -> Dict:

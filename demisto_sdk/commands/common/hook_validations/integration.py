@@ -1,5 +1,6 @@
 import os
 import re
+from pathlib import Path
 from typing import Dict, Optional
 
 import yaml
@@ -9,8 +10,9 @@ from demisto_sdk.commands.common.constants import (
     DEPRECATED_REGEXES, ENDPOINT_COMMAND_NAME, ENDPOINT_FLEXIBLE_REQUIRED_ARGS,
     FEED_REQUIRED_PARAMS, FETCH_REQUIRED_PARAMS, FIRST_FETCH,
     FIRST_FETCH_PARAM, INTEGRATION_CATEGORIES, IOC_OUTPUTS_DICT, MAX_FETCH,
-    MAX_FETCH_PARAM, PYTHON_SUBTYPES, REPUTATION_COMMAND_NAMES, TYPE_PWSH,
-    XSOAR_CONTEXT_STANDARD_URL)
+    MAX_FETCH_PARAM, PACKS_DIR, PACKS_PACK_META_FILE_NAME, PYTHON_SUBTYPES,
+    REPUTATION_COMMAND_NAMES, TYPE_PWSH, XSOAR_CONTEXT_STANDARD_URL,
+    XSOAR_SUPPORT)
 from demisto_sdk.commands.common.default_additional_info_loader import \
     load_default_additional_info_dict
 from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
@@ -79,7 +81,7 @@ class IntegrationValidator(ContentEntityValidator):
         answers = [
             super().is_valid_file(validate_rn),
             self.is_valid_subtype(),
-            self.is_valid_default_argument_in_reputation_command(),
+            self.is_valid_default_array_argument_in_reputation_command(),
             self.is_valid_default_argument(),
             self.is_proxy_configured_correctly(),
             self.is_insecure_configured_correctly(),
@@ -103,6 +105,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_there_separators_in_names(),
             self.name_not_contain_the_type(),
             self.is_valid_endpoint_command(),
+            self.is_api_token_in_credential_type(),
         ]
 
         return all(answers)
@@ -116,7 +119,7 @@ class IntegrationValidator(ContentEntityValidator):
                 validate_rn (bool): Whether to validate release notes (changelog) or not.
                 skip_test_conf (bool): If true then will skip test playbook configuration validation
                 check_is_unskipped (bool): Whether to check if the integration is unskipped.
-                conf_file (dict):
+                conf_json_data (dict): The conf.json file data.
 
             Returns:
                 bool: True if integration is valid, False otherwise.
@@ -314,13 +317,13 @@ class IntegrationValidator(ContentEntityValidator):
 
         return True
 
-    def is_valid_default_argument_in_reputation_command(self):
+    def is_valid_default_array_argument_in_reputation_command(self):
         # type: () -> bool
         """Check if a reputation command (domain/email/file/ip/url/cve)
-            has a default non required argument.
+            has a default non required argument and make sure the default value can accept array of inputs.
 
         Returns:
-            bool. Whether a reputation command hold a valid argument
+            bool. Whether a reputation command hold a valid argument which support array.
         """
         commands = self.current_file.get('script', {}).get('commands', [])
         if commands is None:
@@ -338,6 +341,12 @@ class IntegrationValidator(ContentEntityValidator):
                         if arg.get('default') is False:
                             error_message, error_code = Errors.wrong_default_argument(arg_name,
                                                                                       command_name)
+                            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                                self.is_valid = False
+                                flag = False
+                        if not arg.get('isArray'):
+                            error_message, error_code = Errors.wrong_is_array_argument(arg_name,
+                                                                                       command_name)
                             if self.handle_error(error_message, error_code, file_path=self.file_path):
                                 self.is_valid = False
                                 flag = False
@@ -1363,3 +1372,59 @@ class IntegrationValidator(ContentEntityValidator):
                               suggested_fix=Errors.suggest_fix(self.file_path))
             return False
         return True
+
+    def has_no_fromlicense_key_in_contributions_integration(self):
+        """Verifies that only xsoar supported integration can contain the `fromlicense` key in the configuration.
+
+        Returns:
+            bool: True if the key does not exist or if the support level of the integration is `xsoar`, False otherwise.
+        """
+        pack_name = get_pack_name(self.file_path)
+        if pack_name:
+            metadata_path = Path(PACKS_DIR, pack_name, PACKS_PACK_META_FILE_NAME)
+            metadata_content = self.get_metadata_file_content(metadata_path)
+
+            if metadata_content.get('support', '').lower() == XSOAR_SUPPORT:
+                return True
+
+            conf_params = self.current_file.get('configuration', [])
+            for param_name in conf_params:
+                if 'fromlicense' in param_name.keys():
+                    error_message, error_code = Errors.fromlicense_in_parameters(param_name.get('name'))
+
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                        self.is_valid = False
+                        return False
+
+            return True
+
+        else:
+            raise Exception('Could not find the pack name of the integration, '
+                            'please verify the integration is in a pack')
+
+    def is_api_token_in_credential_type(self):
+        """Checks if there are no keys with the `encrypted` type,
+            The best practice is to use the `credential` type instead of `encrypted`.
+
+        Returns:
+            bool: True if there is no a key with type encrypted False otherwise.
+        """
+        pack_name = get_pack_name(self.file_path)
+        if pack_name:
+            metadata_path = Path(PACKS_DIR, pack_name, PACKS_PACK_META_FILE_NAME)
+            metadata_content = self.get_metadata_file_content(metadata_path)
+
+            if metadata_content.get('support') != XSOAR_SUPPORT:
+                return True
+
+            conf_params = self.current_file.get('configuration', [])
+            for param in conf_params:
+                if param.get('type') == 4:
+                    error_message, error_code = Errors.api_token_is_not_in_credential_type(param.get('name'))
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                        return False
+
+            return True
+
+        raise Exception('Could not find the pack name of the integration, '
+                        'please verify the integration is in a pack')

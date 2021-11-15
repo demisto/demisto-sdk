@@ -14,7 +14,7 @@ ALLOWED_IGNORE_ERRORS = [
     'BA101', 'BA106', 'BA108', 'BA109', 'BA110', 'BA111', 'BA112', 'BA113',
     'DS107',
     'IF100', 'IF106',
-    'IN109', 'IN110', 'IN122', 'IN126', 'IN128', 'IN135', 'IN136', 'IN139',
+    'IN109', 'IN110', 'IN122', 'IN126', 'IN128', 'IN135', 'IN136', 'IN139', 'IN144', 'IN145',
     'MP106',
     'PA113', 'PA116', 'PA124', 'PA125', 'PA127',
     'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112', 'PB114', 'PB115', 'PB116',
@@ -97,6 +97,10 @@ ERROR_CODE = {
                                          'related_field': 'script.commands.name'},
     "integration_is_skipped": {'code': "IN140", 'ui_applicable': False, 'related_field': ''},
     "reputation_missing_argument": {'code': "IN141", 'ui_applicable': True, 'related_field': '<argument-name>.default'},
+    "wrong_is_array_argument": {'code': "IN144", 'ui_applicable': True, 'related_field': '<argument-name>.default'},
+    "api_token_is_not_in_credential_type": {'code': "IN145", 'ui_applicable': True, 'related_field': '<argument-name>.type'},
+    "fromlicense_in_parameters": {'code': "IN146", 'ui_applicable': True,
+                                  'related_field': '<parameter-name>.fromlicense'},
     "invalid_version_script_name": {'code': "SC100", 'ui_applicable': True, 'related_field': 'name'},
     "invalid_deprecated_script": {'code': "SC101", 'ui_applicable': False, 'related_field': 'comment'},
     "invalid_command_name_in_script": {'code': "SC102", 'ui_applicable': False, 'related_field': ''},
@@ -311,7 +315,10 @@ ERROR_CODE = {
     "invalid_generic_field_group_value": {'code': "GF100", 'ui_applicable': False, 'related_field': 'group'},
     "invalid_generic_field_id": {'code': "GF101", 'ui_applicable': False, 'related_field': 'id'},
     "non_default_additional_info": {'code': "IN142", 'ui_applicable': True, 'related_field': 'additionalinfo'},
-    "missing_default_additional_info": {'code': "IN143", 'ui_applicable': True, 'related_field': 'additionalinfo'}
+    "missing_default_additional_info": {'code': "IN143", 'ui_applicable': True, 'related_field': 'additionalinfo'},
+    "invalid_from_server_version_in_lists": {'code': "LI100", 'ui_applicable': False,
+                                             'related_field': 'fromVersion'},
+
 }
 
 
@@ -449,6 +456,19 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def api_token_is_not_in_credential_type(param_name):
+        return f"In order to allow fetching the {param_name} from an external vault, the type of the {param_name} " \
+               f"parameter should be changed from 'Encrypted' (type 4), to 'Credentials' (type 9)'. For more details" \
+               f"check the convention for credentials - " \
+               f"https://xsoar.pan.dev/docs/integrations/code-conventions#credentials"
+
+    @staticmethod
+    @error_code_decorator
+    def fromlicense_in_parameters(param_name):
+        return 'The "fromlicense" field of the {} parameter is not allowed for contributors'.format(param_name)
+
+    @staticmethod
+    @error_code_decorator
     def wrong_category(category):
         return "The category '{}' is not in the integration schemas, the valid options are:\n{}" \
             .format(category, '\n'.join(INTEGRATION_CATEGORIES))
@@ -464,6 +484,12 @@ class Errors:
     @error_code_decorator
     def wrong_default_argument(arg_name, command_name):
         return "The argument '{}' of the command '{}' is not configured as default" \
+            .format(arg_name, command_name)
+
+    @staticmethod
+    @error_code_decorator
+    def wrong_is_array_argument(arg_name, command_name):
+        return "The argument '{}' of the command '{}' is not configured as array input." \
             .format(arg_name, command_name)
 
     @staticmethod
@@ -1687,6 +1713,11 @@ class Errors:
     @error_code_decorator
     def unknown_fields_in_pre_process_rules(fields_names: str):
         return f'Unknown field(s) in Pre Process Rule: {fields_names}'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_from_server_version_in_lists(version_field):
+        return f'{version_field} field in a list item needs to be at least 6.5.0'
 
     @staticmethod
     @error_code_decorator

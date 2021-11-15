@@ -31,7 +31,7 @@ from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK, CLASSIFIERS_DIR,
     DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH, DOC_FILES_DIR,
     ID_IN_COMMONFIELDS, ID_IN_ROOT, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
-    INDICATOR_FIELDS_DIR, INTEGRATIONS_DIR, JOBS_DIR, LAYOUTS_DIR,
+    INDICATOR_FIELDS_DIR, INTEGRATIONS_DIR, LAYOUTS_DIR, LISTS_DIR, JOBS_DIR,
     OFFICIAL_CONTENT_ID_SET_PATH, PACK_METADATA_IRON_BANK_TAG,
     PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
     PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
@@ -1082,7 +1082,9 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
     if path.suffix == '.json':
         if RELEASE_NOTES_DIR in path.parts:
             return FileType.RELEASE_NOTES_CONFIG
-        if JOBS_DIR in path.parts:
+        elif LISTS_DIR in os.path.dirname(path):
+            return FileType.LISTS
+        elif JOBS_DIR in path.parts:
             return FileType.JOB
 
     # integration image
@@ -1196,6 +1198,9 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
         if 'scriptName' in _dict and 'existingEventsFilters' in _dict and 'readyExistingEventsFilters' in _dict and \
                 'newEventFilters' in _dict and 'readyNewEventFilters' in _dict:
             return FileType.PRE_PROCESS_RULES
+
+        if 'allRead' in _dict and 'truncated' in _dict:
+            return FileType.LISTS
 
         if 'definitionIds' in _dict and 'views' in _dict:
             return FileType.GENERIC_MODULE
@@ -1579,6 +1584,10 @@ def is_path_of_pre_process_rules_directory(path: str) -> bool:
     """Returns true if directory is pre-processing rules directory, false if not.
     """
     return os.path.basename(path) == PRE_PROCESS_RULES_DIR
+
+
+def is_path_of_lists_directory(path: str) -> bool:
+    return os.path.basename(path) == LISTS_DIR
 
 
 def is_path_of_classifier_directory(path: str) -> bool:

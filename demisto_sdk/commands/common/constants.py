@@ -35,6 +35,7 @@ DOC_FILES_DIR = 'doc_files'
 DOCUMENTATION_DIR = 'Documentation'
 JOBS_DIR = 'Jobs'
 PRE_PROCESS_RULES_DIR = 'PreProcessRules'
+LISTS_DIR = 'Lists'
 
 SCRIPT = 'script'
 AUTOMATION = 'automation'
@@ -44,6 +45,7 @@ TEST_PLAYBOOK = 'testplaybook'
 LAYOUT = 'layout'
 LAYOUTS_CONTAINER = 'layoutscontainer'
 PRE_PROCESS_RULES = 'pre-process-rules'
+LISTS = 'list'  # singular, as it is the prefix of the file
 INCIDENT_TYPE = 'incidenttype'
 INCIDENT_FIELD = 'incidentfield'
 INDICATOR_FIELD = 'indicatorfield'
@@ -112,6 +114,7 @@ class FileType(Enum):
     GENERIC_TYPE = 'generictype'
     GENERIC_DEFINITION = 'genericdefinition'
     PRE_PROCESS_RULES = 'pre-process-rule'
+    LISTS = 'list'
     JOB = 'job'
 
 
@@ -138,6 +141,7 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.GENERIC_MODULE: 'Modules',
     FileType.GENERIC_TYPE: 'Object Types',
     FileType.GENERIC_FIELD: 'Object Fields',
+    FileType.LISTS: 'Lists',
     FileType.JOB: 'Jobs'
 }
 
@@ -164,6 +168,7 @@ ENTITY_TYPE_TO_DIR = {
     FileType.GENERIC_MODULE.value: GENERIC_MODULES_DIR,
     FileType.GENERIC_FIELD.value: GENERIC_FIELDS_DIR,
     FileType.GENERIC_TYPE.value: GENERIC_TYPES_DIR,
+    FileType.LISTS.value: LISTS_DIR,
     FileType.JOB.value: JOBS_DIR
 }
 
@@ -191,6 +196,7 @@ CONTENT_ENTITIES_DIRS = [
     GENERIC_MODULES_DIR,
     GENERIC_DEFINITIONS_DIR,
     PRE_PROCESS_RULES_DIR,
+    LISTS_DIR,
     JOBS_DIR
 ]
 
@@ -208,7 +214,7 @@ CONTENT_ENTITY_UPLOAD_ORDER = [
     LAYOUTS_DIR,
     DASHBOARDS_DIR,
     PRE_PROCESS_RULES_DIR,
-    DASHBOARDS_DIR,
+    LISTS_DIR,
     JOBS_DIR
 ]
 
@@ -544,6 +550,7 @@ ID_IN_ROOT = [  # entities in which 'id' key is in the root
     'layoutscontainer',
     'mapper',
     'pre_process_rule',
+    'lists',
     JOB
 ]
 
@@ -805,6 +812,7 @@ DIR_LIST_FOR_REGULAR_ENTETIES = [
     INDICATOR_TYPES_DIR,
     CONNECTIONS_DIR,
     INDICATOR_FIELDS_DIR,
+    LISTS_DIR,
     JOBS_DIR
 ]
 PACKS_DIRECTORIES = [
@@ -1202,6 +1210,8 @@ VALIDATED_PACK_ITEM_TYPES = [
     'Classifiers',
     'Layouts',
     'PreProcessRules',
+    'Lists',
+    # todo Jobs?
 ]
 
 FIRST_FETCH = 'first_fetch'
@@ -1265,6 +1275,7 @@ class ContentItems(Enum):
     GENERIC_FIELDS = 'genericfield'
     GENERIC_TYPES = 'generictype'
     PRE_PROCESS_RULES = 'pre-process-rule'
+    LISTS = 'list'
     JOB = 'job'
 
 
@@ -1283,6 +1294,7 @@ CONTENT_ITEMS_DISPLAY_FOLDERS = {
     CLASSIFIERS_DIR,
     WIDGETS_DIR,
     JOBS_DIR
+    LISTS_DIR,
 }
 
 

@@ -59,7 +59,7 @@ class Downloader:
         pack_content (dict): The pack content that maps the pack
     """
 
-    def __init__(self, output: str, input: str, regex: str, force: bool = False, insecure: bool = False,
+    def __init__(self, output: str, input: str, regex: str = '', force: bool = False, insecure: bool = False,
                  verbose: bool = False, list_files: bool = False, all_custom_content: bool = False,
                  run_format: bool = False):
         logging.disable(logging.CRITICAL)
@@ -70,7 +70,7 @@ class Downloader:
         self.insecure = insecure
         self.log_verbose = verbose
         self.list_files = list_files
-        self.all_custom_content = all_custom_content or regex
+        self.all_custom_content = all_custom_content
         self.run_format = run_format
         self.client = None
         self.custom_content_temp_dir = mkdtemp()
@@ -131,7 +131,7 @@ class Downloader:
                 output_flag = False
                 print_color("Error: Missing option '-o' / '--output'.", LOG_COLORS.RED)
             if not self.input_files:
-                if not self.all_custom_content:
+                if not self.all_custom_content and not self.regex:
                     input_flag = False
                     print_color("Error: Missing option '-i' / '--input'.", LOG_COLORS.RED)
             if not input_flag or not output_flag:
@@ -235,7 +235,7 @@ class Downloader:
         if self.regex:
             for input_file in self.input_files:
                 input_files_regex_match.append(input_file) if re.search(self.regex, input_file) else None
-        self.input_files = input_files_regex_match
+            self.input_files = input_files_regex_match
 
     def verify_output_pack_is_pack(self) -> bool:
         """

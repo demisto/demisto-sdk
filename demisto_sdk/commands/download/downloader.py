@@ -231,8 +231,8 @@ class Downloader:
         Handles the case where the regex flag is given
         :return: None
         """
+        input_files_regex_match = []
         if self.regex:
-            input_files_regex_match = list()
             for input_file in self.input_files:
                 input_files_regex_match.append(input_file) if re.search(self.regex, input_file) else None
         self.input_files = input_files_regex_match

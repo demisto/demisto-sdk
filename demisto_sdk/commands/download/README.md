@@ -52,11 +52,10 @@ If there are files that exist both in the output directory and are specified in 
 * **-v, --verbose**
 
     Verbose output.
-    
+
 * **-r, --regex**
 
     Regex Pattern, download all the custom content files that match this regex pattern.
-
 
 ### Asumptions
 For consistency, we assume that for each integration or script the folder containing it will have the same name as the integration/script name with no separators. For example the integration `Test Integration_Full-Name`, will be under `~/.../Packs/TestPack/Integrations/TestIntegrationFullName/`.

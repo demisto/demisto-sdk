@@ -40,9 +40,10 @@ from demisto_sdk.tests.constants_test import (
     DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY, DESTINATION_FORMAT_LISTS_COPY,
     DESTINATION_FORMAT_MAPPER, DESTINATION_FORMAT_PRE_PROCESS_RULES_COPY,
     DESTINATION_FORMAT_PRE_PROCESS_RULES_INVALID_NAME_COPY,
-    DESTINATION_FORMAT_REPORT, DESTINATION_FORMAT_WIDGET, INCIDENTFIELD_PATH,
-    INCIDENTTYPE_PATH, INDICATORFIELD_PATH, INDICATORTYPE_PATH,
-    INVALID_OUTPUT_PATH, LAYOUT_PATH, LAYOUT_SCHEMA_PATH,
+    DESTINATION_FORMAT_REPORT, DESTINATION_FORMAT_WIDGET,
+    GENERICFIELD_SCHEMA_PATH, INCIDENTFIELD_PATH, INCIDENTFIELD_SCHEMA_PATH,
+    INCIDENTTYPE_PATH, INDICATORFIELD_PATH, INDICATORFIELD_SCHEMA_PATH,
+    INDICATORTYPE_PATH, INVALID_OUTPUT_PATH, LAYOUT_PATH, LAYOUT_SCHEMA_PATH,
     LAYOUTS_CONTAINER_PATH, LAYOUTS_CONTAINER_SCHEMA_PATH, LISTS_PATH,
     LISTS_SCHEMA_PATH, MAPPER_PATH, MAPPER_SCHEMA_PATH, PRE_PROCESS_RULES_PATH,
     PRE_PROCESS_RULES_SCHEMA_PATH, REPORT_PATH, SOURCE_FORMAT_CLASSIFIER,
@@ -502,6 +503,42 @@ class TestFormattingLayoutscontainer:
         layoutscontainer_formatter.data['id'] = "id"
         layoutscontainer_formatter.update_id()
         assert layoutscontainer_formatter.data['name'] == layoutscontainer_formatter.data['id']
+
+    @pytest.mark.parametrize('schema', [GENERICFIELD_SCHEMA_PATH,
+                                        INCIDENTFIELD_SCHEMA_PATH,
+                                        INDICATORFIELD_SCHEMA_PATH])
+    def test_remove_null_doesnt_remove_defaultrows(self, schema):
+        """
+        Given
+            - Generic, indicator and incident fields schemes
+        When
+            - Run format on Generic, indicator and incident fields files
+        Then
+            - Ensure defaultRows key updated successfully
+        """
+        incident_formater = BaseUpdateJSON(input='test', output='')
+        incident_formater.schema_path = schema
+        incident_formater.data = {'defaultRows': [], 'type': 'grid'}
+        incident_formater.remove_null_fields()
+        assert incident_formater.data['defaultRows'] == []
+
+    @pytest.mark.parametrize('schema', [GENERICFIELD_SCHEMA_PATH,
+                                        INCIDENTFIELD_SCHEMA_PATH,
+                                        INDICATORFIELD_SCHEMA_PATH])
+    def test_remove_null_remove_defaultrows(self, schema):
+        """
+        Given
+            - Generic, indicator and incident fields schemes
+        When
+            - Run format on Generic, indicator and incident fields files
+        Then
+            - Ensure defaultRows key updated successfully
+        """
+        incident_formater = BaseUpdateJSON(input='test', output='')
+        incident_formater.schema_path = schema
+        incident_formater.data = {'defaultRows': [], 'type': 'shortText'}
+        incident_formater.remove_null_fields()
+        assert 'defaultRows' not in incident_formater.data
 
     def test_remove_null_fields(self, layoutscontainer_formatter):
         """

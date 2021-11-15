@@ -2,7 +2,7 @@ import json
 import logging
 import os
 from json import JSONDecodeError
-from typing import List, Dict
+from typing import Dict, List
 
 import demisto_client
 
@@ -64,6 +64,7 @@ class XSOARConfigFileUpdater:
         if self.add_custom_pack:
             self.update_custom_pack()
             return 0
+        return 0
 
     def verify_flags(self) -> bool:
         """
@@ -150,4 +151,3 @@ class XSOARConfigFileUpdater:
     def set_xsoar_config_data(self, config_file_info):
         with open(self.file_path, 'w') as config_file:
             json.dump(config_file_info, config_file, indent=4)
-

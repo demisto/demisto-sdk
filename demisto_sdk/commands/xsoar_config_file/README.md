@@ -28,7 +28,7 @@ Handle your XSOAR Configuration File.
 This will downloads all the installed MarketPlace Packs to the marketplace_packs section in XSOAR Configuration File.
 
 `demisto-sdk xsoar-config-file --add-marketplace-pack --pack-id PackId --pack-data 1.0.1`
-This will add PackId with 1.0.1 version to he marketplace_packs section in XSOAR Configuration File.
+This will add PackId with 1.0.1 version to the marketplace_packs section in XSOAR Configuration File.
 
 `demisto-sdk xsoar-config-file --add-custom-pack --pack-id PackId --pack-data Packs/PackID`
-This will add PackId with Packs/PackId URL to he custom_packs section in XSOAR Configuration File.
+This will add PackId with Packs/PackId URL to the custom_packs section in XSOAR Configuration File.

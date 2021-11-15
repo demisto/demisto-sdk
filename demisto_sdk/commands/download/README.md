@@ -52,6 +52,10 @@ If there are files that exist both in the output directory and are specified in 
 * **-v, --verbose**
 
     Verbose output.
+    
+* **-r, --regex**
+
+    Regex Pattern, download all the custom content files that match this regex pattern.
 
 
 ### Asumptions
@@ -105,4 +109,10 @@ demisto-sdk download -lf
 ```
 This will print the list of all custom content files available to be downloaded from Demisto instance.
 -i / --input & -o / --output should not be provided.
+<br/><br/>
+```
+demisto-sdk download -o Packs/Phishing -r *Pishing*
+```
+Regex Pattern, download all the custom content files that match this regex pattern.
+-o / --output should not be provided.
 <br/><br/>

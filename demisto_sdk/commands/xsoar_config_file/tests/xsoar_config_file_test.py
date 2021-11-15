@@ -7,8 +7,9 @@ import click
 import pytest
 
 from demisto_sdk.__main__ import xsoar_config_file_update
-from demisto_sdk.commands.xsoar_config_file.xsoar_config_file import XSOARConfigFileUpdater
 from demisto_sdk.commands.common.tools import src_root
+from demisto_sdk.commands.xsoar_config_file.xsoar_config_file import \
+    XSOARConfigFileUpdater
 
 UNIT_TEST_DATA = (src_root() / 'commands' / 'xsoar_config_file' / 'tests' / 'data')
 

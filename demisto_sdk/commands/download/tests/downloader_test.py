@@ -321,8 +321,8 @@ class TestBuildPackContent:
             {'entity': LAYOUTS_DIR, 'path': env.LAYOUT_INSTANCE_PATH, 'out': env.LAYOUT_PACK_OBJECT},
             {'entity': LAYOUTS_DIR, 'path': 'demisto_sdk/commands/download/tests/downloader_test.py', 'out': {}},
             {'entity': PRE_PROCESS_RULES_DIR, 'path': env.PRE_PROCESS_RULES_INSTANCE_PATH, 'out': []},
-            {'entity': LISTS_DIR, 'path': env.LISTS_INSTANCE_PATH, 'out': []}
-            {'entity': JOBS_DIR, 'path': env.JOBS_INSTANCE_PATH, 'out': []},
+            {'entity': LISTS_DIR, 'path': env.LISTS_INSTANCE_PATH, 'out': []},
+            {'entity': JOBS_DIR, 'path': env.JOBS_INSTANCE_PATH, 'out': []}
         ]
         downloader = Downloader(output='', input='')
         for param in parameters:
@@ -336,7 +336,7 @@ class TestBuildPackContent:
              'main_name': 'Test Integration'},
             {'entity': LAYOUTS_DIR, 'path': env.LAYOUT_INSTANCE_PATH, 'main_id': 'Hello World Alert',
              'main_name': 'Hello World Alert'},
-            {'entity': LAYOUTS_DIR, 'path': 'demisto_sdk/commands/download/tests/downloader_testt.py',
+            {'entity': LAYOUTS_DIR, 'path': 'demisto_sdk/commands/download/tests/downloader_test.py',
              'main_id': '', 'main_name': ''}
         ]
         downloader = Downloader(output='', input='')

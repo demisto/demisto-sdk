@@ -7,8 +7,8 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     AgentTool, AuthorImage, ChangeLog, Classifier, ClassifierMapper,
     Connection, Contributors, Dashboard, DocFile, GenericDefinition,
     GenericField, GenericModule, GenericType, IncidentField, IncidentType,
-    IndicatorField, IndicatorType, Integration, Layout, LayoutsContainer,
-    Lists, Job, OldClassifier, OldIndicatorType, PackIgnore, PackMetaData, Playbook,
+    IndicatorField, IndicatorType, Integration, Job, Layout, LayoutsContainer,
+    Lists, OldClassifier, OldIndicatorType, PackIgnore, PackMetaData, Playbook,
     PreProcessRule, Readme, ReleaseNote, ReleaseNoteConfig, Report, Script,
     SecretIgnore, Widget)
 from demisto_sdk.commands.common.content.objects.root_objects import \

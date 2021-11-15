@@ -1167,13 +1167,13 @@ class TestValidators:
                              )
     def test_is_valid_unsearchable_key_incident_field(self, pack: Pack, expected_result, unsearchable):
         """
-                Given
-                    - An incident field which unsearchable is true
-                    - An incident field which unsearchable is false
-                When
-                    - Run the validate command.
-                Then
-                    - validate that is_valid_unsearchable_key expected answer
+        Given
+            - An incident field which unsearchable is true
+            - An incident field which unsearchable is false
+        When
+            - Run the validate command.
+        Then
+            - validate that is_valid_unsearchable_key expected answer
         """
         incident_field = pack.create_incident_field('MyIncidentField')
         incident_field.update({"unsearchable": unsearchable})
@@ -1186,13 +1186,13 @@ class TestValidators:
                              )
     def test_is_valid_unsearchable_key_generic_field(self, pack: Pack, expected_result, unsearchable):
         """
-                Given
-                    - A generic field which unsearchable is true
-                    - A generic field which unsearchable is false
-                When
-                    - Run the validate command.
-                Then
-                    - validate that is_valid_unsearchable_key expected answer
+        Given
+            - A generic field which unsearchable is true
+            - A generic field which unsearchable is false
+        When
+            - Run the validate command.
+        Then
+            - validate that is_valid_unsearchable_key expected answer
         """
         generic_field = pack.create_generic_field('MyGenericField')
         generic_field.update({"unsearchable": unsearchable})
@@ -1208,13 +1208,15 @@ class TestValidators:
                              )
     def test_is_valid_file_generic_field(self, mocker, pack: Pack, expected_result, unsearchable, is_added_file):
         """
-                Given
-                    - An incident field which unsearchable is true
-                    - An incident field which unsearchable is false
-                When
-                    - Run the validate command.
-                Then
-                    - validate that is_valid_unsearchable_key expected answer
+        Given
+            - A generic field which unsearchable is true, is_added_file is false
+            - A generic field which unsearchable is false, is_added_file is false
+            - A generic field which unsearchable is true, is_added_file is true
+            - A generic field which unsearchable is false, is_added_file is true
+        When
+            - Run the validate command.
+        Then
+            - validate that is_valid_file is expected answer
         """
         incident_field = pack.create_generic_field('MyField')
         incident_field.update({"unsearchable": unsearchable})
@@ -1234,13 +1236,15 @@ class TestValidators:
     def test_is_valid_file_incident_field(self, mocker, pack: Pack, expected_result, unsearchable,
                                           is_added_file):
         """
-                Given
-                    - An incident field which unsearchable is true
-                    - An incident field which unsearchable is false
-                When
-                    - Run the validate command.
-                Then
-                    - validate that is_valid_unsearchable_key expected answer
+        Given
+            - An incident field which unsearchable is true, is_added_file is false
+            - An incident field which unsearchable is false, is_added_file is false
+            - An incident field which unsearchable is true, is_added_file is true
+            - An incident field which unsearchable is false, is_added_file is true
+        When
+            - Run the validate command.
+        Then
+            - validate that is_valid_file is expected answer
         """
         incident_field = pack.create_incident_field('MyField')
         incident_field.update({"unsearchable": unsearchable})

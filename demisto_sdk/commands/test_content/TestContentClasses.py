@@ -1130,10 +1130,7 @@ class Integration:
             module_instance['data'].append(param_conf)
         try:
             if len(self.additional_instances) > 1:
-                # This step allows for create_integration_instances to install any additional instances as defined in
-                # the instance_name list.
                 for additional_instance in self.additional_instances:
-                    self.build_context.logging_module.info(f"Configuring - {additional_instance}")
                     module_instance['name'] = additional_instance['instance_name']
                     module_instance['configuration'] = additional_instance['configuration']
                     res = demisto_client.generic_request_func(self=client, method='PUT',
@@ -1259,14 +1256,11 @@ class Integration:
         self.build_context.logging_module.debug(f'Disabling integration instance "{module_instance.get("name")}"')
         try:
             if len(self.additional_instances) > 1:
-                # This step allows for create_integration_instances to install any additional instances as defined in
-                # the instance_name list.
                 for additional_instance in self.additional_instances:
                     instance_config = additional_instance.get('instance_config_from_server', {})
                     additional_module_instance = {
                         key: instance_config[key] for key in ['id', 'brand', 'name', 'data', 'isIntegrationScript', ]
                     }
-                    self.build_context.logging_module.info(f"Disabling - {additional_instance}")
                     additional_module_instance['enable'] = "false"
                     additional_module_instance['version'] = -1
                     res = demisto_client.generic_request_func(self=client, method='PUT',

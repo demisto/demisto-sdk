@@ -65,8 +65,8 @@ class GenericFieldValidator(ContentEntityValidator):
         Returns:
             bool. Whether the file's unsearchable key is set to true.
         """
-        indicator_field_unsearchable = self.current_file.get('unsearchable', True)
-        if indicator_field_unsearchable:
+        generic_field_unsearchable = self.current_file.get('unsearchable', True)
+        if generic_field_unsearchable:
             return True
         error_message, error_code = Errors.unsearchable_key_should_be_true_generic_field()
         if self.handle_error(error_message, error_code, file_path=self.file_path):

@@ -33,6 +33,7 @@ class GenericFieldJSONFormat(BaseUpdateJSON):
             click.secho(f'\n================= Updating file {self.source_file} =================', fg='bright_blue')
             super().update_json()
             self.set_default_values_as_needed()
+            self.update_unsearchable_key()
             self.update_group_field()
             self.update_id_field_if_needed()
             self.save_json_to_destination_file()

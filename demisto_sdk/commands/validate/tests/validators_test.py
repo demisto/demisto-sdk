@@ -1200,6 +1200,63 @@ class TestValidators:
         res_validator = GenericFieldValidator(structure)
         assert res_validator.is_valid_unsearchable_key() is expected_result
 
+    @pytest.mark.parametrize('expected_result, unsearchable, is_added_file',
+                             [(True, True, True),
+                              (False, False, True),
+                              (True, True, False),
+                              (True, False, False)]
+                             )
+    def test_is_valid_file_generic_field(self, mocker, pack: Pack, expected_result, unsearchable, is_added_file):
+        """
+                Given
+                    - An incident field which unsearchable is true
+                    - An incident field which unsearchable is false
+                When
+                    - Run the validate command.
+                Then
+                    - validate that is_valid_unsearchable_key expected answer
+        """
+        incident_field = pack.create_generic_field('MyField')
+        incident_field.update({"unsearchable": unsearchable})
+        structure = StructureValidator(incident_field.path)
+        res_validator = GenericFieldValidator(structure)
+        mocker.patch.object(ContentEntityValidator, 'is_valid_generic_object_file', return_value=True)
+        mocker.patch.object(GenericFieldValidator, 'is_valid_group', return_value=True)
+        mocker.patch.object(GenericFieldValidator, 'is_valid_id_prefix', return_value=True)
+        assert res_validator.is_valid_file(validate_rn=False, is_added_file=is_added_file) is expected_result
+
+    @pytest.mark.parametrize('expected_result, unsearchable, is_added_file',
+                             [(True, True, True),
+                              (False, False, True),
+                              (True, True, False),
+                              (True, False, False)]
+                             )
+    def test_is_valid_file_incident_field(self, mocker, pack: Pack, expected_result, unsearchable,
+                                          is_added_file):
+        """
+                Given
+                    - An incident field which unsearchable is true
+                    - An incident field which unsearchable is false
+                When
+                    - Run the validate command.
+                Then
+                    - validate that is_valid_unsearchable_key expected answer
+        """
+        incident_field = pack.create_incident_field('MyField')
+        incident_field.update({"unsearchable": unsearchable})
+        structure = StructureValidator(incident_field.path)
+        res_validator = IncidentFieldValidator(structure)
+        mocker.patch.object(ContentEntityValidator, 'is_valid_file', return_value=True)
+        mocker.patch.object(IncidentFieldValidator, 'is_valid_type', return_value=True)
+        mocker.patch.object(IncidentFieldValidator, 'is_valid_group', return_value=True)
+        mocker.patch.object(IncidentFieldValidator, 'is_valid_content_flag', return_value=True)
+        mocker.patch.object(IncidentFieldValidator, 'is_valid_system_flag', return_value=True)
+        mocker.patch.object(IncidentFieldValidator, 'is_valid_cliname', return_value=True)
+        mocker.patch.object(IncidentFieldValidator, 'is_valid_version', return_value=True)
+        mocker.patch.object(IncidentFieldValidator, 'is_valid_required', return_value=True)
+        mocker.patch.object(IncidentFieldValidator, 'is_valid_indicator_grid_fromversion', return_value=True)
+        assert res_validator.is_valid_file(validate_rn=False, is_added_file=is_added_file) is expected_result
+
 
 @pytest.mark.parametrize('pack_name, expected', [
     ('NonSupported', False),

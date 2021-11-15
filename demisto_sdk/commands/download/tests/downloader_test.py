@@ -252,6 +252,7 @@ class TestFlagHandlers:
             downloader.all_custom_content = a
             downloader.output_pack_path = o
             downloader.input_files = i
+            downloader.regex = ''
             answer = downloader.verify_flags()
             stdout, _ = capsys.readouterr()
             if err:

@@ -16,7 +16,8 @@ from demisto_sdk.commands.common.constants import GENERIC_COMMANDS_NAMES, BASE_P
 from demisto_sdk.commands.common.tools import (get_content_id_set,
                                                is_external_repository,
                                                print_error, print_warning,
-                                               get_content_path)
+                                               get_content_path,
+                                               get_pack_name)
 from demisto_sdk.commands.common.update_id_set import merge_id_sets
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
@@ -1636,7 +1637,7 @@ def calculate_single_pack_dependencies(pack: str, dependency_graph: object) -> T
         all_level_dependencies: A list with all dependencies names
         pack: The pack name
     """
-    install_logging('Calculate_Packs_Dependencies.log', include_process_name=True) # TODO: fix
+    logging.info('Calculate_Packs_Dependencies.log', include_process_name=True)
 
     try:
         logging.info(f"Calculating {pack} pack dependencies.")
@@ -1678,7 +1679,7 @@ def select_packs_for_calculation() -> list:
     Returns:
         A list of packs
     """
-    IGNORED_FILES.append(GCPConfig.BASE_PACK)  # skip dependency calculation of Base pack
+    IGNORED_FILES.append(BASE_PACK)  # skip dependency calculation of Base pack
     packs = []
     for pack in os.scandir(PACKS_FULL_PATH):
         if not pack.is_dir() or pack.name in IGNORED_FILES:
@@ -1703,6 +1704,7 @@ def get_id_set(id_set_path: str) -> dict:
     else:
         id_set = IDSetCreator(print_logs=False).create_id_set()
     return id_set
+
 
 def calculate_all_packs_dependencies(pack_dependencies_result: dict, id_set_path: str, output_path: str = ALL_PACKS_DEPENDENCIES_DEFAULT_PATH) -> None:
     """
@@ -1729,8 +1731,8 @@ def calculate_all_packs_dependencies(pack_dependencies_result: dict, id_set_path
                 "dependencies": first_level_dependencies,
                 "displayedImages": list(first_level_dependencies.keys()),
                 "allLevelDependencies": all_level_dependencies,
-                "path": os.path.join(PACKS_FOLDER, pack_name),
-                "fullPath": os.path.abspath(os.path.join(PACKS_FOLDER, pack_name))
+                "path": os.path.join(PACKS_DIR, pack_name),
+                "fullPath": os.path.abspath(os.path.join(PACKS_DIR, pack_name))
             }
         except Exception:
             logging.exception('Failed to collect pack dependencies results')
@@ -1756,7 +1758,8 @@ def calculate_all_packs_dependencies(pack_dependencies_result: dict, id_set_path
 
         logging.success(f"Created packs dependencies file at: {output_path}")
 
-def get_packs_dependent_on_given_packs(packs, id_set_path, dependent_packs, silent_mode=True):
+
+def get_packs_dependent_on_given_packs(packs, id_set_path, silent_mode=True):
     """
 
     Args:
@@ -1770,14 +1773,12 @@ def get_packs_dependent_on_given_packs(packs, id_set_path, dependent_packs, sile
     """
 
     def collect_dependent_packs(results) -> None:
-        first_level_dependencies = results
-        print(f'First Level Dependencies: {first_level_dependencies.keys()}')
-        print(f'Dependent Packs: {dependent_packs}')
+        first_level_dependencies = results[0]
         dependent_packs.extend(first_level_dependencies.keys())
 
     if type(packs) is not list:
         packs = [packs]
-
+    dependent_packs = []
     id_set = get_id_set(id_set_path)
     all_packs = select_packs_for_calculation()
     dependency_graph = PackDependencies.build_all_dependencies_graph(all_packs, id_set=id_set, verbose=False)

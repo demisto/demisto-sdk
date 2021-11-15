@@ -14,7 +14,6 @@ import docker.errors
 import git
 import requests.exceptions
 import urllib3.exceptions
-from pathlib import PosixPath
 
 from wcmatch.pathlib import Path
 from demisto_sdk.commands.common.constants import (PACKS_PACK_META_FILE_NAME,
@@ -30,7 +29,7 @@ from demisto_sdk.commands.common.tools import (find_file, find_type,
                                                print_error, print_v,
                                                print_warning,
                                                retrieve_file_ending,
-                                               pack_name_to_path)
+                                               pack_name_to_posix_path)
 from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, PWSH_CHECKS,
                                                PY_CHCEKS,
                                                build_skipped_exit_code,
@@ -79,19 +78,16 @@ class LintManager:
                                                     git=git,
                                                     all_packs=all_packs,
                                                     base_branch=self._prev_ver)
-        self._id_set_path = id_set_path
-        self._check_dependent_packs = check_dependent_packs
-        print(self._check_dependent_packs)
+        self._id_set_path = 'Tests/id_set.json' # TODO: fix!!!!!!!!!!!!!!!!
+        self._check_dependent_packs = False # TODO: fix!!!!!!!!!!!!!!!!
         if self._check_dependent_packs:
-            dependent = [] # TODO: check if i can insert it
-            dependent = [PosixPath(pack_name_to_path(pack)) for pack in
-                         get_packs_dependent_on_given_packs(self._pkgs, self._id_set_path, dependent)]
-            if True:
+            print("Checking for dependent packs")
+            dependent = [pack_name_to_posix_path(pack) for pack in
+                         get_packs_dependent_on_given_packs(self._pkgs, self._id_set_path)]
+            self._pkgs = list(set(self._pkgs + dependent)) # remove dups
+            if dependent:
                 print(f"Found {Colors.Fg.cyan}{len(dependent)}{Colors.reset} dependent packages. Executing lint and "
                       f"test on dependent packages as well.")
-
-            self._pkgs = self._pkgs + dependent
-            self._pkgs = list(set(self._pkgs)) # remove dups
 
         if json_file_path:
             if os.path.isdir(json_file_path):
@@ -259,9 +255,7 @@ class LintManager:
         Returns:
             List[Path]: A list of names of packages that should run.
         """
-        print(
-            f"Comparing to {Colors.Fg.cyan}{base_branch}{Colors.reset} using branch {Colors.Fg.cyan}"
-            f"{content_repo.active_branch}{Colors.reset}")
+
         staged_files = {content_repo.working_dir / Path(item.b_path).parent for item in
                         content_repo.active_branch.commit.tree.diff(None, paths=pkgs)}
 
@@ -269,8 +263,9 @@ class LintManager:
             if content_repo.active_branch == 'master':
                 # case 1: comparing master against the latest previous commit
                 last_common_commit = content_repo.remote().refs.master.commit.parents[0]
+                print(f"Comparing {Colors.Fg.cyan}master{Colors.reset} to its {Colors.Fg.cyan}previous commit: {last_common_commit} {Colors.reset}")
             else:
-                # case 2: active branch is not master, compaire against master since no other base branch is specified
+                # case 2: active branch is not master, compare against last common commit with master
                 last_common_commit = content_repo.merge_base(content_repo.active_branch.commit,
                                                              f'{content_repo.remote()}/master')
         else:
@@ -280,6 +275,7 @@ class LintManager:
             else: # if the base branch is given as a branch name
                 last_common_commit = content_repo.merge_base(content_repo.active_branch.commit,
                                                              f'{content_repo.remote()}/{base_branch}')
+
         changed_from_base = {content_repo.working_dir / Path(item.b_path).parent for item in
                              content_repo.active_branch.commit.tree.diff(last_common_commit, paths=pkgs)}
         all_changed = staged_files.union(changed_from_base)

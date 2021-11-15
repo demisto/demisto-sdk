@@ -22,7 +22,8 @@ from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_last_remote_release_version,
                                                get_release_note_entries,
-                                               print_error, print_warning)
+                                               print_error, print_warning,
+                                               print_success)
 from demisto_sdk.commands.common.update_id_set import merge_id_sets_from_files
 from demisto_sdk.commands.convert.convert_manager import ConvertManager
 from demisto_sdk.commands.coverage_analyze.coverage_report import \
@@ -651,10 +652,10 @@ def secrets(config, **kwargs):
 )
 @click.option("-dt", "--docker-timeout", default=60,
               help="The timeout (in seconds) for requests done by the docker client.", type=int)
-@click.option("--id-set-path", help="Path to id_set.json, relevant for when using the --check-dependent flag.",
-              type=str)
-@click.option("--check-dependent", is_flag=True, help="Run unit tests and lint on all packages that are dependent on the found"
-                                        " modified packages.")
+@click.option("-idp", "--id-set-path", help="Path to id_set.json, relevant for when using the --check-dependent flag.",
+              type=str, default='Tests/id_set.json') # TODO: fix
+@click.option("-chd", "--check-dependent", default=True, help="Run unit tests and lint on all packages that are dependent on the found"
+                                        " modified packages.") # TODO: fix
 
 def lint(**kwargs):
     """Lint command will perform:
@@ -1474,8 +1475,7 @@ def find_dependencies(**kwargs):
             print_success(f"The packs dependencies json was succesfully saved to {output_path}")
 
         elif get_dependent_on:
-            dependent_on = []
-            get_packs_dependent_on_given_packs(input_path.name, id_set_path, dependent_on, False)
+            get_packs_dependent_on_given_packs(input_path.name, id_set_path, False) # TODO: not print?
 
         else:
             if not input_path:

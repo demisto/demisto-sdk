@@ -1,7 +1,6 @@
 import json
 import logging
 import os
-from json import JSONDecodeError
 from typing import Dict, List
 
 import demisto_client
@@ -144,7 +143,7 @@ class XSOARConfigFileUpdater:
             with open(self.file_path, 'r') as config_file:
                 try:
                     config_file_info = json.load(config_file)
-                except JSONDecodeError:
+                except json.JSONDecodeError:
                     pass
         return config_file_info
 

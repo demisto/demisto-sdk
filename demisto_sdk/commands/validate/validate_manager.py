@@ -14,7 +14,7 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_ID_SET_PATH, GENERIC_FIELDS_DIR, GENERIC_TYPES_DIR,
     IGNORED_PACK_NAMES, OLDEST_SUPPORTED_VERSION, PACKS_DIR,
     PACKS_PACK_META_FILE_NAME, SKIP_RELEASE_NOTES_FOR_TYPES,
-    TESTS_AND_DOC_DIRECTORIES, FileType, PathLevel)
+    FileType, PathLevel, VALIDATION_USING_GIT_IGNORABLE_DATA)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
                                                 FOUND_FILES_AND_ERRORS,
@@ -1372,7 +1372,7 @@ class ValidateManager:
 
         file_type = find_type(file_path)
 
-        if self.ignore_test_doc_non_pack_file(file_path):
+        if self.ignore_files_irrelevant_for_validaiton(file_path):
             return None
 
         if not file_type:
@@ -1404,9 +1404,10 @@ class ValidateManager:
         else:
             return file_path
 
-    def ignore_test_doc_non_pack_file(self, file_path: str) -> bool:
+    def ignore_files_irrelevant_for_validaiton(self, file_path: str) -> bool:
         # ignore doc data, test_data and non pack files
-        if any(test_dir in str(file_path) for test_dir in TESTS_AND_DOC_DIRECTORIES) or PACKS_DIR not in file_path:
+        if any(name in str(file_path) for name in VALIDATION_USING_GIT_IGNORABLE_DATA) \
+                or PACKS_DIR not in file_path:
             if self.print_ignored_files:
                 click.secho(f"ignoring file {file_path}", fg='yellow')
             self.ignored_files.add(file_path)

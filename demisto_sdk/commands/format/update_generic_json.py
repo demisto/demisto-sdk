@@ -111,6 +111,3 @@ class BaseUpdateJSON(BaseUpdate):
                 click.echo('Updating YML ID and name to be without spaces at the end')
             self.data['name'] = self.data['name'].strip()
             self.data['id'] = self.data['id'].strip()
-
-    def is_grid_type_file(self):
-        return self.data['type'] == 'grid'

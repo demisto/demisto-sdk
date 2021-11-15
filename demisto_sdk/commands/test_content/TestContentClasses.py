@@ -1139,6 +1139,8 @@ class Integration:
                     res = demisto_client.generic_request_func(self=client, method='PUT',
                                                               path='/settings/integration',
                                                               body=module_instance)
+                    instance_config = ast.literal_eval(res[0])
+                    additional_instance['instance_config_from_server'] = instance_config
             else:
                 res = demisto_client.generic_request_func(self=client, method='PUT',
                                                           path='/settings/integration',
@@ -1256,9 +1258,25 @@ class Integration:
         module_instance['version'] = -1
         self.build_context.logging_module.debug(f'Disabling integration instance "{module_instance.get("name")}"')
         try:
-            res = demisto_client.generic_request_func(self=client, method='PUT',
-                                                      path='/settings/integration',
-                                                      body=module_instance)
+            if len(self.additional_instances) > 1:
+                # This step allows for create_integration_instances to install any additional instances as defined in
+                # the instance_name list.
+                for additional_instance in self.additional_instances:
+                    instance_config = additional_instance.get('instance_config_from_server', {})
+                    additional_module_instance = {
+                        key: instance_config[key] for key in ['id', 'brand', 'name', 'data', 'isIntegrationScript', ]
+                    }
+                    self.build_context.logging_module.info(f"Disabling - {additional_instance}")
+                    additional_module_instance['enable'] = "false"
+                    additional_module_instance['version'] = -1
+                    res = demisto_client.generic_request_func(self=client, method='PUT',
+                                                              path='/settings/integration',
+                                                              body=additional_module_instance)
+            else:
+                res = demisto_client.generic_request_func(self=client, method='PUT',
+                                                          path='/settings/integration',
+                                                          body=module_instance)
+
         except ApiException:
             self.build_context.logging_module.exception('Failed to disable integration instance')
             return

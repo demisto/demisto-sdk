@@ -14,7 +14,7 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_ID_SET_PATH, GENERIC_FIELDS_DIR, GENERIC_TYPES_DIR,
     IGNORED_PACK_NAMES, OLDEST_SUPPORTED_VERSION, PACKS_DIR,
     PACKS_PACK_META_FILE_NAME, SKIP_RELEASE_NOTES_FOR_TYPES,
-    FileType, PathLevel, VALIDATION_USING_GIT_IGNORABLE_DATA)
+    VALIDATION_USING_GIT_IGNORABLE_DATA, FileType, PathLevel)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
                                                 FOUND_FILES_AND_ERRORS,

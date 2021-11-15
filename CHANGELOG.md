@@ -1,4 +1,5 @@
 # Changelog
+* The **format** command will now not remove the `defaultRows` key from incident, indicator and generic fields with `type: grid`
 * Fixed an issue where the **update-release-notes** command crashes with `--help` flag.
 * Removed a validation that DBotRole should be set for automation that requires elevated permissions to the `XSOAR-linter` in the **lint** command.
 * Fixed an issue in **Validate** command where playbooks conditional tasks were mishandeled.

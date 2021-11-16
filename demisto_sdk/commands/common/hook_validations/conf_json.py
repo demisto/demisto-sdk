@@ -123,7 +123,7 @@ class ConfJsonValidator(BaseValidator):
             else:
                 test_playbooks_unskip_status[test_playbook_id] = True
 
-        if not any(test_playbooks_unskip_status.values()):
+        if not any(test_playbooks_unskip_status.values()) and 'dynamic-section' not in current_file.get('tags', []):
             error_message, error_code = Errors.all_entity_test_playbooks_are_skipped(entity_id)
             if self.handle_error(error_message, error_code, file_path=file_path):
                 self._is_valid = False

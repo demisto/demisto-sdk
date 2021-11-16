@@ -1475,8 +1475,8 @@ def find_dependencies(**kwargs):
 
         else:
             if not input_path:
-                print_error(f"Please provide an input path. The path should be formatted as 'Packs/<some pack name>'. "
-                            f"For example, Packs/HelloWorld")
+                print_error("Please provide an input path. The path should be formatted as 'Packs/<some pack name>'. "
+                            "For example, Packs/HelloWorld")
                 sys.exit(1)
             else:
                 input_path = Path(input_path)
@@ -1486,8 +1486,8 @@ def find_dependencies(**kwargs):
                     sys.exit(1)
 
                 if output_path and not all_packs_dependencies:
-                    print_warning(f"You used the '--outputs-path' argument, which is only relevant for when using the"
-                                  f" '--all-packs-dependencies' flag. Ignoring this argument.")
+                    print_warning("You used the '--outputs-path' argument, which is only relevant for when using the"
+                                  " '--all-packs-dependencies' flag. Ignoring this argument.")
 
                 if get_dependent_on:
                     if input_path.parts[-1] in IGNORED_FILES:

@@ -1,4 +1,3 @@
-import argparse
 import glob
 import json
 import logging
@@ -17,8 +16,7 @@ from pebble import ProcessFuture, ProcessPool
 from requests import RequestException
 
 from demisto_sdk.commands.common import constants
-from demisto_sdk.commands.common.constants import (
-    ALL_PACKS_DEPENDENCIES_DEFAULT_PATH, BASE_PACK, GENERIC_COMMANDS_NAMES,
+from demisto_sdk.commands.common.constants import (GENERIC_COMMANDS_NAMES,
     IGNORED_FILES, PACKS_DIR)
 from demisto_sdk.commands.common.tools import (get_content_id_set,
                                                get_content_path, get_pack_name,

@@ -1064,6 +1064,7 @@ class Integration:
         """
         server_url = self.build_context.get_public_ip_from_server_url(client.api_client.configuration.host)
         self._set_integration_params(server_url, playbook_id, is_mockable)
+        self.build_context.logging_module.warning(f'Additional Instances are - {self.additional_instances}')
         configuration = self._get_integration_config(client.api_client.configuration.host)
         if not configuration:
             self.build_context.logging_module.error(f'Could not find configuration for integration {self}')
@@ -1133,6 +1134,9 @@ class Integration:
                 for additional_instance in self.additional_instances:
                     module_instance['name'] = additional_instance['instance_name']
                     module_instance['configuration'] = additional_instance['configuration']
+                    self.build_context.logging_module.warning(
+                        f'Additonal Instance being configured is - {additional_instance}')
+                    self.build_context.logging_module.warning(f'Module Instance being configured is - {module_instance}')
                     res = demisto_client.generic_request_func(self=client, method='PUT',
                                                               path='/settings/integration',
                                                               body=module_instance)

@@ -731,7 +731,7 @@ def lint(**kwargs):
 @click.option("--no-min-coverage-enforcement", help="Do not enforce minimum coverage.", is_flag=True)
 @click.option(
     "--previous-coverage-report-url", help="URL of the previous coverage report.",
-    default='https://storage.googleapis.com/marketplace-dist-dev/code-coverage/coverage-min.json', type=str
+    default='https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-min.json', type=str
 )
 def coverage_analyze(**kwargs):
     try:
@@ -1545,14 +1545,22 @@ def find_dependencies(**kwargs):
 )
 @click.option(
     '--verbose', help='Print debug level logs', is_flag=True)
+@click.option(
+    '-p', '--package',
+    help='Generated integration will be split to package format instead of a yml file.',
+    is_flag=True
+)
+@pass_config
 def postman_codegen(
+        config,
         input: IO,
         output: Path,
         name: str,
         output_prefix: str,
         command_prefix: str,
         config_out: bool,
-        verbose: bool
+        verbose: bool,
+        package: bool
 ):
     """Generates a Cortex XSOAR integration given a Postman collection 2.1 JSON file."""
     if verbose:
@@ -1560,7 +1568,7 @@ def postman_codegen(
     else:
         logger = logging.getLogger('demisto-sdk')
 
-    config = postman_to_autogen_configuration(
+    postman_config = postman_to_autogen_configuration(
         collection=json.load(input),
         name=name,
         command_prefix=command_prefix,
@@ -1568,13 +1576,17 @@ def postman_codegen(
     )
 
     if config_out:
-        path = output / f'config-{config.name}.json'
+        path = output / f'config-{postman_config.name}.json'
         with open(path, mode='w+') as f:
-            json.dump(config.to_dict(), f, indent=4)
+            json.dump(postman_config.to_dict(), f, indent=4)
             logger.info(f'Config file generated at:\n{os.path.abspath(path)}')
     else:
         # generate integration yml
-        config.generate_integration_package(output, is_unified=True)
+        yml_path = postman_config.generate_integration_package(output, is_unified=True)
+        if package:
+            yml_splitter = YmlSplitter(configuration=config.configuration, file_type=FileType.INTEGRATION.value,
+                                       input=str(yml_path), output=str(output))
+            yml_splitter.extract_to_package_format()
 
 
 # ====================== generate-integration ====================== #

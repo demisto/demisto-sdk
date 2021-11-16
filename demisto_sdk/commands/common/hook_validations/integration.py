@@ -105,7 +105,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_there_separators_in_names(),
             self.name_not_contain_the_type(),
             self.is_valid_endpoint_command(),
-            self.has_no_fromlicense_key_in_contributions_integration(),
+            self.is_api_token_in_credential_type(),
         ]
 
         return all(answers)
@@ -119,7 +119,7 @@ class IntegrationValidator(ContentEntityValidator):
                 validate_rn (bool): Whether to validate release notes (changelog) or not.
                 skip_test_conf (bool): If true then will skip test playbook configuration validation
                 check_is_unskipped (bool): Whether to check if the integration is unskipped.
-                conf_file (dict):
+                conf_json_data (dict): The conf.json file data.
 
             Returns:
                 bool: True if integration is valid, False otherwise.
@@ -1401,3 +1401,30 @@ class IntegrationValidator(ContentEntityValidator):
         else:
             raise Exception('Could not find the pack name of the integration, '
                             'please verify the integration is in a pack')
+
+    def is_api_token_in_credential_type(self):
+        """Checks if there are no keys with the `encrypted` type,
+            The best practice is to use the `credential` type instead of `encrypted`.
+
+        Returns:
+            bool: True if there is no a key with type encrypted False otherwise.
+        """
+        pack_name = get_pack_name(self.file_path)
+        if pack_name:
+            metadata_path = Path(PACKS_DIR, pack_name, PACKS_PACK_META_FILE_NAME)
+            metadata_content = self.get_metadata_file_content(metadata_path)
+
+            if metadata_content.get('support') != XSOAR_SUPPORT:
+                return True
+
+            conf_params = self.current_file.get('configuration', [])
+            for param in conf_params:
+                if param.get('type') == 4:
+                    error_message, error_code = Errors.api_token_is_not_in_credential_type(param.get('name'))
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                        return False
+
+            return True
+
+        raise Exception('Could not find the pack name of the integration, '
+                        'please verify the integration is in a pack')

@@ -66,7 +66,6 @@ class LintManager:
         # Gather facts for manager
         self._facts: dict = self._gather_facts()
         self._prev_ver = prev_ver  # None if not inserted (and not master as was the default value)
-        print(self._prev_ver)
         self._all_packs = all_packs
         # Set 'git' to true if no packs have been specified, 'lint' should operate as 'lint -g'
         lint_no_packs_command = not git and not all_packs and not input
@@ -78,8 +77,10 @@ class LintManager:
                                                     git=git,
                                                     all_packs=all_packs,
                                                     base_branch=self._prev_ver)
-        self._id_set_path = 'Tests/id_set.json' # TODO: fix!!!!!!!!!!!!!!!!
-        self._check_dependent_packs = False # TODO: fix!!!!!!!!!!!!!!!!
+        self._id_set_path = id_set_path
+        self._check_dependent_packs = check_dependent_packs
+        print(id_set_path)
+        print(self._check_dependent_packs)
         if self._check_dependent_packs:
             print("Checking for dependent packs")
             dependent = [pack_name_to_posix_path(pack) for pack in
@@ -260,21 +261,27 @@ class LintManager:
                         content_repo.active_branch.commit.tree.diff(None, paths=pkgs)}
 
         if not base_branch:
-            if content_repo.active_branch == 'master':
+            # if we remove the next part, then this means base_branch should be set to master in this part
+            if content_repo.active_branch == 'master': # TODO: check if can remove, there is no use to it
                 # case 1: comparing master against the latest previous commit
                 last_common_commit = content_repo.remote().refs.master.commit.parents[0]
                 print(f"Comparing {Colors.Fg.cyan}master{Colors.reset} to its {Colors.Fg.cyan}previous commit: {last_common_commit} {Colors.reset}")
             else:
                 # case 2: active branch is not master, compare against last common commit with master
                 last_common_commit = content_repo.merge_base(content_repo.active_branch.commit,
-                                                             f'{content_repo.remote()}/master')
+                                                             f'{content_repo.remote()}/master')[0]
+                print(f"Comparing {Colors.Fg.cyan}{content_repo.active_branch}{Colors.reset} to"
+                      f" {Colors.Fg.cyan}last common commit with master: {last_common_commit} {Colors.reset}")
+
         else:
             # case 3: comparing the active branch (either master or another branch) against a specific commit or branch
             if sha1Regex.match(base_branch): # if the base branch is given as a commit hash
                 last_common_commit = base_branch
             else: # if the base branch is given as a branch name
                 last_common_commit = content_repo.merge_base(content_repo.active_branch.commit,
-                                                             f'{content_repo.remote()}/{base_branch}')
+                                                             f'{content_repo.remote()}/{base_branch}')[0]
+            print(f"Comparing {Colors.Fg.cyan}{content_repo.active_branch}{Colors.reset} to commit hash{Colors.Fg.cyan}"
+                  f" {last_common_commit} {Colors.reset}")
 
         changed_from_base = {content_repo.working_dir / Path(item.b_path).parent for item in
                              content_repo.active_branch.commit.tree.diff(last_common_commit, paths=pkgs)}

@@ -653,9 +653,10 @@ def secrets(config, **kwargs):
 @click.option("-dt", "--docker-timeout", default=60,
               help="The timeout (in seconds) for requests done by the docker client.", type=int)
 @click.option("-idp", "--id-set-path", help="Path to id_set.json, relevant for when using the --check-dependent flag.",
-              type=str, default='Tests/id_set.json') # TODO: fix
-@click.option("-chd", "--check-dependent", default=True, help="Run unit tests and lint on all packages that are dependent on the found"
-                                        " modified packages.") # TODO: fix
+              type=click.Path(resolve_path=True))
+@click.option("-chd", "--check-dependent", is_flag=True, help="Run unit tests and lint on all packages that are dependent on the found"
+                                        " modified packages.")
+
 
 def lint(**kwargs):
     """Lint command will perform:
@@ -678,8 +679,8 @@ def lint(**kwargs):
         quiet=kwargs.get('quiet'),  # type: ignore[arg-type]
         prev_ver=kwargs.get('prev_ver'),  # type: ignore[arg-type]
         json_file_path=kwargs.get('json_file'), # type: ignore[arg-type]
-        id_set_path=kwargs.get('id-set-path'),  # type: ignore[arg-type]
-        check_dependent_packs=kwargs.get('check-dependent'),  # type: ignore[arg-type]
+        id_set_path=kwargs.get('id_set_path'),  # type: ignore[arg-type]
+        check_dependent_packs=kwargs.get('check_dependent'),  # type: ignore[arg-type]
     )
     return lint_manager.run_dev_packages(
         parallel=kwargs.get('parallel'),  # type: ignore[arg-type]

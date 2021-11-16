@@ -1372,7 +1372,7 @@ class ValidateManager:
 
         file_type = find_type(file_path)
 
-        if self.ignore_files_irrelevant_for_validaiton(file_path):
+        if self.ignore_files_irrelevant_for_validation(file_path):
             return None
 
         if not file_type:
@@ -1404,7 +1404,7 @@ class ValidateManager:
         else:
             return file_path
 
-    def ignore_files_irrelevant_for_validaiton(self, file_path: str) -> bool:
+    def ignore_files_irrelevant_for_validation(self, file_path: str) -> bool:
         # ignore doc data, test_data and non pack files
         if any(name in str(file_path) for name in VALIDATION_USING_GIT_IGNORABLE_DATA) \
                 or PACKS_DIR not in file_path:

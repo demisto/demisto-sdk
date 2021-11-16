@@ -858,7 +858,7 @@ TESTS_AND_DOC_DIRECTORIES = [
     'doc_imgs',
 ]
 
-VALIDATION_USING_GIT_IGNORABLE_DATA = [
+VALIDATION_USING_GIT_IGNORABLE_DATA = (
     'Pipfile',
     'Pipfile.lock',
     'command_examples',
@@ -869,7 +869,7 @@ VALIDATION_USING_GIT_IGNORABLE_DATA = [
     'tests_data',
     'doc_files',
     'doc_imgs',
-]
+)
 
 FILE_TYPES_FOR_TESTING = [
     '.py',

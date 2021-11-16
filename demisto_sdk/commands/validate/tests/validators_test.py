@@ -1114,7 +1114,7 @@ class TestValidators:
     @pytest.mark.parametrize('file_path',
                              ['Packs/SomeIntegration/IntegrationName/file.py',
                               'Packs/pack_id/Integrations/integration_id/file.yml'])
-    def test_ignore_files_irrelevant_for_validaiton_should_not_ignore(self, file_path: str):
+    def test_ignore_files_irrelevant_for_validation_should_not_ignore(self, file_path: str):
         """
         Given
             - File path
@@ -1124,7 +1124,7 @@ class TestValidators:
             - File is not ignored and False is returned
         """
         validate_manager = ValidateManager(check_is_unskipped=False)
-        assert not validate_manager.ignore_files_irrelevant_for_validaiton(file_path)
+        assert not validate_manager.ignore_files_irrelevant_for_validation(file_path)
 
     @pytest.mark.parametrize('file_path',
                              ['Packs/pack_id/Integrations/integration_id/test_data/file.json',
@@ -1133,7 +1133,7 @@ class TestValidators:
                               'Packs/pack_id/TestPlaybooks/test_data/file.json',
                               'Packs/pack_id/pack_metadata.json',
                               'Packs/pack_id/Integrations/integration_id/command_examples'])
-    def test_ignore_files_irrelevant_for_validaiton_test_file(self, file_path: str):
+    def test_ignore_files_irrelevant_for_validation_test_file(self, file_path: str):
         """
         Given
             - File path
@@ -1143,14 +1143,14 @@ class TestValidators:
             - File is ignored and True is returned
         """
         validate_manager = ValidateManager(check_is_unskipped=False)
-        assert validate_manager.ignore_files_irrelevant_for_validaiton(file_path)
+        assert validate_manager.ignore_files_irrelevant_for_validation(file_path)
 
     @pytest.mark.parametrize('file_path',
                              ['OtherDir/Integration/file.json',
                               'TestData/file.json',
                               'TestPlaybooks/file.yml',
                               'docs/dbot/README.md'])
-    def test_ignore_files_irrelevant_for_validaiton_non_pack(self, file_path: str):
+    def test_ignore_files_irrelevant_for_validation_non_pack(self, file_path: str):
         """
         Given
             - File path
@@ -1160,7 +1160,7 @@ class TestValidators:
             - File is ignored and True is returned
         """
         validate_manager = ValidateManager(check_is_unskipped=False)
-        assert validate_manager.ignore_files_irrelevant_for_validaiton(file_path)
+        assert validate_manager.ignore_files_irrelevant_for_validation(file_path)
 
 
 @pytest.mark.parametrize('pack_name, expected', [

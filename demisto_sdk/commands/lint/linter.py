@@ -175,7 +175,6 @@ class Linter:
         """
         # Looking for pkg yaml
         yml_file: Optional[Path] = self._pack_abs_dir.glob([r'*.yaml', r'*.yml', r'!*unified*.yml'], flags=NEGATE)
-        print("########################## PASSED #########################")
 
         if not yml_file:
             logger.info(f"{self._pack_abs_dir} - Skipping no yaml file found {yml_file}")

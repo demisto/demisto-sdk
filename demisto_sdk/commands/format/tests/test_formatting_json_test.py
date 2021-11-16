@@ -507,14 +507,14 @@ class TestFormattingLayoutscontainer:
     @pytest.mark.parametrize('schema', [GENERICFIELD_SCHEMA_PATH,
                                         INCIDENTFIELD_SCHEMA_PATH,
                                         INDICATORFIELD_SCHEMA_PATH])
-    def test_remove_null_doesnt_remove_defaultrows(self, schema):
+    def test_remove_null_doesnt_remove_defaultrows_type_grid(self, schema):
         """
         Given
-            - Generic, indicator and incident fields schemes
+            - Generic, indicator and incident fields schemes with 'defaultrows' key of type "grid"
         When
-            - Run format on Generic, indicator and incident fields files
+            - Run remove_null_fields on Generic, indicator and incident fields files
         Then
-            - Ensure defaultRows key updated successfully
+            - Ensure defaultRows key remains the same
         """
         incident_formater = BaseUpdateJSON(input='test', output='')
         incident_formater.schema_path = schema
@@ -525,12 +525,12 @@ class TestFormattingLayoutscontainer:
     @pytest.mark.parametrize('schema', [GENERICFIELD_SCHEMA_PATH,
                                         INCIDENTFIELD_SCHEMA_PATH,
                                         INDICATORFIELD_SCHEMA_PATH])
-    def test_remove_null_remove_defaultrows(self, schema):
+    def test_remove_null_remove_defaultrows_non_grid(self, schema):
         """
         Given
-            - Generic, indicator and incident fields schemes
+            - Generic, indicator and incident fields schemes with 'defaultrows' key of type "grid"
         When
-            - Run format on Generic, indicator and incident fields files
+            - Run remove_null_fields on Generic, indicator and incident fields files
         Then
             - Ensure defaultRows key updated successfully
         """

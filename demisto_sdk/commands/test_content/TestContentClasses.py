@@ -1132,8 +1132,30 @@ class Integration:
         try:
             if len(self.additional_instances) > 1:
                 for additional_instance in self.additional_instances:
+                    module_instance['data'] = []
                     module_instance['name'] = additional_instance['instance_name']
                     module_instance['configuration'] = additional_instance['configuration']
+                    for param_conf in module_configuration:
+                        if param_conf['display'] in self.configuration.params or param_conf['name'] in self.configuration.params:  # type: ignore
+                            # param defined in conf
+                            key = param_conf['display'] if param_conf['display'] in self.configuration.params else param_conf['name']
+                            if key == 'credentials':
+                                credentials = additional_instance[key]  # type: ignore
+                                param_value = {
+                                    'credential': '',
+                                    'identifier': credentials['identifier'],
+                                    'password': credentials['password'],
+                                    'passwordChanged': False
+                                }
+                            else:
+                                param_value = additional_instance[key]  # type: ignore
+
+                            param_conf['value'] = param_value
+                            param_conf['hasvalue'] = True
+                        elif param_conf['defaultValue']:
+                            # param is required - take default value
+                            param_conf['value'] = param_conf['defaultValue']
+                        module_instance['data'].append(param_conf)
                     self.build_context.logging_module.warning(
                         f'Additonal Instance being configured is - {additional_instance}')
                     self.build_context.logging_module.warning(f'Module Instance being configured is - {module_instance}')

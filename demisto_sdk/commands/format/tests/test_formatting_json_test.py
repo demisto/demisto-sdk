@@ -117,7 +117,10 @@ class TestFormattingJson:
             assert str(e) == "The given output path is not a specific file path.\nOnly file path can be a output path." \
                              "  Please specify a correct output."
 
-    @pytest.mark.parametrize('formatter', [GenericFieldJSONFormat, IncidentFieldJSONFormat, IndicatorFieldJSONFormat])
+    @pytest.mark.parametrize('formatter', [GenericFieldJSONFormat,
+                                           IncidentFieldJSONFormat,
+                                           IndicatorFieldJSONFormat,
+                                           ])
     def test_update_unsearchable_key(self, formatter):
         """
         Given
@@ -130,7 +133,7 @@ class TestFormattingJson:
 
         fields_formatter = formatter(input='test')
         fields_formatter.data = {'unsearchable': False}
-        fields_formatter.update_unsearchable_key()
+        fields_formatter.set_default_values_as_needed()
         assert fields_formatter.data['unsearchable']
 
 

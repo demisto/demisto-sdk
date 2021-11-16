@@ -17,7 +17,7 @@ from demisto_sdk.commands.format.format_constants import (
     DEFAULT_VERSION, ERROR_RETURN_CODE, GENERIC_OBJECTS_DEFAULT_FROMVERSION,
     GENERIC_OBJECTS_FILE_TYPES, NEW_FILE_DEFAULT_5_5_0_FROMVERSION,
     OLD_FILE_DEFAULT_1_FROMVERSION, SKIP_RETURN_CODE, SUCCESS_RETURN_CODE,
-    UNSEARCHABLE_KEY_DEFAULT_VALUE, VERSION_6_0_0)
+    VERSION_6_0_0)
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
 ryaml = YAML()
@@ -365,9 +365,3 @@ class BaseUpdate:
 
             else:
                 return SUCCESS_RETURN_CODE
-
-    def update_unsearchable_key(self):
-        """Changes 'unsearchable' key of a generic field object to default."""
-        if self.verbose:
-            click.echo(f'Setting unsearchable to default: {UNSEARCHABLE_KEY_DEFAULT_VALUE}')
-        self.data['unsearchable'] = UNSEARCHABLE_KEY_DEFAULT_VALUE

@@ -14,7 +14,6 @@ ERROR_RETURN_CODE = 1
 SKIP_RETURN_CODE = 2
 SKIP_VALIDATE_PY_RETURN_CODE = 3
 GENERIC_FIELD_DEFAULT_GROUP = 4
-UNSEARCHABLE_KEY_DEFAULT_VALUE = True
 GENERIC_FIELD_DEFAULT_ID_PREFIX = 'generic_'
 
 ARGUMENTS_DEFAULT_VALUES = {
@@ -23,6 +22,7 @@ ARGUMENTS_DEFAULT_VALUES = {
                        'IndicatorTypeJSONFormat', 'GenericFieldJSONFormat', 'GenericTypeJSONFormat',
                        'GenericTypeJSONFormat', 'GenericDefinitionJSONFormat']),
     'required': (False, ['IncidentFieldJSONFormat', 'IndicatorFieldJSONFormat', 'GenericFieldJSONFormat']),
+    'unsearchable': (True, ['IncidentFieldJSONFormat', 'IndicatorFieldJSONFormat', 'GenericFieldJSONFormat']),
 }
 GENERIC_OBJECTS_FILE_TYPES = [FileType.GENERIC_FIELD, FileType.GENERIC_TYPE,
                               FileType.GENERIC_MODULE, FileType.GENERIC_DEFINITION]

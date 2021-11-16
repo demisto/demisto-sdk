@@ -1148,7 +1148,7 @@ class Integration:
                                     'passwordChanged': False
                                 }
                             else:
-                                param_value = additional_instance[key]  # type: ignore
+                                param_value = additional_instance['configuration'][key]  # type: ignore
 
                             param_conf['value'] = param_value
                             param_conf['hasvalue'] = True

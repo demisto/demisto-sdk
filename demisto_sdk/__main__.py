@@ -17,13 +17,14 @@ from pkg_resources import get_distribution
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 # Common tools
-from demisto_sdk.commands.common.constants import FileType, ALL_PACKS_DEPENDENCIES_DEFAULT_PATH, IGNORED_FILES
+from demisto_sdk.commands.common.constants import (
+    ALL_PACKS_DEPENDENCIES_DEFAULT_PATH, IGNORED_FILES, FileType)
 from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_last_remote_release_version,
                                                get_release_note_entries,
-                                               print_error, print_warning,
-                                               print_success)
+                                               print_error, print_success,
+                                               print_warning)
 from demisto_sdk.commands.common.update_id_set import merge_id_sets_from_files
 from demisto_sdk.commands.convert.convert_manager import ConvertManager
 from demisto_sdk.commands.coverage_analyze.coverage_report import \
@@ -35,8 +36,9 @@ from demisto_sdk.commands.doc_reviewer.doc_reviewer import DocReviewer
 from demisto_sdk.commands.download.downloader import Downloader
 from demisto_sdk.commands.error_code_info.error_code_info import \
     generate_error_code_information
-from demisto_sdk.commands.find_dependencies.find_dependencies import \
-    PackDependencies, get_packs_dependent_on_given_packs, calculate_all_packs_dependencies
+from demisto_sdk.commands.find_dependencies.find_dependencies import (
+    PackDependencies, calculate_all_packs_dependencies,
+    get_packs_dependent_on_given_packs)
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.generate_docs.generate_integration_doc import \
     generate_integration_doc
@@ -655,9 +657,7 @@ def secrets(config, **kwargs):
 @click.option("-idp", "--id-set-path", help="Path to id_set.json, relevant for when using the --check-dependent flag.",
               type=click.Path(resolve_path=True))
 @click.option("-chd", "--check-dependent", is_flag=True, help="Run unit tests and lint on all packages that are dependent on the found"
-                                        " modified packages.")
-
-
+              " modified packages.")
 def lint(**kwargs):
     """Lint command will perform:
         1. Package in host checks - flake8, bandit, mypy, vulture.
@@ -678,7 +678,7 @@ def lint(**kwargs):
         verbose=kwargs.get('verbose'),  # type: ignore[arg-type]
         quiet=kwargs.get('quiet'),  # type: ignore[arg-type]
         prev_ver=kwargs.get('prev_ver'),  # type: ignore[arg-type]
-        json_file_path=kwargs.get('json_file'), # type: ignore[arg-type]
+        json_file_path=kwargs.get('json_file'),  # type: ignore[arg-type]
         id_set_path=kwargs.get('id_set_path'),  # type: ignore[arg-type]
         check_dependent_packs=kwargs.get('check_dependent'),  # type: ignore[arg-type]
     )
@@ -1507,8 +1507,6 @@ def find_dependencies(**kwargs):
 
     except ValueError as exp:
         print_error(str(exp))
-
-
 
 
 # ====================== postman-codegen ====================== #

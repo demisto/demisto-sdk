@@ -12,11 +12,11 @@ from contextlib import contextmanager
 from distutils.version import LooseVersion
 from enum import Enum
 from functools import lru_cache, partial
-from pathlib import Path
+from pathlib import Path, PosixPath
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from typing import (Callable, Dict, List, Match, Optional, Set, Tuple, Type,
                     Union)
-from pathlib import PosixPath
+
 import click
 import colorama
 import demisto_client
@@ -853,8 +853,10 @@ def filter_files_by_type(file_paths=None, skip_file_types=None) -> set:
 def pack_name_to_path(pack_name):
     return os.path.join(PACKS_DIR, pack_name)
 
+
 def pack_name_to_posix_path(pack_name):
     return PosixPath(pack_name_to_path(pack_name))
+
 
 def get_pack_ignore_file_path(pack_name):
     return os.path.join(PACKS_DIR, pack_name, PACKS_PACK_IGNORE_FILE_NAME)

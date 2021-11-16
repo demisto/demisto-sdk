@@ -1,23 +1,30 @@
+import argparse
 import glob
 import json
+import logging
 import os
 import sys
+from concurrent.futures import as_completed
+from contextlib import contextmanager
 from copy import deepcopy
 from distutils.version import LooseVersion
-from typing import Optional, Union, Tuple, Iterable, List, Callable
+from pprint import pformat
+from typing import Callable, Iterable, List, Optional, Tuple, Union
 
 import click
 import networkx as nx
+from pebble import ProcessFuture, ProcessPool
 from requests import RequestException
 
 from demisto_sdk.commands.common import constants
-from demisto_sdk.commands.common.constants import GENERIC_COMMANDS_NAMES, BASE_PACK, PACKS_DIR, \
-    IGNORED_FILES, ALL_PACKS_DEPENDENCIES_DEFAULT_PATH
+from demisto_sdk.commands.common.constants import (
+    ALL_PACKS_DEPENDENCIES_DEFAULT_PATH, BASE_PACK, GENERIC_COMMANDS_NAMES,
+    IGNORED_FILES, PACKS_DIR)
 from demisto_sdk.commands.common.tools import (get_content_id_set,
+                                               get_content_path, get_pack_name,
                                                is_external_repository,
-                                               print_error, print_warning, print_success,
-                                               get_content_path,
-                                               get_pack_name)
+                                               print_error, print_success,
+                                               print_warning)
 from demisto_sdk.commands.common.update_id_set import merge_id_sets
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
@@ -25,13 +32,6 @@ MINIMUM_DEPENDENCY_VERSION = LooseVersion('6.0.0')
 COMMON_TYPES_PACK = 'CommonTypes'
 PACKS_FULL_PATH = os.path.join(get_content_path(), PACKS_DIR)  # full path to Packs folder in content repo
 
-import argparse
-import logging
-from concurrent.futures import as_completed
-from contextlib import contextmanager
-from pprint import pformat
-
-from pebble import ProcessPool, ProcessFuture
 
 def parse_for_pack_metadata(dependency_graph: nx.DiGraph, graph_root: str, verbose: bool = False,
                             complete_data: bool = False, id_set_data=None) -> tuple:
@@ -1584,6 +1584,7 @@ class PackDependencies:
 
         return pack_meta_file_content
 
+
 @contextmanager
 def ProcessPoolHandler() -> ProcessPool:
     """ Process pool Handler which terminate all processes in case of Exception.
@@ -1736,7 +1737,7 @@ def calculate_all_packs_dependencies(id_set_path: str, output_path: str) -> None
             logging.exception('Failed to collect pack dependencies results')
             raise
 
-    pack_dependencies_result = {}
+    pack_dependencies_result: dict = {}
     id_set = get_id_set(id_set_path)
     packs = select_packs_for_calculation()
 
@@ -1775,7 +1776,7 @@ def get_packs_dependent_on_given_packs(packs, id_set_path):
 
     if type(packs) is not list:
         packs = [packs]
-    dependent_packs = []
+    dependent_packs: list = []
     id_set = get_id_set(id_set_path)
     all_packs = select_packs_for_calculation()
     dependency_graph = PackDependencies.build_all_dependencies_graph(all_packs, id_set=id_set, verbose=False)

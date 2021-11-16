@@ -14,8 +14,8 @@ import docker.errors
 import git
 import requests.exceptions
 import urllib3.exceptions
-
 from wcmatch.pathlib import Path
+
 from demisto_sdk.commands.common.constants import (PACKS_PACK_META_FILE_NAME,
                                                    TYPE_PWSH, TYPE_PYTHON,
                                                    DemistoException)
@@ -26,18 +26,19 @@ from demisto_sdk.commands.common.tools import (find_file, find_type,
                                                get_file_displayed_name,
                                                get_json,
                                                is_external_repository,
+                                               pack_name_to_posix_path,
                                                print_error, print_v,
                                                print_warning,
-                                               retrieve_file_ending,
-                                               pack_name_to_posix_path)
+                                               retrieve_file_ending)
+from demisto_sdk.commands.find_dependencies.find_dependencies import \
+    get_packs_dependent_on_given_packs
 from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, PWSH_CHECKS,
                                                PY_CHCEKS,
                                                build_skipped_exit_code,
                                                generate_coverage_report,
-                                               get_test_modules, validate_env,
-                                               )
+                                               get_test_modules, validate_env)
 from demisto_sdk.commands.lint.linter import Linter
-from demisto_sdk.commands.find_dependencies.find_dependencies import get_packs_dependent_on_given_packs
+
 logger = logging.getLogger('demisto-sdk')
 sha1Regex = re.compile(r'\b[0-9a-fA-F]{40}\b', re.M)
 
@@ -93,7 +94,6 @@ class LintManager:
                 json_file_path = os.path.join(json_file_path, 'lint_outputs.json')
         self.json_file_path = json_file_path
         self.linters_error_list: list = []
-
 
     @staticmethod
     def _gather_facts() -> Dict[str, Any]:
@@ -260,7 +260,7 @@ class LintManager:
 
         if not base_branch:
             # if we remove the next part, then this means base_branch should be set to master in this part
-            if content_repo.active_branch == 'master': # TODO: check if can remove, there is no use to it
+            if content_repo.active_branch == 'master':  # TODO: check if can remove, there is no use to it
                 # case 1: comparing master against the latest previous commit
                 last_common_commit = content_repo.remote().refs.master.commit.parents[0]
                 print(f"Comparing {Colors.Fg.cyan}master{Colors.reset} to its {Colors.Fg.cyan}previous commit: {last_common_commit} {Colors.reset}")
@@ -273,9 +273,9 @@ class LintManager:
 
         else:
             # case 3: comparing the active branch (either master or another branch) against a specific commit or branch
-            if sha1Regex.match(base_branch): # if the base branch is given as a commit hash
+            if sha1Regex.match(base_branch):  # if the base branch is given as a commit hash
                 last_common_commit = base_branch
-            else: # if the base branch is given as a branch name
+            else:  # if the base branch is given as a branch name
                 last_common_commit = content_repo.merge_base(content_repo.active_branch.commit,
                                                              f'{content_repo.remote()}/{base_branch}')[0]
             print(f"Comparing {Colors.Fg.cyan}{content_repo.active_branch}{Colors.reset} to commit hash{Colors.Fg.cyan}"

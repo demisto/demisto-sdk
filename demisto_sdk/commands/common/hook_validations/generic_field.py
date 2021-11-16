@@ -69,6 +69,7 @@ class GenericFieldValidator(ContentEntityValidator):
         if generic_field_unsearchable:
             return True
         error_message, error_code = Errors.unsearchable_key_should_be_true_generic_field()
-        if self.handle_error(error_message, error_code, file_path=self.file_path):
+        if self.handle_error(error_message, error_code, file_path=self.file_path,
+                             suggested_fix=Errors.suggest_fix(self.file_path)):
             return False
         return True

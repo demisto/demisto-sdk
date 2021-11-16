@@ -17,7 +17,7 @@ from pkg_resources import get_distribution
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 # Common tools
-from demisto_sdk.commands.common.constants import FileType
+from demisto_sdk.commands.common.constants import FileType, ALL_PACKS_DEPENDENCIES_DEFAULT_PATH, IGNORED_FILES
 from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_last_remote_release_version,
@@ -1453,51 +1453,57 @@ def update_release_notes(**kwargs):
                                                "'--output-path' argument", required=False, is_flag=True)
 @click.option("--output-path", help="The destination path for the packs dependencies json file. This argument is "
                                     "only relevant for when using the '--all-packs-dependecies' flag.", required=False)
-@click.option("--get-depndent-on", help="Get only the packs dependent ON the given pack.", required=False,
+@click.option("--get-dependent-on", help="Get only the packs dependent ON the given pack. Note: this flag can not be"
+                                         " used for the packs ApiModules and Base", required=False,
               is_flag=True)
-
 def find_dependencies(**kwargs):
     """Find pack dependencies and update pack metadata."""
     check_configuration_file('find-dependencies', kwargs)
     update_pack_metadata = not kwargs.get('no_update')
-    input_path = Path(kwargs.get('input')) # TODO: verify
-    #input_path: Path = Path(kwargs["input"])  # To not shadow python builtin `input`
+    input_path = kwargs.get('input')
     verbose = kwargs.get('verbose', False)
     id_set_path = kwargs.get('id_set_path', '')
     use_pack_metadata = kwargs.get('use_pack_metadata', False)
-    all_packs_dependencies = kwargs.get('all-packs-dependencies', False)
-    get_dependent_on = kwargs.get('get-depndent-on', False)
-    output_path = kwargs.get('output-path')
+    all_packs_dependencies = kwargs.get('all_packs_dependencies')
+    get_dependent_on = kwargs.get('get_dependent_on')
+    output_path = kwargs.get('output_path', ALL_PACKS_DEPENDENCIES_DEFAULT_PATH)
 
     try:
         if all_packs_dependencies:
-            pack_dependencies_result = {} # TODO: check if can do without
-            calculate_all_packs_dependencies(pack_dependencies_result, id_set_path, output_path)
-            print_success(f"The packs dependencies json was succesfully saved to {output_path}")
-
-        elif get_dependent_on:
-            get_packs_dependent_on_given_packs(input_path.name, id_set_path, False) # TODO: not print?
+            calculate_all_packs_dependencies(id_set_path, output_path)
+            print_success(f"The packs dependencies json was successfully saved to {output_path}")
 
         else:
             if not input_path:
                 print_error(f"Please provide an input path. The path should be formatted as 'Packs/<some pack name>'. "
                             f"For example, Packs/HelloWorld")
                 sys.exit(1)
-            elif len(input_path.parts) != 2 or input_path.parts[-2] != "Packs":
-                print_error(f"Input path ({input_path}) must be formatted as 'Packs/<some pack name>'. "
-                            f"For example, Packs/HelloWorld")
-                sys.exit(1)
-            if output_path:
-                print_warning(f"You used the '--outputs-path' argument, which is only relevant for when using the"
-                              f" '--all-packs-dependencies' flag. Ignoring this argument.")
+            else:
+                input_path = Path(input_path)
+                if len(input_path.parts) != 2 or input_path.parts[-2] != "Packs":
+                    print_error(f"Input path ({input_path}) must be formatted as 'Packs/<some pack name>'. "
+                                f"For example, Packs/HelloWorld")
+                    sys.exit(1)
 
-                PackDependencies.find_dependencies(
-                    pack_name=input_path.name,
-                    id_set_path=str(id_set_path),
-                    verbose=verbose,
-                    update_pack_metadata=update_pack_metadata,
-                    use_pack_metadata=use_pack_metadata,
-                )
+                if output_path and not all_packs_dependencies:
+                    print_warning(f"You used the '--outputs-path' argument, which is only relevant for when using the"
+                                  f" '--all-packs-dependencies' flag. Ignoring this argument.")
+
+                if get_dependent_on:
+                    if input_path.parts[-1] in IGNORED_FILES:
+                        print_error(f"Finding all packs dependent on {input_path.parts[-1]} pack is not supported.")
+                        sys.exit(1)
+                    dependent_packs = get_packs_dependent_on_given_packs(input_path, id_set_path)
+                    print_success(f"Found {len(dependent_packs)} dependent packs:\n {str(dependent_packs)}")
+
+                else:
+                    PackDependencies.find_dependencies(
+                        pack_name=input_path.name,
+                        id_set_path=str(id_set_path),
+                        verbose=verbose,
+                        update_pack_metadata=update_pack_metadata,
+                        use_pack_metadata=use_pack_metadata,
+                    )
 
     except ValueError as exp:
         print_error(str(exp))

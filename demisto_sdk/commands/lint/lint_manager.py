@@ -79,16 +79,14 @@ class LintManager:
                                                     base_branch=self._prev_ver)
         self._id_set_path = id_set_path
         self._check_dependent_packs = check_dependent_packs
-        print(id_set_path)
-        print(self._check_dependent_packs)
         if self._check_dependent_packs:
-            print("Checking for dependent packs")
+            print("Checking for dependent packs...")
             dependent = [pack_name_to_posix_path(pack) for pack in
                          get_packs_dependent_on_given_packs(self._pkgs, self._id_set_path)]
-            self._pkgs = list(set(self._pkgs + dependent)) # remove dups
+            self._pkgs = list(set(self._pkgs + dependent))  # remove dups
             if dependent:
                 print(f"Found {Colors.Fg.cyan}{len(dependent)}{Colors.reset} dependent packages. Executing lint and "
-                      f"test on dependent packages as well.")
+                      f"test on dependent packages as well for a total of {Colors.Fg.cyan}{len(self._pkgs)}{Colors.reset} packages")
 
         if json_file_path:
             if os.path.isdir(json_file_path):
@@ -218,7 +216,7 @@ class LintManager:
             for pkg in pkgs:
                 print_v(f"Found changed package {Colors.Fg.cyan}{pkg}{Colors.reset}",
                         log_verbose=self._verbose)
-        print(f"Execute lint and test on {Colors.Fg.cyan}{len(pkgs)}/{total_found}{Colors.reset} packages")
+        print(f"Executing lint and test on {Colors.Fg.cyan}{len(pkgs)}/{total_found}{Colors.reset} packages")
 
         return pkgs
 
@@ -271,7 +269,7 @@ class LintManager:
                 last_common_commit = content_repo.merge_base(content_repo.active_branch.commit,
                                                              f'{content_repo.remote()}/master')[0]
                 print(f"Comparing {Colors.Fg.cyan}{content_repo.active_branch}{Colors.reset} to"
-                      f" {Colors.Fg.cyan}last common commit with master: {last_common_commit} {Colors.reset}")
+                      f" last common commit with master: {Colors.Fg.cyan}{last_common_commit}{Colors.reset}")
 
         else:
             # case 3: comparing the active branch (either master or another branch) against a specific commit or branch

@@ -15,7 +15,7 @@ from demisto_sdk.commands.common.constants import GENERIC_COMMANDS_NAMES, BASE_P
     IGNORED_FILES, ALL_PACKS_DEPENDENCIES_DEFAULT_PATH
 from demisto_sdk.commands.common.tools import (get_content_id_set,
                                                is_external_repository,
-                                               print_error, print_warning,
+                                               print_error, print_warning, print_success,
                                                get_content_path,
                                                get_pack_name)
 from demisto_sdk.commands.common.update_id_set import merge_id_sets
@@ -1637,7 +1637,6 @@ def calculate_single_pack_dependencies(pack: str, dependency_graph: object) -> T
         all_level_dependencies: A list with all dependencies names
         pack: The pack name
     """
-    logging.info('Calculate_Packs_Dependencies.log', include_process_name=True)
 
     try:
         logging.info(f"Calculating {pack} pack dependencies.")
@@ -1646,7 +1645,7 @@ def calculate_single_pack_dependencies(pack: str, dependency_graph: object) -> T
             logging.debug(f'Iterating dependency {dependency_pack} for pack {pack}')
             additional_data['mandatory'] = pack in additional_data['mandatory_for_packs']
             del additional_data['mandatory_for_packs']
-        first_level_dependencies, all_level_dependencies = parse_for_pack_metadata(subgraph, pack) # TODO: verify out of loop
+        first_level_dependencies, all_level_dependencies = parse_for_pack_metadata(subgraph, pack)
     except Exception:
         logging.exception(f"Failed calculating {pack} pack dependencies")
         raise
@@ -1664,12 +1663,12 @@ def get_all_packs_dependency_graph(id_set: dict, packs: list) -> Iterable:
     Returns:
         A graph with all packs dependencies
     """
-    logging.info("Calculating pack dependencies.")
+    print("Calculating all packs dependencies.")
     try:
         dependency_graph = PackDependencies.build_all_dependencies_graph(packs, id_set=id_set, verbose=False)
         return dependency_graph
     except Exception:
-        logging.exception("Failed calculating dependencies graph")
+        print_error("Failed calculating dependencies graph")
         exit(2)
 
 
@@ -1679,11 +1678,10 @@ def select_packs_for_calculation() -> list:
     Returns:
         A list of packs
     """
-    IGNORED_FILES.append(BASE_PACK)  # skip dependency calculation of Base pack
     packs = []
     for pack in os.scandir(PACKS_FULL_PATH):
         if not pack.is_dir() or pack.name in IGNORED_FILES:
-            logging.warning(f"Skipping dependency calculation of {pack.name} pack.")
+            print_warning(f"Skipping dependency calculation of {pack.name} pack.")
             continue  # skipping ignored packs
         packs.append(pack.name)
     return packs
@@ -1706,16 +1704,14 @@ def get_id_set(id_set_path: str) -> dict:
     return id_set
 
 
-def calculate_all_packs_dependencies(pack_dependencies_result: dict, id_set_path: str, output_path: str = ALL_PACKS_DEPENDENCIES_DEFAULT_PATH) -> None:
+def calculate_all_packs_dependencies(id_set_path: str, output_path: str) -> None:
     """
-    Calculates the pack dependencies and adds them to 'pack_dependencies_result' in parallel.
-    First - the method generates the full dependency graph.
-
-    Them - using a process pool we extract the dependencies of each pack and adds them to the 'pack_dependencies_result'
+    Calculates all packs dependencies in parallel.
+    First - the method generates the full dependency graph. Then - using a process pool we extract the
+    dependencies of each pack and adds them to the dict 'pack_dependencies_result'.
     Args:
-        pack_dependencies_result: The dict to which the results should be added
-        id_set: The id_set content
-        packs: The packs that should be part of the dependencies calculation
+        id_set_path: The id_set content.
+        output_path: The path for the outputs json.
     """
 
     def add_pack_metadata_results(results: Tuple) -> None:
@@ -1738,6 +1734,7 @@ def calculate_all_packs_dependencies(pack_dependencies_result: dict, id_set_path
             logging.exception('Failed to collect pack dependencies results')
             raise
 
+    pack_dependencies_result = {}
     id_set = get_id_set(id_set_path)
     packs = select_packs_for_calculation()
 
@@ -1749,17 +1746,15 @@ def calculate_all_packs_dependencies(pack_dependencies_result: dict, id_set_path
         for pack in dependency_graph:
             futures.append(pool.schedule(calculate_single_pack_dependencies, args=(pack, dependency_graph), timeout=10))
         wait_futures_complete(futures=futures, done_fn=add_pack_metadata_results)
-        logging.info(f"Number of created pack dependencies entries: {len(pack_dependencies_result.keys())}")
+        print(f"Number of created pack dependencies entries: {len(pack_dependencies_result.keys())}")
         # finished iteration over pack folders
-        logging.success("Finished dependencies calculation")
+        print_success("Finished dependencies calculation")
 
         with open(output_path, 'w') as pack_dependencies_file:
-            json.dump(pack_dependencies_result, pack_dependencies_file, indent=4) # TODO: verify this part is working
-
-        logging.success(f"Created packs dependencies file at: {output_path}")
+            json.dump(pack_dependencies_result, pack_dependencies_file, indent=4)
 
 
-def get_packs_dependent_on_given_packs(packs, id_set_path, silent_mode=True):
+def get_packs_dependent_on_given_packs(packs, id_set_path):
     """
 
     Args:
@@ -1792,9 +1787,4 @@ def get_packs_dependent_on_given_packs(packs, id_set_path, silent_mode=True):
                               timeout=10))
         wait_futures_complete(futures=futures, done_fn=collect_dependent_packs)
 
-    if not silent_mode:
-        # print the found pack dependency results
-        click.echo(click.style(f"Found {len(dependent_packs)} dependent packs:", bold=True))
-        click.echo(click.style(dependent_packs, bold=True))
-
-    return dependent_packs
+    return set(dependent_packs)

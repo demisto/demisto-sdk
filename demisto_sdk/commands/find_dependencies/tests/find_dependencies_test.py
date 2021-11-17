@@ -2,18 +2,18 @@ import json
 import os
 from pathlib import Path
 from typing import List
+from unittest.mock import patch
 
 import networkx as nx
 import pytest
 
 import demisto_sdk.commands.create_id_set.create_id_set as cis
 from demisto_sdk.commands.common.constants import FileType
-from demisto_sdk.commands.find_dependencies.find_dependencies import \
-    PackDependencies, calculate_single_pack_dependencies, get_packs_dependent_on_given_packs, calculate_all_packs_dependencies
+from demisto_sdk.commands.find_dependencies.find_dependencies import (
+    PackDependencies, calculate_single_pack_dependencies, get_packs_dependent_on_given_packs)
 from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
 from TestSuite.utils import IsEqualFunctions
-from unittest.mock import patch
 
 
 def create_a_pack_entity(pack, entity_type: FileType = None, entity_id: str = None, entity_name: str = None,
@@ -2287,6 +2287,7 @@ class TestDependsOnGenericModules:
 def find_pack_display_name_mock(pack_folder_name):
     return pack_folder_name
 
+
 class TestCalculateSinglePackDependencies:
     @classmethod
     def setup_class(cls):
@@ -2383,7 +2384,7 @@ def get_mock_dependency_graph():
 class TestGetDependentOnGivenPack:
     def test_get_dependent_on_given_pack(self, mocker):
         mocker.patch('demisto_sdk.commands.find_dependencies.find_dependencies.find_pack_display_name',
-              side_effect=find_pack_display_name_mock)
+                     side_effect=find_pack_display_name_mock)
         mocker.patch('demisto_sdk.commands.find_dependencies.find_dependencies.get_id_set', return_value={})
         mocker.patch('demisto_sdk.commands.find_dependencies.find_dependencies.select_packs_for_calculation',
                      return_value=[])

@@ -1,12 +1,15 @@
 import json
 import os
+import shutil
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
 import pytest
 import yaml
+from click.testing import CliRunner
 
 import demisto_sdk.commands.common.tools as tools
+from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.generate_integration.code_generator import (
     IntegrationGeneratorConfig, IntegrationGeneratorOutput)
@@ -694,6 +697,28 @@ class TestPostmanCodeGen:
             assert outputs[i].description == expected[i].description
             assert outputs[i].type_ == expected[i].type_
         assert len(outputs) == len(expected)
+
+    def test_package_integration_generation(self, tmp_path):
+        """
+        Given
+        - postman collection
+        When
+        - generating an integration in a package format
+        Then
+        - package should be created with the integration files.
+        """
+        package_path = os.path.join(self.test_files_path, 'package')
+        os.mkdir(package_path)
+        collection_path = os.path.join(self.test_files_path, 'VirusTotal.postman_collection.json')
+        try:
+            runner = CliRunner()
+            runner.invoke(main, ['postman-codegen', '-i', collection_path,
+                                 '-o', package_path, '-p'], catch_exceptions=False)
+            assert all(elem in os.listdir(package_path) for elem in ['package.py', 'README.md', 'package.yml'])
+        except Exception as e:
+            raise e
+        finally:
+            shutil.rmtree(package_path)
 
 
 def _testutil_create_postman_collection(dest_path, with_request: Optional[dict] = None, no_auth: bool = False):

@@ -135,7 +135,7 @@ class TestExportReport:
 class TestCoverageSummary:
 
     class TestGetFilesSummary:
-        default_url = 'https://storage.googleapis.com/marketplace-dist-dev/code-coverage/coverage-min.json'
+        default_url = 'https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-min.json'
 
         @staticmethod
         def check_get_files(cache_dir, mock_min_cov_request, request_count):

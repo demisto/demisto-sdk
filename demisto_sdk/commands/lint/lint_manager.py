@@ -87,7 +87,7 @@ class LintManager:
             self._pkgs = list(set(self._pkgs + dependent))  # remove dups
             if dependent:
                 print(f"Found {Colors.Fg.cyan}{len(dependent)}{Colors.reset} dependent packages. Executing lint and "
-                      f"test on dependent packages as well for a total of {Colors.Fg.cyan}{len(self._pkgs)}{Colors.reset} packages")
+                      f"test on dependent packages as well.")
 
         if json_file_path:
             if os.path.isdir(json_file_path):
@@ -216,7 +216,7 @@ class LintManager:
             for pkg in pkgs:
                 print_v(f"Found changed package {Colors.Fg.cyan}{pkg}{Colors.reset}",
                         log_verbose=self._verbose)
-        print(f"Executing lint and test on {Colors.Fg.cyan}{len(pkgs)}/{total_found}{Colors.reset} packages")
+        print(f"Executing lint and test on {Colors.Fg.cyan}{len(pkgs)}/{total_found}{Colors.reset} integrations and scripts")
 
         return pkgs
 

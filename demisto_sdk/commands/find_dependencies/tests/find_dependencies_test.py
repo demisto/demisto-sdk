@@ -10,7 +10,8 @@ import pytest
 import demisto_sdk.commands.create_id_set.create_id_set as cis
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.find_dependencies.find_dependencies import (
-    PackDependencies, calculate_single_pack_dependencies, get_packs_dependent_on_given_packs)
+    PackDependencies, calculate_single_pack_dependencies,
+    get_packs_dependent_on_given_packs)
 from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
 from TestSuite.utils import IsEqualFunctions

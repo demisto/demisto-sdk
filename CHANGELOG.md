@@ -9,6 +9,7 @@
 * Added an assertion that checks for duplicated requests' names when generating an integration from a postman collection.
 * Added support for [.env files](https://pypi.org/project/python-dotenv/). You can now add a `.env` file to your repository with the logging information instead of setting a global environment variables.
 * When running **lint** command with --keep-container flag, the docker images are committed.
+* The **validate** command will not return missing test playbook error when given a script with dynamic-section tag
 
 # 1.5.2
 * Added a validation to **update-release-notes** command to ensure that the `--version` flag argument is in the right format.

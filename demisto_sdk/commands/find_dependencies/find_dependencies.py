@@ -1704,7 +1704,7 @@ def get_id_set(id_set_path: str) -> dict:
     return id_set
 
 
-def calculate_all_packs_dependencies(id_set_path: str, output_path: str) -> None:
+def calculate_all_packs_dependencies(id_set_path: str, output_path: str) -> dict:
     """
     Calculates all packs dependencies in parallel.
     First - the method generates the full dependency graph. Then - using a process pool we extract the
@@ -1752,9 +1752,10 @@ def calculate_all_packs_dependencies(id_set_path: str, output_path: str) -> None
 
         with open(output_path, 'w') as pack_dependencies_file:
             json.dump(pack_dependencies_result, pack_dependencies_file, indent=4)
+    return pack_dependencies_result
 
 
-def get_packs_dependent_on_given_packs(packs, id_set_path):
+def get_packs_dependent_on_given_packs(packs, id_set_path) -> set:
     """
 
     Args:
@@ -1770,7 +1771,6 @@ def get_packs_dependent_on_given_packs(packs, id_set_path):
     def collect_dependent_packs(results) -> None:
         first_level_dependencies = results[0]
         dependent_packs.extend(first_level_dependencies.keys())
-
     if type(packs) is not list:
         packs = [packs]
     dependent_packs: list = []

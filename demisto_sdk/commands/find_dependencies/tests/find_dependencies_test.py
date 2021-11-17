@@ -9,10 +9,11 @@ import pytest
 import demisto_sdk.commands.create_id_set.create_id_set as cis
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
-    PackDependencies
+    PackDependencies, calculate_single_pack_dependencies, get_packs_dependent_on_given_packs, calculate_all_packs_dependencies
 from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
 from TestSuite.utils import IsEqualFunctions
+from unittest.mock import patch
 
 
 def create_a_pack_entity(pack, entity_type: FileType = None, entity_id: str = None, entity_name: str = None,
@@ -427,8 +428,8 @@ def create_content_repo():
         ids.create_id_set()
 
 
-def setup_module():
-    create_content_repo()
+# def setup_module():
+#     create_content_repo()
 
 
 class TestIdSetFilters:
@@ -2281,3 +2282,115 @@ class TestDependsOnGenericModules:
             verbose=False,
         )
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
+
+def find_pack_display_name_mock(pack_folder_name):
+    return pack_folder_name
+
+class TestCalculateSinglePackDependencies:
+    @classmethod
+    def setup_class(cls):
+        patch('demisto_sdk.commands.find_dependencies.find_dependencies.find_pack_display_name',
+              side_effect=find_pack_display_name_mock)
+        patch('Tests.scripts.utils.log_util.install_logging')
+        graph = nx.DiGraph()
+        graph.add_node('pack1', mandatory_for_packs=[])
+        graph.add_node('pack2', mandatory_for_packs=[])
+        graph.add_node('pack3', mandatory_for_packs=[])
+        graph.add_node('pack4', mandatory_for_packs=[])
+        graph.add_node('pack5', mandatory_for_packs=[])
+        graph.add_edge('pack1', 'pack2')
+        graph.add_edge('pack2', 'pack3')
+        graph.add_edge('pack1', 'pack4')
+        graph.nodes()['pack4']['mandatory_for_packs'].append('pack1')
+
+        dependencies = calculate_single_pack_dependencies('pack1', graph)
+        cls.first_level_dependencies, cls.all_level_dependencies, _ = dependencies
+
+    def test_calculate_single_pack_dependencies_first_level_dependencies(self):
+        """
+        Given
+            - A full dependency graph where:
+                - pack1 -> pack2 -> pack3
+                - pack1 -> pack4
+                - pack4 is mandatory for pack1
+                - pack5 and pack1 are not a dependency for any pack
+        When
+            - Running `calculate_single_pack_dependencies` to extract the first and all levels dependencies
+        Then
+            - Ensure first level dependencies for pack1 are only pack2 and pack4
+        """
+        all_nodes = {'pack1', 'pack2', 'pack3', 'pack4', 'pack5'}
+        expected_first_level_dependencies = {'pack2', 'pack4'}
+        for node in expected_first_level_dependencies:
+            assert node in self.first_level_dependencies
+        for node in all_nodes - expected_first_level_dependencies:
+            assert node not in self.first_level_dependencies
+
+    def test_calculate_single_pack_dependencies_all_levels_dependencies(self):
+        """
+        Given
+            - A full dependency graph where:
+                - pack1 -> pack2 -> pack3
+                - pack1 -> pack4
+                - pack4 is mandatory for pack1
+                - pack5 and pack1 are not a dependency for any pack
+        When
+            - Running `calculate_single_pack_dependencies` to extract the first and all levels dependencies
+        Then
+            - Ensure all levels dependencies for pack1 are pack2, pack3 and pack4 only
+        """
+        all_nodes = {'pack1', 'pack2', 'pack3', 'pack4', 'pack5'}
+        expected_all_level_dependencies = {'pack2', 'pack3', 'pack4'}
+        for node in expected_all_level_dependencies:
+            assert node in self.all_level_dependencies
+        for node in all_nodes - expected_all_level_dependencies:
+            assert node not in self.all_level_dependencies
+
+    def test_calculate_single_pack_dependencies_mandatory_dependencies(self):
+        """
+        Given
+            - A full dependency graph where:
+                - pack1 -> pack2 -> pack3
+                - pack1 -> pack4
+                - pack4 is mandatory for pack1
+                - pack5 and pack1 are not a dependency for any pack
+        When
+            - Running `calculate_single_pack_dependencies` to extract the first and all levels dependencies
+        Then
+            - pack4 is mandatory for pack1 and that there are no other mandatory dependencies
+        """
+        expected_mandatory_dependency = 'pack4'
+        assert self.first_level_dependencies[expected_mandatory_dependency]['mandatory']
+        for node in self.first_level_dependencies:
+            if node != expected_mandatory_dependency:
+                assert not self.first_level_dependencies[node]['mandatory']
+
+
+def get_mock_dependency_graph():
+    graph = nx.DiGraph()
+    graph.add_node('pack1', mandatory_for_packs=[])
+    graph.add_node('pack2', mandatory_for_packs=[])
+    graph.add_node('pack3', mandatory_for_packs=[])
+    graph.add_node('pack4', mandatory_for_packs=[])
+    graph.add_node('pack5', mandatory_for_packs=[])
+    graph.add_edge('pack1', 'pack2')
+    graph.add_edge('pack2', 'pack4')
+    graph.add_edge('pack1', 'pack4')
+    return graph
+
+
+class TestGetDependentOnGivenPack:
+    def test_get_dependent_on_given_pack(self, mocker):
+        mocker.patch('demisto_sdk.commands.find_dependencies.find_dependencies.find_pack_display_name',
+              side_effect=find_pack_display_name_mock)
+        mocker.patch('demisto_sdk.commands.find_dependencies.find_dependencies.get_id_set', return_value={})
+        mocker.patch('demisto_sdk.commands.find_dependencies.find_dependencies.select_packs_for_calculation',
+                     return_value=[])
+        mocker.patch('demisto_sdk.commands.find_dependencies.find_dependencies.PackDependencies.build_all_'
+                     'dependencies_graph', return_value=get_mock_dependency_graph())
+        mocker.patch('demisto_sdk.commands.common.tools.get_pack_name', return_value='pack4')
+        dependent_packs = get_packs_dependent_on_given_packs('pack4', '')
+        assert 'pack2' in dependent_packs
+        assert 'pack1' in dependent_packs
+        assert len(dependent_packs) == 2

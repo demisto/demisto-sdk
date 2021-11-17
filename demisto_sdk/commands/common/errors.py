@@ -1444,7 +1444,8 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def pack_metadata_missing_categories(pack_meta_file) -> str:
-        return f'{pack_meta_file} - Missing categories'
+        return f'{pack_meta_file} - Missing categories. \nAt least one category should be chosen,' \
+               f' for example: {INTEGRATION_CATEGORIES}'
 
     @staticmethod
     @error_code_decorator

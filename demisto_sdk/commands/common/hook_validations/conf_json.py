@@ -16,6 +16,7 @@ class ConfJsonValidator(BaseValidator):
         conf_data (dict): The data from the conf.json file in our repo.
     """
     CONF_PATH = "./Tests/conf.json"
+    DYNAMIC_SECTION_TAG = 'dynamic-section'
 
     def __init__(self, ignored_errors=None, print_as_warnings=False, suppress_print=False, json_file_path=None):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
@@ -104,6 +105,9 @@ class ConfJsonValidator(BaseValidator):
         Returns:
             True if the content entity has at least one unskipped test playbook.
         """
+        # If it has a dynamic section tag, it shouldn't have a test playbook.
+        if self.DYNAMIC_SECTION_TAG in current_file.get('tags', []):
+            return True
         if test_playbook_ids is None:
             test_playbook_ids = []
         test_playbooks_unskip_status = {}

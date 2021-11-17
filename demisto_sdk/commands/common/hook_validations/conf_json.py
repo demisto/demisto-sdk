@@ -101,7 +101,7 @@ class ConfJsonValidator(BaseValidator):
             file_path: The file path of the entity to check.
             test_playbook_ids: test_playbook_ids unrelated to `tests` field in the file.
 
-        Retrun:
+        Returns:
             True if the content entity has at least one unskipped test playbook.
         """
         if test_playbook_ids is None:

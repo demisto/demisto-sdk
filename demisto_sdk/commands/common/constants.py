@@ -869,6 +869,8 @@ VALIDATION_USING_GIT_IGNORABLE_DATA = (
     'tests_data',
     'doc_files',
     'doc_imgs',
+    '.secrets-ignore',
+    '.pack-ignore'
 )
 
 FILE_TYPES_FOR_TESTING = [

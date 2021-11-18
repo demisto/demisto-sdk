@@ -1410,13 +1410,32 @@ class ValidateManager:
             return file_path
 
     def ignore_files_irrelevant_for_validation(self, file_path: str) -> bool:
-        # ignore doc data, test_data and non pack files
-        if PACKS_DIR not in file_path or any(name in str(file_path) for name in VALIDATION_USING_GIT_IGNORABLE_DATA):
-            if self.print_ignored_files:
-                click.secho(f"ignoring file {file_path}", fg='yellow')
-            self.ignored_files.add(file_path)
+        """
+        Will ignore files that are not in the packs directory, are .txt files or are in the
+        VALIDATION_USING_GIT_IGNORABLE_DATA tuple.
+
+        Args:
+            file_path: path of file to check if should be ignored.
+        Returns: True if file is ignored, false otherwise
+        """
+
+        if PACKS_DIR not in file_path:
+            self.ignore_file(file_path)
+            return True
+
+        if file_path.endswith(".txt"):
+            self.ignore_file(file_path)
+            return True
+
+        if any(name in str(file_path) for name in VALIDATION_USING_GIT_IGNORABLE_DATA):
+            self.ignore_file(file_path)
             return True
         return False
+
+    def ignore_file(self, file_path: str) -> None:
+        if self.print_ignored_files:
+            click.secho(f"ignoring file {file_path}", fg='yellow')
+        self.ignored_files.add(file_path)
 
     """ ######################################## Validate Tools ############################################### """
 

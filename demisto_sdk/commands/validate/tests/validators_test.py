@@ -1134,7 +1134,10 @@ class TestValidators:
                               'Packs/pack_id/Scripts/script_id/test_data/file.json',
                               'Packs/pack_id/TestPlaybooks/test_data/file.json',
                               'Packs/pack_id/pack_metadata.json',
-                              'Packs/pack_id/Integrations/integration_id/command_examples'])
+                              'Packs/pack_id/Integrations/integration_id/command_examples',
+                              'Packs/pack_id/Integrations/integration_id/test.txt',
+                              'Packs/pack_id/.secrets-ignore',
+                              'Packs/pack_id/.pack-ignore'])
     def test_ignore_files_irrelevant_for_validation_test_file(self, file_path: str):
         """
         Given

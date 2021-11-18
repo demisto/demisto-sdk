@@ -858,6 +858,21 @@ TESTS_AND_DOC_DIRECTORIES = [
     'doc_imgs',
 ]
 
+VALIDATION_USING_GIT_IGNORABLE_DATA = (
+    'Pipfile',
+    'Pipfile.lock',
+    'command_examples',
+    'pack_metadata.json',
+    'testdata',
+    'test_data',
+    'data_test',
+    'tests_data',
+    'doc_files',
+    'doc_imgs',
+    '.secrets-ignore',
+    '.pack-ignore'
+)
+
 FILE_TYPES_FOR_TESTING = [
     '.py',
     '.js',

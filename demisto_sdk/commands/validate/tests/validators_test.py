@@ -1573,7 +1573,7 @@ def test_check_file_relevance_and_format_path_file_to_format_with_old_path(mocke
     mocker.patch('demisto_sdk.commands.validate.validate_manager.find_type', return_value=file_type)
     mocker.patch.object(validator_obj, 'is_old_file_format', return_value=False)
     assert validator_obj.check_file_relevance_and_format_path(input_file_path, old_file_path, set()) ==\
-           ('Packs/old_file_path.yml', 'Packs/some_file.yml')
+        ('Packs/old_file_path.yml', 'Packs/some_file.yml')
 
 
 def test_check_file_relevance_and_format_path_old_format_file(mocker):

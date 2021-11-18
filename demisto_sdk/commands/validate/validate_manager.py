@@ -416,6 +416,8 @@ class ValidateManager:
         """
         file_type = find_type(file_path)
 
+        is_added_file = file_path in added_files if added_files else False
+
         if file_type in self.skipped_file_types or file_path.endswith('_unified.yml'):
             self.ignored_files.add(file_path)
             return True
@@ -521,7 +523,8 @@ class ValidateManager:
 
         # incident fields and indicator fields are using the same validation.
         elif file_type in (FileType.INCIDENT_FIELD, FileType.INDICATOR_FIELD):
-            return self.validate_incident_field(structure_validator, pack_error_ignore_list, is_modified)
+
+            return self.validate_incident_field(structure_validator, pack_error_ignore_list, is_modified, is_added_file)
 
         elif file_type == FileType.REPUTATION:
             return self.validate_reputation(structure_validator, pack_error_ignore_list)
@@ -554,7 +557,7 @@ class ValidateManager:
             return self.validate_widget(structure_validator, pack_error_ignore_list)
 
         elif file_type == FileType.GENERIC_FIELD:
-            return self.validate_generic_field(structure_validator, pack_error_ignore_list)
+            return self.validate_generic_field(structure_validator, pack_error_ignore_list, is_added_file)
 
         elif file_type == FileType.GENERIC_TYPE:
             return self.validate_generic_type(structure_validator, pack_error_ignore_list)
@@ -858,17 +861,19 @@ class ValidateManager:
                                            json_file_path=self.json_file_path)
         return report_validator.is_valid_file(validate_rn=False)
 
-    def validate_incident_field(self, structure_validator, pack_error_ignore_list, is_modified):
+    def validate_incident_field(self, structure_validator, pack_error_ignore_list, is_modified, is_added_file):
         incident_field_validator = IncidentFieldValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                                           print_as_warnings=self.print_ignored_errors,
                                                           json_file_path=self.json_file_path)
         if is_modified and self.is_backward_check:
             return all([incident_field_validator.is_valid_file(validate_rn=False, is_new_file=not is_modified,
-                                                               use_git=self.use_git),
+                                                               use_git=self.use_git,
+                                                               is_added_file=is_added_file),
                         incident_field_validator.is_backward_compatible()])
         else:
             return incident_field_validator.is_valid_file(validate_rn=False, is_new_file=not is_modified,
-                                                          use_git=self.use_git)
+                                                          use_git=self.use_git,
+                                                          is_added_file=is_added_file)
 
     def validate_reputation(self, structure_validator, pack_error_ignore_list):
         reputation_validator = ReputationValidator(structure_validator, ignored_errors=pack_error_ignore_list,
@@ -952,12 +957,12 @@ class ValidateManager:
                                            json_file_path=self.json_file_path)
         return widget_validator.is_valid_file(validate_rn=False)
 
-    def validate_generic_field(self, structure_validator, pack_error_ignore_list):
+    def validate_generic_field(self, structure_validator, pack_error_ignore_list, is_added_file):
         generic_field_validator = GenericFieldValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                                         print_as_warnings=self.print_ignored_errors,
                                                         json_file_path=self.json_file_path)
 
-        return generic_field_validator.is_valid_file(validate_rn=False)
+        return generic_field_validator.is_valid_file(validate_rn=False, is_added_file=is_added_file)
 
     def validate_generic_type(self, structure_validator, pack_error_ignore_list):
         generic_type_validator = GenericTypeValidator(structure_validator, ignored_errors=pack_error_ignore_list,

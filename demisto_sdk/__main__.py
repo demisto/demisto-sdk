@@ -1451,7 +1451,7 @@ def update_release_notes(**kwargs):
 @click.option("--all-packs-dependencies", help="Return a json file with ALL content packs dependencies. "
                                                "The json file will be saved under the path given in the "
                                                "'--output-path' argument", required=False, is_flag=True)
-@click.option("--output-path", help="The destination path for the packs dependencies json file. This argument is "
+@click.option("-o", "--output-path", help="The destination path for the packs dependencies json file. This argument is "
                                     "only relevant for when using the '--all-packs-dependecies' flag.", required=False)
 @click.option("--get-dependent-on", help="Get only the packs dependent ON the given pack. Note: this flag can not be"
                                          " used for the packs ApiModules and Base", required=False,

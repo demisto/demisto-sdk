@@ -1351,7 +1351,7 @@ class ValidateManager:
                 file_path = str(path)
 
             try:
-                formatted_path = self.format_file_path(file_path, old_path, old_format_files)
+                formatted_path = self.check_file_relevance_and_format_path(file_path, old_path, old_format_files)
                 if formatted_path:
                     filtered_set.add(formatted_path)
 
@@ -1364,7 +1364,7 @@ class ValidateManager:
 
         return filtered_set, old_format_files
 
-    def format_file_path(self, file_path, old_path, old_format_files):
+    def check_file_relevance_and_format_path(self, file_path, old_path, old_format_files):
         """Determines if a file is relevant for validation and create any modification to the file_path if needed"""
 
         if file_path.split(os.path.sep)[0] in ('.gitlab', '.circleci', '.github'):
@@ -1387,7 +1387,7 @@ class ValidateManager:
                 file_path = file_path.replace('.py', '.yml').replace('.ps1', '.yml').replace('.js', '.yml')
 
                 if old_path:
-                    old_path = old_path.replace('.py', '.yml').replace('.ps1', ',yml').replace('.js', '.yml')
+                    old_path = old_path.replace('.py', '.yml').replace('.ps1', '.yml').replace('.js', '.yml')
             else:
                 return None
 
@@ -1406,8 +1406,7 @@ class ValidateManager:
 
     def ignore_files_irrelevant_for_validation(self, file_path: str) -> bool:
         # ignore doc data, test_data and non pack files
-        if any(name in str(file_path) for name in VALIDATION_USING_GIT_IGNORABLE_DATA) \
-                or PACKS_DIR not in file_path:
+        if PACKS_DIR not in file_path or any(name in str(file_path) for name in VALIDATION_USING_GIT_IGNORABLE_DATA):
             if self.print_ignored_files:
                 click.secho(f"ignoring file {file_path}", fg='yellow')
             self.ignored_files.add(file_path)

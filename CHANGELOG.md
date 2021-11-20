@@ -1,4 +1,6 @@
 # Changelog
+
+# 1.5.3
 * The **format** command will now set `unsearchable: True` for incident, indicator and generic fields.
 * Fixed an issue where the **update-release-notes** command crashes with `--help` flag.
 * Added validation to the **validate** command that verifies the `unsearchable` key in incident, indicator and generic fields is set to true.

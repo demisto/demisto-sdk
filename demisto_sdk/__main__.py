@@ -1469,41 +1469,18 @@ def find_dependencies(**kwargs):
     output_path = kwargs.get('output_path', ALL_PACKS_DEPENDENCIES_DEFAULT_PATH)
 
     try:
-        if all_packs_dependencies:
-            calculate_all_packs_dependencies(id_set_path, output_path, verbose)
-            print_success(f"The packs dependencies json was successfully saved to {output_path}")
 
-        else:
-            if not input_path:
-                print_error("Please provide an input path. The path should be formatted as 'Packs/<some pack name>'. "
-                            "For example, Packs/HelloWorld")
-                sys.exit(1)
-            else:
-                input_path = Path(input_path)
-                if len(input_path.parts) != 2 or input_path.parts[-2] != "Packs":
-                    print_error(f"Input path ({input_path}) must be formatted as 'Packs/<some pack name>'. "
-                                f"For example, Packs/HelloWorld")
-                    sys.exit(1)
-
-                if output_path and not all_packs_dependencies:
-                    print_warning("You used the '--outputs-path' argument, which is only relevant for when using the"
-                                  " '--all-packs-dependencies' flag. Ignoring this argument.")
-
-                if get_dependent_on:
-                    if input_path.parts[-1] in IGNORED_PACKS_IN_DEPENDENCY_CALC:
-                        print_error(f"Finding all packs dependent on {input_path.parts[-1]} pack is not supported.")
-                        sys.exit(1)
-                    dependent_packs = get_packs_dependent_on_given_packs(input_path, id_set_path, verbose)
-                    print_success(f"Found {len(dependent_packs)} dependent packs:\n {str(dependent_packs)}")
-
-                else:
-                    PackDependencies.find_dependencies(
-                        pack_name=input_path.name,
-                        id_set_path=str(id_set_path),
-                        verbose=verbose,
-                        update_pack_metadata=update_pack_metadata,
-                        use_pack_metadata=use_pack_metadata,
-                    )
+        PackDependencies.find_dependencies_manager(
+            pack_name=input_path.name,
+            id_set_path=str(id_set_path),
+            verbose=verbose,
+            update_pack_metadata=update_pack_metadata,
+            use_pack_metadata=use_pack_metadata,
+            input_path=input_path,
+            all_packs_dependencies=all_packs_dependencies,
+            get_dependent_on=get_dependent_on,
+            output_path=output_path,
+        )
 
     except ValueError as exp:
         print_error(str(exp))

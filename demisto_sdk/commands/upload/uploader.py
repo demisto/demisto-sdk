@@ -182,7 +182,7 @@ class Uploader:
 
         entity_type = find_type(str(upload_object.path))
         if entity_type in UPLOAD_SUPPORTED_ENTITIES:
-            if True:  # type: ignore
+            if upload_object.from_version <= self.demisto_version <= upload_object.to_version:  # type: ignore
                 try:
                     result = upload_object.upload(self.client)  # type: ignore
                     if self.log_verbose:

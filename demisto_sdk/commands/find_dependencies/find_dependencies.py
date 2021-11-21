@@ -17,7 +17,7 @@ from requests import RequestException
 
 from demisto_sdk.commands.common import constants
 from demisto_sdk.commands.common.constants import (GENERIC_COMMANDS_NAMES,
-                                                   IGNORED_FILES, PACKS_DIR)
+                                                   IGNORED_PACKS_IN_DEPENDENCY_CALC, PACKS_DIR)
 from demisto_sdk.commands.common.tools import (get_content_id_set,
                                                get_content_path, get_pack_name,
                                                is_external_repository,
@@ -1681,7 +1681,7 @@ def select_packs_for_calculation() -> list:
     """
     packs = []
     for pack in os.scandir(PACKS_FULL_PATH):
-        if not pack.is_dir() or pack.name in IGNORED_FILES:
+        if not pack.is_dir() or pack.name in IGNORED_PACKS_IN_DEPENDENCY_CALC:
             print_warning(f"Skipping dependency calculation of {pack.name} pack.")
             continue  # skipping ignored packs
         packs.append(pack.name)

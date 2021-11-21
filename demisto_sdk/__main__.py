@@ -18,7 +18,7 @@ from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 # Common tools
 from demisto_sdk.commands.common.constants import (
-    ALL_PACKS_DEPENDENCIES_DEFAULT_PATH, IGNORED_FILES, FileType)
+    ALL_PACKS_DEPENDENCIES_DEFAULT_PATH, IGNORED_PACKS_IN_DEPENDENCY_CALC, FileType)
 from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_last_remote_release_version,
@@ -1490,7 +1490,7 @@ def find_dependencies(**kwargs):
                                   " '--all-packs-dependencies' flag. Ignoring this argument.")
 
                 if get_dependent_on:
-                    if input_path.parts[-1] in IGNORED_FILES:
+                    if input_path.parts[-1] in IGNORED_PACKS_IN_DEPENDENCY_CALC:
                         print_error(f"Finding all packs dependent on {input_path.parts[-1]} pack is not supported.")
                         sys.exit(1)
                     dependent_packs = get_packs_dependent_on_given_packs(input_path, id_set_path)

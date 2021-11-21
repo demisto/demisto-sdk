@@ -14,7 +14,7 @@ import docker.errors
 import git
 import requests.exceptions
 import urllib3.exceptions
-from wcmatch.pathlib import Path
+from wcmatch.pathlib import Path, PosixPath
 
 from demisto_sdk.commands.common.constants import (PACKS_PACK_META_FILE_NAME,
                                                    TYPE_PWSH, TYPE_PYTHON,
@@ -73,7 +73,7 @@ class LintManager:
         if lint_no_packs_command:
             git = True
         # Filter packages to lint and test check
-        self._pkgs: List[Path] = self._get_packages(content_repo=self._facts["content_repo"],
+        self._pkgs: List[PosixPath] = self._get_packages(content_repo=self._facts["content_repo"],
                                                     input=input,
                                                     git=git,
                                                     all_packs=all_packs,
@@ -184,7 +184,7 @@ class LintManager:
         return facts
 
     def _get_packages(self, content_repo: git.Repo, input: str, git: bool, all_packs: bool, base_branch: str) \
-            -> List[Path]:
+            -> List[PosixPath]:
         """ Get packages paths to run lint command.
 
         Args:
@@ -195,7 +195,7 @@ class LintManager:
             base_branch (str): Name of the branch or sha1 commit to run the diff on.
 
         Returns:
-            List[Path]: Pkgs to run lint
+            List[PosixPath]: Pkgs to run lint
         """
         pkgs: list
         if all_packs or git:
@@ -239,20 +239,20 @@ class LintManager:
         return list(all_pkgs)
 
     @staticmethod
-    def _filter_changed_packages(content_repo: git.Repo, pkgs: List[Path], base_branch: str) -> List[Path]:
+    def _filter_changed_packages(content_repo: git.Repo, pkgs: List[PosixPath], base_branch: str) -> List[PosixPath]:
         """ Checks which packages had changes in them and should run on Lint.
-        The diff is calculated using git, and is done by the follwing cases:
+        The diff is calculated using git, and is done by the following cases:
         - case 1: If the active branch is 'master', the diff is between master and the previous commit.
         - case 2: If the active branch is not master, and no other base branch is specified to comapre to,
          the diff is between the active branch and master.
         - case 3: If the base branch is specified, the diff is between the active branch and the given base branch.
 
         Args:
-            pkgs(List[Path]): pkgs to check
+            pkgs(List[PosixPath]): pkgs to check
             base_branch (str): Name of the branch or sha1 commit to run the diff on.
 
         Returns:
-            List[Path]: A list of names of packages that should run.
+            List[PosixPath]: A list of names of packages that should run.
         """
 
         staged_files = {content_repo.working_dir / Path(item.b_path).parent for item in

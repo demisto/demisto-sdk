@@ -1470,7 +1470,7 @@ def find_dependencies(**kwargs):
 
     try:
         if all_packs_dependencies:
-            calculate_all_packs_dependencies(id_set_path, output_path)
+            calculate_all_packs_dependencies(id_set_path, output_path, verbose)
             print_success(f"The packs dependencies json was successfully saved to {output_path}")
 
         else:
@@ -1493,7 +1493,7 @@ def find_dependencies(**kwargs):
                     if input_path.parts[-1] in IGNORED_PACKS_IN_DEPENDENCY_CALC:
                         print_error(f"Finding all packs dependent on {input_path.parts[-1]} pack is not supported.")
                         sys.exit(1)
-                    dependent_packs = get_packs_dependent_on_given_packs(input_path, id_set_path)
+                    dependent_packs = get_packs_dependent_on_given_packs(input_path, id_set_path, verbose)
                     print_success(f"Found {len(dependent_packs)} dependent packs:\n {str(dependent_packs)}")
 
                 else:

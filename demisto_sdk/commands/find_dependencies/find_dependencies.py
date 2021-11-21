@@ -1,6 +1,5 @@
 import glob
 import json
-import logging
 import os
 import sys
 from concurrent.futures import as_completed
@@ -1594,7 +1593,7 @@ def ProcessPoolHandler() -> ProcessPool:
         try:
             yield pool
         except Exception:
-            logging.exception("Gracefully release all resources due to Error...")
+            print_error("Gracefully release all resources due to Error...")
             raise
         finally:
             pool.close()
@@ -1615,11 +1614,11 @@ def wait_futures_complete(futures: List[ProcessFuture], done_fn: Callable):
             result = future.result()
             done_fn(result)
         except Exception as e:
-            logging.exception(e)
+            print_error(e)
             raise
 
 
-def calculate_single_pack_dependencies(pack: str, dependency_graph: object) -> Tuple[dict, list, str]:
+def calculate_single_pack_dependencies(pack: str, dependency_graph: object, verbose: bool = False) -> Tuple[dict, list, str]:
     """
     Calculates pack dependencies given a pack and a dependencies graph.
     First is extract the dependencies subgraph of the given graph only using DFS algorithm with the pack as source.
@@ -1632,6 +1631,7 @@ def calculate_single_pack_dependencies(pack: str, dependency_graph: object) -> T
     Args:
         pack: The pack for which we need to calculate the dependencies
         dependency_graph: The full dependencies graph
+        verbose: Whether to output a detailed response.
 
     Returns:
         first_level_dependencies: A dict of the form {'dependency_name': {'mandatory': < >, 'display_name': < >}}
@@ -1640,15 +1640,16 @@ def calculate_single_pack_dependencies(pack: str, dependency_graph: object) -> T
     """
 
     try:
-        logging.info(f"Calculating {pack} pack dependencies.")
+        print(f"Calculating {pack} pack dependencies.")
         subgraph = PackDependencies.get_dependencies_subgraph_by_dfs(dependency_graph, pack)
         for dependency_pack, additional_data in subgraph.nodes(data=True):
-            logging.debug(f'Iterating dependency {dependency_pack} for pack {pack}')
+            if verbose:
+                print(f'Iterating dependency {dependency_pack} for pack {pack}')
             additional_data['mandatory'] = pack in additional_data['mandatory_for_packs']
             del additional_data['mandatory_for_packs']
         first_level_dependencies, all_level_dependencies = parse_for_pack_metadata(subgraph, pack)
     except Exception:
-        logging.exception(f"Failed calculating {pack} pack dependencies")
+        print_error(f"Failed calculating {pack} pack dependencies")
         raise
 
     return first_level_dependencies, all_level_dependencies, pack
@@ -1705,7 +1706,7 @@ def get_id_set(id_set_path: str) -> dict:
     return id_set
 
 
-def calculate_all_packs_dependencies(id_set_path: str, output_path: str) -> dict:
+def calculate_all_packs_dependencies(id_set_path: str, output_path: str, verbose: bool = False) -> dict:
     """
     Calculates all packs dependencies in parallel.
     First - the method generates the full dependency graph. Then - using a process pool we extract the
@@ -1713,6 +1714,7 @@ def calculate_all_packs_dependencies(id_set_path: str, output_path: str) -> dict
     Args:
         id_set_path: The id_set content.
         output_path: The path for the outputs json.
+        verbose: Whether to print the log to the console.
     """
 
     def add_pack_metadata_results(results: Tuple) -> None:
@@ -1723,7 +1725,8 @@ def calculate_all_packs_dependencies(id_set_path: str, output_path: str) -> dict
         """
         try:
             first_level_dependencies, all_level_dependencies, pack_name = results
-            logging.debug(f'Got dependencies for pack {pack_name}\n: {pformat(all_level_dependencies)}')
+            if verbose:
+                print(f'Got dependencies for pack {pack_name}\n: {pformat(all_level_dependencies)}')
             pack_dependencies_result[pack_name] = {
                 "dependencies": first_level_dependencies,
                 "displayedImages": list(first_level_dependencies.keys()),
@@ -1732,7 +1735,7 @@ def calculate_all_packs_dependencies(id_set_path: str, output_path: str) -> dict
                 "fullPath": os.path.abspath(os.path.join(PACKS_DIR, pack_name))
             }
         except Exception:
-            logging.exception('Failed to collect pack dependencies results')
+            print_error('Failed to collect pack dependencies results')
             raise
 
     pack_dependencies_result: dict = {}
@@ -1745,7 +1748,7 @@ def calculate_all_packs_dependencies(id_set_path: str, output_path: str) -> dict
     with ProcessPoolHandler() as pool:
         futures = []
         for pack in dependency_graph:
-            futures.append(pool.schedule(calculate_single_pack_dependencies, args=(pack, dependency_graph), timeout=10))
+            futures.append(pool.schedule(calculate_single_pack_dependencies, args=(pack, dependency_graph, verbose), timeout=10))
         wait_futures_complete(futures=futures, done_fn=add_pack_metadata_results)
         print(f"Number of created pack dependencies entries: {len(pack_dependencies_result.keys())}")
         # finished iteration over pack folders
@@ -1756,14 +1759,13 @@ def calculate_all_packs_dependencies(id_set_path: str, output_path: str) -> dict
     return pack_dependencies_result
 
 
-def get_packs_dependent_on_given_packs(packs, id_set_path) -> set:
+def get_packs_dependent_on_given_packs(packs, id_set_path, verbose=False) -> set:
     """
 
     Args:
         packs: A pack or a list of packs of interest, to resulted packs will be dependent on these packs.
         id_set_path: Path to id_set.json file.
-        dependent_packs:  The list to which the results should be added.
-        silent_mode: When True, will not print logs. False will print logs.
+        verbose: Whether to print the log to the console.
 
     Returns:
         A list with the packs dependent on the given packs.
@@ -1784,7 +1786,7 @@ def get_packs_dependent_on_given_packs(packs, id_set_path) -> set:
         futures = []
         for pack in pack_names:
             futures.append(
-                pool.schedule(calculate_single_pack_dependencies, args=(str(pack), reverse_dependency_graph),
+                pool.schedule(calculate_single_pack_dependencies, args=(str(pack), reverse_dependency_graph, verbose),
                               timeout=10))
         wait_futures_complete(futures=futures, done_fn=collect_dependent_packs)
 

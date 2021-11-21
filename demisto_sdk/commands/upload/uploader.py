@@ -17,7 +17,7 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    INCIDENT_TYPES_DIR,
                                                    INDICATOR_FIELDS_DIR,
                                                    INDICATOR_TYPES_DIR,
-                                                   INTEGRATIONS_DIR,
+                                                   INTEGRATIONS_DIR, JOBS_DIR,
                                                    LAYOUTS_DIR, PLAYBOOKS_DIR,
                                                    REPORTS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
@@ -59,6 +59,7 @@ UPLOAD_SUPPORTED_ENTITIES = [
     FileType.LAYOUT,
     FileType.LAYOUTS_CONTAINER,
     FileType.LISTS,
+    FileType.JOB
 ]
 
 
@@ -76,6 +77,7 @@ CONTENT_ENTITY_UPLOAD_ORDER = [
     CLASSIFIERS_DIR,
     WIDGETS_DIR,
     LAYOUTS_DIR,
+    JOBS_DIR,
     DASHBOARDS_DIR,
     REPORTS_DIR
 ]
@@ -180,7 +182,7 @@ class Uploader:
 
         entity_type = find_type(str(upload_object.path))
         if entity_type in UPLOAD_SUPPORTED_ENTITIES:
-            if upload_object.from_version <= self.demisto_version <= upload_object.to_version:  # type: ignore
+            if True:  # type: ignore
                 try:
                     result = upload_object.upload(self.client)  # type: ignore
                     if self.log_verbose:

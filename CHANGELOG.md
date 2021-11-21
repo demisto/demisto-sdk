@@ -1,10 +1,17 @@
 # Changelog
+
+# 1.5.3
+* The **format** command will now set `unsearchable: True` for incident, indicator and generic fields.
 * Fixed an issue where the **update-release-notes** command crashes with `--help` flag.
+* Added validation to the **validate** command that verifies the `unsearchable` key in incident, indicator and generic fields is set to true.
 * Removed a validation that DBotRole should be set for automation that requires elevated permissions to the `XSOAR-linter` in the **lint** command.
 * Fixed an issue in **Validate** command where playbooks conditional tasks were mishandeled.
 * Added a validation to prevent contributors from using the `fromlicense` key as a configuration parameter in an integration's YML
 * Added a validation to ensure that the type for **API token** (and similar) parameters are configured correctly as a `credential` type in the integration configuration YML.
 * Added an assertion that checks for duplicated requests' names when generating an integration from a postman collection.
+* Added support for [.env files](https://pypi.org/project/python-dotenv/). You can now add a `.env` file to your repository with the logging information instead of setting a global environment variables.
+* When running **lint** command with --keep-container flag, the docker images are committed.
+* The **validate** command will not return missing test playbook error when given a script with dynamic-section tag.
 
 # 1.5.2
 * Added a validation to **update-release-notes** command to ensure that the `--version` flag argument is in the right format.

@@ -22,6 +22,7 @@ ARGUMENTS_DEFAULT_VALUES = {
                        'IndicatorTypeJSONFormat', 'GenericFieldJSONFormat', 'GenericTypeJSONFormat',
                        'GenericTypeJSONFormat', 'GenericDefinitionJSONFormat']),
     'required': (False, ['IncidentFieldJSONFormat', 'IndicatorFieldJSONFormat', 'GenericFieldJSONFormat']),
+    'unsearchable': (True, ['IncidentFieldJSONFormat', 'IndicatorFieldJSONFormat', 'GenericFieldJSONFormat']),
 }
 GENERIC_OBJECTS_FILE_TYPES = [FileType.GENERIC_FIELD, FileType.GENERIC_TYPE,
                               FileType.GENERIC_MODULE, FileType.GENERIC_DEFINITION]

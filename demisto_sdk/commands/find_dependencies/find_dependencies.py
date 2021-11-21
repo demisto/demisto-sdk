@@ -21,8 +21,8 @@ from demisto_sdk.commands.common.tools import (get_content_id_set,
                                                is_external_repository,
                                                print_error, print_success,
                                                print_warning, ProcessPoolHandler, wait_futures_complete)
-from demisto_sdk.commands.common.update_id_set import merge_id_sets, get_id_set
-from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
+from demisto_sdk.commands.common.update_id_set import merge_id_sets
+from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator, get_id_set
 
 MINIMUM_DEPENDENCY_VERSION = LooseVersion('6.0.0')
 COMMON_TYPES_PACK = 'CommonTypes'
@@ -1500,12 +1500,11 @@ class PackDependencies:
 
     @staticmethod
     def find_dependencies_manager(
-            pack_name: str,
             id_set_path: str = '',
             update_pack_metadata: bool = False,
             verbose: bool = False,
             use_pack_metadata: bool = False,
-            input_path: Path = None,
+            input_path: str = None,
             all_packs_dependencies: bool = False,
             get_dependent_on: bool = False,
             output_path: str = None,
@@ -1519,12 +1518,12 @@ class PackDependencies:
             print_success(f"Found {len(dependent_packs)} dependent packs:\n {str(dependent_packs)}")
 
         elif all_packs_dependencies:
-            calculate_all_packs_dependencies(id_set_path, output_path, verbose) # this
+            calculate_all_packs_dependencies(id_set_path, output_path, verbose)
             print_success(f"The packs dependencies json was successfully saved to {output_path}")
 
         else:
             PackDependencies.find_dependencies(
-                pack_name=pack_name,
+                pack_name=Path(input_path).name,
                 id_set_path=id_set_path,
                 verbose=verbose,
                 update_pack_metadata=update_pack_metadata,
@@ -1666,7 +1665,8 @@ def calculate_single_pack_dependencies(pack: str, dependency_graph: object, verb
     """
 
     try:
-        print(f"Calculating {pack} pack dependencies.")
+        if verbose:
+            print(f"Calculating {pack} pack dependencies.")
         subgraph = PackDependencies.get_dependencies_subgraph_by_dfs(dependency_graph, pack)
         for dependency_pack, additional_data in subgraph.nodes(data=True):
             if verbose:

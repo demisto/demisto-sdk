@@ -36,9 +36,7 @@ from demisto_sdk.commands.doc_reviewer.doc_reviewer import DocReviewer
 from demisto_sdk.commands.download.downloader import Downloader
 from demisto_sdk.commands.error_code_info.error_code_info import \
     generate_error_code_information
-from demisto_sdk.commands.find_dependencies.find_dependencies import (
-    PackDependencies, calculate_all_packs_dependencies,
-    get_packs_dependent_on_given_packs)
+from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.generate_docs.generate_integration_doc import \
     generate_integration_doc
@@ -1471,7 +1469,6 @@ def find_dependencies(**kwargs):
     try:
 
         PackDependencies.find_dependencies_manager(
-            pack_name=input_path.name,
             id_set_path=str(id_set_path),
             verbose=verbose,
             update_pack_metadata=update_pack_metadata,

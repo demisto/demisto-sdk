@@ -38,7 +38,6 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type, get_json,
                                                print_color, print_error,
                                                print_warning)
 from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
-from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 CONTENT_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
                     'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
@@ -1962,19 +1961,3 @@ def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=
 def sort(data):
     data.sort(key=lambda r: list(r.keys())[0].lower())  # Sort data by key value
     return data
-
-def get_id_set(id_set_path: str) -> dict:
-    """
-    Parses the content of id_set_path and returns its content.
-    Args:
-        id_set_path: The path of the id_set file
-
-    Returns:
-        The parsed content of id_set
-    """
-    if id_set_path:
-        with open(id_set_path, 'r') as id_set_file:
-            id_set = json.load(id_set_file)
-    else:
-        id_set = IDSetCreator(print_logs=False).create_id_set()
-    return id_set

@@ -429,8 +429,8 @@ def create_content_repo():
         ids.create_id_set()
 
 
-# def setup_module():
-#     create_content_repo()
+def setup_module():
+    create_content_repo()
 
 
 class TestIdSetFilters:

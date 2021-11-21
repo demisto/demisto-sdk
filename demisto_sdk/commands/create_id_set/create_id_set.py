@@ -86,3 +86,19 @@ class IDSetCreator:
                 os.makedirs(intermediate_dirs, exist_ok=True)
             with open(self.output, 'w+') as id_set_file:
                 json.dump(self.id_set, id_set_file, indent=4)
+
+def get_id_set(id_set_path: str) -> dict:
+    """
+    Parses the content of id_set_path and returns its content.
+    Args:
+        id_set_path: The path of the id_set file
+
+    Returns:
+        The parsed content of id_set
+    """
+    if id_set_path:
+        with open(id_set_path, 'r') as id_set_file:
+            id_set = json.load(id_set_file)
+    else:
+        id_set = IDSetCreator(print_logs=False).create_id_set()
+    return id_set

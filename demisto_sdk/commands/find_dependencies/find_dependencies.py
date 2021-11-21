@@ -2,8 +2,7 @@ import glob
 import json
 import os
 import sys
-from concurrent.futures import as_completed
-from contextlib import contextmanager
+
 from copy import deepcopy
 from distutils.version import LooseVersion
 from pprint import pformat
@@ -11,7 +10,6 @@ from typing import Callable, Iterable, List, Optional, Tuple, Union
 
 import click
 import networkx as nx
-from pebble import ProcessFuture, ProcessPool
 from requests import RequestException
 
 from demisto_sdk.commands.common import constants
@@ -21,8 +19,8 @@ from demisto_sdk.commands.common.tools import (get_content_id_set,
                                                get_content_path, get_pack_name,
                                                is_external_repository,
                                                print_error, print_success,
-                                               print_warning)
-from demisto_sdk.commands.common.update_id_set import merge_id_sets
+                                               print_warning, ProcessPoolHandler, wait_futures_complete)
+from demisto_sdk.commands.common.update_id_set import merge_id_sets, get_id_set
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 MINIMUM_DEPENDENCY_VERSION = LooseVersion('6.0.0')
@@ -1582,42 +1580,6 @@ class PackDependencies:
         return pack_meta_file_content
 
 
-@contextmanager
-def ProcessPoolHandler() -> ProcessPool:
-    """ Process pool Handler which terminate all processes in case of Exception.
-
-    Yields:
-        ProcessPool: Pebble process pool.
-    """
-    with ProcessPool(max_workers=3) as pool:
-        try:
-            yield pool
-        except Exception:
-            print_error("Gracefully release all resources due to Error...")
-            raise
-        finally:
-            pool.close()
-            pool.join()
-
-
-def wait_futures_complete(futures: List[ProcessFuture], done_fn: Callable):
-    """Wait for all futures to complete, Raise exception if occurred.
-
-    Args:
-        futures: futures to wait for.
-        done_fn: Function to run on result.
-    Raises:
-        Exception: Raise caught exception for further cleanups.
-    """
-    for future in as_completed(futures):
-        try:
-            result = future.result()
-            done_fn(result)
-        except Exception as e:
-            print_error(e)
-            raise
-
-
 def calculate_single_pack_dependencies(pack: str, dependency_graph: object, verbose: bool = False) -> Tuple[dict, list, str]:
     """
     Calculates pack dependencies given a pack and a dependencies graph.
@@ -1687,23 +1649,6 @@ def select_packs_for_calculation() -> list:
             continue  # skipping ignored packs
         packs.append(pack.name)
     return packs
-
-
-def get_id_set(id_set_path: str) -> dict:
-    """
-    Parses the content of id_set_path and returns its content.
-    Args:
-        id_set_path: The path of the id_set file
-
-    Returns:
-        The parsed content of id_set
-    """
-    if id_set_path:
-        with open(id_set_path, 'r') as id_set_file:
-            id_set = json.load(id_set_file)
-    else:
-        id_set = IDSetCreator(print_logs=False).create_id_set()
-    return id_set
 
 
 def calculate_all_packs_dependencies(id_set_path: str, output_path: str, verbose: bool = False) -> dict:

@@ -19,12 +19,15 @@ from typing import (Callable, Dict, List, Match, Optional, Set, Tuple, Type,
 
 import click
 import colorama
+from concurrent.futures import as_completed
+from contextlib import contextmanager
 import demisto_client
 import git
 import requests
 import urllib3
 import yaml
 from packaging.version import parse
+from pebble import ProcessFuture, ProcessPool
 from ruamel.yaml import YAML
 
 from demisto_sdk.commands.common.constants import (
@@ -2147,3 +2150,39 @@ def get_script_or_sub_playbook_tasks_from_playbook(searched_entity_name: str, ma
             searched_tasks.append(task_data)
 
     return searched_tasks
+
+
+@contextmanager
+def ProcessPoolHandler() -> ProcessPool:
+    """ Process pool Handler which terminate all processes in case of Exception.
+
+    Yields:
+        ProcessPool: Pebble process pool.
+    """
+    with ProcessPool(max_workers=3) as pool:
+        try:
+            yield pool
+        except Exception:
+            print_error("Gracefully release all resources due to Error...")
+            raise
+        finally:
+            pool.close()
+            pool.join()
+
+
+def wait_futures_complete(futures: List[ProcessFuture], done_fn: Callable):
+    """Wait for all futures to complete, Raise exception if occurred.
+
+    Args:
+        futures: futures to wait for.
+        done_fn: Function to run on result.
+    Raises:
+        Exception: Raise caught exception for further cleanups.
+    """
+    for future in as_completed(futures):
+        try:
+            result = future.result()
+            done_fn(result)
+        except Exception as e:
+            print_error(e)
+            raise

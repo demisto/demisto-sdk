@@ -3,88 +3,6 @@ mapping:
   id:
     type: str
     required: true
-  version:
-    type: int
-    required: false
-  modified:
-    type: str
-    required: false
-  sortValues:
-    type: any
-    required: false
-  roles:
-    type: map
-    mapping:
-      CommonFields:
-        type: any
-        required: false
-      Name:
-        type: str
-        required: false
-      Locked:
-        type: bool
-        required: false
-      NestedRoles:
-        type: any
-        required: false
-      PagesAccess:
-        type: any
-        required: false
-      flattenedRoles:
-        type: str
-        required: false
-      Permissions:
-        type: any
-        required: false
-      flattenedPermissions:
-        type: any
-        required: false
-      flattenedPermissionsArr:
-        type: any
-        required: false
-      ADGroups:
-        type: any
-        required: false
-      SAMLGroups:
-        type: any
-        required: false
-      flattened:
-        type: bool
-        required: false
-      Shifts:
-        type: any
-        required: false
-      DefaultPreferences:
-        type: any
-        required: false
-      DefaultDashboards:
-        type: any
-        required: false
-    required: false
-  allRead:
-    type: bool
-    required: false
-  allReadWrite:
-    type: bool
-    required: false
-  previousRoles:
-    type: any
-    required: false
-  previousAllRead:
-    type: bool
-    required: false
-  previousAllReadWrite:
-    type: bool
-    required: false
-  hasRole:
-    type: bool
-    required: false
-  dbotCreatedBy:
-    type: str
-    required: false
-  ShardID:
-    type: int
-    required: false
   CustomFields:
     type: any
     required: false
@@ -250,9 +168,6 @@ mapping:
   startDate:
     type: str
     required: false
-  endingType:
-    type: str
-    required: false
   times:
     type: int
     required: false
@@ -292,29 +207,17 @@ mapping:
   fromServerVersion:
     type: str
     required: true
+  fromVersion:
+    type: str
+    required: false
   toServerVersion:
     type: str
     required: false
   propagationLabels:
     type: any
     required: false
-  packPropagationLabels:
-    type: any
-    required: false
   definitionId:
     type: str
-    required: false
-  vcShouldIgnore:
-    type: bool
-    required: false
-  vcShouldKeepItemLegacyProdMachine:
-    type: bool
-    required: false
-  commitMessage:
-    type: str
-    required: false
-  shouldCommit:
-    type: bool
     required: false
   minutesToTimeout:
     type: int

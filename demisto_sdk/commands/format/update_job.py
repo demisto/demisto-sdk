@@ -44,7 +44,12 @@ class JobJSONFormat(BaseUpdateJSON):
             self.update_id()
             self.attempt_infer_selected_feeds()
             self.set_from_server_version_to_default()
-            super().update_json()
+
+            # relevant parts of super().update_json()
+            self.remove_null_fields()
+            self.remove_unnecessary_keys()
+            self.remove_spaces_end_of_id_and_name()
+
             self.save_json_to_destination_file()
             return SUCCESS_RETURN_CODE
 

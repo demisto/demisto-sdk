@@ -170,7 +170,7 @@ ENTITY_TYPE_TO_DIR = {
 
 CONTENT_FILE_ENDINGS = ['py', 'yml', 'png', 'json', 'md']
 
-IGNORED_PACKS_IN_DEPENDENCY_CALC = ['ApiModules', 'NonSupported', 'Base']  # files to ignore inside Packs folder
+IGNORED_PACKS_IN_DEPENDENCY_CALC = ['ApiModules', 'NonSupported', 'Base']  # Packs that are ignored when calculating dependencies
 ALL_PACKS_DEPENDENCIES_DEFAULT_PATH = './all_packs_dependencies.json'
 
 CUSTOM_CONTENT_FILE_ENDINGS = ['yml', 'json']

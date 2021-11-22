@@ -8,10 +8,10 @@ import pytest
 
 from demisto_sdk.__main__ import xsoar_config_file_update
 from demisto_sdk.commands.common.tools import src_root
-from demisto_sdk.commands.xsoar_config_file.xsoar_config_file import \
+from demisto_sdk.commands.update_xsoar_config_file.update_xsoar_config_file import \
     XSOARConfigFileUpdater
 
-UNIT_TEST_DATA = (src_root() / 'commands' / 'xsoar_config_file' / 'tests' / 'data')
+UNIT_TEST_DATA = (src_root() / 'commands' / 'update_xsoar_config_file' / 'tests' / 'data')
 
 
 @contextmanager
@@ -43,7 +43,7 @@ class TestXSOARConfigFileUpdater:
         Given:
             - add_all_marketplace_packs arg as True or False
         When:
-            - run the xsoar_config_file command
+            - run the update_xsoar_config_file command
         Then:
             - validate the xsoar_config file exist in the destination output
             - validate the xsoar_config file output is as expected
@@ -76,7 +76,7 @@ class TestXSOARConfigFileUpdater:
         Given:
             - add_marketplace_pack arg as True
         When:
-            - run the xsoar_config_file command
+            - run the update_xsoar_config_file command
         Then:
             - validate the xsoar_config file exist in the destination output
             - validate the xsoar_config file output is as expected
@@ -106,7 +106,7 @@ class TestXSOARConfigFileUpdater:
         Given:
             - add_custom_pack arg as True
         When:
-            - run the xsoar_config_file command
+            - run the update_xsoar_config_file command
         Then:
             - validate the xsoar_config file exist in the destination output
             - validate the xsoar_config file output is as expected
@@ -136,7 +136,7 @@ class TestXSOARConfigFileUpdater:
         Given:
             - add_marketplace_pack arg as True without the mandatory args
         When:
-            - run the xsoar_config_file command
+            - run the update_xsoar_config_file command
         Then:
             - validate the xsoar_config file exist in the destination output
             - validate the Error massage when the argument us missing
@@ -171,7 +171,7 @@ class TestXSOARConfigFileUpdater:
         Given:
             - add_custom_pack arg as True
         When:
-            - run the xsoar_config_file command
+            - run the update_xsoar_config_file command
         Then:
             - validate the xsoar_config file exist in the destination output
             - validate the Error massage when the argument us missing

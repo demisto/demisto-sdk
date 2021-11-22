@@ -72,7 +72,7 @@ from demisto_sdk.commands.update_release_notes.update_rn_manager import \
     UpdateReleaseNotesManager
 from demisto_sdk.commands.upload.uploader import ConfigFileParser, Uploader
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
-from demisto_sdk.commands.xsoar_config_file.xsoar_config_file import \
+from demisto_sdk.commands.update_xsoar_config_file.update_xsoar_config_file import \
     XSOARConfigFileUpdater
 from demisto_sdk.commands.zip_packs.packs_zipper import (EX_FAIL, EX_SUCCESS,
                                                          PacksZipper)
@@ -935,7 +935,7 @@ def download(**kwargs):
     return downloader.download()
 
 
-# ====================== xsoar-config-file ====================== #
+# ====================== update-xsoar-config-file ====================== #
 @main.command()
 @click.help_option(
     '-h', '--help'

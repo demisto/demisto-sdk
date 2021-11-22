@@ -1,4 +1,4 @@
-## xsoar-config-file
+## update-xsoar-config-file
 
 Handle your XSOAR Configuration File.
 
@@ -24,11 +24,11 @@ Handle your XSOAR Configuration File.
   XSOAR Configuration File path, the default value is in the repo level.
 
 **Examples**:
-`demisto-sdk xsoar-config-file --add-all-marketplace-packs`
+`demisto-sdk update-xsoar-config-file --add-all-marketplace-packs`
 This will downloads all the installed MarketPlace Packs to the marketplace_packs section in XSOAR Configuration File.
 
-`demisto-sdk xsoar-config-file --add-marketplace-pack --pack-id PackId --pack-data 1.0.1`
+`demisto-sdk update-xsoar-config-file --add-marketplace-pack --pack-id PackId --pack-data 1.0.1`
 This will add PackId with 1.0.1 version to the marketplace_packs section in XSOAR Configuration File.
 
-`demisto-sdk xsoar-config-file --add-custom-pack --pack-id PackId --pack-data Packs/PackID`
+`demisto-sdk update-xsoar-config-file --add-custom-pack --pack-id PackId --pack-data Packs/PackID`
 This will add PackId with Packs/PackId URL to the custom_packs section in XSOAR Configuration File.

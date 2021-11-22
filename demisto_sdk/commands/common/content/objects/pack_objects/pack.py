@@ -302,28 +302,28 @@ class Pack:
         """
 
         # the flow are - turn off the sign check -> upload -> turn back the check to be as previously
-        logger.info('Turn off the server verification for signed packs')
-        _, _, prev_conf = tools.update_server_configuration(client=client,
-                                                            server_configuration={PACK_VERIFY_KEY: 'false'},
-                                                            error_msg='Can not turn off the pack verification')
-        try:
-            logger.info('Uploading...')
-            return client.upload_content_packs(file=self.path)  # type: ignore
-        finally:
-            config_keys_to_update = None
-            config_keys_to_delete = None
-            try:
-                prev_key_val = prev_conf.get(PACK_VERIFY_KEY, None)
-                if prev_key_val is not None:
-                    config_keys_to_update = {PACK_VERIFY_KEY: prev_key_val}
-                else:
-                    config_keys_to_delete = {PACK_VERIFY_KEY}
-                logger.info('Setting the server verification to be as previously')
-                tools.update_server_configuration(client=client,
-                                                  server_configuration=config_keys_to_update,
-                                                  config_keys_to_delete=config_keys_to_delete,
-                                                  error_msg='Can not turn on the pack verification')
-            except (Exception, KeyboardInterrupt):
-                action = DELETE_VERIFY_KEY_ACTION if prev_key_val is None \
-                    else SET_VERIFY_KEY_ACTION.format(prev_key_val)
-                raise Exception(TURN_VERIFICATION_ERROR_MSG.format(action=action))
+        # logger.info('Turn off the server verification for signed packs')
+        # _, _, prev_conf = tools.update_server_configuration(client=client,
+        #                                                     server_configuration={PACK_VERIFY_KEY: 'false'},
+        #                                                     error_msg='Can not turn off the pack verification')
+        # try:
+        logger.info('Uploading...')
+        return client.upload_content_packs(file=self.path, skipVerify=False)  # type: ignore
+        # finally:
+        #     config_keys_to_update = None
+        #     config_keys_to_delete = None
+        #     try:
+        #         # prev_key_val = prev_conf.get(PACK_VERIFY_KEY, None)
+        #         # if prev_key_val is not None:
+        #         #     config_keys_to_update = {PACK_VERIFY_KEY: prev_key_val}
+        #         # else:
+        #         #     config_keys_to_delete = {PACK_VERIFY_KEY}
+        #         # logger.info('Setting the server verification to be as previously')
+        #         # tools.update_server_configuration(client=client,
+        #         #                                   server_configuration=config_keys_to_update,
+        #         #                                   config_keys_to_delete=config_keys_to_delete,
+        #         #                                   error_msg='Can not turn on the pack verification')
+        #     except (Exception, KeyboardInterrupt):
+        #         # action = DELETE_VERIFY_KEY_ACTION if prev_key_val is None \
+        #         #     else SET_VERIFY_KEY_ACTION.format(prev_key_val)
+        #         raise Exception(TURN_VERIFICATION_ERROR_MSG.format(action=action))

@@ -12,7 +12,7 @@ class JobValidator(ContentEntityValidator):
                  **kwargs):
         super().__init__(structure_validator, ignored_errors, print_as_warnings, json_file_path=json_file_path,
                          **kwargs)
-        self.from_version = self.current_file.get('fromServerVersion') or self.current_file.get('fromServer')
+        self.from_version = self.current_file.get('fromServerVersion')
         self._errors = []
 
     def get_errors(self):

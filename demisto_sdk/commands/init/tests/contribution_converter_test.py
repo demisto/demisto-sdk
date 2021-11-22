@@ -587,7 +587,8 @@ class TestEnsureUniquePackDirName:
     def mock_format_manager(*args):
         return args
 
-    def test_format_converted_pack(self, contribution_converter, mocker):
+    @pytest.mark.parametrize('new_pack', [True, False])
+    def test_format_converted_pack(self, contribution_converter, mocker, new_pack):
         """Test the 'format_converted_pack' method
 
         Args:
@@ -604,6 +605,7 @@ class TestEnsureUniquePackDirName:
         Then
         - Ensure the repo we are comparing with is "xsoar-contrib/master"
         """
+        contribution_converter.create_new = new_pack
         result = mocker.patch('demisto_sdk.commands.init.contribution_converter.format_manager',
                               side_efect=self.mock_format_manager())
         contribution_converter.format_converted_pack()

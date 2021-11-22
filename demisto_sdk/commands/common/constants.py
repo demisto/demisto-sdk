@@ -759,63 +759,11 @@ CHECKED_TYPES_REGEXES = [
 CHECKED_TYPES_NO_REGEX = [item.replace(CAN_START_WITH_DOT_SLASH, "").replace(NOT_TEST, "") for item in
                           CHECKED_TYPES_REGEXES]
 
-PATHS_TO_VALIDATE: List[str] = sum(
-    [
-        PYTHON_ALL_REGEXES,
-        JSON_ALL_REPORTS_REGEXES
-    ], []
-)
-
-PACKAGE_SCRIPTS_REGEXES = [
-    PACKS_SCRIPT_PY_REGEX,
-    PACKS_SCRIPT_YML_REGEX
-]
-
 PACKAGE_SUPPORTING_DIRECTORIES = [INTEGRATIONS_DIR, SCRIPTS_DIR]
-
-IGNORED_TYPES_REGEXES = [DESCRIPTION_REGEX, IMAGE_REGEX, PIPFILE_REGEX, SCHEMA_REGEX]
 
 IGNORED_PACK_NAMES = ['Legacy', 'NonSupported', 'ApiModules']
 
-PACK_IGNORE_TEST_FLAG = 'auto-test'
-
 PACKAGE_YML_FILE_REGEX = r'(?:\./)?(?:Packs/[^/]+\/)?(?:Integrations|Scripts)\/([^\\/]+)/([^\\/]+)\.yml'
-
-OLD_YML_FORMAT_FILE = [PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, PACKS_SCRIPT_NON_SPLIT_YML_REGEX]
-
-DIR_LIST_FOR_REGULAR_ENTETIES = [
-    PLAYBOOKS_DIR,
-    REPORTS_DIR,
-    DASHBOARDS_DIR,
-    WIDGETS_DIR,
-    INCIDENT_TYPES_DIR,
-    INCIDENT_FIELDS_DIR,
-    LAYOUTS_DIR,
-    PRE_PROCESS_RULES_DIR,
-    CLASSIFIERS_DIR,
-    INDICATOR_TYPES_DIR,
-    CONNECTIONS_DIR,
-    INDICATOR_FIELDS_DIR,
-    LISTS_DIR,
-]
-PACKS_DIRECTORIES = [
-    SCRIPTS_DIR,
-    INTEGRATIONS_DIR,
-    DASHBOARDS_DIR,
-    WIDGETS_DIR,
-    INDICATOR_FIELDS_DIR,
-    INDICATOR_TYPES_DIR,
-    INCIDENT_FIELDS_DIR,
-    INCIDENT_TYPES_DIR,
-    REPORTS_DIR,
-    CONNECTIONS_DIR,
-    PLAYBOOKS_DIR
-]
-SPELLCHECK_FILE_TYPES = [
-    PACKS_INTEGRATION_YML_REGEX,
-    PACKS_SCRIPT_YML_REGEX,
-    PLAYBOOK_YML_REGEX
-]
 
 KNOWN_FILE_STATUSES = ['a', 'm', 'd', 'r'] + ['r{:03}'.format(i) for i in range(101)]
 
@@ -825,19 +773,6 @@ CODE_FILES_REGEX = [
     PACKS_INTEGRATION_PS_REGEX,
     PACKS_SCRIPT_PS_REGEX
 ]
-
-SCRIPTS_REGEX_LIST = [PACKS_SCRIPT_YML_REGEX, PACKS_SCRIPT_PY_REGEX, PACKS_SCRIPT_PS_REGEX]
-
-# All files that have related yml file
-REQUIRED_YML_FILE_TYPES = [PACKS_INTEGRATION_PY_REGEX,
-                           PACKS_INTEGRATION_README_REGEX,
-                           PACKS_INTEGRATION_NON_SPLIT_README_REGEX,
-
-                           PACKS_SCRIPT_PY_REGEX,
-                           PACKS_SCRIPT_README_REGEX,
-                           PACKS_SCRIPT_NON_SPLIT_README_REGEX,
-
-                           PLAYBOOK_README_REGEX]
 
 TYPE_PWSH = 'powershell'
 TYPE_PYTHON = 'python'
@@ -873,13 +808,6 @@ VALIDATION_USING_GIT_IGNORABLE_DATA = (
     '.pack-ignore'
 )
 
-FILE_TYPES_FOR_TESTING = [
-    '.py',
-    '.js',
-    '.yml',
-    '.ps1'
-]
-
 # python subtypes
 PYTHON_SUBTYPES = {'python3', 'python2'}
 
@@ -902,8 +830,6 @@ def urljoin(*args: str):
 
 OFFICIAL_CONTENT_ID_SET_PATH = 'https://storage.googleapis.com/marketplace-dist/content/id_set.json'
 
-# Run all test signal
-RUN_ALL_TESTS_FORMAT = 'Run all tests'
 FILTER_CONF = './artifacts/filter_file.txt'
 
 
@@ -917,7 +843,6 @@ class PB_Status:
 
 # change log regexes
 UNRELEASE_HEADER = '## [Unreleased]\n'  # lgtm[py/regex/duplicate-in-character-class]
-CONTENT_RELEASE_TAG_REGEX = r'^\d{2}\.\d{1,2}\.\d'
 RELEASE_NOTES_REGEX = re.escape(UNRELEASE_HEADER) + r'([\s\S]+?)## \[\d{2}\.\d{1,2}\.\d\] - \d{4}-\d{2}-\d{2}'
 
 # Beta integration disclaimer
@@ -966,8 +891,6 @@ SCHEMA_TO_REGEX = {
     'genericmodule': JSON_ALL_GENERIC_MODULES_REGEXES,
     'genericdefinition': JSON_ALL_GENERIC_DEFINITIONS_REGEXES
 }
-
-EXTERNAL_PR_REGEX = r'^pull/(\d+)$'
 
 FILE_TYPES_PATHS_TO_VALIDATE = {
     'reports': JSON_ALL_REPORTS_REGEXES

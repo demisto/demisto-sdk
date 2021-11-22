@@ -727,7 +727,6 @@ def get_file_description(path, file_type) -> str:
         return yml_file.get('comment', '')
 
     elif file_type in (FileType.CLASSIFIER, FileType.REPORT, FileType.WIDGET, FileType.DASHBOARD, FileType.JOB):
-        # todo should job use CommitMessage instead?
         json_file = get_json(path)
         return json_file.get('description', '')
 

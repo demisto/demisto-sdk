@@ -366,7 +366,7 @@ def convert_request_to_command(item: dict):
                 for key, value in flattened_json.items():
                     path_split = key.split('.')
                     json_path = path_split[:-1]
-                    path_length = shared_args_path[path_split[-1]] + 1
+                    path_length = shared_args_path[path_split[-1].lower()] + 1
                     arg_name = '_'.join(path_split[-path_length:])
                     arg = IntegrationGeneratorArg(
                         name=arg_name,
@@ -453,11 +453,11 @@ def duplicate_requests_check(commands_names_dict: dict) -> None:
 
 
 def find_shared_args_path(flattened_json: dict) -> dict:
-    names_dict = defaultdict(list)
-    shared_args_path = defaultdict(int)
+    names_dict: dict = defaultdict(list)
+    shared_args_path: dict = defaultdict(int)
     for key in flattened_json:
         path_split = key.split('.')
-        arg_name = path_split[-1]
+        arg_name = path_split[-1].lower()
 
         # finds the maximum shared path with all other arguments in the same list
         for other_arg in names_dict[arg_name]:

@@ -1,4 +1,5 @@
 # Changelog
+* Fixed an issue with the **format** command when contributing via the UI
 
 # 1.5.3
 * The **format** command will now set `unsearchable: True` for incident, indicator and generic fields.

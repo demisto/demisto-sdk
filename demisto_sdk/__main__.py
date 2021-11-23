@@ -18,13 +18,12 @@ from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 # Common tools
 from demisto_sdk.commands.common.constants import (
-    ALL_PACKS_DEPENDENCIES_DEFAULT_PATH, IGNORED_PACKS_IN_DEPENDENCY_CALC, FileType)
+    ALL_PACKS_DEPENDENCIES_DEFAULT_PATH, FileType)
 from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_last_remote_release_version,
                                                get_release_note_entries,
-                                               print_error, print_success,
-                                               print_warning)
+                                               print_error, print_warning)
 from demisto_sdk.commands.common.update_id_set import merge_id_sets_from_files
 from demisto_sdk.commands.convert.convert_manager import ConvertManager
 from demisto_sdk.commands.coverage_analyze.coverage_report import \
@@ -36,7 +35,8 @@ from demisto_sdk.commands.doc_reviewer.doc_reviewer import DocReviewer
 from demisto_sdk.commands.download.downloader import Downloader
 from demisto_sdk.commands.error_code_info.error_code_info import \
     generate_error_code_information
-from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
+from demisto_sdk.commands.find_dependencies.find_dependencies import \
+    PackDependencies
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.generate_docs.generate_integration_doc import \
     generate_integration_doc
@@ -1450,7 +1450,7 @@ def update_release_notes(**kwargs):
                                                "The json file will be saved under the path given in the "
                                                "'--output-path' argument", required=False, is_flag=True)
 @click.option("-o", "--output-path", help="The destination path for the packs dependencies json file. This argument is "
-                                    "only relevant for when using the '--all-packs-dependecies' flag.", required=False)
+              "only relevant for when using the '--all-packs-dependecies' flag.", required=False)
 @click.option("--get-dependent-on", help="Get only the packs dependent ON the given pack. Note: this flag can not be"
                                          " used for the packs ApiModules and Base", required=False,
               is_flag=True)
@@ -1462,8 +1462,8 @@ def find_dependencies(**kwargs):
     verbose = kwargs.get('verbose', False)
     id_set_path = kwargs.get('id_set_path', '')
     use_pack_metadata = kwargs.get('use_pack_metadata', False)
-    all_packs_dependencies = kwargs.get('all_packs_dependencies')
-    get_dependent_on = kwargs.get('get_dependent_on')
+    all_packs_dependencies = kwargs.get('all_packs_dependencies', False)
+    get_dependent_on = kwargs.get('get_dependent_on', False)
     output_path = kwargs.get('output_path', ALL_PACKS_DEPENDENCIES_DEFAULT_PATH)
 
     try:

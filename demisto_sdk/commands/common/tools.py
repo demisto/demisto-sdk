@@ -7,6 +7,7 @@ import re
 import shlex
 import sys
 import urllib.parse
+from concurrent.futures import as_completed
 from configparser import ConfigParser, MissingSectionHeaderError
 from contextlib import contextmanager
 from distutils.version import LooseVersion
@@ -19,8 +20,6 @@ from typing import (Callable, Dict, List, Match, Optional, Set, Tuple, Type,
 
 import click
 import colorama
-from concurrent.futures import as_completed
-from contextlib import contextmanager
 import demisto_client
 import git
 import requests

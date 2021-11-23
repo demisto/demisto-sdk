@@ -2,27 +2,29 @@ import glob
 import json
 import os
 import sys
-
 from copy import deepcopy
 from distutils.version import LooseVersion
 from pathlib import Path
 from pprint import pformat
-from typing import Callable, Iterable, List, Optional, Tuple, Union
+from typing import Iterable, Optional, Tuple, Union
 
 import click
 import networkx as nx
 from requests import RequestException
 
 from demisto_sdk.commands.common import constants
-from demisto_sdk.commands.common.constants import (GENERIC_COMMANDS_NAMES,
-                                                   IGNORED_PACKS_IN_DEPENDENCY_CALC, PACKS_DIR)
-from demisto_sdk.commands.common.tools import (get_content_id_set,
+from demisto_sdk.commands.common.constants import (
+    GENERIC_COMMANDS_NAMES, IGNORED_PACKS_IN_DEPENDENCY_CALC, PACKS_DIR)
+from demisto_sdk.commands.common.tools import (ProcessPoolHandler,
+                                               get_content_id_set,
                                                get_content_path, get_pack_name,
                                                is_external_repository,
                                                print_error, print_success,
-                                               print_warning, ProcessPoolHandler, wait_futures_complete)
+                                               print_warning,
+                                               wait_futures_complete)
 from demisto_sdk.commands.common.update_id_set import merge_id_sets
-from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator, get_id_set
+from demisto_sdk.commands.create_id_set.create_id_set import (IDSetCreator,
+                                                              get_id_set)
 
 MINIMUM_DEPENDENCY_VERSION = LooseVersion('6.0.0')
 COMMON_TYPES_PACK = 'CommonTypes'
@@ -1473,7 +1475,6 @@ class PackDependencies:
 
         return graph
 
-
     @staticmethod
     def check_arguments_find_dependencies(input_path, all_packs_dependencies, output_path, get_dependent_on):
         if not input_path:
@@ -1518,12 +1519,12 @@ class PackDependencies:
             print_success(f"Found {len(dependent_packs)} dependent packs:\n {str(dependent_packs)}")
 
         elif all_packs_dependencies:
-            calculate_all_packs_dependencies(id_set_path, output_path, verbose)
+            calculate_all_packs_dependencies(id_set_path, output_path, verbose)  # type: ignore[arg-type]
             print_success(f"The packs dependencies json was successfully saved to {output_path}")
 
         else:
             PackDependencies.find_dependencies(
-                pack_name=Path(input_path).name,
+                pack_name=Path(input_path).name,  # type: ignore[arg-type]
                 id_set_path=id_set_path,
                 verbose=verbose,
                 update_pack_metadata=update_pack_metadata,

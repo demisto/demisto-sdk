@@ -87,6 +87,7 @@ class IDSetCreator:
             with open(self.output, 'w+') as id_set_file:
                 json.dump(self.id_set, id_set_file, indent=4)
 
+
 def get_id_set(id_set_path: str) -> dict:
     """
     Parses the content of id_set_path and returns its content.

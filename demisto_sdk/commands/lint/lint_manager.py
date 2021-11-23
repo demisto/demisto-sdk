@@ -29,16 +29,16 @@ from demisto_sdk.commands.common.tools import (find_file, find_type,
                                                pack_name_to_posix_path,
                                                print_error, print_v,
                                                print_warning,
-                                               retrieve_file_ending,
-                                               get_parent_directory_name)
-from demisto_sdk.commands.find_dependencies.find_dependencies import get_packs_dependent_on_given_packs
+                                               retrieve_file_ending)
+from demisto_sdk.commands.find_dependencies.find_dependencies import \
+    get_packs_dependent_on_given_packs
 from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, PWSH_CHECKS,
                                                PY_CHCEKS,
                                                build_skipped_exit_code,
                                                generate_coverage_report,
                                                get_test_modules, validate_env)
 from demisto_sdk.commands.lint.linter import Linter
-from demisto_sdk.commands.common.git_util import GitUtil
+
 logger = logging.getLogger('demisto-sdk')
 sha1Regex = re.compile(r'\b[0-9a-fA-F]{40}\b', re.M)
 
@@ -74,10 +74,10 @@ class LintManager:
             git = True
         # Filter packages to lint and test check
         self._pkgs: List[PosixPath] = self._get_packages(content_repo=self._facts["content_repo"],
-                                                    input=input,
-                                                    git=git,
-                                                    all_packs=all_packs,
-                                                    base_branch=self._prev_ver)
+                                                         input=input,
+                                                         git=git,
+                                                         all_packs=all_packs,
+                                                         base_branch=self._prev_ver)
         self._id_set_path = id_set_path
         self._check_dependent_packs = check_dependent_packs
         if self._check_dependent_packs:
@@ -239,9 +239,8 @@ class LintManager:
         return list(all_pkgs)
 
     @staticmethod
-
     def _get_packages_from_modified_files(modified_files):
-        """
+        r"""
         Out of all modified files, return only the files relevant for linting, which are the packages
         (scripts\integrations) under the pack.
         Args:
@@ -284,9 +283,9 @@ class LintManager:
                 last_common_commit = base_branch
             else:
                 last_common_commit = content_repo.merge_base(content_repo.active_branch.commit,
-                                                         f'{content_repo.remote()}/{base_branch}')[0]
+                                                             f'{content_repo.remote()}/{base_branch}')[0]
             print(f"Comparing {Colors.Fg.cyan}{content_repo.active_branch}{Colors.reset} to"
-              f" last common commit with {Colors.Fg.cyan}{last_common_commit}{Colors.reset}")
+                  f" last common commit with {Colors.Fg.cyan}{last_common_commit}{Colors.reset}")
 
         changed_from_base = {content_repo.working_dir / Path(item.b_path).parent for item in
                              content_repo.active_branch.commit.tree.diff(last_common_commit, paths=pkgs)}

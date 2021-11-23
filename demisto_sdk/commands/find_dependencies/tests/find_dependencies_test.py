@@ -2,10 +2,10 @@ import json
 import os
 from pathlib import Path
 from typing import List
-import pytest
 from unittest.mock import patch
 
 import networkx as nx
+import pytest
 
 import demisto_sdk.commands.create_id_set.create_id_set as cis
 from demisto_sdk.commands.common.constants import FileType
@@ -2384,7 +2384,6 @@ def get_mock_dependency_graph():
 
 class TestGetDependentOnGivenPack:
     def test_get_dependent_on_given_pack(self, mocker):
-        #import demisto_sdk.commands.common.tools
         mocker.patch('demisto_sdk.commands.find_dependencies.find_dependencies.find_pack_display_name',
                      side_effect=find_pack_display_name_mock)
         mocker.patch('demisto_sdk.commands.find_dependencies.find_dependencies.get_id_set', return_value={})

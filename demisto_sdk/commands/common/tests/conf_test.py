@@ -166,3 +166,36 @@ def test_non_testable_entity_is_vaild_in_conf(mocker):
     assert validator.is_valid_file_in_conf_json(current_file=current,
                                                 file_type=FileType.TEST_PLAYBOOK,
                                                 file_path="SomeFilePath")
+
+
+NOT_SKIPPED_DYNAMIC_SECTION_INPUTS = [
+    ({"skipped_tests": {"SomeTestPlaybook": "Some Issue"}}, {'tests': ['TestPlaybook'], 'tags': ['dynamic-section']}),
+    ({"skipped_tests": {"TestPlaybook": "Some Issue"}}, {'tests': ['TestPlaybook'], 'tags': ['dynamic-section']}),
+    ({"skipped_tests": {"SomeTestPlaybook": "Some Issue"}}, {'tags': ['dynamic-section']})]
+
+
+@pytest.mark.parametrize('conf_data, yml_data', NOT_SKIPPED_DYNAMIC_SECTION_INPUTS)
+def test_not_skipped_test_playbook_for_dynamic_section(mocker, conf_data, yml_data):
+    """
+    Given:
+    - Script data.
+    - Conf JSON file.
+
+    When:
+    - running is_valid_file_in_conf_json specifically on the content entity with dynamic section tag.
+    Cases:
+        Case 1) Has not skipped TPB.
+        Case 2) Has skipped TPB.
+        Case 3) Does not have TPB.
+
+    Then:
+    - Ensure True is returned.
+    """
+    mocker.patch.object(ConfJsonValidator, 'load_conf_file',
+                        return_value=conf_data)
+
+    validator = ConfJsonValidator()
+
+    assert validator.is_valid_file_in_conf_json(current_file=yml_data,
+                                                file_type=FileType.SCRIPT,
+                                                file_path="SomeFilePath")

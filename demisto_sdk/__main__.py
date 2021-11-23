@@ -1884,7 +1884,6 @@ def convert(config, **kwargs):
 @main.command(
     name='error-code',
     help='Quickly find relevant information regarding an error code.',
-    hidden=True,
 )
 @click.help_option(
     '-h', '--help'

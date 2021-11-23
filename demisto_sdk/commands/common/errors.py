@@ -311,6 +311,9 @@ ERROR_CODE = {
     "missing_field_values_in_feed_job": {
         'code': "JB103", 'ui_applicable': False, 'related_field': 'isFeed'
     },
+    "empty_or_missing_job_name": {
+        'code': "JB104", 'ui_applicable': False, 'related_field': 'name'
+    },
     "xsoar_config_file_is_not_json": {'code': "XC100", 'ui_applicable': False, 'related_field': ''},
     "xsoar_config_file_malformed": {'code': "XC101", 'ui_applicable': False, 'related_field': ''},
     "invalid_readme_image_error": {'code': "RM108", 'ui_applicable': False, 'related_field': ''},
@@ -1710,6 +1713,11 @@ class Errors:
             if key:
                 found.append(value)
         return f'Job objects cannot have non-empty {" or ".join(found)} when isFeed is set to false.'
+
+    @staticmethod
+    @error_code_decorator
+    def empty_or_missing_job_name():
+        return 'Job objects must have a non-empty name.'
 
     @staticmethod
     @error_code_decorator

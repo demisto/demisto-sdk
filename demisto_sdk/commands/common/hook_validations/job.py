@@ -1,6 +1,6 @@
 from distutils.version import LooseVersion
 
-from demisto_sdk.commands.common.constants import DEFAULT_JOB_FROM_VERSION
+from demisto_sdk.commands.common.constants import DEFAULT_JOB_FROM_VERSION, JOB
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
@@ -68,8 +68,20 @@ class JobValidator(ContentEntityValidator):
 
         return True
 
+    def is_name_not_empty(self):
+        name = self.current_file.get('name')
+        if (not name) or (name.isspace()):
+            error_message, error_code = Errors.empty_or_missing_job_name()
+            formatted_error = self.handle_error(error_message, error_code, file_path=self.file_path)
+            if formatted_error:
+                self._errors.append(error_message)
+                return False
+        return True
+
     def is_valid_file(self, validate_rn=True):
         return all((
             self.is_valid_feed_fields(),
+            self.is_name_not_empty(),
+            self._is_id_equals_name(JOB),
             super().is_valid_file(validate_rn),  # includes is_fromversion_valid()
         ))

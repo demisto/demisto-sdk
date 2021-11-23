@@ -1650,7 +1650,7 @@ def test_job_non_feed_with_selected_feeds(repo, capsys):
             Ensure an error is raised, and validation fails
     """
     pack = repo.create_pack()
-    job = pack.create_job(is_feed=False, name='job_name', selected_feeds=['field_name'])
+    job = pack.create_job(is_feed=False, name='job_name', selected_feeds=['feed_name'])
     validate_manager = ValidateManager(check_is_unskipped=False, file_path=job.path, skip_conf_json=True)
 
     with ChangeCWD(repo.path):
@@ -1670,7 +1670,7 @@ def test_job_both_selected_and_all_feeds_in_job(repo, capsys):
             Ensure an error is raised, and validation fails
     """
     pack = repo.create_pack()
-    job = pack.create_job(is_feed=True, name='job_name', selected_feeds=['field_name'])
+    job = pack.create_job(is_feed=True, name='job_name', selected_feeds=['feed_name'])
     job.update({'isAllFeeds': True})
     validate_manager = ValidateManager(check_is_unskipped=False, file_path=job.path, skip_conf_json=True)
 
@@ -1679,6 +1679,57 @@ def test_job_both_selected_and_all_feeds_in_job(repo, capsys):
                                                  pack_error_ignore_list=list())
     stdout = capsys.readouterr().out
     assert "Job cannot have non-empty selectedFeeds values when isAllFields is set to true" in stdout
+
+
+@pytest.mark.parametrize('is_feed', (True, False))
+@pytest.mark.parametrize('name', ('', ' ', '  ', '\n', '\t'))
+def test_job_blank_name(repo, capsys, name: str, is_feed: bool):
+    """
+    Given
+            A Job object in a repo, with a blank (space/empty) value as its name
+    When
+            Validating the file
+    Then
+            Ensure an error is raised, and validation fails
+    """
+    pack = repo.create_pack()
+    job = pack.create_job(is_feed=is_feed, name=name)
+    job.update({'name': name})  # name is appended with number in create_job, so it must be explicitly set here
+
+    validate_manager = ValidateManager(check_is_unskipped=False, file_path=job.path, skip_conf_json=True)
+
+    with ChangeCWD(repo.path):
+        assert not validate_manager.validate_job(StructureValidator(job.path, is_new_file=True),
+                                                 pack_error_ignore_list=list())
+    stdout = capsys.readouterr().out
+    expected_string, expected_code = Errors.empty_or_missing_job_name()
+    assert expected_string in stdout
+    assert expected_code in stdout
+
+
+@pytest.mark.parametrize('is_feed', (True, False))
+def test_job_missing_name(repo, capsys, is_feed: bool):
+    """
+    Given
+            A Job object in a repo, with an empty value as name
+    When
+            Validating the file
+    Then
+            Ensure an error is raised, and validation fails
+    """
+    pack = repo.create_pack()
+    job = pack.create_job(is_feed=is_feed)
+    job.remove('name')  # some name is appended with number in create_job, so it must be explicitly removed
+
+    validate_manager = ValidateManager(check_is_unskipped=False, file_path=job.path, skip_conf_json=True)
+
+    with ChangeCWD(repo.path):
+        assert not validate_manager.validate_job(StructureValidator(job.path, is_new_file=True),
+                                                 pack_error_ignore_list=list())
+    stdout = capsys.readouterr().out
+    expected_string, expected_code = Errors.empty_or_missing_job_name()
+    assert expected_string in stdout
+    assert expected_code in stdout
 
 
 @pytest.mark.parametrize("is_all_feeds,selected_feeds", ((True, []),

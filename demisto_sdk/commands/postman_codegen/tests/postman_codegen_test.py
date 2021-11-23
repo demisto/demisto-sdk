@@ -205,13 +205,13 @@ class TestPostmanHelpers:
         }
         duplicate_requests_check(names_dict)
 
-    with open("test_files/shared_args_path.json") as shared_args_path_file:
+    test_files_path = os.path.join(git_path(), 'demisto_sdk', 'commands', 'postman_codegen', 'tests', 'test_files')
+    with open(os.path.join(test_files_path, 'shared_args_path.json')) as shared_args_path_file:
         shared_args_path_items = json.load(shared_args_path_file)
 
     more_then_one_paths = defaultdict(int, {'name': 2, 'description': 3, 'url': 3, 'method': 3})
     one_for_each_paths = defaultdict(int, {'name': 1, 'id': 1, 'uid': 1})
     complicated_chars_paths = defaultdict(int, {'name': 1, 'required': 5})
-
     SHARED_ARGS_PATH = ((shared_args_path_items['more_then_one_items'], more_then_one_paths),
                         (shared_args_path_items['no_path_items'], defaultdict(int)),
                         (shared_args_path_items['one_for_each_items'], one_for_each_paths),

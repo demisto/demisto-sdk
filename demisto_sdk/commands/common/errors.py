@@ -217,6 +217,30 @@ ERROR_CODE = {
     "incident_type_invalid_auto_extract_mode": {'code': "IT103", 'ui_applicable': True, 'related_field': 'mode'},
     "incident_type_non_existent_playbook_id": {'code': "IT104", 'ui_applicable': False, 'related_field': ''},
 
+    # LI - Lists
+    "invalid_from_server_version_in_lists": {'code': "LI100", 'ui_applicable': False,
+                                             'related_field': 'fromVersion'},
+
+    # LO - Layouts
+    "invalid_version_in_layout": {'code': "LO100", 'ui_applicable': False, 'related_field': 'version'},
+    "invalid_version_in_layoutscontainer": {'code': "LO101", 'ui_applicable': False, 'related_field': 'version'},
+    "invalid_file_path_layout": {'code': "LO102", 'ui_applicable': False, 'related_field': ''},
+    "invalid_file_path_layoutscontainer": {'code': "LO103", 'ui_applicable': False, 'related_field': ''},
+    "invalid_incident_field_in_layout": {'code': "LO104", 'ui_applicable': False, 'related_field': ''},
+    "layouts_container_non_existent_script_id": {'code': "LO105", 'ui_applicable': False, 'related_field': ''},
+    "layout_non_existent_script_id": {'code': "LO106", 'ui_applicable': False, 'related_field': ''},
+
+    # MP - Mappers
+    "invalid_from_version_in_mapper": {'code': "MP100", 'ui_applicable': False, 'related_field': 'fromVersion'},
+    "invalid_to_version_in_mapper": {'code': "MP101", 'ui_applicable': False, 'related_field': 'toVersion'},
+    "invalid_mapper_file_name": {'code': "MP102", 'ui_applicable': False, 'related_field': ''},
+    "missing_from_version_in_mapper": {'code': "MP103", 'ui_applicable': False, 'related_field': 'fromVersion'},
+    "invalid_type_in_mapper": {'code': "MP104", 'ui_applicable': False, 'related_field': 'type'},
+    "mapper_non_existent_incident_types": {'code': "MP105", 'ui_applicable': False, 'related_field': 'incident_types'},
+    "invalid_incident_field_in_mapper": {'code': "MP106", 'ui_applicable': False, 'related_field': 'mapping'},
+    "changed_incident_field_in_mapper": {'code': "MP107", 'ui_applicable': True, 'related_field': 'mapping'},
+    "removed_incident_types": {'code': "MP108", 'ui_applicable': True, 'related_field': 'mapping'},
+
     # SC - Scripts
     "invalid_version_script_name": {'code': "SC100", 'ui_applicable': True, 'related_field': 'name'},
     "invalid_deprecated_script": {'code': "SC101", 'ui_applicable': False, 'related_field': 'comment'},
@@ -329,26 +353,6 @@ ERROR_CODE = {
     "pykwalify_field_undefined_with_path": {'code': "ST111", 'ui_applicable': False, 'related_field': ''},
     "pykwalify_incorrect_enum": {'code': "ST112", 'ui_applicable': False, 'related_field': ''},
 
-    # MP - Mappers
-    "invalid_from_version_in_mapper": {'code': "MP100", 'ui_applicable': False, 'related_field': 'fromVersion'},
-    "invalid_to_version_in_mapper": {'code': "MP101", 'ui_applicable': False, 'related_field': 'toVersion'},
-    "invalid_mapper_file_name": {'code': "MP102", 'ui_applicable': False, 'related_field': ''},
-    "missing_from_version_in_mapper": {'code': "MP103", 'ui_applicable': False, 'related_field': 'fromVersion'},
-    "invalid_type_in_mapper": {'code': "MP104", 'ui_applicable': False, 'related_field': 'type'},
-    "mapper_non_existent_incident_types": {'code': "MP105", 'ui_applicable': False, 'related_field': 'incident_types'},
-    "invalid_incident_field_in_mapper": {'code': "MP106", 'ui_applicable': False, 'related_field': 'mapping'},
-    "changed_incident_field_in_mapper": {'code': "MP107", 'ui_applicable': True, 'related_field': 'mapping'},
-    "removed_incident_types": {'code': "MP108", 'ui_applicable': True, 'related_field': 'mapping'},
-
-    # LO - Layouts
-    "invalid_version_in_layout": {'code': "LO100", 'ui_applicable': False, 'related_field': 'version'},
-    "invalid_version_in_layoutscontainer": {'code': "LO101", 'ui_applicable': False, 'related_field': 'version'},
-    "invalid_file_path_layout": {'code': "LO102", 'ui_applicable': False, 'related_field': ''},
-    "invalid_file_path_layoutscontainer": {'code': "LO103", 'ui_applicable': False, 'related_field': ''},
-    "invalid_incident_field_in_layout": {'code': "LO104", 'ui_applicable': False, 'related_field': ''},
-    "layouts_container_non_existent_script_id": {'code': "LO105", 'ui_applicable': False, 'related_field': ''},
-    "layout_non_existent_script_id": {'code': "LO106", 'ui_applicable': False, 'related_field': ''},
-
     # PP - Pre-Process Rules
     "invalid_from_server_version_in_pre_process_rules": {'code': "PP100", 'ui_applicable': False, 'related_field': 'fromServerVersion'},
     "invalid_incident_field_in_pre_process_rules": {'code': "PP101", 'ui_applicable': False, 'related_field': ''},
@@ -356,11 +360,6 @@ ERROR_CODE = {
     # XC - XSOAR Config
     "xsoar_config_file_is_not_json": {'code': "XC100", 'ui_applicable': False, 'related_field': ''},
     "xsoar_config_file_malformed": {'code': "XC101", 'ui_applicable': False, 'related_field': ''},
-
-    # LI - Lists
-    "invalid_from_server_version_in_lists": {'code': "LI100", 'ui_applicable': False,
-                                             'related_field': 'fromVersion'},
-
 }
 
 

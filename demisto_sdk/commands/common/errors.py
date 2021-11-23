@@ -110,6 +110,47 @@ ERROR_CODE = {
     "description_contains_demisto_word": {'code': "DS107", 'ui_applicable': True,
                                           'related_field': 'detaileddescription'},
 
+    # GF - Generic Fields
+    "invalid_generic_field_group_value": {'code': "GF100", 'ui_applicable': False, 'related_field': 'group'},
+    "invalid_generic_field_id": {'code': "GF101", 'ui_applicable': False, 'related_field': 'id'},
+
+    # ID - ID Set
+    "id_set_conflicts": {'code': "ID100", 'ui_applicable': False, 'related_field': ''},
+    # missing 101
+    "duplicated_id": {'code': "ID102", 'ui_applicable': False, 'related_field': ''},
+    "no_id_set_file": {'code': "ID103", 'ui_applicable': False, 'related_field': ''},
+
+    # IF - Incident Fields
+    "invalid_incident_field_name": {'code': "IF100", 'ui_applicable': True, 'related_field': 'name'},
+    "invalid_incident_field_content_key_value": {'code': "IF101", 'ui_applicable': False, 'related_field': 'content'},
+    "invalid_incident_field_system_key_value": {'code': "IF102", 'ui_applicable': False, 'related_field': 'system'},
+    "invalid_incident_field_type": {'code': "IF103", 'ui_applicable': True, 'related_field': 'type'},
+    "invalid_incident_field_group_value": {'code': "IF104", 'ui_applicable': False, 'related_field': 'group'},
+    "invalid_incident_field_cli_name_regex": {'code': "IF105", 'ui_applicable': False, 'related_field': 'cliName'},
+    "invalid_incident_field_cli_name_value": {'code': "IF106", 'ui_applicable': True, 'related_field': 'cliName'},
+    # missing 107
+    "invalid_incident_field_or_type_from_version": {'code': "IF108", 'ui_applicable': False,
+                                                    'related_field': 'fromVersion'},
+    "new_incident_field_required": {'code': "IF109", 'ui_applicable': True, 'related_field': 'required'},
+    "from_version_modified_after_rename": {'code': "IF110", 'ui_applicable': False, 'related_field': 'fromVersion'},
+    "incident_field_type_change": {'code': "IF111", 'ui_applicable': False, 'related_field': 'type'},
+    "indicator_field_type_grid_minimal_version": {'code': "IF112", 'ui_applicable': False,
+                                                  'related_field': 'fromVersion'},
+    "invalid_incident_field_prefix": {'code': "IF113", 'ui_applicable': False, 'related_field': 'name'},
+    "incident_field_non_existent_script_id": {'code': "IF114", 'ui_applicable': False, 'related_field': ''},
+
+    # IM - Images
+    "no_image_given": {'code': "IM100", 'ui_applicable': True, 'related_field': 'image'},
+    "image_too_large": {'code': "IM101", 'ui_applicable': True, 'related_field': 'image'},
+    "image_in_package_and_yml": {'code': "IM102", 'ui_applicable': False, 'related_field': 'image'},
+    "not_an_image_file": {'code': "IM103", 'ui_applicable': False, 'related_field': 'image'},
+    "no_image_field_in_yml": {'code': "IM104", 'ui_applicable': True, 'related_field': 'image'},
+    "image_field_not_in_base64": {'code': "IM105", 'ui_applicable': True, 'related_field': 'image'},
+    "default_image_error": {'code': "IM106", 'ui_applicable': True, 'related_field': 'image'},
+    "invalid_image_name": {'code': "IM107", 'ui_applicable': False, 'related_field': 'image'},
+    "image_is_empty": {'code': "IM108", 'ui_applicable': True, 'related_field': 'image'},
+    "author_image_is_missing": {'code': "IM109", 'ui_applicable': True, 'related_field': 'image'},
+
     # IN - Integrations
     "wrong_display_name": {'code': "IN100", 'ui_applicable': True, 'related_field': '<parameter-name>.display'},
     "wrong_default_parameter_not_empty": {'code': "IN101", 'ui_applicable': True,
@@ -168,6 +209,14 @@ ERROR_CODE = {
                                   'related_field': '<parameter-name>.fromlicense'},
     "changed_integration_yml_fields": {'code': "IN147", "ui_applicable": False, 'related_field': 'script'},
 
+    # IT - Incident Types
+    "incident_type_integer_field": {'code': "IT100", 'ui_applicable': True, 'related_field': ''},
+    "incident_type_invalid_playbook_id_field": {'code': "IT101", 'ui_applicable': False, 'related_field': 'playbookId'},
+    "incident_type_auto_extract_fields_invalid": {'code': "IT102", 'ui_applicable': False,
+                                                  'related_field': 'extractSettings'},
+    "incident_type_invalid_auto_extract_mode": {'code': "IT103", 'ui_applicable': True, 'related_field': 'mode'},
+    "incident_type_non_existent_playbook_id": {'code': "IT104", 'ui_applicable': False, 'related_field': ''},
+
     # SC - Scripts
     "invalid_version_script_name": {'code': "SC100", 'ui_applicable': True, 'related_field': 'name'},
     "invalid_deprecated_script": {'code': "SC101", 'ui_applicable': False, 'related_field': 'comment'},
@@ -176,28 +225,10 @@ ERROR_CODE = {
     "is_valid_script_file_path_in_scripts_folder": {'code': "SC104", 'ui_applicable': False, 'related_field': ''},
     "incident_in_script_arg": {'code': "SC105", 'ui_applicable': True, 'related_field': 'args.name'},
 
-    # ID - ID Set
-    "id_set_conflicts": {'code': "ID100", 'ui_applicable': False, 'related_field': ''},
-    # missing 101
-    "duplicated_id": {'code': "ID102", 'ui_applicable': False, 'related_field': ''},
-    "no_id_set_file": {'code': "ID103", 'ui_applicable': False, 'related_field': ''},
-
     # WD - Widgets
     "remove_field_from_widget": {'code': "WD100", 'ui_applicable': False, 'related_field': ''},
     "include_field_in_widget": {'code': "WD101", 'ui_applicable': False, 'related_field': ''},
     "invalid_fromversion_for_type_metrics": {'code': "WD102", 'ui_applicable': False, 'related_field': ''},
-
-    # IM - Images
-    "no_image_given": {'code': "IM100", 'ui_applicable': True, 'related_field': 'image'},
-    "image_too_large": {'code': "IM101", 'ui_applicable': True, 'related_field': 'image'},
-    "image_in_package_and_yml": {'code': "IM102", 'ui_applicable': False, 'related_field': 'image'},
-    "not_an_image_file": {'code': "IM103", 'ui_applicable': False, 'related_field': 'image'},
-    "no_image_field_in_yml": {'code': "IM104", 'ui_applicable': True, 'related_field': 'image'},
-    "image_field_not_in_base64": {'code': "IM105", 'ui_applicable': True, 'related_field': 'image'},
-    "default_image_error": {'code': "IM106", 'ui_applicable': True, 'related_field': 'image'},
-    "invalid_image_name": {'code': "IM107", 'ui_applicable': False, 'related_field': 'image'},
-    "image_is_empty": {'code': "IM108", 'ui_applicable': True, 'related_field': 'image'},
-    "author_image_is_missing": {'code': "IM109", 'ui_applicable': True, 'related_field': 'image'},
 
     # RN - Release Notes
     "missing_release_notes": {'code': "RN100", 'ui_applicable': False, 'related_field': ''},
@@ -233,33 +264,6 @@ ERROR_CODE = {
     "playbook_tasks_not_quiet_mode": {'code': "PB115", 'ui_applicable': False, 'related_field': 'tasks'},
     "playbook_tasks_continue_on_error": {'code': "PB116", 'ui_applicable': False, 'related_field': 'tasks'},
     "content_entity_is_not_in_id_set": {'code': "PB117", 'ui_applicable': False, 'related_field': ''},
-
-    # IF - Incident Fields
-    "invalid_incident_field_name": {'code': "IF100", 'ui_applicable': True, 'related_field': 'name'},
-    "invalid_incident_field_content_key_value": {'code': "IF101", 'ui_applicable': False, 'related_field': 'content'},
-    "invalid_incident_field_system_key_value": {'code': "IF102", 'ui_applicable': False, 'related_field': 'system'},
-    "invalid_incident_field_type": {'code': "IF103", 'ui_applicable': True, 'related_field': 'type'},
-    "invalid_incident_field_group_value": {'code': "IF104", 'ui_applicable': False, 'related_field': 'group'},
-    "invalid_incident_field_cli_name_regex": {'code': "IF105", 'ui_applicable': False, 'related_field': 'cliName'},
-    "invalid_incident_field_cli_name_value": {'code': "IF106", 'ui_applicable': True, 'related_field': 'cliName'},
-    # missing 107
-    "invalid_incident_field_or_type_from_version": {'code': "IF108", 'ui_applicable': False,
-                                                    'related_field': 'fromVersion'},
-    "new_incident_field_required": {'code': "IF109", 'ui_applicable': True, 'related_field': 'required'},
-    "from_version_modified_after_rename": {'code': "IF110", 'ui_applicable': False, 'related_field': 'fromVersion'},
-    "incident_field_type_change": {'code': "IF111", 'ui_applicable': False, 'related_field': 'type'},
-    "indicator_field_type_grid_minimal_version": {'code': "IF112", 'ui_applicable': False,
-                                                  'related_field': 'fromVersion'},
-    "invalid_incident_field_prefix": {'code': "IF113", 'ui_applicable': False, 'related_field': 'name'},
-    "incident_field_non_existent_script_id": {'code': "IF114", 'ui_applicable': False, 'related_field': ''},
-
-    # IT - Incident Types
-    "incident_type_integer_field": {'code': "IT100", 'ui_applicable': True, 'related_field': ''},
-    "incident_type_invalid_playbook_id_field": {'code': "IT101", 'ui_applicable': False, 'related_field': 'playbookId'},
-    "incident_type_auto_extract_fields_invalid": {'code': "IT102", 'ui_applicable': False,
-                                                  'related_field': 'extractSettings'},
-    "incident_type_invalid_auto_extract_mode": {'code': "IT103", 'ui_applicable': True, 'related_field': 'mode'},
-    "incident_type_non_existent_playbook_id": {'code': "IT104", 'ui_applicable': False, 'related_field': ''},
 
     # PA - Packs (unique files)
     "pack_file_does_not_exist": {'code': "PA100", 'ui_applicable': False, 'related_field': ''},
@@ -352,10 +356,6 @@ ERROR_CODE = {
     # XC - XSOAR Config
     "xsoar_config_file_is_not_json": {'code': "XC100", 'ui_applicable': False, 'related_field': ''},
     "xsoar_config_file_malformed": {'code': "XC101", 'ui_applicable': False, 'related_field': ''},
-
-    # GF - Generic Fields
-    "invalid_generic_field_group_value": {'code': "GF100", 'ui_applicable': False, 'related_field': 'group'},
-    "invalid_generic_field_id": {'code': "GF101", 'ui_applicable': False, 'related_field': 'id'},
 
     # LI - Lists
     "invalid_from_server_version_in_lists": {'code': "LI100", 'ui_applicable': False,

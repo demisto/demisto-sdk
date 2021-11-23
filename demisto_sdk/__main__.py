@@ -637,7 +637,7 @@ def secrets(config, **kwargs):
 @click.option("--no-pwsh-analyze", is_flag=True, help="Do NOT run powershell analyze")
 @click.option("--no-pwsh-test", is_flag=True, help="Do NOT run powershell test")
 @click.option("-kc", "--keep-container", is_flag=True, help="Keep the test container")
-@click.option("--prev-ver", help="Previous branch or SHA1 commit to run checks against")
+@click.option("--prev-ver", help="Previous branch or SHA1 commit to run checks against", default='master')
 @click.option("--test-xml", help="Path to store pytest xml results", type=click.Path(exists=True, resolve_path=True))
 @click.option("--failure-report", help="Path to store failed packs report",
               type=click.Path(exists=True, resolve_path=True))

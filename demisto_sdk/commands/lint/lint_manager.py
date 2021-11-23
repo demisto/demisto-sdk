@@ -29,16 +29,16 @@ from demisto_sdk.commands.common.tools import (find_file, find_type,
                                                pack_name_to_posix_path,
                                                print_error, print_v,
                                                print_warning,
-                                               retrieve_file_ending)
-from demisto_sdk.commands.find_dependencies.find_dependencies import \
-    get_packs_dependent_on_given_packs
+                                               retrieve_file_ending,
+                                               get_parent_directory_name)
+from demisto_sdk.commands.find_dependencies.find_dependencies import get_packs_dependent_on_given_packs
 from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, PWSH_CHECKS,
                                                PY_CHCEKS,
                                                build_skipped_exit_code,
                                                generate_coverage_report,
                                                get_test_modules, validate_env)
 from demisto_sdk.commands.lint.linter import Linter
-
+from demisto_sdk.commands.common.git_util import GitUtil
 logger = logging.getLogger('demisto-sdk')
 sha1Regex = re.compile(r'\b[0-9a-fA-F]{40}\b', re.M)
 
@@ -66,7 +66,7 @@ class LintManager:
         self._verbose = not quiet if quiet else verbose
         # Gather facts for manager
         self._facts: dict = self._gather_facts()
-        self._prev_ver = prev_ver  # None if not inserted (and not master as was the default value)
+        self._prev_ver = prev_ver
         self._all_packs = all_packs
         # Set 'git' to true if no packs have been specified, 'lint' should operate as 'lint -g'
         lint_no_packs_command = not git and not all_packs and not input
@@ -211,8 +211,8 @@ class LintManager:
 
         total_found = len(pkgs)
         if git:
-            pkgs = self._filter_changed_packages(content_repo=content_repo,
-                                                 pkgs=pkgs, base_branch=base_branch)
+            pkgs = self._filter_changed_packages(content_repo=content_repo, pkgs=pkgs,
+                                                 base_branch=base_branch)
             for pkg in pkgs:
                 print_v(f"Found changed package {Colors.Fg.cyan}{pkg}{Colors.reset}",
                         log_verbose=self._verbose)
@@ -227,7 +227,7 @@ class LintManager:
         Returns:
             list: A list of integration, script and beta_integration names.
         """
-        # ￿Get packages from main content path
+        # Get packages from main content path
         content_main_pkgs: set = set(Path(content_dir).glob(['Integrations/*/',
                                                              'Scripts/*/', ]))
         # Get packages from packs path
@@ -239,13 +239,27 @@ class LintManager:
         return list(all_pkgs)
 
     @staticmethod
+
+    def _get_packages_from_modified_files(modified_files):
+        """
+        Out of all modified files, return only the files relevant for linting, which are the packages
+        (scripts\integrations) under the pack.
+        Args:
+            modified_files: A list of paths of files recognized as modified.
+
+        Returns:
+            A list of paths of modified packages (scripts/integrations)
+        """
+        return [path for path in modified_files if 'Scripts' in path.parts or 'Intergations' in path.parts]
+
+    @staticmethod
     def _filter_changed_packages(content_repo: git.Repo, pkgs: List[PosixPath], base_branch: str) -> List[PosixPath]:
         """ Checks which packages had changes in them and should run on Lint.
         The diff is calculated using git, and is done by the following cases:
         - case 1: If the active branch is 'master', the diff is between master and the previous commit.
         - case 2: If the active branch is not master, and no other base branch is specified to comapre to,
          the diff is between the active branch and master.
-        - case 3: If the base branch is specified, the diff is between the active branch and the given base branch.
+        - case 3: If the base branch is specified, the diff is between the active branch (master\not master) and the given base branch.
 
         Args:
             pkgs(List[PosixPath]): pkgs to check
@@ -258,28 +272,21 @@ class LintManager:
         staged_files = {content_repo.working_dir / Path(item.b_path).parent for item in
                         content_repo.active_branch.commit.tree.diff(None, paths=pkgs)}
 
-        if not base_branch:
-            # if we remove the next part, then this means base_branch should be set to master in this part
-            if content_repo.active_branch == 'master':  # TODO: check if can remove, there is no use to it
-                # case 1: comparing master against the latest previous commit
-                last_common_commit = content_repo.remote().refs.master.commit.parents[0]
-                print(f"Comparing {Colors.Fg.cyan}master{Colors.reset} to its {Colors.Fg.cyan}previous commit: {last_common_commit} {Colors.reset}")
-            else:
-                # case 2: active branch is not master, compare against last common commit with master
-                last_common_commit = content_repo.merge_base(content_repo.active_branch.commit,
-                                                             f'{content_repo.remote()}/master')[0]
-                print(f"Comparing {Colors.Fg.cyan}{content_repo.active_branch}{Colors.reset} to"
-                      f" last common commit with master: {Colors.Fg.cyan}{last_common_commit}{Colors.reset}")
+        if base_branch == 'master' and content_repo.active_branch.name == 'master':
+            # case 1: comparing master against the latest previous commit
+            last_common_commit = content_repo.remote().refs.master.commit.parents[0]
+            print(f"Comparing {Colors.Fg.cyan}master{Colors.reset} to its {Colors.Fg.cyan}previous commit: "
+                  f"{last_common_commit} {Colors.reset}")
 
         else:
-            # case 3: comparing the active branch (either master or another branch) against a specific commit or branch
+            # cases 2+3: compare the active branch (master\not master) against the given base branch (master\not master)
             if sha1Regex.match(base_branch):  # if the base branch is given as a commit hash
                 last_common_commit = base_branch
-            else:  # if the base branch is given as a branch name
+            else:
                 last_common_commit = content_repo.merge_base(content_repo.active_branch.commit,
-                                                             f'{content_repo.remote()}/{base_branch}')[0]
-            print(f"Comparing {Colors.Fg.cyan}{content_repo.active_branch}{Colors.reset} to commit hash{Colors.Fg.cyan}"
-                  f" {last_common_commit} {Colors.reset}")
+                                                         f'{content_repo.remote()}/{base_branch}')[0]
+            print(f"Comparing {Colors.Fg.cyan}{content_repo.active_branch}{Colors.reset} to"
+              f" last common commit with {Colors.Fg.cyan}{last_common_commit}{Colors.reset}")
 
         changed_from_base = {content_repo.working_dir / Path(item.b_path).parent for item in
                              content_repo.active_branch.commit.tree.diff(last_common_commit, paths=pkgs)}

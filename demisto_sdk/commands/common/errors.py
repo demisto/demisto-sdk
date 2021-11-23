@@ -298,18 +298,16 @@ ERROR_CODE = {
     "invalid_from_server_version_in_pre_process_rules": {'code': "PP100", 'ui_applicable': False, 'related_field': 'fromServerVersion'},
     "invalid_incident_field_in_pre_process_rules": {'code': "PP101", 'ui_applicable': False, 'related_field': ''},
 
-    # SC - Scripts
-    "invalid_version_script_name": {'code': "SC100", 'ui_applicable': True, 'related_field': 'name'},
-    "invalid_deprecated_script": {'code': "SC101", 'ui_applicable': False, 'related_field': 'comment'},
-    "invalid_command_name_in_script": {'code': "SC102", 'ui_applicable': False, 'related_field': ''},
-    "is_valid_script_file_path_in_folder": {'code': "SC103", 'ui_applicable': False, 'related_field': ''},
-    "is_valid_script_file_path_in_scripts_folder": {'code': "SC104", 'ui_applicable': False, 'related_field': ''},
-    "incident_in_script_arg": {'code': "SC105", 'ui_applicable': True, 'related_field': 'args.name'},
-
-    # WD - Widgets
-    "remove_field_from_widget": {'code': "WD100", 'ui_applicable': False, 'related_field': ''},
-    "include_field_in_widget": {'code': "WD101", 'ui_applicable': False, 'related_field': ''},
-    "invalid_fromversion_for_type_metrics": {'code': "WD102", 'ui_applicable': False, 'related_field': ''},
+    # RM - READMEs
+    "readme_error": {'code': "RM100", 'ui_applicable': False, 'related_field': ''},
+    "image_path_error": {'code': "RM101", 'ui_applicable': False, 'related_field': ''},
+    "readme_missing_output_context": {'code': "RM102", 'ui_applicable': False, 'related_field': ''},
+    "error_starting_mdx_server": {'code': "RM103", 'ui_applicable': False, 'related_field': ''},
+    "empty_readme_error": {'code': "RM104", 'ui_applicable': False, 'related_field': ''},
+    "readme_equal_description_error": {'code': "RM105", 'ui_applicable': False, 'related_field': ''},
+    "readme_contains_demisto_word": {'code': "RM106", 'ui_applicable': False, 'related_field': ''},
+    "template_sentence_in_readme": {'code': "RM107", 'ui_applicable': False, 'related_field': ''},
+    "invalid_readme_image_error": {'code': "RM108", 'ui_applicable': False, 'related_field': ''},
 
     # RN - Release Notes
     "missing_release_notes": {'code': "RN100", 'ui_applicable': False, 'related_field': ''},
@@ -324,23 +322,20 @@ ERROR_CODE = {
     "modified_existing_release_notes": {'code': "RN109", 'ui_applicable': False, 'related_field': ''},
     "release_notes_config_file_missing_release_notes": {'code': "RN110", 'ui_applicable': False, 'related_field': ''},
 
-    # RM - READMEs
-    "readme_error": {'code': "RM100", 'ui_applicable': False, 'related_field': ''},
-    "image_path_error": {'code': "RM101", 'ui_applicable': False, 'related_field': ''},
-    "readme_missing_output_context": {'code': "RM102", 'ui_applicable': False, 'related_field': ''},
-    "error_starting_mdx_server": {'code': "RM103", 'ui_applicable': False, 'related_field': ''},
-    "empty_readme_error": {'code': "RM104", 'ui_applicable': False, 'related_field': ''},
-    "readme_equal_description_error": {'code': "RM105", 'ui_applicable': False, 'related_field': ''},
-    "readme_contains_demisto_word": {'code': "RM106", 'ui_applicable': False, 'related_field': ''},
-    "template_sentence_in_readme": {'code': "RM107", 'ui_applicable': False, 'related_field': ''},
-    "invalid_readme_image_error": {'code': "RM108", 'ui_applicable': False, 'related_field': ''},
-
     # RP - Reputations (Indicator Types)
     "wrong_version_reputations": {'code': "RP100", 'ui_applicable': False, 'related_field': 'version'},
     "reputation_expiration_should_be_numeric": {'code': "RP101", 'ui_applicable': True, 'related_field': 'expiration'},
     "reputation_id_and_details_not_equal": {'code': "RP102", 'ui_applicable': False, 'related_field': 'id'},
     "reputation_invalid_indicator_type_id": {'code': "RP103", 'ui_applicable': False, 'related_field': 'id'},
     "reputation_empty_required_fields": {'code': "RP104", 'ui_applicable': False, 'related_field': 'id'},
+
+    # SC - Scripts
+    "invalid_version_script_name": {'code': "SC100", 'ui_applicable': True, 'related_field': 'name'},
+    "invalid_deprecated_script": {'code': "SC101", 'ui_applicable': False, 'related_field': 'comment'},
+    "invalid_command_name_in_script": {'code': "SC102", 'ui_applicable': False, 'related_field': ''},
+    "is_valid_script_file_path_in_folder": {'code': "SC103", 'ui_applicable': False, 'related_field': ''},
+    "is_valid_script_file_path_in_scripts_folder": {'code': "SC104", 'ui_applicable': False, 'related_field': ''},
+    "incident_in_script_arg": {'code': "SC105", 'ui_applicable': True, 'related_field': 'args.name'},
 
     # ST - Structures
     "structure_doesnt_match_scheme": {'code': "ST100", 'ui_applicable': False, 'related_field': ''},
@@ -356,6 +351,11 @@ ERROR_CODE = {
     "pykwalify_general_error": {'code': "ST110", 'ui_applicable': False, 'related_field': ''},
     "pykwalify_field_undefined_with_path": {'code': "ST111", 'ui_applicable': False, 'related_field': ''},
     "pykwalify_incorrect_enum": {'code': "ST112", 'ui_applicable': False, 'related_field': ''},
+
+    # WD - Widgets
+    "remove_field_from_widget": {'code': "WD100", 'ui_applicable': False, 'related_field': ''},
+    "include_field_in_widget": {'code': "WD101", 'ui_applicable': False, 'related_field': ''},
+    "invalid_fromversion_for_type_metrics": {'code': "WD102", 'ui_applicable': False, 'related_field': ''},
 
     # XC - XSOAR Config
     "xsoar_config_file_is_not_json": {'code': "XC100", 'ui_applicable': False, 'related_field': ''},

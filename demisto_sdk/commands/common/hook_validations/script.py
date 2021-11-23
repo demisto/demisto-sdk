@@ -380,3 +380,16 @@ class ScriptValidator(ContentEntityValidator):
                 self.is_valid = False
                 return False
         return True
+
+    def runas_is_not_dbtrole(self):
+        """
+        Check that runas permission is not DBotRole
+        Returns: True if the runas is valid
+        """
+        runas = self.current_file.get('runas', '')
+        if runas == 'DBotRole':
+            error_message, error_code = Errors.runas_is_dbotrole()
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                return False
+        return True

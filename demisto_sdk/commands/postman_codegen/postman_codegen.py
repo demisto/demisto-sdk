@@ -360,11 +360,14 @@ def convert_request_to_command(item: dict):
             try:
                 body_obj = json.loads(request_body.get('raw'))
                 body_format = create_body_format(body_obj)
+                flattened_json = flatten_json(body_obj)
+                shared_args_path = find_shared_args_path(flattened_json)
 
-                for key, value in flatten_json(body_obj).items():
+                for key, value in flattened_json.items():
                     path_split = key.split('.')
                     json_path = path_split[:-1]
-                    arg_name = path_split[-1]
+                    path_length = shared_args_path[path_split[-1]] + 1
+                    arg_name = '_'.join(path_split[-path_length:])
                     arg = IntegrationGeneratorArg(
                         name=arg_name,
                         description='',
@@ -447,3 +450,23 @@ def duplicate_requests_check(commands_names_dict: dict) -> None:
     assert len(duplicates_list) == 0, f'There are requests with non-unique names: {duplicates_list}.\n' \
                                       f'You should give a unique name to each request.\n' \
                                       f'Names are case-insensitive and whitespaces are ignored.'
+
+
+def find_shared_args_path(flattened_json: dict) -> dict:
+    names_dict = defaultdict(list)
+    shared_args_path = defaultdict(int)
+    for key in flattened_json:
+        path_split = key.split('.')
+        arg_name = path_split[-1]
+
+        # finds the maximum shared path with all other arguments in the same list
+        for other_arg in names_dict[arg_name]:
+            other_path_split = other_arg.split('.')
+            for max_same_path, (other_path, arg_path) in enumerate(zip(other_path_split[::-1], path_split[::-1])):
+                if other_path == arg_path:
+                    shared_args_path[arg_name] = max(max_same_path + 1, shared_args_path[arg_name])
+                else:
+                    break
+
+        names_dict[arg_name].append(key)
+    return shared_args_path

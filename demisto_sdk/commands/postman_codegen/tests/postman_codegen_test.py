@@ -1,6 +1,7 @@
 import json
 import os
 import shutil
+from collections import defaultdict
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
@@ -16,7 +17,7 @@ from demisto_sdk.commands.generate_integration.code_generator import (
 from demisto_sdk.commands.postman_codegen.postman_codegen import (
     build_commands_names_dict, create_body_format, duplicate_requests_check,
     flatten_collections, generate_command_outputs,
-    postman_to_autogen_configuration)
+    postman_to_autogen_configuration, find_shared_args_path)
 
 
 class TestPostmanHelpers:
@@ -203,6 +204,33 @@ class TestPostmanHelpers:
             ]
         }
         duplicate_requests_check(names_dict)
+
+    with open("test_files/shared_args_path.json") as shared_args_path_file:
+        shared_args_path_items = json.load(shared_args_path_file)
+
+    more_then_one_paths = defaultdict(int, {'name': 2, 'description': 3, 'url': 3, 'method': 3})
+    one_for_each_paths = defaultdict(int, {'name': 1, 'id': 1, 'uid': 1})
+    complicated_chars_paths = defaultdict(int, {'name': 1, 'required': 5})
+
+    SHARED_ARGS_PATH = ((shared_args_path_items['more_then_one_items'], more_then_one_paths),
+                        (shared_args_path_items['no_path_items'], defaultdict(int)),
+                        (shared_args_path_items['one_for_each_items'], one_for_each_paths),
+                        (shared_args_path_items['complicated_chars_items'], complicated_chars_paths))
+
+    @pytest.mark.parametrize('flattened_json, shared_args_path', SHARED_ARGS_PATH)
+    def test_find_shared_args_path(self, flattened_json, shared_args_path):
+        """
+        Given
+        - Dictionary containing flattened json with raw body of a request
+
+        When
+        - There are arguments in the request which have the same name (suffix)
+
+        Then
+        - Returns arguments' dictionary with an entry for each argument name, that holds the minimum distinguishing shared path of
+        all arguments with the same name
+        """
+        assert find_shared_args_path(flattened_json) == shared_args_path
 
 
 class TestPostmanCodeGen:

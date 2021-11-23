@@ -584,6 +584,34 @@ class TestEnsureUniquePackDirName:
         assert new_pack_dir_name != pack_name
         assert new_pack_dir_name == pack_name + 'V2'
 
+    def mock_format_manager(*args):
+        return args
+
+    @pytest.mark.parametrize('new_pack', [True, False])
+    def test_format_converted_pack(self, contribution_converter, mocker, new_pack):
+        """Test the 'format_converted_pack' method
+
+        Args:
+            contribution_converter (fixture): An instance of the ContributionConverter class
+
+        Scenario: Formatting the added/modified files by checking against "xsoar-contrib/master" repo
+
+        Given
+        - ContributionConverter class
+
+        When
+        - Running the format_converted_pack method to format the files
+
+        Then
+        - Ensure the repo we are comparing with is "xsoar-contrib/master"
+        """
+        contribution_converter.create_new = new_pack
+        result = mocker.patch('demisto_sdk.commands.init.contribution_converter.format_manager',
+                              side_efect=self.mock_format_manager())
+        contribution_converter.format_converted_pack()
+
+        assert result.call_args[1].get('prev_ver') == 'xsoar-contrib/master'
+
     def test_ensure_unique_pack_dir_name_with_conflict_and_version_suffix(self, contribution_converter):
         """Test the 'ensure_unique_pack_dir_name' method
 

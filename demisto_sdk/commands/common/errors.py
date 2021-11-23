@@ -13,7 +13,8 @@ FOUND_FILES_AND_IGNORED_ERRORS: list = []
 ALLOWED_IGNORE_ERRORS = [
     'BA101', 'BA106', 'BA108', 'BA109', 'BA110', 'BA111', 'BA112', 'BA113',
     'DS107',
-    'IF100', 'IF106',
+    'GF102',
+    'IF100', 'IF106', 'IF115',
     'IN109', 'IN110', 'IN122', 'IN126', 'IN128', 'IN135', 'IN136', 'IN139', 'IN144', 'IN145',
     'MP106',
     'PA113', 'PA116', 'PA124', 'PA125', 'PA127',
@@ -113,6 +114,7 @@ ERROR_CODE = {
     # GF - Generic Fields
     "invalid_generic_field_group_value": {'code': "GF100", 'ui_applicable': False, 'related_field': 'group'},
     "invalid_generic_field_id": {'code': "GF101", 'ui_applicable': False, 'related_field': 'id'},
+    "unsearchable_key_should_be_true_generic_field": {'code': "GF102", 'ui_applicable': False, 'related_field': 'unsearchable'},
 
     # ID - ID Set
     "id_set_conflicts": {'code': "ID100", 'ui_applicable': False, 'related_field': ''},
@@ -138,6 +140,7 @@ ERROR_CODE = {
                                                   'related_field': 'fromVersion'},
     "invalid_incident_field_prefix": {'code': "IF113", 'ui_applicable': False, 'related_field': 'name'},
     "incident_field_non_existent_script_id": {'code': "IF114", 'ui_applicable': False, 'related_field': ''},
+    "unsearchable_key_should_be_true_incident_field": {'code': "IF115", 'ui_applicable': False, 'related_field': 'unsearchable'},
 
     # IM - Images
     "no_image_given": {'code': "IM100", 'ui_applicable': True, 'related_field': 'image'},
@@ -469,6 +472,16 @@ class Errors:
     @error_code_decorator
     def indicator_field_type_grid_minimal_version(fromversion):
         return f"The indicator field has a fromVersion of: {fromversion} but the minimal fromVersion is 5.5.0."
+
+    @staticmethod
+    @error_code_decorator
+    def unsearchable_key_should_be_true_incident_field():
+        return 'The unsearchable key in indicator and incident fields should be set to true.'
+
+    @staticmethod
+    @error_code_decorator
+    def unsearchable_key_should_be_true_generic_field():
+        return 'The unsearchable key in a generic field should be set to true.'
 
     @staticmethod
     @error_code_decorator

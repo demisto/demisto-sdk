@@ -56,6 +56,29 @@ ERROR_CODE = {
     "breaking_backwards_arg_changed": {'code': "BC103", 'ui_applicable': False, 'related_field': 'name'},
     "breaking_backwards_command_arg_changed": {'code': "BC104", 'ui_applicable': False, 'related_field': 'args'},
 
+    # CJ - conf.json
+    "description_missing_from_conf_json": {'code': "CJ100", 'ui_applicable': False, 'related_field': ''},
+    "test_not_in_conf_json": {'code': "CJ101", 'ui_applicable': False, 'related_field': ''},
+    "integration_not_registered": {'code': "CJ102", 'ui_applicable': False, 'related_field': ''},
+    "no_test_playbook": {'code': "CJ103", 'ui_applicable': False, 'related_field': ''},
+    "test_playbook_not_configured": {'code': "CJ104", 'ui_applicable': False, 'related_field': ''},
+    "all_entity_test_playbooks_are_skipped": {'code': "CJ105", 'ui_applicable': False, 'related_field': ''},
+
+    # CL - Classifiers
+    "invalid_to_version_in_new_classifiers": {'code': "CL100", 'ui_applicable': False, 'related_field': 'toVersion'},
+    "invalid_to_version_in_old_classifiers": {'code': "CL101", 'ui_applicable': False, 'related_field': 'toVersion'},
+    "invalid_from_version_in_new_classifiers": {'code': "CL102", 'ui_applicable': False,
+                                                'related_field': 'fromVersion'},
+    "invalid_from_version_in_old_classifiers": {'code': "CL103", 'ui_applicable': False,
+                                                'related_field': 'fromVersion'},
+    "missing_from_version_in_new_classifiers": {'code': "CL104", 'ui_applicable': False,
+                                                'related_field': 'fromVersion'},
+    "missing_to_version_in_old_classifiers": {'code': "CL105", 'ui_applicable': False, 'related_field': 'toVersion'},
+    "from_version_higher_to_version": {'code': "CL106", 'ui_applicable': False, 'related_field': 'fromVersion'},
+    "invalid_type_in_new_classifiers": {'code': "CL107", 'ui_applicable': False, 'related_field': 'type'},
+    "classifier_non_existent_incident_types": {'code': "CL108", 'ui_applicable': False,
+                                               'related_field': 'incident_types'},
+
     # IN - Integrations
     "wrong_display_name": {'code': "IN100", 'ui_applicable': True, 'related_field': '<parameter-name>.display'},
     "wrong_default_parameter_not_empty": {'code': "IN101", 'ui_applicable': True,
@@ -163,14 +186,6 @@ ERROR_CODE = {
     "invalid_image_name": {'code': "IM107", 'ui_applicable': False, 'related_field': 'image'},
     "image_is_empty": {'code': "IM108", 'ui_applicable': True, 'related_field': 'image'},
     "author_image_is_missing": {'code': "IM109", 'ui_applicable': True, 'related_field': 'image'},
-
-    # CJ - conf.json
-    "description_missing_from_conf_json": {'code': "CJ100", 'ui_applicable': False, 'related_field': ''},
-    "test_not_in_conf_json": {'code': "CJ101", 'ui_applicable': False, 'related_field': ''},
-    "integration_not_registered": {'code': "CJ102", 'ui_applicable': False, 'related_field': ''},
-    "no_test_playbook": {'code': "CJ103", 'ui_applicable': False, 'related_field': ''},
-    "test_playbook_not_configured": {'code': "CJ104", 'ui_applicable': False, 'related_field': ''},
-    "all_entity_test_playbooks_are_skipped": {'code': "CJ105", 'ui_applicable': False, 'related_field': ''},
 
     # RN - Release Notes
     "missing_release_notes": {'code': "RN100", 'ui_applicable': False, 'related_field': ''},
@@ -309,21 +324,6 @@ ERROR_CODE = {
     "pykwalify_general_error": {'code': "ST110", 'ui_applicable': False, 'related_field': ''},
     "pykwalify_field_undefined_with_path": {'code': "ST111", 'ui_applicable': False, 'related_field': ''},
     "pykwalify_incorrect_enum": {'code': "ST112", 'ui_applicable': False, 'related_field': ''},
-
-    # CL - Classifiers
-    "invalid_to_version_in_new_classifiers": {'code': "CL100", 'ui_applicable': False, 'related_field': 'toVersion'},
-    "invalid_to_version_in_old_classifiers": {'code': "CL101", 'ui_applicable': False, 'related_field': 'toVersion'},
-    "invalid_from_version_in_new_classifiers": {'code': "CL102", 'ui_applicable': False,
-                                                'related_field': 'fromVersion'},
-    "invalid_from_version_in_old_classifiers": {'code': "CL103", 'ui_applicable': False,
-                                                'related_field': 'fromVersion'},
-    "missing_from_version_in_new_classifiers": {'code': "CL104", 'ui_applicable': False,
-                                                'related_field': 'fromVersion'},
-    "missing_to_version_in_old_classifiers": {'code': "CL105", 'ui_applicable': False, 'related_field': 'toVersion'},
-    "from_version_higher_to_version": {'code': "CL106", 'ui_applicable': False, 'related_field': 'fromVersion'},
-    "invalid_type_in_new_classifiers": {'code': "CL107", 'ui_applicable': False, 'related_field': 'type'},
-    "classifier_non_existent_incident_types": {'code': "CL108", 'ui_applicable': False,
-                                               'related_field': 'incident_types'},
 
     # MP - Mappers
     "invalid_from_version_in_mapper": {'code': "MP100", 'ui_applicable': False, 'related_field': 'fromVersion'},

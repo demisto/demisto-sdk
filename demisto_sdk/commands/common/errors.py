@@ -79,6 +79,37 @@ ERROR_CODE = {
     "classifier_non_existent_incident_types": {'code': "CL108", 'ui_applicable': False,
                                                'related_field': 'incident_types'},
 
+    # DA - Dashboards
+    "remove_field_from_dashboard": {'code': "DA100", 'ui_applicable': False, 'related_field': ''},
+    "include_field_in_dashboard": {'code': "DA101", 'ui_applicable': False, 'related_field': ''},
+
+    # DB - DBot
+    "dbot_invalid_output": {'code': "DB100", 'ui_applicable': True, 'related_field': 'contextPath'},
+    "dbot_invalid_description": {'code': "DB101", 'ui_applicable': True, 'related_field': 'description'},
+
+    # DO - Docker Images
+    "default_docker_error": {'code': "DO100", 'ui_applicable': True, 'related_field': 'dockerimage'},
+    "latest_docker_error": {'code': "DO101", 'ui_applicable': True, 'related_field': 'dockerimage'},
+    "not_demisto_docker": {'code': "DO102", 'ui_applicable': True, 'related_field': 'dockerimage'},
+    "docker_tag_not_fetched": {'code': "DO103", 'ui_applicable': True, 'related_field': 'dockerimage'},
+    "no_docker_tag": {'code': "DO104", 'ui_applicable': True, 'related_field': 'dockerimage'},
+    "docker_not_formatted_correctly": {'code': "DO105", 'ui_applicable': True, 'related_field': 'dockerimage'},
+    "docker_not_on_the_latest_tag": {'code': "DO106", 'ui_applicable': True, 'related_field': 'dockerimage'},
+    "non_existing_docker": {'code': "DO107", 'ui_applicable': True, 'related_field': 'dockerimage'},
+    "dockerimage_not_in_yml_file": {'code': "DO108", 'ui_applicable': True, 'related_field': 'dockerimage'},
+
+    # DS - Descriptions
+    "description_missing_in_beta_integration": {'code': "DS100", 'ui_applicable': False, 'related_field': ''},
+    "no_beta_disclaimer_in_description": {'code': "DS101", 'ui_applicable': False, 'related_field': ''},
+    "no_beta_disclaimer_in_yml": {'code': "DS102", 'ui_applicable': False, 'related_field': ''},
+    "description_in_package_and_yml": {'code': "DS103", 'ui_applicable': False, 'related_field': ''},
+    "no_description_file_warning": {'code': "DS104", 'ui_applicable': False, 'related_field': ''},
+    "description_contains_contrib_details": {'code': "DS105", 'ui_applicable': False,
+                                             'related_field': 'detaileddescription'},
+    "invalid_description_name": {'code': "DS106", 'ui_applicable': False, 'related_field': ''},
+    "description_contains_demisto_word": {'code': "DS107", 'ui_applicable': True,
+                                          'related_field': 'detaileddescription'},
+
     # IN - Integrations
     "wrong_display_name": {'code': "IN100", 'ui_applicable': True, 'related_field': '<parameter-name>.display'},
     "wrong_default_parameter_not_empty": {'code': "IN101", 'ui_applicable': True,
@@ -145,30 +176,11 @@ ERROR_CODE = {
     "is_valid_script_file_path_in_scripts_folder": {'code': "SC104", 'ui_applicable': False, 'related_field': ''},
     "incident_in_script_arg": {'code': "SC105", 'ui_applicable': True, 'related_field': 'args.name'},
 
-    # DB - DBot
-    "dbot_invalid_output": {'code': "DB100", 'ui_applicable': True, 'related_field': 'contextPath'},
-    "dbot_invalid_description": {'code': "DB101", 'ui_applicable': True, 'related_field': 'description'},
-
-    # DO - Docker Images
-    "default_docker_error": {'code': "DO100", 'ui_applicable': True, 'related_field': 'dockerimage'},
-    "latest_docker_error": {'code': "DO101", 'ui_applicable': True, 'related_field': 'dockerimage'},
-    "not_demisto_docker": {'code': "DO102", 'ui_applicable': True, 'related_field': 'dockerimage'},
-    "docker_tag_not_fetched": {'code': "DO103", 'ui_applicable': True, 'related_field': 'dockerimage'},
-    "no_docker_tag": {'code': "DO104", 'ui_applicable': True, 'related_field': 'dockerimage'},
-    "docker_not_formatted_correctly": {'code': "DO105", 'ui_applicable': True, 'related_field': 'dockerimage'},
-    "docker_not_on_the_latest_tag": {'code': "DO106", 'ui_applicable': True, 'related_field': 'dockerimage'},
-    "non_existing_docker": {'code': "DO107", 'ui_applicable': True, 'related_field': 'dockerimage'},
-    "dockerimage_not_in_yml_file": {'code': "DO108", 'ui_applicable': True, 'related_field': 'dockerimage'},
-
     # ID - ID Set
     "id_set_conflicts": {'code': "ID100", 'ui_applicable': False, 'related_field': ''},
     # missing 101
     "duplicated_id": {'code': "ID102", 'ui_applicable': False, 'related_field': ''},
     "no_id_set_file": {'code': "ID103", 'ui_applicable': False, 'related_field': ''},
-
-    # DA - Dashboards
-    "remove_field_from_dashboard": {'code': "DA100", 'ui_applicable': False, 'related_field': ''},
-    "include_field_in_dashboard": {'code': "DA101", 'ui_applicable': False, 'related_field': ''},
 
     # WD - Widgets
     "remove_field_from_widget": {'code': "WD100", 'ui_applicable': False, 'related_field': ''},
@@ -221,18 +233,6 @@ ERROR_CODE = {
     "playbook_tasks_not_quiet_mode": {'code': "PB115", 'ui_applicable': False, 'related_field': 'tasks'},
     "playbook_tasks_continue_on_error": {'code': "PB116", 'ui_applicable': False, 'related_field': 'tasks'},
     "content_entity_is_not_in_id_set": {'code': "PB117", 'ui_applicable': False, 'related_field': ''},
-
-    # DS - Descriptions
-    "description_missing_in_beta_integration": {'code': "DS100", 'ui_applicable': False, 'related_field': ''},
-    "no_beta_disclaimer_in_description": {'code': "DS101", 'ui_applicable': False, 'related_field': ''},
-    "no_beta_disclaimer_in_yml": {'code': "DS102", 'ui_applicable': False, 'related_field': ''},
-    "description_in_package_and_yml": {'code': "DS103", 'ui_applicable': False, 'related_field': ''},
-    "no_description_file_warning": {'code': "DS104", 'ui_applicable': False, 'related_field': ''},
-    "description_contains_contrib_details": {'code': "DS105", 'ui_applicable': False,
-                                             'related_field': 'detaileddescription'},
-    "invalid_description_name": {'code': "DS106", 'ui_applicable': False, 'related_field': ''},
-    "description_contains_demisto_word": {'code': "DS107", 'ui_applicable': True,
-                                          'related_field': 'detaileddescription'},
 
     # IF - Incident Fields
     "invalid_incident_field_name": {'code': "IF100", 'ui_applicable': True, 'related_field': 'name'},

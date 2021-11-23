@@ -241,54 +241,6 @@ ERROR_CODE = {
     "changed_incident_field_in_mapper": {'code': "MP107", 'ui_applicable': True, 'related_field': 'mapping'},
     "removed_incident_types": {'code': "MP108", 'ui_applicable': True, 'related_field': 'mapping'},
 
-    # SC - Scripts
-    "invalid_version_script_name": {'code': "SC100", 'ui_applicable': True, 'related_field': 'name'},
-    "invalid_deprecated_script": {'code': "SC101", 'ui_applicable': False, 'related_field': 'comment'},
-    "invalid_command_name_in_script": {'code': "SC102", 'ui_applicable': False, 'related_field': ''},
-    "is_valid_script_file_path_in_folder": {'code': "SC103", 'ui_applicable': False, 'related_field': ''},
-    "is_valid_script_file_path_in_scripts_folder": {'code': "SC104", 'ui_applicable': False, 'related_field': ''},
-    "incident_in_script_arg": {'code': "SC105", 'ui_applicable': True, 'related_field': 'args.name'},
-
-    # WD - Widgets
-    "remove_field_from_widget": {'code': "WD100", 'ui_applicable': False, 'related_field': ''},
-    "include_field_in_widget": {'code': "WD101", 'ui_applicable': False, 'related_field': ''},
-    "invalid_fromversion_for_type_metrics": {'code': "WD102", 'ui_applicable': False, 'related_field': ''},
-
-    # RN - Release Notes
-    "missing_release_notes": {'code': "RN100", 'ui_applicable': False, 'related_field': ''},
-    "no_new_release_notes": {'code': "RN101", 'ui_applicable': False, 'related_field': ''},
-    "release_notes_not_formatted_correctly": {'code': "RN102", 'ui_applicable': False, 'related_field': ''},
-    "release_notes_not_finished": {'code': "RN103", 'ui_applicable': False, 'related_field': ''},
-    "release_notes_file_empty": {'code': "RN104", 'ui_applicable': False, 'related_field': ''},
-    "multiple_release_notes_files": {'code': "RN105", 'ui_applicable': False, 'related_field': ''},
-    "missing_release_notes_for_pack": {'code': "RN106", 'ui_applicable': False, 'related_field': ''},
-    "missing_release_notes_entry": {'code': "RN107", 'ui_applicable': False, 'related_field': ''},
-    "added_release_notes_for_new_pack": {'code': "RN108", 'ui_applicable': False, 'related_field': ''},
-    "modified_existing_release_notes": {'code': "RN109", 'ui_applicable': False, 'related_field': ''},
-    "release_notes_config_file_missing_release_notes": {'code': "RN110", 'ui_applicable': False, 'related_field': ''},
-
-    # PB - Playbooks
-    "playbook_cant_have_rolename": {'code': "PB100", 'ui_applicable': True, 'related_field': 'rolename'},
-    "playbook_unreachable_condition": {'code': "PB101", 'ui_applicable': True, 'related_field': 'tasks'},
-    "playbook_unhandled_condition": {'code': "PB102", 'ui_applicable': True, 'related_field': 'conditions'},
-    "playbook_unconnected_tasks": {'code': "PB103", 'ui_applicable': True, 'related_field': 'tasks'},
-    "invalid_deprecated_playbook": {'code': "PB104", 'ui_applicable': False, 'related_field': 'description'},
-    "playbook_cant_have_deletecontext_all": {'code': "PB105", 'ui_applicable': True, 'related_field': 'tasks'},
-    "using_instance_in_playbook": {'code': "PB106", 'ui_applicable': True, 'related_field': 'tasks'},
-    "invalid_script_id": {'code': "PB107", 'ui_applicable': False, 'related_field': 'tasks'},
-    "invalid_uuid": {'code': "PB108", 'ui_applicable': False, 'related_field': 'taskid'},
-    "taskid_different_from_id": {'code': "PB109", 'ui_applicable': False, 'related_field': 'taskid'},
-    "content_entity_version_not_match_playbook_version": {'code': "PB110", 'ui_applicable': False,
-                                                          'related_field': 'toVersion'},
-    "integration_version_not_match_playbook_version": {'code': "PB111", 'ui_applicable': False,
-                                                       'related_field': 'toVersion'},
-    "playbook_condition_has_no_else_path": {'code': "PB112", 'ui_applicable': False, 'related_field': 'nexttasks'},
-    "invalid_subplaybook_name": {'code': "PB113", 'ui_applicable': False, 'related_field': 'tasks'},
-    "playbook_not_quiet_mode": {'code': "PB114", 'ui_applicable': False, 'related_field': ''},
-    "playbook_tasks_not_quiet_mode": {'code': "PB115", 'ui_applicable': False, 'related_field': 'tasks'},
-    "playbook_tasks_continue_on_error": {'code': "PB116", 'ui_applicable': False, 'related_field': 'tasks'},
-    "content_entity_is_not_in_id_set": {'code': "PB117", 'ui_applicable': False, 'related_field': ''},
-
     # PA - Packs (unique files)
     "pack_file_does_not_exist": {'code': "PA100", 'ui_applicable': False, 'related_field': ''},
     "cant_open_pack_file": {'code': "PA101", 'ui_applicable': False, 'related_field': ''},
@@ -319,6 +271,58 @@ ERROR_CODE = {
     "pack_metadata_long_description": {'code': "PA126", 'ui_applicable': False, 'related_field': ''},
     "metadata_url_invalid": {'code': "PA127", 'ui_applicable': False, 'related_field': ''},
     "required_pack_file_does_not_exist": {'code': "PA128", 'ui_applicable': False, 'related_field': ''},
+
+    # PB - Playbooks
+    "playbook_cant_have_rolename": {'code': "PB100", 'ui_applicable': True, 'related_field': 'rolename'},
+    "playbook_unreachable_condition": {'code': "PB101", 'ui_applicable': True, 'related_field': 'tasks'},
+    "playbook_unhandled_condition": {'code': "PB102", 'ui_applicable': True, 'related_field': 'conditions'},
+    "playbook_unconnected_tasks": {'code': "PB103", 'ui_applicable': True, 'related_field': 'tasks'},
+    "invalid_deprecated_playbook": {'code': "PB104", 'ui_applicable': False, 'related_field': 'description'},
+    "playbook_cant_have_deletecontext_all": {'code': "PB105", 'ui_applicable': True, 'related_field': 'tasks'},
+    "using_instance_in_playbook": {'code': "PB106", 'ui_applicable': True, 'related_field': 'tasks'},
+    "invalid_script_id": {'code': "PB107", 'ui_applicable': False, 'related_field': 'tasks'},
+    "invalid_uuid": {'code': "PB108", 'ui_applicable': False, 'related_field': 'taskid'},
+    "taskid_different_from_id": {'code': "PB109", 'ui_applicable': False, 'related_field': 'taskid'},
+    "content_entity_version_not_match_playbook_version": {'code': "PB110", 'ui_applicable': False,
+                                                          'related_field': 'toVersion'},
+    "integration_version_not_match_playbook_version": {'code': "PB111", 'ui_applicable': False,
+                                                       'related_field': 'toVersion'},
+    "playbook_condition_has_no_else_path": {'code': "PB112", 'ui_applicable': False, 'related_field': 'nexttasks'},
+    "invalid_subplaybook_name": {'code': "PB113", 'ui_applicable': False, 'related_field': 'tasks'},
+    "playbook_not_quiet_mode": {'code': "PB114", 'ui_applicable': False, 'related_field': ''},
+    "playbook_tasks_not_quiet_mode": {'code': "PB115", 'ui_applicable': False, 'related_field': 'tasks'},
+    "playbook_tasks_continue_on_error": {'code': "PB116", 'ui_applicable': False, 'related_field': 'tasks'},
+    "content_entity_is_not_in_id_set": {'code': "PB117", 'ui_applicable': False, 'related_field': ''},
+
+    # PP - Pre-Process Rules
+    "invalid_from_server_version_in_pre_process_rules": {'code': "PP100", 'ui_applicable': False, 'related_field': 'fromServerVersion'},
+    "invalid_incident_field_in_pre_process_rules": {'code': "PP101", 'ui_applicable': False, 'related_field': ''},
+
+    # SC - Scripts
+    "invalid_version_script_name": {'code': "SC100", 'ui_applicable': True, 'related_field': 'name'},
+    "invalid_deprecated_script": {'code': "SC101", 'ui_applicable': False, 'related_field': 'comment'},
+    "invalid_command_name_in_script": {'code': "SC102", 'ui_applicable': False, 'related_field': ''},
+    "is_valid_script_file_path_in_folder": {'code': "SC103", 'ui_applicable': False, 'related_field': ''},
+    "is_valid_script_file_path_in_scripts_folder": {'code': "SC104", 'ui_applicable': False, 'related_field': ''},
+    "incident_in_script_arg": {'code': "SC105", 'ui_applicable': True, 'related_field': 'args.name'},
+
+    # WD - Widgets
+    "remove_field_from_widget": {'code': "WD100", 'ui_applicable': False, 'related_field': ''},
+    "include_field_in_widget": {'code': "WD101", 'ui_applicable': False, 'related_field': ''},
+    "invalid_fromversion_for_type_metrics": {'code': "WD102", 'ui_applicable': False, 'related_field': ''},
+
+    # RN - Release Notes
+    "missing_release_notes": {'code': "RN100", 'ui_applicable': False, 'related_field': ''},
+    "no_new_release_notes": {'code': "RN101", 'ui_applicable': False, 'related_field': ''},
+    "release_notes_not_formatted_correctly": {'code': "RN102", 'ui_applicable': False, 'related_field': ''},
+    "release_notes_not_finished": {'code': "RN103", 'ui_applicable': False, 'related_field': ''},
+    "release_notes_file_empty": {'code': "RN104", 'ui_applicable': False, 'related_field': ''},
+    "multiple_release_notes_files": {'code': "RN105", 'ui_applicable': False, 'related_field': ''},
+    "missing_release_notes_for_pack": {'code': "RN106", 'ui_applicable': False, 'related_field': ''},
+    "missing_release_notes_entry": {'code': "RN107", 'ui_applicable': False, 'related_field': ''},
+    "added_release_notes_for_new_pack": {'code': "RN108", 'ui_applicable': False, 'related_field': ''},
+    "modified_existing_release_notes": {'code': "RN109", 'ui_applicable': False, 'related_field': ''},
+    "release_notes_config_file_missing_release_notes": {'code': "RN110", 'ui_applicable': False, 'related_field': ''},
 
     # RM - READMEs
     "readme_error": {'code': "RM100", 'ui_applicable': False, 'related_field': ''},
@@ -352,10 +356,6 @@ ERROR_CODE = {
     "pykwalify_general_error": {'code': "ST110", 'ui_applicable': False, 'related_field': ''},
     "pykwalify_field_undefined_with_path": {'code': "ST111", 'ui_applicable': False, 'related_field': ''},
     "pykwalify_incorrect_enum": {'code': "ST112", 'ui_applicable': False, 'related_field': ''},
-
-    # PP - Pre-Process Rules
-    "invalid_from_server_version_in_pre_process_rules": {'code': "PP100", 'ui_applicable': False, 'related_field': 'fromServerVersion'},
-    "invalid_incident_field_in_pre_process_rules": {'code': "PP101", 'ui_applicable': False, 'related_field': ''},
 
     # XC - XSOAR Config
     "xsoar_config_file_is_not_json": {'code': "XC100", 'ui_applicable': False, 'related_field': ''},

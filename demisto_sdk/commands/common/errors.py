@@ -49,6 +49,13 @@ ERROR_CODE = {
     "spaces_in_the_end_of_id": {'code': "BA112", 'ui_applicable': False, 'related_field': 'id'},
     "spaces_in_the_end_of_name": {'code': "BA113", 'ui_applicable': False, 'related_field': 'name'},
 
+    # BC - Backward Compatible
+    "breaking_backwards_subtype": {'code': "BC100", 'ui_applicable': False, 'related_field': 'subtype'},
+    "breaking_backwards_context": {'code': "BC101", 'ui_applicable': False, 'related_field': 'contextPath'},
+    "breaking_backwards_command": {'code': "BC102", 'ui_applicable': False, 'related_field': 'contextPath'},
+    "breaking_backwards_arg_changed": {'code': "BC103", 'ui_applicable': False, 'related_field': 'name'},
+    "breaking_backwards_command_arg_changed": {'code': "BC104", 'ui_applicable': False, 'related_field': 'args'},
+
     # IN - Integrations
     "wrong_display_name": {'code': "IN100", 'ui_applicable': True, 'related_field': '<parameter-name>.display'},
     "wrong_default_parameter_not_empty": {'code': "IN101", 'ui_applicable': True,
@@ -118,13 +125,6 @@ ERROR_CODE = {
     # DB - DBot
     "dbot_invalid_output": {'code': "DB100", 'ui_applicable': True, 'related_field': 'contextPath'},
     "dbot_invalid_description": {'code': "DB101", 'ui_applicable': True, 'related_field': 'description'},
-
-    # BC - Backward Compatible
-    "breaking_backwards_subtype": {'code': "BC100", 'ui_applicable': False, 'related_field': 'subtype'},
-    "breaking_backwards_context": {'code': "BC101", 'ui_applicable': False, 'related_field': 'contextPath'},
-    "breaking_backwards_command": {'code': "BC102", 'ui_applicable': False, 'related_field': 'contextPath'},
-    "breaking_backwards_arg_changed": {'code': "BC103", 'ui_applicable': False, 'related_field': 'name'},
-    "breaking_backwards_command_arg_changed": {'code': "BC104", 'ui_applicable': False, 'related_field': 'args'},
 
     # DO - Docker Images
     "default_docker_error": {'code': "DO100", 'ui_applicable': True, 'related_field': 'dockerimage'},
@@ -1786,7 +1786,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def from_version_higher_to_version():
-        return 'The `fromVersion` field can not be higher or equal to the `toVersion` field.'
+        return 'The `fromVersion` field cannot be higher or equal to the `toVersion` field.'
 
     @staticmethod
     @error_code_decorator

@@ -1,5 +1,6 @@
 # Changelog
 * Fixed an issue with the **format** command when contributing via the UI
+* The **format** command will now not remove the `defaultRows` key from incident, indicator and generic fields with `type: grid`.
 
 # 1.5.3
 * The **format** command will now set `unsearchable: True` for incident, indicator and generic fields.

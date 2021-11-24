@@ -1100,7 +1100,7 @@ class TestClassifierValidation:
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', classifier.path], catch_exceptions=False)
         assert f"Validating {classifier.path} as classifier" in result.stdout
-        assert 'fromVersion field can not be higher than toVersion field' in result.stdout
+        assert 'The `fromVersion` field cannot be higher or equal to the `toVersion` field.' in result.stdout
         assert result.exit_code == 1
 
     def test_missing_mandatory_field_in_new_classifier(self, mocker, repo):
@@ -1398,7 +1398,7 @@ class TestMapperValidation:
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', mapper.path], catch_exceptions=False)
         assert f"Validating {mapper.path} as mapper" in result.stdout
-        assert 'fromVersion field can not be higher than toVersion field' in result.stdout
+        assert 'The `fromVersion` field cannot be higher or equal to the `toVersion` field.' in result.stdout
         assert result.exit_code == 1
 
     def test_invalid_mapper_type(self, mocker, repo):

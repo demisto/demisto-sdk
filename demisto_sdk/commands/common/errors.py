@@ -2019,5 +2019,5 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def runas_is_dbotrole():
-        return f'The runas value is DBotRole, it may cause access and exposure of sensitive data. '\
-               f'Please consider changing it.'
+        return 'The runas value is DBotRole, it may cause access and exposure of sensitive data. ' \
+               'Please consider changing it.'

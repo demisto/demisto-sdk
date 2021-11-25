@@ -1036,8 +1036,14 @@ XSOAR_CONTEXT_STANDARD_URL = "https://xsoar.pan.dev/docs/integrations/context-st
 XSOAR_SUPPORT_URL = "https://www.paloaltonetworks.com/cortex"
 MARKETPLACE_LIVE_DISCUSSIONS = \
     'https://live.paloaltonetworks.com/t5/cortex-xsoar-discussions/bd-p/Cortex_XSOAR_Discussions'
-MARKETPLACE_MIN_VERSION = '6.0.0'
 EXCLUDED_DISPLAY_NAME_WORDS = ['partner', 'community']
+
+DEFAULT_CONTENT_ITEM_FROM_VERSION = '0.0.0'
+DEFAULT_CONTENT_ITEM_TO_VERSION = '99.99.99'
+MARKETPLACE_MIN_VERSION = '6.0.0'
+OLDEST_SUPPORTED_VERSION = '5.0.0'
+GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION = '6.5.0'
+FEATURE_BRANCHES = ['v4.5.0']
 
 BASE_PACK = "Base"
 NON_SUPPORTED_PACK = "NonSupported"
@@ -1211,12 +1217,6 @@ VALIDATED_PACK_ITEM_TYPES = [
 FIRST_FETCH = 'first_fetch'
 
 MAX_FETCH = 'max_fetch'
-
-OLDEST_SUPPORTED_VERSION = '5.0.0'
-
-GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION = '6.5.0'
-
-FEATURE_BRANCHES = ['v4.5.0']
 
 SKIP_RELEASE_NOTES_FOR_TYPES = (FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK,
                                 FileType.TEST_SCRIPT, FileType.DOC_IMAGE, FileType.AUTHOR_IMAGE, None,

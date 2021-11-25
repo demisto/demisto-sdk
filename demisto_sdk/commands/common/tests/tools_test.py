@@ -9,12 +9,10 @@ import pytest
 import requests
 
 from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
-                                                   LAYOUTS_DIR, PACKS_DIR,
-                                                   PACKS_PACK_IGNORE_FILE_NAME,
-                                                   PLAYBOOKS_DIR, SCRIPTS_DIR,
-                                                   TEST_PLAYBOOKS_DIR,
-                                                   FileType)
+from demisto_sdk.commands.common.constants import (
+    DEFAULT_CONTENT_ITEM_TO_VERSION, INTEGRATIONS_DIR, LAYOUTS_DIR, PACKS_DIR,
+    PACKS_PACK_IGNORE_FILE_NAME, PLAYBOOKS_DIR, SCRIPTS_DIR,
+    TEST_PLAYBOOKS_DIR, FileType)
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import (
     LOG_COLORS, arg_to_list, compare_context_path_in_yml_and_readme,
@@ -815,7 +813,7 @@ def test_get_to_version_no_to_version(repo):
     with ChangeCWD(repo.path):
         to_ver = get_to_version(integration.yml.path)
 
-        assert to_ver == '99.99.99'
+        assert to_ver == DEFAULT_CONTENT_ITEM_TO_VERSION
 
 
 def test_get_file_displayed_name__integration(repo):

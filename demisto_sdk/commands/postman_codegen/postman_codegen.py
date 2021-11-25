@@ -88,6 +88,7 @@ def create_body_format(body: Union[dict, list]):
         "key7": "{key7}"
     }
     """
+
     def format_value(d, o):
         for k, v in d.items():
             if isinstance(v, dict):

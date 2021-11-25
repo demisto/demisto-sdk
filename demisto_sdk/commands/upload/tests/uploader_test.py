@@ -12,7 +12,6 @@ from packaging.version import parse
 from pipenv.patched.piptools import click
 
 from demisto_sdk.__main__ import main, upload
-from demisto_sdk.commands.common import constants
 from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    INTEGRATIONS_DIR,
                                                    LAYOUTS_DIR, SCRIPTS_DIR,
@@ -26,6 +25,7 @@ from demisto_sdk.commands.upload.uploader import (
     Uploader, parse_error_response, print_summary,
     sort_directories_based_on_dependencies)
 from TestSuite.test_tools import ChangeCWD
+from pytest import raises
 
 DATA = ''
 
@@ -710,6 +710,9 @@ class TestZippedPackUpload:
         click.Context(command=upload).invoke(upload, input=input)
 
         uploaded_file_path = API_CLIENT.upload_content_packs.call_args[1]['file']
+        skip_verify = API_CLIENT.upload_content_packs.call_args[1]['skip_verify']
+
+        assert skip_verify == 'true'
         assert str(uploaded_file_path) == input
 
     def test_zip_and_upload(self, mocker):
@@ -858,7 +861,35 @@ class TestZippedPackUpload:
         assert status_code == 0
 
         uploaded_file_path = API_CLIENT.upload_content_packs.call_args[1]['file']
+        skip_verify = API_CLIENT.upload_content_packs.call_args[1]['skip_verify']
+
+        assert skip_verify == 'true'
         assert 'uploadable_packs.zip' in str(uploaded_file_path)
+
+    @pytest.mark.parametrize(argnames='input', argvalues=[TEST_PACK_ZIP, CONTENT_PACKS_ZIP])
+    def test_upload_with_skip_verify(self, mocker, input):
+        """
+        Given:
+            - zipped pack or zip of pack zips to upload
+        When:
+            - call to upload command
+        Then:
+            - validate the upload_content_packs in the api client was called correct
+              and the pack verification ws turned on and off
+        """
+        # prepare
+        mock_api_client(mocker)
+        mocker.patch.object(API_CLIENT, 'upload_content_packs')
+        mocker.patch.object(Uploader, 'notify_user_should_override_packs', return_value=True)
+
+        # run
+        click.Context(command=upload).invoke(upload, input=input)
+
+        skip_value = API_CLIENT.upload_content_packs.call_args[1]['skip_verify']
+        uploaded_file_path = API_CLIENT.upload_content_packs.call_args[1]['file']
+
+        assert str(uploaded_file_path) == input
+        assert skip_value == 'true'
 
 
 def exception_raiser(**kwargs):

@@ -239,16 +239,21 @@ class TestPostmanCodeGen:
     autogen_config_stream = None
     postman_collection: dict
     autogen_config: dict
+    arguments_check_collection: dict
 
     @classmethod
     def setup_class(cls):
         collection_path = os.path.join(cls.test_files_path, 'VirusTotal.postman_collection.json')
         autogen_config_path = os.path.join(cls.test_files_path, 'VirusTotal-autogen-config.json')
+        arguments_check_collection_path = os.path.join(cls.test_files_path, 'arguments_check_collection.json')
         with open(collection_path) as f:
             cls.postman_collection = json.load(f)
 
         with open(autogen_config_path) as f:
             cls.autogen_config = json.load(f)
+
+        with open(arguments_check_collection_path) as f:
+            cls.arguments_check_collection = json.load(f)
 
         cls.postman_collection_stream = open(collection_path)
         cls.autogen_config_stream = open(autogen_config_path)
@@ -323,6 +328,28 @@ class TestPostmanCodeGen:
         )
 
         assert autogen_config.command_prefix == 'virustotal'
+
+    def test_command_arguments_names_duplication(self):
+        """
+        Given
+        - postman collection with one command, that has some arguments with the same name (suffix)
+
+        When
+        - generating config file
+
+        Then
+        - ensure the number of arguments generated is the same as the number of arguments in the command (if not, some arguments
+        are generated as one with the same name)
+        """
+        autogen_config = postman_to_autogen_configuration(
+            collection=self.arguments_check_collection,
+            command_prefix=None,
+
+            name=None,
+            context_path_prefix=None,
+            category=None
+        )
+        assert len(autogen_config.commands[0].arguments) == 16
 
     def test_context_output_path(self):
         """

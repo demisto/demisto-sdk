@@ -1106,7 +1106,7 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
     if path.suffix == '.js':
         return FileType.JAVASCRIPT_FILE
 
-    if path.name == XSOAR_CONFIG_FILE:
+    if path.name.endswith(XSOAR_CONFIG_FILE):
         return FileType.XSOAR_CONFIG
 
     return None

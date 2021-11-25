@@ -2175,7 +2175,7 @@ class TestJob:
     def test_process_jobs(capsys, repo, is_feed: bool, print_logs: bool):
         """
         Given
-            - A Job file path.
+            - A repo with a job object.
             - Whether to print logs.
         When
             - Parsing job files.
@@ -2183,7 +2183,8 @@ class TestJob:
             - Verify output to logs.
         """
         pack = repo.create_pack()
-        job = pack.create_job(is_feed)
+        job_details = 'job details'
+        job = pack.create_job(is_feed, details=job_details)
         res = process_jobs(job.path, print_logs)
 
         captured = capsys.readouterr()
@@ -2200,6 +2201,8 @@ class TestJob:
 
         assert datum['fromServerVersion'] == DEFAULT_JOB_FROM_VERSION
         assert datum['pack'] == pack.name
+        assert datum['details'] == job_details
+        assert datum['selectedFeeds'] == job.selected_feeds or []
 
         assert (f'adding {job.path} to id_set' in captured.out) == print_logs
 

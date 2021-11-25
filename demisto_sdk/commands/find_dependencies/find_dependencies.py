@@ -1299,7 +1299,8 @@ class PackDependencies:
                 click.secho("\n".join((f"Warning: {id_set_key} had not been previously collected into the id_set.",
                                        "This may mean you're using an outdated version of the Demisto SDK.",
                                        "Please upgrade it and run demisto-sdk find-dependencies.")),
-                            fg="yellow")  # todo halt run here?
+                            fg="red")
+                raise RuntimeError("Outdated SDK version - please upgrade")  # todo test
             pack_items[pack_key] = PackDependencies._search_for_pack_items(pack_id, id_set[id_set_key])
 
         if not sum(pack_items.values(), []):

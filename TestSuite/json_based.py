@@ -48,5 +48,5 @@ class JSONBased:
 
     def remove(self, key: str):
         file_content = self.read_json_as_dict()
-        del file_content[key]
+        file_content.pop(key, None)
         self.write_json(file_content)

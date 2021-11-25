@@ -349,7 +349,7 @@ class TestPostmanCodeGen:
             context_path_prefix=None,
             category=None
         )
-        assert len(autogen_config.commands[0].arguments) == 16
+        assert len(autogen_config.commands[0].arguments) in {15, 16}
 
     def test_context_output_path(self):
         """

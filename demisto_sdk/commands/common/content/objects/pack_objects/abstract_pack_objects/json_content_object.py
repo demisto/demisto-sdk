@@ -4,6 +4,8 @@ from typing import List, Optional, Union
 from packaging.version import LegacyVersion, Version, parse
 from wcmatch.pathlib import Path
 
+from demisto_sdk.commands.common.constants import (
+    DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION)
 from demisto_sdk.commands.common.content.objects.abstract_objects import \
     JSONObject
 from demisto_sdk.commands.common.content.objects.pack_objects.change_log.change_log import \
@@ -66,7 +68,7 @@ class JSONContentObject(JSONObject):
             1. Version object - https://github.com/pypa/packaging
             2. Attribute info - https://xsoar.pan.dev/docs/integrations/yaml-file#version-and-tests
         """
-        return parse(self.get('fromVersion', '0.0.0'))
+        return parse(self.get('fromVersion', DEFAULT_CONTENT_ITEM_FROM_VERSION))
 
     @property
     def to_version(self) -> Union[Version, LegacyVersion]:
@@ -79,7 +81,7 @@ class JSONContentObject(JSONObject):
             1. Version object - https://github.com/pypa/packaging
             2. Attribute info - https://xsoar.pan.dev/docs/integrations/yaml-file#version-and-tests
         """
-        return parse(self.get('toVersion', '99.99.99'))
+        return parse(self.get('toVersion', DEFAULT_CONTENT_ITEM_TO_VERSION))
 
     def dump(self, dest_dir: Optional[Union[str, Path]] = None, change_log: Optional[bool] = False,
              readme: Optional[bool] = False) -> List[Path]:

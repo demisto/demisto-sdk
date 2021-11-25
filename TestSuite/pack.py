@@ -63,7 +63,6 @@ class Pack:
         self._pack_path = packs_dir / self.name
         self._pack_path.mkdir()
         self.path = str(self._pack_path)
-        self.relative_path = str(Path("Packs") / self._pack_path.name)
 
         # Create repo structure
         self._integrations_path = self._pack_path / 'Integrations'

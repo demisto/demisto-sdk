@@ -16,8 +16,8 @@ from demisto_sdk.commands.generate_integration.code_generator import (
     IntegrationGeneratorConfig, IntegrationGeneratorOutput)
 from demisto_sdk.commands.postman_codegen.postman_codegen import (
     build_commands_names_dict, create_body_format, duplicate_requests_check,
-    flatten_collections, generate_command_outputs,
-    postman_to_autogen_configuration, find_shared_args_path)
+    find_shared_args_path, flatten_collections, generate_command_outputs,
+    postman_to_autogen_configuration)
 
 
 class TestPostmanHelpers:

@@ -25,7 +25,6 @@ from demisto_sdk.commands.upload.uploader import (
     Uploader, parse_error_response, print_summary,
     sort_directories_based_on_dependencies)
 from TestSuite.test_tools import ChangeCWD
-from pytest import raises
 
 DATA = ''
 

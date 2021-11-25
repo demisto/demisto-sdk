@@ -10,6 +10,7 @@ from typing import IO
 
 # Third party packages
 import click
+import dotenv
 import git
 from pkg_resources import get_distribution
 
@@ -96,6 +97,25 @@ class PathsParamType(click.Path):
         return value
 
 
+class VersionParamType(click.ParamType):
+    """
+    Defines a click options type for use with the @click.option decorator
+
+    The type accepts a string represents a version number.
+    """
+
+    name = "version"
+
+    def convert(self, value, param, ctx):
+        version_sections = value.split('.')
+        if len(version_sections) == 3 and \
+                all(version_section.isdigit() for version_section in version_sections):
+            return value
+        else:
+            self.fail(f"Version {value} is not according to the expected format. "
+                      f"The format of version should be in x.y.z format, e.g: <2.1.3>", param, ctx)
+
+
 class DemistoSDK:
     """
     The core class for the SDK.
@@ -154,6 +174,7 @@ def check_configuration_file(command, args):
 )
 @pass_config
 def main(config, version, release_notes):
+    dotenv.load_dotenv()  # Load a .env file from the cwd.
     config.configuration = Configuration()
     if not os.getenv('DEMISTO_SDK_SKIP_VERSION_CHECK') or version:  # If the key exists/called to version
         cur_version = get_distribution('demisto-sdk').version
@@ -701,7 +722,7 @@ def lint(**kwargs):
 @click.option("--no-min-coverage-enforcement", help="Do not enforce minimum coverage.", is_flag=True)
 @click.option(
     "--previous-coverage-report-url", help="URL of the previous coverage report.",
-    default='https://storage.googleapis.com/marketplace-dist-dev/code-coverage/coverage-min.json', type=str
+    default='https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-min.json', type=str
 )
 def coverage_analyze(**kwargs):
     try:
@@ -1134,6 +1155,10 @@ def generate_test_playbook(**kwargs):
                              "Integration template options: HelloWorld, HelloIAMWorld, FeedHelloWorld.\n"
                              "Script template options: HelloWorldScript")
 @click.option(
+    "-a", "--author-image", help="Path of the file 'Author_image.png'. \n "
+    "Image will be presented in marketplace under PUBLISHER section. File should be up to 4kb and dimensions of 120x50"
+)
+@click.option(
     '--demisto_mock', is_flag=True,
     help="Copy the demistomock. Relevant for initialization of Scripts and Integrations within a Pack.")
 @click.option(
@@ -1348,7 +1373,7 @@ def merge_id_sets(**kwargs):
     type=click.Choice(['major', 'minor', 'revision', 'maintenance', 'documentation'])
 )
 @click.option(
-    '-v', '--version', help="Bump to a specific version."
+    '-v', '--version', help="Bump to a specific version.", type=VersionParamType()
 )
 @click.option(
     '-g', '--use-git',
@@ -1472,14 +1497,22 @@ def find_dependencies(**kwargs):
 )
 @click.option(
     '--verbose', help='Print debug level logs', is_flag=True)
+@click.option(
+    '-p', '--package',
+    help='Generated integration will be split to package format instead of a yml file.',
+    is_flag=True
+)
+@pass_config
 def postman_codegen(
+        config,
         input: IO,
         output: Path,
         name: str,
         output_prefix: str,
         command_prefix: str,
         config_out: bool,
-        verbose: bool
+        verbose: bool,
+        package: bool
 ):
     """Generates a Cortex XSOAR integration given a Postman collection 2.1 JSON file."""
     if verbose:
@@ -1487,7 +1520,7 @@ def postman_codegen(
     else:
         logger = logging.getLogger('demisto-sdk')
 
-    config = postman_to_autogen_configuration(
+    postman_config = postman_to_autogen_configuration(
         collection=json.load(input),
         name=name,
         command_prefix=command_prefix,
@@ -1495,13 +1528,17 @@ def postman_codegen(
     )
 
     if config_out:
-        path = output / f'config-{config.name}.json'
+        path = output / f'config-{postman_config.name}.json'
         with open(path, mode='w+') as f:
-            json.dump(config.to_dict(), f, indent=4)
+            json.dump(postman_config.to_dict(), f, indent=4)
             logger.info(f'Config file generated at:\n{os.path.abspath(path)}')
     else:
         # generate integration yml
-        config.generate_integration_package(output, is_unified=True)
+        yml_path = postman_config.generate_integration_package(output, is_unified=True)
+        if package:
+            yml_splitter = YmlSplitter(configuration=config.configuration, file_type=FileType.INTEGRATION.value,
+                                       input=str(yml_path), output=str(output))
+            yml_splitter.extract_to_package_format()
 
 
 # ====================== generate-integration ====================== #
@@ -1827,7 +1864,6 @@ def convert(config, **kwargs):
 @main.command(
     name='error-code',
     help='Quickly find relevant information regarding an error code.',
-    hidden=True,
 )
 @click.help_option(
     '-h', '--help'

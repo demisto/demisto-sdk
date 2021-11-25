@@ -20,7 +20,7 @@ class CoverageReport:
                  coverage_file: Optional[str] = os.path.join('coverage_report', '.coverage'), no_cache: Optional[bool] = False,
                  report_dir: str = 'coverage_report', report_type: Optional[str] = None,
                  no_degradation_check: Optional[bool] = False,
-                 previous_coverage_report_url: Optional[str] = 'https://storage.googleapis.com/marketplace-dist-dev/code-coverage/coverage-min.json'):
+                 previous_coverage_report_url: Optional[str] = 'https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-min.json'):
         self.report_dir = report_dir
         self._cov: Optional[coverage.Coverage] = None
         self._report_str: Optional[str] = None

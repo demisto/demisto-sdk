@@ -31,6 +31,7 @@ class Pack:
 
     def __init__(self, packs_dir: Path, name: str, repo):
         # Initiate lists:
+        self.name = name
         self._repo = repo
         self.repo_path = repo.path
         self.integrations: List[Integration] = list()

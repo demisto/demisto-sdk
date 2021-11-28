@@ -1,5 +1,6 @@
 import ast
 import json
+import os
 import re
 import tempfile
 
@@ -89,16 +90,22 @@ class Runner:
     def _get_playground_id(self):
         """Retrieves Playground ID from the remote Demisto instance.
         """
-        playground_filter = {'filter': {'type': [9]}}
+        playground_filter = {'filter': {'type': [9], 'user': ['admin']}}
         answer = self.client.search_investigations(filter=playground_filter)
 
-        if answer.total != 1:
+        if answer.data is None:
+            raise RuntimeError(
+                f'Got unexpected amount of results in getPlaygroundInvestigationID. '
+                f'Response was: {answer.total}'
+            )
+        results = [playground for playground in answer.data if playground.creating_user_id == os.getenv('DEMISTO_USERNAME', 'admin')]
+        if len(results) != 1:
             raise RuntimeError(
                 f'Got unexpected amount of results in getPlaygroundInvestigationID. '
                 f'Response was: {answer.total}'
             )
 
-        result = answer.data[0].id
+        result = results[0].id
 
         print_v(f'Playground ID: {result}', self.log_verbose)
 

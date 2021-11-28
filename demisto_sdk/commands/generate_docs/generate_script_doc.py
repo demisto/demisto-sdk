@@ -23,14 +23,18 @@ def generate_script_doc(input_path, examples, output: str = None, permissions: s
             output = os.path.dirname(os.path.realpath(input_path))
 
         if examples:
-            if not examples.startswith('!'):
-                examples = f'!{examples}'
+            if os.path.isfile(examples):
+                with open(examples, 'r') as examples_file:
+                    examples = examples_file.read().splitlines()
+            else:
+                if not examples.startswith('!'):
+                    examples = f'!{examples}'
+                examples = [examples]
 
-            example_dict, build_errors = build_example_dict([examples], insecure)
-            script_name = examples.split(' ')[0][1:]
-            example_section, example_errors = generate_script_example(script_name, example_dict)
+            example_dict, build_errors = build_example_dict(examples, insecure)
+            script_name = examples[0].split(' ')[0][1:]
+            example_section = generate_script_example(script_name, example_dict)
             errors.extend(build_errors)
-            errors.extend(example_errors)
         else:
             errors.append('Note: Script example was not provided. For a more complete documentation,run with the -e '
                           'option with an example command. For example: -e "!ConvertFile entry_id=<entry_id>".')
@@ -81,13 +85,15 @@ def generate_script_doc(input_path, examples, output: str = None, permissions: s
                 doc.extend(generate_list_section('Used In', used_in, True,
                                                  text='This script is used in the following playbooks and scripts.'))
             else:  # if we have more than 10 use a sample
-                print_warning(f'"Used In" section found too many scripts/playbooks ({len(used_in)}). Will use a sample of 10.'
-                              ' Full list is available as a comment in the README file.')
+                print_warning(
+                    f'"Used In" section found too many scripts/playbooks ({len(used_in)}). Will use a sample of 10.'
+                    ' Full list is available as a comment in the README file.')
                 sample_used_in = random.sample(used_in, 10)
                 doc.extend(generate_list_section('Used In', sorted(sample_used_in), True,
                                                  text='Sample usage of this script can be found in the following playbooks and scripts.'))
                 used_in_str = '\n'.join(used_in)
-                doc.append(f"<!--\nUsed In: list was truncated. Full list commented out for reference:\n\n{used_in_str}\n -->\n")
+                doc.append(
+                    f"<!--\nUsed In: list was truncated. Full list commented out for reference:\n\n{used_in_str}\n -->\n")
 
         doc.extend(generate_table_section(inputs, 'Inputs', 'There are no inputs for this script.'))
 
@@ -217,34 +223,25 @@ def get_used_in(id_set, script_id):
 
 
 def generate_script_example(script_name, example=None):
-    errors: list = []
-    if example:
-        script_example = example[script_name][0]
-        md_example = example[script_name][1]
-        context_example = example[script_name][2]
-    else:
+    if not example:
         return '', [f'did not get any example for {script_name}. please add it manually.']
-
-    example = [
-        '',
-        '## Script Example',
-        '```{}```'.format(script_example),
-        '',
-    ]
-    if context_example:
-        example.extend([
-            '## Context Example',
-            '```json',
-            '{}'.format(context_example),
-            '```',
-            '',
-        ])
-
+    cmd_lst = example.get(script_name, None)
+    if not cmd_lst:
+        return '', [f'did not get any example for {script_name}. please add it manually.']
+    results = ['', '## Script Examples']
+    for script_example, md_example, context_example in cmd_lst:
+        results.extend(['### Example command', f'```{script_example}```'])
+        if context_example:
+            results.extend(['### Context Example',
+                            '```json',
+                            '{}'.format(context_example),
+                            '```',
+                            '', ])
         if md_example:
-            example.extend([
-                '## Human Readable Output',
-                '{}'.format('>'.join(f'\n{md_example}'.splitlines(True))),  # prefix human readable with quote
-                '',
-            ])
+            results.extend(['### Human Readable Output',
+                            '{}'.format('>'.join(f'\n{md_example}'.splitlines(True))),
+                            # prefix human readable with quote
+                            '',
+                            ])
 
-    return example, errors
+    return results

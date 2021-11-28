@@ -280,8 +280,10 @@ def build_example_dict(command_examples: list, insecure: bool):
         context_example = json.dumps(context_example, indent=4)
         errors.extend(cmd_errors)
 
-        if not cmd_errors and cmd not in examples:
-            examples[cmd] = (example, md_example, context_example)
+        if not cmd_errors:
+            if cmd not in examples:
+                examples[cmd] = []
+            examples[cmd].append((example, md_example, context_example))
     return examples, errors
 
 

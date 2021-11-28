@@ -16,23 +16,14 @@ from typing import Callable, Dict, List, Optional, Tuple
 import click
 import networkx
 
-from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
-                                                   COMMON_TYPES_PACK,
-                                                   DASHBOARDS_DIR,
-                                                   DEFAULT_ID_SET_PATH,
-                                                   GENERIC_DEFINITIONS_DIR,
-                                                   GENERIC_FIELDS_DIR,
-                                                   GENERIC_MODULES_DIR,
-                                                   GENERIC_TYPES_DIR,
-                                                   INCIDENT_FIELDS_DIR,
-                                                   INCIDENT_TYPES_DIR,
-                                                   INDICATOR_FIELDS_DIR,
-                                                   INDICATOR_TYPES_DIR,
-                                                   JOBS_DIR, LAYOUTS_DIR,
-                                                   LISTS_DIR, MAPPERS_DIR,
-                                                   REPORTS_DIR, SCRIPTS_DIR,
-                                                   TEST_PLAYBOOKS_DIR,
-                                                   WIDGETS_DIR, FileType)
+from demisto_sdk.commands.common.constants import (
+    CLASSIFIERS_DIR, COMMON_TYPES_PACK, DASHBOARDS_DIR,
+    DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
+    DEFAULT_ID_SET_PATH, GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR,
+    GENERIC_MODULES_DIR, GENERIC_TYPES_DIR, INCIDENT_FIELDS_DIR,
+    INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, LAYOUTS_DIR,
+    LISTS_DIR, MAPPERS_DIR, REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR,
+    WIDGETS_DIR, JOBS_DIR, FileType)
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type, get_json,
                                                get_pack_name, get_yaml,
                                                print_color, print_error,
@@ -1979,10 +1970,10 @@ def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=
     for dup1, dup2 in itertools.combinations(duplicates, 2):
         dict1 = list(dup1.values())[0]
         dict2 = list(dup2.values())[0]
-        dict1_from_version = LooseVersion(dict1.get('fromversion', '0.0.0'))
-        dict2_from_version = LooseVersion(dict2.get('fromversion', '0.0.0'))
-        dict1_to_version = LooseVersion(dict1.get('toversion', '99.99.99'))
-        dict2_to_version = LooseVersion(dict2.get('toversion', '99.99.99'))
+        dict1_from_version = LooseVersion(dict1.get('fromversion', DEFAULT_CONTENT_ITEM_FROM_VERSION))
+        dict2_from_version = LooseVersion(dict2.get('fromversion', DEFAULT_CONTENT_ITEM_FROM_VERSION))
+        dict1_to_version = LooseVersion(dict1.get('toversion', DEFAULT_CONTENT_ITEM_TO_VERSION))
+        dict2_to_version = LooseVersion(dict2.get('toversion', DEFAULT_CONTENT_ITEM_TO_VERSION))
 
         # Checks if the Layouts kind is different then they are not duplicates
         if object_type == 'Layouts':

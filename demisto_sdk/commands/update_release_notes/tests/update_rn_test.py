@@ -7,7 +7,8 @@ from typing import Dict, Optional
 import mock
 import pytest
 
-from demisto_sdk.commands.common.constants import FileType
+from demisto_sdk.commands.common.constants import (
+    DEFAULT_CONTENT_ITEM_TO_VERSION, FileType)
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_json
 from demisto_sdk.commands.common.update_id_set import DEFAULT_ID_SET_PATH
@@ -945,7 +946,7 @@ class TestRNUpdateUnit:
         ("1.0.1", "1.0.2", True),
         ("1.0.5", "1.0.4", False),
         ("1.0.5", "1.0.5", True),
-        ("1.0.0", '99.99.99', True)
+        ("1.0.0", DEFAULT_CONTENT_ITEM_TO_VERSION, True)
     ]
 
     @pytest.mark.parametrize('pack_current_version, git_current_version, expected_result', diff_package)

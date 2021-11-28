@@ -1,16 +1,21 @@
 import json
 import os
+import shutil
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
 import pytest
 import yaml
+from click.testing import CliRunner
 
+import demisto_sdk.commands.common.tools as tools
+from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.generate_integration.code_generator import (
     IntegrationGeneratorConfig, IntegrationGeneratorOutput)
 from demisto_sdk.commands.postman_codegen.postman_codegen import (
-    create_body_format, flatten_collections, generate_command_outputs,
+    build_commands_names_dict, create_body_format, duplicate_requests_check,
+    flatten_collections, generate_command_outputs,
     postman_to_autogen_configuration)
 
 
@@ -76,6 +81,128 @@ class TestPostmanHelpers:
     ])
     def test_flatten_collections(self, collection: list, outputs: list):
         assert flatten_collections(collection) == outputs
+
+    def test_build_commands_names_dict_duplicate_names(self):
+        """
+        Given
+        - dictionary containing names of requests from a collection
+
+        When
+        - There are requests with names which have the same kebab case
+
+        Then
+        - returns names' dictionary with an entry of the matching kebab-case which has a list with the problematic names
+        """
+        requests = [
+            {
+                "name": "Test Number One"
+            },
+            {
+                "name": "Test number  one"
+            },
+            {
+                "name": "Test number two"
+            }
+        ]
+        names_dict = build_commands_names_dict(requests)
+        assert len(names_dict[tools.to_kebab_case("Test Number One")]) == 2
+        assert len(names_dict[tools.to_kebab_case("Test number two")]) == 1
+        assert len(names_dict) == 2
+
+    def test_build_commands_names_dict_no_duplicate_names(self):
+        """
+        Given
+        - dictionary containing names of requests from a collection
+
+        When
+        - There are no requests with names which have the same kebab case
+
+        Then
+        - returns names' dictionary with an entry for each request's name kebab case and the original name
+        """
+        requests = [
+            {
+                "name": "Test Number One"
+            },
+            {
+                "name": "Test number two"
+            }
+        ]
+        names_dict = build_commands_names_dict(requests)
+        assert len(names_dict[tools.to_kebab_case("Test Number One")]) == 1
+        assert len(names_dict[tools.to_kebab_case("Test number two")]) == 1
+        assert len(names_dict) == 2
+
+    def test_build_commands_names_dict_none_names(self):
+        """
+        Given
+        - dictionary containing names of requests from a collection
+
+        When
+        - There's a request with no name key
+
+        Then
+        - returns names' dictionary with an entry for each request's name kebab case and the original name and just them
+        """
+        requests = [
+            {
+                "None": None
+            },
+            {
+                "name": "Test number  one"
+            },
+            {
+                "name": "Test number two"
+            }
+        ]
+        names_dict = build_commands_names_dict(requests)
+        assert len(names_dict[tools.to_kebab_case("Test Number One")]) == 1
+        assert len(names_dict[tools.to_kebab_case("Test number two")]) == 1
+        assert len(names_dict) == 2
+
+    def test_duplicate_requests_check_duplicates_exist(self):
+        """
+        Given
+        - dictionary containing names in kebab case of requests and a list with their original names
+
+        When
+        - There are requests with the same kebab case
+
+        Then
+        - throw assertion error with the problematic requests' names
+        """
+        with pytest.raises(Exception):
+            names_dict = {
+                'test-number-one': [
+                    "Test number  one",
+                    "Test Number One"
+                ],
+                'test-number-two': [
+                    "Test number two"
+                ]
+            }
+            duplicate_requests_check(names_dict)
+
+    def test_duplicate_requests_check_duplicates_dont_exist(self):
+        """
+        Given
+        - dictionary containing names in kebab case of requests and a list with their original names
+
+        When
+        - There are no requests with the same kebab case
+
+        Then
+        - don't throw assertion error
+        """
+        names_dict = {
+            'test-number-one': [
+                "Test number  one",
+            ],
+            'test-number-two': [
+                "Test number two"
+            ]
+        }
+        duplicate_requests_check(names_dict)
 
 
 class TestPostmanCodeGen:
@@ -570,6 +697,28 @@ class TestPostmanCodeGen:
             assert outputs[i].description == expected[i].description
             assert outputs[i].type_ == expected[i].type_
         assert len(outputs) == len(expected)
+
+    def test_package_integration_generation(self, tmp_path):
+        """
+        Given
+        - postman collection
+        When
+        - generating an integration in a package format
+        Then
+        - package should be created with the integration files.
+        """
+        package_path = os.path.join(self.test_files_path, 'package')
+        os.mkdir(package_path)
+        collection_path = os.path.join(self.test_files_path, 'VirusTotal.postman_collection.json')
+        try:
+            runner = CliRunner()
+            runner.invoke(main, ['postman-codegen', '-i', collection_path,
+                                 '-o', package_path, '-p'], catch_exceptions=False)
+            assert all(elem in os.listdir(package_path) for elem in ['package.py', 'README.md', 'package.yml'])
+        except Exception as e:
+            raise e
+        finally:
+            shutil.rmtree(package_path)
 
 
 def _testutil_create_postman_collection(dest_path, with_request: Optional[dict] = None, no_auth: bool = False):

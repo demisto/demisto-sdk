@@ -21,7 +21,7 @@ The type of coverage report (posible values: 'text', 'html', 'xml', 'json' or 'a
 * **---no-min-coverage-enforcement**
 Do not enforce minimum coverage.
 * **--previous-coverage-report-url**
-URL of the previous coverage report. The default value is https://storage.googleapis.com/marketplace-dist-dev/code-coverage/coverage-min.json
+URL of the previous coverage report. The default value is https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-min.json
 
 **Examples**:
 1. print report of .coverge file - `demisto-sdk coverage-analyze -i .coverage`

@@ -5,7 +5,8 @@ import re
 from distutils.version import LooseVersion
 from enum import Enum, IntEnum
 
-from demisto_sdk.commands.common.constants import FileType
+from demisto_sdk.commands.common.constants import (
+    DEFAULT_CONTENT_ITEM_FROM_VERSION, FileType)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
@@ -179,7 +180,7 @@ class IncidentFieldValidator(ContentEntityValidator):
 
         return not is_bc_broke
 
-    def is_valid_file(self, validate_rn=True, is_new_file=False, use_git=False):
+    def is_valid_file(self, validate_rn=True, is_new_file=False, use_git=False, is_added_file=False):
         """Check whether the Incident Field is valid or not
         """
         answers = [
@@ -202,6 +203,8 @@ class IncidentFieldValidator(ContentEntityValidator):
             answers.append(self.is_valid_name())
         if is_new_file and use_git:
             answers.append(self.is_valid_incident_field_name_prefix())
+        if is_added_file:
+            answers.append(self.is_valid_unsearchable_key())
         return all(answers)
 
     def is_valid_name(self):
@@ -393,7 +396,7 @@ class IncidentFieldValidator(ContentEntityValidator):
         if self.current_file.get('type') != 'grid':
             return True
 
-        current_version = LooseVersion(self.current_file.get('fromVersion', '0.0.0'))
+        current_version = LooseVersion(self.current_file.get('fromVersion', DEFAULT_CONTENT_ITEM_FROM_VERSION))
         if current_version < LooseVersion('5.5.0'):
             error_message, error_code = Errors.indicator_field_type_grid_minimal_version(current_version)
 
@@ -425,4 +428,19 @@ class IncidentFieldValidator(ContentEntityValidator):
                     suggested_fix=Errors.suggest_fix_field_name(field_name, pack_prefix=name_prefixes[0])):
                 return False
 
+        return True
+
+    def is_valid_unsearchable_key(self):
+        # type: () -> bool
+        """Validate that the unsearchable key is true
+        Returns:
+            bool. Whether the file's unsearchable key is set to true.
+        """
+        unsearchable = self.current_file.get('unsearchable', True)
+        if unsearchable:
+            return True
+        error_message, error_code = Errors.unsearchable_key_should_be_true_incident_field()
+        if self.handle_error(error_message, error_code, file_path=self.file_path,
+                             suggested_fix=Errors.suggest_fix(self.file_path)):
+            return False
         return True

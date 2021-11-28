@@ -7,7 +7,8 @@ from typing import Tuple
 import click
 from git import InvalidGitRepositoryError
 
-from demisto_sdk.commands.common.constants import PLAYBOOK, FileType
+from demisto_sdk.commands.common.constants import (
+    DEFAULT_CONTENT_ITEM_FROM_VERSION, PLAYBOOK, FileType)
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.tools import (find_type, get_yaml,
                                                is_string_uuid, write_yml)
@@ -94,7 +95,7 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
                 else:
                     click.secho('Version format is not valid', fg='red')
 
-        elif not self.old_file and LooseVersion(self.data.get('fromversion', '0.0.0')) < \
+        elif not self.old_file and LooseVersion(self.data.get('fromversion', DEFAULT_CONTENT_ITEM_FROM_VERSION)) < \
                 LooseVersion(NEW_FILE_DEFAULT_5_5_0_FROMVERSION):
             if self.assume_yes:
                 self.data['fromversion'] = NEW_FILE_DEFAULT_5_5_0_FROMVERSION

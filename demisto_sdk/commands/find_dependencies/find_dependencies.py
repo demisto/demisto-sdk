@@ -11,7 +11,8 @@ import networkx as nx
 from requests import RequestException
 
 from demisto_sdk.commands.common import constants
-from demisto_sdk.commands.common.constants import GENERIC_COMMANDS_NAMES
+from demisto_sdk.commands.common.constants import (
+    DEFAULT_CONTENT_ITEM_TO_VERSION, GENERIC_COMMANDS_NAMES)
 from demisto_sdk.commands.common.tools import (get_content_id_set,
                                                is_external_repository,
                                                print_error, print_warning)
@@ -209,7 +210,7 @@ class PackDependencies:
         for item in items_list:
             item_details = list(item.values())[0]
             if item_details.get('name', '') in items_names and 'pack' in item_details and \
-                    LooseVersion(item_details.get('toversion', '99.99.99')) >= MINIMUM_DEPENDENCY_VERSION:
+                    LooseVersion(item_details.get('toversion', DEFAULT_CONTENT_ITEM_TO_VERSION)) >= MINIMUM_DEPENDENCY_VERSION:
                 pack_names.add(item_details.get('pack'))
 
         if not exclude_ignored_dependencies:
@@ -256,7 +257,7 @@ class PackDependencies:
                 item_details = list(item_from_id_set.values())[0]
                 if (machine_name in item_possible_ids or item_name == item_details.get('name')) \
                         and item_details.get('pack') \
-                        and LooseVersion(item_details.get('toversion', '99.99.99')) >= MINIMUM_DEPENDENCY_VERSION \
+                        and LooseVersion(item_details.get('toversion', DEFAULT_CONTENT_ITEM_TO_VERSION)) >= MINIMUM_DEPENDENCY_VERSION \
                         and (item_details['pack'] not in constants.IGNORED_DEPENDENCY_CALCULATION or
                              not exclude_ignored_dependencies):
                     packs.add(item_details.get('pack'))
@@ -281,7 +282,7 @@ class PackDependencies:
         for item in id_set['integrations']:
             item_details = list(item.values())[0]
             if command in item_details.get('commands', []) and 'pack' in item_details and \
-                    LooseVersion(item_details.get('toversion', '99.99.99')) >= MINIMUM_DEPENDENCY_VERSION:
+                    LooseVersion(item_details.get('toversion', DEFAULT_CONTENT_ITEM_TO_VERSION)) >= MINIMUM_DEPENDENCY_VERSION:
                 pack_names.add(item_details.get('pack'))
 
         if not exclude_ignored_dependencies:
@@ -1471,7 +1472,7 @@ class PackDependencies:
             pack_name: str,
             id_set_path: str = '',
             exclude_ignored_dependencies: bool = True,
-            update_pack_metadata: bool = True,
+            update_pack_metadata: bool = False,
             silent_mode: bool = False,
             verbose: bool = False,
             debug_file_path: str = '',
@@ -1496,14 +1497,16 @@ class PackDependencies:
             Dict: first level dependencies of a given pack.
 
         """
-        if not id_set_path or not os.path.isfile(id_set_path):
-            if not skip_id_set_creation:
-                id_set = IDSetCreator(print_logs=False).create_id_set()
-            else:
-                return {}
-        else:
+
+        if id_set_path and os.path.isfile(id_set_path):
             with open(id_set_path, 'r') as id_set_file:
                 id_set = json.load(id_set_file)
+        else:
+            if skip_id_set_creation:
+                return {}
+
+            id_set = IDSetCreator(print_logs=False).create_id_set()
+
         if is_external_repository():
             print_warning('Running in a private repository, will download the id set from official content')
             id_set = get_merged_official_and_local_id_set(id_set, silent_mode=silent_mode)
@@ -1521,17 +1524,17 @@ class PackDependencies:
             complete_data=complete_data,
             id_set_data=id_set,
         )
+        if use_pack_metadata:
+            first_level_dependencies = PackDependencies.update_dependencies_from_pack_metadata(pack_name,
+                                                                                               first_level_dependencies)
         if update_pack_metadata:
             update_pack_metadata_with_dependencies(pack_name, first_level_dependencies)
+
         if not silent_mode:
             # print the found pack dependency results
             click.echo(click.style(f"Found dependencies result for {pack_name} pack:", bold=True))
             dependency_result = json.dumps(first_level_dependencies, indent=4)
             click.echo(click.style(dependency_result, bold=True))
-
-        if use_pack_metadata:
-            first_level_dependencies = PackDependencies.update_dependencies_from_pack_metadata(pack_name,
-                                                                                               first_level_dependencies)
 
         return first_level_dependencies
 

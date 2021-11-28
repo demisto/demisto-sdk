@@ -2379,6 +2379,8 @@ def get_mock_dependency_graph():
     graph.add_edge('pack1', 'pack2')
     graph.add_edge('pack2', 'pack4')
     graph.add_edge('pack1', 'pack4')
+    graph.nodes()['pack1']['mandatory_for_packs'].append('pack4')
+
     return graph
 
 
@@ -2393,7 +2395,8 @@ class TestGetDependentOnGivenPack:
                      'dependencies_graph', return_value=get_mock_dependency_graph())
         mocker.patch('demisto_sdk.commands.find_dependencies.find_dependencies.get_pack_name', return_value='pack4')
 
-        dependent_packs = get_packs_dependent_on_given_packs('pack4', '')
+        dependent_packs_dict, dependent_packs = get_packs_dependent_on_given_packs('pack4', '')
         assert 'pack2' in dependent_packs
         assert 'pack1' in dependent_packs
+        assert dependent_packs_dict['pack4']['packsDependentOnThisPack']['pack1']['mandatory'] == True
         assert len(dependent_packs) == 2

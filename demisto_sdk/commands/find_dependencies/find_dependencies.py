@@ -1476,27 +1476,34 @@ class PackDependencies:
         return graph
 
     @staticmethod
-    def check_arguments_find_dependencies(input_path, all_packs_dependencies, output_path, get_dependent_on):
-        if not input_path:
+    def check_arguments_find_dependencies(input_paths, all_packs_dependencies, output_path, get_dependent_on):
+        if not input_paths:
             if not all_packs_dependencies:
                 print_error("Please provide an input path. The path should be formatted as 'Packs/<some pack name>'. "
                             "For example, Packs/HelloWorld")
                 sys.exit(1)
 
         else:
-            input_path = Path(input_path)
-            if len(input_path.parts) != 2 or input_path.parts[-2] != "Packs":
-                print_error(f"Input path ({input_path}) must be formatted as 'Packs/<some pack name>'. "
-                            f"For example, Packs/HelloWorld")
-                sys.exit(1)
+            input_paths = [Path(path) for path in list(input_paths)]
+            for path in input_paths:
+                if len(path.parts) != 2 or path.parts[-2] != "Packs":
+                    print_error(f"Input path ({path}) must be formatted as 'Packs/<some pack name>'. "
+                                f"For example, Packs/HelloWorld")
+                    sys.exit(1)
 
         if output_path and not all_packs_dependencies:
             print_warning("You used the '--outputs-path' argument, which is only relevant for when using the"
                           " '--all-packs-dependencies' flag. Ignoring this argument.")
 
         if get_dependent_on:
-            if input_path.parts[-1] in IGNORED_PACKS_IN_DEPENDENCY_CALC:
-                print_error(f"Finding all packs dependent on {input_path.parts[-1]} pack is not supported.")
+            for path in input_paths:
+                if path.parts[-1] in IGNORED_PACKS_IN_DEPENDENCY_CALC:
+                    print_error(f"Finding all packs dependent on {path.parts[-1]} pack is not supported.")
+                    sys.exit(1)
+        else:
+            if len(input_paths) > 1:
+                print_error(f"Please supply only one pack path to calculate its dependencies. Multiple inputs in only "
+                            f"supported when using the --get-dependent-on flag.")
                 sys.exit(1)
 
     @staticmethod
@@ -1505,18 +1512,20 @@ class PackDependencies:
             update_pack_metadata: bool = False,
             verbose: bool = False,
             use_pack_metadata: bool = False,
-            input_path: str = None,
+            input_paths: str = None,
             all_packs_dependencies: bool = False,
             get_dependent_on: bool = False,
             output_path: str = None,
     ) -> None:
 
-        PackDependencies.check_arguments_find_dependencies(input_path, all_packs_dependencies, output_path,
+        PackDependencies.check_arguments_find_dependencies(input_paths, all_packs_dependencies, output_path,
                                                            get_dependent_on)
 
         if get_dependent_on:
-            dependent_packs = get_packs_dependent_on_given_packs(input_path, id_set_path, verbose)
-            print_success(f"Found {len(dependent_packs)} dependent packs:\n {str(dependent_packs)}")
+            dependent_packs, _ = get_packs_dependent_on_given_packs(input_paths, id_set_path, output_path, verbose)
+            print_success(f"Found the following dependent packs:")
+            dependent_packs = json.dumps(dependent_packs, indent=4)
+            click.echo(click.style(dependent_packs, bold=True))
 
         elif all_packs_dependencies:
             calculate_all_packs_dependencies(id_set_path, output_path, verbose)  # type: ignore[arg-type]
@@ -1524,7 +1533,7 @@ class PackDependencies:
 
         else:
             PackDependencies.find_dependencies(
-                pack_name=Path(input_path).name,  # type: ignore[arg-type]
+                pack_name=Path(input_path[0]).name,  # type: ignore[arg-type]
                 id_set_path=id_set_path,
                 verbose=verbose,
                 update_pack_metadata=update_pack_metadata,
@@ -1769,24 +1778,40 @@ def calculate_all_packs_dependencies(id_set_path: str, output_path: str, verbose
     return pack_dependencies_result
 
 
-def get_packs_dependent_on_given_packs(packs, id_set_path, verbose=False) -> set:
+def get_packs_dependent_on_given_packs(packs: Union[str, list], id_set_path: str, output_path: str = None, verbose: bool = False) -> dict:
     """
 
     Args:
-        packs: A pack or a list of packs of interest, to resulted packs will be dependent on these packs.
+        packs: A list of paths of packs of interest. The resulted packs will be
+         dependent on these packs.
         id_set_path: Path to id_set.json file.
+        output_path: The path for the outputs json.
         verbose: Whether to print the log to the console.
 
     Returns:
-        A list with the packs dependent on the given packs.
+        1. A dict with the given packs as keys, and the dependent packs with details about the dependency
+         (such as mandatory or not) as values (as a nested dict).
+        2. A set with the names of packs dependent on the given packs.
     """
 
     def collect_dependent_packs(results) -> None:
-        first_level_dependencies = results[0]
-        dependent_packs.extend(first_level_dependencies.keys())
-    if type(packs) is not list:
-        packs = [packs]
-    dependent_packs: list = []
+        try:
+            first_level_dependencies, all_level_dependencies, pack_name = results
+            if verbose:
+                print(f'Got dependencies for pack {pack_name}\n: {pformat(all_level_dependencies)}')
+            dependent_on_results[pack_name] = {
+                "packsDependentOnThisPack": first_level_dependencies,
+                "path": os.path.join(PACKS_DIR, pack_name),
+                "fullPath": os.path.abspath(os.path.join(PACKS_DIR, pack_name))
+            }
+            dependent_packs_list.extend(first_level_dependencies.keys())
+
+        except Exception:
+            print_error('Failed to collect the packs dependent on given packs')
+            raise
+
+    dependent_on_results: dict = {}
+    dependent_packs_list: list = []
     id_set = get_id_set(id_set_path)
     all_packs = select_packs_for_calculation()
     dependency_graph = PackDependencies.build_all_dependencies_graph(all_packs, id_set=id_set, verbose=False)
@@ -1799,5 +1824,10 @@ def get_packs_dependent_on_given_packs(packs, id_set_path, verbose=False) -> set
                 pool.schedule(calculate_single_pack_dependencies, args=(str(pack), reverse_dependency_graph, verbose),
                               timeout=10))
         wait_futures_complete(futures=futures, done_fn=collect_dependent_packs)
+        # finished iteration over pack folders
+        print_success("Finished calculating the dependencies on the given packs.")
 
-    return set(dependent_packs)
+        if output_path:
+            with open(output_path, 'w') as pack_dependencies_file:
+                json.dump(dependent_on_results, pack_dependencies_file, indent=4)
+    return dependent_on_results, set(dependent_packs_list)

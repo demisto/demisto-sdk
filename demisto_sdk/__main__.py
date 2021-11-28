@@ -1435,8 +1435,9 @@ def update_release_notes(**kwargs):
     '-h', '--help'
 )
 @click.option(
-    "-i", "--input", help="Pack path to find dependencies. For example: Pack/HelloWorld", required=False,
-    type=click.Path(exists=True, dir_okay=True))
+    "-i", "--input", help="Pack path to find dependencies. For example: Pack/HelloWorld. When using the"
+                          " --get-dependent-on flag, this argument can be used multiple times.", required=False,
+    type=click.Path(exists=True, dir_okay=True), multiple=True)
 @click.option(
     "-idp", "--id-set-path", help="Path to id set json file.", required=False)
 @click.option(
@@ -1458,7 +1459,7 @@ def find_dependencies(**kwargs):
     """Find pack dependencies and update pack metadata."""
     check_configuration_file('find-dependencies', kwargs)
     update_pack_metadata = not kwargs.get('no_update')
-    input_path = kwargs.get('input')
+    input_paths = kwargs.get('input')
     verbose = kwargs.get('verbose', False)
     id_set_path = kwargs.get('id_set_path', '')
     use_pack_metadata = kwargs.get('use_pack_metadata', False)
@@ -1473,7 +1474,7 @@ def find_dependencies(**kwargs):
             verbose=verbose,
             update_pack_metadata=update_pack_metadata,
             use_pack_metadata=use_pack_metadata,
-            input_path=input_path,
+            input_paths=input_paths,
             all_packs_dependencies=all_packs_dependencies,
             get_dependent_on=get_dependent_on,
             output_path=output_path,

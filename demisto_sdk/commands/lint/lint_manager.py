@@ -82,8 +82,8 @@ class LintManager:
         self._check_dependent_packs = check_dependent_packs
         if self._check_dependent_packs:
             print("Checking for dependent packs...")
-            dependent = [pack_name_to_posix_path(pack) for pack in
-                         get_packs_dependent_on_given_packs(self._pkgs, self._id_set_path)]
+            _, dependent = get_packs_dependent_on_given_packs(self._pkgs, self._id_set_path)
+            dependent = [pack_name_to_posix_path(pack) for pack in dependent]
             self._pkgs = list(set(self._pkgs + dependent))  # remove dups
             if dependent:
                 print(f"Found {Colors.Fg.cyan}{len(dependent)}{Colors.reset} dependent packages. Executing lint and "

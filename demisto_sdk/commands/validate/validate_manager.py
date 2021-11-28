@@ -11,8 +11,8 @@ from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK, AUTHOR_IMAGE_FILE_NAME, CONTENT_ENTITIES_DIRS,
-    DEFAULT_ID_SET_PATH, GENERIC_FIELDS_DIR, GENERIC_TYPES_DIR,
-    IGNORED_PACK_NAMES, OLDEST_SUPPORTED_VERSION, PACKS_DIR,
+    DEFAULT_CONTENT_ITEM_TO_VERSION, DEFAULT_ID_SET_PATH, GENERIC_FIELDS_DIR,
+    GENERIC_TYPES_DIR, IGNORED_PACK_NAMES, OLDEST_SUPPORTED_VERSION, PACKS_DIR,
     PACKS_PACK_META_FILE_NAME, SKIP_RELEASE_NOTES_FOR_TYPES,
     VALIDATION_USING_GIT_IGNORABLE_DATA, FileType, PathLevel)
 from demisto_sdk.commands.common.content import Content
@@ -1609,7 +1609,7 @@ class ValidateManager:
         is_deprecated = current_file.get("deprecated")
 
         toversion_is_old = "toversion" in current_file and \
-                           version.parse(current_file.get("toversion", "99.99.99")) < \
+                           version.parse(current_file.get("toversion", DEFAULT_CONTENT_ITEM_TO_VERSION)) < \
                            version.parse(OLDEST_SUPPORTED_VERSION)
 
         if is_deprecated or toversion_is_old:

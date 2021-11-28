@@ -192,6 +192,18 @@ def generate_ai_descriptions(
         verbose: verbose (debug mode)
         insecure: insecure https (debug mode)
     """
+    print()
+    print("⚠" * 100)
+    print('''███████ ██   ██ ██████  ███████ ██████  ██ ███    ███ ███████ ███    ██ ████████  █████  ██
+██       ██ ██  ██   ██ ██      ██   ██ ██ ████  ████ ██      ████   ██    ██    ██   ██ ██
+█████     ███   ██████  █████   ██████  ██ ██ ████ ██ █████   ██ ██  ██    ██    ███████ ██
+██       ██ ██  ██      ██      ██   ██ ██ ██  ██  ██ ██      ██  ██ ██    ██    ██   ██ ██
+███████ ██   ██ ██      ███████ ██   ██ ██ ██      ██ ███████ ██   ████    ██    ██   ██ ███████
+''')
+    print("this feature is experimental, use with caution.")
+    print("⚠" * 100)
+    print()
+
     try:
         similar_paths: Dict[str, str] = {}
         yml_data = get_yaml(input_path)

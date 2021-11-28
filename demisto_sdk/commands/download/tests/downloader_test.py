@@ -239,12 +239,12 @@ class TestHelperMethods:
 
 class TestFlagHandlers:
     @pytest.mark.parametrize('lf, a, o, i, r, res, err', [
-        (True, True, True, True, False, True, ''),
-        (False, False, False, True, False, False, "Error: Missing option '-o' / '--output'."),
-        (False, False, True, False, False, False, "Error: Missing option '-i' / '--input'."),
-        (False, True, True, False, False, True, ''),
-        (False, True, True, True, False, True, ''),
-        (False, False, True, False, True, True, '')
+        (True, True, True, True, None, True, ''),
+        (False, False, False, True, None, False, "Error: Missing option '-o' / '--output'."),
+        (False, False, True, False, None, False, "Error: Missing option '-i' / '--input'."),
+        (False, True, True, False, None, True, ''),
+        (False, True, True, True, None, True, ''),
+        (False, False, True, False, 'Some Regex', True, '')
     ])
     def test_verify_flags(self, lf, a, o, i, r, res, err, capsys):
         with patch.object(Downloader, "__init__", lambda x, y, z: None):

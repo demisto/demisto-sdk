@@ -236,7 +236,7 @@ class TestXSOARConfigFileUpdater:
             - check that the update_config_file_manager works as expected
         Then:
             - validate the error code is as expected.
-            - validate the Error massage when the argument us missing
+            - validate the Error massage when the argument is missing
         """
         mocker.patch.object(XSOARConfigFileUpdater, 'update_marketplace_pack')
 

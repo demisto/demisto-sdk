@@ -54,15 +54,12 @@ class XSOARConfigFileUpdater:
         """
         if not self.verify_flags():
             return 1
-        if self.add_all_marketplace_packs:
+        elif self.add_all_marketplace_packs:
             self.add_all_installed_packs_to_config_file()
-            return 0
-        if self.add_marketplace_pack:
+        elif self.add_marketplace_pack:
             self.update_marketplace_pack()
-            return 0
-        if self.add_custom_pack:
+        elif self.add_custom_pack:
             self.update_custom_pack()
-            return 0
         return 0
 
     def verify_flags(self) -> bool:
@@ -70,24 +67,23 @@ class XSOARConfigFileUpdater:
         Verifies that the flags configuration given by the user is correct
         :return: The verification result
         """
+        is_valid_pack_structure = True
+
         if self.add_marketplace_pack or self.add_custom_pack:
-            pack_id, pack_data = True, True
             if not self.pack_id:
-                pack_id = False
+                is_valid_pack_structure = False
                 print_color("Error: Missing option '-pi' / '--pack-id'.", LOG_COLORS.RED)
             if not self.pack_data:
-                pack_data = False
+                is_valid_pack_structure = False
                 print_color("Error: Missing option '-pd' / '--pack-data'.", LOG_COLORS.RED)
-            if not pack_data or not pack_id:
-                return False
-        return True
+        return is_valid_pack_structure
 
     def add_all_installed_packs_to_config_file(self):
         """
         Update the MarketPlace Packs Section in the Configuration File with all the installed packs on the machine.
         """
         marketplace_packs = self.get_installed_packs()
-        self.generic_update_xsoar_config_data(section_name=MARKETPLACE_PACKS_SECTION, data_to_update=marketplace_packs)
+        self.update_xsoar_config_data(section_name=MARKETPLACE_PACKS_SECTION, data_to_update=marketplace_packs)
 
     def get_installed_packs(self) -> List[Dict[str, str]]:
         """
@@ -95,16 +91,16 @@ class XSOARConfigFileUpdater:
         """
         client = demisto_client.configure(verify_ssl=self.insecure)
         res = client.generic_request('/contentpacks/metadata/installed', "GET")
-        installed_packs = eval(res[0])
+        installed_packs_data = eval(res[0])
 
-        marketplace_packs = [
+        installed_packs = [
             {
                 "id": pack["id"],
                 "version": pack['currentVersion']
             }
-            for pack in installed_packs
+            for pack in installed_packs_data
         ]
-        return marketplace_packs
+        return installed_packs
 
     def update_marketplace_pack(self):
         """
@@ -114,7 +110,7 @@ class XSOARConfigFileUpdater:
             "id": self.pack_id,
             "version": self.pack_data
         }
-        self.generic_update_xsoar_config_data(section_name=MARKETPLACE_PACKS_SECTION, data_to_update=new_pack)
+        self.update_xsoar_config_data(section_name=MARKETPLACE_PACKS_SECTION, data_to_update=new_pack)
 
     def update_custom_pack(self):
         """
@@ -124,9 +120,9 @@ class XSOARConfigFileUpdater:
             "id": self.pack_id,
             "url": self.pack_data
         }
-        self.generic_update_xsoar_config_data(section_name=CUSTOM_PACKS_SECTION, data_to_update=new_pack)
+        self.update_xsoar_config_data(section_name=CUSTOM_PACKS_SECTION, data_to_update=new_pack)
 
-    def generic_update_xsoar_config_data(self, section_name, data_to_update):
+    def update_xsoar_config_data(self, section_name, data_to_update):
         """
         Add / Update the Configuration File according to the section and data that provided.
         """

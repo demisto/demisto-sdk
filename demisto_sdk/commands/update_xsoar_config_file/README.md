@@ -9,19 +9,19 @@ Handle your XSOAR Configuration File.
 
 **Arguments**:
 * **-pi, --pack-id**
-  The Pack ID to add to XSOAR Configuration File.
+  The Pack ID to add to marketplace_packs or custom_packs sections in the XSOAR Configuration File.
 * **-pd, --pack-data**
   The Pack data to add to XSOAR Configuration File.
-* **-amp, --add-marketplace-pack**
+* **-mp, --add-marketplace-pack**
   Add a Pack to the marketplace_packs section in the Configuration File.
-* **-acp, --add-custom-pack**
+* **-cp, --add-custom-pack**
   Add a Pack to the custom_packs section in the Configuration File.
-* **-aamp, --add-all-marketplace-packs**
-  Add automatically all the installed MarketPlace Packs to the marketplace_packs section in XSOAR Configuration File.
+* **-all, --add-all-marketplace-packs**
+  Add all packs currently installed on the marketplace to the marketplace_packs section in XSOAR Configuration File.
 * **--insecure**
   Skip certificate validation.
 * **--file-path**
-  XSOAR Configuration File path, the default value is in the repo level.
+  The XSOAR Configuration File path in your Repository, the default value is in the repo level.
 
 **Examples**:
 `demisto-sdk update-xsoar-config-file --add-all-marketplace-packs`

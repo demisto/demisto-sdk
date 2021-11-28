@@ -947,13 +947,13 @@ def download(**kwargs):
     "-pd", "--pack-data", help="The Pack Data to add to XSOAR Configuration File - "
            "Pack URL for Custom Pack and Pack Version for OOTB Pack", required=False, multiple=False)
 @click.option(
-    "-amp", "--add-marketplace-pack", help="Add a Pack to the MarketPlace Packs section in the Configuration File",
+    "-mp", "--add-marketplace-pack", help="Add a Pack to the MarketPlace Packs section in the Configuration File",
     required=False, is_flag=True)
 @click.option(
-    "-acp", "--add-custom-pack", help="Add the Pack to the Custom Packs section in the Configuration File",
+    "-cp", "--add-custom-pack", help="Add the Pack to the Custom Packs section in the Configuration File",
     is_flag=True)
 @click.option(
-    "-aamp", "--add-all-marketplace-packs",
+    "-all", "--add-all-marketplace-packs",
     help="Add all the installed MarketPlace Packs to the marketplace_packs in XSOAR Configuration File", is_flag=True)
 @click.option(
     "--insecure", help="Skip certificate validation", is_flag=True)

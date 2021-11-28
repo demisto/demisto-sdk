@@ -234,7 +234,8 @@ class Downloader:
         input_files_regex_match = []
         if self.regex:
             for input_file in self.input_files:
-                input_files_regex_match.append(input_file) if re.search(self.regex, input_file) else None
+                if re.search(self.regex, input_file):
+                    input_files_regex_match.append(input_file)
             self.input_files = input_files_regex_match
 
     def verify_output_pack_is_pack(self) -> bool:

@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 
 from click.testing import CliRunner
 
@@ -74,7 +73,7 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
             import demisto_sdk.commands.common.update_id_set as uis
             mocker.patch.object(uis, 'cpu_count', return_value=1)
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [FIND_DEPENDENCIES_CMD, '-i', str(Path("Packs") / pack._pack_path.name), '-v'],
+            result = runner.invoke(main, [FIND_DEPENDENCIES_CMD, '-i', pack.relative_path, '-v'],
                                    catch_exceptions=False)
         assert secho.call_args_list[0][0][0] == '\n# Pack ID: FindDependencyPack'  # first log line is the pack name
         assert secho.call_args_list[1][0][0] == '### Scripts'

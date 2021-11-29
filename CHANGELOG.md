@@ -3,6 +3,7 @@
 * The **format** command will now not remove the `defaultRows` key from incident, indicator and generic fields with `type: grid`.
 * Fixed an issue with the **validate** command when a layoutscontainer did not have the `fromversion` field set.
 * Added `skipVerify` argument in **upload** command to skip pack signature verification.
+* added a new command **update-xsoar-config-file** to handle your XSOAR Configuration File.
 * Fixed `to_kebab_case`, it will now deal with strings that have hyphens, commas or periods in them, changing them to be hyphens in the new string.
 
 # 1.5.3

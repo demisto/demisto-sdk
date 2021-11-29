@@ -1437,7 +1437,7 @@ def update_release_notes(**kwargs):
 @click.option(
     "-i", "--input", help="Pack path to find dependencies. For example: Pack/HelloWorld. When using the"
                           " --get-dependent-on flag, this argument can be used multiple times.", required=False,
-    type=click.Path(dir_okay=True), multiple=True)
+    type=click.Path(exists=True, dir_okay=True), multiple=True)
 @click.option(
     "-idp", "--id-set-path", help="Path to id set json file.", required=False)
 @click.option(

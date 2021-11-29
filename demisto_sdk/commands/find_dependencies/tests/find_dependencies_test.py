@@ -2398,5 +2398,5 @@ class TestGetDependentOnGivenPack:
         dependent_packs_dict, dependent_packs = get_packs_dependent_on_given_packs('pack4', '')
         assert 'pack2' in dependent_packs
         assert 'pack1' in dependent_packs
-        assert dependent_packs_dict['pack4']['packsDependentOnThisPack']['pack1']['mandatory'] == True
+        assert dependent_packs_dict['pack4']['packsDependentOnThisPack']['pack1']['mandatory']
         assert len(dependent_packs) == 2

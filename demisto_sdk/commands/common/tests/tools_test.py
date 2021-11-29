@@ -1480,7 +1480,10 @@ KEBAB_CASES = [('Scan File', 'scan-file'),
                ('Scan.File', 'scan-file'),
                ('*scan,file', 'scan-file'),
                ('Scan     File', 'scan-file'),
-               ('Scan - File', 'scan-file')]
+               ('Scan - File', 'scan-file'),
+               ('Scan-File', 'scan-file'),
+               ('Scan- File', 'scan-file'),
+               ('Scan -File', 'scan-file')]
 
 
 @pytest.mark.parametrize('input_str, output_str', KEBAB_CASES)

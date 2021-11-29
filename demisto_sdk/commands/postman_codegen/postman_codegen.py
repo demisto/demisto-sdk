@@ -88,6 +88,7 @@ def create_body_format(body: Union[dict, list]):
         "key7": "{key7}"
     }
     """
+
     def format_value(d, o):
         for k, v in d.items():
             if isinstance(v, dict):
@@ -361,13 +362,13 @@ def convert_request_to_command(item: dict):
                 body_obj = json.loads(request_body.get('raw'))
                 body_format = create_body_format(body_obj)
                 flattened_json = flatten_json(body_obj)
-                shared_args_path = find_shared_args_path(flattened_json)
+                shared_arg_to_split_position_dict = find_shared_args_path(flattened_json)
 
                 for key, value in flattened_json.items():
                     path_split = key.split('.')
                     json_path = path_split[:-1]
-                    path_length = shared_args_path[path_split[-1].lower()] + 1
-                    arg_name = '_'.join(path_split[-path_length:])
+                    min_unique_path_length = shared_arg_to_split_position_dict[path_split[-1].lower()] + 1
+                    arg_name = '_'.join(path_split[-min_unique_path_length:])
                     arg = IntegrationGeneratorArg(
                         name=arg_name,
                         description='',
@@ -452,21 +453,37 @@ def duplicate_requests_check(commands_names_dict: dict) -> None:
                                       f'Names are case-insensitive and whitespaces are ignored.'
 
 
-def find_shared_args_path(flattened_json: dict) -> dict:
-    names_dict: dict = defaultdict(list)
-    shared_args_path: dict = defaultdict(int)
+def find_shared_args_path(flattened_json: Dict[str, any]) -> Dict[str, int]:
+    """
+    Finds the maximum shared path for all arguments with the same name.
+    Args:
+        flattened_json (Dict[str, any]): Flattened json returned after running the flatten_json function.
+
+    Returns:
+        (Dict[str, int]): Dictionary from argument name to the minimum unique path length for all arguments with this name.
+    """
+    arg_name_to_split_path_dict: Dict[str, List[List[str]]] = defaultdict(list)
+    shared_arg_to_split_position_dict: Dict[str, int] = defaultdict(int)
     for key in flattened_json:
-        path_split = key.split('.')
-        arg_name = path_split[-1].lower()
+        split_path = key.split('.')
+        arg_name = split_path[-1].lower()
 
-        # finds the maximum shared path with all other arguments in the same list
-        for other_arg in names_dict[arg_name]:
-            other_path_split = other_arg.split('.')
-            for max_same_path, (other_path, arg_path) in enumerate(zip(other_path_split[::-1], path_split[::-1])):
-                if other_path == arg_path:
-                    shared_args_path[arg_name] = max(max_same_path + 1, shared_args_path[arg_name])
-                else:
-                    break
+        shared_arg_to_split_position_dict[arg_name] = updated_max_length(split_path, arg_name_to_split_path_dict[arg_name],
+                                                                         shared_arg_to_split_position_dict[arg_name])
+        arg_name_to_split_path_dict[arg_name].append(split_path)
 
-        names_dict[arg_name].append(key)
-    return shared_args_path
+    return shared_arg_to_split_position_dict
+
+
+def updated_max_length(split_path: List[str], other_args_split_paths: List[List[str]] = list, current_max: int = 0):
+    """
+    Finds the maximum shared path between the path given and all other arguments in the given list.
+    """
+    for other_arg_split_path in other_args_split_paths:
+        for max_same_path, (other_path, arg_path) in enumerate(zip(other_arg_split_path[::-1], split_path[::-1])):
+            if other_path == arg_path:
+                current_max = max(max_same_path + 1, current_max)
+            else:
+                break
+
+    return current_max

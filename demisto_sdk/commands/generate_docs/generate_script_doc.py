@@ -1,7 +1,8 @@
 import os
 import random
 
-from demisto_sdk.commands.common.constants import DEFAULT_ID_SET_PATH
+from demisto_sdk.commands.common.constants import (
+    DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_ID_SET_PATH)
 from demisto_sdk.commands.common.tools import (get_from_version, get_yaml,
                                                open_id_set_file, print_error,
                                                print_warning)
@@ -135,7 +136,7 @@ def get_script_info(script_path):
 
     res = [{'Name': 'Script Type', 'Description': script_type},
            {'Name': 'Tags', 'Description': tags}]
-    if from_version != '0.0.0':
+    if from_version != DEFAULT_CONTENT_ITEM_FROM_VERSION:
         res.append({'Name': 'Cortex XSOAR Version', 'Description': from_version})
     return res
 

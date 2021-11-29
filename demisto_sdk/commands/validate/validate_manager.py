@@ -1034,7 +1034,7 @@ class ValidateManager:
                                      pack_error_ignore_list,
                                      print_as_warnings=self.print_ignored_errors,
                                      json_file_path=self.json_file_path)
-        is_valid = job_validator.is_valid_file(validate_rn=False)  # todo validate_rn = ?
+        is_valid = job_validator.is_valid_file()
         if not is_valid:
             click.secho(job_validator.get_errors(), fg="bright_red")
 

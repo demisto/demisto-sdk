@@ -1897,7 +1897,7 @@ def to_kebab_case(s: str):
     """
     if s:
         new_s = s.lower()
-        new_s = re.sub(' +', '-', new_s)
+        new_s = re.sub('[ ,-]+', '-', new_s)
         new_s = re.sub('[^A-Za-z0-9-]+', '', new_s)
         m = re.search('[a-z0-9]+(-[a-z]+)*', new_s)
         if m:

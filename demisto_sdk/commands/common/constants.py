@@ -1233,7 +1233,7 @@ VALIDATED_PACK_ITEM_TYPES = [
     'Layouts',
     'PreProcessRules',
     'Lists',
-    # todo Jobs?
+    'Jobs'
 ]
 
 FIRST_FETCH = 'first_fetch'

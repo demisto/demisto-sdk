@@ -67,11 +67,7 @@ class TestXSOARConfigFileUpdater:
                 config_file_info = {}
             assert config_file_info == expected_outputs
 
-    @pytest.mark.parametrize(argnames='add_marketplace_pack, pack_id, pack_data, expected_path, err, expected_outputs',
-                             argvalues=[(True, 'Pack1', '1.0.1', 'xsoar_config.json', '',
-                                         {'marketplace_packs': [{'id': 'Pack1', 'version': '1.0.1'}]})])
-    def test_add_marketplace_pack(self, add_marketplace_pack, pack_id, pack_data, expected_path, capsys, err,
-                                  expected_outputs):
+    def test_add_marketplace_pack(self, capsys):
         """
         Given:
             - add_marketplace_pack arg as True
@@ -85,23 +81,19 @@ class TestXSOARConfigFileUpdater:
         with temp_dir() as tmp_output_dir:
             click.Context(command=xsoar_config_file_update).invoke(xsoar_config_file_update,
                                                                    file_path=tmp_output_dir / 'xsoar_config.json',
-                                                                   add_marketplace_pack=add_marketplace_pack,
-                                                                   pack_id=pack_id,
-                                                                   pack_data=pack_data)
-            assert Path(f'{tmp_output_dir}/{expected_path}').exists()
+                                                                   add_marketplace_pack=True,
+                                                                   pack_id='Pack1',
+                                                                   pack_data='1.0.1')
+            assert Path(f'{tmp_output_dir}/xsoar_config.json').exists()
 
             try:
-                with open(f'{tmp_output_dir}/{expected_path}', 'r') as config_file:
+                with open(f'{tmp_output_dir}/xsoar_config.json', 'r') as config_file:
                     config_file_info = json.load(config_file)
             except IsADirectoryError:
                 config_file_info = {}
-            assert config_file_info == expected_outputs
+            assert config_file_info == {'marketplace_packs': [{'id': 'Pack1', 'version': '1.0.1'}]}
 
-    @pytest.mark.parametrize(argnames='add_custom_pack, pack_id, pack_data, expected_path, err, expected_outputs',
-                             argvalues=[(True, 'Pack1', 'Packs/Pack1', 'xsoar_config.json', '',
-                                         {'custom_packs': [{'id': 'Pack1', 'url': 'Packs/Pack1'}]})])
-    def test_add_custom_pack(self, add_custom_pack, pack_id, pack_data, expected_path, capsys, err,
-                             expected_outputs):
+    def test_add_custom_pack(self, capsys):
         """
         Given:
             - add_custom_pack arg as True
@@ -115,17 +107,17 @@ class TestXSOARConfigFileUpdater:
         with temp_dir() as tmp_output_dir:
             click.Context(command=xsoar_config_file_update).invoke(xsoar_config_file_update,
                                                                    file_path=tmp_output_dir / 'xsoar_config.json',
-                                                                   add_custom_pack=add_custom_pack,
-                                                                   pack_id=pack_id,
-                                                                   pack_data=pack_data)
-            assert Path(f'{tmp_output_dir}/{expected_path}').exists()
+                                                                   add_custom_pack=True,
+                                                                   pack_id='Pack1',
+                                                                   pack_data='Packs/Pack1')
+            assert Path(f'{tmp_output_dir}/xsoar_config.json').exists()
 
             try:
-                with open(f'{tmp_output_dir}/{expected_path}', 'r') as config_file:
+                with open(f'{tmp_output_dir}/xsoar_config.json', 'r') as config_file:
                     config_file_info = json.load(config_file)
             except IsADirectoryError:
                 config_file_info = {}
-            assert config_file_info == expected_outputs
+            assert config_file_info == {'custom_packs': [{'id': 'Pack1', 'url': 'Packs/Pack1'}]}
 
     @pytest.mark.parametrize(argnames='add_marketplace_pack, pack_id, pack_data, expected_path, err, expected_outputs',
                              argvalues=[(True, '', '1.0.1', '', "Error: Missing option '-pi' / '--pack-id'.", {}),

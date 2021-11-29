@@ -139,7 +139,7 @@ class XSOARConfigFileUpdater:
             with open(self.file_path, 'r') as config_file:
                 try:
                     config_file_info = json.load(config_file)
-                except json.JSONDecodeError:
+                except json.JSONDecodeError:  # In case that the file exits but empty
                     pass
         return config_file_info
 

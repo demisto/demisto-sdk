@@ -41,7 +41,6 @@ ID_SET_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Cla
                    'GenericDefinitions', 'Lists', 'Jobs']
 
 BUILT_IN_FIELDS = [
-    # todo anything to update?
     "name",
     "details",
     "severity",

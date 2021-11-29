@@ -19,7 +19,7 @@ class Job(JSONBased):
     def create_default_job(self):
         self.write_json({
             'fromVersion': DEFAULT_JOB_FROM_VERSION,
-            'id': self.pure_name,  # todo
+            'id': self.pure_name,
             'name': self.pure_name,
             'isFeed': self.is_feed,
             'details': self.details,

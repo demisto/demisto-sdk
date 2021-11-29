@@ -543,7 +543,7 @@ class UpdateRN:
                 rn_desc += '\n'
             else:
                 rn_desc = f'##### {content_name}\n'
-                if self.update_type == 'maintenance':  # todo typo
+                if self.update_type == 'maintenance':
                     rn_desc += '- Maintenance and stability enhancements.\n'
                 elif self.update_type == 'documentation':
                     rn_desc += '- Documentation and metadata improvements.\n'

@@ -31,7 +31,7 @@ class Job(JSONBased):
 
     @property
     def playbook_name(self):
-        default = f'{self.pure_name}_playbook'
+        default = f'job-{self.pure_name}_playbook'
 
         try:
             return (self.read_json_as_dict() or {}).get('playbookId', default)

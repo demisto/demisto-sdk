@@ -343,9 +343,8 @@ class Pack:
                    details: str = '') -> Job:
         job = Job(pure_name=name or str(len(self.jobs)), jobs_dir_path=self._jobs_path, is_feed=is_feed,
                   selected_feeds=selected_feeds, details=details)
-        job_playbook = self.create_playbook(name=job.playbook_name)
+        self.create_playbook(name=job.playbook_name).create_default_playbook(name=job.playbook_name)
         self.jobs.append(job)
-        self.playbooks.append(job_playbook)
         return job
 
     def create_layout(

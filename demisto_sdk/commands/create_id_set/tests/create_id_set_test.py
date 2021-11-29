@@ -160,14 +160,23 @@ def test_create_id_set_flow(repo, mocker):
         entity_content_in_id_set = id_set_content.get(id_set_entity)
         assert entity_content_in_id_set, f'ID set for {id_set_entity} is empty'
 
-        # Since Layouts folder contains both layouts and layoutcontainers then this folder has 2 * amount objects
-        # And since there is a test playbook for each integration and script.
+        factor = 1
+        if id_set_entity in {'Layouts', 'TestPlaybooks', 'Jobs'}:
+            '''
+            Layouts: The folder contains both layouts and layoutcontainers
+            TestPlaybooks: each integration and script has a test playbook
+            Jobs: The default test suite pack has two jobs (is_feed=true, is_feed=false), and a playbook
+            '''
+            factor = 2
 
-        # The default test suite pack has two jobs (is_feed=true, is_feed=false), so two jobs are expected.
-        if id_set_entity not in {'Layouts', 'TestPlaybooks', 'Jobs'}:
-            assert len(entity_content_in_id_set) == number_of_packs_to_create
-        else:
-            assert len(entity_content_in_id_set) == number_of_packs_to_create * 2
+        elif id_set_entity == 'playbooks':
+            ''' 
+            One playbook is generated for every pack,
+            And one more is created for each of the 2 Job objects that are automatically created in every pack. 
+            '''
+            factor = 3
+
+        assert len(entity_content_in_id_set) == factor * number_of_packs_to_create
 
 
 def setup_id_set():

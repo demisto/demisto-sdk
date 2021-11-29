@@ -1,3 +1,4 @@
+from json.decoder import JSONDecodeError
 from pathlib import Path
 from typing import List, Optional
 
@@ -10,20 +11,30 @@ class Job(JSONBased):
                  details: str = ''):
         super().__init__(jobs_dir_path, pure_name, "job")
         self.pure_name = pure_name
-        self.is_feed = is_feed
-        self.selected_feeds = selected_feeds or []
-        self.details = details
+        self.create_default_job(
+            is_feed=is_feed,
+            selected_feeds=selected_feeds or [],
+            details=details
+        )
 
-        self.create_default_job()
-
-    def create_default_job(self):
+    def create_default_job(self, is_feed: bool, selected_feeds: list, details: str):
         self.write_json({
             'fromVersion': DEFAULT_JOB_FROM_VERSION,
             'id': self.pure_name,
             'name': self.pure_name,
-            'isFeed': self.is_feed,
-            'details': self.details,
-            'selectedFeeds': self.selected_feeds or [],
-            'isAllFeeds': self.is_feed and not self.selected_feeds,
-            'playbookId': f'{self.pure_name}_playbookId',  # todo can we assume it exists? otherwise, tests may fail
+            'isFeed': is_feed,
+            'details': details,
+            'selectedFeeds': selected_feeds,
+            'isAllFeeds': is_feed and not selected_feeds,
+            'playbookId': self.playbook_name
         })
+
+    @property
+    def playbook_name(self):
+        default = f'{self.pure_name}_playbook'
+
+        try:
+            return (self.read_json_as_dict() or {}).get('playbookId', default)
+
+        except JSONDecodeError:  # file not yet written
+            return default

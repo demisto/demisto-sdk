@@ -45,7 +45,7 @@ class JobValidator(ContentEntityValidator):
                     return False
 
             elif selected_feeds:
-                pass  # todo validate feeds somehow?
+                return True  # feeds are validated in the id_set
 
             elif is_all_feeds:
                 return True

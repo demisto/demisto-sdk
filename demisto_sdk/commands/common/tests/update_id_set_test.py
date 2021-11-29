@@ -2202,7 +2202,7 @@ class TestJob:
         assert datum['fromversion'] == DEFAULT_JOB_FROM_VERSION
         assert datum['pack'] == pack.name
         assert datum['details'] == job_details
-        assert datum['selectedFeeds'] == job.selected_feeds or []
+        assert datum['selectedFeeds'] == []
 
         assert (f'adding {job.path} to id_set' in captured.out) == print_logs
 

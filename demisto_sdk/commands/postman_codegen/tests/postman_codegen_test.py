@@ -235,7 +235,8 @@ class TestPostmanHelpers:
         - Returns arguments' dictionary with an entry for each argument name, that holds the minimum distinguishing shared path of
         all arguments with the same name
         """
-        assert find_shared_args_path(flattened_json) == shared_arg_to_split_position_dict
+        for key, value in find_shared_args_path(flattened_json).items():
+            assert shared_arg_to_split_position_dict[key] == value
 
     split_path1 = 'collection.item.settings.name'.split('.')
     split_path2 = 'collection.info.settings.name'.split('.')

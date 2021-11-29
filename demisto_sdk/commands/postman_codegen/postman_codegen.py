@@ -2,7 +2,7 @@ import json
 import logging
 import re
 from collections import defaultdict
-from typing import Dict, List, Union
+from typing import Any, Dict, List, Union
 
 import demisto_sdk.commands.common.tools as tools
 from demisto_sdk.commands.common.constants import DemistoException
@@ -453,7 +453,7 @@ def duplicate_requests_check(commands_names_dict: dict) -> None:
                                       f'Names are case-insensitive and whitespaces are ignored.'
 
 
-def find_shared_args_path(flattened_json: Dict[str, any]) -> Dict[str, int]:
+def find_shared_args_path(flattened_json: Dict[str, Any]) -> Dict[str, int]:
     """
     Finds the maximum shared path for all arguments with the same name.
     Args:
@@ -475,7 +475,7 @@ def find_shared_args_path(flattened_json: Dict[str, any]) -> Dict[str, int]:
     return shared_arg_to_split_position_dict
 
 
-def updated_max_length(split_path: List[str], other_args_split_paths: List[List[str]] = list, current_max: int = 0):
+def updated_max_length(split_path: List[str], other_args_split_paths: List[List[str]] = List, current_max: int = 0):
     """
     Finds the maximum shared path between the path given and all other arguments in the given list.
     """

@@ -60,6 +60,7 @@ from demisto_sdk.commands.postman_codegen.postman_codegen import \
 # Import demisto-sdk commands
 from demisto_sdk.commands.run_cmd.runner import Runner
 from demisto_sdk.commands.run_playbook.playbook_runner import PlaybookRunner
+from demisto_sdk.commands.run_test_playbook.test_playbook_runner import TestPlaybookRunner
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
 from demisto_sdk.commands.split.jsonsplitter import JsonSplitter
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
@@ -1002,6 +1003,35 @@ def run_playbook(**kwargs):
     check_configuration_file('run-playbook', kwargs)
     playbook_runner = PlaybookRunner(**kwargs)
     return playbook_runner.run_playbook()
+
+
+# ====================== run-test-playbook ====================== #
+@main.command()
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    '--playbook_id', '-p',
+    help="The playbook ID to run.",
+    required=True
+)
+@click.option(
+    '--wait', '-w', is_flag=True,
+    help="Wait until the test-playbook run is finished and get a response."
+)
+@click.option(
+    '--timeout', '-t',
+    default=90,
+    show_default=True,
+    help="Timeout for the command. The test-playbook will continue to run in your instance"
+)
+@click.option(
+    "--insecure", help="Skip certificate validation.", is_flag=True)
+def run_playbook(**kwargs):
+    """Run a test playbooks in your instance."""
+    check_configuration_file('run-test-playbook', kwargs)
+    test_playbook_runner = TestPlaybookRunner(**kwargs)
+    return test_playbook_runner.run_test_playbook()
 
 
 # ====================== generate-outputs ====================== #

@@ -1403,10 +1403,9 @@ def get_job_data(path: str, print_logs: bool):
     json_data = get_json(path)
     data = create_common_entity_data(path=path,
                                      name=json_data.get('name'),
-                                     to_version=json_data.get('toServerVersion'),
-                                     from_version=json_data.get('fromServerVersion'),  # todo here or below?
+                                     to_version=json_data.get('toVersion'),
+                                     from_version=json_data.get('fromVersion'),
                                      pack=get_pack_name(path))
-    data['fromServerVersion'] = json_data.get('fromServerVersion')
     data['playbookId'] = json_data.get('playbookId')
     data['selectedFeeds'] = json_data.get('selectedFeeds', [])
     data['details'] = json_data.get('details', [])

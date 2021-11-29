@@ -1988,11 +1988,10 @@ class TestDependsOnJob:
                 "jobby": {
                     "name": "jobby",
                     "file_path": "Packs/pack0/Jobs/job-jobby.json",
-                    "fromversion": DEFAULT_JOB_FROM_VERSION,
                     "pack": "pack0",
                     "playbookId": "Pentera Run Scan",
                     "selectedFeeds": selected_feeds,
-                    "fromServerVersion": DEFAULT_JOB_FROM_VERSION  # todo handle redundancy
+                    "fromVersion": DEFAULT_JOB_FROM_VERSION
                 }
             }
         ]

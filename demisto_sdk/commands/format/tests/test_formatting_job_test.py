@@ -33,10 +33,10 @@ def test_infer_selected_feeds(repo, is_feed: bool, all_feeds: bool):
 
 
 @pytest.mark.parametrize('is_feed', (True, False))
-def test_add_default_from_server_version(repo, is_feed: bool):
+def test_add_default_fromversion(repo, is_feed: bool):
     """
     Given
-            A Job object that doesn't have fromServerVersion
+            A Job object that doesn't have fromVersion
     When
             Calling format
     Then
@@ -45,16 +45,16 @@ def test_add_default_from_server_version(repo, is_feed: bool):
     pack = repo.create_pack()
     job = pack.create_job(is_feed)
     job_dict_before = job.read_json_as_dict()
-    assert job_dict_before['fromServerVersion'] == DEFAULT_JOB_FROM_VERSION
+    assert job_dict_before['fromVersion'] == DEFAULT_JOB_FROM_VERSION
 
-    job.remove('fromServerVersion')
-    assert 'fromServerVersion' not in job.read_json_as_dict()
+    job.remove('fromVersion')
+    assert 'fromVersion' not in job.read_json_as_dict()
 
     run_format_on_file(job.path, JOB, DEFAULT_JOB_FROM_VERSION)
 
     job_dict_after = job.read_json_as_dict()
-    assert 'fromServerVersion' in job_dict_after
-    assert job_dict_after['fromServerVersion'] == DEFAULT_JOB_FROM_VERSION
+    assert 'fromVersion' in job_dict_after
+    assert job_dict_after['fromVersion'] == DEFAULT_JOB_FROM_VERSION
 
 
 @pytest.mark.parametrize('is_feed', (True, False))

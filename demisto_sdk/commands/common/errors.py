@@ -4,6 +4,7 @@ import decorator
 
 from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
                                                    CONF_PATH,
+                                                   DEFAULT_JOB_FROM_VERSION,
                                                    INTEGRATION_CATEGORIES,
                                                    PACK_METADATA_DESC,
                                                    PACK_METADATA_NAME)
@@ -365,20 +366,28 @@ ERROR_CODE = {
     "xsoar_config_file_malformed": {'code': "XC101", 'ui_applicable': False, 'related_field': ''},
 
     # JB - Jobs
-    "invalid_from_server_version_in_job": {
-        'code': "JB100", 'ui_applicable': False, 'related_field': 'fromServerVersion'
+    "invalid_fromversion_in_job": {
+        'code': "JB100", 'ui_applicable': False,
+        'related_field': 'fromVersion'
     },
     "invalid_both_selected_and_all_feeds_in_job": {
-        'code': "JB101", 'ui_applicable': False, 'related_field': 'isAllFields'
+        'code': "JB101", 'ui_applicable': False,
+        'related_field': 'isAllFields'
     },
     "unexpected_field_values_in_non_feed_job": {
-        'code': "JB102", 'ui_applicable': False, 'related_field': 'isFeed'
+        'code': "JB102",
+        'ui_applicable': False,
+        'related_field': 'isFeed'
     },
     "missing_field_values_in_feed_job": {
-        'code': "JB103", 'ui_applicable': False, 'related_field': 'isFeed'
+        'code': "JB103",
+        'ui_applicable': False,
+        'related_field': 'isFeed'
     },
     "empty_or_missing_job_name": {
-        'code': "JB104", 'ui_applicable': False, 'related_field': 'name'
+        'code': "JB104",
+        'ui_applicable': False,
+        'related_field': 'name'
     },
 }
 
@@ -1751,8 +1760,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_from_server_version_in_job(version):
-        return f'fromServerVersion field in Job needs to be at least 6.5.0 (found {version})'
+    def invalid_fromversion_in_job(version):
+        return f'fromVersion field in Job needs to be at least {DEFAULT_JOB_FROM_VERSION} (found {version})'
 
     @staticmethod
     @error_code_decorator

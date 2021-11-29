@@ -2199,7 +2199,7 @@ class TestJob:
         assert path.parts[-2] == JOBS_DIR
         assert path.parts[-3] == pack.name
 
-        assert datum['fromServerVersion'] == DEFAULT_JOB_FROM_VERSION
+        assert datum['fromVersion'] == DEFAULT_JOB_FROM_VERSION
         assert datum['pack'] == pack.name
         assert datum['details'] == job_details
         assert datum['selectedFeeds'] == job.selected_feeds or []

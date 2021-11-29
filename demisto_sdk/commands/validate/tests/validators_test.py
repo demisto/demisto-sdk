@@ -11,6 +11,7 @@ from mock import patch
 import demisto_sdk.commands.validate.validate_manager
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (CONF_PATH,
+                                                   DEFAULT_JOB_FROM_VERSION,
                                                    PACKS_PACK_META_FILE_NAME,
                                                    TEST_PLAYBOOK, FileType)
 from demisto_sdk.commands.common.errors import Errors
@@ -1630,14 +1631,14 @@ def test_job_from_version(repo, capsys, is_feed: bool, version: Optional[str]):
     """
     pack = repo.create_pack()
     job = pack.create_job(is_feed, 'job_name')
-    job.update({'fromServerVersion': version})
+    job.update({'fromVersion': version})
     validate_manager = ValidateManager(check_is_unskipped=False, file_path=job.path, skip_conf_json=True)
 
     with ChangeCWD(repo.path):
         assert not validate_manager.validate_job(StructureValidator(job.path, is_new_file=True),
                                                  pack_error_ignore_list=list())
     stdout = capsys.readouterr().out
-    assert f"fromServerVersion field in Job needs to be at least 6.5.0 (found {version})" in stdout
+    assert f"fromVersion field in Job needs to be at least {DEFAULT_JOB_FROM_VERSION} (found {version})" in stdout
 
 
 def test_job_non_feed_with_selected_feeds(repo, capsys):

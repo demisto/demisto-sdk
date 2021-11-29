@@ -12,7 +12,7 @@ class JobValidator(ContentEntityValidator):
                  **kwargs):
         super().__init__(structure_validator, ignored_errors, print_as_warnings, json_file_path=json_file_path,
                          **kwargs)
-        self.from_version = self.current_file.get('fromServerVersion')
+        self.from_version = self.current_file.get('fromVersion')
         self._errors = []
 
     def get_errors(self):
@@ -24,7 +24,7 @@ class JobValidator(ContentEntityValidator):
 
     def is_valid_fromversion(self):
         if not self.from_version or LooseVersion(self.from_version) < LooseVersion(DEFAULT_JOB_FROM_VERSION):
-            error_message, error_code = Errors.invalid_from_server_version_in_job(self.from_version)
+            error_message, error_code = Errors.invalid_fromversion_in_job(self.from_version)
             formatted_error = self.handle_error(error_message, error_code, file_path=self.file_path)
             if formatted_error:
                 self._errors.append(error_message)

@@ -65,4 +65,4 @@ class JobJSONFormat(BaseUpdateJSON):
         return format_result, result_code
 
     def set_from_server_version_to_default(self, location=None):
-        self.set_default_value('fromServerVersion', DEFAULT_JOB_FROM_VERSION, location=location)
+        self.set_default_value('fromVersion', DEFAULT_JOB_FROM_VERSION, location=location)

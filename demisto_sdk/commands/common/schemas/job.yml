@@ -206,10 +206,10 @@ mapping:
     required: false
   fromServerVersion:
     type: str
-    required: true
+    required: false
   fromVersion:
     type: str
-    required: false
+    required: true
   toServerVersion:
     type: str
     required: false

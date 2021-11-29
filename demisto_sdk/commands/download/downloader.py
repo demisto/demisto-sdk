@@ -3,6 +3,7 @@ import io
 import json
 import logging
 import os
+import re
 import shutil
 import tarfile
 from tempfile import mkdtemp
@@ -44,6 +45,7 @@ class Downloader:
     Attributes:
         output_pack_path (str): The path of the output pack to download custom content to
         input_files (list): The list of custom content files names to download
+        regex (str): Regex Pattern, download all the custom content files that match this regex pattern
         force (bool): Indicates whether to merge existing files or not
         insecure (bool): Indicates whether to use insecure connection or not
         log_verbose (bool): Indicates whether to use verbose logs or not
@@ -57,11 +59,13 @@ class Downloader:
         pack_content (dict): The pack content that maps the pack
     """
 
-    def __init__(self, output: str, input: str, force: bool = False, insecure: bool = False, verbose: bool = False,
-                 list_files: bool = False, all_custom_content: bool = False, run_format: bool = False):
+    def __init__(self, output: str, input: str, regex: str = '', force: bool = False, insecure: bool = False,
+                 verbose: bool = False, list_files: bool = False, all_custom_content: bool = False,
+                 run_format: bool = False):
         logging.disable(logging.CRITICAL)
         self.output_pack_path = output
         self.input_files = list(input)
+        self.regex = regex
         self.force = force
         self.insecure = insecure
         self.log_verbose = verbose
@@ -98,6 +102,7 @@ class Downloader:
         if self.handle_list_files_flag():
             return 0
         self.handle_all_custom_content_flag()
+        self.handle_regex_flag()
         if not self.verify_output_pack_is_pack():
             return 1
 
@@ -126,7 +131,7 @@ class Downloader:
                 output_flag = False
                 print_color("Error: Missing option '-o' / '--output'.", LOG_COLORS.RED)
             if not self.input_files:
-                if not self.all_custom_content:
+                if not self.all_custom_content and not self.regex:
                     input_flag = False
                     print_color("Error: Missing option '-i' / '--input'.", LOG_COLORS.RED)
             if not input_flag or not output_flag:
@@ -220,6 +225,18 @@ class Downloader:
             names_list: list = [cco['name'] for cco in custom_content_objects]
             # Remove duplicated names, for example: IncidentType & Layout with the same name.
             self.input_files = list(set(names_list))
+
+    def handle_regex_flag(self) -> None:
+        """
+        Handles the case where the regex flag is given
+        :return: None
+        """
+        input_files_regex_match = []
+        if self.regex:
+            for input_file in self.input_files:
+                if re.search(self.regex, input_file):
+                    input_files_regex_match.append(input_file)
+            self.input_files = input_files_regex_match
 
     def verify_output_pack_is_pack(self) -> bool:
         """

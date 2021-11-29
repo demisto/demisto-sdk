@@ -1011,9 +1011,13 @@ def run_playbook(**kwargs):
     '-h', '--help'
 )
 @click.option(
-    '--playbook_id', '-p',
+    '--input', '-i',
     help="The playbook ID to run.",
-    required=True
+    required=False
+)
+@click.option(
+    '--all', is_flag=True,
+    help="Wait until the test-playbook run is finished and get a response."
 )
 @click.option(
     '--wait', '-w', is_flag=True,
@@ -1031,7 +1035,7 @@ def run_playbook(**kwargs):
     """Run a test playbooks in your instance."""
     check_configuration_file('run-test-playbook', kwargs)
     test_playbook_runner = TestPlaybookRunner(**kwargs)
-    return test_playbook_runner.run_test_playbook()
+    return test_playbook_runner.run_test_playbooks()
 
 
 # ====================== generate-outputs ====================== #

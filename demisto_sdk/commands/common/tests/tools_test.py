@@ -1477,6 +1477,7 @@ def test_get_test_playbook_id():
 
 KEBAB_CASES = [('Scan File', 'scan-file'),
                ('Scan File-', 'scan-file'),
+               ('Scan.File', 'scan-file'),
                ('*scan,file', 'scan-file'),
                ('Scan     File', 'scan-file'),
                ('Scan - File', 'scan-file')]

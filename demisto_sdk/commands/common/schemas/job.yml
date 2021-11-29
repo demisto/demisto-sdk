@@ -56,7 +56,7 @@ mapping:
     required: false
   details:
     type: str
-    required: false
+    required: true
   openDuration:
     type: int
     required: false

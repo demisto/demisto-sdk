@@ -18,8 +18,8 @@ def test_infer_selected_feeds(repo, is_feed: bool, all_feeds: bool):
     pack = repo.create_pack()
     job = pack.create_job(is_feed)
     job_dict_before = job.read_json_as_dict()
-    assert job.is_feed == job_dict_before['isFeed']
-    assert job.is_feed == job_dict_before['isAllFeeds']
+    assert is_feed == job_dict_before['isFeed']
+    assert is_feed == job_dict_before['isAllFeeds']
     assert job_dict_before['selectedFeeds'] == []
 
     job.remove('selectedFeeds')

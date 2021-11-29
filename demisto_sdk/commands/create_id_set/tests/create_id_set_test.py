@@ -170,9 +170,9 @@ def test_create_id_set_flow(repo, mocker):
             factor = 2
 
         elif id_set_entity == 'playbooks':
-            ''' 
+            '''
             One playbook is generated for every pack,
-            And one more is created for each of the 2 Job objects that are automatically created in every pack. 
+            And one more is created for each of the 2 Job objects that are automatically created in every pack.
             '''
             factor = 3
 

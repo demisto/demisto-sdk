@@ -4,7 +4,7 @@
 * Fixed an issue with the **validate** command when a layoutscontainer did not have the `fromversion` field set.
 * Added `skipVerify` argument in **upload** command to skip pack signature verification.
 * added a new command **update-xsoar-config-file** to handle your XSOAR Configuration File.
-* The **postman-codegen** will not have duplicates arguments' name, it renames them to the minimum distinguishing shared path between it and other arguments with the same name.
+* The **postman-codegen** will not have duplicates arguments' name. It will rename them to the minimum distinguished shared path for each of them.
 
 # 1.5.3
 * The **format** command will now set `unsearchable: True` for incident, indicator and generic fields.

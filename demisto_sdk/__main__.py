@@ -549,6 +549,11 @@ def validate(config, **kwargs):
               type=click.Path(exists=True, resolve_path=True), hidden=True)
 @click.option('-rt', '--remove-test-playbooks', is_flag=True,
               help='Should remove test playbooks from content packs or not.', default=True, hidden=True)
+@click.option('-mp', '--marketplace', help='The marketplace the artifacts are created for, that '
+                                                          'determines which artifacts are created for each pack. '
+                                                          'Default is the XSOAR marketplace, that has all of the packs '
+                                                          'artifacts.', default='xsoar')  # TODO: verify default name
+
 def create_content_artifacts(**kwargs) -> int:
     """Generating the following artifacts:
        1. content_new - Contains all content objects of type json,yaml (from_version < 6.0.0)

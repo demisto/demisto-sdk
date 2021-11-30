@@ -51,6 +51,7 @@ from demisto_sdk.commands.common.hook_validations.incident_type import \
     IncidentTypeValidator
 from demisto_sdk.commands.common.hook_validations.integration import \
     IntegrationValidator
+from demisto_sdk.commands.common.hook_validations.job import JobValidator
 from demisto_sdk.commands.common.hook_validations.layout import (
     LayoutsContainerValidator, LayoutValidator)
 from demisto_sdk.commands.common.hook_validations.lists import ListsValidator
@@ -567,6 +568,9 @@ class ValidateManager:
         elif file_type == FileType.GENERIC_DEFINITION:
             return self.validate_generic_definition(structure_validator, pack_error_ignore_list)
 
+        elif file_type == FileType.JOB:
+            return self.validate_job(structure_validator, pack_error_ignore_list)
+
         else:
             error_message, error_code = Errors.file_type_not_supported()
             if self.handle_error(error_message=error_message, error_code=error_code, file_path=file_path):
@@ -1024,6 +1028,17 @@ class ValidateManager:
             author_valid = self.validate_author_image(author_image_path, pack_error_ignore_list)
 
         return files_valid and author_valid
+
+    def validate_job(self, structure_validator, pack_error_ignore_list):
+        job_validator = JobValidator(structure_validator,
+                                     pack_error_ignore_list,
+                                     print_as_warnings=self.print_ignored_errors,
+                                     json_file_path=self.json_file_path)
+        is_valid = job_validator.is_valid_file()
+        if not is_valid:
+            click.secho(job_validator.get_errors(), fg="bright_red")
+
+        return is_valid
 
     def validate_modified_files(self, modified_files):
         click.secho(f'\n================= Running validation on modified files =================',

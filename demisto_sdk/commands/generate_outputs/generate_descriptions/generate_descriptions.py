@@ -15,6 +15,9 @@ CREDENTIALS = 9
 
 old_merge_environment_settings = requests.Session.merge_environment_settings
 
+logger = logging.getLogger(__name__)
+
+
 # Globals
 STOP_SEQS = ["\n", "\ncontextPath:"]
 CURRENT_PROMPT = "contextPath: Guardicore.Incident.source_asset.labels\ndescriptionMessage: The source assets labels for the Incident." \
@@ -97,11 +100,11 @@ def generate_desc(input_ctx, verbose=False,
     prompt += f"contextPath: {input_ctx}\ndescriptionMessage:"
 
     if verbose:
-        print("=" * 25)
-        print("PROMPT: ")
-        print(prompt)
-        print("=" * 25)
-        print("Using GPT-3...")
+        logger.debug("=" * 25)
+        logger.debug("PROMPT: ")
+        logger.debug(prompt)
+        logger.debug("=" * 25)
+        logger.debug("Using GPT-3...")
 
     if insecure:
         return ai21_api_request(prompt, {"prob_check": prob_check,
@@ -156,7 +159,7 @@ def build_description_with_probabilities(data):
 
 def write_desc(c_index, final_output, o_index, output_path, verbose, yml_data):
     if verbose:
-        print(f"Writing: {final_output}\n---")
+        logger.debug(f"Writing: {final_output}\n---")
     yml_data['script']['commands'][c_index]['outputs'][o_index][
         'description'] = final_output
     write_yml(output_path, yml_data)
@@ -176,6 +179,20 @@ def correct_interactively(command_ctx, final_output, output):
     return final_output
 
 
+def print_experimental():
+    print()
+    print("⚠" * 100)
+    print('''███████ ██   ██ ██████  ███████ ██████  ██ ███    ███ ███████ ███    ██ ████████  █████  ██
+    ██       ██ ██  ██   ██ ██      ██   ██ ██ ████  ████ ██      ████   ██    ██    ██   ██ ██
+    █████     ███   ██████  █████   ██████  ██ ██ ████ ██ █████   ██ ██  ██    ██    ███████ ██
+    ██       ██ ██  ██      ██      ██   ██ ██ ██  ██  ██ ██      ██  ██ ██    ██    ██   ██ ██
+    ███████ ██   ██ ██      ███████ ██   ██ ██ ██      ██ ███████ ██   ████    ██    ██   ██ ███████
+    ''')
+    print("this feature is experimental, use with caution.")
+    print("⚠" * 100)
+    print()
+
+
 def generate_ai_descriptions(
         input_path: str,
         output_path: str = "out.yml",
@@ -192,17 +209,10 @@ def generate_ai_descriptions(
         verbose: verbose (debug mode)
         insecure: insecure https (debug mode)
     """
-    print()
-    print("⚠" * 100)
-    print('''███████ ██   ██ ██████  ███████ ██████  ██ ███    ███ ███████ ███    ██ ████████  █████  ██
-██       ██ ██  ██   ██ ██      ██   ██ ██ ████  ████ ██      ████   ██    ██    ██   ██ ██
-█████     ███   ██████  █████   ██████  ██ ██ ████ ██ █████   ██ ██  ██    ██    ███████ ██
-██       ██ ██  ██      ██      ██   ██ ██ ██  ██  ██ ██      ██  ██ ██    ██    ██   ██ ██
-███████ ██   ██ ██      ███████ ██   ██ ██ ██      ██ ███████ ██   ████    ██    ██   ██ ███████
-''')
-    print("this feature is experimental, use with caution.")
-    print("⚠" * 100)
-    print()
+    print_experimental()
+
+    if verbose:
+        logger.setLevel(logging.DEBUG)
 
     try:
         similar_paths: Dict[str, str] = {}
@@ -221,12 +231,12 @@ def generate_ai_descriptions(
             command_name = command.get('name')
 
             if interactive or verbose:
-                print(f'Command: {command_name}')
+                logger.debug(f'Command: {command_name}')
 
             outputs = command.get('outputs')
             if not outputs:
                 if interactive or verbose:
-                    print("-- Skipping because no outputs for command")
+                    logger.debug("-- Skipping because no outputs for command")
                 continue
 
             # Iterate over every output per command

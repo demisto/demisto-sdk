@@ -1496,6 +1496,12 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def pack_metadata_missing_categories(pack_meta_file) -> str:
+        return f'{pack_meta_file} - Missing categories.\nPlease supply at least one category, ' \
+               f'for example: {INTEGRATION_CATEGORIES}'
+
+    @staticmethod
+    @error_code_decorator
     def pack_name_already_exists(new_pack_name) -> str:
         return f"A pack named: {new_pack_name} already exists in content repository, " \
                f"change the pack's name in the metadata file."

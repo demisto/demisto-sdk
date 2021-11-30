@@ -103,10 +103,7 @@ def generate_desc(input_ctx, verbose=False,
         print("=" * 25)
         print("Using GPT-3...")
 
-    if insecure:
-        return ai21_api_request(prompt, {"prob_check": prob_check,
-                                         "insecure": insecure})
-    return ai21_api_request(prompt, {"prob_check": prob_check})
+    return ai21_api_request(prompt, {"prob_check": prob_check,  "insecure": insecure})
 
 
 def ai21_api_request(prompt, options={}):

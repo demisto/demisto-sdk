@@ -1,3 +1,5 @@
+import os
+
 import requests_mock
 
 from demisto_sdk.commands.common.legacy_git_tools import git_path
@@ -14,7 +16,7 @@ LOGPROB_INPUT_AI21 = get_json(
     f'{git_path()}/demisto_sdk/commands/generate_outputs/generate_descriptions/tests/test_data/logprob_res.json')
 
 
-def test_ai21_api_request():
+def test_ai21_api_request(mocker):
     """
         Given
            - A prompt
@@ -25,6 +27,8 @@ def test_ai21_api_request():
     """
     from demisto_sdk.commands.generate_outputs.generate_descriptions import \
         generate_descriptions
+
+    mocker.patch.dict(os.environ, {'AI21_KEY': '123'})
 
     with requests_mock.Mocker() as m:
         # Mock get requests
@@ -54,7 +58,7 @@ def test_build_description_with_probabilities():
         LOGPROB_INPUT_AI21) == 'The **Unkown**'
 
 
-def test_generate_ai_descriptions(tmp_path):
+def test_generate_ai_descriptions(mocker, tmp_path):
     """
       Given
          -
@@ -65,6 +69,8 @@ def test_generate_ai_descriptions(tmp_path):
     """
     from demisto_sdk.commands.generate_outputs.generate_descriptions import \
         generate_descriptions
+
+    mocker.patch.dict(os.environ, {'AI21_KEY': '123'})
 
     input = tmp_path / "input_generate_ai_descriptions.yml"
     output = tmp_path / "output_generate_ai_descriptions.yml"

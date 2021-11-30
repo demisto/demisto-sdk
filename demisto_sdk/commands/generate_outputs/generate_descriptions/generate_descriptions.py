@@ -79,12 +79,12 @@ def animate():
         time.sleep(0.1)
 
 
-def generate_desc_with_spinner(command_ctx, insecure, output, verbose):
+def generate_desc_with_spinner(command_output_path, insecure, output, verbose):
     global LOADING_DONE
     LOADING_DONE = False
     t = threading.Thread(target=animate)
     t.start()
-    output = generate_desc(command_ctx, verbose=verbose,
+    output = generate_desc(command_output_path, verbose=verbose,
                            prob_check=True,
                            insecure=insecure)
     LOADING_DONE = True
@@ -106,7 +106,9 @@ def generate_desc(input_ctx, verbose=False,
         logger.debug("=" * 25)
         logger.debug("Using GPT-3...")
 
-    return ai21_api_request(prompt, {"prob_check": prob_check,  "insecure": insecure})
+    return ai21_api_request(prompt, {
+        "prob_check": prob_check,
+        "insecure": insecure})
 
 
 def ai21_api_request(prompt, options={}):
@@ -167,7 +169,7 @@ def write_desc(c_index, final_output, o_index, output_path, verbose, yml_data):
     write_yml(output_path, yml_data)
 
 
-def correct_interactively(command_ctx, final_output, output):
+def correct_interactively(command_output_path, final_output, output):
     print('\r', end='', flush=True)
     final_output = pinput('>> Generated output: ',
                           final_output)
@@ -177,7 +179,7 @@ def correct_interactively(command_ctx, final_output, output):
         if y == 'y':
             print(
                 f"(Correcting prompt `{final_output}` instead of `{output}`)")
-            correct_prompt(command_ctx, final_output)
+            correct_prompt(command_output_path, final_output)
     return final_output
 
 
@@ -246,10 +248,10 @@ def generate_ai_descriptions(
                 command_output_path = o.get('contextPath')
 
                 # Match past paths automatically.
-                if command_ctx in similar_paths:
+                if command_output_path in similar_paths:
                     print(
-                        f"--Already added description for exact path: {command_ctx}--")
-                    final_output = similar_paths.get(command_ctx)
+                        f"--Already added description for exact path: {command_output_path}--")
+                    final_output = similar_paths.get(command_output_path)
                     yml_data['script']['commands'][c_index]['outputs'][o_index][
                         'description'] = final_output
                     write_yml(output_path, yml_data)
@@ -258,7 +260,7 @@ def generate_ai_descriptions(
                 # Print the progress and current context path
                 if interactive or verbose:
                     print(f'\n{o_index + 1}/{len(outputs)}')
-                    print(f'Context: {command_ctx}')
+                    print(f'Context: {command_output_path}')
 
                 output = "No result from GPT."
 
@@ -266,7 +268,7 @@ def generate_ai_descriptions(
                 # have a long prompt we need to clear).
                 for _exception in range(2):
                     try:
-                        output = generate_desc_with_spinner(command_ctx,
+                        output = generate_desc_with_spinner(command_output_path,
                                                             insecure, output,
                                                             verbose)
                         break
@@ -279,7 +281,7 @@ def generate_ai_descriptions(
 
                 # Correct the description if needed interactively
                 if interactive:
-                    final_output = correct_interactively(command_ctx,
+                    final_output = correct_interactively(command_output_path,
                                                          final_output, output)
 
                 # Write the final description to the file (backup)
@@ -287,7 +289,7 @@ def generate_ai_descriptions(
                            yml_data)
 
                 # Update the similar context paths
-                similar_paths[command_ctx] = str(final_output)
+                similar_paths[command_output_path] = str(final_output)
 
             # Backup the prompt for later usage (in case we cleared the prompt)
             if DEBUG_PROMPT:

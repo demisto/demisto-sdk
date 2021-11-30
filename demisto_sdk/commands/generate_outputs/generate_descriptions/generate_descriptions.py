@@ -106,10 +106,7 @@ def generate_desc(input_ctx, verbose=False,
         logger.debug("=" * 25)
         logger.debug("Using GPT-3...")
 
-    if insecure:
-        return ai21_api_request(prompt, {"prob_check": prob_check,
-                                         "insecure": insecure})
-    return ai21_api_request(prompt, {"prob_check": prob_check})
+    return ai21_api_request(prompt, {"prob_check": prob_check,  "insecure": insecure})
 
 
 def ai21_api_request(prompt, options={}):
@@ -246,7 +243,7 @@ def generate_ai_descriptions(
 
             # Iterate over every output per command
             for o_index, o in enumerate(outputs):
-                command_ctx = o.get('contextPath')
+                command_output_path = o.get('contextPath')
 
                 # Match past paths automatically.
                 if command_ctx in similar_paths:

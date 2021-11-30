@@ -1031,7 +1031,7 @@ def run_playbook(**kwargs):
 )
 @click.option(
     "--insecure", help="Skip certificate validation.", is_flag=True)
-def run_playbook(**kwargs):
+def run_test_playbook(**kwargs):
     """Run a test playbooks in your instance."""
     check_configuration_file('run-test-playbook', kwargs)
     test_playbook_runner = TestPlaybookRunner(**kwargs)

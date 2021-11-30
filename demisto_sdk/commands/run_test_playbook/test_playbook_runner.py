@@ -24,17 +24,14 @@ class TestPlaybookRunner:
         base_link_to_workplan (str): the base link to see the full test playbook run in your xsoar instance.
     """
 
-    def __init__(self, input: str, all: bool, url: str, wait: bool, timeout: int, insecure: bool = False):
+    def __init__(self, input: str, all: bool, wait: bool, timeout: int, insecure: bool = False):
         self.test_playbook_input = input
         self.all_test_playbooks = all
         self.should_wait = wait
         self.timeout = timeout
         verify = (not insecure) if insecure else None
-        self.demisto_client = demisto_client.configure(
-            base_url=url,
-            verify_ssl=verify)
-
-        self.base_link_to_workplan = self.get_base_link_to_workplan(url)
+        self.demisto_client = demisto_client.configure(verify_ssl=verify)
+        self.base_link_to_workplan = self.get_base_link_to_workplan()
 
     def run_test_playbooks(self) -> int:
         """
@@ -173,19 +170,11 @@ class TestPlaybookRunner:
         test_playbook_results = self.demisto_client.generic_request(method='GET', path=f'/inv-playbook/{inc_id}')
         return eval(test_playbook_results[0])
 
-    def get_base_link_to_workplan(self, url):
+    def get_base_link_to_workplan(self):
         """Create a base link to the workplan in the specified xsoar instance
-
-        Args:
-            url(str): URL to a xsoar instance. Could be None if not provided
-
         Returns:
             str: The link to the workplan
         """
 
-        if url:
-            return f'{url}/#/WorkPlan/'
-
-        else:
-            base_url = os.environ.get('DEMISTO_BASE_URL')
-            return f'{base_url}/#/WorkPlan/'
+        base_url = os.environ.get('DEMISTO_BASE_URL')
+        return f'{base_url}/#/WorkPlan/'

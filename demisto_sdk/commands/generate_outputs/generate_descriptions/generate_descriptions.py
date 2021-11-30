@@ -231,7 +231,7 @@ def generate_ai_descriptions(
 
             # Iterate over every output per command
             for o_index, o in enumerate(outputs):
-                command_ctx = o.get('contextPath')
+                command_output_path = o.get('contextPath')
 
                 # Match past paths automatically.
                 if command_ctx in similar_paths:

@@ -475,7 +475,7 @@ def find_shared_args_path(flattened_json: Dict[str, Any]) -> Dict[str, int]:
     return shared_arg_to_split_position_dict
 
 
-def updated_max_length(split_path: List[str], other_args_split_paths: List[List[str]] = List, current_max: int = 0):
+def updated_max_length(split_path: List[str], other_args_split_paths: List[List[str]], current_max: int):
     """
     Finds the maximum shared path between the path given and all other arguments in the given list.
     """

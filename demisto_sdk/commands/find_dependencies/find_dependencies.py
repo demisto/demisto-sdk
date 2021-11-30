@@ -1297,11 +1297,12 @@ class PackDependencies:
                                      ('lists', 'Lists'),
                                      ('jobs', 'Jobs')):
             if id_set_key not in id_set:
-                click.secho("\n".join((f"Warning: {id_set_key} had not been previously collected into the id_set.",
-                                       "This may mean you're using an outdated version of the Demisto SDK.",
-                                       "Please upgrade it and run demisto-sdk find-dependencies.")),
-                            fg="red")
-                raise RuntimeError("Outdated SDK version - please upgrade")  # todo test
+                raise RuntimeError(
+                    "\n".join((f"Error: the {id_set_key} content type is missing from the id_set.",
+                               "This may mean the existing id_set was created with an outdated version "
+                               "of the Demisto SDK. Please delete content/Tests/id_set.json and "
+                               "run demisto-sdk find-dependencies again."))
+                )
             pack_items[pack_key] = PackDependencies._search_for_pack_items(pack_id, id_set[id_set_key])
 
         if not sum(pack_items.values(), []):

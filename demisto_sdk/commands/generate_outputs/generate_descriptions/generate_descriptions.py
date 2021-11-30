@@ -113,9 +113,14 @@ def generate_desc(input_ctx, verbose=False,
 
 
 def ai21_api_request(prompt, options={}):
+    ai21_key = os.environ.get('AI21_KEY')
+    if not ai21_key:
+        print_error("No ai21 key provided, see docs and obtain one.")
+        return
+
     res = requests.post(
         "https://api.ai21.com/studio/v1/j1-large/complete",
-        headers={"Authorization": f"Bearer {os.environ.get('AI21_KEY')}"},
+        headers={"Authorization": f"Bearer {ai21_key}"},
         json={
             "prompt": prompt,
             "numResults": 1,
@@ -292,8 +297,4 @@ def generate_ai_descriptions(
                 with open(f"backup_prompt_ai_{c_index}.txt", "w") as ai_prompt_file:
                     ai_prompt_file.write(get_current_prompt())
     except Exception as ex:
-        if verbose:
-            raise
-        else:
-            print_error(f'Error: {str(ex)}')
-            return
+        print_error(f'Error: {str(ex)}')

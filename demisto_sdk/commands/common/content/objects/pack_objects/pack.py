@@ -17,7 +17,7 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    INCIDENT_TYPES_DIR,
                                                    INDICATOR_FIELDS_DIR,
                                                    INDICATOR_TYPES_DIR,
-                                                   INTEGRATIONS_DIR,
+                                                   INTEGRATIONS_DIR, JOBS_DIR,
                                                    LAYOUTS_DIR, LISTS_DIR,
                                                    PLAYBOOKS_DIR,
                                                    PRE_PROCESS_RULES_DIR,
@@ -29,8 +29,8 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     AgentTool, AuthorImage, Classifier, ClassifierMapper, Connection,
     Contributors, Dashboard, DocFile, GenericDefinition, GenericField,
     GenericModule, GenericType, IncidentField, IncidentType, IndicatorField,
-    IndicatorType, Integration, LayoutObject, Lists, OldClassifier, PackIgnore,
-    PackMetaData, Playbook, PreProcessRule, Readme, ReleaseNote,
+    IndicatorType, Integration, Job, LayoutObject, Lists, OldClassifier,
+    PackIgnore, PackMetaData, Playbook, PreProcessRule, Readme, ReleaseNote,
     ReleaseNoteConfig, Report, Script, SecretIgnore, Widget)
 from demisto_sdk.commands.common.content.objects_factory import \
     path_to_pack_object
@@ -196,6 +196,11 @@ class Pack:
     def doc_files(self) -> Iterator[DocFile]:
         return self._content_files_list_generator_factory(dir_name=DOC_FILES_DIR,
                                                           suffix="*")
+
+    @property
+    def jobs(self) -> Iterator[Job]:
+        return self._content_files_list_generator_factory(JOBS_DIR,
+                                                          suffix="json")
 
     @property
     def pack_metadata(self) -> Optional[PackMetaData]:

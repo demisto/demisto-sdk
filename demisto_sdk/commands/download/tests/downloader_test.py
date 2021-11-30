@@ -11,9 +11,9 @@ from demisto_sdk.commands.common.constants import (
     DELETED_JSON_FIELDS_BY_DEMISTO, DELETED_YML_FIELDS_BY_DEMISTO,
     GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR, GENERIC_MODULES_DIR,
     GENERIC_TYPES_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
-    INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, INTEGRATIONS_DIR, LAYOUTS_DIR,
-    LISTS_DIR, PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR, REPORTS_DIR, SCRIPTS_DIR,
-    TEST_PLAYBOOKS_DIR, WIDGETS_DIR)
+    INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, INTEGRATIONS_DIR, JOBS_DIR,
+    LAYOUTS_DIR, LISTS_DIR, PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR, REPORTS_DIR,
+    SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR)
 from demisto_sdk.commands.common.tools import (get_child_files, get_json,
                                                get_yaml)
 from demisto_sdk.commands.download.downloader import Downloader
@@ -53,8 +53,9 @@ class Environment:
         self.SCRIPT_PACK_OBJECT = None
         self.PLAYBOOK_PACK_OBJECT = None
         self.LAYOUT_PACK_OBJECT = None
-        self.PRE_PROCESS_RULES_PACK_OBJECT = None
         self.LISTS_PACK_OBJECT = None
+        self.JOBS_PACK_OBJECT = None
+        self.JOBS_INSTANCE_PATH = None
         self.PACK_CONTENT = None
         self.INTEGRATION_CUSTOM_CONTENT_OBJECT = None
         self.SCRIPT_CUSTOM_CONTENT_OBJECT = None
@@ -83,6 +84,7 @@ class Environment:
         self.LAYOUT_INSTANCE_PATH = f'{self.PACK_INSTANCE_PATH}/Layouts/layout-details-TestLayout.json'
         self.PRE_PROCESS_RULES_INSTANCE_PATH = f'{self.PACK_INSTANCE_PATH}/PreProcessRules/preprocessrule-dummy.json'
         self.LISTS_INSTANCE_PATH = f'{self.PACK_INSTANCE_PATH}/Lists/list-dummy.json'
+        self.JOBS_INSTANCE_PATH = f'{self.PACK_INSTANCE_PATH}/Jobs/job-sample.json'
 
         self.CUSTOM_CONTENT_SCRIPT_PATH = f'{self.CUSTOM_CONTENT_BASE_PATH}/automation-TestScript.yml'
         self.CUSTOM_CONTENT_INTEGRATION_PATH = f'{self.CUSTOM_CONTENT_BASE_PATH}/integration-Test_Integration.yml'
@@ -132,6 +134,10 @@ class Environment:
             {'name': 'DummyList', 'id': 'DummyList',
              'path': self.LISTS_INSTANCE_PATH, 'file_ending': 'json'}
         ]}
+        self.JOBS_PACK_OBJECT = {'DummyJob': [
+            {'name': 'DummyJob', 'id': 'DummyJob',
+             'path': self.JOBS_INSTANCE_PATH, 'file_ending': 'json'}
+        ]}
 
         self.PACK_CONTENT = {
             INTEGRATIONS_DIR: [self.INTEGRATION_PACK_OBJECT],
@@ -140,6 +146,7 @@ class Environment:
             LAYOUTS_DIR: [self.LAYOUT_PACK_OBJECT],
             PRE_PROCESS_RULES_DIR: [],
             LISTS_DIR: [],
+            JOBS_DIR: [],
             TEST_PLAYBOOKS_DIR: [], REPORTS_DIR: [], DASHBOARDS_DIR: [], WIDGETS_DIR: [], INCIDENT_FIELDS_DIR: [],
             INDICATOR_FIELDS_DIR: [], INCIDENT_TYPES_DIR: [], CLASSIFIERS_DIR: [], CONNECTIONS_DIR: [],
             INDICATOR_TYPES_DIR: [], GENERIC_TYPES_DIR: [], GENERIC_FIELDS_DIR: [], GENERIC_MODULES_DIR: [],
@@ -214,44 +221,46 @@ class TestHelperMethods:
         ('G S M', 'md', 'description', 'GSM_description.md')
     ])
     def test_get_searched_basename(self, name, ending, detail, output):
-        downloader = Downloader(output='', input='')
+        downloader = Downloader(output='', input='', regex='')
         assert downloader.get_searched_basename(name, ending, detail) == output
 
     @pytest.mark.parametrize('ending, output', [
         ('py', 'python'), ('md', 'description'), ('yml', 'yaml'), ('png', 'image'), ('', '')
     ])
     def test_get_extracted_file_detail(self, ending, output):
-        downloader = Downloader(output='', input='')
+        downloader = Downloader(output='', input='', regex='')
         assert downloader.get_extracted_file_detail(ending) == output
 
     @pytest.mark.parametrize('name, output', [('automation-demisto', 'script-demisto'), ('wow', 'wow'),
                                               ("playbook-demisto", "demisto")])
     def test_update_file_prefix(self, name, output):
-        downloader = Downloader(output='', input='')
+        downloader = Downloader(output='', input='', regex='')
         assert downloader.update_file_prefix(name) == output
         assert not downloader.update_file_prefix(name).startswith("playbook-")
 
     @pytest.mark.parametrize('name', ['GSM', 'G S M', 'G_S_M', 'G-S-M', 'G S_M', 'G_S-M'])
     def test_create_dir_name(self, name):
-        downloader = Downloader(output='', input='')
+        downloader = Downloader(output='', input='', regex='')
         assert downloader.create_dir_name(name) == 'GSM'
 
 
 class TestFlagHandlers:
-    @pytest.mark.parametrize('lf, a, o, i, res, err', [
-        (True, True, True, True, True, ''),
-        (False, False, False, True, False, "Error: Missing option '-o' / '--output'."),
-        (False, False, True, False, False, "Error: Missing option '-i' / '--input'."),
-        (False, True, True, False, True, ''),
-        (False, True, True, True, True, '')
+    @pytest.mark.parametrize('lf, a, o, i, r, res, err', [
+        (True, True, True, True, None, True, ''),
+        (False, False, False, True, None, False, "Error: Missing option '-o' / '--output'."),
+        (False, False, True, False, None, False, "Error: Missing option '-i' / '--input'."),
+        (False, True, True, False, None, True, ''),
+        (False, True, True, True, None, True, ''),
+        (False, False, True, False, 'Some Regex', True, '')
     ])
-    def test_verify_flags(self, lf, a, o, i, res, err, capsys):
+    def test_verify_flags(self, lf, a, o, i, r, res, err, capsys):
         with patch.object(Downloader, "__init__", lambda x, y, z: None):
             downloader = Downloader('', '')
             downloader.list_files = lf
             downloader.all_custom_content = a
             downloader.output_pack_path = o
             downloader.input_files = i
+            downloader.regex = r
             answer = downloader.verify_flags()
             stdout, _ = capsys.readouterr()
             if err:
@@ -301,7 +310,7 @@ class TestFlagHandlers:
 class TestBuildPackContent:
     def test_build_pack_content(self, tmp_path):
         env = Environment(tmp_path)
-        downloader = Downloader(output=env.PACK_INSTANCE_PATH, input='')
+        downloader = Downloader(output=env.PACK_INSTANCE_PATH, input='', regex='')
         downloader.build_pack_content()
         assert ordered(downloader.pack_content) == ordered(env.PACK_CONTENT)
 
@@ -314,9 +323,10 @@ class TestBuildPackContent:
             {'entity': LAYOUTS_DIR, 'path': env.LAYOUT_INSTANCE_PATH, 'out': env.LAYOUT_PACK_OBJECT},
             {'entity': LAYOUTS_DIR, 'path': 'demisto_sdk/commands/download/tests/downloader_test.py', 'out': {}},
             {'entity': PRE_PROCESS_RULES_DIR, 'path': env.PRE_PROCESS_RULES_INSTANCE_PATH, 'out': []},
-            {'entity': LISTS_DIR, 'path': env.LISTS_INSTANCE_PATH, 'out': []}
+            {'entity': LISTS_DIR, 'path': env.LISTS_INSTANCE_PATH, 'out': []},
+            {'entity': JOBS_DIR, 'path': env.JOBS_INSTANCE_PATH, 'out': []}
         ]
-        downloader = Downloader(output='', input='')
+        downloader = Downloader(output='', input='', regex='')
         for param in parameters:
             pack_content_object = downloader.build_pack_content_object(param['entity'], param['path'])
             assert ordered(pack_content_object) == ordered(param['out'])
@@ -328,10 +338,10 @@ class TestBuildPackContent:
              'main_name': 'Test Integration'},
             {'entity': LAYOUTS_DIR, 'path': env.LAYOUT_INSTANCE_PATH, 'main_id': 'Hello World Alert',
              'main_name': 'Hello World Alert'},
-            {'entity': LAYOUTS_DIR, 'path': 'demisto_sdk/commands/download/tests/downloader_testt.py',
+            {'entity': LAYOUTS_DIR, 'path': 'demisto_sdk/commands/download/tests/downloader_test.py',
              'main_id': '', 'main_name': ''}
         ]
-        downloader = Downloader(output='', input='')
+        downloader = Downloader(output='', input='', regex='')
         for param in parameters:
             op_id, op_name = downloader.get_main_file_details(param['entity'], os.path.abspath(param['path']))
             assert op_id == param['main_id']
@@ -364,7 +374,7 @@ class TestBuildCustomContent:
             {'path': env.CUSTOM_CONTENT_PLAYBOOK_PATH,
              'output_custom_content_object': env.PLAYBOOK_CUSTOM_CONTENT_OBJECT},
         ]
-        downloader = Downloader(output='', input='')
+        downloader = Downloader(output='', input='', regex='')
         for param in parameters:
             assert downloader.build_custom_content_object(param['path']) == param['output_custom_content_object']
 
@@ -599,7 +609,7 @@ class TestMergeExistingFile:
         ryaml = YAML()
         ryaml.preserve_quotes = True
         env = Environment(tmp_path)
-        downloader = Downloader(output='', input='')
+        downloader = Downloader(output='', input='', regex='')
         downloader.update_data(env.CUSTOM_CONTENT_INTEGRATION_PATH,
                                f'{env.INTEGRATION_INSTANCE_PATH}/TestIntegration.yml', 'yml')
 
@@ -619,7 +629,7 @@ class TestMergeExistingFile:
 
     def test_update_data_json(self, tmp_path):
         env = Environment(tmp_path)
-        downloader = Downloader(output='', input='')
+        downloader = Downloader(output='', input='', regex='')
         downloader.update_data(env.CUSTOM_CONTENT_LAYOUT_PATH, env.LAYOUT_INSTANCE_PATH, 'json')
         file_data: dict = get_json(env.CUSTOM_CONTENT_LAYOUT_PATH)
         for field in DELETED_JSON_FIELDS_BY_DEMISTO:
@@ -652,7 +662,7 @@ class TestMergeNewFile:
             temp_dir = env.tmp_path / f'temp_dir_{parameters.index(param)}'
             os.mkdir(temp_dir)
             entity = param['custom_content_object']['entity']
-            downloader = Downloader(output=str(temp_dir), input='')
+            downloader = Downloader(output=str(temp_dir), input='', regex='')
             basename = downloader.create_dir_name(param['custom_content_object']['name'])
             output_entity_dir_path = f'{temp_dir}/{entity}'
             os.mkdir(output_entity_dir_path)
@@ -678,7 +688,7 @@ class TestMergeNewFile:
             os.mkdir(output_dir_path)
             old_file_path = param['custom_content_object']['path']
             new_file_path = f'{output_dir_path}/{os.path.basename(old_file_path)}'
-            downloader = Downloader(output=temp_dir, input='')
+            downloader = Downloader(output=temp_dir, input='', regex='')
             downloader.merge_new_file(param['custom_content_object'])
             assert os.path.isfile(new_file_path)
 
@@ -690,5 +700,5 @@ class TestVerifyPackPath:
     ])
     def test_verify_output_path_is_pack(self, tmp_path, output_path, valid_ans):
         env = Environment(tmp_path)
-        downloader = Downloader(output=f'{env.CONTENT_BASE_PATH}/{output_path}', input='')
+        downloader = Downloader(output=f'{env.CONTENT_BASE_PATH}/{output_path}', input='', regex='')
         assert downloader.verify_output_pack_is_pack() is valid_ans

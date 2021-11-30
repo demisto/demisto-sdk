@@ -8,7 +8,8 @@ import click
 import yaml
 from ruamel.yaml import YAML
 
-from demisto_sdk.commands.common.constants import INTEGRATION, PLAYBOOK
+from demisto_sdk.commands.common.constants import (
+    DEFAULT_CONTENT_ITEM_FROM_VERSION, INTEGRATION, PLAYBOOK)
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_dict_from_file,
                                                get_pack_metadata,
                                                get_remote_file,
@@ -229,7 +230,7 @@ class BaseUpdate:
             else:
                 self.data[self.from_version_key] = from_version
         else:
-            if LooseVersion(self.data.get(self.from_version_key, '0.0.0')) < \
+            if LooseVersion(self.data.get(self.from_version_key, DEFAULT_CONTENT_ITEM_FROM_VERSION)) < \
                     LooseVersion(GENERIC_OBJECTS_DEFAULT_FROMVERSION):
                 self.data[self.from_version_key] = GENERIC_OBJECTS_DEFAULT_FROMVERSION
 
@@ -274,7 +275,7 @@ class BaseUpdate:
 
             # If it is new pack, and it has from version lower than 5.5.0, ask to set it to 5.5.0
             # Playbook has its own validation in update_fromversion_by_user() function in update_playbook.py
-            elif LooseVersion(self.data.get(self.from_version_key, '0.0.0')) < \
+            elif LooseVersion(self.data.get(self.from_version_key, DEFAULT_CONTENT_ITEM_FROM_VERSION)) < \
                     LooseVersion(NEW_FILE_DEFAULT_5_5_0_FROMVERSION) and file_type != PLAYBOOK:
                 if self.assume_yes:
                     self.data[self.from_version_key] = NEW_FILE_DEFAULT_5_5_0_FROMVERSION

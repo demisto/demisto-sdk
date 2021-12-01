@@ -4,6 +4,7 @@ from typing import List, Optional
 from demisto_sdk.commands.common.constants import DEFAULT_IMAGE_BASE64
 from TestSuite.file import File
 from TestSuite.integration import Integration
+from TestSuite.job import Job
 from TestSuite.json_based import JSONBased
 from TestSuite.playbook import Playbook
 from TestSuite.script import Script
@@ -56,8 +57,10 @@ class Pack:
         self.test_playbooks: List[Playbook] = list()
         self.release_notes: List[TextBased] = list()
         self.release_notes_config: List[JSONBased] = list()
+        self.jobs: List[Job] = list()
+
         # Create base pack
-        self._pack_path = packs_dir / name
+        self._pack_path = packs_dir / self.name
         self._pack_path.mkdir()
         self.path = str(self._pack_path)
 
@@ -131,6 +134,9 @@ class Pack:
 
         self.author_image = File(tmp_path=self._pack_path / 'Author_image.png', repo_path=repo.path)
         self.author_image.write(DEFAULT_IMAGE_BASE64)
+
+        self._jobs_path = self._pack_path / 'Jobs'
+        self._jobs_path.mkdir()
 
     def create_integration(
             self,
@@ -332,6 +338,14 @@ class Pack:
         generic_definition = self._create_json_based(name, prefix, content, dir_path=self._generic_definitions_path)
         self.generic_definitions.append(generic_definition)
         return generic_definition
+
+    def create_job(self, is_feed: bool, name: Optional[str] = None, selected_feeds: Optional[List[str]] = None,
+                   details: str = '') -> Job:
+        job = Job(pure_name=name or str(len(self.jobs)), jobs_dir_path=self._jobs_path, is_feed=is_feed,
+                  selected_feeds=selected_feeds, details=details)
+        self.create_playbook(name=job.playbook_name).create_default_playbook(name=job.playbook_name)
+        self.jobs.append(job)
+        return job
 
     def create_layout(
             self,

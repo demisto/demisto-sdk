@@ -118,7 +118,7 @@ class UpdateRN:
                 docker_image_name = None
             changed_files[(file_name, file_type)] = {
                 'description': get_file_description(packfile, file_type),
-                'is_new_file': True if packfile in self.added_files else False,
+                'is_new_file': packfile in self.added_files,
                 'fromversion': get_from_version_at_update_rn(packfile),
                 'dockerimage': docker_image_name,
                 'path': packfile
@@ -581,9 +581,8 @@ class UpdateRN:
                 continue
 
             _header_by_type = RN_HEADER_BY_FILE_TYPE.get(_type)
-
             if _type in (FileType.CONNECTION, FileType.INCIDENT_TYPE, FileType.REPUTATION, FileType.LAYOUT,
-                         FileType.INCIDENT_FIELD):
+                         FileType.INCIDENT_FIELD, FileType.JOB):
                 rn_desc = f'\n- **{content_name}**'
 
             elif _type in (FileType.GENERIC_TYPE, FileType.GENERIC_FIELD):
@@ -727,7 +726,7 @@ def get_file_description(path, file_type) -> str:
         yml_file = get_yaml(path)
         return yml_file.get('comment', '')
 
-    elif file_type in (FileType.CLASSIFIER, FileType.REPORT, FileType.WIDGET, FileType.DASHBOARD):
+    elif file_type in (FileType.CLASSIFIER, FileType.REPORT, FileType.WIDGET, FileType.DASHBOARD, FileType.JOB):
         json_file = get_json(path)
         return json_file.get('description', '')
 

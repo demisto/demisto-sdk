@@ -280,6 +280,8 @@ def test_pack_init_without_filling_metadata(tmpdir, monkeypatch, initiator):
         result = initiator.init()
     assert result
 
+    assert all(Path(tmpdir / initiator.full_output_path / d).exists() for d in initiator.DIR_LIST)
+
 
 def test_get_valid_user_input(monkeypatch, initiator):
     monkeypatch.setattr('builtins.input', generate_multiple_inputs(deque(['InvalidInput', '100', '1'])))

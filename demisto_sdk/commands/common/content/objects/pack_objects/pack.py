@@ -1,8 +1,10 @@
 import logging
 import subprocess
+from distutils.version import LooseVersion
 from typing import Any, Iterator, Optional, Union
 
 import demisto_client
+from demisto_sdk.commands.common.tools import get_demisto_version
 from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
@@ -295,6 +297,10 @@ class Pack:
         except Exception as error:
             logger.error(f'Error while trying to sign pack {self.path.name}.\n {error}')
 
+    def is_server_version_ge(self, client, server_version_to_check):
+        server_version = get_demisto_version(client)
+        return LooseVersion(server_version.base_version) >= LooseVersion(server_version_to_check)
+
     def upload(self, logger: logging.Logger, client: demisto_client):
         """
         Upload the pack zip to demisto_client
@@ -304,6 +310,13 @@ class Pack:
         Returns:
             The result of the upload command from demisto_client
         """
+        if self.is_server_version_ge(client, '6.5.0'):
+            try:
+                logger.info('Uploading...')
+                return client.upload_content_packs(file=self.path, skip_verify='true')  # type: ignore
+
+            except Exception as err:
+                raise Exception(f'Failed to upload pack, error: {err}')
 
         # the flow are - turn off the sign check -> upload -> turn back the check to be as previously
         logger.info('Turn off the server verification for signed packs')

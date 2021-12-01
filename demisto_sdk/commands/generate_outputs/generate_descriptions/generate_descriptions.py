@@ -34,8 +34,8 @@ CURRENT_PROMPT = "contextPath: Guardicore.Incident.source_asset.labels\ndescript
                  "\ncontextPath: WellDone.Endpoint.metadata.InventoryAPI.report_source\ndescriptionMessage:  The Endpoint's InvestoryAPI report source." \
                  "\ncontextPath: SomethingElse.Endpoint.bios_uuid\ndescriptionMessage:"
 LOADING_DONE = False
-INPUT_PREFIX = '\r>> Generated output: '
-DEBUG_PROMPT = False
+INPUT_PREFIX = '>> Generated output: \t'
+DEBUG_PROMPT = True
 
 
 def pinput(prompt, prefill=''):
@@ -77,7 +77,7 @@ def animate():
     for c in itertools.cycle(['|', '/', '-', '\\']):
         if LOADING_DONE:
             break
-        print(INPUT_PREFIX + c, end="", flush=True)
+        print(f"\r{INPUT_PREFIX} {c}", end="", flush=True)
         time.sleep(0.1)
 
 
@@ -145,7 +145,7 @@ def ai21_api_request(prompt, options={}):
 def build_description_with_probabilities(data):
     """ Build the description and wrap low probabilities with *'s """
     output = ""
-    PROBABILITY_THREASHOLD = 0.2  # less than 20% sure, higher is more precise.
+    probability_threashold = 0.2  # less than 20% sure, higher is more precise.
     tokens = data.get("tokens")
     for token in tokens:
         token = token.get("generatedToken")
@@ -156,7 +156,7 @@ def build_description_with_probabilities(data):
         v = math.exp(v)
 
         # Wrap low probability tokens with **'s
-        if v < PROBABILITY_THREASHOLD:
+        if v < probability_threashold:
             output += f" **{i.lstrip()}**"
         else:
             output += i
@@ -174,8 +174,8 @@ def write_desc(c_index, final_output, o_index, output_path, verbose, yml_data):
 
 def correct_interactively(command_output_path, final_output, output):
     print('\r', end='', flush=True)
-    final_output = pinput('>> Generated output: ',
-                          final_output)
+    final_output = pinput(INPUT_PREFIX, final_output)
+
     # Learn from mistakes
     if final_output != output:
         y = input("Should we append to prompt (y/n)? ")
@@ -189,7 +189,7 @@ def correct_interactively(command_output_path, final_output, output):
 def print_experimental():
     print()
     print("⚠" * 100)
-    print('''███████ ██   ██ ██████  ███████ ██████  ██ ███    ███ ███████ ███    ██ ████████  █████  ██
+    print('''    ███████ ██   ██ ██████  ███████ ██████  ██ ███    ███ ███████ ███    ██ ████████  █████  ██
     ██       ██ ██  ██   ██ ██      ██   ██ ██ ████  ████ ██      ████   ██    ██    ██   ██ ██
     █████     ███   ██████  █████   ██████  ██ ██ ████ ██ █████   ██ ██  ██    ██    ███████ ██
     ██       ██ ██  ██      ██      ██   ██ ██ ██  ██  ██ ██      ██  ██ ██    ██    ██   ██ ██
@@ -255,15 +255,20 @@ def generate_ai_descriptions(
                     print(
                         f"--Already added description for exact path: {command_output_path}--")
                     final_output = similar_paths.get(command_output_path)
-                    yml_data['script']['commands'][c_index]['outputs'][o_index][
-                        'description'] = final_output
-                    write_yml(output_path, yml_data)
+                    print(f"Last output was: '{final_output}'")
+                    y = input("Should we use it (y/n)? ")
+                    if y == 'y':
+                        print('Using last seen output.')
+                        yml_data['script']['commands'][c_index]['outputs'][o_index][
+                            'description'] = final_output
+                        write_yml(output_path, yml_data)
                     continue
 
                 # Print the progress and current context path
                 if interactive or verbose:
                     print(f'\n{o_index + 1}/{len(outputs)}')
-                    print(f'Context: {command_output_path}')
+                    print(f'Command: {command_name}')
+                    print(f'Context path:\t\t{command_output_path}')
 
                 output = "No result from GPT."
 

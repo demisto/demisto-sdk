@@ -35,8 +35,9 @@ def generate_script_doc(input_path, examples, output: str = None, permissions: s
 
             example_dict, build_errors = build_example_dict(examples, insecure)
             script_name = list(example_dict.keys())[0] if example_dict else None
-            example_section = generate_script_example(script_name, example_dict)
+            example_section, example_errors = generate_script_example(script_name, example_dict)
             errors.extend(build_errors)
+            errors.extend(example_errors)
         else:
             errors.append('Note: Script example was not provided. For a more complete documentation,run with the -e '
                           'option with an example command. For example: -e "!ConvertFile entry_id=<entry_id>".')
@@ -225,25 +226,28 @@ def get_used_in(id_set, script_id):
 
 
 def generate_script_example(script_name, example=None):
+    results = []
+    errors = []
     if not example:
-        return '', [f'did not get any example for {script_name}. please add it manually.']
-    cmd_lst = example.get(script_name, None)
-    if not cmd_lst:
-        return '', [f'did not get any example for {script_name}. please add it manually.']
-    results = ['', '## Script Examples']
-    for script_example, md_example, context_example in cmd_lst:
-        results.extend(['### Example command', f'```{script_example}```'])
-        if context_example:
-            results.extend(['### Context Example',
-                            '```json',
-                            '{}'.format(context_example),
-                            '```',
-                            '', ])
-        if md_example:
-            results.extend(['### Human Readable Output',
-                            '{}'.format('>'.join(f'\n{md_example}'.splitlines(True))),
-                            # prefix human readable with quote
-                            '',
-                            ])
+        errors.append(f'did not get any example for {script_name}. please add it manually.')
+    else:
+        examples = example.get(script_name, None)
+        if not examples:
+            return '', [f'did not get any example for {script_name}. please add it manually.']
+        results.extend(['', '## Script Examples'])
+        for script_example, md_example, context_example in examples:
+            results.extend(['### Example command', f'```{script_example}```'])
+            if context_example:
+                results.extend(['### Context Example',
+                                '```json',
+                                '{}'.format(context_example),
+                                '```',
+                                '', ])
+            if md_example:
+                results.extend(['### Human Readable Output',
+                                '{}'.format('>'.join(f'\n{md_example}'.splitlines(True))),
+                                # prefix human readable with quote
+                                '',
+                                ])
 
-    return results
+    return results, errors

@@ -399,6 +399,7 @@ class PackUniqueFilesValidator(BaseValidator):
 
             # check metadata categories isn't an empty list
             if not metadata[PACK_METADATA_CATEGORIES]:
+                assert 'pack_metadata_missing_categories' in dir(Errors)
                 if self._add_error(Errors.pack_metadata_missing_categories(self.pack_meta_file),
                                    self.pack_meta_file):
                     return False

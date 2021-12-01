@@ -39,6 +39,7 @@ DEBUG_PROMPT = False
 
 
 def pinput(prompt, prefill=''):
+    ''' Interactive input with a prefix '''
     import readline
     readline.set_startup_hook(lambda: readline.insert_text(prefill))
     try:
@@ -48,6 +49,7 @@ def pinput(prompt, prefill=''):
 
 
 def clear_prompt():
+    ''' When the prompt is too big we need to clear it.'''
     global CURRENT_PROMPT
     if len(CURRENT_PROMPT) >= 2000 * 4:
         y = input("Can't teach model anymore (prompt too big), clear?")
@@ -162,6 +164,7 @@ def build_description_with_probabilities(data):
 
 
 def write_desc(c_index, final_output, o_index, output_path, verbose, yml_data):
+    ''' Write a description to disk '''
     if verbose:
         logger.debug(f"Writing: {final_output}\n---")
     yml_data['script']['commands'][c_index]['outputs'][o_index][

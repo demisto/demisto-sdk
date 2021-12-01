@@ -40,7 +40,8 @@ class Runner:
         self.log_verbose = verbose
         self.debug = debug
         self.debug_path = debug_path
-        verify = (not insecure) if insecure else None  # set to None so demisto_client will use env var DEMISTO_VERIFY_SSL
+        verify = (
+            not insecure) if insecure else None  # set to None so demisto_client will use env var DEMISTO_VERIFY_SSL
         self.client = demisto_client.configure(verify_ssl=verify)
         self.json2outputs = json_to_outputs
         self.prefix = prefix
@@ -91,14 +92,21 @@ class Runner:
         """
         playground_filter = {'filter': {'type': [9]}}
         answer = self.client.search_investigations(filter=playground_filter)
-
-        if answer.total != 1:
+        user_data, response, _ = self.client.generic_request(path='/user',
+                                                             method='GET',
+                                                             content_type='application/json',
+                                                             response_type=object)
+        if response != 200:
+            raise RuntimeError('Cannot find username')
+        username = user_data.get('username')
+        playgrounds = [playground for playground in answer.data if playground.creating_user_id == username]
+        if len(playgrounds) != 1:
             raise RuntimeError(
                 f'Got unexpected amount of results in getPlaygroundInvestigationID. '
-                f'Response was: {answer.total}'
+                f'Response was: {len(playgrounds)}'
             )
 
-        result = answer.data[0].id
+        result = playgrounds[0].id
 
         print_v(f'Playground ID: {result}', self.log_verbose)
 

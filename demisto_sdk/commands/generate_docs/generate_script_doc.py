@@ -27,12 +27,13 @@ def generate_script_doc(input_path, examples, output: str = None, permissions: s
                 with open(examples, 'r') as examples_file:
                     examples = examples_file.read().splitlines()
             else:
-                if not examples.startswith('!'):
-                    examples = f'!{examples}'
-                examples = [examples]
+                examples = examples.split(',')
+                for i, example in enumerate(examples):
+                    if not example.startswith('!'):
+                        examples[i] = f'!{examples}'
 
             example_dict, build_errors = build_example_dict(examples, insecure)
-            script_name = examples[0].split(' ')[0][1:]
+            script_name = list(example_dict.keys())[0] if example_dict else None
             example_section = generate_script_example(script_name, example_dict)
             errors.extend(build_errors)
         else:

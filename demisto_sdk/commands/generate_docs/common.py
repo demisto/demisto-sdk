@@ -273,7 +273,7 @@ def build_example_dict(command_examples: list, insecure: bool):
     examples = {}  # type: dict
     errors = []  # type: list
     for example in command_examples:
-        cmd, md_example, context_example, cmd_errors = execute_command(example, insecure)
+        name, md_example, context_example, cmd_errors = execute_command(example, insecure)
         if 'playbookQuery' in context_example:
             del context_example['playbookQuery']
 
@@ -281,9 +281,9 @@ def build_example_dict(command_examples: list, insecure: bool):
         errors.extend(cmd_errors)
 
         if not cmd_errors:
-            if cmd not in examples:
-                examples[cmd] = []
-            examples[cmd].append((example, md_example, context_example))
+            if name not in examples:
+                examples[name] = []
+            examples[name].append((example, md_example, context_example))
     return examples, errors
 
 

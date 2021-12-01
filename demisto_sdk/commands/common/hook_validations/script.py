@@ -71,7 +71,8 @@ class ScriptValidator(ContentEntityValidator):
             self.is_valid_pwsh(),
             self.is_valid_script_file_path(),
             self.is_there_separators_in_names(),
-            self.name_not_contain_the_type()
+            self.name_not_contain_the_type(),
+            self.runas_is_not_dbtrole()
         ])
         # check only on added files
         if not self.old_file:

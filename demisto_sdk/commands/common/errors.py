@@ -4,6 +4,7 @@ import decorator
 
 from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
                                                    CONF_PATH,
+                                                   DEFAULT_JOB_FROM_VERSION,
                                                    INTEGRATION_CATEGORIES,
                                                    PACK_METADATA_DESC,
                                                    PACK_METADATA_NAME)
@@ -364,6 +365,31 @@ ERROR_CODE = {
     # XC - XSOAR Config
     "xsoar_config_file_is_not_json": {'code': "XC100", 'ui_applicable': False, 'related_field': ''},
     "xsoar_config_file_malformed": {'code': "XC101", 'ui_applicable': False, 'related_field': ''},
+
+    # JB - Jobs
+    "invalid_fromversion_in_job": {
+        'code': "JB100", 'ui_applicable': False,
+        'related_field': 'fromVersion'
+    },
+    "invalid_both_selected_and_all_feeds_in_job": {
+        'code': "JB101", 'ui_applicable': False,
+        'related_field': 'isAllFields'
+    },
+    "unexpected_field_values_in_non_feed_job": {
+        'code': "JB102",
+        'ui_applicable': False,
+        'related_field': 'isFeed'
+    },
+    "missing_field_values_in_feed_job": {
+        'code': "JB103",
+        'ui_applicable': False,
+        'related_field': 'isFeed'
+    },
+    "empty_or_missing_job_name": {
+        'code': "JB104",
+        'ui_applicable': False,
+        'related_field': 'name'
+    },
 }
 
 
@@ -412,7 +438,7 @@ class Errors:
         return "The file type is not supported in the validate command.\n" \
                "The validate command supports: Integrations, Scripts, Playbooks, " \
                "Incident fields, Incident types, Indicator fields, Indicator types, Objects fields, Object types," \
-               " Object modules, Images, Release notes, Layouts and Descriptions."
+               " Object modules, Images, Release notes, Layouts, Jobs and Descriptions."
 
     @staticmethod
     @error_code_decorator
@@ -1732,6 +1758,37 @@ class Errors:
     def invalid_file_path_layoutscontainer(file_name):
         return f'Invalid file name - {file_name}. layoutscontainer file name should start with ' \
                '"layoutscontainer-" prefix.'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_fromversion_in_job(version):
+        return f'fromVersion field in Job needs to be at least {DEFAULT_JOB_FROM_VERSION} (found {version})'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_both_selected_and_all_feeds_in_job():
+        return 'Job cannot have non-empty selectedFeeds values when isAllFields is set to true.'
+
+    @staticmethod
+    @error_code_decorator
+    def unexpected_field_values_in_non_feed_job(found_selected_fields: bool, found_is_all_fields: bool):
+        found: List[str] = []
+        for key, value in {found_selected_fields: 'selectedFeeds',
+                           found_is_all_fields: 'isAllFields'}.items():
+            if key:
+                found.append(value)
+        return f'Job objects cannot have non-empty {" or ".join(found)} when isFeed is set to false.'
+
+    @staticmethod
+    @error_code_decorator
+    def empty_or_missing_job_name():
+        return 'Job objects must have a non-empty name.'
+
+    @staticmethod
+    @error_code_decorator
+    def missing_field_values_in_feed_job():
+        return 'Job must either have non-empty selectedFeeds OR have isAllFields set to true ' \
+               'when isFeed is set to true.'
 
     @staticmethod
     @error_code_decorator

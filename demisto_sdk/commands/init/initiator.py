@@ -13,13 +13,14 @@ import yamlordereddictloader
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
-    CLASSIFIERS_DIR, CONNECTIONS_DIR, DASHBOARDS_DIR, DOC_FILES_DIR,
-    GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR, GENERIC_MODULES_DIR,
-    GENERIC_TYPES_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
-    INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, INTEGRATION_CATEGORIES,
-    INTEGRATIONS_DIR, LAYOUTS_DIR, MARKETPLACE_LIVE_DISCUSSIONS,
-    PACK_INITIAL_VERSION, PACK_SUPPORT_OPTIONS, PLAYBOOKS_DIR, REPORTS_DIR,
-    SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR, XSOAR_AUTHOR, XSOAR_SUPPORT,
+    CLASSIFIERS_DIR, CONNECTIONS_DIR, DASHBOARDS_DIR,
+    DEFAULT_CONTENT_ITEM_FROM_VERSION, DOC_FILES_DIR, GENERIC_DEFINITIONS_DIR,
+    GENERIC_FIELDS_DIR, GENERIC_MODULES_DIR, GENERIC_TYPES_DIR,
+    INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
+    INDICATOR_TYPES_DIR, INTEGRATION_CATEGORIES, INTEGRATIONS_DIR, JOBS_DIR,
+    LAYOUTS_DIR, MARKETPLACE_LIVE_DISCUSSIONS, PACK_INITIAL_VERSION,
+    PACK_SUPPORT_OPTIONS, PLAYBOOKS_DIR, REPORTS_DIR, SCRIPTS_DIR,
+    TEST_PLAYBOOKS_DIR, WIDGETS_DIR, XSOAR_AUTHOR, XSOAR_SUPPORT,
     XSOAR_SUPPORT_URL, GitContentConfig)
 from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                get_common_server_path,
@@ -118,7 +119,7 @@ class Initiator:
     DIR_LIST = [INTEGRATIONS_DIR, SCRIPTS_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
                 PLAYBOOKS_DIR, LAYOUTS_DIR, TEST_PLAYBOOKS_DIR, CLASSIFIERS_DIR, CONNECTIONS_DIR, DASHBOARDS_DIR,
                 INDICATOR_TYPES_DIR, REPORTS_DIR, WIDGETS_DIR, DOC_FILES_DIR, GENERIC_MODULES_DIR,
-                GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR, GENERIC_TYPES_DIR]
+                GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR, GENERIC_TYPES_DIR, JOBS_DIR]
 
     def __init__(self, output: str, name: str = '', id: str = '', integration: bool = False, template: str = '',
                  category: str = '', script: bool = False, pack: bool = False, author_image: str = '', demisto_mock: bool = False,
@@ -551,7 +552,7 @@ class Initiator:
         if from_version:
             yml_dict['fromversion'] = from_version
 
-        if LooseVersion(yml_dict.get('fromversion', '0.0.0')) < LooseVersion(self.SUPPORTED_FROM_VERSION):
+        if LooseVersion(yml_dict.get('fromversion', DEFAULT_CONTENT_ITEM_FROM_VERSION)) < LooseVersion(self.SUPPORTED_FROM_VERSION):
             yml_dict['fromversion'] = self.SUPPORTED_FROM_VERSION
 
         if integration:

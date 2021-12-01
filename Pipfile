@@ -53,6 +53,7 @@ PyYAML = "*"
 giturlparse = "*"
 pytest-freezegun = "*"
 python-dotenv = "*"
+importlib-resources = "*"
 
 [dev-packages]
 mitmproxy = "==5.1.0"

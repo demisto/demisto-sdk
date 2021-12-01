@@ -16,23 +16,14 @@ from typing import Callable, Dict, List, Optional, Tuple
 import click
 import networkx
 
-from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
-                                                   COMMON_TYPES_PACK,
-                                                   DASHBOARDS_DIR,
-                                                   DEFAULT_ID_SET_PATH,
-                                                   GENERIC_DEFINITIONS_DIR,
-                                                   GENERIC_FIELDS_DIR,
-                                                   GENERIC_MODULES_DIR,
-                                                   GENERIC_TYPES_DIR,
-                                                   INCIDENT_FIELDS_DIR,
-                                                   INCIDENT_TYPES_DIR,
-                                                   INDICATOR_FIELDS_DIR,
-                                                   INDICATOR_TYPES_DIR,
-                                                   LAYOUTS_DIR, LISTS_DIR,
-                                                   MAPPERS_DIR, REPORTS_DIR,
-                                                   SCRIPTS_DIR,
-                                                   TEST_PLAYBOOKS_DIR,
-                                                   WIDGETS_DIR, FileType)
+from demisto_sdk.commands.common.constants import (
+    CLASSIFIERS_DIR, COMMON_TYPES_PACK, DASHBOARDS_DIR,
+    DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
+    DEFAULT_ID_SET_PATH, GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR,
+    GENERIC_MODULES_DIR, GENERIC_TYPES_DIR, INCIDENT_FIELDS_DIR,
+    INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, JOBS_DIR,
+    LAYOUTS_DIR, LISTS_DIR, MAPPERS_DIR, REPORTS_DIR, SCRIPTS_DIR,
+    TEST_PLAYBOOKS_DIR, WIDGETS_DIR, FileType)
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type, get_json,
                                                get_pack_name, get_yaml,
                                                print_color, print_error,
@@ -42,12 +33,12 @@ from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
 CONTENT_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
                     'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
                     'Layouts', 'Reports', 'Widgets', 'Mappers', 'Packs', 'GenericTypes',
-                    'GenericFields', 'GenericModules', 'GenericDefinitions', 'Lists']
+                    'GenericFields', 'GenericModules', 'GenericDefinitions', 'Lists', 'Jobs']
 
 ID_SET_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Classifiers',
                    'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
                    'Layouts', 'Reports', 'Widgets', 'Mappers', 'GenericTypes', 'GenericFields', 'GenericModules',
-                   'GenericDefinitions', 'Lists']
+                   'GenericDefinitions', 'Lists', 'Jobs']
 
 BUILT_IN_FIELDS = [
     "name",
@@ -1160,6 +1151,28 @@ def process_generic_items(file_path: str, print_logs: bool,
     return res
 
 
+def process_jobs(file_path: str, print_logs: bool) -> list:
+    """
+    Process a JSON file representing a Job object.
+    Args:
+        file_path: The file path from object field folder
+        print_logs: Whether to print logs to stdout.
+
+    Returns:
+        a list of Job data.
+    """
+    result: List = []
+    try:
+        if find_type(file_path) == FileType.JOB:
+            if print_logs:
+                print(f'adding {file_path} to id_set')
+            result.append(get_job_data(file_path, print_logs))
+    except Exception as exp:  # noqa
+        print_error(f'failed to process job {file_path}, Error: {str(exp)}')
+        raise
+    return result
+
+
 def process_general_items(file_path: str, print_logs: bool, expected_file_types: Tuple[FileType],
                           data_extraction_func: Callable) -> list:
     """
@@ -1254,7 +1267,7 @@ def get_playbooks_paths(pack_to_create):
             ['Packs', '*', 'Playbooks', '*.yml']
         ]
 
-    playbook_files = list(pack_to_create)
+    playbook_files = list(pack_to_create) if pack_to_create else []
     for path in path_list:
         playbook_files.extend(glob.glob(os.path.join(*path)))
 
@@ -1385,6 +1398,23 @@ def get_generic_field_data(path, generic_types_list):
     return {id_: data}
 
 
+def get_job_data(path: str, print_logs: bool):
+    json_data = get_json(path)
+    data = create_common_entity_data(path=path,
+                                     name=json_data.get('name'),
+                                     to_version=json_data.get('toVersion'),
+                                     from_version=json_data.get('fromVersion'),
+                                     pack=get_pack_name(path))
+    data['playbookId'] = json_data.get('playbookId')
+    data['selectedFeeds'] = json_data.get('selectedFeeds', [])
+    data['details'] = json_data.get('details', [])
+
+    if print_logs:
+        print(f'adding {path} to id_set')
+
+    return {json_data.get('id'): data}
+
+
 def get_generic_module_data(path):
     json_data = get_json(path)
     id_ = json_data.get('id')
@@ -1438,6 +1468,7 @@ class IDSetType(Enum):
     GENERIC_FIELD = 'GenericFields'
     GENERIC_MODULE = 'GenericModules'
     GENERIC_DEFINITION = 'GenericDefinitions'
+    JOBS = 'Jobs'
 
     @classmethod
     def has_value(cls, value):
@@ -1592,6 +1623,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     generic_modules_list = []
     generic_definitions_list = []
     lists_list = []
+    jobs_list = []
     packs_dict: Dict[str, Dict] = {}
 
     pool = Pool(processes=int(cpu_count()))
@@ -1842,6 +1874,15 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
 
         progress_bar.update(1)
 
+        if 'Jobs' in objects_to_create:
+            print_color("\nStarting iteration over Jobs", LOG_COLORS.GREEN)
+            print_color(f"pack to create: {pack_to_create}", LOG_COLORS.YELLOW)
+            for arr in pool.map(partial(process_jobs, print_logs=print_logs),
+                                get_general_paths(JOBS_DIR, pack_to_create)):
+                jobs_list.extend(arr)
+
+        progress_bar.update(1)
+
     new_ids_dict = OrderedDict()
     # we sort each time the whole set in case someone manually changed something
     # it shouldn't take too much time
@@ -1865,6 +1906,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     new_ids_dict['GenericModules'] = sort(generic_modules_list)
     new_ids_dict['GenericDefinitions'] = sort(generic_definitions_list)
     new_ids_dict['Lists'] = sort(lists_list)
+    new_ids_dict['Jobs'] = sort(jobs_list)
 
     exec_time = time.time() - start_time
     print_color("Finished the creation of the id_set. Total time: {} seconds".format(exec_time), LOG_COLORS.GREEN)
@@ -1926,10 +1968,10 @@ def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=
     for dup1, dup2 in itertools.combinations(duplicates, 2):
         dict1 = list(dup1.values())[0]
         dict2 = list(dup2.values())[0]
-        dict1_from_version = LooseVersion(dict1.get('fromversion', '0.0.0'))
-        dict2_from_version = LooseVersion(dict2.get('fromversion', '0.0.0'))
-        dict1_to_version = LooseVersion(dict1.get('toversion', '99.99.99'))
-        dict2_to_version = LooseVersion(dict2.get('toversion', '99.99.99'))
+        dict1_from_version = LooseVersion(dict1.get('fromversion', DEFAULT_CONTENT_ITEM_FROM_VERSION))
+        dict2_from_version = LooseVersion(dict2.get('fromversion', DEFAULT_CONTENT_ITEM_FROM_VERSION))
+        dict1_to_version = LooseVersion(dict1.get('toversion', DEFAULT_CONTENT_ITEM_TO_VERSION))
+        dict2_to_version = LooseVersion(dict2.get('toversion', DEFAULT_CONTENT_ITEM_TO_VERSION))
 
         # Checks if the Layouts kind is different then they are not duplicates
         if object_type == 'Layouts':

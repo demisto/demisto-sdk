@@ -1,4 +1,5 @@
 import itertools
+import json
 import logging
 import math
 import os
@@ -17,22 +18,24 @@ old_merge_environment_settings = requests.Session.merge_environment_settings
 
 logger = logging.getLogger(__name__)
 
-
 # Globals
 STOP_SEQS = ["\n", "\ncontextPath:"]
-CURRENT_PROMPT = "contextPath: Guardicore.Incident.source_asset.labels\ndescriptionMessage: The source assets labels for the Incident." \
-                 "\ncontextPath: Something.Incident.reenrich_count\ndescriptionMessage: The number of re-enrichments made on an incident." \
-                 "\ncontextPath: VeryBigWord.Endpoint.vm.orchestration_details.orchestration_obj_id" \
-                 "\ndescriptionMessage: The orchestration object identifier for an Endpoint's virtual machine." \
-                 "\ncontextPath: AAA.Endpoint.status\ndescriptionMessage: The status of an Endpoint (off/on)." \
-                 "\ncontextPath: DDDdddRRR.Endpoint.is_on_alert\ndescriptionMessage: Whether the endpoint is on or not." \
-                 "\ncontextPath: Blabla.Endpoint.active\ndescriptionMessage: Whether the endpoint is on or off." \
-                 "\ncontextPath: Guardicore.Endpoint.nics.is_cloud_public\ndescriptionMessage: Whether the Endpoint's NIC is in the public cloud or not." \
-                 "\ncontextPath: Activity.Endpoint.active\ndescriptionMessage: Whether the Endpoint is on or off." \
-                 "\ncontextPath: IDID.Endpoint.host_orchestration_id\ndescriptionMessage: The orchestration object identifier for the Endpoint's host." \
-                 "\ncontextPath: BrublaBRO.Endpoint.is_on\ndescriptionMessage:  Whether the Endpoint is on or not." \
-                 "\ncontextPath: WellDone.Endpoint.metadata.InventoryAPI.report_source\ndescriptionMessage:  The Endpoint's InvestoryAPI report source." \
-                 "\ncontextPath: SomethingElse.Endpoint.bios_uuid\ndescriptionMessage:"
+CURRENT_PROMPT = [
+    "contextPath: Guardicore.Incident.source_asset.labels\ndescriptionMessage: The source assets labels for the Incident.",
+    "contextPath: Something.Incident.reenrich_count\ndescriptionMessage: The number of re-enrichments made on an incident.",
+    "contextPath: VeryBigWord.Endpoint.vm.orchestration_details.orchestration_obj_id\n" +
+    "descriptionMessage: The orchestration object identifier for an Endpoint's virtual machine.",
+    "contextPath: AAA.Endpoint.status\ndescriptionMessage: The status of an Endpoint (off/on).",
+    "contextPath: DDDdddRRR.Endpoint.is_on_alert\ndescriptionMessage: Whether the endpoint is on or not.",
+    "contextPath: Blabla.Endpoint.active\ndescriptionMessage: Whether the endpoint is on or off.",
+    "contextPath: Guardicore.Endpoint.nics.is_cloud_public\ndescriptionMessage: Whether the Endpoint's NIC is in the public cloud or not.",
+    "contextPath: Activity.Endpoint.active\ndescriptionMessage: Whether the Endpoint is on or off.",
+    "contextPath: IDID.Endpoint.host_orchestration_id\ndescriptionMessage: The orchestration object identifier for the Endpoint's host.",
+    "contextPath: BrublaBRO.Endpoint.is_on\ndescriptionMessage:  Whether the Endpoint is on or not.",
+    "contextPath: WellDone.Endpoint.metadata.InventoryAPI.report_source\ndescriptionMessage:  The Endpoint's InvestoryAPI report source.",
+]
+PROMPT_HISTORY = CURRENT_PROMPT[::]
+PROMPT_MAX_LINES = 40
 LOADING_DONE = False
 INPUT_PREFIX = '>> Generated output: \t'
 DEBUG_PROMPT = True
@@ -48,27 +51,26 @@ def pinput(prompt, prefill=''):
         readline.set_startup_hook()
 
 
-def clear_prompt():
+def remove_last_prompt():
     ''' When the prompt is too big we need to clear it.'''
     global CURRENT_PROMPT
-    if len(CURRENT_PROMPT) >= 2000 * 4:
-        y = input("Can't teach model anymore (prompt too big), clear?")
-        if y == 'y':
-            print("Truncating prompt:")
-            print(CURRENT_PROMPT)
-            CURRENT_PROMPT = ""
-            print('Teaching from blank now')
+
+    if len(CURRENT_PROMPT) >= PROMPT_MAX_LINES:
+        print(f"Prompt too big (>{PROMPT_MAX_LINES}) sliding window")
+        CURRENT_PROMPT.pop(0)
 
 
 def correct_prompt(ctx, correct_desc):
-    global CURRENT_PROMPT
-    clear_prompt()
-    CURRENT_PROMPT += f"contextPath: {ctx}\ndescriptionMessage: {correct_desc}\n"
+    global CURRENT_PROMPT, PROMPT_HISTORY
+    remove_last_prompt()
+    CURRENT_PROMPT.append(
+        f"contextPath: {ctx}\ndescriptionMessage: {correct_desc}")
+    PROMPT_HISTORY.append(CURRENT_PROMPT[-1])
 
 
 def get_current_prompt():
     global CURRENT_PROMPT
-    return CURRENT_PROMPT
+    return "\n".join(CURRENT_PROMPT)
 
 
 def animate():
@@ -100,13 +102,6 @@ def generate_desc(input_ctx, verbose=False,
 
     prompt = get_current_prompt()
     prompt += f"contextPath: {input_ctx}\ndescriptionMessage:"
-
-    if verbose:
-        logger.debug("=" * 25)
-        logger.debug("PROMPT: ")
-        logger.debug(prompt)
-        logger.debug("=" * 25)
-        logger.debug("Using GPT-3...")
 
     return ai21_api_request(prompt, {
         "prob_check": prob_check,
@@ -259,7 +254,8 @@ def generate_ai_descriptions(
                     y = input("Should we use it (y/n)? ")
                     if y == 'y':
                         print('Using last seen output.')
-                        yml_data['script']['commands'][c_index]['outputs'][o_index][
+                        yml_data['script']['commands'][c_index]['outputs'][
+                            o_index][
                             'description'] = final_output
                         write_yml(output_path, yml_data)
                     continue
@@ -282,7 +278,7 @@ def generate_ai_descriptions(
                         break
                     except requests.exceptions.RequestException as e:
                         print('Failed AI description request: ', e)
-                        clear_prompt()
+                        remove_last_prompt()
                         continue
 
                 final_output = output
@@ -301,7 +297,13 @@ def generate_ai_descriptions(
 
             # Backup the prompt for later usage (in case we cleared the prompt)
             if DEBUG_PROMPT:
-                with open(f"backup_prompt_ai_{c_index}.txt", "w") as ai_prompt_file:
-                    ai_prompt_file.write(get_current_prompt())
+                with open(f"backup_prompt_ai_{c_index}.txt", "w") as f:
+                    f.write(get_current_prompt())
+
     except Exception as ex:
         print_error(f'Error: {str(ex)}')
+
+    # backup all of the prompts (without truncating)
+    if DEBUG_PROMPT:
+        with open("history_prompt.txt", "w") as f:
+            f.write(json.dumps(PROMPT_HISTORY))

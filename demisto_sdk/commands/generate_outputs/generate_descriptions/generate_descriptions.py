@@ -20,6 +20,9 @@ logger = logging.getLogger(__name__)
 
 # Globals
 STOP_SEQS = ["\n", "\ncontextPath:"]
+
+# The base instructions for the GPT model, this is how it knows that we want it
+# to do. How the structure of the response looks and what it should look like.
 CURRENT_PROMPT = [
     "contextPath: Guardicore.Incident.source_asset.labels\ndescriptionMessage: The source assets labels for the Incident.",
     "contextPath: Something.Incident.reenrich_count\ndescriptionMessage: The number of re-enrichments made on an incident.",

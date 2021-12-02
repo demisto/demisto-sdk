@@ -16,9 +16,9 @@ ALLOWED_IGNORE_ERRORS = [
     'DS107',
     'GF102',
     'IF100', 'IF106', 'IF115',
-    'IN109', 'IN110', 'IN122', 'IN126', 'IN128', 'IN135', 'IN136', 'IN139', 'IN144', 'IN145',
+    'IN109', 'IN110', 'IN122', 'IN124', 'IN126', 'IN128', 'IN135', 'IN136', 'IN139', 'IN144', 'IN145',
     'MP106',
-    'PA113', 'PA116', 'PA124', 'PA125', 'PA127',
+    'PA113', 'PA116', 'PA124', 'PA125', 'PA127', 'PA129',
     'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112', 'PB114', 'PB115', 'PB116',
     'RM100', 'RM102', 'RM104', 'RM106',
     'RP102', 'RP104',
@@ -275,6 +275,7 @@ ERROR_CODE = {
     "pack_metadata_long_description": {'code': "PA126", 'ui_applicable': False, 'related_field': ''},
     "metadata_url_invalid": {'code': "PA127", 'ui_applicable': False, 'related_field': ''},
     "required_pack_file_does_not_exist": {'code': "PA128", 'ui_applicable': False, 'related_field': ''},
+    "pack_metadata_missing_categories": {'code': "PA129", 'ui_applicable': False, 'related_field': ''},
 
     # PB - Playbooks
     "playbook_cant_have_rolename": {'code': "PB100", 'ui_applicable': True, 'related_field': 'rolename'},
@@ -1520,6 +1521,12 @@ class Errors:
     @error_code_decorator
     def pack_metadata_price_change(old_price, new_price) -> str:
         return f"The pack price was changed from {old_price} to {new_price} - revert the change"
+
+    @staticmethod
+    @error_code_decorator
+    def pack_metadata_missing_categories(pack_meta_file) -> str:
+        return f'{pack_meta_file} - Missing categories.\nPlease supply at least one category, ' \
+               f'for example: {INTEGRATION_CATEGORIES}'
 
     @staticmethod
     @error_code_decorator

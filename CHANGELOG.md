@@ -4,6 +4,7 @@
 * Fixed an issue with the **validate** command when a layoutscontainer did not have the `fromversion` field set.
 * Added `skipVerify` argument in **upload** command to skip pack signature verification.
 * added a new command **update-xsoar-config-file** to handle your XSOAR Configuration File.
+* Adding a filter to the current user to `_get_playground_id` method to find the actual playground id.
 
 # 1.5.3
 * The **format** command will now set `unsearchable: True` for incident, indicator and generic fields.

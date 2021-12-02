@@ -263,7 +263,7 @@ def generate_ai_descriptions(
                             o_index][
                             'description'] = final_output
                         write_yml(output_path, yml_data)
-                    continue
+                        continue
 
                 # Print the progress and current context path
                 if interactive or verbose:

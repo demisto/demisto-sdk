@@ -62,7 +62,7 @@ class TestPostmanHelpers:
                 "key1": "val1"
             },
             {
-                "key2": "val2"
+                "key1": "val11"
             }
         ]
 
@@ -71,9 +71,6 @@ class TestPostmanHelpers:
         assert body_format == [
             {
                 "key1": "{key1}"
-            },
-            {
-                "key2": "{key2}"
             }
         ]
 

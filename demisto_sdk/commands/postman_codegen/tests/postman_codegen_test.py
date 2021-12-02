@@ -62,7 +62,7 @@ class TestPostmanHelpers:
                 "key1": "val1"
             },
             {
-                "key1": "val11"
+                "key2": "val2"
             }
         ]
 
@@ -71,6 +71,9 @@ class TestPostmanHelpers:
         assert body_format == [
             {
                 "key1": "{key1}"
+            },
+            {
+                "key2": "{key2}"
             }
         ]
 
@@ -231,8 +234,8 @@ class TestPostmanHelpers:
         - Returns arguments' dictionary with an entry for each argument name, that holds the minimum distinguishing shared path of
         all arguments with the same name
         """
-        for key, value in find_shared_args_path(flattened_json).items():
-            assert shared_arg_to_split_position_dict[key] == value
+        for arg_name, min_path_length in find_shared_args_path(flattened_json).items():
+            assert shared_arg_to_split_position_dict[arg_name] == min_path_length
 
     def test_find_shared_args_path_no_path(self):
         """
@@ -252,8 +255,8 @@ class TestPostmanHelpers:
             "destination": "{{destination_collection_uid}}"
         }
         shared_arg_to_split_position_dict = defaultdict(int)
-        for key, value in find_shared_args_path(flattened_json).items():
-            assert shared_arg_to_split_position_dict[key] == value
+        for arg_name, min_path_length in find_shared_args_path(flattened_json).items():
+            assert shared_arg_to_split_position_dict[arg_name] == min_path_length
 
     split_path1 = ['collection', 'item', 'settings', 'name']
     split_path2 = ['collection', 'info', 'settings', 'name']

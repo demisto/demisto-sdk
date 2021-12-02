@@ -70,6 +70,8 @@ GENERIC_MODULE = 'genericmodule'
 GENERIC_DEFINITION = 'genericdefinition'
 JOB = 'job'
 
+MARKETPLACE_KEY_PACK_METADATA = 'marketplace'
+MARKETPLACE_XSIAM_VALUE_PACK_METADATA = 'v2'
 
 class FileType(Enum):
     INTEGRATION = 'integration'
@@ -1251,6 +1253,7 @@ LAYOUT_AND_MAPPER_BUILT_IN_FIELDS = ['indicatortype', 'source', 'comment', 'aggr
 UUID_REGEX = r'[0-9a-f]{8}\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\b[0-9a-f]{12}'
 
 DEFAULT_ID_SET_PATH = "./Tests/id_set.json"
+MP_V2_ID_SET_PATH = "./Tests/mp_v2_id_set.json"
 
 CONTEXT_OUTPUT_README_TABLE_HEADER = '| **Path** | **Type** | **Description** |'
 

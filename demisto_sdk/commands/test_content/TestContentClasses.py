@@ -22,7 +22,9 @@ from demisto_client.demisto_api import DefaultApi, Incident
 from demisto_client.demisto_api.rest import ApiException
 from slack import WebClient as SlackClient
 
-from demisto_sdk.commands.common.constants import FILTER_CONF, PB_Status
+from demisto_sdk.commands.common.constants import (
+    DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
+    FILTER_CONF, PB_Status)
 from demisto_sdk.commands.test_content.constants import (
     CONTENT_BUILD_SSH_USER, LOAD_BALANCER_DNS)
 from demisto_sdk.commands.test_content.Docker import Docker
@@ -95,8 +97,8 @@ class TestConfiguration:
         self.raw_dict = test_configuration
         self.playbook_id = test_configuration.get('playbookID', '')
         self.nightly_test = test_configuration.get('nightly', False)
-        self.from_version = test_configuration.get('fromversion', '0.0.0')
-        self.to_version = test_configuration.get('toversion', '99.99.99')
+        self.from_version = test_configuration.get('fromversion', DEFAULT_CONTENT_ITEM_FROM_VERSION)
+        self.to_version = test_configuration.get('toversion', DEFAULT_CONTENT_ITEM_TO_VERSION)
         self.timeout = test_configuration.get('timeout', default_test_timeout)
         self.memory_threshold = test_configuration.get('memory_threshold', Docker.DEFAULT_CONTAINER_MEMORY_USAGE)
         self.pid_threshold = test_configuration.get('pid_threshold', Docker.DEFAULT_CONTAINER_PIDS_USAGE)

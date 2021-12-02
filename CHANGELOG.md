@@ -1,5 +1,9 @@
 # Changelog
 * Fixed an issue with the **format** command when contributing via the UI
+* The **format** command will now not remove the `defaultRows` key from incident, indicator and generic fields with `type: grid`.
+* Fixed an issue with the **validate** command when a layoutscontainer did not have the `fromversion` field set.
+* Added `skipVerify` argument in **upload** command to skip pack signature verification.
+* added a new command **update-xsoar-config-file** to handle your XSOAR Configuration File.
 * Adding a filter to the current user to `_get_playground_id` method to find the actual playground id.
 
 # 1.5.3

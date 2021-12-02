@@ -5,7 +5,8 @@ import re
 from distutils.version import LooseVersion
 from enum import Enum, IntEnum
 
-from demisto_sdk.commands.common.constants import FileType
+from demisto_sdk.commands.common.constants import (
+    DEFAULT_CONTENT_ITEM_FROM_VERSION, FileType)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
@@ -395,7 +396,7 @@ class IncidentFieldValidator(ContentEntityValidator):
         if self.current_file.get('type') != 'grid':
             return True
 
-        current_version = LooseVersion(self.current_file.get('fromVersion', '0.0.0'))
+        current_version = LooseVersion(self.current_file.get('fromVersion', DEFAULT_CONTENT_ITEM_FROM_VERSION))
         if current_version < LooseVersion('5.5.0'):
             error_message, error_code = Errors.indicator_field_type_grid_minimal_version(current_version)
 

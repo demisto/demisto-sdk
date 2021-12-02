@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 from click.testing import CliRunner
 
@@ -26,7 +27,8 @@ EMPTY_ID_SET = {
     'GenericFields': [],
     'GenericModules': [],
     'GenericDefinitions': [],
-    'Lists': []
+    'Lists': [],
+    'Jobs': []
 }
 
 
@@ -45,7 +47,6 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
 
         When
         - Running find-dependencies on it.
-        -
 
         Then
         - Ensure find-dependencies passes.
@@ -73,10 +74,8 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
             import demisto_sdk.commands.common.update_id_set as uis
             mocker.patch.object(uis, 'cpu_count', return_value=1)
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [FIND_DEPENDENCIES_CMD, '-i',
-                                          'Packs/' + os.path.basename(repo.packs[0].path), '-v'
-                                          ]
-                                   )
+            result = runner.invoke(main, [FIND_DEPENDENCIES_CMD, '-i', str(Path("Packs") / pack._pack_path.name), '-v'],
+                                   catch_exceptions=False)
         assert secho.call_args_list[0][0][0] == '\n# Pack ID: FindDependencyPack'  # first log line is the pack name
         assert secho.call_args_list[1][0][0] == '### Scripts'
         assert secho.call_args_list[2][0][0] == '### Playbooks'
@@ -93,7 +92,8 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
         assert secho.call_args_list[13][0][0] == '### Generic Types'
         assert secho.call_args_list[14][0][0] == '### Generic Fields'
         assert secho.call_args_list[15][0][0] == '### Generic Modules'
-        assert secho.call_args_list[16][0][0] == 'All level dependencies are: []'  # last log is regarding all the deps
+        assert secho.call_args_list[16][0][0] == '### Jobs'
+        assert secho.call_args_list[17][0][0] == 'All level dependencies are: []'  # last log is regarding all the deps
         assert result.exit_code == 0
         assert result.stderr == ""
 

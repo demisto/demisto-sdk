@@ -23,7 +23,7 @@ def test_ai21_api_request(mocker):
         When
            - generating ai descriptions
         Then
-           - Ensure the outputs are correct
+           - Ensure the descriptions are generated with probability indicators
     """
     from demisto_sdk.commands.generate_outputs.generate_descriptions import \
         generate_descriptions
@@ -49,7 +49,7 @@ def test_build_description_with_probabilities():
         When
           - generating probability string
         Then
-          - Ensure the outputs are correct
+          - Ensure the output is wrapped with *'s
     """
     from demisto_sdk.commands.generate_outputs.generate_descriptions import \
         generate_descriptions
@@ -61,11 +61,11 @@ def test_build_description_with_probabilities():
 def test_generate_ai_descriptions(mocker, tmp_path):
     """
       Given
-         -
+         - An integration YAML without descriptions
       When
          - using generate_ai_descriptions
       Then
-         - Ensure the outputs are correct
+         - Ensure the descriptions are generated
     """
     from demisto_sdk.commands.generate_outputs.generate_descriptions import \
         generate_descriptions

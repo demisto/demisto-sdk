@@ -4,10 +4,12 @@ import os
 import sys
 import tempfile
 import unittest
+from pathlib import Path
 
 import pytest
 
-from demisto_sdk.commands.common.constants import FileType
+from demisto_sdk.commands.common.constants import (DEFAULT_JOB_FROM_VERSION,
+                                                   JOBS_DIR, FileType)
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.update_id_set import (
     find_duplicates, get_classifier_data, get_dashboard_data,
@@ -20,7 +22,7 @@ from demisto_sdk.commands.common.update_id_set import (
     get_mapper_data, get_pack_metadata_data, get_playbook_data,
     get_report_data, get_script_data, get_values_for_keys_recursively,
     get_widget_data, has_duplicate, merge_id_sets, process_general_items,
-    process_incident_fields, process_integration, process_script,
+    process_incident_fields, process_integration, process_jobs, process_script,
     re_create_id_set)
 from TestSuite.utils import IsEqualFunctions
 
@@ -2164,6 +2166,87 @@ class TestGenericModule:
         assert 'definitionIds' in result.keys()
         assert 'views' in result.keys()
         assert 'pack' in result.keys()
+
+
+class TestJob:
+    @staticmethod
+    @pytest.mark.parametrize('print_logs', (True, False))
+    @pytest.mark.parametrize('is_feed', (True, False))
+    def test_process_jobs(capsys, repo, is_feed: bool, print_logs: bool):
+        """
+        Given
+            - A repo with a job object.
+            - Whether to print logs.
+        When
+            - Parsing job files.
+        Then
+            - Verify output to logs.
+        """
+        pack = repo.create_pack()
+        job_details = 'job details'
+        job = pack.create_job(is_feed, details=job_details)
+        res = process_jobs(job.path, print_logs)
+
+        captured = capsys.readouterr()
+        assert len(res) == 1
+        datum = res[0][job.pure_name]
+        assert datum['name'] == job.pure_name
+        path = Path(datum['file_path'])
+        assert path.name == f'job-{job.pure_name}.json'
+        assert path.exists()
+        assert path.is_file()
+        assert path.suffix == '.json'
+        assert path.parts[-2] == JOBS_DIR
+        assert path.parts[-3] == pack.name
+
+        assert datum['fromversion'] == DEFAULT_JOB_FROM_VERSION
+        assert datum['pack'] == pack.name
+        assert datum['details'] == job_details
+        assert datum['selectedFeeds'] == []
+
+        assert (f'adding {job.path} to id_set' in captured.out) == print_logs
+
+    @staticmethod
+    @pytest.mark.parametrize('is_feed', (True, False))
+    def test_process_jobs_non_job_extension(capsys, repo, is_feed: bool):
+        """
+        Given
+            - A file that isn't a valid Job (wrong filetype)
+            - Whether to print logs.
+        When
+            - Parsing job files.
+        Then
+            - Verify output to logs.
+        """
+        pack = repo.create_pack()
+        job = pack.create_job(is_feed)
+        job_path = Path(job.path)
+        new_path = job_path.rename(job_path.with_suffix('.yml'))
+        res = process_jobs(str(new_path), False)
+        assert not res
+
+    @staticmethod
+    @pytest.mark.parametrize('print_logs', (True, False))
+    @pytest.mark.parametrize('is_feed', (True, False))
+    def test_process_jobs_file_nonexistent(capsys, repo, is_feed: bool, print_logs: bool):
+        """
+        Given
+            - A file that isn't a valid Job (missing file)
+            - Whether to print logs.
+        When
+            - Parsing job files.
+        Then
+            - Verify output to logs.
+        """
+        pack = repo.create_pack()
+        job = pack.create_job(is_feed)
+        job_json_path = Path(job.path)
+        job_json_path_as_yml = job_json_path.with_suffix('.yml')
+
+        job_json_path.rename(job_json_path_as_yml)
+        with pytest.raises(FileNotFoundError):
+            assert not process_jobs(str(job_json_path), print_logs)
+        assert f"failed to process job {job_json_path}" in capsys.readouterr().out
 
 
 def test_merge_id_sets(tmp_path):

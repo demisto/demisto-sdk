@@ -37,6 +37,8 @@ class TestRNUpdate(unittest.TestCase):
             "\n#### Indicator Fields\n- **Hello World Indicator Field**\n" \
             "\n#### Indicator Types\n- **Hello World Indicator Type**\n" \
             "\n#### Integrations\n##### Hello World Integration\n- %%UPDATE_RN%%\n" \
+            "\n#### Jobs\n##### Hello World Job #1\n- %%UPDATE_RN%%" \
+            "\n##### Hello World Job #2\n- %%UPDATE_RN%%\n" \
             "\n#### Layouts\n- **Hello World Layout**\n" \
             "- **Second Hello World Layout**\n" \
             "\n#### Modules\n##### Hello World Generic Module\n- %%UPDATE_RN%%\n" \
@@ -67,7 +69,9 @@ class TestRNUpdate(unittest.TestCase):
             ("Hello World Report", FileType.REPORT): {"description": "", "is_new_file": False},
             ("N/A2", None): {"description": "", "is_new_file": True},
             ("Hello World Generic Module", FileType.GENERIC_MODULE): {"description": "", "is_new_file": False},
-            ("Hello World Generic Definition", FileType.GENERIC_DEFINITION): {"description": "", "is_new_file": False}
+            ("Hello World Generic Definition", FileType.GENERIC_DEFINITION): {"description": "", "is_new_file": False},
+            ("Hello World Job #1", FileType.JOB): {"description": "sample job", "is_new_file": False},
+            ("Hello World Job #2", FileType.JOB): {"description": "yet another job", "is_new_file": False}
         }
         release_notes = update_rn.build_rn_template(changed_items)
         assert expected_result == release_notes

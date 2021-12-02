@@ -91,14 +91,28 @@ class Runner:
         """
         playground_filter = {'filter': {'type': [9]}}
         answer = self.client.search_investigations(filter=playground_filter)
-
-        if answer.total != 1:
+        if answer.total == 0:
             raise RuntimeError(
-                f'Got unexpected amount of results in getPlaygroundInvestigationID. '
-                f'Response was: {answer.total}'
+                'No playgrounds were detected in the environment.'
             )
+        playgrounds = answer.data
+        if len(playgrounds) > 1:
+            # if found more than one playground, try to filter to results against the current user
+            user_data, response, _ = self.client.generic_request(path='/user',
+                                                                 method='GET',
+                                                                 content_type='application/json',
+                                                                 response_type=object)
+            if response != 200:
+                raise RuntimeError('Cannot find username')
+            username = user_data.get('username')
+            playgrounds = [playground for playground in playgrounds if playground.creating_user_id == username]
+            if len(playgrounds) != 1:
+                raise RuntimeError(
+                    f'There is more than one playground to the user. '
+                    f'Number of playgrounds is: {len(playgrounds)}'
+                )
 
-        result = answer.data[0].id
+        result = playgrounds[0].id
 
         print_v(f'Playground ID: {result}', self.log_verbose)
 

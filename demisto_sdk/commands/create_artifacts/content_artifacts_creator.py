@@ -18,9 +18,9 @@ from demisto_sdk.commands.common.constants import (
     DOCUMENTATION_DIR, GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR,
     GENERIC_MODULES_DIR, GENERIC_TYPES_DIR, INCIDENT_FIELDS_DIR,
     INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR,
-    INTEGRATIONS_DIR, LAYOUTS_DIR, LISTS_DIR, PACKS_DIR, PLAYBOOKS_DIR,
-    PRE_PROCESS_RULES_DIR, RELEASE_NOTES_DIR, REPORTS_DIR, SCRIPTS_DIR,
-    TEST_PLAYBOOKS_DIR, TOOLS_DIR, WIDGETS_DIR, ContentItems)
+    INTEGRATIONS_DIR, JOBS_DIR, LAYOUTS_DIR, LISTS_DIR, PACKS_DIR,
+    PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR, RELEASE_NOTES_DIR, REPORTS_DIR,
+    SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, TOOLS_DIR, WIDGETS_DIR, ContentItems)
 from demisto_sdk.commands.common.content import (Content, ContentError,
                                                  ContentFactoryError, Pack)
 from demisto_sdk.commands.common.content.objects.pack_objects import (
@@ -163,6 +163,7 @@ class ContentItemsHandler:
             ContentItems.INDICATOR_TYPES: [],
             ContentItems.LAYOUTS: [],
             ContentItems.PRE_PROCESS_RULES: [],
+            ContentItems.JOB: [],
             ContentItems.CLASSIFIERS: [],
             ContentItems.WIDGETS: [],
             ContentItems.GENERIC_FIELDS: [],
@@ -184,6 +185,7 @@ class ContentItemsHandler:
             LAYOUTS_DIR: self.add_layout_as_content_item,
             PRE_PROCESS_RULES_DIR: self.add_pre_process_rules_as_content_item,
             LISTS_DIR: self.add_lists_as_content_item,
+            JOBS_DIR: self.add_jobs_as_content_item,
             CLASSIFIERS_DIR: self.add_classifier_as_content_item,
             WIDGETS_DIR: self.add_widget_as_content_item,
             GENERIC_TYPES_DIR: self.add_generic_type_as_content_item,
@@ -303,6 +305,12 @@ class ContentItemsHandler:
         self.content_items[ContentItems.PRE_PROCESS_RULES].append({
             'name': content_object.get('name') or content_object.get('id', ''),
             'description': content_object.get('description', ''),
+        })
+
+    def add_jobs_as_content_item(self, content_object: ContentObject):
+        self.content_items[ContentItems.JOB].append({
+            'name': content_object.get('name') or content_object.get('id', ''),
+            'details': content_object.get('details', ''),
         })
 
     def add_lists_as_content_item(self, content_object: ContentObject):
@@ -640,12 +648,24 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
         pack_report += dump_pack_conditionally(artifact_manager, playbook)
     for test_playbook in pack.test_playbooks:
         pack_report += dump_pack_conditionally(artifact_manager, test_playbook)
+    for report in pack.reports:
+        content_items_handler.handle_content_item(report)
+        pack_report += dump_pack_conditionally(artifact_manager, report)
+    for layout in pack.layouts:
+        content_items_handler.handle_content_item(layout)
+        pack_report += dump_pack_conditionally(artifact_manager, layout)
     for pre_process_rule in pack.pre_process_rules:
         content_items_handler.handle_content_item(pre_process_rule)
         pack_report += dump_pack_conditionally(artifact_manager, pre_process_rule)
     for list_item in pack.lists:
         content_items_handler.handle_content_item(list_item)
         pack_report += dump_pack_conditionally(artifact_manager, list_item)
+    for job in pack.jobs:
+        content_items_handler.handle_content_item(job)
+        pack_report += dump_pack_conditionally(artifact_manager, job)
+    for dashboard in pack.dashboards:
+        content_items_handler.handle_content_item(dashboard)
+        pack_report += dump_pack_conditionally(artifact_manager, dashboard)
     for incident_field in pack.incident_fields:
         content_items_handler.handle_content_item(incident_field)
         pack_report += dump_pack_conditionally(artifact_manager, incident_field)

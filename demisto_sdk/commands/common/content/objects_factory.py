@@ -7,7 +7,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     AgentTool, AuthorImage, ChangeLog, Classifier, ClassifierMapper,
     Connection, Contributors, Dashboard, DocFile, GenericDefinition,
     GenericField, GenericModule, GenericType, IncidentField, IncidentType,
-    IndicatorField, IndicatorType, Integration, Layout, LayoutsContainer,
+    IndicatorField, IndicatorType, Integration, Job, Layout, LayoutsContainer,
     Lists, OldClassifier, OldIndicatorType, PackIgnore, PackMetaData, Playbook,
     PreProcessRule, Readme, ReleaseNote, ReleaseNoteConfig, Report, Script,
     SecretIgnore, Widget)
@@ -52,7 +52,8 @@ TYPE_CONVERSION_BY_FileType = {
     FileType.GENERIC_TYPE: GenericType,
     FileType.GENERIC_FIELD: GenericField,
     FileType.GENERIC_MODULE: GenericModule,
-    FileType.GENERIC_DEFINITION: GenericDefinition
+    FileType.GENERIC_DEFINITION: GenericDefinition,
+    FileType.JOB: Job
 }
 
 TYPE_CONVERSION_BY_FILE_NAME = {

@@ -94,8 +94,7 @@ class Runner:
         answer = self.client.search_investigations(filter=playground_filter)
         if answer.total == 0:
             raise RuntimeError(
-                f'Got unexpected amount of results in getPlaygroundInvestigationID. '
-                f'Response was: {answer.data}'
+                'No playgrounds were detected in the environment.'
             )
         playgrounds = answer.data
         if answer.total > 1:

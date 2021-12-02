@@ -455,7 +455,7 @@ def duplicate_requests_check(commands_names_dict: dict) -> None:
 
 def find_shared_args_path(flattened_json: Dict[str, Any]) -> Dict[str, int]:
     """
-    Finds the maximum shared path for all arguments with the same name.
+    Finds the minimum unique path length needed for all arguments with the same name.
     Args:
         flattened_json (Dict[str, any]): Flattened json returned after running the flatten_json function.
 

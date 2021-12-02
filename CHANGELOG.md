@@ -1,5 +1,6 @@
 # Changelog
 * Fixed an issue with the **format** command when contributing via the UI
+* Adding a filter to the current user to `_get_playground_id` method to find the actual playground id.
 
 # 1.5.3
 * The **format** command will now set `unsearchable: True` for incident, indicator and generic fields.

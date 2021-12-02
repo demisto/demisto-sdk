@@ -468,22 +468,23 @@ def find_shared_args_path(flattened_json: Dict[str, Any]) -> Dict[str, int]:
         split_path = key.split('.')
         arg_name = split_path[-1].lower()
 
-        shared_arg_to_split_position_dict[arg_name] = updated_max_length(split_path, arg_name_to_split_path_dict[arg_name],
-                                                                         shared_arg_to_split_position_dict[arg_name])
+        shared_arg_to_split_position_dict[arg_name] = update_min_unique_path(split_path,
+                                                                             arg_name_to_split_path_dict[arg_name],
+                                                                             shared_arg_to_split_position_dict[arg_name])
         arg_name_to_split_path_dict[arg_name].append(split_path)
 
     return shared_arg_to_split_position_dict
 
 
-def updated_max_length(split_path: List[str], other_args_split_paths: List[List[str]], current_max: int):
+def update_min_unique_path(split_path: List[str], other_args_split_paths: List[List[str]], current_min_unique: int):
     """
-    Finds the maximum shared path between the path given and all other arguments in the given list.
+    Finds the minimum unique path length needed for all arguments with the same name.
     """
     for other_arg_split_path in other_args_split_paths:
         for max_same_path, (other_path, arg_path) in enumerate(zip(other_arg_split_path[::-1], split_path[::-1])):
             if other_path == arg_path:
-                current_max = max(max_same_path + 1, current_max)
+                current_min_unique = max(max_same_path + 1, current_min_unique)
             else:
                 break
 
-    return current_max
+    return current_min_unique

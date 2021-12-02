@@ -17,7 +17,7 @@ from demisto_sdk.commands.generate_integration.code_generator import (
 from demisto_sdk.commands.postman_codegen.postman_codegen import (
     build_commands_names_dict, create_body_format, duplicate_requests_check,
     find_shared_args_path, flatten_collections, generate_command_outputs,
-    postman_to_autogen_configuration, updated_max_length)
+    postman_to_autogen_configuration, update_min_unique_path)
 
 
 class TestPostmanHelpers:
@@ -216,10 +216,10 @@ class TestPostmanHelpers:
                              'collection.info.settings.name': 'info_settings_name',
                              'collection.item.property.name': 'item_property_name'},
                             defaultdict(int, {'name': 2}))
-    SHARED_ARGS_PATH = ((shared_args_path_items['more_then_one_items'], more_then_one_paths),
-                        (shared_args_path_items['no_path_items'], defaultdict(int)),
-                        (shared_args_path_items['one_for_each_items'], one_for_each_paths),
-                        (shared_args_path_items['complicated_chars_items'], complicated_chars_paths),
+    SHARED_ARGS_PATH = ((shared_args_path_items['more_then_one'], more_then_one_paths),
+                        (shared_args_path_items['no_path'], defaultdict(int)),
+                        (shared_args_path_items['one_for_each'], one_for_each_paths),
+                        (shared_args_path_items['complicated_chars'], complicated_chars_paths),
                         same_path_at_the_end)
 
     @pytest.mark.parametrize('flattened_json, shared_arg_to_split_position_dict', SHARED_ARGS_PATH)
@@ -238,10 +238,10 @@ class TestPostmanHelpers:
         for key, value in find_shared_args_path(flattened_json).items():
             assert shared_arg_to_split_position_dict[key] == value
 
-    split_path1 = 'collection.item.settings.name'.split('.')
-    split_path2 = 'collection.info.settings.name'.split('.')
-    split_path3 = 'collection.item.property.name'.split('.')
-    split_path4 = 'set.item.property.name'.split('.')
+    split_path1 = ['collection', 'item', 'settings', 'name']
+    split_path2 = ['collection', 'info', 'settings', 'name']
+    split_path3 = ['collection', 'item', 'property', 'name']
+    split_path4 = ['set', 'item', 'property', 'name']
 
     first_call = (split_path2, [], 0, 0)
     max_to_bigger_then_zero = (split_path4, [split_path2], 0, 1)
@@ -254,19 +254,19 @@ class TestPostmanHelpers:
                          max_changes_on_second_item,
                          max_doesnt_change)
 
-    @pytest.mark.parametrize('split_path, other_args_split_paths, current_max, new_max', UPDATED_MAX_INPUT)
-    def test_updated_max_length(self, split_path, other_args_split_paths, current_max, new_max):
+    @pytest.mark.parametrize('split_path, other_args_split_paths, current_min_unique, new_min_unique', UPDATED_MAX_INPUT)
+    def test_update_min_distinguish_path(self, split_path, other_args_split_paths, current_min_unique, new_min_unique):
         """
         Given
-        - A split path of an argument, a list of other arguments' splitted paths, and the maximum shared path until now
+        - A split path of an argument, a list of other arguments' splitted paths, and the minimum unique path until now
 
         When
-        - Finding the maximum shared path between the arguments that have the same name
+        - Finding the minimum unique path between the arguments that have the same name
 
         Then
-        - Returns the maximum shared path of all arguments with the same name
+        - Returns the minimum unique path of all arguments with the same name
         """
-        assert updated_max_length(split_path, other_args_split_paths, current_max) == new_max
+        assert update_min_unique_path(split_path, other_args_split_paths, current_min_unique) == new_min_unique
 
 
 class TestPostmanCodeGen:

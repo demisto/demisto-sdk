@@ -1,5 +1,5 @@
 {
-  "more_then_one_items": {
+  "more_then_one": {
     "collection.info.name": "Sample Collection 909",
     "collection.info.description": "This is just a sample collection.",
     "collection.info.schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
@@ -16,25 +16,25 @@
     "collection.item.request.method": "GET",
     "collection.item.request.description": "This is a sample GET Request"
   },
-  "no_path_items": {
+  "no_path": {
     "strategy": "deleteSource",
     "source": "{{source_collection_uid}}",
     "destination": "{{destination_collection_uid}}"
   },
-  "one_for_each_items": {
+  "one_for_each": {
     "workspace.name": "New Workspace",
     "workspace.type": "personal",
     "workspace.description": "Some description",
-    "workspace.collections.id": "e1fc3c38-a0b8-44a3-bd44-d753a96b2e9d",
+    "workspace.collections.id": "e1fc3c38-a0b8-44a3-bd44-d753a96b2e",
     "workspace.collections.name": "Straw hats",
-    "workspace.collections.uid": "8154-e1fc3c38-a0b8-44a3-bd44-d753a96b2e9d",
-    "workspace.environments.id": "83a1aaa2-a204-4bd8-9b92-4d486918906b",
+    "workspace.collections.uid": "8154-e1fc3c38-a0b8-44a3-bd44-d753a96b2e",
+    "workspace.environments.id": "83a1aaa2-a204-4bd8-9b92-4d48691890",
     "workspace.environments.name": "env",
-    "workspace.environments.uid": "8154-83a1aaa2-a204-4bd8-9b92-4d486918906b",
-    "workspace.mocks.id": "cda672ef-1375-40e9-baee-e20ece8d7b65",
-    "workspace.monitors.id": "1e889bd2-3862-4be0-b2c2-9b1fe9673aec"
+    "workspace.environments.uid": "8154-83a1aaa2-a204-4bd8-9b92-4d48691890",
+    "workspace.mocks.id": "cda672ef-1375-40e9-baee-e20ece8d7",
+    "workspace.monitors.id": "1e889bd2-3862-4be0-b2c2-9b1fe9673"
   },
-  "complicated_chars_items": {
+  "complicated_chars": {
     "input.info.title": "Swagger Petstore",
     "input.info.license.name": "MIT",
     "input.paths./pets.get.parameters.name": "limit",

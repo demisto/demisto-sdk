@@ -110,7 +110,7 @@ class Runner:
             if len(playgrounds) != 1:
                 raise RuntimeError(
                     f'There is more than one playground to the user. '
-                    f'Number of playground is: {len(playgrounds)}'
+                    f'Number of playgrounds is: {len(playgrounds)}'
                 )
 
         result = playgrounds[0].id

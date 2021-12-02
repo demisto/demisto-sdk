@@ -997,7 +997,7 @@ class TestZippedPackUpload:
 
         try:
             skip_value = API_CLIENT.upload_content_packs.call_args[1]['skip_verify']
-        except:
+        except KeyError:
             skip_value = None
         assert not skip_value
 

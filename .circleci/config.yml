@@ -144,6 +144,7 @@ jobs:
             name: Checkout the Content Repo
             command: |
               git clone --depth 1 https://github.com/demisto/content.git
+              git checkout 0b67dc477753561f09fb6a207b289f09f93faac9
               cd content
               git config diff.renameLimit 5000
               git --no-pager log -1

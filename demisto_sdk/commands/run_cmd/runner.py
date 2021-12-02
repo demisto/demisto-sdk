@@ -40,8 +40,7 @@ class Runner:
         self.log_verbose = verbose
         self.debug = debug
         self.debug_path = debug_path
-        verify = (
-            not insecure) if insecure else None  # set to None so demisto_client will use env var DEMISTO_VERIFY_SSL
+        verify = (not insecure) if insecure else None  # set to None so demisto_client will use env var DEMISTO_VERIFY_SSL
         self.client = demisto_client.configure(verify_ssl=verify)
         self.json2outputs = json_to_outputs
         self.prefix = prefix

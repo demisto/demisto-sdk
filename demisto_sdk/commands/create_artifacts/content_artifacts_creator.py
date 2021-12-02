@@ -635,37 +635,11 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
     content_items_handler = ContentItemsHandler()
     is_feed_pack = False
 
-    for integration in pack.integrations:
-        content_items_handler.handle_content_item(integration)
-        is_feed_pack = is_feed_pack or integration.is_feed
-        pack_report += dump_pack_conditionally(artifact_manager, integration)
-    for script in pack.scripts:
-        content_items_handler.handle_content_item(script)
-        pack_report += dump_pack_conditionally(artifact_manager, script)
-    for playbook in pack.playbooks:
-        content_items_handler.handle_content_item(playbook)
-        is_feed_pack = is_feed_pack or playbook.get('name', '').startswith('TIM')
-        pack_report += dump_pack_conditionally(artifact_manager, playbook)
-    for test_playbook in pack.test_playbooks:
-        pack_report += dump_pack_conditionally(artifact_manager, test_playbook)
-    for report in pack.reports:
-        content_items_handler.handle_content_item(report)
-        pack_report += dump_pack_conditionally(artifact_manager, report)
-    for layout in pack.layouts:
-        content_items_handler.handle_content_item(layout)
-        pack_report += dump_pack_conditionally(artifact_manager, layout)
-    for pre_process_rule in pack.pre_process_rules:
-        content_items_handler.handle_content_item(pre_process_rule)
-        pack_report += dump_pack_conditionally(artifact_manager, pre_process_rule)
-    for list_item in pack.lists:
-        content_items_handler.handle_content_item(list_item)
-        pack_report += dump_pack_conditionally(artifact_manager, list_item)
-    for job in pack.jobs:
-        content_items_handler.handle_content_item(job)
-        pack_report += dump_pack_conditionally(artifact_manager, job)
-    for dashboard in pack.dashboards:
-        content_items_handler.handle_content_item(dashboard)
-        pack_report += dump_pack_conditionally(artifact_manager, dashboard)
+    for classifier in pack.classifiers:
+        content_items_handler.handle_content_item(classifier)
+        pack_report += dump_pack_conditionally(artifact_manager, classifier)
+    for connection in pack.connections:
+        pack_report += dump_pack_conditionally(artifact_manager, connection)
     for incident_field in pack.incident_fields:
         content_items_handler.handle_content_item(incident_field)
         pack_report += dump_pack_conditionally(artifact_manager, incident_field)
@@ -678,11 +652,25 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
     for indicator_type in pack.indicator_types:
         content_items_handler.handle_content_item(indicator_type)
         pack_report += dump_pack_conditionally(artifact_manager, indicator_type)
-    for connection in pack.connections:
-        pack_report += dump_pack_conditionally(artifact_manager, connection)
-    for classifier in pack.classifiers:
-        content_items_handler.handle_content_item(classifier)
-        pack_report += dump_pack_conditionally(artifact_manager, classifier)
+    for integration in pack.integrations:
+        content_items_handler.handle_content_item(integration)
+        is_feed_pack = is_feed_pack or integration.is_feed
+        pack_report += dump_pack_conditionally(artifact_manager, integration)
+    for job in pack.jobs:
+        content_items_handler.handle_content_item(job)
+        pack_report += dump_pack_conditionally(artifact_manager, job)
+    for list_item in pack.lists:
+        content_items_handler.handle_content_item(list_item)
+        pack_report += dump_pack_conditionally(artifact_manager, list_item)
+    for playbook in pack.playbooks:
+        content_items_handler.handle_content_item(playbook)
+        is_feed_pack = is_feed_pack or playbook.get('name', '').startswith('TIM')
+        pack_report += dump_pack_conditionally(artifact_manager, playbook)
+    for script in pack.scripts:
+        content_items_handler.handle_content_item(script)
+        pack_report += dump_pack_conditionally(artifact_manager, script)
+    for test_playbook in pack.test_playbooks:
+        pack_report += dump_pack_conditionally(artifact_manager, test_playbook)
     for release_note in pack.release_notes:
         pack_report += ObjectReport(release_note, content_packs=True)
         release_note.dump(artifact_manager.content_packs_path / pack.id / RELEASE_NOTES_DIR)
@@ -694,15 +682,6 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
         for dashboard in pack.dashboards:
             content_items_handler.handle_content_item(dashboard)
             pack_report += dump_pack_conditionally(artifact_manager, dashboard)
-        for widget in pack.widgets:
-            content_items_handler.handle_content_item(widget)
-            pack_report += dump_pack_conditionally(artifact_manager, widget)
-        for report in pack.reports:
-            content_items_handler.handle_content_item(report)
-            pack_report += dump_pack_conditionally(artifact_manager, report)
-        for layout in pack.layouts:  # TODO: verify layouts == layouts_container
-            content_items_handler.handle_content_item(layout)
-            pack_report += dump_pack_conditionally(artifact_manager, layout)
         for generic_definition in pack.generic_definitions:
             content_items_handler.handle_content_item(generic_definition)
             pack_report += dump_pack_conditionally(artifact_manager, generic_definition)
@@ -715,6 +694,21 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
         for generic_field in pack.generic_fields:
             content_items_handler.handle_content_item(generic_field)
             pack_report += dump_pack_conditionally(artifact_manager, generic_field)
+        for layout in pack.layouts:
+            content_items_handler.handle_content_item(layout)
+            pack_report += dump_pack_conditionally(artifact_manager, layout)
+        for pre_process_rule in pack.pre_process_rules:
+            content_items_handler.handle_content_item(pre_process_rule)
+            pack_report += dump_pack_conditionally(artifact_manager, pre_process_rule)
+        for report in pack.reports:
+            content_items_handler.handle_content_item(report)
+            pack_report += dump_pack_conditionally(artifact_manager, report)
+        for widget in pack.widgets:
+            content_items_handler.handle_content_item(widget)
+            pack_report += dump_pack_conditionally(artifact_manager, widget)
+
+
+
 
     for tool in pack.tools:
         object_report = ObjectReport(tool, content_packs=True)

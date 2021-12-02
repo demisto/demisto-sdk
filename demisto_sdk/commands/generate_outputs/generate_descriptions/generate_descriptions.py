@@ -176,7 +176,7 @@ def correct_interactively(command_output_path, final_output, output):
 
     # Learn from mistakes
     if final_output != output:
-        y = input("Should we append to prompt (y/n)? ")
+        y = input("Should we append to prompt (y/n)? ").lower()
         if y == 'y' or y == 'yes':
             print(
                 f"(Correcting prompt `{final_output}` instead of `{output}`)")

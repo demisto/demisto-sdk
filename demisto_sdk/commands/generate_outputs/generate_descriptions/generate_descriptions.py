@@ -64,6 +64,8 @@ def remove_last_prompt():
 
 
 def correct_prompt(ctx, correct_desc):
+    ''' Correct the currently usee prompt with new
+        user corrected descriptions '''
     global CURRENT_PROMPT, PROMPT_HISTORY
     remove_last_prompt()
     CURRENT_PROMPT.append(

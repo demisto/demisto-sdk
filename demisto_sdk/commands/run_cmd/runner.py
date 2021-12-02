@@ -97,7 +97,7 @@ class Runner:
                 'No playgrounds were detected in the environment.'
             )
         playgrounds = answer.data
-        if answer.total > 1:
+        if len(playgrounds) > 1:
             # if found more than one playground, try to filter to results against the current user
             user_data, response, _ = self.client.generic_request(path='/user',
                                                                  method='GET',

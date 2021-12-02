@@ -143,7 +143,7 @@ jobs:
         - run:
             name: Checkout the Content Repo
             command: |
-              git clone --depth 1 https://github.com/demisto/content.git
+              git clone https://github.com/demisto/content.git
               cd content
               git checkout validate_runas
               git config diff.renameLimit 5000

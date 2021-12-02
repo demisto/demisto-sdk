@@ -256,8 +256,8 @@ def generate_ai_descriptions(
                         f"--Already added description for exact path: {command_output_path}--")
                     final_output = similar_paths.get(command_output_path)
                     print(f"Last output was: '{final_output}'")
-                    y = input("Should we use it (y/n)? ")
-                    if y == 'y':
+                    y = input("Should we use it (y/n)? ").lower()
+                    if y == 'y' or y == 'yes':
                         print('Using last seen output.')
                         yml_data['script']['commands'][c_index]['outputs'][
                             o_index][

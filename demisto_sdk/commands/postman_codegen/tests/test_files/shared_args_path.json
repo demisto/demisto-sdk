@@ -1,5 +1,5 @@
 {
-  "more_then_one": {
+  "many_with_shared_paths": {
     "collection.info.name": "Sample Collection 909",
     "collection.info.description": "This is just a sample collection.",
     "collection.info.schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
@@ -16,12 +16,7 @@
     "collection.item.request.method": "GET",
     "collection.item.request.description": "This is a sample GET Request"
   },
-  "no_path": {
-    "strategy": "deleteSource",
-    "source": "{{source_collection_uid}}",
-    "destination": "{{destination_collection_uid}}"
-  },
-  "one_for_each": {
+  "one_shared_for_each_paths": {
     "workspace.name": "New Workspace",
     "workspace.type": "personal",
     "workspace.description": "Some description",
@@ -34,7 +29,7 @@
     "workspace.mocks.id": "cda672ef-1375-40e9-baee-e20ece8d7",
     "workspace.monitors.id": "1e889bd2-3862-4be0-b2c2-9b1fe9673"
   },
-  "complicated_chars": {
+  "complicated_chars_in_paths": {
     "input.info.title": "Swagger Petstore",
     "input.info.license.name": "MIT",
     "input.paths./pets.get.parameters.name": "limit",
@@ -42,5 +37,10 @@
     "other.paths./pets.get.parameters.required": false,
     "input.paths./pets.get.responses.default.description": "unexpected error",
     "input.paths./pets.get.responses.default.content.application/json.schema.required": "message"
+  },
+  "same_path_at_the_end": {
+    "collection.item.settings.name": "item_settings_name",
+    "collection.info.settings.name": "info_settings_name",
+    "collection.item.property.name": "item_property_name"
   }
 }

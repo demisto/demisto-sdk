@@ -209,18 +209,14 @@ class TestPostmanHelpers:
     with open(os.path.join(test_files_path, 'shared_args_path.json')) as shared_args_path_file:
         shared_args_path_items = json.load(shared_args_path_file)
 
-    more_then_one_paths = defaultdict(int, {'name': 2, 'description': 3, 'url': 3, 'method': 3})
-    one_for_each_paths = defaultdict(int, {'name': 1, 'id': 1, 'uid': 1})
-    complicated_chars_paths = defaultdict(int, {'name': 1, 'required': 5})
-    same_path_at_the_end = ({'collection.item.settings.name': 'item_settings_name',
-                             'collection.info.settings.name': 'info_settings_name',
-                             'collection.item.property.name': 'item_property_name'},
-                            defaultdict(int, {'name': 2}))
-    SHARED_ARGS_PATH = ((shared_args_path_items['more_then_one'], more_then_one_paths),
-                        (shared_args_path_items['no_path'], defaultdict(int)),
-                        (shared_args_path_items['one_for_each'], one_for_each_paths),
-                        (shared_args_path_items['complicated_chars'], complicated_chars_paths),
-                        same_path_at_the_end)
+    many_with_shared_paths = defaultdict(int, {'name': 2, 'description': 3, 'url': 3, 'method': 3})
+    one_shared_for_each_paths = defaultdict(int, {'name': 1, 'id': 1, 'uid': 1})
+    complicated_chars_in_paths = defaultdict(int, {'name': 1, 'required': 5})
+    same_path_at_the_end = defaultdict(int, {'name': 2})
+    SHARED_ARGS_PATH = ((shared_args_path_items['many_with_shared_paths'], many_with_shared_paths),
+                        (shared_args_path_items['one_shared_for_each_paths'], one_shared_for_each_paths),
+                        (shared_args_path_items['complicated_chars_in_paths'], complicated_chars_in_paths),
+                        (shared_args_path_items['same_path_at_the_end'], same_path_at_the_end))
 
     @pytest.mark.parametrize('flattened_json, shared_arg_to_split_position_dict', SHARED_ARGS_PATH)
     def test_find_shared_args_path(self, flattened_json, shared_arg_to_split_position_dict):
@@ -235,6 +231,27 @@ class TestPostmanHelpers:
         - Returns arguments' dictionary with an entry for each argument name, that holds the minimum distinguishing shared path of
         all arguments with the same name
         """
+        for key, value in find_shared_args_path(flattened_json).items():
+            assert shared_arg_to_split_position_dict[key] == value
+
+    def test_find_shared_args_path_no_path(self):
+        """
+        Given
+        - Dictionary containing flattened json with raw body of a request, that doesn't have duplicate names
+
+        When
+        - There are no arguments in the request which have the same name (suffix)
+
+        Then
+        - Returns arguments' dictionary with an entry for each argument name, that holds the minimum distinguishing shared path of
+        all arguments with the same name - which is 0 in this case
+        """
+        flattened_json = {
+            "strategy": "deleteSource",
+            "source": "{{source_collection_uid}}",
+            "destination": "{{destination_collection_uid}}"
+        }
+        shared_arg_to_split_position_dict = defaultdict(int)
         for key, value in find_shared_args_path(flattened_json).items():
             assert shared_arg_to_split_position_dict[key] == value
 
@@ -385,7 +402,7 @@ class TestPostmanCodeGen:
             context_path_prefix=None,
             category=None
         )
-        assert len(autogen_config.commands[0].arguments) in {15, 16}
+        assert len(autogen_config.commands[0].arguments) == 15
 
     def test_context_output_path(self):
         """

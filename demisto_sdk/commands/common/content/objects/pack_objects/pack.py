@@ -303,7 +303,8 @@ class Pack:
 
     def upload(self, logger: logging.Logger, client: demisto_client):
         """
-        Upload the pack zip to demisto_client
+        Upload the pack zip to demisto_client,
+        from 6.5 server version we have the option to use skip_verify arg instead of server configuration.
         Args:
             logger (logging.Logger): System logger already initialized.
             client: The demisto_client object of the desired XSOAR machine to upload to.

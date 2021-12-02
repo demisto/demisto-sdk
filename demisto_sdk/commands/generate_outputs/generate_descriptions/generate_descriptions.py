@@ -59,7 +59,7 @@ def remove_last_prompt():
     global CURRENT_PROMPT
 
     if len(CURRENT_PROMPT) >= PROMPT_MAX_LINES:
-        print(f"Prompt too big (>{PROMPT_MAX_LINES}) sliding window")
+        logger.debug(f"Prompt too big (>{PROMPT_MAX_LINES}) sliding window")
         CURRENT_PROMPT.pop(0)
 
 

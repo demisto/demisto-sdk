@@ -24,10 +24,11 @@ from demisto_sdk.commands.common.constants import (
     INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, JOBS_DIR,
     LAYOUTS_DIR, LISTS_DIR, MAPPERS_DIR, REPORTS_DIR, SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR, WIDGETS_DIR, FileType)
-from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type, get_json,
+from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
+                                               get_current_repo_name, get_json,
                                                get_pack_name, get_yaml,
                                                print_color, print_error,
-                                               print_warning, get_current_repo_name)
+                                               print_warning)
 from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
 
 CONTENT_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',

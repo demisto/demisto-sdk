@@ -5,8 +5,7 @@ import click
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
 
-from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
-                                               print_error, get_yaml)
+from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color, get_yaml)
 
 
 SUCCESS_RETURN_CODE = 0
@@ -25,7 +24,7 @@ class TestPlaybookRunner:
         base_link_to_workplan (str): the base link to see the full test playbook run in your xsoar instance.
     """
 
-    def __init__(self, input: str, all: bool, wait: bool, timeout: int, insecure: bool = False):
+    def __init__(self, input: str = '', all: bool = False, wait: bool = True, timeout: int = 90, insecure: bool = False):
         self.test_playbook_input = input
         self.all_test_playbooks = all
         self.should_wait = wait
@@ -39,7 +38,6 @@ class TestPlaybookRunner:
         Run test playbooks on your XSOAR machine.
         :return: The exit code
         """
-        print(self.test_playbook_input)
         exit_code: int = self.run_test_playbooks_manager()
         return exit_code
 
@@ -53,22 +51,23 @@ class TestPlaybookRunner:
         if not self.verify_flags():
             status_code = ERROR_RETURN_CODE
 
-        elif self.test_playbook_input is None or not os.path.exists(self.test_playbook_input):
+        elif (self.test_playbook_input is None or not os.path.exists(self.test_playbook_input)) and \
+                not self.all_test_playbooks:
             click.secho(f'Error: Given input path: {self.test_playbook_input} does not exist', fg='bright_red')
             status_code = ERROR_RETURN_CODE
 
         # Run specific test playbook
         elif os.path.isfile(self.test_playbook_input):
             test_playbook_id = self.get_test_playbook_id(self.test_playbook_input)
-            self.run_test_playbook_by_id(test_playbook_id)
+            status_code = self.run_test_playbook_by_id(test_playbook_id)
 
         # Run all pack test playbooks
         elif os.path.isdir(self.test_playbook_input):
-            self.run_test_playbooks_folder(self.test_playbook_input)
+            status_code = self.run_test_playbooks_folder(self.test_playbook_input)
 
         # Run all repo test playbooks
         elif self.all_test_playbooks:
-            self.run_all_test_playbooks()
+            status_code = self.run_all_test_playbooks()
 
         return status_code
 
@@ -95,19 +94,28 @@ class TestPlaybookRunner:
         """
         Run all pack test playbooks
         """
+        status_code = 0
         full_path = f'{folder_path}/TestPlaybooks'
         list_test_playbooks_files = os.listdir(full_path)
         for test_playbook in list_test_playbooks_files:
             test_playbook_id = self.get_test_playbook_id(os.path.join(full_path, test_playbook))
-            self.run_test_playbook_by_id(test_playbook_id)
+            res = self.run_test_playbook_by_id(test_playbook_id)
+            if res == 1:
+                status_code = 1
+        return status_code
 
     def run_all_test_playbooks(self):
         """
         Run all the repo test playbooks
         """
+        status_code = 0
         packs_list = os.listdir('Packs')
         for pack in packs_list:
-            self.run_test_playbooks_folder(f'Packs/{pack}')
+            if os.path.isdir(f'Packs/{pack}'):
+                res = self.run_test_playbooks_folder(f'Packs/{pack}')
+                if res == 1:
+                    status_code = 1
+        return status_code
 
     def run_test_playbook_by_id(self, test_playbook_id):
         """Run a test playbook in your xsoar instance.
@@ -120,14 +128,14 @@ class TestPlaybookRunner:
             incident_id = self.create_incident_with_test_playbook(
                 incident_name=f'inc_{test_playbook_id}', test_playbook_id=test_playbook_id)
         except ApiException as a:
-            print_error(str(a))
+            print_color(str(a), LOG_COLORS.RED)
             return 1
 
         work_plan_link = self.base_link_to_workplan + str(incident_id)
         if self.should_wait:
-            print(f'Waiting for the test playbook to finish running.. \n'
-                  f'To see the test playbook run in real-time please go to : {work_plan_link}',
-                  LOG_COLORS.GREEN)
+            print_color(f'Waiting for the test playbook to finish running.. \n'
+                        f'To see the test playbook run in real-time please go to : {work_plan_link}',
+                        LOG_COLORS.GREEN)
 
             elapsed_time = 0
             start_time = time.time()
@@ -142,17 +150,17 @@ class TestPlaybookRunner:
 
             # Ended the loop because of timeout
             if elapsed_time >= self.timeout:
-                print_error(f'The command had timed out while the playbook is in progress.\n'
-                            f'To keep tracking the test playbook please go to : {work_plan_link}')
+                print_color(f'The command had timed out while the playbook is in progress.\n'
+                            f'To keep tracking the test playbook please go to : {work_plan_link}', LOG_COLORS.RED)
             else:
                 if test_playbook_results["state"] == "failed":
-                    print_error("The test playbook finished running with status: FAILED")
+                    print_color("The test playbook finished running with status: FAILED", LOG_COLORS.RED)
                     return 1
                 else:
                     print_color("The test playbook has completed its run successfully", LOG_COLORS.GREEN)
 
         else:
-            print(f'To see results please go to : {work_plan_link}')
+            print_color(f'To see results please go to : {work_plan_link}', LOG_COLORS.NATIVE)
 
         return 0
 
@@ -179,11 +187,11 @@ class TestPlaybookRunner:
         try:
             response = self.demisto_client.create_incident(create_incident_request=create_incident_request)
         except ApiException as e:
-            print_error(f'Failed to create incident with playbook id : "{test_playbook_id}", '
+            print_color(f'Failed to create incident with playbook id : "{test_playbook_id}", '
                         'possible reasons are:\n'
                         '1. This playbook name does not exist \n'
                         '2. Schema problems in the playbook \n'
-                        '3. Unauthorized api key')
+                        '3. Unauthorized api key', LOG_COLORS.RED)
             raise e
 
         print_color(f'The test playbook: {self.test_playbook_input} was triggered successfully.', LOG_COLORS.GREEN)

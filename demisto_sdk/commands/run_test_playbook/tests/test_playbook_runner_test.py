@@ -11,7 +11,7 @@ from demisto_sdk.tests.constants_test import (CONTENT_REPO_EXAMPLE_ROOT,
 from TestSuite.test_tools import ChangeCWD
 
 WAITING_MASSAGE = "Waiting for the test playbook to finish running.."
-LINK_MASSAGE = 'To see the test playbook run in real-time please go to : http://localhost:8080/#/WorkPlan/1234'
+LINK_MASSAGE = 'To see the test playbook run in real-time please go to :'
 SUCCESS_MASSAGE = 'The test playbook has completed its run successfully'
 FAILED_MASSAGE = 'The test playbook finished running with status: FAILED'
 
@@ -185,4 +185,3 @@ class TestTestPlaybookRunner:
         assert WAITING_MASSAGE in stdout
         assert LINK_MASSAGE in stdout
         assert FAILED_MASSAGE in stdout
-

@@ -7,7 +7,8 @@ import yaml
 
 from demisto_sdk.commands.common.constants import (
     BANG_COMMAND_ARGS_MAPPING_DICT, BANG_COMMAND_NAMES, DBOT_SCORES_DICT,
-    DEPRECATED_REGEXES, ENDPOINT_COMMAND_NAME, ENDPOINT_FLEXIBLE_REQUIRED_ARGS,
+    DEFAULT_CONTENT_ITEM_FROM_VERSION, DEPRECATED_REGEXES,
+    ENDPOINT_COMMAND_NAME, ENDPOINT_FLEXIBLE_REQUIRED_ARGS,
     FEED_REQUIRED_PARAMS, FETCH_REQUIRED_PARAMS, FIRST_FETCH,
     FIRST_FETCH_PARAM, INTEGRATION_CATEGORIES, IOC_OUTPUTS_DICT, MAX_FETCH,
     MAX_FETCH_PARAM, PACKS_DIR, PACKS_PACK_META_FILE_NAME, PYTHON_SUBTYPES,
@@ -870,9 +871,9 @@ class IntegrationValidator(ContentEntityValidator):
     def is_valid_feed(self):
         # type: () -> bool
         valid_from_version = valid_feed_params = True
-        if self.current_file.get("script", {}).get("feed"):
-            from_version = self.current_file.get("fromversion", "0.0.0")
-            if not from_version or server_version_compare("5.5.0", from_version) == 1:
+        if self.current_file.get('script', {}).get('feed'):
+            from_version = self.current_file.get('fromversion', DEFAULT_CONTENT_ITEM_FROM_VERSION)
+            if not from_version or server_version_compare('5.5.0', from_version) == 1:
                 error_message, error_code = Errors.feed_wrong_from_version(from_version)
                 if self.handle_error(error_message, error_code, file_path=self.file_path,
                                      suggested_fix=Errors.suggest_fix(self.file_path, '--from-version', '5.5.0')):
@@ -882,9 +883,9 @@ class IntegrationValidator(ContentEntityValidator):
         return valid_from_version and valid_feed_params
 
     def is_valid_pwsh(self) -> bool:
-        if self.current_file.get("script", {}).get("type") == TYPE_PWSH:
-            from_version = self.current_file.get("fromversion", "0.0.0")
-            if not from_version or server_version_compare("5.5.0", from_version) > 0:
+        if self.current_file.get('script', {}).get('type') == TYPE_PWSH:
+            from_version = self.current_file.get('fromversion', DEFAULT_CONTENT_ITEM_FROM_VERSION)
+            if not from_version or server_version_compare('5.5.0', from_version) > 0:
                 error_message, error_code = Errors.pwsh_wrong_version(from_version)
                 if self.handle_error(error_message, error_code, file_path=self.file_path,
                                      suggested_fix=Errors.suggest_fix(self.file_path, '--from-version', '5.5.0')):

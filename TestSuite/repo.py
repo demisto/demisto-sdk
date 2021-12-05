@@ -69,7 +69,8 @@ class Repo:
             'GenericTypes': [],
             'GenericFields': [],
             'GenericModules': [],
-            'GenericDefinitions': []
+            'GenericDefinitions': [],
+            'Jobs': []
         })
 
     def __del__(self):
@@ -203,6 +204,9 @@ class Repo:
         generic_definition.write_json({'id': f'generic_{name} - generic_definition'})
         generic_definition.update({'name': f'generic_{name} - generic_definition'})
         generic_definition.update({'auditable': False})
+
+        pack.create_job(is_feed=False, name=name)
+        pack.create_job(is_feed=True, name=f'{name}_all_feeds')
 
         return pack
 

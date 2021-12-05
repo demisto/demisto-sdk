@@ -25,7 +25,7 @@ from demisto_sdk.commands.common.constants import (
     LAYOUTS_DIR, LISTS_DIR, MAPPERS_DIR, REPORTS_DIR, SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR, WIDGETS_DIR, FileType)
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
-                                               get_current_repo_name, get_json,
+                                               get_current_repo, get_json,
                                                get_pack_name, get_yaml,
                                                print_color, print_error,
                                                print_warning)
@@ -833,7 +833,7 @@ def create_common_entity_data(path, name, to_version, from_version, pack):
     if name:
         data['name'] = name
     data['file_path'] = path
-    data['source'] = get_current_repo_name()
+    data['source'] = get_current_repo()
     if to_version:
         data['toversion'] = to_version
     if from_version:
@@ -852,7 +852,7 @@ def get_pack_metadata_data(file_path, print_logs: bool):
         pack_data = {
             "name": json_data.get('name'),
             "current_version": json_data.get('currentVersion'),
-            'source': get_current_repo_name(),
+            'source': get_current_repo(),
             "author": json_data.get('author', ''),
             'certification': 'certified' if json_data.get('support', '').lower() in ['xsoar', 'partner'] else '',
             "tags": json_data.get('tags', []),

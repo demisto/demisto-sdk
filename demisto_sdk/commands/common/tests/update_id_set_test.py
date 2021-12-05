@@ -517,6 +517,7 @@ class TestPlaybooks:
     PLAYBOOK_DATA = {
         "name": "Dummy Playbook",
         "file_path": TESTS_DIR + "/test_files/DummyPack/Playbooks/DummyPlaybook.yml",
+        "source": "github.com - demisto/demisto-sdk",
         "fromversion": "4.5.0",
         "filters": ["isEqualString"],
         "transformers": ["uniq"],
@@ -2444,7 +2445,8 @@ def test_merged_id_sets_with_legal_duplicates(caplog):
             {
                 'playbook_foo1': {
                     'name': 'playbook_foo1',
-                    'pack': 'foo_1'
+                    'pack': 'foo_1',
+                    'source': 'repo1'
                 }
             }
         ],
@@ -2452,7 +2454,8 @@ def test_merged_id_sets_with_legal_duplicates(caplog):
             {
                 'Script_Foo1': {
                     'name': 'ScriptFoo',
-                    'pack': 'foo_1'
+                    'pack': 'foo_1',
+                    'source': 'repo1'
                 }
             }
         ]
@@ -2463,7 +2466,8 @@ def test_merged_id_sets_with_legal_duplicates(caplog):
             {
                 'playbook_foo1': {
                     'name': 'playbook_foo1',
-                    'pack': 'foo_1'
+                    'pack': 'foo_1',
+                    'source': 'repo2'
                 }
             }
         ],

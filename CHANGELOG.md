@@ -5,6 +5,7 @@
 * added a new command **update-xsoar-config-file** to handle your XSOAR Configuration File.
 * Added `skipVerify` argument in **upload** command to skip pack signature verification.
 * Adding a filter to the current user to `_get_playground_id` method to find the actual playground id.
+* Added the `Job` content type.
 
 # 1.5.3
 * The **format** command will now set `unsearchable: True` for incident, indicator and generic fields.

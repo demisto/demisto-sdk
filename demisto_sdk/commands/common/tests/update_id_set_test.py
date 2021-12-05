@@ -234,7 +234,7 @@ class TestDuplicates:
         ('pack1', 'pack1', 'repo1', 'repo2'),
         ('pack1', 'pack1', 'repo1', 'repo2')
     ])
-    def test_has_duplicate(first_pack, second_pack,  first_source, second_source):
+    def test_has_duplicate(first_pack, second_pack, first_source, second_source):
         """
         Given
             - id_set.json with two duplicate layouts of the same type (details), their versions also overrides.

@@ -14,6 +14,7 @@ from multiprocessing import Pool, cpu_count
 from typing import Callable, Dict, List, Optional, Tuple
 
 import click
+from pathlib import Path
 import networkx
 
 from demisto_sdk.commands.common.constants import (
@@ -42,7 +43,8 @@ ID_SET_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Cla
 
 CONTENT_MP_V2_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
                     'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
-                    'Mappers', 'Packs', 'GenericTypes', 'Lists', 'Jobs']
+                    'Mappers', 'Packs', 'Lists', 'Jobs']
+
 ID_SET_MP_V2_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Classifiers',
                     'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
                     'Mappers', 'Lists', 'Jobs']
@@ -1036,20 +1038,58 @@ def get_depends_on(data_dict):
 
     return depends_on_list, command_to_integration
 
+def get_mp_types_by_item(file_path):
+    """
+    Get the supporting marketplaces for the given content item, defined by the mp field in the metadata
+    (see issue https://github.com/demisto/etc/issues/44220)
+    Args:
+        file_path: path to content item in content repo
 
-def process_integration(file_path: str, print_logs: bool) -> list:
+    Returns:
+        list of names of supporting marketplaces (current options are marketplacev2 and xsoar)
+    """
+    file_path = Path(file_path)
+    metadata_path = Path(*file_path.parts[0:2]) / METADATA_FILE_NAME
+    try:
+        with open(metadata_path, mode=r) as metadata_file:
+            metadata = json.load(metadata_file)
+            marketplaces = metadata[MARKETPLACE_KEY_PACK_METADATA]
+        return marketplaces
+    except FileNotFoundError:
+        return []
+
+def should_skip_item_by_mp(file_path: str, marketplace: str):
+    """
+    Returns true if the item given (as path) should be part of the current generated id set, dependeing if the current
+    marketplace is present in the item's pack metadata in the relevant field.
+    Args:
+        file_path: path to content item
+        marketplace: the marketplace this current generated id set is for
+
+    Returns: True if should be skipped, else False
+
+    """
+
+    return MARKETPLACE_XSIAM_VALUE_PACK_METADATA in get_mp_types_by_item(
+        file_path) and marketplace == MARKETPLACE_XSIAM_VALUE_PACK_METADATA
+
+
+def process_integration(file_path: str, print_logs: bool, marketplace: str) -> list:
     """
     Process integration dir or file
 
     Arguments:
-        file_path {string} -- file path to integration file
-        print_logs {bool} -- whether to print logs to stdout
+        file_path (str): file path to integration file
+        print_logs (bool): whether to print logs to stdout
+        marketplace (str): the marketplace this id set is designated for (xsoar\xsiam)
 
     Returns:
-        list -- integration data list (may be empty)
+        list: integration data list (may be empty)
     """
     res = []
     try:
+        if should_skip_item_by_mp(file_path, marketplace):
+            return []
         if os.path.isfile(file_path):
             if find_type(file_path) in (FileType.INTEGRATION, FileType.BETA_INTEGRATION):
                 if print_logs:
@@ -1590,7 +1630,6 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     if id_set_path == "":
         if marketplace == MARKETPLACE_XSIAM_VALUE_PACK_METADATA:
             id_set_path = MP_V2_ID_SET_PATH
-            objects_to_create = CONTENT_MP_V2_ENTITIES
         else:
             id_set_path = DEFAULT_ID_SET_PATH
 

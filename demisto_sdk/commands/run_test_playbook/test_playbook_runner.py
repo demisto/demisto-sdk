@@ -1,6 +1,7 @@
 import os
 import time
 
+import click
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
 
@@ -35,7 +36,7 @@ class TestPlaybookRunner:
 
     def run_test_playbooks(self) -> int:
         """
-        Downloads custom content data from Demisto to the output pack in content repository.
+        Run test playbooks on your XSOAR machine.
         :return: The exit code
         """
         print(self.test_playbook_input)
@@ -43,21 +44,33 @@ class TestPlaybookRunner:
         return exit_code
 
     def run_test_playbooks_manager(self):
+        """
+        Manages all ru-test-playbook command flows
+        return The exit code of each flow
+        """
+        status_code = SUCCESS_RETURN_CODE
+
         if not self.verify_flags():
-            return 1
+            status_code = ERROR_RETURN_CODE
+
+        elif self.test_playbook_input is None or not os.path.exists(self.test_playbook_input):
+            click.secho(f'Error: Given input path: {self.test_playbook_input} does not exist', fg='bright_red')
+            status_code = ERROR_RETURN_CODE
 
         # Run specific test playbook
         elif os.path.isfile(self.test_playbook_input):
             test_playbook_id = self.get_test_playbook_id(self.test_playbook_input)
             self.run_test_playbook_by_id(test_playbook_id)
 
-        # Run all the test playbooks in the pack
+        # Run all pack test playbooks
         elif os.path.isdir(self.test_playbook_input):
             self.run_test_playbooks_folder(self.test_playbook_input)
 
-        # Run all the test playbooks in the repo
+        # Run all repo test playbooks
         elif self.all_test_playbooks:
             self.run_all_test_playbooks()
+
+        return status_code
 
     def verify_flags(self) -> bool:
         """
@@ -72,16 +85,26 @@ class TestPlaybookRunner:
         return is_flags_valid
 
     def get_test_playbook_id(self, file_path):
+        """
+        Get test playbook ID from test playbook file name
+        """
         test_playbook_data = get_yaml(file_path=file_path)
         return test_playbook_data.get('id')
 
     def run_test_playbooks_folder(self, folder_path):
-        list_test_playbooks_files = os.listdir(f'{folder_path}/TestPlaybooks')
+        """
+        Run all pack test playbooks
+        """
+        full_path = f'{folder_path}/TestPlaybooks'
+        list_test_playbooks_files = os.listdir(full_path)
         for test_playbook in list_test_playbooks_files:
-            test_playbook_id = self.get_test_playbook_id(test_playbook)
+            test_playbook_id = self.get_test_playbook_id(os.path.join(full_path, test_playbook))
             self.run_test_playbook_by_id(test_playbook_id)
 
     def run_all_test_playbooks(self):
+        """
+        Run all the repo test playbooks
+        """
         packs_list = os.listdir('Packs')
         for pack in packs_list:
             self.run_test_playbooks_folder(f'Packs/{pack}')
@@ -106,28 +129,28 @@ class TestPlaybookRunner:
                   f'To see the test playbook run in real-time please go to : {work_plan_link}',
                   LOG_COLORS.GREEN)
 
-            elasped_time = 0
+            elapsed_time = 0
             start_time = time.time()
 
-            while elasped_time < self.timeout:
+            while elapsed_time < self.timeout:
                 test_playbook_results = self.get_test_playbook_results_dict(incident_id)
                 if test_playbook_results["state"] == "inprogress":
                     time.sleep(10)
-                    elasped_time = int(time.time() - start_time)
+                    elapsed_time = int(time.time() - start_time)
                 else:   # the test playbook has finished running
                     break
 
             # Ended the loop because of timeout
-            if elasped_time >= self.timeout:
+            if elapsed_time >= self.timeout:
                 print_error(f'The command had timed out while the playbook is in progress.\n'
                             f'To keep tracking the test playbook please go to : {work_plan_link}')
             else:
                 if test_playbook_results["state"] == "failed":
                     print_error("The test playbook finished running with status: FAILED")
+                    return 1
                 else:
                     print_color("The test playbook has completed its run successfully", LOG_COLORS.GREEN)
 
-        # The command does not wait for the test playbook to finish running
         else:
             print(f'To see results please go to : {work_plan_link}')
 

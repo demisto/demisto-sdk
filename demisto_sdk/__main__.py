@@ -1012,15 +1012,16 @@ def run_playbook(**kwargs):
 )
 @click.option(
     '--input', '-i',
-    help="The playbook ID to run.",
+    help="Path to test playbook to run, "
+         "can be a path to specific test playbook or path to pack name for example: Packs/GitHub.",
     required=False
 )
 @click.option(
     '--all', is_flag=True,
-    help="Wait until the test-playbook run is finished and get a response."
+    help="Run all the test playbooks from this repository."
 )
 @click.option(
-    '--wait', '-w', is_flag=True,
+    '--wait', '-w', is_flag=True, default=True,
     help="Wait until the test-playbook run is finished and get a response."
 )
 @click.option(

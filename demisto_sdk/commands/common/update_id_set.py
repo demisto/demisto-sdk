@@ -36,7 +36,7 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type, get_json,
                                                get_pack_name, get_yaml,
                                                print_color, print_error,
-                                               print_warning)
+                                               print_warning, get_current_repo_name)
 from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
 
 CONTENT_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
@@ -850,6 +850,7 @@ def create_common_entity_data(path, name, to_version, from_version, pack):
     if name:
         data['name'] = name
     data['file_path'] = path
+    data['source'] = get_current_repo_name()
     if to_version:
         data['toversion'] = to_version
     if from_version:
@@ -1937,6 +1938,11 @@ def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=
                 return False
             if dict1.get('typeID', '') != dict2.get('typeID', ''):
                 return False
+
+        # If they have the same pack name and the same source they actually the same entity.
+        # Added to support merge between two id-sets that contain the same pack.
+        if dict1.get('pack') == dict2.get('pack') and dict1.get('source') == dict2.get('source'):
+            return False
 
         # A: 3.0.0 - 3.6.0
         # B: 3.5.0 - 4.5.0

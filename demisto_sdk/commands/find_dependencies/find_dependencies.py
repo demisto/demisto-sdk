@@ -1508,9 +1508,9 @@ class PackDependencies:
 
         if is_external_repository():
             print_warning('Running in a private repository, will download the id set from official content')
-            tmp_id_set = get_merged_official_and_local_id_set(id_set, silent_mode=silent_mode)
-            if tmp_id_set is not None:  # if duplicates were not found
-                id_set = tmp_id_set
+            id_set = get_merged_official_and_local_id_set(id_set, silent_mode=silent_mode)
+            if id_set is None:  # if there are duplicates between the merge
+                raise ValueError('Found duplicates in the id-set when merging with official content')
 
         dependency_graph = PackDependencies.build_dependency_graph(
             pack_id=pack_name,

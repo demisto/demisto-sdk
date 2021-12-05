@@ -1,10 +1,14 @@
 import click
+import demisto_client
 import pytest
-from TestSuite.test_tools import ChangeCWD
+from demisto_client.demisto_api import DefaultApi
 
 from demisto_sdk.__main__ import run_test_playbook
-from demisto_sdk.commands.run_test_playbook.test_playbook_runner import TestPlaybookRunner
-from demisto_sdk.tests.constants_test import TEST_PLAYBOOK, VALID_PACK, CONTENT_REPO_EXAMPLE_ROOT
+from demisto_sdk.commands.run_test_playbook.test_playbook_runner import \
+    TestPlaybookRunner
+from demisto_sdk.tests.constants_test import (CONTENT_REPO_EXAMPLE_ROOT,
+                                              TEST_PLAYBOOK, VALID_PACK)
+from TestSuite.test_tools import ChangeCWD
 
 
 class TestTestPlaybookRunner:
@@ -20,6 +24,7 @@ class TestTestPlaybookRunner:
         Then:
             - validate the results is aas expected
         """
+        mocker.patch.object(demisto_client, 'configure', return_value=DefaultApi())
         mocker.patch.object(TestPlaybookRunner, 'create_incident_with_test_playbook', return_value='1234')
         mocker.patch.object(TestPlaybookRunner, 'get_test_playbook_results_dict', return_value={"state": tpb_result})
         result = click.Context(command=run_test_playbook).invoke(run_test_playbook, input=TEST_PLAYBOOK)
@@ -36,6 +41,7 @@ class TestTestPlaybookRunner:
         Then:
             - validate the results is aas expected
         """
+        mocker.patch.object(demisto_client, 'configure', return_value=DefaultApi())
         mocker.patch.object(TestPlaybookRunner, 'create_incident_with_test_playbook', return_value='1234')
         mocker.patch.object(TestPlaybookRunner, 'get_test_playbook_results_dict', return_value={"state": tpb_result})
         result = click.Context(command=run_test_playbook).invoke(run_test_playbook, input=VALID_PACK)
@@ -53,6 +59,7 @@ class TestTestPlaybookRunner:
             - validate the results is aas expected
         """
         with ChangeCWD(CONTENT_REPO_EXAMPLE_ROOT):
+            mocker.patch.object(demisto_client, 'configure', return_value=DefaultApi())
             mocker.patch.object(TestPlaybookRunner, 'create_incident_with_test_playbook', return_value='1234')
             mocker.patch.object(TestPlaybookRunner, 'get_test_playbook_results_dict', return_value={"state": tpb_result})
             result = click.Context(command=run_test_playbook).invoke(run_test_playbook, all=True, input='')
@@ -73,6 +80,7 @@ class TestTestPlaybookRunner:
             - validate the error code is as expected.
             - validate the Error massage when the argument is missing
         """
+        mocker.patch.object(demisto_client, 'configure', return_value=DefaultApi())
         mocker.patch.object(TestPlaybookRunner, 'create_incident_with_test_playbook', return_value='1234')
         mocker.patch.object(TestPlaybookRunner, 'get_test_playbook_results_dict', return_value={'state': 'success'})
 

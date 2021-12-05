@@ -60,7 +60,8 @@ from demisto_sdk.commands.postman_codegen.postman_codegen import \
 # Import demisto-sdk commands
 from demisto_sdk.commands.run_cmd.runner import Runner
 from demisto_sdk.commands.run_playbook.playbook_runner import PlaybookRunner
-from demisto_sdk.commands.run_test_playbook.test_playbook_runner import TestPlaybookRunner
+from demisto_sdk.commands.run_test_playbook.test_playbook_runner import \
+    TestPlaybookRunner
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
 from demisto_sdk.commands.split.jsonsplitter import JsonSplitter
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter

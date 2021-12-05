@@ -5,8 +5,7 @@ import click
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
 
-from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color, get_yaml)
-
+from demisto_sdk.commands.common.tools import LOG_COLORS, get_yaml, print_color
 
 SUCCESS_RETURN_CODE = 0
 ERROR_RETURN_CODE = 1

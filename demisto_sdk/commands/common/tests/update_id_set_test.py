@@ -319,6 +319,7 @@ class TestIntegrations:
             "name": "Dummy Integration",
             "file_path": TESTS_DIR + "/test_files/DummyPack/Integrations/DummyIntegration/DummyIntegration.yml",
             "fromversion": "4.1.0",
+            "source": "github.com - demisto/demisto-sdk",
             "docker_image": "demisto/python3:3.7.4.977",
             "commands": ['xdr-get-incidents',
                          'xdr-get-incident-extra-data',

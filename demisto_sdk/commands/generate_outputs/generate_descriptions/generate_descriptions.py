@@ -264,6 +264,8 @@ def generate_ai_descriptions(
                             'description'] = final_output
                         write_yml(output_path, yml_data)
                         continue
+                    else:
+                        print("Asking again...")
 
                 # Print the progress and current context path
                 if interactive or verbose:

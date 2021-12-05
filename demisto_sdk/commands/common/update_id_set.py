@@ -852,6 +852,7 @@ def get_pack_metadata_data(file_path, print_logs: bool):
         pack_data = {
             "name": json_data.get('name'),
             "current_version": json_data.get('currentVersion'),
+            'source': get_current_repo_name(),
             "author": json_data.get('author', ''),
             'certification': 'certified' if json_data.get('support', '').lower() in ['xsoar', 'partner'] else '',
             "tags": json_data.get('tags', []),

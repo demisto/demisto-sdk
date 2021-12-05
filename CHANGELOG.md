@@ -6,6 +6,8 @@
 * Added `skipVerify` argument in **upload** command to skip pack signature verification.
 * Adding a filter to the current user to `_get_playground_id` method to find the actual playground id.
 * Added support for Job content item in the **format**, **validate**, **upload**, **create-id-set**, **find-dependecies** and **create-content-artifacts** commands.
+* The **postman-codegen** will not have duplicates arguments' name. It will rename them to the minimum distinguished shared path for each of them.
+* Changed the **validate** command to fail on missing test-playbooks only if no unittests are found. 
 
 # 1.5.3
 * The **format** command will now set `unsearchable: True` for incident, indicator and generic fields.

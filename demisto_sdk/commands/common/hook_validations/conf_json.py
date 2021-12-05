@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 from demisto_sdk.commands.common.constants import (API_MODULES_PACK, CONF_PATH,
                                                    FileType)
@@ -127,7 +128,7 @@ class ConfJsonValidator(BaseValidator):
             else:
                 test_playbooks_unskip_status[test_playbook_id] = True
 
-        if not any(test_playbooks_unskip_status.values()):
+        if not any(test_playbooks_unskip_status.values()) and not self.has_unitest(file_path):
             error_message, error_code = Errors.all_entity_test_playbooks_are_skipped(entity_id)
             if self.handle_error(error_message, error_code, file_path=file_path):
                 self._is_valid = False
@@ -144,3 +145,15 @@ class ConfJsonValidator(BaseValidator):
                     test_playbook_ids.append(test['playbookID'])
 
         return self.has_unskipped_test_playbook(integration_data, integration_id, file_path, test_playbook_ids)
+
+    def has_unitest(self, file_path):
+        """ Checks if the tests file exist. If so, Test Playbook is not a must. """
+        test_path = Path(file_path)
+        test_file_name = test_path.parts[-1].replace('.yml', '_test.py')
+        test_path = test_path.parent / test_file_name
+
+        # We only check existence as we have coverage report to check the actual tests
+        if not test_path.exists():
+            return False
+
+        return True

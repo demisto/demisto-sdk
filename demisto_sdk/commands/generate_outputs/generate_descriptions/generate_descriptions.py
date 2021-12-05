@@ -253,7 +253,7 @@ def generate_ai_descriptions(
                 # Match past paths automatically.
                 if command_output_path in similar_paths:
                     print(
-                        f"--Already added description for exact path: {command_output_path}--")
+                        f"\n--Already added description for exact path: {command_output_path}--")
                     final_output = similar_paths.get(command_output_path)
                     print(f"Last output was: '{final_output}'")
                     y = input("Should we use it (y/n)? ").lower()

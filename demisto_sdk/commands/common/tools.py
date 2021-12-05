@@ -21,6 +21,7 @@ import click
 import colorama
 import demisto_client
 import git
+import giturlparse
 import requests
 import urllib3
 import yaml
@@ -2150,3 +2151,13 @@ def get_script_or_sub_playbook_tasks_from_playbook(searched_entity_name: str, ma
             searched_tasks.append(task_data)
 
     return searched_tasks
+
+
+def get_current_repo() -> str:
+    try:
+        git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
+        parsed_git = giturlparse.parse(git_repo.remotes.origin.url)
+        return f'{parsed_git.host} - {parsed_git.owner}/{parsed_git.repo}'
+    except git.InvalidGitRepositoryError:
+        print_warning('git repo is not found')
+        return "Unknown source"

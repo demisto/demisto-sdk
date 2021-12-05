@@ -228,18 +228,25 @@ class TestDuplicates:
     ]
 
     @staticmethod
-    def test_has_duplicate():
+    @pytest.mark.parametrize('first_pack, second_pack, first_source, second_source', [
+        ('pack1', 'pack2', 'repo1', 'repo2'),
+        ('pack1', 'pack2', 'repo1', 'repo1'),
+        ('pack1', 'pack1', 'repo1', 'repo2'),
+        ('pack1', 'pack1', 'repo1', 'repo2')
+    ])
+    def test_has_duplicate(first_pack, second_pack,  first_source, second_source):
         """
         Given
             - id_set.json with two duplicate layouts of the same type (details), their versions also overrides.
             They are considered duplicates because they have the same name (typeID), their versions override, and they
-            are the same kind (details) and they are from different pack
+            are the same kind (details).
+            If the pack and source is the same - there are duplicates, otherwise they are not
 
         When
             - checking for duplicate
 
         Then
-            - Ensure duplicates found
+            - Ensure duplicates found depending on the pack and source
         """
         id_set = {
             'Layouts': []
@@ -250,7 +257,8 @@ class TestDuplicates:
                 'fromVersion': '5.0.0',
                 'kind': 'Details',
                 'path': 'Layouts/layout-details-urlrep.json',
-                'pack': 'urlRep1'
+                'pack': first_pack,
+                'source': first_source
             }
         })
 
@@ -259,12 +267,14 @@ class TestDuplicates:
                 'typeID': 'urlRep',
                 'kind': 'Details',
                 'path': 'Layouts/layout-details-urlrep2.json',
-                'pack': 'urlRep2'
+                'pack': second_pack,
+                'source': second_source
             }
         })
 
         has_duplicates = has_duplicate(id_set['Layouts'], 'urlRep', 'Layouts', False)
-        assert has_duplicates is True
+        expected = first_pack != second_pack or first_source != second_source
+        assert has_duplicates == expected
 
     @staticmethod
     def test_has_no_duplicate():
@@ -664,7 +674,8 @@ class TestPlaybooks:
         """
         data = {'tasks': {'0': {'scriptarguments': {'value': {'complex': {'filters': [[{'operator': 'isEqualString'}],
                                                                                       [{'operator': 'isEqualString'}],
-                                                                                      [{'operator': 'StringContainsArray'}]
+                                                                                      [{
+                                                                                          'operator': 'StringContainsArray'}]
                                                                                       ]}}}}}}
         _, filters = get_filters_and_transformers_from_playbook(data)
         assert len(filters) == 2

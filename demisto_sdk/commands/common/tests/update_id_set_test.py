@@ -425,6 +425,7 @@ class TestScripts:
         "DummyScript": {
             "name": "DummyScript",
             "file_path": TESTS_DIR + "/test_files/DummyPack/Scripts/DummyScript.yml",
+            "source": "github.com - demisto/demisto-sdk",
             "fromversion": "5.0.0",
             "docker_image": "demisto/python3:3.7.3.286",
             "tests": [
@@ -436,6 +437,7 @@ class TestScripts:
     PACK_SCRIPT_DATA = {
         "DummyScript": {
             "name": "DummyScript",
+            "source": "github.com - demisto/demisto-sdk",
             "docker_image": "demisto/python3:3.8.2.6981",
             "pack": "DummyPack",
             "file_path": TESTS_DIR + "/test_files/Packs/DummyPack/Scripts/DummyScript/DummyScript.yml",

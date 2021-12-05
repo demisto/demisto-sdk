@@ -2,7 +2,7 @@ import os
 import re
 from copy import deepcopy
 from distutils.version import LooseVersion
-from typing import Dict, Optional, Set, Union
+from typing import Any, Dict, Optional, Set, Union
 
 import click
 import yaml
@@ -95,13 +95,17 @@ class BaseUpdate:
             return output_file_path
 
     def set_version_to_default(self, location=None):
-        """Replaces the version of the YML to default."""
+        self.set_default_value('version', DEFAULT_VERSION, location)
+
+    def set_default_value(self, key: str, value: Any, location=None):
+        """Replaces the version to default."""
         if self.verbose:
-            click.echo(f'Setting JSON version to default: {DEFAULT_VERSION}')
+            click.echo(f'Setting {key} to default={value}' +
+                       ' in custom location' if location else '')
         if location:
-            location['version'] = DEFAULT_VERSION
+            location[key] = value
         else:
-            self.data['version'] = DEFAULT_VERSION
+            self.data[key] = value
 
     def remove_unnecessary_keys(self):
         """Removes keys that are in file but not in schema of file type"""

@@ -71,6 +71,8 @@ from demisto_sdk.commands.unify.generic_module_unifier import \
 from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
 from demisto_sdk.commands.update_release_notes.update_rn_manager import \
     UpdateReleaseNotesManager
+from demisto_sdk.commands.update_xsoar_config_file.update_xsoar_config_file import \
+    XSOARConfigFileUpdater
 from demisto_sdk.commands.upload.uploader import ConfigFileParser, Uploader
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.commands.zip_packs.packs_zipper import (EX_FAIL, EX_SUCCESS,
@@ -910,6 +912,9 @@ def upload(**kwargs):
     "-i", "--input", help="Custom content file name to be downloaded. Can be provided multiple times",
     required=False, multiple=True)
 @click.option(
+    "-r", "--regex", help="Regex Pattern, download all the custom content files that match this regex pattern.",
+    required=False)
+@click.option(
     "--insecure", help="Skip certificate validation", is_flag=True)
 @click.option(
     "-v", "--verbose", help="Verbose output", is_flag=True)
@@ -929,6 +934,39 @@ def download(**kwargs):
     check_configuration_file('download', kwargs)
     downloader: Downloader = Downloader(**kwargs)
     return downloader.download()
+
+
+# ====================== update-xsoar-config-file ====================== #
+@main.command()
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    "-pi", "--pack-id", help="The Pack ID to add to XSOAR Configuration File", required=False,
+    multiple=False)
+@click.option(
+    "-pd", "--pack-data", help="The Pack Data to add to XSOAR Configuration File - "
+           "Pack URL for Custom Pack and Pack Version for OOTB Pack", required=False, multiple=False)
+@click.option(
+    "-mp", "--add-marketplace-pack", help="Add a Pack to the MarketPlace Packs section in the Configuration File",
+    required=False, is_flag=True)
+@click.option(
+    "-cp", "--add-custom-pack", help="Add the Pack to the Custom Packs section in the Configuration File",
+    is_flag=True)
+@click.option(
+    "-all", "--add-all-marketplace-packs",
+    help="Add all the installed MarketPlace Packs to the marketplace_packs in XSOAR Configuration File", is_flag=True)
+@click.option(
+    "--insecure", help="Skip certificate validation", is_flag=True)
+@click.option(
+    "--file-path", help="XSOAR Configuration File path, the default value is in the repo level", is_flag=False)
+def xsoar_config_file_update(**kwargs):
+    """Download custom content from Demisto instance.
+    DEMISTO_BASE_URL environment variable should contain the Demisto server base URL.
+    DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
+    """
+    file_updater: XSOARConfigFileUpdater = XSOARConfigFileUpdater(**kwargs)
+    return file_updater.update()
 
 
 # ====================== run ====================== #

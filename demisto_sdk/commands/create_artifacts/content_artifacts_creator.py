@@ -81,7 +81,7 @@ class ArtifactsManager:
         self.signature_key = signature_key
         self.signDirectory = sign_directory
         self.remove_test_playbooks = remove_test_playbooks
-        self.marketplace = marketplace
+        self.marketplace = marketplace.lower()
         # run related arguments
         self.content_new_path = self.artifacts_path / 'content_new'
         self.content_test_path = self.artifacts_path / 'content_test'
@@ -678,7 +678,7 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
         pack_report += ObjectReport(release_note_config, content_packs=True)
         release_note_config.dump(artifact_manager.content_packs_path / pack.id / RELEASE_NOTES_DIR)
 
-    if artifact_manager.marketplace == 'xsoar':
+    if artifact_manager.marketplace == MARKETPLACE_XSOAR_VALUE_PACK_METADATA:
         for dashboard in pack.dashboards:
             content_items_handler.handle_content_item(dashboard)
             pack_report += dump_pack_conditionally(artifact_manager, dashboard)
@@ -706,9 +706,6 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
         for widget in pack.widgets:
             content_items_handler.handle_content_item(widget)
             pack_report += dump_pack_conditionally(artifact_manager, widget)
-
-
-
 
     for tool in pack.tools:
         object_report = ObjectReport(tool, content_packs=True)

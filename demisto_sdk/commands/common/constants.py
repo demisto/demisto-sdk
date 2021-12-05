@@ -70,6 +70,9 @@ GENERIC_MODULE = 'genericmodule'
 GENERIC_DEFINITION = 'genericdefinition'
 JOB = 'job'
 
+MARKETPLACE_KEY_PACK_METADATA = 'marketplaces'
+MARKETPLACE_XSIAM_VALUE_PACK_METADATA = 'marketplacev2'
+MARKETPLACE_XSOAR_VALUE_PACK_METADATA = 'xsoar'
 
 class FileType(Enum):
     INTEGRATION = 'integration'

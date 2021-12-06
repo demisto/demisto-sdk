@@ -71,9 +71,6 @@ GENERIC_DEFINITION = 'genericdefinition'
 JOB = 'job'
 
 MARKETPLACE_KEY_PACK_METADATA = 'marketplaces'
-MARKETPLACE_XSIAM_VALUE_PACK_METADATA = 'marketplacev2'
-MARKETPLACE_XSOAR_VALUE_PACK_METADATA = 'xsoar'
-
 
 class FileType(Enum):
     INTEGRATION = 'integration'
@@ -1335,3 +1332,7 @@ UUID_REGEX = r'([\w]{8}-[\w]{4}-[\w]{4}-[\w]{4}-[\w]{8,12})'
 
 class IronBankDockers:
     API_LINK = 'https://repo1.dso.mil/api/v4/projects/dsop%2Fopensource%2Fpalo-alto-networks%2Fdemisto%2F'
+
+class MarketplaceVersions(Enum):
+    XSOAR = 'xsoar'
+    MarketplaceV2 = 'marketplacev2'

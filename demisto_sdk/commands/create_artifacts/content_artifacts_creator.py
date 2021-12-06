@@ -19,7 +19,7 @@ from demisto_sdk.commands.common.constants import (
     GENERIC_MODULES_DIR, GENERIC_TYPES_DIR, INCIDENT_FIELDS_DIR,
     INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR,
     INTEGRATIONS_DIR, JOBS_DIR, LAYOUTS_DIR, LISTS_DIR,
-    MARKETPLACE_XSOAR_VALUE_PACK_METADATA, PACKS_DIR, PLAYBOOKS_DIR,
+    MarketplaceVersions, PACKS_DIR, PLAYBOOKS_DIR,
     PRE_PROCESS_RULES_DIR, RELEASE_NOTES_DIR, REPORTS_DIR, SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR, TOOLS_DIR, WIDGETS_DIR, ContentItems)
 from demisto_sdk.commands.common.content import (Content, ContentError,
@@ -679,7 +679,7 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
         pack_report += ObjectReport(release_note_config, content_packs=True)
         release_note_config.dump(artifact_manager.content_packs_path / pack.id / RELEASE_NOTES_DIR)
 
-    if artifact_manager.marketplace == MARKETPLACE_XSOAR_VALUE_PACK_METADATA:
+    if artifact_manager.marketplace == MarketplaceVersions.MarketplaceV2:
         for dashboard in pack.dashboards:
             content_items_handler.handle_content_item(dashboard)
             pack_report += dump_pack_conditionally(artifact_manager, dashboard)

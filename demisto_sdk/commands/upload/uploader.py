@@ -17,7 +17,7 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    INCIDENT_TYPES_DIR,
                                                    INDICATOR_FIELDS_DIR,
                                                    INDICATOR_TYPES_DIR,
-                                                   INTEGRATIONS_DIR,
+                                                   INTEGRATIONS_DIR, JOBS_DIR,
                                                    LAYOUTS_DIR, PLAYBOOKS_DIR,
                                                    REPORTS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
@@ -50,7 +50,7 @@ UPLOAD_SUPPORTED_ENTITIES = [
 
     FileType.INCIDENT_TYPE,
     FileType.INCIDENT_FIELD,
-    FileType.REPUTATION,
+    # FileType.REPUTATION,  currently not supported by demisto-py
     FileType.INDICATOR_FIELD,
 
     FileType.WIDGET,
@@ -59,6 +59,7 @@ UPLOAD_SUPPORTED_ENTITIES = [
     FileType.LAYOUT,
     FileType.LAYOUTS_CONTAINER,
     FileType.LISTS,
+    FileType.JOB
 ]
 
 
@@ -76,6 +77,7 @@ CONTENT_ENTITY_UPLOAD_ORDER = [
     CLASSIFIERS_DIR,
     WIDGETS_DIR,
     LAYOUTS_DIR,
+    JOBS_DIR,
     DASHBOARDS_DIR,
     REPORTS_DIR
 ]

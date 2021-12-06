@@ -7,7 +7,8 @@ import networkx as nx
 import pytest
 
 import demisto_sdk.commands.create_id_set.create_id_set as cis
-from demisto_sdk.commands.common.constants import FileType
+from demisto_sdk.commands.common.constants import (DEFAULT_JOB_FROM_VERSION,
+                                                   FileType)
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
 from TestSuite.repo import Repo
@@ -455,7 +456,8 @@ class TestIdSetFilters:
                     "file_path": "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseAuditAlert/PrismaCloudComputeParseAuditAlert.yml",
                     "fromversion": '5.0.0',
                     "docker_image": "demisto/python3:3.8.3.8715",
-                    "pack": "PrismaCloudCompute"
+                    "pack": "PrismaCloudCompute",
+                    'source': 'github.com - demisto/demisto-sdk'
                 }
             },
             {
@@ -464,7 +466,8 @@ class TestIdSetFilters:
                     "file_path": "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseCloudDiscoveryAlert/PrismaCloudComputeParseCloudDiscoveryAlert.yml",
                     "fromversion": '5.0.0',
                     "docker_image": "demisto/python3:3.8.3.8715",
-                    "pack": "PrismaCloudCompute"
+                    "pack": "PrismaCloudCompute",
+                    'source': 'github.com - demisto/demisto-sdk'
                 }
             },
             {
@@ -473,7 +476,9 @@ class TestIdSetFilters:
                     "file_path": "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseComplianceAlert/PrismaCloudComputeParseComplianceAlert.yml",
                     "fromversion": '5.0.0',
                     "docker_image": "demisto/python3:3.8.3.8715",
-                    "pack": "PrismaCloudCompute"
+                    "pack": "PrismaCloudCompute",
+                    'source': 'github.com - demisto/demisto-sdk'
+
                 }
             },
             {
@@ -482,7 +487,8 @@ class TestIdSetFilters:
                     "file_path": "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseVulnerabilityAlert/PrismaCloudComputeParseVulnerabilityAlert.yml",
                     "fromversion": '5.0.0',
                     "docker_image": "demisto/python3:3.8.3.8715",
-                    "pack": "PrismaCloudCompute"
+                    "pack": "PrismaCloudCompute",
+                    'source': 'github.com - demisto/demisto-sdk'
                 }
             }
         ]
@@ -512,7 +518,8 @@ class TestIdSetFilters:
                     "tests": [
                         "No tests"
                     ],
-                    "pack": "Expanse"
+                    "pack": "Expanse",
+                    'source': 'github.com - demisto/demisto-sdk'
                 }
             }
         ]
@@ -1960,6 +1967,41 @@ class TestDependsOnDashboard:
             header='Dashboards',
         )
 
+        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+
+
+class TestDependsOnJob:
+    @pytest.mark.parametrize('feed_dependency', (True, False))
+    def test_collect_job_dependencies(self, id_set: dict, feed_dependency: bool):
+        """
+        Given
+            - A job entry in the id_set
+        When
+            - Building a dependency graph
+        Then
+            - Ensure depended-on packs are extracted
+        """
+        expected_result = {('Pcysys', True)}  # playbook dependant
+
+        if feed_dependency:
+            expected_result.add(('FeedAWS', True))  # integration (feed) dependant
+            selected_feeds = ['FeedAWS']
+        else:
+            selected_feeds = []
+
+        test_job_data = [
+            {
+                "jobby": {
+                    "name": "jobby",
+                    "file_path": "Packs/pack0/Jobs/job-jobby.json",
+                    "pack": "pack0",
+                    "playbookId": "Pentera Run Scan",
+                    "selectedFeeds": selected_feeds,
+                    "fromVersion": DEFAULT_JOB_FROM_VERSION
+                }
+            }
+        ]
+        found_result = PackDependencies._collect_jobs_dependencies(test_job_data, id_set, verbose=False)
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
 

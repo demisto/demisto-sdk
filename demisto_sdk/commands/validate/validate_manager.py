@@ -11,8 +11,8 @@ from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK, AUTHOR_IMAGE_FILE_NAME, CONTENT_ENTITIES_DIRS,
-    DEFAULT_ID_SET_PATH, GENERIC_FIELDS_DIR, GENERIC_TYPES_DIR,
-    IGNORED_PACK_NAMES, OLDEST_SUPPORTED_VERSION, PACKS_DIR,
+    DEFAULT_CONTENT_ITEM_TO_VERSION, DEFAULT_ID_SET_PATH, GENERIC_FIELDS_DIR,
+    GENERIC_TYPES_DIR, IGNORED_PACK_NAMES, OLDEST_SUPPORTED_VERSION, PACKS_DIR,
     PACKS_PACK_META_FILE_NAME, SKIP_RELEASE_NOTES_FOR_TYPES,
     VALIDATION_USING_GIT_IGNORABLE_DATA, FileType, PathLevel)
 from demisto_sdk.commands.common.content import Content
@@ -51,6 +51,7 @@ from demisto_sdk.commands.common.hook_validations.incident_type import \
     IncidentTypeValidator
 from demisto_sdk.commands.common.hook_validations.integration import \
     IntegrationValidator
+from demisto_sdk.commands.common.hook_validations.job import JobValidator
 from demisto_sdk.commands.common.hook_validations.layout import (
     LayoutsContainerValidator, LayoutValidator)
 from demisto_sdk.commands.common.hook_validations.lists import ListsValidator
@@ -567,6 +568,9 @@ class ValidateManager:
         elif file_type == FileType.GENERIC_DEFINITION:
             return self.validate_generic_definition(structure_validator, pack_error_ignore_list)
 
+        elif file_type == FileType.JOB:
+            return self.validate_job(structure_validator, pack_error_ignore_list)
+
         else:
             error_message, error_code = Errors.file_type_not_supported()
             if self.handle_error(error_message=error_message, error_code=error_code, file_path=file_path):
@@ -1024,6 +1028,17 @@ class ValidateManager:
             author_valid = self.validate_author_image(author_image_path, pack_error_ignore_list)
 
         return files_valid and author_valid
+
+    def validate_job(self, structure_validator, pack_error_ignore_list):
+        job_validator = JobValidator(structure_validator,
+                                     pack_error_ignore_list,
+                                     print_as_warnings=self.print_ignored_errors,
+                                     json_file_path=self.json_file_path)
+        is_valid = job_validator.is_valid_file()
+        if not is_valid:
+            click.secho(job_validator.get_errors(), fg="bright_red")
+
+        return is_valid
 
     def validate_modified_files(self, modified_files):
         click.secho(f'\n================= Running validation on modified files =================',
@@ -1609,7 +1624,7 @@ class ValidateManager:
         is_deprecated = current_file.get("deprecated")
 
         toversion_is_old = "toversion" in current_file and \
-                           version.parse(current_file.get("toversion", "99.99.99")) < \
+                           version.parse(current_file.get("toversion", DEFAULT_CONTENT_ITEM_TO_VERSION)) < \
                            version.parse(OLDEST_SUPPORTED_VERSION)
 
         if is_deprecated or toversion_is_old:

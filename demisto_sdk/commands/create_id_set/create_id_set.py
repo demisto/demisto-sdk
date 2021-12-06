@@ -13,7 +13,7 @@ from demisto_sdk.commands.common.update_id_set import re_create_id_set
 class IDSetCreator:
 
     def __init__(self, output: Optional[str] = '', input: Optional[str] = None, print_logs: bool = True,
-                 fail_duplicates: bool = False):
+                 fail_duplicates: bool = False, marketplace: str = 'xsoar'):
         """IDSetCreator
 
         Args:
@@ -29,7 +29,7 @@ class IDSetCreator:
         self.print_logs = print_logs
         self.fail_duplicates = fail_duplicates
         self.id_set = OrderedDict()  # type: ignore
-        self.marketplace = markeplace
+        self.marketplace = marketplace.lower()
 
     def create_id_set(self):
         self.id_set = re_create_id_set(

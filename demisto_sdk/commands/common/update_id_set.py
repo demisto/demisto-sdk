@@ -24,7 +24,8 @@ from demisto_sdk.commands.common.constants import (
     GENERIC_MODULES_DIR, GENERIC_TYPES_DIR, INCIDENT_FIELDS_DIR,
     INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, JOBS_DIR,
     LAYOUTS_DIR, LISTS_DIR, MAPPERS_DIR, REPORTS_DIR, SCRIPTS_DIR,
-    TEST_PLAYBOOKS_DIR, WIDGETS_DIR, FileType, MARKETPLACE_KEY_PACK_METADATA, MARKETPLACE_XSIAM_VALUE_PACK_METADATA)
+    TEST_PLAYBOOKS_DIR, WIDGETS_DIR, FileType, MARKETPLACE_KEY_PACK_METADATA, MarketplaceVersions,
+    METADATA_FILE_NAME)
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type, get_json,
                                                get_pack_name, get_yaml,
                                                print_color, print_error,
@@ -867,10 +868,13 @@ def create_common_entity_data(path, name, to_version, from_version, pack, market
     return data
 
 
-def get_pack_metadata_data(file_path, print_logs: bool):
+def get_pack_metadata_data(file_path, print_logs: bool, marketplace: str):
     try:
         if print_logs:
             print(f'adding {file_path} to id_set')
+
+        if should_skip_item_by_mp(file_path, marketplace):
+            return {}
 
         json_data = get_json(file_path)
         pack_data = {
@@ -1060,7 +1064,7 @@ def get_mp_types_by_item(file_path):
 
 def should_skip_item_by_mp(file_path: str, marketplace: str):
     """
-    Returns true if the item given (as path) should be part of the current generated id set, dependeing if the current
+    Checks if the item given (as path) should be part of the current generated id set, dependeing if the current
     marketplace is present in the item's pack metadata in the relevant field.
     Args:
         file_path: path to content item
@@ -1070,8 +1074,7 @@ def should_skip_item_by_mp(file_path: str, marketplace: str):
 
     """
 
-    return MARKETPLACE_XSIAM_VALUE_PACK_METADATA in get_mp_types_by_item(
-        file_path) and marketplace == MARKETPLACE_XSIAM_VALUE_PACK_METADATA
+    return marketplace not in get_mp_types_by_item(file_path)
 
 
 def process_integration(file_path: str, print_logs: bool, marketplace: str) -> list:
@@ -1081,7 +1084,7 @@ def process_integration(file_path: str, print_logs: bool, marketplace: str) -> l
     Arguments:
         file_path (str): file path to integration file
         print_logs (bool): whether to print logs to stdout
-        marketplace (str): the marketplace this id set is designated for (xsoar\xsiam)
+        marketplace (str): the marketplace this id set is designated for (xsoar or )
 
     Returns:
         list: integration data list (may be empty)
@@ -1111,9 +1114,11 @@ def process_integration(file_path: str, print_logs: bool, marketplace: str) -> l
     return res
 
 
-def process_script(file_path: str, print_logs: bool) -> list:
+def process_script(file_path: str, print_logs: bool, marketplace: str) -> list:
     res = []
     try:
+        if should_skip_item_by_mp(file_path, marketplace):
+            return []
         if os.path.isfile(file_path):
             if find_type(file_path) == FileType.SCRIPT:
                 if print_logs:
@@ -1133,7 +1138,7 @@ def process_script(file_path: str, print_logs: bool) -> list:
     return res
 
 
-def process_incident_fields(file_path: str, print_logs: bool, incidents_types_list: list) -> list:
+def process_incident_fields(file_path: str, print_logs: bool, incidents_types_list: list, marketplace: str) -> list:
     """
     Process a incident_fields JSON file
     Args:
@@ -1146,6 +1151,8 @@ def process_incident_fields(file_path: str, print_logs: bool, incidents_types_li
     """
     res = []
     try:
+        if should_skip_item_by_mp(file_path, marketplace):
+            return []
         if find_type(file_path) == FileType.INCIDENT_FIELD:
             if print_logs:
                 print(f'adding {file_path} to id_set')
@@ -1156,7 +1163,7 @@ def process_incident_fields(file_path: str, print_logs: bool, incidents_types_li
     return res
 
 
-def process_indicator_types(file_path: str, print_logs: bool, all_integrations: list) -> list:
+def process_indicator_types(file_path: str, print_logs: bool, all_integrations: list, marketplace: str) -> list:
     """
     Process a indicator types JSON file
     Args:
@@ -1169,6 +1176,8 @@ def process_indicator_types(file_path: str, print_logs: bool, all_integrations: 
     """
     res = []
     try:
+        if should_skip_item_by_mp(file_path, marketplace):
+            return []
         # ignore old reputations.json files
         if not os.path.basename(file_path) == 'reputations.json' and find_type(file_path) == FileType.REPUTATION:
             if print_logs:
@@ -1181,7 +1190,7 @@ def process_indicator_types(file_path: str, print_logs: bool, all_integrations: 
     return res
 
 
-def process_generic_items(file_path: str, print_logs: bool,
+def process_generic_items(file_path: str, print_logs: bool, marketplace: str,
                           generic_types_list: list = None) -> list:
     """
     Process a generic field JSON file
@@ -1196,6 +1205,8 @@ def process_generic_items(file_path: str, print_logs: bool,
     """
     res = []
     try:
+        if should_skip_item_by_mp(file_path, marketplace):
+            return []
         if find_type(file_path) == FileType.GENERIC_FIELD:
             if print_logs:
                 print(f'adding {file_path} to id_set')
@@ -1210,7 +1221,7 @@ def process_generic_items(file_path: str, print_logs: bool,
     return res
 
 
-def process_jobs(file_path: str, print_logs: bool) -> list:
+def process_jobs(file_path: str, print_logs: bool, marketplace: str) -> list:
     """
     Process a JSON file representing a Job object.
     Args:
@@ -1222,6 +1233,8 @@ def process_jobs(file_path: str, print_logs: bool) -> list:
     """
     result: List = []
     try:
+        if should_skip_item_by_mp(file_path, marketplace):
+            return []
         if find_type(file_path) == FileType.JOB:
             if print_logs:
                 print(f'adding {file_path} to id_set')
@@ -1233,7 +1246,7 @@ def process_jobs(file_path: str, print_logs: bool) -> list:
 
 
 def process_general_items(file_path: str, print_logs: bool, expected_file_types: Tuple[FileType],
-                          data_extraction_func: Callable) -> list:
+                          data_extraction_func: Callable, marketplace: str) -> list:
     """
     Process a general item file.
     expected file in one of the following:
@@ -1260,6 +1273,8 @@ def process_general_items(file_path: str, print_logs: bool, expected_file_types:
     res = []
     try:
         if find_type(file_path) in expected_file_types:
+            if should_skip_item_by_mp(file_path, marketplace):
+                return []
             if print_logs:
                 print(f'adding {file_path} to id_set')
             res.append(data_extraction_func(file_path))
@@ -1270,7 +1285,7 @@ def process_general_items(file_path: str, print_logs: bool, expected_file_types:
     return res
 
 
-def process_test_playbook_path(file_path: str, print_logs: bool) -> tuple:
+def process_test_playbook_path(file_path: str, print_logs: bool, marketplace: str) -> tuple:
     """
     Process a yml file in the testplyabook dir. Maybe either a script or playbook
 
@@ -1286,6 +1301,8 @@ def process_test_playbook_path(file_path: str, print_logs: bool) -> tuple:
     try:
         if print_logs:
             print(f'adding {file_path} to id_set')
+        if should_skip_item_by_mp(file_path, marketplace):
+            return None, None
         if find_type(file_path) == FileType.TEST_SCRIPT:
             script = get_script_data(file_path)
         if find_type(file_path) == FileType.TEST_PLAYBOOK:
@@ -1628,13 +1645,13 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     Returns: id-set object
     """
     if id_set_path == "":
-        if marketplace == MARKETPLACE_XSIAM_VALUE_PACK_METADATA:
+        if marketplace == MarketplaceVersions.MarketplaceV2:
             id_set_path = MP_V2_ID_SET_PATH
         else:
             id_set_path = DEFAULT_ID_SET_PATH
 
     if not objects_to_create:
-        if marketplace == MARKETPLACE_XSIAM_VALUE_PACK_METADATA:
+        if marketplace == MarketplaceVersions.MarketplaceV2:
             objects_to_create = CONTENT_MP_V2_ENTITIES
         else:
             objects_to_create = CONTENT_ENTITIES
@@ -1709,7 +1726,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
         if 'Packs' in objects_to_create:
             print_color("\nStarting iteration over Packs", LOG_COLORS.GREEN)
             for pack_data in pool.map(partial(get_pack_metadata_data,
-                                              print_logs=print_logs
+                                              print_logs=print_logs, marketplace=marketplace
                                               ),
                                       get_pack_metadata_paths(pack_to_create)):
                 packs_dict.update(pack_data)
@@ -1719,7 +1736,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
         if 'Integrations' in objects_to_create:
             print_color("\nStarting iteration over Integrations", LOG_COLORS.GREEN)
             for arr in pool.map(partial(process_integration,
-                                        print_logs=print_logs
+                                        print_logs=print_logs, marketplace=marketplace
                                         ),
                                 get_integrations_paths(pack_to_create)):
                 integration_list.extend(arr)
@@ -1732,6 +1749,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         print_logs=print_logs,
                                         expected_file_types=(FileType.PLAYBOOK,),
                                         data_extraction_func=get_playbook_data,
+                                        marketplace=marketplace,
                                         ),
                                 get_playbooks_paths(pack_to_create)):
                 playbooks_list.extend(arr)
@@ -1741,7 +1759,8 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
         if 'Scripts' in objects_to_create:
             print_color("\nStarting iteration over Scripts", LOG_COLORS.GREEN)
             for arr in pool.map(partial(process_script,
-                                        print_logs=print_logs
+                                        print_logs=print_logs,
+                                        marketplace=marketplace,
                                         ),
                                 get_general_paths(SCRIPTS_DIR, pack_to_create)):
                 scripts_list.extend(arr)
@@ -1751,7 +1770,8 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
         if 'TestPlaybooks' in objects_to_create:
             print_color("\nStarting iteration over TestPlaybooks", LOG_COLORS.GREEN)
             for pair in pool.map(partial(process_test_playbook_path,
-                                         print_logs=print_logs
+                                         print_logs=print_logs,
+                                         marketplace=marketplace,
                                          ),
                                  get_general_paths(TEST_PLAYBOOKS_DIR, pack_to_create)):
                 if pair[0]:
@@ -1767,6 +1787,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         print_logs=print_logs,
                                         expected_file_types=(FileType.CLASSIFIER, FileType.OLD_CLASSIFIER),
                                         data_extraction_func=get_classifier_data,
+                                        marketplace=marketplace,
                                         ),
                                 get_general_paths(CLASSIFIERS_DIR, pack_to_create)):
                 classifiers_list.extend(arr)
@@ -1779,6 +1800,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         print_logs=print_logs,
                                         expected_file_types=(FileType.DASHBOARD,),
                                         data_extraction_func=get_dashboard_data,
+                                        marketplace=marketplace,
                                         ),
                                 get_general_paths(DASHBOARDS_DIR, pack_to_create)):
                 dashboards_list.extend(arr)
@@ -1791,6 +1813,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         print_logs=print_logs,
                                         expected_file_types=(FileType.INCIDENT_TYPE,),
                                         data_extraction_func=get_incident_type_data,
+                                        marketplace=marketplace,
                                         ),
                                 get_general_paths(INCIDENT_TYPES_DIR, pack_to_create)):
                 incident_type_list.extend(arr)
@@ -1802,7 +1825,8 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
             print_color("\nStarting iteration over Incident Fields", LOG_COLORS.GREEN)
             for arr in pool.map(partial(process_incident_fields,
                                         print_logs=print_logs,
-                                        incidents_types_list=incident_type_list
+                                        incidents_types_list=incident_type_list,
+                                        marketplace=marketplace,
                                         ),
                                 get_general_paths(INCIDENT_FIELDS_DIR, pack_to_create)):
                 incident_fields_list.extend(arr)
@@ -1815,6 +1839,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         print_logs=print_logs,
                                         expected_file_types=(FileType.INDICATOR_FIELD,),
                                         data_extraction_func=get_general_data,
+                                        marketplace=marketplace,
                                         ),
                                 get_general_paths(INDICATOR_FIELDS_DIR, pack_to_create)):
                 indicator_fields_list.extend(arr)
@@ -1826,7 +1851,8 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
             print_color("\nStarting iteration over Indicator Types", LOG_COLORS.GREEN)
             for arr in pool.map(partial(process_indicator_types,
                                         print_logs=print_logs,
-                                        all_integrations=integration_list
+                                        all_integrations=integration_list,
+                                        marketplace=marketplace,
                                         ),
                                 get_general_paths(INDICATOR_TYPES_DIR, pack_to_create)):
                 indicator_types_list.extend(arr)
@@ -1839,6 +1865,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         print_logs=print_logs,
                                         expected_file_types=(FileType.LAYOUT,),
                                         data_extraction_func=get_layout_data,
+                                        marketplace=marketplace,
                                         ),
                                 get_general_paths(LAYOUTS_DIR, pack_to_create)):
                 layouts_list.extend(arr)
@@ -1846,6 +1873,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         print_logs=print_logs,
                                         expected_file_types=(FileType.LAYOUTS_CONTAINER,),
                                         data_extraction_func=get_layoutscontainer_data,
+                                        marketplace=marketplace,
                                         ),
                                 get_general_paths(LAYOUTS_DIR, pack_to_create)):
                 layouts_list.extend(arr)
@@ -1858,6 +1886,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         print_logs=print_logs,
                                         expected_file_types=(FileType.REPORT,),
                                         data_extraction_func=get_report_data,
+                                        marketplace=marketplace,
                                         ),
                                 get_general_paths(REPORTS_DIR, pack_to_create)):
                 reports_list.extend(arr)
@@ -1870,6 +1899,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         print_logs=print_logs,
                                         expected_file_types=(FileType.WIDGET,),
                                         data_extraction_func=get_widget_data,
+                                        marketplace=marketplace,
                                         ),
                                 get_general_paths(WIDGETS_DIR, pack_to_create)):
                 widgets_list.extend(arr)
@@ -1882,6 +1912,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         print_logs=print_logs,
                                         expected_file_types=(FileType.MAPPER,),
                                         data_extraction_func=get_mapper_data,
+                                        marketplace=marketplace,
                                         ),
                                 get_general_paths(MAPPERS_DIR, pack_to_create)):
                 mappers_list.extend(arr)
@@ -1894,6 +1925,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         print_logs=print_logs,
                                         expected_file_types=(FileType.LISTS,),
                                         data_extraction_func=get_list_data,
+                                        marketplace=marketplace,
                                         ),
                                 get_general_paths(LISTS_DIR, pack_to_create)):
                 lists_list.extend(arr)
@@ -1907,6 +1939,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         expected_file_types=(FileType.GENERIC_DEFINITION,),
                                         data_extraction_func=get_general_data,
                                         print_logs=print_logs,
+                                        marketplace=marketplace,
                                         ),
                                 get_general_paths(GENERIC_DEFINITIONS_DIR, pack_to_create)):
                 generic_definitions_list.extend(arr)
@@ -1919,6 +1952,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         print_logs=print_logs,
                                         expected_file_types=(FileType.GENERIC_MODULE,),
                                         data_extraction_func=get_generic_module_data,
+                                        marketplace=marketplace,
                                         ),
                                 get_general_paths(GENERIC_MODULES_DIR, pack_to_create)):
                 generic_modules_list.extend(arr)
@@ -1930,6 +1964,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
             print_color(f"pack to create: {pack_to_create}", LOG_COLORS.YELLOW)
             for arr in pool.map(partial(process_generic_items,
                                         print_logs=print_logs,
+                                        marketplace=marketplace,
                                         ),
                                 get_generic_entities_paths(GENERIC_TYPES_DIR, pack_to_create)):
                 generic_types_list.extend(arr)
@@ -1942,6 +1977,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
             for arr in pool.map(partial(process_generic_items,
                                         print_logs=print_logs,
                                         generic_types_list=generic_types_list,
+                                        marketplace=marketplace,
                                         ),
                                 get_generic_entities_paths(GENERIC_FIELDS_DIR, pack_to_create)):
                 generic_fields_list.extend(arr)
@@ -1951,7 +1987,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
         if 'Jobs' in objects_to_create:
             print_color("\nStarting iteration over Jobs", LOG_COLORS.GREEN)
             print_color(f"pack to create: {pack_to_create}", LOG_COLORS.YELLOW)
-            for arr in pool.map(partial(process_jobs, print_logs=print_logs),
+            for arr in pool.map(partial(process_jobs, print_logs=print_logs, marketplace=marketplace, ),
                                 get_general_paths(JOBS_DIR, pack_to_create)):
                 jobs_list.extend(arr)
 

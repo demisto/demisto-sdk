@@ -13,7 +13,7 @@ import demisto_sdk.commands.common.tools as tools
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.generate_integration.code_generator import (
-    IntegrationGeneratorConfig, IntegrationGeneratorOutput)
+    IntegrationGeneratorConfig, IntegrationGeneratorOutput, IntegrationGeneratorArg)
 from demisto_sdk.commands.postman_codegen.postman_codegen import (
     build_commands_names_dict, create_body_format, duplicate_requests_check,
     find_shared_args_path, flatten_collections, generate_command_outputs,
@@ -73,6 +73,68 @@ class TestPostmanHelpers:
                 "key1": "{key1}"
             }
         ]
+
+    def test_create_body_format_different_arg_name(self):
+        request_body = {
+            "key1": "val1",
+            "key5": {
+                "key3": "val3"
+            },
+            "key4": [
+                {
+                    "key1": "val5"
+                },
+            ],
+            "key7": [
+                "a",
+                "b",
+                "c"
+            ],
+            "key2": {
+                "key6": {
+                    "key3": "val3",
+                    "key8": "val8"
+                }
+            }
+        }
+        args: List[IntegrationGeneratorArg] = [IntegrationGeneratorArg(name="key1", description='', in_='body', in_object=[]),
+                                               IntegrationGeneratorArg(name="key5", description='', in_='body', in_object=[]),
+                                               IntegrationGeneratorArg(name="key5_key3", description='', in_='body',
+                                                                       in_object=["key5"]),
+                                               IntegrationGeneratorArg(name="key4", description='', in_='body', in_object=[]),
+                                               IntegrationGeneratorArg(name="key4_key1", description='', in_='body',
+                                                                       in_object=["key4"]),
+                                               IntegrationGeneratorArg(name="key4_key3", description='', in_='body',
+                                                                       in_object=["key4"]),
+                                               IntegrationGeneratorArg(name="key7", description='', in_='body', in_object=[]),
+                                               IntegrationGeneratorArg(name="key2", description='', in_='body', in_object=[]),
+                                               IntegrationGeneratorArg(name="key6", description='', in_='body',
+                                                                       in_object=["key2"]),
+                                               IntegrationGeneratorArg(name="key6_key3", description='', in_='body',
+                                                                       in_object=["key2", "key6"]),
+                                               IntegrationGeneratorArg(name="key8", description='', in_='body',
+                                                                       in_object=["key2", "key6"]),
+                                               ]
+        body_format = create_body_format(request_body, args)
+
+        assert body_format == {
+            "key1": "{key1}",
+            "key5": {
+                "key3": "{key5_key3}"
+            },
+            "key4": [
+                {
+                    "key1": "{key4_key1}"
+                },
+            ],
+            "key7": "{key7}",
+            "key2": {
+                "key6": {
+                    "key3": "{key6_key3}",
+                    "key8": "{key8}"
+                }
+            }
+        }
 
     @pytest.mark.parametrize('collection, outputs', [
         ([], []),

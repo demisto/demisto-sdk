@@ -461,18 +461,11 @@ def generate_command_example(cmd_from_yaml, cmd_example=None):
     errors = []
     if not cmd_example:
         errors.append(f'did not get any example for {cmd_from_yaml["name"]}. please add it manually.')
-        example.extend([
-            '#### Context Example',
-            '```json',
-            '""',
-            '```',
-            '',
-        ])
 
     else:
         example.extend([
             '',
-            '### Command',
+            '#### Command',
             '```{}```'.format(cmd_from_yaml['name']),
             '',
         ])

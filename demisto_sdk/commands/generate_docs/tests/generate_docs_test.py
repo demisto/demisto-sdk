@@ -418,7 +418,7 @@ def test_generate_command_section_with_empty_cotext_example():
     expected_section = ['### test1', '***', ' ', '#### Required Permissions', '**FILL IN REQUIRED PERMISSIONS HERE**',
                         '#### Base Command', '', '`test1`', '#### Input', '',
                         'There are no input arguments for this command.', '', '#### Context Output', '',
-                        'There is no context output for this command.', '', '### Command', '```test1```', '',
+                        'There is no context output for this command.', '', '#### Command', '```test1```', '',
                         '#### Command example', '```None```', '#### Human Readable Output', '\n>None', '']
 
     assert '\n'.join(section) == '\n'.join(expected_section)
@@ -444,14 +444,10 @@ def test_generate_command_section_with_empty_cotext_list():
                                                       example_dict={},
                                                       command_permissions_dict={})
 
-    expected_section = ['### test1', '***', ' ', '#### Required Permissions',
-                        '**FILL IN REQUIRED PERMISSIONS HERE**',
+    expected_section = ['### test1', '***', ' ', '#### Required Permissions', '**FILL IN REQUIRED PERMISSIONS HERE**',
                         '#### Base Command', '', '`test1`', '#### Input', '',
-                        'There are no input arguments for this command.', '',
-                        '#### Context Output', '',
-                        'There is no context output for this command.', '',
-                        '#### Command Example', '``` ```', '',
-                        '#### Human Readable Output', '\n', '']
+                        'There are no input arguments for this command.', '', '#### Context Output', '',
+                        'There is no context output for this command.']
 
     assert '\n'.join(section) == '\n'.join(expected_section)
 
@@ -470,7 +466,7 @@ def test_generate_commands_section_human_readable():
 
     example_dict = {
         'non-deprecated-cmd': [
-            '!non-deprecated-cmd', '## this is human readable\nThis is a line\nAnother line', '{}'
+            ('!non-deprecated-cmd', '## this is human readable\nThis is a line\nAnother line', '{}')
         ]
     }
 

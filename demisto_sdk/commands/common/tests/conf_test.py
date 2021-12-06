@@ -200,6 +200,7 @@ def test_not_skipped_test_playbook_for_dynamic_section(mocker, conf_data, yml_da
                                                 file_type=FileType.SCRIPT,
                                                 file_path="SomeFilePath")
 
+
 @pytest.mark.parametrize('has_tests', (True, False))
 def test_has_unittests(mocker, integration, has_tests):
     from pathlib import Path
@@ -216,6 +217,7 @@ def test_has_unittests(mocker, integration, has_tests):
     finally:
         if test_file:
             test_file.unlink()  # Remove the file
+
 
 def test_get_test_path(mocker, integration):
     mocker.patch.object(ConfJsonValidator, 'load_conf_file', return_value={})

@@ -1,5 +1,5 @@
 # Changelog
-* Changed the **validate** command to fail on missing test-playbooks only if no unittests are found. 
+* Changed the **validate** command to fail on missing test-playbooks only if no unittests are found.
 
 # 1.5.4
 * Fixed an issue with the **format** command when contributing via the UI

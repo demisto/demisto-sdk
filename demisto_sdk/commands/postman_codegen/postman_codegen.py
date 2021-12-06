@@ -89,16 +89,22 @@ def create_body_format(body: Union[dict, list], args: List[IntegrationGeneratorA
     }
     """
 
-    def format_value(d, o):
+    def format_value(d, o, path=()):
         for k, v in d.items():
             if isinstance(v, dict):
                 o[k] = {}
-                o[k] = format_value(v, o[k])
+                o[k] = format_value(v, o[k], path + (k,))
             elif isinstance(v, list) and len(v) > 0 and isinstance(v[0], dict):
                 o[k] = [{}]
-                o[k][0] = format_value(v[0], o[k][0])
+                o[k][0] = format_value(v[0], o[k][0], path + (k,))
             else:
                 o[k] = '{' + k + '}'
+                if args:
+                    for arg in args:
+                        if arg.in_object == list(path) and k in arg.name:
+                            o[k] = '{' + arg.name + '}'
+                            args.remove(arg)
+                            break
         return o
 
     if isinstance(body, dict):
@@ -360,7 +366,6 @@ def convert_request_to_command(item: dict):
         if request_body.get('mode') == 'raw':
             try:
                 body_obj = json.loads(request_body.get('raw'))
-                body_format = create_body_format(body_obj)
                 flattened_json = flatten_json(body_obj)
                 shared_arg_to_split_position_dict = find_shared_args_path(flattened_json)
 
@@ -376,6 +381,8 @@ def convert_request_to_command(item: dict):
                         in_object=json_path
                     )
                     args.append(arg)
+
+                body_format = create_body_format(body_obj, args)
 
             except Exception:
                 logger.exception(f'Failed to parse {name} request body as JSON.')

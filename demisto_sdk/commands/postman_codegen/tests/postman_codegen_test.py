@@ -5,10 +5,11 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
-import demisto_sdk.commands.common.tools as tools
 import pytest
 import yaml
 from click.testing import CliRunner
+
+import demisto_sdk.commands.common.tools as tools
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.generate_integration.code_generator import (

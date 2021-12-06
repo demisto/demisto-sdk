@@ -1,4 +1,5 @@
 # Changelog
+* The request data body format generated in the **postman-codegen** will use the python argument's name and not the raw data argument's name.
 
 # 1.5.4
 * Fixed an issue with the **format** command when contributing via the UI

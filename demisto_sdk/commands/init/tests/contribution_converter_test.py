@@ -197,12 +197,6 @@ def test_convert_contribution_zip_outputs_structure(get_content_path_mock, get_p
     repo = Repo(repo_dir)
     contrib_zip = Contribution(target_dir, 'ContribTestPack', repo)
     contrib_zip.create_zip(contribution_zip_dir)
-    # rename script-script0.yml unified to automation-script0.yml
-    # this naming is aligned to how the server exports scripts in contribution zips
-    rename_file_in_zip(
-        contrib_zip.created_zip_filepath, 'automation/script-script0.yml', 'automation/automation-script0.yml'
-    )
-
     # Convert Zip
     name = 'Contrib Test Pack'
     contribution_path = contrib_zip.created_zip_filepath
@@ -529,6 +523,119 @@ def test_convert_contribution_dir_to_pack_contents(tmp_path):
     assert not fake_pack_extracted_dir.exists()
 
 
+def test_convert_contribution_dir_to_pack_contents_mapper(tmp_path):
+    """
+    Scenario: convert a directory which was unarchived from a contribution zip into the content
+        pack directory into which the contribution is intended to update, and the contribution
+        includes a file that already exists in the pack
+
+    Given
+    - The pack's original content contains mapper files and appears like so
+
+        ├── Classifiers
+        │   └── classifier-mapper-SomeIncidentField.json
+
+    When
+    - After the contribution zip files have been unarchived to the destination pack the pack
+        directory tree appears like so
+
+        ├── classifier
+        │   └── classifier-SomeIncidentField.json
+
+    Then
+    - Ensure the file '.../classifier/classifier-SomeIncidentField.json' is moved to
+        '.../Classifiers/classifier-mapper-SomeIncidentField.json' and overwrites the existing file.
+    """
+    fake_pack_subdir = tmp_path / 'Classifiers'
+    fake_pack_subdir.mkdir()
+    extant_file = fake_pack_subdir / 'classifier-mapper-SomeIncidentField.json'
+    old_json = {"mapping": "old_value", "type": "mapping-incoming"}
+    extant_file.write_text(json.dumps(old_json))
+    fake_pack_extracted_dir = tmp_path / 'classifier'
+    fake_pack_extracted_dir.mkdir()
+    update_file = fake_pack_extracted_dir / 'classifier-SomeIncidentField.json'
+    new_json = {"mapping": "new_value", "type": "mapping-incoming"}
+    update_file.write_text(json.dumps(new_json))
+    cc = ContributionConverter()
+    cc.pack_dir_path = tmp_path
+    cc.convert_contribution_dir_to_pack_contents(fake_pack_extracted_dir)
+    assert json.loads(extant_file.read_text()) == new_json
+    assert not fake_pack_extracted_dir.exists()
+
+
+def test_convert_contribution_dir_to_pack_contents_new_indicatorfield(tmp_path):
+    """
+    Scenario: convert a directory which was unarchived from a contribution zip into the content
+        pack directory into which the contribution is intended to update, and the contribution
+        includes a file that already exists in the pack
+
+    Given
+    - A new content pack contains indicatorfield file
+
+    When
+    - After the contribution zip files have been unarchived to the destination pack the pack
+        directory tree appears like so
+
+        ├── incidentfield
+        │   └── indicatorfield-SomeIndicatorfieldField.json
+
+    Then
+    - Ensure the file '.../incidentfield/indicatorfield-SomeIndicatorfieldField.json' is moved to
+        '.../IndicatorFields/indicatorfield-SomeIndicatorfieldField.json.json'.
+    """
+    fake_pack_extracted_dir = tmp_path / 'incidentfield'
+    fake_pack_extracted_dir.mkdir()
+    update_file = fake_pack_extracted_dir / 'indicatorfield-SomeIncidentField.json'
+    json_data = {"field": "new_value"}
+    update_file.write_text(json.dumps(json_data))
+    extant_file = tmp_path / 'IndicatorFields' / 'indicatorfield-SomeIncidentField.json'
+    cc = ContributionConverter()
+    cc.pack_dir_path = tmp_path
+    cc.convert_contribution_dir_to_pack_contents(fake_pack_extracted_dir)
+    assert not fake_pack_extracted_dir.exists()
+    assert json.loads(extant_file.read_text()) == json_data
+
+
+def test_convert_contribution_dir_to_pack_contents_update_indicatorfield(tmp_path):
+    """
+    Scenario: convert a directory which was unarchived from a contribution zip into the content
+        pack directory into which the contribution is intended to update, and the contribution
+        includes a file that already exists in the pack
+
+    Given
+    - The pack's original content contains mapper files and appears like so
+
+        ├── Indicatorfields
+        │   └── indicatorfield-SomeIncidentField.json
+
+    When
+    - After the contribution zip files have been unarchived to the destination pack the pack
+        directory tree appears like so
+
+        ├── incidentfield
+        │   └── indicatorfield-SomeIncidentField.json
+
+    Then
+    - Ensure the file '.../incidentfield/indicatorfield-SomeIncidentField.json' is moved to
+        '.../Indicatorfields/indicatorfield-SomeIncidentField.json' and overwrites the existing file.
+    """
+    fake_pack_subdir = tmp_path / 'Indicatorfields'
+    fake_pack_subdir.mkdir()
+    extant_file = fake_pack_subdir / 'indicatorfield-SomeIncidentField.json'
+    old_json = {"field": "old_value"}
+    extant_file.write_text(json.dumps(old_json))
+    fake_pack_extracted_dir = tmp_path / 'incidentfield'
+    fake_pack_extracted_dir.mkdir()
+    update_file = fake_pack_extracted_dir / 'indicatorfield-SomeIncidentField.json'
+    new_json = {"field": "new_value"}
+    update_file.write_text(json.dumps(new_json))
+    cc = ContributionConverter()
+    cc.pack_dir_path = tmp_path
+    cc.convert_contribution_dir_to_pack_contents(fake_pack_extracted_dir)
+    assert json.loads(extant_file.read_text()) == new_json
+    assert not fake_pack_extracted_dir.exists()
+
+
 @pytest.mark.parametrize('contribution_converter', ['TestPack'], indirect=True)
 class TestEnsureUniquePackDirName:
     def test_ensure_unique_pack_dir_name_no_conflict(self, contribution_converter):
@@ -715,7 +822,7 @@ class TestReleaseNotes:
              "source_name": "CrowdStrikeMalquery",
              "source_file_name": "Packs/CrowdStrikeMalquery/Integrations/CrowdStrikeMalquery/CrowdStrikeMalquery.yml"}]
         expected_rn_per_content_item = {'CrowdStrike Malquery':
-                                        '- release note entry number #1\n- release note entry number #2\n',
+                                            '- release note entry number #1\n- release note entry number #2\n',
                                         'CrowdStrikeMalquery - Multidownload and Fetch':
                                             '- changed this playbook\n- Updated another thing\n'}
         mocker.patch.object(

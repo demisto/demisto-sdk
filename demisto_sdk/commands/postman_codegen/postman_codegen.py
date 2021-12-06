@@ -52,7 +52,7 @@ def postman_headers_to_conf_headers(postman_headers, skip_authorization_header: 
     return headers
 
 
-def create_body_format(body: Union[dict, list]):
+def create_body_format(body: Union[dict, list], args: List[IntegrationGeneratorArg] = None):
     """
     {
         "key1": "val1",

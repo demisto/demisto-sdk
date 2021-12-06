@@ -92,7 +92,6 @@ class Runner:
         playground_filter = {'filter': {'type': [9]}}
         answer = self.client.search_investigations(filter=playground_filter)
         if answer.total == 0:
-        if answer.total != 1:
             raise RuntimeError(
                 'No playgrounds were detected in the environment.'
             )

@@ -392,15 +392,13 @@ def test_generate_commands_section():
 
     section, errors = generate_commands_section(yml_data, example_dict={}, command_permissions_dict={})
 
-    expected_section = [
-        '## Commands',
-        'You can execute these commands from the Cortex XSOAR CLI, as part of an automation, or in a playbook.',
-        'After you successfully execute a command, a DBot message appears in the War Room with the command details.',
-        '### non-deprecated-cmd', '***', ' ', '#### Required Permissions',
-        '**FILL IN REQUIRED PERMISSIONS HERE**', '#### Base Command', '', '`non-deprecated-cmd`', '#### Input', '',
-        'There are no input arguments for this command.', '', '#### Context Output', '',
-        'There is no context output for this command.', '', '#### Command Example', '``` ```', '',
-        '#### Human Readable Output', '\n', '']
+    expected_section = ['## Commands',
+                        'You can execute these commands from the Cortex XSOAR CLI, as part of an automation, or in a playbook.',
+                        'After you successfully execute a command, a DBot message appears in the War Room with the command details.',
+                        '### non-deprecated-cmd', '***', ' ', '#### Required Permissions',
+                        '**FILL IN REQUIRED PERMISSIONS HERE**', '#### Base Command', '', '`non-deprecated-cmd`',
+                        '#### Input', '', 'There are no input arguments for this command.', '', '#### Context Output',
+                        '', 'There is no context output for this command.']
 
     assert '\n'.join(section) == '\n'.join(expected_section)
 
@@ -411,7 +409,7 @@ def test_generate_command_section_with_empty_cotext_example():
     the 'Context Example' sections should be empty
     """
     example_dict = {
-        'test1': (None, None, '{}')
+        'test1': [(None, None, '{}')]
     }
     command = {'deprecated': False, 'name': 'test1'}
 
@@ -420,8 +418,8 @@ def test_generate_command_section_with_empty_cotext_example():
     expected_section = ['### test1', '***', ' ', '#### Required Permissions', '**FILL IN REQUIRED PERMISSIONS HERE**',
                         '#### Base Command', '', '`test1`', '#### Input', '',
                         'There are no input arguments for this command.', '', '#### Context Output', '',
-                        'There is no context output for this command.', '', '#### Command Example', '```None```', '',
-                        '#### Human Readable Output', '\n>None', '']
+                        'There is no context output for this command.', '', '### Command', '```test1```', '',
+                        '#### Command example', '```None```', '#### Human Readable Output', '\n>None', '']
 
     assert '\n'.join(section) == '\n'.join(expected_section)
 
@@ -660,7 +658,8 @@ class TestGetCommandExamples:
         command_examples = tmp_path / "command_examples"
 
         with open(command_examples, 'w+') as ce:
-            ce.write('!zoom-create-user\n!zoom-create-meeting\n!zoom-fetch-recording\n!zoom-list-users\n!zoom-delete-user')
+            ce.write(
+                '!zoom-create-user\n!zoom-create-meeting\n!zoom-fetch-recording\n!zoom-list-users\n!zoom-delete-user')
 
         command_example_a = 'zoom-create-user'
         command_example_b = 'zoom-list-users'
@@ -763,7 +762,7 @@ yml_data_cases = [(
          '', '    | **Parameter** | **Description** | **Required** |', '    | --- | --- | --- |',
          '    | test1 | More info | True |', '    | test2 |  | True |', '',
          '4. Click **Test** to validate the URLs, token, and connection.']  # expected
-),
+    ),
     (
         {'name': 'test', 'display': 'test', 'configuration': [
             {'display': 'test1', 'name': 'test1', 'additionalinfo': 'More info', 'required': True, 'type': 8},
@@ -774,7 +773,7 @@ yml_data_cases = [(
          '', '    | **Parameter** | **Description** | **Required** |', '    | --- | --- | --- |',
          '    | test1 | More info | True |', '    | test2 | Some more data | True |', '',
          '4. Click **Test** to validate the URLs, token, and connection.']  # expected
-),
+    ),
     (
         {'name': 'test', 'display': 'test', 'configuration': [
             {'display': 'userName', 'displaypassword': 'password', 'name': 'userName', 'additionalinfo': 'Credentials',
@@ -785,7 +784,7 @@ yml_data_cases = [(
          '', '    | **Parameter** | **Description** | **Required** |', '    | --- | --- | --- |',
          '    | userName | Credentials | True |', '    | password |  | True |', '',
          '4. Click **Test** to validate the URLs, token, and connection.']  # expected
-),
+    ),
     (
         {'name': 'test', 'display': 'test', 'configuration': [
             {'display': 'userName', 'name': 'userName', 'additionalinfo': 'Credentials',
@@ -796,7 +795,7 @@ yml_data_cases = [(
          '', '    | **Parameter** | **Description** | **Required** |', '    | --- | --- | --- |',
          '    | userName | Credentials | True |', '    | Password |  | True |', '',
          '4. Click **Test** to validate the URLs, token, and connection.']  # expected
-),
+    ),
     (
         {'name': 'test', 'display': 'test', 'configuration': [
             {'display': 'test1', 'name': 'test1', 'additionalinfo': 'More info', 'required': True, 'type': 8},
@@ -813,7 +812,7 @@ yml_data_cases = [(
          '    | Proxy | non-default info. | True |',
          '',
          '4. Click **Test** to validate the URLs, token, and connection.']  # expected
-)
+    )
 ]
 
 

@@ -336,9 +336,9 @@ def generate_single_command_section(cmd: dict, example_dict: dict, command_permi
         section.append('')
 
     # Raw output:
-    example_section = generate_command_example(cmd, cmd_example)
+    example_section, example_errors = generate_command_example(cmd, cmd_example)
     section.extend(example_section)
-
+    errors.extend(example_errors)
     return section, errors
 
 
@@ -461,15 +461,23 @@ def generate_command_example(cmd_from_yaml, cmd_example=None):
     errors = []
     if not cmd_example:
         errors.append(f'did not get any example for {cmd_from_yaml["name"]}. please add it manually.')
+        example.extend([
+            '#### Context Example',
+            '```json',
+            '""',
+            '```',
+            '',
+        ])
+
     else:
         example.extend([
             '',
-            '### Command Example',
+            '### Command',
             '```{}```'.format(cmd_from_yaml['name']),
             '',
         ])
         for script_example, md_example, context_example in cmd_example:
-            example.extend(['#### Example command', f'```{script_example}```'])
+            example.extend(['#### Command example', f'```{script_example}```'])
             if context_example and context_example != '{}':
                 example.extend([
                     '#### Context Example',

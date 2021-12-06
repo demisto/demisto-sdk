@@ -230,18 +230,25 @@ class TestDuplicates:
     ]
 
     @staticmethod
-    def test_has_duplicate():
+    @pytest.mark.parametrize('first_pack, second_pack, first_source, second_source', [
+        ('pack1', 'pack2', 'repo1', 'repo2'),
+        ('pack1', 'pack2', 'repo1', 'repo1'),
+        ('pack1', 'pack1', 'repo1', 'repo2'),
+        ('pack1', 'pack1', 'repo1', 'repo2')
+    ])
+    def test_has_duplicate(first_pack, second_pack, first_source, second_source):
         """
         Given
             - id_set.json with two duplicate layouts of the same type (details), their versions also overrides.
             They are considered duplicates because they have the same name (typeID), their versions override, and they
-            are the same kind (details) and they are from different pack
+            are the same kind (details).
+            If the pack and source is the same - there are duplicates, otherwise they are not
 
         When
             - checking for duplicate
 
         Then
-            - Ensure duplicates found
+            - Ensure duplicates found depending on the pack and source
         """
         id_set = {
             'Layouts': []
@@ -252,7 +259,8 @@ class TestDuplicates:
                 'fromVersion': '5.0.0',
                 'kind': 'Details',
                 'path': 'Layouts/layout-details-urlrep.json',
-                'pack': 'urlRep1'
+                'pack': first_pack,
+                'source': first_source
             }
         })
 
@@ -261,12 +269,14 @@ class TestDuplicates:
                 'typeID': 'urlRep',
                 'kind': 'Details',
                 'path': 'Layouts/layout-details-urlrep2.json',
-                'pack': 'urlRep2'
+                'pack': second_pack,
+                'source': second_source
             }
         })
 
         has_duplicates = has_duplicate(id_set['Layouts'], 'urlRep', 'Layouts', False)
-        assert has_duplicates is True
+        expected = first_pack != second_pack or first_source != second_source
+        assert has_duplicates == expected
 
     @staticmethod
     def test_has_no_duplicate():
@@ -309,6 +319,7 @@ class TestIntegrations:
             "name": "Dummy Integration",
             "file_path": TESTS_DIR + "/test_files/DummyPack/Integrations/DummyIntegration/DummyIntegration.yml",
             "fromversion": "4.1.0",
+            "source": "github.com - demisto/demisto-sdk",
             "docker_image": "demisto/python3:3.7.4.977",
             "commands": ['xdr-get-incidents',
                          'xdr-get-incident-extra-data',
@@ -341,6 +352,7 @@ class TestIntegrations:
             "name": "Dummy Integration",
             "file_path": TESTS_DIR + "/test_files/DummyPack/Integrations/integration-DummyIntegration.yml",
             "fromversion": "4.1.0",
+            "source": "github.com - demisto/demisto-sdk",
             "commands": ['xdr-get-incidents',
                          'xdr-get-incident-extra-data',
                          'xdr-update-incident',
@@ -427,6 +439,7 @@ class TestScripts:
         "DummyScript": {
             "name": "DummyScript",
             "file_path": TESTS_DIR + "/test_files/DummyPack/Scripts/DummyScript.yml",
+            "source": "github.com - demisto/demisto-sdk",
             "fromversion": "5.0.0",
             "docker_image": "demisto/python3:3.7.3.286",
             "tests": [
@@ -438,6 +451,7 @@ class TestScripts:
     PACK_SCRIPT_DATA = {
         "DummyScript": {
             "name": "DummyScript",
+            "source": "github.com - demisto/demisto-sdk",
             "docker_image": "demisto/python3:3.8.2.6981",
             "pack": "DummyPack",
             "file_path": TESTS_DIR + "/test_files/Packs/DummyPack/Scripts/DummyScript/DummyScript.yml",
@@ -505,6 +519,7 @@ class TestPlaybooks:
     PLAYBOOK_DATA = {
         "name": "Dummy Playbook",
         "file_path": TESTS_DIR + "/test_files/DummyPack/Playbooks/DummyPlaybook.yml",
+        "source": "github.com - demisto/demisto-sdk",
         "fromversion": "4.5.0",
         "filters": ["isEqualString"],
         "transformers": ["uniq"],
@@ -664,7 +679,8 @@ class TestPlaybooks:
         """
         data = {'tasks': {'0': {'scriptarguments': {'value': {'complex': {'filters': [[{'operator': 'isEqualString'}],
                                                                                       [{'operator': 'isEqualString'}],
-                                                                                      [{'operator': 'StringContainsArray'}]
+                                                                                      [{
+                                                                                          'operator': 'StringContainsArray'}]
                                                                                       ]}}}}}}
         _, filters = get_filters_and_transformers_from_playbook(data)
         assert len(filters) == 2
@@ -2431,7 +2447,8 @@ def test_merged_id_sets_with_legal_duplicates(caplog):
             {
                 'playbook_foo1': {
                     'name': 'playbook_foo1',
-                    'pack': 'foo_1'
+                    'pack': 'foo_1',
+                    'source': 'repo1'
                 }
             }
         ],
@@ -2439,7 +2456,8 @@ def test_merged_id_sets_with_legal_duplicates(caplog):
             {
                 'Script_Foo1': {
                     'name': 'ScriptFoo',
-                    'pack': 'foo_1'
+                    'pack': 'foo_1',
+                    'source': 'repo1'
                 }
             }
         ]
@@ -2450,7 +2468,8 @@ def test_merged_id_sets_with_legal_duplicates(caplog):
             {
                 'playbook_foo1': {
                     'name': 'playbook_foo1',
-                    'pack': 'foo_1'
+                    'pack': 'foo_1',
+                    'source': 'repo2'
                 }
             }
         ],

@@ -1,4 +1,5 @@
 # Changelog
+* Changed the **validate** command to fail on missing test-playbooks only if no unittests are found. 
 
 # 1.5.4
 * Fixed an issue with the **format** command when contributing via the UI
@@ -13,7 +14,6 @@
 * Fixed a bug when duplicates were found in **find_dependencies**.
 * Added function **get_current_repo** to `tools`.
 * The **postman-codegen** will not have duplicates arguments' name. It will rename them to the minimum distinguished shared path for each of them.
-* Changed the **validate** command to fail on missing test-playbooks only if no unittests are found. 
 
 # 1.5.3
 * The **format** command will now set `unsearchable: True` for incident, indicator and generic fields.

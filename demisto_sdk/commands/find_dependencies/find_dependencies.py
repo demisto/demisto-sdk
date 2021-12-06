@@ -165,6 +165,8 @@ def get_merged_official_and_local_id_set(local_id_set: dict, silent_mode: bool =
         local_id_set,
         print_logs=not silent_mode
     )
+    if duplicates:
+        raise ValueError('Found duplicates when merging local id_set with official id_set')
     return unified_id_set.get_dict()
 
 

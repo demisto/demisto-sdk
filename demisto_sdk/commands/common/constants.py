@@ -167,6 +167,10 @@ ENTITY_TYPE_TO_DIR = {
     FileType.LISTS.value: LISTS_DIR,
 
 }
+ENTITY_TYPE_TO_DIR_FOR_FIELDS = {
+    "incidentfield": "IncidentFields",
+    "indicatorfield": "IndicatorFields",
+}
 
 CONTENT_FILE_ENDINGS = ['py', 'yml', 'png', 'json', 'md']
 

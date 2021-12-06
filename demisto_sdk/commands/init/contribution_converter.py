@@ -16,7 +16,7 @@ from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     AUTOMATION, ENTITY_TYPE_TO_DIR, INTEGRATION, INTEGRATIONS_DIR,
     MARKETPLACE_LIVE_DISCUSSIONS, PACK_INITIAL_VERSION, SCRIPT, SCRIPTS_DIR,
-    XSOAR_AUTHOR, XSOAR_SUPPORT, XSOAR_SUPPORT_URL)
+    XSOAR_AUTHOR, XSOAR_SUPPORT, XSOAR_SUPPORT_URL, ENTITY_TYPE_TO_DIR_FOR_FIELDS)
 from demisto_sdk.commands.common.tools import (LOG_COLORS, capital_case,
                                                find_type,
                                                get_child_directories,
@@ -239,17 +239,40 @@ class ContributionConverter:
             dst_name = ENTITY_TYPE_TO_DIR.get(basename, '')
             src_path = os.path.join(self.pack_dir_path, basename)
             dst_path = os.path.join(self.pack_dir_path, dst_name)
-            if os.path.exists(dst_path):
-                # move src folder files to dst folder
-                for _, _, files in os.walk(src_path, topdown=False):
-                    for name in files:
-                        src_file_path = os.path.join(src_path, name)
-                        dst_file_path = os.path.join(dst_path, name)
-                        shutil.move(src_file_path, dst_file_path)
-                shutil.rmtree(src_path, ignore_errors=True)
-            else:
-                # replace dst folder with src folder
-                shutil.move(src_path, dst_path)
+            # move src folder files to dst folder
+            for _, _, files in os.walk(src_path, topdown=False):
+                for name in files:
+                    src_file_path = os.path.join(src_path, name)
+                    dst_file_path = self.fix_dst_path(basename, name, dst_path, src_file_path)
+                    shutil.move(src_file_path, dst_file_path)
+            shutil.rmtree(src_path, ignore_errors=True)
+
+    def fix_dst_path(self, basename, file_name, dst_dir_path, src_file_path):
+        if basename == "classifier":
+            new_dst_file_path = self.fix_dst_file_path(file_name, dst_dir_path, src_file_path)
+        elif basename == "incidentfield":
+            new_dst_file_path = self.fix_dst_folder_path(file_name)
+        else:
+            new_dst_file_path = os.path.join(dst_dir_path, file_name)
+        return new_dst_file_path
+
+    def fix_dst_file_path(self, file_name, dst_dir_path, src_file_path):
+        new_dst_file_path = None
+        file_type = find_type(src_file_path)
+        if file_type and file_type.value == "mapper":
+            entity_name = file_name.split('-')[-1]
+            new_dst_file_path = os.path.join(dst_dir_path, f"classifier-mapper-{entity_name}")
+        return new_dst_file_path
+
+    def fix_dst_folder_path(self, file_name):
+        new_dst_file_path = None
+        for key, value in ENTITY_TYPE_TO_DIR_FOR_FIELDS.items():
+            if key in file_name:
+                dst_path = os.path.join(self.pack_dir_path, value)
+                if not os.path.exists(dst_path):
+                    os.mkdir(dst_path)
+                new_dst_file_path = os.path.join(dst_path, file_name)
+        return new_dst_file_path
 
     def format_converted_pack(self) -> None:
         """Runs the demisto-sdk's format command on the pack converted from the contribution zipfile"""

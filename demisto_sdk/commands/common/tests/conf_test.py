@@ -199,3 +199,26 @@ def test_not_skipped_test_playbook_for_dynamic_section(mocker, conf_data, yml_da
     assert validator.is_valid_file_in_conf_json(current_file=yml_data,
                                                 file_type=FileType.SCRIPT,
                                                 file_path="SomeFilePath")
+
+@pytest.mark.parametrize('has_tests', (True, False))
+def test_has_unittests(mocker, integration, has_tests):
+    from pathlib import Path
+
+    mocker.patch.object(ConfJsonValidator, 'load_conf_file', return_value={})
+    validator = ConfJsonValidator()
+    test_file = None
+    try:
+        if has_tests:
+            test_file: Path = Path(integration.path) / (integration.name + '_test.py')
+            test_file.touch()
+        res = validator.has_unittest(integration.yml.path)
+        assert res == has_tests
+    finally:
+        if test_file:
+            test_file.unlink()  # Remove the file
+
+def test_get_test_path(mocker, integration):
+    mocker.patch.object(ConfJsonValidator, 'load_conf_file', return_value={})
+    validator = ConfJsonValidator()
+    res = validator.get_test_path(integration.yml.path)
+    assert res.parts[-1] == integration.name + '_test.py'

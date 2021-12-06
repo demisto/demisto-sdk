@@ -4,7 +4,8 @@ from typing import Dict, List, Tuple
 
 import click
 
-from demisto_sdk.commands.common.constants import TESTS_AND_DOC_DIRECTORIES
+from demisto_sdk.commands.common.constants import (JOB,
+                                                   TESTS_AND_DOC_DIRECTORIES)
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.tools import (find_type, get_files_in_dir,
                                                print_error, print_success,
@@ -32,6 +33,7 @@ from demisto_sdk.commands.format.update_indicatorfields import \
 from demisto_sdk.commands.format.update_indicatortype import \
     IndicatorTypeJSONFormat
 from demisto_sdk.commands.format.update_integration import IntegrationYMLFormat
+from demisto_sdk.commands.format.update_job import JobJSONFormat
 from demisto_sdk.commands.format.update_layout import LayoutBaseFormat
 from demisto_sdk.commands.format.update_lists import ListsFormat
 from demisto_sdk.commands.format.update_mapper import MapperJSONFormat
@@ -71,7 +73,8 @@ FILE_TYPE_AND_LINKED_CLASS = {
     'genericfield': GenericFieldJSONFormat,
     'generictype': GenericTypeJSONFormat,
     'genericmodule': GenericModuleJSONFormat,
-    'genericdefinition': GenericDefinitionJSONFormat
+    'genericdefinition': GenericDefinitionJSONFormat,
+    JOB: JobJSONFormat
 }
 
 UNFORMATTED_FILES = ['readme',

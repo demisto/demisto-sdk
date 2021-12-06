@@ -237,6 +237,10 @@ VALID_GENERIC_DEFINITION_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/generi
 
 VALID_GITLAB_RESPONSE = f"{GIT_ROOT}/demisto_sdk/tests/test_files/valid_gitlab_search_response.json"
 
+GENERICFIELD_SCHEMA_PATH = f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/genericfield.yml"
+INCIDENTFIELD_SCHEMA_PATH = f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/incidentfield.yml"
+INDICATORFIELD_SCHEMA_PATH = f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/indicatorfield.yml"
+
 DIR_LIST = [
     f'{PACK_TARGET}/{constants.INTEGRATIONS_DIR}',
     f'{PACK_TARGET}/{constants.SCRIPTS_DIR}',

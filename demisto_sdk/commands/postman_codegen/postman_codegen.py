@@ -103,7 +103,6 @@ def create_body_format(body: Union[dict, list], args: List[IntegrationGeneratorA
                     for arg in args:
                         if arg.in_object == list(path) and k in arg.name:
                             o[k] = '{' + arg.name + '}'
-                            args.remove(arg)
                             break
         return o
 

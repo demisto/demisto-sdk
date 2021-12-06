@@ -1,10 +1,12 @@
 # Changelog
+
+# 1.5.4
 * Fixed an issue with the **format** command when contributing via the UI
 * The **format** command will now not remove the `defaultRows` key from incident, indicator and generic fields with `type: grid`.
 * Fixed an issue with the **validate** command when a layoutscontainer did not have the `fromversion` field set.
 * added a new command **update-xsoar-config-file** to handle your XSOAR Configuration File.
 * Added `skipVerify` argument in **upload** command to skip pack signature verification.
-* Adding a filter to the current user to **_get_playground_id** method to find the actual playground id.
+* Fixed an issue when the **run** command  failed running when there’s more than one playground, by explicitly using the current user’s playground.
 * Added support for Job content item in the **format**, **validate**, **upload**, **create-id-set**, **find-dependecies** and **create-content-artifacts** commands.
 * Added a **source** field to the **id_set** entitles.
 * Two entitles will not consider as duplicates if they share the same pack and the same source.

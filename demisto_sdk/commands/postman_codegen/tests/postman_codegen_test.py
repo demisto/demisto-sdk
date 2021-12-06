@@ -13,7 +13,7 @@ import demisto_sdk.commands.common.tools as tools
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.generate_integration.code_generator import (
-    IntegrationGeneratorConfig, IntegrationGeneratorOutput, IntegrationGeneratorArg)
+    IntegrationGeneratorArg, IntegrationGeneratorConfig, IntegrationGeneratorOutput)
 from demisto_sdk.commands.postman_codegen.postman_codegen import (
     build_commands_names_dict, create_body_format, duplicate_requests_check,
     find_shared_args_path, flatten_collections, generate_command_outputs,

@@ -248,11 +248,14 @@ class ContributionConverter:
             shutil.rmtree(src_path, ignore_errors=True)
 
     def fix_dst_path(self, basename, file_name, dst_dir_path, src_file_path):
+        new_dst_file_path = None
         if basename == "classifier":
             new_dst_file_path = self.fix_dst_file_path(file_name, dst_dir_path, src_file_path)
         elif basename == "incidentfield":
             new_dst_file_path = self.fix_dst_folder_path(file_name)
-        else:
+        if not new_dst_file_path:
+            if not os.path.exists(dst_dir_path):
+                os.mkdir(dst_dir_path)
             new_dst_file_path = os.path.join(dst_dir_path, file_name)
         return new_dst_file_path
 

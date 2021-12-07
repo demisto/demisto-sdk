@@ -14,9 +14,9 @@ import click
 
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
-    AUTOMATION, ENTITY_TYPE_TO_DIR, INTEGRATION, INTEGRATIONS_DIR,
-    MARKETPLACE_LIVE_DISCUSSIONS, PACK_INITIAL_VERSION, SCRIPT, SCRIPTS_DIR,
-    XSOAR_AUTHOR, XSOAR_SUPPORT, XSOAR_SUPPORT_URL, ENTITY_TYPE_TO_DIR_FOR_FIELDS)
+    AUTOMATION, ENTITY_TYPE_TO_DIR, ENTITY_TYPE_TO_DIR_FOR_FIELDS, INTEGRATION,
+    INTEGRATIONS_DIR, MARKETPLACE_LIVE_DISCUSSIONS, PACK_INITIAL_VERSION,
+    SCRIPT, SCRIPTS_DIR, XSOAR_AUTHOR, XSOAR_SUPPORT, XSOAR_SUPPORT_URL)
 from demisto_sdk.commands.common.tools import (LOG_COLORS, capital_case,
                                                find_type,
                                                get_child_directories,

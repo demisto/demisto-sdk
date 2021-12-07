@@ -533,27 +533,27 @@ def test_convert_contribution_dir_to_pack_contents_update_mapper(tmp_path):
     - The pack's original content contains mapper files and appears like so
 
         ├── Classifiers
-        │   └── classifier-mapper-SomeIncidentField.json
+        │   └── classifier-mapper-MyMapper.json
 
     When
     - After the contribution zip files have been unarchived to the destination pack the pack
         directory tree appears like so
 
         ├── classifier
-        │   └── classifier-SomeIncidentField.json
+        │   └── classifier-MyMapper.json
 
     Then
-    - Ensure the file '.../classifier/classifier-SomeIncidentField.json' is moved to
-        '.../Classifiers/classifier-mapper-SomeIncidentField.json' and overwrites the existing file.
+    - Ensure the file '.../classifier/classifier-MyMapper.json' is moved to
+        '.../Classifiers/classifier-mapper-MyMapper.json' and overwrites the existing file.
     """
     fake_pack_subdir = tmp_path / 'Classifiers'
     fake_pack_subdir.mkdir()
-    extant_file = fake_pack_subdir / 'classifier-mapper-SomeIncidentField.json'
+    extant_file = fake_pack_subdir / 'classifier-mapper-MyMapper.json'
     old_json = {"mapping": "old_value", "type": "mapping-incoming"}
     extant_file.write_text(json.dumps(old_json))
     fake_pack_extracted_dir = tmp_path / 'classifier'
     fake_pack_extracted_dir.mkdir()
-    update_file = fake_pack_extracted_dir / 'classifier-SomeIncidentField.json'
+    update_file = fake_pack_extracted_dir / 'classifier-MyMapper.json'
     new_json = {"mapping": "new_value", "type": "mapping-incoming"}
     update_file.write_text(json.dumps(new_json))
     cc = ContributionConverter()
@@ -639,28 +639,28 @@ def test_convert_contribution_dir_to_pack_contents_update_indicatorfield(tmp_pat
     Given
     - The pack's original content contains mapper files and appears like so
 
-        ├── Indicatorfields
-        │   └── indicatorfield-SomeIncidentField.json
+        ├── IndicatorFields
+        │   └── indicatorfield-SomeIndicatorField.json
 
     When
     - After the contribution zip files have been unarchived to the destination pack the pack
         directory tree appears like so
 
         ├── incidentfield
-        │   └── indicatorfield-SomeIncidentField.json
+        │   └── indicatorfield-SomeIndicatorField.json
 
     Then
-    - Ensure the file '.../incidentfield/indicatorfield-SomeIncidentField.json' is moved to
-        '.../Indicatorfields/indicatorfield-SomeIncidentField.json' and overwrites the existing file.
+    - Ensure the file '.../incidentfield/indicatorfield-SomeIndicatorField.json' is moved to
+        '.../IndicatorFields/indicatorfield-SomeIndicatorField.json' and overwrites the existing file.
     """
-    fake_pack_subdir = tmp_path / 'Indicatorfields'
+    fake_pack_subdir = tmp_path / 'IndicatorFields'
     fake_pack_subdir.mkdir()
-    extant_file = fake_pack_subdir / 'indicatorfield-SomeIncidentField.json'
+    extant_file = fake_pack_subdir / 'indicatorfield-SomeIndicatorField.json'
     old_json = {"field": "old_value"}
     extant_file.write_text(json.dumps(old_json))
     fake_pack_extracted_dir = tmp_path / 'incidentfield'
     fake_pack_extracted_dir.mkdir()
-    update_file = fake_pack_extracted_dir / 'indicatorfield-SomeIncidentField.json'
+    update_file = fake_pack_extracted_dir / 'indicatorfield-SomeIndicatorField.json'
     new_json = {"field": "new_value"}
     update_file.write_text(json.dumps(new_json))
     cc = ContributionConverter()
@@ -856,7 +856,7 @@ class TestReleaseNotes:
              "source_name": "CrowdStrikeMalquery",
              "source_file_name": "Packs/CrowdStrikeMalquery/Integrations/CrowdStrikeMalquery/CrowdStrikeMalquery.yml"}]
         expected_rn_per_content_item = {'CrowdStrike Malquery':
-                                            '- release note entry number #1\n- release note entry number #2\n',
+                                        '- release note entry number #1\n- release note entry number #2\n',
                                         'CrowdStrikeMalquery - Multidownload and Fetch':
                                             '- changed this playbook\n- Updated another thing\n'}
         mocker.patch.object(

@@ -259,7 +259,7 @@ class ContributionConverter:
             new_dst_file_path = os.path.join(dst_dir_path, file_name)
         return new_dst_file_path
 
-    def fix_dst_file_path(self,file_name, dst_dir_path, src_file_path):
+    def fix_dst_file_path(self, file_name, dst_dir_path, src_file_path):
         new_dst_file_path = None
         file_type = find_type(src_file_path)
         if file_type and file_type.value == "mapper":

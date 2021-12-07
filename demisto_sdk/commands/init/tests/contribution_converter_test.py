@@ -523,7 +523,7 @@ def test_convert_contribution_dir_to_pack_contents(tmp_path):
     assert not fake_pack_extracted_dir.exists()
 
 
-def test_convert_contribution_dir_to_pack_contents_mapper(tmp_path):
+def test_convert_contribution_dir_to_pack_contents_update_mapper(tmp_path):
     """
     Scenario: convert a directory which was unarchived from a contribution zip into the content
         pack directory into which the contribution is intended to update, and the contribution
@@ -560,6 +560,40 @@ def test_convert_contribution_dir_to_pack_contents_mapper(tmp_path):
     cc.pack_dir_path = tmp_path
     cc.convert_contribution_dir_to_pack_contents(fake_pack_extracted_dir)
     assert json.loads(extant_file.read_text()) == new_json
+    assert not fake_pack_extracted_dir.exists()
+
+
+def test_convert_contribution_dir_to_pack_contents_new_mapper(tmp_path):
+    """
+    Scenario: convert a directory which was unarchived from a contribution zip into the content
+        pack directory into which the contribution is intended to update, and the contribution
+        includes a file that already exists in the pack
+
+    Given
+    - A new content pack contains mapper file
+
+    When
+    - After the contribution zip files have been unarchived to the destination pack the pack
+        directory tree appears like so
+
+        ├── classifier
+        │   └── classifier-myMapper.json
+
+    Then
+    - Ensure the file '.../classifier/classifier-myMapper.json' is moved to
+        '.../Classifiers/classifier-mapper-myMapper.json' and overwrites the existing file.
+    """
+
+    fake_pack_extracted_dir = tmp_path / 'classifier'
+    fake_pack_extracted_dir.mkdir()
+    update_file = fake_pack_extracted_dir / 'classifier-myMapper.json'
+    json_data = {"mapping": "new_value", "type": "mapping-incoming"}
+    update_file.write_text(json.dumps(json_data))
+    extant_file = tmp_path / 'Classifiers' / 'classifier-mapper-myMapper.json'
+    cc = ContributionConverter()
+    cc.pack_dir_path = tmp_path
+    cc.convert_contribution_dir_to_pack_contents(fake_pack_extracted_dir)
+    assert json.loads(extant_file.read_text()) == json_data
     assert not fake_pack_extracted_dir.exists()
 
 

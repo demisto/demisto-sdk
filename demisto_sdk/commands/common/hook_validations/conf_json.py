@@ -148,7 +148,7 @@ class ConfJsonValidator(BaseValidator):
 
     def get_test_path(self, file_path):
         test_path = Path(file_path)
-        test_file_name = test_path.parts[-1].replace('.yml', '_test.py')
+        test_file_name = test_path.name.replace('.yml', '_test.py')
         return test_path.parent / test_file_name
 
     def has_unittest(self, file_path):

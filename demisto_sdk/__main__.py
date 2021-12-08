@@ -1459,7 +1459,7 @@ def find_dependencies(**kwargs):
     """Find pack dependencies and update pack metadata."""
     check_configuration_file('find-dependencies', kwargs)
     update_pack_metadata = not kwargs.get('no_update')
-    input_paths = kwargs.get('input')  # sice it can be multiple, recived as a tuple
+    input_paths = kwargs.get('input')  # since it can be multiple, received as a tuple
     verbose = kwargs.get('verbose', False)
     id_set_path = kwargs.get('id_set_path', '')
     use_pack_metadata = kwargs.get('use_pack_metadata', False)

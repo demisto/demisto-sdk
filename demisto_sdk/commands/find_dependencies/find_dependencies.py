@@ -1615,7 +1615,7 @@ class PackDependencies:
 
         else:
             PackDependencies.find_dependencies(
-                pack_name=Path(input_paths[0]).name,  # type: ignore[arg-type]
+                pack_name=Path(input_paths[0]).name,  # type: ignore
                 id_set_path=id_set_path,
                 verbose=verbose,
                 update_pack_metadata=update_pack_metadata,

@@ -510,9 +510,9 @@ def get_command_examples(commands_examples_input, specific_commands):
     # Filter from the examples only the commands specified by the user
     if specific_commands:
         command_examples = [command_ex for command_ex in command_examples if
-                                   command_ex.split(' ')[0].strip('!') in specific_commands]
+                            command_ex.split(' ')[0].strip('!') in specific_commands]
 
-    command_examples: list = list(filter(None, map(command_example_filter, command_examples)))
+    command_examples = list(filter(None, map(command_example_filter, command_examples))) or []
 
     print('found the following commands:\n{}'.format('\n'.join(command_examples)))
     return command_examples

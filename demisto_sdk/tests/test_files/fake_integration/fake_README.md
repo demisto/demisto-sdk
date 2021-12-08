@@ -46,14 +46,6 @@ Create a new user in zoom account
 | Zoom.User.created_at | date | Created date of the user | 
 | Zoom.User.type | number | The type of the user | 
 
-
-#### Command Example
-``` ```
-
-#### Human Readable Output
-
-
-
 ### zoom-create-meeting
 ***
 Create a new zoom meeting (scheduled or instant)
@@ -81,14 +73,6 @@ Create a new zoom meeting (scheduled or instant)
 | Zoom.Meeting.join_url | string | Join url for the meeting | 
 | Zoom.Meeting.id | string | Meeting id of the new meeting that is created | 
 | Zoom.Meeting.start_url | string | The URL to start the meeting | 
-
-
-#### Command Example
-``` ```
-
-#### Human Readable Output
-
-
 
 ### zoom-fetch-recording
 ***
@@ -119,14 +103,6 @@ Get meeting record and save as file in the warroom
 | File.Type | unknown | Attachment's Type | 
 | File.EntryID | unknown | Attachment's EntryID | 
 | File.SSDeep | unknown | Attachment's SSDeep hash | 
-
-
-#### Command Example
-``` ```
-
-#### Human Readable Output
-
-
 
 ### zoom-list-users
 ***
@@ -166,14 +142,6 @@ List the existing users
 | Zoom.User.pmi | string | PMI of user | 
 | Zoom.User.group_ids | string | Groups user belongs to | 
 
-
-#### Command Example
-``` ```
-
-#### Human Readable Output
-
-
-
 ### zoom-delete-user
 ***
 Delete a user from Zoom
@@ -193,10 +161,3 @@ Delete a user from Zoom
 #### Context Output
 
 There is no context output for this command.
-
-#### Command Example
-``` ```
-
-#### Human Readable Output
-
-

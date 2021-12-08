@@ -409,7 +409,8 @@ def test_generate_command_section_with_empty_cotext_example():
     the 'Context Example' sections should be empty
     """
     example_dict = {
-        'test1': [(None, None, '{}')]
+        'test1': [('!test1', 'test without args', '{}'),
+                  ('!test1 value=val', 'test with args', '{}')]
     }
     command = {'deprecated': False, 'name': 'test1'}
 
@@ -419,7 +420,9 @@ def test_generate_command_section_with_empty_cotext_example():
                         '#### Base Command', '', '`test1`', '#### Input', '',
                         'There are no input arguments for this command.', '', '#### Context Output', '',
                         'There is no context output for this command.', '', '#### Command', '```test1```', '',
-                        '#### Command example', '```None```', '#### Human Readable Output', '\n>None', '']
+                        '#### Command example', '```!test1```', '#### Human Readable Output', '\n>test without args',
+                        '', '#### Command example', '```!test1 value=val```', '#### Human Readable Output',
+                        '\n>test with args', '']
 
     assert '\n'.join(section) == '\n'.join(expected_section)
 
@@ -466,7 +469,7 @@ def test_generate_commands_section_human_readable():
 
     example_dict = {
         'non-deprecated-cmd': [
-            ('!non-deprecated-cmd', '## this is human readable\nThis is a line\nAnother line', '{}')
+            ('!non-deprecated-cmd', '## this is human readable\nThis is a line\nAnother line', '{}'),
         ]
     }
 
@@ -496,15 +499,13 @@ def test_generate_commands_with_permissions_section():
     section, errors = generate_commands_section(yml_data, example_dict={}, command_permissions_dict={
         'non-deprecated-cmd': 'SUPERUSER'})
 
-    expected_section = [
-        '## Commands',
-        'You can execute these commands from the Cortex XSOAR CLI, as part of an automation, or in a playbook.',
-        'After you successfully execute a command, a DBot message appears in the War Room with the command details.',
-        '### non-deprecated-cmd', '***', ' ', '#### Required Permissions',
-        'SUPERUSER', '#### Base Command', '', '`non-deprecated-cmd`', '#### Input', '',
-        'There are no input arguments for this command.', '', '#### Context Output', '',
-        'There is no context output for this command.', '', '#### Command Example', '``` ```', '',
-        '#### Human Readable Output', '\n', '']
+    expected_section = ['## Commands',
+                        'You can execute these commands from the Cortex XSOAR CLI, as part of an automation, or in a playbook.',
+                        'After you successfully execute a command, a DBot message appears in the War Room with the command details.',
+                        '### non-deprecated-cmd', '***', ' ', '#### Required Permissions', 'SUPERUSER',
+                        '#### Base Command', '', '`non-deprecated-cmd`', '#### Input', '',
+                        'There are no input arguments for this command.', '', '#### Context Output', '',
+                        'There is no context output for this command.']
 
     assert '\n'.join(section) == '\n'.join(expected_section)
 
@@ -530,15 +531,12 @@ def test_generate_commands_with_permissions_section_command_doesnt_exist():
     section, errors = generate_commands_section(yml_data, example_dict={}, command_permissions_dict={
         '!non-deprecated-cmd': 'SUPERUSER'})
 
-    expected_section = [
-        '## Commands',
-        'You can execute these commands from the Cortex XSOAR CLI, as part of an automation, or in a playbook.',
-        'After you successfully execute a command, a DBot message appears in the War Room with the command details.',
-        '### non-deprecated-cmd', '***', ' ', '#### Required Permissions',
-        '', '#### Base Command', '', '`non-deprecated-cmd`', '#### Input', '',
-        'There are no input arguments for this command.', '', '#### Context Output', '',
-        'There is no context output for this command.', '', '#### Command Example', '``` ```', '',
-        '#### Human Readable Output', '\n', '']
+    expected_section = ['## Commands',
+                        'You can execute these commands from the Cortex XSOAR CLI, as part of an automation, or in a playbook.',
+                        'After you successfully execute a command, a DBot message appears in the War Room with the command details.',
+                        '### non-deprecated-cmd', '***', ' ', '#### Required Permissions', '', '#### Base Command', '',
+                        '`non-deprecated-cmd`', '#### Input', '', 'There are no input arguments for this command.', '',
+                        '#### Context Output', '', 'There is no context output for this command.']
 
     assert 'Error! Command Permissions were not found for command non-deprecated-cmd' in errors
     assert '\n'.join(section) == '\n'.join(expected_section)

@@ -63,7 +63,7 @@ class ArtifactsManager:
             content_version: release content version.
             suffix: suffix to add all file we creates.
             cpus: available cpus in the computer.
-            marketplace: The marketplace the artifacts are created for. deafults is xsoar marketplace. # TODO: verify default name
+            marketplace: The marketplace the artifacts are created for. deafults is xsoar marketplace.
             id_set_path: the full path of id_set.json.
             pack_names: Packs to create artifacts for.
             signature_key: Base64 encoded signature key used for signing packs.

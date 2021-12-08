@@ -147,9 +147,9 @@ class ConfJsonValidator(BaseValidator):
         return self.has_unskipped_test_playbook(integration_data, integration_id, file_path, test_playbook_ids)
 
     def get_test_path(self, file_path):
-        """ Gets a yml path and returns the matching integration's test file"""
+        """ Gets a yml path and returns the matching integration's test."""
         test_path = Path(file_path)
-        test_file_name = test_path.name.replace('.yml', '_test.py')
+        test_file_name = test_path.parts[-1].replace('.yml', '_test.py')
         return test_path.parent / test_file_name
 
     def has_unittest(self, file_path):

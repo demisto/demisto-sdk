@@ -487,35 +487,35 @@ def generate_command_example(cmd_from_yaml, cmd_example=None):
     return example, errors
 
 
-def get_command_examples(commands_examples, specific_commands):
+def get_command_examples(commands_examples_input, specific_commands):
     """
     get command examples from command file
 
-    @param commands_examples: commands examples file or a comma separeted list of com
+    @param commands_examples_input: commands examples file or a comma separeted list of com
     @param specific_commands: commands specified by the user
 
     @return: a list of command examples
     """
 
-    if not commands_examples:
+    if not commands_examples_input:
         return []
 
-    if os.path.isfile(commands_examples):
-        with open(commands_examples, 'r') as examples_file:
+    if os.path.isfile(commands_examples_input):
+        with open(commands_examples_input, 'r') as examples_file:
             command_examples = examples_file.read().splitlines()
     else:
         print_warning('failed to open commands file, using commands as comma seperated list')
-        command_examples = commands_examples.split(',')
+        command_examples = commands_examples_input.split(',')
 
     # Filter from the examples only the commands specified by the user
     if specific_commands:
-        commands_examples = [command_ex for command_ex in command_examples if
-                             command_ex.split(' ')[0].strip('!') in specific_commands]
+        command_examples = [command_ex for command_ex in command_examples if
+                                   command_ex.split(' ')[0].strip('!') in specific_commands]
 
-    commands_examples: list = list(filter(None, map(command_example_filter, commands_examples)))
+    command_examples: list = list(filter(None, map(command_example_filter, command_examples)))
 
-    print('found the following commands:\n{}'.format('\n'.join(commands_examples)))
-    return commands_examples
+    print('found the following commands:\n{}'.format('\n'.join(command_examples)))
+    return command_examples
 
 
 def command_example_filter(command):

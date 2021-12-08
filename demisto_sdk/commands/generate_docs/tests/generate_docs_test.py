@@ -659,7 +659,7 @@ class TestGetCommandExamples:
 
         specific_commands = [command_example_a, command_example_b]
 
-        commands = get_command_examples(commands_examples=command_examples, specific_commands=specific_commands)
+        commands = get_command_examples(commands_examples_input=command_examples, specific_commands=specific_commands)
 
         assert commands == [f'!{command_example_a}', f'!{command_example_b}']
 
@@ -684,7 +684,7 @@ class TestGetCommandExamples:
 
         specific_commands = [command_example_a, command_example_b]
 
-        commands = get_command_examples(commands_examples=command_examples, specific_commands=specific_commands)
+        commands = get_command_examples(commands_examples_input=command_examples, specific_commands=specific_commands)
 
         assert commands == [f'!{command_example_a}', f'!{command_example_b}']
 

@@ -26,7 +26,7 @@ from demisto_sdk.commands.common.tools import (
     get_release_note_entries, get_release_notes_file_path, get_ryaml,
     get_test_playbook_id, get_to_version, has_remote_configured,
     is_origin_content_repo, is_pack_path, is_uuid, retrieve_file_ending,
-    run_command_os, server_version_compare)
+    run_command_os, server_version_compare, get_current_repo)
 from demisto_sdk.tests.constants_test import (IGNORED_PNG,
                                               INDICATORFIELD_EXTRA_FIELDS,
                                               SOURCE_FORMAT_INTEGRATION_COPY,
@@ -1473,3 +1473,23 @@ def test_get_test_playbook_id():
     test_playbook_name, test_playbook_pack = get_test_playbook_id(test_playbook_id_set, test_name)
     assert test_playbook_name == 'HelloWorld-Test'
     assert test_playbook_pack == 'HelloWorld'
+
+@pytest.mark.parametrize(
+    'url, expected_name',
+    [
+        ('ssh://git@github.com/demisto/content-dist.git', 'github.com - demisto/content-dist'),
+        ('git@github.com:demisto/content-dist.git', 'github.com - demisto/content-dist'),
+        # clone using github ssh example
+        ('https://github.com/demisto/content-dist.git', 'github.com - demisto/content-dist'),
+        # clone using github https example
+        ('https://github.com/demisto/content-dist', 'github.com - demisto/content-dist'),
+        ('https://code.pan.run/xsoar/content-dist', 'code.pan.run - xsoar/content-dist'),  # gitlab
+        ('https://code.pan.run/xsoar/content-dist.git', 'code.pan.run - xsoar/content-dist'),
+        ('https://gitlab-ci-token:token@code.pan.run/xsoar/content-dist.git', 'code.pan.run - xsoar/content-dist')
+    ]
+)
+def test_get_current_repo(mocker, url, expected_name):
+    import giturlparse
+    mocker.patch.object(giturlparse, 'parse', return_value=giturlparse.parse(url))
+    name = get_current_repo()
+    assert name == expected_name

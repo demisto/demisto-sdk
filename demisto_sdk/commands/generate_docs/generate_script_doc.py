@@ -88,15 +88,13 @@ def generate_script_doc(input_path, examples, output: str = None, permissions: s
                 doc.extend(generate_list_section('Used In', used_in, True,
                                                  text='This script is used in the following playbooks and scripts.'))
             else:  # if we have more than 10 use a sample
-                print_warning(
-                    f'"Used In" section found too many scripts/playbooks ({len(used_in)}). Will use a sample of 10.'
-                    ' Full list is available as a comment in the README file.')
+                print_warning(f'"Used In" section found too many scripts/playbooks ({len(used_in)}). Will use a sample of 10.'
+                              ' Full list is available as a comment in the README file.')
                 sample_used_in = random.sample(used_in, 10)
                 doc.extend(generate_list_section('Used In', sorted(sample_used_in), True,
                                                  text='Sample usage of this script can be found in the following playbooks and scripts.'))
                 used_in_str = '\n'.join(used_in)
-                doc.append(
-                    f"<!--\nUsed In: list was truncated. Full list commented out for reference:\n\n{used_in_str}\n -->\n")
+                doc.append(f"<!--\nUsed In: list was truncated. Full list commented out for reference:\n\n{used_in_str}\n -->\n")
 
         doc.extend(generate_table_section(inputs, 'Inputs', 'There are no inputs for this script.'))
 

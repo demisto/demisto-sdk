@@ -652,8 +652,7 @@ class TestGetCommandExamples:
         command_examples = tmp_path / "command_examples"
 
         with open(command_examples, 'w+') as ce:
-            ce.write(
-                '!zoom-create-user\n!zoom-create-meeting\n!zoom-fetch-recording\n!zoom-list-users\n!zoom-delete-user')
+            ce.write('!zoom-create-user\n!zoom-create-meeting\n!zoom-fetch-recording\n!zoom-list-users\n!zoom-delete-user')
 
         command_example_a = 'zoom-create-user'
         command_example_b = 'zoom-list-users'

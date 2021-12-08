@@ -124,8 +124,7 @@ def generate_integration_doc(
         else:
             docs = []  # type: list
             docs.extend(add_lines(yml_data.get('description')))
-            docs.extend(
-                ['This integration was integrated and tested with version xx of {}'.format(yml_data['name']), ''])
+            docs.extend(['This integration was integrated and tested with version xx of {}'.format(yml_data['name']), ''])
             # Checks if the integration is a new version
             integration_version = re.findall("[vV][2-9]$", yml_data.get("display", ""))
             if integration_version and not skip_breaking_changes:
@@ -339,6 +338,7 @@ def generate_single_command_section(cmd: dict, example_dict: dict, command_permi
     example_section, example_errors = generate_command_example(cmd, cmd_example)
     section.extend(example_section)
     errors.extend(example_errors)
+
     return section, errors
 
 
@@ -361,8 +361,7 @@ def generate_versions_differences_section(input_path, old_version, display_name)
     ]
 
     if not old_version:
-        user_response = str(
-            input('Enter the path of the previous integration version file if any. Press Enter to skip.\n'))
+        user_response = str(input('Enter the path of the previous integration version file if any. Press Enter to skip.\n'))
 
         if user_response:
             old_version = user_response
@@ -452,8 +451,7 @@ def disable_md_autolinks(markdown: str) -> str:
     """
     if not markdown:
         return markdown
-    return re.sub(r'\b(?<!\)\[)(https?)://([\w\d]+?\.[\w\d]+?)\b', r'\1:<span>//</span>\2', markdown,
-                  flags=re.IGNORECASE)
+    return re.sub(r'\b(?<!\)\[)(https?)://([\w\d]+?\.[\w\d]+?)\b', r'\1:<span>//</span>\2', markdown, flags=re.IGNORECASE)
 
 
 def generate_command_example(cmd_from_yaml, cmd_example=None):

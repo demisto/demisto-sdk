@@ -17,16 +17,16 @@ from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import (
     LOG_COLORS, arg_to_list, compare_context_path_in_yml_and_readme,
     filter_files_by_type, filter_files_on_pack, filter_packagify_changes,
-    find_type, get_code_lang, get_dict_from_file, get_entity_id_by_entity_type,
-    get_entity_name_by_entity_type, get_file_displayed_name,
-    get_file_version_suffix_if_exists, get_files_in_dir,
-    get_ignore_pack_skipped_tests, get_last_release_version,
+    find_type, get_code_lang, get_current_repo, get_dict_from_file,
+    get_entity_id_by_entity_type, get_entity_name_by_entity_type,
+    get_file_displayed_name, get_file_version_suffix_if_exists,
+    get_files_in_dir, get_ignore_pack_skipped_tests, get_last_release_version,
     get_last_remote_release_version, get_latest_release_notes_text,
     get_pack_metadata, get_relative_path_from_packs_dir,
     get_release_note_entries, get_release_notes_file_path, get_ryaml,
     get_test_playbook_id, get_to_version, has_remote_configured,
     is_origin_content_repo, is_pack_path, is_uuid, retrieve_file_ending,
-    run_command_os, server_version_compare, get_current_repo, to_kebab_case)
+    run_command_os, server_version_compare, to_kebab_case)
 from demisto_sdk.tests.constants_test import (IGNORED_PNG,
                                               INDICATORFIELD_EXTRA_FIELDS,
                                               SOURCE_FORMAT_INTEGRATION_COPY,

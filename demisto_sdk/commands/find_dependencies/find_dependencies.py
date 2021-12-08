@@ -14,7 +14,7 @@ from requests import RequestException
 
 from demisto_sdk.commands.common import constants
 from demisto_sdk.commands.common.constants import (
-    GENERIC_COMMANDS_NAMES, DEFAULT_CONTENT_ITEM_TO_VERSION,
+    DEFAULT_CONTENT_ITEM_TO_VERSION, GENERIC_COMMANDS_NAMES,
     IGNORED_PACKS_IN_DEPENDENCY_CALC, PACKS_DIR)
 from demisto_sdk.commands.common.tools import (ProcessPoolHandler,
                                                get_content_id_set,
@@ -1581,7 +1581,7 @@ class PackDependencies:
             update_pack_metadata: bool = False,
             verbose: bool = False,
             use_pack_metadata: bool = False,
-            input_paths: Optional[Tuple] = None,
+            input_paths: Tuple = None,
             all_packs_dependencies: bool = False,
             get_dependent_on: bool = False,
             output_path: str = None,

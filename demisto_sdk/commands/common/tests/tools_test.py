@@ -1479,9 +1479,7 @@ def test_get_test_playbook_id():
     [
         ('ssh://git@github.com/demisto/content-dist.git', 'github.com - demisto/content-dist'),
         ('git@github.com:demisto/content-dist.git', 'github.com - demisto/content-dist'),
-        # clone using github ssh example
         ('https://github.com/demisto/content-dist.git', 'github.com - demisto/content-dist'),
-        # clone using github https example
         ('https://github.com/demisto/content-dist', 'github.com - demisto/content-dist'),
         ('https://code.pan.run/xsoar/content-dist', 'code.pan.run - xsoar/content-dist'),  # gitlab
         ('https://code.pan.run/xsoar/content-dist.git', 'code.pan.run - xsoar/content-dist'),

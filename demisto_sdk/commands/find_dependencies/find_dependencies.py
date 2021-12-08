@@ -1508,7 +1508,7 @@ class PackDependencies:
 
         if output_path and not all_packs_dependencies and not get_dependent_on:
             print_warning("You used the '--outputs-path' argument, which is only relevant for when using the"
-                          " '--all-packs-dependencies' or --get-dependent-on flags. Ignoring this argument.")
+                          " '--all-packs-dependencies' or '--get-dependent-on' flags. Ignoring this argument.")
 
     @staticmethod
     def find_dependencies_manager(

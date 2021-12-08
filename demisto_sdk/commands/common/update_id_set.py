@@ -487,7 +487,7 @@ def get_playbook_data(file_path: str) -> dict:
 
     playbook_data = create_common_entity_data(path=file_path, name=name, to_version=toversion,
                                               from_version=fromversion, pack=pack,
-                                              marketplace=json_data.get(MARKETPLACE_KEY_PACK_METADATA))
+                                              marketplace=data_dictionary.get(MARKETPLACE_KEY_PACK_METADATA))
 
     transformers, filters = get_filters_and_transformers_from_playbook(data_dictionary)
 
@@ -534,7 +534,7 @@ def get_script_data(file_path, script_code=None):
     pack = get_pack_name(file_path)
 
     script_data = create_common_entity_data(path=file_path, name=name, to_version=toversion, from_version=fromversion,
-                                            pack=pack, marketplace=json_data.get(MARKETPLACE_KEY_PACK_METADATA))
+                                            pack=pack, marketplace=data_dictionary.get(MARKETPLACE_KEY_PACK_METADATA))
     if deprecated:
         script_data['deprecated'] = deprecated
     if depends_on:
@@ -868,7 +868,7 @@ def create_common_entity_data(path, name, to_version, from_version, pack, market
     return data
 
 
-def get_pack_metadata_data(file_path, print_logs: bool, marketplace: str):
+def get_pack_metadata_data(file_path, print_logs: bool, marketplace: str = 'xsoar'):
     try:
         if print_logs:
             print(f'adding {file_path} to id_set')
@@ -884,7 +884,8 @@ def get_pack_metadata_data(file_path, print_logs: bool, marketplace: str):
             'certification': 'certified' if json_data.get('support', '').lower() in ['xsoar', 'partner'] else '',
             "tags": json_data.get('tags', []),
             "use_cases": json_data.get('useCases', []),
-            "categories": json_data.get('categories', [])
+            "categories": json_data.get('categories', []),
+            "marketplaces": json_data.get('marketplaces', [])
         }
 
         pack_id = get_pack_name(file_path)
@@ -1008,7 +1009,7 @@ def parse_dashboard_or_report_data(all_layouts, data_file_json, path):
                 scripts.add(widget_data.get('query'))
 
     data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack,
-                                     marketplace=json_data.get(MARKETPLACE_KEY_PACK_METADATA))
+                                     marketplace=data_file_json.get(MARKETPLACE_KEY_PACK_METADATA))
     if scripts:
         data['scripts'] = list(scripts)
 
@@ -1042,6 +1043,7 @@ def get_depends_on(data_dict):
 
     return depends_on_list, command_to_integration
 
+
 def get_mp_types_by_item(file_path):
     """
     Get the supporting marketplaces for the given content item, defined by the mp field in the metadata
@@ -1052,15 +1054,18 @@ def get_mp_types_by_item(file_path):
     Returns:
         list of names of supporting marketplaces (current options are marketplacev2 and xsoar)
     """
-    file_path = Path(file_path)
-    metadata_path = Path(*file_path.parts[0:2]) / METADATA_FILE_NAME
+    file_path_parts = Path(file_path).parts
+    if 'Packs' not in file_path_parts:
+        return []
+    metadata_path = Path(*file_path_parts[0:2]) / METADATA_FILE_NAME
     try:
-        with open(metadata_path, mode=r) as metadata_file:
+        with open(metadata_path, 'r') as metadata_file:
             metadata = json.load(metadata_file)
             marketplaces = metadata[MARKETPLACE_KEY_PACK_METADATA]
         return marketplaces
     except FileNotFoundError:
         return []
+
 
 def should_skip_item_by_mp(file_path: str, marketplace: str):
     """
@@ -1077,7 +1082,7 @@ def should_skip_item_by_mp(file_path: str, marketplace: str):
     return marketplace not in get_mp_types_by_item(file_path)
 
 
-def process_integration(file_path: str, print_logs: bool, marketplace: str) -> list:
+def process_integration(file_path: str, print_logs: bool, marketplace: str = 'xsoar') -> list:
     """
     Process integration dir or file
 
@@ -1114,7 +1119,7 @@ def process_integration(file_path: str, print_logs: bool, marketplace: str) -> l
     return res
 
 
-def process_script(file_path: str, print_logs: bool, marketplace: str) -> list:
+def process_script(file_path: str, print_logs: bool, marketplace: str = 'xsoar') -> list:
     res = []
     try:
         if should_skip_item_by_mp(file_path, marketplace):
@@ -1138,7 +1143,7 @@ def process_script(file_path: str, print_logs: bool, marketplace: str) -> list:
     return res
 
 
-def process_incident_fields(file_path: str, print_logs: bool, incidents_types_list: list, marketplace: str) -> list:
+def process_incident_fields(file_path: str, print_logs: bool, incidents_types_list: list, marketplace: str = 'xsoar') -> list:
     """
     Process a incident_fields JSON file
     Args:
@@ -1163,7 +1168,7 @@ def process_incident_fields(file_path: str, print_logs: bool, incidents_types_li
     return res
 
 
-def process_indicator_types(file_path: str, print_logs: bool, all_integrations: list, marketplace: str) -> list:
+def process_indicator_types(file_path: str, print_logs: bool, all_integrations: list, marketplace: str = 'xsoar') -> list:
     """
     Process a indicator types JSON file
     Args:
@@ -1190,7 +1195,7 @@ def process_indicator_types(file_path: str, print_logs: bool, all_integrations: 
     return res
 
 
-def process_generic_items(file_path: str, print_logs: bool, marketplace: str,
+def process_generic_items(file_path: str, print_logs: bool, marketplace: str = 'xsoar',
                           generic_types_list: list = None) -> list:
     """
     Process a generic field JSON file
@@ -1221,7 +1226,7 @@ def process_generic_items(file_path: str, print_logs: bool, marketplace: str,
     return res
 
 
-def process_jobs(file_path: str, print_logs: bool, marketplace: str) -> list:
+def process_jobs(file_path: str, print_logs: bool, marketplace: str = 'xsoar') -> list:
     """
     Process a JSON file representing a Job object.
     Args:
@@ -1246,7 +1251,7 @@ def process_jobs(file_path: str, print_logs: bool, marketplace: str) -> list:
 
 
 def process_general_items(file_path: str, print_logs: bool, expected_file_types: Tuple[FileType],
-                          data_extraction_func: Callable, marketplace: str) -> list:
+                          data_extraction_func: Callable, marketplace: str = 'xsoar') -> list:
     """
     Process a general item file.
     expected file in one of the following:
@@ -1285,9 +1290,9 @@ def process_general_items(file_path: str, print_logs: bool, expected_file_types:
     return res
 
 
-def process_test_playbook_path(file_path: str, print_logs: bool, marketplace: str) -> tuple:
+def process_test_playbook_path(file_path: str, print_logs: bool, marketplace: str = 'xsoar') -> tuple:
     """
-    Process a yml file in the testplyabook dir. Maybe either a script or playbook
+    Process a yml file in the test playbook dir. Maybe either a script or playbook
 
     Arguments:
         file_path {string} -- path to yaml file
@@ -1517,8 +1522,6 @@ def get_generic_module_data(path):
     return {id_: data}
 
 
-
-
 def get_list_data(path: str):
     json_data = get_json(path)
     data = create_common_entity_data(path=path,
@@ -1645,13 +1648,13 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     Returns: id-set object
     """
     if id_set_path == "":
-        if marketplace == MarketplaceVersions.MarketplaceV2:
+        if marketplace == MarketplaceVersions.MarketplaceV2.value:
             id_set_path = MP_V2_ID_SET_PATH
         else:
             id_set_path = DEFAULT_ID_SET_PATH
 
     if not objects_to_create:
-        if marketplace == MarketplaceVersions.MarketplaceV2:
+        if marketplace == MarketplaceVersions.MarketplaceV2.value:
             objects_to_create = CONTENT_MP_V2_ENTITIES
         else:
             objects_to_create = CONTENT_ENTITIES
@@ -2001,36 +2004,40 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     new_ids_dict['integrations'] = sort(integration_list)
     new_ids_dict['TestPlaybooks'] = sort(testplaybooks_list)
     new_ids_dict['Classifiers'] = sort(classifiers_list)
-    new_ids_dict['Dashboards'] = sort(dashboards_list)
     new_ids_dict['IncidentFields'] = sort(incident_fields_list)
     new_ids_dict['IncidentTypes'] = sort(incident_type_list)
     new_ids_dict['IndicatorFields'] = sort(indicator_fields_list)
     new_ids_dict['IndicatorTypes'] = sort(indicator_types_list)
-    new_ids_dict['Layouts'] = sort(layouts_list)
-    new_ids_dict['Reports'] = sort(reports_list)
-    new_ids_dict['Widgets'] = sort(widgets_list)
-    new_ids_dict['Mappers'] = sort(mappers_list)
-    new_ids_dict['Packs'] = packs_dict
-    new_ids_dict['GenericTypes'] = sort(generic_types_list)
-    new_ids_dict['GenericFields'] = sort(generic_fields_list)
-    new_ids_dict['GenericModules'] = sort(generic_modules_list)
-    new_ids_dict['GenericDefinitions'] = sort(generic_definitions_list)
     new_ids_dict['Lists'] = sort(lists_list)
     new_ids_dict['Jobs'] = sort(jobs_list)
+    new_ids_dict['Mappers'] = sort(mappers_list)
+    new_ids_dict['Packs'] = packs_dict
+
+    if marketplace == MarketplaceVersions.XSOAR.value:
+        new_ids_dict['GenericTypes'] = sort(generic_types_list)
+        new_ids_dict['GenericFields'] = sort(generic_fields_list)
+        new_ids_dict['GenericModules'] = sort(generic_modules_list)
+        new_ids_dict['GenericDefinitions'] = sort(generic_definitions_list)
+        new_ids_dict['Layouts'] = sort(layouts_list)
+        new_ids_dict['Reports'] = sort(reports_list)
+        new_ids_dict['Widgets'] = sort(widgets_list)
+        new_ids_dict['Dashboards'] = sort(dashboards_list)
 
     exec_time = time.time() - start_time
     print_color("Finished the creation of the id_set. Total time: {} seconds".format(exec_time), LOG_COLORS.GREEN)
-    duplicates = find_duplicates(new_ids_dict, print_logs)
+    duplicates = find_duplicates(new_ids_dict, print_logs, marketplace)
     if any(duplicates) and fail_on_duplicates:
         raise Exception(f'The following ids were found duplicates\n{json.dumps(duplicates, indent=4)}\n')
 
     return new_ids_dict
 
 
-def find_duplicates(id_set, print_logs):
+def find_duplicates(id_set, print_logs, marketplace):
     lists_to_return = []
 
-    for object_type in ID_SET_ENTITIES:
+    entities = ID_SET_ENTITIES if marketplace == 'xsoar' else ID_SET_MP_V2_ENTITIES
+
+    for object_type in entities:
         if print_logs:
             print_color("Checking diff for {}".format(object_type), LOG_COLORS.GREEN)
         objects = id_set.get(object_type)

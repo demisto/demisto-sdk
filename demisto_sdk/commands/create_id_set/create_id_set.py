@@ -6,7 +6,9 @@ from typing import Optional
 from genericpath import exists
 
 from demisto_sdk.commands.common.constants import (DEFAULT_ID_SET_PATH,
-                                                   GENERIC_COMMANDS_NAMES)
+                                                   GENERIC_COMMANDS_NAMES,
+                                                   MarketplaceVersions,
+                                                   MP_V2_ID_SET_PATH)
 from demisto_sdk.commands.common.update_id_set import re_create_id_set
 
 
@@ -80,11 +82,11 @@ class IDSetCreator:
         return command_name_to_implemented_integration_map
 
     def save_id_set(self):
-        if self.output == "":
-            self.output = DEFAULT_ID_SET_PATH
-        if self.output:
-            if not exists(self.output):
-                intermediate_dirs = os.path.dirname(os.path.abspath(self.output))
-                os.makedirs(intermediate_dirs, exist_ok=True)
-            with open(self.output, 'w+') as id_set_file:
-                json.dump(self.id_set, id_set_file, indent=4)
+        if not self.output:
+            self.output = MP_V2_ID_SET_PATH if self.marketplace == MarketplaceVersions.MarketplaceV2.value \
+                else DEFAULT_ID_SET_PATH
+        if not exists(self.output):
+            intermediate_dirs = os.path.dirname(os.path.abspath(self.output))
+            os.makedirs(intermediate_dirs, exist_ok=True)
+        with open(self.output, 'w+') as id_set_file:
+            json.dump(self.id_set, id_set_file, indent=4)

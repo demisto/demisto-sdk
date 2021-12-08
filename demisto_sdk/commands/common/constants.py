@@ -1335,6 +1335,7 @@ UUID_REGEX = r'([\w]{8}-[\w]{4}-[\w]{4}-[\w]{4}-[\w]{8,12})'
 class IronBankDockers:
     API_LINK = 'https://repo1.dso.mil/api/v4/projects/dsop%2Fopensource%2Fpalo-alto-networks%2Fdemisto%2F'
 
+
 class MarketplaceVersions(Enum):
     XSOAR = 'xsoar'
     MarketplaceV2 = 'marketplacev2'

@@ -1439,7 +1439,7 @@ def update_release_notes(**kwargs):
                           " --get-dependent-on flag, this argument can be used multiple times.", required=False,
     type=click.Path(exists=True, dir_okay=True), multiple=True)
 @click.option(
-    "-idp", "--id-set-path", help="Path to id set json file.", required=False)
+    "-idp", "--id-set-path", help="Path to id set json file.", required=False, default='')
 @click.option(
     "--no-update", help="Use to find the pack dependencies without updating the pack metadata.", required=False,
     is_flag=True)

@@ -93,7 +93,7 @@ def generate_integration_doc(
             example_dict, build_errors = build_example_dict(command_examples, insecure)
             errors.extend(build_errors)
         else:
-            errors.append(f'Command examples was not found {examples}.')
+            errors.append(f'Command examples was not found: {examples}.')
 
         if permissions == 'per-command':
             command_permissions_dict: Any = {}

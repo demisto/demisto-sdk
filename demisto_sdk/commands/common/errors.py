@@ -1954,7 +1954,7 @@ class Errors:
     @error_code_decorator
     def all_entity_test_playbooks_are_skipped(entity_id):
         return f"Either {entity_id} does not have any test playbooks or that all test playbooks in this " \
-               f"pack are currently skipped.\n" \
+               f"pack are currently skipped, and there is no unittests file to be found.\n" \
                f"Please create a test playbook or un-skip at least one of the relevant test playbooks.\n " \
                f"You can un-skip a playbook by deleting the line relevant to one of the test playbooks from " \
                f"the 'skipped_tests' section inside the conf.json file and deal " \

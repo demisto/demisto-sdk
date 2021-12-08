@@ -1,5 +1,6 @@
 # Changelog
 * Changed the **validate** command to fail on missing test-playbooks only if no unittests are found.
+* Fixed `to_kebab_case`, it will now deal with strings that have hyphens, commas or periods in them, changing them to be hyphens in the new string.
 
 # 1.5.4
 * Fixed an issue with the **format** command when contributing via the UI

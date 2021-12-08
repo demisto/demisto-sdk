@@ -77,7 +77,7 @@ class TestIDSetCreator:
         assert 'Mappers' in id_set.keys()
         assert 'Packs' in id_set.keys()
 
-    def test_create_id_set_on_specific_pack(self, repo, mocker):
+    def test_create_id_set_on_specific_pack(self, mocker, repo):
         """
         Given
         - two packs with integrations to create an ID set from
@@ -91,19 +91,20 @@ class TestIDSetCreator:
         - ensure output id_set does not contain the second pack
 
         """
-        mocker.patch('demisto_sdk.commands.create_id_set.create_id_set.should_skip_item_by_mp', return_value=False)
-
+        import demisto_sdk.commands.common.update_id_set as u
+        mocker.patch.object(u, 're_create_id_set', return_value={})
+        #mocker.patch('demisto_sdk.commands.common.update_id_set', return_value={})
         packs = repo.packs
 
         pack_to_create_id_set_on = repo.create_pack('pack_to_create_id_set_on')
         pack_to_create_id_set_on.create_integration(yml={'commonfields': {'id': 'id1'}, 'category': '', 'name':
-                                                         'integration to create id set', 'script': {'type': 'python'}},
+            'integration to create id set', 'script': {'type': 'python'}},
                                                     name='integration1')
         packs.append(pack_to_create_id_set_on)
 
         pack_to_not_create_id_set_on = repo.create_pack('pack_to_not_create_id_set_on')
         pack_to_not_create_id_set_on.create_integration(yml={'commonfields': {'id2': 'id'}, 'category': '', 'name':
-                                                             'integration to not create id set'}, name='integration2')
+            'integration to not create id set'}, name='integration2')
         packs.append(pack_to_not_create_id_set_on)
 
         id_set_creator = IDSetCreator(self.file_path, pack_to_create_id_set_on.path)

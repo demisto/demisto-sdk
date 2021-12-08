@@ -15,7 +15,6 @@
 * Added function **get_current_repo** to `tools`.
 * The **postman-codegen** will not have duplicates arguments' name. It will rename them to the minimum distinguished shared path for each of them.
 
-
 # 1.5.3
 * The **format** command will now set `unsearchable: True` for incident, indicator and generic fields.
 * Fixed an issue where the **update-release-notes** command crashes with `--help` flag.

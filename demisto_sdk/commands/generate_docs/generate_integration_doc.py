@@ -504,7 +504,7 @@ def get_command_examples(commands_examples, specific_commands):
         with open(commands_examples, 'r') as examples_file:
             command_examples = examples_file.read().splitlines()
     else:
-        print('failed to open command file')
+        print_warning('failed to open commands file, using commands as comma seperated list')
         command_examples = commands_examples.split(',')
 
     # Filter from the examples only the commands specified by the user

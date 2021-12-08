@@ -26,7 +26,7 @@ from demisto_sdk.commands.common.tools import (
     get_release_note_entries, get_release_notes_file_path, get_ryaml,
     get_test_playbook_id, get_to_version, has_remote_configured,
     is_origin_content_repo, is_pack_path, is_uuid, retrieve_file_ending,
-    run_command_os, server_version_compare, get_current_repo)
+    run_command_os, server_version_compare, get_current_repo, to_kebab_case)
 from demisto_sdk.tests.constants_test import (IGNORED_PNG,
                                               INDICATORFIELD_EXTRA_FIELDS,
                                               SOURCE_FORMAT_INTEGRATION_COPY,
@@ -1491,3 +1491,19 @@ def test_get_current_repo(mocker, url, expected_name):
     mocker.patch.object(giturlparse, 'parse', return_value=giturlparse.parse(url))
     name = get_current_repo()
     assert name == expected_name
+
+
+KEBAB_CASES = [('Scan File', 'scan-file'),
+               ('Scan File-', 'scan-file'),
+               ('Scan.File', 'scan-file'),
+               ('*scan,file', 'scan-file'),
+               ('Scan     File', 'scan-file'),
+               ('Scan - File', 'scan-file'),
+               ('Scan-File', 'scan-file'),
+               ('Scan- File', 'scan-file'),
+               ('Scan -File', 'scan-file')]
+
+
+@pytest.mark.parametrize('input_str, output_str', KEBAB_CASES)
+def test_to_kebab_case(input_str, output_str):
+    assert to_kebab_case(input_str) == output_str

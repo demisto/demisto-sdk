@@ -1,0 +1,37 @@
+{
+  "tokens": [
+    {
+      "generatedToken": {
+        "token": "The",
+        "logprob": -1.254825472831726
+      },
+      "topTokens": "None",
+      "textRange": {
+        "start": 0,
+        "end": 4
+      }
+    },
+    {
+      "generatedToken": {
+        "token": "▁Unkown",
+        "logprob": -3
+      },
+      "topTokens": "None",
+      "textRange": {
+        "start": 0,
+        "end": 4
+      }
+    },
+    {
+      "generatedToken": {
+        "token": "<|newline|>",
+        "logprob": -0.8236160278320312
+      },
+      "topTokens": "None",
+      "textRange": {
+        "start": 4,
+        "end": 11
+      }
+    }
+  ]
+}

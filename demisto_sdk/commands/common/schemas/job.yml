@@ -1,0 +1,279 @@
+type: map
+mapping:
+  id:
+    type: str
+    required: true
+  CustomFields:
+    type: any
+    required: false
+  account:
+    type: str
+    required: false
+  autime:
+    type: int
+    required: false
+  type:
+    type: str
+    required: false
+  rawType:
+    type: str
+    required: false
+  name:
+    type: str
+    required: true
+  rawName:
+    type: str
+    required: false
+  status:
+    type: int
+    required: false
+  reason:
+    type: str
+    required: false
+  created:
+    type: str
+    required: false
+  occurred:
+    type: str
+    required: false
+  closed:
+    type: str
+    required: false
+  sla:
+    type: int
+    required: false
+  severity:
+    type: int
+    required: false
+  investigationId:
+    type: str
+    required: false
+  labels:
+    type: any
+    required: false
+  attachment:
+    type: any
+    required: false
+  details:
+    type: str
+    required: true
+  openDuration:
+    type: int
+    required: false
+  lastOpen:
+    type: str
+    required: false
+  closingUserId:
+    type: str
+    required: false
+  owner:
+    type: str
+    required: false
+  activated:
+    type: str
+    required: false
+  closeReason:
+    type: str
+    required: false
+  rawCloseReason:
+    type: str
+    required: false
+  closeNotes:
+    type: str
+    required: false
+  playbookId:
+    type: str
+    required: true
+  dueDate:
+    type: str
+    required: false
+  reminder:
+    type: str
+    required: false
+  runStatus:
+    type: str
+    required: false
+  notifyTime:
+    type: str
+    required: false
+  phase:
+    type: str
+    required: false
+  rawPhase:
+    type: str
+    required: false
+  isPlayground:
+    type: bool
+    required: false
+  rawJSON:
+    type: str
+    required: false
+  parent:
+    type: str
+    required: false
+  category:
+    type: str
+    required: false
+  rawCategory:
+    type: str
+    required: false
+  linkedIncidents:
+    type: any
+    required: false
+  linkedCount:
+    type: int
+    required: false
+  droppedCount:
+    type: int
+    required: false
+  sourceInstance:
+    type: str
+    required: false
+  sourceBrand:
+    type: str
+    required: false
+  canvases:
+    type: any
+    required: false
+  lastJobRunTime:
+    type: str
+    required: false
+  feedBased:
+    type: bool
+    required: false
+  dbotMirrorId:
+    type: str
+    required: false
+  dbotMirrorInstance:
+    type: str
+    required: false
+  dbotMirrorDirection:
+    type: str
+    required: false
+  dbotDirtyFields:
+    type: any
+    required: false
+  dbotCurrentDirtyFields:
+    type: any
+    required: false
+  dbotMirrorTags:
+    type: any
+    required: false
+  dbotMirrorLastSync:
+    type: str
+    required: false
+  isDebug:
+    type: bool
+    required: false
+  startDate:
+    type: str
+    required: false
+  times:
+    type: int
+    required: false
+  recurrent:
+    type: bool
+    required: false
+  endingDate:
+    type: str
+    required: false
+  humanCron:
+    type: map
+    mapping:
+      timePeriodType:
+        type: str
+        required: false
+      timePeriod:
+        type: int
+        required: false
+  timezoneOffset:
+    type: int
+    required: false
+  cronView:
+    type: bool
+    required: false
+  timezone:
+    type: str
+    required: false
+  scheduled:
+    type: bool
+    required: false
+  packID:
+    type: str
+    required: false
+  itemVersion:
+    type: str
+    required: false
+  fromServerVersion:
+    type: str
+    required: false
+  fromVersion:
+    type: str
+    required: true
+  toServerVersion:
+    type: str
+    required: false
+  propagationLabels:
+    type: any
+    required: false
+  definitionId:
+    type: str
+    required: false
+  minutesToTimeout:
+    type: int
+    required: false
+  description:
+    type: str
+    required: false
+  currentIncidentId:
+    type: str
+    required: false
+  lastRunTime:
+    type: str
+    required: false
+  nextRunTime:
+    type: str
+    required: false
+  displayNextRunTime:
+    type: str
+    required: false
+  disabledNextRunTime:
+    type: str
+    required: false
+  schedulingStatus:
+    type: str
+    required: false
+  previousRunStatus:
+    type: str
+    required: false
+  tags:
+    type: seq
+    required: false
+    sequence:
+      - type: str
+  shouldTriggerNew:
+    type: bool
+    required: false
+  closePrevRun:
+    type: bool
+    required: false
+  notifyOwner:
+    type: bool
+    required: false
+  isFeed:
+    type: bool
+    required: true
+  selectedFeeds:
+    type: seq
+    required: True
+    sequence:
+      - type: str
+  isAllFeeds:
+    type: bool
+    required: true
+  locked:
+    type: bool
+    required: false
+  system:
+    type: bool
+    required: false

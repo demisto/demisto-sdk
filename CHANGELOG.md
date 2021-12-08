@@ -1,10 +1,20 @@
 # Changelog
+* Fixed `to_kebab_case`, it will now deal with strings that have hyphens, commas or periods in them, changing them to be hyphens in the new string.
+
+# 1.5.4
 * Fixed an issue with the **format** command when contributing via the UI
 * The **format** command will now not remove the `defaultRows` key from incident, indicator and generic fields with `type: grid`.
 * Fixed an issue with the **validate** command when a layoutscontainer did not have the `fromversion` field set.
-* Added `skipVerify` argument in **upload** command to skip pack signature verification.
 * added a new command **update-xsoar-config-file** to handle your XSOAR Configuration File.
-* Fixed `to_kebab_case`, it will now deal with strings that have hyphens, commas or periods in them, changing them to be hyphens in the new string.
+* Added `skipVerify` argument in **upload** command to skip pack signature verification.
+* Fixed an issue when the **run** command  failed running when there’s more than one playground, by explicitly using the current user’s playground.
+* Added support for Job content item in the **format**, **validate**, **upload**, **create-id-set**, **find-dependecies** and **create-content-artifacts** commands.
+* Added a **source** field to the **id_set** entitles.
+* Two entitles will not consider as duplicates if they share the same pack and the same source.
+* Fixed a bug when duplicates were found in **find_dependencies**.
+* Added function **get_current_repo** to `tools`.
+* The **postman-codegen** will not have duplicates arguments' name. It will rename them to the minimum distinguished shared path for each of them.
+
 
 # 1.5.3
 * The **format** command will now set `unsearchable: True` for incident, indicator and generic fields.

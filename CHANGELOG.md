@@ -1,7 +1,7 @@
 # Changelog
 * Changed the **validate** command to fail on missing test-playbooks only if no unittests are found.
 * Fixed `to_kebab_case`, it will now deal with strings that have hyphens, commas or periods in them, changing them to be hyphens in the new string.
-* Fixed `get_current_repo` in `tools` not to return the token if the remote url includes the token.
+* Fixed an issue in the **create-id-set** command, where the `source` value included the git token if it was specified in the remote url.
 
 # 1.5.4
 * Fixed an issue with the **format** command when contributing via the UI

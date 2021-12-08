@@ -1521,6 +1521,19 @@ class PackDependencies:
             get_dependent_on: bool = False,
             output_path: str = None,
     ) -> None:
+        """
+
+        Args:
+            id_set_path: Path to id set json file.
+            update_pack_metadata: Whether to update the pack metadata.
+            verbose :Whether to print the log to the console
+            use_pack_metadata: Whether to update the dependencies from the pack metadata.
+            input_paths: Packs paths to find dependencies.
+            all_packs_dependencies: Whether to calculate dependencies for all content packs.
+            get_dependent_on: Whether to get the packs dependent on the given packs.
+            output_path: The destination path for the packs dependencies json file.
+
+        """
 
         PackDependencies.check_arguments_find_dependencies(input_paths, all_packs_dependencies, output_path,
                                                            get_dependent_on)
@@ -1552,7 +1565,6 @@ class PackDependencies:
             update_pack_metadata: bool = False,
             silent_mode: bool = False,
             verbose: bool = False,
-            debug_file_path: str = '',
             skip_id_set_creation: bool = False,
             use_pack_metadata: bool = False,
             complete_data: bool = False,
@@ -1561,11 +1573,7 @@ class PackDependencies:
         Main function for dependencies search and pack metadata update.
 
         Args:
-            use_pack_metadata:
-            all_packs_dependencies:
-            input_path:
-            output_path:
-            get_dependent_on:
+            use_pack_metadata: Whether to update the dependencies from the pack metadata.
             pack_name (str): pack id, currently pack folder name is in use.
             id_set_path (str): id set json.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.

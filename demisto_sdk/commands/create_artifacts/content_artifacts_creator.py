@@ -679,7 +679,7 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
         pack_report += ObjectReport(release_note_config, content_packs=True)
         release_note_config.dump(artifact_manager.content_packs_path / pack.id / RELEASE_NOTES_DIR)
 
-    if artifact_manager.marketplace == MarketplaceVersions.MarketplaceV2:
+    if artifact_manager.marketplace == MarketplaceVersions.XSOAR.value:
         for dashboard in pack.dashboards:
             content_items_handler.handle_content_item(dashboard)
             pack_report += dump_pack_conditionally(artifact_manager, dashboard)

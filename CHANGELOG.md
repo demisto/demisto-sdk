@@ -1,9 +1,24 @@
 # Changelog
-* Fixed an issue with the **format** command when contributing via the UI
+* Changed the **validate** command to fail on missing test-playbooks only if no unittests are found.
+* Fixed `to_kebab_case`, it will now deal with strings that have hyphens, commas or periods in them, changing them to be hyphens in the new string.
 * Added the *--check-dependent* flag to **lint**, that enables running lint also on packs dependent on the packs lint is set to run on.
 * Added the *--get-dependent-on* flag to **find-dependencies**, that enables finding all packs dependent on given packs.
 * Added the *--all-packs-dependencies* flag to **find-dependencies**, that generates a json with all packs dependencies.
 
+# 1.5.4
+* Fixed an issue with the **format** command when contributing via the UI
+
+* The **format** command will now not remove the `defaultRows` key from incident, indicator and generic fields with `type: grid`.
+* Fixed an issue with the **validate** command when a layoutscontainer did not have the `fromversion` field set.
+* added a new command **update-xsoar-config-file** to handle your XSOAR Configuration File.
+* Added `skipVerify` argument in **upload** command to skip pack signature verification.
+* Fixed an issue when the **run** command  failed running when there’s more than one playground, by explicitly using the current user’s playground.
+* Added support for Job content item in the **format**, **validate**, **upload**, **create-id-set**, **find-dependecies** and **create-content-artifacts** commands.
+* Added a **source** field to the **id_set** entitles.
+* Two entitles will not consider as duplicates if they share the same pack and the same source.
+* Fixed a bug when duplicates were found in **find_dependencies**.
+* Added function **get_current_repo** to `tools`.
+* The **postman-codegen** will not have duplicates arguments' name. It will rename them to the minimum distinguished shared path for each of them.
 # 1.5.3
 * The **format** command will now set `unsearchable: True` for incident, indicator and generic fields.
 * Fixed an issue where the **update-release-notes** command crashes with `--help` flag.

@@ -14,7 +14,8 @@ from requests import RequestException
 
 from demisto_sdk.commands.common import constants
 from demisto_sdk.commands.common.constants import (
-    GENERIC_COMMANDS_NAMES, IGNORED_PACKS_IN_DEPENDENCY_CALC, PACKS_DIR)
+    GENERIC_COMMANDS_NAMES, DEFAULT_CONTENT_ITEM_TO_VERSION,
+    IGNORED_PACKS_IN_DEPENDENCY_CALC, PACKS_DIR)
 from demisto_sdk.commands.common.tools import (ProcessPoolHandler,
                                                get_content_id_set,
                                                get_content_path, get_pack_name,
@@ -173,6 +174,8 @@ def get_merged_official_and_local_id_set(local_id_set: dict, silent_mode: bool =
         local_id_set,
         print_logs=not silent_mode
     )
+    if duplicates:
+        raise ValueError('Found duplicates when merging local id_set with official id_set')
     return unified_id_set.get_dict()
 
 
@@ -218,7 +221,7 @@ class PackDependencies:
         for item in items_list:
             item_details = list(item.values())[0]
             if item_details.get('name', '') in items_names and 'pack' in item_details and \
-                    LooseVersion(item_details.get('toversion', '99.99.99')) >= MINIMUM_DEPENDENCY_VERSION:
+                    LooseVersion(item_details.get('toversion', DEFAULT_CONTENT_ITEM_TO_VERSION)) >= MINIMUM_DEPENDENCY_VERSION:
                 pack_names.add(item_details.get('pack'))
 
         if not exclude_ignored_dependencies:
@@ -265,7 +268,7 @@ class PackDependencies:
                 item_details = list(item_from_id_set.values())[0]
                 if (machine_name in item_possible_ids or item_name == item_details.get('name')) \
                         and item_details.get('pack') \
-                        and LooseVersion(item_details.get('toversion', '99.99.99')) >= MINIMUM_DEPENDENCY_VERSION \
+                        and LooseVersion(item_details.get('toversion', DEFAULT_CONTENT_ITEM_TO_VERSION)) >= MINIMUM_DEPENDENCY_VERSION \
                         and (item_details['pack'] not in constants.IGNORED_DEPENDENCY_CALCULATION or
                              not exclude_ignored_dependencies):
                     packs.add(item_details.get('pack'))
@@ -290,7 +293,7 @@ class PackDependencies:
         for item in id_set['integrations']:
             item_details = list(item.values())[0]
             if command in item_details.get('commands', []) and 'pack' in item_details and \
-                    LooseVersion(item_details.get('toversion', '99.99.99')) >= MINIMUM_DEPENDENCY_VERSION:
+                    LooseVersion(item_details.get('toversion', DEFAULT_CONTENT_ITEM_TO_VERSION)) >= MINIMUM_DEPENDENCY_VERSION:
                 pack_names.add(item_details.get('pack'))
 
         if not exclude_ignored_dependencies:
@@ -1224,6 +1227,54 @@ class PackDependencies:
         return dependencies_packs
 
     @staticmethod
+    def _collect_jobs_dependencies(pack_jobs: list, id_set: dict, verbose: bool,
+                                   exclude_ignored_dependencies: bool = True) -> set:
+        """
+        Collects integrations dependencies.
+        Args:
+            pack_jobs (list): collection of pack job data.
+            id_set (dict): id set json.
+            verbose (bool): Whether to log the dependencies to the console.
+            exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
+
+        Returns:
+            set: dependencies data that includes pack id and whether is mandatory or not.
+        """
+        all_job_dependencies = set()
+        if verbose:
+            click.secho('### Jobs', fg='white')
+
+        for job in pack_jobs:
+            job_data = next(iter(job.values()))
+            job_dependencies = set()
+
+            # Playbook dependency
+            job_dependencies.update(
+                PackDependencies._label_as_mandatory(
+                    PackDependencies._search_packs_by_items_names_or_ids(
+                        job_data.get('playbookId', ''), id_set['playbooks'], exclude_ignored_dependencies)
+                )
+            )
+
+            # Specified feeds dependencies
+            job_dependencies.update(
+                PackDependencies._label_as_mandatory(
+                    PackDependencies._search_packs_by_items_names_or_ids(
+                        job_data.get('selectedFeeds', []), id_set['integrations'], exclude_ignored_dependencies
+                    )
+                )
+            )
+
+            if job_dependencies:
+                # do not trim spaces from the end of the string, they are required for the MD structure.
+                if verbose:
+                    click.secho(
+                        f'{os.path.basename(job_data.get("file_path", ""))} depends on: {job_dependencies}',
+                        fg='white')
+            all_job_dependencies.update(job_dependencies)
+        return all_job_dependencies
+
+    @staticmethod
     def _collect_pack_items(pack_id: str, id_set: dict) -> dict:
         """
         Collects script and playbook content items inside specific pack.
@@ -1237,25 +1288,33 @@ class PackDependencies:
         """
         pack_items = dict()
 
-        pack_items['scripts'] = PackDependencies._search_for_pack_items(pack_id, id_set['scripts'])
-        pack_items['playbooks'] = PackDependencies._search_for_pack_items(pack_id, id_set['playbooks'])
-        pack_items['layouts'] = PackDependencies._search_for_pack_items(pack_id, id_set['Layouts'])
-        pack_items['incidents_fields'] = PackDependencies._search_for_pack_items(pack_id, id_set['IncidentFields'])
-        pack_items['indicators_fields'] = PackDependencies._search_for_pack_items(pack_id, id_set['IndicatorFields'])
-        pack_items['indicators_types'] = PackDependencies._search_for_pack_items(pack_id, id_set['IndicatorTypes'])
-        pack_items['integrations'] = PackDependencies._search_for_pack_items(pack_id, id_set['integrations'])
-        pack_items['incidents_types'] = PackDependencies._search_for_pack_items(pack_id, id_set['IncidentTypes'])
-        pack_items['classifiers'] = PackDependencies._search_for_pack_items(pack_id, id_set['Classifiers'])
-        pack_items['mappers'] = PackDependencies._search_for_pack_items(pack_id, id_set['Mappers'])
-        pack_items['widgets'] = PackDependencies._search_for_pack_items(pack_id, id_set['Widgets'])
-        pack_items['dashboards'] = PackDependencies._search_for_pack_items(pack_id, id_set['Dashboards'])
-        pack_items['reports'] = PackDependencies._search_for_pack_items(pack_id, id_set['Reports'])
-        pack_items['generic_types'] = PackDependencies._search_for_pack_items(pack_id, id_set['GenericTypes'])
-        pack_items['generic_fields'] = PackDependencies._search_for_pack_items(pack_id, id_set['GenericFields'])
-        pack_items['generic_modules'] = PackDependencies._search_for_pack_items(pack_id, id_set['GenericModules'])
-        pack_items['generic_definitions'] = PackDependencies._search_for_pack_items(pack_id,
-                                                                                    id_set['GenericDefinitions'])
-        pack_items['lists'] = PackDependencies._search_for_pack_items(pack_id, id_set['Lists'])
+        for pack_key, id_set_key in (('scripts', 'scripts',),
+                                     ('playbooks', 'playbooks'),
+                                     ('layouts', 'Layouts'),
+                                     ('incidents_fields', 'IncidentFields'),
+                                     ('indicators_fields', 'IndicatorFields'),
+                                     ('indicators_types', 'IndicatorTypes'),
+                                     ('integrations', 'integrations'),
+                                     ('incidents_types', 'IncidentTypes'),
+                                     ('classifiers', 'Classifiers'),
+                                     ('mappers', 'Mappers'),
+                                     ('widgets', 'Widgets'),
+                                     ('dashboards', 'Dashboards'),
+                                     ('reports', 'Reports'),
+                                     ('generic_types', 'GenericTypes'),
+                                     ('generic_fields', 'GenericFields'),
+                                     ('generic_modules', 'GenericModules'),
+                                     ('generic_definitions', 'GenericDefinitions'),
+                                     ('lists', 'Lists'),
+                                     ('jobs', 'Jobs')):
+            if id_set_key not in id_set:
+                raise RuntimeError(
+                    "\n".join((f"Error: the {id_set_key} content type is missing from the id_set.",
+                               "This may mean the existing id_set was created with an outdated version "
+                               "of the Demisto SDK. Please delete content/Tests/id_set.json and "
+                               "run demisto-sdk find-dependencies again."))
+                )
+            pack_items[pack_key] = PackDependencies._search_for_pack_items(pack_id, id_set[id_set_key])
 
         if not sum(pack_items.values(), []):
             click.secho(f"Couldn't find any items for pack '{pack_id}'. Please make sure:\n"
@@ -1376,13 +1435,19 @@ class PackDependencies:
             verbose,
             exclude_ignored_dependencies,
         )
+        jobs_dependencies = PackDependencies._collect_jobs_dependencies(
+            pack_items['jobs'],
+            id_set,
+            verbose,
+            exclude_ignored_dependencies,
+        )
 
         pack_dependencies = (
             scripts_dependencies | playbooks_dependencies | layouts_dependencies | incidents_fields_dependencies |
             indicators_types_dependencies | integrations_dependencies | incidents_types_dependencies |
             classifiers_dependencies | mappers_dependencies | widget_dependencies | dashboards_dependencies |
             reports_dependencies | generic_types_dependencies | generic_modules_dependencies |
-            generic_fields_dependencies
+            generic_fields_dependencies | jobs_dependencies
         )
 
         return pack_dependencies

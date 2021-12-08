@@ -2,9 +2,9 @@ import os
 import re
 from typing import Optional
 
-from demisto_sdk.commands.common.constants import (API_MODULES_PACK,
-                                                   DEPRECATED_REGEXES,
-                                                   PYTHON_SUBTYPES, TYPE_PWSH)
+from demisto_sdk.commands.common.constants import (
+    API_MODULES_PACK, DEFAULT_CONTENT_ITEM_FROM_VERSION, DEPRECATED_REGEXES,
+    PYTHON_SUBTYPES, TYPE_PWSH)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
@@ -71,7 +71,8 @@ class ScriptValidator(ContentEntityValidator):
             self.is_valid_pwsh(),
             self.is_valid_script_file_path(),
             self.is_there_separators_in_names(),
-            self.name_not_contain_the_type()
+            self.name_not_contain_the_type(),
+            self.runas_is_not_dbtrole()
         ])
         # check only on added files
         if not self.old_file:
@@ -242,9 +243,9 @@ class ScriptValidator(ContentEntityValidator):
             return True
 
     def is_valid_pwsh(self) -> bool:
-        if self.current_file.get("type") == TYPE_PWSH:
-            from_version = self.current_file.get("fromversion", "0.0.0")
-            if not from_version or server_version_compare("5.5.0", from_version) > 0:
+        if self.current_file.get('type') == TYPE_PWSH:
+            from_version = self.current_file.get('fromversion', DEFAULT_CONTENT_ITEM_FROM_VERSION)
+            if not from_version or server_version_compare('5.5.0', from_version) > 0:
                 error_message, error_code = Errors.pwsh_wrong_version(from_version)
                 if self.handle_error(error_message, error_code, file_path=self.file_path,
                                      suggested_fix=Errors.suggest_fix(self.file_path, '--from-version', '5.5.0')):
@@ -376,6 +377,19 @@ class ScriptValidator(ContentEntityValidator):
         name = self.current_file.get('name', '')
         if 'script' in name.lower():
             error_message, error_code = Errors.field_contain_forbidden_word(field_names=['name'], word='script')
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                return False
+        return True
+
+    def runas_is_not_dbtrole(self):
+        """
+        Check that runas permission is not DBotRole
+        Returns: True if the runas is valid
+        """
+        runas = self.current_file.get('runas', '')
+        if runas == 'DBotRole':
+            error_message, error_code = Errors.runas_is_dbotrole()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
                 return False

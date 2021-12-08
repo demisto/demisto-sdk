@@ -1,5 +1,6 @@
 import logging
 import subprocess
+from distutils.version import LooseVersion
 from typing import Any, Iterator, Optional, Union
 
 import demisto_client
@@ -17,7 +18,7 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    INCIDENT_TYPES_DIR,
                                                    INDICATOR_FIELDS_DIR,
                                                    INDICATOR_TYPES_DIR,
-                                                   INTEGRATIONS_DIR,
+                                                   INTEGRATIONS_DIR, JOBS_DIR,
                                                    LAYOUTS_DIR, LISTS_DIR,
                                                    PACK_VERIFY_KEY,
                                                    PLAYBOOKS_DIR,
@@ -30,11 +31,12 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     AgentTool, AuthorImage, Classifier, ClassifierMapper, Connection,
     Contributors, Dashboard, DocFile, GenericDefinition, GenericField,
     GenericModule, GenericType, IncidentField, IncidentType, IndicatorField,
-    IndicatorType, Integration, LayoutObject, Lists, OldClassifier, PackIgnore,
-    PackMetaData, Playbook, PreProcessRule, Readme, ReleaseNote,
+    IndicatorType, Integration, Job, LayoutObject, Lists, OldClassifier,
+    PackIgnore, PackMetaData, Playbook, PreProcessRule, Readme, ReleaseNote,
     ReleaseNoteConfig, Report, Script, SecretIgnore, Widget)
 from demisto_sdk.commands.common.content.objects_factory import \
     path_to_pack_object
+from demisto_sdk.commands.common.tools import get_demisto_version
 from demisto_sdk.commands.test_content import tools
 
 TURN_VERIFICATION_ERROR_MSG = "Can not set the pack verification configuration key,\nIn the server - go to Settings -> troubleshooting\
@@ -205,6 +207,11 @@ class Pack:
                                                           suffix="*")
 
     @property
+    def jobs(self) -> Iterator[Job]:
+        return self._content_files_list_generator_factory(JOBS_DIR,
+                                                          suffix="json")
+
+    @property
     def pack_metadata(self) -> Optional[PackMetaData]:
         obj = None
         file = self._path / "pack_metadata.json"
@@ -290,16 +297,27 @@ class Pack:
         except Exception as error:
             logger.error(f'Error while trying to sign pack {self.path.name}.\n {error}')
 
+    def is_server_version_ge(self, client, server_version_to_check):
+        server_version = get_demisto_version(client)
+        return LooseVersion(server_version.base_version) >= LooseVersion(server_version_to_check)  # type: ignore
+
     def upload(self, logger: logging.Logger, client: demisto_client):
         """
-        Upload the pack zip to demisto_client
+        Upload the pack zip to demisto_client,
+        from 6.5 server version we have the option to use skip_verify arg instead of server configuration.
         Args:
             logger (logging.Logger): System logger already initialized.
             client: The demisto_client object of the desired XSOAR machine to upload to.
-
         Returns:
             The result of the upload command from demisto_client
         """
+        if self.is_server_version_ge(client, '6.5.0'):
+            try:
+                logger.info('Uploading...')
+                return client.upload_content_packs(file=self.path, skip_verify='true')  # type: ignore
+
+            except Exception as err:
+                raise Exception(f'Failed to upload pack, error: {err}')
 
         # the flow are - turn off the sign check -> upload -> turn back the check to be as previously
         logger.info('Turn off the server verification for signed packs')

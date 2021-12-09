@@ -461,12 +461,6 @@ def generate_command_example(cmd_from_yaml, cmd_example=None):
         errors.append(f'did not get any example for {cmd_from_yaml["name"]}. please add it manually.')
 
     else:
-        example.extend([
-            '',
-            '#### Command',
-            '```{}```'.format(cmd_from_yaml['name']),
-            '',
-        ])
         for script_example, md_example, context_example in cmd_example:
             example.extend(['#### Command example', f'```{script_example}```'])
             if context_example and context_example != '{}':

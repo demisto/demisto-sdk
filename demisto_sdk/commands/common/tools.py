@@ -2158,9 +2158,13 @@ def get_current_repo() -> str:
         git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
         parsed_git = giturlparse.parse(git_repo.remotes.origin.url)
         host = parsed_git.host
+        owner = parsed_git.owner
         if '@' in host:
             host = host.split('@')[1]
-        return f'{host} - {parsed_git.owner}/{parsed_git.repo}'
+        if host == 'code.pan.run' and owner == 'xsoar':  # xsoar repos are the same source
+            host = 'github.com'
+            owner = 'demisto'
+        return f'{host} - {owner}/{parsed_git.repo}'
     except git.InvalidGitRepositoryError:
         print_warning('git repo is not found')
         return "Unknown source"

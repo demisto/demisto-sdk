@@ -2001,10 +2001,11 @@ def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=
     return False
 
 
-def is_same_source(source1, source2):
+def is_same_source(source1, source2) -> bool:
     """
     Two sources will considered the same if they are exactly the same repo, or they are the XSOAR repos, one in github
     and another in gitlab
+    github.com, demisto, content == code,pan.run, xsoar, content
     """
     if source1 == source2:
         return True
@@ -2013,6 +2014,7 @@ def is_same_source(source1, source2):
     if host1 in {'github.com', 'code.pan.run'} and owner1 in {'demisto', 'xsoar'} \
             and host2 in {'github.com', 'code.pan.run'} and owner2 in {'demisto', 'xsoar'}:
         return repo1 == repo2
+    return False
 
 
 def sort(data):

@@ -833,7 +833,7 @@ def create_common_entity_data(path, name, to_version, from_version, pack):
     if name:
         data['name'] = name
     data['file_path'] = path
-    data['source'] = get_current_repo()
+    data['source'] = list(get_current_repo())
     if to_version:
         data['toversion'] = to_version
     if from_version:

@@ -29,7 +29,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type, get_json,
                                                get_pack_name, get_yaml,
                                                print_color, print_error,
-                                               print_warning)
+                                               print_warning, get_mp_types_by_item)
 from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
 
 CONTENT_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
@@ -1044,33 +1044,11 @@ def get_depends_on(data_dict):
     return depends_on_list, command_to_integration
 
 
-def get_mp_types_by_item(file_path):
-    """
-    Get the supporting marketplaces for the given content item, defined by the mp field in the metadata
-    (see issue https://github.com/demisto/etc/issues/44220)
-    Args:
-        file_path: path to content item in content repo
-
-    Returns:
-        list of names of supporting marketplaces (current options are marketplacev2 and xsoar)
-    """
-    file_path_parts = Path(file_path).parts
-    if 'Packs' not in file_path_parts:
-        return []
-    metadata_path = Path(*file_path_parts[0:2]) / METADATA_FILE_NAME
-    try:
-        with open(metadata_path, 'r') as metadata_file:
-            metadata = json.load(metadata_file)
-            marketplaces = metadata[MARKETPLACE_KEY_PACK_METADATA]
-        return marketplaces
-    except FileNotFoundError:
-        return []
-
-
 def should_skip_item_by_mp(file_path: str, marketplace: str):
     """
-    Checks if the item given (as path) should be part of the current generated id set, dependeing if the current
-    marketplace is present in the item's pack metadata in the relevant field.
+    Checks if the item given (as path) should be part of the current generated id set, depending if the current
+    marketplace is present in the item's pack metadata in the relevant field. For xsoar marketplace, always return
+    False, as all content items are relevant for xsoar marketplace.
     Args:
         file_path: path to content item
         marketplace: the marketplace this current generated id set is for
@@ -1078,7 +1056,8 @@ def should_skip_item_by_mp(file_path: str, marketplace: str):
     Returns: True if should be skipped, else False
 
     """
-
+    if marketplace == MarketplaceVersions.XSOAR.value:
+        return False
     return marketplace not in get_mp_types_by_item(file_path)
 
 

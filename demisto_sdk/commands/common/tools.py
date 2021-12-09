@@ -40,7 +40,8 @@ from demisto_sdk.commands.common.constants import (
     PACKS_README_FILE_NAME, PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR,
     RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR,
-    XSOAR_CONFIG_FILE, FileType, GitContentConfig, urljoin)
+    XSOAR_CONFIG_FILE, FileType, GitContentConfig, urljoin, MARKETPLACE_KEY_PACK_METADATA,
+    METADATA_FILE_NAME)
 from demisto_sdk.commands.common.git_util import GitUtil
 
 urllib3.disable_warnings()
@@ -2150,3 +2151,25 @@ def get_script_or_sub_playbook_tasks_from_playbook(searched_entity_name: str, ma
             searched_tasks.append(task_data)
 
     return searched_tasks
+
+
+def get_mp_types_by_item(file_path):
+    """
+    Get the supporting marketplaces for the given content item, defined by the mp field in the metadata
+    (see issue https://github.com/demisto/etc/issues/44220)
+    Args:
+        file_path: path to content item in content repo
+
+    Returns:
+        list of names of supporting marketplaces (current options are marketplacev2 and xsoar)
+    """
+    file_path_parts = Path(file_path).parts
+
+    metadata_path = Path(*file_path_parts[0:2]) / METADATA_FILE_NAME
+    try:
+        with open(metadata_path, 'r') as metadata_file:
+            metadata = json.load(metadata_file)
+            marketplaces = metadata[MARKETPLACE_KEY_PACK_METADATA]
+        return marketplaces
+    except FileNotFoundError:
+        return []

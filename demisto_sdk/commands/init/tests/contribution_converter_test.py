@@ -197,6 +197,11 @@ def test_convert_contribution_zip_outputs_structure(get_content_path_mock, get_p
     repo = Repo(repo_dir)
     contrib_zip = Contribution(target_dir, 'ContribTestPack', repo)
     contrib_zip.create_zip(contribution_zip_dir)
+    # rename script-script0.yml unified to automation-script0.yml
+    # this naming is aligned to how the server exports scripts in contribution zips
+    rename_file_in_zip(
+        contrib_zip.created_zip_filepath, 'automation/script-script0.yml', 'automation/automation-script0.yml'
+    )
     # Convert Zip
     name = 'Contrib Test Pack'
     contribution_path = contrib_zip.created_zip_filepath

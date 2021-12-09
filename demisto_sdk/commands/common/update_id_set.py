@@ -11,24 +11,26 @@ from distutils.version import LooseVersion
 from enum import Enum
 from functools import partial
 from multiprocessing import Pool, cpu_count
+from pathlib import Path
 from typing import Callable, Dict, List, Optional, Tuple
 
 import click
-from pathlib import Path
 import networkx
 
 from demisto_sdk.commands.common.constants import (
     CLASSIFIERS_DIR, COMMON_TYPES_PACK, DASHBOARDS_DIR,
     DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
-    DEFAULT_ID_SET_PATH, MP_V2_ID_SET_PATH, GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR,
+    DEFAULT_ID_SET_PATH, GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR,
     GENERIC_MODULES_DIR, GENERIC_TYPES_DIR, INCIDENT_FIELDS_DIR,
     INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, JOBS_DIR,
-    LAYOUTS_DIR, LISTS_DIR, MAPPERS_DIR, REPORTS_DIR, SCRIPTS_DIR,
-    TEST_PLAYBOOKS_DIR, WIDGETS_DIR, FileType, MARKETPLACE_KEY_PACK_METADATA, MarketplaceVersions)
+    LAYOUTS_DIR, LISTS_DIR, MAPPERS_DIR, MARKETPLACE_KEY_PACK_METADATA,
+    MP_V2_ID_SET_PATH, REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR,
+    WIDGETS_DIR, FileType, MarketplaceVersions)
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type, get_json,
+                                               get_mp_types_by_item,
                                                get_pack_name, get_yaml,
                                                print_color, print_error,
-                                               print_warning, get_mp_types_by_item)
+                                               print_warning)
 from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
 
 CONTENT_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
@@ -42,12 +44,12 @@ ID_SET_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Cla
                    'GenericDefinitions', 'Lists', 'Jobs']
 
 CONTENT_MP_V2_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
-                    'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
-                    'Mappers', 'Packs', 'Lists', 'Jobs']
+                          'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
+                          'Mappers', 'Packs', 'Lists', 'Jobs']
 
 ID_SET_MP_V2_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Classifiers',
-                    'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
-                    'Mappers', 'Lists', 'Jobs']
+                         'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
+                         'Mappers', 'Lists', 'Jobs']
 
 BUILT_IN_FIELDS = [
     "name",

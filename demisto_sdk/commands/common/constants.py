@@ -72,6 +72,7 @@ JOB = 'job'
 
 MARKETPLACE_KEY_PACK_METADATA = 'marketplaces'
 
+
 class FileType(Enum):
     INTEGRATION = 'integration'
     SCRIPT = 'script'

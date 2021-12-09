@@ -234,9 +234,6 @@ class ContributionConverter:
         Args:
             unpacked_contribution_dir (str): The directory to convert
         """
-        click.echo(
-            f'TEST changing file names'
-        )
         basename = os.path.basename(unpacked_contribution_dir)
         if basename in ENTITY_TYPE_TO_DIR:
             dst_name = ENTITY_TYPE_TO_DIR.get(basename, '')
@@ -253,19 +250,16 @@ class ContributionConverter:
     def fix_dst_path(self, basename, file_name, dst_dir_path, src_file_path):
         new_dst_file_path = None
         if basename == "classifier":
-            new_dst_file_path = self.fix_dst_file_path(file_name, dst_dir_path, src_file_path)
+            new_dst_file_path = self.fix_dst_file_path_for_mapper(file_name, dst_dir_path, src_file_path)
         elif basename == "incidentfield":
-            new_dst_file_path = self.fix_dst_folder_path(file_name)
+            new_dst_file_path = self.fix_dst_folder_path_for_fields(file_name)
         if not new_dst_file_path:
             if not os.path.exists(dst_dir_path):
                 os.mkdir(dst_dir_path)
             new_dst_file_path = os.path.join(dst_dir_path, file_name)
         return new_dst_file_path
 
-    def fix_dst_file_path(self, file_name, dst_dir_path, src_file_path):
-        click.echo(
-            f'TEST changing mapper name'
-        )
+    def fix_dst_file_path_for_mapper(self, file_name, dst_dir_path, src_file_path):
         new_dst_file_path = None
         file_type = find_type(src_file_path)
         if file_type and file_type.value == "mapper":
@@ -276,10 +270,7 @@ class ContributionConverter:
             new_dst_file_path = os.path.join(dst_dir_path, f"classifier-mapper-{entity_name}")
         return new_dst_file_path
 
-    def fix_dst_folder_path(self, file_name):
-        click.echo(
-            f'TEST changing indicator field name'
-        )
+    def fix_dst_folder_path_for_fields(self, file_name):
         new_dst_file_path = None
         for key, value in ENTITY_TYPE_TO_DIR_FOR_FIELDS.items():
             if key in file_name:

@@ -11,7 +11,6 @@ from distutils.version import LooseVersion
 from enum import Enum
 from functools import partial
 from multiprocessing import Pool, cpu_count
-from pathlib import Path
 from typing import Callable, Dict, List, Optional, Tuple
 
 import click

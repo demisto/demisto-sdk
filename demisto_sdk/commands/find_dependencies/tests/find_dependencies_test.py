@@ -456,7 +456,8 @@ class TestIdSetFilters:
                     "file_path": "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseAuditAlert/PrismaCloudComputeParseAuditAlert.yml",
                     "fromversion": '5.0.0',
                     "docker_image": "demisto/python3:3.8.3.8715",
-                    "pack": "PrismaCloudCompute"
+                    "pack": "PrismaCloudCompute",
+                    "source": ['github.com', 'demisto', 'demisto-sdk'],
                 }
             },
             {
@@ -465,7 +466,8 @@ class TestIdSetFilters:
                     "file_path": "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseCloudDiscoveryAlert/PrismaCloudComputeParseCloudDiscoveryAlert.yml",
                     "fromversion": '5.0.0',
                     "docker_image": "demisto/python3:3.8.3.8715",
-                    "pack": "PrismaCloudCompute"
+                    "pack": "PrismaCloudCompute",
+                    "source": ['github.com', 'demisto', 'demisto-sdk'],
                 }
             },
             {
@@ -474,7 +476,8 @@ class TestIdSetFilters:
                     "file_path": "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseComplianceAlert/PrismaCloudComputeParseComplianceAlert.yml",
                     "fromversion": '5.0.0',
                     "docker_image": "demisto/python3:3.8.3.8715",
-                    "pack": "PrismaCloudCompute"
+                    "pack": "PrismaCloudCompute",
+                    "source": ['github.com', 'demisto', 'demisto-sdk'],
                 }
             },
             {
@@ -483,7 +486,8 @@ class TestIdSetFilters:
                     "file_path": "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseVulnerabilityAlert/PrismaCloudComputeParseVulnerabilityAlert.yml",
                     "fromversion": '5.0.0',
                     "docker_image": "demisto/python3:3.8.3.8715",
-                    "pack": "PrismaCloudCompute"
+                    "pack": "PrismaCloudCompute",
+                    "source": ['github.com', 'demisto', 'demisto-sdk'],
                 }
             }
         ]
@@ -513,7 +517,8 @@ class TestIdSetFilters:
                     "tests": [
                         "No tests"
                     ],
-                    "pack": "Expanse"
+                    "pack": "Expanse",
+                    "source": ['github.com', 'demisto', 'demisto-sdk'],
                 }
             }
         ]

@@ -29,6 +29,8 @@ Also supports converting JSON format to demisto entry context yaml format.
   Skip certificate validation.
 * **-v, --verbose**
   Verbose output - mainly for debugging purposes.
+* **--ai**
+  AI description generation - \*Experimnetal\* a new way to use GPT-like transformers to generate descriptions from context paths.
 
 **Notes**
 * The output of the command will be writen in the input file (in-place).
@@ -84,3 +86,20 @@ outputs:
   description: ''
   type: Date
 ```
+
+#### Experimental: Usage of --ai flag
+To use the `--ai` flag you need to register with [ai21.com](https://studio.ai21.com/sign-up) and obtain an API key, replace `KEYHERE` in the examples below with your API key.
+Don't share your key with anyone as this can get your account banned. Also don't change or misuse the service:
+See the terms and guidelines here: https://studio.ai21.com/terms-of-use https://studio.ai21.com/docs/responsible-use/
+
+##### With JSON-to-Outputs
+The `--ai` flag can be used together with the `--json` flag to add descriptions to the generated outputs from the json-to-outputs flow, like so:
+`AI21_KEY=KEYHERE demisto-sdk generate-outputs --json test.json -c "test-command" -p "somePrefix" --ai -o out.yml`
+
+##### With Examples
+The `--ai` flag can be used together with the `--examples` flag to add descriptions to the generated outputs from the examples flow, like so:
+`AI21_KEY=KEYHERE demisto-sdk generate-outputs --examples ./examples_test -i ~/examples.yml --ai`
+
+##### Standalone
+You can also use it on a regular integration YAML file like so:
+`AI21_KEY=KEYHERE demisto-sdk generate-outputs -i input.yml --ai -o outout.yml`

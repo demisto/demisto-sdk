@@ -22,7 +22,7 @@ ALLOWED_IGNORE_ERRORS = [
     'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112', 'PB114', 'PB115', 'PB116',
     'RM100', 'RM102', 'RM104', 'RM106',
     'RP102', 'RP104',
-    'SC100', 'SC101', 'SC105',
+    'SC100', 'SC101', 'SC105', 'SC106',
 ]
 
 PRESET_ERROR_TO_IGNORE = {
@@ -341,6 +341,7 @@ ERROR_CODE = {
     "is_valid_script_file_path_in_folder": {'code': "SC103", 'ui_applicable': False, 'related_field': ''},
     "is_valid_script_file_path_in_scripts_folder": {'code': "SC104", 'ui_applicable': False, 'related_field': ''},
     "incident_in_script_arg": {'code': "SC105", 'ui_applicable': True, 'related_field': 'args.name'},
+    "runas_is_dbotrole": {'code': "SC106", 'ui_applicable': False, 'related_field': 'runas'},
 
     # ST - Structures
     "structure_doesnt_match_scheme": {'code': "ST100", 'ui_applicable': False, 'related_field': ''},
@@ -1953,7 +1954,7 @@ class Errors:
     @error_code_decorator
     def all_entity_test_playbooks_are_skipped(entity_id):
         return f"Either {entity_id} does not have any test playbooks or that all test playbooks in this " \
-               f"pack are currently skipped.\n" \
+               f"pack are currently skipped, and there is no unittests file to be found.\n" \
                f"Please create a test playbook or un-skip at least one of the relevant test playbooks.\n " \
                f"You can un-skip a playbook by deleting the line relevant to one of the test playbooks from " \
                f"the 'skipped_tests' section inside the conf.json file and deal " \
@@ -2078,3 +2079,9 @@ class Errors:
     @error_code_decorator
     def missing_default_additional_info(params: List[str]):
         return f'The additionalinfo of params {params} is empty.'
+
+    @staticmethod
+    @error_code_decorator
+    def runas_is_dbotrole():
+        return 'The runas value is DBotRole, it may cause access and exposure of sensitive data. ' \
+               'Please consider changing it.'

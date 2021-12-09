@@ -1904,7 +1904,7 @@ def to_kebab_case(s: str):
     """
     if s:
         new_s = s.lower()
-        new_s = re.sub(' +', '-', new_s)
+        new_s = re.sub('[ ,.-]+', '-', new_s)
         new_s = re.sub('[^A-Za-z0-9-]+', '', new_s)
         m = re.search('[a-z0-9]+(-[a-z]+)*', new_s)
         if m:
@@ -2157,7 +2157,10 @@ def get_current_repo() -> str:
     try:
         git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
         parsed_git = giturlparse.parse(git_repo.remotes.origin.url)
-        return f'{parsed_git.host} - {parsed_git.owner}/{parsed_git.repo}'
+        host = parsed_git.host
+        if '@' in host:
+            host = host.split('@')[1]
+        return f'{host} - {parsed_git.owner}/{parsed_git.repo}'
     except git.InvalidGitRepositoryError:
         print_warning('git repo is not found')
         return "Unknown source"

@@ -1478,13 +1478,13 @@ def test_get_test_playbook_id():
 @pytest.mark.parametrize(
     'url, expected_name',
     [
-        ('ssh://git@github.com/demisto/content-dist.git', 'github.com - demisto/content-dist'),
-        ('git@github.com:demisto/content-dist.git', 'github.com - demisto/content-dist'),
-        ('https://github.com/demisto/content-dist.git', 'github.com - demisto/content-dist'),
-        ('https://github.com/demisto/content-dist', 'github.com - demisto/content-dist'),
-        ('https://code.pan.run/xsoar/content-dist', 'code.pan.run - xsoar/content-dist'),  # gitlab
-        ('https://code.pan.run/xsoar/content-dist.git', 'code.pan.run - xsoar/content-dist'),
-        ('https://gitlab-ci-token:token@code.pan.run/xsoar/content-dist.git', 'code.pan.run - xsoar/content-dist')
+        ('ssh://git@github.com/demisto/content-dist.git', ('github.com', 'demisto', 'content-dist')),
+        ('git@github.com:demisto/content-dist.git', ('github.com', 'demisto', 'content-dist')),
+        ('https://github.com/demisto/content-dist.git', ('github.com', 'demisto', 'content-dist')),
+        ('https://github.com/demisto/content-dist', ('github.com', 'demisto', 'content-dist')),
+        ('https://code.pan.run/xsoar/content-dist', ('code.pan.run', 'xsoar', 'content-dist')),  # gitlab
+        ('https://code.pan.run/xsoar/content-dist.git', ('code.pan.run', 'xsoar', 'content-dist')),
+        ('https://gitlab-ci-token:token@code.pan.run/xsoar/content-dist.git', ('code.pan.run', 'xsoar', 'content-dist'))
     ]
 )
 def test_get_current_repo(mocker, url, expected_name):

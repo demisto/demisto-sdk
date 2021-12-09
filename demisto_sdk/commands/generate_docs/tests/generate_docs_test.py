@@ -419,10 +419,9 @@ def test_generate_command_section_with_empty_cotext_example():
     expected_section = ['### test1', '***', ' ', '#### Required Permissions', '**FILL IN REQUIRED PERMISSIONS HERE**',
                         '#### Base Command', '', '`test1`', '#### Input', '',
                         'There are no input arguments for this command.', '', '#### Context Output', '',
-                        'There is no context output for this command.', '', '#### Command', '```test1```', '',
-                        '#### Command example', '```!test1```', '#### Human Readable Output', '\n>test without args',
-                        '', '#### Command example', '```!test1 value=val```', '#### Human Readable Output',
-                        '\n>test with args', '']
+                        'There is no context output for this command.', '#### Command example', '```!test1```',
+                        '#### Human Readable Output', '\n>test without args', '', '#### Command example',
+                        '```!test1 value=val```', '#### Human Readable Output', '\n>test with args', '']
 
     assert '\n'.join(section) == '\n'.join(expected_section)
 
@@ -652,7 +651,8 @@ class TestGetCommandExamples:
         command_examples = tmp_path / "command_examples"
 
         with open(command_examples, 'w+') as ce:
-            ce.write('!zoom-create-user\n!zoom-create-meeting\n!zoom-fetch-recording\n!zoom-list-users\n!zoom-delete-user')
+            ce.write(
+                '!zoom-create-user\n!zoom-create-meeting\n!zoom-fetch-recording\n!zoom-list-users\n!zoom-delete-user')
 
         command_example_a = 'zoom-create-user'
         command_example_b = 'zoom-list-users'
@@ -740,12 +740,12 @@ yml_data_cases = [
         {'defaultvalue': '', 'display': 'test1', 'name': 'test1', 'required': True, 'type': 8},
         {'defaultvalue': '', 'display': 'test2', 'name': 'test2', 'required': True, 'type': 8}
     ]},  # case no param with additional info field
-         ['1. Navigate to **Settings** > **Integrations** > **Servers & Services**.',
-          '2. Search for test.', '3. Click **Add instance** to create and configure a new integration instance.',
-          '', '    | **Parameter** | **Required** |', '    | --- | --- |', '    | test1 | True |',
-          '    | test2 | True |',
-          '', '4. Click **Test** to validate the URLs, token, and connection.']  # expected
-    ),
+     ['1. Navigate to **Settings** > **Integrations** > **Servers & Services**.',
+      '2. Search for test.', '3. Click **Add instance** to create and configure a new integration instance.',
+      '', '    | **Parameter** | **Required** |', '    | --- | --- |', '    | test1 | True |',
+      '    | test2 | True |',
+      '', '4. Click **Test** to validate the URLs, token, and connection.']  # expected
+     ),
     (
         {'name': 'test', 'display': 'test', 'configuration': [
             {'display': 'test1', 'name': 'test1', 'additionalinfo': 'More info', 'required': True, 'type': 8},

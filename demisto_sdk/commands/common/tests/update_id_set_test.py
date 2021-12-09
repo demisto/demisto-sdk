@@ -2524,7 +2524,7 @@ class TestIDSetMPV2:
 
     def test_re_create_id_set(self, mocker):
         import demisto_sdk.commands.common.update_id_set as uis
-        mocker.patch('demisto_sdk.commands.common.update_id_set.get_mp_types_by_item', return_value=['xsoar', 'marketplacev2'])
+        mocker.patch.object(uis, 'get_mp_types_by_item', return_value=['xsoar', 'marketplacev2'])
         xsoar_only_content_items = ['Dashboards', 'Layouts', 'Reports', 'Widgets', 'GenericFields',
                                     'GenericTypes', 'GenericModules', 'GenericDefinitions']
         pack_path = os.path.join(TESTS_DIR, 'test_files', 'DummyPack')

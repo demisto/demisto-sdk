@@ -1,5 +1,6 @@
 # Site packages
 import json
+import yaml
 import logging
 import os
 import sys
@@ -56,6 +57,8 @@ from demisto_sdk.commands.openapi_codegen.openapi_codegen import \
     OpenAPIIntegration
 from demisto_sdk.commands.postman_codegen.postman_codegen import \
     postman_to_autogen_configuration
+from demisto_sdk.commands.ansible_codegen.ansible_codegen import \
+    AnsibleIntegration
 # Import demisto-sdk commands
 from demisto_sdk.commands.run_cmd.runner import Runner
 from demisto_sdk.commands.run_playbook.playbook_runner import PlaybookRunner
@@ -73,7 +76,8 @@ from demisto_sdk.commands.upload.uploader import ConfigFileParser, Uploader
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.commands.zip_packs.packs_zipper import (EX_FAIL, EX_SUCCESS,
                                                          PacksZipper)
-
+from demisto_sdk.commands.common.hook_validations.docker import \
+    DockerImageValidator
 
 class PathsParamType(click.Path):
     """
@@ -1672,6 +1676,101 @@ def openapi_codegen(**kwargs):
         tools.print_error(f'There was an error creating the package in {output_dir}')
         sys.exit(1)
 
+# ====================== ansible-codegen ====================== #
+@main.command(short_help='''Generates a Cortex XSOAR Ansible integration given a integration configuration file.''')
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    '-ci', '--container_image', help='The ansible-runner container image to use for working with Ansible. If not specified the latest demisto/ansible-runner is used', required=False)
+@click.option(
+    '-cf', '--config_file', help='The integration configuration YAML file. It is created in the first run of the command',
+    required=False)
+@click.option(
+    '-n', '--base_name', help='The base filename to use for the generated files', required=False)
+@click.option(
+    '-o', '--output_dir', help='Directory to store the output in (default is current working directory)',
+    required=False)
+@click.option(
+    '-f', '--fix_code', is_flag=True, help='Fix the python code using autopep8')
+@click.option(
+    '-v', '--verbose', is_flag=True, help='Be verbose with the log output')
+def ansible_codegen(**kwargs):
+    """Generates a Cortex XSOAR Ansible integration given a integration configuration file.
+    In the first run of the command, an integration configuration file is created, which needs be modified with the details of the Ansible which will be packaged as a integration.
+    Then, the command is run a second time with the integration configuration to generate the actual integration files.
+    """
+
+    if not kwargs.get('output_dir'):
+        output_dir = os.getcwd()
+    else:
+        output_dir = kwargs['output_dir']
+
+    # Check the directory exists and if not, try to create it
+    if not os.path.exists(output_dir):
+        try:
+            os.mkdir(output_dir)
+        except Exception as err:
+            tools.print_error(f'Error creating directory {output_dir} - {err}')
+            sys.exit(1)
+    if not os.path.isdir(output_dir):
+        tools.print_error(f'The directory provided "{output_dir}" is not a directory')
+        sys.exit(1)
+
+    config_file = kwargs['config_file']
+    base_name = kwargs.get('base_name')
+    if base_name is None:
+        base_name = 'GeneratedIntegration'
+
+    verbose = kwargs.get('verbose', False)
+    fix_code = kwargs.get('fix_code', False)
+
+    container_image = kwargs.get('container_image')
+    if container_image is None:
+        container_image = "demisto/ansible-runner:" + DockerImageValidator.get_docker_image_latest_tag_request('demisto/ansible-runner')
+
+    configuration = None
+    if kwargs.get('config_file'):
+        try:
+            with open(kwargs['config_file'], 'r') as config_file:
+                configuration = yaml.load(config_file, Loader=yaml.Loader)
+        except Exception as e:
+            print_error(f'Failed to load configuration file: {e}')
+
+    integration = AnsibleIntegration(base_name, verbose=verbose, container_image=container_image, output_dir=output_dir, codegen_configuration=configuration, fix_code=fix_code)
+
+    if not kwargs.get('config_file'):
+        integration.save_empty_config(output_dir)
+        config_path = os.path.join(output_dir, f'{base_name}_config.yml')
+        tools.print_success(f'Created empty configuration file {config_path}. ')
+        command_to_run = f'demisto-sdk ansible-codegen -cf "{config_path}" -ci "{container_image}" -n "{base_name}" -o "{output_dir}"'
+        if verbose:
+            command_to_run = command_to_run + ' -v'
+        if fix_code:
+                command_to_run = command_to_run + ' -f'
+
+        click.echo(f'Run the command again with the created configuration file (after populating it): {command_to_run}')
+        sys.exit(0)
+    
+    click.echo('Loading AnsibleCodegen configuration file...')
+    integration.load_config()
+
+    click.echo('Validating AnsibleCodegen configuration file...')
+    validate, validate_message = integration.validate()
+
+    if not validate:
+        print_error(f'AnsibleCodegen configuration file failed to validate: {validate_message}')
+        sys.exit(1)
+
+    click.echo('Fetching the ansible-docs for the modules specified, from container image...')
+    integration.fetch_ansible_docs()
+
+    click.echo('Generating integration files...')
+    if integration.save_package():
+        tools.print_success(f'Successfully finished generating integration code and saved it in {output_dir}')
+    else:
+        tools.print_error(f'There was an error creating the package in {output_dir}')
+        sys.exit(1)
 
 # ====================== test-content command ====================== #
 @main.command(

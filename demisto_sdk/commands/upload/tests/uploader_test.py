@@ -3,13 +3,13 @@ import json
 from functools import wraps
 from unittest.mock import MagicMock, patch
 
+import click
 import demisto_client
 import pytest
 from click.testing import CliRunner
 from demisto_client.demisto_api import DefaultApi
 from demisto_client.demisto_api.rest import ApiException
 from packaging.version import parse
-from pipenv.patched.piptools import click
 
 from demisto_sdk.__main__ import main, upload
 from demisto_sdk.commands.common import constants
@@ -19,7 +19,7 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
                                                    FileType)
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import (
-    DELETE_VERIFY_KEY_ACTION, TURN_VERIFICATION_ERROR_MSG)
+    DELETE_VERIFY_KEY_ACTION, TURN_VERIFICATION_ERROR_MSG, Pack)
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yml_paths_in_dir, src_root
 from demisto_sdk.commands.test_content import tools
@@ -706,6 +706,7 @@ class TestZippedPackUpload:
         # prepare
         mock_api_client(mocker)
         mocker.patch.object(API_CLIENT, 'upload_content_packs')
+        mocker.patch.object(Pack, 'is_server_version_ge', return_value=False)
         mocker.patch.object(tools, 'update_server_configuration', return_value=(None, None, {}))
         mocker.patch.object(Uploader, 'notify_user_should_override_packs', return_value=True)
 
@@ -752,6 +753,7 @@ class TestZippedPackUpload:
         # prepare
         mock_api_client(mocker)
         mocker.patch.object(API_CLIENT, 'upload_content_packs')
+        mocker.patch.object(Pack, 'is_server_version_ge', return_value=False)
         mocker.patch.object(tools, 'update_server_configuration',
                             return_value=(None, None, {constants.PACK_VERIFY_KEY: 'prev_val'}))
         mocker.patch.object(Uploader, 'notify_user_should_override_packs', return_value=True)
@@ -829,6 +831,7 @@ class TestZippedPackUpload:
 
         mock_api_client(mocker)
         mocker.patch.object(uploader, 'parse_error_response')
+        mocker.patch.object(Pack, 'is_server_version_ge', return_value=False)
         mocker.patch.object(tools, 'update_server_configuration', new=conditional_exception_raiser)
         mocker.patch.object(Uploader, 'notify_user_should_override_packs', return_value=True)
         mocker.patch.object(API_CLIENT, 'upload_content_packs')
@@ -853,6 +856,7 @@ class TestZippedPackUpload:
         """
         mock_api_client(mocker)
         mocker.patch.object(tools, 'update_server_configuration', return_value=(None, None, {}))
+        mocker.patch.object(Pack, 'is_server_version_ge', return_value=False)
         mocker.patch.object(API_CLIENT, 'upload_content_packs', new=exception_raiser)
         mocker.patch.object(Uploader, 'notify_user_should_override_packs', return_value=True)
 
@@ -922,6 +926,7 @@ class TestZippedPackUpload:
         # prepare
         mock_api_client(mocker)
         mocker.patch.object(API_CLIENT, 'upload_content_packs')
+        mocker.patch.object(Pack, 'is_server_version_ge', return_value=False)
         mocker.patch.object(tools, 'update_server_configuration', return_value=(None, None, {}))
         mocker.patch.object(Uploader, 'notify_user_should_override_packs', return_value=True)
 
@@ -939,6 +944,62 @@ class TestZippedPackUpload:
 
         uploaded_file_path = API_CLIENT.upload_content_packs.call_args[1]['file']
         assert 'uploadable_packs.zip' in str(uploaded_file_path)
+
+    @pytest.mark.parametrize(argnames='input', argvalues=[TEST_PACK_ZIP, CONTENT_PACKS_ZIP])
+    def test_upload_with_skip_verify(self, mocker, input):
+        """
+        Given:
+            - zipped pack or zip of pack zips to upload
+        When:
+            - call to upload command
+        Then:
+            - validate the upload_content_packs in the api client was called correct
+              and the skip_verify arg is "true"
+        """
+        # prepare
+        mock_api_client(mocker)
+        mocker.patch.object(API_CLIENT, 'upload_content_packs')
+        mocker.patch.object(Pack, 'is_server_version_ge', return_value=True)
+        mocker.patch.object(Uploader, 'notify_user_should_override_packs', return_value=True)
+
+        # run
+        click.Context(command=upload).invoke(upload, input=input)
+
+        skip_value = API_CLIENT.upload_content_packs.call_args[1]['skip_verify']
+        uploaded_file_path = API_CLIENT.upload_content_packs.call_args[1]['file']
+
+        assert str(uploaded_file_path) == input
+        assert skip_value == 'true'
+
+    @pytest.mark.parametrize(argnames='input', argvalues=[TEST_PACK_ZIP, CONTENT_PACKS_ZIP])
+    def test_upload_without_skip_verify(self, mocker, input):
+        """
+        Given:
+            - zipped pack or zip of pack zips to upload
+        When:
+            - call to upload command
+        Then:
+            - validate the upload_content_packs in the api client was called correct
+              and the skip_verify arg is None
+        """
+        # prepare
+        mock_api_client(mocker)
+        mocker.patch.object(API_CLIENT, 'upload_content_packs')
+        mocker.patch.object(tools, 'update_server_configuration', return_value=(None, None, {}))
+        mocker.patch.object(Pack, 'is_server_version_ge', return_value=False)
+        mocker.patch.object(Uploader, 'notify_user_should_override_packs', return_value=True)
+
+        # run
+        click.Context(command=upload).invoke(upload, input=input)
+        uploaded_file_path = API_CLIENT.upload_content_packs.call_args[1]['file']
+
+        assert str(uploaded_file_path) == input
+
+        try:
+            skip_value = API_CLIENT.upload_content_packs.call_args[1]['skip_verify']
+        except KeyError:
+            skip_value = None
+        assert not skip_value
 
 
 def exception_raiser(**kwargs):

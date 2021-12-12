@@ -1,17 +1,23 @@
 import json
 import os
+import shutil
+from collections import defaultdict
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
 import pytest
 import yaml
+from click.testing import CliRunner
 
+import demisto_sdk.commands.common.tools as tools
+from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.generate_integration.code_generator import (
     IntegrationGeneratorConfig, IntegrationGeneratorOutput)
 from demisto_sdk.commands.postman_codegen.postman_codegen import (
-    create_body_format, flatten_collections, generate_command_outputs,
-    postman_to_autogen_configuration)
+    build_commands_names_dict, create_body_format, duplicate_requests_check,
+    find_shared_args_path, flatten_collections, generate_command_outputs,
+    postman_to_autogen_configuration, update_min_unique_path)
 
 
 class TestPostmanHelpers:
@@ -77,6 +83,208 @@ class TestPostmanHelpers:
     def test_flatten_collections(self, collection: list, outputs: list):
         assert flatten_collections(collection) == outputs
 
+    def test_build_commands_names_dict_duplicate_names(self):
+        """
+        Given
+        - dictionary containing names of requests from a collection
+
+        When
+        - There are requests with names which have the same kebab case
+
+        Then
+        - returns names' dictionary with an entry of the matching kebab-case which has a list with the problematic names
+        """
+        requests = [
+            {
+                "name": "Test Number One"
+            },
+            {
+                "name": "Test number  one"
+            },
+            {
+                "name": "Test number two"
+            }
+        ]
+        names_dict = build_commands_names_dict(requests)
+        assert len(names_dict[tools.to_kebab_case("Test Number One")]) == 2
+        assert len(names_dict[tools.to_kebab_case("Test number two")]) == 1
+        assert len(names_dict) == 2
+
+    def test_build_commands_names_dict_no_duplicate_names(self):
+        """
+        Given
+        - dictionary containing names of requests from a collection
+
+        When
+        - There are no requests with names which have the same kebab case
+
+        Then
+        - returns names' dictionary with an entry for each request's name kebab case and the original name
+        """
+        requests = [
+            {
+                "name": "Test Number One"
+            },
+            {
+                "name": "Test number two"
+            }
+        ]
+        names_dict = build_commands_names_dict(requests)
+        assert len(names_dict[tools.to_kebab_case("Test Number One")]) == 1
+        assert len(names_dict[tools.to_kebab_case("Test number two")]) == 1
+        assert len(names_dict) == 2
+
+    def test_build_commands_names_dict_none_names(self):
+        """
+        Given
+        - dictionary containing names of requests from a collection
+
+        When
+        - There's a request with no name key
+
+        Then
+        - returns names' dictionary with an entry for each request's name kebab case and the original name and just them
+        """
+        requests = [
+            {
+                "None": None
+            },
+            {
+                "name": "Test number  one"
+            },
+            {
+                "name": "Test number two"
+            }
+        ]
+        names_dict = build_commands_names_dict(requests)
+        assert len(names_dict[tools.to_kebab_case("Test Number One")]) == 1
+        assert len(names_dict[tools.to_kebab_case("Test number two")]) == 1
+        assert len(names_dict) == 2
+
+    def test_duplicate_requests_check_duplicates_exist(self):
+        """
+        Given
+        - dictionary containing names in kebab case of requests and a list with their original names
+
+        When
+        - There are requests with the same kebab case
+
+        Then
+        - throw assertion error with the problematic requests' names
+        """
+        with pytest.raises(Exception):
+            names_dict = {
+                'test-number-one': [
+                    "Test number  one",
+                    "Test Number One"
+                ],
+                'test-number-two': [
+                    "Test number two"
+                ]
+            }
+            duplicate_requests_check(names_dict)
+
+    def test_duplicate_requests_check_duplicates_dont_exist(self):
+        """
+        Given
+        - dictionary containing names in kebab case of requests and a list with their original names
+
+        When
+        - There are no requests with the same kebab case
+
+        Then
+        - don't throw assertion error
+        """
+        names_dict = {
+            'test-number-one': [
+                "Test number  one",
+            ],
+            'test-number-two': [
+                "Test number two"
+            ]
+        }
+        duplicate_requests_check(names_dict)
+
+    test_files_path = os.path.join(git_path(), 'demisto_sdk', 'commands', 'postman_codegen', 'tests', 'test_files')
+    with open(os.path.join(test_files_path, 'shared_args_path.json')) as shared_args_path_file:
+        shared_args_path_items = json.load(shared_args_path_file)
+
+    many_with_shared_paths = defaultdict(int, {'name': 2, 'description': 3, 'url': 3, 'method': 3})
+    one_shared_for_each_paths = defaultdict(int, {'name': 1, 'id': 1, 'uid': 1})
+    complicated_chars_in_paths = defaultdict(int, {'name': 1, 'required': 5})
+    same_path_at_the_end = defaultdict(int, {'name': 2})
+    SHARED_ARGS_PATH = ((shared_args_path_items['many_with_shared_paths'], many_with_shared_paths),
+                        (shared_args_path_items['one_shared_for_each_paths'], one_shared_for_each_paths),
+                        (shared_args_path_items['complicated_chars_in_paths'], complicated_chars_in_paths),
+                        (shared_args_path_items['same_path_at_the_end'], same_path_at_the_end))
+
+    @pytest.mark.parametrize('flattened_json, shared_arg_to_split_position_dict', SHARED_ARGS_PATH)
+    def test_find_shared_args_path(self, flattened_json, shared_arg_to_split_position_dict):
+        """
+        Given
+        - Dictionary containing flattened json with raw body of a request
+
+        When
+        - There are arguments in the request which have the same name (suffix)
+
+        Then
+        - Returns arguments' dictionary with an entry for each argument name, that holds the minimum distinguishing shared path of
+        all arguments with the same name
+        """
+        for arg_name, min_path_length in find_shared_args_path(flattened_json).items():
+            assert shared_arg_to_split_position_dict[arg_name] == min_path_length
+
+    def test_find_shared_args_path_no_path(self):
+        """
+        Given
+        - Dictionary containing flattened json with raw body of a request, that doesn't have duplicate names
+
+        When
+        - There are no arguments in the request which have the same name (suffix)
+
+        Then
+        - Returns arguments' dictionary with an entry for each argument name, that holds the minimum distinguishing shared path of
+        all arguments with the same name - which is 0 in this case
+        """
+        flattened_json = {
+            "strategy": "deleteSource",
+            "source": "{{source_collection_uid}}",
+            "destination": "{{destination_collection_uid}}"
+        }
+        shared_arg_to_split_position_dict = defaultdict(int)
+        for arg_name, min_path_length in find_shared_args_path(flattened_json).items():
+            assert shared_arg_to_split_position_dict[arg_name] == min_path_length
+
+    split_path1 = ['collection', 'item', 'settings', 'name']
+    split_path2 = ['collection', 'info', 'settings', 'name']
+    split_path3 = ['collection', 'item', 'property', 'name']
+    split_path4 = ['set', 'item', 'property', 'name']
+
+    first_call = (split_path2, [], 0, 0)
+    max_to_bigger_then_zero = (split_path4, [split_path2], 0, 1)
+    max_changes_on_first_item = (split_path4, [split_path3, split_path2, split_path1], 2, 3)
+    max_changes_on_second_item = (split_path1, [split_path3, split_path2], 1, 2)
+    max_doesnt_change = (split_path3, [split_path1, split_path2], 2, 2)
+    UPDATED_MAX_INPUT = (first_call,
+                         max_to_bigger_then_zero,
+                         max_changes_on_first_item,
+                         max_changes_on_second_item,
+                         max_doesnt_change)
+
+    @pytest.mark.parametrize('split_path, other_args_split_paths, current_min_unique, new_min_unique', UPDATED_MAX_INPUT)
+    def test_update_min_distinguish_path(self, split_path, other_args_split_paths, current_min_unique, new_min_unique):
+        """
+        Given
+        - A split path of an argument, a list of other arguments' splitted paths, and the minimum unique path until now
+
+        When
+        - Finding the minimum unique path between the arguments that have the same name
+
+        Then
+        - Returns the minimum unique path of all arguments with the same name
+        """
+        assert update_min_unique_path(split_path, other_args_split_paths, current_min_unique) == new_min_unique
+
 
 class TestPostmanCodeGen:
     test_files_path = os.path.join(git_path(), 'demisto_sdk', 'commands', 'postman_codegen', 'tests', 'test_files')
@@ -84,16 +292,21 @@ class TestPostmanCodeGen:
     autogen_config_stream = None
     postman_collection: dict
     autogen_config: dict
+    arguments_check_collection: dict
 
     @classmethod
     def setup_class(cls):
         collection_path = os.path.join(cls.test_files_path, 'VirusTotal.postman_collection.json')
         autogen_config_path = os.path.join(cls.test_files_path, 'VirusTotal-autogen-config.json')
+        arguments_check_collection_path = os.path.join(cls.test_files_path, 'arguments_check_collection.json')
         with open(collection_path) as f:
             cls.postman_collection = json.load(f)
 
         with open(autogen_config_path) as f:
             cls.autogen_config = json.load(f)
+
+        with open(arguments_check_collection_path) as f:
+            cls.arguments_check_collection = json.load(f)
 
         cls.postman_collection_stream = open(collection_path)
         cls.autogen_config_stream = open(autogen_config_path)
@@ -168,6 +381,28 @@ class TestPostmanCodeGen:
         )
 
         assert autogen_config.command_prefix == 'virustotal'
+
+    def test_command_arguments_names_duplication(self):
+        """
+        Given
+        - postman collection with one command, that has some arguments with the same name (suffix)
+
+        When
+        - generating config file
+
+        Then
+        - ensure the number of arguments generated is the same as the number of arguments in the command (if not, some arguments
+        are generated as one with the same name)
+        """
+        autogen_config = postman_to_autogen_configuration(
+            collection=self.arguments_check_collection,
+            command_prefix=None,
+
+            name=None,
+            context_path_prefix=None,
+            category=None
+        )
+        assert len(autogen_config.commands[0].arguments) == 15
 
     def test_context_output_path(self):
         """
@@ -570,6 +805,28 @@ class TestPostmanCodeGen:
             assert outputs[i].description == expected[i].description
             assert outputs[i].type_ == expected[i].type_
         assert len(outputs) == len(expected)
+
+    def test_package_integration_generation(self, tmp_path):
+        """
+        Given
+        - postman collection
+        When
+        - generating an integration in a package format
+        Then
+        - package should be created with the integration files.
+        """
+        package_path = os.path.join(self.test_files_path, 'package')
+        os.mkdir(package_path)
+        collection_path = os.path.join(self.test_files_path, 'VirusTotal.postman_collection.json')
+        try:
+            runner = CliRunner()
+            runner.invoke(main, ['postman-codegen', '-i', collection_path,
+                                 '-o', package_path, '-p'], catch_exceptions=False)
+            assert all(elem in os.listdir(package_path) for elem in ['package.py', 'README.md', 'package.yml'])
+        except Exception as e:
+            raise e
+        finally:
+            shutil.rmtree(package_path)
 
 
 def _testutil_create_postman_collection(dest_path, with_request: Optional[dict] = None, no_auth: bool = False):

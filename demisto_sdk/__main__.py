@@ -11,6 +11,7 @@ from typing import IO
 
 # Third party packages
 import click
+import dotenv
 import git
 from pkg_resources import get_distribution
 
@@ -72,6 +73,8 @@ from demisto_sdk.commands.unify.generic_module_unifier import \
 from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
 from demisto_sdk.commands.update_release_notes.update_rn_manager import \
     UpdateReleaseNotesManager
+from demisto_sdk.commands.update_xsoar_config_file.update_xsoar_config_file import \
+    XSOARConfigFileUpdater
 from demisto_sdk.commands.upload.uploader import ConfigFileParser, Uploader
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.commands.zip_packs.packs_zipper import (EX_FAIL, EX_SUCCESS,
@@ -106,6 +109,8 @@ class VersionParamType(click.ParamType):
 
     The type accepts a string represents a version number.
     """
+
+    name = "version"
 
     def convert(self, value, param, ctx):
         version_sections = value.split('.')
@@ -175,6 +180,7 @@ def check_configuration_file(command, args):
 )
 @pass_config
 def main(config, version, release_notes):
+    dotenv.load_dotenv()  # Load a .env file from the cwd.
     config.configuration = Configuration()
     if not os.getenv('DEMISTO_SDK_SKIP_VERSION_CHECK') or version:  # If the key exists/called to version
         cur_version = get_distribution('demisto-sdk').version
@@ -547,6 +553,10 @@ def validate(config, **kwargs):
               type=click.Path(exists=True, resolve_path=True), hidden=True)
 @click.option('-rt', '--remove-test-playbooks', is_flag=True,
               help='Should remove test playbooks from content packs or not.', default=True, hidden=True)
+@click.option('-mp', '--marketplace', help='The marketplace the artifacts are created for, that '
+                                           'determines which artifacts are created for each pack. '
+                                           'Default is the XSOAR marketplace, that has all of the packs '
+                                           'artifacts.', default='xsoar', type=click.Choice(['xsoar', 'marketplacev2', 'v2']))
 def create_content_artifacts(**kwargs) -> int:
     """Generating the following artifacts:
        1. content_new - Contains all content objects of type json,yaml (from_version < 6.0.0)
@@ -722,7 +732,7 @@ def lint(**kwargs):
 @click.option("--no-min-coverage-enforcement", help="Do not enforce minimum coverage.", is_flag=True)
 @click.option(
     "--previous-coverage-report-url", help="URL of the previous coverage report.",
-    default='https://storage.googleapis.com/marketplace-dist-dev/code-coverage/coverage-min.json', type=str
+    default='https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-min.json', type=str
 )
 def coverage_analyze(**kwargs):
     try:
@@ -909,6 +919,9 @@ def upload(**kwargs):
     "-i", "--input", help="Custom content file name to be downloaded. Can be provided multiple times",
     required=False, multiple=True)
 @click.option(
+    "-r", "--regex", help="Regex Pattern, download all the custom content files that match this regex pattern.",
+    required=False)
+@click.option(
     "--insecure", help="Skip certificate validation", is_flag=True)
 @click.option(
     "-v", "--verbose", help="Verbose output", is_flag=True)
@@ -928,6 +941,39 @@ def download(**kwargs):
     check_configuration_file('download', kwargs)
     downloader: Downloader = Downloader(**kwargs)
     return downloader.download()
+
+
+# ====================== update-xsoar-config-file ====================== #
+@main.command()
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    "-pi", "--pack-id", help="The Pack ID to add to XSOAR Configuration File", required=False,
+    multiple=False)
+@click.option(
+    "-pd", "--pack-data", help="The Pack Data to add to XSOAR Configuration File - "
+           "Pack URL for Custom Pack and Pack Version for OOTB Pack", required=False, multiple=False)
+@click.option(
+    "-mp", "--add-marketplace-pack", help="Add a Pack to the MarketPlace Packs section in the Configuration File",
+    required=False, is_flag=True)
+@click.option(
+    "-cp", "--add-custom-pack", help="Add the Pack to the Custom Packs section in the Configuration File",
+    is_flag=True)
+@click.option(
+    "-all", "--add-all-marketplace-packs",
+    help="Add all the installed MarketPlace Packs to the marketplace_packs in XSOAR Configuration File", is_flag=True)
+@click.option(
+    "--insecure", help="Skip certificate validation", is_flag=True)
+@click.option(
+    "--file-path", help="XSOAR Configuration File path, the default value is in the repo level", is_flag=False)
+def xsoar_config_file_update(**kwargs):
+    """Download custom content from Demisto instance.
+    DEMISTO_BASE_URL environment variable should contain the Demisto server base URL.
+    DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
+    """
+    file_updater: XSOARConfigFileUpdater = XSOARConfigFileUpdater(**kwargs)
+    return file_updater.update()
 
 
 # ====================== run ====================== #
@@ -1029,9 +1075,12 @@ def run_playbook(**kwargs):
     "-v", "--verbose", is_flag=True,
     help="Verbose output - mainly for debugging purposes")
 @click.option(
+    "--ai", is_flag=True,
+    help="**Experimental** - Help generate context descriptions via AI transformers (must have a valid AI21 key at ai21.com)")
+@click.option(
     "--interactive",
     help="If passed, then for each output field will ask user interactively to enter the "
-         "description. By default is interactive mode is disabled",
+         "description. By default is interactive mode is disabled. No need to use with --ai (it is already interactive)",
     is_flag=True)
 @click.option(
     "-d", "--descriptions",
@@ -1058,7 +1107,6 @@ def generate_outputs(**kwargs):
     file/UI/PyCharm. This script auto generates the YAML for a command from the JSON result of the relevant API call
     In addition you can supply examples files and generate the context description directly in the YML from those examples.
     """
-
     check_configuration_file('generate-outputs', kwargs)
     return run_generate_outputs(**kwargs)
 
@@ -1154,6 +1202,10 @@ def generate_test_playbook(**kwargs):
     "-t", "--template", help="Create an Integration/Script based on a specific template.\n"
                              "Integration template options: HelloWorld, HelloIAMWorld, FeedHelloWorld.\n"
                              "Script template options: HelloWorldScript")
+@click.option(
+    "-a", "--author-image", help="Path of the file 'Author_image.png'. \n "
+    "Image will be presented in marketplace under PUBLISHER section. File should be up to 4kb and dimensions of 120x50"
+)
 @click.option(
     '--demisto_mock', is_flag=True,
     help="Copy the demistomock. Relevant for initialization of Scripts and Integrations within a Pack.")
@@ -1493,14 +1545,22 @@ def find_dependencies(**kwargs):
 )
 @click.option(
     '--verbose', help='Print debug level logs', is_flag=True)
+@click.option(
+    '-p', '--package',
+    help='Generated integration will be split to package format instead of a yml file.',
+    is_flag=True
+)
+@pass_config
 def postman_codegen(
+        config,
         input: IO,
         output: Path,
         name: str,
         output_prefix: str,
         command_prefix: str,
         config_out: bool,
-        verbose: bool
+        verbose: bool,
+        package: bool
 ):
     """Generates a Cortex XSOAR integration given a Postman collection 2.1 JSON file."""
     if verbose:
@@ -1508,7 +1568,7 @@ def postman_codegen(
     else:
         logger = logging.getLogger('demisto-sdk')
 
-    config = postman_to_autogen_configuration(
+    postman_config = postman_to_autogen_configuration(
         collection=json.load(input),
         name=name,
         command_prefix=command_prefix,
@@ -1516,13 +1576,17 @@ def postman_codegen(
     )
 
     if config_out:
-        path = output / f'config-{config.name}.json'
+        path = output / f'config-{postman_config.name}.json'
         with open(path, mode='w+') as f:
-            json.dump(config.to_dict(), f, indent=4)
+            json.dump(postman_config.to_dict(), f, indent=4)
             logger.info(f'Config file generated at:\n{os.path.abspath(path)}')
     else:
         # generate integration yml
-        config.generate_integration_package(output, is_unified=True)
+        yml_path = postman_config.generate_integration_package(output, is_unified=True)
+        if package:
+            yml_splitter = YmlSplitter(configuration=config.configuration, file_type=FileType.INTEGRATION.value,
+                                       input=str(yml_path), output=str(output))
+            yml_splitter.extract_to_package_format()
 
 
 # ====================== generate-integration ====================== #
@@ -1943,7 +2007,6 @@ def convert(config, **kwargs):
 @main.command(
     name='error-code',
     help='Quickly find relevant information regarding an error code.',
-    hidden=True,
 )
 @click.help_option(
     '-h', '--help'

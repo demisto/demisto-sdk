@@ -13,6 +13,8 @@ from demisto_sdk.commands.format.update_classifier import (
 from demisto_sdk.commands.format.update_connection import ConnectionJSONFormat
 from demisto_sdk.commands.format.update_dashboard import DashboardJSONFormat
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
+from demisto_sdk.commands.format.update_genericfield import \
+    GenericFieldJSONFormat
 from demisto_sdk.commands.format.update_incidentfields import \
     IncidentFieldJSONFormat
 from demisto_sdk.commands.format.update_incidenttype import \
@@ -40,9 +42,10 @@ from demisto_sdk.tests.constants_test import (
     DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY, DESTINATION_FORMAT_LISTS_COPY,
     DESTINATION_FORMAT_MAPPER, DESTINATION_FORMAT_PRE_PROCESS_RULES_COPY,
     DESTINATION_FORMAT_PRE_PROCESS_RULES_INVALID_NAME_COPY,
-    DESTINATION_FORMAT_REPORT, DESTINATION_FORMAT_WIDGET, INCIDENTFIELD_PATH,
-    INCIDENTTYPE_PATH, INDICATORFIELD_PATH, INDICATORTYPE_PATH,
-    INVALID_OUTPUT_PATH, LAYOUT_PATH, LAYOUT_SCHEMA_PATH,
+    DESTINATION_FORMAT_REPORT, DESTINATION_FORMAT_WIDGET,
+    GENERICFIELD_SCHEMA_PATH, INCIDENTFIELD_PATH, INCIDENTFIELD_SCHEMA_PATH,
+    INCIDENTTYPE_PATH, INDICATORFIELD_PATH, INDICATORFIELD_SCHEMA_PATH,
+    INDICATORTYPE_PATH, INVALID_OUTPUT_PATH, LAYOUT_PATH, LAYOUT_SCHEMA_PATH,
     LAYOUTS_CONTAINER_PATH, LAYOUTS_CONTAINER_SCHEMA_PATH, LISTS_PATH,
     LISTS_SCHEMA_PATH, MAPPER_PATH, MAPPER_SCHEMA_PATH, PRE_PROCESS_RULES_PATH,
     PRE_PROCESS_RULES_SCHEMA_PATH, REPORT_PATH, SOURCE_FORMAT_CLASSIFIER,
@@ -114,6 +117,25 @@ class TestFormattingJson:
         except Exception as e:
             assert str(e) == "The given output path is not a specific file path.\nOnly file path can be a output path." \
                              "  Please specify a correct output."
+
+    @pytest.mark.parametrize('formatter', [GenericFieldJSONFormat,
+                                           IncidentFieldJSONFormat,
+                                           IndicatorFieldJSONFormat,
+                                           ])
+    def test_update_unsearchable_key(self, formatter):
+        """
+        Given
+            - A dictionary of file that the unsearchable is false
+        When
+            - Run format on file
+        Then
+            - Ensure unsearchable updated successfully
+        """
+
+        fields_formatter = formatter(input='test')
+        fields_formatter.data = {'unsearchable': False}
+        fields_formatter.set_default_values_as_needed()
+        assert fields_formatter.data['unsearchable']
 
 
 class TestFormattingIncidentTypes:
@@ -502,6 +524,42 @@ class TestFormattingLayoutscontainer:
         layoutscontainer_formatter.data['id'] = "id"
         layoutscontainer_formatter.update_id()
         assert layoutscontainer_formatter.data['name'] == layoutscontainer_formatter.data['id']
+
+    @pytest.mark.parametrize('schema', [GENERICFIELD_SCHEMA_PATH,
+                                        INCIDENTFIELD_SCHEMA_PATH,
+                                        INDICATORFIELD_SCHEMA_PATH])
+    def test_remove_null_doesnt_remove_defaultrows_type_grid(self, schema):
+        """
+        Given
+            - Generic, indicator and incident fields schemes with 'defaultrows' key of type "grid"
+        When
+            - Run remove_null_fields on Generic, indicator and incident fields files
+        Then
+            - Ensure defaultRows key remains the same
+        """
+        incident_formater = BaseUpdateJSON(input='test', output='')
+        incident_formater.schema_path = schema
+        incident_formater.data = {'defaultRows': [], 'type': 'grid'}
+        incident_formater.remove_null_fields()
+        assert incident_formater.data['defaultRows'] == []
+
+    @pytest.mark.parametrize('schema', [GENERICFIELD_SCHEMA_PATH,
+                                        INCIDENTFIELD_SCHEMA_PATH,
+                                        INDICATORFIELD_SCHEMA_PATH])
+    def test_remove_null_remove_defaultrows_non_grid(self, schema):
+        """
+        Given
+            - Generic, indicator and incident fields schemes with 'defaultrows' key of type "grid"
+        When
+            - Run remove_null_fields on Generic, indicator and incident fields files
+        Then
+            - Ensure defaultRows key updated successfully
+        """
+        incident_formater = BaseUpdateJSON(input='test', output='')
+        incident_formater.schema_path = schema
+        incident_formater.data = {'defaultRows': [], 'type': 'shortText'}
+        incident_formater.remove_null_fields()
+        assert 'defaultRows' not in incident_formater.data
 
     def test_remove_null_fields(self, layoutscontainer_formatter):
         """

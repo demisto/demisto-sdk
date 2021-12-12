@@ -13,13 +13,14 @@ import yamlordereddictloader
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
-    CLASSIFIERS_DIR, CONNECTIONS_DIR, DASHBOARDS_DIR, DOC_FILES_DIR,
-    GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR, GENERIC_MODULES_DIR,
-    GENERIC_TYPES_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
-    INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, INTEGRATION_CATEGORIES,
-    INTEGRATIONS_DIR, LAYOUTS_DIR, MARKETPLACE_LIVE_DISCUSSIONS,
-    PACK_INITIAL_VERSION, PACK_SUPPORT_OPTIONS, PLAYBOOKS_DIR, REPORTS_DIR,
-    SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR, XSOAR_AUTHOR, XSOAR_SUPPORT,
+    CLASSIFIERS_DIR, CONNECTIONS_DIR, DASHBOARDS_DIR,
+    DEFAULT_CONTENT_ITEM_FROM_VERSION, DOC_FILES_DIR, GENERIC_DEFINITIONS_DIR,
+    GENERIC_FIELDS_DIR, GENERIC_MODULES_DIR, GENERIC_TYPES_DIR,
+    INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
+    INDICATOR_TYPES_DIR, INTEGRATION_CATEGORIES, INTEGRATIONS_DIR, JOBS_DIR,
+    LAYOUTS_DIR, MARKETPLACE_LIVE_DISCUSSIONS, PACK_INITIAL_VERSION,
+    PACK_SUPPORT_OPTIONS, PLAYBOOKS_DIR, REPORTS_DIR, SCRIPTS_DIR,
+    TEST_PLAYBOOKS_DIR, WIDGETS_DIR, XSOAR_AUTHOR, XSOAR_SUPPORT,
     XSOAR_SUPPORT_URL, GitContentConfig)
 from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                get_common_server_path,
@@ -118,10 +119,10 @@ class Initiator:
     DIR_LIST = [INTEGRATIONS_DIR, SCRIPTS_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
                 PLAYBOOKS_DIR, LAYOUTS_DIR, TEST_PLAYBOOKS_DIR, CLASSIFIERS_DIR, CONNECTIONS_DIR, DASHBOARDS_DIR,
                 INDICATOR_TYPES_DIR, REPORTS_DIR, WIDGETS_DIR, DOC_FILES_DIR, GENERIC_MODULES_DIR,
-                GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR, GENERIC_TYPES_DIR]
+                GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR, GENERIC_TYPES_DIR, JOBS_DIR]
 
     def __init__(self, output: str, name: str = '', id: str = '', integration: bool = False, template: str = '',
-                 category: str = '', script: bool = False, pack: bool = False, demisto_mock: bool = False,
+                 category: str = '', script: bool = False, pack: bool = False, author_image: str = '', demisto_mock: bool = False,
                  common_server: bool = False):
         self.output = output if output else ''
         self.id = id
@@ -129,6 +130,7 @@ class Initiator:
         self.is_integration = integration
         self.is_script = script
         self.is_pack = pack
+        self.author_image = author_image
         self.demisto_mock = demisto_mock
         self.common_server = common_server
         self.category = category
@@ -253,7 +255,6 @@ class Initiator:
             os.mkdir(path=path)
 
         self.create_pack_base_files()
-
         click.echo(
             f"Successfully created the pack {self.dir_name} in: {self.full_output_path}",
             color=LOG_COLORS.GREEN
@@ -286,7 +287,7 @@ class Initiator:
 
     def create_pack_base_files(self):
         """
-        Create empty 'README.md', '.secrets-ignore', and '.pack-ignore' files that are expected
+        Create empty 'README.md', '.secrets-ignore', '.pack-ignore' and 'Author_image.png' files that are expected
         to be in the base directory of a pack
         """
         click.echo('Creating pack base files', color=LOG_COLORS.NATIVE)
@@ -298,6 +299,14 @@ class Initiator:
 
         fp = open(os.path.join(self.full_output_path, '.pack-ignore'), 'a')
         fp.close()
+
+        # if an `Author_image.png` file was given - replace the default file with it
+        author_image_path = os.path.join(self.full_output_path, 'Author_image.png')
+        if self.author_image:
+            shutil.copyfile(self.author_image, author_image_path)
+        else:
+            fp = open(author_image_path, 'a')
+            fp.close()
 
     @staticmethod
     def create_metadata(fill_manually: bool, data: Dict = {}) -> Dict:
@@ -543,7 +552,7 @@ class Initiator:
         if from_version:
             yml_dict['fromversion'] = from_version
 
-        if LooseVersion(yml_dict.get('fromversion', '0.0.0')) < LooseVersion(self.SUPPORTED_FROM_VERSION):
+        if LooseVersion(yml_dict.get('fromversion', DEFAULT_CONTENT_ITEM_FROM_VERSION)) < LooseVersion(self.SUPPORTED_FROM_VERSION):
             yml_dict['fromversion'] = self.SUPPORTED_FROM_VERSION
 
         if integration:

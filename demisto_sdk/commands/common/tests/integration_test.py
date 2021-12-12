@@ -787,6 +787,33 @@ class TestIntegrationValidator:
 
             assert not validator.is_valid_parameters_display_name()
 
+    @pytest.mark.parametrize('support_level, expected_result', [('XSOAR', True), ('community', False)])
+    def test_fromlicense_in_integration_parameters_fields(self, pack, support_level, expected_result):
+        """
+        Given
+            - An integration from a contributor with not allowed key ('fromlicense') in parameters.
+        When
+            - Running is_valid_param.
+        Then
+            - an integration with an invalid parameters display name is invalid.
+        """
+        pack.pack_metadata.write_json({"support": support_level})
+        integration = pack.create_integration('contributor')
+
+        integration.yml.write_dict({'configuration': [{
+            'name': 'token',
+            'display': 'token',
+            'fromlicense': 'encrypted'
+        }]})
+
+        with ChangeCWD(pack.repo_path):
+            structure_validator = StructureValidator(integration.yml.path, predefined_scheme='integration')
+            validator = IntegrationValidator(structure_validator)
+
+            result = validator.has_no_fromlicense_key_in_contributions_integration()
+
+        assert result == expected_result
+
     def test_valid_integration_path(self, integration):
         """
         Given
@@ -956,6 +983,41 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure_validator)
 
         assert validator.name_not_contain_the_type()
+
+    @pytest.mark.parametrize('support, parameter_type, expected_result', [
+        ('xsoar', 4, False),
+        ('xsoar', 9, True),
+        ('community', 4, True),
+        ('partner', 4, True),
+    ])
+    def test_is_api_token_in_credential_type(self, pack, support, parameter_type, expected_result):
+        """
+        Given
+            - An integration with API token parameter in non credential type.
+        When
+            - Running is_api_token_in_credential_type on `xsoar` support integration and non `xsoar` integration.
+        Then
+            - Ensure the validate on `xsoar` integration support failed on invalid type,
+            the type of the parameter should be 9 (credentials).
+        """
+
+        pack.pack_metadata.write_json({
+            'support': support
+        })
+
+        integration = pack.create_integration(yml={
+            'configuration': [{
+                'display': 'API token',
+                'name': 'token',
+                'type': parameter_type  # Encrypted text failed
+            }]
+        })
+
+        with ChangeCWD(pack.repo_path):
+            structure_validator = StructureValidator(integration.yml.path, predefined_scheme='integration')
+            validator = IntegrationValidator(structure_validator)
+
+            assert validator.is_api_token_in_credential_type() == expected_result
 
     IS_SKIPPED_INPUTS = [
         ({'skipped_integrations': {"SomeIntegration": "No instance"}}, False),

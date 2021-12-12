@@ -3,11 +3,13 @@ display: Ansible Integration Name  # Displayed name of integration
 category: "IT Services"  # Integration Category. See https://xsoar.pan.dev/docs/documentation/pack-docs#pack-keywords-tags-use-cases--categories
 description: "Manage your X"  # Short integration description
 parameters:  # List of integration configuration parameters. See https://xsoar.pan.dev/docs/integrations/yaml-file#configuration for details. Params are sent as arguments to the underlying Ansible module using the param name
-  - additionalinfo: Token used to authenticate with the API.
-    display: API Key
-    name: api_key
-    required: false
-    type: 4
+  - additionalinfo: This is the API Token for the Example Cloud.
+    display: Username
+    displaypassword: API Token
+    hiddenusername: true
+    name: creds
+    required: true
+    type: 9
   - additionalinfo: Allows connection when SSL certificates are not valid. Set to `false`
       when certificates are not trusted.
     defaultvalue: 'False'
@@ -21,6 +23,9 @@ parameters:  # List of integration configuration parameters. See https://xsoar.p
 ignored_args:  # List of any Ansible module arguments that should be ignored from the command definition. For example because the argument is coming from the integration parm. Either Omit option such testing is not possible
   - api_token
   - endpoint
+creds_mapping:  # Optional key:value pairs to translate xsoar param to ansible arguments. Used in cases where argument name collisions may occur.
+  xsoar: ansible
+  password: api_token
 test_command: example.example.example_info  # Which ansible module should be used as the integration test command. This should be a module that can run with just the integration config parameters. Either Omit option if such testing is not possible
 command_prefix: example  # Prefix all the generated XSOAR commands with this value. Omit config or set to None to not add any prefix  
 host_type: ssh  # The Ansible connection type. Use one of: 'ssh', 'winrm', 'nxos', 'ios', 'local'. Modules that run locally and use their own connection mechanism should use the value 'local'.

@@ -24,7 +24,7 @@ from demisto_sdk.commands.common.hook_validations.integration import \
 ILLEGAL_CODE_NAMES = ['type', 'from', 'id', 'filter', 'list']
 NAME_FIX = '_'
 REQUIRED_KEYS = ['name','display','category','description','host_type','ansible_modules']
-OPTIONAL_KEYS = ['test_command','command_prefix', 'ignored_args', 'configuration']
+OPTIONAL_KEYS = ['test_command','command_prefix', 'ignored_args', 'configuration', 'creds_mapping']
 HOST_TYPES = ['ssh', 'winrm', 'nxos', 'ios', 'local']
 REMOTE_HOST_TYPES = ['ssh', 'winrm', 'nxos', 'ios']
 ANSIBLE_ONLINE_DOCS_URL_BASE = 'https://docs.ansible.com/ansible/latest/collections/'  # The URL of the online module documentation
@@ -39,6 +39,7 @@ class AnsibleIntegration:
         self.display = ''
         self.category = ''
         self.description = ''
+        self.creds_mapping = None
         self.host_type = 'local'
         self.test_command = None
         self.command_prefix = None
@@ -67,6 +68,7 @@ class AnsibleIntegration:
         self.ansible_modules = self.codegen_configuration.get('ansible_modules')
         self.ignored_args = self.codegen_configuration.get('ignored_args', None)
         self.parameters = self.codegen_configuration.get('parameters', [])
+        self.creds_mapping = self.codegen_configuration.get('creds_mapping', None)
 
         # Add concurrency tunable relating to non-local based targets
         if self.host_type != 'local':
@@ -206,7 +208,7 @@ class AnsibleIntegration:
             code: The integration python code.
         """
         name = self.name
-        code = '''import traceback
+        code = f'''import traceback
 import ssh_agent_setup
 import demistomock as demisto  # noqa: F401
 from CommonServerPython import *  # noqa: F401
@@ -214,11 +216,7 @@ from CommonServerPython import *  # noqa: F401
 # Import Generated code
 from AnsibleApiModule import *  # noqa: E402
 
-'''
-
-        code +="host_type = '%s'" % self.host_type
-        
-        code += '''
+host_type = '{self.host_type}'
 
 # MAIN FUNCTION
 
@@ -237,6 +235,7 @@ def main() -> None:
     command = demisto.command()
     args = demisto.args()
     int_params = demisto.params()
+    creds_mapping =  {self.creds_mapping}
 
     try:
 
@@ -271,7 +270,7 @@ def main() -> None:
             else:
                 demisto_command = to_kebab_case(ansible_module)
 
-            code += "\n        elif command == '%s':\n            return_results(generic_ansible('%s', '%s', args, int_params, host_type))" % (demisto_command, name.lower(), ansible_module,)
+            code += "\n        elif command == '%s':\n            return_results(generic_ansible('%s', '%s', args, int_params, host_type, creds_mapping))" % (demisto_command, name.lower(), ansible_module,)
 
         code += '''
     # Log exceptions and return errors

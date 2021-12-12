@@ -3,8 +3,7 @@ import os
 import re
 import shutil
 import sys
-from distutils.util import strtobool
-from typing import Any, List, Optional, Union
+from typing import Optional
 
 import autopep8
 import yaml
@@ -24,7 +23,7 @@ from demisto_sdk.commands.common.hook_validations.integration import \
 ILLEGAL_CODE_NAMES = ['type', 'from', 'id', 'filter', 'list']
 NAME_FIX = '_'
 REQUIRED_KEYS = ['name', 'display', 'category', 'description', 'host_type', 'ansible_modules']
-OPTIONAL_KEYS = ['test_command', 'command_prefix', 'ignored_args', 'configuration', 'creds_mapping']
+OPTIONAL_KEYS = ['test_command', 'command_prefix', 'ignored_args', 'parameters', 'creds_mapping']
 HOST_TYPES = ['ssh', 'winrm', 'nxos', 'ios', 'local']
 REMOTE_HOST_TYPES = ['ssh', 'winrm', 'nxos', 'ios']
 # The URL of the online module documentation
@@ -33,8 +32,9 @@ ANSIBLE_ONLINE_DOCS_URL_BASE = 'https://docs.ansible.com/ansible/latest/collecti
 
 class AnsibleIntegration:
     def __init__(self, base_name: str, verbose: bool = False, codegen_configuration:
-                 Optional[dict] = None, container_image: str = None, output_dir: str = ".", fix_code: bool = False):
+                 Optional[dict] = None, file_path: str = None, container_image: str = None, output_dir: str = ".", fix_code: bool = False):
         self.codegen_configuration = codegen_configuration if codegen_configuration else {}
+        self.file_path = file_path
         self.base_path = output_dir
         self.base_name = base_name
         self.name = ''
@@ -59,6 +59,14 @@ class AnsibleIntegration:
         """
         Loads the ansible codgen config
         """
+
+        if self.file_path:
+            try:
+                with open(self.file_path, 'r') as config_file:
+                    self.codegen_configuration = yaml.load(config_file, Loader=yaml.Loader)
+            except Exception as e:
+                print_error(f'Failed to load configuration file: {e}')
+
         self.name = self.codegen_configuration.get('name')
         self.host_type = self.codegen_configuration.get('host_type')
         self.display = self.codegen_configuration.get('display')
@@ -105,7 +113,7 @@ class AnsibleIntegration:
         if "ansible-doc 2." not in ansibledoc_version:    # Tested with ansible-doc 2.12.1
             print_error(
                 f'ansible-doc 2.x not found in container or not compatible version. Is Ansible installed in container image?\nansible-docs reports: {ansibledoc_version}')
-            raise
+            sys.exit(1)
 
         for module in self.ansible_modules:
             ansibledoc_lookup = lookup_container.exec(command=f"ansible-doc -t module -j \"{module}\"").get("Outputs")
@@ -114,7 +122,7 @@ class AnsibleIntegration:
             # Check for ansible-doc error text
             if f"module {module} not found" in str(ansibledoc_lookup):
                 print_error(f'Module {module} not found in container')
-                raise
+                sys.exit(1)
 
             try:
                 self.ansible_docs.update(json.loads(ansibledoc_lookup))
@@ -158,7 +166,7 @@ class AnsibleIntegration:
             validation_message += f"\n  * Invalid option for host_type: {host_type}"
 
         # Check if XSOAR config parameters provided are valid
-        if self.codegen_configuration.get('configuration') is not None:
+        if self.codegen_configuration.get('parameters') is not None:
 
             self.print_with_verbose('Creating partial integration yaml file for config validation...')
             yaml_file = self.save_yaml(self.base_path, skip_commands=True)
@@ -187,17 +195,17 @@ class AnsibleIntegration:
                 validation = False
                 validation_message += f"\n  * Failed Param validation"
 
-        # Check catgory
-        category_valid = integration_validator.is_valid_category
-        if category_valid is False:
-            validation = False
-            validation_message += f"\n  * Invalid category"
+            # Check category
+            category_valid = integration_validator.is_valid_category
+            if category_valid is False:
+                validation = False
+                validation_message += f"\n  * Invalid category"
 
-        # Check Docker image is valid
-        container_image_valid = integration_validator.is_docker_image_valid
-        if container_image_valid is False:
-            validation = False
-            validation_message += f"\n  * Failed container image validation"
+            # Check Docker image is valid
+            container_image_valid = integration_validator.is_docker_image_valid
+            if container_image_valid is False:
+                validation = False
+                validation_message += f"\n  * Failed container image validation"
 
         return(validation, validation_message)
 

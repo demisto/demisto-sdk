@@ -1,6 +1,5 @@
 # Site packages
 import json
-import yaml
 import logging
 import os
 import sys
@@ -1793,15 +1792,12 @@ def ansible_codegen(**kwargs):
     if container_image is None:
         container_image = "demisto/ansible-runner:" + DockerImageValidator.get_docker_image_latest_tag_request('demisto/ansible-runner')
 
-    configuration = None
+    file_path = None
     if kwargs.get('config_file'):
-        try:
-            with open(kwargs['config_file'], 'r') as config_file:
-                configuration = yaml.load(config_file, Loader=yaml.Loader)
-        except Exception as e:
-            print_error(f'Failed to load configuration file: {e}')
+        file_path = kwargs.get('config_file')
 
-    integration = AnsibleIntegration(base_name, verbose=verbose, container_image=container_image, output_dir=output_dir, codegen_configuration=configuration, fix_code=fix_code)
+
+    integration = AnsibleIntegration(base_name, verbose=verbose, container_image=container_image, output_dir=output_dir, file_path=file_path, fix_code=fix_code)
 
     if not kwargs.get('config_file'):
         integration.save_empty_config(output_dir)

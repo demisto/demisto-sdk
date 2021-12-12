@@ -23,15 +23,17 @@ from demisto_sdk.commands.common.hook_validations.integration import \
 
 ILLEGAL_CODE_NAMES = ['type', 'from', 'id', 'filter', 'list']
 NAME_FIX = '_'
-REQUIRED_KEYS = ['name','display','category','description','host_type','ansible_modules']
-OPTIONAL_KEYS = ['test_command','command_prefix', 'ignored_args', 'configuration', 'creds_mapping']
+REQUIRED_KEYS = ['name', 'display', 'category', 'description', 'host_type', 'ansible_modules']
+OPTIONAL_KEYS = ['test_command', 'command_prefix', 'ignored_args', 'configuration', 'creds_mapping']
 HOST_TYPES = ['ssh', 'winrm', 'nxos', 'ios', 'local']
 REMOTE_HOST_TYPES = ['ssh', 'winrm', 'nxos', 'ios']
-ANSIBLE_ONLINE_DOCS_URL_BASE = 'https://docs.ansible.com/ansible/latest/collections/'  # The URL of the online module documentation
+# The URL of the online module documentation
+ANSIBLE_ONLINE_DOCS_URL_BASE = 'https://docs.ansible.com/ansible/latest/collections/'
 
 
 class AnsibleIntegration:
-    def __init__(self, base_name: str, verbose: bool = False, codegen_configuration: Optional[dict] = None, container_image: str = None, output_dir: str = ".", fix_code: bool = False):
+    def __init__(self, base_name: str, verbose: bool = False, codegen_configuration:
+                 Optional[dict] = None, container_image: str = None, output_dir: str = ".", fix_code: bool = False):
         self.codegen_configuration = codegen_configuration if codegen_configuration else {}
         self.base_path = output_dir
         self.base_name = base_name
@@ -52,7 +54,6 @@ class AnsibleIntegration:
         self.verbose = verbose
         self.container_image = container_image
         self.fix_code = fix_code
-
 
     def load_config(self):
         """
@@ -80,14 +81,13 @@ class AnsibleIntegration:
             concurrency_factor['defaultvalue'] = "4"
             concurrency_factor['additionalinfo'] = "If multiple hosts are specified in a command, how many hosts should be interacted with concurrently."
             self.parameters.append(concurrency_factor)
-        
+
         # Set a command_prefix if not already provided
         if self.command_prefix is None:
             if len(self.name.split(' ')) == 1:  # If the config `name` is a single word then trust the caps
                 self.command_prefix = self.name.lower()
             else:
                 self.command_prefix = to_kebab_case(self.name)
-
 
     def fetch_ansible_docs(self):
         """
@@ -96,16 +96,19 @@ class AnsibleIntegration:
         """
         # Lookup ansible module docs from container
         self.print_with_verbose('Creating container for module documentation lookup...')
-        lookup_container = ContainerRunner(image=self.container_image, container_name="demisto-sdk-ansiblecodegen-lookup")
+        lookup_container = ContainerRunner(
+            image=self.container_image,
+            container_name="demisto-sdk-ansiblecodegen-lookup")
 
         # Make sure ansible-docs is present in container
-        ansibledoc_version = str(lookup_container.exec(command = f"ansible-doc --version").get("Outputs"))
+        ansibledoc_version = str(lookup_container.exec(command=f"ansible-doc --version").get("Outputs"))
         if "ansible-doc 2." not in ansibledoc_version:    # Tested with ansible-doc 2.12.1
-            print_error(f'ansible-doc 2.x not found in container or not compatible version. Is Ansible installed in container image?\nansible-docs reports: {ansibledoc_version}')
+            print_error(
+                f'ansible-doc 2.x not found in container or not compatible version. Is Ansible installed in container image?\nansible-docs reports: {ansibledoc_version}')
             raise
-        
+
         for module in self.ansible_modules:
-            ansibledoc_lookup = lookup_container.exec(command = f"ansible-doc -t module -j \"{module}\"").get("Outputs")
+            ansibledoc_lookup = lookup_container.exec(command=f"ansible-doc -t module -j \"{module}\"").get("Outputs")
             # Unfortunately we can't rely on the status code and need to parse the text output :(
 
             # Check for ansible-doc error text
@@ -118,10 +121,9 @@ class AnsibleIntegration:
             except Exception as e:
                 print_error(f'Failed to load the ansible-docs for module {module}: {e}')
                 sys.exit(1)
-       
+
         self.print_with_verbose('Removing container used for module documentation lookup...')
         lookup_container.remove_container
-
 
     def validate(self) -> tuple:
         """
@@ -133,7 +135,7 @@ class AnsibleIntegration:
 
         # Check that config is not empty
         if self.codegen_configuration == {}:
-            return(False,"AnsibleCodeGen Config is empty")
+            return(False, "AnsibleCodeGen Config is empty")
 
         # Check for any config options not in defintion
         valid_keys = REQUIRED_KEYS + OPTIONAL_KEYS
@@ -172,14 +174,14 @@ class AnsibleIntegration:
 
             # Param Validation tests
             param_valid = all([integration_validator.has_no_duplicate_params,
-                integration_validator.is_proxy_configured_correctly,
-                integration_validator.is_insecure_configured_correctly,
-                integration_validator.is_checkbox_param_configured_correctly,
-                integration_validator.is_checkbox_param_configured_correctly,
-                integration_validator.is_not_valid_display_configuration,
-                integration_validator.is_valid_hidden_params,
-                integration_validator.is_valid_parameters_display_name,
-                integration_validator.default_params_have_default_additional_info])
+                               integration_validator.is_proxy_configured_correctly,
+                               integration_validator.is_insecure_configured_correctly,
+                               integration_validator.is_checkbox_param_configured_correctly,
+                               integration_validator.is_checkbox_param_configured_correctly,
+                               integration_validator.is_not_valid_display_configuration,
+                               integration_validator.is_valid_hidden_params,
+                               integration_validator.is_valid_parameters_display_name,
+                               integration_validator.default_params_have_default_additional_info])
 
             if param_valid is not True:
                 validation = False
@@ -198,7 +200,6 @@ class AnsibleIntegration:
             validation_message += f"\n  * Failed container image validation"
 
         return(validation, validation_message)
-
 
     def generate_python_code(self) -> str:
         """
@@ -257,20 +258,22 @@ def main() -> None:
             return_results('This integration does not support testing from this screen. \\
                            Please refer to the documentation for details on how to perform \\
                            configuration tests.')'''
-        
+
         self.print_with_verbose('Adding Ansible modules to the Python code.')
         for ansible_module in self.ansible_modules:
 
             demisto_command = ""
 
-            ansible_module = ansible_module.split(".")[-1]  # In case ansible module has been provided in collection namespace form. We want just the module name
+            # In case ansible module has been provided in collection namespace form. We want just the module name
+            ansible_module = ansible_module.split(".")[-1]
 
             if not to_kebab_case(ansible_module).startswith(self.command_prefix + '-'):
                 demisto_command = self.command_prefix + '-' + to_kebab_case(ansible_module)
             else:
                 demisto_command = to_kebab_case(ansible_module)
 
-            code += "\n        elif command == '%s':\n            return_results(generic_ansible('%s', '%s', args, int_params, host_type, creds_mapping))" % (demisto_command, name.lower(), ansible_module,)
+            code += "\n        elif command == '%s':\n            return_results(generic_ansible('%s', '%s', args, int_params, host_type, creds_mapping))" % (
+                demisto_command, name.lower(), ansible_module,)
 
         code += '''
     # Log exceptions and return errors
@@ -294,7 +297,6 @@ if __name__ in ('__main__', '__builtin__', 'builtins'):
 
         return code
 
-
     def save_python_code(self, directory: str) -> str:
         """
         Writes the python code to a file.
@@ -314,7 +316,6 @@ if __name__ in ('__main__', '__builtin__', 'builtins'):
             print_error(f'Error writing {python_file} - {err}')
             raise
 
-
     def generate_yaml(self, skip_commands: bool = False) -> XSOARIntegration:
         """
         Generate integration yaml file based on configuration file, and Ansible module documentation.
@@ -332,13 +333,12 @@ if __name__ in ('__main__', '__builtin__', 'builtins'):
 
         commonfields = XSOARIntegration.CommonFields(self.name)
 
-        int_script = XSOARIntegration.Script('', "python", "python3", self.container_image,False, commands)
+        int_script = XSOARIntegration.Script('', "python", "python3", self.container_image, False, commands)
 
         integration = XSOARIntegration(commonfields, self.name, self.display, self.category, self.description, configuration=self.parameters,
                                        script=int_script)
-                        
-        return integration
 
+        return integration
 
     def save_yaml(self, directory: str, skip_commands: bool = False) -> str:
         """
@@ -354,12 +354,11 @@ if __name__ in ('__main__', '__builtin__', 'builtins'):
         yaml_file = os.path.join(directory, f'{self.base_name}.yml')
         try:
             with open(yaml_file, 'w') as fp:
-                fp.write(yaml.dump(self.generate_yaml(skip_commands = skip_commands).to_dict()))
+                fp.write(yaml.dump(self.generate_yaml(skip_commands=skip_commands).to_dict()))
             return yaml_file
         except Exception as err:
             print_error(f'Error writing {yaml_file} - {err}')
             raise
-
 
     def save_empty_config(self, directory: str) -> str:
         """
@@ -378,7 +377,6 @@ if __name__ in ('__main__', '__builtin__', 'builtins'):
         except Exception as err:
             print_error(f'Error writing {config_file} - {err}')
             raise
-
 
     def save_image_and_desc(self, directory: str) -> tuple:
         """
@@ -401,7 +399,6 @@ if __name__ in ('__main__', '__builtin__', 'builtins'):
             print_error(f'Error copying image and description files - {err}')
             return '', ''
 
-
     def generate_command_example(self, module: str, command_name: str) -> str:
         """
         Reads ansible-docs examples and outputs a equivalent XSOAR command example.
@@ -414,7 +411,8 @@ if __name__ in ('__main__', '__builtin__', 'builtins'):
         example_command = ""
 
         module_examples = self.ansible_docs.get(module).get("doc").get("examples")  # Pull up the examples section
-        module_example = module_examples.split("- name:")[0]  # If there are multiple just use the first, it's normally the most straight forward
+        # If there are multiple just use the first, it's normally the most straight forward
+        module_example = module_examples.split("- name:")[0]
 
         # Get actual example
         example_command = f"!{command_name} "  # Start of command
@@ -429,9 +427,8 @@ if __name__ in ('__main__', '__builtin__', 'builtins'):
                     value = str(value).replace("\n", "\"")
                     value = str(value).replace("\\", "\\\\")
                     example_command += "%s=\"%s\" " % (arg, value)
-        
-        self.example_commands.append(example_command)
 
+        self.example_commands.append(example_command)
 
     def save_command_examples(self, directory: str) -> str:
         """
@@ -452,7 +449,6 @@ if __name__ in ('__main__', '__builtin__', 'builtins'):
             print_error(f'Error writing {command_examples_file} - {err}')
             raise
 
-
     def save_package(self) -> tuple:
         """
         Creates a package for the integration including python, yaml, image and description files.
@@ -469,7 +465,6 @@ if __name__ in ('__main__', '__builtin__', 'builtins'):
         image_path, desc_path = self.save_image_and_desc(self.base_path)
         examples_path = self.save_command_examples(self.base_path)
         return code_path, yml_path, image_path, desc_path, examples_path
-    
 
     def print_with_verbose(self, text: str):
         """
@@ -479,7 +474,6 @@ if __name__ in ('__main__', '__builtin__', 'builtins'):
         """
         if self.verbose:
             print(text)
-
 
     def get_yaml_commands(self) -> list:
         """
@@ -503,12 +497,14 @@ if __name__ in ('__main__', '__builtin__', 'builtins'):
             command_options = command_doc.get("options")
             command_returns = self.ansible_docs.get(module).get("return")
 
-            if not to_kebab_case(module).startswith(self.command_prefix + '-'):  # Don't double up with the prefix, if the module name already has the prefix
+            if not to_kebab_case(module).startswith(self.command_prefix +
+                                                    '-'):  # Don't double up with the prefix, if the module name already has the prefix
                 command_name = self.command_prefix + '-' + to_kebab_case(module)
             else:
                 command_name = to_kebab_case(module)
             module_online_help = f"{ANSIBLE_ONLINE_DOCS_URL_BASE}{command_namespace}/{command_collection}/{command_module}_module.html"
-            command_description = str(command_doc.get('short_description')) + "\n Further documentation available at " + module_online_help
+            command_description = str(command_doc.get('short_description')) + \
+                "\n Further documentation available at " + module_online_help
 
             args = []
             # Add Arguments
@@ -516,7 +512,12 @@ if __name__ in ('__main__', '__builtin__', 'builtins'):
             # Add static arguments if integration uses host based targets
             if self.host_type in REMOTE_HOST_TYPES:
                 remote_host_desc = "hostname or IP of target. Optionally the port can be specified using :PORT. If multiple targets are specified using an array, the integration will use the configured concurrency factor for high performance."
-                args.append(XSOARIntegration.Script.Command.Argument(name = "host", description = remote_host_desc, required = True, is_array = True))
+                args.append(
+                    XSOARIntegration.Script.Command.Argument(
+                        name="host",
+                        description=remote_host_desc,
+                        required=True,
+                        is_array=True))
 
             for arg, option in command_options.items():
 
@@ -528,15 +529,15 @@ if __name__ in ('__main__', '__builtin__', 'builtins'):
                     argument = {}
                     argument['name'] = str(arg)
 
-                    if isinstance(option.get('description'),list):
+                    if isinstance(option.get('description'), list):
                         argument['description'] = ""
                         for line_of_doco in option.get('description'):
                             if not line_of_doco.isspace():
                                 clean_line_of_doco = line_of_doco.strip()  # remove begin/end whitespace
 
-                                # remove ansible link markup 
+                                # remove ansible link markup
                                 # https://docs.ansible.com/ansible/latest/dev_guide/developing_modules_documenting.html#linking-within-module-documentation
-                                clean_line_of_doco = re.sub('[ILUCMB]\((.+?)\)','`\g<1>`',clean_line_of_doco) 
+                                clean_line_of_doco = re.sub('[ILUCMB]\\((.+?)\\)', '`\\g<1>`', clean_line_of_doco)
 
                                 argument['description'] = argument['description'] + ' ' + clean_line_of_doco
                         argument['description'] = argument['description'].strip()
@@ -551,9 +552,11 @@ if __name__ in ('__main__', '__builtin__', 'builtins'):
                     if option.get('required') == True:
                         argument['required'] = True
 
-                    if str(option.get('default')) not in ['[]', '{}']:  # Ansible docs have a empty list/dict as defaults....
+                    # Ansible docs have a empty list/dict as defaults....
+                    if str(option.get('default')) not in ['[]', '{}']:
                         if option.get('default') is not None:
-                            if type(option.get('default')) is bool:  # The default True/False str cast of bool can be confusing. Using Yes/No instead.
+                            # The default True/False str cast of bool can be confusing. Using Yes/No instead.
+                            if type(option.get('default')) is bool:
                                 if option.get('default') is True:
                                     argument['defaultValue'] = "Yes"
                                 if option.get('default') is False:
@@ -567,11 +570,11 @@ if __name__ in ('__main__', '__builtin__', 'builtins'):
                         for choice in option.get('choices'):
                             argument['predefined'].append(str(choice))
                     else:
-                        # Ansible Docs don't explicitly mark true/false as choices for bools, so we must do add it ourselves
+                        # Ansible Docs don't explicitly mark true/false as choices for bools, so
+                        # we must do add it ourselves
                         if type(option.get('default')) is bool:
                             argument['predefined'] = ['Yes', 'No']
                             argument['auto'] = "PREDEFINED"
-
 
                     if option.get('type') in ["list", "dict"]:
                         argument['isArray'] = True
@@ -584,24 +587,27 @@ if __name__ in ('__main__', '__builtin__', 'builtins'):
                 for output, details in command_returns.items():
                     output_to_add = {}
                     if details is not None:
-                        output_to_add['contextPath'] = str("%s.%s.%s" % (self.name, to_pascal_case(command_module), output))
+                        output_to_add['contextPath'] = str("%s.%s.%s" %
+                                                           (self.name, to_pascal_case(command_module), output))
 
-                        # remove ansible link markup 
+                        # remove ansible link markup
                         # https://docs.ansible.com/ansible/latest/dev_guide/developing_modules_documenting.html#linking-within-module-documentation
                         if type(details.get('description')) == list:
                             # Do something if it is a list
                             output_to_add['description'] = ""
                             for line in details.get('description'):
-                                clean_line_of_description = re.sub('[ILUCMB]\((.+?)\)','`\g<1>`', line) 
-                                output_to_add['description'] = output_to_add['description'] + "\n" + clean_line_of_description
+                                clean_line_of_description = re.sub('[ILUCMB]\\((.+?)\\)', '`\\g<1>`', line)
+                                output_to_add['description'] = output_to_add['description'] + \
+                                    "\n" + clean_line_of_description
                             output_to_add['description'] = output_to_add['description'].strip()
                         else:
-                            clean_line_of_description = re.sub('[ILUCMB]\((.+?)\)','`\g<1>`',str(details.get('description'))) 
+                            clean_line_of_description = re.sub(
+                                '[ILUCMB]\\((.+?)\\)', '`\\g<1>`', str(details.get('description')))
                             output_to_add['description'] = clean_line_of_description.strip()
 
                         if details.get('type') == "str":
                             output_to_add['type'] = "string"
-                        
+
                         elif details.get('type') == "int":
                             output_to_add['type'] = "number"
 
@@ -613,7 +619,7 @@ if __name__ in ('__main__', '__builtin__', 'builtins'):
                             output_to_add['type'] = "boolean"
 
                         else:  # If the output is any other type it doesn't directly map to a XSOAR type
-                            output_to_add['type'] = "unknown"  
+                            output_to_add['type'] = "unknown"
                     outputs.append(output_to_add)
             commands.append(XSOARIntegration.Script.Command(command_name, command_description, args, outputs))
 

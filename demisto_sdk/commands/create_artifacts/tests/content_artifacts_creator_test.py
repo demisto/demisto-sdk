@@ -173,6 +173,37 @@ def test_dump_pack(mock_git):
                             src2=ARTIFACTS_EXPECTED_RESULTS / 'content' / 'content_packs' / 'Sample01')
 
 
+def test_contains_indicator_type():
+    """
+    Given
+    - A pack with old and new indicator type.
+
+    When
+    - Running zip-packs on it.
+
+    Then
+    - Ensure that the new indicator type is added to the zipped pack, and that the old one is not.
+    """
+    import demisto_sdk.commands.create_artifacts.content_artifacts_creator as cca
+    from demisto_sdk.commands.zip_packs.packs_zipper import PacksZipper
+
+    cca.logger = logging_setup(0)
+
+    with temp_dir() as temp:
+        packs_zipper = PacksZipper(pack_paths=PACKS_DIR + '/TestIndicatorTypes',
+                                   output=temp,
+                                   content_version='6.0.0',
+                                   zip_all=False)
+        packs_zipper.zip_packs()
+        assert packs_zipper.artifacts_manager.packs['TestIndicatorTypes'].metadata.content_items['reputation'] == [
+            {
+                "details": "Sample",
+                "reputationScriptName": "",
+                "enhancementScriptNames": []
+            }
+        ]
+
+
 def test_create_content_artifacts(mock_git):
     from demisto_sdk.commands.create_artifacts.content_artifacts_creator import \
         ArtifactsManager

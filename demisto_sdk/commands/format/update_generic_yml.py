@@ -11,7 +11,7 @@ from demisto_sdk.commands.common.constants import (INTEGRATION, PLAYBOOK,
 from demisto_sdk.commands.common.tools import (_get_file_id, find_type,
                                                get_entity_id_by_entity_type,
                                                get_not_registered_tests,
-                                               get_yaml, is_uuid)
+                                               get_yaml, is_uuid, get_remote_file)
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 
 ryaml = YAML()
@@ -46,12 +46,14 @@ class BaseUpdateYML(BaseUpdate):
                  assume_yes: bool = False,
                  deprecate: bool = False,
                  add_tests: bool = True,
+                 sort_with_master: bool = True
                  ):
         super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
                          verbose=verbose, assume_yes=assume_yes)
         self.id_and_version_location = self.get_id_and_version_path_object()
         self.deprecate = deprecate
         self.add_tests = add_tests
+        self.sort_with_master = sort_with_master
 
     def _load_conf_file(self) -> Dict:
         """
@@ -109,7 +111,8 @@ class BaseUpdateYML(BaseUpdate):
         self.update_id_to_equal_name()
         self.set_version_to_default(self.id_and_version_location)
         self.copy_tests_from_old_file()
-
+        if self.sort_with_master:
+            self._sort_yml_with_master()
         if self.deprecate:
             self.update_deprecate(file_type=file_type)
 
@@ -179,9 +182,10 @@ class BaseUpdateYML(BaseUpdate):
             if self.assume_yes:
                 should_edit_conf_json = True
             else:
-                should_edit_conf_json = click.confirm(f'The following test playbooks are not configured in conf.json file '
-                                                      f'{not_registered_tests_string}\n'
-                                                      f'Would you like to add them now?')
+                should_edit_conf_json = click.confirm(
+                    f'The following test playbooks are not configured in conf.json file '
+                    f'{not_registered_tests_string}\n'
+                    f'Would you like to add them now?')
             if should_edit_conf_json:
                 conf_json_content['tests'].extend(self.get_test_playbooks_configuration(not_registered_tests,
                                                                                         content_item_id,
@@ -256,3 +260,38 @@ class BaseUpdateYML(BaseUpdate):
                 click.echo('Updating YML ID and name to be without spaces at the end')
             self.data['name'] = self.data['name'].strip()
             self.id_and_version_location['id'] = self.id_and_version_location['id'].strip()
+
+    def _sort_yml_with_master(self):
+        yml_from_master = get_remote_file(self.schema_path)
+        sorted_data = {}
+        for k, v in yml_from_master.items():
+            if k in self.data:
+                sorted_data[k] = v
+
+        for k, v in self.data.items():
+            if k not in sorted_data:
+                sorted_data[k] = v
+
+    def _sort(self, original_data, new_data, sorted_data, path):
+        if type(original_data) != type(new_data):
+            raise ValueError(f'types of data is not the same. '
+                             f'original data is {type(original_data)} while new data is {type(new_data)}')
+        if not isinstance(original_data, dict):
+            self._insert_value_to_dict_path(sorted_data, new_data, path)
+        for k, v in original_data.items():
+            if k in new_data:
+                if not isinstance(v, dict):
+                    self._insert_value_to_dict_path(sorted_data, v, path)
+                else:
+                    self._sort(original_data[k], new_data[k], sorted_data, path + [k])
+
+        for k, v in new_data.items():
+            if k not in sorted_data:
+                self._insert_value_to_dict_path(sorted_data, v, path)
+
+    def _insert_value_to_dict_path(self, sorted_data, value, path):
+        dct = sorted_data
+        for p in path:
+            dct.setdefault(p, {})
+            dct = dct[p]
+

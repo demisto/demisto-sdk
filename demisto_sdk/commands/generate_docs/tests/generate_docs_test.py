@@ -740,12 +740,12 @@ yml_data_cases = [
         {'defaultvalue': '', 'display': 'test1', 'name': 'test1', 'required': True, 'type': 8},
         {'defaultvalue': '', 'display': 'test2', 'name': 'test2', 'required': True, 'type': 8}
     ]},  # case no param with additional info field
-     ['1. Navigate to **Settings** > **Integrations** > **Servers & Services**.',
-      '2. Search for test.', '3. Click **Add instance** to create and configure a new integration instance.',
-      '', '    | **Parameter** | **Required** |', '    | --- | --- |', '    | test1 | True |',
-      '    | test2 | True |',
-      '', '4. Click **Test** to validate the URLs, token, and connection.']  # expected
-     ),
+         ['1. Navigate to **Settings** > **Integrations** > **Servers & Services**.',
+          '2. Search for test.', '3. Click **Add instance** to create and configure a new integration instance.',
+          '', '    | **Parameter** | **Required** |', '    | --- | --- |', '    | test1 | True |',
+          '    | test2 | True |',
+          '', '4. Click **Test** to validate the URLs, token, and connection.']  # expected
+    ),
     (
         {'name': 'test', 'display': 'test', 'configuration': [
             {'display': 'test1', 'name': 'test1', 'additionalinfo': 'More info', 'required': True, 'type': 8},

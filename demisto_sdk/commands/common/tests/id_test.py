@@ -439,7 +439,8 @@ def test_is_layout_using_script_validate_integration_commands_scripts():
         "pack": "DeveloperTools"
     }
     }]
-    validator.integration_set = [{
+    validator.integration_set = [
+        {
             "SlackV2": {
                 "name": "SlackV2",
                 "file_path": "Packs/Slack/Integrations/Slack/Slack.yml",
@@ -497,7 +498,8 @@ def test_is_layout_using_script_validate_integration_commands_scripts_on_wrong_c
         "pack": "DeveloperTools"
     }
     }]
-    validator.integration_set = [{
+    validator.integration_set = [
+        {
             "SlackV2": {
                 "name": "SlackV2",
                 "file_path": "Packs/Slack/Integrations/Slack/Slack.yml",

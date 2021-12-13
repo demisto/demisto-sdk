@@ -3,7 +3,7 @@
 * Fixed `to_kebab_case`, it will now deal with strings that have hyphens, commas or periods in them, changing them to be hyphens in the new string.
 * Fixed an issue in the **create-id-set** command, where the `source` value included the git token if it was specified in the remote url.
 * Fixed an issue in the **merge-id-set** command, where merging fails because of duplicates but the packs are in the XSOAR repo but in different version control.
-* Add `Lists` Content Item as valid `IDSetType`
+* Fixed missing `Lists` Content Item as valid `IDSetType`
 
 # 1.5.4
 * Fixed an issue with the **format** command when contributing via the UI

@@ -417,7 +417,7 @@ def test_is_layout_using_existing_script_ignore_builtin_scripts():
         "The layout's script id is a builtin script therefore ignored and thus the result should be True."
 
 
-def test_is_layout_using_existing_script_ignore_integration_commands_scripts():
+def test_is_layout_using_script_validate_integration_commands_scripts():
     """
     Given
         - layout which has an integration command script id .
@@ -427,7 +427,7 @@ def test_is_layout_using_existing_script_ignore_integration_commands_scripts():
         - is_layout_scripts_found is called with an id_set.json
 
     Then
-        - Ensure that the integration command script is ignored - i.e is_layout_scripts_found returns True.
+        - Ensure that the integration command script is not ignored - i.e is_layout_scripts_found returns True.
     """
 
     validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
@@ -439,6 +439,32 @@ def test_is_layout_using_existing_script_ignore_integration_commands_scripts():
         "pack": "DeveloperTools"
     }
     }]
+    validator.integration_set = [{
+            "SlackV2": {
+                "name": "SlackV2",
+                "file_path": "Packs/Slack/Integrations/Slack/Slack.yml",
+                "fromversion": "5.0.0",
+                "commands": [
+                    "send-notification",
+                    "slack-send"
+                ],
+                "pack": "Slack"
+            }
+        },
+        {
+            "Mail Sender (New)": {
+                "name": "Mail Sender (New)",
+                "file_path": "Packs/MailSenderNew/Integrations/MailSenderNew/MailSenderNew.yml",
+                "commands": [
+                    "send-mail"
+                ],
+                "tests": [
+                    "Mail Sender (New) Test"
+                ],
+                "pack": "MailSenderNew"
+            }
+        }
+    ]
 
     layout_data = {'my-layout': {
         'typename': 'my-layout',
@@ -446,7 +472,64 @@ def test_is_layout_using_existing_script_ignore_integration_commands_scripts():
     }}
 
     assert validator._is_layout_scripts_found(layout_data=layout_data) is True, \
-        "The layout's script id is an integration command script therefore ignored and thus the result should be True."
+        "The layout's script id is an integration command which is real command."
+
+
+def test_is_layout_using_script_validate_integration_commands_scripts_on_wrong_command():
+    """
+    Given
+        - layout which has an integration command script id which is not existing in the id_set.json .
+        - id_set.json
+
+    When
+        - is_layout_scripts_found is called with an id_set.json
+
+    Then
+        - Ensure that the integration command script is not ignored - i.e is_layout_scripts_found returns False.
+    """
+
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+
+    validator.script_set = [{"script_to_test": {
+        "name": "script_to_test",
+        "file_path": "Packs/DeveloperTools/TestPlaybooks/script-script_to_test.yml",
+        "fromversion": "6.0.0",
+        "pack": "DeveloperTools"
+    }
+    }]
+    validator.integration_set = [{
+            "SlackV2": {
+                "name": "SlackV2",
+                "file_path": "Packs/Slack/Integrations/Slack/Slack.yml",
+                "fromversion": "5.0.0",
+                "commands": [
+                    "slack-send"
+                ],
+                "pack": "Slack"
+            }
+        },
+        {
+            "Mail Sender (New)": {
+                "name": "Mail Sender (New)",
+                "file_path": "Packs/MailSenderNew/Integrations/MailSenderNew/MailSenderNew.yml",
+                "commands": [
+                    "send-mail"
+                ],
+                "tests": [
+                    "Mail Sender (New) Test"
+                ],
+                "pack": "MailSenderNew"
+            }
+        }
+    ]
+
+    layout_data = {'my-layout': {
+        'typename': 'my-layout',
+        'scripts': ['SlackV2|||send-notification', 'Mail Sender (New)|||send-mail']
+    }}
+
+    assert validator._is_layout_scripts_found(layout_data=layout_data) is False, \
+        "The layout's script id is an integration command which is not real command."
 
 
 def test_is_non_real_command_found__happy_flow():

@@ -263,7 +263,7 @@ class IDSetValidations(BaseValidator):
                     checked_integration_id = list(checked_integration.keys())[0]
                     if checked_integration_id == integration_id:
                         commands = checked_integration.get(checked_integration_id, {}).get("commands")
-                        if integration_command in commands:
+                        if integration_command not in commands:
                             validated_scripts_set.add(script_id)
         return validated_scripts_set
 

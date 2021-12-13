@@ -1050,7 +1050,7 @@ def run_playbook(**kwargs):
     '-h', '--help'
 )
 @click.option(
-    '--input', '-i',
+    '-tpb', '--test-playbook-path',
     help="Path to test playbook to run, "
          "can be a path to specific test playbook or path to pack name for example: Packs/GitHub.",
     required=False

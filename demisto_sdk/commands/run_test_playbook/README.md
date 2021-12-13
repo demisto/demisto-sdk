@@ -14,7 +14,7 @@ export DEMISTO_API_KEY=<YOUR_DEMISTO_API_KEY>
 ```
 
 **Arguments**:
-* **-i, --input**
+* **-tpb', '--test-playbook-path**
                         Path to test playbook to run, can be a path to specific test playbook or path to pack name for example: Packs/GitHub.
 * **-t, --timeout**
                         Timeout for the command in seconds. The test playbook will continue to run in XSOAR.
@@ -38,14 +38,14 @@ export DEMISTO_API_KEY = `api key`
 
 
 ```
-demisto-sdk run-playbook -i 'Packs/Github/TestPlaybooks/Test-Github_test_playbook.yml'
+demisto-sdk run-playbook -tpb 'Packs/Github/TestPlaybooks/Test-Github_test_playbook.yml'
 ```
 
 This will run the playbook `Test-Github_test_playbook.yml` in XSOAR instance `https://demisto.local` and will wait for the test playbook to finish its run.
 <br/><br/>
 
 ```
-demisto-sdk run-playbook -p 'Packs/Github'
+demisto-sdk run-playbook -tpb 'Packs/Github'
 ```
 This will run all the test playbooks in `Packs/GitHub/TestPlaybooks` in XSOAR instance `https://demisto.local` and will wait for the playbooks to finish its run.
 <br/><br/>

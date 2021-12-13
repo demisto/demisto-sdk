@@ -15,7 +15,7 @@ class TestPlaybookRunner:
     """TestPlaybookRunner is a class that's designed to run a test playbook in a given XSOAR instance.
 
     Attributes:
-        input (str): the input of the test playbook to run
+        test_playbook_path (str): the input of the test playbook to run
         all (bool): whether to wait until the playbook run is completed or not.
         should_wait (bool): whether to wait until the test playbook run is completed or not.
         timeout (int): timeout for the command. The test playbook will continue to run in your xsoar instance.
@@ -23,11 +23,14 @@ class TestPlaybookRunner:
         base_link_to_workplan (str): the base link to see the full test playbook run in your xsoar instance.
     """
 
-    def __init__(self, input: str = '', all: bool = False, wait: bool = True, timeout: int = 90, insecure: bool = False):
-        self.test_playbook_input = input
+    def __init__(self, test_playbook_path: str = '', all: bool = False, wait: bool = True, timeout: int = 90,
+                 insecure: bool = False):
+        self.test_playbook_path = test_playbook_path
         self.all_test_playbooks = all
         self.should_wait = wait
         self.timeout = timeout
+
+        # we set to None so demisto_client will use env var DEMISTO_VERIFY_SSL
         verify = (not insecure) if insecure else None
         self.demisto_client = demisto_client.configure(verify_ssl=verify)
         self.base_link_to_workplan = self.get_base_link_to_workplan()
@@ -37,32 +40,27 @@ class TestPlaybookRunner:
         Run test playbooks on your XSOAR machine.
         :return: The exit code
         """
-        exit_code: int = self.run_test_playbooks_manager()
+        exit_code: int = self.manage_and_run_test_playbooks()
         return exit_code
 
-    def run_test_playbooks_manager(self):
+    def manage_and_run_test_playbooks(self):
         """
         Manages all ru-test-playbook command flows
         return The exit code of each flow
         """
         status_code = SUCCESS_RETURN_CODE
 
-        if not self.verify_flags():
-            status_code = ERROR_RETURN_CODE
-
-        elif (self.test_playbook_input is None or not os.path.exists(self.test_playbook_input)) and \
-                not self.all_test_playbooks:
-            click.secho(f'Error: Given input path: {self.test_playbook_input} does not exist', fg='bright_red')
+        if not self.validate_tpb_path():
             status_code = ERROR_RETURN_CODE
 
         # Run specific test playbook
-        elif os.path.isfile(self.test_playbook_input):
-            test_playbook_id = self.get_test_playbook_id(self.test_playbook_input)
+        elif os.path.isfile(self.test_playbook_path):
+            test_playbook_id = self.get_test_playbook_id(self.test_playbook_path)
             status_code = self.run_test_playbook_by_id(test_playbook_id)
 
         # Run all pack test playbooks
-        elif os.path.isdir(self.test_playbook_input):
-            status_code = self.run_test_playbooks_folder(self.test_playbook_input)
+        elif os.path.isdir(self.test_playbook_path):
+            status_code = self.run_test_playbooks_folder(self.test_playbook_path)
 
         # Run all repo test playbooks
         elif self.all_test_playbooks:
@@ -70,17 +68,22 @@ class TestPlaybookRunner:
 
         return status_code
 
-    def verify_flags(self) -> bool:
+    def validate_tpb_path(self) -> bool:
         """
-        Verifies that the flags configuration given by the user is correct
+        Verifies that the input path configuration given by the user is correct
         :return: The verification result
         """
-        is_flags_valid = True
+        valid = True
         if not self.all_test_playbooks:
-            if not self.test_playbook_input:
-                is_flags_valid = False
+            if not self.test_playbook_path:
                 print_color("Error: Missing option '-i' / '--input'.", LOG_COLORS.RED)
-        return is_flags_valid
+                valid = False
+
+            elif not os.path.exists(self.test_playbook_path):
+                click.secho(f'Error: Given input path: {self.test_playbook_path} does not exist', fg='bright_red')
+                valid = False
+
+        return valid
 
     def get_test_playbook_id(self, file_path):
         """
@@ -140,8 +143,8 @@ class TestPlaybookRunner:
             start_time = time.time()
 
             while elapsed_time < self.timeout:
-                test_playbook_results = self.get_test_playbook_results_dict(incident_id)
-                if test_playbook_results["state"] == "inprogress":
+                test_playbook_result = self.get_test_playbook_results_state(incident_id)
+                if test_playbook_result == "inprogress":
                     time.sleep(10)
                     elapsed_time = int(time.time() - start_time)
                 else:   # the test playbook has finished running
@@ -152,7 +155,7 @@ class TestPlaybookRunner:
                 print_color(f'The command had timed out while the playbook is in progress.\n'
                             f'To keep tracking the test playbook please go to : {work_plan_link}', LOG_COLORS.RED)
             else:
-                if test_playbook_results["state"] == "failed":
+                if test_playbook_result == "failed":
                     print_color("The test playbook finished running with status: FAILED", LOG_COLORS.RED)
                     return 1
                 else:
@@ -193,12 +196,13 @@ class TestPlaybookRunner:
                         '3. Unauthorized api key', LOG_COLORS.RED)
             raise e
 
-        print_color(f'The test playbook: {self.test_playbook_input} was triggered successfully.', LOG_COLORS.GREEN)
+        print_color(f'The test playbook: {self.test_playbook_path} was triggered successfully.', LOG_COLORS.GREEN)
         return response.id
 
-    def get_test_playbook_results_dict(self, inc_id):
+    def get_test_playbook_results_state(self, inc_id):
         test_playbook_results = self.demisto_client.generic_request(method='GET', path=f'/inv-playbook/{inc_id}')
-        return eval(test_playbook_results[0])
+        res_dict = eval(test_playbook_results[0])
+        return res_dict.get('state')
 
     def get_base_link_to_workplan(self):
         """Create a base link to the workplan in the specified xsoar instance

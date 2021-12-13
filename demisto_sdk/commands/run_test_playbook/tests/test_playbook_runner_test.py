@@ -31,8 +31,8 @@ class TestTestPlaybookRunner:
         """
         mocker.patch.object(demisto_client, 'configure', return_value=DefaultApi())
         mocker.patch.object(TestPlaybookRunner, 'create_incident_with_test_playbook', return_value='1234')
-        mocker.patch.object(TestPlaybookRunner, 'get_test_playbook_results_dict', return_value={"state": tpb_result})
-        result = click.Context(command=run_test_playbook).invoke(run_test_playbook, input=TEST_PLAYBOOK)
+        mocker.patch.object(TestPlaybookRunner, 'get_test_playbook_results_state', return_value=tpb_result)
+        result = click.Context(command=run_test_playbook).invoke(run_test_playbook, test_playbook_path=TEST_PLAYBOOK)
         assert result == res
 
     @pytest.mark.parametrize(argnames='tpb_result, res, massage', argvalues=[('failed', 1, FAILED_MASSAGE),
@@ -49,8 +49,8 @@ class TestTestPlaybookRunner:
         """
         mocker.patch.object(demisto_client, 'configure', return_value=DefaultApi())
         mocker.patch.object(TestPlaybookRunner, 'create_incident_with_test_playbook', return_value='1234')
-        mocker.patch.object(TestPlaybookRunner, 'get_test_playbook_results_dict', return_value={"state": tpb_result})
-        result = click.Context(command=run_test_playbook).invoke(run_test_playbook, input=VALID_PACK)
+        mocker.patch.object(TestPlaybookRunner, 'get_test_playbook_results_state', return_value=tpb_result)
+        result = click.Context(command=run_test_playbook).invoke(run_test_playbook, test_playbook_path=VALID_PACK)
         assert result == res
 
         stdout, _ = capsys.readouterr()
@@ -71,8 +71,8 @@ class TestTestPlaybookRunner:
         with ChangeCWD(CONTENT_REPO_EXAMPLE_ROOT):
             mocker.patch.object(demisto_client, 'configure', return_value=DefaultApi())
             mocker.patch.object(TestPlaybookRunner, 'create_incident_with_test_playbook', return_value='1234')
-            mocker.patch.object(TestPlaybookRunner, 'get_test_playbook_results_dict', return_value={"state": tpb_result})
-            result = click.Context(command=run_test_playbook).invoke(run_test_playbook, all=True, input='')
+            mocker.patch.object(TestPlaybookRunner, 'get_test_playbook_results_state', return_value=tpb_result)
+            result = click.Context(command=run_test_playbook).invoke(run_test_playbook, all=True, test_playbook_path='')
             assert result == res
 
             stdout, _ = capsys.readouterr()
@@ -93,11 +93,11 @@ class TestTestPlaybookRunner:
         """
         mocker.patch.object(demisto_client, 'configure', return_value=DefaultApi())
         mocker.patch.object(TestPlaybookRunner, 'create_incident_with_test_playbook', return_value='1234')
-        mocker.patch.object(TestPlaybookRunner, 'get_test_playbook_results_dict', return_value={'state': 'success'})
+        mocker.patch.object(TestPlaybookRunner, 'get_test_playbook_results_state', return_value='success')
 
         self.test_playbook_input = input_tpb
-        test_playbook = TestPlaybookRunner(input=self.test_playbook_input)
-        error_code = test_playbook.run_test_playbooks_manager()
+        test_playbook = TestPlaybookRunner(test_playbook_path=self.test_playbook_input)
+        error_code = test_playbook.manage_and_run_test_playbooks()
         assert error_code == exit_code
 
         stdout, _ = capsys.readouterr()
@@ -119,11 +119,11 @@ class TestTestPlaybookRunner:
         """
         mocker.patch.object(demisto_client, 'configure', return_value=DefaultApi())
         mocker.patch.object(TestPlaybookRunner, 'create_incident_with_test_playbook', return_value='1234')
-        mocker.patch.object(TestPlaybookRunner, 'get_test_playbook_results_dict', return_value={'state': 'success'})
+        mocker.patch.object(TestPlaybookRunner, 'get_test_playbook_results_state', return_value='success')
 
         self.test_playbook_input = input_tpb
-        test_playbook = TestPlaybookRunner(input=self.test_playbook_input)
-        error_code = test_playbook.run_test_playbooks_manager()
+        test_playbook = TestPlaybookRunner(test_playbook_path=self.test_playbook_input)
+        error_code = test_playbook.manage_and_run_test_playbooks()
         assert error_code == exit_code
 
         stdout, _ = capsys.readouterr()
@@ -145,10 +145,10 @@ class TestTestPlaybookRunner:
         """
         mocker.patch.object(demisto_client, 'configure', return_value=DefaultApi())
         mocker.patch.object(TestPlaybookRunner, 'create_incident_with_test_playbook', return_value='1234')
-        mocker.patch.object(TestPlaybookRunner, 'get_test_playbook_results_dict', return_value={'state': tpb_results})
+        mocker.patch.object(TestPlaybookRunner, 'get_test_playbook_results_state', return_value=tpb_results)
 
         self.test_playbook_input = TEST_PLAYBOOK
-        test_playbook_runner = TestPlaybookRunner(input=self.test_playbook_input)
+        test_playbook_runner = TestPlaybookRunner(test_playbook_path=self.test_playbook_input)
         res = test_playbook_runner.run_test_playbook_by_id(playbook_id)
 
         assert res == exit_code
@@ -173,10 +173,10 @@ class TestTestPlaybookRunner:
         """
         mocker.patch.object(demisto_client, 'configure', return_value=DefaultApi())
         mocker.patch.object(TestPlaybookRunner, 'create_incident_with_test_playbook', return_value='1234')
-        mocker.patch.object(TestPlaybookRunner, 'get_test_playbook_results_dict', return_value={'state': tpb_results})
+        mocker.patch.object(TestPlaybookRunner, 'get_test_playbook_results_state', return_value=tpb_results)
 
         self.test_playbook_input = TEST_PLAYBOOK
-        test_playbook_runner = TestPlaybookRunner(input=self.test_playbook_input)
+        test_playbook_runner = TestPlaybookRunner(test_playbook_path=self.test_playbook_input)
         res = test_playbook_runner.run_test_playbook_by_id(playbook_id)
 
         assert res == exit_code

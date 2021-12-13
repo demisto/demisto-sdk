@@ -211,8 +211,8 @@ class ContentItemsHandler:
             return
 
         # reputation in old format aren't supported in 6.0.0 server version
-        if content_object_directory == INDICATOR_TYPES_DIR and not re.match(content_object.path.name,
-                                                                            'reputation-.*.json'):
+        if content_object_directory == INDICATOR_TYPES_DIR and re.match('reputation-.*.json',
+                                                                        content_object.path.name):
             return
 
         # skip content items that are not displayed in contentItems

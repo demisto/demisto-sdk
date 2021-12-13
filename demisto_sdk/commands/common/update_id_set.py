@@ -29,7 +29,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type, get_json,
                                                get_mp_types_by_item,
                                                get_pack_name, get_yaml,
                                                print_color, print_error,
-                                               print_warning)
+                                               print_warning, get_current_repo, get_file)
 from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
 
 CONTENT_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
@@ -481,8 +481,7 @@ def get_playbook_data(file_path: str) -> dict:
     dependent_incident_fields, dependent_indicator_fields = get_dependent_incident_and_indicator_fields(data_dictionary)
 
     playbook_data = create_common_entity_data(path=file_path, name=name, to_version=toversion,
-                                              from_version=fromversion, pack=pack,
-                                              marketplace=data_dictionary.get(MARKETPLACE_KEY_PACK_METADATA))
+                                              from_version=fromversion, pack=pack)
 
     transformers, filters = get_filters_and_transformers_from_playbook(data_dictionary)
 
@@ -529,7 +528,7 @@ def get_script_data(file_path, script_code=None):
     pack = get_pack_name(file_path)
 
     script_data = create_common_entity_data(path=file_path, name=name, to_version=toversion, from_version=fromversion,
-                                            pack=pack, marketplace=data_dictionary.get(MARKETPLACE_KEY_PACK_METADATA))
+                                            pack=pack)
     if deprecated:
         script_data['deprecated'] = deprecated
     if depends_on:
@@ -623,8 +622,7 @@ def get_layout_data(path):
     tabs = layout.get('tabs', [])
     scripts = get_layouts_scripts_ids(tabs)
 
-    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack,
-                                     marketplace=json_data.get(MARKETPLACE_KEY_PACK_METADATA))
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
     if type_:
         data['typeID'] = type_
     if type_name:
@@ -734,8 +732,7 @@ def get_incident_field_data(path, incidents_types_list):
     if field_calculations_scripts:
         all_scripts = all_scripts.union({field_calculations_scripts})
 
-    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack,
-                                     marketplace=json_data.get(MARKETPLACE_KEY_PACK_METADATA))
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
 
     if all_associated_types:
         data['incident_types'] = list(all_associated_types)
@@ -772,8 +769,7 @@ def get_indicator_type_data(path, all_integrations):
         if integration_commands and reputation_command in integration_commands:
             associated_integrations.add(integration_name)
 
-    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack,
-                                     marketplace=json_data.get(MARKETPLACE_KEY_PACK_METADATA))
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
     if associated_integrations:
         data['integrations'] = list(associated_integrations)
     if all_scripts:
@@ -793,8 +789,7 @@ def get_incident_type_data(path):
     pre_processing_script = json_data.get('preProcessingScript')
     pack = get_pack_name(path)
 
-    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack,
-                                     marketplace=json_data.get(MARKETPLACE_KEY_PACK_METADATA))
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
     if playbook_id and playbook_id != '':
         data['playbooks'] = playbook_id
     if pre_processing_script and pre_processing_script != '':
@@ -829,8 +824,7 @@ def get_classifier_data(path):
         if complex_value:
             transformers, filters = get_filters_and_transformers_from_complex_value(complex_value)
 
-    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack,
-                                     marketplace=json_data.get(MARKETPLACE_KEY_PACK_METADATA))
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
     if incidents_types:
         data['incident_types'] = list(incidents_types)
     if filters:
@@ -843,7 +837,7 @@ def get_classifier_data(path):
     return {id_: data}
 
 
-def create_common_entity_data(path, name, to_version, from_version, pack, marketplace):
+def create_common_entity_data(path, name, to_version, from_version, pack):
     data = OrderedDict()
     if name:
         data['name'] = name
@@ -855,8 +849,6 @@ def create_common_entity_data(path, name, to_version, from_version, pack, market
         data['fromversion'] = from_version
     if pack:
         data['pack'] = pack
-    if marketplace:
-        data['marketplace'] = marketplace
     return data
 
 
@@ -938,8 +930,7 @@ def get_mapper_data(path):
                 all_filters.update(filters)
 
     incidents_fields = {incident_field for incident_field in incidents_fields if incident_field not in BUILT_IN_FIELDS}
-    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack,
-                                     marketplace=json_data.get(MARKETPLACE_KEY_PACK_METADATA))
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
     if incidents_types:
         data['incident_types'] = list(incidents_types)
     if incidents_fields:
@@ -968,8 +959,7 @@ def get_widget_data(path):
     if json_data.get('dataType') == 'scripts':
         scripts = json_data.get('query')
 
-    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack,
-                                     marketplace=json_data.get(MARKETPLACE_KEY_PACK_METADATA))
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
     if scripts:
         data['scripts'] = [scripts]
 
@@ -1001,8 +991,7 @@ def parse_dashboard_or_report_data(all_layouts, data_file_json, path):
             if widget_data.get('dataType') == 'scripts':
                 scripts.add(widget_data.get('query'))
 
-    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack,
-                                     marketplace=data_file_json.get(MARKETPLACE_KEY_PACK_METADATA))
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
     if scripts:
         data['scripts'] = list(scripts)
 
@@ -1018,8 +1007,7 @@ def get_general_data(path):
     toversion = json_data.get('toVersion')
     pack = get_pack_name(path)
 
-    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack,
-                                     marketplace=json_data.get(MARKETPLACE_KEY_PACK_METADATA))
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
     if brandname:  # for classifiers
         data['name'] = brandname
     return {id_: data}
@@ -1039,9 +1027,13 @@ def get_depends_on(data_dict):
 
 def should_skip_item_by_mp(file_path: str, marketplace: str):
     """
-    Checks if the item given (as path) should be part of the current generated id set, depending if the current
-    marketplace is present in the item's pack metadata in the relevant field. For xsoar marketplace, always return
-    False, as all content items are relevant for xsoar marketplace.
+    Checks if the item given (as path) should be part of the current generated id set.
+     The checks are in this order:
+     1. If we are in a xsoar run, then all packs should be uploaded.
+     2. Otherwise, this is not a xsoar run, we check if the given item has a 'xsoarOnly' field set to true.
+     3. Otherwise, we check if the item is inside a pack that it's pack metadata 'marketplaces' field does not include
+     the current marketplace we are creating this id set for.
+
     Args:
         file_path: path to content item
         marketplace: the marketplace this current generated id set is for
@@ -1049,8 +1041,23 @@ def should_skip_item_by_mp(file_path: str, marketplace: str):
     Returns: True if should be skipped, else False
 
     """
+    # first check, if we are using this id set for xsoar MP
     if marketplace == MarketplaceVersions.XSOAR.value:
         return False
+
+    # second check, check field 'xsoarOnly' in the item's file
+    try:
+        item_data = get_yaml(file_path)
+    except ValueError:
+        item_data = get_json(file_path)
+    except FileNotFoundError:
+        return True
+    except IsADirectoryError:
+        return True
+    if item_data.get('xsoarOnly'):
+        return True
+
+    # third check, check the metadata of the pack
     return marketplace not in get_mp_types_by_item(file_path)
 
 
@@ -1068,9 +1075,9 @@ def process_integration(file_path: str, print_logs: bool, marketplace: str = 'xs
     """
     res = []
     try:
-        if should_skip_item_by_mp(file_path, marketplace):
-            return []
         if os.path.isfile(file_path):
+            if should_skip_item_by_mp(file_path, marketplace):
+                return []
             if find_type(file_path) in (FileType.INTEGRATION, FileType.BETA_INTEGRATION):
                 if print_logs:
                     print(f'adding {file_path} to id_set')
@@ -1079,6 +1086,8 @@ def process_integration(file_path: str, print_logs: bool, marketplace: str = 'xs
             # package integration
             package_name = os.path.basename(file_path)
             file_path = os.path.join(file_path, '{}.yml'.format(package_name))
+            if should_skip_item_by_mp(file_path, marketplace):
+                return []
             if os.path.isfile(file_path):
                 # locally, might have leftover dirs without committed files
                 if print_logs:
@@ -1094,9 +1103,9 @@ def process_integration(file_path: str, print_logs: bool, marketplace: str = 'xs
 def process_script(file_path: str, print_logs: bool, marketplace: str = 'xsoar') -> list:
     res = []
     try:
-        if should_skip_item_by_mp(file_path, marketplace):
-            return []
         if os.path.isfile(file_path):
+            if should_skip_item_by_mp(file_path, marketplace):
+                return []
             if find_type(file_path) == FileType.SCRIPT:
                 if print_logs:
                     print(f'adding {file_path} to id_set')
@@ -1105,6 +1114,8 @@ def process_script(file_path: str, print_logs: bool, marketplace: str = 'xsoar')
             # package script
             unifier = YmlUnifier(file_path)
             yml_path, code = unifier.get_script_or_integration_package_data()
+            if should_skip_item_by_mp(yml_path, marketplace):
+                return []
             if print_logs:
                 print(f'adding {file_path} to id_set')
             res.append(get_script_data(yml_path, script_code=code))
@@ -1242,7 +1253,7 @@ def process_general_items(file_path: str, print_logs: bool, expected_file_types:
         file_path: The file path from an item folder
         print_logs: Whether to print logs to stdout
         expected_file_types: specific file type to parse, will ignore the rest
-        data_extraction_func: a function that given a file path will returns an id-set data dict.
+        data_extraction_func: a function that given a file path will return an id-set data dict.
 
     Returns:
         a list of item data.
@@ -1391,8 +1402,7 @@ def get_generic_type_data(path):
     definitionId = json_data.get('definitionId')
     layout = json_data.get('layout')
 
-    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack,
-                                     marketplace=json_data.get(MARKETPLACE_KEY_PACK_METADATA))
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
     if playbook_id and playbook_id != '':
         data['playbooks'] = playbook_id
     if definitionId:
@@ -1440,8 +1450,7 @@ def get_generic_field_data(path, generic_types_list):
     if field_calculations_scripts:
         all_scripts = all_scripts.union({field_calculations_scripts})
 
-    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack,
-                                     marketplace=json_data.get(MARKETPLACE_KEY_PACK_METADATA))
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
 
     if all_associated_types:
         data['generic_types'] = list(all_associated_types)
@@ -1455,12 +1464,12 @@ def get_generic_field_data(path, generic_types_list):
 
 def get_job_data(path: str, print_logs: bool):
     json_data = get_json(path)
+
     data = create_common_entity_data(path=path,
                                      name=json_data.get('name'),
                                      to_version=json_data.get('toVersion'),
                                      from_version=json_data.get('fromVersion'),
-                                     pack=get_pack_name(path),
-                                     marketplace=json_data.get(MARKETPLACE_KEY_PACK_METADATA))
+                                     pack=get_pack_name(path))
     data['playbookId'] = json_data.get('playbookId')
     data['selectedFeeds'] = json_data.get('selectedFeeds', [])
     data['details'] = json_data.get('details', [])
@@ -1484,8 +1493,7 @@ def get_generic_module_data(path):
         'title': view.get('title'),
         'dashboards': [tab.get('dashboard', {}).get('id') for tab in view.get('tabs', [])]} for view in views}
 
-    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack,
-                                     marketplace=json_data.get(MARKETPLACE_KEY_PACK_METADATA))
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
     if definitionIds:
         data['definitionIds'] = definitionIds
     if views:
@@ -1500,8 +1508,7 @@ def get_list_data(path: str):
                                      name=json_data.get('name'),
                                      to_version=json_data.get('toVersion'),
                                      from_version=json_data.get('fromVersion'),
-                                     pack=get_pack_name(path),
-                                     marketplace=json_data.get(MARKETPLACE_KEY_PACK_METADATA))
+                                     pack=get_pack_name(path))
 
     return {json_data.get('id'): data}
 
@@ -1616,6 +1623,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
         pack_to_create: The input path. the default is the content repo.
         objects_to_create (list, optional): [description]. Defaults to None.
         fail_on_duplicates: If value is True an error will be raised if duplicates are found
+        marketplace: The marketplace the id set are created for.
 
     Returns: id-set object
     """

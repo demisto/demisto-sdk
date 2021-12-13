@@ -69,6 +69,24 @@ class TestPacksMetadata:
     ]
 
     @staticmethod
+    def test_re_create_id_set(mocker):
+        import demisto_sdk.commands.common.update_id_set as uis
+        mocker.patch.object(uis, 'get_mp_types_by_item', return_value=['xsoar', 'marketplacev2'])
+        xsoar_only_content_items = ['Dashboards', 'Layouts', 'Reports', 'Widgets', 'GenericFields',
+                                    'GenericTypes', 'GenericModules', 'GenericDefinitions']
+        pack_path = os.path.join(TESTS_DIR, 'test_files', 'DummyPack')
+        id_set_xsoar = re_create_id_set(pack_to_create=pack_path, marketplace='xsoar')
+        id_set_marketplacev2 = re_create_id_set(pack_to_create=pack_path, marketplace='marketplacev2')
+        assert id_set_xsoar.get('scripts')
+        assert id_set_xsoar.get('playbooks')
+        assert id_set_xsoar.get('integrations')
+        assert id_set_marketplacev2.get('scripts')
+        assert id_set_marketplacev2.get('playbooks')
+        assert id_set_marketplacev2.get('integrations')
+        assert all(item in id_set_xsoar.keys() for item in xsoar_only_content_items)
+        assert all(item not in id_set_marketplacev2.keys() for item in xsoar_only_content_items)
+
+    @staticmethod
     @pytest.mark.parametrize('metadata_file_content, author, certification', TEST_PACK)
     def test_process_metadata(mocker, repo, metadata_file_content, author, certification):
         """
@@ -2557,3 +2575,12 @@ class TestIDSetMPV2:
         assert not id_set_marketplacev2.get('integrations')
         assert all(item in id_set_xsoar.keys() for item in xsoar_only_content_items)
         assert all(item not in id_set_marketplacev2.keys() for item in xsoar_only_content_items)
+
+    def test_re_create_id_set_script_is_xsoar_only(self, mocker):
+        import demisto_sdk.commands.common.update_id_set as uis
+        mocker.patch.object(uis, 'get_mp_types_by_item', return_value=['xsoar', 'marketplacev2'])
+        pack_path = os.path.join(TESTS_DIR, 'test_files', 'DummyPackScriptIsXsoarOnly')
+        id_set_marketplacev2 = uis.re_create_id_set(pack_to_create=pack_path, marketplace='marketplacev2')
+        assert not id_set_marketplacev2.get('scripts')
+        assert id_set_marketplacev2.get('playbooks')
+        assert id_set_marketplacev2.get('integrations')

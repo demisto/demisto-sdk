@@ -582,7 +582,6 @@ def test_generate_script_doc(tmp_path, mocker):
             assert f1.read() == f2.read()
 
 
-
 class TestAppendOrReplaceCommandInDocs:
     positive_test_data_file = os.path.join(FILES_PATH, 'docs_test', 'positive_docs_section_end_with_eof.md')
     command = 'dxl-send-event'

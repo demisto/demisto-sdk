@@ -1078,7 +1078,7 @@ class Integration:
 
         # define module instance:
         params = self.configuration.params  # type: ignore
-        incident_configuration = params.pop('incident_configuration') if 'incident_configuration' in params else {}
+        incident_configuration = params.get('incident_configuration', {})
 
         # If incident_type is given in Test Playbook configuration on test-conf, we change the default configuration.
         if incident_configuration and incident_configuration.get('incident_type'):

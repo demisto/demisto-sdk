@@ -1077,9 +1077,8 @@ class Integration:
         )
 
         # define module instance:
-
-        incident_configuration = self.configuration.params.pop(
-            'incident_configuration') if 'incident_configuration' in self.configuration.params else {}  # type: ignore
+        params = self.configuration.params  # type: ignore
+        incident_configuration = params.pop('incident_configuration') if 'incident_configuration' in params else {}
 
         # If incident_type is given in Test Playbook configuration on test-conf, we change the default configuration.
         if incident_configuration and incident_configuration.get('incident_type'):
@@ -1115,14 +1114,11 @@ class Integration:
 
         # set module params
         for param_conf in module_configuration:
-            if param_conf['display'] in self.configuration.params or param_conf[  # type: ignore
-                'name'] in self.configuration.params:  # type: ignore
+            if param_conf['display'] in params or param_conf['name'] in params:  # type: ignore
                 # param defined in conf
-                key = param_conf['display'] if param_conf['display'] in self.configuration.params else param_conf[
-                    # type: ignore
-                    'name']
+                key = param_conf['display'] if param_conf['display'] in params else param_conf['name']
                 if key == 'credentials':
-                    credentials = self.configuration.params[key]  # type: ignore
+                    credentials = params[key]  # type: ignore
                     param_value = {
                         'credential': '',
                         'identifier': credentials['identifier'],
@@ -1130,7 +1126,7 @@ class Integration:
                         'passwordChanged': False
                     }
                 else:
-                    param_value = self.configuration.params[key]  # type: ignore
+                    param_value = params[key]  # type: ignore
 
                 param_conf['value'] = param_value
                 param_conf['hasvalue'] = True

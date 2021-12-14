@@ -271,7 +271,7 @@ class ContributionConverter:
 
         Args:
             yml_path: str: Content item yml path.
-            is_contribution: bool: Check if the integration is a new contribution or not.
+            is_contribution: bool: Check if the content item is a new integration contribution or not.
         """
         file_type = find_type(yml_path)
         file_type = file_type.value if file_type else file_type

@@ -79,7 +79,7 @@ def generate_integration_doc(
         insecure: should use insecure
         verbose: verbose (debug mode)
         command: specific command to generate docs for
-        is_contribution: Check if the integration is a new contribution or not.
+        is_contribution: Check if the content item is a new integration contribution or not.
 
     """
     try:

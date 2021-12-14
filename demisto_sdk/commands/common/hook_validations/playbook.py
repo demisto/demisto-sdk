@@ -314,20 +314,22 @@ class PlaybookValidator(ContentEntityValidator):
             return is_valid
 
         id_set_scripts = id_set_file.get("scripts")
+        id_set_integrations = id_set_file.get("integrations")
         pb_tasks = self.current_file.get('tasks', {})
         for id, task_dict in pb_tasks.items():
             pb_task = task_dict.get('task', {})
             script_id_used_in_task = pb_task.get('script')
             task_script_name = pb_task.get('scriptName')
-            script_entry_to_check = script_id_used_in_task if script_id_used_in_task else task_script_name  # i.e
-            # script id or script name
-            integration_script_flag = "|||"  # skipping all builtin integration scripts
-
-            is_script_id_should_be_checked = script_id_used_in_task and integration_script_flag not in script_id_used_in_task
-            if is_script_id_should_be_checked:
-                is_valid = self.check_script_id(script_id_used_in_task, id_set_scripts)
-            elif task_script_name and integration_script_flag not in task_script_name:
-                is_valid = self.check_script_name(task_script_name, id_set_scripts)
+            script_entry_to_check = script_id_used_in_task if script_id_used_in_task else task_script_name
+            integration_script_flag = "|||"
+            if script_id_used_in_task:
+                if integration_script_flag not in script_id_used_in_task:  # Checking script
+                    is_valid &= self.check_script_id(script_id_used_in_task, id_set_scripts)
+                else:  # Checking integration command
+                    is_valid &= self.check_integration_command(script_id_used_in_task,
+                                                               id_set_integrations)
+            if task_script_name and integration_script_flag not in task_script_name:
+                is_valid &= self.check_script_name(task_script_name, id_set_scripts)
 
             if not is_valid:
                 error_message, error_code = Errors.invalid_script_id(script_entry_to_check, pb_task)
@@ -345,6 +347,29 @@ class PlaybookValidator(ContentEntityValidator):
             True if script_used_in_task exists in id_set
         """
         return any([script_id_used_in_task in id_set_dict for id_set_dict in id_set_scripts])
+
+    def check_integration_command(self, integration_id_used_in_task, id_set_integrations,
+                                  empty_integration_id=True):
+        """
+        Checks if integration id and command exists in at least one of id_set's dicts
+        Args:
+            integration_id_used_in_task (str):  integration id from playbook
+            id_set_integrations (list): all integrations of id_set
+            empty_integration_id (bool): Whether integration_id is legal as None.
+             i.e.: |||Command is legal or not. true - legal, false - not
+        Returns:
+            True if integration_id and integration_command exist in id_set
+        """
+        integration_id, integration_command = integration_id_used_in_task.split("|||")
+        if integration_id == "Builtin":  # skipping Builtin
+            return True
+        for id_integration_dict in id_set_integrations:
+            id_integration_id = list(id_integration_dict.keys())[0]
+            if (empty_integration_id and not integration_id) or id_integration_id == integration_id:
+                commands = id_integration_dict.get(id_integration_id, {}).get("commands", [])
+                if integration_command in commands:
+                    return True
+        return False
 
     def check_script_name(self, pb_script_name, id_set_scripts):
         """

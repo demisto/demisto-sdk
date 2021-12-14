@@ -4,6 +4,7 @@
 * Fixed an issue in the **create-id-set** command, where the `source` value included the git token if it was specified in the remote url.
 * Fixed an issue in the **merge-id-set** command, where merging fails because of duplicates but the packs are in the XSOAR repo but in different version control.
 * Fixed missing `Lists` Content Item as valid `IDSetType`
+* Added enhancement for **generate-docs**. It is possible to provide both file or a comma seperated list as `examples`. Also, it's possible to provide more than one example for a script or a command.
 * Fixed an issue in the **zip-packs** command, it will now add new indicator types to the zipped pack.
 
 # 1.5.4

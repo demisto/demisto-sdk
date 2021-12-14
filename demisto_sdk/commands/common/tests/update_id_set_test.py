@@ -68,23 +68,46 @@ class TestPacksMetadata:
         (METADATA_WITH_COMMUNITY_SUPPORT, 'Someone', ''),
     ]
 
-    @staticmethod
-    def test_re_create_id_set(mocker):
-        import demisto_sdk.commands.common.update_id_set as uis
-        mocker.patch.object(uis, 'get_mp_types_by_item', return_value=['xsoar', 'marketplacev2'])
-        xsoar_only_content_items = ['Dashboards', 'Layouts', 'Reports', 'Widgets', 'GenericFields',
-                                    'GenericTypes', 'GenericModules', 'GenericDefinitions']
-        pack_path = os.path.join(TESTS_DIR, 'test_files', 'DummyPack')
-        id_set_xsoar = re_create_id_set(pack_to_create=pack_path, marketplace='xsoar')
-        id_set_marketplacev2 = re_create_id_set(pack_to_create=pack_path, marketplace='marketplacev2')
-        assert id_set_xsoar.get('scripts')
-        assert id_set_xsoar.get('playbooks')
-        assert id_set_xsoar.get('integrations')
-        assert id_set_marketplacev2.get('scripts')
-        assert id_set_marketplacev2.get('playbooks')
-        assert id_set_marketplacev2.get('integrations')
-        assert all(item in id_set_xsoar.keys() for item in xsoar_only_content_items)
-        assert all(item not in id_set_marketplacev2.keys() for item in xsoar_only_content_items)
+    # @staticmethod
+    # def test_re_create_id_set(mocker):
+    #     import demisto_sdk.commands.common.update_id_set as uis
+    #     mocker.patch.object(uis, 'get_mp_types_by_item', return_value=['xsoar', 'marketplacev2'])
+    #     xsoar_only_content_items = ['Dashboards', 'Layouts', 'Reports', 'Widgets', 'GenericFields',
+    #                                 'GenericTypes', 'GenericModules', 'GenericDefinitions']
+    #     pack_path = os.path.join(TESTS_DIR, 'test_files', 'DummyPack')
+    #     id_set_xsoar = re_create_id_set(pack_to_create=pack_path, marketplace='xsoar')
+    #     id_set_marketplacev2 = re_create_id_set(pack_to_create=pack_path, marketplace='marketplacev2')
+    #     assert id_set_xsoar.get('scripts')
+    #     assert id_set_xsoar.get('playbooks')
+    #     assert id_set_xsoar.get('integrations')
+    #     assert id_set_marketplacev2.get('scripts')
+    #     assert id_set_marketplacev2.get('playbooks')
+    #     assert id_set_marketplacev2.get('integrations')
+    #     assert all(item in id_set_xsoar.keys() for item in xsoar_only_content_items)
+    #     assert all(item not in id_set_marketplacev2.keys() for item in xsoar_only_content_items)
+    #
+    # @staticmethod
+    # @pytest.mark.parametrize('metadata_file_content, author, certification', TEST_PACK)
+    # def test_process_metadata_2(mocker, repo, metadata_file_content, author, certification):
+    #     """
+    #     Given
+    #         - A pack_metadata file for Pack1
+    #     When
+    #         - parsing pack metadata files
+    #     Then
+    #         - parsing all the data from file successfully
+    #     """
+    #     import demisto_sdk.commands.common.update_id_set as uis
+    #     mocker.patch.object(uis, 'get_pack_name', return_value='Pack1')
+    #     mocker.patch.object(uis, 'get_mp_types_by_item', return_value=['xsoar', 'marketplacev2'])
+    #     pack_path = os.path.join(TESTS_DIR, 'test_files', 'DummyPack')
+    #     id_set_xsoar = re_create_id_set(pack_to_create=pack_path, marketplace='xsoar')
+    #
+    #     pack = repo.create_pack("Pack1")
+    #     pack.pack_metadata.write_json(metadata_file_content)
+    #
+    #     res = get_pack_metadata_data(pack.pack_metadata.path, print_logs=False)
+
 
     @staticmethod
     @pytest.mark.parametrize('metadata_file_content, author, certification', TEST_PACK)
@@ -99,6 +122,7 @@ class TestPacksMetadata:
         """
         import demisto_sdk.commands.common.update_id_set as uis
         mocker.patch.object(uis, 'get_pack_name', return_value='Pack1')
+        mocker.patch.object(uis, 'get_mp_types_by_item', return_value=['xsoar', 'marketplacev2'])
 
         pack = repo.create_pack("Pack1")
         pack.pack_metadata.write_json(metadata_file_content)

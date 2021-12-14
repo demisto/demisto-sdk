@@ -11,6 +11,7 @@ from distutils.version import LooseVersion
 from enum import Enum
 from functools import partial
 from multiprocessing import Pool, cpu_count
+from pathlib import Path
 from typing import Callable, Dict, List, Optional, Tuple
 
 import click
@@ -49,6 +50,7 @@ CONTENT_MP_V2_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks
 ID_SET_MP_V2_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Classifiers',
                          'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
                          'Mappers', 'Lists', 'Jobs']
+
 
 BUILT_IN_FIELDS = [
     "name",
@@ -1046,15 +1048,12 @@ def should_skip_item_by_mp(file_path: str, marketplace: str):
         return False
 
     # second check, check field 'xsoarOnly' in the item's file
+    file_type = Path(file_path).suffix
     try:
-        item_data = get_yaml(file_path)
-    except ValueError:
-        item_data = get_json(file_path)
-    except FileNotFoundError:
-        return True
-    except IsADirectoryError:
-        return True
-    if item_data.get('xsoarOnly'):
+        item_data = get_file(file_path, file_type)
+        if item_data.get('xsoarOnly'):
+            return True
+    except (ValueError, FileNotFoundError, IsADirectoryError):
         return True
 
     # third check, check the metadata of the pack
@@ -1624,6 +1623,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
         objects_to_create (list, optional): [description]. Defaults to None.
         fail_on_duplicates: If value is True an error will be raised if duplicates are found
         marketplace: The marketplace the id set are created for.
+        print_logs: Whether to print logs or not
 
     Returns: id-set object
     """
@@ -1917,7 +1917,6 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
 
         if 'GenericDefinitions' in objects_to_create:
             print_color("\nStarting iteration over Generic Definitions", LOG_COLORS.GREEN)
-            print_color(f"pack to create: {pack_to_create}", LOG_COLORS.YELLOW)
             for arr in pool.map(partial(process_general_items,
                                         expected_file_types=(FileType.GENERIC_DEFINITION,),
                                         data_extraction_func=get_general_data,
@@ -1944,7 +1943,6 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
 
         if 'GenericTypes' in objects_to_create:
             print_color("\nStarting iteration over Generic Types", LOG_COLORS.GREEN)
-            print_color(f"pack to create: {pack_to_create}", LOG_COLORS.YELLOW)
             for arr in pool.map(partial(process_generic_items,
                                         print_logs=print_logs,
                                         marketplace=marketplace,
@@ -1969,7 +1967,6 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
 
         if 'Jobs' in objects_to_create:
             print_color("\nStarting iteration over Jobs", LOG_COLORS.GREEN)
-            print_color(f"pack to create: {pack_to_create}", LOG_COLORS.YELLOW)
             for arr in pool.map(partial(process_jobs, print_logs=print_logs, marketplace=marketplace, ),
                                 get_general_paths(JOBS_DIR, pack_to_create)):
                 jobs_list.extend(arr)

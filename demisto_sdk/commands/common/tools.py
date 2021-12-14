@@ -473,7 +473,7 @@ def get_file(file_path, type_of_file):
             # revert str to stream for loader
             stream = io.StringIO(replaced)
             try:
-                if 'yml' == type_of_file:
+                if type_of_file in ('yml', '.yml'):
                     data_dictionary = yaml.load(stream, Loader=XsoarLoader)
 
                 else:

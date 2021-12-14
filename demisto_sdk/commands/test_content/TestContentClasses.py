@@ -624,7 +624,8 @@ class BuildContext:
         """
         if self.server:
             return {self.server: None}
-        instances_ips = {env.get('InstanceDNS'): env.get('TunnelPort') for env in self.env_json if env.get('Role') == self.server_version}
+        instances_ips = {env.get('InstanceDNS'): env.get('TunnelPort') for env in self.env_json if
+                         env.get('Role') == self.server_version}
         return instances_ips
 
     def get_public_ip_from_server_url(self, server_url: str) -> str:
@@ -1077,8 +1078,10 @@ class Integration:
 
         # define module instance:
 
+        incident_configuration = self.configuration.params.pop(
+            'incident_configuration') if 'incident_configuration' in self.configuration.params else {}  # type: ignore
+
         # If incident_type is given in Test Playbook configuration on test-conf, we change the default configuration.
-        incident_configuration = self.configuration.params.get('incident_configuration', {})  # type: ignore
         if incident_configuration and incident_configuration.get('incident_type'):
             incident_type_configuration = list(
                 filter(lambda config: config.get('name') == 'incidentType', module_configuration))
@@ -1113,9 +1116,10 @@ class Integration:
         # set module params
         for param_conf in module_configuration:
             if param_conf['display'] in self.configuration.params or param_conf[  # type: ignore
-                    'name'] in self.configuration.params:  # type: ignore
+                'name'] in self.configuration.params:  # type: ignore
                 # param defined in conf
-                key = param_conf['display'] if param_conf['display'] in self.configuration.params else param_conf[  # type: ignore
+                key = param_conf['display'] if param_conf['display'] in self.configuration.params else param_conf[
+                    # type: ignore
                     'name']
                 if key == 'credentials':
                     credentials = self.configuration.params[key]  # type: ignore
@@ -1244,7 +1248,8 @@ class Integration:
         """
         # tested with POSTMAN, this is the minimum required fields for the request.
         module_instance = {
-            key: self.integration_configuration_from_server[key] for key in ['id', 'brand', 'name', 'data', 'isIntegrationScript', ]
+            key: self.integration_configuration_from_server[key] for key in
+            ['id', 'brand', 'name', 'data', 'isIntegrationScript', ]
         }
         module_instance['enable'] = "false"
         module_instance['version'] = -1

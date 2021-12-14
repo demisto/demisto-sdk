@@ -1,3 +1,4 @@
+import json
 import re
 from typing import List, Optional, Union
 
@@ -108,3 +109,10 @@ class JSONContentObject(JSONObject):
             created_files.extend(self.readme.dump(dest_dir))
 
         return created_files
+
+    def is_list(self) -> bool:
+        with open(self.path) as f:
+            data = json.loads(f.read())
+            if type(data) == list:
+                return True
+        return False

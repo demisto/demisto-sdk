@@ -210,11 +210,6 @@ class ContentItemsHandler:
         if content_object.to_version < FIRST_MARKETPLACE_VERSION:
             return
 
-        # reputation in old format aren't supported in 6.0.0 server version
-        if content_object_directory == INDICATOR_TYPES_DIR and re.match('reputation-.*.json',
-                                                                        content_object.path.name):
-            return
-
         # skip content items that are not displayed in contentItems
         if content_object_directory not in CONTENT_ITEMS_DISPLAY_FOLDERS:
             return
@@ -651,8 +646,11 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
         content_items_handler.handle_content_item(indicator_field)
         pack_report += dump_pack_conditionally(artifact_manager, indicator_field)
     for indicator_type in pack.indicator_types:
-        content_items_handler.handle_content_item(indicator_type)
-        pack_report += dump_pack_conditionally(artifact_manager, indicator_type)
+        if indicator_type.is_list():
+            logger.error(f'Indicator type "{indicator_type.path.name}" file holds a list and therefore is not supported.')
+        else:
+            content_items_handler.handle_content_item(indicator_type)
+            pack_report += dump_pack_conditionally(artifact_manager, indicator_type)
     for integration in pack.integrations:
         content_items_handler.handle_content_item(integration)
         is_feed_pack = is_feed_pack or integration.is_feed

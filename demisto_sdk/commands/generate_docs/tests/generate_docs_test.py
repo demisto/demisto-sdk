@@ -567,19 +567,23 @@ def test_generate_script_doc(tmp_path, mocker):
         id_set = json.load(f)
     patched = mocker.patch.object(IDSetCreator, 'create_id_set', return_value=id_set)
     mocker.patch.object(common, 'execute_command', side_effect=handle_example)
+    # because used in is random
+    mocker.patch('demisto_sdk.commands.generate_docs.generate_script_doc.get_used_in', return_value=[])
     generate_script_doc(in_script, '!Set key=k1 value=v1,!Set key=k2 value=v2 append=true', str(d), verbose=True)
     patched.assert_called()
     readme = d / "README.md"
-    with open(readme) as f1:
-        with open(expected_readme) as f2:
-            assert f1.read() == f2.read()
+    with open(readme) as real_readme_file:
+        with open(expected_readme) as expected_readme_file:
+            assert real_readme_file.read() == expected_readme_file.read()
+
+    # No try the same thing with a txt file
     command_examples = d / 'command_examples.txt'
     with command_examples.open('w') as f:
         f.write('!Set key=k1 value=v1\n!Set key=k2 value=v2 append=true')
     generate_script_doc(in_script, command_examples, str(d), verbose=True)
-    with open(readme) as f1:
-        with open(expected_readme) as f2:
-            assert f1.read() == f2.read()
+    with open(readme) as real_readme_file:
+        with open(expected_readme) as expected_readme_file:
+            assert real_readme_file.read() == expected_readme_file.read()
 
 
 class TestAppendOrReplaceCommandInDocs:

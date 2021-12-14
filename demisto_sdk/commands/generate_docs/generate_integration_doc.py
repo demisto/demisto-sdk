@@ -64,7 +64,8 @@ def generate_integration_doc(
         verbose: bool = False,
         command: Optional[str] = None,
         old_version: str = '',
-        skip_breaking_changes: bool = False):
+        skip_breaking_changes: bool = False,
+        is_contribution: bool = False):
     """ Generate integration documentation.
 
     Args:
@@ -78,6 +79,7 @@ def generate_integration_doc(
         insecure: should use insecure
         verbose: verbose (debug mode)
         command: specific command to generate docs for
+        is_contribution: Check if the integration is a new contribution or not.
 
     """
     try:
@@ -124,7 +126,9 @@ def generate_integration_doc(
         else:
             docs = []  # type: list
             docs.extend(add_lines(yml_data.get('description')))
-            docs.extend(['This integration was integrated and tested with version xx of {}'.format(yml_data['name']), ''])
+            if not is_contribution:
+                docs.extend(['This integration was integrated and tested with version xx of {}'
+                            .format(yml_data['name']), ''])
             # Checks if the integration is a new version
             integration_version = re.findall("[vV][2-9]$", yml_data.get("display", ""))
             if integration_version and not skip_breaking_changes:

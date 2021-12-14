@@ -17,10 +17,10 @@ from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import (
     LOG_COLORS, arg_to_list, compare_context_path_in_yml_and_readme,
     filter_files_by_type, filter_files_on_pack, filter_packagify_changes,
-    find_type, get_code_lang, get_dict_from_file, get_entity_id_by_entity_type,
-    get_entity_name_by_entity_type, get_file_displayed_name,
-    get_file_version_suffix_if_exists, get_files_in_dir,
-    get_ignore_pack_skipped_tests, get_last_release_version,
+    find_type, get_code_lang, get_current_repo, get_dict_from_file,
+    get_entity_id_by_entity_type, get_entity_name_by_entity_type,
+    get_file_displayed_name, get_file_version_suffix_if_exists,
+    get_files_in_dir, get_ignore_pack_skipped_tests, get_last_release_version,
     get_last_remote_release_version, get_latest_release_notes_text,
     get_pack_metadata, get_relative_path_from_packs_dir,
     get_release_note_entries, get_release_notes_file_path, get_ryaml,
@@ -1473,6 +1473,25 @@ def test_get_test_playbook_id():
     test_playbook_name, test_playbook_pack = get_test_playbook_id(test_playbook_id_set, test_name)
     assert test_playbook_name == 'HelloWorld-Test'
     assert test_playbook_pack == 'HelloWorld'
+
+
+@pytest.mark.parametrize(
+    'url, expected_name',
+    [
+        ('ssh://git@github.com/demisto/content-dist.git', ('github.com', 'demisto', 'content-dist')),
+        ('git@github.com:demisto/content-dist.git', ('github.com', 'demisto', 'content-dist')),
+        ('https://github.com/demisto/content-dist.git', ('github.com', 'demisto', 'content-dist')),
+        ('https://github.com/demisto/content-dist', ('github.com', 'demisto', 'content-dist')),
+        ('https://code.pan.run/xsoar/content-dist', ('code.pan.run', 'xsoar', 'content-dist')),  # gitlab
+        ('https://code.pan.run/xsoar/content-dist.git', ('code.pan.run', 'xsoar', 'content-dist')),
+        ('https://gitlab-ci-token:token@code.pan.run/xsoar/content-dist.git', ('code.pan.run', 'xsoar', 'content-dist'))
+    ]
+)
+def test_get_current_repo(mocker, url, expected_name):
+    import giturlparse
+    mocker.patch.object(giturlparse, 'parse', return_value=giturlparse.parse(url))
+    name = get_current_repo()
+    assert name == expected_name
 
 
 KEBAB_CASES = [('Scan File', 'scan-file'),

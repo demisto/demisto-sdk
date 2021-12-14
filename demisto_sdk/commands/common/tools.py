@@ -2153,11 +2153,14 @@ def get_script_or_sub_playbook_tasks_from_playbook(searched_entity_name: str, ma
     return searched_tasks
 
 
-def get_current_repo() -> str:
+def get_current_repo() -> Tuple[str, str, str]:
     try:
         git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
         parsed_git = giturlparse.parse(git_repo.remotes.origin.url)
-        return f'{parsed_git.host} - {parsed_git.owner}/{parsed_git.repo}'
+        host = parsed_git.host
+        if '@' in host:
+            host = host.split('@')[1]
+        return host, parsed_git.owner, parsed_git.repo
     except git.InvalidGitRepositoryError:
         print_warning('git repo is not found')
-        return "Unknown source"
+        return "Unknown source", '', ''

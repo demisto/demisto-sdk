@@ -1075,11 +1075,10 @@ class Integration:
             f'validate "test-module": {self.configuration.should_validate_test_module})'
         )
 
-        # define module instance
+        # define module instance:
 
-        # If incident_type is given in Test Playbook configuration on test-conf
-        incident_configuration = self.configuration.params.get('incident_configuration', {})
-        print(f'##### SDK params: {self.configuration.params.keys()} , {incident_configuration=} #####')
+        # If incident_type is given in Test Playbook configuration on test-conf, we change the default configuration.
+        incident_configuration = self.configuration.params.get('incident_configuration', {})  # type: ignore
         if incident_configuration and incident_configuration.get('incident_type'):
             incident_type_configuration = list(
                 filter(lambda config: config.get('name') == 'incidentType', module_configuration))
@@ -1102,12 +1101,12 @@ class Integration:
             'mappingId': configuration.get('defaultClassifier', ''),
             'outgoingMapperId': configuration.get('defaultMapperOut', '')
         }
+        # If default mapper or classifier are given in test-conf we ignore defaultMapperIn or defaultClassifier from yml.
         if incident_configuration.get('classifier_id'):
             module_instance['mappingId'] = incident_configuration.get('classifier_id')
         if incident_configuration.get('incoming_mapper_id'):
             module_instance['incomingMapperId'] = incident_configuration.get('incoming_mapper_id')
 
-        print(f'#### SDK {module_instance=}#####')
         # set server keys
         self._set_server_keys(client, server_context)
 

@@ -620,7 +620,7 @@ class TestGenerateIntegrationDoc:
     def teardown_class(cls):
         cls.rm_readme()
 
-    def test_generate_integration_doc(self):
+    def test_generate_integration_doc(self, mocker):
         """
         Given
             - YML file representing an integration.
@@ -630,9 +630,12 @@ class TestGenerateIntegrationDoc:
             - Validate that the integration README was created correctly, specifically that line numbers are not being reset after a table.
             - Test that the predefined values and default values are added to the README.
     """
+        import demisto_sdk.commands.generate_docs.common as common
         fake_readme = os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), 'fake_README.md')
+        examples = os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), 'command_examples.txt')
+        mocker.patch.object(common, 'execute_command', side_effect=handle_example)
         # Generate doc
-        generate_integration_doc(TEST_INTEGRATION_PATH)
+        generate_integration_doc(TEST_INTEGRATION_PATH, examples)
         with open(fake_readme) as fake_file:
             with open(os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), 'README.md')) as real_file:
                 fake_data = fake_file.read()

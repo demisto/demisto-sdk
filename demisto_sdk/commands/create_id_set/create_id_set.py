@@ -8,6 +8,7 @@ from genericpath import exists
 from demisto_sdk.commands.common.constants import (DEFAULT_ID_SET_PATH,
                                                    GENERIC_COMMANDS_NAMES)
 from demisto_sdk.commands.common.update_id_set import re_create_id_set
+from demisto_sdk.commands.common.tools import open_id_set_file
 
 
 class IDSetCreator:
@@ -98,8 +99,7 @@ def get_id_set(id_set_path: str) -> dict:
         The parsed content of id_set
     """
     if id_set_path:
-        with open(id_set_path, 'r') as id_set_file:
-            id_set = json.load(id_set_file)
+        id_set = open_id_set_file(id_set_path)
     else:
         id_set = IDSetCreator(print_logs=False).create_id_set()
     return id_set

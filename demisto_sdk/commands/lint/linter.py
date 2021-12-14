@@ -174,8 +174,9 @@ class Linter:
             bool: Indicating if to continue further or not, if False exit Thread, Else continue.
         """
         # Looking for pkg yaml
+        print("before")
         yml_file: Optional[Path] = self._pack_abs_dir.glob([r'*.yaml', r'*.yml', r'!*unified*.yml'], flags=NEGATE)
-
+        print("after")
         if not yml_file:
             logger.info(f"{self._pack_abs_dir} - Skipping no yaml file found {yml_file}")
             self._pkg_lint_status["errors"].append('Unable to find yml file in package')

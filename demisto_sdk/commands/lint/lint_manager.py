@@ -29,7 +29,8 @@ from demisto_sdk.commands.common.tools import (find_file, find_type,
                                                pack_name_to_posix_path,
                                                print_error, print_v,
                                                print_warning,
-                                               retrieve_file_ending)
+                                               retrieve_file_ending,
+                                               get_api_module_dependencies)
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     get_packs_dependent_on_given_packs
 from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, PWSH_CHECKS,
@@ -56,11 +57,12 @@ class LintManager:
         prev_ver(str): Previous branch or SHA1 commit to run checks against.
         json_file_path(str): Path to a json file to write the run resutls to.
         id_set_path(str): Path to an existing id_set.json.
-        check_dependent_packs(bool): Whether to run lint also on the packs dependent on the given packs.
+        check_dependent_api_module(bool): Whether to run lint also on the packs dependent on the modified api modules
+        files.
     """
 
     def __init__(self, input: str, git: bool, all_packs: bool, quiet: bool, verbose: int, prev_ver: str,
-                 json_file_path: str = '', id_set_path: str = None, check_dependent_packs: bool = False):
+                 json_file_path: str = '', id_set_path: str = None, check_dependent_api_module: bool = False):
 
         # Verbosity level
         self._verbose = not quiet if quiet else verbose
@@ -70,24 +72,20 @@ class LintManager:
         self._all_packs = all_packs
         # Set 'git' to true if no packs have been specified, 'lint' should operate as 'lint -g'
         lint_no_packs_command = not git and not all_packs and not input
-        if lint_no_packs_command:
-            git = True
+        git = True if lint_no_packs_command else git
         # Filter packages to lint and test check
         self._pkgs: List[PosixPath] = self._get_packages(content_repo=self._facts["content_repo"],
                                                          input=input,
                                                          git=git,
                                                          all_packs=all_packs,
                                                          base_branch=self._prev_ver)
+
         self._id_set_path = id_set_path
-        self._check_dependent_packs = check_dependent_packs
-        if self._check_dependent_packs:
-            print("Checking for dependent packs...")
-            _, dependent = get_packs_dependent_on_given_packs(self._pkgs, self._id_set_path)
-            dependent = [pack_name_to_posix_path(pack) for pack in dependent]
-            self._pkgs = list(set(self._pkgs + dependent))  # remove dups
-            if dependent:
-                print(f"Found {Colors.Fg.cyan}{len(dependent)}{Colors.reset} dependent packages. Executing lint and "
-                      f"test on dependent packages as well.")
+        if check_dependent_api_module:
+            dependent_on_api_module = get_api_module_dependencies(self._pkgs, self._id_set_path)
+            self._pkgs = self._pkgs + dependent_on_api_module
+            print(f"Found {Colors.Fg.cyan}{len(dependent_on_api_module)}{Colors.reset} dependent packages."
+                  f" Executing lint and test on dependent packages as well.")
 
         if json_file_path:
             if os.path.isdir(json_file_path):

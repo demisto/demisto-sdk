@@ -2203,3 +2203,37 @@ def wait_futures_complete(futures: List[ProcessFuture], done_fn: Callable):
         except Exception as e:
             print_error(e)
             raise
+
+
+def get_api_module_dependencies(pkgs, id_set_path):
+    """
+    Get all paths to integrations and scripts dependent on api modules that are found in the modified files.
+    Args:
+        pkgs: the pkgs paths found as modified to run lint on (including the api module files)
+        id_set_path: path to id set
+
+    Returns:
+        a list of the paths to the scripts and integration found dependent on the modified api modules.
+    """
+    id_set = open_id_set_file(id_set_path)
+    api_modules = [pkg.name for pkg in pkgs if 'ApiModules' in pkg.parts]
+    scripts = id_set.get('scripts')  # TODO: constants
+    integrations = id_set.get('integrations')
+    using_scripts, using_integrations = [], []
+
+    for script in scripts:
+        api_module = list(script.values())[0].get('api_modules', [])
+        if api_module in api_modules:
+            using_scripts.extend(list(script.values()))
+
+    for integration in integrations:
+        api_module = list(integration.values())[0].get('api_modules', [])
+        if api_module in api_modules:
+            using_integrations.extend(list(integration.values()))
+
+    using_scripts_pkg_paths = [Path(script.get('file_path')).parent for script in using_scripts]
+    using_integrations_pkg_paths = [Path(integration.get('file_path')).parent for integration in using_integrations]
+    return list(set(using_integrations_pkg_paths + using_scripts_pkg_paths))
+
+
+

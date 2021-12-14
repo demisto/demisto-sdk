@@ -541,20 +541,46 @@ def test_generate_commands_with_permissions_section_command_doesnt_exist():
     assert '\n'.join(section) == '\n'.join(expected_section)
 
 
+def handle_example(example, insecure):
+    parts = example.split()
+    name = parts[0].strip('!')
+    context = {}
+    for p in parts[1:]:
+        key, value = p.split('=')
+        context[key] = value
+
+    headers = ' | '.join(context.keys())
+    sep = ' | '.join(['---' for _ in range(len(context.keys()))])
+    values = ' | '.join(context.values())
+    human_readable = '\n'.join([headers, sep, values])
+    return name, human_readable, context, []
+
+
 def test_generate_script_doc(tmp_path, mocker):
+    import demisto_sdk.commands.generate_docs.common as common
     d = tmp_path / "script_doc_out"
     d.mkdir()
     in_script = os.path.join(FILES_PATH, 'docs_test', 'script-Set.yml')
     id_set_file = os.path.join(FILES_PATH, 'docs_test', 'id_set.json')
+    expected_readme = os.path.join(FILES_PATH, 'docs_test', 'set_expected-README.md')
     with open(id_set_file, 'r') as f:
         id_set = json.load(f)
     patched = mocker.patch.object(IDSetCreator, 'create_id_set', return_value=id_set)
-    generate_script_doc(in_script, '', str(d), verbose=True)
+    mocker.patch.object(common, 'execute_command', side_effect=handle_example)
+    generate_script_doc(in_script, '!Set key=k1 value=v1,!Set key=k2 value=v2 append=true', str(d), verbose=True)
     patched.assert_called()
     readme = d / "README.md"
-    with open(readme) as f:
-        text = f.read()
-        assert 'Sample usage of this script can be found in the following playbooks and scripts' in text
+    with open(readme) as f1:
+        with open(expected_readme) as f2:
+            assert f1.read() == f2.read()
+    command_examples = d / 'command_examples.txt'
+    with command_examples.open('w') as f:
+        f.write('!Set key=k1 value=v1\n!Set key=k2 value=v2 append=true')
+    generate_script_doc(in_script, command_examples, str(d), verbose=True)
+    with open(readme) as f1:
+        with open(expected_readme) as f2:
+            assert f1.read() == f2.read()
+
 
 
 class TestAppendOrReplaceCommandInDocs:

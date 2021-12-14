@@ -1463,6 +1463,7 @@ class IDSetType(Enum):
     GENERIC_MODULE = 'GenericModules'
     GENERIC_DEFINITION = 'GenericDefinitions'
     JOBS = 'Jobs'
+    LISTS = 'Lists'
 
     @classmethod
     def has_value(cls, value):

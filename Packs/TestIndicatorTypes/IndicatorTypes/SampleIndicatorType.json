@@ -1,22 +1,22 @@
 {
- "id": "Sample Indicator",
- "version": -1,
- "modified": "2021-11-12T10:53:47.623475729Z",
- "propagationLabels": [
-     "indiadevsec",
-     "impsseuston"
- ],
- "shouldCommit": false,
- "regex": "",
- "details": "Sample",
- "prevDetails": "Sample",
- "system": false,
- "locked": false,
- "disabled": false,
- "file": false,
- "updateAfter": 0,
- "mergeContext": false,
- "formatScript": "UnEscapeIPs",
- "expiration": 0,
- "layout": "ipRep"
+  "id": "Sample Indicator",
+  "version": -1,
+  "modified": "2021-11-12T10:53:47.623475729Z",
+  "propagationLabels": [
+    "indiadevsec",
+    "impsseuston"
+  ],
+  "shouldCommit": false,
+  "regex": "",
+  "details": "Good Sample",
+  "prevDetails": "Sample",
+  "system": false,
+  "locked": false,
+  "disabled": false,
+  "file": false,
+  "updateAfter": 0,
+  "mergeContext": false,
+  "formatScript": "UnEscapeIPs",
+  "expiration": 0,
+  "layout": "ipRep"
 }

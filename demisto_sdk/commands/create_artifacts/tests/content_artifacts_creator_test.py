@@ -195,9 +195,10 @@ def test_contains_indicator_type():
                                    content_version='6.0.0',
                                    zip_all=False)
         packs_zipper.zip_packs()
+        assert packs_zipper.artifacts_manager.packs['TestIndicatorTypes'].metadata.content_items != {}
         assert packs_zipper.artifacts_manager.packs['TestIndicatorTypes'].metadata.content_items['reputation'] == [
             {
-                "details": "Sample",
+                "details": "Good Sample",
                 "reputationScriptName": "",
                 "enhancementScriptNames": []
             }

@@ -457,7 +457,7 @@ class TestIdSetFilters:
                     "fromversion": '5.0.0',
                     "docker_image": "demisto/python3:3.8.3.8715",
                     "pack": "PrismaCloudCompute",
-                    'source': 'github.com - demisto/demisto-sdk'
+                    "source": ['github.com', 'demisto', 'demisto-sdk'],
                 }
             },
             {
@@ -467,7 +467,7 @@ class TestIdSetFilters:
                     "fromversion": '5.0.0',
                     "docker_image": "demisto/python3:3.8.3.8715",
                     "pack": "PrismaCloudCompute",
-                    'source': 'github.com - demisto/demisto-sdk'
+                    "source": ['github.com', 'demisto', 'demisto-sdk'],
                 }
             },
             {
@@ -477,8 +477,7 @@ class TestIdSetFilters:
                     "fromversion": '5.0.0',
                     "docker_image": "demisto/python3:3.8.3.8715",
                     "pack": "PrismaCloudCompute",
-                    'source': 'github.com - demisto/demisto-sdk'
-
+                    "source": ['github.com', 'demisto', 'demisto-sdk'],
                 }
             },
             {
@@ -488,7 +487,7 @@ class TestIdSetFilters:
                     "fromversion": '5.0.0',
                     "docker_image": "demisto/python3:3.8.3.8715",
                     "pack": "PrismaCloudCompute",
-                    'source': 'github.com - demisto/demisto-sdk'
+                    "source": ['github.com', 'demisto', 'demisto-sdk'],
                 }
             }
         ]
@@ -519,7 +518,7 @@ class TestIdSetFilters:
                         "No tests"
                     ],
                     "pack": "Expanse",
-                    'source': 'github.com - demisto/demisto-sdk'
+                    "source": ['github.com', 'demisto', 'demisto-sdk'],
                 }
             }
         ]

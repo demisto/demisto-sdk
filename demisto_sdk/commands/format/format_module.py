@@ -106,6 +106,7 @@ def format_manager(input: str = None,
                    prev_ver: str = None,
                    include_untracked: bool = False,
                    add_tests: bool = None,
+                   sync_to_master: bool = False
                    ):
     """
     Format_manager is a function that activated format command on different type of files.
@@ -122,6 +123,7 @@ def format_manager(input: str = None,
         prev_ver (str): Against which branch should the difference be recognized
         include_untracked (bool): Whether to include untracked files when checking against git
         add_tests (bool): Whether to exclude tests automatically.
+        sync_to_master (bool): Whether to sync the file to master version
     Returns:
         int 0 in case of success 1 otherwise
     """
@@ -168,7 +170,8 @@ def format_manager(input: str = None,
                                                                  update_docker=update_docker,
                                                                  assume_yes=assume_yes,
                                                                  deprecate=deprecate,
-                                                                 add_tests=add_tests)
+                                                                 add_tests=add_tests,
+                                                                 sync_to_master=sync_to_master)
                 if err_res:
                     log_list.extend([(err_res, print_error)])
                 if info_res:
@@ -264,7 +267,6 @@ def run_format_on_file(input: str, file_type: str, from_version: str, **kwargs) 
         input (str): The input file path.
         file_type (str): The type of input file
         from_version (str): The fromVersion value that was set by User.
-        old_file (bool): Whether the file is a added file = new or a modified file = old.
     Returns:
         List of Success , List of Error.
     """

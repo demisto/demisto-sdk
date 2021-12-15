@@ -1,14 +1,15 @@
 from distutils.version import LooseVersion
 
 import click
+import dictdiffer
 import ujson
 import yaml
-import dictdiffer
-from demisto_sdk.commands.common.GitContentConfig import GitContentConfig
 
 from demisto_sdk.commands.common.constants import \
     DEFAULT_CONTENT_ITEM_TO_VERSION
-from demisto_sdk.commands.common.tools import find_type, is_uuid, print_error, get_remote_file
+from demisto_sdk.commands.common.GitContentConfig import GitContentConfig
+from demisto_sdk.commands.common.tools import (find_type, get_remote_file,
+                                               is_uuid, print_error)
 from demisto_sdk.commands.format.format_constants import (
     ARGUMENTS_DEFAULT_VALUES, GENERIC_OBJECTS_FILE_TYPES, TO_VERSION_5_9_9)
 from demisto_sdk.commands.format.update_generic import BaseUpdate

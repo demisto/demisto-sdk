@@ -163,6 +163,97 @@ def test_is_incident_field_using_existing_script_negative():
         "The incident field's script id is not in the id set thus result should be False."
 
 
+def test_is_incident_field_using_existing_script_with_command_positive():
+    """
+    Given
+        - incident field which has an existing script id and command.
+        - id_set.json
+
+    When
+        - is_incident_field_scripts_found is called with an id_set.json
+
+    Then
+        - Ensure that the script is in the id set and command - i.e is_incident_field_scripts_found returns True.
+    """
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+
+    incident_field_data = {'Incident_field_test': {
+        'id': 'Incident_field_test',
+        'name': 'Incident_field_test',
+        'scripts': ['script_to_test|||command_to_test']
+    }
+    }
+
+    validator.script_set = [{"script_to_test_1": {
+        "name": "script_to_test_1",
+                "file_path": "Packs/DeveloperTools/TestPlaybooks/script-script_to_test_1.yml",
+                "fromversion": "5.0.0",
+                "pack": "DeveloperTools"
+    }
+    }]
+
+    validator.integration_set = [
+        {
+            "script_to_test": {
+                "name": "script_to_test",
+                "file_path": "Packs/Slack/Integrations/script_to_test/script_to_test.yml",
+                "fromversion": "5.0.0",
+                "commands": [
+                    "command_to_test"
+                ],
+                "pack": "script_to_test"
+            }
+        }]
+
+    assert validator._is_incident_field_scripts_found(incident_field_data=incident_field_data) is True, \
+        "The incident field's script id is in the id set thus result should be True."
+
+
+def test_is_incident_field_using_existing_script_with_command_negative():
+    """
+    Given
+        - incident field which has an existing script id and non-existing command.
+        - id_set.json
+
+    When
+        - is_incident_field_scripts_found is called with an id_set.json
+
+    Then
+        - Ensure that the script is in the id set and non-existing command - i.e is_incident_field_scripts_found returns False.
+    """
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
+
+    incident_field_data = {'Incident_field_test': {
+        'id': 'Incident_field_test',
+        'name': 'Incident_field_test',
+        'scripts': ['script_to_test|||command_to_test']
+    }
+    }
+
+    validator.script_set = [{"script_to_test_1": {
+        "name": "script_to_test_1",
+                "file_path": "Packs/DeveloperTools/TestPlaybooks/script-script_to_test_1.yml",
+                "fromversion": "5.0.0",
+                "pack": "DeveloperTools"
+    }
+    }]
+
+    validator.integration_set = [
+        {
+            "script_to_test": {
+                "name": "script_to_test",
+                "file_path": "Packs/Slack/Integrations/script_to_test/script_to_test.yml",
+                "fromversion": "5.0.0",
+                "commands": [
+                    "command_to_test_1"
+                ],
+                "pack": "script_to_test"
+            }
+        }]
+
+    assert validator._is_incident_field_scripts_found(incident_field_data=incident_field_data) is False, \
+        "The incident field's script id is in the id set but the command not thus result should be False."
+
 def test_is_incident_field_using_existing_script_no_scripts():
     """
     Given

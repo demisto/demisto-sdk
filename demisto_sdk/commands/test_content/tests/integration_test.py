@@ -1,10 +1,11 @@
 from copy import deepcopy
-from unittest.mock import ANY
 
 import pytest
 
-from demisto_sdk.commands.test_content.ParallelLoggingManager import ParallelLoggingManager
-from demisto_sdk.commands.test_content.TestContentClasses import Integration, BuildContext, TestResults
+from demisto_sdk.commands.test_content.ParallelLoggingManager import \
+    ParallelLoggingManager
+from demisto_sdk.commands.test_content.TestContentClasses import (BuildContext,
+                                                                  Integration)
 
 CONFIGURATION = {
     'configuration': [
@@ -47,6 +48,8 @@ INCIDENT_CASES = [
         , {'incident_type': '', 'classifier': 'Example Classifier', 'mapper': 'Example Mapper'}
     ),
     ({},  # case no incident configuration provided
+     {'incident_type': '', 'classifier': '', 'mapper': ''}),
+    (None, # case no incident configuration provided
      {'incident_type': '', 'classifier': '', 'mapper': ''})
 ]
 
@@ -55,10 +58,16 @@ INCIDENT_CASES = [
 def test_create_module(mocker, incident_configuration, expected):
     """
     Given:
-
+        incident configuration with only incident type
+        incident configuration with both incident type and classifier/ mapper
+        incident configuration with only classifier/ mapper
+        incident configuration without incident configuration
     When:
+        running configuring instance for test playbook run
 
     Then:
+        validate the module i configured with the incident configuration.
+        (the default incidentType is changed to new one, and mapper/ classifier are added)
     """
 
     class Dummyconf:
@@ -85,4 +94,3 @@ def test_create_module(mocker, incident_configuration, expected):
     assert res_module.get('configuration').get('configuration')[0].get('value') == expected.get('incident_type')
     assert res_module.get('incomingMapperId') == expected.get('mapper')
     assert res_module.get('mappingId') == expected.get('classifier')
-

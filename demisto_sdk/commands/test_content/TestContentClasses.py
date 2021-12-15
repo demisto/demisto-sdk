@@ -1064,9 +1064,9 @@ class Integration:
         }
 
         # If default mapper or classifier are given in test-conf we ignore defaultMapperIn or defaultClassifier from yml.
-        if incident_configuration.get('classifier_id'):
+        if incident_configuration and incident_configuration.get('classifier_id'):
             module_instance['mappingId'] = incident_configuration.get('classifier_id')
-        if incident_configuration.get('incoming_mapper_id'):
+        if incident_configuration and incident_configuration.get('incoming_mapper_id'):
             module_instance['incomingMapperId'] = incident_configuration.get('incoming_mapper_id')
 
         return module_instance
@@ -1115,7 +1115,7 @@ class Integration:
         incident_configuration = params.get('incident_configuration', {})
 
         module_instance = self.create_module(instance_name, configuration, incident_configuration)
-        print(f'######## SDK {module_configuration=} #########')
+
         # set server keys
         self._set_server_keys(client, server_context)
 

@@ -3,17 +3,14 @@ import os
 from typing import Dict, List, Optional
 
 import click
-import dictdiffer
 from ruamel.yaml import YAML
 
 from demisto_sdk.commands.common.constants import (INTEGRATION, PLAYBOOK,
                                                    TEST_PLAYBOOKS_DIR,
                                                    FileType)
-from demisto_sdk.commands.common.GitContentConfig import GitContentConfig
 from demisto_sdk.commands.common.tools import (_get_file_id, find_type,
                                                get_entity_id_by_entity_type,
-                                               get_not_registered_tests,
-                                               get_remote_file, get_yaml,
+                                               get_not_registered_tests, get_yaml,
                                                is_uuid)
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 
@@ -262,11 +259,4 @@ class BaseUpdateYML(BaseUpdate):
                 click.echo('Updating YML ID and name to be without spaces at the end')
             self.data['name'] = self.data['name'].strip()
             self.id_and_version_location['id'] = self.id_and_version_location['id'].strip()
-
-    def sync_data_to_master(self):
-        master_data = get_remote_file(self.relative_content_path, github_repo=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME)
-        if not master_data:
-            return
-        diff = dictdiffer.diff(master_data, self.data)
-        self.data = dictdiffer.patch(diff, master_data)
 

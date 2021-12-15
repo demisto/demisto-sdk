@@ -1,14 +1,12 @@
 from distutils.version import LooseVersion
 
 import click
-import dictdiffer
 import ujson
 import yaml
 
 from demisto_sdk.commands.common.constants import \
     DEFAULT_CONTENT_ITEM_TO_VERSION
-from demisto_sdk.commands.common.GitContentConfig import GitContentConfig
-from demisto_sdk.commands.common.tools import (find_type, get_remote_file,
+from demisto_sdk.commands.common.tools import (find_type,
                                                is_uuid, print_error)
 from demisto_sdk.commands.format.format_constants import (
     ARGUMENTS_DEFAULT_VALUES, GENERIC_OBJECTS_FILE_TYPES, TO_VERSION_5_9_9)
@@ -120,10 +118,3 @@ class BaseUpdateJSON(BaseUpdate):
                 click.echo('Updating YML ID and name to be without spaces at the end')
             self.data['name'] = self.data['name'].strip()
             self.data['id'] = self.data['id'].strip()
-
-    def sync_data_to_master(self):
-        master_data = get_remote_file(self.relative_content_path, github_repo=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME)
-        if not master_data:
-            return
-        diff = dictdiffer.diff(master_data, self.data)
-        self.data = dictdiffer.patch(diff, master_data)

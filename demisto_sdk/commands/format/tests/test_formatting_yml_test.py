@@ -1080,7 +1080,7 @@ class TestFormatting:
         Then
             - Ensure that the result is in the same order as master
         """
-        import demisto_sdk.commands.format.update_generic_yml as update_generic_yml
+        import demisto_sdk.commands.format.update_generic as update_generic
 
         test_files_path = os.path.join(git_path(), 'demisto_sdk', 'tests')
         vmware_integration_yml_path = os.path.join(test_files_path, 'test_files', 'content_repo_example', 'Packs',
@@ -1092,7 +1092,7 @@ class TestFormatting:
         with sorted_yml_file.open('w') as f:
             yaml.dump(yml_example, f, sort_keys=True)  # sorting the keys to have different order
         mocker.patch.object(BaseUpdateYML, 'get_id_and_version_path_object', return_value={'id': "vmware"})
-        mocker.patch.object(update_generic_yml, 'get_remote_file', return_value=yml_example)
+        mocker.patch.object(update_generic, 'get_remote_file', return_value=yml_example)
         base_update_yml = BaseUpdateYML(input=str(sorted_yml_file))
         base_update_yml.sync_data_to_master()
         assert OrderedDict(base_update_yml.data) == OrderedDict(yml_example)
@@ -1106,7 +1106,7 @@ class TestFormatting:
         Then
             - Ensure that the result is the changed result to make sure that the patching works
         """
-        import demisto_sdk.commands.format.update_generic_yml as update_generic_yml
+        import demisto_sdk.commands.format.update_generic as update_generic
         test_files_path = os.path.join(git_path(), 'demisto_sdk', 'tests')
         vmware_integration_yml_path = os.path.join(test_files_path, 'test_files', 'content_repo_example', 'Packs',
                                                    'VMware',
@@ -1126,7 +1126,7 @@ class TestFormatting:
             yaml.dump(sorted_yml, f)
 
         mocker.patch.object(BaseUpdateYML, 'get_id_and_version_path_object', return_value={'id': "vmware"})
-        mocker.patch.object(update_generic_yml, 'get_remote_file', return_value=yml_example)
+        mocker.patch.object(update_generic, 'get_remote_file', return_value=yml_example)
         base_update_yml = BaseUpdateYML(input=str(sorted_yml_file))
         base_update_yml.sync_data_to_master()
         assert base_update_yml.data == sorted_yml

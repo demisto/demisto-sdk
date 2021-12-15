@@ -5,11 +5,13 @@ from distutils.version import LooseVersion
 from typing import Any, Dict, Optional, Set, Union
 
 import click
+import dictdiffer
 import yaml
 from ruamel.yaml import YAML
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION, INTEGRATION, PLAYBOOK)
+from demisto_sdk.commands.common.GitContentConfig import GitContentConfig
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_dict_from_file,
                                                get_pack_metadata,
                                                get_remote_file,
@@ -370,3 +372,10 @@ class BaseUpdate:
 
             else:
                 return SUCCESS_RETURN_CODE
+
+    def sync_data_to_master(self):
+        data_from_master = get_remote_file(self.relative_content_path, github_repo=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME)
+        if data_from_master:
+            diff = dictdiffer.diff(data_from_master, self.data)
+            self.data = dictdiffer.patch(diff, data_from_master)
+

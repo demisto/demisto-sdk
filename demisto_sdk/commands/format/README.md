@@ -47,8 +47,6 @@ When done formatting, the **validate** command will run, to let you know of thin
 
   Set if you want to sync the yml file to content's master structure
 
-  
-
 ### Examples
 ```
 demisto-sdk format

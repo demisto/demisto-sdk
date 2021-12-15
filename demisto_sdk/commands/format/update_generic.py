@@ -378,4 +378,3 @@ class BaseUpdate:
         if data_from_master:
             diff = dictdiffer.diff(data_from_master, self.data)
             self.data = dictdiffer.patch(diff, data_from_master)
-

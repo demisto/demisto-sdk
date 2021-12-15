@@ -259,4 +259,3 @@ class BaseUpdateYML(BaseUpdate):
                 click.echo('Updating YML ID and name to be without spaces at the end')
             self.data['name'] = self.data['name'].strip()
             self.id_and_version_location['id'] = self.id_and_version_location['id'].strip()
-

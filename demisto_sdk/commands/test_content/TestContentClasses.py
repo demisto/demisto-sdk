@@ -1071,7 +1071,6 @@ class Integration:
 
         return module_instance
 
-
     def create_integration_instance(self,
                                     client: DefaultApi,
                                     playbook_id: str,
@@ -1115,7 +1114,7 @@ class Integration:
         params = self.configuration.params  # type: ignore
         incident_configuration = params.get('incident_configuration', {})
 
-        module_configuration = self.create_module(instance_name, configuration, incident_configuration)
+        module_instance = self.create_module(instance_name, configuration, incident_configuration)
         print(f'######## SDK {module_configuration=} #########')
         # set server keys
         self._set_server_keys(client, server_context)

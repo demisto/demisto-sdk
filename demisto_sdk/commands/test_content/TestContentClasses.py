@@ -1121,11 +1121,11 @@ class Integration:
 
         # set module params
         for param_conf in module_configuration:
-            if param_conf['display'] in params or param_conf['name'] in params:  # type: ignore
+            if param_conf['display'] in params or param_conf['name'] in params:
                 # param defined in conf
                 key = param_conf['display'] if param_conf['display'] in params else param_conf['name']
                 if key == 'credentials':
-                    credentials = params[key]  # type: ignore
+                    credentials = params[key]
                     param_value = {
                         'credential': '',
                         'identifier': credentials['identifier'],
@@ -1133,7 +1133,7 @@ class Integration:
                         'passwordChanged': False
                     }
                 else:
-                    param_value = params[key]  # type: ignore
+                    param_value = params[key]
 
                 param_conf['value'] = param_value
                 param_conf['hasvalue'] = True

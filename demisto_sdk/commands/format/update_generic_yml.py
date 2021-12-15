@@ -3,16 +3,18 @@ import os
 from typing import Dict, List, Optional
 
 import click
-from demisto_sdk.commands.common.GitContentConfig import GitContentConfig
-from ruamel.yaml import YAML
 import dictdiffer
+from ruamel.yaml import YAML
+
 from demisto_sdk.commands.common.constants import (INTEGRATION, PLAYBOOK,
                                                    TEST_PLAYBOOKS_DIR,
                                                    FileType)
+from demisto_sdk.commands.common.GitContentConfig import GitContentConfig
 from demisto_sdk.commands.common.tools import (_get_file_id, find_type,
                                                get_entity_id_by_entity_type,
                                                get_not_registered_tests,
-                                               get_yaml, is_uuid, get_remote_file)
+                                               get_remote_file, get_yaml,
+                                               is_uuid)
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 
 ryaml = YAML()

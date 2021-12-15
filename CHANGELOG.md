@@ -1,4 +1,11 @@
 # Changelog
+* Changed the **validate** command to fail on missing test-playbooks only if no unittests are found.
+* Fixed `to_kebab_case`, it will now deal with strings that have hyphens, commas or periods in them, changing them to be hyphens in the new string.
+* Fixed an issue in the **create-id-set** command, where the `source` value included the git token if it was specified in the remote url.
+* Fixed an issue in the **merge-id-set** command, where merging fails because of duplicates but the packs are in the XSOAR repo but in different version control.
+* Fixed missing `Lists` Content Item as valid `IDSetType`
+* Added enhancement for **generate-docs**. It is possible to provide both file or a comma seperated list as `examples`. Also, it's possible to provide more than one example for a script or a command.
+
 
 # 1.5.4
 * Fixed an issue with the **format** command when contributing via the UI
@@ -6,7 +13,7 @@
 * Fixed an issue with the **validate** command when a layoutscontainer did not have the `fromversion` field set.
 * added a new command **update-xsoar-config-file** to handle your XSOAR Configuration File.
 * Added `skipVerify` argument in **upload** command to skip pack signature verification.
-* Adding a filter to the current user to **_get_playground_id** method to find the actual playground id.
+* Fixed an issue when the **run** command  failed running when there’s more than one playground, by explicitly using the current user’s playground.
 * Added support for Job content item in the **format**, **validate**, **upload**, **create-id-set**, **find-dependecies** and **create-content-artifacts** commands.
 * Added a **source** field to the **id_set** entitles.
 * Two entitles will not consider as duplicates if they share the same pack and the same source.

@@ -254,6 +254,7 @@ def test_is_incident_field_using_existing_script_with_command_negative():
     assert validator._is_incident_field_scripts_found(incident_field_data=incident_field_data) is False, \
         "The incident field's script id is in the id set but the command not thus result should be False."
 
+
 def test_is_incident_field_using_existing_script_no_scripts():
     """
     Given

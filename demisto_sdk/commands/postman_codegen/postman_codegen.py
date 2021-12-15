@@ -2,7 +2,7 @@ import json
 import logging
 import re
 from collections import defaultdict
-from typing import Dict, List, Union
+from typing import Any, Dict, List, Union
 
 import demisto_sdk.commands.common.tools as tools
 from demisto_sdk.commands.common.constants import DemistoException
@@ -88,6 +88,7 @@ def create_body_format(body: Union[dict, list]):
         "key7": "{key7}"
     }
     """
+
     def format_value(d, o):
         for k, v in d.items():
             if isinstance(v, dict):
@@ -360,11 +361,14 @@ def convert_request_to_command(item: dict):
             try:
                 body_obj = json.loads(request_body.get('raw'))
                 body_format = create_body_format(body_obj)
+                flattened_json = flatten_json(body_obj)
+                shared_arg_to_split_position_dict = find_shared_args_path(flattened_json)
 
-                for key, value in flatten_json(body_obj).items():
+                for key, value in flattened_json.items():
                     path_split = key.split('.')
                     json_path = path_split[:-1]
-                    arg_name = path_split[-1]
+                    min_unique_path_length = shared_arg_to_split_position_dict[path_split[-1].lower()] + 1
+                    arg_name = '_'.join(path_split[-min_unique_path_length:])
                     arg = IntegrationGeneratorArg(
                         name=arg_name,
                         description='',
@@ -447,3 +451,40 @@ def duplicate_requests_check(commands_names_dict: dict) -> None:
     assert len(duplicates_list) == 0, f'There are requests with non-unique names: {duplicates_list}.\n' \
                                       f'You should give a unique name to each request.\n' \
                                       f'Names are case-insensitive and whitespaces are ignored.'
+
+
+def find_shared_args_path(flattened_json: Dict[str, Any]) -> Dict[str, int]:
+    """
+    Finds the minimum unique path length needed for all arguments with the same name.
+    Args:
+        flattened_json (Dict[str, any]): Flattened json returned after running the flatten_json function.
+
+    Returns:
+        (Dict[str, int]): Dictionary from argument name to the minimum unique path length for all arguments with this name.
+    """
+    arg_name_to_split_path_dict: Dict[str, List[List[str]]] = defaultdict(list)
+    shared_arg_to_split_position_dict: Dict[str, int] = defaultdict(int)
+    for key in flattened_json:
+        split_path = key.split('.')
+        arg_name = split_path[-1].lower()
+
+        shared_arg_to_split_position_dict[arg_name] = update_min_unique_path(split_path,
+                                                                             arg_name_to_split_path_dict[arg_name],
+                                                                             shared_arg_to_split_position_dict[arg_name])
+        arg_name_to_split_path_dict[arg_name].append(split_path)
+
+    return shared_arg_to_split_position_dict
+
+
+def update_min_unique_path(split_path: List[str], other_args_split_paths: List[List[str]], current_min_unique: int):
+    """
+    Finds the minimum unique path length needed for all arguments with the same name.
+    """
+    for other_arg_split_path in other_args_split_paths:
+        for max_same_path, (other_path, arg_path) in enumerate(zip(other_arg_split_path[::-1], split_path[::-1])):
+            if other_path == arg_path:
+                current_min_unique = max(max_same_path + 1, current_min_unique)
+            else:
+                break
+
+    return current_min_unique

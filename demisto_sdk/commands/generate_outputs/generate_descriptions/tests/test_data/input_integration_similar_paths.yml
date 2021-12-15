@@ -1,0 +1,47 @@
+category: Deception
+commonfields:
+  id: Test
+  version: -1
+configuration:
+  - name: base_url
+    display: API Server URL
+    required: true
+    defaultvalue: https://example.com/
+    type: 0
+    additionalinfo: ''
+description: Test
+display: Test
+fromversion: 6.0.0
+name: Test
+script:
+  commands:
+    - arguments:
+        - default: false
+          description: ID of incident
+          isArray: false
+          name: id
+          required: true
+          secret: false
+      deprecated: false
+      description: Display information about an incident.
+      execution: false
+      name: threatstream-submit-to-sandbox
+      outputs:
+        - contextPath: ThreatStream.Analysis.Platform
+          description: ''
+          type: String
+        - contextPath: ThreatStream.Analysis.Platform
+          description: ''
+          type: Number
+        - contextPath: ThreatStream.Analysis.Platform
+          description: ''
+          type: String
+  dockerimage: demisto/python3:3.9.6.22912
+  feed: false
+  isfetch: true
+  longRunning: false
+  longRunningPort: false
+  runonce: false
+  script: '-'
+  subtype: python3
+  type: python

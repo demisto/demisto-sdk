@@ -24,7 +24,8 @@ from demisto_sdk.commands.common.constants import (
     INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, JOBS_DIR,
     LAYOUTS_DIR, LISTS_DIR, MAPPERS_DIR, REPORTS_DIR, SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR, WIDGETS_DIR, FileType)
-from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type, get_json,
+from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
+                                               get_current_repo, get_json,
                                                get_pack_name, get_yaml,
                                                print_color, print_error,
                                                print_warning)
@@ -270,7 +271,6 @@ def get_integration_api_modules(file_path, data_dictionary, is_unified_integrati
 
 
 def get_integration_data(file_path):
-    integration_data = OrderedDict()
     data_dictionary = get_yaml(file_path)
 
     is_unified_integration = data_dictionary.get('script', {}).get('script', '') not in ['-', '']
@@ -300,13 +300,11 @@ def get_integration_data(file_path):
     for mapper in ['defaultmapperin', 'defaultmapperout']:
         if data_dictionary.get(mapper):
             mappers.add(data_dictionary.get(mapper))
-
-    integration_data['name'] = name
-    integration_data['file_path'] = file_path
-    if toversion:
-        integration_data['toversion'] = toversion
-    if fromversion:
-        integration_data['fromversion'] = fromversion
+    integration_data = create_common_entity_data(path=file_path,
+                                                 name=name,
+                                                 to_version=toversion,
+                                                 from_version=fromversion,
+                                                 pack=pack)
     if docker_image:
         integration_data['docker_image'] = docker_image
     if cmd_list:
@@ -317,8 +315,6 @@ def get_integration_data(file_path):
         integration_data['deprecated'] = deprecated
     if deprecated_commands:
         integration_data['deprecated_commands'] = deprecated_commands
-    if pack:
-        integration_data['pack'] = pack
     if integration_api_modules:
         integration_data['api_modules'] = integration_api_modules
     if default_classifier and default_classifier != '':
@@ -674,24 +670,20 @@ def get_layouts_scripts_ids(layout_tabs):
 def get_layoutscontainer_data(path):
     json_data = get_json(path)
     layouts_container_fields = ["group", "edit", "indicatorsDetails", "indicatorsQuickView", "quickView", "close",
-                                "details", "detailsV2", "mobile", "name"]
-    data = OrderedDict({field: json_data[field] for field in layouts_container_fields if json_data.get(field)})
+                                "details", "detailsV2", "mobile"]
+    pack = get_pack_name(path)
+    data = create_common_entity_data(path=path, name=json_data.get('name'),
+                                     to_version=json_data.get('toVersion'),
+                                     from_version=json_data.get('fromVersion'),
+                                     pack=pack)
+    data.update(OrderedDict({field: json_data[field] for field in layouts_container_fields if json_data.get(field)}))
 
     id_ = json_data.get('id')
-    pack = get_pack_name(path)
     incident_indicator_types_dependency = {id_}
     incident_indicator_fields_dependency = get_values_for_keys_recursively(json_data, ['fieldId'])
     definition_id = json_data.get('definitionId')
-
     if data.get('name'):
         incident_indicator_types_dependency.add(data['name'])
-    if json_data.get('toVersion'):
-        data['toversion'] = json_data['toVersion']
-    if json_data.get('fromVersion'):
-        data['fromversion'] = json_data['fromVersion']
-    if pack:
-        data['pack'] = pack
-    data['file_path'] = path
     data['incident_and_indicator_types'] = list(incident_indicator_types_dependency)
     if incident_indicator_fields_dependency['fieldId']:
         data['incident_and_indicator_fields'] = incident_indicator_fields_dependency['fieldId']
@@ -841,6 +833,7 @@ def create_common_entity_data(path, name, to_version, from_version, pack):
     if name:
         data['name'] = name
     data['file_path'] = path
+    data['source'] = list(get_current_repo())
     if to_version:
         data['toversion'] = to_version
     if from_version:
@@ -859,6 +852,7 @@ def get_pack_metadata_data(file_path, print_logs: bool):
         pack_data = {
             "name": json_data.get('name'),
             "current_version": json_data.get('currentVersion'),
+            'source': get_current_repo(),
             "author": json_data.get('author', ''),
             'certification': 'certified' if json_data.get('support', '').lower() in ['xsoar', 'partner'] else '',
             "tags": json_data.get('tags', []),
@@ -1469,6 +1463,7 @@ class IDSetType(Enum):
     GENERIC_MODULE = 'GenericModules'
     GENERIC_DEFINITION = 'GenericDefinitions'
     JOBS = 'Jobs'
+    LISTS = 'Lists'
 
     @classmethod
     def has_value(cls, value):
@@ -1980,6 +1975,11 @@ def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=
             if dict1.get('typeID', '') != dict2.get('typeID', ''):
                 return False
 
+        # If they have the same pack name and the same source they actually the same entity.
+        # Added to support merge between two id-sets that contain the same pack.
+        if dict1.get('pack') == dict2.get('pack') and is_same_source(dict1.get('source'), dict2.get('source')):
+            return False
+
         # A: 3.0.0 - 3.6.0
         # B: 3.5.0 - 4.5.0
         # C: 3.5.2 - 3.5.4
@@ -1999,6 +1999,22 @@ def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=
             print_warning('The following {} have the same ID ({}) but different names: '
                           '"{}", "{}".'.format(object_type, id_to_check, dict1.get('name'), dict2.get('name')))
 
+    return False
+
+
+def is_same_source(source1, source2) -> bool:
+    """
+    Two sources will considered the same if they are exactly the same repo, or they are the XSOAR repos, one in github
+    and another in gitlab
+    github.com, demisto, content == code,pan.run, xsoar, content
+    """
+    if source1 == source2:
+        return True
+    host1, owner1, repo1 = source1
+    host2, owner2, repo2 = source2
+    if host1 in {'github.com', 'code.pan.run'} and owner1 in {'demisto', 'xsoar'} \
+            and host2 in {'github.com', 'code.pan.run'} and owner2 in {'demisto', 'xsoar'}:
+        return repo1 == repo2
     return False
 
 

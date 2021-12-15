@@ -21,6 +21,7 @@ import click
 import colorama
 import demisto_client
 import git
+import giturlparse
 import requests
 import urllib3
 import yaml
@@ -1903,7 +1904,7 @@ def to_kebab_case(s: str):
     """
     if s:
         new_s = s.lower()
-        new_s = re.sub(' +', '-', new_s)
+        new_s = re.sub('[ ,.-]+', '-', new_s)
         new_s = re.sub('[^A-Za-z0-9-]+', '', new_s)
         m = re.search('[a-z0-9]+(-[a-z]+)*', new_s)
         if m:
@@ -2150,3 +2151,16 @@ def get_script_or_sub_playbook_tasks_from_playbook(searched_entity_name: str, ma
             searched_tasks.append(task_data)
 
     return searched_tasks
+
+
+def get_current_repo() -> Tuple[str, str, str]:
+    try:
+        git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
+        parsed_git = giturlparse.parse(git_repo.remotes.origin.url)
+        host = parsed_git.host
+        if '@' in host:
+            host = host.split('@')[1]
+        return host, parsed_git.owner, parsed_git.repo
+    except git.InvalidGitRepositoryError:
+        print_warning('git repo is not found')
+        return "Unknown source", '', ''

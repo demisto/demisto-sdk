@@ -79,10 +79,14 @@ class LintManager:
                                                          git=git,
                                                          all_packs=all_packs,
                                                          base_branch=self._prev_ver)
+        print(f"Executing lint and test on {Colors.Fg.cyan}{len(self._pkgs)}{Colors.reset} integrations and scripts")
 
         self._id_set_path = id_set_path
         if check_dependent_api_module:
+            print("Checking for packages dependent on the modified api module...")
             dependent_on_api_module = get_api_module_dependencies(self._pkgs, self._id_set_path)
+            dependent_on_api_module = self._get_packages(content_repo=self._facts["content_repo"],
+                                                         input=dependent_on_api_module)
             self._pkgs = self._pkgs + dependent_on_api_module
             print(f"Found {Colors.Fg.cyan}{len(dependent_on_api_module)}{Colors.reset} dependent packages."
                   f" Executing lint and test on dependent packages as well.")
@@ -181,8 +185,8 @@ class LintManager:
         logger.debug("Docker daemon test passed")
         return facts
 
-    def _get_packages(self, content_repo: git.Repo, input: str, git: bool, all_packs: bool, base_branch: str) \
-            -> List[PosixPath]:
+    def _get_packages(self, content_repo: git.Repo, input: str, git: bool = False, all_packs: bool = False,
+                      base_branch: str = 'master') -> List[PosixPath]:
         """ Get packages paths to run lint command.
 
         Args:
@@ -200,21 +204,19 @@ class LintManager:
             pkgs = LintManager._get_all_packages(content_dir=content_repo.working_dir)
         else:  # specific pack as input, -i flag has been used
             pkgs = []
-            for item in input.split(','):
+            input = input.split(',') if isinstance(input, str) else input
+            for item in input:
                 is_pack = os.path.isdir(item) and os.path.exists(os.path.join(item, PACKS_PACK_META_FILE_NAME))
                 if is_pack:
                     pkgs.extend(LintManager._get_all_packages(content_dir=item))
                 else:
                     pkgs.append(Path(item))
-
-        total_found = len(pkgs)
         if git:
             pkgs = self._filter_changed_packages(content_repo=content_repo, pkgs=pkgs,
                                                  base_branch=base_branch)
             for pkg in pkgs:
                 print_v(f"Found changed package {Colors.Fg.cyan}{pkg}{Colors.reset}",
                         log_verbose=self._verbose)
-        print(f"Executing lint and test on {Colors.Fg.cyan}{len(pkgs)}/{total_found}{Colors.reset} integrations and scripts")
 
         return pkgs
 

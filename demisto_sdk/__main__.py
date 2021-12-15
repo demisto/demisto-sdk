@@ -654,11 +654,13 @@ def secrets(config, **kwargs):
 )
 @click.option("-dt", "--docker-timeout", default=60,
               help="The timeout (in seconds) for requests done by the docker client.", type=int)
-@click.option("-idp", "--id-set-path", help="Path to id_set.json, relevant for when using the --check-dependent flag.",
-              type=click.Path(resolve_path=True))
+@click.option("-idp", "--id-set-path", help="Path to id_set.json, relevant for when using the "
+                                            "--check-dependent-api-module flag.",
+              type=click.Path(resolve_path=True),
+              default='Tests/id_set.json')
 @click.option("-chd", "--check-dependent-api-module", is_flag=True, help="Run unit tests and lint on all packages that "
                                                                          "are dependent on the found "
-                                                                         "modified api modules.")
+                                                                         "modified api modules.", default=True)
 def lint(**kwargs):
     """Lint command will perform:
         1. Package in host checks - flake8, bandit, mypy, vulture.

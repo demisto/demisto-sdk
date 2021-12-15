@@ -7,6 +7,7 @@ import pytest
 import yaml
 from mock import Mock, patch
 from ruamel.yaml import YAML
+from collections import OrderedDict
 
 from demisto_sdk.commands.common.constants import (FEED_REQUIRED_PARAMS,
                                                    FETCH_REQUIRED_PARAMS,
@@ -479,7 +480,8 @@ class TestFormatting:
         - Ensure the file was created.
         - Ensure that the isfetch and incidenttype params were added to the yml of the integration.
         """
-        mocker.patch.object(IntegrationValidator, 'has_no_fromlicense_key_in_contributions_integration', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'has_no_fromlicense_key_in_contributions_integration',
+                            return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_api_token_in_credential_type', return_value=True)
 
         os.makedirs(path, exist_ok=True)
@@ -520,7 +522,8 @@ class TestFormatting:
         - Ensure that the feedBypassExclusionList, Fetch indicators , feedReputation, feedReliability ,
          feedExpirationPolicy, feedExpirationInterval ,feedFetchInterval params were added to the yml of the integration.
         """
-        mocker.patch.object(IntegrationValidator, 'has_no_fromlicense_key_in_contributions_integration', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'has_no_fromlicense_key_in_contributions_integration',
+                            return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_api_token_in_credential_type', return_value=True)
 
         os.makedirs(path, exist_ok=True)
@@ -607,7 +610,7 @@ class TestFormatting:
         base_yml = PlaybookYMLFormat(source_path, path=schema_path)
 
         assert base_yml.data['tasks']['29']['task'][
-            'playbookName'] == 'File Enrichment - Virus Total Private API_dev_copy'
+                   'playbookName'] == 'File Enrichment - Virus Total Private API_dev_copy'
         base_yml.remove_copy_and_dev_suffixes_from_subplaybook()
 
         assert base_yml.data['tasks']['29']['task']['name'] == 'Fake name'
@@ -849,10 +852,10 @@ class TestFormatting:
 
         playbook_yml.update_task_uuid()
         assert is_string_uuid(playbook_yml.data['tasks']['1']['task']['id']) and \
-            is_string_uuid(playbook_yml.data['tasks']['1']['taskid'])
+               is_string_uuid(playbook_yml.data['tasks']['1']['taskid'])
         assert playbook_yml.data['tasks']['1']['task']['id'] == playbook_yml.data['tasks']['1']['taskid']
         assert is_string_uuid(playbook_yml.data['tasks']['2']['task']['id']) and \
-            is_string_uuid(playbook_yml.data['tasks']['2']['taskid'])
+               is_string_uuid(playbook_yml.data['tasks']['2']['taskid'])
         assert playbook_yml.data['tasks']['2']['task']['id'] == playbook_yml.data['tasks']['2']['taskid']
 
     def test_check_for_subplaybook_usages(self, repo):
@@ -1069,3 +1072,63 @@ class TestFormatting:
         base_update_yml = BaseUpdateYML(input=integration.yml.path)
         base_update_yml.remove_spaces_end_of_id_and_name()
         assert base_update_yml.data['name'] == 'MyIntegration'
+
+    def test_sync_to_maser_no_change(self, mocker, tmp_path):
+        """
+        Given
+            A yml which is sorted in a different order than master, but same content.
+        When
+            - Running format with sync_to_master enabled
+        Then
+            - Ensure that the result is in the same order as master
+        """
+        import demisto_sdk.commands.format.update_generic_yml as update_generic_yml
+
+        test_files_path = os.path.join(git_path(), 'demisto_sdk', 'tests')
+        vmware_integration_yml_path = os.path.join(test_files_path, 'test_files', 'content_repo_example', 'Packs',
+                                                   'VMware',
+                                                   'Integrations', 'integration-VMware.yml')
+        with open(vmware_integration_yml_path) as f:
+            yml_example = yaml.safe_load(f)
+        sorted_yml_file = tmp_path / 'test.yml'
+        with sorted_yml_file.open('w') as f:
+            yaml.dump(yml_example, f, sort_keys=True)  # sorting the keys to have different order
+        mocker.patch.object(BaseUpdateYML, 'get_id_and_version_path_object', return_value={'id': "vmware"})
+        mocker.patch.object(update_generic_yml, 'get_remote_file', return_value=yml_example)
+        base_update_yml = BaseUpdateYML(input=str(sorted_yml_file))
+        base_update_yml.sync_data_to_master()
+        assert OrderedDict(base_update_yml.data) == OrderedDict(yml_example)
+
+    def test_sync_to_master_with_change(self, mocker, tmp_path):
+        """
+        Given
+            A yml which is sorted in a different order than master, and the content is changed
+        When
+            - Running format with sync_to_master enabled
+        Then
+            - Ensure that the result is the changed result to make sure that the patching works
+        """
+        import demisto_sdk.commands.format.update_generic_yml as update_generic_yml
+        test_files_path = os.path.join(git_path(), 'demisto_sdk', 'tests')
+        vmware_integration_yml_path = os.path.join(test_files_path, 'test_files', 'content_repo_example', 'Packs',
+                                                   'VMware',
+                                                   'Integrations', 'integration-VMware.yml')
+        with open(vmware_integration_yml_path) as f:
+            yml_example = yaml.safe_load(f)
+        sorted_yml_file = tmp_path / 'test.yml'
+        with sorted_yml_file.open('w') as f:
+            yaml.dump(yml_example, f, sort_keys=True)  # sorting the keys to have different order
+        with sorted_yml_file.open() as f:
+            sorted_yml = yaml.safe_load(f)
+        sorted_yml['description'] = 'test'
+        sorted_yml['configuration'][0]['defaultvalue'] = 'test'
+        del sorted_yml['configuration'][1]['defaultvalue']
+        sorted_yml['script']['commands'][0]['outputs'].append({"contextPath": "VMWare.test", "description": "VM test"})
+        with sorted_yml_file.open('w') as f:
+            yaml.dump(sorted_yml, f)
+
+        mocker.patch.object(BaseUpdateYML, 'get_id_and_version_path_object', return_value={'id': "vmware"})
+        mocker.patch.object(update_generic_yml, 'get_remote_file', return_value=yml_example)
+        base_update_yml = BaseUpdateYML(input=str(sorted_yml_file))
+        base_update_yml.sync_data_to_master()
+        assert base_update_yml.data == sorted_yml

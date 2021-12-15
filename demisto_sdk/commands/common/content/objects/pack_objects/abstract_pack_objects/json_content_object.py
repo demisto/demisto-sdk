@@ -1,4 +1,3 @@
-import json
 import re
 from typing import List, Optional, Union
 
@@ -13,6 +12,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects.change_log.change_
     ChangeLog
 from demisto_sdk.commands.common.content.objects.pack_objects.readme.readme import \
     Readme
+from demisto_sdk.commands.common.tools import get_json
 
 
 class JSONContentObject(JSONObject):
@@ -111,8 +111,7 @@ class JSONContentObject(JSONObject):
         return created_files
 
     def is_list(self) -> bool:
-        with open(self.path) as f:
-            data = json.loads(f.read())
-            if type(data) == list:
-                return True
+        data = get_json(str(self.path))
+        if isinstance(data, list):
+            return True
         return False

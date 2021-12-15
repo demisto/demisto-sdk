@@ -1036,6 +1036,41 @@ class Integration:
         )
         server_context.prev_system_conf = prev_system_conf
 
+    def create_module(self, instance_name: str, configuration: dict, incident_configuration: dict = None):
+        module_configuration = configuration['configuration']
+
+        # If incident_type is given in Test Playbook configuration on test-conf, we change the default configuration.
+        if incident_configuration and incident_configuration.get('incident_type'):
+            incident_type_configuration = list(
+                filter(lambda config: config.get('name') == 'incidentType', module_configuration))
+
+            incident_type_configuration[0]['value'] = incident_configuration.get('incident_type')
+
+        module_instance = {
+            'brand': configuration['name'],
+            'category': configuration['category'],
+            'configuration': configuration,
+            'data': [],
+            'enabled': "true",
+            'engine': '',
+            'id': '',
+            'isIntegrationScript': self.configuration.is_byoi,  # type: ignore
+            'name': instance_name,
+            'passwordProtected': False,
+            'version': 0,
+            'incomingMapperId': configuration.get('defaultMapperIn', ''),
+            'mappingId': configuration.get('defaultClassifier', ''),
+            'outgoingMapperId': configuration.get('defaultMapperOut', '')
+        }
+
+        # If default mapper or classifier are given in test-conf we ignore defaultMapperIn or defaultClassifier from yml.
+        if incident_configuration.get('classifier_id'):
+            module_instance['mappingId'] = incident_configuration.get('classifier_id')
+        if incident_configuration.get('incoming_mapper_id'):
+            module_instance['incomingMapperId'] = incident_configuration.get('incoming_mapper_id')
+
+        return module_instance
+
     def create_integration_instance(self,
                                     client: DefaultApi,
                                     playbook_id: str,
@@ -1079,37 +1114,7 @@ class Integration:
         params = self.configuration.params  # type: ignore
         incident_configuration = params.get('incident_configuration', {})
 
-        module_configuration = configuration['configuration']
-
-        # If incident_type is given in Test Playbook configuration on test-conf, we change the default configuration.
-        if incident_configuration and incident_configuration.get('incident_type'):
-            incident_type_configuration = list(
-                filter(lambda config: config.get('name') == 'incidentType', module_configuration))
-
-            incident_type_configuration[0]['value'] = incident_configuration.get('incident_type')
-
-        module_instance = {
-            'brand': configuration['name'],
-            'category': configuration['category'],
-            'configuration': configuration,
-            'data': [],
-            'enabled': "true",
-            'engine': '',
-            'id': '',
-            'isIntegrationScript': self.configuration.is_byoi,  # type: ignore
-            'name': instance_name,
-            'passwordProtected': False,
-            'version': 0,
-            'incomingMapperId': configuration.get('defaultMapperIn', ''),
-            'mappingId': configuration.get('defaultClassifier', ''),
-            'outgoingMapperId': configuration.get('defaultMapperOut', '')
-        }
-
-        # If default mapper or classifier are given in test-conf we ignore defaultMapperIn or defaultClassifier from yml.
-        if incident_configuration.get('classifier_id'):
-            module_instance['mappingId'] = incident_configuration.get('classifier_id')
-        if incident_configuration.get('incoming_mapper_id'):
-            module_instance['incomingMapperId'] = incident_configuration.get('incoming_mapper_id')
+        module_instance = self.create_module(instance_name, configuration, incident_configuration)
         print(f'######## SDK {module_configuration=} #########')
         # set server keys
         self._set_server_keys(client, server_context)

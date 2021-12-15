@@ -25,9 +25,13 @@ mapping:
   name:
     type: str
     required: true
+  name_x2:
+    type: str
   description:
     type: str
     required: true
+  description_x2:
+    type: str
   hidden:
     type: bool
   deprecated:
@@ -156,16 +160,28 @@ mapping:
               name:
                 type: str
                 required: true
+              name_x2:
+                type: str
               playbookName:
                 type: str
+              playbookName_x2:
+                type: str
               playbookId:
+                type: str
+              playbookId_x2:
                 type: str
               description:
                 type: str
                 required: true
+              description_x2:
+                type: str
               scriptName:
                 type: str
+              scriptName_x2:
+                type: str
               script:
+                type: str
+              script_x2:
                 type: str
               tags:
                 sequence:
@@ -205,6 +221,8 @@ mapping:
                 sequence:
                   - include: arg_filters_schema
               scriptId:
+                type: str
+              scriptId_x2:
                 type: str
               scriptArguments:
                 type: map
@@ -327,6 +345,8 @@ schema;arg_filter_schema:
         value:
           type: any
           required: true
+        value_x2:
+          type: any
         iscontext:
           type: bool
     right:
@@ -335,6 +355,8 @@ schema;arg_filter_schema:
         value:
           type: any
           required: true
+        value_x2:
+          type: any
         iscontext:
           type: bool
 

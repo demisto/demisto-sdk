@@ -6,8 +6,7 @@ import yaml
 
 from demisto_sdk.commands.common.constants import \
     DEFAULT_CONTENT_ITEM_TO_VERSION
-from demisto_sdk.commands.common.tools import (find_type,
-                                               is_uuid, print_error)
+from demisto_sdk.commands.common.tools import find_type, is_uuid, print_error
 from demisto_sdk.commands.format.format_constants import (
     ARGUMENTS_DEFAULT_VALUES, GENERIC_OBJECTS_FILE_TYPES, TO_VERSION_5_9_9)
 from demisto_sdk.commands.format.update_generic import BaseUpdate

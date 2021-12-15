@@ -38,18 +38,18 @@ INCIDENT_CASES = [
         {
             "incident_type": "Example Type",
             "classifier_id": "Example Classifier",
-            "incoming_mapper_id": "Example Mapper"}  # case both incident type and classifier/mapper
-        , {'incident_type': 'Example Type', 'classifier': 'Example Classifier', 'mapper': 'Example Mapper'}
+            "incoming_mapper_id": "Example Mapper"},  # case both incident type and classifier/mapper
+        {'incident_type': 'Example Type', 'classifier': 'Example Classifier', 'mapper': 'Example Mapper'}
     ),
     (
         {
             "classifier_id": "Example Classifier",
-            "incoming_mapper_id": "Example Mapper"}  # case both incident type and classifier/mapper
-        , {'incident_type': '', 'classifier': 'Example Classifier', 'mapper': 'Example Mapper'}
+            "incoming_mapper_id": "Example Mapper"},  # case both incident type and classifier/mapper
+        {'incident_type': '', 'classifier': 'Example Classifier', 'mapper': 'Example Mapper'}
     ),
     ({},  # case no incident configuration provided
      {'incident_type': '', 'classifier': '', 'mapper': ''}),
-    (None, # case no incident configuration provided
+    (None,  # case no incident configuration provided
      {'incident_type': '', 'classifier': '', 'mapper': ''})
 ]
 

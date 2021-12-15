@@ -30,8 +30,9 @@ class TestTestPlaybookRunner:
             - validate the results is aas expected
         """
         mocker.patch.object(demisto_client, 'configure', return_value=DefaultApi())
+        mocker.patch.object(TestPlaybookRunner, 'print_tpb_error_details')
         mocker.patch.object(TestPlaybookRunner, 'create_incident_with_test_playbook', return_value='1234')
-        mocker.patch.object(TestPlaybookRunner, 'get_test_playbook_results_state', return_value=tpb_result)
+        mocker.patch.object(TestPlaybookRunner, 'get_test_playbook_results_dict', return_value={"state": tpb_result})
         result = click.Context(command=run_test_playbook).invoke(run_test_playbook, test_playbook_path=TEST_PLAYBOOK)
         assert result == res
 
@@ -48,8 +49,9 @@ class TestTestPlaybookRunner:
             - validate the num of tpb is as expected (4 tpb in Azure Pack)
         """
         mocker.patch.object(demisto_client, 'configure', return_value=DefaultApi())
+        mocker.patch.object(TestPlaybookRunner, 'print_tpb_error_details')
         mocker.patch.object(TestPlaybookRunner, 'create_incident_with_test_playbook', return_value='1234')
-        mocker.patch.object(TestPlaybookRunner, 'get_test_playbook_results_state', return_value=tpb_result)
+        mocker.patch.object(TestPlaybookRunner, 'get_test_playbook_results_dict', return_value={"state": tpb_result})
         result = click.Context(command=run_test_playbook).invoke(run_test_playbook, test_playbook_path=VALID_PACK)
         assert result == res
 
@@ -70,8 +72,10 @@ class TestTestPlaybookRunner:
         """
         with ChangeCWD(CONTENT_REPO_EXAMPLE_ROOT):
             mocker.patch.object(demisto_client, 'configure', return_value=DefaultApi())
+            mocker.patch.object(TestPlaybookRunner, 'print_tpb_error_details')
             mocker.patch.object(TestPlaybookRunner, 'create_incident_with_test_playbook', return_value='1234')
-            mocker.patch.object(TestPlaybookRunner, 'get_test_playbook_results_state', return_value=tpb_result)
+            mocker.patch.object(TestPlaybookRunner, 'get_test_playbook_results_dict', return_value=
+            {"state": tpb_result})
             result = click.Context(command=run_test_playbook).invoke(run_test_playbook, all=True, test_playbook_path='')
             assert result == res
 
@@ -92,8 +96,9 @@ class TestTestPlaybookRunner:
             - validate the Error massage when the argument is missing
         """
         mocker.patch.object(demisto_client, 'configure', return_value=DefaultApi())
+        mocker.patch.object(TestPlaybookRunner, 'print_tpb_error_details')
         mocker.patch.object(TestPlaybookRunner, 'create_incident_with_test_playbook', return_value='1234')
-        mocker.patch.object(TestPlaybookRunner, 'get_test_playbook_results_state', return_value='success')
+        mocker.patch.object(TestPlaybookRunner, 'get_test_playbook_results_dict', return_value={'state': 'success'})
 
         self.test_playbook_input = input_tpb
         test_playbook = TestPlaybookRunner(test_playbook_path=self.test_playbook_input)
@@ -105,7 +110,7 @@ class TestTestPlaybookRunner:
             assert err in stdout
 
     @pytest.mark.parametrize(argnames='input_tpb, exit_code, err',
-                             argvalues=[('', 1, "Error: Missing option '-i' / '--input'."),
+                             argvalues=[('', 1, "Error: Missing option '-tpb' / '--test-playbook-path'."),
                                         ('BlaBla', 1, 'Error: Given input path: BlaBla does not exist')])
     def test_failed_run_test_playbook_manager(self, mocker, input_tpb, exit_code, err, capsys):
         """
@@ -119,7 +124,7 @@ class TestTestPlaybookRunner:
         """
         mocker.patch.object(demisto_client, 'configure', return_value=DefaultApi())
         mocker.patch.object(TestPlaybookRunner, 'create_incident_with_test_playbook', return_value='1234')
-        mocker.patch.object(TestPlaybookRunner, 'get_test_playbook_results_state', return_value='success')
+        mocker.patch.object(TestPlaybookRunner, 'get_test_playbook_results_dict', return_value={'state': 'success'})
 
         self.test_playbook_input = input_tpb
         test_playbook = TestPlaybookRunner(test_playbook_path=self.test_playbook_input)
@@ -144,8 +149,9 @@ class TestTestPlaybookRunner:
             - validate all the massage is as expected.
         """
         mocker.patch.object(demisto_client, 'configure', return_value=DefaultApi())
+        mocker.patch.object(TestPlaybookRunner, 'print_tpb_error_details')
         mocker.patch.object(TestPlaybookRunner, 'create_incident_with_test_playbook', return_value='1234')
-        mocker.patch.object(TestPlaybookRunner, 'get_test_playbook_results_state', return_value=tpb_results)
+        mocker.patch.object(TestPlaybookRunner, 'get_test_playbook_results_dict', return_value={'state': tpb_results})
 
         self.test_playbook_input = TEST_PLAYBOOK
         test_playbook_runner = TestPlaybookRunner(test_playbook_path=self.test_playbook_input)
@@ -172,8 +178,9 @@ class TestTestPlaybookRunner:
             - validate the all the massages is as expected.
         """
         mocker.patch.object(demisto_client, 'configure', return_value=DefaultApi())
+        mocker.patch.object(TestPlaybookRunner, 'print_tpb_error_details')
         mocker.patch.object(TestPlaybookRunner, 'create_incident_with_test_playbook', return_value='1234')
-        mocker.patch.object(TestPlaybookRunner, 'get_test_playbook_results_state', return_value=tpb_results)
+        mocker.patch.object(TestPlaybookRunner, 'get_test_playbook_results_dict', return_value={'state': tpb_results})
 
         self.test_playbook_input = TEST_PLAYBOOK
         test_playbook_runner = TestPlaybookRunner(test_playbook_path=self.test_playbook_input)

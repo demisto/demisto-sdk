@@ -1,4 +1,5 @@
 import os
+import re
 import time
 
 import click
@@ -6,9 +7,11 @@ import demisto_client
 from demisto_client.demisto_api.rest import ApiException
 
 from demisto_sdk.commands.common.tools import LOG_COLORS, get_yaml, print_color
+from demisto_sdk.commands.upload.uploader import Uploader
 
 SUCCESS_RETURN_CODE = 0
 ERROR_RETURN_CODE = 1
+ENTRY_TYPE_ERROR = 4
 
 
 class TestPlaybookRunner:
@@ -31,8 +34,8 @@ class TestPlaybookRunner:
         self.timeout = timeout
 
         # we set to None so demisto_client will use env var DEMISTO_VERIFY_SSL
-        verify = (not insecure) if insecure else None
-        self.demisto_client = demisto_client.configure(verify_ssl=verify)
+        self.verify = (not insecure) if insecure else None
+        self.demisto_client = demisto_client.configure(verify_ssl=self.verify)
         self.base_link_to_workplan = self.get_base_link_to_workplan()
 
     def run_test_playbooks(self) -> int:
@@ -49,22 +52,27 @@ class TestPlaybookRunner:
         return The exit code of each flow
         """
         status_code = SUCCESS_RETURN_CODE
+        all_tpb_files_list: list = []
 
         if not self.validate_tpb_path():
             status_code = ERROR_RETURN_CODE
 
-        # Run specific test playbook
-        elif os.path.isfile(self.test_playbook_path):
-            test_playbook_id = self.get_test_playbook_id(self.test_playbook_path)
-            status_code = self.run_test_playbook_by_id(test_playbook_id)
+        # Run all repo test playbooks
+        elif self.all_test_playbooks:
+            all_tpb_files_list.extend(self.run_all_test_playbooks())
 
         # Run all pack test playbooks
         elif os.path.isdir(self.test_playbook_path):
-            status_code = self.run_test_playbooks_folder(self.test_playbook_path)
+            all_tpb_files_list.extend(self.run_test_playbooks_folder(self.test_playbook_path))
 
-        # Run all repo test playbooks
-        elif self.all_test_playbooks:
-            status_code = self.run_all_test_playbooks()
+        # Run specific test playbook
+        elif os.path.isfile(self.test_playbook_path):
+            all_tpb_files_list.append(self.test_playbook_path)
+
+        for tpb in all_tpb_files_list:
+            self.upload_tpb(tpb_file=tpb)
+            test_playbook_id = self.get_test_playbook_id(tpb)
+            status_code = self.run_test_playbook_by_id(test_playbook_id)
 
         return status_code
 
@@ -76,7 +84,7 @@ class TestPlaybookRunner:
         valid = True
         if not self.all_test_playbooks:
             if not self.test_playbook_path:
-                print_color("Error: Missing option '-i' / '--input'.", LOG_COLORS.RED)
+                print_color("Error: Missing option '-tpb' / '--test-playbook-path'.", LOG_COLORS.RED)
                 valid = False
 
             elif not os.path.exists(self.test_playbook_path):
@@ -96,28 +104,21 @@ class TestPlaybookRunner:
         """
         Run all pack test playbooks
         """
-        status_code = 0
         full_path = f'{folder_path}/TestPlaybooks'
         list_test_playbooks_files = os.listdir(full_path)
-        for test_playbook in list_test_playbooks_files:
-            test_playbook_id = self.get_test_playbook_id(os.path.join(full_path, test_playbook))
-            res = self.run_test_playbook_by_id(test_playbook_id)
-            if res == 1:
-                status_code = 1
-        return status_code
+        list_test_playbooks_files = [f'{full_path}/{tpb}' for tpb in list_test_playbooks_files]
+        return list_test_playbooks_files
 
     def run_all_test_playbooks(self):
         """
         Run all the repo test playbooks
         """
-        status_code = 0
+        tpb_list: list = []
         packs_list = os.listdir('Packs')
         for pack in packs_list:
             if os.path.isdir(f'Packs/{pack}'):
-                res = self.run_test_playbooks_folder(f'Packs/{pack}')
-                if res == 1:
-                    status_code = 1
-        return status_code
+                tpb_list.extend(self.run_test_playbooks_folder(f'Packs/{pack}'))
+        return tpb_list
 
     def run_test_playbook_by_id(self, test_playbook_id):
         """Run a test playbook in your xsoar instance.
@@ -143,8 +144,8 @@ class TestPlaybookRunner:
             start_time = time.time()
 
             while elapsed_time < self.timeout:
-                test_playbook_result = self.get_test_playbook_results_state(incident_id)
-                if test_playbook_result == "inprogress":
+                test_playbook_result = self.get_test_playbook_results_dict(incident_id)
+                if test_playbook_result['state'] == "inprogress":
                     time.sleep(10)
                     elapsed_time = int(time.time() - start_time)
                 else:   # the test playbook has finished running
@@ -155,7 +156,8 @@ class TestPlaybookRunner:
                 print_color(f'The command had timed out while the playbook is in progress.\n'
                             f'To keep tracking the test playbook please go to : {work_plan_link}', LOG_COLORS.RED)
             else:
-                if test_playbook_result == "failed":
+                if test_playbook_result['state'] == "failed":
+                    self.print_tpb_error_details(test_playbook_result, test_playbook_id)
                     print_color("The test playbook finished running with status: FAILED", LOG_COLORS.RED)
                     return 1
                 else:
@@ -199,10 +201,20 @@ class TestPlaybookRunner:
         print_color(f'The test playbook: {self.test_playbook_path} was triggered successfully.', LOG_COLORS.GREEN)
         return response.id
 
-    def get_test_playbook_results_state(self, inc_id):
+    def get_test_playbook_results_dict(self, inc_id):
         test_playbook_results = self.demisto_client.generic_request(method='GET', path=f'/inv-playbook/{inc_id}')
-        res_dict = eval(test_playbook_results[0])
-        return res_dict.get('state')
+        return eval(test_playbook_results[0])
+
+    def print_tpb_error_details(self, tpb_res, tpb_id):
+        entries = tpb_res['entries']
+        print_color(f'Test Playbook {tpb_id} has failed:', LOG_COLORS.RED)
+        for entry in entries:
+            if entry['type'] == ENTRY_TYPE_ERROR and entry['parentContent']:
+                print_color(f'- Task ID: {entry["taskId"]}', LOG_COLORS.RED)
+                # Checks for passwords and replaces them with "******"
+                parent_content = re.sub(r' (P|p)assword="[^";]*"', ' password=******', entry['parentContent'])
+                print_color(f'  Command: {parent_content}', LOG_COLORS.RED)
+                print_color(f'  Body:\n{entry["contents"]}', LOG_COLORS.RED)
 
     def get_base_link_to_workplan(self):
         """Create a base link to the workplan in the specified xsoar instance
@@ -212,3 +224,7 @@ class TestPlaybookRunner:
 
         base_url = os.environ.get('DEMISTO_BASE_URL')
         return f'{base_url}/#/WorkPlan/'
+
+    def upload_tpb(self, tpb_file):
+        uploader = Uploader(input=tpb_file, insecure=self.verify)
+        uploader.upload()

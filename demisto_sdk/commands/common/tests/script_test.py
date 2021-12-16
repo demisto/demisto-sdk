@@ -594,3 +594,39 @@ class TestScriptValidator:
         structure_validator = StructureValidator(script.yml.path)
         validator = ScriptValidator(structure_validator)
         assert validator.name_not_contain_the_type()
+
+    def test_runas_is_dbtrole(self, pack):
+        """
+        Given
+            - A script with runas = DBotRole.
+        When
+            - running runas_is_not_dbtrole.
+        Then
+            - Ensure the validate failed.
+        """
+
+        script = pack.create_script(yml={"runas": "DBotRole"})
+
+        with ChangeCWD(pack.repo_path):
+            structure_validator = StructureValidator(script.yml.path)
+            validator = ScriptValidator(structure_validator)
+
+            assert not validator.runas_is_not_dbtrole()
+
+    def test_runas_is_not_dbtrole(self, pack):
+        """
+        Given
+            - A script without runas.
+        When
+            - running runas_is_not_dbtrole.
+        Then
+            - Ensure the validate passes.
+        """
+
+        script = pack.create_script(yml={})
+
+        with ChangeCWD(pack.repo_path):
+            structure_validator = StructureValidator(script.yml.path)
+            validator = ScriptValidator(structure_validator)
+
+            assert validator.runas_is_not_dbtrole()

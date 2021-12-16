@@ -1,0 +1,83 @@
+{
+  "id": "01a54692-b53d-4163-937a-32003bcb3c64",
+  "prompt": "test",
+  "completions": [
+    {
+      "data": {
+        "text": " The ThreatStream Platform.",
+        "tokens": [
+          {
+            "generatedToken": {
+              "token": "▁The",
+              "logprob": -1.254825472831726
+            },
+            "topTokens": "None",
+            "textRange": {
+              "start": 0,
+              "end": 4
+            }
+          },
+          {
+            "generatedToken": {
+              "token": "▁Threat",
+              "logprob": -0.8236160278320312
+            },
+            "topTokens": "None",
+            "textRange": {
+              "start": 4,
+              "end": 11
+            }
+          },
+          {
+            "generatedToken": {
+              "token": "Stream",
+              "logprob": -0.04839858040213585
+            },
+            "topTokens": "None",
+            "textRange": {
+              "start": 11,
+              "end": 17
+            }
+          },
+          {
+            "generatedToken": {
+              "token": "▁Platform",
+              "logprob": -2.0
+            },
+            "topTokens": "None",
+            "textRange": {
+              "start": 17,
+              "end": 26
+            }
+          },
+          {
+            "generatedToken": {
+              "token": ".",
+              "logprob": -1.2856147289276123
+            },
+            "topTokens": "None",
+            "textRange": {
+              "start": 26,
+              "end": 27
+            }
+          },
+          {
+            "generatedToken": {
+              "token": "<|newline|>",
+              "logprob": -0.0468529649078846
+            },
+            "topTokens": "None",
+            "textRange": {
+              "start": 27,
+              "end": 27
+            }
+          }
+        ]
+      },
+      "finishReason": {
+        "reason": "stop",
+        "sequence": "\n"
+      }
+    }
+  ]
+}

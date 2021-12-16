@@ -11,7 +11,6 @@ from ruamel.yaml import YAML
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION, INTEGRATION, PLAYBOOK)
-from demisto_sdk.commands.common.GitContentConfig import GitContentConfig
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_dict_from_file,
                                                get_pack_metadata,
                                                get_remote_file,

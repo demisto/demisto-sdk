@@ -1071,7 +1071,7 @@ class TestFormatting:
         base_update_yml.remove_spaces_end_of_id_and_name()
         assert base_update_yml.data['name'] == 'MyIntegration'
 
-    def test_sync_to_maser_no_change(self, mocker, tmp_path):
+    def test_sync_to_master_no_change(self, mocker, tmp_path):
         """
         Given
             A yml which is sorted in a different order than master, but same content.

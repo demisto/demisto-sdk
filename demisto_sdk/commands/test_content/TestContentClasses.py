@@ -1400,6 +1400,11 @@ class TestContext:
                 self.playbook.disable_integrations(self.client, self.server_context)
                 return PB_Status.FAILED
 
+            print(f" SDK Playbook info: {self.playbook}")
+            pb_path = f'/playbook/{urllib.parse.quote(self.playbook.configuration.playbook_id)}'
+            res = demisto_client.generic_request_func(self=self.client, method='GET',
+                                                      path=pb_path)
+            print(f' SDK PB {res=}')
             incident = self.playbook.create_incident(self.client)
             if not incident:
                 return ''

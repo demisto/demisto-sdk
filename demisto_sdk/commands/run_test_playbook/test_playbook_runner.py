@@ -38,60 +38,58 @@ class TestPlaybookRunner:
         self.demisto_client = demisto_client.configure(verify_ssl=self.verify)
         self.base_link_to_workplan = self.get_base_link_to_workplan()
 
-    def run_test_playbooks(self) -> int:
-        """
-        Run test playbooks on your XSOAR machine.
-        :return: The exit code
-        """
-        exit_code: int = self.manage_and_run_test_playbooks()
-        return exit_code
-
     def manage_and_run_test_playbooks(self):
         """
         Manages all ru-test-playbook command flows
         return The exit code of each flow
         """
         status_code = SUCCESS_RETURN_CODE
-        all_tpb_files_list: list = []
+        test_playbooks: list = []
 
         if not self.validate_tpb_path():
             status_code = ERROR_RETURN_CODE
 
-        # Run all repo test playbooks
-        elif self.all_test_playbooks:
-            all_tpb_files_list.extend(self.run_all_test_playbooks())
+        test_playbooks.extend(self.collect_all_tpb_files_paths())
 
-        # Run all pack test playbooks
-        elif os.path.isdir(self.test_playbook_path):
-            all_tpb_files_list.extend(self.run_test_playbooks_folder(self.test_playbook_path))
-
-        # Run specific test playbook
-        elif os.path.isfile(self.test_playbook_path):
-            all_tpb_files_list.append(self.test_playbook_path)
-
-        for tpb in all_tpb_files_list:
+        for tpb in test_playbooks:
             self.upload_tpb(tpb_file=tpb)
             test_playbook_id = self.get_test_playbook_id(tpb)
             status_code = self.run_test_playbook_by_id(test_playbook_id)
 
         return status_code
 
+    def collect_all_tpb_files_paths(self):
+        test_playbooks: list = []
+        # Run all repo test playbooks
+        if self.all_test_playbooks:
+            test_playbooks.extend(self.get_all_test_playbooks())
+
+        # Run all pack test playbooks
+        elif os.path.isdir(self.test_playbook_path):
+            test_playbooks.extend(self.get_test_playbooks_from_folder(self.test_playbook_path))
+
+        # Run specific test playbook
+        elif os.path.isfile(self.test_playbook_path):
+            test_playbooks.append(self.test_playbook_path)
+
+        return test_playbooks
+
     def validate_tpb_path(self) -> bool:
         """
         Verifies that the input path configuration given by the user is correct
         :return: The verification result
         """
-        valid = True
+        is_path_valid = True
         if not self.all_test_playbooks:
             if not self.test_playbook_path:
                 print_color("Error: Missing option '-tpb' / '--test-playbook-path'.", LOG_COLORS.RED)
-                valid = False
+                is_path_valid = False
 
             elif not os.path.exists(self.test_playbook_path):
-                click.secho(f'Error: Given input path: {self.test_playbook_path} does not exist', fg='bright_red')
-                valid = False
+                print_color(f'Error: Given input path: {self.test_playbook_path} does not exist', LOG_COLORS.RED)
+                is_path_valid = False
 
-        return valid
+        return is_path_valid
 
     def get_test_playbook_id(self, file_path):
         """
@@ -100,24 +98,24 @@ class TestPlaybookRunner:
         test_playbook_data = get_yaml(file_path=file_path)
         return test_playbook_data.get('id')
 
-    def run_test_playbooks_folder(self, folder_path):
+    def get_test_playbooks_from_folder(self, folder_path):
         """
-        Run all pack test playbooks
+        Get all pack test playbooks
         """
         full_path = f'{folder_path}/TestPlaybooks'
         list_test_playbooks_files = os.listdir(full_path)
         list_test_playbooks_files = [f'{full_path}/{tpb}' for tpb in list_test_playbooks_files]
         return list_test_playbooks_files
 
-    def run_all_test_playbooks(self):
+    def get_all_test_playbooks(self):
         """
-        Run all the repo test playbooks
+        Get all the repo test playbooks
         """
         tpb_list: list = []
         packs_list = os.listdir('Packs')
         for pack in packs_list:
             if os.path.isdir(f'Packs/{pack}'):
-                tpb_list.extend(self.run_test_playbooks_folder(f'Packs/{pack}'))
+                tpb_list.extend(self.get_test_playbooks_from_folder(f'Packs/{pack}'))
         return tpb_list
 
     def run_test_playbook_by_id(self, test_playbook_id):
@@ -126,47 +124,53 @@ class TestPlaybookRunner:
         Returns:
             int. 0 in success, 1 in a failure.
         """
+        status_code: int = SUCCESS_RETURN_CODE
         # create an incident with the given playbook
         try:
             incident_id = self.create_incident_with_test_playbook(
                 incident_name=f'inc_{test_playbook_id}', test_playbook_id=test_playbook_id)
         except ApiException as a:
             print_color(str(a), LOG_COLORS.RED)
-            return 1
+            status_code = ERROR_RETURN_CODE
 
         work_plan_link = self.base_link_to_workplan + str(incident_id)
         if self.should_wait:
-            print_color(f'Waiting for the test playbook to finish running.. \n'
-                        f'To see the test playbook run in real-time please go to : {work_plan_link}',
-                        LOG_COLORS.GREEN)
-
-            elapsed_time = 0
-            start_time = time.time()
-
-            while elapsed_time < self.timeout:
-                test_playbook_result = self.get_test_playbook_results_dict(incident_id)
-                if test_playbook_result['state'] == "inprogress":
-                    time.sleep(10)
-                    elapsed_time = int(time.time() - start_time)
-                else:   # the test playbook has finished running
-                    break
-
-            # Ended the loop because of timeout
-            if elapsed_time >= self.timeout:
-                print_color(f'The command had timed out while the playbook is in progress.\n'
-                            f'To keep tracking the test playbook please go to : {work_plan_link}', LOG_COLORS.RED)
-            else:
-                if test_playbook_result['state'] == "failed":
-                    self.print_tpb_error_details(test_playbook_result, test_playbook_id)
-                    print_color("The test playbook finished running with status: FAILED", LOG_COLORS.RED)
-                    return 1
-                else:
-                    print_color("The test playbook has completed its run successfully", LOG_COLORS.GREEN)
+            status_code = self.run_and_check_tpb_status(test_playbook_id, work_plan_link, incident_id)
 
         else:
             print_color(f'To see results please go to : {work_plan_link}', LOG_COLORS.NATIVE)
 
-        return 0
+        return status_code
+
+    def run_and_check_tpb_status(self, test_playbook_id, work_plan_link, incident_id):
+        status_code = SUCCESS_RETURN_CODE
+        print_color(f'Waiting for the test playbook to finish running.. \n'
+                    f'To see the test playbook run in real-time please go to : {work_plan_link}', LOG_COLORS.GREEN)
+
+        elapsed_time = 0
+        start_time = time.time()
+
+        while elapsed_time < self.timeout:
+            test_playbook_result = self.get_test_playbook_results_dict(incident_id)
+            if test_playbook_result['state'] == "inprogress":
+                time.sleep(10)
+                elapsed_time = int(time.time() - start_time)
+            else:  # the test playbook has finished running
+                break
+
+        # Ended the loop because of timeout
+        if elapsed_time >= self.timeout:
+            print_color(f'The command had timed out while the playbook is in progress.\n'
+                        f'To keep tracking the test playbook please go to : {work_plan_link}', LOG_COLORS.RED)
+        else:
+            if test_playbook_result['state'] == "failed":
+                self.print_tpb_error_details(test_playbook_result, test_playbook_id)
+                print_color("The test playbook finished running with status: FAILED", LOG_COLORS.RED)
+                status_code = ERROR_RETURN_CODE
+            else:
+                print_color("The test playbook has completed its run successfully", LOG_COLORS.GREEN)
+
+        return status_code
 
     def create_incident_with_test_playbook(self, incident_name, test_playbook_id):
         # type: (str, str) -> int
@@ -226,5 +230,5 @@ class TestPlaybookRunner:
         return f'{base_url}/#/WorkPlan/'
 
     def upload_tpb(self, tpb_file):
-        uploader = Uploader(input=tpb_file, insecure=self.verify)
+        uploader = Uploader(input=tpb_file, insecure=self.verify)  # type: ignore
         uploader.upload()

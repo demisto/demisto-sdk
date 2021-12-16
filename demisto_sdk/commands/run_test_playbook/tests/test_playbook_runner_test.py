@@ -74,8 +74,8 @@ class TestTestPlaybookRunner:
             mocker.patch.object(demisto_client, 'configure', return_value=DefaultApi())
             mocker.patch.object(TestPlaybookRunner, 'print_tpb_error_details')
             mocker.patch.object(TestPlaybookRunner, 'create_incident_with_test_playbook', return_value='1234')
-            mocker.patch.object(TestPlaybookRunner, 'get_test_playbook_results_dict', return_value=
-            {"state": tpb_result})
+            mocker.patch.object(TestPlaybookRunner, 'get_test_playbook_results_dict',
+                                return_value={"state": tpb_result})
             result = click.Context(command=run_test_playbook).invoke(run_test_playbook, all=True, test_playbook_path='')
             assert result == res
 

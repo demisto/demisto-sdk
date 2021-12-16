@@ -1079,7 +1079,7 @@ def run_test_playbook(**kwargs):
     """Run a test playbooks in your instance."""
     check_configuration_file('run-test-playbook', kwargs)
     test_playbook_runner = TestPlaybookRunner(**kwargs)
-    return test_playbook_runner.run_test_playbooks()
+    return test_playbook_runner.manage_and_run_test_playbooks()
 
 
 # ====================== generate-outputs ====================== #

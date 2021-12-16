@@ -52,7 +52,8 @@ class BaseUpdate:
                  no_validate: bool = False,
                  verbose: bool = False,
                  assume_yes: bool = False,
-                 deprecate: bool = False):
+                 deprecate: bool = False,
+                 **kwargs):
         self.source_file = input
         self.output_file = self.set_output_file_path(output)
         self.verbose = verbose

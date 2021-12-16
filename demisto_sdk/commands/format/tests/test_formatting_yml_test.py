@@ -1130,3 +1130,4 @@ class TestFormatting:
         base_update_yml = BaseUpdateYML(input=str(sorted_yml_file))
         base_update_yml.sync_data_to_master()
         assert base_update_yml.data == sorted_yml
+        assert OrderedDict(base_update_yml.data) != OrderedDict(sorted_yml)

@@ -45,7 +45,7 @@ When done formatting, the **validate** command will run, to let you know of thin
 
 * **-sm, --sync-to-master**
 
-  Set if you want to sync the yml file to content's master structure
+  Set if you want to sync the yml file to XSOAR content's master structure
 
 ### Examples
 ```

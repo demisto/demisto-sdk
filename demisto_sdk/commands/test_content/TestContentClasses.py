@@ -132,6 +132,7 @@ class Conf:
         Args:
             conf: The contents of the content conf.json file.
         """
+        print(f"{conf=}")
         self.default_timeout: int = conf.get('testTimeout', 30)
         self.tests: list = [
             TestConfiguration(test_configuration, self.default_timeout) for test_configuration in conf.get('tests', [])
@@ -1400,8 +1401,7 @@ class TestContext:
                 self.playbook.disable_integrations(self.client, self.server_context)
                 return PB_Status.FAILED
 
-            print(f" SDK conf info: {self.build_context.conf}")
-            pb_path = f'/playbook/{self.playbook.configuration.playbook_id}'
+            pb_path = f'/playbook/{urllib.parse.quote("Block Indicators - Generic v2")}'
             print(f'{pb_path=}')
             res = demisto_client.generic_request_func(self=self.client, method='GET',
                                                       path=pb_path)

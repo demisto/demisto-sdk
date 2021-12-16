@@ -72,7 +72,7 @@ class BaseUpdateYML(BaseUpdate):
     def get_id_and_version_for_data(self, data):
         yml_type = self.__class__.__name__
         path = self.ID_AND_VERSION_PATH_BY_YML_TYPE[yml_type]
-        return data.get(path, self.data)
+        return data.get(path, data)
 
     def update_id_to_equal_name(self) -> None:
         """Updates the id of the YML to be the same as it's name

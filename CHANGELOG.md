@@ -5,7 +5,7 @@
 * Fixed an issue in the **merge-id-set** command, where merging fails because of duplicates but the packs are in the XSOAR repo but in different version control.
 * Fixed missing `Lists` Content Item as valid `IDSetType`
 * Added enhancement for **generate-docs**. It is possible to provide both file or a comma seperated list as `examples`. Also, it's possible to provide more than one example for a script or a command.
-
+* Fixed an issue in **format** when running on a modified YML, that the `id` value is not changed to its old `id` value. 
 
 # 1.5.4
 * Fixed an issue with the **format** command when contributing via the UI

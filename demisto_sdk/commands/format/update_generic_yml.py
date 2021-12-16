@@ -45,15 +45,12 @@ class BaseUpdateYML(BaseUpdate):
                  verbose: bool = False,
                  assume_yes: bool = False,
                  deprecate: bool = False,
-                 add_tests: bool = True,
-                 sync_to_master: bool = False,
-                 ):
+                 add_tests: bool = True):
         super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
                          verbose=verbose, assume_yes=assume_yes)
         self.id_and_version_location = self.get_id_and_version_path_object()
         self.deprecate = deprecate
         self.add_tests = add_tests
-        self.sync_to_master = sync_to_master
 
     def _load_conf_file(self) -> Dict:
         """
@@ -113,8 +110,7 @@ class BaseUpdateYML(BaseUpdate):
         self.copy_tests_from_old_file()
         if self.deprecate:
             self.update_deprecate(file_type=file_type)
-        if self.sync_to_master:
-            self.sync_data_to_master()
+        self.sync_data_to_master()
 
     def update_tests(self) -> None:
         """

@@ -27,11 +27,9 @@ class BaseUpdateJSON(BaseUpdate):
                  from_version: str = '',
                  no_validate: bool = False,
                  verbose: bool = False,
-                 sync_to_master: bool = False,
                  **kwargs):
         super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
                          verbose=verbose, **kwargs)
-        self.sync_to_master = sync_to_master
 
     def set_default_values_as_needed(self):
         """Sets basic arguments of reputation commands to be default, isArray and required."""
@@ -60,8 +58,7 @@ class BaseUpdateJSON(BaseUpdate):
             self.set_fromVersion(from_version=self.from_version, file_type=source_file_type)
         else:
             self.set_fromVersion(from_version=self.from_version)
-        if self.sync_to_master:
-            self.sync_data_to_master()
+        self.sync_data_to_master()
 
     def set_toVersion(self):
         """

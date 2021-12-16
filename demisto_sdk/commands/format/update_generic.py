@@ -375,7 +375,6 @@ class BaseUpdate:
                 return SUCCESS_RETURN_CODE
 
     def sync_data_to_master(self):
-        data_from_master = get_remote_file(self.relative_content_path, github_repo=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME)
-        if data_from_master:
-            diff = dictdiffer.diff(data_from_master, self.data)
-            self.data = dictdiffer.patch(diff, data_from_master)
+        if self.old_file:
+            diff = dictdiffer.diff(self.old_file, self.data)
+            self.data = dictdiffer.patch(diff, self.old_file)

@@ -797,11 +797,6 @@ def coverage_analyze(**kwargs):
     is_flag=True,
     help='Whether to answer manually to add tests configuration prompt when running interactively.'
 )
-@click.option(
-    '-sm', '--sync-to-master',
-    is_flag=True,
-    help='Whether sync the file to content master'
-)
 def format(
         input: Path,
         output: Path,
@@ -814,8 +809,7 @@ def format(
         use_git: bool,
         prev_ver: str,
         include_untracked: bool,
-        add_tests: bool,
-        sync_to_master: bool
+        add_tests: bool
 ):
     """Run formatter on a given script/playbook/integration/incidentfield/indicatorfield/
     incidenttype/indicatortype/layout/dashboard/classifier/mapper/widget/report file/genericfield/generictype/
@@ -834,7 +828,6 @@ def format(
         prev_ver=prev_ver,
         include_untracked=include_untracked,
         add_tests=add_tests,
-        sync_to_master=sync_to_master
     )
 
 

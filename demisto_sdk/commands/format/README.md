@@ -43,10 +43,6 @@ When done formatting, the **validate** command will run, to let you know of thin
 
   Set if you want to deprecate the integration/script/playbook
 
-* **-sm, --sync-to-master**
-
-  Set if you want to sync the yml file to XSOAR content's master structure
-
 ### Examples
 ```
 demisto-sdk format

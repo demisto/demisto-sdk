@@ -246,6 +246,7 @@ class YmlSplitter:
                 if lang_type == TYPE_PWSH:
                     code_file.write(". $PSScriptRoot\\CommonServerPowerShell.ps1\n")
                     self.lines_inserted_at_code_start += 1
+            self.replace_imported_code(script)
             code_file.write(script)
             if script and script[-1] != '\n':
                 # make sure files end with a new line (pyml seems to strip the last newline)
@@ -292,3 +293,6 @@ class YmlSplitter:
         """
         if self.logging:
             print_color(log_msg, log_color)
+
+    def replace_imported_code(self, script):
+        pass

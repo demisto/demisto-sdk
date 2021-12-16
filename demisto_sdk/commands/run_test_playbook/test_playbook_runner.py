@@ -2,7 +2,6 @@ import os
 import re
 import time
 
-import click
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
 

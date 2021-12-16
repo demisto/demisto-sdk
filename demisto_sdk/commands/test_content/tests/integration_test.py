@@ -10,17 +10,8 @@ from demisto_sdk.commands.test_content.TestContentClasses import (BuildContext,
 CONFIGURATION = {
     'configuration': [
         {
-            'defaultValue': '',
-            'display': 'Incident type',
-            'displayPassword': '',
-            'hidden': False,
-            'hiddenPassword': False,
-            'hiddenUsername': False,
-            'info': '',
+
             'name': 'incidentType',
-            'options': None,
-            'required': False,
-            'type': 13,
             'value': ''
         },
 
@@ -66,7 +57,7 @@ def test_create_module(mocker, incident_configuration, expected):
         running configuring instance for test playbook run
 
     Then:
-        validate the module i configured with the incident configuration.
+        validate the module iד configured with the incident configuration.
         (the default incidentType is changed to new one, and mapper/ classifier are added)
     """
 

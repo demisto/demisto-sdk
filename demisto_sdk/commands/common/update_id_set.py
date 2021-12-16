@@ -2000,6 +2000,9 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
         new_ids_dict['Widgets'] = sort(widgets_list)
         new_ids_dict['Dashboards'] = sort(dashboards_list)
 
+    elif marketplace == MarketplaceVersions.MarketplaceV2.value:
+        new_ids_dict = filter_excluded_entities_b(new_ids_dict, marketplace)
+
     exec_time = time.time() - start_time
     print_color("Finished the creation of the id_set. Total time: {} seconds".format(exec_time), LOG_COLORS.GREEN)
     duplicates = find_duplicates(new_ids_dict, print_logs, marketplace)
@@ -2008,6 +2011,23 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
 
     return new_ids_dict
 
+# ############# PSEUDO CODE ############
+# def filter_excluded_entities_b(id_set, black_list, xsoar_id_set):
+#     entities_dependent_on_black_list = get_entities_dependent_on_entities(xsoar_id_set, black_list)  # here we are using the reversed graph
+#     def check_if_entities_should_be_removed_and_remove(entities_dependent_on_black_list):
+#         removed_entities_ids = []
+#         for entity in entities_dependent_on_black_list:
+#             if check_if_entity_in_id_set_and_mandatory(entity, id_set):  # get the mandatory info from the reveres graph, should be embedded in 'entity'
+#                 remove_from_id_set_key(id_set, entity_type, entity)  # if mandatory, remove entity from id_set
+#                 removed_entities_ids.append(entity)
+#             else:
+#                 remove_from_id_set_dependent_value(id_set, entity_type, entity)
+#             return removed_entities_ids
+#
+#     while entities_dependent_on_black_list:
+#         entities_dependent_on_black_list = check_if_entities_should_be_removed_and_remove(entities_dependent_on_black_list)
+#     return id_set
+############ END OF PSEUDO CODE ############
 
 def find_duplicates(id_set, print_logs, marketplace):
     lists_to_return = []

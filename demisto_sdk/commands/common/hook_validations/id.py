@@ -215,9 +215,9 @@ class IDSetValidations(BaseValidator):
         # Ignore Builtin scripts because they are implemented on the server side and thus not in the id_set.json
         scripts_in_entity = self._remove_builtin_scripts(scripts_in_entity)
 
-        # Validate command should verify that each integration command
-        # called from a layout, a layoutscontainer or an incident field is really exist.
-        scripts_in_entity = self._validate_checked_integration_commands_scripts(scripts_in_entity)
+        # Validate command should verify that each integration command called from
+        # a layout, a layoutscontainer or an incident field really exist in the content repo.
+        scripts_in_entity = self._validate_integration_commands(scripts_in_entity)
         return scripts_in_entity
 
     def _remove_builtin_scripts(self, scripts_set):
@@ -240,11 +240,12 @@ class IDSetValidations(BaseValidator):
 
         return not_builtin_scripts_set
 
-    def _validate_checked_integration_commands_scripts(self, scripts_set):
+    def _validate_integration_commands(self, scripts_set):
         """
         For each script ID in the given scripts set checks if it is an integration command by
-        checking if it contains '|||'.  If a script is  an integration command checks in id_set.json
-        if it exists.
+        checking if it contains '|||'.
+        If a script is  an integration command checks whether it exists in id_set.json
+        if it exists we remove it from the scripts_set.
         Args:
             scripts_set: A set of scripts IDs
 

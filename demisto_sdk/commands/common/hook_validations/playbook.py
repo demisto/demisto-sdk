@@ -329,6 +329,7 @@ class PlaybookValidator(ContentEntityValidator):
                     is_valid &= self.check_integration_command(script_id_used_in_task,
                                                                id_set_integrations)
             if task_script_name and integration_script_flag not in task_script_name:
+                # if there is 'scriptName' and it is not integration
                 is_valid &= self.check_script_name(task_script_name, id_set_scripts)
 
             if not is_valid:
@@ -349,13 +350,14 @@ class PlaybookValidator(ContentEntityValidator):
         return any([script_id_used_in_task in id_set_dict for id_set_dict in id_set_scripts])
 
     def check_integration_command(self, integration_id_used_in_task, id_set_integrations,
-                                  empty_integration_id=True):
+                                  command_without_brand=True):
         """
         Checks if integration id and command exists in at least one of id_set's dicts
         Args:
             integration_id_used_in_task (str):  integration id from playbook
             id_set_integrations (list): all integrations of id_set
-            empty_integration_id (bool): Whether integration_id is legal as None.
+            command_without_brand (bool): Whether the case that the command does not include the
+            brand/integration name is legal.
              i.e.: |||Command is legal or not. true - legal, false - not
         Returns:
             True if integration_id and integration_command exist in id_set
@@ -365,7 +367,7 @@ class PlaybookValidator(ContentEntityValidator):
             return True
         for id_integration_dict in id_set_integrations:
             id_integration_id = list(id_integration_dict.keys())[0]
-            if (empty_integration_id and not integration_id) or id_integration_id == integration_id:
+            if (command_without_brand and not integration_id) or id_integration_id == integration_id:
                 commands = id_integration_dict.get(id_integration_id, {}).get("commands", [])
                 if integration_command in commands:
                     return True

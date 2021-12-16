@@ -28,10 +28,9 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
                  verbose: bool = False,
                  assume_yes: bool = False,
                  deprecate: bool = False,
-                 add_tests: bool = False,
-                 **kwargs):
+                 add_tests: bool = False):
         super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
-                         verbose=verbose, assume_yes=assume_yes, deprecate=deprecate, add_tests=add_tests, **kwargs)
+                         verbose=verbose, assume_yes=assume_yes, deprecate=deprecate, add_tests=add_tests)
 
     def add_description(self):
         """Add empty description to playbook and tasks."""

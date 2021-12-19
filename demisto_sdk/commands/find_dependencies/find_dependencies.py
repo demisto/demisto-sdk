@@ -229,7 +229,7 @@ class PackDependencies:
                 packs_and_items_dict[item_details.get('pack')] = item_id
 
         if not exclude_ignored_dependencies:
-            return set(pack_names)
+            return set(pack_names), packs_and_items_dict
         return {p for p in pack_names if p not in constants.IGNORED_DEPENDENCY_CALCULATION}, packs_and_items_dict
 
     @staticmethod
@@ -307,7 +307,7 @@ class PackDependencies:
                 packs_and_items_dict[item_details.get('pack')] = item_id
 
         if not exclude_ignored_dependencies:
-            return set(pack_names)
+            return set(pack_names), packs_and_items_dict
         return {p for p in pack_names if p not in constants.IGNORED_DEPENDENCY_CALCULATION}, packs_and_items_dict
 
     @staticmethod
@@ -382,7 +382,7 @@ class PackDependencies:
                                       id_set: dict,
                                       verbose: bool,
                                       exclude_ignored_dependencies: bool = True,
-                                      get_dependent_items: bool = True): #TODO: fix and change to false
+                                      get_dependent_items: bool = False):
         """
         Collects script pack dependencies.
 
@@ -483,7 +483,7 @@ class PackDependencies:
 
     @staticmethod
     def _collect_playbooks_dependencies(pack_playbooks: list, id_set: dict, verbose: bool,
-                                        exclude_ignored_dependencies: bool = True, get_dependent_items: bool = True):
+                                        exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False):
         """
         Collects playbook pack dependencies.
 
@@ -527,9 +527,10 @@ class PackDependencies:
                 if packs_found_from_integration:
                     if command in skippable_tasks:
                         pack_dependencies_data = PackDependencies._label_as_optional(packs_found_from_integration)
+                    else:
                         pack_dependencies_data = PackDependencies._detect_generic_commands_dependencies(
                             packs_found_from_integration) # TODO: verify if we wand the generic and if should note inside node's value (mismatch with 'mandatory for')
-                        playbook_dependencies.update(pack_dependencies_data)
+                    playbook_dependencies.update(pack_dependencies_data)
                 items_dependencies = update_items_dependencies(get_dependent_items, items_dependencies, playbook_id, packs_and_items_dict)
 
             implementing_scripts = playbook_data.get('implementing_scripts', []) + \
@@ -609,7 +610,7 @@ class PackDependencies:
                                       id_set: dict,
                                       verbose: bool,
                                       exclude_ignored_dependencies: bool = True,
-                                      get_dependent_items: bool = True
+                                      get_dependent_items: bool = False
                                       ):
         """
         Collects layouts pack dependencies.
@@ -682,7 +683,7 @@ class PackDependencies:
 
     @staticmethod
     def _collect_incidents_fields_dependencies(pack_incidents_fields: list, id_set: dict, verbose: bool,
-                                               exclude_ignored_dependencies: bool = True, get_dependent_items: bool = True):
+                                               exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False):
         """
         Collects in incidents fields dependencies.
 
@@ -738,7 +739,7 @@ class PackDependencies:
 
     @staticmethod
     def _collect_indicators_types_dependencies(pack_indicators_types: list, id_set: dict, verbose: bool,
-                                               exclude_ignored_dependencies: bool = True, get_dependent_items: bool = True):
+                                               exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False):
         """
         Collects in indicators types dependencies.
 
@@ -803,7 +804,7 @@ class PackDependencies:
 
     @staticmethod
     def _collect_integrations_dependencies(pack_integrations: list, id_set: dict, verbose: bool,
-                                           exclude_ignored_dependencies: bool = True, get_dependent_items: bool = True):
+                                           exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False):
         """
         Collects integrations dependencies.
         Args:
@@ -879,7 +880,7 @@ class PackDependencies:
 
     @staticmethod
     def _collect_incidents_types_dependencies(pack_incidents_types: list, id_set: dict, verbose: bool,
-                                              exclude_ignored_dependencies: bool = True, get_dependent_items: bool = True):
+                                              exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False):
         """
         Collects in incidents types dependencies.
 
@@ -939,7 +940,7 @@ class PackDependencies:
 
     @staticmethod
     def _collect_classifiers_dependencies(pack_classifiers: list, id_set: dict, verbose: bool,
-                                          exclude_ignored_dependencies: bool = True, get_dependent_items: bool = True):
+                                          exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False):
         """
         Collects in classifiers dependencies.
 
@@ -1017,7 +1018,7 @@ class PackDependencies:
 
     @staticmethod
     def _collect_mappers_dependencies(pack_mappers: list, id_set: dict, verbose: bool,
-                                      exclude_ignored_dependencies: bool = True, get_dependent_items: bool = True):
+                                      exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False):
         """
         Collects in mappers dependencies.
 
@@ -1121,7 +1122,7 @@ class PackDependencies:
 
     @staticmethod
     def _collect_widget_dependencies(pack_widgets: list, id_set: dict, verbose: bool,
-                                     exclude_ignored_dependencies: bool = True, header: str = "Widgets", get_dependent_items: bool = True):
+                                     exclude_ignored_dependencies: bool = True, header: str = "Widgets", get_dependent_items: bool = False):
         """
         Collects widget dependencies.
 
@@ -1171,7 +1172,7 @@ class PackDependencies:
 
     @staticmethod
     def _collect_generic_types_dependencies(pack_generic_types: list, id_set: dict, verbose: bool,
-                                            exclude_ignored_dependencies: bool = True, get_dependent_items: bool = True):
+                                            exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False):
         """
         Collects generic types dependencies.
         Args:
@@ -1241,7 +1242,7 @@ class PackDependencies:
 
     @staticmethod
     def _collect_generic_fields_dependencies(pack_generic_fields: list, id_set: dict, verbose: bool,
-                                             exclude_ignored_dependencies: bool = True, get_dependent_items: bool = True):
+                                             exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False):
         """
         Collects in generic fields dependencies.
 
@@ -1313,7 +1314,7 @@ class PackDependencies:
 
     @staticmethod
     def _collect_generic_modules_dependencies(pack_generic_modules: list, id_set: dict, verbose: bool,
-                                              exclude_ignored_dependencies: bool = True, get_dependent_items: bool = True):
+                                              exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False):
         """
         Collects generic types dependencies.
         Args:
@@ -1374,7 +1375,7 @@ class PackDependencies:
 
     @staticmethod
     def _collect_jobs_dependencies(pack_jobs: list, id_set: dict, verbose: bool,
-                                   exclude_ignored_dependencies: bool = True, get_dependent_items: bool = True):
+                                   exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False):
         """
         Collects integrations dependencies.
         Args:
@@ -1418,7 +1419,10 @@ class PackDependencies:
                         f'{os.path.basename(job_data.get("file_path", ""))} depends on: {job_dependencies}',
                         fg='white')
             all_job_dependencies.update(job_dependencies)
-        return all_job_dependencies, items_dependencies
+
+        if get_dependent_items:
+            return all_job_dependencies, items_dependencies
+        return all_job_dependencies
 
     @staticmethod
     def _collect_pack_items(pack_id: str, id_set: dict) -> dict:
@@ -1473,7 +1477,7 @@ class PackDependencies:
 
     @staticmethod
     def _find_pack_dependencies(pack_id: str, id_set: dict, verbose: bool,
-                                exclude_ignored_dependencies: bool = True, get_dependent_items: bool = True) -> set:
+                                exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False) -> set:
         """
         Searches for specific pack dependencies.
 
@@ -1561,7 +1565,7 @@ class PackDependencies:
             id_set,
             verbose,
             exclude_ignored_dependencies,
-            get_dependent_items
+            get_dependent_items=get_dependent_items
         )
         dashboards_dependencies, dashboards_items_dependencies = PackDependencies._collect_widget_dependencies(
             pack_items['dashboards'],
@@ -1616,9 +1620,9 @@ class PackDependencies:
             generic_fields_dependencies | jobs_dependencies
         )
 
-        items_depenencies = {**scripts_items_dependencies, **playbooks_items_dependencies, **widgets_items_dependencies,\
+        items_depenencies = {**scripts_items_dependencies, **playbooks_items_dependencies, **widgets_items_dependencies,
                             **layouts_items_dependencies, **incidents_fields_items_dependencies,
-                              **indicators_types_items_dependencies, **integrations_items_dependencies,
+                            **indicators_types_items_dependencies, **integrations_items_dependencies,
                             **incidents_types_items_dependencies, **classifiers_items_dependencies,
                             **mappers_items_dependencies, **dashboards_items_dependencies, **reports_items_dependencies,
                             **generic_types_items_dependencies, **generic_fields_items_dependencies,
@@ -1649,9 +1653,9 @@ class PackDependencies:
         for pack in pack_ids:
             dependency_graph.add_node(pack, mandatory_for_packs=[])
         for pack in pack_ids:
-            # dependencies = PackDependencies._find_pack_dependencies(
             dependencies, dependencies_items = PackDependencies._find_pack_dependencies(
-                pack, id_set, verbose=verbose, exclude_ignored_dependencies=exclude_ignored_dependencies)
+                pack, id_set, verbose=verbose, exclude_ignored_dependencies=exclude_ignored_dependencies,
+                get_dependent_items=True)
             for dependency_name, is_mandatory in dependencies:
                 if dependency_name == pack:
                     continue
@@ -1660,8 +1664,7 @@ class PackDependencies:
                 dependency_graph.add_edge(pack, dependency_name)
                 if is_mandatory:
                     dependency_graph.nodes()[dependency_name]['mandatory_for_packs'].append(pack)
-                    #dependent_items = get_dependent_items(pack, dependency_name)
-                    dependency_graph.nodes()[dependency_name]['mandatory_dep_items'] = dependencies_items
+                    dependency_graph.nodes()[dependency_name]['mandatory_dependencies_items'] = dependencies_items
 
         return dependency_graph
 
@@ -1683,7 +1686,7 @@ class PackDependencies:
 
     @staticmethod
     def build_dependency_graph(pack_id: str, id_set: dict, verbose: bool,
-                               exclude_ignored_dependencies: bool = True) -> nx.DiGraph:
+                               exclude_ignored_dependencies: bool = True, get_dependent_items: bool = True) -> nx.DiGraph:
         """
         Builds all level of dependencies and returns dependency graph.
 
@@ -1705,13 +1708,14 @@ class PackDependencies:
             leaf_nodes = [n for n in graph.nodes() if graph.out_degree(n) == 0]
 
             for leaf in leaf_nodes:
-                leaf_dependencies = PackDependencies._find_pack_dependencies(
-                    leaf, id_set, verbose=verbose, exclude_ignored_dependencies=exclude_ignored_dependencies)
+                leaf_dependencies, dependencies_items = PackDependencies._find_pack_dependencies(
+                    leaf, id_set, verbose=verbose, exclude_ignored_dependencies=exclude_ignored_dependencies,
+                    get_dependent_items=get_dependent_items)
 
                 if leaf_dependencies:
                     for dependency_name, is_mandatory in leaf_dependencies:
                         if dependency_name not in graph.nodes():
-                            graph.add_node(dependency_name, mandatory=is_mandatory)
+                            graph.add_node(dependency_name, mandatory=is_mandatory, mandatory_dependencies_items=dependencies_items)
                             graph.add_edge(leaf, dependency_name)
 
             found_new_dependencies = graph.number_of_nodes() > current_number_of_nodes
@@ -2091,13 +2095,13 @@ def update_items_dependencies(get_dependent_items, items_dependencies, current_e
     """
     Updates the given items dependencies dict with the packs and items dict (those are items dependent on the current entitiy id)
     Args:
-        get_dependent_items:
-        items_dependencies:
-        current_entity_id:
-        packs_and_items_dict:
+        get_dependent_items: the flag indicating whether to get the items (on top of the packs).
+        items_dependencies: the part of id set that contains the current type of item.
+        current_entity_id: the entity of itnterest, that we are looking for items that are dependent on it.
+        packs_and_items_dict: the dict containing the already known dependencies data.
 
     Returns:
-
+        packs_and_items_dict modified with the newly found dependencies.
     """
     if get_dependent_items and packs_and_items_dict:
         if items_dependencies.get(current_entity_id):

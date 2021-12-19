@@ -532,12 +532,12 @@ class TestIdSetFilters:
 
 
 class TestDependsOnScriptAndIntegration:
-    @pytest.mark.parametrize("dependency_script,expected_result",
-                             [("GetServerURL", {("GetServerURL", True)}),
-                              ("HelloWorldScript", {("HelloWorld", True)}),
-                              ("PrismaCloudComputeParseAuditAlert", {("PrismaCloudCompute", True)})
+    @pytest.mark.parametrize("dependency_script,expected_pack,expected_items",
+                             [("GetServerURL", {("GetServerURL", True)}, {'DummyScript': {'GetServerURL': 'GetServerURL'}}),
+                              ("HelloWorldScript", {("HelloWorld", True)}, {'DummyScript': {'HelloWorld': 'HelloWorldScript'}}),
+                              ("PrismaCloudComputeParseAuditAlert", {("PrismaCloudCompute", True)}, {'DummyScript': {'PrismaCloudCompute': 'PrismaCloudComputeParseAuditAlert'}})
                               ])
-    def test_collect_scripts_depends_on_script(self, dependency_script, expected_result, id_set):
+    def test_collect_scripts_depends_on_script(self, dependency_script, expected_pack, expected_items, id_set):
         """
         Given
             - A script entry in the id_set depending on a script.
@@ -563,12 +563,13 @@ class TestDependsOnScriptAndIntegration:
             }
         ]
 
-        found_result = PackDependencies._collect_scripts_dependencies(pack_scripts=test_input,
+        found_result, found_items = PackDependencies._collect_scripts_dependencies(pack_scripts=test_input,
                                                                       id_set=id_set,
                                                                       verbose=False,
-                                                                      )
+                                                                      get_dependent_items=True)
 
-        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+        assert found_result == expected_pack
+        assert found_items == expected_items
 
     @pytest.mark.parametrize("dependency_integration_command,expected_result",
                              [("sslbl-get-indicators", {("Feedsslabusech", True)}),
@@ -2043,21 +2044,21 @@ class TestDependsOnReports:
 
 
 SEARCH_PACKS_INPUT = [
-    (['type'], 'IncidentFields', set()),
-    (['emailaddress'], 'IncidentFields', {'Compliance'}),
-    (['E-mail Address'], 'IncidentFields', {'Compliance'}),
-    (['adminemail'], 'IndicatorFields', {'CommonTypes'}),
-    (['Admin Email'], 'IndicatorFields', {'CommonTypes'}),
-    (['Claroty'], 'Mappers', {'Claroty'}),
-    (['Claroty - Incoming Mapper'], 'Mappers', {'Claroty'}),
-    (['Cortex XDR - IR'], 'Classifiers', {'CortexXDR'}),
+    (['type'], 'IncidentFields', (set(), dict())),
+    (['emailaddress'], 'IncidentFields', ({'Compliance'}, {'Compliance': 'incident_emailaddress'})),
+    (['E-mail Address'], 'IncidentFields', ({'Compliance'}, {'Compliance': 'incident_emailaddress'})),
+    (['adminemail'], 'IndicatorFields', ({'CommonTypes'}, {'CommonTypes': 'indicator_adminemail'})),
+    (['Admin Email'], 'IndicatorFields', ({'CommonTypes'}, {'CommonTypes': 'indicator_adminemail'})),
+    (['Claroty'], 'Mappers',({'Claroty'}, {'Claroty': 'Claroty'})),
+    (['Claroty - Incoming Mapper'], 'Mappers', ({'Claroty'}, {'Claroty': 'CBAlerts - Incoming Mapper'})),
+    (['Cortex XDR - IR'], 'Classifiers', ({'CortexXDR'}, {'CortexXDR': 'Cortex XDR - IR'})),
 ]
-
 
 @pytest.mark.parametrize('item_names, section_name, expected_result', SEARCH_PACKS_INPUT)
 def test_search_packs_by_items_names_or_ids(item_names, section_name, expected_result, id_set):
-    found_packs = PackDependencies._search_packs_by_items_names_or_ids(item_names, id_set[section_name])
-    assert IsEqualFunctions.is_sets_equal(found_packs, expected_result)
+    found_packs, packs_and_items_dict = PackDependencies._search_packs_by_items_names_or_ids(item_names, id_set[section_name])
+    assert found_packs == expected_result[0]
+    assert packs_and_items_dict ==  expected_result[1]
 
 
 def test_find_dependencies_using_pack_metadata(mocker):
@@ -2159,8 +2160,18 @@ class TestDependencyGraph:
                             'pack2': [('pack3', False), ('pack2', True)],
                             'pack3': [],
                             'pack4': [('pack6', False)]}
-            return dependencies[pack_id]
 
+            dependencies_items = {'pack1': {'pack2': 'item2', 'pack3': 'item3'},
+                                  'pack2': {'pack3': 'item3', 'pack2': 'item2'},
+                                  'pack3': {},
+                                  'pack4': {'pack3': 'item3'}}
+
+            return dependencies[pack_id], dependencies_items[pack_id]
+
+        {'Expanse Behavior Severity Update': {'Expanse': 'ExpanseParseRawIncident', 'CommonScripts': 'IsGreaterThan'},
+         'ExpanseParseRawIncident': {'Expanse': 'ExpanseParseRawIncident'},
+         'Expanse Appearance': {'Expanse': 'incident_expanseseverity'},
+         'Expanse Behavior': {'Expanse': 'Expanse Behavior Severity Update'}}
         mocker.patch(
             'demisto_sdk.commands.find_dependencies.find_dependencies.PackDependencies._find_pack_dependencies',
             side_effect=mock_find_pack_dependencies
@@ -2185,8 +2196,7 @@ class TestDependencyGraph:
         pack_name = "ImpossibleTraveler"
         found_graph = PackDependencies.build_dependency_graph(pack_id=pack_name,
                                                               id_set=id_set,
-                                                              verbose=False,
-                                                              )
+                                                              verbose=False)
         root_of_graph = [n for n in found_graph.nodes if found_graph.in_degree(n) == 0][0]
         pack_dependencies = [n for n in found_graph.nodes if found_graph.in_degree(n) > 0]
 

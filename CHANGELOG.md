@@ -6,6 +6,7 @@
 * Fixed missing `Lists` Content Item as valid `IDSetType`
 * Added enhancement for **generate-docs**. It is possible to provide both file or a comma seperated list as `examples`. Also, it's possible to provide more than one example for a script or a command.
 * Added feature in **format** to sync YML and JSON files to the `master` file structure.
+* Added option to specify `Incident Type`, `Incoming Mapper` and `Classifier` when configuring instance in **test-content**
 
 # 1.5.4
 * Fixed an issue with the **format** command when contributing via the UI

@@ -32,7 +32,7 @@ class GitUtil:
         Returns:
             Set: A set of Paths to the modified files.
         """
-        remote, branch = self._handle_prev_ver(prev_ver)
+        remote, branch = self.handle_prev_ver(prev_ver)
         current_branch_or_hash = self.get_current_git_branch_or_hash()
 
         # when checking branch against itself only return the last commit.
@@ -66,7 +66,7 @@ class GitUtil:
 
             # if remote does not exist we are checking against the commit sha1
             else:
-                # TODO Get prev_ver from _handle_prev_ver
+                # TODO Get prev_ver from handle_prev_ver
                 committed = {Path(os.path.join(item.a_path)) for item in self.repo.commit(rev=prev_ver).diff(
                     current_branch_or_hash).iter_change_type('M')}.union(untrue_rename_committed)
 
@@ -103,7 +103,7 @@ class GitUtil:
 
         # if remote does not exist we are checking against the commit sha1
         else:
-            # TODO Get prev_ver from _handle_prev_ver
+            # TODO Get prev_ver from handle_prev_ver
             committed_added = {Path(os.path.join(item.a_path)) for item in
                                self.repo.commit(rev=prev_ver).diff(current_branch_or_hash).iter_change_type('A')}
 
@@ -129,7 +129,7 @@ class GitUtil:
         Returns:
             Set: A set of Paths to the added files.
         """
-        remote, branch = self._handle_prev_ver(prev_ver)
+        remote, branch = self.handle_prev_ver(prev_ver)
         current_branch_or_hash = self.get_current_git_branch_or_hash()
 
         # when checking branch against itself only return the last commit.
@@ -155,7 +155,7 @@ class GitUtil:
 
         # if remote does not exist we are checking against the commit sha1
         else:
-            # TODO Get prev_ver from _handle_prev_ver
+            # TODO Get prev_ver from handle_prev_ver
             committed = {Path(os.path.join(item.a_path)) for item
                          in self.repo.commit(rev=prev_ver).diff(
                 current_branch_or_hash).iter_change_type('A')}.union(untrue_rename_committed)
@@ -218,7 +218,7 @@ class GitUtil:
         Returns:
             Set: A set of Paths to the deleted files.
         """
-        remote, branch = self._handle_prev_ver(prev_ver)
+        remote, branch = self.handle_prev_ver(prev_ver)
         current_branch_or_hash = self.get_current_git_branch_or_hash()
 
         # when checking branch against itself only return the last commit.
@@ -238,7 +238,7 @@ class GitUtil:
 
             # if remote does not exist we are checking against the commit sha1
             else:
-                # TODO Get prev_ver from _handle_prev_ver
+                # TODO Get prev_ver from handle_prev_ver
                 committed = {Path(os.path.join(item.a_path)) for item
                              in self.repo.commit(rev=prev_ver).diff(
                     current_branch_or_hash).iter_change_type('D')}
@@ -281,7 +281,7 @@ class GitUtil:
             Set: A set of Tuples of Paths to the renamed files -
             first element being the old file path and the second is the new.
         """
-        remote, branch = self._handle_prev_ver(prev_ver)
+        remote, branch = self.handle_prev_ver(prev_ver)
         current_branch_or_hash = self.get_current_git_branch_or_hash()
 
         # when checking branch against itself only return the last commit.
@@ -303,7 +303,7 @@ class GitUtil:
 
             # if remote does not exist we are checking against the commit sha1
             else:
-                # TODO Get prev_ver from _handle_prev_ver
+                # TODO Get prev_ver from handle_prev_ver
                 committed = {(Path(item.a_path), Path(item.b_path)) for item
                              in self.repo.commit(rev=prev_ver).diff(
                     current_branch_or_hash).iter_change_type('R') if item.score == 100}
@@ -381,7 +381,7 @@ class GitUtil:
         Returns:
             Set: of Paths to files changed in the current branch.
         """
-        remote, branch = self._handle_prev_ver(prev_ver)
+        remote, branch = self.handle_prev_ver(prev_ver)
         current_branch_or_hash = self.get_current_git_branch_or_hash()
 
         if remote:
@@ -391,7 +391,7 @@ class GitUtil:
 
         # if remote does not exist we are checking against the commit sha1
         else:
-            # TODO Get prev_ver from _handle_prev_ver
+            # TODO Get prev_ver from handle_prev_ver
             return {Path(os.path.join(item)) for item
                     in self.repo.git.diff('--name-only',
                                           f'{prev_ver}...{current_branch_or_hash}').split('\n')}
@@ -406,7 +406,7 @@ class GitUtil:
             running on master against master.
         """
         # when checking branch against itself only return the last commit.
-        # TODO Get prev_ver from _handle_prev_ver
+        # TODO Get prev_ver from handle_prev_ver
         if self.get_current_working_branch() != prev_ver:
             return set()
 
@@ -429,7 +429,7 @@ class GitUtil:
 
         return remote in self.repo.remotes
 
-    def _handle_prev_ver(self, prev_ver: str = ''):
+    def handle_prev_ver(self, prev_ver: str = ''):
         # check for sha1 in regex
         sha1_pattern = re.compile(r'\b[0-9a-f]{40}\b', flags=re.IGNORECASE)
         if prev_ver and sha1_pattern.match(prev_ver):

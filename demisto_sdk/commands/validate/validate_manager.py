@@ -1224,11 +1224,17 @@ class ValidateManager:
         if prev_ver:
             return prev_ver
 
-        # check if git is connected and if demisto exists in remotes if so set prev_ver as 'demisto/master'
-        if self.git_util and self.git_util.check_if_remote_exists('demisto'):
-            return 'demisto/master'
+        # If git is connected - Use it to get prev_ver
+        if self.git_util:
+            # If demisto exists in remotes if so set prev_ver as 'demisto/master'
+            if self.git_util.check_if_remote_exists('demisto'):
+                return 'demisto/master'
 
-        # default to 'origin/master' if none of the above apply
+            # Otherwise, use git to get the primary branch
+            _, branch = self.git_util.handle_prev_ver()
+            return 'origin/' + branch
+
+        # Default to 'origin/master'
         return 'origin/master'
 
     def setup_git_params(self):
@@ -1252,8 +1258,8 @@ class ValidateManager:
             # when running against git while on release branch - show errors but don't fail the validation
             self.always_valid = True
 
-        # on master don't check RN
-        elif self.branch_name == 'master':
+        # On main or master don't check RN
+        elif self.branch_name in ['master', 'main']:
             self.skip_pack_rn_validation = True
             error_message, error_code = Errors.running_on_master_with_git()
             if self.handle_error(error_message, error_code, file_path='General',

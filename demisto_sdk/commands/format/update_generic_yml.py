@@ -45,8 +45,7 @@ class BaseUpdateYML(BaseUpdate):
                  verbose: bool = False,
                  assume_yes: bool = False,
                  deprecate: bool = False,
-                 add_tests: bool = True,
-                 ):
+                 add_tests: bool = True):
         super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
                          verbose=verbose, assume_yes=assume_yes)
         self.id_and_version_location = self.get_id_and_version_path_object()
@@ -121,9 +120,9 @@ class BaseUpdateYML(BaseUpdate):
         self.update_id_to_equal_name()
         self.set_version_to_default(self.id_and_version_location)
         self.copy_tests_from_old_file()
-
         if self.deprecate:
             self.update_deprecate(file_type=file_type)
+        self.sync_data_to_master()
 
     def update_tests(self) -> None:
         """

@@ -1,6 +1,7 @@
 import os
 import shutil
 import sys
+from collections import OrderedDict
 
 import click
 import pytest
@@ -1069,3 +1070,64 @@ class TestFormatting:
         base_update_yml = BaseUpdateYML(input=integration.yml.path)
         base_update_yml.remove_spaces_end_of_id_and_name()
         assert base_update_yml.data['name'] == 'MyIntegration'
+
+    def test_sync_to_master_no_change(self, mocker, tmp_path):
+        """
+        Given
+            A yml which is sorted in a different order than master, but same content.
+        When
+            - Running format with sync_to_master enabled
+        Then
+            - Ensure that the result is in the same order as master
+        """
+        import demisto_sdk.commands.format.update_generic as update_generic
+
+        test_files_path = os.path.join(git_path(), 'demisto_sdk', 'tests')
+        vmware_integration_yml_path = os.path.join(test_files_path, 'test_files', 'content_repo_example', 'Packs',
+                                                   'VMware',
+                                                   'Integrations', 'integration-VMware.yml')
+        with open(vmware_integration_yml_path) as f:
+            yml_example = yaml.safe_load(f)
+        sorted_yml_file = tmp_path / 'test.yml'
+        with sorted_yml_file.open('w') as f:
+            yaml.dump(yml_example, f, sort_keys=True)  # sorting the keys to have different order
+        mocker.patch.object(BaseUpdateYML, 'get_id_and_version_path_object', return_value={'id': "vmware"})
+        mocker.patch.object(update_generic, 'get_remote_file', return_value=yml_example)
+        base_update_yml = BaseUpdateYML(input=str(sorted_yml_file))
+        base_update_yml.sync_data_to_master()
+        assert OrderedDict(base_update_yml.data) == OrderedDict(yml_example)
+
+    def test_sync_to_master_with_change(self, mocker, tmp_path):
+        """
+        Given
+            A yml which is sorted in a different order than master, and the content is changed
+        When
+            - Running format with sync_to_master enabled
+        Then
+            - Ensure that the result is the changed result to make sure that the patching works
+        """
+        import demisto_sdk.commands.format.update_generic as update_generic
+        test_files_path = os.path.join(git_path(), 'demisto_sdk', 'tests')
+        vmware_integration_yml_path = os.path.join(test_files_path, 'test_files', 'content_repo_example', 'Packs',
+                                                   'VMware',
+                                                   'Integrations', 'integration-VMware.yml')
+        with open(vmware_integration_yml_path) as f:
+            yml_example = yaml.safe_load(f)
+        sorted_yml_file = tmp_path / 'test.yml'
+        with sorted_yml_file.open('w') as f:
+            yaml.dump(yml_example, f, sort_keys=True)  # sorting the keys to have different order
+        with sorted_yml_file.open() as f:
+            sorted_yml = yaml.safe_load(f)
+        sorted_yml['description'] = 'test'
+        sorted_yml['configuration'][0]['defaultvalue'] = 'test'
+        del sorted_yml['configuration'][1]['defaultvalue']
+        sorted_yml['script']['commands'][0]['outputs'].append({"contextPath": "VMWare.test", "description": "VM test"})
+        with sorted_yml_file.open('w') as f:
+            yaml.dump(sorted_yml, f)
+
+        mocker.patch.object(BaseUpdateYML, 'get_id_and_version_path_object', return_value={'id': "vmware"})
+        mocker.patch.object(update_generic, 'get_remote_file', return_value=yml_example)
+        base_update_yml = BaseUpdateYML(input=str(sorted_yml_file))
+        base_update_yml.sync_data_to_master()
+        assert base_update_yml.data == sorted_yml
+        assert OrderedDict(base_update_yml.data) != OrderedDict(sorted_yml)

@@ -22,17 +22,14 @@ from demisto_sdk.commands.common.constants import (PACKS_PACK_META_FILE_NAME,
 # Local packages
 from demisto_sdk.commands.common.logger import Colors
 from demisto_sdk.commands.common.tools import (find_file, find_type,
+                                               get_api_module_dependencies,
                                                get_content_path,
                                                get_file_displayed_name,
                                                get_json,
                                                is_external_repository,
-                                               pack_name_to_posix_path,
                                                print_error, print_v,
                                                print_warning,
-                                               retrieve_file_ending,
-                                               get_api_module_dependencies)
-from demisto_sdk.commands.find_dependencies.find_dependencies import \
-    get_packs_dependent_on_given_packs
+                                               retrieve_file_ending)
 from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, PWSH_CHECKS,
                                                PY_CHCEKS,
                                                build_skipped_exit_code,

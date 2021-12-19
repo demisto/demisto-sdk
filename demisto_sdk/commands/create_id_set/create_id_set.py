@@ -7,8 +7,8 @@ from genericpath import exists
 
 from demisto_sdk.commands.common.constants import (DEFAULT_ID_SET_PATH,
                                                    GENERIC_COMMANDS_NAMES)
-from demisto_sdk.commands.common.update_id_set import re_create_id_set
 from demisto_sdk.commands.common.tools import open_id_set_file
+from demisto_sdk.commands.common.update_id_set import re_create_id_set
 
 
 class IDSetCreator:

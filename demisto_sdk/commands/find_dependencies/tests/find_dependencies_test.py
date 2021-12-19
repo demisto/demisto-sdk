@@ -535,7 +535,8 @@ class TestDependsOnScriptAndIntegration:
     @pytest.mark.parametrize("dependency_script,expected_pack,expected_items",
                              [("GetServerURL", {("GetServerURL", True)}, {'DummyScript': {'GetServerURL': 'GetServerURL'}}),
                               ("HelloWorldScript", {("HelloWorld", True)}, {'DummyScript': {'HelloWorld': 'HelloWorldScript'}}),
-                              ("PrismaCloudComputeParseAuditAlert", {("PrismaCloudCompute", True)}, {'DummyScript': {'PrismaCloudCompute': 'PrismaCloudComputeParseAuditAlert'}})
+                              ("PrismaCloudComputeParseAuditAlert", {("PrismaCloudCompute", True)}, {
+                               'DummyScript': {'PrismaCloudCompute': 'PrismaCloudComputeParseAuditAlert'}})
                               ])
     def test_collect_scripts_depends_on_script(self, dependency_script, expected_pack, expected_items, id_set):
         """
@@ -564,9 +565,9 @@ class TestDependsOnScriptAndIntegration:
         ]
 
         found_result, found_items = PackDependencies._collect_scripts_dependencies(pack_scripts=test_input,
-                                                                      id_set=id_set,
-                                                                      verbose=False,
-                                                                      get_dependent_items=True)
+                                                                                   id_set=id_set,
+                                                                                   verbose=False,
+                                                                                   get_dependent_items=True)
 
         assert found_result == expected_pack
         assert found_items == expected_items
@@ -2049,16 +2050,17 @@ SEARCH_PACKS_INPUT = [
     (['E-mail Address'], 'IncidentFields', ({'Compliance'}, {'Compliance': 'incident_emailaddress'})),
     (['adminemail'], 'IndicatorFields', ({'CommonTypes'}, {'CommonTypes': 'indicator_adminemail'})),
     (['Admin Email'], 'IndicatorFields', ({'CommonTypes'}, {'CommonTypes': 'indicator_adminemail'})),
-    (['Claroty'], 'Mappers',({'Claroty'}, {'Claroty': 'Claroty'})),
+    (['Claroty'], 'Mappers', ({'Claroty'}, {'Claroty': 'Claroty'})),
     (['Claroty - Incoming Mapper'], 'Mappers', ({'Claroty'}, {'Claroty': 'CBAlerts - Incoming Mapper'})),
     (['Cortex XDR - IR'], 'Classifiers', ({'CortexXDR'}, {'CortexXDR': 'Cortex XDR - IR'})),
 ]
+
 
 @pytest.mark.parametrize('item_names, section_name, expected_result', SEARCH_PACKS_INPUT)
 def test_search_packs_by_items_names_or_ids(item_names, section_name, expected_result, id_set):
     found_packs, packs_and_items_dict = PackDependencies._search_packs_by_items_names_or_ids(item_names, id_set[section_name])
     assert found_packs == expected_result[0]
-    assert packs_and_items_dict ==  expected_result[1]
+    assert packs_and_items_dict == expected_result[1]
 
 
 def test_find_dependencies_using_pack_metadata(mocker):

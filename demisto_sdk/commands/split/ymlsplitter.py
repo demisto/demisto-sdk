@@ -298,12 +298,13 @@ class YmlSplitter:
             print_color(log_msg, log_color)
 
     def replace_imported_code(self, script):
-        if '### GENERATED CODE ###' in script:
+        # this is how we check that generated code exists, and the syntax of the generated code is up to date
+        if '### END GENERATED CODE ###' in script:
             matches = re.finditer(REGEX_MODULE, script)
             for match_num, match in enumerate(matches, start=1):
                 self.print_logs(f'match number {match_num} found', LOG_COLORS.NATIVE)
                 code = match.group(1)
                 lines = code.split('\n')
-                imported_line = lines[0][2:]
+                imported_line = lines[0][2:]  # the first two chars are not part of the code
                 script = script.replace(match.group(), imported_line)
         return script

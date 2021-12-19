@@ -107,6 +107,7 @@ class TestConfiguration:
         self.context_print_dt = test_configuration.get('context_print_dt')
         self.test_integrations: List[str] = self._parse_integrations_conf(test_configuration)
         self.test_instance_names: List[str] = self._parse_instance_names_conf(test_configuration)
+        self.external_playbook_config: dict = test_configuration.get('external_playbook_config', {})
 
     @staticmethod
     def _parse_integrations_conf(test_configuration):
@@ -132,7 +133,6 @@ class Conf:
         Args:
             conf: The contents of the content conf.json file.
         """
-        print(f"{conf=}")
         self.default_timeout: int = conf.get('testTimeout', 30)
         self.tests: list = [
             TestConfiguration(test_configuration, self.default_timeout) for test_configuration in conf.get('tests', [])
@@ -143,6 +143,7 @@ class Conf:
         self.unmockable_integrations: Dict[str, str] = conf.get('unmockable_integrations')  # type: ignore
         self.parallel_integrations: List[str] = conf['parallel_integrations']
         self.docker_thresholds = conf.get('docker_thresholds', {}).get('images', {})
+
 
 
 class TestPlaybook:
@@ -1401,11 +1402,20 @@ class TestContext:
                 self.playbook.disable_integrations(self.client, self.server_context)
                 return PB_Status.FAILED
 
-            pb_path = f'/playbook/{urllib.parse.quote("Block Indicators - Generic v2")}'
+            external_playbook_configuration = self.playbook.configuration.external_playbook_config
+            # if external_playbook_configuration:
+            external_playbook_id = external_playbook_configuration['playbookID']
+            pb_path = f'/playbook/{urllib.parse.quote("LogRhythmRestV2-test")}'
             print(f'{pb_path=}')
-            res = demisto_client.generic_request_func(self=self.client, method='GET',
-                                                      path=pb_path)
+            # Get External playbook configuration
+            res = demisto_client.generic_request_func(self=self.client, method='GET', path=pb_path)
             print(f' SDK PB {res=}')
+            # Save Default Configuration.
+
+            # Change Configuration for external pb
+
+
+
             incident = self.playbook.create_incident(self.client)
             if not incident:
                 return ''
@@ -1422,6 +1432,11 @@ class TestContext:
 
             if self.playbook.configuration.context_print_dt:
                 self.playbook.print_context_to_log(self.client, investigation_id)
+
+            # restore Configuration for external playbook
+            if external_playbook_configuration:
+                pass
+
             self.playbook.disable_integrations(self.client, self.server_context)
             self._clean_incident_if_successful(playbook_state)
             return playbook_state

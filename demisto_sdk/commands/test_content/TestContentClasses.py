@@ -1428,7 +1428,8 @@ class TestContext:
             external_playbook_configuration = self.playbook.configuration.external_playbook_config
             # if external_playbook_configuration:
             # external_playbook_id = external_playbook_configuration['playbookID']
-            pb_path = f'/playbook/{urllib.parse.quote("Account Enrichment - Generic v2.1")}'
+            # pb_path = f'/playbook/{urllib.parse.quote("Account Enrichment - Generic v2.1")}'
+            pb_path = f'/playbook/Account Enrichment - Generic v2.1'
             print(f'{pb_path=}')
             # Get External playbook configuration
             res = demisto_client.generic_request_func(self=self.client, method='GET', path=pb_path)

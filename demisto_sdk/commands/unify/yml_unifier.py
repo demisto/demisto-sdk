@@ -364,10 +364,10 @@ class YmlUnifier:
         module_path = os.path.join('./Packs', 'ApiModules', 'Scripts', module_name, module_name + '.py')
         module_code = YmlUnifier._get_api_module_code(module_name, module_path)
 
-        module_code = f'\n### {module_import}\n' \
-                      f'### GENERATED CODE ###\n' \
+        module_code = f'\n### GENERATED CODE ###\n' \
+                      f'# {module_import}\n' \
                       f'# This code was inserted in place of an API module.{module_code}\n' \
-                      f'### GENERATED CODE ### F'
+                      f'### END GENERATED CODE ###'
 
         return script_code.replace(module_import, module_code)
 

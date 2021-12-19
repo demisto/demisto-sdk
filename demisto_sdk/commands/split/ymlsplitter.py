@@ -1,5 +1,6 @@
 import base64
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -17,6 +18,8 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                get_pipenv_dir,
                                                get_python_version, pascal_case,
                                                print_color, print_error)
+
+REGEX_MODULE = r"### GENERATED CODE ###((.|\s)+?)### END GENERATED CODE ###"
 
 
 def get_pip_requirements(docker_image: str):
@@ -246,7 +249,7 @@ class YmlSplitter:
                 if lang_type == TYPE_PWSH:
                     code_file.write(". $PSScriptRoot\\CommonServerPowerShell.ps1\n")
                     self.lines_inserted_at_code_start += 1
-            self.replace_imported_code(script)
+            script = self.replace_imported_code(script)
             code_file.write(script)
             if script and script[-1] != '\n':
                 # make sure files end with a new line (pyml seems to strip the last newline)
@@ -295,4 +298,12 @@ class YmlSplitter:
             print_color(log_msg, log_color)
 
     def replace_imported_code(self, script):
-        pass
+        if '### GENERATED CODE ###' in script:
+            matches = re.finditer(REGEX_MODULE, script)
+            for match_num, match in enumerate(matches, start=1):
+                self.print_logs(f'match number {match_num} found', LOG_COLORS.NATIVE)
+                code = match.group(1)
+                lines = code.split('\n')
+                imported_line = lines[0][2:]
+                script = script.replace(match.group(), imported_line)
+        return script

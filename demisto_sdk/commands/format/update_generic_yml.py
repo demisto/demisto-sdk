@@ -85,8 +85,6 @@ class BaseUpdateYML(BaseUpdate):
                 updated_integration_id[self.id_and_version_location['id']] = self.data['name']
             self.id_and_version_location['id'] = self.data['name']
         else:
-            if self.verbose:
-                click.echo('It is a modified file, keeping the old ID')
             current_id = self.id_and_version_location.get('id')
             old_id = self.get_id_and_version_for_data(self.old_file).get('id')
             if current_id != old_id:

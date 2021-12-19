@@ -449,9 +449,10 @@ class GitUtil:
                 try:  # try to get the main branch
                     branch = self.repo.heads.main.name
                 except AttributeError:  # if main does not exist, get master
-                    branch = self.repo.heads.master.name
-                except AttributeError:
-                    raise Exception("Unable to find main or master branch from current working directory - aborting.")
+                    try:
+                        branch = self.repo.heads.master.name
+                    except AttributeError:
+                        raise Exception("Unable to find main or master branch from current working directory - aborting.")
         return remote, branch
 
     def get_current_git_branch_or_hash(self) -> str:

@@ -1209,4 +1209,3 @@ class TestFormatting:
         base_yml = IntegrationYMLFormat(input=playbook.yml.path)
         base_yml.update_id_to_equal_name()
         assert base_yml.data.get('id') == uid
-

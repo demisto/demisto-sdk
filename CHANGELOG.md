@@ -5,7 +5,12 @@
 * Fixed an issue in the **merge-id-set** command, where merging fails because of duplicates but the packs are in the XSOAR repo but in different version control.
 * Fixed missing `Lists` Content Item as valid `IDSetType`
 * Added enhancement for **generate-docs**. It is possible to provide both file or a comma seperated list as `examples`. Also, it's possible to provide more than one example for a script or a command.
+* Added feature in **format** to sync YML and JSON files to the `master` file structure.
+* Added option to specify `Incident Type`, `Incoming Mapper` and `Classifier` when configuring instance in **test-content**
+* added a new command **run-test-playbook** to run a test playbook in a given XSOAR instance.
 * Fixed an issue in **format** when running on a modified YML, that the `id` value is not changed to its old `id` value. 
+* Enhancement for **unify** command, added comments when replacing `ApiModule` code with the original import code and a mark when the generated code ends.
+* Enhancement for **split** command, replace `ApiModule` code block to `import` when splitting a YML. 
 
 # 1.5.4
 * Fixed an issue with the **format** command when contributing via the UI

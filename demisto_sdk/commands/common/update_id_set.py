@@ -1646,7 +1646,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
 
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('integrations', []).append(_id)
                 integration_list.extend(arr)
 
         progress_bar.update(1)
@@ -1661,7 +1661,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                 get_playbooks_paths(pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('playbooks', []).append(_id)
                 playbooks_list.extend(arr)
 
         progress_bar.update(1)
@@ -1674,7 +1674,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                 get_general_paths(SCRIPTS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('scripts', []).append(_id)
                 scripts_list.extend(arr)
 
         progress_bar.update(1)
@@ -1702,7 +1702,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                 get_general_paths(CLASSIFIERS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('classifiers', []).append(_id)
                 classifiers_list.extend(arr)
 
         progress_bar.update(1)
@@ -1717,7 +1717,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                 get_general_paths(DASHBOARDS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('dashboards', []).append(_id)
                 dashboards_list.extend(arr)
 
         progress_bar.update(1)
@@ -1732,7 +1732,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                 get_general_paths(INCIDENT_TYPES_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('incidentTypes', []).append(_id)
                 incident_type_list.extend(arr)
 
         progress_bar.update(1)
@@ -1747,7 +1747,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                 get_general_paths(INCIDENT_FIELDS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('incidentFields', []).append(_id)
                 incident_fields_list.extend(arr)
 
         progress_bar.update(1)
@@ -1762,7 +1762,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                 get_general_paths(INDICATOR_FIELDS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('indicatorFields', []).append(_id)
                 indicator_fields_list.extend(arr)
 
         progress_bar.update(1)
@@ -1777,7 +1777,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                 get_general_paths(INDICATOR_TYPES_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('indicatorTypes', []).append(_id)
                 indicator_types_list.extend(arr)
 
         progress_bar.update(1)
@@ -1790,9 +1790,6 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         data_extraction_func=get_layout_data,
                                         ),
                                 get_general_paths(LAYOUTS_DIR, pack_to_create)):
-                for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
-                    if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', []).append(_id)
                 layouts_list.extend(arr)
             for arr in pool.map(partial(process_general_items,
                                         print_logs=print_logs,
@@ -1802,7 +1799,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                 get_general_paths(LAYOUTS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('layouts', []).append(_id)
                 layouts_list.extend(arr)
 
         progress_bar.update(1)
@@ -1817,7 +1814,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                 get_general_paths(REPORTS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('reports', []).append(_id)
                 reports_list.extend(arr)
 
         progress_bar.update(1)
@@ -1832,7 +1829,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                 get_general_paths(WIDGETS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('widgets', []).append(_id)
                 widgets_list.extend(arr)
 
         progress_bar.update(1)
@@ -1847,7 +1844,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                 get_general_paths(MAPPERS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('mappers', []).append(_id)
                 mappers_list.extend(arr)
 
         progress_bar.update(1)
@@ -1862,7 +1859,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                 get_general_paths(LISTS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('lists', []).append(_id)
                 lists_list.extend(arr)
 
         progress_bar.update(1)
@@ -1878,7 +1875,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                 get_general_paths(GENERIC_DEFINITIONS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('genericDefinitions', []).append(_id)
                 generic_definitions_list.extend(arr)
 
         progress_bar.update(1)
@@ -1893,7 +1890,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                 get_general_paths(GENERIC_MODULES_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('genericModules', []).append(_id)
                 generic_modules_list.extend(arr)
 
         progress_bar.update(1)
@@ -1907,7 +1904,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                 get_generic_entities_paths(GENERIC_TYPES_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('genericTypes', []).append(_id)
                 generic_types_list.extend(arr)
 
         progress_bar.update(1)
@@ -1922,7 +1919,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                 get_generic_entities_paths(GENERIC_FIELDS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('genericFields', []).append(_id)
                 generic_fields_list.extend(arr)
 
         progress_bar.update(1)
@@ -1934,7 +1931,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                 get_general_paths(JOBS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('jobs', []).append(_id)
                 jobs_list.extend(arr)
 
         progress_bar.update(1)

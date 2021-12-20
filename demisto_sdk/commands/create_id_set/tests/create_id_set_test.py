@@ -108,7 +108,7 @@ class TestIDSetCreator:
         assert len(private_id_set['integrations']) == 1
         assert private_id_set['integrations'][0].get('id1', {}).get('name', '') == 'integration to create id set'
         assert private_id_set['integrations'][0].get('id2', {}).get('name', '') == ''
-        assert private_id_set['Packs'].get('pack_to_create_id_set_on', {}).get('ContentItems', '') == ['id1']
+        assert private_id_set['Packs']['pack_to_create_id_set_on']['ContentItems']['integrations'] == ['id1']
 
     def test_create_id_set_on_specific_empty_pack(self, repo):
         """

@@ -1,9 +1,10 @@
 # Changelog
 * Changed the **validate** command to fail on missing test-playbooks only if no unittests are found.
 * Fixed `to_kebab_case`, it will now deal with strings that have hyphens, commas or periods in them, changing them to be hyphens in the new string.
-* Added the *--check-dependent* flag to **lint**, that enables running lint also on packs dependent on the packs lint is set to run on.
-* Added the *--get-dependent-on* flag to **find-dependencies**, that enables finding all packs dependent on given packs.
+* Added the *--check-dependent-api-module* flag to **lint**, that enables running lint also on packs dependent modified api modules, if there are any.
+* Added the *--get-dependent-on-* flag to **find-dependencies**, that enables finding all packs dependent on given packs.
 * Added the *--all-packs-dependencies* flag to **find-dependencies**, that generates a json with all packs dependencies.
+* For *--all-packs-dependencies* in **find-dependencies**, added the information to the dependecies graph of the items causing the dependencies.
 
 # 1.5.4
 * Fixed an issue with the **format** command when contributing via the UI

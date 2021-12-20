@@ -1437,11 +1437,9 @@ class TestContext:
             print(f'{pb_path2=}')
             print(f'{pb_path3=}')
             # Get External playbook configuration
-            res1 = demisto_client.generic_request_func(self=self.client, method='POST', path=pb_all_path, body={'name':'test'})
             res2 = demisto_client.generic_request_func(self=self.client, method='GET', path=pb_path)
             res3 = demisto_client.generic_request_func(self=self.client, method='GET', path=pb_path2)
             res4 = demisto_client.generic_request_func(self=self.client, method='GET', path=pb_path3)
-            print(f' SDK PB {res1=}')
             print(f' SDK PB {res2=}')
             print(f' SDK PB {res3=}')
             print(f' SDK PB {res4=}')

@@ -833,7 +833,7 @@ def create_common_entity_data(path, name, to_version, from_version, pack):
     if name:
         data['name'] = name
     data['file_path'] = path
-    data['source'] = get_current_repo()
+    data['source'] = list(get_current_repo())
     if to_version:
         data['toversion'] = to_version
     if from_version:
@@ -1463,6 +1463,7 @@ class IDSetType(Enum):
     GENERIC_MODULE = 'GenericModules'
     GENERIC_DEFINITION = 'GenericDefinitions'
     JOBS = 'Jobs'
+    LISTS = 'Lists'
 
     @classmethod
     def has_value(cls, value):
@@ -1974,7 +1975,7 @@ def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=
 
         # If they have the same pack name and the same source they actually the same entity.
         # Added to support merge between two id-sets that contain the same pack.
-        if dict1.get('pack') == dict2.get('pack') and dict1.get('source') == dict2.get('source'):
+        if dict1.get('pack') == dict2.get('pack') and is_same_source(dict1.get('source'), dict2.get('source')):
             return False
 
         # A: 3.0.0 - 3.6.0
@@ -1996,6 +1997,22 @@ def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=
             print_warning('The following {} have the same ID ({}) but different names: '
                           '"{}", "{}".'.format(object_type, id_to_check, dict1.get('name'), dict2.get('name')))
 
+    return False
+
+
+def is_same_source(source1, source2) -> bool:
+    """
+    Two sources will considered the same if they are exactly the same repo, or they are the XSOAR repos, one in github
+    and another in gitlab
+    github.com, demisto, content == code,pan.run, xsoar, content
+    """
+    if source1 == source2:
+        return True
+    host1, owner1, repo1 = source1
+    host2, owner2, repo2 = source2
+    if host1 in {'github.com', 'code.pan.run'} and owner1 in {'demisto', 'xsoar'} \
+            and host2 in {'github.com', 'code.pan.run'} and owner2 in {'demisto', 'xsoar'}:
+        return repo1 == repo2
     return False
 
 

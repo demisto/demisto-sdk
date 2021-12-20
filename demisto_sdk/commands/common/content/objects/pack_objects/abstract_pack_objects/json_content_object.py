@@ -112,6 +112,4 @@ class JSONContentObject(JSONObject):
 
     def is_list(self) -> bool:
         data = get_json(str(self.path))
-        if isinstance(data, list):
-            return True
-        return False
+        return isinstance(data, list)

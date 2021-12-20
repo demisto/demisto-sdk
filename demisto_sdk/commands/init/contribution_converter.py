@@ -260,6 +260,16 @@ class ContributionConverter:
         return new_dst_file_path
 
     def fix_dst_file_path_for_mapper(self, file_name, dst_dir_path, src_file_path):
+        """
+        Checks if the file is a mapper and if so change the file name to `classifier-mapper-`
+        instead of `classifier-`
+        Args:
+            file_name (str): The file name.
+            dst_dir_path (str): The destination directory path.
+            src_file_path (str): The source file path.
+        Returns:
+            Return the new destination file path for mapper, none otherwise.
+        """
         new_dst_file_path = None
         file_type = find_type(src_file_path)
         if file_type and file_type.value == "mapper":
@@ -271,13 +281,20 @@ class ContributionConverter:
         return new_dst_file_path
 
     def fix_dst_folder_path_for_fields(self, file_name):
+        """
+        Checks if the file is an incident filed or an indicator field and create the directory accordingly.
+        Args:
+            file_name (str): The file name.
+        Returns:
+            Return the new destination file path for incident/indicator field.
+        """
         new_dst_file_path = None
-        for key, value in ENTITY_TYPE_TO_DIR_FOR_FIELDS.items():
-            if key in file_name:
-                dst_path = os.path.join(self.pack_dir_path, value)
-                if not os.path.exists(dst_path):
-                    os.mkdir(dst_path)
-                new_dst_file_path = os.path.join(dst_path, file_name)
+        for field_type, field_dir in ENTITY_TYPE_TO_DIR_FOR_FIELDS.items():
+            if field_type in file_name:
+                dir_dst_path = os.path.join(self.pack_dir_path, field_dir)
+                if not os.path.exists(dir_dst_path):
+                    os.mkdir(dir_dst_path)
+                new_dst_file_path = os.path.join(dir_dst_path, file_name)
         return new_dst_file_path
 
     def format_converted_pack(self) -> None:

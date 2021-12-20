@@ -299,7 +299,8 @@ class YmlSplitter:
 
     def replace_imported_code(self, script):
         # this is how we check that generated code exists, and the syntax of the generated code is up to date
-        if '### END GENERATED CODE ###' in script:
+        if '### GENERATED CODE ###:' in script and \
+                '### END GENERATED CODE ###' in script:
             matches = re.finditer(REGEX_MODULE, script)
             for match in matches:
                 code = match.group(1)

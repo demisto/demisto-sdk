@@ -1691,7 +1691,6 @@ class PackDependencies:
                 if dependency_name == pack:
                     continue
                 if dependency_name not in dependency_graph:
-                    # should have here mandatory_dependencies_items = [Common Scripts:
                     dependency_graph.add_node(dependency_name, mandatory_for_packs=[], mandatory_dep_items={})
                 dependency_graph.add_edge(pack, dependency_name)
                 if is_mandatory:
@@ -1784,9 +1783,11 @@ class PackDependencies:
                     if path.parts[-1] in IGNORED_PACKS_IN_DEPENDENCY_CALC:
                         print_error(f"Finding all packs dependent on {path.parts[-1]} pack is not supported.")
                         sys.exit(1)
-
+        if all_packs_dependencies and not output_path:
+            print_error("Please insert path for the generated output using --output-path")
+            sys.exit(1)
         if output_path and not all_packs_dependencies and not get_dependent_on:
-            print_warning("You used the '--outputs-path' argument, which is only relevant for when using the"
+            print_warning("You used the '--output-path' argument, which is only relevant for when using the"
                           " '--all-packs-dependencies' or '--get-dependent-on' flags. Ignoring this argument.")
 
     @staticmethod
@@ -1944,7 +1945,7 @@ class PackDependencies:
         return pack_meta_file_content
 
 
-def calculate_single_pack_dependencies(pack: str, dependency_graph: object, verbose: bool = False) -> Tuple[dict, list, str]:
+def calculate_single_pack_dependencies(pack: str, dependency_graph: object, verbose: bool = False, get_dependent_on: bool = False) -> Tuple[dict, list, str]:
     """
     Calculates pack dependencies given a pack and a dependencies graph.
     First is extract the dependencies subgraph of the given graph only using DFS algorithm with the pack as source.
@@ -1958,6 +1959,7 @@ def calculate_single_pack_dependencies(pack: str, dependency_graph: object, verb
         pack: The pack for which we need to calculate the dependencies
         dependency_graph: The full dependencies graph
         verbose: Whether to output a detailed response.
+        get_dependent_on: # TODO: fix
 
     Returns:
         first_level_dependencies: A dict of the form {'dependency_name': {'mandatory': < >, 'display_name': < >}}
@@ -1972,14 +1974,45 @@ def calculate_single_pack_dependencies(pack: str, dependency_graph: object, verb
         for dependency_pack, additional_data in subgraph.nodes(data=True):
             if verbose:
                 print(f'Iterating dependency {dependency_pack} for pack {pack}')
-            additional_data['mandatory'] = pack in additional_data['mandatory_for_packs']
-            del additional_data['mandatory_for_packs']
+            if get_dependent_on:
+                additional_data['mandatory'] = dependency_pack in dependency_graph.nodes()._nodes[pack]['mandatory_for_packs']
+                if 'mandatory_dependencies_items' in additional_data:
+                    # containing the items depending on dependent_pack, therefore irrelevant in this case
+                    additional_data.pop('mandatory_dependencies_items')
+                if 'mandatory_for_packs' in additional_data and pack != dependency_pack:
+                    additional_data.pop('mandatory_for_packs')
+            else:
+                additional_data['mandatory'] = pack in additional_data['mandatory_for_packs']
+                if additional_data['mandatory']:
+                    additional_data['mandatory_dependencies_items'] = \
+                        filter_mandatory_dependencies_items_by_pack(
+                            pack, additional_data['mandatory_dependencies_items'])
+                del additional_data['mandatory_for_packs']
         first_level_dependencies, all_level_dependencies = parse_for_pack_metadata(subgraph, pack)
     except Exception:
         print_error(f"Failed calculating {pack} pack dependencies")
         raise
 
     return first_level_dependencies, all_level_dependencies, pack
+
+
+def filter_mandatory_dependencies_items_by_pack(dependent_pack, mandatory_dependencies_items):
+    """
+    Returns only the items from the given dependent_pack, which are dependent *on* items from the pack that generated
+    mandatory_dependencies_items.
+    Args:
+        dependent_pack: pack of interest
+        mandatory_dependencies_items: dict of {item1: {pack: item2}} where item1 is mandatory for item2.
+
+    Returns:
+        A filtered dict where the pack key (such as in the example {item1: {pack: item2}}) is only of the given pack.
+    """
+    filtered_mandatory_dependencies_items = dict()
+    for item1, pack_and_item_dict in mandatory_dependencies_items:
+        for pack, item2 in pack_and_item_dict:
+            if dependent_pack == pack:
+                filtered_mandatory_dependencies_items[item1] = {pack: item2}
+    return filtered_mandatory_dependencies_items
 
 
 def get_all_packs_dependency_graph(id_set: dict, packs: list) -> Iterable:
@@ -2112,8 +2145,8 @@ def get_packs_dependent_on_given_packs(packs, id_set_path, output_path=None, ver
         futures = []
         for pack in pack_names:
             futures.append(
-                pool.schedule(calculate_single_pack_dependencies, args=(str(pack), reverse_dependency_graph, verbose),
-                              timeout=10))
+                pool.schedule(calculate_single_pack_dependencies, args=(str(pack), reverse_dependency_graph, verbose, True),
+                              timeout=10000))
         wait_futures_complete(futures=futures, done_fn=collect_dependent_packs)
         # finished iteration over pack folders
         print_success("Finished calculating the dependencies on the given packs.")
@@ -2151,5 +2184,5 @@ def remove_unmandatory_items(packs_and_items_dict, pack_dependencies_data) -> No
         pack_dependencies_data: list of tupples of (pack id, is mandatory)
     """
     for pack, is_mandatory in pack_dependencies_data:
-        if not is_mandatory:
+        if not is_mandatory and pack in packs_and_items_dict.keys():
             packs_and_items_dict.pop(pack)

@@ -2223,7 +2223,8 @@ def get_api_module_dependencies(pkgs, id_set_path):
     scripts = id_set.get(IdSetKeys.SCRIPTS.value)
     integrations = id_set.get(IdSetKeys.INTEGRATIONS.value)
     using_scripts, using_integrations = [], []
-
+    # TODO: add prints and dependent on which
+    # TODO: add all commands to sdk nightly
     for script in scripts:
         api_module = list(script.values())[0].get(IdSetKeys.API_MODULES.value, [])
         if api_module in api_modules:

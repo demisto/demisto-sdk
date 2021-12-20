@@ -1428,12 +1428,24 @@ class TestContext:
             external_playbook_configuration = self.playbook.configuration.external_playbook_config
             # if external_playbook_configuration:
             # external_playbook_id = external_playbook_configuration['playbookID']
-            # pb_path = f'/playbook/{urllib.parse.quote("Account Enrichment - Generic v2.1")}'
-            pb_path = urllib.parse.quote(f'/playbook/Account Enrichment - Generic v2.1')
+            pb_path = urllib.parse.quote('/playbook/Account Enrichment - Generic v2.1')
+            pb_path2 = urllib.parse.quote_plus('/playbook/Account Enrichment - Generic v2.1')
+            pb_path3 = '/playbook/Account%20Enrichment%20-%20Generic%20v2.1'
+            pb_all_path = f'/playbook/search/'
+
             print(f'{pb_path=}')
+            print(f'{pb_path2=}')
+            print(f'{pb_path3=}')
             # Get External playbook configuration
-            res = demisto_client.generic_request_func(self=self.client, method='GET', path=pb_path)
-            print(f' SDK PB {res=}')
+            res1 = demisto_client.generic_request_func(self=self.client, method='POST', path=pb_all_path, body={'name':'test'})
+            res2 = demisto_client.generic_request_func(self=self.client, method='GET', path=pb_path)
+            res3 = demisto_client.generic_request_func(self=self.client, method='GET', path=pb_path2)
+            res4 = demisto_client.generic_request_func(self=self.client, method='GET', path=pb_path3)
+            print(f' SDK PB {res1=}')
+            print(f' SDK PB {res2=}')
+            print(f' SDK PB {res3=}')
+            print(f' SDK PB {res4=}')
+
             # Save Default Configuration.
 
             # Change Configuration for external pb

@@ -64,6 +64,7 @@ class PackUniqueFilesValidator(BaseValidator):
     """PackUniqueFilesValidator is designed to validate the correctness of content pack's files structure.
     Existence and validity of this files is essential."""
 
+    # TODO Use correct branch
     def __init__(self, pack, pack_path=None, validate_dependencies=False, ignored_errors=None, print_as_warnings=False,
                  should_version_raise=False, id_set_path=None, suppress_print=False, private_repo=False,
                  skip_id_set_creation=False, prev_ver='origin/master', json_file_path=None, support=None,
@@ -560,6 +561,7 @@ class PackUniqueFilesValidator(BaseValidator):
                 click.secho("Running on master branch - skipping price change validation", fg="yellow")
             return None
         try:
+            # TODO Use correct branch
             old_meta_file_content = current_repo.git.show(f'origin/master:{metadata_file_path}')
 
         except GitCommandError as e:

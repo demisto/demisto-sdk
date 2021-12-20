@@ -79,6 +79,7 @@ class SecretsValidator(object):
         self.is_circle = is_circle
         self.white_list_path = white_list_path
         self.ignore_entropy = ignore_entropy
+        # TODO Use correct branch
         self.prev_ver = prev_ver if prev_ver is not None else 'origin/master'
 
     def get_secrets(self, branch_name, is_circle):

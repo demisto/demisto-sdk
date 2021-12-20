@@ -332,6 +332,7 @@ class TestGetRemoteFileLocally:
     def setup_method(self):
         # create local git repo
         example_repo = git.Repo.init(self.REPO_NAME)
+        # TODO Use correct branch
         example_repo.git.checkout('-b', 'origin/master')
         with open(os.path.join(self.REPO_NAME, self.FILE_NAME), 'w+') as somefile:
             somefile.write(self.FILE_CONTENT)

@@ -101,6 +101,7 @@ class ContentEntityValidator(BaseValidator):
         Returns:
             (bool): is release branch
         """
+        # TODO Use correct branch
         diff_string_config_yml = run_command("git diff origin/master .circleci/config.yml")
         if re.search(r'[+-][ ]+CONTENT_VERSION: ".*', diff_string_config_yml):
             return True

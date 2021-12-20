@@ -28,7 +28,7 @@ IS_LIST = [(TEST_LIST_JSON, '', True),
 
 
 @pytest.mark.parametrize('path, file_name_prefix, is_list', IS_LIST)
-def test_is_list(path: Union[Path, str], file_name_prefix, is_list: bool):
+def test_is_file_structure_list(path: Union[Path, str], file_name_prefix, is_list: bool):
     """
     Given
         - A json file path
@@ -37,7 +37,7 @@ def test_is_list(path: Union[Path, str], file_name_prefix, is_list: bool):
     Then
         - Returns true if the file's content is a list, else return false
     """
-    assert JSONContentObject(path, file_name_prefix).is_list() == is_list
+    assert JSONContentObject(path, file_name_prefix).is_file_structure_list() == is_list
 
 
 class TestFileWithStem:

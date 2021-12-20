@@ -110,6 +110,10 @@ class JSONContentObject(JSONObject):
 
         return created_files
 
-    def is_list(self) -> bool:
+    def is_file_structure_list(self) -> bool:
+        """
+        Checks whether the content of the file has a structure of a list.
+        Assuming the file is a valid json file, use this to determine whether the file holds a list of values or a dictionary.
+        """
         data = get_json(str(self.path))
         return isinstance(data, list)

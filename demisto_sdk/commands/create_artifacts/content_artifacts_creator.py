@@ -646,7 +646,8 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
         content_items_handler.handle_content_item(indicator_field)
         pack_report += dump_pack_conditionally(artifact_manager, indicator_field)
     for indicator_type in pack.indicator_types:
-        if indicator_type.is_list():
+        # list of indicator types in one file (i.e. old format) instead of one per file aren't supported from 6.0.0 server version
+        if indicator_type.is_file_structure_list():
             logger.error(f'Indicator type "{indicator_type.path.name}" file holds a list and therefore is not supported.')
         else:
             content_items_handler.handle_content_item(indicator_type)

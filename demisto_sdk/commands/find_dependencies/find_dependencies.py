@@ -398,6 +398,7 @@ class PackDependencies:
         """
         dependencies_packs = set()
         items_dependencies = dict()
+        pack_dependencies_data = []
         if verbose:
             click.secho('### Scripts', fg='white')
 
@@ -432,8 +433,9 @@ class PackDependencies:
                         pack_dependencies_data = PackDependencies._detect_generic_commands_dependencies(pack_names)
                         script_dependencies.update(pack_dependencies_data)
 
-                items_dependencies = update_items_dependencies(get_dependent_items, items_dependencies, script_id,
-                                                               packs_and_items_dict)
+                if pack_dependencies_data and get_dependent_items:
+                    update_items_dependencies(pack_dependencies_data, items_dependencies, script_id,
+                                              packs_and_items_dict)
 
             if verbose:
                 click.secho(f'{os.path.basename(script.get("file_path", ""))} depends on: {script_dependencies}',
@@ -498,6 +500,7 @@ class PackDependencies:
         """
         dependencies_packs = set()
         items_dependencies = dict()
+        packs_and_items_dict = dict()
         if verbose:
             click.secho('### Playbooks', fg='white')
 
@@ -517,46 +520,43 @@ class PackDependencies:
                     packs_found_from_integration, packs_and_items_dict = PackDependencies._search_packs_by_items_names(
                         integration_name, id_set['integrations'], exclude_ignored_dependencies)
                 elif command not in GENERIC_COMMANDS_NAMES:  # do not collect deps on generic command in Pbs
-                    packs_found_from_integration, packs_and_items_dict = PackDependencies._search_packs_by_integration_command(
-                        command, id_set, exclude_ignored_dependencies)
-                else:
-                    _, packs_and_items_dict = PackDependencies._search_packs_by_integration_command(
-                        command, id_set, exclude_ignored_dependencies)
+                    packs_found_from_integration, packs_and_items_dict = PackDependencies.\
+                        _search_packs_by_integration_command(command, id_set, exclude_ignored_dependencies)
 
                 if packs_found_from_integration:
                     if command in skippable_tasks:
                         pack_dependencies_data = PackDependencies._label_as_optional(packs_found_from_integration)
                     else:
                         pack_dependencies_data = PackDependencies._detect_generic_commands_dependencies(
-                            packs_found_from_integration)  # TODO: verify if we wand the generic and if should note inside node's value (mismatch with 'mandatory for')
+                            packs_found_from_integration)
                     playbook_dependencies.update(pack_dependencies_data)
-                items_dependencies = update_items_dependencies(get_dependent_items, items_dependencies, playbook_id, packs_and_items_dict)
+                    if get_dependent_items:
+                        update_items_dependencies(pack_dependencies_data, items_dependencies, playbook_id,
+                                                  packs_and_items_dict)
 
             implementing_scripts = playbook_data.get('implementing_scripts', []) + \
                 playbook_data.get('filters', []) + \
                 playbook_data.get('transformers', [])
 
             # searching for packs of implementing scripts
-            dependencies, mandatory_packs_and_scripts_dict = PackDependencies._differentiate_playbook_implementing_objects(
-                implementing_scripts,
-                skippable_tasks,
-                id_set['scripts'],
-                exclude_ignored_dependencies
-            )
+            dependencies, mandatory_packs_and_scripts_dict = PackDependencies.\
+                _differentiate_playbook_implementing_objects(implementing_scripts, skippable_tasks, id_set['scripts'],
+                                                             exclude_ignored_dependencies)
             playbook_dependencies.update(dependencies)
-            items_dependencies = update_items_dependencies(get_dependent_items, items_dependencies, playbook_id,
-                                                           mandatory_packs_and_scripts_dict)
+            if get_dependent_items:
+                update_items_dependencies(dependencies, items_dependencies, playbook_id,
+                                          mandatory_packs_and_scripts_dict)
 
             # searching for packs of implementing playbooks
-            dependencies, mandatory_packs_and_playbooks_dict = PackDependencies._differentiate_playbook_implementing_objects(
-                playbook_data.get('implementing_playbooks', []),
-                skippable_tasks,
-                id_set['playbooks'],
-                exclude_ignored_dependencies,
-            )
+            dependencies, mandatory_packs_and_playbooks_dict = PackDependencies.\
+                _differentiate_playbook_implementing_objects(playbook_data.get('implementing_playbooks', []),
+                                                             skippable_tasks, id_set['playbooks'],
+                                                             exclude_ignored_dependencies,
+                                                             )
             playbook_dependencies.update(dependencies)
-            items_dependencies = update_items_dependencies(get_dependent_items, items_dependencies, playbook_id,
-                                                           mandatory_packs_and_playbooks_dict)
+            if get_dependent_items:
+                update_items_dependencies(dependencies, items_dependencies, playbook_id,
+                                          mandatory_packs_and_playbooks_dict)
 
             dependencies, mandatory_packs_and_lists_dict = PackDependencies._differentiate_playbook_implementing_objects(
                 playbook_data.get('lists', []),
@@ -565,20 +565,23 @@ class PackDependencies:
                 exclude_ignored_dependencies,
             )
             playbook_dependencies.update(dependencies)
-            items_dependencies = update_items_dependencies(get_dependent_items, items_dependencies, playbook_id,
-                                                           mandatory_packs_and_lists_dict)
+            if get_dependent_items:
+                update_items_dependencies(dependencies, items_dependencies, playbook_id,
+                                          mandatory_packs_and_lists_dict)
             # ---- incident fields packs ----
             # playbook dependencies from incident fields should be marked as optional unless CommonTypes pack,
             # as customers do not have to use the OOTB inputs.
             incident_fields = playbook_data.get('incident_fields', [])
-            packs_found_from_incident_fields, packs_and_incident_fields_dict = PackDependencies._search_packs_by_items_names_or_ids(
-                incident_fields, id_set['IncidentFields'], exclude_ignored_dependencies)
+            packs_found_from_incident_fields, packs_and_incident_fields_dict = PackDependencies.\
+                _search_packs_by_items_names_or_ids(incident_fields, id_set['IncidentFields'],
+                                                    exclude_ignored_dependencies)
             if packs_found_from_incident_fields:
                 pack_dependencies_data = PackDependencies._update_optional_commontypes_pack_dependencies(
                     packs_found_from_incident_fields)
                 playbook_dependencies.update(pack_dependencies_data)
-            items_dependencies = update_items_dependencies(get_dependent_items, items_dependencies, playbook_id,
-                                                           packs_and_incident_fields_dict)  # TODO: verify optional
+                if get_dependent_items:
+                    update_items_dependencies(pack_dependencies_data, items_dependencies, playbook_id,
+                                              packs_and_incident_fields_dict)
             # ---- indicator fields packs ----
             # playbook dependencies from indicator fields should be marked as optional unless CommonTypes pack,
             # as customers do not have to use the OOTB inputs.
@@ -589,8 +592,9 @@ class PackDependencies:
                 pack_dependencies_data = PackDependencies._update_optional_commontypes_pack_dependencies(
                     packs_found_from_indicator_fields)
                 playbook_dependencies.update(pack_dependencies_data)
-            items_dependencies = update_items_dependencies(get_dependent_items, items_dependencies, playbook_id,
-                                                           packs_and_indicator_fields_dict)
+                if get_dependent_items:
+                    update_items_dependencies(pack_dependencies_data, items_dependencies, playbook_id,
+                                              packs_and_indicator_fields_dict)
             if playbook_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
                 if verbose:
@@ -647,24 +651,26 @@ class PackDependencies:
                 packs_found_from_incident_indicator_types, packs_and_incident_indicator_dict = PackDependencies._search_packs_by_items_names(
                     related_types, id_set[f'{layout_type}Types'],
                     exclude_ignored_dependencies)
-                items_dependencies = update_items_dependencies(get_dependent_items, items_dependencies, layout_id,
-                                                               packs_and_incident_indicator_dict)
+
                 if packs_found_from_incident_indicator_types:
                     pack_dependencies_data = PackDependencies. \
                         _label_as_mandatory(packs_found_from_incident_indicator_types)
                     layout_dependencies.update(pack_dependencies_data)
-
+                    if get_dependent_items:
+                        update_items_dependencies(pack_dependencies_data, items_dependencies, layout_id,
+                                                  packs_and_incident_indicator_dict)
             related_fields = layout_data.get('incident_and_indicator_fields', [])
-            packs_found_from_incident_indicator_fields, packs_and_incident_indicator_dict = PackDependencies._search_packs_by_items_names_or_ids(
-                related_fields, id_set[f'{layout_type}Fields'],
-                exclude_ignored_dependencies, layout_type)
-            items_dependencies = update_items_dependencies(get_dependent_items, items_dependencies, layout_id,
-                                                           packs_and_incident_indicator_dict)
+            packs_found_from_incident_indicator_fields, packs_and_incident_indicator_dict = PackDependencies.\
+                _search_packs_by_items_names_or_ids(related_fields, id_set[f'{layout_type}Fields'],
+                                                    exclude_ignored_dependencies, layout_type)
 
             if packs_found_from_incident_indicator_fields:
                 pack_dependencies_data = PackDependencies. \
                     _label_as_mandatory(packs_found_from_incident_indicator_fields)
                 layout_dependencies.update(pack_dependencies_data)
+                if get_dependent_items:
+                    update_items_dependencies(pack_dependencies_data, items_dependencies, layout_id,
+                                              packs_and_incident_indicator_dict)
 
             if layout_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
@@ -721,8 +727,9 @@ class PackDependencies:
                 pack_dependencies_data = PackDependencies. \
                     _label_as_mandatory(packs_found_from_scripts)
                 incident_field_dependencies.update(pack_dependencies_data)
-            items_dependencies = update_items_dependencies(get_dependent_items, items_dependencies, incident_field_id,
-                                                           packs_and_scripts_dict)
+                if get_dependent_items:
+                    update_items_dependencies(pack_dependencies_data, items_dependencies, incident_field_id,
+                                              packs_and_scripts_dict)
             if incident_field_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
                 if verbose:
@@ -781,12 +788,14 @@ class PackDependencies:
             related_scripts = indicator_type_data.get('scripts', [])
             packs_found_from_scripts, packs_and_scripts_dict = PackDependencies._search_packs_by_items_names(
                 related_scripts, id_set['scripts'], exclude_ignored_dependencies)
-            items_dependencies = update_items_dependencies(get_dependent_items, items_dependencies, indicator_type_id,
-                                                           packs_and_scripts_dict)
+
             if packs_found_from_scripts:
                 pack_dependencies_data = PackDependencies. \
                     _label_as_optional(packs_found_from_scripts)
                 indicator_type_dependencies.update(pack_dependencies_data)
+                if get_dependent_items:
+                    update_items_dependencies(pack_dependencies_data, items_dependencies, indicator_type_id,
+                                              packs_and_scripts_dict)
 
             if indicator_type_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
@@ -832,8 +841,9 @@ class PackDependencies:
                 pack_dependencies_data = PackDependencies. \
                     _label_as_mandatory(packs_found_from_classifiers)
                 dependencies_packs.update(pack_dependencies_data)
-            items_dependencies = update_items_dependencies(get_dependent_items, items_dependencies, integration_id,
-                                                           packs_and_classifiers_dict)
+                if get_dependent_items:
+                    update_items_dependencies(pack_dependencies_data, items_dependencies, integration_id,
+                                              packs_and_classifiers_dict)
 
             related_mappers = integration_data.get('mappers', [])
             packs_found_from_mappers, packs_and_mappers_dict = PackDependencies._search_packs_by_items_names_or_ids(
@@ -843,8 +853,9 @@ class PackDependencies:
                 pack_dependencies_data = PackDependencies. \
                     _label_as_mandatory(packs_found_from_mappers)
                 dependencies_packs.update(pack_dependencies_data)
-            items_dependencies = update_items_dependencies(get_dependent_items, items_dependencies, integration_id,
-                                                           packs_and_mappers_dict)
+                if get_dependent_items:
+                    update_items_dependencies(pack_dependencies_data, items_dependencies, integration_id,
+                                              packs_and_mappers_dict)
 
             related_incident_types = integration_data.get('incident_types', [])
             packs_found_from_incident_types, packs_and_incident_types_dict = PackDependencies._search_packs_by_items_names(
@@ -854,7 +865,8 @@ class PackDependencies:
                 pack_dependencies_data = PackDependencies. \
                     _label_as_mandatory(packs_found_from_incident_types)
                 dependencies_packs.update(pack_dependencies_data)
-            items_dependencies = update_items_dependencies(get_dependent_items, items_dependencies, integration_id,
+                if get_dependent_items:
+                    update_items_dependencies(pack_dependencies_data, items_dependencies, integration_id,
                                                            packs_and_incident_types_dict)
 
             related_indicator_fields = integration_data.get('indicator_fields')
@@ -910,8 +922,9 @@ class PackDependencies:
                 pack_dependencies_data = PackDependencies. \
                     _label_as_mandatory(packs_found_from_playbooks)
                 incident_type_dependencies.update(pack_dependencies_data)
-            items_dependencies = update_items_dependencies(get_dependent_items, items_dependencies, incident_type_id,
-                                                           packs_and_playbooks_dict)
+                if get_dependent_items:
+                    update_items_dependencies(pack_dependencies_data, items_dependencies, incident_type_id,
+                                              packs_and_playbooks_dict)
 
             related_scripts = incident_type_data.get('scripts', [])
             packs_found_from_scripts, packs_and_scripts_dict = PackDependencies._search_packs_by_items_names(
@@ -921,8 +934,9 @@ class PackDependencies:
                 pack_dependencies_data = PackDependencies. \
                     _label_as_mandatory(packs_found_from_scripts)
                 incident_type_dependencies.update(pack_dependencies_data)
-            items_dependencies = update_items_dependencies(get_dependent_items, items_dependencies, incident_type_id,
-                                                           packs_and_scripts_dict)
+                if get_dependent_items:
+                    update_items_dependencies(pack_dependencies_data, items_dependencies, incident_type_id,
+                                              packs_and_scripts_dict)
 
             if incident_type_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
@@ -973,9 +987,9 @@ class PackDependencies:
                     pack_dependencies_data = PackDependencies._label_as_mandatory(
                         packs_found_from_generic_types)
                     classifier_dependencies.update(pack_dependencies_data)
-                items_dependencies = update_items_dependencies(get_dependent_items, items_dependencies,
-                                                               classifier_id,
-                                                               packs_and_generic_types_dict)
+                    if get_dependent_items:
+                        update_items_dependencies(pack_dependencies_data, items_dependencies, classifier_id,
+                                                  packs_and_generic_types_dict)
             else:
                 packs_found_from_incident_types, packs_and_incident_types_dict = PackDependencies._search_packs_by_items_names(
                     related_types, id_set['IncidentTypes'], exclude_ignored_dependencies)
@@ -986,9 +1000,9 @@ class PackDependencies:
                     pack_dependencies_data = PackDependencies._update_optional_commontypes_pack_dependencies(
                         packs_found_from_incident_types)
                     classifier_dependencies.update(pack_dependencies_data)
-                items_dependencies = update_items_dependencies(get_dependent_items, items_dependencies,
-                                                               classifier_id,
-                                                               packs_and_incident_types_dict)
+                    if get_dependent_items:
+                        update_items_dependencies(pack_dependencies_data, items_dependencies,classifier_id,
+                                                  packs_and_incident_types_dict)
 
             # collect pack dependencies from transformers and filters
             related_scripts = classifier_data.get('filters', []) + classifier_data.get('transformers', [])
@@ -998,8 +1012,8 @@ class PackDependencies:
             if packs_found_from_scripts:
                 pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_scripts)
                 classifier_dependencies.update(pack_dependencies_data)
-
-            items_dependencies = update_items_dependencies(get_dependent_items, items_dependencies,
+                if get_dependent_items:
+                    update_items_dependencies(pack_dependencies_data, items_dependencies,
                                                            classifier_id,
                                                            packs_and_scripts_dict)
             if classifier_dependencies:
@@ -1051,9 +1065,9 @@ class PackDependencies:
                     pack_dependencies_data = PackDependencies._label_as_mandatory(
                         packs_found_from_generic_types)
                     mapper_dependencies.update(pack_dependencies_data)
-                items_dependencies = update_items_dependencies(get_dependent_items, items_dependencies,
-                                                               mapper_id,
-                                                               packs_and_generic_types_dict)
+                    if get_dependent_items:
+                        update_items_dependencies(pack_dependencies_data, items_dependencies, mapper_id,
+                                                  packs_and_generic_types_dict)
 
                 packs_found_from_generic_fields, packs_and_generic_fields_dict = PackDependencies._search_packs_by_items_names(
                     related_types, id_set['GenericFields'], exclude_ignored_dependencies)
@@ -1062,10 +1076,9 @@ class PackDependencies:
                     pack_dependencies_data = PackDependencies._label_as_mandatory(
                         packs_found_from_generic_fields)
                     mapper_dependencies.update(pack_dependencies_data)
-
-                items_dependencies = update_items_dependencies(get_dependent_items, items_dependencies,
-                                                               mapper_id,
-                                                               packs_and_generic_fields_dict)
+                    if get_dependent_items:
+                        update_items_dependencies(pack_dependencies_data, items_dependencies, mapper_id,
+                                                  packs_and_generic_fields_dict)
             else:
                 packs_found_from_incident_types, packs_and_incident_types_dict = PackDependencies._search_packs_by_items_names(
                     related_types, id_set['IncidentTypes'], exclude_ignored_dependencies)
@@ -1077,9 +1090,9 @@ class PackDependencies:
                         packs_found_from_incident_types)
                     mapper_dependencies.update(pack_dependencies_data)
 
-                items_dependencies = update_items_dependencies(get_dependent_items, items_dependencies,
-                                                               mapper_id,
-                                                               packs_and_incident_types_dict)
+                    if get_dependent_items:
+                        update_items_dependencies(pack_dependencies_data, items_dependencies, mapper_id,
+                                                  packs_and_incident_types_dict)
 
                 related_fields = mapper_data.get('incident_fields', [])
                 packs_found_from_incident_fields, packs_and_incident_fields_dict = PackDependencies._search_packs_by_items_names_or_ids(
@@ -1091,9 +1104,9 @@ class PackDependencies:
                     pack_dependencies_data = PackDependencies._update_optional_commontypes_pack_dependencies(
                         packs_found_from_incident_fields)
                     mapper_dependencies.update(pack_dependencies_data)
-                items_dependencies = update_items_dependencies(get_dependent_items, items_dependencies,
-                                                               mapper_id,
-                                                               packs_and_incident_fields_dict)
+                    if get_dependent_items:
+                        update_items_dependencies(pack_dependencies_data, items_dependencies, mapper_id,
+                                                  packs_and_incident_fields_dict)
             # collect pack dependencies from transformers and filters
             related_scripts = mapper_data.get('filters', []) + mapper_data.get('transformers', [])
             packs_found_from_scripts, packs_and_scripts_dict = PackDependencies._search_packs_by_items_names_or_ids(
@@ -1102,10 +1115,9 @@ class PackDependencies:
             if packs_found_from_scripts:
                 pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_scripts)
                 mapper_dependencies.update(pack_dependencies_data)
-
-            items_dependencies = update_items_dependencies(get_dependent_items, items_dependencies,
-                                                           mapper_id,
-                                                           packs_and_scripts_dict)
+                if get_dependent_items:
+                    update_items_dependencies(pack_dependencies_data, items_dependencies, mapper_id,
+                                              packs_and_scripts_dict)
             if mapper_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
                 if verbose:
@@ -1153,9 +1165,9 @@ class PackDependencies:
                 pack_dependencies_data = PackDependencies. \
                     _label_as_mandatory(packs_found_from_scripts)
                 widget_dependencies.update(pack_dependencies_data)
-            items_dependencies = update_items_dependencies(get_dependent_items, items_dependencies,
-                                                           widget_id,
-                                                           packs_and_scripts_dict)
+                if get_dependent_items:
+                    update_items_dependencies(pack_dependencies_data, items_dependencies, widget_id,
+                                              packs_and_scripts_dict)
             if widget_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
                 if verbose:
@@ -1200,7 +1212,8 @@ class PackDependencies:
                 pack_dependencies_data = PackDependencies. \
                     _label_as_mandatory(packs_found_from_scripts)
                 generic_type_dependencies.update(pack_dependencies_data)
-            items_dependencies = update_items_dependencies(get_dependent_items, items_dependencies,
+                if get_dependent_items:
+                    update_items_dependencies(pack_dependencies_data, items_dependencies,
                                                            generic_type_id,
                                                            packs_and_scripts_dict)
             related_definitions = generic_type_data.get('definitionId')
@@ -1211,7 +1224,8 @@ class PackDependencies:
                 pack_dependencies_data = PackDependencies. \
                     _label_as_mandatory(packs_found_from_definitions)
                 generic_type_dependencies.update(pack_dependencies_data)
-            items_dependencies = update_items_dependencies(get_dependent_items, items_dependencies,
+                if get_dependent_items:
+                    update_items_dependencies(pack_dependencies_data, items_dependencies,
                                                            generic_type_id,
                                                            packs_and_definitions_dict)
 
@@ -1223,7 +1237,8 @@ class PackDependencies:
                 pack_dependencies_data = PackDependencies. \
                     _label_as_mandatory(packs_found_from_layout)
                 generic_type_dependencies.update(pack_dependencies_data)
-            items_dependencies = update_items_dependencies(get_dependent_items, items_dependencies,
+                if get_dependent_items:
+                    update_items_dependencies(pack_dependencies_data, items_dependencies,
                                                            generic_type_id,
                                                            packs_and_layouts_dict)
             if generic_type_dependencies:
@@ -1273,7 +1288,8 @@ class PackDependencies:
                 pack_dependencies_data = PackDependencies. \
                     _label_as_mandatory(packs_found_from_scripts)
                 generic_field_dependencies.update(pack_dependencies_data)
-            items_dependencies = update_items_dependencies(get_dependent_items, items_dependencies,
+                if get_dependent_items:
+                    update_items_dependencies(pack_dependencies_data, items_dependencies,
                                                            generic_field_id,
                                                            packs_and_scripts_dict)
             related_definitions = generic_field_data.get('definitionId')
@@ -1284,7 +1300,8 @@ class PackDependencies:
                 pack_dependencies_data = PackDependencies. \
                     _label_as_mandatory(packs_found_from_definitions)
                 generic_field_dependencies.update(pack_dependencies_data)
-            items_dependencies = update_items_dependencies(get_dependent_items, items_dependencies,
+                if get_dependent_items:
+                    update_items_dependencies(pack_dependencies_data, items_dependencies,
                                                            generic_field_id,
                                                            packs_and_definitions_dict)
             related_types = generic_field_data.get('generic_types')
@@ -1295,7 +1312,8 @@ class PackDependencies:
                 pack_dependencies_data = PackDependencies. \
                     _label_as_mandatory(packs_found_from_types)
                 generic_field_dependencies.update(pack_dependencies_data)
-            items_dependencies = update_items_dependencies(get_dependent_items, items_dependencies,
+                if get_dependent_items:
+                    update_items_dependencies(pack_dependencies_data, items_dependencies,
                                                            generic_field_id,
                                                            packs_and_types_dict)
             if generic_field_dependencies:
@@ -1342,7 +1360,8 @@ class PackDependencies:
                 pack_dependencies_data = PackDependencies. \
                     _label_as_mandatory(packs_found_from_definitions)
                 generic_module_dependencies.update(pack_dependencies_data)
-            items_dependencies = update_items_dependencies(get_dependent_items, items_dependencies,
+                if get_dependent_items:
+                    update_items_dependencies(pack_dependencies_data, items_dependencies,
                                                            generic_module_id,
                                                            packs_and_definitions_dict)
             related_views = generic_module_data.get('views', {})
@@ -1355,7 +1374,8 @@ class PackDependencies:
                     pack_dependencies_data = PackDependencies. \
                         _label_as_mandatory(packs_found_from_dashboards)
                     generic_module_dependencies.update(pack_dependencies_data)
-                items_dependencies = update_items_dependencies(get_dependent_items, items_dependencies,
+                    if get_dependent_items:
+                        update_items_dependencies(pack_dependencies_data, items_dependencies,
                                                                generic_module_id,
                                                                packs_and_dashboards_dict)
 
@@ -1399,15 +1419,19 @@ class PackDependencies:
             # Playbook dependency
             packs_found_from_playbooks, packs_and_playbooks_dict = PackDependencies._search_packs_by_items_names_or_ids(
                 job_data.get('playbookId', ''), id_set['playbooks'], exclude_ignored_dependencies)
-            job_dependencies.update(PackDependencies._label_as_mandatory(packs_found_from_playbooks))
-            items_dependencies = update_items_dependencies(get_dependent_items, items_dependencies,
+            pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_playbooks)
+            job_dependencies.update(pack_dependencies_data)
+            if get_dependent_items:
+               update_items_dependencies(pack_dependencies_data, items_dependencies,
                                                            job_id,
                                                            packs_and_playbooks_dict)
             # Specified feeds dependencies
             packs_found_from_feeds, packs_and_feeds_dict = PackDependencies._search_packs_by_items_names_or_ids(
                 job_data.get('selectedFeeds', []), id_set['integrations'], exclude_ignored_dependencies)
-            job_dependencies.update(PackDependencies._label_as_mandatory(packs_found_from_feeds))
-            items_dependencies = update_items_dependencies(get_dependent_items, items_dependencies,
+            pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_feeds)
+            job_dependencies.update(pack_dependencies_data)
+            if get_dependent_items:
+               update_items_dependencies(pack_dependencies_data, items_dependencies,
                                                            job_id,
                                                            packs_and_feeds_dict)
             if job_dependencies:
@@ -1474,7 +1498,7 @@ class PackDependencies:
 
     @staticmethod
     def _find_pack_dependencies(pack_id: str, id_set: dict, verbose: bool,
-                                exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False) -> set:
+                                exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False):
         """
         Searches for specific pack dependencies.
 
@@ -2100,21 +2124,32 @@ def get_packs_dependent_on_given_packs(packs, id_set_path, output_path=None, ver
     return dependent_on_results, set(dependent_packs_list)
 
 
-def update_items_dependencies(get_dependent_items, items_dependencies, current_entity_id, packs_and_items_dict):
+def update_items_dependencies(pack_dependencies_data, items_dependencies, current_entity_id, packs_and_items_dict) -> None:
     """
     Updates the given items dependencies dict with the packs and items dict (those are items dependent on the current entitiy id)
     Args:
-        get_dependent_items: the flag indicating whether to get the items (on top of the packs).
+        pack_dependencies_data: list of tupples of (pack id, is mandatory).
         items_dependencies: the part of id set that contains the current type of item.
-        current_entity_id: the entity of itnterest, that we are looking for items that are dependent on it.
+        current_entity_id: the entity of interest, that we are looking for items that are dependent on it.
         packs_and_items_dict: the dict containing the already known dependencies data.
 
-    Returns:
-        packs_and_items_dict modified with the newly found dependencies.
     """
-    if get_dependent_items and packs_and_items_dict:
+
+    if packs_and_items_dict:
+        remove_unmandatory_items(packs_and_items_dict, pack_dependencies_data)
         if items_dependencies.get(current_entity_id):
             items_dependencies[current_entity_id].update(packs_and_items_dict)
         else:
             items_dependencies[current_entity_id] = packs_and_items_dict
-    return items_dependencies
+
+
+def remove_unmandatory_items(packs_and_items_dict, pack_dependencies_data) -> None:
+    """
+    Removes unmandatory items from packs_and_items_dict by the data in pack_dependencies_data.
+    Args:
+        packs_and_items_dict: dict generated based on id set, of {pack id: item from that pack}
+        pack_dependencies_data: list of tupples of (pack id, is mandatory)
+    """
+    for pack, is_mandatory in pack_dependencies_data:
+        if not is_mandatory:
+            packs_and_items_dict.pop(pack)

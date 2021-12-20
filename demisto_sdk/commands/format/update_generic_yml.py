@@ -85,9 +85,12 @@ class BaseUpdateYML(BaseUpdate):
                 updated_integration_id[self.id_and_version_location['id']] = self.data['name']
             self.id_and_version_location['id'] = self.data['name']
         else:
-            if self.verbose:
-                click.echo('It is a modified file, keeping the old ID')
-            self.id_and_version_location['id'] = self.get_id_and_version_for_data(self.old_file)['id']
+            current_id = self.id_and_version_location.get('id')
+            old_id = self.get_id_and_version_for_data(self.old_file).get('id')
+            if current_id != old_id:
+                click.secho(f'The modified YML file corresponding to the path: {self.relative_content_path} ID does not match the ID in remote YML file.'
+                            f' Changing the YML ID from {current_id} back to {old_id}.')
+                self.id_and_version_location['id'] = old_id
         if updated_integration_id:
             self.updated_ids.update(updated_integration_id)
 

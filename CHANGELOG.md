@@ -8,7 +8,7 @@
 * Added feature in **format** to sync YML and JSON files to the `master` file structure.
 * Added option to specify `Incident Type`, `Incoming Mapper` and `Classifier` when configuring instance in **test-content**
 * added a new command **run-test-playbook** to run a test playbook in a given XSOAR instance.
-* Fixed an issue in **format** when running on a modified YML, that the `id` value is not changed to its old `id` value. 
+* Fixed an issue in **format** when running on a modified YML, that the `id` value is not changed to its old `id` value.
 * Enhancement for **split** command, replace `ApiModule` code block to `import` when splitting a YML. 
 
 # 1.5.4

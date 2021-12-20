@@ -9,7 +9,7 @@
 * Added option to specify `Incident Type`, `Incoming Mapper` and `Classifier` when configuring instance in **test-content**
 * added a new command **run-test-playbook** to run a test playbook in a given XSOAR instance.
 * Fixed an issue in **format** when running on a modified YML, that the `id` value is not changed to its old `id` value.
-* Enhancement for **split** command, replace `ApiModule` code block to `import` when splitting a YML. 
+* Enhancement for **split** command, replace `ApiModule` code block to `import` when splitting a YML.
 
 # 1.5.4
 * Fixed an issue with the **format** command when contributing via the UI

@@ -190,7 +190,7 @@ def test_contains_indicator_type():
     cca.logger = logging_setup(0)
 
     with temp_dir() as temp:
-        packs_zipper = PacksZipper(pack_paths=PACKS_DIR + '/TestIndicatorTypes',
+        packs_zipper = PacksZipper(pack_paths=str(TEST_DATA / PACKS_DIR / 'TestIndicatorTypes'),
                                    output=temp,
                                    content_version='6.0.0',
                                    zip_all=False)

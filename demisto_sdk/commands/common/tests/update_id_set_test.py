@@ -7,7 +7,6 @@ import unittest
 from pathlib import Path
 
 import pytest
-
 from demisto_sdk.commands.common.constants import (DEFAULT_JOB_FROM_VERSION,
                                                    JOBS_DIR, FileType)
 from demisto_sdk.commands.common.legacy_git_tools import git_path
@@ -19,10 +18,11 @@ from demisto_sdk.commands.common.update_id_set import (
     get_generic_field_data, get_generic_module_data, get_generic_type_data,
     get_incident_fields_by_playbook_input, get_incident_type_data,
     get_indicator_type_data, get_layout_data, get_layoutscontainer_data,
-    get_mapper_data, get_pack_metadata_data, get_playbook_data,
+    get_mapper_data, get_pack_metadata_data, get_playbook_data, get_pack_metadata_paths,
     get_report_data, get_script_data, get_values_for_keys_recursively,
     get_widget_data, has_duplicate, merge_id_sets, process_general_items,
-    process_incident_fields, process_integration, process_jobs, process_script, re_create_id_set)
+    process_incident_fields, process_integration, process_jobs, process_script, re_create_id_set,
+    should_skip_item_by_mp)
 from TestSuite.utils import IsEqualFunctions
 
 TESTS_DIR = f'{git_path()}/demisto_sdk/tests'
@@ -68,47 +68,6 @@ class TestPacksMetadata:
         (METADATA_WITH_COMMUNITY_SUPPORT, 'Someone', ''),
     ]
 
-    # @staticmethod
-    # def test_re_create_id_set(mocker):
-    #     import demisto_sdk.commands.common.update_id_set as uis
-    #     mocker.patch.object(uis, 'get_mp_types_by_item', return_value=['xsoar', 'marketplacev2'])
-    #     xsoar_only_content_items = ['Dashboards', 'Layouts', 'Reports', 'Widgets', 'GenericFields',
-    #                                 'GenericTypes', 'GenericModules', 'GenericDefinitions']
-    #     pack_path = os.path.join(TESTS_DIR, 'test_files', 'DummyPack')
-    #     id_set_xsoar = re_create_id_set(pack_to_create=pack_path, marketplace='xsoar')
-    #     id_set_marketplacev2 = re_create_id_set(pack_to_create=pack_path, marketplace='marketplacev2')
-    #     assert id_set_xsoar.get('scripts')
-    #     assert id_set_xsoar.get('playbooks')
-    #     assert id_set_xsoar.get('integrations')
-    #     assert id_set_marketplacev2.get('scripts')
-    #     assert id_set_marketplacev2.get('playbooks')
-    #     assert id_set_marketplacev2.get('integrations')
-    #     assert all(item in id_set_xsoar.keys() for item in xsoar_only_content_items)
-    #     assert all(item not in id_set_marketplacev2.keys() for item in xsoar_only_content_items)
-    #
-    # @staticmethod
-    # @pytest.mark.parametrize('metadata_file_content, author, certification', TEST_PACK)
-    # def test_process_metadata_2(mocker, repo, metadata_file_content, author, certification):
-    #     """
-    #     Given
-    #         - A pack_metadata file for Pack1
-    #     When
-    #         - parsing pack metadata files
-    #     Then
-    #         - parsing all the data from file successfully
-    #     """
-    #     import demisto_sdk.commands.common.update_id_set as uis
-    #     mocker.patch.object(uis, 'get_pack_name', return_value='Pack1')
-    #     mocker.patch.object(uis, 'get_mp_types_by_item', return_value=['xsoar', 'marketplacev2'])
-    #     pack_path = os.path.join(TESTS_DIR, 'test_files', 'DummyPack')
-    #     id_set_xsoar = re_create_id_set(pack_to_create=pack_path, marketplace='xsoar')
-    #
-    #     pack = repo.create_pack("Pack1")
-    #     pack.pack_metadata.write_json(metadata_file_content)
-    #
-    #     res = get_pack_metadata_data(pack.pack_metadata.path, print_logs=False)
-
-
     @staticmethod
     @pytest.mark.parametrize('metadata_file_content, author, certification', TEST_PACK)
     def test_process_metadata(mocker, repo, metadata_file_content, author, certification):
@@ -139,6 +98,23 @@ class TestPacksMetadata:
         assert result.get('use_cases') == ['Case Management']
         assert result.get('categories') == ['Endpoint']
         assert result.get('marketplaces') == ['xsoar', 'marketplacev2']
+
+    @staticmethod
+    def test_process_metadata__marketplace_mismatch(mocker):
+        """
+        Given
+            - Pack metadata
+
+        When
+            - parsing pack files when there is a mismatch between the item's marketplaces and the current run marketplace.
+
+        Then
+            - return empty dict
+        """
+        import demisto_sdk.commands.common.update_id_set as uis
+        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=True)
+        res = get_pack_metadata_data('', print_logs=False)
+        assert res == {}
 
     @staticmethod
     @pytest.mark.parametrize('print_logs', [True, False])
@@ -483,6 +459,23 @@ class TestIntegrations:
         with pytest.raises(Exception):
             process_integration(test_file_path, True)
 
+    @staticmethod
+    def test__process_integration__marketplace_mismatch(mocker):
+        """
+        Given
+            - An integration file
+
+        When
+            - parsing item files when there is a mismatch between the item's marketplaces and the current run marketplace.
+
+        Then
+            - return empty list
+        """
+        import demisto_sdk.commands.common.update_id_set as uis
+        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=True)
+        test_file_path = os.path.join(TESTS_DIR, 'test_files', 'invalid_file_structures', 'integration.yml')
+        res = process_integration(test_file_path, print_logs=False)
+        assert res == []
 
 class TestScripts:
     SCRIPT_DATA = {
@@ -547,6 +540,24 @@ class TestScripts:
         returned_data = data.get('DummyScript')
 
         assert IsEqualFunctions.is_dicts_equal(returned_data, const_data)
+
+    @staticmethod
+    def test_process_script__marketplace_mismatch(mocker):
+        """
+        Given
+            - A script file
+
+        When
+            - parsing script files when there is a mismatch between the item's marketplaces and the current run marketplace.
+
+        Then
+            - return empty list
+        """
+        import demisto_sdk.commands.common.update_id_set as uis
+        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=True)
+        test_file_path = os.path.join(TESTS_DIR, 'test_files', 'invalid_file_structures', 'integration.yml')
+        res = process_script(test_file_path, print_logs=False)
+        assert res == []
 
     @staticmethod
     def test_process_script__exception():
@@ -961,6 +972,23 @@ class TestIncidentFields:
         assert 'toversion' in result.keys()
         assert 'incident_types' not in result.keys()
         assert 'scripts' not in result.keys()
+
+    @staticmethod
+    def test_process_incident_fields__marketplace_mismatch(mocker):
+        """
+        Given
+            - An incident field file
+        When
+            - parsing An incident field files when there is a mismatch between the item's marketplaces and the current run marketplace.
+        Then
+            - return empty list
+        """
+        import demisto_sdk.commands.common.update_id_set as uis
+        test_dir = os.path.join(git_path(), 'demisto_sdk', 'commands', 'create_id_set', 'tests',
+                                'test_data', 'incidentfield-to-test-no-types_scripts.json')
+        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=True)
+        res = process_incident_fields('', True, [])
+        assert res == []
 
 
 class TestIndicatorType:
@@ -1734,6 +1762,25 @@ class TestGenericFunctions:
         assert 'dummy incident type' in result['incident_types']
         assert 'dummy incident type 2' in result['incident_types']
         assert 'dummy incident type 3' in result['incident_types']
+
+    @staticmethod
+    def test_process_general_items__marketplace_mismatch(mocker):
+        """
+        Given
+            - An item file
+
+        When
+            - parsing item files when there is a mismatch between the item's marketplaces and the current run marketplace.
+
+        Then
+            - return empty list
+        """
+        import demisto_sdk.commands.common.update_id_set as uis
+        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=True)
+        test_file = os.path.join(git_path(), 'demisto_sdk', 'commands', 'create_id_set', 'tests',
+                                 'test_data', 'classifier-to-test.json')
+        res = process_general_items(test_file, True, (FileType.CLASSIFIER,), get_classifier_data)
+        assert res == []
 
     @staticmethod
     def test_process_general_items__exception():
@@ -2564,47 +2611,24 @@ def test_get_filters_and_transformers_from_complex_value():
     assert 'StringContainsArray' in filters
 
 
-class TestIDSetMPV2:
+def test_should_skip_item_by_mp(mocker):
+    """
+    Given
+    - path of content item, the current marketplace this id set is generated for.
+    When
+    - when creating the id set, checking a content item that is 'xsoar only' if it should be part of the mpV2
+     id set.
+    Then
+    - return True since this item should be skipped.
 
-    def test_re_create_id_set(self, mocker):
-        import demisto_sdk.commands.common.update_id_set as uis
-        mocker.patch.object(uis, 'get_mp_types_by_item', return_value=['xsoar', 'marketplacev2'])
-        xsoar_only_content_items = ['Dashboards', 'Layouts', 'Reports', 'Widgets', 'GenericFields',
-                                    'GenericTypes', 'GenericModules', 'GenericDefinitions']
-        pack_path = os.path.join(TESTS_DIR, 'test_files', 'DummyPack')
-        id_set_xsoar = uis.re_create_id_set(pack_to_create=pack_path, marketplace='xsoar')
-        id_set_marketplacev2 = uis.re_create_id_set(pack_to_create=pack_path, marketplace='marketplacev2')
-        assert id_set_xsoar.get('scripts')
-        assert id_set_xsoar.get('playbooks')
-        assert id_set_xsoar.get('integrations')
-        assert id_set_marketplacev2.get('scripts')
-        assert id_set_marketplacev2.get('playbooks')
-        assert id_set_marketplacev2.get('integrations')
-        assert all(item in id_set_xsoar.keys() for item in xsoar_only_content_items)
-        assert all(item not in id_set_marketplacev2.keys() for item in xsoar_only_content_items)
-
-    def test_re_create_id_set_xsoar_only_pack(self, mocker):
-        import demisto_sdk.commands.common.update_id_set as uis
-        mocker.patch.object(uis, 'get_mp_types_by_item', return_value=['xsoar'])
-        xsoar_only_content_items = ['Dashboards', 'Layouts', 'Reports', 'Widgets', 'GenericFields',
-                                    'GenericTypes', 'GenericModules', 'GenericDefinitions']
-        pack_path = os.path.join(TESTS_DIR, 'test_files', 'DummyPackXsoarMPOnly')
-        id_set_xsoar = uis.re_create_id_set(pack_to_create=pack_path, marketplace='xsoar')
-        id_set_marketplacev2 = uis.re_create_id_set(pack_to_create=pack_path, marketplace='marketplacev2')
-        assert id_set_xsoar.get('scripts')
-        assert id_set_xsoar.get('playbooks')
-        assert id_set_xsoar.get('integrations')
-        assert not id_set_marketplacev2.get('scripts')
-        assert not id_set_marketplacev2.get('playbooks')
-        assert not id_set_marketplacev2.get('integrations')
-        assert all(item in id_set_xsoar.keys() for item in xsoar_only_content_items)
-        assert all(item not in id_set_marketplacev2.keys() for item in xsoar_only_content_items)
-
-    def test_re_create_id_set_script_is_xsoar_only(self, mocker):
-        import demisto_sdk.commands.common.update_id_set as uis
-        mocker.patch.object(uis, 'get_mp_types_by_item', return_value=['xsoar', 'marketplacev2'])
-        pack_path = os.path.join(TESTS_DIR, 'test_files', 'DummyPackScriptIsXsoarOnly')
-        id_set_marketplacev2 = uis.re_create_id_set(pack_to_create=pack_path, marketplace='marketplacev2')
-        assert not id_set_marketplacev2.get('scripts')
-        assert id_set_marketplacev2.get('playbooks')
-        assert id_set_marketplacev2.get('integrations')
+    """
+    import demisto_sdk.commands.common.update_id_set as uis
+    mocker.patch.object(uis, 'get_mp_types_by_item', return_value=['xsoar'])
+    pack_path = os.path.join(TESTS_DIR, 'test_files', 'DummyPackXsoarMPOnly')
+    script_path = os.path.join(TESTS_DIR, 'test_files', 'DummyPackScriptIsXsoarOnly', 'Scripts', 'DummyScript')
+    res1 = should_skip_item_by_mp(pack_path, 'mpv2')
+    res2 = should_skip_item_by_mp(pack_path, 'xsoar')
+    res3 = should_skip_item_by_mp(script_path, 'mpv2')
+    assert res1
+    assert not res2
+    assert res3

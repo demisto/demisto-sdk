@@ -1431,18 +1431,22 @@ class TestContext:
             pb_path = urllib.parse.quote('/playbook/Account Enrichment - Generic v2.1')
             pb_path2 = urllib.parse.quote_plus('/playbook/Account Enrichment - Generic v2.1')
             pb_path3 = '/playbook/Account%20Enrichment%20-%20Generic%20v2.1'
+            pb_path4 = '/playbook/Account Enrichment - Generic v2.1'
             pb_all_path = f'/playbook/search/'
 
             print(f'{pb_path=}')
             print(f'{pb_path2=}')
             print(f'{pb_path3=}')
+            print(f'{pb_path4=}')
             # Get External playbook configuration
             res2 = demisto_client.generic_request_func(self=self.client, method='GET', path=pb_path)
             res3 = demisto_client.generic_request_func(self=self.client, method='GET', path=pb_path2)
             res4 = demisto_client.generic_request_func(self=self.client, method='GET', path=pb_path3)
+            res5 = demisto_client.generic_request_func(self=self.client, method='GET', path=pb_path4)
             print(f' SDK PB {res2=}')
             print(f' SDK PB {res3=}')
             print(f' SDK PB {res4=}')
+            print(f' SDK PB {res5=}')
 
             # Save Default Configuration.
 

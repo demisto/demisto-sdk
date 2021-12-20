@@ -61,21 +61,15 @@ class TestIDSetCreator:
         id_set = id_set_creator.create_id_set()
         assert not os.path.exists(self.file_path)
         assert id_set is not None
-        assert 'scripts' in id_set.keys()
-        assert 'integrations' in id_set.keys()
-        assert 'playbooks' in id_set.keys()
-        assert 'TestPlaybooks' in id_set.keys()
-        assert 'Classifiers' in id_set.keys()
-        assert 'Dashboards' in id_set.keys()
-        assert 'IncidentFields' in id_set.keys()
-        assert 'IncidentTypes' in id_set.keys()
-        assert 'IndicatorFields' in id_set.keys()
-        assert 'IndicatorTypes' in id_set.keys()
-        assert 'Layouts' in id_set.keys()
-        assert 'Reports' in id_set.keys()
-        assert 'Widgets' in id_set.keys()
-        assert 'Mappers' in id_set.keys()
-        assert 'Packs' in id_set.keys()
+
+        keys = set(id_set.keys())
+        expected_keys = {'scripts', 'playbooks', 'integrations', 'TestPlaybooks', 'Classifiers', 'Dashboards',
+                         'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes', 'Layouts', 'Reports',
+                         'Widgets', 'Mappers', 'Packs', 'GenericTypes', 'GenericFields', 'GenericModules',
+                         'GenericDefinitions', 'Lists', 'Jobs'}
+
+        assert keys == expected_keys, f'missing keys: {expected_keys.difference(keys)}\n' \
+                                      f' unexpected keys: {keys.difference(expected_keys)}'
 
     def test_create_id_set_on_specific_pack(self, repo):
         """
@@ -114,6 +108,7 @@ class TestIDSetCreator:
         assert len(private_id_set['integrations']) == 1
         assert private_id_set['integrations'][0].get('id1', {}).get('name', '') == 'integration to create id set'
         assert private_id_set['integrations'][0].get('id2', {}).get('name', '') == ''
+        assert private_id_set['Packs']['pack_to_create_id_set_on']['ContentItems']['integrations'] == ['id1']
 
     def test_create_id_set_on_specific_empty_pack(self, repo):
         """

@@ -1036,6 +1036,41 @@ class Integration:
         )
         server_context.prev_system_conf = prev_system_conf
 
+    def create_module(self, instance_name: str, configuration: dict, incident_configuration: dict = None):
+        module_configuration = configuration['configuration']
+
+        # If incident_type is given in Test Playbook configuration on test-conf, we change the default configuration.
+        if incident_configuration and incident_configuration.get('incident_type'):
+            incident_type_configuration = list(
+                filter(lambda config: config.get('name') == 'incidentType', module_configuration))
+
+            incident_type_configuration[0]['value'] = incident_configuration.get('incident_type')
+
+        module_instance = {
+            'brand': configuration['name'],
+            'category': configuration['category'],
+            'configuration': configuration,
+            'data': [],
+            'enabled': "true",
+            'engine': '',
+            'id': '',
+            'isIntegrationScript': self.configuration.is_byoi,  # type: ignore
+            'name': instance_name,
+            'passwordProtected': False,
+            'version': 0,
+            'incomingMapperId': configuration.get('defaultMapperIn', ''),
+            'mappingId': configuration.get('defaultClassifier', ''),
+            'outgoingMapperId': configuration.get('defaultMapperOut', '')
+        }
+
+        # If default mapper or classifier are given in test-conf we ignore defaultMapperIn or defaultClassifier from yml.
+        if incident_configuration and incident_configuration.get('classifier_id'):
+            module_instance['mappingId'] = incident_configuration.get('classifier_id')
+        if incident_configuration and incident_configuration.get('incoming_mapper_id'):
+            module_instance['incomingMapperId'] = incident_configuration.get('incoming_mapper_id')
+
+        return module_instance
+
     def create_integration_instance(self,
                                     client: DefaultApi,
                                     playbook_id: str,
@@ -1074,36 +1109,23 @@ class Integration:
             f'Configuring instance for {self} (instance name: {instance_name}, '  # type: ignore
             f'validate "test-module": {self.configuration.should_validate_test_module})'
         )
-        # define module instance
-        module_instance = {
-            'brand': configuration['name'],
-            'category': configuration['category'],
-            'configuration': configuration,
-            'data': [],
-            'enabled': "true",
-            'engine': '',
-            'id': '',
-            'isIntegrationScript': self.configuration.is_byoi,  # type: ignore
-            'name': instance_name,
-            'passwordProtected': False,
-            'version': 0,
-            'incomingMapperId': configuration.get('defaultMapperIn', ''),
-            'mappingId': configuration.get('defaultClassifier', ''),
-            'outgoingMapperId': configuration.get('defaultMapperOut', '')
-        }
+
+        # define module instance:
+        params = self.configuration.params  # type: ignore
+        incident_configuration = params.get('incident_configuration', {})
+
+        module_instance = self.create_module(instance_name, configuration, incident_configuration)
 
         # set server keys
         self._set_server_keys(client, server_context)
 
         # set module params
         for param_conf in module_configuration:
-            if param_conf['display'] in self.configuration.params or param_conf[  # type: ignore
-                    'name'] in self.configuration.params:  # type: ignore
+            if param_conf['display'] in params or param_conf['name'] in params:
                 # param defined in conf
-                key = param_conf['display'] if param_conf['display'] in self.configuration.params else param_conf[  # type: ignore
-                    'name']
+                key = param_conf['display'] if param_conf['display'] in params else param_conf['name']
                 if key == 'credentials':
-                    credentials = self.configuration.params[key]  # type: ignore
+                    credentials = params[key]
                     param_value = {
                         'credential': '',
                         'identifier': credentials['identifier'],
@@ -1111,7 +1133,7 @@ class Integration:
                         'passwordChanged': False
                     }
                 else:
-                    param_value = self.configuration.params[key]  # type: ignore
+                    param_value = params[key]
 
                 param_conf['value'] = param_value
                 param_conf['hasvalue'] = True
@@ -1229,7 +1251,8 @@ class Integration:
         """
         # tested with POSTMAN, this is the minimum required fields for the request.
         module_instance = {
-            key: self.integration_configuration_from_server[key] for key in ['id', 'brand', 'name', 'data', 'isIntegrationScript', ]
+            key: self.integration_configuration_from_server[key] for key in
+            ['id', 'brand', 'name', 'data', 'isIntegrationScript', ]
         }
         module_instance['enable'] = "false"
         module_instance['version'] = -1

@@ -104,8 +104,7 @@ def format_manager(input: str = None,
                    use_git: bool = False,
                    prev_ver: str = None,
                    include_untracked: bool = False,
-                   add_tests: bool = None,
-                   ):
+                   add_tests: bool = None):
     """
     Format_manager is a function that activated format command on different type of files.
     Args:
@@ -263,7 +262,6 @@ def run_format_on_file(input: str, file_type: str, from_version: str, **kwargs) 
         input (str): The input file path.
         file_type (str): The type of input file
         from_version (str): The fromVersion value that was set by User.
-        old_file (bool): Whether the file is a added file = new or a modified file = old.
     Returns:
         List of Success , List of Error.
     """

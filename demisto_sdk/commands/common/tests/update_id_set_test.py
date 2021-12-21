@@ -301,7 +301,6 @@ class TestDuplicates:
         })
 
         has_duplicates = has_duplicate(id_set['Layouts'], 'urlRep', 'Layouts', False)
-        expected = first_pack != second_pack or first_source != second_source
         assert has_duplicates == expected
 
     @staticmethod

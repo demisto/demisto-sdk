@@ -664,6 +664,7 @@ class TestFormatting:
         Then
             - Ensure the display name contains the word (Beta), the param beta is True
         """
+
         formatter = IntegrationYMLFormat(input=SOURCE_BETA_INTEGRATION_FILE)
         formatter.update_beta_integration()
         assert '(Beta)' in formatter.data['display']

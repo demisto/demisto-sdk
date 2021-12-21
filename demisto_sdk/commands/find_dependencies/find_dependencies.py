@@ -1681,41 +1681,37 @@ class PackDependencies:
         Returns:
             DiGraph: all dependencies of given packs.
         """
-        try:
-            dependency_graph = nx.DiGraph()
-            for pack in pack_ids:
-                dependency_graph.add_node(pack, mandatory_for_packs=[], mandatory_dependencies_items={}, mandatory_for_items={}, depending_on_packs=[])
-            for pack in pack_ids:
-                # ITEMS *THIS PACK* IS DEPENDENT *ON*:
-                dependencies, dependencies_items = PackDependencies._find_pack_dependencies(
-                    pack, id_set, verbose=verbose, exclude_ignored_dependencies=exclude_ignored_dependencies,
-                    get_dependent_items=True)
-                for dependency_name, is_mandatory in dependencies:
-                    if dependency_name == pack:
+        dependency_graph = nx.DiGraph()
+        for pack in pack_ids:
+            dependency_graph.add_node(pack, mandatory_for_packs=[], mandatory_dependencies_items={}, mandatory_for_items={}, depending_on_packs=[])
+        for pack in pack_ids:
+            # ITEMS *THIS PACK* IS DEPENDENT *ON*:
+            dependencies, dependencies_items = PackDependencies._find_pack_dependencies(
+                pack, id_set, verbose=verbose, exclude_ignored_dependencies=exclude_ignored_dependencies,
+                get_dependent_items=True)
+            for dependency_name, is_mandatory in dependencies:
+                if dependency_name == pack:
+                    continue
+                if dependency_name not in dependency_graph:
+                    dependency_graph.add_node(dependency_name, mandatory_for_packs=[], mandatory_dependencies_items={}, mandatory_for_items={}, depending_on_packs=[])
+                dependency_graph.add_edge(pack, dependency_name)
+                if is_mandatory:
+                    dependency_graph.nodes()[dependency_name]['mandatory_for_packs'].append(pack)
+            for dependent_item, items_depending_on_item in dependencies_items.items():
+                for pack_of_item_dependent_on, item_dependent_on in items_depending_on_item.items():
+                    if pack_of_item_dependent_on == pack:
                         continue
-                    if dependency_name not in dependency_graph:
-                        dependency_graph.add_node(dependency_name, mandatory_for_packs=[], mandatory_dependencies_items={}, mandatory_for_items={}, depending_on_packs=[])
-                    dependency_graph.add_edge(pack, dependency_name)
-                    if is_mandatory:
-                        dependency_graph.nodes()[dependency_name]['mandatory_for_packs'].append(pack)
-                for dependent_item, items_depending_on_item in dependencies_items.items():
-                    for pack_of_item_dependent_on, item_dependent_on in items_depending_on_item.items():
-                        if pack_of_item_dependent_on == pack:
-                            continue
-                        if pack_of_item_dependent_on not in dependency_graph:
-                            dependency_graph.add_node(pack_of_item_dependent_on, mandatory_for_packs=[], mandatory_dependencies_items={}, mandatory_for_items={}, depending_on_packs=[])
-                        if dependency_graph.nodes()[pack_of_item_dependent_on].get('mandatory_for_items').get(item_dependent_on):
-                            dependency_graph.nodes()[pack_of_item_dependent_on]['mandatory_for_items'][item_dependent_on].update({pack: dependent_item})
-                        else:
-                            dependency_graph.nodes()[pack_of_item_dependent_on]['mandatory_for_items'][item_dependent_on] = {pack: dependent_item}
+                    if pack_of_item_dependent_on not in dependency_graph:
+                        dependency_graph.add_node(pack_of_item_dependent_on, mandatory_for_packs=[], mandatory_dependencies_items={}, mandatory_for_items={}, depending_on_packs=[])
+                    if dependency_graph.nodes()[pack_of_item_dependent_on].get('mandatory_for_items').get(item_dependent_on):
+                        dependency_graph.nodes()[pack_of_item_dependent_on]['mandatory_for_items'][item_dependent_on].update({pack: dependent_item})
+                    else:
+                        dependency_graph.nodes()[pack_of_item_dependent_on]['mandatory_for_items'][item_dependent_on] = {pack: dependent_item}
 
-                dependency_graph.nodes()[pack]['depending_on_packs'] = list(dependencies)
-                dependency_graph.nodes()[pack]['mandatory_dependencies_items'] = dependencies_items # PACK IS DEPENDENT ON THESE
+            dependency_graph.nodes()[pack]['depending_on_packs'] = list(dependencies)
+            dependency_graph.nodes()[pack]['mandatory_dependencies_items'] = dependencies_items
 
-            return dependency_graph
-        except Exception as e:
-            print(pack)
-            print(e)
+        return dependency_graph
 
     @staticmethod
     def get_dependencies_subgraph_by_dfs(dependencies_graph: nx.DiGraph, source_pack: str) -> nx.DiGraph:
@@ -1985,7 +1981,7 @@ def calculate_single_pack_dependencies(pack: str, dependency_graph: object, verb
         pack: The pack name
     """
     try:
-        pack_graph_node = dependency_graph.nodes()._nodes[pack]
+        pack_graph_node = dependency_graph.nodes[pack]
         subgraph = PackDependencies.get_dependencies_subgraph_by_dfs(dependency_graph, pack)
         first_level_dependencies = {}
         all_level_dependencies = []

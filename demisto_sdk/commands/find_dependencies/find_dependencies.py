@@ -2008,8 +2008,8 @@ def filter_mandatory_dependencies_items_by_pack(dependent_pack, mandatory_depend
         A filtered dict where the pack key (such as in the example {item1: {pack: item2}}) is only of the given pack.
     """
     filtered_mandatory_dependencies_items = dict()
-    for item1, pack_and_item_dict in mandatory_dependencies_items:
-        for pack, item2 in pack_and_item_dict:
+    for item1, pack_and_item_dict in mandatory_dependencies_items.items():
+        for pack, item2 in pack_and_item_dict.items():
             if dependent_pack == pack:
                 filtered_mandatory_dependencies_items[item1] = {pack: item2}
     return filtered_mandatory_dependencies_items
@@ -2091,7 +2091,7 @@ def calculate_all_packs_dependencies(id_set_path: str, output_path: str, verbose
     with ProcessPoolHandler() as pool:
         futures = []
         for pack in dependency_graph:
-            futures.append(pool.schedule(calculate_single_pack_dependencies, args=(pack, dependency_graph, verbose), timeout=10))
+            futures.append(pool.schedule(calculate_single_pack_dependencies, args=(pack, dependency_graph, verbose), timeout=10000))
         wait_futures_complete(futures=futures, done_fn=add_pack_metadata_results)
         print(f"Number of created pack dependencies entries: {len(pack_dependencies_result.keys())}")
         # finished iteration over pack folders

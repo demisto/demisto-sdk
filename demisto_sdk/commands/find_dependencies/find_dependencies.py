@@ -2010,6 +2010,7 @@ def calculate_single_pack_dependencies(pack: str, dependency_graph: object, verb
                 additional_data['mandatory'] = pack in additional_data['mandatory_for_packs']
                 del additional_data['mandatory_for_packs']
                 del additional_data['mandatory_for_items']
+                del additional_data['depending_on_packs']
                 del additional_data['mandatory_dependencies_items'] # This could be added as a value to the output, see issue XXX #TODO: fix
 
             first_level_dependencies, all_level_dependencies = parse_for_pack_metadata(subgraph, pack)
@@ -2131,7 +2132,7 @@ def get_packs_dependent_on_given_packs(packs, id_set_path, output_path=None, ver
             if verbose:
                 print(f'Got dependencies for pack {pack_name}\n: {pformat(all_level_dependencies)}')
             dependent_on_results[pack_name] = {
-                "packsDependentOnThisPack": first_level_dependencies,
+                "packsDependentOnThisPackMandatorily": first_level_dependencies,
                 "path": os.path.join(PACKS_DIR, pack_name),
                 "fullPath": os.path.abspath(os.path.join(PACKS_DIR, pack_name))
             }
@@ -2153,7 +2154,7 @@ def get_packs_dependent_on_given_packs(packs, id_set_path, output_path=None, ver
         for pack in pack_names:
             futures.append(
                 pool.schedule(calculate_single_pack_dependencies, args=(str(pack), reverse_dependency_graph, verbose, True),
-                              timeout=10000))
+                              ))
         wait_futures_complete(futures=futures, done_fn=collect_dependent_packs)
         # finished iteration over pack folders
         print_success("Finished calculating the dependencies on the given packs.")
@@ -2174,7 +2175,7 @@ def update_items_dependencies(pack_dependencies_data, items_dependencies, curren
         packs_and_items_dict: the dict containing the already known dependencies data.
 
     """
-    entity_key = (current_entity_id, current_entity_type)
+    entity_key = (current_entity_type, current_entity_id)
     if packs_and_items_dict:
         remove_unmandatory_items(packs_and_items_dict, pack_dependencies_data)
         if packs_and_items_dict:

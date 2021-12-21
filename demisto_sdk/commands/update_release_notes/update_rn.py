@@ -117,7 +117,7 @@ class UpdateRN:
             file_name, file_type = self.get_changed_file_name_and_type(packfile)
             if 'yml' in packfile and file_type in [FileType.INTEGRATION, FileType.BETA_INTEGRATION,
                                                    FileType.SCRIPT] and packfile not in self.added_files:
-                docker_image_name: Optional[str] = check_docker_image_changed(packfile)
+                docker_image_name: Optional[str] = check_docker_image_changed(main_branch=self.main_branch, packfile=packfile)
             else:
                 docker_image_name = None
             changed_files[(file_name, file_type)] = {
@@ -781,18 +781,21 @@ def update_api_modules_dependents_rn(pre_release: bool, update_type: Union[str, 
     return total_updated_packs
 
 
-def check_docker_image_changed(added_or_modified_yml: str) -> Optional[str]:
+def check_docker_image_changed(main_branch: str, packfile: str) -> Optional[str]:
     """ Checks whether the docker image was changed in master.
 
         :param
-            added_or_modified_yml: The added or modified yml path
+            main_branch: The git main branch
+            packfile: The added or modified yml path
 
         :rtype: ``Optional[str]``
         :return
         The latest docker image
     """
     try:
-        diff = run_command(f'git diff origin/master -- {added_or_modified_yml}', exit_on_error=False)
+        # TODO use correct branch
+        # = run_command(f'git diff origin/master -- {packfile}', exit_on_error=False)
+        diff = run_command(f'git diff {main_branch} -- {packfile}', exit_on_error=False)
     except RuntimeError as e:
         if any(['is outside repository' in exp for exp in e.args]):
             return None

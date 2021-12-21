@@ -66,8 +66,7 @@ class GitUtil:
 
             # if remote does not exist we are checking against the commit sha1
             else:
-                # TODO Get prev_ver from handle_prev_ver
-                committed = {Path(os.path.join(item.a_path)) for item in self.repo.commit(rev=prev_ver).diff(
+                committed = {Path(os.path.join(item.a_path)) for item in self.repo.commit(rev=branch).diff(
                     current_branch_or_hash).iter_change_type('M')}.union(untrue_rename_committed)
 
             # identify all files that were touched on this branch regardless of status
@@ -103,9 +102,8 @@ class GitUtil:
 
         # if remote does not exist we are checking against the commit sha1
         else:
-            # TODO Get prev_ver from handle_prev_ver
             committed_added = {Path(os.path.join(item.a_path)) for item in
-                               self.repo.commit(rev=prev_ver).diff(current_branch_or_hash).iter_change_type('A')}
+                               self.repo.commit(rev=branch).diff(current_branch_or_hash).iter_change_type('A')}
 
         staged = staged - committed_added - renamed - deleted
 
@@ -155,9 +153,8 @@ class GitUtil:
 
         # if remote does not exist we are checking against the commit sha1
         else:
-            # TODO Get prev_ver from handle_prev_ver
             committed = {Path(os.path.join(item.a_path)) for item
-                         in self.repo.commit(rev=prev_ver).diff(
+                         in self.repo.commit(rev=branch).diff(
                 current_branch_or_hash).iter_change_type('A')}.union(untrue_rename_committed)
 
         # identify all files that were touched on this branch regardless of status
@@ -238,9 +235,8 @@ class GitUtil:
 
             # if remote does not exist we are checking against the commit sha1
             else:
-                # TODO Get prev_ver from handle_prev_ver
                 committed = {Path(os.path.join(item.a_path)) for item
-                             in self.repo.commit(rev=prev_ver).diff(
+                             in self.repo.commit(rev=branch).diff(
                     current_branch_or_hash).iter_change_type('D')}
 
             # identify all files that were touched on this branch regardless of status
@@ -303,9 +299,8 @@ class GitUtil:
 
             # if remote does not exist we are checking against the commit sha1
             else:
-                # TODO Get prev_ver from handle_prev_ver
                 committed = {(Path(item.a_path), Path(item.b_path)) for item
-                             in self.repo.commit(rev=prev_ver).diff(
+                             in self.repo.commit(rev=branch).diff(
                     current_branch_or_hash).iter_change_type('R') if item.score == 100}
 
             # identify all files that were touched on this branch regardless of status
@@ -391,10 +386,9 @@ class GitUtil:
 
         # if remote does not exist we are checking against the commit sha1
         else:
-            # TODO Get prev_ver from handle_prev_ver
             return {Path(os.path.join(item)) for item
                     in self.repo.git.diff('--name-only',
-                                          f'{prev_ver}...{current_branch_or_hash}').split('\n')}
+                                          f'{branch}...{current_branch_or_hash}').split('\n')}
 
     def _only_last_commit(self, prev_ver: str, requested_status: str) -> Set:
         """Get all the files that were changed in the last commit of a given type when checking a branch against itself.
@@ -406,8 +400,7 @@ class GitUtil:
             running on master against master.
         """
         # when checking branch against itself only return the last commit.
-        # TODO Get prev_ver from handle_prev_ver
-        if self.get_current_working_branch() != prev_ver:
+        if self.get_current_working_branch() != self.handle_prev_ver(prev_ver)[1]:
             return set()
 
         try:

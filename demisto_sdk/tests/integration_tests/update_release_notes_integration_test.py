@@ -1,5 +1,6 @@
 import os
 from os.path import join
+from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
@@ -506,8 +507,12 @@ def test_update_release_notes_specific_version_valid(demisto_client, mocker, rep
     mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value={'currentVersion': '1.1.0'})
     mocker.patch('demisto_sdk.commands.common.tools.get_pack_name', return_value='FeedAzureValid')
     mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
+
+    path_cwd = Path.cwd()
+    mocker.patch.object(Path, 'cwd', return_value=path_cwd)
+
     with ChangeCWD(repo.path):
-        runner = CliRunner(mix_stderr=False)
+        runner = CliRunner(mix_stderr=True)
         result = runner.invoke(main, [UPDATE_RN_COMMAND, '-i', join('Packs', 'FeedAzureValid'), '-v', '4.0.0'])
     assert result.exit_code == 0
     assert not result.exception

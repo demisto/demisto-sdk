@@ -23,14 +23,13 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_ID_SET_PATH, GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR,
     GENERIC_MODULES_DIR, GENERIC_TYPES_DIR, INCIDENT_FIELDS_DIR,
     INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, JOBS_DIR,
-    LAYOUTS_DIR, LISTS_DIR, MAPPERS_DIR, MARKETPLACE_KEY_PACK_METADATA,
-    MP_V2_ID_SET_PATH, REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR,
-    WIDGETS_DIR, FileType, MarketplaceVersions)
-from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type, get_json,
-                                               get_mp_types_from_metadata_by_item,
-                                               get_pack_name, get_yaml,
-                                               print_color, print_error,
-                                               print_warning, get_current_repo, get_file)
+    LAYOUTS_DIR, LISTS_DIR, MAPPERS_DIR, MP_V2_ID_SET_PATH, REPORTS_DIR,
+    SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR, FileType,
+    MarketplaceVersions)
+from demisto_sdk.commands.common.tools import (
+    LOG_COLORS, find_type, get_current_repo, get_file, get_json,
+    get_mp_types_from_metadata_by_item, get_pack_name, get_yaml, print_color,
+    print_error, print_warning)
 from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
 
 CONTENT_ENTITIES = ['Packs', 'Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
@@ -1701,7 +1700,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     jobs_list = []
     packs_dict: Dict[str, Dict] = {}
 
-    pool = Pool(processes=1)
+    pool = Pool(processes=int(cpu_count()))
 
     print_color("Starting the creation of the id_set", LOG_COLORS.GREEN)
 

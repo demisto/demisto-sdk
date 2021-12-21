@@ -7,6 +7,7 @@ import unittest
 from pathlib import Path
 
 import pytest
+
 from demisto_sdk.commands.common.constants import (DEFAULT_JOB_FROM_VERSION,
                                                    JOBS_DIR, FileType)
 from demisto_sdk.commands.common.legacy_git_tools import git_path
@@ -18,11 +19,11 @@ from demisto_sdk.commands.common.update_id_set import (
     get_generic_field_data, get_generic_module_data, get_generic_type_data,
     get_incident_fields_by_playbook_input, get_incident_type_data,
     get_indicator_type_data, get_layout_data, get_layoutscontainer_data,
-    get_mapper_data, get_pack_metadata_data, get_playbook_data, get_pack_metadata_paths,
+    get_mapper_data, get_pack_metadata_data, get_playbook_data,
     get_report_data, get_script_data, get_values_for_keys_recursively,
     get_widget_data, has_duplicate, merge_id_sets, process_general_items,
-    process_incident_fields, process_integration, process_jobs, process_script, re_create_id_set,
-    should_skip_item_by_mp)
+    process_incident_fields, process_integration, process_jobs, process_script,
+    re_create_id_set, should_skip_item_by_mp)
 from TestSuite.utils import IsEqualFunctions
 
 TESTS_DIR = f'{git_path()}/demisto_sdk/tests'
@@ -475,6 +476,7 @@ class TestIntegrations:
         test_file_path = os.path.join(TESTS_DIR, 'test_files', 'invalid_file_structures', 'integration.yml')
         res = process_integration(test_file_path, print_logs=False)
         assert res == []
+
 
 class TestScripts:
     SCRIPT_DATA = {
@@ -986,7 +988,7 @@ class TestIncidentFields:
         test_dir = os.path.join(git_path(), 'demisto_sdk', 'commands', 'create_id_set', 'tests',
                                 'test_data', 'incidentfield-to-test-no-types_scripts.json')
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=True)
-        res = process_incident_fields('', True, [])
+        res = process_incident_fields(test_dir, True, [])
         assert res == []
 
 

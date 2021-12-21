@@ -1049,7 +1049,7 @@ class PackDependencies:
 
         if verbose:
             click.secho('### Mappers', fg='white')
-
+# one dict item has no value
         for mapper in pack_mappers:
             mapper_id = list(mapper.keys())[0]
             mapper_data = next(iter(mapper.values()))
@@ -1967,31 +1967,33 @@ def calculate_single_pack_dependencies(pack: str, dependency_graph: object, verb
         pack: The pack name
     """
 
+    pack_graph_node = dependency_graph.nodes()._nodes[pack]
     try:
         if verbose:
             print(f"Calculating {pack} pack dependencies.")
         subgraph = PackDependencies.get_dependencies_subgraph_by_dfs(dependency_graph, pack)
+
         for dependency_pack, additional_data in subgraph.nodes(data=True):
             if verbose:
                 print(f'Iterating dependency {dependency_pack} for pack {pack}')
             if get_dependent_on:
-                additional_data['mandatory'] = dependency_pack in dependency_graph.nodes()._nodes[pack]['mandatory_for_packs']
-                if 'mandatory_dependencies_items' in additional_data:
-                    # containing the items depending on dependent_pack, therefore irrelevant in this case
-                    additional_data.pop('mandatory_dependencies_items')
+                additional_data['mandatory'] = dependency_pack in pack_graph_node['mandatory_for_packs']
+                additional_data['items_causing_dependencies'] = filter_mandatory_dependencies_items_by_pack\
+                    (dependency_pack, pack_graph_node['mandatory_dependencies_items'])
                 if 'mandatory_for_packs' in additional_data and pack != dependency_pack:
-                    additional_data.pop('mandatory_for_packs')
+                    del additional_data['mandatory_for_packs']
             else:
                 additional_data['mandatory'] = pack in additional_data['mandatory_for_packs']
-                if additional_data.get('mandatory_dependencies_items'):
-                #     additional_data['mandatory_dependencies_items'] = filter_mandatory_dependencies_items_by_pack(
-                #                 pack, additional_data['mandatory_dependencies_items'])
-                    del additional_data['mandatory_dependencies_items']
                 del additional_data['mandatory_for_packs']
 
+            if 'mandatory_dependencies_items' in additional_data:
+                # 'mandatory_dependencies_items' contains the items depending mandatory on 'dependent_pack'.
+                # it is possible to add here a way to extract the items from pack depending on 'pack',
+                # see issue XXX TODO: fix
+                additional_data.pop('mandatory_dependencies_items')
+
         first_level_dependencies, all_level_dependencies = parse_for_pack_metadata(subgraph, pack)
-    except Exception as e:
-        print(e)
+    except Exception:
         print_error(f"Failed calculating {pack} pack dependencies")
         raise
 

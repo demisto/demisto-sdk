@@ -1983,13 +1983,15 @@ def calculate_single_pack_dependencies(pack: str, dependency_graph: object, verb
                     additional_data.pop('mandatory_for_packs')
             else:
                 additional_data['mandatory'] = pack in additional_data['mandatory_for_packs']
-                if additional_data['mandatory']:
-                    additional_data['mandatory_dependencies_items'] = \
-                        filter_mandatory_dependencies_items_by_pack(
-                            pack, additional_data['mandatory_dependencies_items'])
+                if additional_data.get('mandatory_dependencies_items'):
+                #     additional_data['mandatory_dependencies_items'] = filter_mandatory_dependencies_items_by_pack(
+                #                 pack, additional_data['mandatory_dependencies_items'])
+                    del additional_data['mandatory_dependencies_items']
                 del additional_data['mandatory_for_packs']
+
         first_level_dependencies, all_level_dependencies = parse_for_pack_metadata(subgraph, pack)
-    except Exception:
+    except Exception as e:
+        print(e)
         print_error(f"Failed calculating {pack} pack dependencies")
         raise
 
@@ -2008,10 +2010,11 @@ def filter_mandatory_dependencies_items_by_pack(dependent_pack, mandatory_depend
         A filtered dict where the pack key (such as in the example {item1: {pack: item2}}) is only of the given pack.
     """
     filtered_mandatory_dependencies_items = dict()
-    for item1, pack_and_item_dict in mandatory_dependencies_items.items():
-        for pack, item2 in pack_and_item_dict.items():
-            if dependent_pack == pack:
-                filtered_mandatory_dependencies_items[item1] = {pack: item2}
+    if mandatory_dependencies_items:
+        for item1, pack_and_item_dict in mandatory_dependencies_items.items():
+            for pack, item2 in pack_and_item_dict.items():
+                if dependent_pack == pack:
+                    filtered_mandatory_dependencies_items[item1] = {pack: item2}
     return filtered_mandatory_dependencies_items
 
 

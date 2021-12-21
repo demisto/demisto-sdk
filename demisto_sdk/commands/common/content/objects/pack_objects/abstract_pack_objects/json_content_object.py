@@ -12,6 +12,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects.change_log.change_
     ChangeLog
 from demisto_sdk.commands.common.content.objects.pack_objects.readme.readme import \
     Readme
+from demisto_sdk.commands.common.tools import get_json
 
 
 class JSONContentObject(JSONObject):
@@ -108,3 +109,11 @@ class JSONContentObject(JSONObject):
             created_files.extend(self.readme.dump(dest_dir))
 
         return created_files
+
+    def is_file_structure_list(self) -> bool:
+        """
+        Checks whether the content of the file has a structure of a list.
+        Assuming the file is a valid json file, use this to determine whether the file holds a list of values or a dictionary.
+        """
+        data = get_json(str(self.path))
+        return isinstance(data, list)

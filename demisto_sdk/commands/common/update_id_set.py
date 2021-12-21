@@ -27,7 +27,7 @@ from demisto_sdk.commands.common.constants import (
     MP_V2_ID_SET_PATH, REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR,
     WIDGETS_DIR, FileType, MarketplaceVersions)
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type, get_json,
-                                               get_mp_types_by_item,
+                                               get_mp_types_from_metadata_by_item,
                                                get_pack_name, get_yaml,
                                                print_color, print_error,
                                                print_warning, get_current_repo, get_file)
@@ -1032,7 +1032,7 @@ def should_skip_item_by_mp(file_path: str, marketplace: str):
     Checks if the item given (as path) should be part of the current generated id set.
      The checks are in this order:
      1. If we are in a xsoar run, then all packs should be uploaded.
-     2. Otherwise, this is not a xsoar run, we check if the given item has a 'xsoarOnly' field set to true.
+     2. Otherwise, this is not a xsoar run, we check if the given item has the right marketplaces under the 'marketplaces' in the item's file,
      3. Otherwise, we check if the item is inside a pack that it's pack metadata 'marketplaces' field does not include
      the current marketplace we are creating this id set for.
 
@@ -1047,17 +1047,17 @@ def should_skip_item_by_mp(file_path: str, marketplace: str):
     if marketplace == MarketplaceVersions.XSOAR.value:
         return False
 
-    # second check, check field 'xsoarOnly' in the item's file
+    # second check, check field 'marketplaces' in the item's file
     file_type = Path(file_path).suffix
     try:
         item_data = get_file(file_path, file_type)
-        if item_data.get('xsoarOnly'):
+        if marketplace in item_data.get('marketplaces'):
             return True
     except (ValueError, FileNotFoundError, IsADirectoryError):
         return True
 
     # third check, check the metadata of the pack
-    return marketplace not in get_mp_types_by_item(file_path)
+    return marketplace not in get_mp_types_from_metadata_by_item(file_path)
 
 
 def process_integration(file_path: str, print_logs: bool, marketplace: str = 'xsoar') -> list:
@@ -1253,7 +1253,7 @@ def process_general_items(file_path: str, print_logs: bool, expected_file_types:
         print_logs: Whether to print logs to stdout
         expected_file_types: specific file type to parse, will ignore the rest
         data_extraction_func: a function that given a file path will return an id-set data dict.
-
+        marketplace: the marketplace this id set is generated for
     Returns:
         a list of item data.
     """

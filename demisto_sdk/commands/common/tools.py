@@ -2167,7 +2167,7 @@ def get_current_repo() -> Tuple[str, str, str]:
         return "Unknown source", '', ''
 
 
-def get_mp_types_by_item(file_path):
+def get_mp_types_from_metadata_by_item(file_path):
     """
     Get the supporting marketplaces for the given content item, defined by the mp field in the metadata
     (see issue https://github.com/demisto/etc/issues/44220)

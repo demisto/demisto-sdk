@@ -81,7 +81,7 @@ class TestPacksMetadata:
         """
         import demisto_sdk.commands.common.update_id_set as uis
         mocker.patch.object(uis, 'get_pack_name', return_value='Pack1')
-        mocker.patch.object(uis, 'get_mp_types_by_item', return_value=['xsoar', 'marketplacev2'])
+        mocker.patch.object(uis, 'get_mp_types_from_metadata_by_item', return_value=['xsoar', 'marketplacev2'])
 
         pack = repo.create_pack("Pack1")
         pack.pack_metadata.write_json(metadata_file_content)
@@ -2622,7 +2622,7 @@ def test_should_skip_item_by_mp(mocker):
 
     """
     import demisto_sdk.commands.common.update_id_set as uis
-    mocker.patch.object(uis, 'get_mp_types_by_item', return_value=['xsoar'])
+    mocker.patch.object(uis, 'get_mp_types_from_metadata_by_item', return_value=['xsoar'])
     pack_path = os.path.join(TESTS_DIR, 'test_files', 'DummyPackXsoarMPOnly')
     script_path = os.path.join(TESTS_DIR, 'test_files', 'DummyPackScriptIsXsoarOnly', 'Scripts', 'DummyScript')
     res1 = should_skip_item_by_mp(pack_path, 'mpv2')

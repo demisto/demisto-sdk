@@ -32,9 +32,9 @@ class IDSetCreator:
         self.id_set = OrderedDict()  # type: ignore
         self.marketplace = marketplace.lower()
 
-        if not self.output:
-            self.output = MP_V2_ID_SET_PATH if self.marketplace == MarketplaceVersions.MarketplaceV2.value \
-                else DEFAULT_ID_SET_PATH
+        # if not self.output:
+        #     self.output = MP_V2_ID_SET_PATH if self.marketplace == MarketplaceVersions.MarketplaceV2.value \
+        #         else DEFAULT_ID_SET_PATH
 
     def create_id_set(self):
         self.id_set = re_create_id_set(
@@ -85,9 +85,14 @@ class IDSetCreator:
         return command_name_to_implemented_integration_map
 
     def save_id_set(self):
-        if self.output == "":
-            self.output = DEFAULT_ID_SET_PATH
+        print(f"first: {self.output}")
+        if not self.output:
+            self.output = MP_V2_ID_SET_PATH if self.marketplace == MarketplaceVersions.MarketplaceV2.value \
+                else DEFAULT_ID_SET_PATH
+        print(f"second: {self.output}")
+
         if self.output:
+            print(f"third: {self.output}")
             if not exists(self.output):
                 intermediate_dirs = os.path.dirname(os.path.abspath(self.output))
                 os.makedirs(intermediate_dirs, exist_ok=True)

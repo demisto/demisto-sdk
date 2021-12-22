@@ -253,8 +253,9 @@ class PackDependencies:
                 'Incident' to search packs with incident fields,
                 'Both' to search packs with indicator fields and incident fields.
         Returns:
-            set: found pack ids.
-
+            tuppele of
+            set: found pack ids and
+dict:       dict: found {pack, (item_type, item_id)} ids
         """
         packs_and_items_dict = {}
         packs = set()
@@ -299,7 +300,9 @@ class PackDependencies:
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
 
         Returns:
-            set: pack id without ignored packs.
+            tuppele of:
+            set: found pack ids
+            dict: found {pack, (item_type, item_id)} ids
         """
         packs_and_items_dict = {}
         pack_names = set()
@@ -389,7 +392,8 @@ class PackDependencies:
                                       exclude_ignored_dependencies: bool = True,
                                       get_dependent_items: bool = False):
         """
-        Collects script pack dependencies.
+        Collects script pack dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
+        and the packs containing them.
 
         Args:
             pack_scripts (list): pack scripts collection.
@@ -399,7 +403,7 @@ class PackDependencies:
 
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
-
+            if get_dependent_on: returns also dict: found {pack, (item_type, item_id)} ids
         """
         dependencies_packs = set()
         items_dependencies = dict()
@@ -466,7 +470,9 @@ class PackDependencies:
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
 
         Returns:
+            tupple of:
             set: dependencies data that includes pack id and whether is mandatory or not.
+            dict: found {mandatory_pack, (item_type, item_id)} ids
         """
         dependencies = set()
 
@@ -491,7 +497,8 @@ class PackDependencies:
     def _collect_playbooks_dependencies(pack_playbooks: list, id_set: dict, verbose: bool,
                                         exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False):
         """
-        Collects playbook pack dependencies.
+        Collects playbook pack dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
+        and the packs containing them.
 
         Args:
             pack_playbooks (list): collection of pack playbooks data.
@@ -501,6 +508,7 @@ class PackDependencies:
 
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
+            if get_dependent_on: returns also mandatory dependency items dict: found {pack, (item_type, item_id)} ids
 
         """
         dependencies_packs = set()
@@ -621,7 +629,8 @@ class PackDependencies:
                                       get_dependent_items: bool = False
                                       ):
         """
-        Collects layouts pack dependencies.
+        Collects layouts pack dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
+        and the packs containing them.
 
         Args:
             pack_layouts (list): collection of pack layouts data.
@@ -631,6 +640,7 @@ class PackDependencies:
 
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
+            if get_dependent_on: returns also dict: found {pack, (item_type, item_id)} ids
 
         """
         dependencies_packs = set()
@@ -694,7 +704,8 @@ class PackDependencies:
     def _collect_incidents_fields_dependencies(pack_incidents_fields: list, id_set: dict, verbose: bool,
                                                exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False):
         """
-        Collects in incidents fields dependencies.
+        Collects in incidents fields dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
+        and the packs containing them.
 
         Args:
             pack_incidents_fields (list): collection of pack incidents fields data.
@@ -704,6 +715,7 @@ class PackDependencies:
 
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
+            if get_dependent_on: returns also dict: found {pack, (item_type, item_id)} ids
 
         """
         dependencies_packs = set()
@@ -751,7 +763,8 @@ class PackDependencies:
     def _collect_indicators_types_dependencies(pack_indicators_types: list, id_set: dict, verbose: bool,
                                                exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False):
         """
-        Collects in indicators types dependencies.
+        Collects in indicators types dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
+        and the packs containing them.
 
         Args:
             pack_indicators_types (list): collection of pack indicators types data.
@@ -761,6 +774,7 @@ class PackDependencies:
 
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
+            if get_dependent_on: returns also dict: found {pack, (item_type, item_id)} ids
 
         """
         dependencies_packs = set()
@@ -818,7 +832,8 @@ class PackDependencies:
     def _collect_integrations_dependencies(pack_integrations: list, id_set: dict, verbose: bool,
                                            exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False):
         """
-        Collects integrations dependencies.
+        Collects integrations dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
+        and the packs containing them.
         Args:
             pack_integrations (list): collection of pack integrations data.
             id_set (dict): id set json.
@@ -827,6 +842,8 @@ class PackDependencies:
 
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
+            if get_dependent_on: returns also dict: found {pack, (item_type, item_id)} ids
+
         """
         dependencies_packs = set()
         items_dependencies = dict()
@@ -897,7 +914,8 @@ class PackDependencies:
     def _collect_incidents_types_dependencies(pack_incidents_types: list, id_set: dict, verbose: bool,
                                               exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False):
         """
-        Collects in incidents types dependencies.
+        Collects in incidents types dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
+        and the packs containing them.
 
         Args:
             pack_incidents_types (list): collection of pack incidents types data.
@@ -907,6 +925,7 @@ class PackDependencies:
 
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
+            if get_dependent_on: returns also dict: found {pack, (item_type, item_id)} ids
 
         """
         dependencies_packs = set()
@@ -959,7 +978,8 @@ class PackDependencies:
     def _collect_classifiers_dependencies(pack_classifiers: list, id_set: dict, verbose: bool,
                                           exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False):
         """
-        Collects in classifiers dependencies.
+        Collects in classifiers dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
+        and the packs containing them.
 
         Args:
             pack_classifiers (list): collection of pack classifiers data.
@@ -969,6 +989,7 @@ class PackDependencies:
 
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
+            if get_dependent_on: returns also dict: found {pack, (item_type, item_id)} ids
 
         """
         dependencies_packs = set()
@@ -1037,7 +1058,8 @@ class PackDependencies:
     def _collect_mappers_dependencies(pack_mappers: list, id_set: dict, verbose: bool,
                                       exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False):
         """
-        Collects in mappers dependencies.
+        Collects in mappers dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
+        and the packs containing them.
 
         Args:
             pack_mappers (list): collection of pack mappers data.
@@ -1047,6 +1069,7 @@ class PackDependencies:
 
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
+            if get_dependent_on: returns also dict: found {pack, (item_type, item_id)} ids
 
         """
         dependencies_packs = set()
@@ -1139,7 +1162,8 @@ class PackDependencies:
     def _collect_widget_dependencies(pack_widgets: list, id_set: dict, verbose: bool,
                                      exclude_ignored_dependencies: bool = True, header: str = "Widgets", get_dependent_items: bool = False):
         """
-        Collects widget dependencies.
+        Collects widget dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
+        and the packs containing them.
 
         Args:
             pack_widgets (list): collection of pack widget data.
@@ -1149,6 +1173,7 @@ class PackDependencies:
 
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
+            if get_dependent_on: returns also dict: found {pack, (item_type, item_id)} ids
 
         """
         dependencies_packs = set()
@@ -1189,7 +1214,8 @@ class PackDependencies:
     def _collect_generic_types_dependencies(pack_generic_types: list, id_set: dict, verbose: bool,
                                             exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False):
         """
-        Collects generic types dependencies.
+        Collects generic types dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
+        and the packs containing them.
         Args:
             pack_generic_types (list): collection of pack generics types data.
             id_set (dict): id set json.
@@ -1197,6 +1223,8 @@ class PackDependencies:
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
+            if get_dependent_on: returns also dict: found {pack, (item_type, item_id)} ids
+
         """
         dependencies_packs = set()
         items_dependencies = dict()
@@ -1262,7 +1290,8 @@ class PackDependencies:
     def _collect_generic_fields_dependencies(pack_generic_fields: list, id_set: dict, verbose: bool,
                                              exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False):
         """
-        Collects in generic fields dependencies.
+        Collects in generic fields dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
+        and the packs containing them.
 
         Args:
             pack_generic_fields (list): collection of pack incidents fields data.
@@ -1272,6 +1301,7 @@ class PackDependencies:
 
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
+            if get_dependent_on: returns also dict: found {pack, (item_type, item_id)} ids
 
         """
         dependencies_packs = set()
@@ -1337,7 +1367,8 @@ class PackDependencies:
     def _collect_generic_modules_dependencies(pack_generic_modules: list, id_set: dict, verbose: bool,
                                               exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False):
         """
-        Collects generic types dependencies.
+        Collects generic types dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
+        and the packs containing them.
         Args:
             pack_generic_types (list): collection of pack generics types data.
             id_set (dict): id set json.
@@ -1345,6 +1376,8 @@ class PackDependencies:
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
+            if get_dependent_on: returns also dict: found {pack, (item_type, item_id)} ids
+
         """
         dependencies_packs = set()
         items_dependencies = dict()
@@ -1400,7 +1433,8 @@ class PackDependencies:
     def _collect_jobs_dependencies(pack_jobs: list, id_set: dict, verbose: bool,
                                    exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False):
         """
-        Collects integrations dependencies.
+        Collects integrations dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
+        and the packs containing them.
         Args:
             pack_jobs (list): collection of pack job data.
             id_set (dict): id set json.
@@ -1409,6 +1443,8 @@ class PackDependencies:
 
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
+            if get_dependent_on: returns also dict: found {pack, (item_type, item_id)} ids
+
         """
         all_job_dependencies = set()
         items_dependencies = dict()
@@ -1505,7 +1541,7 @@ class PackDependencies:
     def _find_pack_dependencies(pack_id: str, id_set: dict, verbose: bool,
                                 exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False):
         """
-        Searches for specific pack dependencies.
+        Searches for the packs and items the given pack is depending on.
 
         Args:
             pack_id (str): pack id, currently pack folder name is in use.
@@ -1514,7 +1550,10 @@ class PackDependencies:
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
         # TODO: add comment about only mandatory items
         Returns:
+            tupple of:
             set: dependencies data that includes pack id and whether is mandatory or not.
+            dict: found {pack, (item_type, item_id)} ids of mandatory dependent items.
+
         """
         if verbose:
             click.secho(f'\n# Pack ID: {pack_id}', fg='white')

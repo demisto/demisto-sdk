@@ -570,7 +570,6 @@ def test_generate_script_doc(tmp_path, mocker):
     mocker.patch.object(common, 'execute_command', side_effect=handle_example)
     # because used in is random
     mocker.patch('demisto_sdk.commands.generate_docs.generate_script_doc.get_used_in', return_value=[])
-    os.chdir(sys.path[0])
     generate_script_doc(in_script, '!Set key=k1 value=v1,!Set key=k2 value=v2 append=true', str(d), verbose=True)
     patched.assert_called()
     readme = d / "README.md"

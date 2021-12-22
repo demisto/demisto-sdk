@@ -60,6 +60,8 @@ from demisto_sdk.commands.postman_codegen.postman_codegen import \
 # Import demisto-sdk commands
 from demisto_sdk.commands.run_cmd.runner import Runner
 from demisto_sdk.commands.run_playbook.playbook_runner import PlaybookRunner
+from demisto_sdk.commands.run_test_playbook.test_playbook_runner import \
+    TestPlaybookRunner
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
 from demisto_sdk.commands.split.jsonsplitter import JsonSplitter
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
@@ -549,6 +551,10 @@ def validate(config, **kwargs):
               type=click.Path(exists=True, resolve_path=True), hidden=True)
 @click.option('-rt', '--remove-test-playbooks', is_flag=True,
               help='Should remove test playbooks from content packs or not.', default=True, hidden=True)
+@click.option('-mp', '--marketplace', help='The marketplace the artifacts are created for, that '
+                                           'determines which artifacts are created for each pack. '
+                                           'Default is the XSOAR marketplace, that has all of the packs '
+                                           'artifacts.', default='xsoar', type=click.Choice(['xsoar', 'marketplacev2', 'v2']))
 def create_content_artifacts(**kwargs) -> int:
     """Generating the following artifacts:
        1. content_new - Contains all content objects of type json,yaml (from_version < 6.0.0)
@@ -1040,6 +1046,40 @@ def run_playbook(**kwargs):
     check_configuration_file('run-playbook', kwargs)
     playbook_runner = PlaybookRunner(**kwargs)
     return playbook_runner.run_playbook()
+
+
+# ====================== run-test-playbook ====================== #
+@main.command()
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    '-tpb', '--test-playbook-path',
+    help="Path to test playbook to run, "
+         "can be a path to specific test playbook or path to pack name for example: Packs/GitHub.",
+    required=False
+)
+@click.option(
+    '--all', is_flag=True,
+    help="Run all the test playbooks from this repository."
+)
+@click.option(
+    '--wait', '-w', is_flag=True, default=True,
+    help="Wait until the test-playbook run is finished and get a response."
+)
+@click.option(
+    '--timeout', '-t',
+    default=90,
+    show_default=True,
+    help="Timeout for the command. The test-playbook will continue to run in your instance"
+)
+@click.option(
+    "--insecure", help="Skip certificate validation.", is_flag=True)
+def run_test_playbook(**kwargs):
+    """Run a test playbooks in your instance."""
+    check_configuration_file('run-test-playbook', kwargs)
+    test_playbook_runner = TestPlaybookRunner(**kwargs)
+    return test_playbook_runner.manage_and_run_test_playbooks()
 
 
 # ====================== generate-outputs ====================== #

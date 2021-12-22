@@ -230,13 +230,16 @@ class TestDuplicates:
     ]
 
     @staticmethod
-    @pytest.mark.parametrize('first_pack, second_pack, first_source, second_source', [
-        ('pack1', 'pack2', 'repo1', 'repo2'),
-        ('pack1', 'pack2', 'repo1', 'repo1'),
-        ('pack1', 'pack1', 'repo1', 'repo2'),
-        ('pack1', 'pack1', 'repo1', 'repo2')
+    @pytest.mark.parametrize('first_pack, second_pack, first_source, second_source, expected', [
+        ('pack1', 'pack2', ('github.com', 'demisto', 'repo1'), ('github.com', 'demisto', 'repo2'), True),
+        ('pack1', 'pack2', ('github.com', 'demisto', 'repo1'), ('github.com', 'demisto', 'repo1'), True),
+        ('pack1', 'pack1', ('github.com', 'demisto', 'repo1'), ('github.com', 'demisto', 'repo2'), True),
+        ('pack1', 'pack1', ('github.com', 'demisto', 'repo1'), ('github.com', 'demisto', 'repo1'), False),
+        ('pack1', 'pack1', ('github.com', 'demisto', 'repo1'), ('code.pan.run', 'xsoar', 'repo1'), False),
+        ('pack1', 'pack1', ('github.com', 'demisto', 'repo1'), ('code.pan.run', 'xsoar', 'repo2'), True)
+
     ])
-    def test_has_duplicate(first_pack, second_pack, first_source, second_source):
+    def test_has_duplicate(first_pack, second_pack, first_source, second_source, expected):
         """
         Given
             - id_set.json with two duplicate layouts of the same type (details), their versions also overrides.
@@ -275,7 +278,6 @@ class TestDuplicates:
         })
 
         has_duplicates = has_duplicate(id_set['Layouts'], 'urlRep', 'Layouts', False)
-        expected = first_pack != second_pack or first_source != second_source
         assert has_duplicates == expected
 
     @staticmethod
@@ -319,7 +321,7 @@ class TestIntegrations:
             "name": "Dummy Integration",
             "file_path": TESTS_DIR + "/test_files/DummyPack/Integrations/DummyIntegration/DummyIntegration.yml",
             "fromversion": "4.1.0",
-            "source": "github.com - demisto/demisto-sdk",
+            "source": ['github.com', 'demisto', 'demisto-sdk'],
             "docker_image": "demisto/python3:3.7.4.977",
             "commands": ['xdr-get-incidents',
                          'xdr-get-incident-extra-data',
@@ -352,7 +354,7 @@ class TestIntegrations:
             "name": "Dummy Integration",
             "file_path": TESTS_DIR + "/test_files/DummyPack/Integrations/integration-DummyIntegration.yml",
             "fromversion": "4.1.0",
-            "source": "github.com - demisto/demisto-sdk",
+            "source": ['github.com', 'demisto', 'demisto-sdk'],
             "commands": ['xdr-get-incidents',
                          'xdr-get-incident-extra-data',
                          'xdr-update-incident',
@@ -439,7 +441,7 @@ class TestScripts:
         "DummyScript": {
             "name": "DummyScript",
             "file_path": TESTS_DIR + "/test_files/DummyPack/Scripts/DummyScript.yml",
-            "source": "github.com - demisto/demisto-sdk",
+            "source": ['github.com', 'demisto', 'demisto-sdk'],
             "fromversion": "5.0.0",
             "docker_image": "demisto/python3:3.7.3.286",
             "tests": [
@@ -451,7 +453,7 @@ class TestScripts:
     PACK_SCRIPT_DATA = {
         "DummyScript": {
             "name": "DummyScript",
-            "source": "github.com - demisto/demisto-sdk",
+            "source": ['github.com', 'demisto', 'demisto-sdk'],
             "docker_image": "demisto/python3:3.8.2.6981",
             "pack": "DummyPack",
             "file_path": TESTS_DIR + "/test_files/Packs/DummyPack/Scripts/DummyScript/DummyScript.yml",
@@ -519,7 +521,7 @@ class TestPlaybooks:
     PLAYBOOK_DATA = {
         "name": "Dummy Playbook",
         "file_path": TESTS_DIR + "/test_files/DummyPack/Playbooks/DummyPlaybook.yml",
-        "source": "github.com - demisto/demisto-sdk",
+        "source": ['github.com', 'demisto', 'demisto-sdk'],
         "fromversion": "4.5.0",
         "filters": ["isEqualString"],
         "transformers": ["uniq"],
@@ -2448,7 +2450,7 @@ def test_merged_id_sets_with_legal_duplicates(caplog):
                 'playbook_foo1': {
                     'name': 'playbook_foo1',
                     'pack': 'foo_1',
-                    'source': 'repo1'
+                    "source": ['github.com', 'demisto', 'repo1'],
                 }
             }
         ],
@@ -2457,7 +2459,7 @@ def test_merged_id_sets_with_legal_duplicates(caplog):
                 'Script_Foo1': {
                     'name': 'ScriptFoo',
                     'pack': 'foo_1',
-                    'source': 'repo1'
+                    "source": ['github.com', 'demisto', 'repo1'],
                 }
             }
         ]
@@ -2469,7 +2471,7 @@ def test_merged_id_sets_with_legal_duplicates(caplog):
                 'playbook_foo1': {
                     'name': 'playbook_foo1',
                     'pack': 'foo_1',
-                    'source': 'repo2'
+                    "source": ['github.com', 'demisto', 'repo2'],
                 }
             }
         ],

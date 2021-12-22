@@ -394,7 +394,7 @@ class GitUtil:
         """Get all the files that were changed in the last commit of a given type when checking a branch against itself.
         Args:
             prev_ver (str): The base branch against which the comparison is made.
-            requested_status (str): M, A, R, D - the git status to return
+            requested_status (str): M(odified), A(dded), R(enamed), D(eleted) - the git status to return
         Returns:
             Set: of Paths to files changed in the the last commit or an empty set if not
             running on master against master.

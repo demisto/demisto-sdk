@@ -1428,24 +1428,24 @@ class TestContext:
             external_playbook_configuration = self.playbook.configuration.external_playbook_config
             # if external_playbook_configuration:
             # external_playbook_id = external_playbook_configuration['playbookID']
-            pb_path = urllib.parse.quote('/playbook/Account Enrichment - Generic v2.1')
-            print(f'{pb_path=}')
-            res2 = demisto_client.generic_request_func(self=self.client, method='GET', path=pb_path)
-            print(f' SDK PB {res2=}')
+            pb_path1 = urllib.parse.quote('/playbook/Account Enrichment - Generic v2.1')
+            print(f'{pb_path1=}')
+            res1 = demisto_client.generic_request_func(self=self.client, method='GET', path=pb_path1)
+            print(f' SDK PB {res1=}')
 
             pb_path2 = urllib.parse.quote_plus('/playbook/Account Enrichment - Generic v2.1')
             print(f'{pb_path2=}')
 
             pb_path3 = '/playbook/Account%20Enrichment%20-%20Generic%20v2.1'
             print(f'{pb_path3=}')
-            res4 = demisto_client.generic_request_func(self=self.client, method='GET', path=pb_path3)
-            print(f' SDK PB {res4=}')
+            res3 = demisto_client.generic_request_func(self=self.client, method='GET', path=pb_path3)
+            print(f' SDK PB {res3=}')
 
             pb_path4 = '/playbook/Account Enrichment - Generic v2.1'
             pb_all_path = f'/playbook/search/'
             print(f'{pb_path4=}')
-            res5 = demisto_client.generic_request_func(self=self.client, method='GET', path=pb_path4)
-            print(f' SDK PB {res5=}')
+            res4 = demisto_client.generic_request_func(self=self.client, method='GET', path=pb_path4)
+            print(f' SDK PB {res4=}')
 
             # Get External playbook configuration
             # res3 = demisto_client.generic_request_func(self=self.client, method='GET', path=pb_path2)

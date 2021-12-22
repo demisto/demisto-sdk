@@ -15,6 +15,8 @@ from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     PACKS_DIR, PACKS_INTEGRATION_README_REGEX, PACKS_WHITELIST_FILE_NAME,
     FileType, re)
+from demisto_sdk.commands.common.content import Content
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                get_pack_name,
                                                is_file_path_in_pack,
@@ -79,8 +81,8 @@ class SecretsValidator(object):
         self.is_circle = is_circle
         self.white_list_path = white_list_path
         self.ignore_entropy = ignore_entropy
-        # TODO Use correct branch
-        self.prev_ver = prev_ver if prev_ver is not None else 'origin/master'
+        self.git_util = GitUtil(repo=Content.git())
+        self.prev_ver = prev_ver if prev_ver is not None else self.git_util.handle_prev_ver()[1]
 
     def get_secrets(self, branch_name, is_circle):
         secret_to_location_mapping = {}

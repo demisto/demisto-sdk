@@ -13,6 +13,8 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION, INTEGRATIONS_DIR, LAYOUTS_DIR, PACKS_DIR,
     PACKS_PACK_IGNORE_FILE_NAME, PLAYBOOKS_DIR, SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR, FileType)
+from demisto_sdk.commands.common.content import Content
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import (
     LOG_COLORS, arg_to_list, compare_context_path_in_yml_and_readme,
@@ -329,11 +331,13 @@ class TestGetRemoteFileLocally:
     FILE_NAME = 'somefile.json'
     FILE_CONTENT = '{"id": "some_file"}'
 
+    git_util = GitUtil(repo=Content.git())
+    main_branch = git_util.handle_prev_ver()[1]
+
     def setup_method(self):
         # create local git repo
         example_repo = git.Repo.init(self.REPO_NAME)
-        # TODO Use correct branch
-        example_repo.git.checkout('-b', 'origin/master')
+        example_repo.git.checkout('-b', f'{self.main_branch}')
         with open(os.path.join(self.REPO_NAME, self.FILE_NAME), 'w+') as somefile:
             somefile.write(self.FILE_CONTENT)
         example_repo.git.add(self.FILE_NAME)

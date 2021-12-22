@@ -793,8 +793,6 @@ def check_docker_image_changed(main_branch: str, packfile: str) -> Optional[str]
         The latest docker image
     """
     try:
-        # TODO use correct branch
-        # = run_command(f'git diff origin/master -- {packfile}', exit_on_error=False)
         diff = run_command(f'git diff {main_branch} -- {packfile}', exit_on_error=False)
     except RuntimeError as e:
         if any(['is outside repository' in exp for exp in e.args]):

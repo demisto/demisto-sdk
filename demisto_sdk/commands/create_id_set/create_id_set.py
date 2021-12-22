@@ -21,20 +21,20 @@ class IDSetCreator:
         Args:
             input (str, optional): The input path. the default input is the content repo.
             output (str, optional): The output path. Set to None to avoid creation of a file. '' means the default path.
-             Defaults to 'Tests/id_set.json'.
             print_logs (bool, optional): Print log output. Defaults to True.
             fail_duplicates(bool, optional): Flag which marks whether create_id_set fails when duplicates
              are found or not
         """
         self.output = output
-        if not self.output:
-            self.output = MP_V2_ID_SET_PATH if self.marketplace == MarketplaceVersions.MarketplaceV2.value \
-                else DEFAULT_ID_SET_PATH
         self.input = input
         self.print_logs = print_logs
         self.fail_duplicates = fail_duplicates
         self.id_set = OrderedDict()  # type: ignore
         self.marketplace = marketplace.lower()
+
+        if not self.output:
+            self.output = MP_V2_ID_SET_PATH if self.marketplace == MarketplaceVersions.MarketplaceV2.value \
+                else DEFAULT_ID_SET_PATH
 
     def create_id_set(self):
         self.id_set = re_create_id_set(
@@ -85,8 +85,11 @@ class IDSetCreator:
         return command_name_to_implemented_integration_map
 
     def save_id_set(self):
-        if not exists(self.output):
-            intermediate_dirs = os.path.dirname(os.path.abspath(self.output))
-            os.makedirs(intermediate_dirs, exist_ok=True)
-        with open(self.output, 'w+') as id_set_file:
-            json.dump(self.id_set, id_set_file, indent=4)
+        if self.output == "":
+            self.output = DEFAULT_ID_SET_PATH
+        if self.output:
+            if not exists(self.output):
+                intermediate_dirs = os.path.dirname(os.path.abspath(self.output))
+                os.makedirs(intermediate_dirs, exist_ok=True)
+            with open(self.output, 'w+') as id_set_file:
+                json.dump(self.id_set, id_set_file, indent=4)

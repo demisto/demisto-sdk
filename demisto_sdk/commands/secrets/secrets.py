@@ -81,8 +81,8 @@ class SecretsValidator(object):
         self.is_circle = is_circle
         self.white_list_path = white_list_path
         self.ignore_entropy = ignore_entropy
-        self.git_util = GitUtil(repo=Content.git())
-        self.prev_ver = prev_ver if prev_ver is not None else self.git_util.handle_prev_ver()[1]
+        # self.prev_ver = prev_ver if prev_ver is not None else 'origin/master'
+        self.prev_ver = prev_ver
 
     def get_secrets(self, branch_name, is_circle):
         secret_to_location_mapping = {}
@@ -131,11 +131,15 @@ class SecretsValidator(object):
         :return: list: list of text files
         """
         if is_circle:
-            if not self.prev_ver.startswith('origin'):
-                self.prev_ver = 'origin/' + self.prev_ver
-            print(f"Running secrets validation against {self.prev_ver}")
+            prev_ver = self.prev_ver
+            if not prev_ver:
+                self.git_util = GitUtil(repo=Content.git())
+                prev_ver = self.git_util.handle_prev_ver()[1]
+            if not prev_ver.startswith('origin'):
+                prev_ver = 'origin/' + prev_ver
+            print(f"Running secrets validation against {prev_ver}")
 
-            changed_files_string = run_command(f"git diff --name-status {self.prev_ver}...{branch_name}")
+            changed_files_string = run_command(f"git diff --name-status {prev_ver}...{branch_name}")
         else:
             print("Running secrets validation on all changes")
             changed_files_string = run_command("git diff --name-status --no-merges HEAD")

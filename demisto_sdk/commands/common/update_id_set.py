@@ -1639,12 +1639,13 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     """Re create the id-set
 
     Args:
-        id_set_path (str, optional): If passed an empty string will use default path. Pass in None to avoid saving the id-set.
-            Defaults to DEFAULT_ID_SET_PATH.
+        id_set_path (str, optional): If passed an empty string will use default path (dependeing on mp type).
+        Pass in None to avoid saving the id-set.
         pack_to_create: The input path. the default is the content repo.
-        objects_to_create (list, optional): [description]. Defaults to None.
+        objects_to_create (list, optional): The content items this id set will contain. Defaults are set
+        depending on the mp type.
         fail_on_duplicates: If value is True an error will be raised if duplicates are found
-        marketplace: The marketplace the id set are created for.
+        marketplace: The marketplace the id set is created for.
         print_logs: Whether to print logs or not
 
     Returns: id-set object

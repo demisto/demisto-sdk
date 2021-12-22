@@ -85,8 +85,9 @@ class IDSetCreator:
         if not self.output:
             self.output = MP_V2_ID_SET_PATH if self.marketplace == MarketplaceVersions.MarketplaceV2.value \
                 else DEFAULT_ID_SET_PATH
-        if not exists(self.output):
-            intermediate_dirs = os.path.dirname(os.path.abspath(self.output))
-            os.makedirs(intermediate_dirs, exist_ok=True)
-        with open(self.output, 'w+') as id_set_file:
-            json.dump(self.id_set, id_set_file, indent=4)
+        if self.output:
+            if not exists(self.output):
+                intermediate_dirs = os.path.dirname(os.path.abspath(self.output))
+                os.makedirs(intermediate_dirs, exist_ok=True)
+            with open(self.output, 'w+') as id_set_file:
+                json.dump(self.id_set, id_set_file, indent=4)

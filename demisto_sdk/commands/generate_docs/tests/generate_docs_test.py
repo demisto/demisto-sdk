@@ -24,14 +24,6 @@ TEST_INTEGRATION_2_PATH = os.path.join(FILES_PATH, 'integration-display-credenti
                                                    '-credentials-none.yml')
 
 
-def setup():
-    try:
-        print('trying to remove old id_set file.')
-        os.remove('Tests/id_Set.json')
-        print('removed')
-    except FileNotFoundError:
-        pass
-
 # common tests
 
 
@@ -577,8 +569,6 @@ def test_generate_script_doc(tmp_path, mocker):
     mocker.patch.object(common, 'execute_command', side_effect=handle_example)
     # because used in is random
     mocker.patch('demisto_sdk.commands.generate_docs.generate_script_doc.get_used_in', return_value=[])
-    if os.path.isfile('Tests/id_set.json'):
-        print('whyis the file here?!')
     generate_script_doc(in_script, '!Set key=k1 value=v1,!Set key=k2 value=v2 append=true', str(d), verbose=True)
     patched.assert_called()
     readme = d / "README.md"
@@ -586,7 +576,7 @@ def test_generate_script_doc(tmp_path, mocker):
         with open(expected_readme) as expected_readme_file:
             assert real_readme_file.read() == expected_readme_file.read()
 
-    # Now try the same thing with a txt file
+    # No try the same thing with a txt file
     command_examples = d / 'command_examples.txt'
     with command_examples.open('w') as f:
         f.write('!Set key=k1 value=v1\n!Set key=k2 value=v2 append=true')

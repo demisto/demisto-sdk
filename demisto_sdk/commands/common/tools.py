@@ -2180,7 +2180,7 @@ def get_mp_types_from_metadata_by_item(file_path):
     """
     file_path_parts = Path(file_path).parts
 
-    metadata_path = Path(*file_path_parts[0:2]) / METADATA_FILE_NAME
+    metadata_path = Path(*file_path_parts[:2]) / METADATA_FILE_NAME
     try:
         with open(metadata_path, 'r') as metadata_file:
             metadata = json.load(metadata_file)

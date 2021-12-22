@@ -52,6 +52,8 @@ def generate_script_doc(input_path, examples, output: str = None, permissions: s
         dependencies, _ = get_depends_on(script)
 
         # get the script usages by the id set
+        print(os.getcwd())
+        print(os.path.isfile(DEFAULT_ID_SET_PATH))
         if not os.path.isfile(DEFAULT_ID_SET_PATH):
             id_set_creator = IDSetCreator(output='', print_logs=False)
             id_set = id_set_creator.create_id_set()

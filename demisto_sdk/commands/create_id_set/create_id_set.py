@@ -27,6 +27,9 @@ class IDSetCreator:
              are found or not
         """
         self.output = output
+        if not self.output:
+            self.output = MP_V2_ID_SET_PATH if self.marketplace == MarketplaceVersions.MarketplaceV2.value \
+                else DEFAULT_ID_SET_PATH
         self.input = input
         self.print_logs = print_logs
         self.fail_duplicates = fail_duplicates
@@ -82,12 +85,8 @@ class IDSetCreator:
         return command_name_to_implemented_integration_map
 
     def save_id_set(self):
-        if not self.output:
-            self.output = MP_V2_ID_SET_PATH if self.marketplace == MarketplaceVersions.MarketplaceV2.value \
-                else DEFAULT_ID_SET_PATH
-        if self.output:
-            if not exists(self.output):
-                intermediate_dirs = os.path.dirname(os.path.abspath(self.output))
-                os.makedirs(intermediate_dirs, exist_ok=True)
-            with open(self.output, 'w+') as id_set_file:
-                json.dump(self.id_set, id_set_file, indent=4)
+        if not exists(self.output):
+            intermediate_dirs = os.path.dirname(os.path.abspath(self.output))
+            os.makedirs(intermediate_dirs, exist_ok=True)
+        with open(self.output, 'w+') as id_set_file:
+            json.dump(self.id_set, id_set_file, indent=4)

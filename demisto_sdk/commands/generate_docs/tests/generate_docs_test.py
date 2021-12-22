@@ -24,6 +24,12 @@ TEST_INTEGRATION_2_PATH = os.path.join(FILES_PATH, 'integration-display-credenti
                                                    '-credentials-none.yml')
 
 
+def setup():
+    try:
+        os.remove('Tests/id_Set.json')
+    except FileNotFoundError:
+        pass
+
 # common tests
 
 

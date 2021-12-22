@@ -38,7 +38,7 @@ class TestPacksMetadata:
         'tags': ['Alerts'],
         'useCases': ['Case Management'],
         'categories': ['Endpoint'],
-        'marketplaces': ['xsoar', 'marketplacev2']
+        'marketplaces': ['xsoar', 'marketplacev2'],
     }
 
     METADATA_WITH_PARTNER_SUPPORT = {

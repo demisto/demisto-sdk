@@ -459,6 +459,7 @@ class TestIntegrations:
         with pytest.raises(Exception):
             process_integration(test_file_path, True)
 
+    @pytest.mark.skip
     @staticmethod
     def test__process_integration__marketplace_mismatch(mocker):
         """

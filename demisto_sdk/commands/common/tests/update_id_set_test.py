@@ -460,7 +460,7 @@ class TestIntegrations:
             process_integration(test_file_path, True)
 
     @staticmethod
-    def test__process_integration__marketplace_mismatch(mocker):
+    def test_process_integration__marketplace_mismatch(mocker):
         """
         Given
             - An integration file

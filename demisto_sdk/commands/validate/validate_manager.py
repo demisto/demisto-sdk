@@ -684,8 +684,9 @@ class ValidateManager:
         if not self.no_configuration_prints:
             self.print_git_config()
 
+        unsupported_files = set()
         modified_files, added_files, changed_meta_files, old_format_files = \
-            self.get_changed_files_from_git()
+            self.get_changed_files_from_git(unsupported_files)
 
         # filter to only specified paths if given
         if self.file_path:
@@ -694,6 +695,7 @@ class ValidateManager:
 
         validation_results = {valid_git_setup}
 
+        validation_results.add(len(unsupported_files) == 0)  # if the set is empty no unsupported files were found
         validation_results.add(self.validate_modified_files(modified_files))
         validation_results.add(self.validate_added_files(added_files, modified_files))
         validation_results.add(self.validate_changed_packs_unique_files(modified_files, added_files, old_format_files,
@@ -1314,24 +1316,25 @@ class ValidateManager:
 
         return modified_files, added_files, renamed_files
 
-    def get_changed_files_from_git(self) -> Tuple[Set, Set, Set, Set]:
+    def get_changed_files_from_git(self, unsupported_files: set = None) -> Tuple[Set, Set, Set, Set]:
         """Get the added and modified after file filtration to only relevant files for validate
 
         Returns:
-            4 sets:
+            5 sets:
             - The filtered modified files (including the renamed files)
             - The filtered added files
             - The changed metadata files
             - The modified old-format files (legacy unified python files)
+            # - The files with an unsupported extension
         """
 
         modified_files, added_files, renamed_files = self.get_unfiltered_changed_files_from_git()
 
         # filter files only to relevant files
-        filtered_modified, old_format_files = self.filter_to_relevant_files(modified_files)
-        filtered_renamed, _ = self.filter_to_relevant_files(renamed_files)
+        filtered_modified, old_format_files = self.filter_to_relevant_files(modified_files, unsupported_files)
+        filtered_renamed, _ = self.filter_to_relevant_files(renamed_files, unsupported_files)
         filtered_modified = filtered_modified.union(filtered_renamed)
-        filtered_added, new_files_in_old_format = self.filter_to_relevant_files(added_files)
+        filtered_added, new_files_in_old_format = self.filter_to_relevant_files(added_files, unsupported_files)
         old_format_files = old_format_files.union(new_files_in_old_format)
 
         # extract metadata files from the recognised changes
@@ -1357,7 +1360,7 @@ class ValidateManager:
 
         return changed_metadata_files
 
-    def filter_to_relevant_files(self, file_set):
+    def filter_to_relevant_files(self, file_set, unsupported_files: set = None):
         """Goes over file set and returns only a filtered set of only files relevant for validation"""
         filtered_set: set = set()
         old_format_files: set = set()
@@ -1371,7 +1374,7 @@ class ValidateManager:
                 file_path = str(path)
 
             try:
-                formatted_path = self.check_file_relevance_and_format_path(file_path, old_path, old_format_files)
+                formatted_path = self.check_file_relevance_and_format_path(file_path, old_path, old_format_files, unsupported_files)
                 if formatted_path:
                     filtered_set.add(formatted_path)
 
@@ -1384,7 +1387,7 @@ class ValidateManager:
 
         return filtered_set, old_format_files
 
-    def check_file_relevance_and_format_path(self, file_path, old_path, old_format_files):
+    def check_file_relevance_and_format_path(self, file_path, old_path, old_format_files, unsupported_files=None):
         """Determines if a file is relevant for validation and create any modification to the file_path if needed"""
 
         if file_path.split(os.path.sep)[0] in ('.gitlab', '.circleci', '.github'):
@@ -1398,6 +1401,8 @@ class ValidateManager:
         if not file_type:
             error_message, error_code = Errors.file_type_not_supported()
             self.handle_error(error_message, error_code, file_path=file_path)
+            if unsupported_files is not None:
+                unsupported_files.add(file_path)
             return None
 
         # redirect non-test code files to the associated yml file

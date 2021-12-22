@@ -576,7 +576,7 @@ def test_generate_script_doc(tmp_path, mocker):
         with open(expected_readme) as expected_readme_file:
             assert real_readme_file.read() == expected_readme_file.read()
 
-    # Now try the same thing with a txt file
+    # No try the same thing with a txt file
     command_examples = d / 'command_examples.txt'
     with command_examples.open('w') as f:
         f.write('!Set key=k1 value=v1\n!Set key=k2 value=v2 append=true')

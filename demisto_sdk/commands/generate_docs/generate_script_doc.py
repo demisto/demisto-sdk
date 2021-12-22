@@ -1,6 +1,5 @@
 import os
 import random
-import sys
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_ID_SET_PATH)

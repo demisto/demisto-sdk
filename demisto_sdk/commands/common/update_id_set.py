@@ -875,7 +875,7 @@ def get_pack_metadata_data(file_path, print_logs: bool, marketplace: str = 'xsoa
             "tags": json_data.get('tags', []),
             "use_cases": json_data.get('useCases', []),
             "categories": json_data.get('categories', []),
-            "marketplaces": json_data.get('marketplaces', [])
+            "marketplaces": json_data.get('marketplaces', []),
         }
 
         pack_id = get_pack_name(file_path)

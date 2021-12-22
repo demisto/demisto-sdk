@@ -100,7 +100,6 @@ class TestPacksMetadata:
         assert result.get('categories') == ['Endpoint']
         assert result.get('marketplaces') == ['xsoar', 'marketplacev2']
 
-    @pytest.mark.skip
     @staticmethod
     def test_process_metadata__marketplace_mismatch(mocker):
         """
@@ -460,7 +459,6 @@ class TestIntegrations:
         with pytest.raises(Exception):
             process_integration(test_file_path, True)
 
-    @pytest.mark.skip
     @staticmethod
     def test__process_integration__marketplace_mismatch(mocker):
         """
@@ -544,7 +542,6 @@ class TestScripts:
 
         assert IsEqualFunctions.is_dicts_equal(returned_data, const_data)
 
-    @pytest.mark.skip
     @staticmethod
     def test_process_script__marketplace_mismatch(mocker):
         """
@@ -977,7 +974,6 @@ class TestIncidentFields:
         assert 'incident_types' not in result.keys()
         assert 'scripts' not in result.keys()
 
-    @pytest.mark.skip
     @staticmethod
     def test_process_incident_fields__marketplace_mismatch(mocker):
         """
@@ -1768,7 +1764,6 @@ class TestGenericFunctions:
         assert 'dummy incident type 2' in result['incident_types']
         assert 'dummy incident type 3' in result['incident_types']
 
-    @pytest.mark.skip
     @staticmethod
     def test_process_general_items__marketplace_mismatch(mocker):
         """

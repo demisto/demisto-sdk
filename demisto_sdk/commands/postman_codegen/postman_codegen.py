@@ -61,7 +61,7 @@ def create_body_format(body: Union[dict, list], args: List[IntegrationGeneratorA
     :param args: list of the arguments, holding their name and path in the object
     """
 
-    def format_value(input_body: Union[Dict, List, str], output_body: Dict, path: tuple = ()):
+    def format_value(input_body: Dict, output_body: Dict, path: tuple = ()):
         for key, value in input_body.items():
             if isinstance(value, dict):
                 output_body[key] = {}

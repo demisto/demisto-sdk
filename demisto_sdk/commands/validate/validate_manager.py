@@ -684,7 +684,7 @@ class ValidateManager:
         if not self.no_configuration_prints:
             self.print_git_config()
 
-        unsupported_files = set()
+        unsupported_files: set = set()
         modified_files, added_files, changed_meta_files, old_format_files = \
             self.get_changed_files_from_git(unsupported_files)
 

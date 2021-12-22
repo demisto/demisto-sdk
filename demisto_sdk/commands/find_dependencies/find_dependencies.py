@@ -6,7 +6,7 @@ from copy import deepcopy
 from distutils.version import LooseVersion
 from pathlib import Path
 from pprint import pformat
-from typing import Iterable, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, Optional, Set, Tuple, Union
 
 import click
 import networkx as nx
@@ -231,7 +231,8 @@ class PackDependencies:
             item_id = list(item.keys())[0]
             item_details = list(item.values())[0]
             if item_details.get('name', '') in items_names and 'pack' in item_details and \
-                    LooseVersion(item_details.get('toversion', DEFAULT_CONTENT_ITEM_TO_VERSION)) >= MINIMUM_DEPENDENCY_VERSION:
+                    LooseVersion(item_details.get('toversion', DEFAULT_CONTENT_ITEM_TO_VERSION)) >=\
+                    MINIMUM_DEPENDENCY_VERSION:
                 pack_names.add(item_details.get('pack'))
                 packs_and_items_dict[item_details.get('pack')] = (item_type, item_id)
 
@@ -282,7 +283,8 @@ class PackDependencies:
                 item_details = list(item_from_id_set.values())[0]
                 if (item_id in item_possible_ids or item_name == item_details.get('name')) \
                         and item_details.get('pack') \
-                        and LooseVersion(item_details.get('toversion', DEFAULT_CONTENT_ITEM_TO_VERSION)) >= MINIMUM_DEPENDENCY_VERSION \
+                        and LooseVersion(item_details.get('toversion', DEFAULT_CONTENT_ITEM_TO_VERSION)) >=\
+                        MINIMUM_DEPENDENCY_VERSION \
                         and (item_details['pack'] not in constants.IGNORED_DEPENDENCY_CALCULATION or
                              not exclude_ignored_dependencies):
                     packs.add(item_details.get('pack'))
@@ -313,7 +315,8 @@ class PackDependencies:
             item_id = list(item.keys())[0]
             item_details = list(item.values())[0]
             if command in item_details.get('commands', []) and 'pack' in item_details and \
-                    LooseVersion(item_details.get('toversion', DEFAULT_CONTENT_ITEM_TO_VERSION)) >= MINIMUM_DEPENDENCY_VERSION:
+                    LooseVersion(item_details.get('toversion', DEFAULT_CONTENT_ITEM_TO_VERSION)) >= \
+                    MINIMUM_DEPENDENCY_VERSION:
                 pack_names.add(item_details.get('pack'))
                 packs_and_items_dict[item_details.get('pack')] = ('integration', item_id)
 
@@ -393,7 +396,7 @@ class PackDependencies:
                                       id_set: dict,
                                       verbose: bool,
                                       exclude_ignored_dependencies: bool = True,
-                                      get_dependent_items: bool = False):
+                                      get_dependent_items: bool = False) -> Union[Tuple, Set[Any]]:
         """
         Collects script pack dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
         and the packs containing them.
@@ -408,8 +411,8 @@ class PackDependencies:
             set: dependencies data that includes pack id and whether is mandatory or not.
             if get_dependent_on: returns also dict: found {pack, (item_type, item_id)} ids
         """
-        dependencies_packs = set()
-        items_dependencies = dict()
+        dependencies_packs = Set[Any]
+        items_dependencies = Dict[str, Any]
         pack_dependencies_data = []
         if verbose:
             click.secho('### Scripts', fg='white')
@@ -430,7 +433,8 @@ class PackDependencies:
 
             for command in dependencies_commands:
                 # try to search dependency by scripts first
-                pack_names, packs_and_items_dict = PackDependencies._search_packs_by_items_names(command, id_set['scripts'], exclude_ignored_dependencies, 'script')
+                pack_names, packs_and_items_dict = PackDependencies._search_packs_by_items_names(
+                    command, id_set['scripts'], exclude_ignored_dependencies, 'script')
 
                 if pack_names:  # found script dependency implementing pack name
                     pack_dependencies_data = PackDependencies._label_as_mandatory(pack_names)
@@ -498,7 +502,8 @@ class PackDependencies:
 
     @staticmethod
     def _collect_playbooks_dependencies(pack_playbooks: list, id_set: dict, verbose: bool,
-                                        exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False):
+                                        exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False) \
+            -> Union[Tuple, Set[Any]]:
         """
         Collects playbook pack dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
         and the packs containing them.
@@ -514,8 +519,8 @@ class PackDependencies:
             if get_dependent_on: returns also mandatory dependency items dict: found {pack, (item_type, item_id)} ids
 
         """
-        dependencies_packs = set()
-        items_dependencies = dict()
+        dependencies_packs = Set[Any]
+        items_dependencies = Dict[str, Any]
         packs_and_items_dict = dict()
         if verbose:
             click.secho('### Playbooks', fg='white')
@@ -590,7 +595,7 @@ class PackDependencies:
             incident_fields = playbook_data.get('incident_fields', [])
             packs_found_from_incident_fields, packs_and_incident_fields_dict = PackDependencies.\
                 _search_packs_by_items_names_or_ids(incident_fields, id_set['IncidentFields'],
-                                                    exclude_ignored_dependencies, 'Both', 'incident_field') # check if in builtin
+                                                    exclude_ignored_dependencies, 'Both', 'incident_field')  # check if in builtin
             if packs_found_from_incident_fields:
                 pack_dependencies_data = PackDependencies._update_optional_commontypes_pack_dependencies(
                     packs_found_from_incident_fields)
@@ -630,7 +635,7 @@ class PackDependencies:
                                       verbose: bool,
                                       exclude_ignored_dependencies: bool = True,
                                       get_dependent_items: bool = False
-                                      ):
+                                      ) -> Union[Tuple, Set[Any]]:
         """
         Collects layouts pack dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
         and the packs containing them.
@@ -646,8 +651,8 @@ class PackDependencies:
             if get_dependent_on: returns also dict: found {pack, (item_type, item_id)} ids
 
         """
-        dependencies_packs = set()
-        items_dependencies = dict()
+        dependencies_packs = Set[Any]
+        items_dependencies = Dict[str, Any]
         if verbose:
             click.secho('### Layouts', fg='white')
 
@@ -705,7 +710,8 @@ class PackDependencies:
 
     @staticmethod
     def _collect_incidents_fields_dependencies(pack_incidents_fields: list, id_set: dict, verbose: bool,
-                                               exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False):
+                                               exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False)\
+            -> Union[Tuple, Set[Any]]:
         """
         Collects in incidents fields dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
         and the packs containing them.
@@ -721,8 +727,8 @@ class PackDependencies:
             if get_dependent_on: returns also dict: found {pack, (item_type, item_id)} ids
 
         """
-        dependencies_packs = set()
-        items_dependencies = dict()
+        dependencies_packs = Set[Any]
+        items_dependencies = Dict[str, Any]
         if verbose:
             click.secho('### Incident Fields', fg='white')
 
@@ -764,7 +770,8 @@ class PackDependencies:
 
     @staticmethod
     def _collect_indicators_types_dependencies(pack_indicators_types: list, id_set: dict, verbose: bool,
-                                               exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False):
+                                               exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False)\
+            -> Union[Tuple, Set[Any]]:
         """
         Collects in indicators types dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
         and the packs containing them.
@@ -780,8 +787,8 @@ class PackDependencies:
             if get_dependent_on: returns also dict: found {pack, (item_type, item_id)} ids
 
         """
-        dependencies_packs = set()
-        items_dependencies = dict()
+        dependencies_packs = Set[Any]
+        items_dependencies = Dict[str, Any]
         if verbose:
             click.secho('### Indicator Types', fg='white')
 
@@ -823,7 +830,8 @@ class PackDependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
                 if verbose:
                     click.secho(
-                        f'{os.path.basename(indicator_type_data.get("file_path", ""))} depends on: {indicator_type_dependencies}',
+                        f'{os.path.basename(indicator_type_data.get("file_path", ""))} depends on:'
+                        f' {indicator_type_dependencies}',
                         fg='white')
             dependencies_packs.update(indicator_type_dependencies)
 
@@ -833,7 +841,8 @@ class PackDependencies:
 
     @staticmethod
     def _collect_integrations_dependencies(pack_integrations: list, id_set: dict, verbose: bool,
-                                           exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False):
+                                           exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False)\
+            -> Union[Tuple, Set[Any]]:
         """
         Collects integrations dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
         and the packs containing them.
@@ -848,8 +857,8 @@ class PackDependencies:
             if get_dependent_on: returns also dict: found {pack, (item_type, item_id)} ids
 
         """
-        dependencies_packs = set()
-        items_dependencies = dict()
+        dependencies_packs = Set[Any]
+        items_dependencies = Dict[str, Any]
         if verbose:
             click.secho('### Integrations', fg='white')
 
@@ -892,7 +901,7 @@ class PackDependencies:
                 dependencies_packs.update(pack_dependencies_data)
                 if get_dependent_items:
                     update_items_dependencies(pack_dependencies_data, items_dependencies, 'integration', integration_id,
-                                                           packs_and_incident_types_dict)
+                                              packs_and_incident_types_dict)
 
             related_indicator_fields = integration_data.get('indicator_fields')
 
@@ -915,7 +924,8 @@ class PackDependencies:
 
     @staticmethod
     def _collect_incidents_types_dependencies(pack_incidents_types: list, id_set: dict, verbose: bool,
-                                              exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False):
+                                              exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False)\
+            -> Union[Tuple, Set[Any]]:
         """
         Collects in incidents types dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
         and the packs containing them.
@@ -931,8 +941,8 @@ class PackDependencies:
             if get_dependent_on: returns also dict: found {pack, (item_type, item_id)} ids
 
         """
-        dependencies_packs = set()
-        items_dependencies = dict()
+        dependencies_packs = Set[Any]
+        items_dependencies = Dict[str, Any]
         if verbose:
             click.secho('### Incident Types', fg='white')
 
@@ -969,7 +979,8 @@ class PackDependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
                 if verbose:
                     click.secho(
-                        f'{os.path.basename(incident_type_data.get("file_path", ""))} depends on: {incident_type_dependencies}',
+                        f'{os.path.basename(incident_type_data.get("file_path", ""))} depends on:'
+                        f' {incident_type_dependencies}',
                         fg='white')
             dependencies_packs.update(incident_type_dependencies)
 
@@ -979,7 +990,8 @@ class PackDependencies:
 
     @staticmethod
     def _collect_classifiers_dependencies(pack_classifiers: list, id_set: dict, verbose: bool,
-                                          exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False):
+                                          exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False) \
+            -> Union[Tuple, Set[Any]]:
         """
         Collects in classifiers dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
         and the packs containing them.
@@ -995,8 +1007,8 @@ class PackDependencies:
             if get_dependent_on: returns also dict: found {pack, (item_type, item_id)} ids
 
         """
-        dependencies_packs = set()
-        items_dependencies = dict()
+        dependencies_packs = Set[Any]
+        items_dependencies = Dict[str, Any]
         if verbose:
             click.secho('### Classifiers', fg='white')
 
@@ -1009,8 +1021,9 @@ class PackDependencies:
 
             if classifier_data.get('definitionId') and classifier_data.get('definitionId') not in ['incident',
                                                                                                    'indicator']:
-                packs_found_from_generic_types, packs_and_generic_types_dict = PackDependencies._search_packs_by_items_names_or_ids(
-                    related_types, id_set['GenericTypes'], exclude_ignored_dependencies, "Generic", 'generic_type')
+                packs_found_from_generic_types, packs_and_generic_types_dict = \
+                    PackDependencies._search_packs_by_items_names_or_ids(
+                        related_types, id_set['GenericTypes'], exclude_ignored_dependencies, "Generic", 'generic_type')
 
                 if packs_found_from_generic_types:
                     pack_dependencies_data = PackDependencies._label_as_mandatory(
@@ -1020,8 +1033,9 @@ class PackDependencies:
                         update_items_dependencies(pack_dependencies_data, items_dependencies, 'classifier', classifier_id,
                                                   packs_and_generic_types_dict)
             else:
-                packs_found_from_incident_types, packs_and_incident_types_dict = PackDependencies._search_packs_by_items_names(
-                    related_types, id_set['IncidentTypes'], exclude_ignored_dependencies, 'incident_type')
+                packs_found_from_incident_types, packs_and_incident_types_dict = \
+                    PackDependencies._search_packs_by_items_names(
+                        related_types, id_set['IncidentTypes'], exclude_ignored_dependencies, 'incident_type')
 
                 # classifiers dependencies from incident types should be marked as optional unless CommonTypes pack,
                 # as customers do not have to use the OOTB mapping.
@@ -1042,9 +1056,9 @@ class PackDependencies:
                 pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_scripts)
                 classifier_dependencies.update(pack_dependencies_data)
                 if get_dependent_items:
-                    update_items_dependencies(pack_dependencies_data, items_dependencies,'classifier',
-                                                           classifier_id,
-                                                           packs_and_scripts_dict)
+                    update_items_dependencies(pack_dependencies_data, items_dependencies, 'classifier',
+                                              classifier_id,
+                                              packs_and_scripts_dict)
             if classifier_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
                 if verbose:
@@ -1059,7 +1073,8 @@ class PackDependencies:
 
     @staticmethod
     def _collect_mappers_dependencies(pack_mappers: list, id_set: dict, verbose: bool,
-                                      exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False):
+                                      exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False)\
+            -> Union[Tuple, Set[Any]]:
         """
         Collects in mappers dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
         and the packs containing them.
@@ -1075,8 +1090,8 @@ class PackDependencies:
             if get_dependent_on: returns also dict: found {pack, (item_type, item_id)} ids
 
         """
-        dependencies_packs = set()
-        items_dependencies = dict()
+        dependencies_packs = Set[Any]
+        items_dependencies = Dict[str, Any]
 
         if verbose:
             click.secho('### Mappers', fg='white')
@@ -1088,8 +1103,9 @@ class PackDependencies:
             related_types = mapper_data.get('incident_types', [])
 
             if mapper_data.get('definitionId') and mapper_data.get('definitionId') not in ['incident', 'indicator']:
-                packs_found_from_generic_types, packs_and_generic_types_dict = PackDependencies._search_packs_by_items_names(
-                    related_types, id_set['GenericTypes'], exclude_ignored_dependencies, 'generic_type')
+                packs_found_from_generic_types, packs_and_generic_types_dict = \
+                    PackDependencies._search_packs_by_items_names(
+                        related_types, id_set['GenericTypes'], exclude_ignored_dependencies, 'generic_type')
 
                 if packs_found_from_generic_types:
                     pack_dependencies_data = PackDependencies._label_as_mandatory(
@@ -1099,8 +1115,9 @@ class PackDependencies:
                         update_items_dependencies(pack_dependencies_data, items_dependencies, 'mapper', mapper_id,
                                                   packs_and_generic_types_dict)
 
-                packs_found_from_generic_fields, packs_and_generic_fields_dict = PackDependencies._search_packs_by_items_names(
-                    related_types, id_set['GenericFields'], exclude_ignored_dependencies, 'generic_field')
+                packs_found_from_generic_fields, packs_and_generic_fields_dict = \
+                    PackDependencies._search_packs_by_items_names(
+                        related_types, id_set['GenericFields'], exclude_ignored_dependencies, 'generic_field')
 
                 if packs_found_from_generic_fields:
                     pack_dependencies_data = PackDependencies._label_as_mandatory(
@@ -1110,8 +1127,9 @@ class PackDependencies:
                         update_items_dependencies(pack_dependencies_data, items_dependencies, 'mapper', mapper_id,
                                                   packs_and_generic_fields_dict)
             else:
-                packs_found_from_incident_types, packs_and_incident_types_dict = PackDependencies._search_packs_by_items_names(
-                    related_types, id_set['IncidentTypes'], exclude_ignored_dependencies, 'incident_type')
+                packs_found_from_incident_types, packs_and_incident_types_dict = PackDependencies.\
+                    _search_packs_by_items_names(
+                        related_types, id_set['IncidentTypes'], exclude_ignored_dependencies, 'incident_type')
 
                 # mappers dependencies from incident types should be marked as optional unless CommonTypes Pack,
                 # as customers do not have to use the OOTB mapping.
@@ -1125,8 +1143,9 @@ class PackDependencies:
                                                   packs_and_incident_types_dict)
 
                 related_fields = mapper_data.get('incident_fields', [])
-                packs_found_from_incident_fields, packs_and_incident_fields_dict = PackDependencies._search_packs_by_items_names_or_ids(
-                    related_fields, id_set['IncidentFields'], exclude_ignored_dependencies, 'Both', 'incident_field')
+                packs_found_from_incident_fields, packs_and_incident_fields_dict = PackDependencies.\
+                    _search_packs_by_items_names_or_ids(
+                        related_fields, id_set['IncidentFields'], exclude_ignored_dependencies, 'Both', 'incident_field')
 
                 # mappers dependencies from incident fields should be marked as optional unless CommonTypes pack,
                 # as customers do not have to use the OOTB mapping.
@@ -1162,7 +1181,8 @@ class PackDependencies:
 
     @staticmethod
     def _collect_widget_dependencies(pack_widgets: list, id_set: dict, verbose: bool,
-                                     exclude_ignored_dependencies: bool = True, header: str = "Widgets", get_dependent_items: bool = False):
+                                     exclude_ignored_dependencies: bool = True, header: str = "Widgets",
+                                     get_dependent_items: bool = False) -> Union[Tuple, Set[Any]]:
         """
         Collects widget dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
         and the packs containing them.
@@ -1178,8 +1198,8 @@ class PackDependencies:
             if get_dependent_on: returns also dict: found {pack, (item_type, item_id)} ids
 
         """
-        dependencies_packs = set()
-        items_dependencies = dict()
+        dependencies_packs = Set[Any]
+        items_dependencies = Dict[str, Any]
 
         if verbose:
             click.secho(f'### {header}', fg='white')
@@ -1214,7 +1234,8 @@ class PackDependencies:
 
     @staticmethod
     def _collect_generic_types_dependencies(pack_generic_types: list, id_set: dict, verbose: bool,
-                                            exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False):
+                                            exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False) \
+            -> Union[Tuple, Set[Any]]:
         """
         Collects generic types dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
         and the packs containing them.
@@ -1228,8 +1249,8 @@ class PackDependencies:
             if get_dependent_on: returns also dict: found {pack, (item_type, item_id)} ids
 
         """
-        dependencies_packs = set()
-        items_dependencies = dict()
+        dependencies_packs = Set[Any]
+        items_dependencies = Dict[str, Any]
 
         if verbose:
             click.secho('### Generic Types', fg='white')
@@ -1249,8 +1270,8 @@ class PackDependencies:
                 generic_type_dependencies.update(pack_dependencies_data)
                 if get_dependent_items:
                     update_items_dependencies(pack_dependencies_data, items_dependencies, 'generic_type',
-                                                           generic_type_id,
-                                                           packs_and_scripts_dict)
+                                              generic_type_id,
+                                              packs_and_scripts_dict)
             related_definitions = generic_type_data.get('definitionId')
             packs_found_from_definitions, packs_and_definitions_dict = PackDependencies._search_packs_by_items_names_or_ids(
                 related_definitions, id_set['GenericDefinitions'], exclude_ignored_dependencies, 'Both', 'generic_definition')
@@ -1261,8 +1282,8 @@ class PackDependencies:
                 generic_type_dependencies.update(pack_dependencies_data)
                 if get_dependent_items:
                     update_items_dependencies(pack_dependencies_data, items_dependencies, 'generic_type',
-                                                           generic_type_id,
-                                                           packs_and_definitions_dict)
+                                              generic_type_id,
+                                              packs_and_definitions_dict)
 
             related_layout = generic_type_data.get('layout')
             packs_found_from_layout, packs_and_layouts_dict = PackDependencies._search_packs_by_items_names_or_ids(
@@ -1274,8 +1295,8 @@ class PackDependencies:
                 generic_type_dependencies.update(pack_dependencies_data)
                 if get_dependent_items:
                     update_items_dependencies(pack_dependencies_data, items_dependencies, 'generic_type',
-                                                           generic_type_id,
-                                                           packs_and_layouts_dict)
+                                              generic_type_id,
+                                              packs_and_layouts_dict)
             if generic_type_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
                 if verbose:
@@ -1290,7 +1311,8 @@ class PackDependencies:
 
     @staticmethod
     def _collect_generic_fields_dependencies(pack_generic_fields: list, id_set: dict, verbose: bool,
-                                             exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False):
+                                             exclude_ignored_dependencies: bool = True,
+                                             get_dependent_items: bool = False) -> Union[Tuple, Set[Any]]:
         """
         Collects in generic fields dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
         and the packs containing them.
@@ -1306,8 +1328,8 @@ class PackDependencies:
             if get_dependent_on: returns also dict: found {pack, (item_type, item_id)} ids
 
         """
-        dependencies_packs = set()
-        items_dependencies = dict()
+        dependencies_packs = Set[Any]
+        items_dependencies = Dict[str, Any]
 
         if verbose:
             click.secho('### Generic Fields', fg='white')
@@ -1327,11 +1349,12 @@ class PackDependencies:
                 generic_field_dependencies.update(pack_dependencies_data)
                 if get_dependent_items:
                     update_items_dependencies(pack_dependencies_data, items_dependencies, 'generic_field',
-                                                           generic_field_id,
-                                                           packs_and_scripts_dict)
+                                              generic_field_id,
+                                              packs_and_scripts_dict)
             related_definitions = generic_field_data.get('definitionId')
-            packs_found_from_definitions, packs_and_definitions_dict = PackDependencies._search_packs_by_items_names_or_ids(
-                related_definitions, id_set['GenericDefinitions'], exclude_ignored_dependencies, 'generic_definition')
+            packs_found_from_definitions, packs_and_definitions_dict = PackDependencies.\
+                _search_packs_by_items_names_or_ids(
+                    related_definitions, id_set['GenericDefinitions'], exclude_ignored_dependencies, 'generic_definition')
 
             if packs_found_from_definitions:
                 pack_dependencies_data = PackDependencies. \
@@ -1339,8 +1362,8 @@ class PackDependencies:
                 generic_field_dependencies.update(pack_dependencies_data)
                 if get_dependent_items:
                     update_items_dependencies(pack_dependencies_data, items_dependencies, 'generic_field',
-                                                           generic_field_id,
-                                                           packs_and_definitions_dict)
+                                              generic_field_id,
+                                              packs_and_definitions_dict)
             related_types = generic_field_data.get('generic_types')
             packs_found_from_types, packs_and_types_dict = PackDependencies._search_packs_by_items_names_or_ids(
                 related_types, id_set['GenericTypes'], exclude_ignored_dependencies, 'Both', 'generic_type')
@@ -1351,8 +1374,8 @@ class PackDependencies:
                 generic_field_dependencies.update(pack_dependencies_data)
                 if get_dependent_items:
                     update_items_dependencies(pack_dependencies_data, items_dependencies, 'generic_field',
-                                                           generic_field_id,
-                                                           packs_and_types_dict)
+                                              generic_field_id,
+                                              packs_and_types_dict)
             if generic_field_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
                 if verbose:
@@ -1367,7 +1390,8 @@ class PackDependencies:
 
     @staticmethod
     def _collect_generic_modules_dependencies(pack_generic_modules: list, id_set: dict, verbose: bool,
-                                              exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False):
+                                              exclude_ignored_dependencies: bool = True,
+                                              get_dependent_items: bool = False) -> Union[Tuple, Set[Any]]:
         """
         Collects generic types dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
         and the packs containing them.
@@ -1381,8 +1405,8 @@ class PackDependencies:
             if get_dependent_on: returns also dict: found {pack, (item_type, item_id)} ids
 
         """
-        dependencies_packs = set()
-        items_dependencies = dict()
+        dependencies_packs = Set[Any]
+        items_dependencies = Dict[str, Any]
 
         if verbose:
             click.secho('### Generic Modules', fg='white')
@@ -1393,8 +1417,10 @@ class PackDependencies:
             generic_module_dependencies = set()
 
             related_definitions = generic_module_data.get('definitionIds')
-            packs_found_from_definitions, packs_and_definitions_dict = PackDependencies._search_packs_by_items_names_or_ids(
-                related_definitions, id_set['GenericDefinitions'], exclude_ignored_dependencies, 'Both', 'generic_definition')
+            packs_found_from_definitions, packs_and_definitions_dict = PackDependencies.\
+                _search_packs_by_items_names_or_ids(
+                    related_definitions, id_set['GenericDefinitions'], exclude_ignored_dependencies,
+                    'Both', 'generic_definition')
 
             if packs_found_from_definitions:
                 pack_dependencies_data = PackDependencies. \
@@ -1402,13 +1428,14 @@ class PackDependencies:
                 generic_module_dependencies.update(pack_dependencies_data)
                 if get_dependent_items:
                     update_items_dependencies(pack_dependencies_data, items_dependencies, 'generic_module',
-                                                           generic_module_id,
-                                                           packs_and_definitions_dict)
+                                              generic_module_id,
+                                              packs_and_definitions_dict)
             related_views = generic_module_data.get('views', {})
             for view in related_views:
                 related_dashboards = related_views.get(view, {}).get('dashboards', [])
-                packs_found_from_dashboards, packs_and_dashboards_dict = PackDependencies._search_packs_by_items_names_or_ids(
-                    related_dashboards, id_set['Dashboards'], exclude_ignored_dependencies, 'dashboard')
+                packs_found_from_dashboards, packs_and_dashboards_dict = PackDependencies.\
+                    _search_packs_by_items_names_or_ids(
+                        related_dashboards, id_set['Dashboards'], exclude_ignored_dependencies, 'dashboard')
 
                 if packs_found_from_dashboards:
                     pack_dependencies_data = PackDependencies. \
@@ -1416,14 +1443,15 @@ class PackDependencies:
                     generic_module_dependencies.update(pack_dependencies_data)
                     if get_dependent_items:
                         update_items_dependencies(pack_dependencies_data, items_dependencies, 'generic_module',
-                                                               generic_module_id,
-                                                               packs_and_dashboards_dict)
+                                                  generic_module_id,
+                                                  packs_and_dashboards_dict)
 
             if generic_module_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
                 if verbose:
                     click.secho(
-                        f'{os.path.basename(generic_module_data.get("file_path", ""))} depends on: {generic_module_dependencies}',
+                        f'{os.path.basename(generic_module_data.get("file_path", ""))} '
+                        f'depends on: {generic_module_dependencies}',
                         fg='white')
             dependencies_packs.update(generic_module_dependencies)
 
@@ -1433,7 +1461,8 @@ class PackDependencies:
 
     @staticmethod
     def _collect_jobs_dependencies(pack_jobs: list, id_set: dict, verbose: bool,
-                                   exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False):
+                                   exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False)\
+            -> Union[Tuple, Set[Any]]:
         """
         Collects integrations dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
         and the packs containing them.
@@ -1448,8 +1477,8 @@ class PackDependencies:
             if get_dependent_on: returns also dict: found {pack, (item_type, item_id)} ids
 
         """
-        all_job_dependencies = set()
-        items_dependencies = dict()
+        all_job_dependencies = Set[Any]
+        items_dependencies = Dict[str, Any]
 
         if verbose:
             click.secho('### Jobs', fg='white')
@@ -1465,18 +1494,18 @@ class PackDependencies:
             pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_playbooks)
             job_dependencies.update(pack_dependencies_data)
             if get_dependent_items:
-               update_items_dependencies(pack_dependencies_data, items_dependencies, 'job',
-                                                           job_id,
-                                                           packs_and_playbooks_dict)
+                update_items_dependencies(pack_dependencies_data, items_dependencies, 'job',
+                                          job_id,
+                                          packs_and_playbooks_dict)
             # Specified feeds dependencies
             packs_found_from_feeds, packs_and_feeds_dict = PackDependencies._search_packs_by_items_names_or_ids(
                 job_data.get('selectedFeeds', []), id_set['integrations'], exclude_ignored_dependencies, 'Both', 'integration')
             pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_feeds)
             job_dependencies.update(pack_dependencies_data)
             if get_dependent_items:
-               update_items_dependencies(pack_dependencies_data, items_dependencies, 'job',
-                                                           job_id,
-                                                           packs_and_feeds_dict)
+                update_items_dependencies(pack_dependencies_data, items_dependencies, 'job',
+                                          job_id,
+                                          packs_and_feeds_dict)
             if job_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
                 if verbose:
@@ -1792,7 +1821,7 @@ class PackDependencies:
 
     @staticmethod
     def build_dependency_graph_single_pack(pack_id: str, id_set: dict, verbose: bool,
-                               exclude_ignored_dependencies: bool = True, get_dependent_items: bool = True) -> nx.DiGraph:
+                                           exclude_ignored_dependencies: bool = True, get_dependent_items: bool = True) -> nx.DiGraph:
         """
         Builds all level of dependencies and returns dependency graph.
 
@@ -2018,7 +2047,9 @@ class PackDependencies:
 
         return pack_meta_file_content
 
-def calculate_single_pack_depends_on(pack: str, dependency_graph: object, verbose: bool = False) -> Tuple[dict, list, str]:
+
+def calculate_single_pack_depends_on(pack: str, dependency_graph: object, verbose: bool = False) \
+        -> Tuple[dict, str]:
     """
 
     Args:
@@ -2032,7 +2063,6 @@ def calculate_single_pack_depends_on(pack: str, dependency_graph: object, verbos
     """
     try:
         pack_graph_node = dependency_graph.nodes[pack]
-        subgraph = PackDependencies.get_dependencies_subgraph_by_dfs(dependency_graph, pack)
         first_level_dependencies = {}
 
         for man_pack in pack_graph_node.get('mandatory_for_packs'):
@@ -2043,11 +2073,12 @@ def calculate_single_pack_depends_on(pack: str, dependency_graph: object, verbos
                 for dep_pack, dep_item in dependent_item_and_pack.items():
                     if dep_pack == man_pack:
                         if verbose:
-                            print(f'Parsing info of dependent items {dep_item} from {dep_pack} on item {item} from {pack} from graph')
+                            print(f'Parsing info of dependent items {dep_item} from {dep_pack} on item {item} from '
+                                  f'{pack} from graph')
                         if first_level_dependencies[man_pack].get('dependent_items'):
                             first_level_dependencies[man_pack]['dependent_items'].append((item, dep_item))
                         else:
-                            first_level_dependencies[man_pack]['dependent_items'] = [(item, dep_item)]
+                            first_level_dependencies[man_pack]['dependent_items'] = [(item, dep_item)]  #type:ignore
     except Exception as e:
         print_error(f"Failed calculating {pack} pack dependencies: {e}")
         raise
@@ -2055,7 +2086,8 @@ def calculate_single_pack_depends_on(pack: str, dependency_graph: object, verbos
     return first_level_dependencies, pack
 
 
-def calculate_single_pack_dependencies(pack: str, dependency_graph: object, verbose: bool = False) -> Tuple[dict, list, str]:
+def calculate_single_pack_dependencies(pack: str, dependency_graph: object, verbose: bool = False) -> \
+        Tuple[dict, list, str]:
     """
     Calculates pack dependencies given a pack and a dependencies graph.
     First is extract the dependencies subgraph of the given graph only using DFS algorithm with the pack as source.
@@ -2088,7 +2120,8 @@ def calculate_single_pack_dependencies(pack: str, dependency_graph: object, verb
             del additional_data['mandatory_for_packs']
             del additional_data['mandatory_for_items']
             del additional_data['depending_on_packs']
-            del additional_data['depending_on_items_mandatorily'] # This could be added as a value to the output, see issue XXX #TODO: fix
+            del additional_data['depending_on_items_mandatorily']
+            # This could be added as a value to the output, see issue XXX #TODO: fix
 
         first_level_dependencies, all_level_dependencies = parse_for_pack_metadata(subgraph, pack)
     except Exception:
@@ -2238,9 +2271,11 @@ def get_packs_dependent_on_given_packs(packs, id_set_path, output_path=None, ver
     return dependent_on_results, set(dependent_packs_list)
 
 
-def update_items_dependencies(pack_dependencies_data, items_dependencies, current_entity_type, current_entity_id, packs_and_items_dict) -> None:
+def update_items_dependencies(pack_dependencies_data, items_dependencies, current_entity_type, current_entity_id,
+                              packs_and_items_dict) -> None:
     """
-    Updates the given items dependencies dict with the packs and items dict (those are items dependent on the current entitiy id)
+    Updates the given items dependencies dict with the packs and items dict (those are items dependent on the current
+    entitiy id)
     Args:
         pack_dependencies_data: list of tupples of (pack id, is mandatory).
         items_dependencies: the part of id set that contains the current type of item.

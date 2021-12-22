@@ -201,7 +201,8 @@ class LintManager:
             pkgs = LintManager._get_all_packages(content_dir=content_repo.working_dir)
         else:  # specific pack as input, -i flag has been used
             pkgs = []
-            input = input.split(',') if isinstance(input, str) else input
+            if isinstance(input, str):
+                input = input.split(',')
             for item in input:
                 is_pack = os.path.isdir(item) and os.path.exists(os.path.join(item, PACKS_PACK_META_FILE_NAME))
                 if is_pack:

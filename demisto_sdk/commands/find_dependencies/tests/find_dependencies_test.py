@@ -573,11 +573,13 @@ class TestDependsOnScriptAndIntegration:
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
     @pytest.mark.parametrize("dependency_script,expected_pack,expected_items",
-                             [("GetServerURL", {("GetServerURL", True)}, {('script', 'DummyScript'): {'GetServerURL': ('script', 'GetServerURL')}}),
-                              ("HelloWorldScript", {("HelloWorld", True)}, {('script', 'DummyScript'): {'HelloWorld': ('script', 'HelloWorldScript')}}),
+                             [("GetServerURL", {("GetServerURL", True)},
+                               {('script', 'DummyScript'): {'GetServerURL': ('script', 'GetServerURL')}}),
+                              ("HelloWorldScript", {("HelloWorld", True)},
+                               {('script', 'DummyScript'): {'HelloWorld': ('script', 'HelloWorldScript')}}),
                               ("PrismaCloudComputeParseAuditAlert", {("PrismaCloudCompute", True)},
-                               {('script', 'DummyScript'): {'PrismaCloudCompute': ('script',
-                                                    'PrismaCloudComputeParseAuditAlert')}})
+                               {('script', 'DummyScript'):
+                                {'PrismaCloudCompute': ('script', 'PrismaCloudComputeParseAuditAlert')}})
                               ])
     def test_collect_scripts_depends_on_script_with_items(self, dependency_script, expected_pack, expected_items, id_set):
         """
@@ -654,11 +656,17 @@ class TestDependsOnScriptAndIntegration:
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
     @pytest.mark.parametrize("dependency_integration_command,expected_result",
-                             [("sslbl-get-indicators", ({("Feedsslabusech", True)}, {('script', 'DummyScript'): {'Feedsslabusech': ('integration', 'Feedsslabusech')}})),
-                              ("activemq-subscribe", ({("ActiveMQ", True)}, {('script', 'DummyScript'): {'ActiveMQ': ('integration', 'ActiveMQ')}})),
-                              ("alienvault-get-indicators", ({("FeedAlienVault", True)}, {('script', 'DummyScript'): {'FeedAlienVault': ('integration', 'FeedAlienVault')}}))
+                             [("sslbl-get-indicators",
+                               ({("Feedsslabusech", True)},
+                                {('script', 'DummyScript'): {'Feedsslabusech': ('integration', 'Feedsslabusech')}})),
+                              ("activemq-subscribe",
+                               ({("ActiveMQ", True)},
+                                {('script', 'DummyScript'): {'ActiveMQ': ('integration', 'ActiveMQ')}})),
+                              ("alienvault-get-indicators", ({("FeedAlienVault", True)},
+                               {('script', 'DummyScript'): {'FeedAlienVault': ('integration', 'FeedAlienVault')}}))
                               ])
-    def test_collect_scripts_depends_on_integration_with_items(self, dependency_integration_command, expected_result, id_set):
+    def test_collect_scripts_depends_on_integration_with_items(self, dependency_integration_command,
+                                                               expected_result, id_set):
         """
         Given
             - A script entry in the id_set depending on integration commands.
@@ -686,13 +694,12 @@ class TestDependsOnScriptAndIntegration:
         ]
 
         found_result, found_items = PackDependencies._collect_scripts_dependencies(pack_scripts=test_input,
-                                                                      id_set=id_set,
-                                                                      verbose=False,
-                                                                      get_dependent_items=True)
+                                                                                   id_set=id_set,
+                                                                                   verbose=False,
+                                                                                   get_dependent_items=True)
 
         assert found_result == expected_result[0]
         assert found_items == expected_result[1]
-
 
     def test_collect_scripts_depends_on_two_scripts(self, id_set):
         """
@@ -1032,10 +1039,10 @@ class TestDependsOnPlaybook:
     @pytest.mark.parametrize("dependency_script,expected_result,expected_items",
                              [("GetServerURL", {("GetServerURL", True)}, {('playbook', 'Dummy Playbook'): {'GetServerURL': ('script', 'GetServerURL')}}),
                               ("HelloWorldScript", {("HelloWorld", True)},
-                                                    {('playbook', 'Dummy Playbook'): {'HelloWorld': ('script', 'HelloWorldScript')}}),
+                               {('playbook', 'Dummy Playbook'): {'HelloWorld': ('script', 'HelloWorldScript')}}),
                               ("PrismaCloudComputeParseAuditAlert", {("PrismaCloudCompute", True)},
-                                                    {('playbook', 'Dummy Playbook'): {
-                                                        'PrismaCloudCompute': ('script', 'PrismaCloudComputeParseAuditAlert')}})
+                               {('playbook', 'Dummy Playbook'): {
+                                   'PrismaCloudCompute': ('script', 'PrismaCloudComputeParseAuditAlert')}})
                               ])
     def test_collect_playbooks_dependencies_on_script_with_items(self, dependency_script, expected_result, expected_items, id_set):
         test_input = [
@@ -1339,7 +1346,10 @@ class TestDependsOnPlaybook:
             - The indicator field accounttype should result in a mandatory dependency to the CommonTypes pack.
         """
         expected_packs = {('SafeBreach', True), ('CommonScripts', True), ('CommonTypes', True)}
-        expected_items = {('playbook', 'SafeBreach - Compare and Validate Insight Indicators'): {'SafeBreach': ('integration', 'SafeBreach'), 'CommonScripts': ('script', 'SetAndHandleEmpty'), 'CommonTypes': ('incident_field', 'indicator_accounttype')}}
+        expected_items = {('playbook', 'SafeBreach - Compare and Validate Insight Indicators'):
+                          {'SafeBreach': ('integration', 'SafeBreach'),
+                           'CommonScripts': ('script', 'SetAndHandleEmpty'),
+                           'CommonTypes': ('incident_field', 'indicator_accounttype')}}
         test_input = [
             {
                 "SafeBreach - Compare and Validate Insight Indicators": {
@@ -1366,9 +1376,9 @@ class TestDependsOnPlaybook:
         ]
 
         found_packs, found_items = PackDependencies._collect_playbooks_dependencies(pack_playbooks=test_input,
-                                                                        id_set=id_set,
-                                                                        verbose=False,
-                                                                        get_dependent_items=True)
+                                                                                    id_set=id_set,
+                                                                                    verbose=False,
+                                                                                    get_dependent_items=True)
 
         assert found_packs == expected_packs
         assert found_items == expected_items
@@ -1568,7 +1578,10 @@ class TestDependsOnLayout:
         Then
             - Extracting the packs that the layout depends on and the items causing mandatory dependencies.
         """
-        expected_result = ({('CrisisManagement', True), ('FeedMitreAttack', True), ('CommonTypes', True)}, {('layout', 'Dummy Layout'): {'FeedMitreAttack': ('layout', 'MITRE ATT&CK'), 'CommonTypes': ('indicator_field', 'indicator_adminname'), 'CrisisManagement': ('indicator_field', 'indicator_jobtitle')}})
+        expected_result = ({('CrisisManagement', True), ('FeedMitreAttack', True), ('CommonTypes', True)},
+                           {('layout', 'Dummy Layout'): {'FeedMitreAttack': (
+                               'layout', 'MITRE ATT&CK'), 'CommonTypes': ('indicator_field', 'indicator_adminname'),
+                               'CrisisManagement': ('indicator_field', 'indicator_jobtitle')}})
 
         test_input = [
             {
@@ -1732,7 +1745,8 @@ class TestDependsOnIncidentField:
         Then
             - Extracting the packs that the incident field depends on with the items causing the dependency.
         """
-        expected_result = ({('Phishing', True), ('Carbon_Black_Enterprise_Response', True)}, {('incident_field', 'Dummy Incident Field'): {'Carbon_Black_Enterprise_Response': ('script', 'CBLiveFetchFiles'), 'Phishing': ('script', 'CheckEmailAuthenticity')}})
+        expected_result = ({('Phishing', True), ('Carbon_Black_Enterprise_Response', True)}, {('incident_field', 'Dummy Incident Field'): {
+                           'Carbon_Black_Enterprise_Response': ('script', 'CBLiveFetchFiles'), 'Phishing': ('script', 'CheckEmailAuthenticity')}})
 
         test_input = [
             {
@@ -1885,7 +1899,6 @@ class TestDependsOnIntegrations:
 
         assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
 
-
     def test_collect_integration_dependencies_with_ites(self, id_set):
         """
         Given
@@ -1895,8 +1908,12 @@ class TestDependsOnIntegrations:
         Then
             - Extracting the packs that the integration depends on and the items causing mandatory dependencies.
         """
-        expected_result = ({('Claroty', True), ('EWS', True), ('HelloWorld', True), ('CommonTypes', True), ('CrisisManagement', True)},
-                           {('integration', 'Dummy Integration'): {'HelloWorld': ('classifier', 'HelloWorld'), 'Claroty': ('mapper', 'CBAlerts-mapper'), 'EWS': ('mapper', 'EWS v2-mapper'), 'CrisisManagement': ('incident_type', 'HR Ticket')}})
+        expected_result = ({('Claroty', True), ('EWS', True), ('HelloWorld', True), ('CommonTypes', True),
+                            ('CrisisManagement', True)},
+                           {('integration', 'Dummy Integration'): {'HelloWorld': ('classifier', 'HelloWorld'),
+                                                                   'Claroty': ('mapper', 'CBAlerts-mapper'),
+                                                                   'EWS': ('mapper', 'EWS v2-mapper'),
+                                                                   'CrisisManagement': ('incident_type', 'HR Ticket')}})
 
         test_input = [
             {
@@ -1922,6 +1939,7 @@ class TestDependsOnIntegrations:
         )
 
         assert found_result == expected_result
+
 
 class TestDependsOnIncidentType:
     def test_collect_incident_type_dependencies(self, id_set):
@@ -1965,8 +1983,10 @@ class TestDependsOnIncidentType:
         Then
             - Extracting the packs that the incident type depends on and the items causing mandatory dependencies.
         """
-        expected_result =({('AutoFocus', True), ('Volatility', True)},
-                          {('incident_type', 'Dummy Incident Type'): {'AutoFocus': ('playbook', 'Autofocus Query Samples, Sessions and Tags'), 'Volatility': ('script', 'AnalyzeMemImage')}})
+        expected_result = ({('AutoFocus', True), ('Volatility', True)},
+                           {('incident_type', 'Dummy Incident Type'):
+                            {'AutoFocus': ('playbook', 'Autofocus Query Samples, Sessions and Tags'),
+                             'Volatility': ('script', 'AnalyzeMemImage')}})
 
         test_input = [
             {
@@ -2032,7 +2052,8 @@ class TestDependsOnClassifiers:
         When
             - Building dependency graph for pack.
         Then
-            - Extracting the packs that the classifier depends on as optional dependencies and the items causing mandatory dependencies, no such of those in this case.
+            - Extracting the packs that the classifier depends on as optional
+            dependencies and the items causing mandatory dependencies, no such of those in this case.
         """
         expected_result = ({('Claroty', False), ('Logzio', False), ('PAN-OS', False)}, {})
 
@@ -2199,7 +2220,8 @@ class TestDependsOnMappers:
         Then
             - Extracting the packs that the mapper depends on as optional dependencies and the items causing the mandatory dependency.
         """
-        expected_result = ({('BruteForce', False), ('PrismaCloud', False), ('AccessInvestigation', False), ('CommonTypes', True)}, {('mapper', 'Dummy Mapper'): {'CommonTypes': ('incident_field', 'incident_accountid')}})
+        expected_result = ({('BruteForce', False), ('PrismaCloud', False), ('AccessInvestigation', False), ('CommonTypes', True)},
+                           {('mapper', 'Dummy Mapper'): {'CommonTypes': ('incident_field', 'incident_accountid')}})
 
         test_input = [
             {
@@ -2466,7 +2488,7 @@ class TestDependsOnJob:
         Then
             - Ensure depended-on packs are extracted and the items causing the mandatory dependencies.
         """
-        expected_result = ({('Pcysys', True)}, {('job', 'jobby'): {'Pcysys': ('playbook', 'Pentera Run Scan')}}) # playbook dependant
+        expected_result = ({('Pcysys', True)}, {('job', 'jobby'): {'Pcysys': ('playbook', 'Pentera Run Scan')}})  # playbook dependant
 
         selected_feeds = []
 
@@ -2484,6 +2506,7 @@ class TestDependsOnJob:
         ]
         found_result = PackDependencies._collect_jobs_dependencies(test_job_data, id_set, verbose=False, get_dependent_items=True)
         assert found_result == expected_result
+
 
 class TestDependsOnReports:
     def test_collect_report_dependencies(self, id_set):
@@ -2554,7 +2577,7 @@ class TestDependsOnReports:
 
 
 SEARCH_PACKS_INPUT = [
-    (['type'], 'IncidentFields', (set(), dict()),'incident_field'),
+    (['type'], 'IncidentFields', (set(), dict()), 'incident_field'),
     (['emailaddress'], 'IncidentFields', ({'Compliance'}, {'Compliance': ('incident_field', 'incident_emailaddress')}), 'incident_field'),
     (['E-mail Address'], 'IncidentFields', ({'Compliance'}, {'Compliance': ('incident_field', 'incident_emailaddress')}), 'incident_field'),
     (['adminemail'], 'IndicatorFields', ({'CommonTypes'}, {'CommonTypes': ('indicator_field', 'indicator_adminemail')}), 'indicator_field'),
@@ -2568,7 +2591,7 @@ SEARCH_PACKS_INPUT = [
 @pytest.mark.parametrize('item_names, section_name, expected_result, type', SEARCH_PACKS_INPUT)
 def test_search_packs_by_items_names_or_ids(item_names, section_name, expected_result, id_set, type):
     found_packs, packs_and_items_dict = PackDependencies._search_packs_by_items_names_or_ids(item_names, id_set[section_name], True,
-                                            'Both', type)
+                                                                                             'Both', type)
     assert found_packs == expected_result[0]
     assert packs_and_items_dict == expected_result[1]
 
@@ -2701,19 +2724,21 @@ class TestDependencyGraph:
         nodes = dependency_graph.nodes(data=True)
 
         assert nodes['pack1']['mandatory_for_packs'] == []
-        assert nodes['pack1']['depending_on_items_mandatorily'] == {('type_item_a', 'item_a'): {'pack2': ('type_item_2', 'item2'), 'pack3': ('type_item_3', 'item3')}}
+        assert nodes['pack1']['depending_on_items_mandatorily'] == {
+            ('type_item_a', 'item_a'): {'pack2': ('type_item_2', 'item2'), 'pack3': ('type_item_3', 'item3')}}
         assert nodes['pack1']['depending_on_packs'] == [('pack2', True), ('pack3', True)]
         assert nodes['pack1']['mandatory_for_items'] == {}
 
         assert nodes['pack2']['mandatory_for_packs'] == ['pack1']
-        assert nodes['pack2']['depending_on_items_mandatorily'] == {('type_item_b', 'item_b'): {'pack3': ('type_item_3', 'item3'), 'pack2': ('type_item_2', 'item2')}}
+        assert nodes['pack2']['depending_on_items_mandatorily'] == {
+            ('type_item_b', 'item_b'): {'pack3': ('type_item_3', 'item3'), 'pack2': ('type_item_2', 'item2')}}
         assert nodes['pack2']['depending_on_packs'] == [('pack3', True), ('pack2', True)]
         assert nodes['pack2']['mandatory_for_items'] == {('type_item_2', 'item2'): {'pack1': ('type_item_a', 'item_a')}}
 
         assert nodes['pack3']['mandatory_for_packs'] == ['pack1', 'pack2']
         assert nodes['pack3']['depending_on_items_mandatorily'] == {}
         assert nodes['pack3']['depending_on_packs'] == []
-        assert nodes['pack3']['mandatory_for_items'] =={('type_item_3', 'item3'): {'pack1': ('type_item_a', 'item_a'), 'pack2': ('type_item_b', 'item_b')}}
+        assert nodes['pack3']['mandatory_for_items'] == {('type_item_3', 'item3'): {'pack1': ('type_item_a', 'item_a'), 'pack2': ('type_item_b', 'item_b')}}
 
         assert nodes['pack4']['mandatory_for_packs'] == []
         assert nodes['pack4']['depending_on_items_mandatorily'] == {('type_item_c', 'item_c'): {'pack4': ('type_item_4', 'item4')}}
@@ -2728,8 +2753,8 @@ class TestDependencyGraph:
     def test_build_dependency_graph(self, id_set):
         pack_name = "ImpossibleTraveler"
         found_graph = PackDependencies.build_dependency_graph_single_pack(pack_id=pack_name,
-                                                              id_set=id_set,
-                                                              verbose=False)
+                                                                          id_set=id_set,
+                                                                          verbose=False)
         root_of_graph = [n for n in found_graph.nodes if found_graph.in_degree(n) == 0][0]
         pack_dependencies = [n for n in found_graph.nodes if found_graph.in_degree(n) > 0]
 
@@ -2748,10 +2773,10 @@ class TestDependencyGraph:
 
         pack_name = "ImpossibleTraveler"
         found_graph = PackDependencies.build_dependency_graph_single_pack(pack_id=pack_name,
-                                                              id_set=id_set,
-                                                              verbose=False,
-                                                              exclude_ignored_dependencies=False
-                                                              )
+                                                                          id_set=id_set,
+                                                                          verbose=False,
+                                                                          exclude_ignored_dependencies=False
+                                                                          )
         root_of_graph = [n for n in found_graph.nodes if found_graph.in_degree(n) == 0][0]
         pack_dependencies = [n for n in found_graph.nodes if found_graph.in_degree(n) > 0]
 
@@ -2882,15 +2907,15 @@ class TestCalculateSinglePackDependencies:
         patch('Tests.scripts.utils.log_util.install_logging')
         graph = nx.DiGraph()
         graph.add_node('pack1', mandatory_for_packs=[], depending_on_items_mandatorily={},
-                                      mandatory_for_items={}, depending_on_packs=[])
+                       mandatory_for_items={}, depending_on_packs=[])
         graph.add_node('pack2', mandatory_for_packs=[], depending_on_items_mandatorily={},
-                                      mandatory_for_items={}, depending_on_packs=[])
+                       mandatory_for_items={}, depending_on_packs=[])
         graph.add_node('pack3', mandatory_for_packs=[], depending_on_items_mandatorily={},
-                                      mandatory_for_items={}, depending_on_packs=[])
+                       mandatory_for_items={}, depending_on_packs=[])
         graph.add_node('pack4', mandatory_for_packs=[], depending_on_items_mandatorily={},
-                                      mandatory_for_items={}, depending_on_packs=[])
+                       mandatory_for_items={}, depending_on_packs=[])
         graph.add_node('pack5', mandatory_for_packs=[], depending_on_items_mandatorily={},
-                                      mandatory_for_items={}, depending_on_packs=[])
+                       mandatory_for_items={}, depending_on_packs=[])
         graph.add_edge('pack1', 'pack2')
         graph.add_edge('pack2', 'pack3')
         graph.add_edge('pack1', 'pack4')
@@ -2964,12 +2989,15 @@ def get_mock_dependency_graph():
 
     graph.add_node('pack1', mandatory_for_packs=[], depending_on_items_mandatorily={
         ('type_item_a', 'item_a'): {'pack2': ('type_item_2', 'item2'), 'pack3': ('type_item_3', 'item3')}},
-                                      mandatory_for_items={}, depending_on_packs=[('pack2', True), ('pack3', True)])
+        mandatory_for_items={}, depending_on_packs=[('pack2', True), ('pack3', True)])
     graph.add_node('pack2', mandatory_for_packs=['pack1'], depending_on_items_mandatorily={
         ('type_item_b', 'item_b'): {'pack3': ('type_item_3', 'item3'), 'pack2': ('type_item_2', 'item2')}},
-                                      mandatory_for_items={('type_item_2', 'item2'): {'pack1': ('type_item_a', 'item_a')}}, depending_on_packs=[('pack3', True), ('pack2', True)])
-    graph.add_node('pack3', mandatory_for_packs= ['pack1', 'pack2'], depending_on_items_mandatorily={},
-                                      mandatory_for_items={('type_item_3', 'item3'): {'pack1': ('type_item_a', 'item_a'), 'pack2': ('type_item_b', 'item_b')}}, depending_on_packs=[])
+        mandatory_for_items={('type_item_2', 'item2'): {'pack1': ('type_item_a', 'item_a')}},
+        depending_on_packs=[('pack3', True), ('pack2', True)])
+    graph.add_node('pack3', mandatory_for_packs=['pack1', 'pack2'], depending_on_items_mandatorily={},
+                   mandatory_for_items={('type_item_3', 'item3'): {'pack1': ('type_item_a', 'item_a'),
+                                                                   'pack2': ('type_item_b', 'item_b')}},
+                   depending_on_packs=[])
     graph.add_edge('pack1', 'pack2')
     graph.add_edge('pack1', 'pack3')
     graph.add_edge('pack2', 'pack3')
@@ -2993,6 +3021,7 @@ class TestGetDependentOnGivenPack:
         assert 'pack1' in dependent_packs
         assert dependent_packs_dict['pack3']['packsDependentOnThisPackMandatorily']['pack1']['mandatory']
         assert dependent_packs_dict['pack3']['packsDependentOnThisPackMandatorily']['pack2']['mandatory']
-        assert dependent_packs_dict['pack3']['packsDependentOnThisPackMandatorily']['pack1']['dependent_items'] == [(('type_item_3', 'item3'), ('type_item_a', 'item_a'))]
-        assert dependent_packs_dict['pack3']['packsDependentOnThisPackMandatorily']['pack2']['dependent_items'] == [(('type_item_3', 'item3'), ('type_item_b', 'item_b'))]
-
+        assert dependent_packs_dict['pack3']['packsDependentOnThisPackMandatorily']['pack1']['dependent_items'] == [
+            (('type_item_3', 'item3'), ('type_item_a', 'item_a'))]
+        assert dependent_packs_dict['pack3']['packsDependentOnThisPackMandatorily']['pack2']['dependent_items'] == [
+            (('type_item_3', 'item3'), ('type_item_b', 'item_b'))]

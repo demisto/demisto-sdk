@@ -26,7 +26,9 @@ TEST_INTEGRATION_2_PATH = os.path.join(FILES_PATH, 'integration-display-credenti
 
 def setup():
     try:
+        print('trying to remove old id_set file.')
         os.remove('Tests/id_Set.json')
+        print('removed')
     except FileNotFoundError:
         pass
 
@@ -575,6 +577,8 @@ def test_generate_script_doc(tmp_path, mocker):
     mocker.patch.object(common, 'execute_command', side_effect=handle_example)
     # because used in is random
     mocker.patch('demisto_sdk.commands.generate_docs.generate_script_doc.get_used_in', return_value=[])
+    if os.path.isfile('Tests/id_set.json'):
+        print('whyis the file here?!')
     generate_script_doc(in_script, '!Set key=k1 value=v1,!Set key=k2 value=v2 append=true', str(d), verbose=True)
     patched.assert_called()
     readme = d / "README.md"

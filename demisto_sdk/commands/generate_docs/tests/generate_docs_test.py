@@ -1,9 +1,10 @@
 import json
 import os
+import sys
 from typing import Dict, List
 
 import pytest
-import sys
+
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_json, get_yaml
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator

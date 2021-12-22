@@ -143,6 +143,10 @@ def update_pack_metadata_with_dependencies(pack_folder_name: str, first_level_de
 
     pack_metadata_path = found_path_results[0]
 
+    # Filter out the dependent items to avoid overloading the pack's metadata
+    for _, dependency_info in first_level_dependencies.items():
+        dependency_info.pop('depending_on_items_mandatorily')
+
     with open(pack_metadata_path, 'r+') as pack_metadata_file:
         pack_metadata = json.load(pack_metadata_file)
         pack_metadata = {} if not isinstance(pack_metadata, dict) else pack_metadata
@@ -212,7 +216,7 @@ class PackDependencies:
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
 
         Returns:
-            set: found pack ids.
+            tupple of set: found pack ids.
 
         """
         packs_and_items_dict = {}
@@ -1661,17 +1665,20 @@ class PackDependencies:
     ) -> nx.DiGraph:
         """
         Builds all level of dependencies and returns dependency graph for all packs.
-        The Graph is of packs as nodes, and each vertical resembles a dependency. For each pack, the node
-        representing it contains 2 data structures:
-        1. A list of 'mandatory for packs' - this is a list of packs that the pack of this node is mandatory for.
-        2. A dict of dicts 'mandatory_dependencies_items' representing the items causing these mandatory dependencies,
-        for example, If the current node repesent pack_a, and pack_a is mandatory for pack_b and pack_c because of
-        a variaty of corresponding items, the dict will be such as:
-        {item_a_1: {pack_b: item_b}, item_a_2: {pack_c: item_c_1, item_c_2}
-        meaning item_a_1 is mandatory for item_b which is in pack_b, item_a_2 is mandatory item_c_1 and item_c_2 which
-        are in pack_c, etc.
 
-        # TODO: fix doc
+        The Graph is of packs as nodes, and each vertical resembles a dependency. For each pack, the node
+        representing it contains 4 data structures:
+        1. A list of 'mandatory_for_packs' - this is a list of packs that the pack of this node is mandatory for.
+        2. A dict of dicts 'mandatory_for_items' - the corresponding items causing the mandatory dependency, in the structure of:
+        {(item_type, item_id): {pack_of_dependent_item: (dependent_item_type, dependent_item_id)}},
+        when item_id is mandatory for dependent_item_id which is in pack pack_of_dependent_item.
+        3. A list of tupples 'depending_on_packs' - the packs of which this pack is dependent on, and whether it is
+         a mandatory dependency or not.
+        4. A dict of dicts 'depending_on_items_mandatorily' the items causing these dependencies, but only the mandatory
+        ones, in the sturcture of:
+        {(item_type, item_id): {pack_of_item_to_be_dependent_on: (item_type_to_be_dependent_on, item_id_to_be_dependent_on)}}
+        when item_id is dependent on item_id_to_be_dependent_on which is in pack pack_of_item_to_be_dependent_on.
+
         Args:
             pack_ids (list): pack ids, currently pack folder names is in use.
             id_set (dict): id set json.
@@ -1681,10 +1688,15 @@ class PackDependencies:
         Returns:
             DiGraph: all dependencies of given packs.
         """
+        if verbose:
+            print('Building the dependencies graph...')
         dependency_graph = nx.DiGraph()
         for pack in pack_ids:
-            dependency_graph.add_node(pack, mandatory_for_packs=[], mandatory_dependencies_items={}, mandatory_for_items={}, depending_on_packs=[])
+            dependency_graph.add_node(pack, mandatory_for_packs=[], depending_on_items_mandatorily={},
+                                      mandatory_for_items={}, depending_on_packs=[])
         for pack in pack_ids:
+            if verbose:
+                print(f'Adding {pack} pack dependencies to the graph...')
             # ITEMS *THIS PACK* IS DEPENDENT *ON*:
             dependencies, dependencies_items = PackDependencies._find_pack_dependencies(
                 pack, id_set, verbose=verbose, exclude_ignored_dependencies=exclude_ignored_dependencies,
@@ -1692,24 +1704,34 @@ class PackDependencies:
             for dependency_name, is_mandatory in dependencies:
                 if dependency_name == pack:
                     continue
+                if verbose:
+                    print(f'Collecting info about {pack} and {dependency_name} dependencies')
                 if dependency_name not in dependency_graph:
-                    dependency_graph.add_node(dependency_name, mandatory_for_packs=[], mandatory_dependencies_items={}, mandatory_for_items={}, depending_on_packs=[])
+                    dependency_graph.add_node(dependency_name, mandatory_for_packs=[], depending_on_items_mandatorily={},
+                                              mandatory_for_items={}, depending_on_packs=[])
                 dependency_graph.add_edge(pack, dependency_name)
                 if is_mandatory:
+                    if verbose:
+                        print(f'Found {dependency_name} pack is mandatory for {pack}')
                     dependency_graph.nodes()[dependency_name]['mandatory_for_packs'].append(pack)
+                    if verbose:
+                        print('Checking for the items causing the dependencies')
             for dependent_item, items_depending_on_item in dependencies_items.items():
                 for pack_of_item_dependent_on, item_dependent_on in items_depending_on_item.items():
                     if pack_of_item_dependent_on == pack:
                         continue
                     if pack_of_item_dependent_on not in dependency_graph:
-                        dependency_graph.add_node(pack_of_item_dependent_on, mandatory_for_packs=[], mandatory_dependencies_items={}, mandatory_for_items={}, depending_on_packs=[])
+                        dependency_graph.add_node(pack_of_item_dependent_on, mandatory_for_packs=[],
+                                                  depending_on_items_mandatorily={}, mandatory_for_items={},
+                                                  depending_on_packs=[])
                     if dependency_graph.nodes()[pack_of_item_dependent_on].get('mandatory_for_items').get(item_dependent_on):
                         dependency_graph.nodes()[pack_of_item_dependent_on]['mandatory_for_items'][item_dependent_on].update({pack: dependent_item})
                     else:
                         dependency_graph.nodes()[pack_of_item_dependent_on]['mandatory_for_items'][item_dependent_on] = {pack: dependent_item}
-
+            if verbose:
+                print(f'\nPack {pack} and its dependencies were successfully added to the dependencies graph.')
             dependency_graph.nodes()[pack]['depending_on_packs'] = list(dependencies)
-            dependency_graph.nodes()[pack]['mandatory_dependencies_items'] = dependencies_items
+            dependency_graph.nodes()[pack]['depending_on_items_mandatorily'] = dependencies_items
 
         return dependency_graph
 
@@ -1760,7 +1782,7 @@ class PackDependencies:
                 if leaf_dependencies:
                     for dependency_name, is_mandatory in leaf_dependencies:
                         if dependency_name not in graph.nodes():
-                            graph.add_node(dependency_name, mandatory=is_mandatory, mandatory_dependencies_items=dependencies_items)
+                            graph.add_node(dependency_name, mandatory=is_mandatory, depending_on_items_mandatorily=dependencies_items)
                             graph.add_edge(leaf, dependency_name)
 
             found_new_dependencies = graph.number_of_nodes() > current_number_of_nodes
@@ -1958,8 +1980,43 @@ class PackDependencies:
 
         return pack_meta_file_content
 
+def calculate_single_pack_depends_on(pack: str, dependency_graph: object, verbose: bool = False) -> Tuple[dict, list, str]:
+    """
 
-def calculate_single_pack_dependencies(pack: str, dependency_graph: object, verbose: bool = False, get_dependent_on: bool = False) -> Tuple[dict, list, str]:
+    Args:
+        pack:
+        dependency_graph:
+        verbose:
+
+    Returns:
+
+    """
+    try:
+        pack_graph_node = dependency_graph.nodes[pack]
+        subgraph = PackDependencies.get_dependencies_subgraph_by_dfs(dependency_graph, pack)
+        first_level_dependencies = {}
+
+        for man_pack in pack_graph_node.get('mandatory_for_packs'):
+            if verbose:
+                print(f'Parsing info of {man_pack} mandatory dependency of pack {pack} from graph')
+            first_level_dependencies[man_pack] = {'mandatory': True}
+            for item, dependent_item_and_pack in pack_graph_node.get('mandatory_for_items', {}).items():
+                for dep_pack, dep_item in dependent_item_and_pack.items():
+                    if dep_pack == man_pack:
+                        if verbose:
+                            print(f'Parsing info of dependent items {dep_item} from {dep_pack} on item {item} from {pack} from graph')
+                        if first_level_dependencies[man_pack].get('dependent_items'):
+                            first_level_dependencies[man_pack]['dependent_items'].append((item, dep_item))
+                        else:
+                            first_level_dependencies[man_pack]['dependent_items'] = [(item, dep_item)]
+    except Exception as e:
+        print_error(f"Failed calculating {pack} pack dependencies: {e}")
+        raise
+
+    return first_level_dependencies, pack
+
+
+def calculate_single_pack_dependencies(pack: str, dependency_graph: object, verbose: bool = False) -> Tuple[dict, list, str]:
     """
     Calculates pack dependencies given a pack and a dependencies graph.
     First is extract the dependencies subgraph of the given graph only using DFS algorithm with the pack as source.
@@ -1973,7 +2030,6 @@ def calculate_single_pack_dependencies(pack: str, dependency_graph: object, verb
         pack: The pack for which we need to calculate the dependencies
         dependency_graph: The full dependencies graph
         verbose: Whether to output a detailed response.
-        get_dependent_on: # TODO: fix
 
     Returns:
         first_level_dependencies: A dict of the form {'dependency_name': {'mandatory': < >, 'display_name': < >}}
@@ -1981,43 +2037,26 @@ def calculate_single_pack_dependencies(pack: str, dependency_graph: object, verb
         pack: The pack name
     """
     try:
-        pack_graph_node = dependency_graph.nodes[pack]
         subgraph = PackDependencies.get_dependencies_subgraph_by_dfs(dependency_graph, pack)
-        first_level_dependencies = {}
-        all_level_dependencies = []
 
-        if get_dependent_on:
-            for man_pack in pack_graph_node.get('mandatory_for_packs'):
-                first_level_dependencies[man_pack] = {'mandatory': True}
-                for item, dependent_item_and_pack in pack_graph_node.get('mandatory_for_items', {}).items():
-                    for dep_pack, dep_item in dependent_item_and_pack.items():
-                        if dep_pack == man_pack:
-                            if first_level_dependencies[man_pack].get('dependent_items'):
-                                first_level_dependencies[man_pack]['dependent_items'].append((item, dep_item))
-                            else:
-                                first_level_dependencies[man_pack]['dependent_items'] = [(item, dep_item)]
-        else:
+        if verbose:
+            print(f"Calculating {pack} pack dependencies.")
+
+        for dependency_pack, additional_data in subgraph.nodes(data=True):
             if verbose:
-                print(f"Calculating {pack} pack dependencies.")
+                print(f'Iterating dependency {dependency_pack} for pack {pack}')
+            additional_data['mandatory'] = pack in additional_data['mandatory_for_packs']
+            del additional_data['mandatory_for_packs']
+            del additional_data['mandatory_for_items']
+            del additional_data['depending_on_packs']
+            del additional_data['depending_on_items_mandatorily'] # This could be added as a value to the output, see issue XXX #TODO: fix
 
-            for dependency_pack, additional_data in subgraph.nodes(data=True):
-                if verbose:
-                    print(f'Iterating dependency {dependency_pack} for pack {pack}')
-                additional_data['mandatory'] = pack in additional_data['mandatory_for_packs']
-                del additional_data['mandatory_for_packs']
-                del additional_data['mandatory_for_items']
-                del additional_data['depending_on_packs']
-                del additional_data['mandatory_dependencies_items'] # This could be added as a value to the output, see issue XXX #TODO: fix
-
-            first_level_dependencies, all_level_dependencies = parse_for_pack_metadata(subgraph, pack)
+        first_level_dependencies, all_level_dependencies = parse_for_pack_metadata(subgraph, pack)
     except Exception:
         print_error(f"Failed calculating {pack} pack dependencies")
         raise
 
-    first_level_dependencies = {str(k): v for k, v in first_level_dependencies.items()}
     return first_level_dependencies, all_level_dependencies, pack
-
-
 
 
 def get_all_packs_dependency_graph(id_set: dict, packs: list) -> Iterable:
@@ -2125,9 +2164,7 @@ def get_packs_dependent_on_given_packs(packs, id_set_path, output_path=None, ver
 
     def collect_dependent_packs(results) -> None:
         try:
-            first_level_dependencies, all_level_dependencies, pack_name = results
-            if verbose:
-                print(f'Got dependencies for pack {pack_name}\n: {pformat(all_level_dependencies)}')
+            first_level_dependencies, pack_name = results
             dependent_on_results[pack_name] = {
                 "packsDependentOnThisPackMandatorily": first_level_dependencies,
                 "path": os.path.join(PACKS_DIR, pack_name),
@@ -2143,14 +2180,14 @@ def get_packs_dependent_on_given_packs(packs, id_set_path, output_path=None, ver
     dependent_packs_list: list = []
     id_set = get_id_set(id_set_path)
     all_packs = select_packs_for_calculation()
-    dependency_graph = PackDependencies.build_all_dependencies_graph(all_packs, id_set=id_set, verbose=False)
+    dependency_graph = PackDependencies.build_all_dependencies_graph(all_packs, id_set=id_set, verbose=verbose)
     reverse_dependency_graph = nx.DiGraph.reverse(dependency_graph)
     pack_names = [get_pack_name(pack_path) for pack_path in packs]
     with ProcessPoolHandler() as pool:
         futures = []
         for pack in pack_names:
             futures.append(
-                pool.schedule(calculate_single_pack_dependencies, args=(str(pack), reverse_dependency_graph, verbose, True),
+                pool.schedule(calculate_single_pack_depends_on, args=(str(pack), reverse_dependency_graph, verbose),
                               ))
         wait_futures_complete(futures=futures, done_fn=collect_dependent_packs)
         # finished iteration over pack folders

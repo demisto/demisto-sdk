@@ -2014,6 +2014,7 @@ def calculate_single_pack_dependencies(pack: str, dependency_graph: object, verb
         print_error(f"Failed calculating {pack} pack dependencies")
         raise
 
+    first_level_dependencies = {str(k): v for k, v in first_level_dependencies.items()}
     return first_level_dependencies, all_level_dependencies, pack
 
 

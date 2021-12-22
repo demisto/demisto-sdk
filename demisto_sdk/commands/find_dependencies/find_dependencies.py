@@ -1539,16 +1539,15 @@ dict:       dict: found {pack, (item_type, item_id)} ids
 
     @staticmethod
     def _find_pack_dependencies(pack_id: str, id_set: dict, verbose: bool,
-                                exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False):
+                                exclude_ignored_dependencies: bool = True):
         """
-        Searches for the packs and items the given pack is depending on.
+        Searches for the packs and mandatory items the given pack is depending on.
 
         Args:
             pack_id (str): pack id, currently pack folder name is in use.
             id_set (dict): id set json.
             verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
-        # TODO: add comment about only mandatory items
         Returns:
             tupple of:
             set: dependencies data that includes pack id and whether is mandatory or not.
@@ -1564,7 +1563,7 @@ dict:       dict: found {pack, (item_type, item_id)} ids
             id_set,
             verbose,
             exclude_ignored_dependencies,
-            get_dependent_items
+            True
         )
 
         playbooks_dependencies, playbooks_items_dependencies = PackDependencies._collect_playbooks_dependencies(
@@ -1572,7 +1571,7 @@ dict:       dict: found {pack, (item_type, item_id)} ids
             id_set,
             verbose,
             exclude_ignored_dependencies,
-            get_dependent_items
+            True
         )
 
         layouts_dependencies, layouts_items_dependencies = PackDependencies._collect_layouts_dependencies(
@@ -1580,21 +1579,21 @@ dict:       dict: found {pack, (item_type, item_id)} ids
             id_set,
             verbose,
             exclude_ignored_dependencies,
-            get_dependent_items
+            True
         )
         incidents_fields_dependencies, incidents_fields_items_dependencies = PackDependencies._collect_incidents_fields_dependencies(
             pack_items['incidents_fields'],
             id_set,
             verbose,
             exclude_ignored_dependencies,
-            get_dependent_items
+            True
         )
         indicators_types_dependencies, indicators_types_items_dependencies = PackDependencies._collect_indicators_types_dependencies(
             pack_items['indicators_types'],
             id_set,
             verbose,
             exclude_ignored_dependencies,
-            get_dependent_items
+            True
         )
 
         integrations_dependencies, integrations_items_dependencies = PackDependencies._collect_integrations_dependencies(
@@ -1602,35 +1601,35 @@ dict:       dict: found {pack, (item_type, item_id)} ids
             id_set,
             verbose,
             exclude_ignored_dependencies,
-            get_dependent_items
+            True
         )
         incidents_types_dependencies, incidents_types_items_dependencies = PackDependencies._collect_incidents_types_dependencies(
             pack_items['incidents_types'],
             id_set,
             verbose,
             exclude_ignored_dependencies,
-            get_dependent_items
+            True
         )
         classifiers_dependencies, classifiers_items_dependencies = PackDependencies._collect_classifiers_dependencies(
             pack_items['classifiers'],
             id_set,
             verbose,
             exclude_ignored_dependencies,
-            get_dependent_items
+            True
         )
         mappers_dependencies, mappers_items_dependencies = PackDependencies._collect_mappers_dependencies(
             pack_items['mappers'],
             id_set,
             verbose,
             exclude_ignored_dependencies,
-            get_dependent_items
+            True
         )
         widget_dependencies, widgets_items_dependencies = PackDependencies._collect_widget_dependencies(
             pack_items['widgets'],
             id_set,
             verbose,
             exclude_ignored_dependencies,
-            get_dependent_items=get_dependent_items
+            get_dependent_items=True
         )
         dashboards_dependencies, dashboards_items_dependencies = PackDependencies._collect_widget_dependencies(
             pack_items['dashboards'],
@@ -1638,7 +1637,7 @@ dict:       dict: found {pack, (item_type, item_id)} ids
             verbose,
             exclude_ignored_dependencies,
             header='Dashboards',
-            get_dependent_items=get_dependent_items
+            get_dependent_items=True
         )
         reports_dependencies, reports_items_dependencies = PackDependencies._collect_widget_dependencies(
             pack_items['reports'],
@@ -1646,35 +1645,35 @@ dict:       dict: found {pack, (item_type, item_id)} ids
             verbose,
             exclude_ignored_dependencies,
             header='Reports',
-            get_dependent_items=get_dependent_items
+            get_dependent_items=True
         )
         generic_types_dependencies, generic_types_items_dependencies = PackDependencies._collect_generic_types_dependencies(
             pack_items['generic_types'],
             id_set,
             verbose,
             exclude_ignored_dependencies,
-            get_dependent_items=get_dependent_items
+            get_dependent_items=True
         )
         generic_fields_dependencies, generic_fields_items_dependencies = PackDependencies._collect_generic_fields_dependencies(
             pack_items['generic_fields'],
             id_set,
             verbose,
             exclude_ignored_dependencies,
-            get_dependent_items=get_dependent_items
+            get_dependent_items=True
         )
         generic_modules_dependencies, generic_modules_items_dependencies = PackDependencies._collect_generic_modules_dependencies(
             pack_items['generic_modules'],
             id_set,
             verbose,
             exclude_ignored_dependencies,
-            get_dependent_items=get_dependent_items
+            get_dependent_items=True
         )
         jobs_dependencies, jobs_items_dependencies = PackDependencies._collect_jobs_dependencies(
             pack_items['jobs'],
             id_set,
             verbose,
             exclude_ignored_dependencies,
-            get_dependent_items=get_dependent_items
+            get_dependent_items=True
         )
 
         pack_dependencies = (
@@ -1738,8 +1737,7 @@ dict:       dict: found {pack, (item_type, item_id)} ids
                 print(f'Adding {pack} pack dependencies to the graph...')
             # ITEMS *THIS PACK* IS DEPENDENT *ON*:
             dependencies, dependencies_items = PackDependencies._find_pack_dependencies(
-                pack, id_set, verbose=verbose, exclude_ignored_dependencies=exclude_ignored_dependencies,
-                get_dependent_items=True)
+                pack, id_set, verbose=verbose, exclude_ignored_dependencies=exclude_ignored_dependencies)
             for dependency_name, is_mandatory in dependencies:
                 if dependency_name == pack:
                     continue
@@ -1791,7 +1789,7 @@ dict:       dict: found {pack, (item_type, item_id)} ids
         return deepcopy(subgraph_from_edges)
 
     @staticmethod
-    def build_dependency_graph(pack_id: str, id_set: dict, verbose: bool,
+    def build_dependency_graph_single_pack(pack_id: str, id_set: dict, verbose: bool,
                                exclude_ignored_dependencies: bool = True, get_dependent_items: bool = True) -> nx.DiGraph:
         """
         Builds all level of dependencies and returns dependency graph.
@@ -1815,8 +1813,7 @@ dict:       dict: found {pack, (item_type, item_id)} ids
 
             for leaf in leaf_nodes:
                 leaf_dependencies, dependencies_items = PackDependencies._find_pack_dependencies(
-                    leaf, id_set, verbose=verbose, exclude_ignored_dependencies=exclude_ignored_dependencies,
-                    get_dependent_items=get_dependent_items)
+                    leaf, id_set, verbose=verbose, exclude_ignored_dependencies=exclude_ignored_dependencies)
 
                 if leaf_dependencies:
                     for dependency_name, is_mandatory in leaf_dependencies:
@@ -1956,7 +1953,7 @@ dict:       dict: found {pack, (item_type, item_id)} ids
             print_warning('Running in a private repository, will download the id set from official content')
             id_set = get_merged_official_and_local_id_set(id_set, silent_mode=silent_mode)
 
-        dependency_graph = PackDependencies.build_dependency_graph(
+        dependency_graph = PackDependencies.build_dependency_graph_single_pack(
             pack_id=pack_name,
             id_set=id_set,
             verbose=verbose,

@@ -1676,12 +1676,13 @@ def camel_to_snake(camel: str) -> str:
 
 
 def open_id_set_file(id_set_path):
-    id_set = None
+    id_set = {}
     try:
         with open(id_set_path, 'r') as id_set_file:
             id_set = json.load(id_set_file)
     except IOError:
         print_warning("Could not open id_set file")
+        raise
     finally:
         return id_set
 
@@ -2220,6 +2221,7 @@ def get_api_module_dependencies(pkgs, id_set_path):
     Returns:
         a list of the paths to the scripts and integration found dependent on the modified api modules.
     """
+
     id_set = open_id_set_file(id_set_path)
     api_modules = [pkg.name for pkg in pkgs if API_MODULES_PACK in pkg.parts]
     scripts = id_set.get(IdSetKeys.SCRIPTS.value)

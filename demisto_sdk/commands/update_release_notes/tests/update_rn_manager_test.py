@@ -163,3 +163,23 @@ class TestUpdateRNManager:
         mng = UpdateReleaseNotesManager(user_input='Packs/test1')
         mng.manage_rn_update()
         assert func_mock.called
+
+    def test_manage_rn_multiple_packs(self, mocker):
+        """
+        Given:
+            - Changes in two packs.
+        When:
+            - manage_rn_update is called.
+        Then:
+            - The update is successfully executed on both packs and no error is raised.
+        """
+        from demisto_sdk.commands.update_release_notes.update_rn_manager import \
+            UpdateReleaseNotesManager
+        mocker.patch.object(UpdateReleaseNotesManager, 'get_git_changed_files',
+                            return_value=({'Packs/test1', 'Packs/test2'}, set(), set()))
+        mocker.patch.object(UpdateReleaseNotesManager, 'check_existing_rn')
+        mocker.patch.object(UpdateReleaseNotesManager, 'handle_api_module_change')
+        create_release_notes_mock = mocker.patch.object(UpdateReleaseNotesManager, 'create_release_notes')
+        mng = UpdateReleaseNotesManager(user_input='Packs/test1')
+        mng.manage_rn_update()
+        assert create_release_notes_mock.call_args.args[0] == {'Packs/test1', 'Packs/test2'}

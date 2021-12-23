@@ -2211,13 +2211,13 @@ def wait_futures_complete(futures: List[ProcessFuture], done_fn: Callable):
             raise
 
 
-def get_api_module_dependencies(pkgs, id_set_path):
+def get_api_module_dependencies(pkgs, id_set_path, verbose):
     """
     Get all paths to integrations and scripts dependent on api modules that are found in the modified files.
     Args:
         pkgs: the pkgs paths found as modified to run lint on (including the api module files)
         id_set_path: path to id set
-
+        verbose: print found dependencies or not
     Returns:
         a list of the paths to the scripts and integration found dependent on the modified api modules.
     """
@@ -2231,14 +2231,16 @@ def get_api_module_dependencies(pkgs, id_set_path):
         script_name = list(script.values())[0].get('name')
         api_module = list(script.values())[0].get(IdSetKeys.API_MODULES.value, [])
         if api_module in api_modules:
-            print(f"found script {script_name} dependent on {api_module}")
+            if verbose:
+                print(f"found script {script_name} dependent on {api_module}")
             using_scripts.extend(list(script.values()))
 
     for integration in integrations:
         integration_name = list(integration.values())[0].get('name')
         api_module = list(integration.values())[0].get(IdSetKeys.API_MODULES.value, [])
         if api_module in api_modules:
-            print(f"found integration {integration_name} dependent on {api_module}")
+            if verbose:
+                print(f"found integration {integration_name} dependent on {api_module}")
             using_integrations.extend(list(integration.values()))
 
     using_scripts_pkg_paths = [Path(script.get(IdSetKeys.FILE_PATH.value)).parent.absolute() for

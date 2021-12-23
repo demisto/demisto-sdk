@@ -81,7 +81,7 @@ class LintManager:
         self._id_set_path = id_set_path
         if check_dependent_api_module:
             print("Checking for packages dependent on the modified api module...")
-            dependent_on_api_module = get_api_module_dependencies(self._pkgs, self._id_set_path)
+            dependent_on_api_module = get_api_module_dependencies(self._pkgs, self._id_set_path, self._verbose)
             dependent_on_api_module = self._get_packages(content_repo=self._facts["content_repo"],
                                                          input=dependent_on_api_module)
             self._pkgs = list(set(self._pkgs + dependent_on_api_module))

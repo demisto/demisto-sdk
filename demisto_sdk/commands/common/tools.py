@@ -2179,7 +2179,7 @@ def get_mp_types_from_metadata_by_item(file_path):
     Returns:
         list of names of supporting marketplaces (current options are marketplacev2 and xsoar)
     """
-    if METADATA_FILE_NAME in Path(file_path).parts: # for when the type is pack, the item we get is the metasata path
+    if METADATA_FILE_NAME in Path(file_path).parts:  # for when the type is pack, the item we get is the metasata path
         metadata_path = file_path
     else:
         metadata_path_parts = get_pack_dir(file_path)

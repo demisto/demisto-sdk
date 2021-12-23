@@ -94,7 +94,7 @@ BUILT_IN_FIELDS = [
 ]
 
 
-def should_skip_item_by_mp(file_path: str, marketplace: str):
+def should_skip_item_by_mp(file_path: str, marketplace: str, print_logs: bool):
     """
     Checks if the item given (as path) should be part of the current generated id set.
      The checks are in this order:
@@ -117,12 +117,17 @@ def should_skip_item_by_mp(file_path: str, marketplace: str):
         item_data = get_file(file_path, file_type)
         if item_data.get('marketplaces'):
             if marketplace not in item_data.get('marketplaces'):
+                if print_logs:
+                    print(f'Skipping {file_path} due to mismatch with the given marketplace')
                 return True
     except (ValueError, FileNotFoundError, IsADirectoryError):
         return True
 
     # second check, check the metadata of the pack
-    return marketplace not in get_mp_types_from_metadata_by_item(file_path)
+    if marketplace not in get_mp_types_from_metadata_by_item(file_path):
+        if print_logs:
+            print(f'Skipping {file_path} due to mismatch with the given marketplace')
+        return True
 
 
 def build_tasks_graph(playbook_data):
@@ -889,9 +894,7 @@ def get_pack_metadata_data(file_path, print_logs: bool, marketplace: str = 'xsoa
         if print_logs:
             print(f'adding {file_path} to id_set')
 
-        if should_skip_item_by_mp(file_path, marketplace):
-            if print_logs:
-                print(f'Skipping {file_path} due to mismatch with the given marketplace')
+        if should_skip_item_by_mp(file_path, marketplace, print_logs):
             return {}
 
         if print_logs:
@@ -1076,9 +1079,7 @@ def process_integration(file_path: str, print_logs: bool, marketplace: str = 'xs
     res = []
     try:
         if os.path.isfile(file_path):
-            if should_skip_item_by_mp(file_path, marketplace):
-                if print_logs:
-                    print(f'Skipping {file_path} due to mismatch with the marketplace this id set is generated for.')
+            if should_skip_item_by_mp(file_path, marketplace, print_logs):
                 return []
             if find_type(file_path) in (FileType.INTEGRATION, FileType.BETA_INTEGRATION):
                 if print_logs:
@@ -1088,9 +1089,7 @@ def process_integration(file_path: str, print_logs: bool, marketplace: str = 'xs
             # package integration
             package_name = os.path.basename(file_path)
             file_path = os.path.join(file_path, '{}.yml'.format(package_name))
-            if should_skip_item_by_mp(file_path, marketplace):
-                if print_logs:
-                    print(f'Skipping {file_path} due to mismatch with the marketplace this id set is generated for.')
+            if should_skip_item_by_mp(file_path, marketplace, print_logs):
                 return []
             if os.path.isfile(file_path):
                 # locally, might have leftover dirs without committed files
@@ -1108,9 +1107,7 @@ def process_script(file_path: str, print_logs: bool, marketplace: str = 'xsoar')
     res = []
     try:
         if os.path.isfile(file_path):
-            if should_skip_item_by_mp(file_path, marketplace):
-                if print_logs:
-                    print(f'Skipping {file_path} due to mismatch with the marketplace this id set is generated for.')
+            if should_skip_item_by_mp(file_path, marketplace, print_logs):
                 return []
             if find_type(file_path) == FileType.SCRIPT:
                 if print_logs:
@@ -1120,7 +1117,7 @@ def process_script(file_path: str, print_logs: bool, marketplace: str = 'xsoar')
             # package script
             unifier = YmlUnifier(file_path)
             yml_path, code = unifier.get_script_or_integration_package_data()
-            if should_skip_item_by_mp(yml_path, marketplace):
+            if should_skip_item_by_mp(yml_path, marketplace, print_logs):
                 return []
             if print_logs:
                 print(f'adding {file_path} to id_set')
@@ -1145,9 +1142,7 @@ def process_incident_fields(file_path: str, print_logs: bool, incidents_types_li
     """
     res = []
     try:
-        if should_skip_item_by_mp(file_path, marketplace):
-            if print_logs:
-                print(f'Skipping {file_path} due to mismatch with the marketplace this id set is generated for.')
+        if should_skip_item_by_mp(file_path, marketplace, print_logs):
             return []
         if find_type(file_path) == FileType.INCIDENT_FIELD:
             if print_logs:
@@ -1172,7 +1167,7 @@ def process_indicator_types(file_path: str, print_logs: bool, all_integrations: 
     """
     res = []
     try:
-        if should_skip_item_by_mp(file_path, marketplace):
+        if should_skip_item_by_mp(file_path, marketplace, print_logs):
             if print_logs:
                 print(f'Skipping {file_path} due to mismatch with the marketplace this id set is generated for.')
             return []
@@ -1203,9 +1198,7 @@ def process_generic_items(file_path: str, print_logs: bool, marketplace: str = '
     """
     res = []
     try:
-        if should_skip_item_by_mp(file_path, marketplace):
-            if print_logs:
-                print(f'Skipping {file_path} due to mismatch with the marketplace this id set is generated for.')
+        if should_skip_item_by_mp(file_path, marketplace, print_logs):
             return []
         if find_type(file_path) == FileType.GENERIC_FIELD:
             if print_logs:
@@ -1233,9 +1226,7 @@ def process_jobs(file_path: str, print_logs: bool, marketplace: str = 'xsoar') -
     """
     result: List = []
     try:
-        if should_skip_item_by_mp(file_path, marketplace):
-            if print_logs:
-                print(f'Skipping {file_path} due to mismatch with the marketplace this id set is generated for.')
+        if should_skip_item_by_mp(file_path, marketplace, print_logs):
             return []
         if find_type(file_path) == FileType.JOB:
             if print_logs:
@@ -1275,9 +1266,7 @@ def process_general_items(file_path: str, print_logs: bool, expected_file_types:
     res = []
     try:
         if find_type(file_path) in expected_file_types:
-            if should_skip_item_by_mp(file_path, marketplace):
-                if print_logs:
-                    print(f'Skipping {file_path} due to mismatch with the marketplace this id set is generated for.')
+            if should_skip_item_by_mp(file_path, marketplace, print_logs):
                 return []
             if print_logs:
                 print(f'adding {file_path} to id_set')
@@ -1305,9 +1294,7 @@ def process_test_playbook_path(file_path: str, print_logs: bool, marketplace: st
     try:
         if print_logs:
             print(f'adding {file_path} to id_set')
-        if should_skip_item_by_mp(file_path, marketplace):
-            if print_logs:
-                print(f'Skipping {file_path} due to mismatch with the marketplace this id set is generated for.')
+        if should_skip_item_by_mp(file_path, marketplace, print_logs):
             return None, None
         if find_type(file_path) == FileType.TEST_SCRIPT:
             script = get_script_data(file_path)

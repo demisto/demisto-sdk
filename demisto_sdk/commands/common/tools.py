@@ -2224,19 +2224,21 @@ def get_api_module_dependencies(pkgs, id_set_path):
 
     id_set = open_id_set_file(id_set_path)
     api_modules = [pkg.name for pkg in pkgs if API_MODULES_PACK in pkg.parts]
-    scripts = id_set.get(IdSetKeys.SCRIPTS.value)
-    integrations = id_set.get(IdSetKeys.INTEGRATIONS.value)
+    scripts = id_set.get(IdSetKeys.SCRIPTS.value, [])
+    integrations = id_set.get(IdSetKeys.INTEGRATIONS.value, [])
     using_scripts, using_integrations = [], []
-    # TODO: add prints and dependent on which
-    # TODO: add all commands to sdk nightly
     for script in scripts:
+        script_name = list(script.values())[0].get('name')
         api_module = list(script.values())[0].get(IdSetKeys.API_MODULES.value, [])
         if api_module in api_modules:
+            print(f"found script {script_name} dependent on {api_module}")
             using_scripts.extend(list(script.values()))
 
     for integration in integrations:
+        integration_name = list(integration.values())[0].get('name')
         api_module = list(integration.values())[0].get(IdSetKeys.API_MODULES.value, [])
         if api_module in api_modules:
+            print(f"found integration {integration_name} dependent on {api_module}")
             using_integrations.extend(list(integration.values()))
 
     using_scripts_pkg_paths = [Path(script.get(IdSetKeys.FILE_PATH.value)).parent.absolute() for

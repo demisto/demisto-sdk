@@ -27,7 +27,7 @@ from demisto_sdk.commands.common.content import (Content, ContentError,
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     JSONContentObject, Script, TextObject, YAMLContentObject,
     YAMLContentUnifiedObject)
-from demisto_sdk.commands.common.tools import arg_to_list
+from demisto_sdk.commands.common.tools import arg_to_list, is_object_in_id_set
 
 from .artifacts_report import ArtifactsReport, ObjectReport
 
@@ -53,7 +53,8 @@ EX_FAIL = 1
 class ArtifactsManager:
     def __init__(self, artifacts_path: str, zip: bool, packs: bool, content_version: str, suffix: str,
                  cpus: int, marketplace: str = 'xsoar', id_set_path: str = '', pack_names: str = 'all', signature_key: str = '',
-                 sign_directory: Path = None, remove_test_playbooks: bool = True):
+                 sign_directory: Path = None, remove_test_playbooks: bool = True,
+                 only_items_from_id_set: bool = False):
         """ Content artifacts configuration
 
         Args:
@@ -83,6 +84,7 @@ class ArtifactsManager:
         self.signDirectory = sign_directory
         self.remove_test_playbooks = remove_test_playbooks
         self.marketplace = marketplace.lower()
+        self.only_items_from_id_set = only_items_from_id_set
         # run related arguments
         self.content_new_path = self.artifacts_path / 'content_new'
         self.content_test_path = self.artifacts_path / 'content_test'
@@ -150,7 +152,7 @@ class ArtifactsManager:
 
 
 class ContentItemsHandler:
-    def __init__(self):
+    def __init__(self, only_items_from_id_set=False):
         self.server_min_version = parse('1.0.0')
         self.content_items: Dict[ContentItems, List] = {
             ContentItems.SCRIPTS: [],
@@ -194,8 +196,9 @@ class ContentItemsHandler:
             GENERIC_MODULES_DIR: self.add_generic_module_as_content_item,
             GENERIC_DEFINITIONS_DIR: self.add_generic_definition_as_content_item
         }
+        self.only_items_from_id_set = only_items_from_id_set
 
-    def handle_content_item(self, content_object: ContentObject):
+    def handle_content_item(self, content_object: ContentObject, pack_id, id_set):
         """Verifies the validity of the content object and parses it to the correct entities list.
 
         Args:
@@ -212,6 +215,10 @@ class ContentItemsHandler:
 
         # skip content items that are not displayed in contentItems
         if content_object_directory not in CONTENT_ITEMS_DISPLAY_FOLDERS:
+            return
+
+        # skip content items that are not displayed in the id set, if the corresponding flag is used
+        if self.only_items_from_id_set and not is_object_in_id_set(content_object.get('name'), pack_id, id_set):
             return
 
         self.server_min_version = max(self.server_min_version, content_object.from_version)
@@ -628,46 +635,46 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
     pack_report = ArtifactsReport(f"Pack {pack.id}:")
 
     pack.metadata.load_user_metadata(pack.id, pack.path.name, pack.path, logger)
-    content_items_handler = ContentItemsHandler()
+    content_items_handler = ContentItemsHandler(only_items_from_id_set=artifact_manager.only_items_from_id_set)
     is_feed_pack = False
 
     for classifier in pack.classifiers:
-        content_items_handler.handle_content_item(classifier)
+        content_items_handler.handle_content_item(classifier, pack.id, artifact_manager.id_set_path)
         pack_report += dump_pack_conditionally(artifact_manager, classifier)
     for connection in pack.connections:
         pack_report += dump_pack_conditionally(artifact_manager, connection)
     for incident_field in pack.incident_fields:
-        content_items_handler.handle_content_item(incident_field)
+        content_items_handler.handle_content_item(incident_field, pack.id, artifact_manager.id_set_path)
         pack_report += dump_pack_conditionally(artifact_manager, incident_field)
     for incident_type in pack.incident_types:
-        content_items_handler.handle_content_item(incident_type)
+        content_items_handler.handle_content_item(incident_type, pack.id, artifact_manager.id_set_path)
         pack_report += dump_pack_conditionally(artifact_manager, incident_type)
     for indicator_field in pack.indicator_fields:
-        content_items_handler.handle_content_item(indicator_field)
+        content_items_handler.handle_content_item(indicator_field, pack.id, artifact_manager.id_set_path)
         pack_report += dump_pack_conditionally(artifact_manager, indicator_field)
     for indicator_type in pack.indicator_types:
         # list of indicator types in one file (i.e. old format) instead of one per file aren't supported from 6.0.0 server version
         if indicator_type.is_file_structure_list():
             logger.error(f'Indicator type "{indicator_type.path.name}" file holds a list and therefore is not supported.')
         else:
-            content_items_handler.handle_content_item(indicator_type)
+            content_items_handler.handle_content_item(indicator_type, pack.id, artifact_manager.id_set_path)
             pack_report += dump_pack_conditionally(artifact_manager, indicator_type)
     for integration in pack.integrations:
-        content_items_handler.handle_content_item(integration)
+        content_items_handler.handle_content_item(integration, pack.id, artifact_manager.id_set_path)
         is_feed_pack = is_feed_pack or integration.is_feed
         pack_report += dump_pack_conditionally(artifact_manager, integration)
     for job in pack.jobs:
-        content_items_handler.handle_content_item(job)
+        content_items_handler.handle_content_item(job, pack.id, artifact_manager.id_set_path)
         pack_report += dump_pack_conditionally(artifact_manager, job)
     for list_item in pack.lists:
-        content_items_handler.handle_content_item(list_item)
+        content_items_handler.handle_content_item(list_item, pack.id, artifact_manager.id_set_path)
         pack_report += dump_pack_conditionally(artifact_manager, list_item)
     for playbook in pack.playbooks:
-        content_items_handler.handle_content_item(playbook)
+        content_items_handler.handle_content_item(playbook, pack.id, artifact_manager.id_set_path)
         is_feed_pack = is_feed_pack or playbook.get('name', '').startswith('TIM')
         pack_report += dump_pack_conditionally(artifact_manager, playbook)
     for script in pack.scripts:
-        content_items_handler.handle_content_item(script)
+        content_items_handler.handle_content_item(script, pack.id, artifact_manager.id_set_path)
         pack_report += dump_pack_conditionally(artifact_manager, script)
     for test_playbook in pack.test_playbooks:
         pack_report += dump_pack_conditionally(artifact_manager, test_playbook)
@@ -680,31 +687,31 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
 
     if artifact_manager.marketplace == MarketplaceVersions.XSOAR.value:
         for dashboard in pack.dashboards:
-            content_items_handler.handle_content_item(dashboard)
+            content_items_handler.handle_content_item(dashboard, pack.id, artifact_manager.id_set_path)
             pack_report += dump_pack_conditionally(artifact_manager, dashboard)
         for generic_definition in pack.generic_definitions:
-            content_items_handler.handle_content_item(generic_definition)
+            content_items_handler.handle_content_item(generic_definition, pack.id, artifact_manager.id_set_path)
             pack_report += dump_pack_conditionally(artifact_manager, generic_definition)
         for generic_module in pack.generic_modules:
-            content_items_handler.handle_content_item(generic_module)
+            content_items_handler.handle_content_item(generic_module, pack.id, artifact_manager.id_set_path)
             pack_report += dump_pack_conditionally(artifact_manager, generic_module)
         for generic_type in pack.generic_types:
-            content_items_handler.handle_content_item(generic_type)
+            content_items_handler.handle_content_item(generic_type, pack.id, artifact_manager.id_set_path)
             pack_report += dump_pack_conditionally(artifact_manager, generic_type)
         for generic_field in pack.generic_fields:
-            content_items_handler.handle_content_item(generic_field)
+            content_items_handler.handle_content_item(generic_field, pack.id, artifact_manager.id_set_path)
             pack_report += dump_pack_conditionally(artifact_manager, generic_field)
         for layout in pack.layouts:
-            content_items_handler.handle_content_item(layout)
+            content_items_handler.handle_content_item(layout, pack.id, artifact_manager.id_set_path)
             pack_report += dump_pack_conditionally(artifact_manager, layout)
         for pre_process_rule in pack.pre_process_rules:
-            content_items_handler.handle_content_item(pre_process_rule)
+            content_items_handler.handle_content_item(pre_process_rule, pack.id, artifact_manager.id_set_path)
             pack_report += dump_pack_conditionally(artifact_manager, pre_process_rule)
         for report in pack.reports:
-            content_items_handler.handle_content_item(report)
+            content_items_handler.handle_content_item(report, pack.id, artifact_manager.id_set_path)
             pack_report += dump_pack_conditionally(artifact_manager, report)
         for widget in pack.widgets:
-            content_items_handler.handle_content_item(widget)
+            content_items_handler.handle_content_item(widget, pack.id, artifact_manager.id_set_path)
             pack_report += dump_pack_conditionally(artifact_manager, widget)
 
     for tool in pack.tools:
@@ -723,7 +730,7 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
         pack_report += ObjectReport(pack.metadata, content_packs=True)
         pack.metadata.content_items = content_items_handler.content_items
         pack.metadata.server_min_version = pack.metadata.server_min_version or content_items_handler.server_min_version
-        if artifact_manager.id_set_path:
+        if artifact_manager.id_set_path and not artifact_manager.only_items_from_id_set:
             # Dependencies can only be done when id_set file is given.
             pack.metadata.handle_dependencies(pack.path.name, artifact_manager.id_set_path, logger)
         else:

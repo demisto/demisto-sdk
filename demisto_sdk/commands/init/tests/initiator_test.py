@@ -112,7 +112,7 @@ class TestCreateMetadata:
             'tags': [],
             'useCases': [],
             'keywords': [],
-            'marketplaces': MARKETPLACES
+            'marketplaces': MARKETPLACES,
         }
 
     def test_create_metadata_non_filled_manually_with_data(self, initiator):
@@ -145,7 +145,7 @@ class TestCreateMetadata:
             'tags': [],
             'useCases': [],
             'keywords': [],
-            'marketplaces': MARKETPLACES
+            'marketplaces': MARKETPLACES,
         }
 
     def test_create_metadata_partner(self, monkeypatch, initiator):
@@ -186,7 +186,7 @@ class TestCreateMetadata:
             'url': PACK_URL,
             'useCases': [],
             'githubUser': [],
-            'marketplaces': MARKETPLACES
+            'marketplaces': MARKETPLACES,
         }
 
     def test_create_metadata_partner_wrong_url(self, monkeypatch, initiator):
@@ -227,7 +227,7 @@ class TestCreateMetadata:
             'url': PACK_URL,
             'useCases': [],
             'githubUser': [],
-            'marketplaces': ['xsoar']
+            'marketplaces': ['xsoar'],
         }
 
     def test_create_metadata_community(self, monkeypatch, initiator):
@@ -268,7 +268,7 @@ class TestCreateMetadata:
             'url': MARKETPLACE_LIVE_DISCUSSIONS,
             'useCases': [],
             'githubUser': [],
-            'marketplaces': ['marketplacev2']
+            'marketplaces': ['marketplacev2'],
         }
 
 

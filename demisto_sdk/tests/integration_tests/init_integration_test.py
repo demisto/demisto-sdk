@@ -77,8 +77,8 @@ def test_integration_init_integration_positive(monkeypatch, tmp_path):
             "useCases": [],
             "keywords": [],
             "githubUser": ["GithubUser1", "GithubUser2"],
-            "marketplaces": ['xsoar', 'marketplacev2']
-                   # testing for subset (<=) to avoid testing created and modified timestamps
+            "marketplaces": ['xsoar', 'marketplacev2'],
+            # testing for subset (<=) to avoid testing created and modified timestamps
         }.items() <= metadata_json.items()
 
     integration_dir_files = {file for file in listdir(tmp_integration_path)}
@@ -157,7 +157,7 @@ def test_integration_init_integration_positive_no_inline_pack_name(monkeypatch, 
             "useCases": [],
             "keywords": [],
             "githubUser": ["GithubUser1", "GithubUser2"],
-            "marketplaces": ['xsoar', 'marketplacev2']
+            "marketplaces": ['xsoar', 'marketplacev2'],
             # testing for subset (<=) to avoid testing created and modified timestamps
         }.items() <= metadata_json.items()
 

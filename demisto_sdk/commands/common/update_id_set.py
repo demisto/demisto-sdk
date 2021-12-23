@@ -101,6 +101,7 @@ def should_skip_item_by_mp(file_path: str, marketplace: str):
      1. Check if the given item has the right marketplaces under the 'marketplaces' in the item's file,
      2. Otherwise, we check if the item is inside a pack that it's pack metadata 'marketplaces' field does not include
      the current marketplace we are creating this id set for.
+     If there are no 'marketplaces' fields in the the item's file and the metadata, the item is set as xsoar only.
 
     Args:
         file_path: path to content item

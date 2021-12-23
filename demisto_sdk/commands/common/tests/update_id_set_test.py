@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pytest
 
+import demisto_sdk.commands.common.update_id_set as uis
 from demisto_sdk.commands.common.constants import (DEFAULT_JOB_FROM_VERSION,
                                                    JOBS_DIR, FileType)
 from demisto_sdk.commands.common.legacy_git_tools import git_path
@@ -24,8 +25,6 @@ from demisto_sdk.commands.common.update_id_set import (
     get_widget_data, has_duplicate, merge_id_sets, process_general_items,
     process_incident_fields, process_integration, process_jobs, process_script,
     re_create_id_set, should_skip_item_by_mp)
-import demisto_sdk.commands.common.update_id_set as uis
-
 from TestSuite.utils import IsEqualFunctions
 
 TESTS_DIR = f'{git_path()}/demisto_sdk/tests'

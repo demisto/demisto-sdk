@@ -14,8 +14,7 @@ from enum import Enum
 from functools import lru_cache, partial
 from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen, check_output
-from typing import (Callable, Dict, List, Match, Optional, Set, Tuple, Type,
-                    Union)
+from typing import Callable, Dict, List, Match, Optional, Tuple, Type, Union
 
 import click
 import colorama
@@ -42,7 +41,8 @@ from demisto_sdk.commands.common.constants import (
     PACKS_README_FILE_NAME, PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR,
     RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR,
-    XSOAR_CONFIG_FILE, FileType, GitContentConfig, urljoin)
+    XSOAR_CONFIG_FILE, FileType, GitContentConfig, MarketplaceVersions,
+    urljoin)
 from demisto_sdk.commands.common.git_util import GitUtil
 
 urllib3.disable_warnings()
@@ -2171,7 +2171,8 @@ def get_current_repo() -> Tuple[str, str, str]:
 
 def get_mp_types_from_metadata_by_item(file_path):
     """
-    Get the supporting marketplaces for the given content item, defined by the mp field in the metadata
+    Get the supporting marketplaces for the given content item, defined by the mp field in the metadata.
+    If the field doesnt exist in the pack's metadata, consider as xsoar only.
     Args:
         file_path: path to content item in content repo
 
@@ -2184,7 +2185,9 @@ def get_mp_types_from_metadata_by_item(file_path):
     try:
         with open(metadata_path, 'r') as metadata_file:
             metadata = json.load(metadata_file)
-            marketplaces = metadata[MARKETPLACE_KEY_PACK_METADATA]
+            marketplaces = metadata.get(MARKETPLACE_KEY_PACK_METADATA)
+            if not marketplaces:
+                return [MarketplaceVersions.XSOAR.value]
         return marketplaces
     except FileNotFoundError:
         return []

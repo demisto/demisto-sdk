@@ -261,7 +261,7 @@ mapping:
     type: seq
     sequence:
       - type: str
-        enum: [ 'xsoar', 'marketplacev2' ]
+        enum: ['xsoar', 'marketplacev2']
 
 
 # playbook->tasks

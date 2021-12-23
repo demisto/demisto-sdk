@@ -2179,15 +2179,12 @@ def get_mp_types_from_metadata_by_item(file_path):
     Returns:
         list of names of supporting marketplaces (current options are marketplacev2 and xsoar)
     """
-    if METADATA_FILE_NAME in Path(file_path).parts:  # for unified integrations
+    if METADATA_FILE_NAME in Path(file_path).parts: # for when the type is pack, the item we get is the metasata path
         metadata_path = file_path
     else:
         metadata_path_parts = get_pack_dir(file_path)
-        if METADATA_FILE_NAME not in metadata_path_parts:  # for unified integrations
-            metadata_path = Path(*metadata_path_parts)
-            metadata_path = metadata_path / METADATA_FILE_NAME
-        else:
-            metadata_path = Path(*metadata_path_parts)
+        metadata_path = Path(*metadata_path_parts) / METADATA_FILE_NAME
+
     try:
         with open(metadata_path, 'r') as metadata_file:
             metadata = json.load(metadata_file)

@@ -2179,9 +2179,15 @@ def get_mp_types_from_metadata_by_item(file_path):
     Returns:
         list of names of supporting marketplaces (current options are marketplacev2 and xsoar)
     """
-    file_path_parts = Path(file_path).parts
-
-    metadata_path = Path(*file_path_parts[:2]) / METADATA_FILE_NAME
+    if METADATA_FILE_NAME in Path(file_path).parts:  # for unified integrations
+        metadata_path = file_path
+    else:
+        metadata_path_parts = get_pack_dir(file_path)
+        if METADATA_FILE_NAME not in metadata_path_parts:  # for unified integrations
+            metadata_path = Path(*metadata_path_parts)
+            metadata_path = metadata_path / METADATA_FILE_NAME
+        else:
+            metadata_path = Path(*metadata_path_parts)
     try:
         with open(metadata_path, 'r') as metadata_file:
             metadata = json.load(metadata_file)
@@ -2191,3 +2197,20 @@ def get_mp_types_from_metadata_by_item(file_path):
             return marketplaces
     except FileNotFoundError:
         return []
+
+
+def get_pack_dir(path):
+    """
+    Used for testing packs where the location of the "Packs" dir is not constant.
+    Args:
+        path: path of current file
+
+    Returns:
+        the path starting from Packs dir
+
+    """
+    parts = Path(path).parts
+    for index in range(len(parts)):
+        if parts[index] == 'Packs':
+            return parts[:index+2]
+    return None

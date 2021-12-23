@@ -9,10 +9,9 @@
 * Added option to specify `Incident Type`, `Incoming Mapper` and `Classifier` when configuring instance in **test-content**
 * added a new command **run-test-playbook** to run a test playbook in a given XSOAR instance.
 * Fixed an issue in **format** when running on a modified YML, that the `id` value is not changed to its old `id` value.
-* Added the *--check-dependent-api-module* flag to **lint**, that enables running lint also on packs dependent modified api modules, if there are any.
-* Added the *--get-dependent-on-* flag to **find-dependencies**, that enables finding all packs dependent on given packs.
-* Added the *--all-packs-dependencies* flag to **find-dependencies**, that generates a json with all packs dependencies.
-* For *--all-packs-dependencies* in **find-dependencies**, added the information to the dependecies graph of the items causing the dependencies.
+* Enhancement for **split** command, replace `ApiModule` code block to `import` when splitting a YML.
+* Fixed an issue where indicator types were missing from the pack's content, when uploading using **zip-packs**.
+* The request data body format generated in the **postman-codegen** will use the python argument's name and not the raw data argument's name.
 
 # 1.5.4
 * Fixed an issue with the **format** command when contributing via the UI

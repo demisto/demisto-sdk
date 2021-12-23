@@ -2212,5 +2212,5 @@ def get_pack_dir(path):
     parts = Path(path).parts
     for index in range(len(parts)):
         if parts[index] == 'Packs':
-            return parts[:index+2]
+            return parts[:index + 2]
     return None

@@ -6,7 +6,7 @@ from copy import deepcopy
 from distutils.version import LooseVersion
 from pathlib import Path
 from pprint import pformat
-from typing import Any, Dict, Iterable, Optional, Set, Tuple, Union
+from typing import Any, Iterable, Optional, Set, Tuple, Union
 
 import click
 import networkx as nx
@@ -411,8 +411,8 @@ class PackDependencies:
             set: dependencies data that includes pack id and whether is mandatory or not.
             if get_dependent_on: returns also dict: found {pack, (item_type, item_id)} ids
         """
-        dependencies_packs = Set[Any]
-        items_dependencies = Dict[str, Any]
+        dependencies_packs: set = set()
+        items_dependencies: dict = {}
         pack_dependencies_data = []
         if verbose:
             click.secho('### Scripts', fg='white')
@@ -520,8 +520,8 @@ class PackDependencies:
             if get_dependent_on: returns also mandatory dependency items dict: found {pack, (item_type, item_id)} ids
 
         """
-        dependencies_packs = Set[Any]
-        items_dependencies = Dict[str, Any]
+        dependencies_packs: set = set()
+        items_dependencies: dict = dict()
         packs_and_items_dict = dict()
         if verbose:
             click.secho('### Playbooks', fg='white')
@@ -652,8 +652,8 @@ class PackDependencies:
             if get_dependent_on: returns also dict: found {pack, (item_type, item_id)} ids
 
         """
-        dependencies_packs = Set[Any]
-        items_dependencies = Dict[str, Any]
+        dependencies_packs: set = set()
+        items_dependencies: dict = dict()
         if verbose:
             click.secho('### Layouts', fg='white')
 
@@ -728,8 +728,8 @@ class PackDependencies:
             if get_dependent_on: returns also dict: found {pack, (item_type, item_id)} ids
 
         """
-        dependencies_packs = Set[Any]
-        items_dependencies = Dict[str, Any]
+        dependencies_packs: set = set()
+        items_dependencies: dict = dict()
         if verbose:
             click.secho('### Incident Fields', fg='white')
 
@@ -788,8 +788,8 @@ class PackDependencies:
             if get_dependent_on: returns also dict: found {pack, (item_type, item_id)} ids
 
         """
-        dependencies_packs = Set[Any]
-        items_dependencies = Dict[str, Any]
+        dependencies_packs: set = set()
+        items_dependencies: dict = dict()
         if verbose:
             click.secho('### Indicator Types', fg='white')
 
@@ -858,8 +858,8 @@ class PackDependencies:
             if get_dependent_on: returns also dict: found {pack, (item_type, item_id)} ids
 
         """
-        dependencies_packs = Set[Any]
-        items_dependencies = Dict[str, Any]
+        dependencies_packs: set = set()
+        items_dependencies: dict = dict()
         if verbose:
             click.secho('### Integrations', fg='white')
 
@@ -942,8 +942,8 @@ class PackDependencies:
             if get_dependent_on: returns also dict: found {pack, (item_type, item_id)} ids
 
         """
-        dependencies_packs = Set[Any]
-        items_dependencies = Dict[str, Any]
+        dependencies_packs: set = set()
+        items_dependencies: dict = dict()
         if verbose:
             click.secho('### Incident Types', fg='white')
 
@@ -1008,8 +1008,8 @@ class PackDependencies:
             if get_dependent_on: returns also dict: found {pack, (item_type, item_id)} ids
 
         """
-        dependencies_packs = Set[Any]
-        items_dependencies = Dict[str, Any]
+        dependencies_packs: set = set()
+        items_dependencies: dict = dict()
         if verbose:
             click.secho('### Classifiers', fg='white')
 
@@ -1091,8 +1091,8 @@ class PackDependencies:
             if get_dependent_on: returns also dict: found {pack, (item_type, item_id)} ids
 
         """
-        dependencies_packs = Set[Any]
-        items_dependencies = Dict[str, Any]
+        dependencies_packs: set = set()
+        items_dependencies: dict = dict()
 
         if verbose:
             click.secho('### Mappers', fg='white')
@@ -1199,8 +1199,8 @@ class PackDependencies:
             if get_dependent_on: returns also dict: found {pack, (item_type, item_id)} ids
 
         """
-        dependencies_packs = Set[Any]
-        items_dependencies = Dict[str, Any]
+        dependencies_packs: set = set()
+        items_dependencies: dict = dict()
 
         if verbose:
             click.secho(f'### {header}', fg='white')
@@ -1250,8 +1250,8 @@ class PackDependencies:
             if get_dependent_on: returns also dict: found {pack, (item_type, item_id)} ids
 
         """
-        dependencies_packs = Set[Any]
-        items_dependencies = Dict[str, Any]
+        dependencies_packs: set = set()
+        items_dependencies: dict = dict()
 
         if verbose:
             click.secho('### Generic Types', fg='white')
@@ -1329,8 +1329,8 @@ class PackDependencies:
             if get_dependent_on: returns also dict: found {pack, (item_type, item_id)} ids
 
         """
-        dependencies_packs = Set[Any]
-        items_dependencies = Dict[str, Any]
+        dependencies_packs: set = set()
+        items_dependencies: dict = dict()
 
         if verbose:
             click.secho('### Generic Fields', fg='white')
@@ -1406,8 +1406,8 @@ class PackDependencies:
             if get_dependent_on: returns also dict: found {pack, (item_type, item_id)} ids
 
         """
-        dependencies_packs = Set[Any]
-        items_dependencies = Dict[str, Any]
+        dependencies_packs: set = set()
+        items_dependencies: dict = dict()
 
         if verbose:
             click.secho('### Generic Modules', fg='white')
@@ -1478,8 +1478,8 @@ class PackDependencies:
             if get_dependent_on: returns also dict: found {pack, (item_type, item_id)} ids
 
         """
-        all_job_dependencies = Set[Any]
-        items_dependencies = Dict[str, Any]
+        all_job_dependencies: set = set()
+        items_dependencies: dict = dict()
 
         if verbose:
             click.secho('### Jobs', fg='white')
@@ -2077,7 +2077,7 @@ def calculate_single_pack_depends_on(pack: str, dependency_graph: nx.DiGraph, ve
                             print(f'Parsing info of dependent items {dep_item} from {dep_pack} on item {item} from '
                                   f'{pack} from graph')
                         if first_level_dependencies[man_pack].get('dependent_items'):
-                            first_level_dependencies[man_pack]['dependent_items'].append((item, dep_item))
+                            first_level_dependencies[man_pack]['dependent_items'].append((item, dep_item))  # type:ignore
                         else:
                             first_level_dependencies[man_pack]['dependent_items'] = [(item, dep_item)]  # type:ignore
     except Exception as e:

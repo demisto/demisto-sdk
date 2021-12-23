@@ -84,25 +84,10 @@ class IDSetCreator:
                     command_name_to_implemented_integration_map[command] = [integration_name]
         return command_name_to_implemented_integration_map
 
-    # def save_id_set(self):
-    #     print(f"first: {self.output}")
-    #     if not self.output:
-    #         self.output = MP_V2_ID_SET_PATH if self.marketplace == MarketplaceVersions.MarketplaceV2.value \
-    #             else DEFAULT_ID_SET_PATH
-    #     print(f"second: {self.output}")
-    #
-    #     if self.output:
-    #         print(f"third: {self.output}")
-    #         if not exists(self.output):
-    #             intermediate_dirs = os.path.dirname(os.path.abspath(self.output))
-    #             os.makedirs(intermediate_dirs, exist_ok=True)
-    #         with open(self.output, 'w+') as id_set_file:
-    #             json.dump(self.id_set, id_set_file, indent=4)
-
     def save_id_set(self):
         if self.output == "":
             self.output = MP_V2_ID_SET_PATH if self.marketplace == MarketplaceVersions.MarketplaceV2.value \
-                             else DEFAULT_ID_SET_PATH
+                else DEFAULT_ID_SET_PATH
         if self.output:
             if not exists(self.output):
                 intermediate_dirs = os.path.dirname(os.path.abspath(self.output))

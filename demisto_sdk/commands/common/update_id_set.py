@@ -94,6 +94,36 @@ BUILT_IN_FIELDS = [
 ]
 
 
+def should_skip_item_by_mp(file_path: str, marketplace: str):
+    """
+    Checks if the item given (as path) should be part of the current generated id set.
+     The checks are in this order:
+     1. Check if the given item has the right marketplaces under the 'marketplaces' in the item's file,
+     2. Otherwise, we check if the item is inside a pack that it's pack metadata 'marketplaces' field does not include
+     the current marketplace we are creating this id set for.
+
+    Args:
+        file_path: path to content item
+        marketplace: the marketplace this current generated id set is for
+
+    Returns: True if should be skipped, else False
+
+    """
+
+    # first check, check field 'marketplaces' in the item's file
+    file_type = Path(file_path).suffix
+    try:
+        item_data = get_file(file_path, file_type)
+        if item_data.get('marketplaces'):
+            if marketplace not in item_data.get('marketplaces'):
+                return True
+    except (ValueError, FileNotFoundError, IsADirectoryError):
+        return True
+
+    # second check, check the metadata of the pack
+    return marketplace not in get_mp_types_from_metadata_by_item(file_path)
+
+
 def build_tasks_graph(playbook_data):
     """
     Builds tasks flow graph.
@@ -1028,40 +1058,6 @@ def get_depends_on(data_dict):
             command_to_integration[splitted_cmd[-1]] = splitted_cmd[0]
 
     return depends_on_list, command_to_integration
-
-
-def should_skip_item_by_mp(file_path: str, marketplace: str):
-    """
-    Checks if the item given (as path) should be part of the current generated id set.
-     The checks are in this order:
-     1. If we are in a xsoar run, then all packs should be uploaded.
-     2. Otherwise, this is not a xsoar run, we check if the given item has the right marketplaces under the 'marketplaces' in the item's file,
-     3. Otherwise, we check if the item is inside a pack that it's pack metadata 'marketplaces' field does not include
-     the current marketplace we are creating this id set for.
-
-    Args:
-        file_path: path to content item
-        marketplace: the marketplace this current generated id set is for
-
-    Returns: True if should be skipped, else False
-
-    """
-    # first check, if we are using this id set for xsoar MP
-    if marketplace == MarketplaceVersions.XSOAR.value:
-        return False
-
-    # second check, check field 'marketplaces' in the item's file
-    file_type = Path(file_path).suffix
-    try:
-        item_data = get_file(file_path, file_type)
-        if item_data.get('marketplaces'):
-            if marketplace not in item_data.get('marketplaces'):
-                return True
-    except (ValueError, FileNotFoundError, IsADirectoryError):
-        return True
-
-    # third check, check the metadata of the pack
-    return marketplace not in get_mp_types_from_metadata_by_item(file_path)
 
 
 def process_integration(file_path: str, print_logs: bool, marketplace: str = 'xsoar') -> list:

@@ -1320,12 +1320,11 @@ class ValidateManager:
         """Get the added and modified after file filtration to only relevant files for validate
 
         Returns:
-            5 sets:
+            4 sets:
             - The filtered modified files (including the renamed files)
             - The filtered added files
             - The changed metadata files
             - The modified old-format files (legacy unified python files)
-            # - The files with an unsupported extension
         """
 
         modified_files, added_files, renamed_files = self.get_unfiltered_changed_files_from_git()

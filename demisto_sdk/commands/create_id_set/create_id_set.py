@@ -101,7 +101,8 @@ class IDSetCreator:
 
     def save_id_set(self):
         if self.output == "":
-            self.output = DEFAULT_ID_SET_PATH
+            self.output = MP_V2_ID_SET_PATH if self.marketplace == MarketplaceVersions.MarketplaceV2.value \
+                             else DEFAULT_ID_SET_PATH
         if self.output:
             if not exists(self.output):
                 intermediate_dirs = os.path.dirname(os.path.abspath(self.output))

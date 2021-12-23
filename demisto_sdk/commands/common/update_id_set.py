@@ -1054,8 +1054,9 @@ def should_skip_item_by_mp(file_path: str, marketplace: str):
     file_type = Path(file_path).suffix
     try:
         item_data = get_file(file_path, file_type)
-        if marketplace not in item_data.get('marketplaces', []):
-            return True
+        if item_data.get('marketplaces'):
+            if marketplace not in item_data.get('marketplaces'):
+                return True
     except (ValueError, FileNotFoundError, IsADirectoryError):
         return True
 

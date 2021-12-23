@@ -94,7 +94,7 @@ BUILT_IN_FIELDS = [
 ]
 
 
-def should_skip_item_by_mp(file_path: str, marketplace: str, print_logs: bool):
+def should_skip_item_by_mp(file_path: str, marketplace: str, print_logs: bool = False):
     """
     Checks if the item given (as path) should be part of the current generated id set.
      The checks are in this order:

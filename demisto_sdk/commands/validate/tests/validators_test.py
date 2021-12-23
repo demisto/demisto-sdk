@@ -1509,7 +1509,7 @@ def test_check_file_relevance_and_format_path_type_missing_file(mocker):
     mocker.patch('demisto_sdk.commands.validate.validate_manager.find_type', return_value=None)
     unsupported_files = set()
     assert validator_obj.check_file_relevance_and_format_path("Packs/type_missing_filename", None, set(), unsupported_files) is None
-    assert "Packs/type_missing_filename" not in unsupported_files
+    assert "Packs/type_missing_filename" in unsupported_files
     mocked_handler.assert_called()
 
 

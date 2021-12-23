@@ -396,7 +396,7 @@ class PackDependencies:
                                       id_set: dict,
                                       verbose: bool,
                                       exclude_ignored_dependencies: bool = True,
-                                      get_dependent_items: bool = False) -> Union[Tuple, Set[Any]]:
+                                      get_dependent_items: bool = False) -> Union[Tuple[Any, Any], Set[Any]]:
         """
         Collects script pack dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
         and the packs containing them.
@@ -466,7 +466,8 @@ class PackDependencies:
     def _differentiate_playbook_implementing_objects(implementing_objects: list,
                                                      skippable_tasks: set,
                                                      id_set_section: list,
-                                                     exclude_ignored_dependencies: bool = True, section_type=None):
+                                                     exclude_ignored_dependencies: bool = True, section_type=None) \
+            -> Tuple[Any, Any]:
         """
         Differentiate implementing objects by skippable.
 
@@ -503,7 +504,7 @@ class PackDependencies:
     @staticmethod
     def _collect_playbooks_dependencies(pack_playbooks: list, id_set: dict, verbose: bool,
                                         exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False) \
-            -> Union[Tuple, Set[Any]]:
+            -> Union[Tuple[Any, Any], Set[Any]]:
         """
         Collects playbook pack dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
         and the packs containing them.
@@ -635,7 +636,7 @@ class PackDependencies:
                                       verbose: bool,
                                       exclude_ignored_dependencies: bool = True,
                                       get_dependent_items: bool = False
-                                      ) -> Union[Tuple, Set[Any]]:
+                                      ) -> Union[Tuple[Any, Any], Set[Any]]:
         """
         Collects layouts pack dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
         and the packs containing them.
@@ -711,7 +712,7 @@ class PackDependencies:
     @staticmethod
     def _collect_incidents_fields_dependencies(pack_incidents_fields: list, id_set: dict, verbose: bool,
                                                exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False)\
-            -> Union[Tuple, Set[Any]]:
+            -> Union[Tuple[Any, Any], Set[Any]]:
         """
         Collects in incidents fields dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
         and the packs containing them.
@@ -771,7 +772,7 @@ class PackDependencies:
     @staticmethod
     def _collect_indicators_types_dependencies(pack_indicators_types: list, id_set: dict, verbose: bool,
                                                exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False)\
-            -> Union[Tuple, Set[Any]]:
+            -> Union[Tuple[Any, Any], Set[Any]]:
         """
         Collects in indicators types dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
         and the packs containing them.
@@ -842,7 +843,7 @@ class PackDependencies:
     @staticmethod
     def _collect_integrations_dependencies(pack_integrations: list, id_set: dict, verbose: bool,
                                            exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False)\
-            -> Union[Tuple, Set[Any]]:
+            -> Union[Tuple[Any, Any], Set[Any]]:
         """
         Collects integrations dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
         and the packs containing them.
@@ -925,7 +926,7 @@ class PackDependencies:
     @staticmethod
     def _collect_incidents_types_dependencies(pack_incidents_types: list, id_set: dict, verbose: bool,
                                               exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False)\
-            -> Union[Tuple, Set[Any]]:
+            -> Union[Tuple[Any, Any], Set[Any]]:
         """
         Collects in incidents types dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
         and the packs containing them.
@@ -991,7 +992,7 @@ class PackDependencies:
     @staticmethod
     def _collect_classifiers_dependencies(pack_classifiers: list, id_set: dict, verbose: bool,
                                           exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False) \
-            -> Union[Tuple, Set[Any]]:
+            -> Union[Tuple[Any, Any], Set[Any]]:
         """
         Collects in classifiers dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
         and the packs containing them.
@@ -1074,7 +1075,7 @@ class PackDependencies:
     @staticmethod
     def _collect_mappers_dependencies(pack_mappers: list, id_set: dict, verbose: bool,
                                       exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False)\
-            -> Union[Tuple, Set[Any]]:
+            -> Union[Tuple[Any, Any], Set[Any]]:
         """
         Collects in mappers dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
         and the packs containing them.
@@ -1182,7 +1183,7 @@ class PackDependencies:
     @staticmethod
     def _collect_widget_dependencies(pack_widgets: list, id_set: dict, verbose: bool,
                                      exclude_ignored_dependencies: bool = True, header: str = "Widgets",
-                                     get_dependent_items: bool = False) -> Union[Tuple, Set[Any]]:
+                                     get_dependent_items: bool = False) -> Union[Tuple[Any, Any], Set[Any]]:
         """
         Collects widget dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
         and the packs containing them.
@@ -1235,7 +1236,7 @@ class PackDependencies:
     @staticmethod
     def _collect_generic_types_dependencies(pack_generic_types: list, id_set: dict, verbose: bool,
                                             exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False) \
-            -> Union[Tuple, Set[Any]]:
+            -> Union[Tuple[Any, Any], Set[Any]]:
         """
         Collects generic types dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
         and the packs containing them.
@@ -1312,7 +1313,7 @@ class PackDependencies:
     @staticmethod
     def _collect_generic_fields_dependencies(pack_generic_fields: list, id_set: dict, verbose: bool,
                                              exclude_ignored_dependencies: bool = True,
-                                             get_dependent_items: bool = False) -> Union[Tuple, Set[Any]]:
+                                             get_dependent_items: bool = False) -> Union[Tuple[Any, Any], Set[Any]]:
         """
         Collects in generic fields dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
         and the packs containing them.
@@ -1391,7 +1392,7 @@ class PackDependencies:
     @staticmethod
     def _collect_generic_modules_dependencies(pack_generic_modules: list, id_set: dict, verbose: bool,
                                               exclude_ignored_dependencies: bool = True,
-                                              get_dependent_items: bool = False) -> Union[Tuple, Set[Any]]:
+                                              get_dependent_items: bool = False) -> Union[Tuple[Any, Any], Set[Any]]:
         """
         Collects generic types dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
         and the packs containing them.
@@ -1462,7 +1463,7 @@ class PackDependencies:
     @staticmethod
     def _collect_jobs_dependencies(pack_jobs: list, id_set: dict, verbose: bool,
                                    exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False)\
-            -> Union[Tuple, Set[Any]]:
+            -> Union[Tuple[Any, Any], Set[Any]]:
         """
         Collects integrations dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
         and the packs containing them.
@@ -2048,7 +2049,7 @@ class PackDependencies:
         return pack_meta_file_content
 
 
-def calculate_single_pack_depends_on(pack: str, dependency_graph: object, verbose: bool = False) \
+def calculate_single_pack_depends_on(pack: str, dependency_graph: nx.DiGraph, verbose: bool = False) \
         -> Tuple[dict, str]:
     """
 
@@ -2078,7 +2079,7 @@ def calculate_single_pack_depends_on(pack: str, dependency_graph: object, verbos
                         if first_level_dependencies[man_pack].get('dependent_items'):
                             first_level_dependencies[man_pack]['dependent_items'].append((item, dep_item))
                         else:
-                            first_level_dependencies[man_pack]['dependent_items'] = [(item, dep_item)]  #type:ignore
+                            first_level_dependencies[man_pack]['dependent_items'] = [(item, dep_item)]  # type:ignore
     except Exception as e:
         print_error(f"Failed calculating {pack} pack dependencies: {e}")
         raise

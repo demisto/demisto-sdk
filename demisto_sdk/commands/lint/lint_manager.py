@@ -6,7 +6,7 @@ import os
 import re
 import sys
 import textwrap
-from typing import Any, Dict, List, Set
+from typing import Any, Dict, List, Set, Union
 
 # Third party packages
 import docker
@@ -182,7 +182,7 @@ class LintManager:
         logger.debug("Docker daemon test passed")
         return facts
 
-    def _get_packages(self, content_repo: git.Repo, input: str, git: bool = False, all_packs: bool = False,
+    def _get_packages(self, content_repo: git.Repo, input: Union[str, List[str]], git: bool = False, all_packs: bool = False,
                       base_branch: str = 'master') -> List[PosixPath]:
         """ Get packages paths to run lint command.
 

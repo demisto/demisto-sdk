@@ -146,7 +146,8 @@ def update_pack_metadata_with_dependencies(pack_folder_name: str, first_level_de
 
     # Filter out the dependent items to avoid overloading the pack's metadata
     for _, dependency_info in first_level_dependencies.items():
-        dependency_info.pop('depending_on_items_mandatorily')
+        if dependency_info.get('depending_on_items_mandatorily'):
+            dependency_info.pop('depending_on_items_mandatorily')
 
     with open(pack_metadata_path, 'r+') as pack_metadata_file:
         pack_metadata = json.load(pack_metadata_file)

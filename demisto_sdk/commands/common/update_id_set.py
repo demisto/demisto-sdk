@@ -1744,7 +1744,8 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
         if 'Integrations' in objects_to_create:
             print_color("\nStarting iteration over Integrations", LOG_COLORS.GREEN)
             for arr in pool.map(partial(process_integration,
-                                        print_logs=print_logs, marketplace=marketplace
+                                        print_logs=print_logs,
+                                        marketplace=marketplace,
                                         ),
                                 get_integrations_paths(pack_to_create)):
 

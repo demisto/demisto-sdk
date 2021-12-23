@@ -76,7 +76,8 @@ class LintManager:
                                                          git=git,
                                                          all_packs=all_packs,
                                                          base_branch=self._prev_ver)
-        print(f"Executing lint and test on {Colors.Fg.cyan}{len(self._pkgs)}{Colors.reset} integrations and scripts")
+        if self._pkgs:
+            print(f"Executing lint and test on {Colors.Fg.cyan}{len(self._pkgs)}{Colors.reset} integrations and scripts")
 
         self._id_set_path = id_set_path
         if check_dependent_api_module:

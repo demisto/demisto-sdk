@@ -463,6 +463,7 @@ class ContributionConverter:
         metadata_dict['useCases'] = zipped_metadata.get('useCases') if zipped_metadata.get('useCases') else []
         metadata_dict['keywords'] = zipped_metadata.get('keywords') if zipped_metadata.get('keywords') else []
         metadata_dict['githubUser'] = [self.gh_user] if self.gh_user else []
+        metadata_dict['marketplaces'] = zipped_metadata.get('marketplaces') or ['xsoar', 'marketplacev2']
         metadata_dict = ContributionConverter.create_pack_metadata(data=metadata_dict)
         metadata_path = os.path.join(self.pack_dir_path, 'pack_metadata.json')
         with open(metadata_path, 'w') as pack_metadata_file:
@@ -490,7 +491,8 @@ class ContributionConverter:
             'categories': [],
             'tags': [],
             'useCases': [],
-            'keywords': []
+            'keywords': [],
+            'marketplaces': [],
         }
 
         if data:

@@ -1356,7 +1356,8 @@ class PackDependencies:
             related_definitions = generic_field_data.get('definitionId')
             packs_found_from_definitions, packs_and_definitions_dict = PackDependencies.\
                 _search_packs_by_items_names_or_ids(
-                    related_definitions, id_set['GenericDefinitions'], exclude_ignored_dependencies, 'generic_definition')
+                    related_definitions, id_set['GenericDefinitions'], exclude_ignored_dependencies, 'Both',
+                'generic_definition')
 
             if packs_found_from_definitions:
                 pack_dependencies_data = PackDependencies. \

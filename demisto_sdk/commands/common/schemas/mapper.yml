@@ -34,4 +34,3 @@ mapping:
     sequence:
       - type: str
         enum: [ 'xsoar', 'marketplacev2' ]
-

@@ -91,4 +91,3 @@ schema;field_schema:
       sequence:
         - type: str
           enum: [ 'xsoar', 'marketplacev2' ]
-

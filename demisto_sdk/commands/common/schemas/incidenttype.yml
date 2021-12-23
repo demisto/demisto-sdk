@@ -73,3 +73,9 @@ mapping:
         type: any
       mode:
         type: str
+  marketplaces:
+    type: seq
+    sequence:
+      - type: str
+        enum: [ 'xsoar', 'marketplacev2' ]
+

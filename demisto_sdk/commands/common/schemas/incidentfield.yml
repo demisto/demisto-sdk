@@ -94,3 +94,8 @@ mapping:
     type: str
   openEnded:
     type: bool
+  marketplaces:
+    type: seq
+    sequence:
+      - type: str
+        enum: [ 'xsoar', 'marketplacev2' ]

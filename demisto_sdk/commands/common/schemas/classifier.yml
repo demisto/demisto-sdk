@@ -54,3 +54,9 @@ mapping:
     type: bool
   definitionId:
     type: str
+  marketplaces:
+    type: seq
+    sequence:
+      - type: str
+        enum: ['xsoar', 'marketplacev2']
+

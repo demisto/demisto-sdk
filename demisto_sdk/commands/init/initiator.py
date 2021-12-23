@@ -21,7 +21,7 @@ from demisto_sdk.commands.common.constants import (
     LAYOUTS_DIR, MARKETPLACE_LIVE_DISCUSSIONS, PACK_INITIAL_VERSION,
     PACK_SUPPORT_OPTIONS, PLAYBOOKS_DIR, REPORTS_DIR, SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR, WIDGETS_DIR, XSOAR_AUTHOR, XSOAR_SUPPORT,
-    XSOAR_SUPPORT_URL, GitContentConfig)
+    XSOAR_SUPPORT_URL, GitContentConfig, MARKETPLACES)
 from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                get_common_server_path,
                                                get_pack_name, print_error,
@@ -122,7 +122,8 @@ class Initiator:
                 GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR, GENERIC_TYPES_DIR, JOBS_DIR]
 
     def __init__(self, output: str, name: str = '', id: str = '', integration: bool = False, template: str = '',
-                 category: str = '', script: bool = False, pack: bool = False, author_image: str = '', demisto_mock: bool = False,
+                 category: str = '', script: bool = False, pack: bool = False, author_image: str = '',
+                 demisto_mock: bool = False,
                  common_server: bool = False):
         self.output = output if output else ''
         self.id = id
@@ -309,7 +310,7 @@ class Initiator:
             fp.close()
 
     @staticmethod
-    def create_metadata(fill_manually: bool, data: Dict = {}) -> Dict:
+    def create_metadata(fill_manually: bool, data: Dict = None) -> Dict:
         """Builds pack metadata JSON content.
 
         Args:
@@ -330,7 +331,8 @@ class Initiator:
             'categories': [],
             'tags': [],
             'useCases': [],
-            'keywords': []
+            'keywords': [],
+            'marketplaces': MARKETPLACES,
         }
 
         if data:
@@ -351,6 +353,12 @@ class Initiator:
                                                                   option_message="\nSupport type of the pack: \n")
         pack_metadata['categories'] = [Initiator.get_valid_user_input(options_list=INTEGRATION_CATEGORIES,
                                                                       option_message="\nPack category options: \n")]
+
+        marketplaces = input("\nSupported marketplaces for this pack, comma separated values.\n"
+                             "Possible options are: xsoar, marketplacev2. default value is 'xsoar,marketplacev2'.\n")
+        mp_list = [m.strip() for m in marketplaces.split(',') if m]
+        if mp_list:
+            pack_metadata['marketplaces'] = mp_list
 
         if pack_metadata.get('support') == XSOAR_SUPPORT:
             pack_metadata['author'] = XSOAR_AUTHOR
@@ -552,7 +560,8 @@ class Initiator:
         if from_version:
             yml_dict['fromversion'] = from_version
 
-        if LooseVersion(yml_dict.get('fromversion', DEFAULT_CONTENT_ITEM_FROM_VERSION)) < LooseVersion(self.SUPPORTED_FROM_VERSION):
+        if LooseVersion(yml_dict.get('fromversion', DEFAULT_CONTENT_ITEM_FROM_VERSION)) < LooseVersion(
+                self.SUPPORTED_FROM_VERSION):
             yml_dict['fromversion'] = self.SUPPORTED_FROM_VERSION
 
         if integration:

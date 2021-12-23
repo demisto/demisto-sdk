@@ -16,7 +16,7 @@ from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     AUTOMATION, ENTITY_TYPE_TO_DIR, INTEGRATION, INTEGRATIONS_DIR,
     MARKETPLACE_LIVE_DISCUSSIONS, PACK_INITIAL_VERSION, SCRIPT, SCRIPTS_DIR,
-    XSOAR_AUTHOR, XSOAR_SUPPORT, XSOAR_SUPPORT_URL)
+    XSOAR_AUTHOR, XSOAR_SUPPORT, XSOAR_SUPPORT_URL, MARKETPLACES)
 from demisto_sdk.commands.common.tools import (LOG_COLORS, capital_case,
                                                find_type,
                                                get_child_directories,
@@ -463,7 +463,7 @@ class ContributionConverter:
         metadata_dict['useCases'] = zipped_metadata.get('useCases') if zipped_metadata.get('useCases') else []
         metadata_dict['keywords'] = zipped_metadata.get('keywords') if zipped_metadata.get('keywords') else []
         metadata_dict['githubUser'] = [self.gh_user] if self.gh_user else []
-        metadata_dict['marketplaces'] = zipped_metadata.get('marketplaces') or ['xsoar', 'marketplacev2']
+        metadata_dict['marketplaces'] = zipped_metadata.get('marketplaces') or MARKETPLACES
         metadata_dict = ContributionConverter.create_pack_metadata(data=metadata_dict)
         metadata_path = os.path.join(self.pack_dir_path, 'pack_metadata.json')
         with open(metadata_path, 'w') as pack_metadata_file:

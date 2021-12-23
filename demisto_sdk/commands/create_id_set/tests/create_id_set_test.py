@@ -31,6 +31,7 @@ METADATA = {
     ]
 }
 
+
 class TestIDSetCreator:
     def setup(self):
         self.id_set_full_path = os.path.join(TESTS_DIR, 'test_files', 'content_repo_example', 'id_set.json')

@@ -175,11 +175,15 @@ class TestUpdateRNManager:
         """
         from demisto_sdk.commands.update_release_notes.update_rn_manager import \
             UpdateReleaseNotesManager
-        mocker.patch.object(UpdateReleaseNotesManager, 'get_git_changed_files',
+        from demisto_sdk.commands.validate.validate_manager import \
+            ValidateManager
+        mocker.patch.object(ValidateManager, 'setup_git_params')
+        mocker.patch.object(ValidateManager, 'filter_to_relevant_files', side_effect=(lambda x: (set(x), set())))
+        mocker.patch.object(ValidateManager, 'get_unfiltered_changed_files_from_git',
                             return_value=({'Packs/test1', 'Packs/test2'}, set(), set()))
         mocker.patch.object(UpdateReleaseNotesManager, 'check_existing_rn')
         mocker.patch.object(UpdateReleaseNotesManager, 'handle_api_module_change')
         create_release_notes_mock = mocker.patch.object(UpdateReleaseNotesManager, 'create_release_notes')
-        mng = UpdateReleaseNotesManager(user_input='Packs/test1')
+        mng = UpdateReleaseNotesManager()
         mng.manage_rn_update()
         assert create_release_notes_mock.call_args.args[0] == {'Packs/test1', 'Packs/test2'}

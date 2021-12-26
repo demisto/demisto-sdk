@@ -11,8 +11,9 @@ import yamlordereddictloader
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
-    INTEGRATION_CATEGORIES, MARKETPLACE_LIVE_DISCUSSIONS, PACK_INITIAL_VERSION,
-    PACK_SUPPORT_OPTIONS, XSOAR_AUTHOR, XSOAR_SUPPORT, XSOAR_SUPPORT_URL)
+    INTEGRATION_CATEGORIES, MARKETPLACE_LIVE_DISCUSSIONS, MARKETPLACES,
+    PACK_INITIAL_VERSION, PACK_SUPPORT_OPTIONS, XSOAR_AUTHOR, XSOAR_SUPPORT,
+    XSOAR_SUPPORT_URL)
 from demisto_sdk.commands.init.initiator import Initiator
 from TestSuite.test_tools import ChangeCWD
 
@@ -110,7 +111,8 @@ class TestCreateMetadata:
             'categories': [],
             'tags': [],
             'useCases': [],
-            'keywords': []
+            'keywords': [],
+            'marketplaces': MARKETPLACES,
         }
 
     def test_create_metadata_non_filled_manually_with_data(self, initiator):
@@ -142,7 +144,8 @@ class TestCreateMetadata:
             'categories': [],
             'tags': [],
             'useCases': [],
-            'keywords': []
+            'keywords': [],
+            'marketplaces': MARKETPLACES,
         }
 
     def test_create_metadata_partner(self, monkeypatch, initiator):
@@ -163,7 +166,7 @@ class TestCreateMetadata:
             'builtins.input',
             generate_multiple_inputs(
                 deque([
-                    PACK_NAME, PACK_DESC, '2', '1', PACK_AUTHOR,
+                    PACK_NAME, PACK_DESC, '2', '1', '', PACK_AUTHOR,
                     PACK_URL, PACK_EMAIL, PACK_DEV_EMAIL, PACK_TAGS, PACK_GITHUB_USERS
                 ])
             )
@@ -182,7 +185,8 @@ class TestCreateMetadata:
             'tags': ['Tag1', 'Tag2'],
             'url': PACK_URL,
             'useCases': [],
-            'githubUser': []
+            'githubUser': [],
+            'marketplaces': MARKETPLACES,
         }
 
     def test_create_metadata_partner_wrong_url(self, monkeypatch, initiator):
@@ -203,7 +207,7 @@ class TestCreateMetadata:
             'builtins.input',
             generate_multiple_inputs(
                 deque([
-                    PACK_NAME, PACK_DESC, '2', '1', PACK_AUTHOR,
+                    PACK_NAME, PACK_DESC, '2', '1', 'xsoar', PACK_AUTHOR,
                     'no_h[t][t]p', PACK_URL, PACK_EMAIL, PACK_DEV_EMAIL, PACK_TAGS, PACK_GITHUB_USERS
                 ])
             )
@@ -222,7 +226,8 @@ class TestCreateMetadata:
             'tags': ['Tag1', 'Tag2'],
             'url': PACK_URL,
             'useCases': [],
-            'githubUser': []
+            'githubUser': [],
+            'marketplaces': ['xsoar'],
         }
 
     def test_create_metadata_community(self, monkeypatch, initiator):
@@ -243,7 +248,7 @@ class TestCreateMetadata:
             'builtins.input',
             generate_multiple_inputs(
                 deque([
-                    PACK_NAME, PACK_DESC, '4', '1', PACK_AUTHOR,
+                    PACK_NAME, PACK_DESC, '4', '1', '  marketplacev2', PACK_AUTHOR,
                     PACK_DEV_EMAIL, PACK_TAGS, PACK_GITHUB_USERS
                 ])
             )
@@ -262,7 +267,8 @@ class TestCreateMetadata:
             'tags': ['Tag1', 'Tag2'],
             'url': MARKETPLACE_LIVE_DISCUSSIONS,
             'useCases': [],
-            'githubUser': []
+            'githubUser': [],
+            'marketplaces': ['marketplacev2'],
         }
 
 

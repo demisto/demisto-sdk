@@ -1464,6 +1464,13 @@ class TestContext:
 
         # if external_playbook_configuration:
         # external_playbook_id = external_playbook_configuration['playbookID']
+        pb_path = urllib.parse('/playbook/Account Enrichment - Generic v2.1')
+        res = demisto_client.generic_request_func(self=self.client, method='GET', path=pb_path)
+        print(f' SDK PB {res=}')
+        pb_path2 = '/playbook/Account Enrichment - Generic v2.1'
+        res2 = demisto_client.generic_request_func(self=self.client, method='GET', path=pb_path2)
+        print(f' SDK PB 2 {res2=}')
+
         pb_path4 = '/playbook/Account Enrichment - Generic v2.1'
         pb_all_path = f'/playbook/search/'
         print(f'{pb_path4=}')

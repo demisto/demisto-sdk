@@ -1,4 +1,5 @@
 # Changelog
+* Enhanced the **update-release-notes** command to automatically commit release notes config file upon creation.
 
 # 1.5.5
 * Changed the **validate** command to fail on missing test-playbooks only if no unittests are found.

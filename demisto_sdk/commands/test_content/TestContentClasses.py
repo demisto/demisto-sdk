@@ -108,7 +108,6 @@ class TestConfiguration:
         self.test_integrations: List[str] = self._parse_integrations_conf(test_configuration)
         self.test_instance_names: List[str] = self._parse_instance_names_conf(test_configuration)
         self.external_playbook_config: dict = test_configuration.get('external_playbook_config', {})
-        print(self.external_playbook_config)
 
     @staticmethod
     def _parse_integrations_conf(test_configuration):
@@ -1465,25 +1464,34 @@ class TestContext:
         # if external_playbook_configuration:
         external_playbook_id = external_playbook_configuration['playbookID']
         external_playbook_path = f'/playbook/{external_playbook_id}'
-        pb_all_path = f'/playbook/search/'
         print(f'/playbook/{external_playbook_id=}')
         res, _, _ = demisto_client.generic_request_func(self=self.client, method='GET',
-                                                  path=external_playbook_path, response_type='object')
+                                                        path=external_playbook_path, response_type='object')
         print(f' SDK PB pb current {res=}')
         # Save Default Configuration.
         inputs = res.get('inputs', [])
-        print(f' SDK PB inputs {inputs=}')
         inputs_default = deepcopy(inputs)
+
         # Change Configuration for external pb.
         # Every input is a dict containing key (str), value(dict with simple/complex key) and description
+        print(f'{external_playbook_configuration=}')
         for input in inputs:
             print(f'{input=}')
-            print(f'{external_playbook_configuration=}')
             if input.get('key') in external_playbook_configuration:
                 input['value']['simple'] = external_playbook_configuration[input.get('key')]
-        print(f'{inputs=}')
-        # saving_inputs_path = f'/playbook/inputs/{external_playbook_id}'
-        # demisto_client.generic_request_func(self=self.client, method='POST', path=saving_inputs_path, body=inputs)
+        print(f'changed {inputs=}')
+
+        saving_inputs_path = f'/playbook/inputs/{external_playbook_id}'
+        demisto_client.generic_request_func(self=self.client, method='POST', path=saving_inputs_path, body=inputs)
+
+        res, _, _ = demisto_client.generic_request_func(self=self.client, method='GET',
+                                                        path=external_playbook_path, response_type='object')
+        print(f'After change SDK PB pb {res=}')
+
+        demisto_client.generic_request_func(self=self.client, method='POST', path=saving_inputs_path,
+                                            body=inputs_default)
+        print(f'After revert SDK PB pb {res=}')
+
 
     def _clean_incident_if_successful(self, playbook_state: str) -> None:
         """

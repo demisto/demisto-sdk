@@ -1464,11 +1464,11 @@ class TestContext:
 
         # if external_playbook_configuration:
         external_playbook_id = external_playbook_configuration['playbookID']
-        # pb_path4 = '/playbook/Account Enrichment - Generic v2.1'
+        external_playbook_path = f'/playbook/{external_playbook_id}'
         pb_all_path = f'/playbook/search/'
-        print(f'{external_playbook_id=}')
+        print(f'/playbook/{external_playbook_id=}')
         res = demisto_client.generic_request_func(self=self.client, method='GET',
-                                                  path=external_playbook_id, response_type='object')
+                                                  path=external_playbook_path, response_type='object')
         print(f' SDK PB pb current {res=}')
         # Save Default Configuration.
         inputs = res.get('inputs', [])

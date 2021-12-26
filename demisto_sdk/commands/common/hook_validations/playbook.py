@@ -307,16 +307,16 @@ class PlaybookValidator(ContentEntityValidator):
         Return:
             bool. if all scripts ids of this playbook are valid.
         """
-        is_valid = True
 
         if not id_set_file:
             click.secho("Skipping playbook script id validation. Could not read id_set.json.", fg="yellow")
-            return is_valid
+            return True
 
         id_set_scripts = id_set_file.get("scripts")
         id_set_integrations = id_set_file.get("integrations")
         pb_tasks = self.current_file.get('tasks', {})
         for id, task_dict in pb_tasks.items():
+            is_valid = True
             pb_task = task_dict.get('task', {})
             script_id_used_in_task = pb_task.get('script')
             task_script_name = pb_task.get('scriptName')
@@ -336,8 +336,6 @@ class PlaybookValidator(ContentEntityValidator):
                 error_message, error_code = Errors.invalid_script_id(script_entry_to_check, pb_task)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return is_valid
-                else:
-                    is_valid = True
 
         return is_valid
 

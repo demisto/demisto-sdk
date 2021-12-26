@@ -1463,15 +1463,16 @@ class TestContext:
         # Get External playbook configuration
 
         # if external_playbook_configuration:
-        # external_playbook_id = external_playbook_configuration['playbookID']
-        pb_path4 = '/playbook/Account Enrichment - Generic v2.1'
+        external_playbook_id = external_playbook_configuration['playbookID']
+        # pb_path4 = '/playbook/Account Enrichment - Generic v2.1'
         pb_all_path = f'/playbook/search/'
-        print(f'{pb_path4=}')
-        res = demisto_client.generic_request_func(self=self.client, method='GET', path=pb_path4, response_type=object)
-        print(f' SDK PB {res=}')
+        print(f'{external_playbook_id=}')
+        res = demisto_client.generic_request_func(self=self.client, method='GET',
+                                                  path=external_playbook_id, response_type='object')
+        print(f' SDK PB pb current {res=}')
         # Save Default Configuration.
         inputs = res.get('inputs', [])
-        print(f' SDK PB {inputs=}')
+        print(f' SDK PB inputs {inputs=}')
         inputs_default = deepcopy(inputs)
         # Change Configuration for external pb
         for input in inputs:

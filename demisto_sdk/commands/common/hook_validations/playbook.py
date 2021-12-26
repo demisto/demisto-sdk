@@ -335,9 +335,9 @@ class PlaybookValidator(ContentEntityValidator):
             if not is_valid:
                 error_message, error_code = Errors.invalid_script_id(script_entry_to_check, pb_task)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
-                    return is_valid
+                    return False
 
-        return is_valid
+        return True
 
     def check_script_id(self, script_id_used_in_task, id_set_scripts):
         """

@@ -108,6 +108,7 @@ class TestConfiguration:
         self.test_integrations: List[str] = self._parse_integrations_conf(test_configuration)
         self.test_instance_names: List[str] = self._parse_instance_names_conf(test_configuration)
         self.external_playbook_config: dict = test_configuration.get('external_playbook_config', {})
+        print(self.external_playbook_config)
 
     @staticmethod
     def _parse_integrations_conf(test_configuration):
@@ -1427,33 +1428,7 @@ class TestContext:
 
             external_playbook_configuration = self.playbook.configuration.external_playbook_config
 
-            # Get External playbook configuration
-            # if external_playbook_configuration:
-            # external_playbook_id = external_playbook_configuration['playbookID']
-
-            pb_path4 = '/playbook/Account Enrichment - Generic v2.1'
-            pb_all_path = f'/playbook/search/'
-            print(f'{pb_path4=}')
-            res = demisto_client.generic_request_func(self=self.client, method='GET', path=pb_path4)
-            print(f' SDK PB {res=}')
-
-            # Save Default Configuration.
-            inputs = res.get('inputs',[])
-            print(f' SDK PB {inputs=}')
-            inputs_default = deepcopy(inputs)
-
-            # Change Configuration for external pb
-            for input in inputs:
-                print(f'{input=}')
-                print(f'{external_playbook_configuration=}')
-                if input.get('key') in external_playbook_configuration:
-                    input['value']['simple'] = external_playbook_configuration[input.get('key')]
-
-            print(f'{inputs=}')
-
-            # saving_inputs_path = f'/playbook/inputs/{external_playbook_id}'
-            # demisto_client.generic_request_func(self=self.client, method='POST', path=saving_inputs_path, body=inputs)
-
+            self.replace_external_playbook_configuration(external_playbook_configuration)
 
             incident = self.playbook.create_incident(self.client)
             if not incident:
@@ -1483,6 +1458,30 @@ class TestContext:
         except Exception:
             self.build_context.logging_module.exception(f'Failed to run incident test for {self.playbook}')
             return PB_Status.FAILED
+
+    def replace_external_playbook_configuration(self, external_playbook_configuration: dict):
+        # Get External playbook configuration
+
+        # if external_playbook_configuration:
+        # external_playbook_id = external_playbook_configuration['playbookID']
+        pb_path4 = '/playbook/Account Enrichment - Generic v2.1'
+        pb_all_path = f'/playbook/search/'
+        print(f'{pb_path4=}')
+        res = demisto_client.generic_request_func(self=self.client, method='GET', path=pb_path4)
+        print(f' SDK PB {res=}')
+        # Save Default Configuration.
+        inputs = res.get('inputs', [])
+        print(f' SDK PB {inputs=}')
+        inputs_default = deepcopy(inputs)
+        # Change Configuration for external pb
+        for input in inputs:
+            print(f'{input=}')
+            print(f'{external_playbook_configuration=}')
+            if input.get('key') in external_playbook_configuration:
+                input['value']['simple'] = external_playbook_configuration[input.get('key')]
+        print(f'{inputs=}')
+        # saving_inputs_path = f'/playbook/inputs/{external_playbook_id}'
+        # demisto_client.generic_request_func(self=self.client, method='POST', path=saving_inputs_path, body=inputs)
 
     def _clean_incident_if_successful(self, playbook_state: str) -> None:
         """

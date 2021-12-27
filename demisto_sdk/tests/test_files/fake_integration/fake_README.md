@@ -46,13 +46,41 @@ Create a new user in zoom account
 | Zoom.User.created_at | date | Created date of the user | 
 | Zoom.User.type | number | The type of the user | 
 
-
-#### Command Example
-``` ```
+#### Command example
+```!zoom-create-user first_name=test1 last_name=test2 email=test@test.com user_type=Basic```
+#### Context Example
+```json
+{
+    "first_name": "test1",
+    "last_name": "test2",
+    "email": "test@test.com",
+    "user_type": "Basic"
+}
+```
 
 #### Human Readable Output
 
+>first_name | last_name | email | user_type
+>--- | --- | --- | ---
+>test1 | test2 | test@test.com | Basic
 
+#### Command example
+```!zoom-create-user first_name=test1 last_name=test2 email=test@test.com user_type=Pro```
+#### Context Example
+```json
+{
+    "first_name": "test1",
+    "last_name": "test2",
+    "email": "test@test.com",
+    "user_type": "Pro"
+}
+```
+
+#### Human Readable Output
+
+>first_name | last_name | email | user_type
+>--- | --- | --- | ---
+>test1 | test2 | test@test.com | Pro
 
 ### zoom-create-meeting
 ***
@@ -82,13 +110,22 @@ Create a new zoom meeting (scheduled or instant)
 | Zoom.Meeting.id | string | Meeting id of the new meeting that is created | 
 | Zoom.Meeting.start_url | string | The URL to start the meeting | 
 
-
-#### Command Example
-``` ```
+#### Command example
+```!zoom-create-meeting type=Instant user=test@test.com topic=mytopic```
+#### Context Example
+```json
+{
+    "type": "Instant",
+    "user": "test@test.com",
+    "topic": "mytopic"
+}
+```
 
 #### Human Readable Output
 
-
+>type | user | topic
+>--- | --- | ---
+>Instant | test@test.com | mytopic
 
 ### zoom-fetch-recording
 ***
@@ -120,13 +157,20 @@ Get meeting record and save as file in the warroom
 | File.EntryID | unknown | Attachment's EntryID | 
 | File.SSDeep | unknown | Attachment's SSDeep hash | 
 
-
-#### Command Example
-``` ```
+#### Command example
+```!zoom-fetch-recording meeting_id=1```
+#### Context Example
+```json
+{
+    "meeting_id": "1"
+}
+```
 
 #### Human Readable Output
 
-
+>meeting_id
+>---
+>1
 
 ### zoom-list-users
 ***
@@ -166,12 +210,12 @@ List the existing users
 | Zoom.User.pmi | string | PMI of user | 
 | Zoom.User.group_ids | string | Groups user belongs to | 
 
-
-#### Command Example
-``` ```
-
+#### Command example
+```!zoom-list-users```
 #### Human Readable Output
 
+>
+>
 
 
 ### zoom-delete-user
@@ -193,10 +237,17 @@ Delete a user from Zoom
 #### Context Output
 
 There is no context output for this command.
-
-#### Command Example
-``` ```
+#### Command example
+```!zoom-delete-user user=test@test.com```
+#### Context Example
+```json
+{
+    "user": "test@test.com"
+}
+```
 
 #### Human Readable Output
 
-
+>user
+>---
+>test@test.com

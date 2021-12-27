@@ -5,6 +5,7 @@ from distutils.version import LooseVersion
 from typing import Any, Dict, Optional, Set, Union
 
 import click
+import dictdiffer
 import yaml
 from ruamel.yaml import YAML
 
@@ -50,7 +51,8 @@ class BaseUpdate:
                  no_validate: bool = False,
                  verbose: bool = False,
                  assume_yes: bool = False,
-                 deprecate: bool = False):
+                 deprecate: bool = False,
+                 **kwargs):
         self.source_file = input
         self.output_file = self.set_output_file_path(output)
         self.verbose = verbose
@@ -370,3 +372,8 @@ class BaseUpdate:
 
             else:
                 return SUCCESS_RETURN_CODE
+
+    def sync_data_to_master(self):
+        if self.old_file:
+            diff = dictdiffer.diff(self.old_file, self.data)
+            self.data = dictdiffer.patch(diff, self.old_file)

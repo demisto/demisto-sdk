@@ -89,13 +89,13 @@ def generate_integration_doc(
             output = os.path.dirname(os.path.realpath(input_path))
         errors: list = []
         example_dict = {}
-        if examples and os.path.isfile(examples):
+        if examples:
             specific_commands = command.split(',') if command else None
             command_examples = get_command_examples(examples, specific_commands)
             example_dict, build_errors = build_example_dict(command_examples, insecure)
             errors.extend(build_errors)
         else:
-            errors.append(f'Command examples was not found {examples}.')
+            errors.append(f'Command examples was not found: {examples}.')
 
         if permissions == 'per-command':
             command_permissions_dict: Any = {}
@@ -458,73 +458,62 @@ def disable_md_autolinks(markdown: str) -> str:
     return re.sub(r'\b(?<!\)\[)(https?)://([\w\d]+?\.[\w\d]+?)\b', r'\1:<span>//</span>\2', markdown, flags=re.IGNORECASE)
 
 
-def generate_command_example(cmd, cmd_example=None):
+def generate_command_example(cmd_from_yaml, cmd_example=None):
+    example = []
     errors = []
-    context_example = None
-    md_example = ''
-    if cmd_example is not None:
-        cmd_example, md_example, context_example = cmd_example
-    else:
-        cmd_example = ' '
-        errors.append('did not get any example for {}. please add it manually.'.format(cmd['name']))
+    if not cmd_example:
+        errors.append(f'did not get any example for {cmd_from_yaml["name"]}. please add it manually.')
 
-    example = [
-        '',
-        '#### Command Example',
-        '```{}```'.format(cmd_example),
-        '',
-    ]
-    if context_example and context_example != '{}':
-        example.extend([
-            '#### Context Example',
-            '```json',
-            '{}'.format(context_example),
-            '```',
-            '',
-        ])
-    example.extend([
-        '#### Human Readable Output',
-        '{}'.format('>'.join(f'\n{disable_md_autolinks(md_example)}'.splitlines(True))),  # prefix human readable with quote
-        '',
-    ])
+    else:
+        for script_example, md_example, context_example in cmd_example:
+            example.extend(['#### Command example', f'```{script_example}```'])
+            if context_example and context_example != '{}':
+                example.extend([
+                    '#### Context Example',
+                    '```json',
+                    '{}'.format(context_example),
+                    '```',
+                    '',
+                ])
+            example.extend([
+                '#### Human Readable Output',
+                '{}'.format('>'.join(f'\n{disable_md_autolinks(md_example)}'.splitlines(True))),
+                # prefix human readable with quote
+                '',
+            ])
 
     return example, errors
 
 
-def get_command_examples(commands_file_path, specific_commands):
+def get_command_examples(commands_examples_input, specific_commands):
     """
     get command examples from command file
 
-    @param commands_file_path: command file or the content of such file
+    @param commands_examples_input: commands examples file or a comma separeted list of com
     @param specific_commands: commands specified by the user
 
     @return: a list of command examples
     """
-    command_examples = []  # type: list
 
-    if commands_file_path is None:
-        return command_examples
+    if not commands_examples_input:
+        return []
 
-    if os.path.isfile(commands_file_path):
-        with open(commands_file_path, 'r') as examples_file:
+    if os.path.isfile(commands_examples_input):
+        with open(commands_examples_input, 'r') as examples_file:
             command_examples = examples_file.read().splitlines()
     else:
-        print('failed to open command file')
-        command_examples = commands_file_path.split('\n')
+        print_warning('failed to open commands file, using commands as comma seperated list')
+        command_examples = commands_examples_input.split(',')
 
     # Filter from the examples only the commands specified by the user
-    commands = []
     if specific_commands:
-        for command_ex in command_examples:
-            if command_ex.split(' ')[0].strip('!') in specific_commands:
-                commands.append(command_ex)
-    else:
-        commands = command_examples
+        command_examples = [command_ex for command_ex in command_examples if
+                            command_ex.split(' ')[0].strip('!') in specific_commands]
 
-    commands: list = list(filter(None, map(command_example_filter, commands)))
+    command_examples = list(filter(None, map(command_example_filter, command_examples))) or []
 
-    print('found the following commands:\n{}'.format('\n'.join(commands)))
-    return commands
+    print('found the following commands:\n{}'.format('\n'.join(command_examples)))
+    return command_examples
 
 
 def command_example_filter(command):

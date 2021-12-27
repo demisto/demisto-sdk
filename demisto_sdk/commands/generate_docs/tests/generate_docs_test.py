@@ -392,15 +392,13 @@ def test_generate_commands_section():
 
     section, errors = generate_commands_section(yml_data, example_dict={}, command_permissions_dict={})
 
-    expected_section = [
-        '## Commands',
-        'You can execute these commands from the Cortex XSOAR CLI, as part of an automation, or in a playbook.',
-        'After you successfully execute a command, a DBot message appears in the War Room with the command details.',
-        '### non-deprecated-cmd', '***', ' ', '#### Required Permissions',
-        '**FILL IN REQUIRED PERMISSIONS HERE**', '#### Base Command', '', '`non-deprecated-cmd`', '#### Input', '',
-        'There are no input arguments for this command.', '', '#### Context Output', '',
-        'There is no context output for this command.', '', '#### Command Example', '``` ```', '',
-        '#### Human Readable Output', '\n', '']
+    expected_section = ['## Commands',
+                        'You can execute these commands from the Cortex XSOAR CLI, as part of an automation, or in a playbook.',
+                        'After you successfully execute a command, a DBot message appears in the War Room with the command details.',
+                        '### non-deprecated-cmd', '***', ' ', '#### Required Permissions',
+                        '**FILL IN REQUIRED PERMISSIONS HERE**', '#### Base Command', '', '`non-deprecated-cmd`',
+                        '#### Input', '', 'There are no input arguments for this command.', '', '#### Context Output',
+                        '', 'There is no context output for this command.']
 
     assert '\n'.join(section) == '\n'.join(expected_section)
 
@@ -411,7 +409,8 @@ def test_generate_command_section_with_empty_cotext_example():
     the 'Context Example' sections should be empty
     """
     example_dict = {
-        'test1': (None, None, '{}')
+        'test1': [('!test1', 'test without args', '{}'),
+                  ('!test1 value=val', 'test with args', '{}')]
     }
     command = {'deprecated': False, 'name': 'test1'}
 
@@ -420,8 +419,9 @@ def test_generate_command_section_with_empty_cotext_example():
     expected_section = ['### test1', '***', ' ', '#### Required Permissions', '**FILL IN REQUIRED PERMISSIONS HERE**',
                         '#### Base Command', '', '`test1`', '#### Input', '',
                         'There are no input arguments for this command.', '', '#### Context Output', '',
-                        'There is no context output for this command.', '', '#### Command Example', '```None```', '',
-                        '#### Human Readable Output', '\n>None', '']
+                        'There is no context output for this command.', '#### Command example', '```!test1```',
+                        '#### Human Readable Output', '\n>test without args', '', '#### Command example',
+                        '```!test1 value=val```', '#### Human Readable Output', '\n>test with args', '']
 
     assert '\n'.join(section) == '\n'.join(expected_section)
 
@@ -446,14 +446,10 @@ def test_generate_command_section_with_empty_cotext_list():
                                                       example_dict={},
                                                       command_permissions_dict={})
 
-    expected_section = ['### test1', '***', ' ', '#### Required Permissions',
-                        '**FILL IN REQUIRED PERMISSIONS HERE**',
+    expected_section = ['### test1', '***', ' ', '#### Required Permissions', '**FILL IN REQUIRED PERMISSIONS HERE**',
                         '#### Base Command', '', '`test1`', '#### Input', '',
-                        'There are no input arguments for this command.', '',
-                        '#### Context Output', '',
-                        'There is no context output for this command.', '',
-                        '#### Command Example', '``` ```', '',
-                        '#### Human Readable Output', '\n', '']
+                        'There are no input arguments for this command.', '', '#### Context Output', '',
+                        'There is no context output for this command.']
 
     assert '\n'.join(section) == '\n'.join(expected_section)
 
@@ -472,7 +468,7 @@ def test_generate_commands_section_human_readable():
 
     example_dict = {
         'non-deprecated-cmd': [
-            '!non-deprecated-cmd', '## this is human readable\nThis is a line\nAnother line', '{}'
+            ('!non-deprecated-cmd', '## this is human readable\nThis is a line\nAnother line', '{}'),
         ]
     }
 
@@ -502,15 +498,13 @@ def test_generate_commands_with_permissions_section():
     section, errors = generate_commands_section(yml_data, example_dict={}, command_permissions_dict={
         'non-deprecated-cmd': 'SUPERUSER'})
 
-    expected_section = [
-        '## Commands',
-        'You can execute these commands from the Cortex XSOAR CLI, as part of an automation, or in a playbook.',
-        'After you successfully execute a command, a DBot message appears in the War Room with the command details.',
-        '### non-deprecated-cmd', '***', ' ', '#### Required Permissions',
-        'SUPERUSER', '#### Base Command', '', '`non-deprecated-cmd`', '#### Input', '',
-        'There are no input arguments for this command.', '', '#### Context Output', '',
-        'There is no context output for this command.', '', '#### Command Example', '``` ```', '',
-        '#### Human Readable Output', '\n', '']
+    expected_section = ['## Commands',
+                        'You can execute these commands from the Cortex XSOAR CLI, as part of an automation, or in a playbook.',
+                        'After you successfully execute a command, a DBot message appears in the War Room with the command details.',
+                        '### non-deprecated-cmd', '***', ' ', '#### Required Permissions', 'SUPERUSER',
+                        '#### Base Command', '', '`non-deprecated-cmd`', '#### Input', '',
+                        'There are no input arguments for this command.', '', '#### Context Output', '',
+                        'There is no context output for this command.']
 
     assert '\n'.join(section) == '\n'.join(expected_section)
 
@@ -536,34 +530,60 @@ def test_generate_commands_with_permissions_section_command_doesnt_exist():
     section, errors = generate_commands_section(yml_data, example_dict={}, command_permissions_dict={
         '!non-deprecated-cmd': 'SUPERUSER'})
 
-    expected_section = [
-        '## Commands',
-        'You can execute these commands from the Cortex XSOAR CLI, as part of an automation, or in a playbook.',
-        'After you successfully execute a command, a DBot message appears in the War Room with the command details.',
-        '### non-deprecated-cmd', '***', ' ', '#### Required Permissions',
-        '', '#### Base Command', '', '`non-deprecated-cmd`', '#### Input', '',
-        'There are no input arguments for this command.', '', '#### Context Output', '',
-        'There is no context output for this command.', '', '#### Command Example', '``` ```', '',
-        '#### Human Readable Output', '\n', '']
+    expected_section = ['## Commands',
+                        'You can execute these commands from the Cortex XSOAR CLI, as part of an automation, or in a playbook.',
+                        'After you successfully execute a command, a DBot message appears in the War Room with the command details.',
+                        '### non-deprecated-cmd', '***', ' ', '#### Required Permissions', '', '#### Base Command', '',
+                        '`non-deprecated-cmd`', '#### Input', '', 'There are no input arguments for this command.', '',
+                        '#### Context Output', '', 'There is no context output for this command.']
 
     assert 'Error! Command Permissions were not found for command non-deprecated-cmd' in errors
     assert '\n'.join(section) == '\n'.join(expected_section)
 
 
+def handle_example(example, insecure):
+    parts = example.split()
+    name = parts[0].strip('!')
+    context = {}
+    for p in parts[1:]:
+        key, value = p.split('=')
+        context[key] = value
+
+    headers = ' | '.join(context.keys())
+    sep = ' | '.join(['---' for _ in range(len(context.keys()))])
+    values = ' | '.join(context.values())
+    human_readable = '\n'.join([headers, sep, values])
+    return name, human_readable, context, []
+
+
 def test_generate_script_doc(tmp_path, mocker):
+    import demisto_sdk.commands.generate_docs.common as common
     d = tmp_path / "script_doc_out"
     d.mkdir()
     in_script = os.path.join(FILES_PATH, 'docs_test', 'script-Set.yml')
     id_set_file = os.path.join(FILES_PATH, 'docs_test', 'id_set.json')
+    expected_readme = os.path.join(FILES_PATH, 'docs_test', 'set_expected-README.md')
     with open(id_set_file, 'r') as f:
         id_set = json.load(f)
     patched = mocker.patch.object(IDSetCreator, 'create_id_set', return_value=id_set)
-    generate_script_doc(in_script, '', str(d), verbose=True)
+    mocker.patch.object(common, 'execute_command', side_effect=handle_example)
+    # because used in is random
+    mocker.patch('demisto_sdk.commands.generate_docs.generate_script_doc.get_used_in', return_value=[])
+    generate_script_doc(in_script, '!Set key=k1 value=v1,!Set key=k2 value=v2 append=true', str(d), verbose=True)
     patched.assert_called()
     readme = d / "README.md"
-    with open(readme) as f:
-        text = f.read()
-        assert 'Sample usage of this script can be found in the following playbooks and scripts' in text
+    with open(readme) as real_readme_file:
+        with open(expected_readme) as expected_readme_file:
+            assert real_readme_file.read() == expected_readme_file.read()
+
+    # No try the same thing with a txt file
+    command_examples = d / 'command_examples.txt'
+    with command_examples.open('w') as f:
+        f.write('!Set key=k1 value=v1\n!Set key=k2 value=v2 append=true')
+    generate_script_doc(in_script, command_examples, str(d), verbose=True)
+    with open(readme) as real_readme_file:
+        with open(expected_readme) as expected_readme_file:
+            assert real_readme_file.read() == expected_readme_file.read()
 
 
 class TestAppendOrReplaceCommandInDocs:
@@ -600,7 +620,7 @@ class TestGenerateIntegrationDoc:
     def teardown_class(cls):
         cls.rm_readme()
 
-    def test_generate_integration_doc(self):
+    def test_generate_integration_doc(self, mocker):
         """
         Given
             - YML file representing an integration.
@@ -610,9 +630,12 @@ class TestGenerateIntegrationDoc:
             - Validate that the integration README was created correctly, specifically that line numbers are not being reset after a table.
             - Test that the predefined values and default values are added to the README.
     """
+        import demisto_sdk.commands.generate_docs.common as common
         fake_readme = os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), 'fake_README.md')
+        examples = os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), 'command_examples.txt')
+        mocker.patch.object(common, 'execute_command', side_effect=handle_example)
         # Generate doc
-        generate_integration_doc(TEST_INTEGRATION_PATH)
+        generate_integration_doc(TEST_INTEGRATION_PATH, examples)
         with open(fake_readme) as fake_file:
             with open(os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), 'README.md')) as real_file:
                 fake_data = fake_file.read()
@@ -679,14 +702,15 @@ class TestGetCommandExamples:
         command_examples = tmp_path / "command_examples"
 
         with open(command_examples, 'w+') as ce:
-            ce.write('!zoom-create-user\n!zoom-create-meeting\n!zoom-fetch-recording\n!zoom-list-users\n!zoom-delete-user')
+            ce.write(
+                '!zoom-create-user\n!zoom-create-meeting\n!zoom-fetch-recording\n!zoom-list-users\n!zoom-delete-user')
 
         command_example_a = 'zoom-create-user'
         command_example_b = 'zoom-list-users'
 
         specific_commands = [command_example_a, command_example_b]
 
-        commands = get_command_examples(commands_file_path=command_examples, specific_commands=specific_commands)
+        commands = get_command_examples(commands_examples_input=command_examples, specific_commands=specific_commands)
 
         assert commands == [f'!{command_example_a}', f'!{command_example_b}']
 
@@ -711,7 +735,7 @@ class TestGetCommandExamples:
 
         specific_commands = [command_example_a, command_example_b]
 
-        commands = get_command_examples(commands_file_path=command_examples, specific_commands=specific_commands)
+        commands = get_command_examples(commands_examples_input=command_examples, specific_commands=specific_commands)
 
         assert commands == [f'!{command_example_a}', f'!{command_example_b}']
 
@@ -762,16 +786,17 @@ def test_generate_table_section_numbered_section():
     assert section == expected_section
 
 
-yml_data_cases = [(
-    {'name': 'test', 'display': 'test', 'configuration': [
+yml_data_cases = [
+    ({'name': 'test', 'display': 'test', 'configuration': [
         {'defaultvalue': '', 'display': 'test1', 'name': 'test1', 'required': True, 'type': 8},
         {'defaultvalue': '', 'display': 'test2', 'name': 'test2', 'required': True, 'type': 8}
     ]},  # case no param with additional info field
-    ['1. Navigate to **Settings** > **Integrations** > **Servers & Services**.',
-     '2. Search for test.', '3. Click **Add instance** to create and configure a new integration instance.',
-     '', '    | **Parameter** | **Required** |', '    | --- | --- |', '    | test1 | True |', '    | test2 | True |',
-     '', '4. Click **Test** to validate the URLs, token, and connection.']  # expected
-),
+         ['1. Navigate to **Settings** > **Integrations** > **Servers & Services**.',
+          '2. Search for test.', '3. Click **Add instance** to create and configure a new integration instance.',
+          '', '    | **Parameter** | **Required** |', '    | --- | --- |', '    | test1 | True |',
+          '    | test2 | True |',
+          '', '4. Click **Test** to validate the URLs, token, and connection.']  # expected
+    ),
     (
         {'name': 'test', 'display': 'test', 'configuration': [
             {'display': 'test1', 'name': 'test1', 'additionalinfo': 'More info', 'required': True, 'type': 8},
@@ -782,7 +807,7 @@ yml_data_cases = [(
          '', '    | **Parameter** | **Description** | **Required** |', '    | --- | --- | --- |',
          '    | test1 | More info | True |', '    | test2 |  | True |', '',
          '4. Click **Test** to validate the URLs, token, and connection.']  # expected
-),
+    ),
     (
         {'name': 'test', 'display': 'test', 'configuration': [
             {'display': 'test1', 'name': 'test1', 'additionalinfo': 'More info', 'required': True, 'type': 8},
@@ -793,7 +818,7 @@ yml_data_cases = [(
          '', '    | **Parameter** | **Description** | **Required** |', '    | --- | --- | --- |',
          '    | test1 | More info | True |', '    | test2 | Some more data | True |', '',
          '4. Click **Test** to validate the URLs, token, and connection.']  # expected
-),
+    ),
     (
         {'name': 'test', 'display': 'test', 'configuration': [
             {'display': 'userName', 'displaypassword': 'password', 'name': 'userName', 'additionalinfo': 'Credentials',
@@ -804,7 +829,7 @@ yml_data_cases = [(
          '', '    | **Parameter** | **Description** | **Required** |', '    | --- | --- | --- |',
          '    | userName | Credentials | True |', '    | password |  | True |', '',
          '4. Click **Test** to validate the URLs, token, and connection.']  # expected
-),
+    ),
     (
         {'name': 'test', 'display': 'test', 'configuration': [
             {'display': 'userName', 'name': 'userName', 'additionalinfo': 'Credentials',
@@ -815,7 +840,7 @@ yml_data_cases = [(
          '', '    | **Parameter** | **Description** | **Required** |', '    | --- | --- | --- |',
          '    | userName | Credentials | True |', '    | Password |  | True |', '',
          '4. Click **Test** to validate the URLs, token, and connection.']  # expected
-),
+    ),
     (
         {'name': 'test', 'display': 'test', 'configuration': [
             {'display': 'test1', 'name': 'test1', 'additionalinfo': 'More info', 'required': True, 'type': 8},
@@ -832,7 +857,7 @@ yml_data_cases = [(
          '    | Proxy | non-default info. | True |',
          '',
          '4. Click **Test** to validate the URLs, token, and connection.']  # expected
-)
+    )
 ]
 
 

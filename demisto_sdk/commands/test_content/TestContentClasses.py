@@ -1460,6 +1460,11 @@ class TestContext:
             return PB_Status.FAILED
 
     def replace_external_playbook_configuration(self, external_playbook_configuration: dict):
+        """ takes external configuration of shape {"playbookID": "Isolate Endpoint - Generic V2",
+                                                   "input_parameters":{"Endpoint_hostname": ["simple", "test"]}
+            and changes the specified playbook configuration to the mentioned one.
+            Only to be used with server version 6.2 and above. """
+
         server_version = get_demisto_version(self.client)
         if LooseVersion(server_version) < LooseVersion('6.2.0'):
             return False
@@ -1483,7 +1488,8 @@ class TestContext:
         for input in inputs:
             print(f'{input=}')
             if input.get('key') in external_playbook_configuration:
-                input['value']['simple'] = external_playbook_configuration[input.get('key')]
+                complexity, val = external_playbook_configuration["input_parameters"][input.get('key')]
+                input['value'][complexity] = val
         print(f'changed {inputs=}')
 
         saving_inputs_path = f'/playbook/inputs/{external_playbook_id}'
@@ -1493,7 +1499,7 @@ class TestContext:
                                                         path=external_playbook_path, response_type='object')
         print(f'After change SDK PB pb {res=}')
 
-        demisto_client.generic_request_func(self=self.client, method='POST', path=saving_inputs_path,
+        res, _, _ = demisto_client.generic_request_func(self=self.client, method='POST', path=saving_inputs_path,
                                             body=inputs_default)
         print(f'After revert SDK PB pb {res=}')
 

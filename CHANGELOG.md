@@ -1,4 +1,5 @@
 # Changelog
+* Fixed an issue where entities appeared in the wrong path when contributing via marketplace.
 
 # 1.5.5
 * Changed the **validate** command to fail on missing test-playbooks only if no unittests are found.

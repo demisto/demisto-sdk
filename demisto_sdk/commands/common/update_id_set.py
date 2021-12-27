@@ -11,6 +11,7 @@ from distutils.version import LooseVersion
 from enum import Enum
 from functools import partial
 from multiprocessing import Pool, cpu_count
+from pathlib import Path
 from typing import Callable, Dict, List, Optional, Tuple
 
 import click
@@ -22,13 +23,13 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_ID_SET_PATH, GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR,
     GENERIC_MODULES_DIR, GENERIC_TYPES_DIR, INCIDENT_FIELDS_DIR,
     INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, JOBS_DIR,
-    LAYOUTS_DIR, LISTS_DIR, MAPPERS_DIR, REPORTS_DIR, SCRIPTS_DIR,
-    TEST_PLAYBOOKS_DIR, WIDGETS_DIR, FileType)
-from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
-                                               get_current_repo, get_json,
-                                               get_pack_name, get_yaml,
-                                               print_color, print_error,
-                                               print_warning)
+    LAYOUTS_DIR, LISTS_DIR, MAPPERS_DIR, MP_V2_ID_SET_PATH, REPORTS_DIR,
+    SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR, FileType,
+    MarketplaceVersions)
+from demisto_sdk.commands.common.tools import (
+    LOG_COLORS, find_type, get_current_repo, get_file, get_json,
+    get_mp_types_from_metadata_by_item, get_pack_name, get_yaml, print_color,
+    print_error, print_warning)
 from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
 
 CONTENT_ENTITIES = ['Packs', 'Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
@@ -40,6 +41,15 @@ ID_SET_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Cla
                    'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
                    'Layouts', 'Reports', 'Widgets', 'Mappers', 'GenericTypes', 'GenericFields', 'GenericModules',
                    'GenericDefinitions', 'Lists', 'Jobs']
+
+CONTENT_MP_V2_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
+                          'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
+                          'Mappers', 'Packs', 'Lists', 'Jobs']
+
+ID_SET_MP_V2_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Classifiers',
+                         'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
+                         'Mappers', 'Lists', 'Jobs']
+
 
 BUILT_IN_FIELDS = [
     "name",
@@ -82,6 +92,42 @@ BUILT_IN_FIELDS = [
     "dbotMirrorTags",
     "dbotMirrorLastSync"
 ]
+
+
+def should_skip_item_by_mp(file_path: str, marketplace: str, print_logs: bool = False):
+    """
+    Checks if the item given (as path) should be part of the current generated id set.
+     The checks are in this order:
+     1. Check if the given item has the right marketplaces under the 'marketplaces' in the item's file,
+     2. Otherwise, we check if the item is inside a pack that it's pack metadata 'marketplaces' field does not include
+     the current marketplace we are creating this id set for.
+     If there are no 'marketplaces' fields in the the item's file and the metadata, the item is set as xsoar only.
+
+    Args:
+        file_path: path to content item
+        marketplace: the marketplace this current generated id set is for
+
+    Returns: True if should be skipped, else False
+
+    """
+
+    # first check, check field 'marketplaces' in the item's file
+    file_type = Path(file_path).suffix
+    try:
+        item_data = get_file(file_path, file_type)
+        if item_data.get('marketplaces'):
+            if marketplace not in item_data.get('marketplaces'):
+                if print_logs:
+                    print(f'Skipping {file_path} due to mismatch with the given marketplace')
+                return True
+    except (ValueError, FileNotFoundError, IsADirectoryError):
+        return True
+
+    # second check, check the metadata of the pack
+    if marketplace not in get_mp_types_from_metadata_by_item(file_path):
+        if print_logs:
+            print(f'Skipping {file_path} due to mismatch with the given marketplace')
+        return True
 
 
 def build_tasks_graph(playbook_data):
@@ -843,11 +889,16 @@ def create_common_entity_data(path, name, to_version, from_version, pack):
     return data
 
 
-def get_pack_metadata_data(file_path, print_logs: bool):
+def get_pack_metadata_data(file_path, print_logs: bool, marketplace: str = 'xsoar'):
     try:
         if print_logs:
             print(f'adding {file_path} to id_set')
 
+        if should_skip_item_by_mp(file_path, marketplace, print_logs):
+            return {}
+
+        if print_logs:
+            print(f'adding {file_path} to id_set')
         json_data = get_json(file_path)
         pack_data = {
             "name": json_data.get('name'),
@@ -857,7 +908,8 @@ def get_pack_metadata_data(file_path, print_logs: bool):
             'certification': 'certified' if json_data.get('support', '').lower() in ['xsoar', 'partner'] else '',
             "tags": json_data.get('tags', []),
             "use_cases": json_data.get('useCases', []),
-            "categories": json_data.get('categories', [])
+            "categories": json_data.get('categories', []),
+            "marketplaces": json_data.get('marketplaces', []),
         }
 
         pack_id = get_pack_name(file_path)
@@ -1012,20 +1064,23 @@ def get_depends_on(data_dict):
     return depends_on_list, command_to_integration
 
 
-def process_integration(file_path: str, print_logs: bool) -> list:
+def process_integration(file_path: str, print_logs: bool, marketplace: str = 'xsoar') -> list:
     """
     Process integration dir or file
 
     Arguments:
-        file_path {string} -- file path to integration file
-        print_logs {bool} -- whether to print logs to stdout
+        file_path (str): file path to integration file
+        print_logs (bool): whether to print logs to stdout
+        marketplace (str): the marketplace this id set is designated for (xsoar or )
 
     Returns:
-        list -- integration data list (may be empty)
+        list: integration data list (may be empty)
     """
     res = []
     try:
         if os.path.isfile(file_path):
+            if should_skip_item_by_mp(file_path, marketplace, print_logs):
+                return []
             if find_type(file_path) in (FileType.INTEGRATION, FileType.BETA_INTEGRATION):
                 if print_logs:
                     print(f'adding {file_path} to id_set')
@@ -1034,6 +1089,8 @@ def process_integration(file_path: str, print_logs: bool) -> list:
             # package integration
             package_name = os.path.basename(file_path)
             file_path = os.path.join(file_path, '{}.yml'.format(package_name))
+            if should_skip_item_by_mp(file_path, marketplace, print_logs):
+                return []
             if os.path.isfile(file_path):
                 # locally, might have leftover dirs without committed files
                 if print_logs:
@@ -1046,10 +1103,12 @@ def process_integration(file_path: str, print_logs: bool) -> list:
     return res
 
 
-def process_script(file_path: str, print_logs: bool) -> list:
+def process_script(file_path: str, print_logs: bool, marketplace: str = 'xsoar') -> list:
     res = []
     try:
         if os.path.isfile(file_path):
+            if should_skip_item_by_mp(file_path, marketplace, print_logs):
+                return []
             if find_type(file_path) == FileType.SCRIPT:
                 if print_logs:
                     print(f'adding {file_path} to id_set')
@@ -1058,6 +1117,8 @@ def process_script(file_path: str, print_logs: bool) -> list:
             # package script
             unifier = YmlUnifier(file_path)
             yml_path, code = unifier.get_script_or_integration_package_data()
+            if should_skip_item_by_mp(yml_path, marketplace, print_logs):
+                return []
             if print_logs:
                 print(f'adding {file_path} to id_set')
             res.append(get_script_data(yml_path, script_code=code))
@@ -1068,7 +1129,7 @@ def process_script(file_path: str, print_logs: bool) -> list:
     return res
 
 
-def process_incident_fields(file_path: str, print_logs: bool, incidents_types_list: list) -> list:
+def process_incident_fields(file_path: str, print_logs: bool, incidents_types_list: list, marketplace: str = 'xsoar') -> list:
     """
     Process a incident_fields JSON file
     Args:
@@ -1081,6 +1142,8 @@ def process_incident_fields(file_path: str, print_logs: bool, incidents_types_li
     """
     res = []
     try:
+        if should_skip_item_by_mp(file_path, marketplace, print_logs):
+            return []
         if find_type(file_path) == FileType.INCIDENT_FIELD:
             if print_logs:
                 print(f'adding {file_path} to id_set')
@@ -1091,7 +1154,7 @@ def process_incident_fields(file_path: str, print_logs: bool, incidents_types_li
     return res
 
 
-def process_indicator_types(file_path: str, print_logs: bool, all_integrations: list) -> list:
+def process_indicator_types(file_path: str, print_logs: bool, all_integrations: list, marketplace: str = 'xsoar') -> list:
     """
     Process a indicator types JSON file
     Args:
@@ -1104,6 +1167,10 @@ def process_indicator_types(file_path: str, print_logs: bool, all_integrations: 
     """
     res = []
     try:
+        if should_skip_item_by_mp(file_path, marketplace, print_logs):
+            if print_logs:
+                print(f'Skipping {file_path} due to mismatch with the marketplace this id set is generated for.')
+            return []
         # ignore old reputations.json files
         if not os.path.basename(file_path) == 'reputations.json' and find_type(file_path) == FileType.REPUTATION:
             if print_logs:
@@ -1116,7 +1183,7 @@ def process_indicator_types(file_path: str, print_logs: bool, all_integrations: 
     return res
 
 
-def process_generic_items(file_path: str, print_logs: bool,
+def process_generic_items(file_path: str, print_logs: bool, marketplace: str = 'xsoar',
                           generic_types_list: list = None) -> list:
     """
     Process a generic field JSON file
@@ -1131,6 +1198,8 @@ def process_generic_items(file_path: str, print_logs: bool,
     """
     res = []
     try:
+        if should_skip_item_by_mp(file_path, marketplace, print_logs):
+            return []
         if find_type(file_path) == FileType.GENERIC_FIELD:
             if print_logs:
                 print(f'adding {file_path} to id_set')
@@ -1145,7 +1214,7 @@ def process_generic_items(file_path: str, print_logs: bool,
     return res
 
 
-def process_jobs(file_path: str, print_logs: bool) -> list:
+def process_jobs(file_path: str, print_logs: bool, marketplace: str = 'xsoar') -> list:
     """
     Process a JSON file representing a Job object.
     Args:
@@ -1157,6 +1226,8 @@ def process_jobs(file_path: str, print_logs: bool) -> list:
     """
     result: List = []
     try:
+        if should_skip_item_by_mp(file_path, marketplace, print_logs):
+            return []
         if find_type(file_path) == FileType.JOB:
             if print_logs:
                 print(f'adding {file_path} to id_set')
@@ -1168,7 +1239,7 @@ def process_jobs(file_path: str, print_logs: bool) -> list:
 
 
 def process_general_items(file_path: str, print_logs: bool, expected_file_types: Tuple[FileType],
-                          data_extraction_func: Callable) -> list:
+                          data_extraction_func: Callable, marketplace: str = 'xsoar') -> list:
     """
     Process a general item file.
     expected file in one of the following:
@@ -1187,14 +1258,16 @@ def process_general_items(file_path: str, print_logs: bool, expected_file_types:
         file_path: The file path from an item folder
         print_logs: Whether to print logs to stdout
         expected_file_types: specific file type to parse, will ignore the rest
-        data_extraction_func: a function that given a file path will returns an id-set data dict.
-
+        data_extraction_func: a function that given a file path will return an id-set data dict.
+        marketplace: the marketplace this id set is generated for
     Returns:
         a list of item data.
     """
     res = []
     try:
         if find_type(file_path) in expected_file_types:
+            if should_skip_item_by_mp(file_path, marketplace, print_logs):
+                return []
             if print_logs:
                 print(f'adding {file_path} to id_set')
             res.append(data_extraction_func(file_path))
@@ -1205,9 +1278,9 @@ def process_general_items(file_path: str, print_logs: bool, expected_file_types:
     return res
 
 
-def process_test_playbook_path(file_path: str, print_logs: bool) -> tuple:
+def process_test_playbook_path(file_path: str, print_logs: bool, marketplace: str = 'xsoar') -> tuple:
     """
-    Process a yml file in the testplyabook dir. Maybe either a script or playbook
+    Process a yml file in the test playbook dir. Maybe either a script or playbook
 
     Arguments:
         file_path {string} -- path to yaml file
@@ -1221,6 +1294,8 @@ def process_test_playbook_path(file_path: str, print_logs: bool) -> tuple:
     try:
         if print_logs:
             print(f'adding {file_path} to id_set')
+        if should_skip_item_by_mp(file_path, marketplace, print_logs):
+            return None, None
         if find_type(file_path) == FileType.TEST_SCRIPT:
             script = get_script_data(file_path)
         if find_type(file_path) == FileType.TEST_PLAYBOOK:
@@ -1394,6 +1469,7 @@ def get_generic_field_data(path, generic_types_list):
 
 def get_job_data(path: str, print_logs: bool):
     json_data = get_json(path)
+
     data = create_common_entity_data(path=path,
                                      name=json_data.get('name'),
                                      to_version=json_data.get('toVersion'),
@@ -1543,20 +1619,34 @@ def merge_id_sets(first_id_set_dict: dict, second_id_set_dict: dict, print_logs:
 
 
 def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_create=None,  # noqa : C901
-                     objects_to_create: list = None, print_logs: bool = True, fail_on_duplicates: bool = False):
+                     objects_to_create: list = None, print_logs: bool = True, fail_on_duplicates: bool = False,
+                     marketplace: str = 'xsoar'):
     """Re create the id-set
 
     Args:
-        id_set_path (str, optional): If passed an empty string will use default path. Pass in None to avoid saving the id-set.
-            Defaults to DEFAULT_ID_SET_PATH.
+        id_set_path (str, optional): If passed an empty string will use default path (dependeing on mp type).
+        Pass in None to avoid saving the id-set.
         pack_to_create: The input path. the default is the content repo.
-        objects_to_create (list, optional): [description]. Defaults to None.
+        objects_to_create (list, optional): The content items this id set will contain. Defaults are set
+        depending on the mp type.
         fail_on_duplicates: If value is True an error will be raised if duplicates are found
+        marketplace: The marketplace the id set is created for.
+        print_logs: Whether to print logs or not
 
     Returns: id-set object
     """
     if id_set_path == "":
-        id_set_path = DEFAULT_ID_SET_PATH
+        if marketplace == MarketplaceVersions.MarketplaceV2.value:
+            id_set_path = MP_V2_ID_SET_PATH
+        else:
+            id_set_path = DEFAULT_ID_SET_PATH
+
+    if not objects_to_create:
+        if marketplace == MarketplaceVersions.MarketplaceV2.value:
+            objects_to_create = CONTENT_MP_V2_ENTITIES
+        else:
+            objects_to_create = CONTENT_ENTITIES
+
     if id_set_path and os.path.exists(id_set_path):
         try:
             refresh_interval = int(os.getenv('DEMISTO_SDK_ID_SET_REFRESH_INTERVAL', -1))
@@ -1594,9 +1684,6 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                         LOG_COLORS.GREEN)
         print("")  # add an empty line for clarity
 
-    if objects_to_create is None:
-        objects_to_create = CONTENT_ENTITIES
-
     start_time = time.time()
     scripts_list = []
     playbooks_list = []
@@ -1630,7 +1717,8 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
         if 'Packs' in objects_to_create:
             print_color("\nStarting iteration over Packs", LOG_COLORS.GREEN)
             for pack_data in pool.map(partial(get_pack_metadata_data,
-                                              print_logs=print_logs
+                                              print_logs=print_logs,
+                                              marketplace=marketplace,
                                               ),
                                       get_pack_metadata_paths(pack_to_create)):
                 packs_dict.update(pack_data)
@@ -1640,7 +1728,8 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
         if 'Integrations' in objects_to_create:
             print_color("\nStarting iteration over Integrations", LOG_COLORS.GREEN)
             for arr in pool.map(partial(process_integration,
-                                        print_logs=print_logs
+                                        print_logs=print_logs,
+                                        marketplace=marketplace,
                                         ),
                                 get_integrations_paths(pack_to_create)):
 
@@ -1657,6 +1746,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         print_logs=print_logs,
                                         expected_file_types=(FileType.PLAYBOOK,),
                                         data_extraction_func=get_playbook_data,
+                                        marketplace=marketplace,
                                         ),
                                 get_playbooks_paths(pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
@@ -1669,7 +1759,8 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
         if 'Scripts' in objects_to_create:
             print_color("\nStarting iteration over Scripts", LOG_COLORS.GREEN)
             for arr in pool.map(partial(process_script,
-                                        print_logs=print_logs
+                                        print_logs=print_logs,
+                                        marketplace=marketplace,
                                         ),
                                 get_general_paths(SCRIPTS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
@@ -1682,7 +1773,8 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
         if 'TestPlaybooks' in objects_to_create:
             print_color("\nStarting iteration over TestPlaybooks", LOG_COLORS.GREEN)
             for pair in pool.map(partial(process_test_playbook_path,
-                                         print_logs=print_logs
+                                         print_logs=print_logs,
+                                         marketplace=marketplace,
                                          ),
                                  get_general_paths(TEST_PLAYBOOKS_DIR, pack_to_create)):
                 if pair[0]:
@@ -1698,6 +1790,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         print_logs=print_logs,
                                         expected_file_types=(FileType.CLASSIFIER, FileType.OLD_CLASSIFIER),
                                         data_extraction_func=get_classifier_data,
+                                        marketplace=marketplace,
                                         ),
                                 get_general_paths(CLASSIFIERS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
@@ -1713,6 +1806,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         print_logs=print_logs,
                                         expected_file_types=(FileType.DASHBOARD,),
                                         data_extraction_func=get_dashboard_data,
+                                        marketplace=marketplace,
                                         ),
                                 get_general_paths(DASHBOARDS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
@@ -1728,6 +1822,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         print_logs=print_logs,
                                         expected_file_types=(FileType.INCIDENT_TYPE,),
                                         data_extraction_func=get_incident_type_data,
+                                        marketplace=marketplace,
                                         ),
                                 get_general_paths(INCIDENT_TYPES_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
@@ -1742,7 +1837,8 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
             print_color("\nStarting iteration over Incident Fields", LOG_COLORS.GREEN)
             for arr in pool.map(partial(process_incident_fields,
                                         print_logs=print_logs,
-                                        incidents_types_list=incident_type_list
+                                        incidents_types_list=incident_type_list,
+                                        marketplace=marketplace,
                                         ),
                                 get_general_paths(INCIDENT_FIELDS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
@@ -1758,6 +1854,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         print_logs=print_logs,
                                         expected_file_types=(FileType.INDICATOR_FIELD,),
                                         data_extraction_func=get_general_data,
+                                        marketplace=marketplace,
                                         ),
                                 get_general_paths(INDICATOR_FIELDS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
@@ -1772,7 +1869,8 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
             print_color("\nStarting iteration over Indicator Types", LOG_COLORS.GREEN)
             for arr in pool.map(partial(process_indicator_types,
                                         print_logs=print_logs,
-                                        all_integrations=integration_list
+                                        all_integrations=integration_list,
+                                        marketplace=marketplace,
                                         ),
                                 get_general_paths(INDICATOR_TYPES_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
@@ -1788,6 +1886,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         print_logs=print_logs,
                                         expected_file_types=(FileType.LAYOUT,),
                                         data_extraction_func=get_layout_data,
+                                        marketplace=marketplace,
                                         ),
                                 get_general_paths(LAYOUTS_DIR, pack_to_create)):
                 layouts_list.extend(arr)
@@ -1795,6 +1894,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         print_logs=print_logs,
                                         expected_file_types=(FileType.LAYOUTS_CONTAINER,),
                                         data_extraction_func=get_layoutscontainer_data,
+                                        marketplace=marketplace,
                                         ),
                                 get_general_paths(LAYOUTS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
@@ -1810,6 +1910,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         print_logs=print_logs,
                                         expected_file_types=(FileType.REPORT,),
                                         data_extraction_func=get_report_data,
+                                        marketplace=marketplace,
                                         ),
                                 get_general_paths(REPORTS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
@@ -1825,6 +1926,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         print_logs=print_logs,
                                         expected_file_types=(FileType.WIDGET,),
                                         data_extraction_func=get_widget_data,
+                                        marketplace=marketplace,
                                         ),
                                 get_general_paths(WIDGETS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
@@ -1840,6 +1942,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         print_logs=print_logs,
                                         expected_file_types=(FileType.MAPPER,),
                                         data_extraction_func=get_mapper_data,
+                                        marketplace=marketplace,
                                         ),
                                 get_general_paths(MAPPERS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
@@ -1855,6 +1958,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         print_logs=print_logs,
                                         expected_file_types=(FileType.LISTS,),
                                         data_extraction_func=get_list_data,
+                                        marketplace=marketplace,
                                         ),
                                 get_general_paths(LISTS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
@@ -1866,11 +1970,11 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
 
         if 'GenericDefinitions' in objects_to_create:
             print_color("\nStarting iteration over Generic Definitions", LOG_COLORS.GREEN)
-            print_color(f"pack to create: {pack_to_create}", LOG_COLORS.YELLOW)
             for arr in pool.map(partial(process_general_items,
                                         expected_file_types=(FileType.GENERIC_DEFINITION,),
                                         data_extraction_func=get_general_data,
                                         print_logs=print_logs,
+                                        marketplace=marketplace,
                                         ),
                                 get_general_paths(GENERIC_DEFINITIONS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
@@ -1886,6 +1990,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         print_logs=print_logs,
                                         expected_file_types=(FileType.GENERIC_MODULE,),
                                         data_extraction_func=get_generic_module_data,
+                                        marketplace=marketplace,
                                         ),
                                 get_general_paths(GENERIC_MODULES_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
@@ -1897,9 +2002,9 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
 
         if 'GenericTypes' in objects_to_create:
             print_color("\nStarting iteration over Generic Types", LOG_COLORS.GREEN)
-            print_color(f"pack to create: {pack_to_create}", LOG_COLORS.YELLOW)
             for arr in pool.map(partial(process_generic_items,
                                         print_logs=print_logs,
+                                        marketplace=marketplace,
                                         ),
                                 get_generic_entities_paths(GENERIC_TYPES_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
@@ -1915,6 +2020,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
             for arr in pool.map(partial(process_generic_items,
                                         print_logs=print_logs,
                                         generic_types_list=generic_types_list,
+                                        marketplace=marketplace,
                                         ),
                                 get_generic_entities_paths(GENERIC_FIELDS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
@@ -1926,8 +2032,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
 
         if 'Jobs' in objects_to_create:
             print_color("\nStarting iteration over Jobs", LOG_COLORS.GREEN)
-            print_color(f"pack to create: {pack_to_create}", LOG_COLORS.YELLOW)
-            for arr in pool.map(partial(process_jobs, print_logs=print_logs),
+            for arr in pool.map(partial(process_jobs, print_logs=print_logs, marketplace=marketplace, ),
                                 get_general_paths(JOBS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
@@ -1944,36 +2049,50 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     new_ids_dict['integrations'] = sort(integration_list)
     new_ids_dict['TestPlaybooks'] = sort(testplaybooks_list)
     new_ids_dict['Classifiers'] = sort(classifiers_list)
-    new_ids_dict['Dashboards'] = sort(dashboards_list)
     new_ids_dict['IncidentFields'] = sort(incident_fields_list)
     new_ids_dict['IncidentTypes'] = sort(incident_type_list)
     new_ids_dict['IndicatorFields'] = sort(indicator_fields_list)
     new_ids_dict['IndicatorTypes'] = sort(indicator_types_list)
-    new_ids_dict['Layouts'] = sort(layouts_list)
-    new_ids_dict['Reports'] = sort(reports_list)
-    new_ids_dict['Widgets'] = sort(widgets_list)
-    new_ids_dict['Mappers'] = sort(mappers_list)
-    new_ids_dict['Packs'] = packs_dict
-    new_ids_dict['GenericTypes'] = sort(generic_types_list)
-    new_ids_dict['GenericFields'] = sort(generic_fields_list)
-    new_ids_dict['GenericModules'] = sort(generic_modules_list)
-    new_ids_dict['GenericDefinitions'] = sort(generic_definitions_list)
     new_ids_dict['Lists'] = sort(lists_list)
     new_ids_dict['Jobs'] = sort(jobs_list)
+    new_ids_dict['Mappers'] = sort(mappers_list)
+    new_ids_dict['Packs'] = packs_dict
+
+    if marketplace == MarketplaceVersions.XSOAR.value:
+        new_ids_dict['GenericTypes'] = sort(generic_types_list)
+        new_ids_dict['GenericFields'] = sort(generic_fields_list)
+        new_ids_dict['GenericModules'] = sort(generic_modules_list)
+        new_ids_dict['GenericDefinitions'] = sort(generic_definitions_list)
+        new_ids_dict['Layouts'] = sort(layouts_list)
+        new_ids_dict['Reports'] = sort(reports_list)
+        new_ids_dict['Widgets'] = sort(widgets_list)
+        new_ids_dict['Dashboards'] = sort(dashboards_list)
+    else:
+        # a workaround for find-dependencies check (PackDependencies._collect_pack_items)
+        new_ids_dict['GenericTypes'] = []
+        new_ids_dict['GenericFields'] = []
+        new_ids_dict['GenericModules'] = []
+        new_ids_dict['GenericDefinitions'] = []
+        new_ids_dict['Layouts'] = []
+        new_ids_dict['Reports'] = []
+        new_ids_dict['Widgets'] = []
+        new_ids_dict['Dashboards'] = []
 
     exec_time = time.time() - start_time
     print_color("Finished the creation of the id_set. Total time: {} seconds".format(exec_time), LOG_COLORS.GREEN)
-    duplicates = find_duplicates(new_ids_dict, print_logs)
+    duplicates = find_duplicates(new_ids_dict, print_logs, marketplace)
     if any(duplicates) and fail_on_duplicates:
         raise Exception(f'The following ids were found duplicates\n{json.dumps(duplicates, indent=4)}\n')
 
     return new_ids_dict
 
 
-def find_duplicates(id_set, print_logs):
+def find_duplicates(id_set, print_logs, marketplace):
     lists_to_return = []
 
-    for object_type in ID_SET_ENTITIES:
+    entities = ID_SET_ENTITIES if marketplace == 'xsoar' else ID_SET_MP_V2_ENTITIES
+
+    for object_type in entities:
         if print_logs:
             print_color("Checking diff for {}".format(object_type), LOG_COLORS.GREEN)
         objects = id_set.get(object_type)

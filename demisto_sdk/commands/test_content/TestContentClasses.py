@@ -1482,11 +1482,10 @@ class TestContext:
         inputs_default = deepcopy(inputs)
 
         # Change Configuration for external pb.
-        # Every input is a dict containing key (str), value(dict with simple/complex key) and description
         print(f'{external_playbook_configuration=}')
         for input in inputs:
             print(f'{input=}')
-            if input.get('key') in external_playbook_configuration:
+            if input.get('key') in external_playbook_configuration["input_parameters"]:
                 value = external_playbook_configuration["input_parameters"][input.get('key')]
                 print(f'{value=}, {input=}')
                 input['value']["simple"] = value.get("simple")

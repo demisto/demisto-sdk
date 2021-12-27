@@ -1466,7 +1466,8 @@ class TestContext:
             Only to be used with server version 6.2 and above. """
 
         server_version = get_demisto_version(self.client)
-        if LooseVersion(server_version) < LooseVersion('6.2.0'):
+
+        if LooseVersion(server_version.base_version) < LooseVersion('6.2.0'): # type: ignore
             return False
 
         # Get External playbook configuration

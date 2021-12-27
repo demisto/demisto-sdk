@@ -2067,6 +2067,16 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
         new_ids_dict['Reports'] = sort(reports_list)
         new_ids_dict['Widgets'] = sort(widgets_list)
         new_ids_dict['Dashboards'] = sort(dashboards_list)
+    else:
+        # a workaround for find-dependencies check (PackDependencies._collect_pack_items)
+        new_ids_dict['GenericTypes'] = []
+        new_ids_dict['GenericFields'] = []
+        new_ids_dict['GenericModules'] = []
+        new_ids_dict['GenericDefinitions'] = []
+        new_ids_dict['Layouts'] = []
+        new_ids_dict['Reports'] = []
+        new_ids_dict['Widgets'] = []
+        new_ids_dict['Dashboards'] = []
 
     exec_time = time.time() - start_time
     print_color("Finished the creation of the id_set. Total time: {} seconds".format(exec_time), LOG_COLORS.GREEN)

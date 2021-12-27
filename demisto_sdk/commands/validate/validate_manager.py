@@ -49,6 +49,8 @@ from demisto_sdk.commands.common.hook_validations.incident_field import \
     IncidentFieldValidator
 from demisto_sdk.commands.common.hook_validations.incident_type import \
     IncidentTypeValidator
+from demisto_sdk.commands.common.hook_validations.indicator_field import \
+    IndicatorFieldValidator
 from demisto_sdk.commands.common.hook_validations.integration import \
     IntegrationValidator
 from demisto_sdk.commands.common.hook_validations.job import JobValidator
@@ -521,10 +523,12 @@ class ValidateManager:
         elif file_type == FileType.AUTHOR_IMAGE:
             return self.validate_author_image(file_path, pack_error_ignore_list)
 
-        # incident fields and indicator fields are using the same validation.
-        elif file_type in (FileType.INCIDENT_FIELD, FileType.INDICATOR_FIELD):
-
+        elif file_type == FileType.INCIDENT_FIELD:
             return self.validate_incident_field(structure_validator, pack_error_ignore_list, is_modified, is_added_file)
+
+        elif file_type == FileType.INDICATOR_FIELD:
+            return self.validate_indicator_field(structure_validator, pack_error_ignore_list, is_modified,
+                                                 is_added_file)
 
         elif file_type == FileType.REPUTATION:
             return self.validate_reputation(structure_validator, pack_error_ignore_list)
@@ -875,6 +879,20 @@ class ValidateManager:
                                                           use_git=self.use_git,
                                                           is_added_file=is_added_file)
 
+    def validate_indicator_field(self, structure_validator, pack_error_ignore_list, is_modified, is_added_file):
+        indicator_field_validator = IndicatorFieldValidator(structure_validator, ignored_errors=pack_error_ignore_list,
+                                                            print_as_warnings=self.print_ignored_errors,
+                                                            json_file_path=self.json_file_path)
+        if is_modified and self.is_backward_check:
+            return all([indicator_field_validator.is_valid_file(validate_rn=False, is_new_file=not is_modified,
+                                                                use_git=self.use_git,
+                                                                is_added_file=is_added_file),
+                        indicator_field_validator.is_backward_compatible()])
+        else:
+            return indicator_field_validator.is_valid_file(validate_rn=False, is_new_file=not is_modified,
+                                                           use_git=self.use_git,
+                                                           is_added_file=is_added_file)
+
     def validate_reputation(self, structure_validator, pack_error_ignore_list):
         reputation_validator = ReputationValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                                    print_as_warnings=self.print_ignored_errors,
@@ -896,7 +914,8 @@ class ValidateManager:
                                                 is_circle=self.is_circle)
 
     def validate_pre_process_rule(self, structure_validator, pack_error_ignore_list):
-        pre_process_rules_validator = PreProcessRuleValidator(structure_validator, ignored_errors=pack_error_ignore_list,
+        pre_process_rules_validator = PreProcessRuleValidator(structure_validator,
+                                                              ignored_errors=pack_error_ignore_list,
                                                               print_as_warnings=self.print_ignored_errors,
                                                               json_file_path=self.json_file_path)
         return pre_process_rules_validator.is_valid_pre_process_rule(validate_rn=False, id_set_file=self.id_set_file,

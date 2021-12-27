@@ -125,16 +125,16 @@ ERROR_CODE = {
 
     # IF - Incident Fields
     "invalid_incident_field_name": {'code': "IF100", 'ui_applicable': True, 'related_field': 'name'},
-    "invalid_incident_field_content_key_value": {'code': "IF101", 'ui_applicable': False, 'related_field': 'content'},
+    "invalid_field_content_key_value": {'code': "IF101", 'ui_applicable': False, 'related_field': 'content'},
     "invalid_incident_field_system_key_value": {'code': "IF102", 'ui_applicable': False, 'related_field': 'system'},
-    "invalid_incident_field_type": {'code': "IF103", 'ui_applicable': True, 'related_field': 'type'},
-    "invalid_incident_field_group_value": {'code': "IF104", 'ui_applicable': False, 'related_field': 'group'},
+    "invalid_field_type": {'code': "IF103", 'ui_applicable': True, 'related_field': 'type'},
+    "invalid_field_group_value": {'code': "IF104", 'ui_applicable': False, 'related_field': 'group'},
     "invalid_incident_field_cli_name_regex": {'code': "IF105", 'ui_applicable': False, 'related_field': 'cliName'},
     "invalid_incident_field_cli_name_value": {'code': "IF106", 'ui_applicable': True, 'related_field': 'cliName'},
     # missing 107
     "invalid_incident_field_or_type_from_version": {'code': "IF108", 'ui_applicable': False,
                                                     'related_field': 'fromVersion'},
-    "new_incident_field_required": {'code': "IF109", 'ui_applicable': True, 'related_field': 'required'},
+    "new_field_required": {'code': "IF109", 'ui_applicable': True, 'related_field': 'required'},
     "from_version_modified_after_rename": {'code': "IF110", 'ui_applicable': False, 'related_field': 'fromVersion'},
     "incident_field_type_change": {'code': "IF111", 'ui_applicable': False, 'related_field': 'type'},
     "indicator_field_type_grid_minimal_version": {'code': "IF112", 'ui_applicable': False,
@@ -1284,23 +1284,23 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_incident_field_content_key_value(content_value):
-        return f"The content key must be set to {content_value}."
+    def invalid_field_content_key_value():
+        return "The content key must be set to True."
 
     @staticmethod
     @error_code_decorator
-    def invalid_incident_field_system_key_value(system_value):
-        return f"The system key must be set to {system_value}"
+    def invalid_incident_field_system_key_value():
+        return "The system key must be set to False"
 
     @staticmethod
     @error_code_decorator
-    def invalid_incident_field_type(file_type, type_fields):
+    def invalid_field_type(file_type, type_fields):
         return f"Type: `{file_type}` is not one of available types.\n" \
-               f"available types: {[value.value for value in type_fields]}"
+               f"available types: {type_fields}"
 
     @staticmethod
     @error_code_decorator
-    def invalid_incident_field_group_value(group):
+    def invalid_field_group_value(group):
         return f"Group {group} is not a group field."
 
     @staticmethod
@@ -1321,8 +1321,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def new_incident_field_required():
-        return 'New incident fields can not be required. change to:\nrequired: false.'
+    def new_field_required():
+        return 'New fields can not be required. change to:\nrequired: false.'
 
     @staticmethod
     @error_code_decorator

@@ -1428,7 +1428,9 @@ class TestContext:
 
             external_playbook_configuration = self.playbook.configuration.external_playbook_config
 
-            self.replace_external_playbook_configuration(external_playbook_configuration)
+            # Change Configuration for external configuration if needed
+            restore_needed, default_vals, restore_path = self.replace_external_playbook_configuration(
+                external_playbook_configuration)
 
             incident = self.playbook.create_incident(self.client)
             if not incident:
@@ -1448,10 +1450,14 @@ class TestContext:
                 self.playbook.print_context_to_log(self.client, investigation_id)
 
             # restore Configuration for external playbook
-            if external_playbook_configuration:
-            # demisto_client.generic_request_func(self=self.client, method='POST', path=saving_inputs_path,
-            # body=inputs_default)
-                pass
+            if restore_needed:
+                self.build_context.logging_module.info(f"Restoring External Playbook parameters.")
+
+                res, _, _ = demisto_client.generic_request_func(self=self.client, method='POST',
+                                                                path=restore_path,
+                                                                body=default_vals)
+                self.build_context.logging_module.info(f"Restored External Playbook successfully.")
+
             self.playbook.disable_integrations(self.client, self.server_context)
             self._clean_incident_if_successful(playbook_state)
             return playbook_state
@@ -1463,45 +1469,48 @@ class TestContext:
         """ takes external configuration of shape {"playbookID": "Isolate Endpoint - Generic V2",
                                                    "input_parameters":{"Endpoint_hostname": ["simple", "test"]}
             and changes the specified playbook configuration to the mentioned one.
+            Returns (Whether the Playbook changed, The values to restore, the path to use when restoring)
             Only to be used with server version 6.2 and above. """
-
+        if not external_playbook_configuration:
+            self.build_context.logging_module.info("External Playbook not in use, skipping re-configuration.")
+            return False, {}, ''
         server_version = get_demisto_version(self.client)
 
         if LooseVersion(server_version.base_version) < LooseVersion('6.2.0'): # type: ignore
-            return False
+            self.build_context.logging_module.info("External Playbook not supported in versions previous to 6.2.0,"
+                                                   " skipping re-configuration.")
+            return False, {}, ''
 
         # if external_playbook_configuration:
+        self.build_context.logging_module.info("External Playbook in use, starting re-configuration.")
+
         external_playbook_id = external_playbook_configuration['playbookID']
         external_playbook_path = f'/playbook/{external_playbook_id}'
-        print(f'/playbook/{external_playbook_id=}')
         res, _, _ = demisto_client.generic_request_func(self=self.client, method='GET',
                                                         path=external_playbook_path, response_type='object')
-        print(f' SDK PB pb current {res=}')
         # Save Default Configuration.
         inputs = res.get('inputs', [])
         inputs_default = deepcopy(inputs)
+        self.build_context.logging_module.info("Saved current configuration.")
 
+        changed_keys = []
         # Change Configuration for external pb.
-        print(f'{external_playbook_configuration=}')
         for input in inputs:
-            print(f'{input=}')
             if input.get('key') in external_playbook_configuration["input_parameters"]:
+                changed_keys.append(input.get('key'))
                 value = external_playbook_configuration["input_parameters"][input.get('key')]
-                print(f'{value=}, {input=}')
                 input['value']["simple"] = value.get("simple")
                 input['value']["complex"] = value.get("complex")
-        print(f'changed {inputs=}')
+
+        self.build_context.logging_module.info(f"Changing keys: {changed_keys}.")
+
 
         saving_inputs_path = f'/playbook/inputs/{external_playbook_id}'
         demisto_client.generic_request_func(self=self.client, method='POST', path=saving_inputs_path, body=inputs)
 
-        res, _, _ = demisto_client.generic_request_func(self=self.client, method='GET',
-                                                        path=external_playbook_path, response_type='object')
-        print(f'After change SDK PB pb {res=}')
+        self.build_context.logging_module.info(f"Re-configured {external_playbook_id} successfully.")
 
-        res, _, _ = demisto_client.generic_request_func(self=self.client, method='POST', path=saving_inputs_path,
-                                            body=inputs_default)
-        print(f'After revert SDK PB pb {res=}')
+        return True, inputs_default, saving_inputs_path
 
 
     def _clean_incident_if_successful(self, playbook_state: str) -> None:

@@ -2211,3 +2211,40 @@ def get_pack_dir(path):
         if parts[index] == 'Packs':
             return parts[:index + 2]
     return []
+
+
+def get_scripts_and_commands_from_yml_data(data, file_type):
+    """Get the used scripts and commands from the yml data
+
+    Args:
+        data: The yml data as extracted with get_yaml
+        file_type: The FileType of the data provided.
+
+    Return (list of found command names, list of found script names)
+    """
+    commands = []
+    scripts = []
+    if file_type == FileType.TEST_PLAYBOOK or file_type == FileType.PLAYBOOK:
+        tasks = data.get('tasks')
+        for task_num in tasks.keys():
+            task = tasks[task_num]
+            inner_task = task.get('task')
+            task_type = task.get('type')
+            if inner_task and task_type == 'regular':
+                if inner_task.get('iscommand'):
+                    commands.append(inner_task.get('script'))
+                else:
+                    scripts.append(inner_task.get('scriptName'))
+
+    if file_type == FileType.SCRIPT:
+        script_id = get_entity_id_by_entity_type(data, SCRIPTS_DIR)
+        scripts = [script_id]
+        if data.get('dependson'):  # TODO: consult on this. if leave add unittest
+            commands = data.get('dependson').get('must', [])
+
+    if file_type == FileType.INTEGRATION:
+        integration_commands = data.get('script', {}).get('commands')
+        for integration_command in integration_commands:
+            commands.append(integration_command.get('name'))
+
+    return commands, scripts

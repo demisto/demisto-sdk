@@ -8,10 +8,10 @@ from ruamel.yaml import YAML
 from demisto_sdk.commands.common.constants import (INTEGRATION, PLAYBOOK,
                                                    TEST_PLAYBOOKS_DIR,
                                                    FileType)
-from demisto_sdk.commands.common.tools import (_get_file_id, find_type,
-                                               get_entity_id_by_entity_type,
-                                               get_not_registered_tests,
-                                               get_yaml, is_uuid)
+from demisto_sdk.commands.common.tools import (
+    _get_file_id, find_type, get_entity_id_by_entity_type,
+    get_not_registered_tests, get_scripts_and_commands_from_yml_data, get_yaml,
+    is_uuid)
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 
 ryaml = YAML()
@@ -132,6 +132,7 @@ class BaseUpdateYML(BaseUpdate):
             pack_path = os.path.dirname(os.path.dirname(os.path.abspath(self.source_file)))
             test_playbook_dir_path = os.path.join(pack_path, TEST_PLAYBOOKS_DIR)
             test_playbook_ids = []
+            commands, scripts = get_scripts_and_commands_from_yml_data(self.data, self.file_type)
             try:
                 test_playbooks_files = os.listdir(test_playbook_dir_path)
                 if test_playbooks_files:
@@ -143,7 +144,21 @@ class BaseUpdateYML(BaseUpdate):
                             test_playbook_data = get_yaml(tpb_file_path)
                             test_playbook_id = get_entity_id_by_entity_type(test_playbook_data,
                                                                             content_entity='')
-                            test_playbook_ids.append(test_playbook_id)
+                            if not scripts and not commands:
+                                test_playbook_ids.append(test_playbook_id)
+                            else:
+                                added = False
+                                tpb_commands, tpb_scripts = get_scripts_and_commands_from_yml_data(
+                                    test_playbook_data, FileType.TEST_PLAYBOOK)
+                                for tpb_command in tpb_commands:
+                                    if not added and tpb_command in commands:
+                                        test_playbook_ids.append(test_playbook_id)
+                                        added = True
+                                for tpb_script in tpb_scripts:
+                                    if not added and tpb_script in scripts:
+                                        test_playbook_ids.append(test_playbook_id)
+                                        added = True
+
                     self.data['tests'] = test_playbook_ids
             except FileNotFoundError:
                 pass

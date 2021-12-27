@@ -1488,7 +1488,7 @@ class TestContext:
             print(f'{input=}')
             if input.get('key') in external_playbook_configuration:
                 value = external_playbook_configuration["input_parameters"][input.get('key')]
-                print(f'{value=}')
+                print(f'{value=}, {input=}')
                 input['value']["simple"] = value.get("simple")
                 input['value']["complex"] = value.get("complex")
         print(f'changed {inputs=}')

@@ -1470,8 +1470,6 @@ class TestContext:
         if LooseVersion(server_version.base_version) < LooseVersion('6.2.0'): # type: ignore
             return False
 
-        # Get External playbook configuration
-
         # if external_playbook_configuration:
         external_playbook_id = external_playbook_configuration['playbookID']
         external_playbook_path = f'/playbook/{external_playbook_id}'
@@ -1490,6 +1488,7 @@ class TestContext:
             print(f'{input=}')
             if input.get('key') in external_playbook_configuration:
                 value = external_playbook_configuration["input_parameters"][input.get('key')]
+                print(f'{value=}')
                 input['value']["simple"] = value.get("simple")
                 input['value']["complex"] = value.get("complex")
         print(f'changed {inputs=}')

@@ -25,6 +25,7 @@ from slack import WebClient as SlackClient
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
     FILTER_CONF, PB_Status)
+from demisto_sdk.commands.common.tools import get_demisto_version
 from demisto_sdk.commands.test_content.constants import (
     CONTENT_BUILD_SSH_USER, LOAD_BALANCER_DNS)
 from demisto_sdk.commands.test_content.Docker import Docker
@@ -1459,6 +1460,10 @@ class TestContext:
             return PB_Status.FAILED
 
     def replace_external_playbook_configuration(self, external_playbook_configuration: dict):
+        server_version = get_demisto_version(self.client)
+        if LooseVersion(server_version) < LooseVersion('6.2.0'):
+            return False
+
         # Get External playbook configuration
 
         # if external_playbook_configuration:

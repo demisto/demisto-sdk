@@ -33,11 +33,11 @@ from demisto_sdk.commands.common.constants import (
     DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH,
     DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
     DOC_FILES_DIR, ID_IN_COMMONFIELDS, ID_IN_ROOT, INCIDENT_FIELDS_DIR,
-    INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INTEGRATIONS_DIR, JOBS_DIR,
-    LAYOUTS_DIR, LISTS_DIR, OFFICIAL_CONTENT_ID_SET_PATH,
-    PACK_METADATA_IRON_BANK_TAG, PACKAGE_SUPPORTING_DIRECTORIES,
-    PACKAGE_YML_FILE_REGEX, PACKS_DIR, PACKS_DIR_REGEX,
-    PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
+    INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR,
+    INTEGRATIONS_DIR, JOBS_DIR, LAYOUTS_DIR, LISTS_DIR,
+    OFFICIAL_CONTENT_ID_SET_PATH, PACK_METADATA_IRON_BANK_TAG,
+    PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
+    PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
     PACKS_README_FILE_NAME, PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR,
     RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR,
@@ -1089,6 +1089,8 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
             return FileType.LISTS
         elif JOBS_DIR in path.parts:
             return FileType.JOB
+        elif INDICATOR_TYPES_DIR in path.parts:
+            return FileType.REPUTATION
 
     # integration image
     if path.name.endswith('_image.png'):
@@ -2153,14 +2155,14 @@ def get_script_or_sub_playbook_tasks_from_playbook(searched_entity_name: str, ma
     return searched_tasks
 
 
-def get_current_repo() -> str:
+def get_current_repo() -> Tuple[str, str, str]:
     try:
         git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
         parsed_git = giturlparse.parse(git_repo.remotes.origin.url)
         host = parsed_git.host
         if '@' in host:
             host = host.split('@')[1]
-        return f'{host} - {parsed_git.owner}/{parsed_git.repo}'
+        return host, parsed_git.owner, parsed_git.repo
     except git.InvalidGitRepositoryError:
         print_warning('git repo is not found')
-        return "Unknown source"
+        return "Unknown source", '', ''

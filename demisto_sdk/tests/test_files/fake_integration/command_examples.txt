@@ -1,0 +1,6 @@
+!zoom-create-user first_name=test1 last_name=test2 email=test@test.com user_type=Basic
+!zoom-create-user first_name=test1 last_name=test2 email=test@test.com user_type=Pro
+!zoom-create-meeting type=Instant user=test@test.com topic=mytopic
+!zoom-fetch-recording meeting_id=1
+!zoom-list-users
+!zoom-delete-user user=test@test.com

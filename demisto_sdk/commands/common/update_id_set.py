@@ -31,9 +31,9 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                print_warning)
 from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
 
-CONTENT_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
+CONTENT_ENTITIES = ['Packs', 'Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
                     'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
-                    'Layouts', 'Reports', 'Widgets', 'Mappers', 'Packs', 'GenericTypes',
+                    'Layouts', 'Reports', 'Widgets', 'Mappers', 'GenericTypes',
                     'GenericFields', 'GenericModules', 'GenericDefinitions', 'Lists', 'Jobs']
 
 ID_SET_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Classifiers',
@@ -833,7 +833,7 @@ def create_common_entity_data(path, name, to_version, from_version, pack):
     if name:
         data['name'] = name
     data['file_path'] = path
-    data['source'] = get_current_repo()
+    data['source'] = list(get_current_repo())
     if to_version:
         data['toversion'] = to_version
     if from_version:
@@ -1463,6 +1463,7 @@ class IDSetType(Enum):
     GENERIC_MODULE = 'GenericModules'
     GENERIC_DEFINITION = 'GenericDefinitions'
     JOBS = 'Jobs'
+    LISTS = 'Lists'
 
     @classmethod
     def has_value(cls, value):
@@ -1642,6 +1643,10 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         print_logs=print_logs
                                         ),
                                 get_integrations_paths(pack_to_create)):
+
+                for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
+                    if data.get('pack'):
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('integrations', []).append(_id)
                 integration_list.extend(arr)
 
         progress_bar.update(1)
@@ -1654,6 +1659,9 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         data_extraction_func=get_playbook_data,
                                         ),
                                 get_playbooks_paths(pack_to_create)):
+                for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
+                    if data.get('pack'):
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('playbooks', []).append(_id)
                 playbooks_list.extend(arr)
 
         progress_bar.update(1)
@@ -1664,6 +1672,9 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         print_logs=print_logs
                                         ),
                                 get_general_paths(SCRIPTS_DIR, pack_to_create)):
+                for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
+                    if data.get('pack'):
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('scripts', []).append(_id)
                 scripts_list.extend(arr)
 
         progress_bar.update(1)
@@ -1689,6 +1700,9 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         data_extraction_func=get_classifier_data,
                                         ),
                                 get_general_paths(CLASSIFIERS_DIR, pack_to_create)):
+                for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
+                    if data.get('pack'):
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('classifiers', []).append(_id)
                 classifiers_list.extend(arr)
 
         progress_bar.update(1)
@@ -1701,6 +1715,9 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         data_extraction_func=get_dashboard_data,
                                         ),
                                 get_general_paths(DASHBOARDS_DIR, pack_to_create)):
+                for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
+                    if data.get('pack'):
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('dashboards', []).append(_id)
                 dashboards_list.extend(arr)
 
         progress_bar.update(1)
@@ -1713,6 +1730,9 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         data_extraction_func=get_incident_type_data,
                                         ),
                                 get_general_paths(INCIDENT_TYPES_DIR, pack_to_create)):
+                for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
+                    if data.get('pack'):
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('incidentTypes', []).append(_id)
                 incident_type_list.extend(arr)
 
         progress_bar.update(1)
@@ -1725,6 +1745,9 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         incidents_types_list=incident_type_list
                                         ),
                                 get_general_paths(INCIDENT_FIELDS_DIR, pack_to_create)):
+                for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
+                    if data.get('pack'):
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('incidentFields', []).append(_id)
                 incident_fields_list.extend(arr)
 
         progress_bar.update(1)
@@ -1737,6 +1760,9 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         data_extraction_func=get_general_data,
                                         ),
                                 get_general_paths(INDICATOR_FIELDS_DIR, pack_to_create)):
+                for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
+                    if data.get('pack'):
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('indicatorFields', []).append(_id)
                 indicator_fields_list.extend(arr)
 
         progress_bar.update(1)
@@ -1749,6 +1775,9 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         all_integrations=integration_list
                                         ),
                                 get_general_paths(INDICATOR_TYPES_DIR, pack_to_create)):
+                for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
+                    if data.get('pack'):
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('indicatorTypes', []).append(_id)
                 indicator_types_list.extend(arr)
 
         progress_bar.update(1)
@@ -1768,6 +1797,9 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         data_extraction_func=get_layoutscontainer_data,
                                         ),
                                 get_general_paths(LAYOUTS_DIR, pack_to_create)):
+                for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
+                    if data.get('pack'):
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('layouts', []).append(_id)
                 layouts_list.extend(arr)
 
         progress_bar.update(1)
@@ -1780,6 +1812,9 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         data_extraction_func=get_report_data,
                                         ),
                                 get_general_paths(REPORTS_DIR, pack_to_create)):
+                for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
+                    if data.get('pack'):
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('reports', []).append(_id)
                 reports_list.extend(arr)
 
         progress_bar.update(1)
@@ -1792,6 +1827,9 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         data_extraction_func=get_widget_data,
                                         ),
                                 get_general_paths(WIDGETS_DIR, pack_to_create)):
+                for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
+                    if data.get('pack'):
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('widgets', []).append(_id)
                 widgets_list.extend(arr)
 
         progress_bar.update(1)
@@ -1804,6 +1842,9 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         data_extraction_func=get_mapper_data,
                                         ),
                                 get_general_paths(MAPPERS_DIR, pack_to_create)):
+                for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
+                    if data.get('pack'):
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('mappers', []).append(_id)
                 mappers_list.extend(arr)
 
         progress_bar.update(1)
@@ -1816,6 +1857,9 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         data_extraction_func=get_list_data,
                                         ),
                                 get_general_paths(LISTS_DIR, pack_to_create)):
+                for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
+                    if data.get('pack'):
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('lists', []).append(_id)
                 lists_list.extend(arr)
 
         progress_bar.update(1)
@@ -1829,6 +1873,9 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         print_logs=print_logs,
                                         ),
                                 get_general_paths(GENERIC_DEFINITIONS_DIR, pack_to_create)):
+                for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
+                    if data.get('pack'):
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('genericDefinitions', []).append(_id)
                 generic_definitions_list.extend(arr)
 
         progress_bar.update(1)
@@ -1841,6 +1888,9 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         data_extraction_func=get_generic_module_data,
                                         ),
                                 get_general_paths(GENERIC_MODULES_DIR, pack_to_create)):
+                for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
+                    if data.get('pack'):
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('genericModules', []).append(_id)
                 generic_modules_list.extend(arr)
 
         progress_bar.update(1)
@@ -1852,6 +1902,9 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         print_logs=print_logs,
                                         ),
                                 get_generic_entities_paths(GENERIC_TYPES_DIR, pack_to_create)):
+                for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
+                    if data.get('pack'):
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('genericTypes', []).append(_id)
                 generic_types_list.extend(arr)
 
         progress_bar.update(1)
@@ -1864,6 +1917,9 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                         generic_types_list=generic_types_list,
                                         ),
                                 get_generic_entities_paths(GENERIC_FIELDS_DIR, pack_to_create)):
+                for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
+                    if data.get('pack'):
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('genericFields', []).append(_id)
                 generic_fields_list.extend(arr)
 
         progress_bar.update(1)
@@ -1873,6 +1929,9 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
             print_color(f"pack to create: {pack_to_create}", LOG_COLORS.YELLOW)
             for arr in pool.map(partial(process_jobs, print_logs=print_logs),
                                 get_general_paths(JOBS_DIR, pack_to_create)):
+                for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
+                    if data.get('pack'):
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('jobs', []).append(_id)
                 jobs_list.extend(arr)
 
         progress_bar.update(1)
@@ -1976,7 +2035,7 @@ def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=
 
         # If they have the same pack name and the same source they actually the same entity.
         # Added to support merge between two id-sets that contain the same pack.
-        if dict1.get('pack') == dict2.get('pack') and dict1.get('source') == dict2.get('source'):
+        if dict1.get('pack') == dict2.get('pack') and is_same_source(dict1.get('source'), dict2.get('source')):
             return False
 
         # A: 3.0.0 - 3.6.0
@@ -1998,6 +2057,22 @@ def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=
             print_warning('The following {} have the same ID ({}) but different names: '
                           '"{}", "{}".'.format(object_type, id_to_check, dict1.get('name'), dict2.get('name')))
 
+    return False
+
+
+def is_same_source(source1, source2) -> bool:
+    """
+    Two sources will considered the same if they are exactly the same repo, or they are the XSOAR repos, one in github
+    and another in gitlab
+    github.com, demisto, content == code,pan.run, xsoar, content
+    """
+    if source1 == source2:
+        return True
+    host1, owner1, repo1 = source1
+    host2, owner2, repo2 = source2
+    if host1 in {'github.com', 'code.pan.run'} and owner1 in {'demisto', 'xsoar'} \
+            and host2 in {'github.com', 'code.pan.run'} and owner2 in {'demisto', 'xsoar'}:
+        return repo1 == repo2
     return False
 
 

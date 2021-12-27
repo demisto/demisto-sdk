@@ -503,7 +503,7 @@ class StructureValidator(BaseValidator):
             (bool): Is file is valid
         """
         try:
-            with open(path, 'r') as yf:
+            with open(self.file_path, 'r') as yf:
                 yaml_obj = ryaml.load(yf)
         except Exception as e:
             error_message, error_code = Errors.invalid_yml_file(e)

@@ -7,12 +7,12 @@ import logging
 import os
 import re
 import string
+from pathlib import Path
 from typing import List, Optional, Tuple
 
 import click
 import yaml
 from pykwalify.core import Core
-from pathlib import Path
 from ruamel.yaml import YAML
 
 from demisto_sdk.commands.common.configuration import Configuration

@@ -209,15 +209,16 @@ class TestPlaybookRunner:
         return eval(test_playbook_results[0])
 
     def print_tpb_error_details(self, tpb_res, tpb_id):
-        entries = tpb_res['entries']
-        print_color(f'Test Playbook {tpb_id} has failed:', LOG_COLORS.RED)
-        for entry in entries:
-            if entry['type'] == ENTRY_TYPE_ERROR and entry['parentContent']:
-                print_color(f'- Task ID: {entry["taskId"]}', LOG_COLORS.RED)
-                # Checks for passwords and replaces them with "******"
-                parent_content = re.sub(r' (P|p)assword="[^";]*"', ' password=******', entry['parentContent'])
-                print_color(f'  Command: {parent_content}', LOG_COLORS.RED)
-                print_color(f'  Body:\n{entry["contents"]}', LOG_COLORS.RED)
+        entries = tpb_res.get('entries')
+        if entries:
+            print_color(f'Test Playbook {tpb_id} has failed:', LOG_COLORS.RED)
+            for entry in entries:
+                if entry['type'] == ENTRY_TYPE_ERROR and entry['parentContent']:
+                    print_color(f'- Task ID: {entry["taskId"]}', LOG_COLORS.RED)
+                    # Checks for passwords and replaces them with "******"
+                    parent_content = re.sub(r' (P|p)assword="[^";]*"', ' password=******', entry['parentContent'])
+                    print_color(f'  Command: {parent_content}', LOG_COLORS.RED)
+                    print_color(f'  Body:\n{entry["contents"]}', LOG_COLORS.RED)
 
     def get_base_link_to_workplan(self):
         """Create a base link to the workplan in the specified xsoar instance

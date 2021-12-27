@@ -1261,10 +1261,9 @@ class TestValidators:
         mocker.patch.object(IncidentFieldValidator, 'is_valid_group', return_value=True)
         mocker.patch.object(IncidentFieldValidator, 'is_valid_content_flag', return_value=True)
         mocker.patch.object(IncidentFieldValidator, 'is_valid_system_flag', return_value=True)
-        mocker.patch.object(IncidentFieldValidator, 'is_valid_cliname', return_value=True)
+        mocker.patch.object(IncidentFieldValidator, 'is_valid_cli_name', return_value=True)
         mocker.patch.object(IncidentFieldValidator, 'is_valid_version', return_value=True)
         mocker.patch.object(IncidentFieldValidator, 'is_valid_required', return_value=True)
-        mocker.patch.object(IncidentFieldValidator, 'is_valid_indicator_grid_fromversion', return_value=True)
         assert res_validator.is_valid_file(validate_rn=False, is_added_file=is_added_file) is expected_result
 
 

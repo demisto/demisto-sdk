@@ -266,14 +266,12 @@ class TestStructureValidator:
         assert not structure.is_valid_file_extension()
 
     def test_is_field_with_open_ended(self, pack: Pack):
-        from demisto_sdk.commands.common.hook_validations.incident_field import \
-            TypeFields
         field_content = {
             'cliName': 'sanityname',
             'name': 'sanity name',
             'id': 'incident',
             'content': True,
-            'type': TypeFields.IncidentFieldTypeMultiSelect.value,
+            'type': 'multiSelect',
             'openEnded': True
         }
         incident_field: JSONBased = pack.create_incident_field(
@@ -284,14 +282,12 @@ class TestStructureValidator:
         assert structure.is_valid_scheme()
 
     def test_is_indicator_with_open_ended(self, pack: Pack):
-        from demisto_sdk.commands.common.hook_validations.incident_field import \
-            TypeFields
         field_content = {
             'cliName': 'sanityname',
             'name': 'sanity name',
             'id': 'incident',
             'content': True,
-            'type': TypeFields.IncidentFieldTypeMultiSelect.value,
+            'type': 'multiSelect',
             'openEnded': True
         }
         incident_field: JSONBased = pack.create_indicator_field(

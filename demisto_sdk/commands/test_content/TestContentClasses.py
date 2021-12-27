@@ -1488,8 +1488,9 @@ class TestContext:
         for input in inputs:
             print(f'{input=}')
             if input.get('key') in external_playbook_configuration:
-                complexity, val = external_playbook_configuration["input_parameters"][input.get('key')]
-                input['value'][complexity] = val
+                value = external_playbook_configuration["input_parameters"][input.get('key')]
+                input['value']["simple"] = value.get("simple")
+                input['value']["complex"] = value.get("complex")
         print(f'changed {inputs=}')
 
         saving_inputs_path = f'/playbook/inputs/{external_playbook_id}'

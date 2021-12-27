@@ -12,6 +12,8 @@ from typing import List, Optional, Tuple
 import click
 import yaml
 from pykwalify.core import Core
+from pathlib import Path
+from ruamel.yaml import YAML
 
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
@@ -88,6 +90,7 @@ class StructureValidator(BaseValidator):
                 self.is_valid_file_path(),
                 self.is_valid_scheme(),
                 self.is_file_id_without_slashes(),
+                self.is_valid_yml()
             ]
 
             if self.old_file:  # In case the file is modified
@@ -495,21 +498,25 @@ class StructureValidator(BaseValidator):
         return True
 
 
-    def is_valid_yaml(self):
+    def is_valid_yml(self):
         # type: () -> bool
-        """Checks if given file is valid
+        """Checks if given file is valid yml file
 
         Returns:
             (bool): Is file is valid
         """
-        try:
-            with open(self.file_path, 'r') as yf:
-                yaml_obj = ryaml.load(yf)
-        except Exception as e:
-            error_message, error_code = Errors.invalid_yml_file(e)
-            self.handle_error(error_message, error_code, file_path=self.file_path)
-            return false
-        return true
+        path = Path(self.file_path)
+        if path.suffix == '.yml':
+            try:
+                ryaml = YAML()
+                ryaml.preserve_quotes = True
+                with open(self.file_path, 'r') as yf:
+                    yaml_obj = ryaml.load(yf)
+            except Exception as e:
+                error_message, error_code = Errors.invalid_yml_file(e)
+                self.handle_error(error_message, error_code, file_path=self.file_path)
+                return False
+        return True
 
 
 def checked_type_by_reg(file_path, compared_regexes=None, return_regex=False):

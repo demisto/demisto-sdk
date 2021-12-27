@@ -495,6 +495,23 @@ class StructureValidator(BaseValidator):
         return True
 
 
+    def is_valid_yaml(self):
+        # type: () -> bool
+        """Checks if given file is valid
+
+        Returns:
+            (bool): Is file is valid
+        """
+        try:
+            with open(path, 'r') as yf:
+                yaml_obj = ryaml.load(yf)
+        except Exception as e:
+            error_message, error_code = Errors.invalid_yml_file(e)
+            self.handle_error(error_message, error_code, file_path=self.file_path)
+            return false
+        return true
+
+
 def checked_type_by_reg(file_path, compared_regexes=None, return_regex=False):
     """ Check if file_path matches the given regexes or any reg from the CHECKED_TYPES_REGEXES list which contains all
      supported file regexes.

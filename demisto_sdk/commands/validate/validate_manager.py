@@ -473,6 +473,11 @@ class ValidateManager:
                                                                        file_path):
                 valid_in_conf = False
 
+        #yml validation
+        if path.suffix == '.yml':
+            if not structure_validator.is_valid_yaml():
+                return False
+
         # Note: these file are not ignored but there are no additional validators for connections
         if file_type == FileType.CONNECTION:
             return True

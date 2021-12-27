@@ -1,4 +1,5 @@
 # Changelog
+* Remove the line which indicates the version of the product from the README.md file for new contributions.
 
 # 1.5.5
 * Changed the **validate** command to fail on missing test-playbooks only if no unittests are found.

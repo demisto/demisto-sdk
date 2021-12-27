@@ -18,37 +18,8 @@ from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_last_remote_release_version,
-                                               get_release_note_entries,
-                                               print_error, print_warning)
-
-
-
-
-from demisto_sdk.commands.init.initiator import Initiator
-from demisto_sdk.commands.integration_diff.integration_diff_detector import \
-    IntegrationDiffDetector
-from demisto_sdk.commands.lint.lint_manager import LintManager
-from demisto_sdk.commands.openapi_codegen.openapi_codegen import \
-    OpenAPIIntegration
-from demisto_sdk.commands.postman_codegen.postman_codegen import \
-    postman_to_autogen_configuration
-# Import demisto-sdk commands
-from demisto_sdk.commands.run_cmd.runner import Runner
-from demisto_sdk.commands.run_playbook.playbook_runner import PlaybookRunner
-from demisto_sdk.commands.run_test_playbook.test_playbook_runner import \
-    TestPlaybookRunner
-from demisto_sdk.commands.secrets.secrets import SecretsValidator
-from demisto_sdk.commands.test_content.execute_test_content import \
-    execute_test_content
-from demisto_sdk.commands.unify.generic_module_unifier import \
-    GenericModuleUnifier
-from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
-from demisto_sdk.commands.update_release_notes.update_rn_manager import \
-    UpdateReleaseNotesManager
-from demisto_sdk.commands.update_xsoar_config_file.update_xsoar_config_file import \
-    XSOARConfigFileUpdater
-from demisto_sdk.commands.upload.uploader import ConfigFileParser, Uploader
-
+                                               get_release_note_entries, is_external_repository,
+                                               print_error, print_success, print_warning)
 
 
 class PathsParamType(click.Path):
@@ -271,6 +242,7 @@ def split(config, **kwargs):
 @pass_config
 def extract_code(config, **kwargs):
     """Extract code from a Demisto integration or script yaml file."""
+    from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
     check_configuration_file('extract-code', kwargs)
     file_type: FileType = find_type(kwargs.get('input', ''), ignore_sub_categories=True)
     if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
@@ -307,17 +279,19 @@ def unify(**kwargs):
     2. GenericModule Unifier - Unifies a GenericModule with its Dashboards to a single JSON object.
      * To use this function - set as input a path to a GenericModule *file*.
     """
-
     check_configuration_file('unify', kwargs)
     # Input is of type Path.
     kwargs['input'] = str(kwargs['input'])
     file_type = find_type(kwargs['input'])
     if file_type == FileType.GENERIC_MODULE:
+        from demisto_sdk.commands.unify.generic_module_unifier import \
+            GenericModuleUnifier
         # pass arguments to GenericModule unifier and call the command
         generic_module_unifier = GenericModuleUnifier(**kwargs)
         generic_module_unifier.merge_generic_module_with_its_dashboards()
 
     else:
+        from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
         # pass arguments to YML unifier and call the command
         yml_unifier = YmlUnifier(**kwargs)
         yml_unifier.merge_script_package_to_yml()
@@ -342,8 +316,8 @@ def unify(**kwargs):
 def zip_packs(**kwargs) -> int:
     """Generating zipped packs that are ready to be uploaded to Cortex XSOAR machine."""
     from demisto_sdk.commands.common.logger import logging_setup
-    from demisto_sdk.commands.zip_packs.packs_zipper import (EX_FAIL, EX_SUCCESS,
-                                                         PacksZipper)
+    from demisto_sdk.commands.zip_packs.packs_zipper import (EX_FAIL, EX_SUCCESS, PacksZipper)
+    from demisto_sdk.commands.upload.uploader import ConfigFileParser, Uploader
     logging_setup(3)
     check_configuration_file('zip-packs', kwargs)
 
@@ -466,7 +440,7 @@ def validate(config, **kwargs):
         print_error('Could not supply the staged flag with the post-commit flag')
         sys.exit(1)
     try:
-        is_external_repo = tools.is_external_repository()
+        is_external_repo = is_external_repository()
         # default validate to -g --post-commit
         if not kwargs.get('validate_all') and not kwargs['use_git'] and not file_path:
             kwargs['use_git'] = True
@@ -587,6 +561,7 @@ def secrets(config, **kwargs):
     """Run Secrets validator to catch sensitive data before exposing your code to public repository.
      Attach path to whitelist to allow manual whitelists.
      """
+    from demisto_sdk.commands.secrets.secrets import SecretsValidator
     check_configuration_file('secrets', kwargs)
     sys.path.append(config.configuration.env_dir)
     secrets_validator = SecretsValidator(
@@ -649,6 +624,7 @@ def lint(**kwargs):
         If no additional flags specifying the packs are given,will lint only changed files.
     """
     from demisto_sdk.commands.common.logger import logging_setup
+    from demisto_sdk.commands.lint.lint_manager import LintManager
     logging_setup(verbose=kwargs.get('verbose'),  # type: ignore[arg-type]
                   quiet=kwargs.get('quiet'),  # type: ignore[arg-type]
                   log_path=kwargs.get('log_path'))  # type: ignore[arg-type]
@@ -858,6 +834,8 @@ def upload(**kwargs):
     DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
     * Note: Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up. *
     """
+    from demisto_sdk.commands.zip_packs.packs_zipper import (EX_FAIL, PacksZipper)
+    from demisto_sdk.commands.upload.uploader import ConfigFileParser, Uploader
     if kwargs['zip'] or kwargs['input_config_file']:
         if kwargs.pop('zip', False):
             pack_path = kwargs['input']
@@ -955,6 +933,8 @@ def xsoar_config_file_update(**kwargs):
     DEMISTO_BASE_URL environment variable should contain the Demisto server base URL.
     DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
     """
+    from demisto_sdk.commands.update_xsoar_config_file.update_xsoar_config_file import \
+        XSOARConfigFileUpdater
     file_updater: XSOARConfigFileUpdater = XSOARConfigFileUpdater(**kwargs)
     return file_updater.update()
 
@@ -991,6 +971,7 @@ def run(**kwargs):
     DEMISTO_BASE_URL environment variable should contain the Demisto base URL.
     DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
     """
+    from demisto_sdk.commands.run_cmd.runner import Runner
     check_configuration_file('run', kwargs)
     runner = Runner(**kwargs)
     return runner.run()
@@ -1028,6 +1009,7 @@ def run_playbook(**kwargs):
     Example: DEMISTO_API_KEY=<API KEY> demisto-sdk run-playbook -p 'p_name' -u
     'https://demisto.local'.
     """
+    from demisto_sdk.commands.run_playbook.playbook_runner import PlaybookRunner
     check_configuration_file('run-playbook', kwargs)
     playbook_runner = PlaybookRunner(**kwargs)
     return playbook_runner.run_playbook()
@@ -1062,6 +1044,7 @@ def run_playbook(**kwargs):
     "--insecure", help="Skip certificate validation.", is_flag=True)
 def run_test_playbook(**kwargs):
     """Run a test playbooks in your instance."""
+    from demisto_sdk.commands.run_test_playbook.test_playbook_runner import TestPlaybookRunner
     check_configuration_file('run-test-playbook', kwargs)
     test_playbook_runner = TestPlaybookRunner(**kwargs)
     return test_playbook_runner.manage_and_run_test_playbooks()
@@ -1236,6 +1219,7 @@ def init(**kwargs):
     If the script/integration flags are not present, we will create a pack with the given name.
     Otherwise when using the flags we will generate a script/integration based on your selection.
     """
+    from demisto_sdk.commands.init.initiator import Initiator
     check_configuration_file('init', kwargs)
     initiator = Initiator(**kwargs)
     initiator.init()
@@ -1476,6 +1460,8 @@ def merge_id_sets(**kwargs):
     is_flag=True)
 def update_release_notes(**kwargs):
     """Auto-increment pack version and generate release notes template."""
+    from demisto_sdk.commands.update_release_notes.update_rn_manager import \
+        UpdateReleaseNotesManager
     check_configuration_file('update-release-notes', kwargs)
     if kwargs.get('force') and not kwargs.get('input'):
         print_error('Please add a specific pack in order to force a release notes update.')
@@ -1592,7 +1578,10 @@ def postman_codegen(
         package: bool
 ):
     """Generates a Cortex XSOAR integration given a Postman collection 2.1 JSON file."""
+    from demisto_sdk.commands.postman_codegen.postman_codegen import postman_to_autogen_configuration
     from demisto_sdk.commands.common.logger import logging_setup
+    from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
+
     if verbose:
         logger = logging_setup(verbose=3)
     else:
@@ -1692,6 +1681,7 @@ def openapi_codegen(**kwargs):
     In the first run of the command, an integration configuration file is created, which can be modified.
     Then, the command is run a second time with the integration configuration to generate the actual integration files.
     """
+    from demisto_sdk.commands.openapi_codegen.openapi_codegen import OpenAPIIntegration
     check_configuration_file('openapi-codegen', kwargs)
     if not kwargs.get('output_dir'):
         output_dir = os.getcwd()
@@ -1703,10 +1693,10 @@ def openapi_codegen(**kwargs):
         try:
             os.mkdir(output_dir)
         except Exception as err:
-            tools.print_error(f'Error creating directory {output_dir} - {err}')
+            print_error(f'Error creating directory {output_dir} - {err}')
             sys.exit(1)
     if not os.path.isdir(output_dir):
-        tools.print_error(f'The directory provided "{output_dir}" is not a directory')
+        print_error(f'The directory provided "{output_dir}" is not a directory')
         sys.exit(1)
 
     input_file = kwargs['input_file']
@@ -1749,7 +1739,7 @@ def openapi_codegen(**kwargs):
     integration.load_file()
     if not kwargs.get('config_file'):
         integration.save_config(integration.configuration, output_dir)
-        tools.print_success(f'Created configuration file in {output_dir}')
+        print_success(f'Created configuration file in {output_dir}')
         if not kwargs.get('use_default', False):
             config_path = os.path.join(output_dir, f'{base_name}_config.json')
             command_to_run = f'demisto-sdk openapi-codegen -i "{input_file}" -cf "{config_path}" -n "{base_name}" ' \
@@ -1767,9 +1757,9 @@ def openapi_codegen(**kwargs):
             sys.exit(0)
 
     if integration.save_package(output_dir):
-        tools.print_success(f'Successfully finished generating integration code and saved it in {output_dir}')
+        print_success(f'Successfully finished generating integration code and saved it in {output_dir}')
     else:
-        tools.print_error(f'There was an error creating the package in {output_dir}')
+        print_error(f'There was an error creating the package in {output_dir}')
         sys.exit(1)
 
 
@@ -1820,6 +1810,7 @@ def test_content(**kwargs):
     run test playbook on the created investigation using mock if possible.
     Collect the result and give a report.
     """
+    from demisto_sdk.commands.test_content.execute_test_content import execute_test_content
     check_configuration_file('test-content', kwargs)
     execute_test_content(**kwargs)
 
@@ -1896,7 +1887,7 @@ def integration_diff(**kwargs):
     """
     Checks for differences between two versions of an integration, and verified that the new version covered the old version.
     """
-
+    from demisto_sdk.commands.integration_diff.integration_diff_detector import IntegrationDiffDetector
     integration_diff_detector = IntegrationDiffDetector(
         new=kwargs.get('new', ''),
         old=kwargs.get('old', ''),

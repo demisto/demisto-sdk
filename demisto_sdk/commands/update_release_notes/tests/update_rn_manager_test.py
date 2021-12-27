@@ -186,4 +186,4 @@ class TestUpdateRNManager:
         create_release_notes_mock = mocker.patch.object(UpdateReleaseNotesManager, 'create_release_notes')
         mng = UpdateReleaseNotesManager()
         mng.manage_rn_update()
-        assert create_release_notes_mock.call_args.args[0] == {'Packs/test1', 'Packs/test2'}
+        create_release_notes_mock.assert_called_with({'Packs/test1', 'Packs/test2'}, set(), set())

@@ -896,6 +896,7 @@ def get_pack_metadata_data(file_path, print_logs: bool, marketplace: str = 'xsoa
 
         if should_skip_item_by_mp(file_path, marketplace, print_logs):
             return {}
+
         if print_logs:
             print(f'adding {file_path} to id_set')
         json_data = get_json(file_path)

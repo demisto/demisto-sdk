@@ -1,4 +1,5 @@
 # Changelog
+* Fixed an issue where **run-test-playbook** command failed to get the task entries when the test playbook finished with errors.
 
 # 1.5.5
 * Changed the **validate** command to fail on missing test-playbooks only if no unittests are found.

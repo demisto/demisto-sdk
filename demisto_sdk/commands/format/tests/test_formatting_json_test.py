@@ -4,7 +4,7 @@ import shutil
 
 import pytest
 from mock import patch
-
+from typing import Optional
 from demisto_sdk.commands.format import (update_dashboard, update_incidenttype,
                                          update_indicatortype)
 from demisto_sdk.commands.format.format_module import format_manager
@@ -137,6 +137,23 @@ class TestFormattingJson:
         fields_formatter.set_default_values_as_needed()
         assert fields_formatter.data['unsearchable']
 
+    @pytest.mark.parametrize('from_version', [None, '5.5.0', '6.2.0'])
+    def test_indicator_field_format_html_type(self, pack, from_version: Optional[str]):
+        """
+        Given
+        - Indicator field of type HTML.
+        When
+        - Running format.
+        Then
+        - Ensure the indicator field from version is set to 6.1.0.
+        """
+        indicator_field = pack.create_indicator_field('IndicatorTestField', {'type': 'html'})
+        if from_version:
+            indicator_field.update({'fromVersion': from_version})
+        fields_formatter = IndicatorFieldJSONFormat(input=indicator_field.path)
+        fields_formatter.run_format()
+        assert fields_formatter.data['fromVersion'] == '6.1.0'
+
 
 class TestFormattingIncidentTypes:
     EXTRACTION_MODE_VARIATIONS = [
@@ -171,7 +188,8 @@ class TestFormattingIncidentTypes:
                 }
             }
         }
-        mocker.patch('demisto_sdk.commands.format.update_generic.get_dict_from_file', return_value=(mock_dict, 'mock_type'))
+        mocker.patch('demisto_sdk.commands.format.update_generic.get_dict_from_file',
+                     return_value=(mock_dict, 'mock_type'))
         mocker.patch('demisto_sdk.commands.format.update_incidenttype.click.prompt', return_value=user_answer)
         formatter = IncidentTypesJSONFormat("test")
         formatter.format_auto_extract_mode()
@@ -241,7 +259,8 @@ class TestFormattingIncidentTypes:
                 }
             }
         }
-        mocker.patch('demisto_sdk.commands.format.update_generic.get_dict_from_file', return_value=(mock_dict, 'mock_type'))
+        mocker.patch('demisto_sdk.commands.format.update_generic.get_dict_from_file',
+                     return_value=(mock_dict, 'mock_type'))
         mocker.patch('demisto_sdk.commands.format.update_incidenttype.click.prompt', return_value=user_answer)
         formatter = IncidentTypesJSONFormat("test")
         formatter.format_auto_extract_mode()
@@ -275,7 +294,8 @@ class TestFormattingIncidentTypes:
                 'fieldCliNameToExtractSettings': {}
             }
         }
-        mocker.patch('demisto_sdk.commands.format.update_generic.get_dict_from_file', return_value=(mock_dict, 'mock_type'))
+        mocker.patch('demisto_sdk.commands.format.update_generic.get_dict_from_file',
+                     return_value=(mock_dict, 'mock_type'))
         mocker.patch('demisto_sdk.commands.format.update_incidenttype.click.prompt', return_value=user_answer)
         formatter = IncidentTypesJSONFormat("test")
         formatter.format_auto_extract_mode()
@@ -720,7 +740,8 @@ class TestFormattingPreProcessRule:
 
     @pytest.fixture(autouse=True)
     def invalid_path_pre_process_rules_formatter(self, pre_process_rules_copy):
-        yield PreProcessRulesFormat(input=pre_process_rules_copy, output=DESTINATION_FORMAT_PRE_PROCESS_RULES_INVALID_NAME_COPY)
+        yield PreProcessRulesFormat(input=pre_process_rules_copy,
+                                    output=DESTINATION_FORMAT_PRE_PROCESS_RULES_INVALID_NAME_COPY)
 
     def test_remove_unnecessary_keys(self, pre_process_rules_formatter):
         """

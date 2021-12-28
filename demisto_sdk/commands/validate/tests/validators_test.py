@@ -1280,14 +1280,14 @@ def test_skip_conf_json(mocker):
           - If set to `False`, the `ConfJsonValidator` should be called.
 
     """
-    from demisto_sdk.commands.common.hook_validations.conf_json import ConfJsonValidator
+    from demisto_sdk.commands.common.hook_validations.conf_json import \
+        ConfJsonValidator
     conf_json_init = mocker.patch.object(ConfJsonValidator, '__init__')
     ValidateManager(skip_conf_json=False)
     conf_json_init.asssert_called()
     conf_json_init = mocker.patch.object(ConfJsonValidator, '__init__')
     ValidateManager(skip_conf_json=True)
     conf_json_init.asssert_not_called()
-
 
 
 @pytest.mark.parametrize('pack_name, expected', [

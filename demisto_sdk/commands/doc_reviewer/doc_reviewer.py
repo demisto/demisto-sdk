@@ -11,8 +11,8 @@ from nltk.corpus import brown, webtext
 from spellchecker import SpellChecker
 
 from demisto_sdk.commands.common.constants import FileType
-from demisto_sdk.commands.common.content import (Integration, Playbook,
-                                                 ReleaseNote, Script,
+from demisto_sdk.commands.common.content import (Content, Integration,
+                                                 Playbook, ReleaseNote, Script,
                                                  path_to_pack_object)
 from demisto_sdk.commands.common.content.objects.abstract_objects import \
     TextObject
@@ -45,10 +45,13 @@ class DocReviewer:
 
         self.file_path = file_path
         self.git_util = None
-        self.prev_ver = prev_ver if prev_ver else 'demisto/master'
 
         if use_git:
             self.git_util = GitUtil()
+            self.git_util = GitUtil(repo=Content.git())
+            self.prev_ver = self.git_util.handle_prev_ver()[1]
+        else:
+            self.prev_ver = prev_ver if prev_ver else 'demisto/master'
 
         if release_notes_only:
             self.SUPPORTED_FILE_TYPES = [FileType.RELEASE_NOTES]

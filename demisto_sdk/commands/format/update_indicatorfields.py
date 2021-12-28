@@ -5,6 +5,7 @@ import click
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
+from demisto_sdk.commands.common.constants import INDICATOR_FIELD_TYPE_TO_MIN_VERSION
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
 
 
@@ -29,6 +30,7 @@ class IndicatorFieldJSONFormat(BaseUpdateJSON):
     def run_format(self) -> int:
         try:
             click.secho(f'\n================= Updating file {self.source_file} =================', fg='bright_blue')
+            self.update_from_version()
             super().update_json()
             self.set_default_values_as_needed()
             self.save_json_to_destination_file()
@@ -46,3 +48,14 @@ class IndicatorFieldJSONFormat(BaseUpdateJSON):
             return format_rs, SKIP_RETURN_CODE
         else:
             return format_rs, self.initiate_file_validator()
+
+    def update_from_version(self):
+        """
+        Updates indicator from version field when needed:
+        1) Field type is grid, update from version to 5.5.0.
+        1) Field type is HTML, update from version to 6.1.0.
+        Returns:
+
+        """
+        if self.data.get('type') in INDICATOR_FIELD_TYPE_TO_MIN_VERSION:
+            self.data['fromVersion'] = INDICATOR_FIELD_TYPE_TO_MIN_VERSION[self.data.get('type')]

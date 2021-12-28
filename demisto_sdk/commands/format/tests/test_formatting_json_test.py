@@ -151,7 +151,7 @@ class TestFormattingJson:
         if from_version:
             indicator_field.update({'fromVersion': from_version})
         fields_formatter = IndicatorFieldJSONFormat(input=indicator_field.path)
-        fields_formatter.run_format()
+        fields_formatter.update_from_version()
         assert fields_formatter.data['fromVersion'] == '6.1.0'
 
 

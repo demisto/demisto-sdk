@@ -3,11 +3,9 @@ This module is designed to validate the correctness of incident field entities i
 """
 from distutils.version import LooseVersion
 from typing import Optional
-from demisto_sdk.commands.common.constants import \
-    DEFAULT_CONTENT_ITEM_FROM_VERSION
-from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.field_base_validator import \
     FieldBaseValidator
+from demisto_sdk.commands.common.constants import INDICATOR_FIELD_TYPE_TO_MIN_VERSION
 
 
 class IndicatorFieldValidator(FieldBaseValidator):
@@ -22,7 +20,6 @@ class IndicatorFieldValidator(FieldBaseValidator):
                             'setby', 'manualsetTime', 'comment', 'modifiedtime', 'sourceinstances', 'sourcebrands',
                             'context', 'expiration', 'expirationstatus', 'manuallyeditedfields', 'moduletofeedmap',
                             'isshared'}
-    FIELD_TYPE_TO_MIN_VERSION = {'html': LooseVersion('6.1.0'), 'grid': LooseVersion('5.5.0')}
 
     def __init__(self, structure_validator, ignored_errors=False,
                  print_as_warnings=False, json_file_path=None, **kwargs):
@@ -55,9 +52,9 @@ class IndicatorFieldValidator(FieldBaseValidator):
                     False otherwise.
         """
         indicator_field_type: Optional[str] = self.current_file.get('type')
-        if indicator_field_type not in self.FIELD_TYPE_TO_MIN_VERSION:
+        if indicator_field_type not in INDICATOR_FIELD_TYPE_TO_MIN_VERSION:
             return True
-        min_version: LooseVersion = self.FIELD_TYPE_TO_MIN_VERSION[indicator_field_type]
+        min_version: LooseVersion = INDICATOR_FIELD_TYPE_TO_MIN_VERSION[indicator_field_type]
         return self.is_valid_from_version_field(min_version,
                                                 f'Indicator field of type {indicator_field_type} must be version'
                                                 f' {min_version} or above.')

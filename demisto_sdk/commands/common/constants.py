@@ -2,7 +2,7 @@ import re
 from enum import Enum
 from functools import reduce
 from typing import Dict, List
-
+from distutils.version import LooseVersion
 from demisto_sdk.commands.common.GitContentConfig import \
     GitContentConfig  # noqa
 
@@ -1341,3 +1341,6 @@ class IronBankDockers:
 class MarketplaceVersions(Enum):
     XSOAR = 'xsoar'
     MarketplaceV2 = 'marketplacev2'
+
+
+INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {'html': LooseVersion('6.1.0'), 'grid': LooseVersion('5.5.0')}

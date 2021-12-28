@@ -179,6 +179,9 @@ class ValidateManager:
         if no_docker_checks:
             self.skip_docker_checks = True
 
+        if self.skip_conf_json:
+            self.check_is_unskipped = False
+
         if self.check_is_unskipped or not self.skip_conf_json:
             self.conf_json_validator = ConfJsonValidator()
             self.conf_json_data = self.conf_json_validator.conf_data

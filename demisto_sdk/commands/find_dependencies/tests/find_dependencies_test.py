@@ -440,8 +440,7 @@ class TestIdSetFilters:
                     "fromversion": '5.0.0',
                     "docker_image": "demisto/python3:3.8.3.8715",
                     "pack": "PrismaCloudCompute",
-                    "source": ['github.com', 'demisto', 'demisto-sdk'],
-                }
+                    "source": ['Unknown source', '', '']}
             },
             {
                 "PrismaCloudComputeParseCloudDiscoveryAlert": {
@@ -450,8 +449,7 @@ class TestIdSetFilters:
                     "fromversion": '5.0.0',
                     "docker_image": "demisto/python3:3.8.3.8715",
                     "pack": "PrismaCloudCompute",
-                    "source": ['github.com', 'demisto', 'demisto-sdk'],
-                }
+                    "source": ['Unknown source', '', '']}
             },
             {
                 "PrismaCloudComputeParseComplianceAlert": {
@@ -460,8 +458,7 @@ class TestIdSetFilters:
                     "fromversion": '5.0.0',
                     "docker_image": "demisto/python3:3.8.3.8715",
                     "pack": "PrismaCloudCompute",
-                    "source": ['github.com', 'demisto', 'demisto-sdk'],
-                }
+                    "source": ['Unknown source', '', '']}
             },
             {
                 "PrismaCloudComputeParseVulnerabilityAlert": {
@@ -470,7 +467,7 @@ class TestIdSetFilters:
                     "fromversion": '5.0.0',
                     "docker_image": "demisto/python3:3.8.3.8715",
                     "pack": "PrismaCloudCompute",
-                    "source": ['github.com', 'demisto', 'demisto-sdk'],
+                    "source": ['Unknown source', '', '']
                 }
             }
         ]
@@ -501,7 +498,7 @@ class TestIdSetFilters:
                         "No tests"
                     ],
                     "pack": "Expanse",
-                    "source": ['github.com', 'demisto', 'demisto-sdk'],
+                    "source": ['Unknown source', '', '']
                 }
             }
         ]
@@ -512,11 +509,11 @@ class TestIdSetFilters:
 
 
 class TestDependsOnScriptAndIntegration:
-    @pytest.mark.parametrize("dependency_script,expected_result",
-                             [("GetServerURL", {("GetServerURL", True)}),
-                              ("HelloWorldScript", {("HelloWorld", True)}),
-                              ("PrismaCloudComputeParseAuditAlert", {("PrismaCloudCompute", True)})
-                              ])
+    @ pytest.mark.parametrize("dependency_script,expected_result",
+                              [("GetServerURL", {("GetServerURL", True)}),
+                               ("HelloWorldScript", {("HelloWorld", True)}),
+                               ("PrismaCloudComputeParseAuditAlert", {("PrismaCloudCompute", True)})
+                               ])
     def test_collect_scripts_depends_on_script(self, dependency_script, expected_result, module_repo):
         """
         Given

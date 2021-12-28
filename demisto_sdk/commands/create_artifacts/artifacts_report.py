@@ -97,8 +97,10 @@ class ArtifactsReport:
                 item['source'] = str(item['source'].relative_to(src_relative_to))
 
         # Transform list of dictionaries to headers and value
-        headers = objects[0].keys()
-        values = [x.values() for x in objects]
-        table = tabulate(headers=headers, tabular_data=values)
+        table = ''
+        if objects:
+            headers = list(objects[0].keys())
+            values = [x.values() for x in objects]
+            table = tabulate(headers=headers, tabular_data=values)
 
         return Colors.Fg.cyan + f'\n{self._header}\n' + Colors.reset + table

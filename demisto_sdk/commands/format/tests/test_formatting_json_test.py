@@ -1,10 +1,11 @@
 import json
 import os
 import shutil
+from typing import Optional
 
 import pytest
 from mock import patch
-from typing import Optional
+
 from demisto_sdk.commands.format import (update_dashboard, update_incidenttype,
                                          update_indicatortype)
 from demisto_sdk.commands.format.format_module import format_manager

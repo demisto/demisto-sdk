@@ -2,10 +2,11 @@ from typing import Tuple
 
 import click
 
+from demisto_sdk.commands.common.constants import \
+    INDICATOR_FIELD_TYPE_TO_MIN_VERSION
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
-from demisto_sdk.commands.common.constants import INDICATOR_FIELD_TYPE_TO_MIN_VERSION
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
 
 
@@ -57,5 +58,6 @@ class IndicatorFieldJSONFormat(BaseUpdateJSON):
         Returns:
 
         """
-        if self.data.get('type') in INDICATOR_FIELD_TYPE_TO_MIN_VERSION:
-            self.data['fromVersion'] = INDICATOR_FIELD_TYPE_TO_MIN_VERSION[self.data.get('type')]
+        indicator_field_type: str = self.data.get('type', '')
+        if indicator_field_type in INDICATOR_FIELD_TYPE_TO_MIN_VERSION:
+            self.data['fromVersion'] = INDICATOR_FIELD_TYPE_TO_MIN_VERSION[indicator_field_type]

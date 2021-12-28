@@ -6,8 +6,8 @@ from distutils.version import LooseVersion
 from enum import IntEnum
 from typing import Set
 
-from demisto_sdk.commands.common.constants import (
-    DEFAULT_CONTENT_ITEM_FROM_VERSION)
+from demisto_sdk.commands.common.constants import \
+    DEFAULT_CONTENT_ITEM_FROM_VERSION
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator

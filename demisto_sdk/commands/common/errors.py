@@ -1,3 +1,4 @@
+from distutils.version import LooseVersion
 from typing import Any, Dict, List, Optional
 
 import decorator
@@ -8,7 +9,6 @@ from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
                                                    INTEGRATION_CATEGORIES,
                                                    PACK_METADATA_DESC,
                                                    PACK_METADATA_NAME)
-from distutils.version import LooseVersion
 
 FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
@@ -499,11 +499,6 @@ class Errors:
     @error_code_decorator
     def field_contain_forbidden_word(field_names: list, word: str):
         return f"The following fields: {', '.join(field_names)} shouldn't contain the word '{word}'."
-
-    @staticmethod
-    @error_code_decorator
-    def field_version_is_not_correct(fromversion):
-        return f"The indicator field has a fromVersion of: {fromversion} but the minimal fromVersion is 5.5.0."
 
     @staticmethod
     @error_code_decorator

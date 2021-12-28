@@ -1,6 +1,8 @@
+from distutils.version import LooseVersion
+
 import pytest
 from mock import patch
-from distutils.version import LooseVersion
+
 from demisto_sdk.commands.common.hook_validations.field_base_validator import (
     FieldBaseValidator, GroupFieldTypes)
 from demisto_sdk.commands.common.hook_validations.structure import \

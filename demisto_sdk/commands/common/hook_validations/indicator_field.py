@@ -3,9 +3,11 @@ This module is designed to validate the correctness of incident field entities i
 """
 from distutils.version import LooseVersion
 from typing import Optional
+
+from demisto_sdk.commands.common.constants import \
+    INDICATOR_FIELD_TYPE_TO_MIN_VERSION
 from demisto_sdk.commands.common.hook_validations.field_base_validator import \
     FieldBaseValidator
-from demisto_sdk.commands.common.constants import INDICATOR_FIELD_TYPE_TO_MIN_VERSION
 
 
 class IndicatorFieldValidator(FieldBaseValidator):

@@ -1,8 +1,9 @@
 import re
+from distutils.version import LooseVersion
 from enum import Enum
 from functools import reduce
 from typing import Dict, List
-from distutils.version import LooseVersion
+
 from demisto_sdk.commands.common.GitContentConfig import \
     GitContentConfig  # noqa
 

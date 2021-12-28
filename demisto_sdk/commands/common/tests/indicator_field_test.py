@@ -94,4 +94,3 @@ class TestIndicatorFieldValidator:
         structure = StructureValidator(indicator_field.path)
         validator = IndicatorFieldValidator(structure)
         assert validator.is_valid_indicator_type_from_version() == expected
-

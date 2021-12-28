@@ -23,7 +23,7 @@ class TestIndicatorFieldValidator:
 
         """
         indicator_field = pack.create_indicator_field('incident_1', {'type': field_type, 'cliName': 'testindicator',
-                                                                     'version': -1, 'fromVersion': '5.5.0',
+                                                                     'version': -1, 'fromVersion': '6.1.0',
                                                                      'content': True, 'group': INDICATOR_GROUP_NUMBER})
         structure = StructureValidator(indicator_field.path)
         validator = IndicatorFieldValidator(structure)

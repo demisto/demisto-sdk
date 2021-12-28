@@ -2,7 +2,7 @@
 This module is designed to validate the correctness of incident field entities in content.
 """
 from distutils.version import LooseVersion
-
+from typing import Optional
 from demisto_sdk.commands.common.constants import \
     DEFAULT_CONTENT_ITEM_FROM_VERSION
 from demisto_sdk.commands.common.errors import Errors
@@ -22,6 +22,7 @@ class IndicatorFieldValidator(FieldBaseValidator):
                             'setby', 'manualsetTime', 'comment', 'modifiedtime', 'sourceinstances', 'sourcebrands',
                             'context', 'expiration', 'expirationstatus', 'manuallyeditedfields', 'moduletofeedmap',
                             'isshared'}
+    FIELD_TYPE_TO_MIN_VERSION = {'html': LooseVersion('6.1.0'), 'grid': LooseVersion('5.5.0')}
 
     def __init__(self, structure_validator, ignored_errors=False,
                  print_as_warnings=False, json_file_path=None, **kwargs):
@@ -42,24 +43,21 @@ class IndicatorFieldValidator(FieldBaseValidator):
         """
         answers = [
             super().is_valid_file(validate_rn),
-            self.is_valid_indicator_grid_from_version(),
+            self.is_valid_indicator_type_from_version(),
         ]
         return all(answers)
 
-    def is_valid_indicator_grid_from_version(self) -> bool:
+    def is_valid_indicator_type_from_version(self) -> bool:
         """
         Validate that a indicator field with type grid is from version >= 5.5.0.
         Returns:
             (bool): True if field type is not grid, or is grid type and its from version is above 5.5.0.
                     False otherwise.
         """
-
-        if self.current_file.get('type') != 'grid':
+        indicator_field_type: Optional[str] = self.current_file.get('type')
+        if indicator_field_type not in self.FIELD_TYPE_TO_MIN_VERSION:
             return True
-        current_version = LooseVersion(self.current_file.get('fromVersion', DEFAULT_CONTENT_ITEM_FROM_VERSION))
-        if current_version < LooseVersion('5.5.0'):
-            error_message, error_code = Errors.indicator_field_type_grid_minimal_version(current_version)
-            if self.handle_error(error_message, error_code, file_path=self.file_path,
-                                 warning=self.structure_validator.quite_bc):
-                return False
-        return True
+        min_version: LooseVersion = self.FIELD_TYPE_TO_MIN_VERSION[indicator_field_type]
+        return self.is_valid_from_version_field(min_version,
+                                                f'Indicator field of type {indicator_field_type} must be version'
+                                                f' {min_version} or above.')

@@ -70,24 +70,28 @@ class TestIndicatorFieldValidator:
     TYPES_FROM_VERSION = [
         ('grid', '5.5.0', True),
         ('grid', '5.0.0', False),
-        ('number', '5.0.0', True)
+        ('number', '5.0.0', True),
+        ('html', '6.1.0', True),
+        ('html', '6.0.0', False),
     ]
 
     @pytest.mark.parametrize('field_type, from_version, expected', TYPES_FROM_VERSION)
-    def test_is_valid_grid_from_version(self, pack, field_type, from_version, expected):
+    def test_is_valid_indicator_type_from_version(self, pack, field_type, from_version, expected):
         """
-            Given
-            - an invalid indicator-field - the field is of type grid but fromVersion is < 5.5.0.
+        Given
+        - An indicator field, with its type
 
-            When
-            - Running is_valid_indicator_grid_fromversion on it.
+        When
+        - Running valid_indicator_type_from_version on it.
 
-            Then
-            - Ensure validate fails on versions < 5.5.0.
+        Then
+        - Ensure if minimal version is needed, and the fromVersion of the indicator field does not satisfy the
+          minimal condition, false is returned. Otherwise ensure true is returned.
         """
         indicator_field = pack.create_indicator_field('incident_1', {'type': field_type, 'cliName': 'testindicator',
                                                                      'version': -1, 'fromVersion': from_version,
                                                                      'content': True, 'group': INDICATOR_GROUP_NUMBER})
         structure = StructureValidator(indicator_field.path)
         validator = IndicatorFieldValidator(structure)
-        assert validator.is_valid_indicator_grid_from_version() == expected
+        assert validator.is_valid_indicator_type_from_version() == expected
+

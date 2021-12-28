@@ -1,6 +1,6 @@
 import pytest
 from mock import patch
-
+from distutils.version import LooseVersion
 from demisto_sdk.commands.common.hook_validations.field_base_validator import (
     FieldBaseValidator, GroupFieldTypes)
 from demisto_sdk.commands.common.hook_validations.structure import \
@@ -375,8 +375,27 @@ class TestFieldValidator:
             mocker.patch.object(field_base_validator, 'get_pack_metadata', return_value=pack_metadata)
             assert validator.is_valid_field_name_prefix() == answer
 
-    # def test_indicator_field_not_html_type(self, pack):
-    #     indicator_field = pack.create_indicator_field('HTMLIndicatorInvalid', {'type': 'html'})
-    #     structure = StructureValidator(indicator_field.path)
-    #     validator = FieldBaseValidator(structure, set(), set())
-    #     assert not validator.is_valid_type()
+    IS_VALID_FROM_VERSION_FIELD = [(LooseVersion('5.5.0'), '5.5.0', True),
+                                   (LooseVersion('5.5.0'), '6.0.0', True),
+                                   (LooseVersion('6.0.0'), '6.0.0', True),
+                                   (LooseVersion('6.0.0'), '6.1.0', True),
+                                   (LooseVersion('6.2.0'), '6.0.0', False),
+                                   (LooseVersion('6.5.0'), '6.0.0', False),
+                                   (LooseVersion('6.5.0'), '6.0.0', False)]
+
+    @pytest.mark.parametrize('min_version, from_version, expected', IS_VALID_FROM_VERSION_FIELD)
+    def test_is_valid_from_version_field(self, pack, min_version: LooseVersion, from_version: str, expected: bool):
+        """
+        Given
+        - A field.
+
+        When
+        - Validating the expected version is meeting the expected minimal version.
+
+        Then
+        - Ensure the expected bool is returned according to whether the condition above is satisfied.
+        """
+        indicator_field = pack.create_indicator_field('incident_1', {'type': 'html', 'fromVersion': from_version})
+        structure = StructureValidator(indicator_field.path)
+        validator = FieldBaseValidator(structure, set(), set())
+        assert validator.is_valid_from_version_field(min_version, reason_for_min_version='') == expected

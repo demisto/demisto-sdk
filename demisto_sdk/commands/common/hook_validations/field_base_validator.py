@@ -2,9 +2,12 @@
 This module is designed to validate the correctness of incident field entities in content.
 """
 import re
+from distutils.version import LooseVersion
 from enum import IntEnum
 from typing import Set
 
+from demisto_sdk.commands.common.constants import (
+    DEFAULT_CONTENT_ITEM_FROM_VERSION)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
@@ -337,5 +340,27 @@ class FieldBaseValidator(ContentEntityValidator):
             error_message, error_code = Errors.unsearchable_key_should_be_true_incident_field()
             if self.handle_error(error_message, error_code, file_path=self.file_path,
                                  suggested_fix=Errors.suggest_fix(self.file_path)):
+                return False
+        return True
+
+    def is_valid_from_version_field(self, min_from_version: LooseVersion, reason_for_min_version: str):
+        """
+        Validates that the from version field is set to the expected minimum.
+        This function is used for cases when:
+        1) Indicator field has the grid type, where the from version field needs to be set to 5.5.0 at least.
+        2) Indicator field has the html type, where the from version field needs to be set to 6.1.0 at least.
+        Args:
+            min_from_version (LooseVersion): Minimum from version to the field.
+            reason_for_min_version (str): Reason for the requested min version. Used for better error message.
+
+        Returns:
+            (bool): True if from version is equal or greater than `min_from_version`, false otherwise.
+        """
+        current_version = LooseVersion(self.current_file.get('fromVersion', DEFAULT_CONTENT_ITEM_FROM_VERSION))
+        if current_version < min_from_version:
+            error_message, error_code = Errors.field_version_is_not_correct(current_version, min_from_version,
+                                                                            reason_for_min_version)
+            if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                 warning=self.structure_validator.quite_bc):
                 return False
         return True

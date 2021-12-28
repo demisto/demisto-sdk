@@ -8,6 +8,7 @@ from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
                                                    INTEGRATION_CATEGORIES,
                                                    PACK_METADATA_DESC,
                                                    PACK_METADATA_NAME)
+from distutils.version import LooseVersion
 
 FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
@@ -115,7 +116,8 @@ ERROR_CODE = {
     # GF - Generic Fields
     "invalid_generic_field_group_value": {'code': "GF100", 'ui_applicable': False, 'related_field': 'group'},
     "invalid_generic_field_id": {'code': "GF101", 'ui_applicable': False, 'related_field': 'id'},
-    "unsearchable_key_should_be_true_generic_field": {'code': "GF102", 'ui_applicable': False, 'related_field': 'unsearchable'},
+    "unsearchable_key_should_be_true_generic_field": {'code': "GF102", 'ui_applicable': False,
+                                                      'related_field': 'unsearchable'},
 
     # ID - ID Set
     "id_set_conflicts": {'code': "ID100", 'ui_applicable': False, 'related_field': ''},
@@ -137,11 +139,11 @@ ERROR_CODE = {
     "new_field_required": {'code': "IF109", 'ui_applicable': True, 'related_field': 'required'},
     "from_version_modified_after_rename": {'code': "IF110", 'ui_applicable': False, 'related_field': 'fromVersion'},
     "incident_field_type_change": {'code': "IF111", 'ui_applicable': False, 'related_field': 'type'},
-    "indicator_field_type_grid_minimal_version": {'code': "IF112", 'ui_applicable': False,
-                                                  'related_field': 'fromVersion'},
+    "field_version_is_not_correct": {'code': "IF112", 'ui_applicable': False, 'related_field': 'fromVersion'},
     "invalid_incident_field_prefix": {'code': "IF113", 'ui_applicable': False, 'related_field': 'name'},
     "incident_field_non_existent_script_id": {'code': "IF114", 'ui_applicable': False, 'related_field': ''},
-    "unsearchable_key_should_be_true_incident_field": {'code': "IF115", 'ui_applicable': False, 'related_field': 'unsearchable'},
+    "unsearchable_key_should_be_true_incident_field": {'code': "IF115", 'ui_applicable': False,
+                                                       'related_field': 'unsearchable'},
 
     # IM - Images
     "no_image_given": {'code': "IM100", 'ui_applicable': True, 'related_field': 'image'},
@@ -208,7 +210,8 @@ ERROR_CODE = {
     "non_default_additional_info": {'code': "IN142", 'ui_applicable': True, 'related_field': 'additionalinfo'},
     "missing_default_additional_info": {'code': "IN143", 'ui_applicable': True, 'related_field': 'additionalinfo'},
     "wrong_is_array_argument": {'code': "IN144", 'ui_applicable': True, 'related_field': '<argument-name>.default'},
-    "api_token_is_not_in_credential_type": {'code': "IN145", 'ui_applicable': True, 'related_field': '<argument-name>.type'},
+    "api_token_is_not_in_credential_type": {'code': "IN145", 'ui_applicable': True,
+                                            'related_field': '<argument-name>.type'},
     "fromlicense_in_parameters": {'code': "IN146", 'ui_applicable': True,
                                   'related_field': '<parameter-name>.fromlicense'},
     "changed_integration_yml_fields": {'code': "IN147", "ui_applicable": False, 'related_field': 'script'},
@@ -300,7 +303,8 @@ ERROR_CODE = {
     "content_entity_is_not_in_id_set": {'code': "PB117", 'ui_applicable': False, 'related_field': ''},
 
     # PP - Pre-Process Rules
-    "invalid_from_server_version_in_pre_process_rules": {'code': "PP100", 'ui_applicable': False, 'related_field': 'fromServerVersion'},
+    "invalid_from_server_version_in_pre_process_rules": {'code': "PP100", 'ui_applicable': False,
+                                                         'related_field': 'fromServerVersion'},
     "invalid_incident_field_in_pre_process_rules": {'code': "PP101", 'ui_applicable': False, 'related_field': ''},
 
     # RM - READMEs
@@ -498,8 +502,15 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def indicator_field_type_grid_minimal_version(fromversion):
+    def field_version_is_not_correct(fromversion):
         return f"The indicator field has a fromVersion of: {fromversion} but the minimal fromVersion is 5.5.0."
+
+    @staticmethod
+    @error_code_decorator
+    def field_version_is_not_correct(from_version_set: LooseVersion, expected_from_version: LooseVersion,
+                                     reason_for_version: str):
+        return f"The field has a fromVersion of: {from_version_set} but the minimal fromVersion " \
+               f"is {expected_from_version}.\nReason for minimum version is: {reason_for_version}"
 
     @staticmethod
     @error_code_decorator
@@ -916,7 +927,7 @@ class Errors:
     def docker_not_on_the_latest_tag(docker_image_tag, docker_image_latest_tag, is_iron_bank=False) -> str:
         return f'The docker image tag is not the latest numeric tag, please update it.\n' \
                f'The docker image tag in the yml file is: {docker_image_tag}\n' \
-               f'The latest docker image tag in {"Iron Bank" if is_iron_bank else "docker hub" } ' \
+               f'The latest docker image tag in {"Iron Bank" if is_iron_bank else "docker hub"} ' \
                f'is: {docker_image_latest_tag}\n'
 
     @staticmethod

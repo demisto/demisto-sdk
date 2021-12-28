@@ -14,19 +14,6 @@
             ]
         },
         {
-            "name": "Python: update AbuseDB",
-            "type": "python",
-            "request": "launch",
-            "module": "demisto_sdk",
-            "cwd": "${env:CONTENT}",
-            "envFile": "${workspaceFolder}/.env",
-            "args": [
-                "update-release-notes",
-                "-i",
-                "Packs/AbuseDB/"
-            ]
-        },
-        {
             "name": "Python: Lint AbuseDB with logs",
             "type": "python",
             "request": "launch",

@@ -1,8 +1,9 @@
 from typing import List
 
-import demisto_sdk.commands.create_id_set.create_id_set as cis
 import networkx as nx
 import pytest
+
+import demisto_sdk.commands.create_id_set.create_id_set as cis
 from demisto_sdk.commands.common.constants import (DEFAULT_JOB_FROM_VERSION,
                                                    FileType)
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
@@ -67,6 +68,7 @@ def create_a_pack_entity(pack, entity_type: FileType = None, entity_id: str = No
     elif entity_type == FileType.GENERIC_FIELD:
         content = {'id': entity_id, 'details': entity_name, "definitionId": "assets"}
         pack.create_generic_field(entity_id, content)
+
 
 def working_repo(repo):
     # Create 5 packs with all entities
@@ -411,6 +413,7 @@ def working_repo(repo):
         ids = cis.IDSetCreator()
         ids.create_id_set()
     return repo
+
 
 class TestIdSetFilters:
     @pytest.mark.parametrize("item_section", ["scripts", "playbooks"])

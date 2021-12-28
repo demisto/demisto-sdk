@@ -66,9 +66,12 @@ class BaseUpdateYML(BaseUpdate):
         Returns:
             Dict. Holds the id and version fields.
         """
+        return self.get_id_and_version_for_data(self.data)
+
+    def get_id_and_version_for_data(self, data):
         yml_type = self.__class__.__name__
         path = self.ID_AND_VERSION_PATH_BY_YML_TYPE[yml_type]
-        return self.data.get(path, self.data)
+        return data.get(path, data)
 
     def update_id_to_equal_name(self) -> None:
         """Updates the id of the YML to be the same as it's name
@@ -81,6 +84,13 @@ class BaseUpdateYML(BaseUpdate):
             if is_uuid(self.id_and_version_location['id']):
                 updated_integration_id[self.id_and_version_location['id']] = self.data['name']
             self.id_and_version_location['id'] = self.data['name']
+        else:
+            current_id = self.id_and_version_location.get('id')
+            old_id = self.get_id_and_version_for_data(self.old_file).get('id')
+            if current_id != old_id:
+                click.secho(f'The modified YML file corresponding to the path: {self.relative_content_path} ID does not match the ID in remote YML file.'
+                            f' Changing the YML ID from {current_id} back to {old_id}.')
+                self.id_and_version_location['id'] = old_id
         if updated_integration_id:
             self.updated_ids.update(updated_integration_id)
 

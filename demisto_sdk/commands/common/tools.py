@@ -14,8 +14,7 @@ from enum import Enum
 from functools import lru_cache, partial
 from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen, check_output
-from typing import (Callable, Dict, List, Match, Optional, Set, Tuple, Type,
-                    Union)
+from typing import Callable, Dict, List, Match, Optional, Tuple, Type, Union
 
 import click
 import colorama
@@ -33,15 +32,17 @@ from demisto_sdk.commands.common.constants import (
     DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH,
     DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
     DOC_FILES_DIR, ID_IN_COMMONFIELDS, ID_IN_ROOT, INCIDENT_FIELDS_DIR,
-    INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INTEGRATIONS_DIR, JOBS_DIR,
-    LAYOUTS_DIR, LISTS_DIR, OFFICIAL_CONTENT_ID_SET_PATH,
-    PACK_METADATA_IRON_BANK_TAG, PACKAGE_SUPPORTING_DIRECTORIES,
-    PACKAGE_YML_FILE_REGEX, PACKS_DIR, PACKS_DIR_REGEX,
-    PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
+    INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR,
+    INTEGRATIONS_DIR, JOBS_DIR, LAYOUTS_DIR, LISTS_DIR,
+    MARKETPLACE_KEY_PACK_METADATA, METADATA_FILE_NAME,
+    OFFICIAL_CONTENT_ID_SET_PATH, PACK_METADATA_IRON_BANK_TAG,
+    PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
+    PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
     PACKS_README_FILE_NAME, PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR,
     RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR,
-    XSOAR_CONFIG_FILE, FileType, GitContentConfig, urljoin)
+    XSOAR_CONFIG_FILE, FileType, GitContentConfig, MarketplaceVersions,
+    urljoin)
 from demisto_sdk.commands.common.git_util import GitUtil
 
 urllib3.disable_warnings()
@@ -472,7 +473,7 @@ def get_file(file_path, type_of_file):
             # revert str to stream for loader
             stream = io.StringIO(replaced)
             try:
-                if 'yml' == type_of_file:
+                if type_of_file in ('yml', '.yml'):
                     data_dictionary = yaml.load(stream, Loader=XsoarLoader)
 
                 else:
@@ -1089,6 +1090,8 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
             return FileType.LISTS
         elif JOBS_DIR in path.parts:
             return FileType.JOB
+        elif INDICATOR_TYPES_DIR in path.parts:
+            return FileType.REPUTATION
 
     # integration image
     if path.name.endswith('_image.png'):
@@ -2164,3 +2167,47 @@ def get_current_repo() -> Tuple[str, str, str]:
     except git.InvalidGitRepositoryError:
         print_warning('git repo is not found')
         return "Unknown source", '', ''
+
+
+def get_mp_types_from_metadata_by_item(file_path):
+    """
+    Get the supporting marketplaces for the given content item, defined by the mp field in the metadata.
+    If the field doesnt exist in the pack's metadata, consider as xsoar only.
+    Args:
+        file_path: path to content item in content repo
+
+    Returns:
+        list of names of supporting marketplaces (current options are marketplacev2 and xsoar)
+    """
+    if METADATA_FILE_NAME in Path(file_path).parts:  # for when the type is pack, the item we get is the metadata path
+        metadata_path = file_path
+    else:
+        metadata_path_parts = get_pack_dir(file_path)
+        metadata_path = Path(*metadata_path_parts) / METADATA_FILE_NAME
+
+    try:
+        with open(metadata_path, 'r') as metadata_file:
+            metadata = json.load(metadata_file)
+            marketplaces = metadata.get(MARKETPLACE_KEY_PACK_METADATA)
+            if not marketplaces:
+                return [MarketplaceVersions.XSOAR.value]
+            return marketplaces
+    except FileNotFoundError:
+        return []
+
+
+def get_pack_dir(path):
+    """
+    Used for testing packs where the location of the "Packs" dir is not constant.
+    Args:
+        path: path of current file
+
+    Returns:
+        the path starting from Packs dir
+
+    """
+    parts = Path(path).parts
+    for index in range(len(parts)):
+        if parts[index] == 'Packs':
+            return parts[:index + 2]
+    return []

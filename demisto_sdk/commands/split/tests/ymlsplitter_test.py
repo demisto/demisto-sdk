@@ -67,6 +67,46 @@ def test_extract_code(tmpdir):
         assert file_data[-1] == '\n'
 
 
+def test_extract_code__with_apimodule(tmpdir):
+    """
+    Given:
+        - A unified YML which ApiModule code is auto-generated there
+    When:
+        - run YmlSpltter on this code
+    Then:
+        - Ensure generated code is being deleted, and the import line exists
+    """
+    extractor = YmlSplitter(input=f'{git_path()}/demisto_sdk/tests/test_files/integration-EDL.yml',
+                            output=str(tmpdir.join('temp_code.py')), file_type='integration')
+
+    extractor.extract_code(extractor.output)
+    with open(extractor.output, 'rb') as temp_code:
+        file_data = temp_code.read().decode('utf-8')
+        assert '### GENERATED CODE ###' not in file_data
+        assert '### END GENERATED CODE ###' not in file_data
+        assert 'from NGINXApiModule import *' in file_data
+        assert 'def create_nginx_server_conf(file_path: str, port: int, params: Dict):' not in file_data
+
+
+def test_extract_code_modules_old_format(tmpdir):
+    """
+    Given:
+        - A unified YML which ApiModule code is auto-generated there, but the comments are not up to date
+    When:
+        - run YmlSpltter on this code
+    Then:
+        - Make sure that the imported code is still there, and the code runs.
+    """
+    extractor = YmlSplitter(input=f'{git_path()}/demisto_sdk/tests/test_files/integration-EDL_old_generated.yml',
+                            output=str(tmpdir.join('temp_code.py')), file_type='integration')
+
+    extractor.extract_code(extractor.output)
+    with open(extractor.output, 'rb') as temp_code:
+        file_data = temp_code.read().decode('utf-8')
+        assert '### GENERATED CODE ###' in file_data
+        assert 'def nginx_log_process(nginx_process: subprocess.Popen):' in file_data
+
+
 def test_extract_code_pwsh(tmpdir):
     extractor = YmlSplitter(input=f'{git_path()}/demisto_sdk/tests/test_files/integration-powershell_ssh_remote.yml',
                             output=str(tmpdir.join('temp_code')), file_type='integration')

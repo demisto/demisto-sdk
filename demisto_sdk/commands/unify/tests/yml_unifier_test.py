@@ -311,8 +311,12 @@ def test_check_api_module_imports():
 def test_insert_module_code(mocker, import_name):
     mocker.patch.object(YmlUnifier, '_get_api_module_code', return_value=DUMMY_MODULE)
     module_name = 'MicrosoftApiModule'
-    new_code = DUMMY_SCRIPT.replace(import_name, '\n### GENERATED CODE ###\n# This code was inserted in place of an API'
-                                                 ' module.{}\n'.format(DUMMY_MODULE))
+    module_code = f'\n### GENERATED CODE ###' \
+                  f': {import_name}\n' \
+                  f'# This code was inserted in place of an API module.{DUMMY_MODULE}\n' \
+                  f'### END GENERATED CODE ###'
+
+    new_code = DUMMY_SCRIPT.replace(import_name, module_code)
 
     code = YmlUnifier.insert_module_code(DUMMY_SCRIPT, import_name, module_name)
 

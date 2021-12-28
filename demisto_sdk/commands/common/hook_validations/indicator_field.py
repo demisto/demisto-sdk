@@ -22,7 +22,7 @@ class IndicatorFieldValidator(FieldBaseValidator):
                             'setby', 'manualsetTime', 'comment', 'modifiedtime', 'sourceinstances', 'sourcebrands',
                             'context', 'expiration', 'expirationstatus', 'manuallyeditedfields', 'moduletofeedmap',
                             'isshared'}
-    FIELD_TYPE_TO_MIN_VERSION = { 'grid': LooseVersion('5.5.0')}
+    FIELD_TYPE_TO_MIN_VERSION = {'html': LooseVersion('6.1.0'), 'grid': LooseVersion('5.5.0')}
 
     def __init__(self, structure_validator, ignored_errors=False,
                  print_as_warnings=False, json_file_path=None, **kwargs):

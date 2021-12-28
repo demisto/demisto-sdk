@@ -1,6 +1,7 @@
 from copy import deepcopy
 from typing import List, Union
 
+from pandas import DataFrame
 from tabulate import tabulate
 from wcmatch.pathlib import Path
 
@@ -95,10 +96,6 @@ class ArtifactsReport:
         if src_relative_to:
             for item in objects:
                 item['source'] = str(item['source'].relative_to(src_relative_to))
+        table = DataFrame(data=objects)
 
-        # Transform list of dictionaries to headers and value
-        headers = objects[0].keys()
-        values = [x.values() for x in objects]
-        table = tabulate(headers=headers, tabular_data=values)
-
-        return Colors.Fg.cyan + f'\n{self._header}\n' + Colors.reset + table
+        return Colors.Fg.cyan + f'\n{self._header}\n' + Colors.reset + tabulate(table, headers='keys', tablefmt='psql')

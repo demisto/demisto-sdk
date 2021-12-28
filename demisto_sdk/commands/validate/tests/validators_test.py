@@ -433,8 +433,7 @@ class TestValidators:
         -  The file will be validated and failed
         """
         mocker.patch.object(ImageValidator, 'is_valid', return_value=True)
-        mocker.patch.object(IntegrationValidator, 'has_no_fromlicense_key_in_contributions_integration',
-                            return_value=True)
+        mocker.patch.object(IntegrationValidator, 'has_no_fromlicense_key_in_contributions_integration', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_api_token_in_credential_type', return_value=True)
 
         validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
@@ -802,17 +801,17 @@ class TestValidators:
         pack2 = repo.create_pack(pack2_name)
         integration2 = pack2.create_integration(pack2_name)
         id_set_content = {'integrations':
-            [
-                {'ApiDependent':
-                    {
-                        'name': integration2.name,
-                        'file_path': integration2.path,
-                        'pack': pack2_name,
-                        'api_modules': api_script1.name
-                    }
-                }
-            ]
-        }
+                          [
+                              {'ApiDependent':
+                               {
+                                   'name': integration2.name,
+                                   'file_path': integration2.path,
+                                   'pack': pack2_name,
+                                   'api_modules': api_script1.name
+                               }
+                               }
+                          ]
+                          }
         id_set_f = tmpdir / "id_set.json"
         id_set_f.write(json.dumps(id_set_content))
         validate_manager = ValidateManager(id_set_path=id_set_f.strpath)
@@ -842,15 +841,15 @@ class TestValidators:
         pack2 = repo.create_pack(pack2_name)
         integration2 = pack2.create_integration(pack2_name)
         id_set_content = {'integrations':
-            [
-                {'ApiDependent':
-                     {'name': integration2.name,
-                      'file_path': integration2.path,
-                      'pack': pack2_name,
-                      'api_modules': api_script1.name
-                      }
-                 }
-            ]}
+                          [
+                              {'ApiDependent':
+                               {'name': integration2.name,
+                                'file_path': integration2.path,
+                                'pack': pack2_name,
+                                'api_modules': api_script1.name
+                                }
+                               }
+                          ]}
         id_set_f = tmpdir / "id_set.json"
         id_set_f.write(json.dumps(id_set_content))
         validate_manager = ValidateManager(id_set_path=id_set_f.strpath)
@@ -1599,8 +1598,8 @@ def test_check_file_relevance_and_format_path_file_to_format_with_old_path(mocke
     validator_obj = ValidateManager(is_external_repo=True, check_is_unskipped=False)
     mocker.patch('demisto_sdk.commands.validate.validate_manager.find_type', return_value=file_type)
     mocker.patch.object(validator_obj, 'is_old_file_format', return_value=False)
-    assert validator_obj.check_file_relevance_and_format_path(input_file_path, old_file_path, set()) == \
-           ('Packs/old_file_path.yml', 'Packs/some_file.yml')
+    assert validator_obj.check_file_relevance_and_format_path(input_file_path, old_file_path, set()) ==\
+        ('Packs/old_file_path.yml', 'Packs/some_file.yml')
 
 
 def test_check_file_relevance_and_format_path_old_format_file(mocker):

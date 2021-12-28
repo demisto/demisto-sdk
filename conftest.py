@@ -71,7 +71,6 @@ def module_repo(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> R
     from demisto_sdk.commands.find_dependencies.tests.find_dependencies_test import \
         working_repo
 
-    # mock.patch('demisto_sdk.commands.common.tools.get_current_repo', lambda: 'content')
     return working_repo(get_repo(request, tmp_path_factory))
 
 

@@ -325,6 +325,15 @@ class TestStructureValidator:
         assert f'Missing the field "{missing_field}" in root' in captured
 
     def test_invalid_yml(self, capsys):
+        """
+        Given
+                An integration yml file, with duplicate field "display: Fetch indicators"
+
+        When
+                Validating the file
+        Then
+                Ensure the structure validator raises a suitable error
+        """
         validator = StructureValidator(file_path=INVALID_INTEGRATION_YML_5,
                                        predefined_scheme='integration')
         exception = f"{INVALID_INTEGRATION_YML_5}: [ST113] - There is problem with the yml file. The error: while constructing a mapping\n" \

@@ -357,6 +357,7 @@ ERROR_CODE = {
     "pykwalify_general_error": {'code': "ST110", 'ui_applicable': False, 'related_field': ''},
     "pykwalify_field_undefined_with_path": {'code': "ST111", 'ui_applicable': False, 'related_field': ''},
     "pykwalify_incorrect_enum": {'code': "ST112", 'ui_applicable': False, 'related_field': ''},
+    "invalid_yml_file": {'code': "ST113", 'ui_applicable': False, 'related_field': ''},
 
     # WD - Widgets
     "remove_field_from_widget": {'code': "WD100", 'ui_applicable': False, 'related_field': ''},
@@ -2085,3 +2086,8 @@ class Errors:
     def runas_is_dbotrole():
         return 'The runas value is DBotRole, it may cause access and exposure of sensitive data. ' \
                'Please consider changing it.'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_yml_file(error):
+        return f'There is problem with the yml file. The error: {error}'

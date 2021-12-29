@@ -8,6 +8,9 @@ from demisto_sdk.commands.common.hook_validations.field_base_validator import (
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 
+INDICATOR_GROUP_NUMBER = 2
+INCIDENT_GROUP_NUMBER = 0
+
 
 class TestFieldValidator:
     NAME_SANITY_FILE = {
@@ -401,3 +404,41 @@ class TestFieldValidator:
         structure = StructureValidator(indicator_field.path)
         validator = FieldBaseValidator(structure, set(), set())
         assert validator.is_valid_from_version_field(min_version, reason_for_min_version='') == expected
+
+    def test_validate_no_empty_selected_values_value_incident(self, pack):
+        """
+        Given
+        - An incident field.
+
+        When
+        - Validating its selectValues do no contain empty values.
+
+        Then
+        - Ensure false is returned.
+        """
+        incident_field = pack.create_incident_field('incident_1', {'type': 'some-type', 'cliName': 'testincident',
+                                                                   'version': -1, 'fromVersion': '5.0.0',
+                                                                   'content': True, 'group': INCIDENT_GROUP_NUMBER,
+                                                                   'selectValues': [""]})
+        structure = StructureValidator(incident_field.path)
+        validator = FieldBaseValidator(structure, {'some-type'}, set())
+        assert not validator.is_valid_file()
+
+    def test_validate_no_empty_selected_values_value_indicator(self, pack):
+        """
+        Given
+        - An indicator field.
+
+        When
+        - Validating its selectValues do no contain empty values.
+
+        Then
+        - Ensure false is returned.
+        """
+        indicator_field = pack.create_indicator_field('ind_1', {'type': 'some-type', 'cliName': 'testindicator',
+                                                                'version': -1, 'fromVersion': '5.0.0',
+                                                                'content': True, 'group': INDICATOR_GROUP_NUMBER,
+                                                                'selectValues': [""]})
+        structure = StructureValidator(indicator_field.path)
+        validator = FieldBaseValidator(structure, {'some-type'}, set())
+        assert not validator.is_valid_file()

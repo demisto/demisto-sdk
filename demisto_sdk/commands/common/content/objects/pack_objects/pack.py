@@ -26,7 +26,8 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    RELEASE_NOTES_DIR,
                                                    REPORTS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
-                                                   TOOLS_DIR, WIDGETS_DIR)
+                                                   TOOLS_DIR, WIDGETS_DIR, FileType,
+                                                   )
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     AgentTool, AuthorImage, Classifier, ClassifierMapper, Connection,
     Contributors, Dashboard, DocFile, GenericDefinition, GenericField,
@@ -36,7 +37,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     ReleaseNoteConfig, Report, Script, SecretIgnore, Widget)
 from demisto_sdk.commands.common.content.objects_factory import \
     path_to_pack_object
-from demisto_sdk.commands.common.tools import get_demisto_version
+from demisto_sdk.commands.common.tools import get_demisto_version, is_object_in_id_set
 from demisto_sdk.commands.test_content import tools
 
 TURN_VERIFICATION_ERROR_MSG = "Can not set the pack verification configuration key,\nIn the server - go to Settings -> troubleshooting\
@@ -51,6 +52,7 @@ class Pack:
         # in case the given path are a Pack and not zipped pack - we init the metadata from the pack
         if not str(path).endswith('.zip'):
             self._metadata = PackMetaData(self._path.joinpath('metadata.json'))
+        self._filter_items_by_id_set = False
 
     def _content_files_list_generator_factory(self, dir_name: str, suffix: str) -> Iterator[Any]:
         """Generic content objects iterable generator
@@ -64,7 +66,14 @@ class Pack:
         """
         objects_path = (self._path / dir_name).glob(patterns=[f"*.{suffix}", f"*/*.{suffix}"])
         for object_path in objects_path:
-            yield path_to_pack_object(object_path)
+            content_object = path_to_pack_object(object_path)
+            # skip content items that are not displayed in the id set, if the corresponding flag is used
+            if self._filter_items_by_id_set and content_object.type not in [FileType.RELEASE_NOTES.value,
+                                                                            FileType.RELEASE_NOTES_CONFIG.value]:
+                if is_object_in_id_set(content_object.get('name'), self._pack_info_from_id_set):
+                    yield
+            else:
+                yield
 
     def _content_dirs_list_generator_factory(self, dir_name) -> Iterator[Any]:
         """Generic content objects iterable generator
@@ -77,6 +86,7 @@ class Pack:
         """
         objects_path = (self._path / dir_name).glob(patterns=["*/"])
         for object_path in objects_path:
+            # TODO: check this case, when is used
             yield path_to_pack_object(object_path)
 
     @property
@@ -345,3 +355,12 @@ class Pack:
                 action = DELETE_VERIFY_KEY_ACTION if prev_key_val is None \
                     else SET_VERIFY_KEY_ACTION.format(prev_key_val)
                 raise Exception(TURN_VERIFICATION_ERROR_MSG.format(action=action))
+
+    # @property
+    # def filter_items_by_id_set(self) -> bool:
+    #     return self._filter_items_by_id_set
+
+    #@filter_items_by_id_set.setter
+    def filter_items_by_id_set(self, artifact_manager):
+        self._filter_items_by_id_set = artifact_manager.filter_by_id_set
+        self._pack_info_from_id_set = artifact_manager.packs_section_from_id_set.get(self.id)

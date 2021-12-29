@@ -555,7 +555,7 @@ def validate(config, **kwargs):
                                            'determines which artifacts are created for each pack. '
                                            'Default is the XSOAR marketplace, that has all of the packs '
                                            'artifacts.', default='xsoar', type=click.Choice(['xsoar', 'marketplacev2', 'v2']))
-@click.option('-isi', '--only-items-from-id-set', is_flag=True,
+@click.option('-isi', '--filter_by_id_set', is_flag=True,
               help='Should use id set as content items guid or not, meaning the content items to be created are only '
                    'the ones in the id set.', default=False, hidden=True)
 def create_content_artifacts(**kwargs) -> int:

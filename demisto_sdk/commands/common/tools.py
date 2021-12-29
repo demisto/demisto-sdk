@@ -1750,25 +1750,25 @@ def get_all_incident_and_indicator_fields_from_id_set(id_set_file, entity_type):
                     fields_list.append(field.replace('incident_', '').replace('indicator_', ''))
     return fields_list
 
-def is_object_in_id_set(object_name, pack, id_set_path):
+def is_object_in_id_set(object_name, pack_info_from_id_set):
     """
-    This is assuming that the id_set is based on the version that contains under each pack the items it contains
+        Check if the given object is part of the packs items that are present in the Packs section in the id set.
+        This is assuming that the id set is based on the version that has, under each pack, the items it contains.
+
     Args:
-        object_type:
-        id_set:
+        object_name: name of object of interest.
+        pack: the pack this object should belong to.
+        packs_section_from_id_set: the section under the key Packs in the previously given id set.
 
     Returns:
 
     """
     try:
-        id_set = open_id_set_file(id_set_path)
-        packs = id_set['Packs']
-        for pack_id, pack_info in packs.items():
-            content_items = pack_info['ContentItems']
-            for items, item_info in content_items.items():
-                for name in item_info:
-                    if object_name == name:
-                        return True
+        content_items = pack_info_from_id_set['ContentItems']
+        for items_type, items_names in content_items.items():
+            for name in items_names:
+                if object_name == name:
+                    return True
         return False
     except KeyError:
         print('The id set given has missing keys in it, make sure you are using the latest id set version.')

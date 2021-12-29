@@ -93,6 +93,7 @@ class FieldBaseValidator(ContentEntityValidator):
             self.is_valid_cli_name(),
             self.is_valid_version(),
             self.is_valid_required(),
+            self.does_not_have_empty_select_values()
         ]
 
         core_packs_list = get_core_pack_list()
@@ -360,6 +361,19 @@ class FieldBaseValidator(ContentEntityValidator):
         if current_version < min_from_version:
             error_message, error_code = Errors.field_version_is_not_correct(current_version, min_from_version,
                                                                             reason_for_min_version)
+            if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                 warning=self.structure_validator.quite_bc):
+                return False
+        return True
+
+    def does_not_have_empty_select_values(self) -> bool:
+        """
+        Due to UI issues, we cannot allow empty values for selectValues field.
+        Returns:
+            (bool): True if selectValues does not have empty values, false if contains empty value.
+        """
+        if any(select_value == '' for select_value in self.current_file.get('selectValues', [])):
+            error_message, error_code = Errors.select_values_cannot_contain_empty_values()
             if self.handle_error(error_message, error_code, file_path=self.file_path,
                                  warning=self.structure_validator.quite_bc):
                 return False

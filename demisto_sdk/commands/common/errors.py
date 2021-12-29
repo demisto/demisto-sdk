@@ -144,6 +144,8 @@ ERROR_CODE = {
     "incident_field_non_existent_script_id": {'code': "IF114", 'ui_applicable': False, 'related_field': ''},
     "unsearchable_key_should_be_true_incident_field": {'code': "IF115", 'ui_applicable': False,
                                                        'related_field': 'unsearchable'},
+    'select_values_cannot_contain_empty_values': {'code': "IF112", 'ui_applicable': False,
+                                                  'related_field': 'selectValues'},
 
     # IM - Images
     "no_image_given": {'code': "IM100", 'ui_applicable': True, 'related_field': 'image'},
@@ -506,6 +508,11 @@ class Errors:
                                      reason_for_version: str):
         return f"The field has a fromVersion of: {from_version_set} but the minimal fromVersion " \
                f"is {expected_from_version}.\nReason for minimum version is: {reason_for_version}"
+
+    @staticmethod
+    @error_code_decorator
+    def select_values_cannot_contain_empty_values():
+        return 'the field selectValues cannot contain empty values. Please remove.'
 
     @staticmethod
     @error_code_decorator

@@ -422,7 +422,7 @@ class TestFieldValidator:
                                                                    'selectValues': [""]})
         structure = StructureValidator(incident_field.path)
         validator = FieldBaseValidator(structure, {'some-type'}, set())
-        assert not validator.is_valid_file()
+        assert not validator.does_not_have_empty_select_values()
 
     def test_validate_no_empty_selected_values_value_indicator(self, pack):
         """
@@ -441,4 +441,4 @@ class TestFieldValidator:
                                                                 'selectValues': [""]})
         structure = StructureValidator(indicator_field.path)
         validator = FieldBaseValidator(structure, {'some-type'}, set())
-        assert not validator.is_valid_file()
+        assert not validator.does_not_have_empty_select_values()

@@ -1267,6 +1267,28 @@ class TestValidators:
         assert res_validator.is_valid_file(validate_rn=False, is_added_file=is_added_file) is expected_result
 
 
+def test_skip_conf_json(mocker):
+    """"
+    Given
+        `skip_conf_json` argument for validate set to `True` or `False`
+    When
+        - Running validate with `skip_conf_json`
+    Then
+        -
+          - If set to `True`, the `ConfJsonValidator` shouldn't be called.
+          - If set to `False`, the `ConfJsonValidator` should be called.
+
+    """
+    from demisto_sdk.commands.common.hook_validations.conf_json import \
+        ConfJsonValidator
+    conf_json_init = mocker.patch.object(ConfJsonValidator, 'load_conf_file')
+    ValidateManager(skip_conf_json=False)
+    conf_json_init.asssert_called()
+    conf_json_init = mocker.patch.object(ConfJsonValidator, 'load_conf_file')
+    ValidateManager(skip_conf_json=True)
+    conf_json_init.asssert_not_called()
+
+
 @pytest.mark.parametrize('pack_name, expected', [
     ('NonSupported', False),
     ('PackName1', True)

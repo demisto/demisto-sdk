@@ -1334,9 +1334,9 @@ class ValidateManager:
         filtered_modified, old_format_files, _ = self.filter_to_relevant_files(modified_files)
         filtered_renamed, _, renamed_files_valid_types = self.filter_to_relevant_files(renamed_files)
         filtered_modified = filtered_modified.union(filtered_renamed)
-        filtered_added, new_files_in_old_format, added_filed_valid_types = self.filter_to_relevant_files(added_files)
+        filtered_added, new_files_in_old_format, added_files_valid_types = self.filter_to_relevant_files(added_files)
         old_format_files = old_format_files.union(new_files_in_old_format)
-        valid_types = all([added_filed_valid_types, renamed_files_valid_types])
+        valid_types = all([added_files_valid_types, renamed_files_valid_types])
 
         # extract metadata files from the recognised changes
         changed_meta = self.pack_metadata_extraction(modified_files, added_files, renamed_files)

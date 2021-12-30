@@ -17,7 +17,7 @@ DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST = BaseValidator.create_reverse_ignored_err
     PRESET_ERROR_TO_CHECK['deprecated'])
 
 
-def test_handle_error():
+def test_handle_error(mocker):
     """
     Given
     - An ignore errors list associated with a file.
@@ -32,30 +32,34 @@ def test_handle_error():
     - Ensure non ignored errors are in FOUND_FILES_AND_ERRORS list.
     - Ensure ignored error are not in FOUND_FILES_AND_ERRORS and in FOUND_FILES_AND_IGNORED_ERRORS
     """
+    import click
     base_validator = BaseValidator(ignored_errors={"file_name": ["BA101"]}, print_as_warnings=True)
 
     # passing the flag checks - checked separately
     base_validator.checked_files.union({'PATH', "file_name"})
 
     formatted_error = base_validator.handle_error("Error-message", "SC102", "PATH")
-    assert formatted_error == 'PATH: [SC102] - Error-message\n'
+    assert formatted_error == '[ERROR]: PATH: [SC102] - Error-message\n'
     assert 'PATH - [SC102]' in FOUND_FILES_AND_ERRORS
 
     formatted_error = base_validator.handle_error("another-error-message", "IN101", "path/to/file_name")
-    assert formatted_error == 'path/to/file_name: [IN101] - another-error-message\n'
+    assert formatted_error == '[ERROR]: path/to/file_name: [IN101] - another-error-message\n'
     assert 'path/to/file_name - [IN101]' in FOUND_FILES_AND_ERRORS
 
+    click_mock = mocker.patch.object(click, 'secho')
     formatted_error = base_validator.handle_error("ignore-file-specific", "BA101", "path/to/file_name")
     assert formatted_error is None
     assert 'path/to/file_name - [BA101]' not in FOUND_FILES_AND_ERRORS
     assert 'path/to/file_name - [BA101]' in FOUND_FILES_AND_IGNORED_ERRORS
+    assert click_mock.call_args.args[0] == "[WARNING]: path/to/file_name: [BA101] - ignore-file-specific\n"
 
     formatted_error = base_validator.handle_error("Error-message", "ST109", "path/to/file_name")
-    assert formatted_error == 'path/to/file_name: [ST109] - Error-message\n'
+    assert formatted_error == '[ERROR]: path/to/file_name: [ST109] - Error-message\n'
     assert 'path/to/file_name - [ST109]' in FOUND_FILES_AND_ERRORS
 
 
-def test_handle_error_file_with_path(pack):
+
+def test_handle_error_file_with_path(pack, mocker):
     """
     Given
     - An ignore errors list associated with a file_path.
@@ -71,6 +75,7 @@ def test_handle_error_file_with_path(pack):
     - Ensure non ignored errors are in FOUND_FILES_AND_ERRORS list.
     - Ensure ignored error are not in FOUND_FILES_AND_ERRORS and in FOUND_FILES_AND_IGNORED_ERRORS
     """
+    import click
     integration = pack.create_integration("TestIntegration")
     rel_path_integration_readme = integration.readme.path[integration.readme.path.find("Packs"):]
     rel_path_pack_readme = pack.readme.path[pack.readme.path.find("Packs"):]
@@ -87,7 +92,7 @@ def test_handle_error_file_with_path(pack):
                                    print_as_warnings=True)
 
     formatted_error = base_validator.handle_error("Error-message", "BA101", integration.readme.path)
-    assert formatted_error == f'{integration.readme.path}: [BA101] - Error-message\n'
+    assert formatted_error == f'[ERROR]: {integration.readme.path}: [BA101] - Error-message\n'
     assert f'{integration.readme.path} - [BA101]' in FOUND_FILES_AND_ERRORS
 
     formatted_error = base_validator.handle_error("Error-message", "ST109", integration.readme.path)
@@ -96,7 +101,7 @@ def test_handle_error_file_with_path(pack):
     assert f'{integration.readme.path} - [ST109]' in FOUND_FILES_AND_IGNORED_ERRORS
 
     formatted_error = base_validator.handle_error("Error-message", "ST109", pack.readme.path)
-    assert formatted_error == f'{pack.readme.path}: [ST109] - Error-message\n'
+    assert formatted_error == f'[ERROR]: {pack.readme.path}: [ST109] - Error-message\n'
     assert f'{pack.readme.path} - [ST109]' in FOUND_FILES_AND_ERRORS
 
     formatted_error = base_validator.handle_error("Error-message", "BA101", pack.readme.path)

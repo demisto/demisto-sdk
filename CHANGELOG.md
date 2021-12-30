@@ -1,6 +1,7 @@
 # Changelog
 * Fixed an issue where **run-test-playbook** command failed to get the task entries when the test playbook finished with errors.
 * Fixed an issue in **validate** command when running with `no-conf-json` argument to ignore the `conf.json` file.
+* Added error type text (`ERROR` or `WARNING`) to **validate** error prints.
 
 # 1.5.5
 * Fixed an issue in the **update-release-notes** command, which did not work when changes were made in multiple packs.

@@ -1332,16 +1332,16 @@ class ValidateManager:
 
         # filter files only to relevant files
         filtered_modified, old_format_files, _ = self.filter_to_relevant_files(modified_files)
-        filtered_renamed, _, renamed_files_valid_extensions = self.filter_to_relevant_files(renamed_files)
+        filtered_renamed, _, renamed_files_valid_types = self.filter_to_relevant_files(renamed_files)
         filtered_modified = filtered_modified.union(filtered_renamed)
-        filtered_added, new_files_in_old_format, added_filed_valid_extensions = self.filter_to_relevant_files(added_files)
+        filtered_added, new_files_in_old_format, added_filed_valid_types = self.filter_to_relevant_files(added_files)
         old_format_files = old_format_files.union(new_files_in_old_format)
-        valid_extensions = all([added_filed_valid_extensions, renamed_files_valid_extensions])
+        valid_types = all([added_filed_valid_types, renamed_files_valid_types])
 
         # extract metadata files from the recognised changes
         changed_meta = self.pack_metadata_extraction(modified_files, added_files, renamed_files)
 
-        return filtered_modified, filtered_added, changed_meta, old_format_files, valid_extensions
+        return filtered_modified, filtered_added, changed_meta, old_format_files, valid_types
 
     def pack_metadata_extraction(self, modified_files, added_files, renamed_files):
         """Extract pack metadata files from the modified and added files
@@ -1361,11 +1361,11 @@ class ValidateManager:
 
         return changed_metadata_files
 
-    def filter_to_relevant_files(self, file_set, unsupported_files: set = None):
+    def filter_to_relevant_files(self, file_set):
         """Goes over file set and returns only a filtered set of only files relevant for validation"""
         filtered_set: set = set()
         old_format_files: set = set()
-        valid_extensions: set = set()
+        valid_types: set = set()
         for path in file_set:
             old_path = None
             if isinstance(path, tuple):
@@ -1377,7 +1377,7 @@ class ValidateManager:
 
             try:
                 formatted_path, old_path, valid_file_extension = self.check_file_relevance_and_format_path(file_path, old_path, old_format_files)
-                valid_extensions.add(valid_file_extension)
+                valid_types.add(valid_file_extension)
                 if formatted_path:
                     if old_path:
                         filtered_set.add((old_path, formatted_path))
@@ -1391,7 +1391,7 @@ class ValidateManager:
                         click.secho(f"ignoring file {file_path}", fg='yellow')
                     self.ignored_files.add(file_path)
 
-        return filtered_set, old_format_files, all(valid_extensions)
+        return filtered_set, old_format_files, all(valid_types)
 
     def check_file_relevance_and_format_path(self, file_path, old_path, old_format_files):
         """
@@ -1399,7 +1399,7 @@ class ValidateManager:
         :returns a tuple(string, string, bool) where
             - the first element is the path of the file that should be returned, if the file isn't relevant then returns an empty string
             - the second element is the old path in case the file was renamed, if the file wasn't renamed then return an empty string
-            - true if the file extension is supported, false otherwise
+            - true if the file type is supported, false otherwise
         """
         irrelevant_file_output = '', '', True
         if file_path.split(os.path.sep)[0] in ('.gitlab', '.circleci', '.github'):

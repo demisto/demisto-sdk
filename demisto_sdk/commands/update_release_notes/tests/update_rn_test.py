@@ -679,7 +679,7 @@ class TestRNUpdate(unittest.TestCase):
             ValidateManager
         manager = UpdateReleaseNotesManager(user_input='BitcoinAbuse')
         validate_manager: ValidateManager = ValidateManager(check_is_unskipped=False)
-        filtered_set, old_format_files = manager.filter_to_relevant_files(
+        filtered_set, old_format_files, _ = manager.filter_to_relevant_files(
             {'.gitlab/ci/.gitlab-ci.yml'}, validate_manager)
         assert filtered_set == set()
         assert old_format_files == set()

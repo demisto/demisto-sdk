@@ -654,6 +654,44 @@ class TestFormatting:
         assert res is None
         assert formatter.data.get('tests') == ['VMWare Test']
 
+    @patch('builtins.input', lambda *args: 'no')
+    def test_update_tests_on_playbook_with_test_playbook(self):
+        """
+        Given
+            - An integration file.
+        When
+            - Run format on the integration
+        Then
+            - Ensure run_format return value is 0
+            - Ensure `tests` field gets the Test Playbook ID
+        """
+        test_files_path = os.path.join(git_path(), 'demisto_sdk', 'tests')
+        phishing_playbook_yml_path = os.path.join(test_files_path, 'test_files', 'content_repo_example', 'Packs',
+                                                  'Phishing',
+                                                  'Playbooks', 'Phishing_Investigation_-_Generic_v2_-_6_0.yml')
+        formatter = PlaybookYMLFormat(input=phishing_playbook_yml_path, output='')
+        formatter.update_tests()
+        assert formatter.data.get('tests') == ['playbook-checkEmailAuthenticity-test']
+
+    @patch('builtins.input', lambda *args: 'no')
+    def test_update_tests_on_script_with_test_playbook(self):
+        """
+        Given
+            - An integration file.
+        When
+            - Run format on the integration
+        Then
+            - Ensure run_format return value is 0
+            - Ensure `tests` field gets the Test Playbook ID
+        """
+        test_files_path = os.path.join(git_path(), 'demisto_sdk', 'tests')
+        email_auth_script_yml_path = os.path.join(test_files_path, 'test_files', 'content_repo_example', 'Packs',
+                                                  'Phishing', 'Scripts',
+                                                  'CheckEmailAuthenticity.yml')
+        formatter = ScriptYMLFormat(input=email_auth_script_yml_path, output='')
+        formatter.update_tests()
+        assert formatter.data.get('tests') == ['playbook-checkEmailAuthenticity-test']
+
     def test_update_docker_format(self, tmpdir, mocker, monkeypatch):
         """Test that script and integration formatter update docker image tag
         """

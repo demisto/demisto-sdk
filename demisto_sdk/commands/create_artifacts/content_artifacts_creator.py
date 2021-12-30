@@ -602,7 +602,6 @@ def dump_packs(artifact_manager: ArtifactsManager, pool: ProcessPool) -> List[Pr
         for pack_name, pack in artifact_manager.packs.items():
             if pack_name not in IGNORED_PACKS:
                 futures.append(pool.schedule(dump_pack, args=(artifact_manager, pack)))
-                # check the case where you runi this on a specific pack but still want to confrunt with packs in id set. do intersect
 
     else:
         for pack_name in artifact_manager.pack_names:
@@ -640,7 +639,7 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
     pack_report = ArtifactsReport(f"Pack {pack.id}:")
 
     pack.metadata.load_user_metadata(pack.id, pack.path.name, pack.path, logger)
-    pack.filter_items_by_id_set = artifact_manager.filter_by_id_set  # maybe change name of func for clearer set of argument
+    pack.filter_items_by_id_set = artifact_manager.filter_by_id_set
     pack.pack_info_from_id_set = artifact_manager.packs_section_from_id_set
     content_items_handler = ContentItemsHandler()
     is_feed_pack = False

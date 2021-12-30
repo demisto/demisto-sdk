@@ -2239,7 +2239,7 @@ def get_scripts_and_commands_from_yml_data(data, file_type):
     if file_type == FileType.SCRIPT:
         script_id = get_entity_id_by_entity_type(data, SCRIPTS_DIR)
         scripts = [script_id]
-        if data.get('dependson'):  # TODO: consult on this. if leave add unittest
+        if data.get('dependson'):
             commands = data.get('dependson').get('must', [])
 
     if file_type == FileType.INTEGRATION:

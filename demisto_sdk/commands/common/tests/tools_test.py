@@ -1516,7 +1516,7 @@ YML_DATA_CASES = [(get_yaml(VALID_INTEGRATION_TEST_PATH), FileType.INTEGRATION,
                    ['PagerDutyGetAllSchedules', 'PagerDutyGetUsersOnCall', 'PagerDutyGetUsersOnCallNow',
                     'PagerDutyIncidents', 'PagerDutySubmitEvent', 'PagerDutyGetContactMethods',
                     'PagerDutyGetUsersNotification'], []),
-                  (get_yaml(VALID_SCRIPT_PATH), FileType.SCRIPT, [], ['TestCreateDuplicates']),
+                  (get_yaml(VALID_SCRIPT_PATH), FileType.SCRIPT, ['send-notification'], ['TestCreateDuplicates']),
                   (get_yaml(TEST_PLAYBOOK), FileType.TEST_PLAYBOOK, ['Gmail|||gmail-search'], ['ReadFile'])]
 
 

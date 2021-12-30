@@ -20,13 +20,13 @@ parameters:  # List of integration configuration parameters. See https://xsoar.p
     options:
     - "False"
     - "True"
-ignored_args:  # List of any Ansible module arguments that should be ignored from the command definition. For example because the argument is coming from the integration parm. Either Omit option such testing is not possible
+ignored_args:  # List of any Ansible module arguments that should be ignored from the command definition. For example because the argument is coming from the integration parm.
   - api_token
   - endpoint
 creds_mapping:  # Optional key:value pairs to translate xsoar param to ansible arguments. Used in cases where argument name collisions may occur.
   xsoar: ansible
   password: api_token
-test_command: example.example.example_info  # Which ansible module should be used as the integration test command. This should be a module that can run with just the integration config parameters. Either Omit option if such testing is not possible
+test_command: example.example.example_info  # Which ansible module should be used as the integration test command. This should be a module that can run with just the integration config parameters. Omit option if such testing is not possible
 command_prefix: example  # Prefix all the generated XSOAR commands with this value. Omit config or set to None to not add any prefix  
 host_type: ssh  # The Ansible connection type. Use one of: 'ssh', 'winrm', 'nxos', 'ios', 'local'. Modules that run locally and use their own connection mechanism should use the value 'local'.
 ansible_modules:  # List of ansible modules to include. Preferred to be in the Ansible collection namespace syntax to avoid ambiguity

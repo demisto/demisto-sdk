@@ -58,7 +58,6 @@ def test_handle_error(mocker):
     assert 'path/to/file_name - [ST109]' in FOUND_FILES_AND_ERRORS
 
 
-
 def test_handle_error_file_with_path(pack, mocker):
     """
     Given
@@ -75,7 +74,6 @@ def test_handle_error_file_with_path(pack, mocker):
     - Ensure non ignored errors are in FOUND_FILES_AND_ERRORS list.
     - Ensure ignored error are not in FOUND_FILES_AND_ERRORS and in FOUND_FILES_AND_IGNORED_ERRORS
     """
-    import click
     integration = pack.create_integration("TestIntegration")
     rel_path_integration_readme = integration.readme.path[integration.readme.path.find("Packs"):]
     rel_path_pack_readme = pack.readme.path[pack.readme.path.find("Packs"):]

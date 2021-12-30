@@ -63,9 +63,9 @@ class BaseValidator:
         Returns:
             str. Will return the formatted error message if it is not ignored, an None if it is ignored
         """
-        def formatted_error_func(error_type):
+        def formatted_error_str(error_type):
             if error_type not in {'ERROR', 'WARNING'}:
-                raise ValueError("Error type is not valid.")
+                raise ValueError("Error type is not valid. Should be in {'ERROR', 'WARNING'}")
             formatted = f"[{error_type}]: {file_path}: [{error_code}] - {error_message}".rstrip("\n") + "\n"
             if drop_line:
                 formatted = '\n' + formatted
@@ -88,12 +88,12 @@ class BaseValidator:
 
         if self.should_ignore_error(error_code, ignored_errors) or warning:
             if self.print_as_warnings or warning:
-                click.secho(formatted_error_func('WARNING'), fg="yellow")
+                click.secho(formatted_error_str('WARNING'), fg="yellow")
                 self.json_output(file_path, error_code, error_message, warning)
                 self.add_to_report_error_list(error_code, file_path, FOUND_FILES_AND_IGNORED_ERRORS)
             return None
 
-        formatted_error = formatted_error_func('ERROR')
+        formatted_error = formatted_error_str('ERROR')
         if should_print and not self.suppress_print:
             if suggested_fix:
                 click.secho(formatted_error[:-1], fg="bright_red")

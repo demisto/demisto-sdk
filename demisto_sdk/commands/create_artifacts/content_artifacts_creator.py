@@ -27,7 +27,7 @@ from demisto_sdk.commands.common.content import (Content, ContentError,
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     JSONContentObject, Script, TextObject, YAMLContentObject,
     YAMLContentUnifiedObject)
-from demisto_sdk.commands.common.tools import arg_to_list, is_object_in_id_set, open_id_set_file
+from demisto_sdk.commands.common.tools import arg_to_list, open_id_set_file
 
 from .artifacts_report import ArtifactsReport, ObjectReport
 
@@ -85,7 +85,7 @@ class ArtifactsManager:
         self.marketplace = marketplace.lower()
         self.filter_by_id_set = filter_by_id_set
         self.pack_names = arg_to_list(pack_names)
-        self.packs_section_from_id_set = None
+        self.packs_section_from_id_set = {}
         # run related arguments
         self.content_new_path = self.artifacts_path / 'content_new'
         self.content_test_path = self.artifacts_path / 'content_test'
@@ -108,32 +108,28 @@ class ArtifactsManager:
             else:
                 self.pack_names = list(set(self.packs_section_from_id_set.keys()).intersection(set(self.pack_names)))
 
-
     def create_content_artifacts(self) -> int:
-        try:
-            with ArtifactsDirsHandler(self), ProcessPoolHandler(self) as pool:
-                futures: List[ProcessFuture] = []
-                # content/Packs
-                futures.extend(dump_packs(self, pool))
-                # content/TestPlaybooks
-                if not self.remove_test_playbooks:
-                    futures.append(pool.schedule(dump_tests_conditionally, args=(self,)))
-                # content/content-descriptor.json
-                futures.append(pool.schedule(dump_content_descriptor, args=(self,)))
-                # content/Documentation/doc-*.json
-                futures.append(pool.schedule(dump_content_documentations, args=(self,)))
-                # Wait for all futures to be finished
-                wait_futures_complete(futures, self)
-                # Add suffix
-                suffix_handler(self)
+        with ArtifactsDirsHandler(self), ProcessPoolHandler(self) as pool:
+            futures: List[ProcessFuture] = []
+            # content/Packs
+            futures.extend(dump_packs(self, pool))
+            # content/TestPlaybooks
+            if not self.remove_test_playbooks:
+                futures.append(pool.schedule(dump_tests_conditionally, args=(self,)))
+            # content/content-descriptor.json
+            futures.append(pool.schedule(dump_content_descriptor, args=(self,)))
+            # content/Documentation/doc-*.json
+            futures.append(pool.schedule(dump_content_documentations, args=(self,)))
+            # Wait for all futures to be finished
+            wait_futures_complete(futures, self)
+            # Add suffix
+            suffix_handler(self)
 
-            if os.path.exists('keyfile'):
-                os.remove('keyfile')
-            logger.info(f"\nExecution time: {time.time() - self.execution_start} seconds")
+        if os.path.exists('keyfile'):
+            os.remove('keyfile')
+        logger.info(f"\nExecution time: {time.time() - self.execution_start} seconds")
 
-            return self.exit_code
-        except Exception as e:
-            print(e)
+        return self.exit_code
 
     def get_relative_pack_path(self, content_object: ContentObject):
         """
@@ -644,7 +640,7 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
     pack_report = ArtifactsReport(f"Pack {pack.id}:")
 
     pack.metadata.load_user_metadata(pack.id, pack.path.name, pack.path, logger)
-    pack.filter_items_by_id_set = artifact_manager.filter_by_id_set# maybe change name of func for clearer set of argument
+    pack.filter_items_by_id_set = artifact_manager.filter_by_id_set  # maybe change name of func for clearer set of argument
     pack.pack_info_from_id_set = artifact_manager.packs_section_from_id_set
     content_items_handler = ContentItemsHandler()
     is_feed_pack = False

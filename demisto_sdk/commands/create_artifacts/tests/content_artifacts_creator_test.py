@@ -7,7 +7,8 @@ import pytest
 
 from demisto_sdk.commands.common.constants import PACKS_DIR, TEST_PLAYBOOKS_DIR
 from demisto_sdk.commands.common.logger import logging_setup
-from demisto_sdk.commands.common.tools import src_root, open_id_set_file, is_object_in_id_set
+from demisto_sdk.commands.common.tools import (is_object_in_id_set,
+                                               open_id_set_file, src_root)
 from TestSuite.test_tools import ChangeCWD
 
 TEST_DATA = src_root() / 'tests' / 'test_files'
@@ -17,6 +18,7 @@ UNIT_TEST_DATA = (src_root() / 'commands' / 'create_artifacts' / 'tests' / 'data
 COMMON_SERVER = UNIT_TEST_DATA / 'common_server'
 ARTIFACTS_EXPECTED_RESULTS = TEST_DATA / 'artifacts'
 PARTIAL_ID_SET_PATH = UNIT_TEST_DATA / 'id_set_missing_packs_and_items.json'
+
 
 def same_folders(src1, src2):
     """Assert if folder contains different files"""
@@ -220,6 +222,7 @@ def test_create_content_artifacts(mock_git):
         assert exit_code == 0
         assert same_folders(temp, ARTIFACTS_EXPECTED_RESULTS / 'content')
 
+
 def test_create_content_artifacts_by_id_set(mock_git):
     """
 
@@ -342,6 +345,7 @@ def test_sign_packs_failure(repo, capsys, key, tool):
     captured = capsys.readouterr()
     assert 'Failed to sign packs. In order to do so, you need to provide both signature_key and ' \
            'sign_directory arguments.' in captured.out
+
 
 def test_is_object_in_id_set():
     """

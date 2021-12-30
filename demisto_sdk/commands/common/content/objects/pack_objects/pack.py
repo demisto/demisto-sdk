@@ -1,7 +1,7 @@
 import logging
 import subprocess
 from distutils.version import LooseVersion
-from typing import Any, Iterator, Optional, Union
+from typing import Any, Dict, Iterator, Optional, Union
 
 import demisto_client
 from wcmatch.pathlib import Path
@@ -26,8 +26,8 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    RELEASE_NOTES_DIR,
                                                    REPORTS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
-                                                   TOOLS_DIR, WIDGETS_DIR, FileType,
-                                                   )
+                                                   TOOLS_DIR, WIDGETS_DIR,
+                                                   FileType)
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     AgentTool, AuthorImage, Classifier, ClassifierMapper, Connection,
     Contributors, Dashboard, DocFile, GenericDefinition, GenericField,
@@ -37,7 +37,8 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     ReleaseNoteConfig, Report, Script, SecretIgnore, Widget)
 from demisto_sdk.commands.common.content.objects_factory import \
     path_to_pack_object
-from demisto_sdk.commands.common.tools import get_demisto_version, is_object_in_id_set
+from demisto_sdk.commands.common.tools import (get_demisto_version,
+                                               is_object_in_id_set)
 from demisto_sdk.commands.test_content import tools
 
 TURN_VERIFICATION_ERROR_MSG = "Can not set the pack verification configuration key,\nIn the server - go to Settings -> troubleshooting\
@@ -53,7 +54,7 @@ class Pack:
         if not str(path).endswith('.zip'):
             self._metadata = PackMetaData(self._path.joinpath('metadata.json'))
         self._filter_items_by_id_set = False
-        self._pack_info_from_id_set = None
+        self._pack_info_from_id_set: Dict[Any, Any] = {}
 
     def _content_files_list_generator_factory(self, dir_name: str, suffix: str) -> Iterator[Any]:
         """Generic content objects iterable generator
@@ -70,7 +71,7 @@ class Pack:
             content_object = path_to_pack_object(object_path)
             # skip content items that are not displayed in the id set, if the corresponding flag is used
             if self._filter_items_by_id_set and content_object.type().value not in [FileType.RELEASE_NOTES.value,
-                                                                            FileType.RELEASE_NOTES_CONFIG.value]:
+                                                                                    FileType.RELEASE_NOTES_CONFIG.value]:
                 if is_object_in_id_set(content_object.get('name'), self._pack_info_from_id_set):
                     yield content_object
             else:
@@ -298,8 +299,7 @@ class Pack:
 
     @pack_info_from_id_set.setter
     def pack_info_from_id_set(self, pack_section_from_id_set: dict):
-        self._pack_info_from_id_set = pack_section_from_id_set.get(self.id) if pack_section_from_id_set else None
-
+        self._pack_info_from_id_set = pack_section_from_id_set.get(self.id, {}) if pack_section_from_id_set else {}
 
     def sign_pack(self, logger: logging.Logger, dumped_pack_dir: Path, sign_directory: Path):
         """ Signs pack folder and creates signature file.
@@ -373,5 +373,3 @@ class Pack:
                 action = DELETE_VERIFY_KEY_ACTION if prev_key_val is None \
                     else SET_VERIFY_KEY_ACTION.format(prev_key_val)
                 raise Exception(TURN_VERIFICATION_ERROR_MSG.format(action=action))
-
-

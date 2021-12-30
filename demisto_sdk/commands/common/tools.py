@@ -1750,6 +1750,7 @@ def get_all_incident_and_indicator_fields_from_id_set(id_set_file, entity_type):
                     fields_list.append(field.replace('incident_', '').replace('indicator_', ''))
     return fields_list
 
+
 def is_object_in_id_set(object_name, pack_info_from_id_set):
     """
         Check if the given object is part of the packs items that are present in the Packs section in the id set.
@@ -1773,8 +1774,6 @@ def is_object_in_id_set(object_name, pack_info_from_id_set):
     except KeyError:
         print('The id set given has missing keys in it, make sure you are using the latest id set version.')
         raise
-
-
 
 
 def is_string_uuid(string_to_check: str):

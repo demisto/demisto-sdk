@@ -1,8 +1,12 @@
 id: File Enrichment - Generic v2
-version: -1
-name: File Enrichment - Generic v2      # comment
+version: 2
+name: File Enrichment - Generic v2_copy # comment
+excessiveKey: should be removed by format command
 contentitemexportablefields:
   contentitemfields:
+    fromServerVersion: ""
+    itemVersion: ""
+    packID: 8864cb0c-b583-4487-8e01-9e6ad200d05a
     propagationLabels:
     - all
 description: |-
@@ -22,7 +26,6 @@ tasks:
       name: ""
       iscommand: false
       brand: ""
-      description: ''
     nexttasks:
       '#none#':
       - "25"
@@ -49,7 +52,6 @@ tasks:
       type: title
       iscommand: false
       brand: ""
-      description: ''
     separatecontext: false
     view: |-
       {
@@ -268,6 +270,7 @@ inputs:
       - operator: uniq
   required: false
   description: File MD5 hash to enrich.
+  some_key_to_remove: this key should be removed when formatting
 - key: SHA256
   value:
     complex:

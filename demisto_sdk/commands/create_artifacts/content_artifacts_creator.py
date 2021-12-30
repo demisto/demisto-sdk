@@ -85,7 +85,7 @@ class ArtifactsManager:
         self.marketplace = marketplace.lower()
         self.filter_by_id_set = filter_by_id_set
         self.pack_names = arg_to_list(pack_names)
-
+        self.packs_section_from_id_set = None
         # run related arguments
         self.content_new_path = self.artifacts_path / 'content_new'
         self.content_test_path = self.artifacts_path / 'content_test'
@@ -100,34 +100,40 @@ class ArtifactsManager:
         self.packs = self.content.packs
         self.exit_code = EX_SUCCESS
 
-        if self.filter_by_id_set: # TODO: add verification for supplying id set
+        if self.filter_by_id_set:
             id_set = open_id_set_file(id_set_path)
             self.packs_section_from_id_set = id_set.get('Packs', {})
-            self.pack_names = list(self.packs_section_from_id_set.keys())
+            if self.pack_names == ['all']:
+                self.pack_names = list(self.packs_section_from_id_set.keys())
+            else:
+                self.pack_names = list(set(self.packs_section_from_id_set.keys()).intersection(set(self.pack_names)))
 
 
     def create_content_artifacts(self) -> int:
-        with ArtifactsDirsHandler(self), ProcessPoolHandler(self) as pool:
-            futures: List[ProcessFuture] = []
-            # content/Packs
-            futures.extend(dump_packs(self, pool))
-            # content/TestPlaybooks
-            if not self.remove_test_playbooks:
-                futures.append(pool.schedule(dump_tests_conditionally, args=(self,)))
-            # content/content-descriptor.json
-            futures.append(pool.schedule(dump_content_descriptor, args=(self,)))
-            # content/Documentation/doc-*.json
-            futures.append(pool.schedule(dump_content_documentations, args=(self,)))
-            # Wait for all futures to be finished
-            wait_futures_complete(futures, self)
-            # Add suffix
-            suffix_handler(self)
+        try:
+            with ArtifactsDirsHandler(self), ProcessPoolHandler(self) as pool:
+                futures: List[ProcessFuture] = []
+                # content/Packs
+                futures.extend(dump_packs(self, pool))
+                # content/TestPlaybooks
+                if not self.remove_test_playbooks:
+                    futures.append(pool.schedule(dump_tests_conditionally, args=(self,)))
+                # content/content-descriptor.json
+                futures.append(pool.schedule(dump_content_descriptor, args=(self,)))
+                # content/Documentation/doc-*.json
+                futures.append(pool.schedule(dump_content_documentations, args=(self,)))
+                # Wait for all futures to be finished
+                wait_futures_complete(futures, self)
+                # Add suffix
+                suffix_handler(self)
 
-        if os.path.exists('keyfile'):
-            os.remove('keyfile')
-        logger.info(f"\nExecution time: {time.time() - self.execution_start} seconds")
+            if os.path.exists('keyfile'):
+                os.remove('keyfile')
+            logger.info(f"\nExecution time: {time.time() - self.execution_start} seconds")
 
-        return self.exit_code
+            return self.exit_code
+        except Exception as e:
+            print(e)
 
     def get_relative_pack_path(self, content_object: ContentObject):
         """
@@ -599,7 +605,7 @@ def dump_packs(artifact_manager: ArtifactsManager, pool: ProcessPool) -> List[Pr
     if 'all' in artifact_manager.pack_names:
         for pack_name, pack in artifact_manager.packs.items():
             if pack_name not in IGNORED_PACKS:
-                futures.append(pool.schedule(dump_pack, args=(artifact_manager, pack), timeout=1000)) # TODO: remove
+                futures.append(pool.schedule(dump_pack, args=(artifact_manager, pack)))
                 # check the case where you runi this on a specific pack but still want to confrunt with packs in id set. do intersect
 
     else:
@@ -607,7 +613,7 @@ def dump_packs(artifact_manager: ArtifactsManager, pool: ProcessPool) -> List[Pr
             if pack_name not in IGNORED_PACKS and pack_name in artifact_manager.packs:
                 futures.append(pool.schedule(dump_pack,
                                              args=(artifact_manager, artifact_manager.packs[pack_name])
-                                             ), timeout=1000)
+                                             ))
 
     return futures
 
@@ -638,8 +644,8 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
     pack_report = ArtifactsReport(f"Pack {pack.id}:")
 
     pack.metadata.load_user_metadata(pack.id, pack.path.name, pack.path, logger)
-    pack.filter_items_by_id_set(artifact_manager) # maybe change name of func for clearer set of argument
-
+    pack.filter_items_by_id_set = artifact_manager.filter_by_id_set# maybe change name of func for clearer set of argument
+    pack.pack_info_from_id_set = artifact_manager.packs_section_from_id_set
     content_items_handler = ContentItemsHandler()
     is_feed_pack = False
 
@@ -735,7 +741,7 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
         pack_report += ObjectReport(pack.metadata, content_packs=True)
         pack.metadata.content_items = content_items_handler.content_items
         pack.metadata.server_min_version = pack.metadata.server_min_version or content_items_handler.server_min_version
-        if artifact_manager.id_set_path and not artifact_manager.only_items_from_id_set:
+        if artifact_manager.id_set_path and not artifact_manager.filter_by_id_set:
             # Dependencies can only be done when id_set file is given.
             pack.metadata.handle_dependencies(pack.path.name, artifact_manager.id_set_path, logger)
         else:

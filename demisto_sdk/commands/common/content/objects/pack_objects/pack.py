@@ -53,6 +53,7 @@ class Pack:
         if not str(path).endswith('.zip'):
             self._metadata = PackMetaData(self._path.joinpath('metadata.json'))
         self._filter_items_by_id_set = False
+        self._pack_info_from_id_set = None
 
     def _content_files_list_generator_factory(self, dir_name: str, suffix: str) -> Iterator[Any]:
         """Generic content objects iterable generator
@@ -68,12 +69,12 @@ class Pack:
         for object_path in objects_path:
             content_object = path_to_pack_object(object_path)
             # skip content items that are not displayed in the id set, if the corresponding flag is used
-            if self._filter_items_by_id_set and content_object.type not in [FileType.RELEASE_NOTES.value,
+            if self._filter_items_by_id_set and content_object.type().value not in [FileType.RELEASE_NOTES.value,
                                                                             FileType.RELEASE_NOTES_CONFIG.value]:
                 if is_object_in_id_set(content_object.get('name'), self._pack_info_from_id_set):
-                    yield
+                    yield content_object
             else:
-                yield
+                yield content_object
 
     def _content_dirs_list_generator_factory(self, dir_name) -> Iterator[Any]:
         """Generic content objects iterable generator
@@ -283,6 +284,23 @@ class Pack:
 
         return obj
 
+    @property
+    def filter_items_by_id_set(self) -> bool:
+        return self._filter_items_by_id_set
+
+    @filter_items_by_id_set.setter
+    def filter_items_by_id_set(self, filter_by_id_set: bool):
+        self._filter_items_by_id_set = filter_by_id_set
+
+    @property
+    def pack_info_from_id_set(self) -> dict:
+        return self._pack_info_from_id_set
+
+    @pack_info_from_id_set.setter
+    def pack_info_from_id_set(self, pack_section_from_id_set: dict):
+        self._pack_info_from_id_set = pack_section_from_id_set.get(self.id) if pack_section_from_id_set else None
+
+
     def sign_pack(self, logger: logging.Logger, dumped_pack_dir: Path, sign_directory: Path):
         """ Signs pack folder and creates signature file.
 
@@ -356,11 +374,4 @@ class Pack:
                     else SET_VERIFY_KEY_ACTION.format(prev_key_val)
                 raise Exception(TURN_VERIFICATION_ERROR_MSG.format(action=action))
 
-    # @property
-    # def filter_items_by_id_set(self) -> bool:
-    #     return self._filter_items_by_id_set
 
-    #@filter_items_by_id_set.setter
-    def filter_items_by_id_set(self, artifact_manager):
-        self._filter_items_by_id_set = artifact_manager.filter_by_id_set
-        self._pack_info_from_id_set = artifact_manager.packs_section_from_id_set.get(self.id)

@@ -138,6 +138,8 @@ class Pack:
         self._jobs_path = self._pack_path / 'Jobs'
         self._jobs_path.mkdir()
 
+        self.contributors = None
+
     def create_integration(
             self,
             name: Optional[str] = None,
@@ -450,3 +452,8 @@ class Pack:
         doc_file_dir = self._pack_path / 'doc_files'
         doc_file_dir.mkdir()
         return File(doc_file_dir / f'{name}.png', self._repo.path)
+
+    def create_contributors_file(self, content) -> TextBased:
+        contributors = self._create_text_based('CONTRIBUTORS.md', content)
+        self.contributors = contributors
+        return contributors

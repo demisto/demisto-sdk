@@ -1772,6 +1772,7 @@ def is_object_in_id_set(object_name, pack_info_from_id_set):
         return False
     except KeyError:
         print('The id set given has missing keys in it, make sure you are using the latest id set version.')
+        raise
 
 
 

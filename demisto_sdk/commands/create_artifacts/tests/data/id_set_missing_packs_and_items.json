@@ -1,0 +1,54 @@
+{
+    "scripts": [],
+    "playbooks": [],
+    "integrations": [],
+    "TestPlaybooks": [],
+    "Classifiers": [],
+    "Dashboards": [],
+    "IncidentFields": [],
+    "IncidentTypes": [],
+    "IndicatorFields": [],
+    "IndicatorTypes": [],
+    "Layouts": [],
+    "Reports": [],
+    "Widgets": [],
+    "Mappers": [],
+    "Packs":{
+        "Sample1": {
+            "name": "Sample1",
+            "current_version": "1.1.1",
+            "source": [],
+            "categories": [
+                "Data Enrichment & Threat Intelligence"
+            ],
+            "ContentItems": {
+                "integrations": [
+                    "integration-sample_packs",
+                    "integration-sample_packs_new"
+                ],
+                "playbooks": [
+                    "playbook-sample_packs",
+                    "playbook-sample_packs_new"
+                ],
+                "scripts": [
+                    "scripts-sample_packs",
+                    "scripts-sample_packs_new"
+                ],
+                "classifiers": [
+                    "classifiers-sample_packs",
+                    "classifiers-sample_packs_new"
+                ],
+                "incidentTypes": [
+                    "incidenttypes-sample_packs",
+                    "incidenttypes-sample_packs_new"
+                ]
+            }
+        }
+    },
+    "GenericTypes": [],
+    "GenericFields": [],
+    "GenericModules": [],
+    "GenericDefinitions": [],
+    "Lists": [],
+    "Jobs": []
+}

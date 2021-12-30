@@ -7,7 +7,7 @@ import pytest
 
 from demisto_sdk.commands.common.constants import PACKS_DIR, TEST_PLAYBOOKS_DIR
 from demisto_sdk.commands.common.logger import logging_setup
-from demisto_sdk.commands.common.tools import src_root
+from demisto_sdk.commands.common.tools import src_root, open_id_set_file, is_object_in_id_set
 from TestSuite.test_tools import ChangeCWD
 
 TEST_DATA = src_root() / 'tests' / 'test_files'
@@ -16,7 +16,7 @@ TEST_PRIVATE_CONTENT_REPO = TEST_DATA / 'private_content_slim'
 UNIT_TEST_DATA = (src_root() / 'commands' / 'create_artifacts' / 'tests' / 'data')
 COMMON_SERVER = UNIT_TEST_DATA / 'common_server'
 ARTIFACTS_EXPECTED_RESULTS = TEST_DATA / 'artifacts'
-
+PARTIAL_ID_SET_PATH = UNIT_TEST_DATA / 'id_set_missing_packs_and_items.json'
 
 def same_folders(src1, src2):
     """Assert if folder contains different files"""
@@ -220,6 +220,31 @@ def test_create_content_artifacts(mock_git):
         assert exit_code == 0
         assert same_folders(temp, ARTIFACTS_EXPECTED_RESULTS / 'content')
 
+def test_create_content_artifacts_by_id_set(mock_git):
+    """
+
+    Test the case where content artifacts are being created by an id set.
+    This test has the following cases:
+    1. A pack is not exsiting in the id set - the pack will not exist as an artifact.
+    2. An item of a pack does not exist under the pack's section in the id set - the item will not exist as an artifact.
+
+    """
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import \
+        ArtifactsManager
+    with temp_dir() as temp:
+        config = ArtifactsManager(artifacts_path=temp,
+                                  content_version='6.0.0',
+                                  zip=False,
+                                  suffix='',
+                                  cpus=1,
+                                  packs=False,
+                                  filter_by_id_set=True,
+                                  id_set_path=PARTIAL_ID_SET_PATH)
+        exit_code = config.create_content_artifacts()
+
+        assert exit_code == 0
+        assert same_folders(temp, ARTIFACTS_EXPECTED_RESULTS / 'content_filtered_by_id_set')
+
 
 def test_create_private_content_artifacts(private_repo):
     from demisto_sdk.commands.common.content import Content
@@ -317,3 +342,24 @@ def test_sign_packs_failure(repo, capsys, key, tool):
     captured = capsys.readouterr()
     assert 'Failed to sign packs. In order to do so, you need to provide both signature_key and ' \
            'sign_directory arguments.' in captured.out
+
+def test_is_object_in_id_set():
+    """
+    Given:
+        - Pack object.
+        - filtered id set.
+    When:
+        - filter-by-id-set flag is on and we are checking if the pack's items exsit in the id set.
+    Then:
+        - Return if the item is in the id set or not.
+
+    """
+    id_set = open_id_set_file(PARTIAL_ID_SET_PATH)
+    packs_section = id_set.get('Packs')
+    pack_name = 'Sample1'
+    assert not is_object_in_id_set('indicator', packs_section[pack_name])
+    assert is_object_in_id_set('scripts-sample_packs', packs_section[pack_name])
+    with pytest.raises(Exception) as e:
+        is_object_in_id_set('scripts-sample_packs', {"pack_name": {}})
+        if not e:
+            assert False

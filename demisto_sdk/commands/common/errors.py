@@ -144,7 +144,7 @@ ERROR_CODE = {
     "incident_field_non_existent_script_id": {'code': "IF114", 'ui_applicable': False, 'related_field': ''},
     "unsearchable_key_should_be_true_incident_field": {'code': "IF115", 'ui_applicable': False,
                                                        'related_field': 'unsearchable'},
-    'select_values_cannot_contain_empty_values': {'code': "IF112", 'ui_applicable': False,
+    'select_values_cannot_contain_empty_values': {'code': "IF115", 'ui_applicable': False,
                                                   'related_field': 'selectValues'},
 
     # IM - Images

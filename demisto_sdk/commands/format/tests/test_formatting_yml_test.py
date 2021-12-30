@@ -666,7 +666,7 @@ class TestFormatting:
             - Ensure `tests` field gets the Test Playbook ID
         """
         test_files_path = os.path.join(git_path(), 'demisto_sdk', 'tests')
-        phishing_playbook_yml_path = os.path.join(test_files_path, 'test_files', 'content_repo_example', 'Packs',
+        phishing_playbook_yml_path = os.path.join(test_files_path, 'test_files', 'Packs',
                                                   'Phishing',
                                                   'Playbooks', 'Phishing_Investigation_-_Generic_v2_-_6_0.yml')
         formatter = PlaybookYMLFormat(input=phishing_playbook_yml_path, output='')
@@ -685,7 +685,7 @@ class TestFormatting:
             - Ensure `tests` field gets the Test Playbook ID
         """
         test_files_path = os.path.join(git_path(), 'demisto_sdk', 'tests')
-        email_auth_script_yml_path = os.path.join(test_files_path, 'test_files', 'content_repo_example', 'Packs',
+        email_auth_script_yml_path = os.path.join(test_files_path, 'test_files', 'Packs',
                                                   'Phishing', 'Scripts',
                                                   'CheckEmailAuthenticity.yml')
         formatter = ScriptYMLFormat(input=email_auth_script_yml_path, output='')

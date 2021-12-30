@@ -252,7 +252,7 @@ script:
       Used for outgoing-mapping through the Get Schema option.
     execution: false
     name: get-mapping-fields
-  dockerimage: demisto/python3:3.9.5.21272
+  dockerimage: demisto/python3:3.9.8.24399
   isfetch: false
   longRunning: false
   longRunningPort: false
@@ -264,4 +264,7 @@ script:
   isremotesyncout: true
 tests:
 - No tests
-fromversion: 6.0.0
+fromversion: 6.1.0
+marketplaces:
+- xsoar
+- marketplacev2

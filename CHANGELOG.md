@@ -1,8 +1,22 @@
 # Changelog
+* Fixed an issue where **run-test-playbook** command failed to get the task entries when the test playbook finished with errors.
+* Fixed an issue in **validate** command when running with `no-conf-json` argument to ignore the `conf.json` file.
+
+# 1.5.5
+* Fixed an issue in the **update-release-notes** command, which did not work when changes were made in multiple packs.
 * Changed the **validate** command to fail on missing test-playbooks only if no unittests are found.
 * Fixed `to_kebab_case`, it will now deal with strings that have hyphens, commas or periods in them, changing them to be hyphens in the new string.
 * Fixed an issue in the **create-id-set** command, where the `source` value included the git token if it was specified in the remote url.
 * Fixed an issue in the **merge-id-set** command, where merging fails because of duplicates but the packs are in the XSOAR repo but in different version control.
+* Fixed missing `Lists` Content Item as valid `IDSetType`
+* Added enhancement for **generate-docs**. It is possible to provide both file or a comma seperated list as `examples`. Also, it's possible to provide more than one example for a script or a command.
+* Added feature in **format** to sync YML and JSON files to the `master` file structure.
+* Added option to specify `Incident Type`, `Incoming Mapper` and `Classifier` when configuring instance in **test-content**
+* added a new command **run-test-playbook** to run a test playbook in a given XSOAR instance.
+* Fixed an issue in **format** when running on a modified YML, that the `id` value is not changed to its old `id` value.
+* Enhancement for **split** command, replace `ApiModule` code block to `import` when splitting a YML.
+* Fixed an issue where indicator types were missing from the pack's content, when uploading using **zip-packs**.
+* The request data body format generated in the **postman-codegen** will use the python argument's name and not the raw data argument's name.
 
 # 1.5.4
 * Fixed an issue with the **format** command when contributing via the UI

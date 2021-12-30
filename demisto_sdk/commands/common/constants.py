@@ -1058,6 +1058,7 @@ XSOAR_SUPPORT_URL = "https://www.paloaltonetworks.com/cortex"
 MARKETPLACE_LIVE_DISCUSSIONS = \
     'https://live.paloaltonetworks.com/t5/cortex-xsoar-discussions/bd-p/Cortex_XSOAR_Discussions'
 EXCLUDED_DISPLAY_NAME_WORDS = ['partner', 'community']
+MARKETPLACES = ['xsoar', 'marketplacev2']
 
 DEFAULT_CONTENT_ITEM_FROM_VERSION = '0.0.0'
 DEFAULT_CONTENT_ITEM_TO_VERSION = '99.99.99'
@@ -1253,6 +1254,8 @@ LAYOUT_AND_MAPPER_BUILT_IN_FIELDS = ['indicatortype', 'source', 'comment', 'aggr
 UUID_REGEX = r'[0-9a-f]{8}\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\b[0-9a-f]{12}'
 
 DEFAULT_ID_SET_PATH = "./Tests/id_set.json"
+MP_V2_ID_SET_PATH = "./Tests/id_set_mp_v2.json"
+METADATA_FILE_NAME = 'pack_metadata.json'
 
 CONTEXT_OUTPUT_README_TABLE_HEADER = '| **Path** | **Type** | **Description** |'
 

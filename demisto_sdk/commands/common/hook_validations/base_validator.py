@@ -63,7 +63,8 @@ class BaseValidator:
         Returns:
             str. Will return the formatted error message if it is not ignored, an None if it is ignored
         """
-        formatted_error = f"{file_path}: [{error_code}] - {error_message}".rstrip("\n") + "\n"
+        error_type = 'WARNING' if warning else 'ERROR'
+        formatted_error = f"[{error_type}]: {file_path}: [{error_code}] - {error_message}".rstrip("\n") + "\n"
 
         if drop_line:
             formatted_error = "\n" + formatted_error

@@ -1789,7 +1789,7 @@ def test_job_unexpected_field_values_in_non_feed_job(repo, capsys,
 def test_validate_contributors_file(repo):
     """
     Given:
-        A simple CONTRIBUTORS.md file
+        A simple CONTRIBUTORS.md file (see this https://xsoar.pan.dev/docs/packs/packs-format#contributorsmd)
     When:
         Running validation on the new file
     Then:

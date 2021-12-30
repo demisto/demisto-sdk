@@ -372,7 +372,7 @@ class FieldBaseValidator(ContentEntityValidator):
         Returns:
             (bool): True if selectValues does not have empty values, false if contains empty value.
         """
-        if any(select_value == '' for select_value in self.current_file.get('selectValues', [])):
+        if any(select_value == '' for select_value in (self.current_file.get('selectValues') or [])):
             error_message, error_code = Errors.select_values_cannot_contain_empty_values()
             if self.handle_error(error_message, error_code, file_path=self.file_path,
                                  warning=self.structure_validator.quite_bc):

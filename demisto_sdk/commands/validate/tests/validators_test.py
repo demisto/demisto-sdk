@@ -843,16 +843,19 @@ class TestValidators:
         pack2_name = 'ApiDependent'
         pack2 = repo.create_pack(pack2_name)
         integration2 = pack2.create_integration(pack2_name)
-        id_set_content = {'integrations':
-            [
-                {'ApiDependent':
-                     {'name': integration2.name,
-                      'file_path': integration2.path,
-                      'pack': pack2_name,
-                      'api_modules': api_script1.name
-                      }
-                 }
-            ]}
+        id_set_content = {
+            'integrations':
+                [
+                    {
+                        'ApiDependent':
+                            {
+                                'name': integration2.name,
+                                'file_path': integration2.path,
+                                'pack': pack2_name,
+                                'api_modules': api_script1.name
+                            }
+                    }
+                ]}
         id_set_f = tmpdir / "id_set.json"
         id_set_f.write(json.dumps(id_set_content))
         validate_manager = ValidateManager(id_set_path=id_set_f.strpath)

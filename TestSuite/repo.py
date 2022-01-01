@@ -241,3 +241,11 @@ class Repo:
         file_path = os.path.join(self.path, file_name)
         with open(file_path, 'w') as f:
             f.write(file_content)
+
+    def add_pack_metadata_file(self, pack_path, file_content):
+        file_path = os.path.join(pack_path, 'pack_metadata.json')
+        if file_content:
+            with open(file_path, 'w') as f:
+                f.write(file_content)
+        else:
+            shutil.copy('demisto_sdk/tests/test_files/DummyPackScriptIsXsoarOnly/pack_metadata.json', file_path)

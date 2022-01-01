@@ -1807,4 +1807,4 @@ def test_validate_contributors_file(repo):
     contributors_file = pack.create_contributors_file(contributors_file_content)
 
     validate_manager = ValidateManager(check_is_unskipped=False, file_path=contributors_file.path, skip_conf_json=True)
-    assert validate_manager.run_validation()
+    assert validate_manager.run_validation_on_specific_files()

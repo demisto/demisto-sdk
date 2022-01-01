@@ -138,7 +138,7 @@ class Pack:
         self._jobs_path = self._pack_path / 'Jobs'
         self._jobs_path.mkdir()
 
-        self.contributors: TextBased = None
+        self.contributors: Optional[TextBased] = None
 
     def create_integration(
             self,

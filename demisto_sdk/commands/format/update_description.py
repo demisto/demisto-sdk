@@ -34,7 +34,7 @@ class DescriptionFormat(BaseUpdate):
         self.is_beta = False
         file_type = find_type(description_type)
         if file_type:
-            self.is_beta = True if find_type(description_type).value == 'betaintegration' else False
+            self.is_beta = find_type(description_type).value == 'betaintegration'
         with open(self.source_file, 'r') as f:
             self.description_content = f.read()
 

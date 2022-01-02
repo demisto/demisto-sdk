@@ -18,6 +18,7 @@ UPDATE_RN_COMMAND = "update-release-notes"
 DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")
 TEST_FILES_PATH = join(git_path(), 'demisto_sdk', 'tests')
 AZURE_FEED_PACK_PATH = join(TEST_FILES_PATH, 'test_files', 'content_repo_example', 'Packs', 'FeedAzureValid')
+CORTEXXDR_PACK_PATH = join(TEST_FILES_PATH, 'test_files', 'Packs', 'CortexXDR')
 RN_FOLDER = join(git_path(), 'Packs', 'FeedAzureValid', 'ReleaseNotes')
 VMWARE_PACK_PATH = join(TEST_FILES_PATH, 'test_files', 'content_repo_example', 'Packs', 'VMware')
 VMWARE_RN_PACK_PATH = join(git_path(), 'Packs', 'VMware', 'ReleaseNotes')
@@ -124,6 +125,45 @@ def test_update_release_notes_modified_integration(demisto_client, mocker):
     with open(rn_path, 'r') as f:
         rn = f.read()
     assert expected_rn == rn
+
+
+def test_update_release_notes_modified_integrations_use_git(demisto_client, mocker):
+    """
+    Given
+    - Azure, CortexXDR packs were changed.
+
+    When
+    - Running demisto-sdk update-release-notes command with --use-git flag.
+
+    Then
+    - Ensure both packs release notes were updated.
+    """
+
+    modified_files = {join(AZURE_FEED_PACK_PATH, 'Integrations', 'FeedAzureValid', 'FeedAzureValid.yml'),
+                      join(CORTEXXDR_PACK_PATH, 'Integrations', 'PaloAltoNetworks_XDR', 'PaloAltoNetworks_XDR.yml')}
+    runner = CliRunner(mix_stderr=False)
+    FeedAzureValid_rn_path = join(git_path(), 'Packs', 'FeedAzureValid', 'ReleaseNotes', '1_0_1.md')
+    CortexXDR_rn_path = join(git_path(), 'Packs', 'FeedAzureValid', 'ReleaseNotes', '1_0_1.md')
+
+    # remove previous run RN
+    if os.path.exists(FeedAzureValid_rn_path):
+        os.remove(FeedAzureValid_rn_path)
+    if os.path.exists(FeedAzureValid_rn_path):
+        os.remove(CortexXDR_rn_path)
+
+    mocker.patch.object(UpdateRN, 'is_bump_required', return_value=True)
+    mocker.patch.object(ValidateManager, 'setup_git_params', return_value='')
+    mocker.patch.object(ValidateManager, 'get_unfiltered_changed_files_from_git', return_value=(modified_files, set(),
+                                                                                                set()))
+    mocker.patch.object(GitUtil, 'get_current_working_branch', return_value="branch_name")
+    mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value={'currentVersion': '1.0.0'})
+    mocker.patch.object(UpdateRN, 'get_master_version', return_value='1.0.0')
+
+    result = runner.invoke(main, [UPDATE_RN_COMMAND, "--use-git"])
+
+    assert not result.exception
+    assert 'Bumping CortexXDR to version: 1.0.1' in result.stdout
+    assert 'Bumping FeedAzureValid to version: 1.0.1' in result.stdout
 
 
 def test_update_release_notes_incident_field(demisto_client, mocker):

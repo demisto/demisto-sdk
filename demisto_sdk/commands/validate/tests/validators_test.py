@@ -1803,7 +1803,7 @@ def test_validate_deleted_files(capsys, file_set, expected_output):
 
     assert expected_output in stdout
 
-    
+
 def test_validate_contributors_file(repo):
     """
     Given:
@@ -1821,4 +1821,3 @@ def test_validate_contributors_file(repo):
 
     validate_manager = ValidateManager(check_is_unskipped=False, file_path=contributors_file.path, skip_conf_json=True)
     assert validate_manager.run_validation_on_specific_files()
-

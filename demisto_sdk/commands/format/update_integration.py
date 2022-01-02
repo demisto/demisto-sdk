@@ -46,7 +46,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
         self.is_beta = False
         integration_type = find_type(input)
         if integration_type:
-            self.is_beta = True if find_type(input).value == 'betaintegration' else False
+            self.is_beta = find_type(input).value == 'betaintegration'
 
     def update_proxy_insecure_param_to_default(self):
         """Updates important integration arguments names and description."""

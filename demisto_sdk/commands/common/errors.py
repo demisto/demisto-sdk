@@ -392,7 +392,7 @@ ERROR_CODE = {
         'ui_applicable': False,
         'related_field': 'name'
     },
-        "deleted_file": {
+    "deleted_file": {
         'code': "ST113",
         'ui_applicable': False,
         'related_field': ''

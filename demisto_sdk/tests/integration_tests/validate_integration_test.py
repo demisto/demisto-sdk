@@ -3426,3 +3426,4 @@ class TestValidationUsingGit:
         assert f'Validating {script.yml.rel_path}' in result.stdout
         assert f'Validating {integration_2.yml.rel_path}' not in result.stdout
         assert f'Validating {script_2.yml.rel_path}' not in result.stdout
+

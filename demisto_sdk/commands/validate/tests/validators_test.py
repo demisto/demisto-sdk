@@ -1784,8 +1784,10 @@ def test_job_unexpected_field_values_in_non_feed_job(repo, capsys,
     assert "Job must either have non-empty selectedFeeds OR have isAllFields set to true when isFeed is set to true" \
            in stdout
 
-@pytest.mark.parametrize('file_set,expected_output', (({'file_path'}, "[ST113] - file file_path was deleted from git, please restore the file."),
-                                                    ({}, "no deleted files were found."))
+
+@pytest.mark.parametrize('file_set,expected_output', (({'file_path'},
+                         "[ST113] - file file_path was deleted from git, please restore the file."),
+                        ({}, "no deleted files were found."))
                         )
 def test_validate_deleted_files(capsys, file_set, expected_output):
 

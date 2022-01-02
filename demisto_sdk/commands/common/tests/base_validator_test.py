@@ -58,7 +58,7 @@ def test_handle_error(mocker):
     assert 'path/to/file_name - [ST109]' in FOUND_FILES_AND_ERRORS
 
 
-def test_handle_error_file_with_path(pack, mocker):
+def test_handle_error_file_with_path(pack):
     """
     Given
     - An ignore errors list associated with a file_path.

@@ -82,7 +82,7 @@ class UpdateReleaseNotesManager:
 
                 filtered_set.add(file)
 
-        return validate_manager.filter_to_relevant_files(filtered_set)
+        return validate_manager.filter_to_relevant_files(file_set)
 
     def filter_files_from_git(self, modified_files: set, added_files: set, renamed_files: set,
                               validate_manager: ValidateManager):

@@ -300,10 +300,14 @@ class TestDuplicates:
             }
         })
 
-        has_duplicates = has_duplicate(id_set['Layouts'], 'urlRep', 'Layouts', False, is_new=False)
+        # Check for duplicates for existing id-sets,
+        # Will not be considered as duplicate when two entities come from the same source
+        has_duplicates = has_duplicate(id_set['Layouts'], 'urlRep', 'Layouts', False, is_create_new=False)
         assert has_duplicates == expected
 
-        assert has_duplicate(id_set['Layouts'], 'urlRep', 'Layouts', False, is_new=True),\
+        # Check for duplicates for a new id-set,
+        # In this case all the examples above should be considered as duplicates
+        assert has_duplicate(id_set['Layouts'], 'urlRep', 'Layouts', False, is_create_new=True),\
             "if it's a new pack it is always a duplicate"
 
 

@@ -51,7 +51,7 @@ def test_handle_error(mocker):
     assert formatted_error is None
     assert 'path/to/file_name - [BA101]' not in FOUND_FILES_AND_ERRORS
     assert 'path/to/file_name - [BA101]' in FOUND_FILES_AND_IGNORED_ERRORS
-    assert click_mock.call_args.args[0] == "[WARNING]: path/to/file_name: [BA101] - ignore-file-specific\n"
+    assert click_mock.call_args_list[0][0][0] == "[WARNING]: path/to/file_name: [BA101] - ignore-file-specific\n"
 
     formatted_error = base_validator.handle_error("Error-message", "ST109", "path/to/file_name")
     assert formatted_error == '[ERROR]: path/to/file_name: [ST109] - Error-message\n'

@@ -1085,7 +1085,7 @@ class ValidateManager:
 
         """
         return pack not in IGNORED_PACK_NAMES
-    
+
     def validate_deleted_files(self, deleted_files) -> bool:
         click.secho(f'\n================= Running validation for deleted files =================',
                     fg="bright_cyan")
@@ -1473,8 +1473,6 @@ class ValidateManager:
                                                     staged_only=self.staged, include_untracked=self.include_untracked)
 
         return deleted_files
-
-
 
     def ignore_file(self, file_path: str) -> None:
         if self.print_ignored_files:

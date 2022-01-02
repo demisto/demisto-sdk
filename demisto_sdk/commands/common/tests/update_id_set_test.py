@@ -310,7 +310,6 @@ class TestDuplicates:
         assert has_duplicate(id_set['Layouts'], 'urlRep', 'Layouts', False, is_create_new=True),\
             "if it's a new pack it is always a duplicate"
 
-
     @staticmethod
     def test_has_no_duplicate():
         """

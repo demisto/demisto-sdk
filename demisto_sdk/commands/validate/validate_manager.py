@@ -694,6 +694,7 @@ class ValidateManager:
         if self.file_path:
             modified_files, added_files, old_format_files = self.specify_files_by_status(modified_files, added_files,
                                                                                          old_format_files)
+        deleted_files = self.get_deleted_files_from_git()
 
         validation_results = {valid_git_setup}
 
@@ -701,6 +702,7 @@ class ValidateManager:
         validation_results.add(self.validate_added_files(added_files, modified_files))
         validation_results.add(self.validate_changed_packs_unique_files(modified_files, added_files, old_format_files,
                                                                         changed_meta_files))
+        validation_results.add(self.validate_deleted_files(deleted_files))
 
         if old_format_files:
             click.secho(f'\n================= Running validation on old format files =================',
@@ -1083,6 +1085,21 @@ class ValidateManager:
 
         """
         return pack not in IGNORED_PACK_NAMES
+    
+    def validate_deleted_files(self, deleted_files) -> bool:
+        click.secho(f'\n================= Running validation for deleted files =================',
+                    fg="bright_cyan")
+
+        if deleted_files:
+            for file_path in deleted_files:
+                error_message, error_code = Errors.deleted_file(file_path)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    self.is_valid = False
+
+            return False
+        else:
+            click.secho(f'\nno deleted files were found.')
+        return True
 
     def validate_changed_packs_unique_files(self, modified_files, added_files, old_format_files, changed_meta_files):
         click.secho(f'\n================= Running validation on changed pack unique files =================',
@@ -1449,6 +1466,15 @@ class ValidateManager:
             self.ignore_file(file_path)
             return True
         return False
+
+    def get_deleted_files_from_git(self):
+
+        deleted_files = self.git_util.deleted_files(prev_ver=self.prev_ver, committed_only=self.is_circle,
+                                                    staged_only=self.staged, include_untracked=self.include_untracked)
+
+        return deleted_files
+
+
 
     def ignore_file(self, file_path: str) -> None:
         if self.print_ignored_files:

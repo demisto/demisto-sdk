@@ -392,6 +392,11 @@ ERROR_CODE = {
         'ui_applicable': False,
         'related_field': 'name'
     },
+        "deleted_file": {
+        'code': "ST113",
+        'ui_applicable': False,
+        'related_field': ''
+    },
 }
 
 
@@ -417,6 +422,11 @@ def error_code_decorator(func, *args, **kwargs):
 
 class Errors:
     BACKWARDS = "Possible backwards compatibility break"
+
+    @staticmethod
+    @error_code_decorator
+    def deleted_file(file_path: str):
+        return f"file {file_path} was deleted from git, please restore the file."
 
     @staticmethod
     def suggest_fix(file_path: str, *args: Any, cmd: str = 'format') -> str:

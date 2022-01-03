@@ -1229,3 +1229,10 @@ class TestFormatting:
         base_yml = IntegrationYMLFormat(input=playbook.yml.path)
         base_yml.update_id_to_equal_name()
         assert base_yml.data.get('id') == uid
+
+    def test_add_from_version(self, mocker, pack):
+        integration = pack.create_integration()
+        integration.yml.write_dict({'commonfields': {'id': "test"}, 'name': "test"})
+        mocker.patch.object(BaseUpdateYML, 'get_id_and_version_path_object', return_value={'id': "test"})
+        base_update_yml = BaseUpdateYML(input=integration.yml.path)
+        assert base_update_yml.from_version == BaseUpdateYML.DEAFULT_FROM_VERSION

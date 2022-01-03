@@ -36,6 +36,8 @@ class BaseUpdateYML(BaseUpdate):
     }
     CONF_PATH = "./Tests/conf.json"
 
+    DEAFULT_FROM_VERSION = "6.0.0"
+
     def __init__(self,
                  input: str = '',
                  output: str = '',
@@ -51,6 +53,8 @@ class BaseUpdateYML(BaseUpdate):
         self.id_and_version_location = self.get_id_and_version_path_object()
         self.deprecate = deprecate
         self.add_tests = add_tests
+        if not from_version:
+            self.from_version = BaseUpdateYML.DEAFULT_FROM_VERSION
 
     def _load_conf_file(self) -> Dict:
         """

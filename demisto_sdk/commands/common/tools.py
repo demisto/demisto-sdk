@@ -1768,9 +1768,8 @@ def is_object_in_id_set(object_name, pack_info_from_id_set):
     try:
         content_items = pack_info_from_id_set['ContentItems']
         for items_type, items_names in content_items.items():
-            for name in items_names:
-                if object_name == name:
-                    return True
+            if object_name in items_names:
+                return True
         return False
     except KeyError:
         print('The id set given has missing keys in it, make sure you are using the latest id set version.')

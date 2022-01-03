@@ -331,7 +331,7 @@ class TestStructureValidator:
         """
         validator = StructureValidator(file_path=INVALID_INTEGRATION_YML_5,
                                        predefined_scheme='integration')
-        exception = f"{INVALID_INTEGRATION_YML_5}: [ST113] - There is problem with the yml file. The error: while constructing a mapping\n" \
+        exception = f"[ERROR]: {INVALID_INTEGRATION_YML_5}: [ST113] - There is problem with the yml file. The error: while constructing a mapping\n" \
                     f"  in \"{INVALID_INTEGRATION_YML_5}\", line 6, column 3\n" \
                     f"found duplicate key \"display\" with value \"Fetch indicators\" (original value: \"Fetch indicators\")\n" \
                     f"  in \"{INVALID_INTEGRATION_YML_5}\", line 8, column 3\n\n" \

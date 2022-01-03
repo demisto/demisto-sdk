@@ -1,6 +1,10 @@
 # Changelog
+* Added 'deprecated' release notes template.
 * Fixed an issue where **run-test-playbook** command failed to get the task entries when the test playbook finished with errors.
 * Fixed an issue in **validate** command when running with `no-conf-json` argument to ignore the `conf.json` file.
+* Added error type text (`ERROR` or `WARNING`) to **validate** error prints.
+* Fixed an issue where the **format** command on test playbook did not format the ID to be equal to the name of the test playbook.
+* Enhanced the **update-release-notes** command to automatically commit release notes config file upon creation.
 * The **validate** command will validate that an indicator field of type html has fromVersion of 6.1.0 and above.
 * The **format** command will now add fromVersion 6.1.0 to indicator field of type html.
 

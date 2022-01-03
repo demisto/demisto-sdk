@@ -267,7 +267,7 @@ class TestIntegrationValidator:
         if expecting_warning:
             from demisto_sdk.commands.common.errors import Errors
             warning_message, warning_code = Errors.non_default_additional_info(['API key'])
-            expected_warning = f"[{warning_code}] - {warning_message}"
+            expected_warning = f"[WARNING]: : [{warning_code}] - {warning_message}"
             captured = capsys.readouterr()
             assert captured.out.lstrip("\":").strip() == expected_warning
             assert not captured.err

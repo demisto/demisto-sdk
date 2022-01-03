@@ -5,13 +5,14 @@ from typing import Dict, List, Optional
 import click
 from ruamel.yaml import YAML
 
-from demisto_sdk.commands.common.constants import (INTEGRATION, PLAYBOOK,
+from demisto_sdk.commands.common.constants import (ENTITY_TYPE_TO_DIR,
+                                                   INTEGRATION, PLAYBOOK,
                                                    TEST_PLAYBOOKS_DIR,
                                                    FileType)
-from demisto_sdk.commands.common.tools import (_get_file_id, find_type,
-                                               get_entity_id_by_entity_type,
-                                               get_not_registered_tests,
-                                               get_yaml, is_uuid)
+from demisto_sdk.commands.common.tools import (
+    _get_file_id, find_type, get_entity_id_by_entity_type,
+    get_not_registered_tests, get_scripts_and_commands_from_yml_data, get_yaml,
+    is_uuid)
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 
 ryaml = YAML()
@@ -132,6 +133,9 @@ class BaseUpdateYML(BaseUpdate):
             pack_path = os.path.dirname(os.path.dirname(os.path.abspath(self.source_file)))
             test_playbook_dir_path = os.path.join(pack_path, TEST_PLAYBOOKS_DIR)
             test_playbook_ids = []
+            file_entity_type = find_type(self.source_file, _dict=self.data, file_type='yml')
+            file_id = get_entity_id_by_entity_type(self.data, ENTITY_TYPE_TO_DIR.get(file_entity_type.value, ""))
+            commands, scripts = get_scripts_and_commands_from_yml_data(self.data, file_entity_type)
             try:
                 test_playbooks_files = os.listdir(test_playbook_dir_path)
                 if test_playbooks_files:
@@ -143,7 +147,29 @@ class BaseUpdateYML(BaseUpdate):
                             test_playbook_data = get_yaml(tpb_file_path)
                             test_playbook_id = get_entity_id_by_entity_type(test_playbook_data,
                                                                             content_entity='')
-                            test_playbook_ids.append(test_playbook_id)
+                            if not scripts and not commands:  # Better safe than sorry
+                                test_playbook_ids.append(test_playbook_id)
+                            else:
+                                added = False
+                                tpb_commands, tpb_scripts = get_scripts_and_commands_from_yml_data(
+                                    test_playbook_data, FileType.TEST_PLAYBOOK)
+
+                                for full_tpb_command in tpb_commands:
+                                    tpb_command_parts = full_tpb_command.split('|||')
+                                    tpb_command = full_tpb_command
+                                    if len(tpb_command_parts) == 2:
+                                        if file_id and file_id != tpb_command_parts[0]:
+                                            continue
+                                        tpb_command = tpb_command_parts[1]
+
+                                    if not added and tpb_command in commands:
+                                        test_playbook_ids.append(test_playbook_id)
+                                        added = True
+                                for tpb_script in tpb_scripts:
+                                    if not added and tpb_script in scripts:
+                                        test_playbook_ids.append(test_playbook_id)
+                                        added = True
+
                     self.data['tests'] = test_playbook_ids
             except FileNotFoundError:
                 pass

@@ -1656,7 +1656,7 @@ class TestContext:
             docker_test_results = self._run_docker_threshold_test()
             if not docker_test_results:
                 playbook_state = PB_Status.FAILED_DOCKER_TEST
-            self._clean_incident_if_successful(playbook_state)
+            # self._clean_incident_if_successful(playbook_state)
         return playbook_state
 
     def _execute_unmockable_test(self) -> bool:

@@ -68,19 +68,19 @@ class UpdateReleaseNotesManager:
         Given a file set, filter it to only files which require RN and if given, from a specific pack
         """
         filtered_set = set()
-        if self.given_pack:
-            for file in file_set:
-                if isinstance(file, tuple):
-                    file_path = str(file[1])
+        for file in file_set:
+            if isinstance(file, tuple):
+                file_path = str(file[1])
 
-                else:
-                    file_path = str(file)
+            else:
+                file_path = str(file)
 
+            if self.given_pack:
                 file_pack_name = get_pack_name(file_path)
                 if not file_pack_name or file_pack_name not in self.given_pack:
                     continue
 
-                filtered_set.add(file)
+            filtered_set.add(file)
 
         return validate_manager.filter_to_relevant_files(filtered_set)
 

@@ -436,3 +436,32 @@ def test_is_docker_image_same_as_yml(release_notes_content, yaml_content, filled
         validator = ReleaseNotesValidator(rn.path, modified_files=[integration1.yml.path],
                                         pack_name=os.path.basename(pack.path))
         assert validator.is_docker_image_same_as_yml() == filled_expected_result
+
+
+TEST_RELEASE_NOTES_TEST_BANK_4 = [
+    ('\n#### Integrations\n##### Integration name\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.\n#### Scripts\n##### Script name\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.',
+    {'Integrations': '##### Integration name\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.', 'Scripts': '##### Script name\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.'}, "\n#### "),
+    ('\n#### Integrations\n##### Integration name1\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.\n##### Integration name2\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.',
+    {'Integrations': '##### Integration name1\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.\n##### Integration name2\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.'}, "\n#### "),
+    ('##### Integration name1\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.\n##### Integration name2\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.',
+    {'Integration name1': '- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.\n', 'Integration name2': '- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.'}, "##### "),]
+
+
+@pytest.mark.parametrize('release_notes_content, filled_expected_result, splitter', TEST_RELEASE_NOTES_TEST_BANK_4)
+def test_get_categories_from_rn(release_notes_content, filled_expected_result, splitter, pack : Pack):
+        """
+        Given
+        - Case 1: Validate for 1 integration and one script
+        - Case 2: Validate for integration with 2 different integrations
+        - Case 3: Validate for splitter param
+
+        When
+        - Running validation on release notes.
+
+        Then
+        - Ensure validation correctly identifies valid release notes.
+        - Case 1: Should Create a dict with one value for integration key and one value for script key.
+        - Case 2: Should Create a dict with one value for integration key that holds 2 integrations.
+        - Case 3: Should Create a dict with two keys of integraition 1 and integration 2.
+        """
+        assert ReleaseNotesValidator.get_categories_from_rn(release_notes_content, splitter) == filled_expected_result

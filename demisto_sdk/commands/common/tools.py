@@ -2230,11 +2230,17 @@ def get_scripts_and_commands_from_yml_data(data, file_type):
             task = tasks[task_num]
             inner_task = task.get('task')
             task_type = task.get('type')
-            if inner_task and task_type == 'regular':
+            if inner_task and task_type == 'regular' or task_type == 'playbook':
                 if inner_task.get('iscommand'):
                     commands.append(inner_task.get('script'))
                 else:
-                    scripts.append(inner_task.get('scriptName'))
+                    if task_type == 'playbook':
+                        scripts.append(inner_task.get('playbookName'))
+                    elif inner_task.get('scriptName'):
+                        scripts.append(inner_task.get('scriptName'))
+        if file_type == file_type == FileType.PLAYBOOK:
+            playbook_id = get_entity_id_by_entity_type(data, PLAYBOOKS_DIR)
+            scripts.append(playbook_id)
 
     if file_type == FileType.SCRIPT:
         script_id = get_entity_id_by_entity_type(data, SCRIPTS_DIR)

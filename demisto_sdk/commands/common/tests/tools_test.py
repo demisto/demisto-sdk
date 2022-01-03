@@ -1517,7 +1517,13 @@ YML_DATA_CASES = [(get_yaml(VALID_INTEGRATION_TEST_PATH), FileType.INTEGRATION,
                     'PagerDutyIncidents', 'PagerDutySubmitEvent', 'PagerDutyGetContactMethods',
                     'PagerDutyGetUsersNotification'], []),
                   (get_yaml(VALID_SCRIPT_PATH), FileType.SCRIPT, ['send-notification'], ['TestCreateDuplicates']),
-                  (get_yaml(TEST_PLAYBOOK), FileType.TEST_PLAYBOOK, ['Gmail|||gmail-search'], ['ReadFile'])]
+                  (get_yaml(TEST_PLAYBOOK), FileType.TEST_PLAYBOOK, ['Gmail|||gmail-search'],
+                   ['ReadFile', 'Get Original Email - Gmail']),
+                  (get_yaml(VALID_PLAYBOOK_ID_PATH), FileType.PLAYBOOK, ['Builtin|||setIncident',
+                                                                         'Builtin|||closeInvestigation',
+                                                                         'Builtin|||setIncident'],
+                   ['Account Enrichment - Generic', 'EmailAskUser', 'ADGetUser', 'IP Enrichment - Generic',
+                    'IP Enrichment - Generic', 'AssignAnalystToIncident', 'access_investigation_-_generic'])]
 
 
 @pytest.mark.parametrize('data, file_type, expected_commands, expected_scripts', YML_DATA_CASES)

@@ -16,7 +16,7 @@ ALLOWED_IGNORE_ERRORS = [
     'BA101', 'BA106', 'BA108', 'BA109', 'BA110', 'BA111', 'BA112', 'BA113',
     'DS107',
     'GF102',
-    'IF100', 'IF106', 'IF115',
+    'IF100', 'IF106', 'IF115', 'IF116',
     'IN109', 'IN110', 'IN122', 'IN124', 'IN126', 'IN128', 'IN135', 'IN136', 'IN139', 'IN144', 'IN145',
     'MP106',
     'PA113', 'PA116', 'PA124', 'PA125', 'PA127', 'PA129',
@@ -144,7 +144,7 @@ ERROR_CODE = {
     "incident_field_non_existent_script_id": {'code': "IF114", 'ui_applicable': False, 'related_field': ''},
     "unsearchable_key_should_be_true_incident_field": {'code': "IF115", 'ui_applicable': False,
                                                        'related_field': 'unsearchable'},
-    'select_values_cannot_contain_empty_values': {'code': "IF115", 'ui_applicable': False,
+    'select_values_cannot_contain_empty_values': {'code': "IF116", 'ui_applicable': False,
                                                   'related_field': 'selectValues'},
 
     # IM - Images

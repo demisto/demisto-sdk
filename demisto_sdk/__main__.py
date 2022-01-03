@@ -1843,7 +1843,7 @@ def test_content(**kwargs):
     '-h', '--help'
 )
 @click.option(
-    '-i', '--input', type=str, help='The path to the file to check')
+    '-i', '--input', type=str, help='The path to the file to check', multiple=True)
 @click.option(
     '--no-camel-case', is_flag=True, help='Whether to check CamelCase words', default=False)
 @click.option(
@@ -1879,7 +1879,7 @@ def doc_review(**kwargs):
     """Check the spelling in .md and .yml files as well as review release notes"""
     from demisto_sdk.commands.doc_reviewer.doc_reviewer import DocReviewer
     doc_reviewer = DocReviewer(
-        file_path=kwargs.get('input'),
+        file_paths=list(kwargs.get('input', [])),
         known_words_file_paths=list(kwargs.get('known_words', [])),
         no_camel_case=kwargs.get('no_camel_case'),
         no_failure=kwargs.get('always_true'),

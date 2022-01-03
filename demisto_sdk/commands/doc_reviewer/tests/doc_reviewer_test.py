@@ -3,6 +3,22 @@ from typing import List
 from demisto_sdk.commands.doc_reviewer.doc_reviewer import DocReviewer
 
 
+def test_having_two_known_words_files():
+    pass
+
+
+def test_having_multiple_file_paths():
+    pass
+
+
+def test_adding_known_words_from_pack():
+    pass
+
+
+def test_files_from_different_packs():
+    pass
+
+
 def test_camel_case_split():
     """
     Given

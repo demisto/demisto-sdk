@@ -378,7 +378,7 @@ def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock
 @patch('demisto_sdk.commands.split.ymlsplitter.get_python_version')
 @patch('demisto_sdk.commands.init.contribution_converter.get_content_path')
 def test_convert_contribution_zip_with_args(get_content_path_mock, get_python_version_mock, tmp_path):
-    '''Convert a contribution zip to a pack and test that the converted pack's 'pack_metadata.json' is correct
+    """Convert a contribution zip to a pack and test that the converted pack's 'pack_metadata.json' is correct
 
     Args:
         get_content_path_mock (MagicMock): Patch of the 'get_content_path' function to return the fake repo directory
@@ -403,7 +403,7 @@ def test_convert_contribution_zip_with_args(get_content_path_mock, get_python_ve
     - Ensure that the pack's 'pack_metadata.json' file's 'author' field is 'Octocat Smith'
     - Ensure that the pack's 'pack_metadata.json' file's 'githubUser' field a list containing only 'octocat'
     - Ensure that the pack's 'pack_metadata.json' file's 'email' field is the empty string
-    '''
+    """
     # Create all Necessary Temporary directories
     # create temp directory for the repo
     repo_dir = tmp_path / 'content_repo'
@@ -447,6 +447,7 @@ def test_convert_contribution_zip_with_args(get_content_path_mock, get_python_ve
         assert metadata.get('description', '') == description
         assert metadata.get('author', '') == author
         assert metadata.get('githubUser', []) == [gh_user]
+        assert metadata.get('marketplaces', []) == ['xsoar', 'marketplacev2']
         assert not metadata.get('email')
 
 

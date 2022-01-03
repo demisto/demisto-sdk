@@ -19,7 +19,7 @@ ALLOWED_IGNORE_ERRORS = [
     'IN109', 'IN110', 'IN122', 'IN124', 'IN126', 'IN128', 'IN135', 'IN136', 'IN139', 'IN144', 'IN145',
     'MP106',
     'PA113', 'PA116', 'PA124', 'PA125', 'PA127', 'PA129',
-    'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112', 'PB114', 'PB115', 'PB116',
+    'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112', 'PB114', 'PB115', 'PB116', 'PB107',
     'RM100', 'RM102', 'RM104', 'RM106',
     'RP102', 'RP104',
     'SC100', 'SC101', 'SC105', 'SC106',
@@ -357,6 +357,7 @@ ERROR_CODE = {
     "pykwalify_general_error": {'code': "ST110", 'ui_applicable': False, 'related_field': ''},
     "pykwalify_field_undefined_with_path": {'code': "ST111", 'ui_applicable': False, 'related_field': ''},
     "pykwalify_incorrect_enum": {'code': "ST112", 'ui_applicable': False, 'related_field': ''},
+    "invalid_yml_file": {'code': "ST113", 'ui_applicable': False, 'related_field': ''},
 
     # WD - Widgets
     "remove_field_from_widget": {'code': "WD100", 'ui_applicable': False, 'related_field': ''},
@@ -2085,3 +2086,8 @@ class Errors:
     def runas_is_dbotrole():
         return 'The runas value is DBotRole, it may cause access and exposure of sensitive data. ' \
                'Please consider changing it.'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_yml_file(error):
+        return f'There is problem with the yml file. The error: {error}'

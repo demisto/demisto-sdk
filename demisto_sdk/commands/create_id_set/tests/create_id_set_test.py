@@ -12,6 +12,25 @@ from TestSuite.utils import IsEqualFunctions
 
 TESTS_DIR = f'{git_path()}/demisto_sdk/tests'
 
+METADATA = {
+    "name": "Pack0",
+    "description": "Export context data to an xlsx file.",
+    "support": "xsoar",
+    "currentVersion": "1.0.0",
+    "author": "Cortex XSOAR",
+    "url": "https://www.paloaltonetworks.com/cortex",
+    "email": "",
+    "created": "2020-08-13T15:13:06Z",
+    "categories": [],
+    "tags": [],
+    "useCases": [],
+    "keywords": [],
+    "marketplaces": [
+        "xsoar",
+        "marketplacev2"
+    ]
+}
+
 
 class TestIDSetCreator:
     def setup(self):
@@ -108,8 +127,9 @@ class TestIDSetCreator:
         assert len(private_id_set['integrations']) == 1
         assert private_id_set['integrations'][0].get('id1', {}).get('name', '') == 'integration to create id set'
         assert private_id_set['integrations'][0].get('id2', {}).get('name', '') == ''
+        assert private_id_set['Packs']['pack_to_create_id_set_on']['ContentItems']['integrations'] == ['id1']
 
-    def test_create_id_set_on_specific_empty_pack(self, repo):
+    def test_create_id_set_on_specific_empty_pack(self, repo, mocker):
         """
         Given
         - an empty pack to create from it ID set
@@ -123,6 +143,10 @@ class TestIDSetCreator:
 
         """
         pack = repo.create_pack()
+        repo.add_pack_metadata_file(pack.path, json.dumps(METADATA))
+
+        import demisto_sdk.commands.common.update_id_set as uis
+        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
 
         id_set_creator = IDSetCreator(self.file_path, pack.path)
 

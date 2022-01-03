@@ -96,6 +96,11 @@ mapping:
     type: bool
   autoUpdateDockerImage:
     type: bool
+  marketplaces:
+    type: seq
+    sequence:
+      - type: str
+        enum: ['xsoar', 'marketplacev2']
 
 # script->args
 schema;argument_schema:

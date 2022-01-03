@@ -38,7 +38,8 @@ def test_integration_init_integration_positive(monkeypatch, tmp_path):
     use_category_from_pack_metadata = 'Y'
     integration_name = "SuperIntegration"
     use_dir_name_as_id = 'Y'
-    inputs = [fill_pack_metadata, pack_display_name, pack_desc, support_type, pack_category,
+    marketplaces = 'xsoar , marketplacev2'
+    inputs = [fill_pack_metadata, pack_display_name, pack_desc, support_type, pack_category, marketplaces,
               pack_author, pack_url, pack_email, pack_dev_email, pack_tags, pack_reviewers, create_integration,
               use_category_from_pack_metadata, integration_name, use_dir_name_as_id, from_version]
 
@@ -75,7 +76,8 @@ def test_integration_init_integration_positive(monkeypatch, tmp_path):
             "tags": pack_tags.split(","),
             "useCases": [],
             "keywords": [],
-            "githubUser": ["GithubUser1", "GithubUser2"]
+            "githubUser": ["GithubUser1", "GithubUser2"],
+            "marketplaces": ['xsoar', 'marketplacev2'],
             # testing for subset (<=) to avoid testing created and modified timestamps
         }.items() <= metadata_json.items()
 
@@ -116,7 +118,8 @@ def test_integration_init_integration_positive_no_inline_pack_name(monkeypatch, 
     use_category_from_pack_metadata = 'Y'
     integration_name = "SuperIntegration"
     use_dir_name_as_id = 'Y'
-    inputs = [pack_name, fill_pack_metadata, pack_display_name, pack_desc, support_type, pack_category,
+    marketplaces = 'xsoar,marketplacev2'
+    inputs = [pack_name, fill_pack_metadata, pack_display_name, pack_desc, support_type, pack_category, marketplaces,
               pack_author, pack_url, pack_email, pack_dev_email, pack_tags, pack_reviewers, create_integration,
               use_category_from_pack_metadata, integration_name, use_dir_name_as_id, from_version]
 
@@ -153,7 +156,8 @@ def test_integration_init_integration_positive_no_inline_pack_name(monkeypatch, 
             "tags": pack_tags.split(","),
             "useCases": [],
             "keywords": [],
-            "githubUser": ["GithubUser1", "GithubUser2"]
+            "githubUser": ["GithubUser1", "GithubUser2"],
+            "marketplaces": ['xsoar', 'marketplacev2'],
             # testing for subset (<=) to avoid testing created and modified timestamps
         }.items() <= metadata_json.items()
 

@@ -58,6 +58,7 @@ class BaseUpdateJSON(BaseUpdate):
             self.set_fromVersion(from_version=self.from_version, file_type=source_file_type)
         else:
             self.set_fromVersion(from_version=self.from_version)
+        self.sync_data_to_master()
 
     def set_toVersion(self):
         """

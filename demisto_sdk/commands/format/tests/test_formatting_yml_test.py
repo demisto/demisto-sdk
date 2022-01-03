@@ -1,6 +1,8 @@
 import os
 import shutil
 import sys
+import uuid
+from collections import OrderedDict
 
 import click
 import pytest
@@ -905,6 +907,26 @@ class TestFormatting:
         playbook_data = playbook.yml.read_dict()
         assert playbook_data['tasks']['1']['task']['playbookId'] == "my-sub-playbook"
 
+    def test_tpb_name_format_change_new_tpb(self, repo):
+        """
+        Given:
+        - A newly created test playbook.
+
+        When:
+        - Formatting, name does not equal ID.
+
+        Then:
+        - Ensure ID value is changed to name.
+        """
+        pack = repo.create_pack('pack')
+        test_playbook = pack.create_test_playbook('LargePlaybook')
+        test_playbook.create_default_test_playbook('SamplePlaybookTest')
+        test_playbook.yml.update({'id': 'other_id'})
+        playbook_yml = TestPlaybookYMLFormat(test_playbook.yml.path, path=test_playbook.yml.path, assume_yes=True)
+
+        playbook_yml.run_format()
+        assert test_playbook.yml.read_dict().get('id') == 'SamplePlaybookTest'
+
     def test_set_fromversion_six_new_contributor_pack_no_fromversion(self, pack):
         """
         Given
@@ -1069,3 +1091,141 @@ class TestFormatting:
         base_update_yml = BaseUpdateYML(input=integration.yml.path)
         base_update_yml.remove_spaces_end_of_id_and_name()
         assert base_update_yml.data['name'] == 'MyIntegration'
+
+    def test_sync_to_master_no_change(self, mocker, tmp_path):
+        """
+        Given
+            A yml which is sorted in a different order than master, but same content.
+        When
+            - Running format with sync_to_master enabled
+        Then
+            - Ensure that the result is in the same order as master
+        """
+        import demisto_sdk.commands.format.update_generic as update_generic
+
+        test_files_path = os.path.join(git_path(), 'demisto_sdk', 'tests')
+        vmware_integration_yml_path = os.path.join(test_files_path, 'test_files', 'content_repo_example', 'Packs',
+                                                   'VMware',
+                                                   'Integrations', 'integration-VMware.yml')
+        with open(vmware_integration_yml_path) as f:
+            yml_example = yaml.safe_load(f)
+        sorted_yml_file = tmp_path / 'test.yml'
+        with sorted_yml_file.open('w') as f:
+            yaml.dump(yml_example, f, sort_keys=True)  # sorting the keys to have different order
+        mocker.patch.object(BaseUpdateYML, 'get_id_and_version_path_object', return_value={'id': "vmware"})
+        mocker.patch.object(update_generic, 'get_remote_file', return_value=yml_example)
+        base_update_yml = BaseUpdateYML(input=str(sorted_yml_file))
+        base_update_yml.sync_data_to_master()
+        assert OrderedDict(base_update_yml.data) == OrderedDict(yml_example)
+
+    def test_sync_to_master_with_change(self, mocker, tmp_path):
+        """
+        Given
+            A yml which is sorted in a different order than master, and the content is changed
+        When
+            - Running format with sync_to_master enabled
+        Then
+            - Ensure that the result is the changed result to make sure that the patching works
+        """
+        import demisto_sdk.commands.format.update_generic as update_generic
+        test_files_path = os.path.join(git_path(), 'demisto_sdk', 'tests')
+        vmware_integration_yml_path = os.path.join(test_files_path, 'test_files', 'content_repo_example', 'Packs',
+                                                   'VMware',
+                                                   'Integrations', 'integration-VMware.yml')
+        with open(vmware_integration_yml_path) as f:
+            yml_example = yaml.safe_load(f)
+        sorted_yml_file = tmp_path / 'test.yml'
+        with sorted_yml_file.open('w') as f:
+            yaml.dump(yml_example, f, sort_keys=True)  # sorting the keys to have different order
+        with sorted_yml_file.open() as f:
+            sorted_yml = yaml.safe_load(f)
+        sorted_yml['description'] = 'test'
+        sorted_yml['configuration'][0]['defaultvalue'] = 'test'
+        del sorted_yml['configuration'][1]['defaultvalue']
+        sorted_yml['script']['commands'][0]['outputs'].append({"contextPath": "VMWare.test", "description": "VM test"})
+        with sorted_yml_file.open('w') as f:
+            yaml.dump(sorted_yml, f)
+
+        mocker.patch.object(BaseUpdateYML, 'get_id_and_version_path_object', return_value={'id': "vmware"})
+        mocker.patch.object(update_generic, 'get_remote_file', return_value=yml_example)
+        base_update_yml = BaseUpdateYML(input=str(sorted_yml_file))
+        base_update_yml.sync_data_to_master()
+        assert base_update_yml.data == sorted_yml
+        assert OrderedDict(base_update_yml.data) != OrderedDict(sorted_yml)
+
+    def test_equal_id_and_name_integartion(self, pack, mocker):
+        """
+        Given
+            - A new integration yml which is the `id` value and `name` value are not equal
+        When
+            - Running format on an integration
+        Then
+            - The `id` value should be changed to the `name` value
+        """
+
+        import demisto_sdk.commands.format.update_generic as update_generic
+        name = 'my_integration'
+        integration = pack.create_integration()
+        uid = str(uuid.uuid4())
+        integration.yml.write_dict({'commonfields': {'id': uid}, 'name': name})
+        mocker.patch.object(update_generic, 'get_remote_file', return_value=None)
+        base_yml = IntegrationYMLFormat(input=integration.yml.path)
+        base_yml.update_id_to_equal_name()
+        assert base_yml.data.get('commonfields', {}).get('id') == name
+
+    def test_equal_id_and_name_playbook(self, pack, mocker):
+        """
+        Given
+            - A new playbook yml which is the `id` and `name` are not equal
+        When
+            - Running format on a playbook
+        Then
+            - The `id` value should be changed to the `name` value
+        """
+        import demisto_sdk.commands.format.update_generic as update_generic
+        name = 'my_playbook'
+        playbook = pack.create_playbook()
+        uid = str(uuid.uuid4())
+        playbook.yml.write_dict({'id': uid, 'name': name})
+        mocker.patch.object(update_generic, 'get_remote_file', return_value=None)
+        base_yml = IntegrationYMLFormat(input=playbook.yml.path)
+        base_yml.update_id_to_equal_name()
+        assert base_yml.data.get('id') == name
+
+    def test_equal_id_and_name_integartion_from_master(self, pack, mocker):
+        """
+        Given
+            - A modified integration yml which is the new `id` value is not equal to the old `id` value
+        When
+            - Running format on an integration
+        Then
+            - The `id` value should be changed to its old `id` value
+        """
+        import demisto_sdk.commands.format.update_generic as update_generic
+        name = 'my_integration'
+        integration = pack.create_integration()
+        uid = str(uuid.uuid4())
+        integration.yml.write_dict({'commonfields': {'id': name}, 'name': name})
+        mocker.patch.object(update_generic, 'get_remote_file', return_value={'commonfields': {'id': uid}})
+        base_yml = IntegrationYMLFormat(input=integration.yml.path)
+        base_yml.update_id_to_equal_name()
+        assert base_yml.data.get('commonfields', {}).get('id') == uid
+
+    def test_equal_id_and_name_playbook_from_master(self, pack, mocker):
+        """
+        Given
+            - A modified playbook yml which is the new `id` value is not equal to the old `id` value
+        When
+            - Running format on a playbook
+        Then
+            - The `id` value should be changed to its old `id` value
+        """
+        import demisto_sdk.commands.format.update_generic as update_generic
+        name = 'my_playbook'
+        playbook = pack.create_playbook()
+        uid = str(uuid.uuid4())
+        playbook.yml.write_dict({'id': name, 'name': name})
+        mocker.patch.object(update_generic, 'get_remote_file', return_value={'id': uid})
+        base_yml = IntegrationYMLFormat(input=playbook.yml.path)
+        base_yml.update_id_to_equal_name()
+        assert base_yml.data.get('id') == uid

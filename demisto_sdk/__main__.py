@@ -1614,7 +1614,7 @@ def postman_codegen(
     )
 
     if config_out:
-        path = output / f'config-{postman_config.name}.json'
+        path = Path(output) / f'config-{postman_config.name}.json'
         with open(path, mode='w+') as f:
             json.dump(postman_config.to_dict(), f, indent=4)
             logger.info(f'Config file generated at:\n{os.path.abspath(path)}')

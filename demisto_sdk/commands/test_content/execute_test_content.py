@@ -12,6 +12,8 @@ from demisto_sdk.commands.test_content.TestContentClasses import (
 SKIPPED_CONTENT_COMMENT = 'The following integrations/tests were collected by the CI build but are currently skipped. ' \
                           'The collected tests are related to this pull request and might be critical.'
 
+COVERAGE_REPORT_COMMENT = 'Link to the coverage report of the integration'
+
 
 def _handle_github_response(response, logging_module) -> dict:
     res_dict = response.json()
@@ -35,16 +37,23 @@ def _add_pr_comment(comment, logging_module):
         if res and res.get('total_count', 0) == 1:
             issue_url = res['items'][0].get('comments_url') if res.get('items', []) else None
             if issue_url:
-                # Check if a comment about skipped tests already exists. If there is delete it first and then post a
-                # new comment:
                 response = requests.get(issue_url, headers=headers, verify=False)
                 issue_comments = _handle_github_response(response, logging_module)
                 for existing_comment in issue_comments:
+                    # Check if a comment about skipped tests already exists. If there is delete it first and then post a
+                    # new comment:
                     if SKIPPED_CONTENT_COMMENT in existing_comment.get('body'):
                         comment_url = existing_comment.get('url')
                         requests.delete(comment_url, headers=headers, verify=False)
-                response = requests.post(issue_url, json={'body': comment}, headers=headers, verify=False)
-                _handle_github_response(response, logging_module)
+                    # Check if a comment about report coverage already exists. If there is delete it first and then post
+                    # a new comment:
+                    if COVERAGE_REPORT_COMMENT in existing_comment.get('body'):
+                        comment_url = existing_comment.get('url')
+                        requests.delete(comment_url, headers=headers, verify=False)
+                skipped_tests_res = requests.post(issue_url, json={'body': comment}, headers=headers, verify=False)
+                _handle_github_response(skipped_tests_res, logging_module)
+                coverage_report_res = requests.post(issue_url, json={'body': comment}, headers=headers, verify=False)
+                _handle_github_response(coverage_report_res, logging_module)
         else:
             logging_module.warning('Add pull request comment failed: There is more then one open pull '
                                    f'request for branch {branch_name}.', real_time=True)

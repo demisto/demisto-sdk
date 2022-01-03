@@ -57,6 +57,4 @@ class IndicatorFieldValidator(FieldBaseValidator):
         if indicator_field_type not in INDICATOR_FIELD_TYPE_TO_MIN_VERSION:
             return True
         min_version: LooseVersion = INDICATOR_FIELD_TYPE_TO_MIN_VERSION[indicator_field_type]
-        return self.is_valid_from_version_field(min_version,
-                                                f'Indicator field of type {indicator_field_type} must be version'
-                                                f' {min_version} or above.')
+        return self.is_valid_from_version_field(min_version, f'Indicator field of type {indicator_field_type}.')

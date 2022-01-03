@@ -3,6 +3,8 @@
 * Fixed an issue where **run-test-playbook** command failed to get the task entries when the test playbook finished with errors.
 * Fixed an issue in **validate** command when running with `no-conf-json` argument to ignore the `conf.json` file.
 * Added error type text (`ERROR` or `WARNING`) to **validate** error prints.
+* Fixed an issue where the **format** command on test playbook did not format the ID to be equal to the name of the test playbook.
+* Enhanced the **update-release-notes** command to automatically commit release notes config file upon creation.
 * Added support for beta integrations in the **format** command.
 
 # 1.5.5

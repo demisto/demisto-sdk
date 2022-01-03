@@ -1081,6 +1081,9 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
         if 'description' in path.name:
             return FileType.DESCRIPTION
 
+        if 'CONTRIBUTORS' in path.name:
+            return FileType.CONTRIBUTORS
+
         return FileType.CHANGELOG
 
     if path.suffix == '.json':

@@ -31,10 +31,12 @@ class DocReviewer:
     SUPPORTED_FILE_TYPES = [FileType.INTEGRATION, FileType.SCRIPT, FileType.PLAYBOOK, FileType.README,
                             FileType.DESCRIPTION, FileType.RELEASE_NOTES, FileType.BETA_INTEGRATION,
                             FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT]
+    PACKS_KNOWN_WORDS_PATH = "known_words.txt"
 
-    def __init__(self, file_path: str, known_words_file_path: str = None, no_camel_case: bool = False,
+    def __init__(self, file_path: str, known_words_file_paths: list = [], no_camel_case: bool = False,
                  no_failure: bool = False, expand_dictionary: bool = False, templates: bool = False,
-                 use_git: bool = False, prev_ver: str = None, release_notes_only: bool = False):
+                 use_git: bool = False, prev_ver: str = None, release_notes_only: bool = False,
+                 load_known_words_from_pack: bool = False):
         if templates:
             ReleaseNotesChecker(template_examples=True)
             sys.exit(0)
@@ -53,17 +55,34 @@ class DocReviewer:
         if release_notes_only:
             self.SUPPORTED_FILE_TYPES = [FileType.RELEASE_NOTES]
 
+        self.known_words_file_paths = known_words_file_paths
+        self.load_known_words_from_pack = load_known_words_from_pack
+
         self.files = set()  # type:Set
         self.spellchecker = SpellChecker()
         self.unknown_words = {}  # type:Dict
         self.no_camel_case = no_camel_case
-        self.known_words_file_path = known_words_file_path
         self.found_misspelled = False
         self.no_failure = no_failure
         self.expand_dictionary = expand_dictionary
         self.files_with_misspells = set()  # type:Set
         self.files_without_misspells = set()  # type:Set
         self.malformed_rn_files = set()  # type:Set
+
+    def find_known_words_from_pack(self):
+        if self.file_path.startswith('Packs'):
+            pack_name = self.file_path.split('/')[1]
+            known_words_path = f"Packs/{pack_name}/{self.PACKS_KNOWN_WORDS_PATH}"
+            if os.path.isfile(known_words_path):
+                click.secho(f'\nUsing known words file found within pack: {known_words_path}', fg='bright_cyan')
+                return known_words_path
+
+            click.secho(f'\nNo known words file was found within pack: {known_words_path}', fg='yellow')
+            return ''
+
+        click.secho(f'\nCould not load pack\'s known words file since no pack structure was found for {self.file_path}'
+                    f'\nMake sure you are running from the content directory.', fg='bright_red')
+        return ''
 
     @staticmethod
     def is_camel_case(word):
@@ -147,12 +166,12 @@ class DocReviewer:
 
         # no eligible files found
         if not self.files:
-            click.secho("Could not find any .md or .yml files - Aborting", fg='bright_red')
+            click.secho("Could not find any .md or .yml files - Aborting.")
             return True
 
         self.add_known_words()
         for file in self.files:
-            click.echo(f'\nChecking spelling on {file}')
+            click.echo(f'\nChecking file {file}')
             self.unknown_words = {}
             if file.endswith('.md'):
                 self.check_md_file(file)
@@ -179,9 +198,15 @@ class DocReviewer:
 
     def add_known_words(self):
         """Add known words to the spellchecker from external and internal files"""
+        if self.load_known_words_from_pack:
+            known_pack_words_file_path = self.find_known_words_from_pack()
+            if known_pack_words_file_path:
+                self.known_words_file_paths += [known_pack_words_file_path]
+
         # adding known words file if given - these words will not count as misspelled
-        if self.known_words_file_path:
-            self.spellchecker.word_frequency.load_text_file(self.known_words_file_path)
+        if self.known_words_file_paths:
+            for known_words_file_path in self.known_words_file_paths:
+                self.spellchecker.word_frequency.load_text_file(known_words_file_path)
 
         # adding the KNOWN_WORDS to the spellchecker recognized words.
         self.spellchecker.word_frequency.load_words(KNOWN_WORDS)

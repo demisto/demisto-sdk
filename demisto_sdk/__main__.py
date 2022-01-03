@@ -1847,7 +1847,7 @@ def test_content(**kwargs):
 @click.option(
     '--no-camel-case', is_flag=True, help='Whether to check CamelCase words', default=False)
 @click.option(
-    '--known-words', type=str, help="The path to a file containing additional known words"
+    '--known-words', type=str, help="The path to a file containing additional known words", multiple=True
 )
 @click.option(
     '--always-true', is_flag=True, help="Whether to fail the command if misspelled words are found"
@@ -1870,12 +1870,17 @@ def test_content(**kwargs):
 @click.option(
     '-rn', '--release-notes', is_flag=True, help="Will run only on release notes files"
 )
+@click.option(
+    '-pkw', '--use-packs-known-words', is_flag=True, help="Will find and load the known_words file from the pack. "
+                                                          "To use this option make sure you are running from the "
+                                                          "content directory.", default=False
+)
 def doc_review(**kwargs):
     """Check the spelling in .md and .yml files as well as review release notes"""
     from demisto_sdk.commands.doc_reviewer.doc_reviewer import DocReviewer
     doc_reviewer = DocReviewer(
         file_path=kwargs.get('input'),
-        known_words_file_path=kwargs.get('known_words'),
+        known_words_file_paths=list(kwargs.get('known_words', [])),
         no_camel_case=kwargs.get('no_camel_case'),
         no_failure=kwargs.get('always_true'),
         expand_dictionary=kwargs.get('expand_dictionary'),
@@ -1883,6 +1888,7 @@ def doc_review(**kwargs):
         use_git=kwargs.get('use_git'),
         prev_ver=kwargs.get('prev_ver'),
         release_notes_only=kwargs.get('release_notes'),
+        load_known_words_from_pack=kwargs.get('use_packs_known_words')
     )
     result = doc_reviewer.run_doc_review()
     if result:

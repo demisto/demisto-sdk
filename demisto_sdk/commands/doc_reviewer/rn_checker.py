@@ -114,5 +114,5 @@ class ReleaseNotesChecker:
             self.print_notes()
             return False
         else:
-            click.secho(f'Release notes {self.file_path} look good!', fg='green')
+            click.secho(f' - Release notes {self.file_path} match a known template.', fg='green')
             return True

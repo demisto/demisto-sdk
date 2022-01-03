@@ -646,8 +646,8 @@ class TestFormatting:
             - Ensure `tests` field gets the Test Playbook ID
         """
         test_files_path = os.path.join(git_path(), 'demisto_sdk', 'tests')
-        vmware_integration_yml_path = os.path.join(test_files_path, 'test_files', 'content_repo_example', 'Packs',
-                                                   'VMware',
+        vmware_integration_yml_path = os.path.join(test_files_path, 'test_files', 'Packs',
+                                                   'Phishing',
                                                    'Integrations', 'integration-VMware.yml')
         formatter = IntegrationYMLFormat(input=vmware_integration_yml_path, output='')
         res = formatter.update_tests()

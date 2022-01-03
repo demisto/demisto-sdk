@@ -17,7 +17,7 @@
 * Enhancement for **split** command, replace `ApiModule` code block to `import` when splitting a YML.
 * Fixed an issue where indicator types were missing from the pack's content, when uploading using **zip-packs**.
 * The request data body format generated in the **postman-codegen** will use the python argument's name and not the raw data argument's name.
-* Added the flag '-fbi' to **create-content-artifacts** to create artifacts only for items in the given id_set.json.
+* Added the flag '--filter-by-id-set' to **create-content-artifacts** to create artifacts only for items in the given id_set.json.
 
 # 1.5.4
 * Fixed an issue with the **format** command when contributing via the UI

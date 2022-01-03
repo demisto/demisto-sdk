@@ -72,8 +72,7 @@ def parse_for_pack_metadata(dependency_graph: nx.DiGraph, graph_root: str, verbo
                 additional_data['certification'] = dependency_data['certification']
             else:
                 additional_data['display_name'] = pack_name
-        if additional_data.get('depending_on_items_mandatorily'):
-            del additional_data['depending_on_items_mandatorily']
+            additional_data.pop('depending_on_items_mandatorily', None)
         first_level_dependencies[dependency_id] = additional_data
 
     all_level_dependencies = [n for n in dependency_graph.nodes if dependency_graph.in_degree(n) > 0]
@@ -146,8 +145,7 @@ def update_pack_metadata_with_dependencies(pack_folder_name: str, first_level_de
 
     # Filter out the dependent items to avoid overloading the pack's metadata
     for _, dependency_info in first_level_dependencies.items():
-        if dependency_info.get('depending_on_items_mandatorily'):
-            dependency_info.pop('depending_on_items_mandatorily')
+        dependency_info.pop('depending_on_items_mandatorily', None)
 
     with open(pack_metadata_path, 'r+') as pack_metadata_file:
         pack_metadata = json.load(pack_metadata_file)
@@ -207,16 +205,16 @@ class PackDependencies:
     @staticmethod
     def _search_packs_by_items_names(items_names: Union[str, list],
                                      items_list: list,
-                                     exclude_ignored_dependencies: bool = True, item_type=None):
+                                     exclude_ignored_dependencies: bool = True, item_type: str = '') -> Tuple[Any, Any]:
         """
         Searches for implemented script/integration/playbook.
-        Get a list of dict of (pack, item)
+        Get a set of packs and dict (pack, item) of the found implemented items.
 
         Args:
             items_names (str or list): items names to search.
             items_list (list): specific section of id set.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
-
+            item_type (str): the type of content item given.
         Returns:
             tuppele of:
                 set: found pack ids and
@@ -234,8 +232,9 @@ class PackDependencies:
             if item_details.get('name', '') in items_names and 'pack' in item_details and \
                     LooseVersion(item_details.get('toversion', DEFAULT_CONTENT_ITEM_TO_VERSION)) >=\
                     MINIMUM_DEPENDENCY_VERSION:
-                pack_names.add(item_details.get('pack'))
-                packs_and_items_dict[item_details.get('pack')] = (item_type, item_id)
+                pack_name = item_details.get('pack')
+                pack_names.add(pack_name)
+                packs_and_items_dict.setdefault(pack_name, []).extend([(item_type, item_id)])
 
         if not exclude_ignored_dependencies:
             return set(pack_names), packs_and_items_dict
@@ -245,7 +244,8 @@ class PackDependencies:
     def _search_packs_by_items_names_or_ids(items_names: Union[str, list],
                                             items_list: list,
                                             exclude_ignored_dependencies: bool = True,
-                                            incident_or_indicator: Optional[str] = 'Both', items_type=None):
+                                            incident_or_indicator: Optional[str] = 'Both', item_type: str = '') -> \
+            Tuple[Any, Any]:
         """
         Searches for implemented packs of the given items.
 
@@ -257,13 +257,14 @@ class PackDependencies:
                 'Indicator' to search packs with indicator fields,
                 'Incident' to search packs with incident fields,
                 'Both' to search packs with indicator fields and incident fields.
+            item_type (str): the type of content item given.
         Returns:
             tuppele of
             set: found pack ids
             dict: found {pack, (item_type, item_id)} ids
         """
         packs_and_items_dict = {}
-        packs = set()
+        pack_names = set()
         if not isinstance(items_names, list):
             items_names = [items_names]
         item_possible_ids = []
@@ -288,15 +289,16 @@ class PackDependencies:
                         MINIMUM_DEPENDENCY_VERSION \
                         and (item_details['pack'] not in constants.IGNORED_DEPENDENCY_CALCULATION or
                              not exclude_ignored_dependencies):
-                    packs.add(item_details.get('pack'))
-                    packs_and_items_dict[item_details.get('pack')] = (items_type, item_id)
+                    pack_name = item_details.get('pack')
+                    pack_names.add(pack_name)
+                    packs_and_items_dict.setdefault(pack_name, []).extend([(item_type, item_id)])
 
-        return packs, packs_and_items_dict
+        return pack_names, packs_and_items_dict
 
     @staticmethod
     def _search_packs_by_integration_command(command: str,
                                              id_set: dict,
-                                             exclude_ignored_dependencies: bool = True):
+                                             exclude_ignored_dependencies: bool = True) -> Tuple[Any, Any]:
         """
         Filters packs by implementing integration commands.
 
@@ -318,8 +320,9 @@ class PackDependencies:
             if command in item_details.get('commands', []) and 'pack' in item_details and \
                     LooseVersion(item_details.get('toversion', DEFAULT_CONTENT_ITEM_TO_VERSION)) >= \
                     MINIMUM_DEPENDENCY_VERSION:
-                pack_names.add(item_details.get('pack'))
-                packs_and_items_dict[item_details.get('pack')] = ('integration', item_id)
+                pack_name = item_details.get('pack')
+                pack_names.add(pack_name)
+                packs_and_items_dict.setdefault(pack_name, []).extend([('integrations', item_id)])
 
         if not exclude_ignored_dependencies:
             return set(pack_names), packs_and_items_dict
@@ -467,7 +470,7 @@ class PackDependencies:
     def _differentiate_playbook_implementing_objects(implementing_objects: list,
                                                      skippable_tasks: set,
                                                      id_set_section: list,
-                                                     exclude_ignored_dependencies: bool = True, section_type=None) \
+                                                     exclude_ignored_dependencies: bool = True, item_type: str = '') \
             -> Tuple[Any, Any]:
         """
         Differentiate implementing objects by skippable.
@@ -477,9 +480,10 @@ class PackDependencies:
             skippable_tasks (set): playbook skippable tasks.
             id_set_section (list): id set section corresponds to implementing_objects (scripts or playbooks).
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
+            item_type (str): the type of content item given.
 
         Returns:
-            tupple of:
+            tuple of:
             set: dependencies data that includes pack id and whether is mandatory or not.
             dict: found {mandatory_pack, (item_type, item_id)} ids
         """
@@ -489,13 +493,13 @@ class PackDependencies:
         optional_scripts = set(implementing_objects) - mandatory_scripts
 
         optional_script_packs, _ = PackDependencies._search_packs_by_items_names(
-            list(optional_scripts), id_set_section, exclude_ignored_dependencies, section_type)
+            list(optional_scripts), id_set_section, exclude_ignored_dependencies, item_type)
         if optional_script_packs:  # found packs of optional objects
             pack_dependencies_data = PackDependencies._label_as_optional(optional_script_packs)
             dependencies.update(pack_dependencies_data)
 
         mandatory_script_packs, mandatory_packs_and_items_dict = PackDependencies._search_packs_by_items_names(
-            list(mandatory_scripts), id_set_section, exclude_ignored_dependencies, section_type)
+            list(mandatory_scripts), id_set_section, exclude_ignored_dependencies, item_type)
         if mandatory_script_packs:  # found packs of mandatory objects
             pack_dependencies_data = PackDependencies._label_as_mandatory(mandatory_script_packs)
             dependencies.update(pack_dependencies_data)
@@ -1583,7 +1587,7 @@ class PackDependencies:
             verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
         Returns:
-            tupple of:
+            tuple of:
             set: dependencies data that includes pack id and whether is mandatory or not.
             dict: found {pack, (item_type, item_id)} ids of mandatory dependent items.
 
@@ -1744,12 +1748,23 @@ class PackDependencies:
         2. A dict of dicts 'mandatory_for_items' - the corresponding items causing the mandatory dependency, in the structure of:
         {(item_type, item_id): {pack_of_dependent_item: (dependent_item_type, dependent_item_id)}},
         when item_id is mandatory for dependent_item_id which is in pack pack_of_dependent_item.
-        3. A list of tupples 'depending_on_packs' - the packs of which this pack is dependent on, and whether it is
+        3. A list of tuples 'depending_on_packs' - the packs of which this pack is dependent on, and whether it is
          a mandatory dependency or not.
         4. A dict of dicts 'depending_on_items_mandatorily' the items causing these dependencies, but only the mandatory
         ones, in the sturcture of:
         {(item_type, item_id): {pack_of_item_to_be_dependent_on: (item_type_to_be_dependent_on, item_id_to_be_dependent_on)}}
         when item_id is dependent on item_id_to_be_dependent_on which is in pack pack_of_item_to_be_dependent_on.
+
+        Example:
+        Playbook "P1" from "pack1" pack depends on playbook "P2" from "pack2" pack.
+        Playbook "P2" from "pack2" pack depends on script "S" from "pack3" pack.
+        the "pack2" node will look like this:
+        {
+            'mandatory_for_packs': ['P1'],
+            'mandatory_for_items': {('playbook', 'P2': {'pack1': ('playbook', 'P1')},
+            'depending_on_packs': [('pack3', True)],
+            'depending_on_items_mandatorily': {('playbook', 'P2': {'pack3': ('script', 'S')},
+        }
 
         Args:
             pack_ids (list): pack ids, currently pack folder names is in use.
@@ -1785,20 +1800,21 @@ class PackDependencies:
                     if verbose:
                         print(f'Found {dependency_name} pack is mandatory for {pack}')
                     dependency_graph.nodes()[dependency_name]['mandatory_for_packs'].append(pack)
-                    if verbose:
-                        print('Checking for the items causing the dependencies')
             for dependent_item, items_depending_on_item in dependencies_items.items():
-                for pack_of_item_dependent_on, item_dependent_on in items_depending_on_item.items():
+                for pack_of_item_dependent_on, items_dependent_on in items_depending_on_item.items():
                     if pack_of_item_dependent_on == pack:
                         continue
                     if pack_of_item_dependent_on not in dependency_graph:
                         dependency_graph.add_node(pack_of_item_dependent_on, mandatory_for_packs=[],
                                                   depending_on_items_mandatorily={}, mandatory_for_items={},
                                                   depending_on_packs=[])
-                    if dependency_graph.nodes()[pack_of_item_dependent_on].get('mandatory_for_items').get(item_dependent_on):
-                        dependency_graph.nodes()[pack_of_item_dependent_on]['mandatory_for_items'][item_dependent_on].update({pack: dependent_item})
-                    else:
-                        dependency_graph.nodes()[pack_of_item_dependent_on]['mandatory_for_items'][item_dependent_on] = {pack: dependent_item}
+                    for item_dependent_on in items_dependent_on:
+                        if verbose:
+                            print(f'Adding the dependency between the items {dependent_item} and {item_dependent_on} '
+                                  f'to the dependency graph')
+                        dependency_graph.nodes()[pack_of_item_dependent_on]['mandatory_for_items'].setdefault(
+                            item_dependent_on, {}).update({pack: dependent_item})
+
             if verbose:
                 print(f'\nPack {pack} and its dependencies were successfully added to the dependencies graph.')
             dependency_graph.nodes()[pack]['depending_on_packs'] = list(dependencies)
@@ -2262,8 +2278,7 @@ def get_packs_dependent_on_given_packs(packs, id_set_path, output_path=None, ver
         futures = []
         for pack in pack_names:
             futures.append(
-                pool.schedule(calculate_single_pack_depends_on, args=(str(pack), reverse_dependency_graph, verbose),
-                              timeout=1000))
+                pool.schedule(calculate_single_pack_depends_on, args=(str(pack), reverse_dependency_graph, verbose)))
         wait_futures_complete(futures=futures, done_fn=collect_dependent_packs)
         # finished iteration over pack folders
         print_success("Finished calculating the dependencies on the given packs.")
@@ -2280,7 +2295,7 @@ def update_items_dependencies(pack_dependencies_data, items_dependencies, curren
     Updates the given items dependencies dict with the packs and items dict (those are items dependent on the current
     entitiy id)
     Args:
-        pack_dependencies_data: list of tupples of (pack id, is mandatory).
+        pack_dependencies_data: list of tuples of (pack id, is mandatory).
         items_dependencies: the part of id set that contains the current type of item.
         current_entity_id: the entity of interest, that we are looking for items that are dependent on it.
         packs_and_items_dict: the dict containing the already known dependencies data.
@@ -2301,7 +2316,7 @@ def remove_unmandatory_items(packs_and_items_dict, pack_dependencies_data) -> No
     Removes unmandatory items from packs_and_items_dict by the data in pack_dependencies_data.
     Args:
         packs_and_items_dict: dict generated based on id set, of {pack id: item from that pack}
-        pack_dependencies_data: list of tupples of (pack id, is mandatory)
+        pack_dependencies_data: list of tuples of (pack id, is mandatory)
     """
     for pack, is_mandatory in pack_dependencies_data:
         if not is_mandatory and pack in packs_and_items_dict.keys():

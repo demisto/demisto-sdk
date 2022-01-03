@@ -664,7 +664,7 @@ def secrets(config, **kwargs):
                                             "--check-dependent-api-module flag.",
               type=click.Path(resolve_path=True),
               default='Tests/id_set.json')
-@click.option("-chd", "--check-dependent-api-module", is_flag=True, help="Run unit tests and lint on all packages that "
+@click.option("-cdam", "--check-dependent-api-module", is_flag=True, help="Run unit tests and lint on all packages that "
                                                                          "are dependent on the found "
                                                                          "modified api modules.", default=True)
 def lint(**kwargs):

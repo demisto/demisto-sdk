@@ -43,7 +43,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_README_FILE_NAME, PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR,
     RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR,
-    XSOAR_CONFIG_FILE, FileType, GitContentConfig, IdSetKeys, urljoin)
+    XSOAR_CONFIG_FILE, FileType, GitContentConfig, IdSetKeys, urljoin, API_MODULES, FILE_PATH)
 from demisto_sdk.commands.common.git_util import GitUtil
 
 urllib3.disable_warnings()
@@ -2228,23 +2228,26 @@ def get_api_module_dependencies(pkgs, id_set_path, verbose):
     integrations = id_set.get(IdSetKeys.INTEGRATIONS.value, [])
     using_scripts, using_integrations = [], []
     for script in scripts:
-        script_name = list(script.values())[0].get('name')
-        api_module = list(script.values())[0].get(IdSetKeys.API_MODULES.value, [])
+        script_info = list(script.values())[0]
+        script_name = script_info.get('name')
+        api_module = script_info.get(API_MODULES, [])
         if api_module in api_modules:
             if verbose:
                 print(f"found script {script_name} dependent on {api_module}")
             using_scripts.extend(list(script.values()))
 
     for integration in integrations:
-        integration_name = list(integration.values())[0].get('name')
-        api_module = list(integration.values())[0].get(IdSetKeys.API_MODULES.value, [])
+        integration_info = list(integration.values())[0]
+        integration_name = integration_info.get('name')
+        api_module = integration_info.get(API_MODULES, [])
         if api_module in api_modules:
             if verbose:
                 print(f"found integration {integration_name} dependent on {api_module}")
             using_integrations.extend(list(integration.values()))
 
-    using_scripts_pkg_paths = [Path(script.get(IdSetKeys.FILE_PATH.value)).parent.absolute() for
+    using_scripts_pkg_paths = [Path(script.get(FILE_PATH)).parent.absolute() for
                                script in using_scripts]
-    using_integrations_pkg_paths = [Path(integration.get(IdSetKeys.FILE_PATH.value)).parent.absolute() for
+    using_integrations_pkg_paths = [Path(integration.get(FILE_PATH)).parent.absolute() for
                                     integration in using_integrations]
     return list(set(using_integrations_pkg_paths + using_scripts_pkg_paths))
+

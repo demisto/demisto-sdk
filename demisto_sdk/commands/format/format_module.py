@@ -134,7 +134,7 @@ def format_manager(input: str = None,
 
     elif use_git:
         files = get_files_to_format_from_git(supported_file_types, prev_ver, include_untracked)
-        print(files)
+        print(f'This is the files: {files}')
 
     if output and not output.endswith(('yml', 'json', 'py')):
         raise Exception("The given output path is not a specific file path.\n"

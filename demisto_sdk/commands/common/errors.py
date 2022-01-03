@@ -1134,7 +1134,7 @@ class Errors:
     def release_notes_docker_image_not_match_yaml(un_matching_files_list: list):
         message_to_return = f'The {un_matching_files_list[0]} release notes file contains incompatible Docker images:\n'
         for un_matching_file in un_matching_files_list[1:]:
-            message_to_return+= f'''- {un_matching_file.get('name')}: Release notes file has dockerimage: {un_matching_file.get('rs_version')} but the YML file has dockerimage: {un_matching_file.get('yml_version')}\n'''
+            message_to_return += f'''- {un_matching_file.get('name')}: Release notes file has dockerimage: {un_matching_file.get('rs_version')} but the YML file has dockerimage: {un_matching_file.get('yml_version')}\n'''
         return message_to_return
 
     @staticmethod

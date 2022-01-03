@@ -80,7 +80,7 @@ class ReleaseNotesValidator(BaseValidator):
 
     def is_docker_image_same_as_yml(self):
         """
-        Iterates on all modified yaml files, 
+        Iterates on all modified yaml files,
         checking if the yaml is related to one of the sections in the RN and if there's a docker-image version update mentioned in the RN.
         If so, make sure the versions match.
 
@@ -92,25 +92,25 @@ class ReleaseNotesValidator(BaseValidator):
         # renamed files will appear in the modified list as a tuple: (old path, new path)
         modified_files_list = [file[1] if isinstance(file, tuple) else file for file in (self.modified_files or [])]
         modified_yml_list = [file for file in modified_files_list if file.endswith('.yml')]
-        error_list = [self.release_notes_file_path[self.release_notes_file_path.rindex('/')+1:]]
+        error_list = [self.release_notes_file_path[self.release_notes_file_path.rindex('/') + 1:]]
         for key, field in zip(['Integrations', 'Scripts'], ['display', 'name']):
             if(key in splited_release_notes):
                 splited_sections_dict = self.get_categories_from_rn(splited_release_notes.get(key), "##### ")
                 for modified_yml_file in modified_yml_list:
-                    modified_yml_dict = get_ryaml(modified_yml_file)        
-                    if modified_yml_dict and modified_yml_dict.get(field) in splited_sections_dict:
+                    modified_yml_dict = get_ryaml(modified_yml_file) or {}
+                    if modified_yml_dict.get(field) in splited_sections_dict:
                         docker_version = self.get_docker_version_from_rn(splited_sections_dict.get(modified_yml_dict.get(field)) + "\n")
-                        if docker_version and modified_yml_dict.get("script").get("dockerimage") != docker_version:
-                            error_list.append({'name':modified_yml_dict.get(field),
-                                            'rs_version':docker_version,
-                                            'yml_version':modified_yml_dict.get("script").get("dockerimage")})
+                        if docker_version and modified_yml_dict.get("script", {}).get("dockerimage") != docker_version:
+                            error_list.append({'name': modified_yml_dict.get(field),
+                                               'rs_version': docker_version,
+                                               'yml_version': modified_yml_dict.get("script", {}).get("dockerimage")})  # type:ignore
         if len(error_list) > 1:
             error_message, error_code = Errors.release_notes_docker_image_not_match_yaml(error_list)
             if self.handle_error(error_message, error_code, file_path=self.release_notes_file_path):
                 return False
 
-        return True    
-    
+        return True
+
     @staticmethod
     def get_docker_version_from_rn(section):
         """
@@ -123,11 +123,13 @@ class ReleaseNotesValidator(BaseValidator):
         updates_list = section.split("- ")
         for update in updates_list:
             if "Docker image" in update and "demisto/" in update:
-                return (re.search('(demisto/.+:([0-9]+)(((\.)[0-9]+)+))', update).group(1)) 
-        return None 
+                match = (re.search(r'(demisto/.+:([0-9]+)(((\.)[0-9]+)+))', update))
+                if match:
+                    return match.group(1)
+        return None
 
     @staticmethod
-    def get_categories_from_rn(rn:str, splitter:str="\n#### "):
+    def get_categories_from_rn(rn: str, splitter: str = "\n#### "):
         """
             Extract the various categories from the release note according to the splitter
             rn : the relese notes
@@ -136,11 +138,11 @@ class ReleaseNotesValidator(BaseValidator):
             dict. dictionary where each entry is the category name in the relese notes
             and its value is the additions for that category.
         """
-        splitted_text = (rn).split(splitter) 
-        splitted_categories_dict = {}  
+        splitted_text = (rn).split(splitter)
+        splitted_categories_dict = {}
         for category in splitted_text:
             if category:
-                splitted_categories_dict[category[0:category.index("\n")]] = category[category.index("\n") + 1:] 
+                splitted_categories_dict[category[0:category.index("\n")]] = category[category.index("\n") + 1:]
         return splitted_categories_dict
 
     @staticmethod

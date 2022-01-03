@@ -1,10 +1,9 @@
-from distutils import version
 import os
-from TestSuite.pack import Pack
-from conftest import integration
+from distutils import version
 
 import pytest
 
+from conftest import integration
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.hook_validations.release_notes import \
     ReleaseNotesValidator
@@ -12,6 +11,7 @@ from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+from TestSuite.pack import Pack
 
 
 def get_validator(file_path='', modified_files=None, added_files=None):
@@ -266,7 +266,7 @@ def test_are_release_notes_complete_added(release_notes, complete_expected_resul
     mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
     validator = get_validator(release_notes, MODIFIED_FILES, ADDED_FILES)
     assert validator.are_release_notes_complete() == complete_expected_result
-   
+
 
 def test_are_release_notes_complete_renamed_file(mocker):
     """
@@ -399,69 +399,69 @@ def test_has_release_notes_been_filled_out(release_notes, filled_expected_result
 
 
 TEST_RELEASE_NOTES_TEST_BANK_3 = [
-    ('#### Integrations\n##### Integration name\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.'
-     , {'display': 'Integration name', 'script': {'dockerimage': 'demisto/python3:3.9.5.21272'}}, True),
-    ('\n#### Scripts\n##### Script name\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.'
-     , {'name': 'Script name', 'script': {'dockerimage': 'demisto/python3:3.9.5.21272'}}, True),
-    ('\n#### Scripts\n##### Script name\n- Upgraded the Docker image to: *demisto/python3:3.9.5.2122*.'
-     , {'name': 'Script name', 'script': {'dockerimage': 'demisto/python3:3.9.4.272'}}, False),
-    ('#### Integrations\n##### Integration name\n- Moved the Pack to Cortex XSOAR support instead of community support.'
-     , {'display': 'Integration name', 'script': {'dockerimage': 'demisto/python3:3.9.5.21272'}}, True),
+    ('#### Integrations\n##### Integration name\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.',
+     {'display': 'Integration name', 'script': {'dockerimage': 'demisto/python3:3.9.5.21272'}}, True),
+    ('\n#### Scripts\n##### Script name\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.',
+     {'name': 'Script name', 'script': {'dockerimage': 'demisto/python3:3.9.5.21272'}}, True),
+    ('\n#### Scripts\n##### Script name\n- Upgraded the Docker image to: *demisto/python3:3.9.5.2122*.',
+     {'name': 'Script name', 'script': {'dockerimage': 'demisto/python3:3.9.4.272'}}, False),
+    ('#### Integrations\n##### Integration name\n- Moved the Pack to Cortex XSOAR support instead of community support.',
+     {'display': 'Integration name', 'script': {'dockerimage': 'demisto/python3:3.9.5.21272'}}, True),
 ]
 
 
 @pytest.mark.parametrize('release_notes_content, yaml_content, filled_expected_result', TEST_RELEASE_NOTES_TEST_BANK_3)
-def test_is_docker_image_same_as_yml(release_notes_content, yaml_content, filled_expected_result, pack : Pack):
-        """
-        Given
-        - Case 1: Validate for integrations, version match.
-        - Case 2: Validate for scripts, version match.
-        - Case 3: Valid when version doesnt match.
-        - Case 4: Release notes appear but docker not changed.
+def test_is_docker_image_same_as_yml(release_notes_content, yaml_content, filled_expected_result, pack: Pack):
+    """
+    Given
+    - Case 1: Validate for integrations, version match.
+    - Case 2: Validate for scripts, version match.
+    - Case 3: Valid when version doesnt match.
+    - Case 4: Release notes appear but docker not changed.
 
-        When
-        - Running validation on release notes.
+    When
+    - Running validation on release notes.
 
-        Then
-        - Ensure validation correctly identifies valid release notes.
-        - Case 1: Should print nothing and return True.
-        - Case 2: Should print nothing and return True.
-        - Case 3: Should return the prompt "Release notes dockerimage version does not match yml dockerimage version." and
-                return False.
-        - Case 4: Should print nothing and return True.
-        """
-        rn = pack.create_release_notes(version='1_0_1',  content = release_notes_content)
-        integration1 = pack.create_integration()
-        integration1.yml.update(yaml_content)
-        validator = ReleaseNotesValidator(rn.path, modified_files=[integration1.yml.path],
-                                        pack_name=os.path.basename(pack.path))
-        assert validator.is_docker_image_same_as_yml() == filled_expected_result
+    Then
+    - Ensure validation correctly identifies valid release notes.
+    - Case 1: Should print nothing and return True.
+    - Case 2: Should print nothing and return True.
+    - Case 3: Should return the prompt "Release notes dockerimage version does not match yml dockerimage version." and
+            return False.
+    - Case 4: Should print nothing and return True.
+    """
+    rn = pack.create_release_notes(version='1_0_1', content=release_notes_content)
+    integration1 = pack.create_integration()
+    integration1.yml.update(yaml_content)
+    validator = ReleaseNotesValidator(rn.path, modified_files=[integration1.yml.path],
+                                      pack_name=os.path.basename(pack.path))
+    assert validator.is_docker_image_same_as_yml() == filled_expected_result
 
 
 TEST_RELEASE_NOTES_TEST_BANK_4 = [
     ('\n#### Integrations\n##### Integration name\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.\n#### Scripts\n##### Script name\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.',
-    {'Integrations': '##### Integration name\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.', 'Scripts': '##### Script name\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.'}, "\n#### "),
+     {'Integrations': '##### Integration name\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.', 'Scripts': '##### Script name\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.'}, "\n#### "),
     ('\n#### Integrations\n##### Integration name1\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.\n##### Integration name2\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.',
-    {'Integrations': '##### Integration name1\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.\n##### Integration name2\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.'}, "\n#### "),
+     {'Integrations': '##### Integration name1\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.\n##### Integration name2\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.'}, "\n#### "),
     ('##### Integration name1\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.\n##### Integration name2\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.',
-    {'Integration name1': '- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.\n', 'Integration name2': '- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.'}, "##### "),]
+     {'Integration name1': '- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.\n', 'Integration name2': '- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.'}, "##### "), ]
 
 
 @pytest.mark.parametrize('release_notes_content, filled_expected_result, splitter', TEST_RELEASE_NOTES_TEST_BANK_4)
-def test_get_categories_from_rn(release_notes_content, filled_expected_result, splitter, pack : Pack):
-        """
-        Given
-        - Case 1: Validate for 1 integration and one script
-        - Case 2: Validate for integration with 2 different integrations
-        - Case 3: Validate for splitter param
+def test_get_categories_from_rn(release_notes_content, filled_expected_result, splitter, pack: Pack):
+    """
+    Given
+    - Case 1: Validate for 1 integration and one script
+    - Case 2: Validate for integration with 2 different integrations
+    - Case 3: Validate for splitter param
 
-        When
-        - Running validation on release notes.
+    When
+    - Running validation on release notes.
 
-        Then
-        - Ensure validation correctly identifies valid release notes.
-        - Case 1: Should Create a dict with one value for integration key and one value for script key.
-        - Case 2: Should Create a dict with one value for integration key that holds 2 integrations.
-        - Case 3: Should Create a dict with two keys of integraition 1 and integration 2.
-        """
-        assert ReleaseNotesValidator.get_categories_from_rn(release_notes_content, splitter) == filled_expected_result
+    Then
+    - Ensure validation correctly identifies valid release notes.
+    - Case 1: Should Create a dict with one value for integration key and one value for script key.
+    - Case 2: Should Create a dict with one value for integration key that holds 2 integrations.
+    - Case 3: Should Create a dict with two keys of integraition 1 and integration 2.
+    """
+    assert ReleaseNotesValidator.get_categories_from_rn(release_notes_content, splitter) == filled_expected_result

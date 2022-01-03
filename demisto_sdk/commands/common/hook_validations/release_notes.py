@@ -98,7 +98,7 @@ class ReleaseNotesValidator(BaseValidator):
                 splited_sections_dict = self.get_categories_from_rn(splited_release_notes.get(key), "##### ")
                 for modified_yml_file in modified_yml_list:
                     modified_yml_dict = get_ryaml(modified_yml_file)        
-                    if modified_yml_dict.get(field) in splited_sections_dict:
+                    if modified_yml_dict and modified_yml_dict.get(field) in splited_sections_dict:
                         docker_version = self.get_docker_version_from_rn(splited_sections_dict.get(modified_yml_dict.get(field)) + "\n")
                         if docker_version and modified_yml_dict.get("script").get("dockerimage") != docker_version:
                             error_list.append({'name':modified_yml_dict.get(field),

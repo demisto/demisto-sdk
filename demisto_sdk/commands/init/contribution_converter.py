@@ -257,6 +257,7 @@ class ContributionConverter:
             f'Executing \'format\' on the restructured contribution zip new/modified files at {self.pack_dir_path}'
         )
         from_version = '6.0.0' if self.create_new else ''
+        print(f'This is the pack dir path: {self.pack_dir_path}')
         format_manager(
             from_version=from_version,
             no_validate=True,

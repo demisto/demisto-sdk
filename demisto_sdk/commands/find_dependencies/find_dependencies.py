@@ -322,7 +322,7 @@ class PackDependencies:
                     MINIMUM_DEPENDENCY_VERSION:
                 pack_name = item_details.get('pack')
                 pack_names.add(pack_name)
-                packs_and_items_dict.setdefault(pack_name, []).extend([('integrations', item_id)])
+                packs_and_items_dict.setdefault(pack_name, []).extend([('integration', item_id)])
 
         if not exclude_ignored_dependencies:
             return set(pack_names), packs_and_items_dict
@@ -1800,6 +1800,8 @@ class PackDependencies:
                     if verbose:
                         print(f'Found {dependency_name} pack is mandatory for {pack}')
                     dependency_graph.nodes()[dependency_name]['mandatory_for_packs'].append(pack)
+            # ('type_item_b', 'item_b'): {'pack3': [('type_item_3', 'item3')], 'pack2': [('type_item_2', 'item2')]}
+
             for dependent_item, items_depending_on_item in dependencies_items.items():
                 for pack_of_item_dependent_on, items_dependent_on in items_depending_on_item.items():
                     if pack_of_item_dependent_on == pack:
@@ -1812,8 +1814,12 @@ class PackDependencies:
                         if verbose:
                             print(f'Adding the dependency between the items {dependent_item} and {item_dependent_on} '
                                   f'to the dependency graph')
-                        dependency_graph.nodes()[pack_of_item_dependent_on]['mandatory_for_items'].setdefault(
-                            item_dependent_on, {}).update({pack: dependent_item})
+                        if dependency_graph.nodes()[pack_of_item_dependent_on]['mandatory_for_items'].get(item_dependent_on, {}).get(pack):
+                            dependency_graph.nodes()[pack_of_item_dependent_on]['mandatory_for_items'][item_dependent_on].setdefault(
+                                pack, []).append(dependent_item)
+                        else:
+                            dependency_graph.nodes()[pack_of_item_dependent_on]['mandatory_for_items'].setdefault(
+                                item_dependent_on, {}).update({pack: [dependent_item]})
 
             if verbose:
                 print(f'\nPack {pack} and its dependencies were successfully added to the dependencies graph.')
@@ -2025,6 +2031,8 @@ class PackDependencies:
         if not silent_mode:
             # print the found pack dependency results
             click.echo(click.style(f"Found dependencies result for {pack_name} pack:", bold=True))
+            # flatten tuple keys to str to allow parsing to json
+            first_level_dependencies = {str(k): str(v) for k, v in first_level_dependencies.items()}
             dependency_result = json.dumps(first_level_dependencies, indent=4)
             click.echo(click.style(dependency_result, bold=True))
 

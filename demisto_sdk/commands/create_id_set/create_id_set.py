@@ -10,7 +10,6 @@ from demisto_sdk.commands.common.constants import (DEFAULT_ID_SET_PATH,
                                                    MP_V2_ID_SET_PATH,
                                                    MarketplaceVersions)
 from demisto_sdk.commands.common.tools import open_id_set_file
-
 from demisto_sdk.commands.common.update_id_set import re_create_id_set
 
 

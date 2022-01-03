@@ -1,9 +1,7 @@
 import os
-from distutils import version
 
 import pytest
 
-from conftest import integration
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.hook_validations.release_notes import \
     ReleaseNotesValidator
@@ -439,12 +437,18 @@ def test_is_docker_image_same_as_yml(release_notes_content, yaml_content, filled
 
 
 TEST_RELEASE_NOTES_TEST_BANK_4 = [
-    ('\n#### Integrations\n##### Integration name\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.\n#### Scripts\n##### Script name\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.',
-     {'Integrations': '##### Integration name\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.', 'Scripts': '##### Script name\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.'}, "\n#### "),
-    ('\n#### Integrations\n##### Integration name1\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.\n##### Integration name2\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.',
-     {'Integrations': '##### Integration name1\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.\n##### Integration name2\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.'}, "\n#### "),
-    ('##### Integration name1\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.\n##### Integration name2\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.',
-     {'Integration name1': '- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.\n', 'Integration name2': '- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.'}, "##### "), ]
+    ("\n#### Integrations\n##### Integration name\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.\n" +
+     "#### Scripts\n##### Script name\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.",
+     {'Integrations': '##### Integration name\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.',
+      'Scripts': '##### Script name\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.'}, "\n#### "),
+    ("\n#### Integrations\n##### Integration name1\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.\n" +
+     "##### Integration name2\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.",
+     {'Integrations': "##### Integration name1\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.\n" +
+      "##### Integration name2\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*."}, "\n#### "),
+    ("##### Integration name1\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.\n" +
+     "##### Integration name2\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.",
+     {'Integration name1': '- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.\n',
+      'Integration name2': '- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.'}, "##### "), ]
 
 
 @pytest.mark.parametrize('release_notes_content, filled_expected_result, splitter', TEST_RELEASE_NOTES_TEST_BANK_4)

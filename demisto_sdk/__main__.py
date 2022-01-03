@@ -665,8 +665,8 @@ def secrets(config, **kwargs):
               type=click.Path(resolve_path=True),
               default='Tests/id_set.json')
 @click.option("-cdam", "--check-dependent-api-module", is_flag=True, help="Run unit tests and lint on all packages that "
-                                                                         "are dependent on the found "
-                                                                         "modified api modules.", default=True)
+              "are dependent on the found "
+              "modified api modules.", default=True)
 def lint(**kwargs):
     """Lint command will perform:
         1. Package in host checks - flake8, bandit, mypy, vulture.

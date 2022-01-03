@@ -221,7 +221,7 @@ class PackDependencies:
                 dict: found {pack, (item_type, item_id)} ids
 
         """
-        packs_and_items_dict = {}
+        packs_and_items_dict: dict = {}
         if not isinstance(items_names, list):
             items_names = [items_names]
 
@@ -263,7 +263,7 @@ class PackDependencies:
             set: found pack ids
             dict: found {pack, (item_type, item_id)} ids
         """
-        packs_and_items_dict = {}
+        packs_and_items_dict: dict = {}
         pack_names = set()
         if not isinstance(items_names, list):
             items_names = [items_names]
@@ -312,8 +312,8 @@ class PackDependencies:
             set: found pack ids
             dict: found {pack, (item_type, item_id)} ids
         """
-        packs_and_items_dict = {}
-        pack_names = set()
+        packs_and_items_dict: dict = {}
+        pack_names: set = set()
         for item in id_set['integrations']:
             item_id = list(item.keys())[0]
             item_details = list(item.values())[0]
@@ -527,7 +527,7 @@ class PackDependencies:
         """
         dependencies_packs: set = set()
         items_dependencies: dict = dict()
-        packs_and_items_dict = dict()
+        packs_and_items_dict: dict = dict()
         if verbose:
             click.secho('### Playbooks', fg='white')
 
@@ -542,7 +542,7 @@ class PackDependencies:
             implementing_commands_and_integrations = playbook_data.get('command_to_integration', {})
 
             for command, integration_name in implementing_commands_and_integrations.items():
-                packs_found_from_integration = set()
+                packs_found_from_integration: set = set()
                 if integration_name:
                     packs_found_from_integration, packs_and_items_dict = PackDependencies._search_packs_by_items_names(
                         integration_name, id_set['integrations'], exclude_ignored_dependencies, 'integration')

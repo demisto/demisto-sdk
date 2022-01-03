@@ -574,6 +574,10 @@ class ValidateManager:
         elif file_type == FileType.JOB:
             return self.validate_job(structure_validator, pack_error_ignore_list)
 
+        elif file_type == FileType.CONTRIBUTORS:
+            # This is temporarily - need to add a proper contributors validations
+            return True
+
         else:
             error_message, error_code = Errors.file_type_not_supported()
             if self.handle_error(error_message=error_message, error_code=error_code, file_path=file_path):
@@ -899,7 +903,8 @@ class ValidateManager:
                                                 is_circle=self.is_circle)
 
     def validate_pre_process_rule(self, structure_validator, pack_error_ignore_list):
-        pre_process_rules_validator = PreProcessRuleValidator(structure_validator, ignored_errors=pack_error_ignore_list,
+        pre_process_rules_validator = PreProcessRuleValidator(structure_validator,
+                                                              ignored_errors=pack_error_ignore_list,
                                                               print_as_warnings=self.print_ignored_errors,
                                                               json_file_path=self.json_file_path)
         return pre_process_rules_validator.is_valid_pre_process_rule(validate_rn=False, id_set_file=self.id_set_file,
@@ -1557,14 +1562,15 @@ class ValidateManager:
         all_modified_files = modified_files.union(old_format_files)
         modified_packs_that_should_have_version_raised = get_pack_names_from_files(all_modified_files, skip_file_types={
             FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT,
-            FileType.DOC_IMAGE, FileType.AUTHOR_IMAGE})
+            FileType.DOC_IMAGE, FileType.AUTHOR_IMAGE, FileType.CONTRIBUTORS})
 
         # also existing packs with added files which are not test-playbook, test-script readme or release notes
         # should have their version raised
         modified_packs_that_should_have_version_raised = modified_packs_that_should_have_version_raised.union(
             get_pack_names_from_files(added_files, skip_file_types={
                 FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK,
-                FileType.TEST_SCRIPT, FileType.DOC_IMAGE, FileType.AUTHOR_IMAGE}) - self.new_packs)
+                FileType.TEST_SCRIPT, FileType.DOC_IMAGE, FileType.AUTHOR_IMAGE,
+                FileType.CONTRIBUTORS}) - self.new_packs)
 
         return modified_packs_that_should_have_version_raised
 

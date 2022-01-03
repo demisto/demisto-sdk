@@ -946,6 +946,26 @@ class TestFormatting:
         playbook_data = playbook.yml.read_dict()
         assert playbook_data['tasks']['1']['task']['playbookId'] == "my-sub-playbook"
 
+    def test_tpb_name_format_change_new_tpb(self, repo):
+        """
+        Given:
+        - A newly created test playbook.
+
+        When:
+        - Formatting, name does not equal ID.
+
+        Then:
+        - Ensure ID value is changed to name.
+        """
+        pack = repo.create_pack('pack')
+        test_playbook = pack.create_test_playbook('LargePlaybook')
+        test_playbook.create_default_test_playbook('SamplePlaybookTest')
+        test_playbook.yml.update({'id': 'other_id'})
+        playbook_yml = TestPlaybookYMLFormat(test_playbook.yml.path, path=test_playbook.yml.path, assume_yes=True)
+
+        playbook_yml.run_format()
+        assert test_playbook.yml.read_dict().get('id') == 'SamplePlaybookTest'
+
     def test_set_fromversion_six_new_contributor_pack_no_fromversion(self, pack):
         """
         Given

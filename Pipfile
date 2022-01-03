@@ -54,6 +54,7 @@ pytest-freezegun = "*"
 python-dotenv = "*"
 importlib-resources = "*"
 dictdiffer = "*"
+setuptools = "*"
 
 [dev-packages]
 mitmproxy = "==5.1.0"

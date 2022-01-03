@@ -301,6 +301,8 @@ schema;input_schema:
     description:
       type: str
       required: true
+    description_x2:
+      type: str
     required:
       type: bool
     playbookInputQuery:
@@ -318,6 +320,8 @@ schema;output_schema:
     description:
       type: str
       required: true
+    description_x2:
+      type: str
 
 # playbook->tasks->conditions
 schema;condition_schema:

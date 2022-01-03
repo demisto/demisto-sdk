@@ -1450,13 +1450,13 @@ class TestContext:
                 self.playbook.print_context_to_log(self.client, investigation_id)
 
             # restore Configuration for external playbook
-            if restore_needed:
-                self.build_context.logging_module.info(f"Restoring External Playbook parameters.")
-
-                res, _, _ = demisto_client.generic_request_func(self=self.client, method='POST',
-                                                                path=restore_path,
-                                                                body=default_vals)
-                self.build_context.logging_module.info(f"Restored External Playbook successfully.")
+            # if restore_needed:
+            #     self.build_context.logging_module.info(f"Restoring External Playbook parameters.")
+            #
+            #     res, _, _ = demisto_client.generic_request_func(self=self.client, method='POST',
+            #                                                     path=restore_path,
+            #                                                     body=default_vals)
+            #     self.build_context.logging_module.info(f"Restored External Playbook successfully.")
 
             self.playbook.disable_integrations(self.client, self.server_context)
             self._clean_incident_if_successful(playbook_state)

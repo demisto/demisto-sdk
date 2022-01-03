@@ -2241,7 +2241,7 @@ def get_scripts_and_commands_from_yml_data(data, file_type):
                         scripts.append(inner_task.get('playbookName'))
                     elif inner_task.get('scriptName'):
                         scripts.append(inner_task.get('scriptName'))
-        if file_type == file_type == FileType.PLAYBOOK:
+        if file_type == FileType.PLAYBOOK:
             playbook_id = get_entity_id_by_entity_type(data, PLAYBOOKS_DIR)
             scripts.append(playbook_id)
 

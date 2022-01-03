@@ -671,8 +671,8 @@ class TestFormatting:
                                                   'Playbooks', 'Phishing_Investigation_-_Generic_v2_-_6_0.yml')
         formatter = PlaybookYMLFormat(input=phishing_playbook_yml_path, output='')
         formatter.update_tests()
-        assert formatter.data.get('tests') == ['playbook-checkEmailAuthenticity-test',
-                                               'Phishing v2 - Test - Actual Incident']
+        assert set(formatter.data.get('tests')) == {'playbook-checkEmailAuthenticity-test',
+                                                    'Phishing v2 - Test - Actual Incident'}
 
     @patch('builtins.input', lambda *args: 'no')
     def test_update_tests_on_script_with_test_playbook(self):

@@ -16,6 +16,8 @@ mapping:
   id:
     type: str
     required: true
+  id_x2:
+    type: str
   version:
     type: int
     required: true

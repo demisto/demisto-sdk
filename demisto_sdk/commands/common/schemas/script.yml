@@ -7,6 +7,8 @@ mapping:
       id:
         type: str
         required: True
+      id_x2:
+        type: str
       version:
         type: int
         required: True

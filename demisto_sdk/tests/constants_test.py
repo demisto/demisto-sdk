@@ -116,6 +116,7 @@ INVALID_INTEGRATION_YML_1 = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integratio
 INVALID_INTEGRATION_YML_2 = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-invalid-yml2.yml"
 INVALID_INTEGRATION_YML_3 = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-invalid-yml3.yml"
 INVALID_INTEGRATION_YML_4 = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-invalid-yml4.yml"
+INVALID_INTEGRATION_YML_5 = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-invalid-yml5.yml"
 VALID_REPUTATION_FILE = f"{GIT_ROOT}/demisto_sdk/tests/test_files/reputation-cidr-valid.json"
 INVALID_REPUTATION_FILE = f"{GIT_ROOT}/demisto_sdk/tests/test_files/reputation-cidr-invalid.json"
 INVALID_NO_HIDDEN_PARAMS = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-invalid-no-hidden-params.yml"
@@ -231,6 +232,10 @@ VALID_GENERIC_MODULE_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/generic-mo
 VALID_GENERIC_DEFINITION_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/generic-definitions-valid.json"
 
 VALID_GITLAB_RESPONSE = f"{GIT_ROOT}/demisto_sdk/tests/test_files/valid_gitlab_search_response.json"
+
+GENERICFIELD_SCHEMA_PATH = f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/genericfield.yml"
+INCIDENTFIELD_SCHEMA_PATH = f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/incidentfield.yml"
+INDICATORFIELD_SCHEMA_PATH = f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/indicatorfield.yml"
 
 DIR_LIST = [
     f'{PACK_TARGET}/{constants.INTEGRATIONS_DIR}',

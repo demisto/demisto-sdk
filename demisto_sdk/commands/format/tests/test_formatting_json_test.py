@@ -1,6 +1,7 @@
 import json
 import os
 import shutil
+from typing import Optional
 
 import pytest
 from mock import patch
@@ -42,9 +43,10 @@ from demisto_sdk.tests.constants_test import (
     DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY, DESTINATION_FORMAT_LISTS_COPY,
     DESTINATION_FORMAT_MAPPER, DESTINATION_FORMAT_PRE_PROCESS_RULES_COPY,
     DESTINATION_FORMAT_PRE_PROCESS_RULES_INVALID_NAME_COPY,
-    DESTINATION_FORMAT_REPORT, DESTINATION_FORMAT_WIDGET, INCIDENTFIELD_PATH,
-    INCIDENTTYPE_PATH, INDICATORFIELD_PATH, INDICATORTYPE_PATH,
-    INVALID_OUTPUT_PATH, LAYOUT_PATH, LAYOUT_SCHEMA_PATH,
+    DESTINATION_FORMAT_REPORT, DESTINATION_FORMAT_WIDGET,
+    GENERICFIELD_SCHEMA_PATH, INCIDENTFIELD_PATH, INCIDENTFIELD_SCHEMA_PATH,
+    INCIDENTTYPE_PATH, INDICATORFIELD_PATH, INDICATORFIELD_SCHEMA_PATH,
+    INDICATORTYPE_PATH, INVALID_OUTPUT_PATH, LAYOUT_PATH, LAYOUT_SCHEMA_PATH,
     LAYOUTS_CONTAINER_PATH, LAYOUTS_CONTAINER_SCHEMA_PATH, LISTS_PATH,
     LISTS_SCHEMA_PATH, MAPPER_PATH, MAPPER_SCHEMA_PATH, PRE_PROCESS_RULES_PATH,
     PRE_PROCESS_RULES_SCHEMA_PATH, REPORT_PATH, SOURCE_FORMAT_CLASSIFIER,
@@ -136,6 +138,23 @@ class TestFormattingJson:
         fields_formatter.set_default_values_as_needed()
         assert fields_formatter.data['unsearchable']
 
+    @pytest.mark.parametrize('from_version', [None, '5.5.0', '6.2.0'])
+    def test_indicator_field_format_html_type(self, pack, from_version: Optional[str]):
+        """
+        Given
+        - Indicator field of type HTML.
+        When
+        - Running format.
+        Then
+        - Ensure the indicator field from version is set to 6.1.0.
+        """
+        indicator_field = pack.create_indicator_field('IndicatorTestField', {'type': 'html'})
+        if from_version:
+            indicator_field.update({'fromVersion': from_version})
+        fields_formatter = IndicatorFieldJSONFormat(input=indicator_field.path)
+        fields_formatter.update_from_version()
+        assert fields_formatter.data['fromVersion'] == '6.1.0'
+
 
 class TestFormattingIncidentTypes:
     EXTRACTION_MODE_VARIATIONS = [
@@ -170,7 +189,8 @@ class TestFormattingIncidentTypes:
                 }
             }
         }
-        mocker.patch('demisto_sdk.commands.format.update_generic.get_dict_from_file', return_value=(mock_dict, 'mock_type'))
+        mocker.patch('demisto_sdk.commands.format.update_generic.get_dict_from_file',
+                     return_value=(mock_dict, 'mock_type'))
         mocker.patch('demisto_sdk.commands.format.update_incidenttype.click.prompt', return_value=user_answer)
         formatter = IncidentTypesJSONFormat("test")
         formatter.format_auto_extract_mode()
@@ -240,7 +260,8 @@ class TestFormattingIncidentTypes:
                 }
             }
         }
-        mocker.patch('demisto_sdk.commands.format.update_generic.get_dict_from_file', return_value=(mock_dict, 'mock_type'))
+        mocker.patch('demisto_sdk.commands.format.update_generic.get_dict_from_file',
+                     return_value=(mock_dict, 'mock_type'))
         mocker.patch('demisto_sdk.commands.format.update_incidenttype.click.prompt', return_value=user_answer)
         formatter = IncidentTypesJSONFormat("test")
         formatter.format_auto_extract_mode()
@@ -274,7 +295,8 @@ class TestFormattingIncidentTypes:
                 'fieldCliNameToExtractSettings': {}
             }
         }
-        mocker.patch('demisto_sdk.commands.format.update_generic.get_dict_from_file', return_value=(mock_dict, 'mock_type'))
+        mocker.patch('demisto_sdk.commands.format.update_generic.get_dict_from_file',
+                     return_value=(mock_dict, 'mock_type'))
         mocker.patch('demisto_sdk.commands.format.update_incidenttype.click.prompt', return_value=user_answer)
         formatter = IncidentTypesJSONFormat("test")
         formatter.format_auto_extract_mode()
@@ -524,6 +546,42 @@ class TestFormattingLayoutscontainer:
         layoutscontainer_formatter.update_id()
         assert layoutscontainer_formatter.data['name'] == layoutscontainer_formatter.data['id']
 
+    @pytest.mark.parametrize('schema', [GENERICFIELD_SCHEMA_PATH,
+                                        INCIDENTFIELD_SCHEMA_PATH,
+                                        INDICATORFIELD_SCHEMA_PATH])
+    def test_remove_null_doesnt_remove_defaultrows_type_grid(self, schema):
+        """
+        Given
+            - Generic, indicator and incident fields schemes with 'defaultrows' key of type "grid"
+        When
+            - Run remove_null_fields on Generic, indicator and incident fields files
+        Then
+            - Ensure defaultRows key remains the same
+        """
+        incident_formater = BaseUpdateJSON(input='test', output='')
+        incident_formater.schema_path = schema
+        incident_formater.data = {'defaultRows': [], 'type': 'grid'}
+        incident_formater.remove_null_fields()
+        assert incident_formater.data['defaultRows'] == []
+
+    @pytest.mark.parametrize('schema', [GENERICFIELD_SCHEMA_PATH,
+                                        INCIDENTFIELD_SCHEMA_PATH,
+                                        INDICATORFIELD_SCHEMA_PATH])
+    def test_remove_null_remove_defaultrows_non_grid(self, schema):
+        """
+        Given
+            - Generic, indicator and incident fields schemes with 'defaultrows' key of type "grid"
+        When
+            - Run remove_null_fields on Generic, indicator and incident fields files
+        Then
+            - Ensure defaultRows key updated successfully
+        """
+        incident_formater = BaseUpdateJSON(input='test', output='')
+        incident_formater.schema_path = schema
+        incident_formater.data = {'defaultRows': [], 'type': 'shortText'}
+        incident_formater.remove_null_fields()
+        assert 'defaultRows' not in incident_formater.data
+
     def test_remove_null_fields(self, layoutscontainer_formatter):
         """
         Given
@@ -683,7 +741,8 @@ class TestFormattingPreProcessRule:
 
     @pytest.fixture(autouse=True)
     def invalid_path_pre_process_rules_formatter(self, pre_process_rules_copy):
-        yield PreProcessRulesFormat(input=pre_process_rules_copy, output=DESTINATION_FORMAT_PRE_PROCESS_RULES_INVALID_NAME_COPY)
+        yield PreProcessRulesFormat(input=pre_process_rules_copy,
+                                    output=DESTINATION_FORMAT_PRE_PROCESS_RULES_INVALID_NAME_COPY)
 
     def test_remove_unnecessary_keys(self, pre_process_rules_formatter):
         """

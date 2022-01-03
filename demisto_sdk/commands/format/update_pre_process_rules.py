@@ -49,10 +49,4 @@ class PreProcessRulesFormat(BaseUpdateJSON):
             return ERROR_RETURN_CODE
 
     def set_from_server_version_to_default(self, location=None):
-        """Replaces the fromServerVersion of the YML to default."""
-        if self.verbose:
-            click.echo(f'Trying to set JSON fromServerVersion to default: {FROM_VERSION_PRE_PROCESS_RULES}')
-        if location and not location.get('fromServerVersion'):
-            location['fromServerVersion'] = FROM_VERSION_PRE_PROCESS_RULES
-        else:
-            self.data.setdefault('fromServerVersion', FROM_VERSION_PRE_PROCESS_RULES)
+        self.set_default_value('fromServerVersion', FROM_VERSION_PRE_PROCESS_RULES, location)

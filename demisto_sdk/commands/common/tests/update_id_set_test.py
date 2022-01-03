@@ -4,10 +4,13 @@ import os
 import sys
 import tempfile
 import unittest
+from pathlib import Path
 
 import pytest
 
-from demisto_sdk.commands.common.constants import FileType
+import demisto_sdk.commands.common.update_id_set as uis
+from demisto_sdk.commands.common.constants import (DEFAULT_JOB_FROM_VERSION,
+                                                   JOBS_DIR, FileType)
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.update_id_set import (
     find_duplicates, get_classifier_data, get_dashboard_data,
@@ -20,8 +23,8 @@ from demisto_sdk.commands.common.update_id_set import (
     get_mapper_data, get_pack_metadata_data, get_playbook_data,
     get_report_data, get_script_data, get_values_for_keys_recursively,
     get_widget_data, has_duplicate, merge_id_sets, process_general_items,
-    process_incident_fields, process_integration, process_script,
-    re_create_id_set)
+    process_incident_fields, process_integration, process_jobs, process_script,
+    re_create_id_set, should_skip_item_by_mp)
 from TestSuite.utils import IsEqualFunctions
 
 TESTS_DIR = f'{git_path()}/demisto_sdk/tests'
@@ -35,7 +38,8 @@ class TestPacksMetadata:
         'author': 'Cortex XSOAR',
         'tags': ['Alerts'],
         'useCases': ['Case Management'],
-        'categories': ['Endpoint']
+        'categories': ['Endpoint'],
+        'marketplaces': ['xsoar', 'marketplacev2'],
     }
 
     METADATA_WITH_PARTNER_SUPPORT = {
@@ -45,7 +49,8 @@ class TestPacksMetadata:
         'author': 'Some Partner',
         'tags': ['Alerts'],
         'useCases': ['Case Management'],
-        'categories': ['Endpoint']
+        'categories': ['Endpoint'],
+        'marketplaces': ['xsoar', 'marketplacev2'],
     }
 
     METADATA_WITH_COMMUNITY_SUPPORT = {
@@ -55,7 +60,8 @@ class TestPacksMetadata:
         'author': 'Someone',
         'tags': ['Alerts'],
         'useCases': ['Case Management'],
-        'categories': ['Endpoint']
+        'categories': ['Endpoint'],
+        'marketplaces': ['xsoar', 'marketplacev2'],
     }
 
     TEST_PACK = [
@@ -75,8 +81,8 @@ class TestPacksMetadata:
         Then
             - parsing all the data from file successfully
         """
-        import demisto_sdk.commands.common.update_id_set as uis
         mocker.patch.object(uis, 'get_pack_name', return_value='Pack1')
+        mocker.patch.object(uis, 'get_mp_types_from_metadata_by_item', return_value=['xsoar', 'marketplacev2'])
 
         pack = repo.create_pack("Pack1")
         pack.pack_metadata.write_json(metadata_file_content)
@@ -92,6 +98,23 @@ class TestPacksMetadata:
         assert result.get('tags') == ['Alerts']
         assert result.get('use_cases') == ['Case Management']
         assert result.get('categories') == ['Endpoint']
+        assert result.get('marketplaces') == ['xsoar', 'marketplacev2']
+
+    @staticmethod
+    def test_process_metadata__marketplace_mismatch(mocker):
+        """
+        Given
+            - Pack metadata
+
+        When
+            - parsing pack files when there is a mismatch between the item's marketplaces and the current run marketplace.
+
+        Then
+            - return empty dict
+        """
+        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=True)
+        res = get_pack_metadata_data('', print_logs=False)
+        assert res == {}
 
     @staticmethod
     @pytest.mark.parametrize('print_logs', [True, False])
@@ -105,8 +128,8 @@ class TestPacksMetadata:
         Then
             - Verify output to logs.
         """
-        import demisto_sdk.commands.common.update_id_set as uis
         mocker.patch.object(uis, 'get_pack_name', return_value='Pack1')
+        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
 
         pack = repo.create_pack("Pack1")
         pack.pack_metadata.write_json({
@@ -116,7 +139,8 @@ class TestPacksMetadata:
             'support': 'xsoar',
             'tags': ['Alerts'],
             'useCases': ['Case Management'],
-            'categories': ['Endpoint']
+            'categories': ['Endpoint'],
+            'marketplaces': ['xsoar', 'marketplacev2']
         })
         pack_metadata_path = pack.pack_metadata.path
         res = get_pack_metadata_data(pack_metadata_path, print_logs)
@@ -130,11 +154,12 @@ class TestPacksMetadata:
         assert res['Pack1']['use_cases'] == ['Case Management']
         assert res['Pack1']['categories'] == ['Endpoint']
         assert res['Pack1']['certification'] == 'certified'
+        assert res['Pack1']['marketplaces'] == ['xsoar', 'marketplacev2']
 
         assert (f'adding {pack_metadata_path} to id_set' in captured.out) == print_logs
 
     @staticmethod
-    def test_process_packs_exception_thrown(capsys):
+    def test_process_packs_exception_thrown(capsys, mocker):
         """
         Given
             - A pack metadata file path.
@@ -143,7 +168,7 @@ class TestPacksMetadata:
         Then
             - Handle the exceptions gracefully.
         """
-
+        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
         with pytest.raises(FileNotFoundError):
             get_pack_metadata_data('Pack_Path', True)
         captured = capsys.readouterr()
@@ -228,18 +253,28 @@ class TestDuplicates:
     ]
 
     @staticmethod
-    def test_has_duplicate():
+    @pytest.mark.parametrize('first_pack, second_pack, first_source, second_source, expected', [
+        ('pack1', 'pack2', ('github.com', 'demisto', 'repo1'), ('github.com', 'demisto', 'repo2'), True),
+        ('pack1', 'pack2', ('github.com', 'demisto', 'repo1'), ('github.com', 'demisto', 'repo1'), True),
+        ('pack1', 'pack1', ('github.com', 'demisto', 'repo1'), ('github.com', 'demisto', 'repo2'), True),
+        ('pack1', 'pack1', ('github.com', 'demisto', 'repo1'), ('github.com', 'demisto', 'repo1'), False),
+        ('pack1', 'pack1', ('github.com', 'demisto', 'repo1'), ('code.pan.run', 'xsoar', 'repo1'), False),
+        ('pack1', 'pack1', ('github.com', 'demisto', 'repo1'), ('code.pan.run', 'xsoar', 'repo2'), True)
+
+    ])
+    def test_has_duplicate(first_pack, second_pack, first_source, second_source, expected):
         """
         Given
             - id_set.json with two duplicate layouts of the same type (details), their versions also overrides.
             They are considered duplicates because they have the same name (typeID), their versions override, and they
-            are the same kind (details) and they are from different pack
+            are the same kind (details).
+            If the pack and source is the same - there are duplicates, otherwise they are not
 
         When
             - checking for duplicate
 
         Then
-            - Ensure duplicates found
+            - Ensure duplicates found depending on the pack and source
         """
         id_set = {
             'Layouts': []
@@ -250,7 +285,8 @@ class TestDuplicates:
                 'fromVersion': '5.0.0',
                 'kind': 'Details',
                 'path': 'Layouts/layout-details-urlrep.json',
-                'pack': 'urlRep1'
+                'pack': first_pack,
+                'source': first_source
             }
         })
 
@@ -259,12 +295,20 @@ class TestDuplicates:
                 'typeID': 'urlRep',
                 'kind': 'Details',
                 'path': 'Layouts/layout-details-urlrep2.json',
-                'pack': 'urlRep2'
+                'pack': second_pack,
+                'source': second_source
             }
         })
 
-        has_duplicates = has_duplicate(id_set['Layouts'], 'urlRep', 'Layouts', False)
-        assert has_duplicates is True
+        # Check for duplicates for existing id-sets,
+        # Will not be considered as duplicate when two entities come from the same source
+        has_duplicates = has_duplicate(id_set['Layouts'], 'urlRep', 'Layouts', False, is_create_new=False)
+        assert has_duplicates == expected
+
+        # Check for duplicates for a new id-set,
+        # In this case all the examples above should be considered as duplicates
+        assert has_duplicate(id_set['Layouts'], 'urlRep', 'Layouts', False, is_create_new=True),\
+            "if it's a new pack it is always a duplicate"
 
     @staticmethod
     def test_has_no_duplicate():
@@ -307,6 +351,7 @@ class TestIntegrations:
             "name": "Dummy Integration",
             "file_path": TESTS_DIR + "/test_files/DummyPack/Integrations/DummyIntegration/DummyIntegration.yml",
             "fromversion": "4.1.0",
+            "source": ['github.com', 'demisto', 'demisto-sdk'],
             "docker_image": "demisto/python3:3.7.4.977",
             "commands": ['xdr-get-incidents',
                          'xdr-get-incident-extra-data',
@@ -339,6 +384,7 @@ class TestIntegrations:
             "name": "Dummy Integration",
             "file_path": TESTS_DIR + "/test_files/DummyPack/Integrations/integration-DummyIntegration.yml",
             "fromversion": "4.1.0",
+            "source": ['github.com', 'demisto', 'demisto-sdk'],
             "commands": ['xdr-get-incidents',
                          'xdr-get-incident-extra-data',
                          'xdr-update-incident',
@@ -365,7 +411,7 @@ class TestIntegrations:
         }
     }
 
-    def test_process_integration__sanity(self):
+    def test_process_integration__sanity(self, mocker):
         """
         Given
             - A valid script package folder located at Packs/DummyPack/Scripts/DummyScript.
@@ -378,7 +424,7 @@ class TestIntegrations:
         """
         non_unified_file_path = os.path.join(TESTS_DIR, 'test_files',
                                              'DummyPack', 'Integrations', 'DummyIntegration')
-
+        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
         res = process_integration(non_unified_file_path, True)
         assert len(res) == 1
         non_unified_integration_data = res[0]
@@ -404,7 +450,7 @@ class TestIntegrations:
             assert IsEqualFunctions.is_dicts_equal(returned_data, const_data)
 
     @staticmethod
-    def test_process_integration__exception():
+    def test_process_integration__exception(mocker):
         """
         Given
             - An invalid "integration" file located at invalid_file_structures where commonfields object is not a dict.
@@ -415,9 +461,27 @@ class TestIntegrations:
         Then
             - an exception will be raised
         """
+        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
         test_file_path = os.path.join(TESTS_DIR, 'test_files', 'invalid_file_structures', 'integration.yml')
         with pytest.raises(Exception):
             process_integration(test_file_path, True)
+
+    @staticmethod
+    def test_process_integration__marketplace_mismatch(mocker):
+        """
+        Given
+            - An integration file
+
+        When
+            - parsing item files when there is a mismatch between the item's marketplaces and the current run marketplace.
+
+        Then
+            - return empty list
+        """
+        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=True)
+        test_file_path = os.path.join(TESTS_DIR, 'test_files', 'invalid_file_structures', 'integration.yml')
+        res = process_integration(test_file_path, print_logs=False)
+        assert res == []
 
 
 class TestScripts:
@@ -425,6 +489,7 @@ class TestScripts:
         "DummyScript": {
             "name": "DummyScript",
             "file_path": TESTS_DIR + "/test_files/DummyPack/Scripts/DummyScript.yml",
+            "source": ['github.com', 'demisto', 'demisto-sdk'],
             "fromversion": "5.0.0",
             "docker_image": "demisto/python3:3.7.3.286",
             "tests": [
@@ -436,6 +501,7 @@ class TestScripts:
     PACK_SCRIPT_DATA = {
         "DummyScript": {
             "name": "DummyScript",
+            "source": ['github.com', 'demisto', 'demisto-sdk'],
             "docker_image": "demisto/python3:3.8.2.6981",
             "pack": "DummyPack",
             "file_path": TESTS_DIR + "/test_files/Packs/DummyPack/Scripts/DummyScript/DummyScript.yml",
@@ -458,7 +524,7 @@ class TestScripts:
         assert IsEqualFunctions.is_dicts_equal(returned_data, const_data)
 
     @staticmethod
-    def test_process_script__sanity_package():
+    def test_process_script__sanity_package(mocker):
         """
         Given
             - An invalid "script" file located at invalid_file_structures where commonfields object is not a dict.
@@ -471,6 +537,7 @@ class TestScripts:
         """
         test_file_path = os.path.join(TESTS_DIR, 'test_files',
                                       'Packs', 'DummyPack', 'Scripts', 'DummyScript')
+        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
         res = process_script(test_file_path, True)
         assert len(res) == 1
         data = res[0]
@@ -483,7 +550,25 @@ class TestScripts:
         assert IsEqualFunctions.is_dicts_equal(returned_data, const_data)
 
     @staticmethod
-    def test_process_script__exception():
+    def test_process_script__marketplace_mismatch(mocker):
+        """
+        Given
+            - A script file
+
+        When
+            - parsing script files when there is a mismatch between the item's marketplaces and the current run marketplace.
+
+        Then
+            - return empty list
+        """
+        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=True)
+        test_file_path = os.path.join(TESTS_DIR, 'test_files', 'invalid_file_structures', 'integration.yml')
+        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
+        res = process_script(test_file_path, print_logs=False)
+        assert res == []
+
+    @staticmethod
+    def test_process_script__exception(mocker):
         """
         Given
             - An invalid "script" file located at invalid_file_structures where commonfields object is not a dict.
@@ -495,6 +580,8 @@ class TestScripts:
             - an exception will be raised
         """
         test_file_path = os.path.join(TESTS_DIR, 'test_files', 'invalid_file_structures', 'script.yml')
+        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
+
         with pytest.raises(Exception):
             process_script(test_file_path, True)
 
@@ -503,6 +590,7 @@ class TestPlaybooks:
     PLAYBOOK_DATA = {
         "name": "Dummy Playbook",
         "file_path": TESTS_DIR + "/test_files/DummyPack/Playbooks/DummyPlaybook.yml",
+        "source": ['github.com', 'demisto', 'demisto-sdk'],
         "fromversion": "4.5.0",
         "filters": ["isEqualString"],
         "transformers": ["uniq"],
@@ -561,7 +649,7 @@ class TestPlaybooks:
         assert 'indicator_fields' in result.keys()
 
     @staticmethod
-    def test_get_playbook_data_no_fields():
+    def test_get_playbook_data_no_fields(mocker):
         """
         Given
             - A playbook file called playbook-no-incident-fields.yml without any
@@ -574,6 +662,8 @@ class TestPlaybooks:
             - parsing all the data from file successfully
         """
         test_dir = f'{git_path()}/demisto_sdk/commands/create_id_set/tests/test_data/playbook-no-incident-fields.yml'
+        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
+
         result = get_playbook_data(test_dir)
         result = result.get('Arcsight - Get events related to the Case')
         assert 'name' in result.keys()
@@ -585,7 +675,7 @@ class TestPlaybooks:
         assert 'indicator_fields' not in result.keys()
 
     @staticmethod
-    def test_process_playbook__exception():
+    def test_process_playbook__exception(mocker):
         """
         Given
             - An invalid "playbook" file located at invalid_file_structures where tasks object is not a dict.
@@ -596,6 +686,7 @@ class TestPlaybooks:
         Then
             - an exception will be raised
         """
+        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
         test_file_path = os.path.join(TESTS_DIR, 'test_files', 'invalid_file_structures', 'playbook.yml')
         with pytest.raises(Exception):
             process_general_items(test_file_path, True, (FileType.PLAYBOOK,), get_playbook_data)
@@ -662,7 +753,8 @@ class TestPlaybooks:
         """
         data = {'tasks': {'0': {'scriptarguments': {'value': {'complex': {'filters': [[{'operator': 'isEqualString'}],
                                                                                       [{'operator': 'isEqualString'}],
-                                                                                      [{'operator': 'StringContainsArray'}]
+                                                                                      [{
+                                                                                          'operator': 'StringContainsArray'}]
                                                                                       ]}}}}}}
         _, filters = get_filters_and_transformers_from_playbook(data)
         assert len(filters) == 2
@@ -737,7 +829,7 @@ class TestPlaybooks:
         assert filters == ['isEqualString']
 
     @staticmethod
-    def test_get_transformers_from_playbook_inputs():
+    def test_get_transformers_from_playbook_inputs(mocker):
         """
         Given
         - playbook with 2 inputs that using Length and toUpperCase transformers
@@ -753,6 +845,8 @@ class TestPlaybooks:
                                                                    ]}}},
                            {'value': {'complex': {'transformers': [{'operator': 'Length'}
                                                                    ]}}}]}
+        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
+
         transformers, _ = get_filters_and_transformers_from_playbook(data)
         assert len(transformers) == 2
         assert 'toUpperCase' in transformers
@@ -761,7 +855,7 @@ class TestPlaybooks:
 
 class TestLayouts:
     @staticmethod
-    def test_process_layouts__sanity():
+    def test_process_layouts__sanity(mocker):
         """
         Given
             - A layout file called layout-to-test.json
@@ -774,6 +868,8 @@ class TestLayouts:
         """
         test_file = os.path.join(git_path(), 'demisto_sdk', 'commands', 'create_id_set', 'tests',
                                  'test_data', 'layout-to-test.json')
+        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
+
         res = process_general_items(test_file, True, (FileType.LAYOUT,), get_layout_data)
         assert len(res) == 1
         result = res[0]
@@ -788,7 +884,7 @@ class TestLayouts:
         assert 'incident_and_indicator_fields' in result.keys()
 
     @staticmethod
-    def test_process_layouts__no_incident_types_and_fields():
+    def test_process_layouts__no_incident_types_and_fields(mocker):
         """
         Given
             - A layout file called layout-to-test.json that doesnt have related incident fields and indicator fields
@@ -801,6 +897,7 @@ class TestLayouts:
         """
         test_file = os.path.join(git_path(), 'demisto_sdk', 'commands', 'create_id_set', 'tests',
                                  'test_data', 'layout-to-test-no-types-fields.json')
+        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
 
         res = process_general_items(test_file, False, (FileType.LAYOUT,), get_layout_data)
         assert len(res) == 1
@@ -816,7 +913,7 @@ class TestLayouts:
         assert 'incident_and_indicator_fields' not in result.keys()
 
     @staticmethod
-    def test_process_layoutscontainer__sanity():
+    def test_process_layoutscontainer__sanity(mocker):
         """
         Given
             - A layoutscontainer file called layoutscontainer-to-test.json
@@ -827,6 +924,7 @@ class TestLayouts:
         """
         test_file = os.path.join(git_path(), 'demisto_sdk', 'commands', 'create_id_set', 'tests',
                                  'test_data', 'layoutscontainer-to-test.json')
+        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
 
         res = process_general_items(test_file, True, (FileType.LAYOUTS_CONTAINER,), get_layoutscontainer_data)
         assert len(res) == 1
@@ -844,7 +942,7 @@ class TestLayouts:
 
 class TestIncidentFields:
     @staticmethod
-    def test_process_incident_fields__sanity():
+    def test_process_incident_fields__sanity(mocker):
         """
         Given
             - An incident field file called incidentfield-to-test.json
@@ -857,6 +955,8 @@ class TestIncidentFields:
         """
         test_dir = os.path.join(git_path(), 'demisto_sdk', 'commands', 'create_id_set', 'tests',
                                 'test_data', 'incidentfield-to-test.json')
+        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
+
         res = process_incident_fields(test_dir, True, [])
         assert len(res) == 1
         result = res[0]
@@ -869,7 +969,7 @@ class TestIncidentFields:
         assert 'scripts' in result.keys()
 
     @staticmethod
-    def test_process_incident_fields__no_types_scripts():
+    def test_process_incident_fields__no_types_scripts(mocker):
         """
         Given
             - An incident field file called incidentfield-to-test-no-types_scripts.json with no script or incident type
@@ -883,6 +983,8 @@ class TestIncidentFields:
         """
         test_dir = os.path.join(git_path(), 'demisto_sdk', 'commands', 'create_id_set', 'tests',
                                 'test_data', 'incidentfield-to-test-no-types_scripts.json')
+        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
+
         res = process_incident_fields(test_dir, True, [])
         assert len(res) == 1
         result = res[0]
@@ -894,10 +996,26 @@ class TestIncidentFields:
         assert 'incident_types' not in result.keys()
         assert 'scripts' not in result.keys()
 
+    @staticmethod
+    def test_process_incident_fields__marketplace_mismatch(mocker):
+        """
+        Given
+            - An incident field file
+        When
+            - parsing An incident field files when there is a mismatch between the item's marketplaces and the current run marketplace.
+        Then
+            - return empty list
+        """
+        test_dir = os.path.join(git_path(), 'demisto_sdk', 'commands', 'create_id_set', 'tests',
+                                'test_data', 'incidentfield-to-test-no-types_scripts.json')
+        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=True)
+        res = process_incident_fields(test_dir, True, [])
+        assert res == []
+
 
 class TestIndicatorType:
     @staticmethod
-    def test_process_indicator_type__sanity():
+    def test_process_indicator_type__sanity(mocker):
         """
         Given
             - An indicator type file called reputation-indicatortype.json.
@@ -909,6 +1027,7 @@ class TestIndicatorType:
             - parsing all the data from file successfully
         """
         test_dir = f'{git_path()}/demisto_sdk/commands/create_id_set/tests/test_data/reputation-indicatortype.json'
+        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
 
         result = get_indicator_type_data(test_dir, [{'integration': {'commands': ['ip']}}])
         result = result.get('indicator-type-dummy')
@@ -996,7 +1115,7 @@ class TestIncidentTypes:
 
 class TestClassifiers:
     @staticmethod
-    def test_process_classifiers__no_types_scripts():
+    def test_process_classifiers__no_types_scripts(mocker):
         """
         Given
             - An classifier file called classifier-to-test-no-incidenttypes.json with incident type
@@ -1010,6 +1129,7 @@ class TestClassifiers:
         """
         test_file = os.path.join(git_path(), 'demisto_sdk', 'commands', 'create_id_set', 'tests',
                                  'test_data', 'classifier-to-test-no-incidenttypes.json')
+        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
 
         res = get_classifier_data(test_file)
         result = res.get('dummy classifier')
@@ -1641,7 +1761,7 @@ class TestReport:
 
 class TestGenericFunctions:
     @staticmethod
-    def test_process_general_items__sanity():
+    def test_process_general_items__sanity(mocker):
         """
         Given
             - A classifier file called classifier-to-test.json
@@ -1654,6 +1774,7 @@ class TestGenericFunctions:
         """
         test_file = os.path.join(git_path(), 'demisto_sdk', 'commands', 'create_id_set', 'tests',
                                  'test_data', 'classifier-to-test.json')
+        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
 
         res = process_general_items(test_file, True, (FileType.CLASSIFIER,), get_classifier_data)
         assert len(res) == 1
@@ -1668,7 +1789,25 @@ class TestGenericFunctions:
         assert 'dummy incident type 3' in result['incident_types']
 
     @staticmethod
-    def test_process_general_items__exception():
+    def test_process_general_items__marketplace_mismatch(mocker):
+        """
+        Given
+            - An item file
+
+        When
+            - parsing item files when there is a mismatch between the item's marketplaces and the current run marketplace.
+
+        Then
+            - return empty list
+        """
+        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=True)
+        test_file = os.path.join(git_path(), 'demisto_sdk', 'commands', 'create_id_set', 'tests',
+                                 'test_data', 'classifier-to-test.json')
+        res = process_general_items(test_file, True, (FileType.CLASSIFIER,), get_classifier_data)
+        assert res == []
+
+    @staticmethod
+    def test_process_general_items__exception(mocker):
         """
         Given
             - An invalid "dashboard" file located at invalid_file_structures where id is a list so it can't be used
@@ -1681,6 +1820,8 @@ class TestGenericFunctions:
             - an exception will be raised
         """
         test_file_path = os.path.join(TESTS_DIR, 'test_files', 'invalid_file_structures', 'dashboard.json')
+        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
+
         with pytest.raises(Exception):
             process_general_items(test_file_path, True, (FileType.DASHBOARD,), get_general_data)
 
@@ -2166,6 +2307,92 @@ class TestGenericModule:
         assert 'pack' in result.keys()
 
 
+class TestJob:
+    @staticmethod
+    @pytest.mark.parametrize('print_logs', (True, False))
+    @pytest.mark.parametrize('is_feed', (True, False))
+    def test_process_jobs(capsys, repo, is_feed: bool, print_logs: bool, mocker):
+        """
+        Given
+            - A repo with a job object.
+            - Whether to print logs.
+        When
+            - Parsing job files.
+        Then
+            - Verify output to logs.
+        """
+        pack = repo.create_pack()
+        job_details = 'job details'
+        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
+        job = pack.create_job(is_feed, details=job_details)
+        res = process_jobs(job.path, print_logs)
+
+        captured = capsys.readouterr()
+        assert len(res) == 1
+        datum = res[0][job.pure_name]
+        assert datum['name'] == job.pure_name
+        path = Path(datum['file_path'])
+        assert path.name == f'job-{job.pure_name}.json'
+        assert path.exists()
+        assert path.is_file()
+        assert path.suffix == '.json'
+        assert path.parts[-2] == JOBS_DIR
+        assert path.parts[-3] == pack.name
+
+        assert datum['fromversion'] == DEFAULT_JOB_FROM_VERSION
+        assert datum['pack'] == pack.name
+        assert datum['details'] == job_details
+        assert datum['selectedFeeds'] == []
+
+        assert (f'adding {job.path} to id_set' in captured.out) == print_logs
+
+    @staticmethod
+    @pytest.mark.parametrize('is_feed', (True, False))
+    def test_process_jobs_non_job_extension(capsys, repo, is_feed: bool, mocker):
+        """
+        Given
+            - A file that isn't a valid Job (wrong filetype)
+            - Whether to print logs.
+        When
+            - Parsing job files.
+        Then
+            - Verify output to logs.
+        """
+        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
+
+        pack = repo.create_pack()
+        job = pack.create_job(is_feed)
+        job_path = Path(job.path)
+        new_path = job_path.rename(job_path.with_suffix('.yml'))
+        res = process_jobs(str(new_path), False)
+        assert not res
+
+    @staticmethod
+    @pytest.mark.parametrize('print_logs', (True, False))
+    @pytest.mark.parametrize('is_feed', (True, False))
+    def test_process_jobs_file_nonexistent(capsys, repo, is_feed: bool, print_logs: bool, mocker):
+        """
+        Given
+            - A file that isn't a valid Job (missing file)
+            - Whether to print logs.
+        When
+            - Parsing job files.
+        Then
+            - Verify output to logs.
+        """
+        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
+
+        pack = repo.create_pack()
+        job = pack.create_job(is_feed)
+        job_json_path = Path(job.path)
+        job_json_path_as_yml = job_json_path.with_suffix('.yml')
+
+        job_json_path.rename(job_json_path_as_yml)
+        with pytest.raises(FileNotFoundError):
+            assert not process_jobs(str(job_json_path), print_logs)
+        assert f"failed to process job {job_json_path}" in capsys.readouterr().out
+
+
 def test_merge_id_sets(tmp_path):
     """
     Given
@@ -2348,7 +2575,8 @@ def test_merged_id_sets_with_legal_duplicates(caplog):
             {
                 'playbook_foo1': {
                     'name': 'playbook_foo1',
-                    'pack': 'foo_1'
+                    'pack': 'foo_1',
+                    "source": ['github.com', 'demisto', 'repo1'],
                 }
             }
         ],
@@ -2356,7 +2584,8 @@ def test_merged_id_sets_with_legal_duplicates(caplog):
             {
                 'Script_Foo1': {
                     'name': 'ScriptFoo',
-                    'pack': 'foo_1'
+                    'pack': 'foo_1',
+                    "source": ['github.com', 'demisto', 'repo1'],
                 }
             }
         ]
@@ -2367,7 +2596,8 @@ def test_merged_id_sets_with_legal_duplicates(caplog):
             {
                 'playbook_foo1': {
                     'name': 'playbook_foo1',
-                    'pack': 'foo_1'
+                    'pack': 'foo_1',
+                    "source": ['github.com', 'demisto', 'repo2'],
                 }
             }
         ],
@@ -2410,3 +2640,24 @@ def test_get_filters_and_transformers_from_complex_value():
     assert 'Length' in transformers
     assert 'isEqualString' in filters
     assert 'StringContainsArray' in filters
+
+
+def test_should_skip_item_by_mp(mocker):
+    """
+    Given
+    - path of content item, the current marketplace this id set is generated for.
+    When
+    - when creating the id set, checking a content item that is 'xsoar only' if it should be part of the mpV2
+     id set.
+    Then
+    - return True since this item should be skipped.
+
+    """
+    import demisto_sdk.commands.common.update_id_set as uis
+    mocker.patch.object(uis, 'get_mp_types_from_metadata_by_item', return_value=['xsoar'])
+    pack_path = os.path.join(TESTS_DIR, 'test_files', 'DummyPackXsoarMPOnly')
+    script_path = os.path.join(TESTS_DIR, 'test_files', 'DummyPackScriptIsXsoarOnly', 'Scripts', 'DummyScript')
+    res1 = should_skip_item_by_mp(pack_path, 'mpv2')
+    res2 = should_skip_item_by_mp(script_path, 'mpv2')
+    assert res1
+    assert res2

@@ -1,4 +1,5 @@
 import re
+from distutils.version import LooseVersion
 from enum import Enum
 from functools import reduce
 from typing import Dict, List
@@ -33,6 +34,7 @@ RELEASE_NOTES_DIR = 'ReleaseNotes'
 TESTS_DIR = 'Tests'
 DOC_FILES_DIR = 'doc_files'
 DOCUMENTATION_DIR = 'Documentation'
+JOBS_DIR = 'Jobs'
 PRE_PROCESS_RULES_DIR = 'PreProcessRules'
 LISTS_DIR = 'Lists'
 
@@ -67,6 +69,9 @@ GENERIC_FIELD = 'genericfield'
 GENERIC_TYPE = 'generictype'
 GENERIC_MODULE = 'genericmodule'
 GENERIC_DEFINITION = 'genericdefinition'
+JOB = 'job'
+
+MARKETPLACE_KEY_PACK_METADATA = 'marketplaces'
 
 
 class FileType(Enum):
@@ -113,6 +118,7 @@ class FileType(Enum):
     GENERIC_DEFINITION = 'genericdefinition'
     PRE_PROCESS_RULES = 'pre-process-rule'
     LISTS = 'list'
+    JOB = 'job'
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -139,6 +145,7 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.GENERIC_TYPE: 'Object Types',
     FileType.GENERIC_FIELD: 'Object Fields',
     FileType.LISTS: 'Lists',
+    FileType.JOB: 'Jobs'
 }
 
 ENTITY_TYPE_TO_DIR = {
@@ -165,7 +172,7 @@ ENTITY_TYPE_TO_DIR = {
     FileType.GENERIC_FIELD.value: GENERIC_FIELDS_DIR,
     FileType.GENERIC_TYPE.value: GENERIC_TYPES_DIR,
     FileType.LISTS.value: LISTS_DIR,
-
+    FileType.JOB.value: JOBS_DIR
 }
 
 CONTENT_FILE_ENDINGS = ['py', 'yml', 'png', 'json', 'md']
@@ -193,6 +200,7 @@ CONTENT_ENTITIES_DIRS = [
     GENERIC_DEFINITIONS_DIR,
     PRE_PROCESS_RULES_DIR,
     LISTS_DIR,
+    JOBS_DIR
 ]
 
 CONTENT_ENTITY_UPLOAD_ORDER = [
@@ -210,6 +218,7 @@ CONTENT_ENTITY_UPLOAD_ORDER = [
     DASHBOARDS_DIR,
     PRE_PROCESS_RULES_DIR,
     LISTS_DIR,
+    JOBS_DIR
 ]
 
 DEFAULT_IMAGE_PREFIX = 'data:image/png;base64,'
@@ -453,6 +462,9 @@ PACKS_CLASSIFIERS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{CLASSIFIERS_DIR}'
 _PACKS_CLASSIFIER_BASE_REGEX = fr'{PACKS_CLASSIFIERS_DIR_REGEX}\/*classifier-(?!mapper).*(?<!5_9_9)'
 PACKS_CLASSIFIER_JSON_REGEX = fr'{_PACKS_CLASSIFIER_BASE_REGEX}\.json'
 
+JOBS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{JOBS_DIR}'
+JOB_JSON_REGEX = fr'{JOBS_DIR_REGEX}\/job-([^/]+)\.json'
+
 # old classifier structure
 _PACKS_CLASSIFIER_BASE_5_9_9_REGEX = fr'{PACKS_CLASSIFIERS_DIR_REGEX}\/*classifier-(?!mapper).*_5_9_9'
 PACKS_CLASSIFIER_JSON_5_9_9_REGEX = fr'{_PACKS_CLASSIFIER_BASE_5_9_9_REGEX}\.json'
@@ -542,6 +554,7 @@ ID_IN_ROOT = [  # entities in which 'id' key is in the root
     'mapper',
     'pre_process_rule',
     'lists',
+    JOB
 ]
 
 INTEGRATION_PREFIX = 'integration'
@@ -713,6 +726,10 @@ JSON_ALL_REPORTS_REGEXES = [
     PACKS_REPORT_JSON_REGEX
 ]
 
+JSON_ALL_JOB_REGEXES = [
+    JOB_JSON_REGEX
+]
+
 CHECKED_TYPES_REGEXES = [
     # Playbooks
     PLAYBOOK_YML_REGEX,
@@ -752,6 +769,8 @@ CHECKED_TYPES_REGEXES = [
     PACKS_RELEASE_NOTES_REGEX,
     PACKS_TOOLS_REGEX,
     CONNECTIONS_REGEX,
+    JOB_JSON_REGEX,
+
     # ReleaseNotes
     PACKS_RELEASE_NOTES_REGEX
 ]
@@ -797,6 +816,7 @@ DIR_LIST_FOR_REGULAR_ENTETIES = [
     CONNECTIONS_DIR,
     INDICATOR_FIELDS_DIR,
     LISTS_DIR,
+    JOBS_DIR
 ]
 PACKS_DIRECTORIES = [
     SCRIPTS_DIR,
@@ -809,7 +829,8 @@ PACKS_DIRECTORIES = [
     INCIDENT_TYPES_DIR,
     REPORTS_DIR,
     CONNECTIONS_DIR,
-    PLAYBOOKS_DIR
+    PLAYBOOKS_DIR,
+    JOBS_DIR
 ]
 SPELLCHECK_FILE_TYPES = [
     PACKS_INTEGRATION_YML_REGEX,
@@ -964,7 +985,8 @@ SCHEMA_TO_REGEX = {
     'genericfield': JSON_ALL_GENERIC_FIELDS_REGEXES,
     'generictype': JSON_ALL_GENERIC_TYPES_REGEXES,
     'genericmodule': JSON_ALL_GENERIC_MODULES_REGEXES,
-    'genericdefinition': JSON_ALL_GENERIC_DEFINITIONS_REGEXES
+    'genericdefinition': JSON_ALL_GENERIC_DEFINITIONS_REGEXES,
+    JOB: JSON_ALL_JOB_REGEXES
 }
 
 EXTERNAL_PR_REGEX = r'^pull/(\d+)$'
@@ -1036,8 +1058,17 @@ XSOAR_CONTEXT_STANDARD_URL = "https://xsoar.pan.dev/docs/integrations/context-st
 XSOAR_SUPPORT_URL = "https://www.paloaltonetworks.com/cortex"
 MARKETPLACE_LIVE_DISCUSSIONS = \
     'https://live.paloaltonetworks.com/t5/cortex-xsoar-discussions/bd-p/Cortex_XSOAR_Discussions'
-MARKETPLACE_MIN_VERSION = '6.0.0'
 EXCLUDED_DISPLAY_NAME_WORDS = ['partner', 'community']
+MARKETPLACES = ['xsoar', 'marketplacev2']
+
+DEFAULT_CONTENT_ITEM_FROM_VERSION = '0.0.0'
+DEFAULT_CONTENT_ITEM_TO_VERSION = '99.99.99'
+MARKETPLACE_MIN_VERSION = '6.0.0'
+DEFAULT_JOB_FROM_VERSION = '6.5.0'
+OLDEST_SUPPORTED_VERSION = '5.0.0'
+LAYOUTS_CONTAINERS_OLDEST_SUPPORTED_VERSION = '6.0.0'
+GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION = '6.5.0'
+FEATURE_BRANCHES = ['v4.5.0']
 
 BASE_PACK = "Base"
 NON_SUPPORTED_PACK = "NonSupported"
@@ -1206,21 +1237,16 @@ VALIDATED_PACK_ITEM_TYPES = [
     'Layouts',
     'PreProcessRules',
     'Lists',
+    'Jobs'
 ]
 
 FIRST_FETCH = 'first_fetch'
 
 MAX_FETCH = 'max_fetch'
 
-OLDEST_SUPPORTED_VERSION = '5.0.0'
-
-GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION = '6.5.0'
-
-FEATURE_BRANCHES = ['v4.5.0']
-
 SKIP_RELEASE_NOTES_FOR_TYPES = (FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK,
                                 FileType.TEST_SCRIPT, FileType.DOC_IMAGE, FileType.AUTHOR_IMAGE, None,
-                                FileType.RELEASE_NOTES_CONFIG)
+                                FileType.RELEASE_NOTES_CONFIG, FileType.CONTRIBUTORS)
 
 LAYOUT_AND_MAPPER_BUILT_IN_FIELDS = ['indicatortype', 'source', 'comment', 'aggregatedreliability', 'detectedips',
                                      'detectedhosts', 'modified', 'expiration', 'timestamp', 'shortdesc',
@@ -1229,6 +1255,8 @@ LAYOUT_AND_MAPPER_BUILT_IN_FIELDS = ['indicatortype', 'source', 'comment', 'aggr
 UUID_REGEX = r'[0-9a-f]{8}\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\b[0-9a-f]{12}'
 
 DEFAULT_ID_SET_PATH = "./Tests/id_set.json"
+MP_V2_ID_SET_PATH = "./Tests/id_set_mp_v2.json"
+METADATA_FILE_NAME = 'pack_metadata.json'
 
 CONTEXT_OUTPUT_README_TABLE_HEADER = '| **Path** | **Type** | **Description** |'
 
@@ -1270,28 +1298,8 @@ class ContentItems(Enum):
     GENERIC_TYPES = 'generictype'
     PRE_PROCESS_RULES = 'pre-process-rule'
     LISTS = 'list'
+    JOB = 'job'
 
-
-YML_SUPPORTED_FOLDERS = {
-    INTEGRATIONS_DIR,
-    SCRIPTS_DIR,
-    PLAYBOOKS_DIR,
-    TEST_PLAYBOOKS_DIR
-}
-
-JSON_SUPPORTED_FOLDERS = {
-    CLASSIFIERS_DIR,
-    CONNECTIONS_DIR,
-    DASHBOARDS_DIR,
-    INCIDENT_FIELDS_DIR,
-    INCIDENT_TYPES_DIR,
-    INDICATOR_FIELDS_DIR,
-    LAYOUTS_DIR,
-    PRE_PROCESS_RULES_DIR,
-    INDICATOR_TYPES_DIR,
-    REPORTS_DIR,
-    WIDGETS_DIR
-}
 
 CONTENT_ITEMS_DISPLAY_FOLDERS = {
     SCRIPTS_DIR,
@@ -1307,7 +1315,8 @@ CONTENT_ITEMS_DISPLAY_FOLDERS = {
     PRE_PROCESS_RULES_DIR,
     CLASSIFIERS_DIR,
     WIDGETS_DIR,
-    LISTS_DIR,
+    JOBS_DIR,
+    LISTS_DIR
 }
 
 
@@ -1328,3 +1337,11 @@ UUID_REGEX = r'([\w]{8}-[\w]{4}-[\w]{4}-[\w]{4}-[\w]{8,12})'
 
 class IronBankDockers:
     API_LINK = 'https://repo1.dso.mil/api/v4/projects/dsop%2Fopensource%2Fpalo-alto-networks%2Fdemisto%2F'
+
+
+class MarketplaceVersions(Enum):
+    XSOAR = 'xsoar'
+    MarketplaceV2 = 'marketplacev2'
+
+
+INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {'html': LooseVersion('6.1.0'), 'grid': LooseVersion('5.5.0')}

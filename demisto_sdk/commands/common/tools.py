@@ -14,13 +14,13 @@ from enum import Enum
 from functools import lru_cache, partial
 from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen, check_output
-from typing import (Callable, Dict, List, Match, Optional, Set, Tuple, Type,
-                    Union)
+from typing import Callable, Dict, List, Match, Optional, Tuple, Type, Union
 
 import click
 import colorama
 import demisto_client
 import git
+import giturlparse
 import requests
 import urllib3
 import yaml
@@ -29,16 +29,20 @@ from ruamel.yaml import YAML
 
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK, CLASSIFIERS_DIR,
-    DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH, DOC_FILES_DIR,
-    ID_IN_COMMONFIELDS, ID_IN_ROOT, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
-    INDICATOR_FIELDS_DIR, INTEGRATIONS_DIR, LAYOUTS_DIR, LISTS_DIR,
+    DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH,
+    DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
+    DOC_FILES_DIR, ID_IN_COMMONFIELDS, ID_IN_ROOT, INCIDENT_FIELDS_DIR,
+    INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR,
+    INTEGRATIONS_DIR, JOBS_DIR, LAYOUTS_DIR, LISTS_DIR,
+    MARKETPLACE_KEY_PACK_METADATA, METADATA_FILE_NAME,
     OFFICIAL_CONTENT_ID_SET_PATH, PACK_METADATA_IRON_BANK_TAG,
     PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
     PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
     PACKS_README_FILE_NAME, PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR,
     RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR,
-    XSOAR_CONFIG_FILE, FileType, GitContentConfig, urljoin)
+    XSOAR_CONFIG_FILE, FileType, GitContentConfig, MarketplaceVersions,
+    urljoin)
 from demisto_sdk.commands.common.git_util import GitUtil
 
 urllib3.disable_warnings()
@@ -350,8 +354,8 @@ def filter_packagify_changes(modified_files, added_files, removed_files, tag='ma
             if details:
                 uniq_identifier = '_'.join([
                     details['name'],
-                    details.get('fromversion', '0.0.0'),
-                    details.get('toversion', '99.99.99')
+                    details.get('fromversion', DEFAULT_CONTENT_ITEM_FROM_VERSION),
+                    details.get('toversion', DEFAULT_CONTENT_ITEM_TO_VERSION)
                 ])
                 packagify_diff[uniq_identifier] = file_path
 
@@ -366,8 +370,8 @@ def filter_packagify_changes(modified_files, added_files, removed_files, tag='ma
 
             uniq_identifier = '_'.join([
                 details['name'],
-                details.get('fromversion', '0.0.0'),
-                details.get('toversion', '99.99.99')
+                details.get('fromversion', DEFAULT_CONTENT_ITEM_FROM_VERSION),
+                details.get('toversion', DEFAULT_CONTENT_ITEM_TO_VERSION)
             ])
             if uniq_identifier in packagify_diff:
                 # if name appears as added and removed, this is packagify process - treat as modified.
@@ -469,7 +473,7 @@ def get_file(file_path, type_of_file):
             # revert str to stream for loader
             stream = io.StringIO(replaced)
             try:
-                if 'yml' == type_of_file:
+                if type_of_file in ('yml', '.yml'):
                     data_dictionary = yaml.load(stream, Loader=XsoarLoader)
 
                 else:
@@ -597,31 +601,31 @@ def get_from_version(file_path):
 
     if data_dictionary:
         from_version = data_dictionary.get('fromversion') if 'fromversion' in data_dictionary \
-            else data_dictionary.get('fromVersion', '0.0.0')
-        if from_version == "":
-            return "0.0.0"
+            else data_dictionary.get('fromVersion', DEFAULT_CONTENT_ITEM_FROM_VERSION)
+        if from_version == '':
+            return DEFAULT_CONTENT_ITEM_FROM_VERSION
 
-        if not re.match(r"^\d{1,2}\.\d{1,2}\.\d{1,2}$", from_version):
-            raise ValueError("{} fromversion is invalid \"{}\". "
-                             "Should be of format: \"x.x.x\". for example: \"4.5.0\"".format(file_path, from_version))
+        if not re.match(r'^\d{1,2}\.\d{1,2}\.\d{1,2}$', from_version):
+            raise ValueError(f'{file_path} fromversion is invalid "{from_version}". '
+                             'Should be of format: "x.x.x". for example: "4.5.0"')
 
         return from_version
 
-    return '0.0.0'
+    return DEFAULT_CONTENT_ITEM_FROM_VERSION
 
 
 def get_to_version(file_path):
     data_dictionary = get_yaml(file_path)
 
     if data_dictionary:
-        to_version = data_dictionary.get('toversion', '99.99.99')
-        if not re.match(r"^\d{1,2}\.\d{1,2}\.\d{1,2}$", to_version):
-            raise ValueError("{} toversion is invalid \"{}\". "
-                             "Should be of format: \"x.x.x\". for example: \"4.5.0\"".format(file_path, to_version))
+        to_version = data_dictionary.get('toversion', DEFAULT_CONTENT_ITEM_TO_VERSION)
+        if not re.match(r'^\d{1,2}\.\d{1,2}\.\d{1,2}$', to_version):
+            raise ValueError(f'{file_path} toversion is invalid "{to_version}". '
+                             'Should be of format: "x.x.x". for example: "4.5.0"')
 
         return to_version
 
-    return '99.99.99'
+    return DEFAULT_CONTENT_ITEM_TO_VERSION
 
 
 def str2bool(v):
@@ -1055,7 +1059,7 @@ def get_dict_from_file(path: str, use_ryaml: bool = False,
 
 
 @lru_cache()
-def find_type_by_path(path: str = '') -> Optional[FileType]:
+def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
     """Find docstring by file path only
     This function is here as we want to implement lru_cache and we can do it on `find_type`
     as dict is not hashable.
@@ -1066,45 +1070,52 @@ def find_type_by_path(path: str = '') -> Optional[FileType]:
     Returns:
         FileType: The file type if found. else None;
     """
-    if path.endswith('.md'):
-        if 'README' in path:
+    path = Path(path)
+    if path.suffix == '.md':
+        if 'README' in path.name:
             return FileType.README
 
-        if RELEASE_NOTES_DIR in path:  # [-2] is the file's dir name
+        if RELEASE_NOTES_DIR in path.parts:
             return FileType.RELEASE_NOTES
 
-        if 'description' in path:
+        if 'description' in path.name:
             return FileType.DESCRIPTION
+
+        if 'CONTRIBUTORS' in path.name:
+            return FileType.CONTRIBUTORS
 
         return FileType.CHANGELOG
 
-    if path.endswith('.json'):
-        if RELEASE_NOTES_DIR in path:
+    if path.suffix == '.json':
+        if RELEASE_NOTES_DIR in path.parts:
             return FileType.RELEASE_NOTES_CONFIG
         elif LISTS_DIR in os.path.dirname(path):
             return FileType.LISTS
+        elif JOBS_DIR in path.parts:
+            return FileType.JOB
+        elif INDICATOR_TYPES_DIR in path.parts:
+            return FileType.REPUTATION
 
     # integration image
-    if path.endswith('_image.png') and not path.endswith("Author_image.png"):
+    if path.name.endswith('_image.png'):
+        if path.name.endswith("Author_image.png"):
+            return FileType.AUTHOR_IMAGE
         return FileType.IMAGE
 
-    if path.endswith("Author_image.png"):
-        return FileType.AUTHOR_IMAGE
-
     # doc files images
-    if path.endswith('.png') and DOC_FILES_DIR in path:
+    if path.suffix == ".png" and DOC_FILES_DIR in path.parts:
         return FileType.DOC_IMAGE
 
-    if path.endswith('.ps1'):
+    if path.suffix == '.ps1':
         return FileType.POWERSHELL_FILE
 
-    if path.endswith('.py'):
+    if path.suffix == '.py':
         return FileType.PYTHON_FILE
 
-    if path.endswith('.js'):
+    if path.suffix == '.js':
         return FileType.JAVASCRIPT_FILE
 
-    if path.endswith(XSOAR_CONFIG_FILE):
+    if path.name.endswith(XSOAR_CONFIG_FILE):
         return FileType.XSOAR_CONFIG
 
     return None
@@ -1205,6 +1216,9 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
 
         if 'auditable' in _dict:
             return FileType.GENERIC_DEFINITION
+
+        if isinstance(_dict, dict) and {'isAllFeeds', 'selectedFeeds', 'isFeed'}.issubset(_dict.keys()):
+            return FileType.JOB
 
         # When using it for all files validation- sometimes 'id' can be integer
         if 'id' in _dict:
@@ -1803,7 +1817,7 @@ def get_file_displayed_name(file_path):
     elif file_type in [FileType.MAPPER, FileType.CLASSIFIER, FileType.INCIDENT_FIELD, FileType.INCIDENT_TYPE,
                        FileType.INDICATOR_FIELD, FileType.LAYOUTS_CONTAINER, FileType.PRE_PROCESS_RULES,
                        FileType.DASHBOARD, FileType.WIDGET,
-                       FileType.REPORT]:
+                       FileType.REPORT, FileType.JOB]:
         return get_json(file_path).get('name')
     elif file_type == FileType.OLD_CLASSIFIER:
         return get_json(file_path).get('brandName')
@@ -1896,7 +1910,7 @@ def to_kebab_case(s: str):
     """
     if s:
         new_s = s.lower()
-        new_s = re.sub(' +', '-', new_s)
+        new_s = re.sub('[ ,.-]+', '-', new_s)
         new_s = re.sub('[^A-Za-z0-9-]+', '', new_s)
         m = re.search('[a-z0-9]+(-[a-z]+)*', new_s)
         if m:
@@ -2143,3 +2157,60 @@ def get_script_or_sub_playbook_tasks_from_playbook(searched_entity_name: str, ma
             searched_tasks.append(task_data)
 
     return searched_tasks
+
+
+def get_current_repo() -> Tuple[str, str, str]:
+    try:
+        git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
+        parsed_git = giturlparse.parse(git_repo.remotes.origin.url)
+        host = parsed_git.host
+        if '@' in host:
+            host = host.split('@')[1]
+        return host, parsed_git.owner, parsed_git.repo
+    except git.InvalidGitRepositoryError:
+        print_warning('git repo is not found')
+        return "Unknown source", '', ''
+
+
+def get_mp_types_from_metadata_by_item(file_path):
+    """
+    Get the supporting marketplaces for the given content item, defined by the mp field in the metadata.
+    If the field doesnt exist in the pack's metadata, consider as xsoar only.
+    Args:
+        file_path: path to content item in content repo
+
+    Returns:
+        list of names of supporting marketplaces (current options are marketplacev2 and xsoar)
+    """
+    if METADATA_FILE_NAME in Path(file_path).parts:  # for when the type is pack, the item we get is the metadata path
+        metadata_path = file_path
+    else:
+        metadata_path_parts = get_pack_dir(file_path)
+        metadata_path = Path(*metadata_path_parts) / METADATA_FILE_NAME
+
+    try:
+        with open(metadata_path, 'r') as metadata_file:
+            metadata = json.load(metadata_file)
+            marketplaces = metadata.get(MARKETPLACE_KEY_PACK_METADATA)
+            if not marketplaces:
+                return [MarketplaceVersions.XSOAR.value]
+            return marketplaces
+    except FileNotFoundError:
+        return []
+
+
+def get_pack_dir(path):
+    """
+    Used for testing packs where the location of the "Packs" dir is not constant.
+    Args:
+        path: path of current file
+
+    Returns:
+        the path starting from Packs dir
+
+    """
+    parts = Path(path).parts
+    for index in range(len(parts)):
+        if parts[index] == 'Packs':
+            return parts[:index + 2]
+    return []

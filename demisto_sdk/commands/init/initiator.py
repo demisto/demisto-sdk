@@ -13,11 +13,12 @@ import yamlordereddictloader
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
-    CLASSIFIERS_DIR, CONNECTIONS_DIR, DASHBOARDS_DIR, DOC_FILES_DIR,
-    GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR, GENERIC_MODULES_DIR,
-    GENERIC_TYPES_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
-    INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, INTEGRATION_CATEGORIES,
-    INTEGRATIONS_DIR, LAYOUTS_DIR, MARKETPLACE_LIVE_DISCUSSIONS,
+    CLASSIFIERS_DIR, CONNECTIONS_DIR, DASHBOARDS_DIR,
+    DEFAULT_CONTENT_ITEM_FROM_VERSION, DOC_FILES_DIR, GENERIC_DEFINITIONS_DIR,
+    GENERIC_FIELDS_DIR, GENERIC_MODULES_DIR, GENERIC_TYPES_DIR,
+    INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
+    INDICATOR_TYPES_DIR, INTEGRATION_CATEGORIES, INTEGRATIONS_DIR, JOBS_DIR,
+    LAYOUTS_DIR, MARKETPLACE_LIVE_DISCUSSIONS, MARKETPLACES,
     PACK_INITIAL_VERSION, PACK_SUPPORT_OPTIONS, PLAYBOOKS_DIR, REPORTS_DIR,
     SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR, XSOAR_AUTHOR, XSOAR_SUPPORT,
     XSOAR_SUPPORT_URL, GitContentConfig)
@@ -118,10 +119,11 @@ class Initiator:
     DIR_LIST = [INTEGRATIONS_DIR, SCRIPTS_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
                 PLAYBOOKS_DIR, LAYOUTS_DIR, TEST_PLAYBOOKS_DIR, CLASSIFIERS_DIR, CONNECTIONS_DIR, DASHBOARDS_DIR,
                 INDICATOR_TYPES_DIR, REPORTS_DIR, WIDGETS_DIR, DOC_FILES_DIR, GENERIC_MODULES_DIR,
-                GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR, GENERIC_TYPES_DIR]
+                GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR, GENERIC_TYPES_DIR, JOBS_DIR]
 
     def __init__(self, output: str, name: str = '', id: str = '', integration: bool = False, template: str = '',
-                 category: str = '', script: bool = False, pack: bool = False, author_image: str = '', demisto_mock: bool = False,
+                 category: str = '', script: bool = False, pack: bool = False, author_image: str = '',
+                 demisto_mock: bool = False,
                  common_server: bool = False):
         self.output = output if output else ''
         self.id = id
@@ -308,7 +310,7 @@ class Initiator:
             fp.close()
 
     @staticmethod
-    def create_metadata(fill_manually: bool, data: Dict = {}) -> Dict:
+    def create_metadata(fill_manually: bool, data: Dict = None) -> Dict:
         """Builds pack metadata JSON content.
 
         Args:
@@ -329,7 +331,8 @@ class Initiator:
             'categories': [],
             'tags': [],
             'useCases': [],
-            'keywords': []
+            'keywords': [],
+            'marketplaces': MARKETPLACES,
         }
 
         if data:
@@ -350,6 +353,12 @@ class Initiator:
                                                                   option_message="\nSupport type of the pack: \n")
         pack_metadata['categories'] = [Initiator.get_valid_user_input(options_list=INTEGRATION_CATEGORIES,
                                                                       option_message="\nPack category options: \n")]
+
+        marketplaces = input("\nSupported marketplaces for this pack, comma separated values.\n"
+                             "Possible options are: xsoar, marketplacev2. default value is 'xsoar,marketplacev2'.\n")
+        mp_list = [m.strip() for m in marketplaces.split(',') if m]
+        if mp_list:
+            pack_metadata['marketplaces'] = mp_list
 
         if pack_metadata.get('support') == XSOAR_SUPPORT:
             pack_metadata['author'] = XSOAR_AUTHOR
@@ -551,7 +560,8 @@ class Initiator:
         if from_version:
             yml_dict['fromversion'] = from_version
 
-        if LooseVersion(yml_dict.get('fromversion', '0.0.0')) < LooseVersion(self.SUPPORTED_FROM_VERSION):
+        if LooseVersion(yml_dict.get('fromversion', DEFAULT_CONTENT_ITEM_FROM_VERSION)) < LooseVersion(
+                self.SUPPORTED_FROM_VERSION):
             yml_dict['fromversion'] = self.SUPPORTED_FROM_VERSION
 
         if integration:

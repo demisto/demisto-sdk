@@ -1,6 +1,7 @@
 import json
 import os
 import shutil
+from collections import defaultdict
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
@@ -12,11 +13,12 @@ import demisto_sdk.commands.common.tools as tools
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.generate_integration.code_generator import (
-    IntegrationGeneratorConfig, IntegrationGeneratorOutput)
+    IntegrationGeneratorArg, IntegrationGeneratorConfig,
+    IntegrationGeneratorOutput)
 from demisto_sdk.commands.postman_codegen.postman_codegen import (
     build_commands_names_dict, create_body_format, duplicate_requests_check,
-    flatten_collections, generate_command_outputs,
-    postman_to_autogen_configuration)
+    find_shared_args_path, flatten_collections, generate_command_outputs,
+    postman_to_autogen_configuration, update_min_unique_path)
 
 
 class TestPostmanHelpers:
@@ -72,6 +74,87 @@ class TestPostmanHelpers:
                 "key1": "{key1}"
             }
         ]
+
+    def test_create_body_format_different_arg_name_nested(self):
+        """
+        Given
+        - Request body and a list of arguments.
+
+        When
+        - There are two arguments, both nested in other arguments, with the same name and different paths.
+
+        Then
+        - Creates a body format with the right arguments' names.
+        """
+        request_body = {
+            "key5": {
+                "key3": "val3"
+            },
+            "key2": {
+                "key6": {
+                    "key3": "val3",
+                    "key8": "val8"
+                }
+            }
+        }
+
+        args: List[IntegrationGeneratorArg] = [
+            IntegrationGeneratorArg(name="key5", description='', in_='body', in_object=[]),
+            IntegrationGeneratorArg(name="key5_key3", description='', in_='body', in_object=["key5"]),
+            IntegrationGeneratorArg(name="key2", description='', in_='body', in_object=[]),
+            IntegrationGeneratorArg(name="key6", description='', in_='body', in_object=["key2"]),
+            IntegrationGeneratorArg(name="key6_key3", description='', in_='body', in_object=["key2", "key6"]),
+            IntegrationGeneratorArg(name="key8", description='', in_='body', in_object=["key2", "key6"]),
+        ]
+        body_format = create_body_format(request_body, args)
+
+        assert body_format == {
+            "key5": {
+                "key3": "{key5_key3}"
+            },
+            "key2": {
+                "key6": {
+                    "key3": "{key6_key3}",
+                    "key8": "{key8}"
+                }
+            }
+        }
+
+    def test_create_body_format_different_arg_name_one_nested(self):
+        """
+        Given
+        - Request body and a list of arguments.
+
+        When
+        - There are two arguments, one of them nested in another argument, with the same name and different paths.
+
+        Then
+        - Creates a body format with the right arguments' names.
+        """
+        request_body = {
+            "key1": "val1",
+            "key4": [
+                {
+                    "key1": "val5"
+                }
+            ]
+        }
+
+        args: List[IntegrationGeneratorArg] = [
+            IntegrationGeneratorArg(name="key1", description='', in_='body', in_object=[]),
+            IntegrationGeneratorArg(name="key4", description='', in_='body', in_object=[]),
+            IntegrationGeneratorArg(name="key4_key1", description='', in_='body', in_object=["key4"]),
+        ]
+        body_format = create_body_format(request_body, args)
+
+        assert body_format == {
+            "key1": "{key1}",
+            "key4": [
+                {
+                    "key1": "{key4_key1}"
+                },
+            ],
+        }
 
     @pytest.mark.parametrize('collection, outputs', [
         ([], []),
@@ -204,6 +287,86 @@ class TestPostmanHelpers:
         }
         duplicate_requests_check(names_dict)
 
+    test_files_path = os.path.join(git_path(), 'demisto_sdk', 'commands', 'postman_codegen', 'tests', 'test_files')
+    with open(os.path.join(test_files_path, 'shared_args_path.json')) as shared_args_path_file:
+        shared_args_path_items = json.load(shared_args_path_file)
+
+    many_with_shared_paths = defaultdict(int, {'name': 2, 'description': 3, 'url': 3, 'method': 3})
+    one_shared_for_each_paths = defaultdict(int, {'name': 1, 'id': 1, 'uid': 1})
+    complicated_chars_in_paths = defaultdict(int, {'name': 1, 'required': 5})
+    same_path_at_the_end = defaultdict(int, {'name': 2})
+    SHARED_ARGS_PATH = ((shared_args_path_items['many_with_shared_paths'], many_with_shared_paths),
+                        (shared_args_path_items['one_shared_for_each_paths'], one_shared_for_each_paths),
+                        (shared_args_path_items['complicated_chars_in_paths'], complicated_chars_in_paths),
+                        (shared_args_path_items['same_path_at_the_end'], same_path_at_the_end))
+
+    @pytest.mark.parametrize('flattened_json, shared_arg_to_split_position_dict', SHARED_ARGS_PATH)
+    def test_find_shared_args_path(self, flattened_json, shared_arg_to_split_position_dict):
+        """
+        Given
+        - Dictionary containing flattened json with raw body of a request
+
+        When
+        - There are arguments in the request which have the same name (suffix)
+
+        Then
+        - Returns arguments' dictionary with an entry for each argument name, that holds the minimum distinguishing shared path of
+        all arguments with the same name
+        """
+        for arg_name, min_path_length in find_shared_args_path(flattened_json).items():
+            assert shared_arg_to_split_position_dict[arg_name] == min_path_length
+
+    def test_find_shared_args_path_no_path(self):
+        """
+        Given
+        - Dictionary containing flattened json with raw body of a request, that doesn't have duplicate names
+
+        When
+        - There are no arguments in the request which have the same name (suffix)
+
+        Then
+        - Returns arguments' dictionary with an entry for each argument name, that holds the minimum distinguishing shared path of
+        all arguments with the same name - which is 0 in this case
+        """
+        flattened_json = {
+            "strategy": "deleteSource",
+            "source": "{{source_collection_uid}}",
+            "destination": "{{destination_collection_uid}}"
+        }
+        shared_arg_to_split_position_dict = defaultdict(int)
+        for arg_name, min_path_length in find_shared_args_path(flattened_json).items():
+            assert shared_arg_to_split_position_dict[arg_name] == min_path_length
+
+    split_path1 = ['collection', 'item', 'settings', 'name']
+    split_path2 = ['collection', 'info', 'settings', 'name']
+    split_path3 = ['collection', 'item', 'property', 'name']
+    split_path4 = ['set', 'item', 'property', 'name']
+
+    first_call = (split_path2, [], 0, 0)
+    max_to_bigger_then_zero = (split_path4, [split_path2], 0, 1)
+    max_changes_on_first_item = (split_path4, [split_path3, split_path2, split_path1], 2, 3)
+    max_changes_on_second_item = (split_path1, [split_path3, split_path2], 1, 2)
+    max_doesnt_change = (split_path3, [split_path1, split_path2], 2, 2)
+    UPDATED_MAX_INPUT = (first_call,
+                         max_to_bigger_then_zero,
+                         max_changes_on_first_item,
+                         max_changes_on_second_item,
+                         max_doesnt_change)
+
+    @pytest.mark.parametrize('split_path, other_args_split_paths, current_min_unique, new_min_unique', UPDATED_MAX_INPUT)
+    def test_update_min_distinguish_path(self, split_path, other_args_split_paths, current_min_unique, new_min_unique):
+        """
+        Given
+        - A split path of an argument, a list of other arguments' splitted paths, and the minimum unique path until now
+
+        When
+        - Finding the minimum unique path between the arguments that have the same name
+
+        Then
+        - Returns the minimum unique path of all arguments with the same name
+        """
+        assert update_min_unique_path(split_path, other_args_split_paths, current_min_unique) == new_min_unique
+
 
 class TestPostmanCodeGen:
     test_files_path = os.path.join(git_path(), 'demisto_sdk', 'commands', 'postman_codegen', 'tests', 'test_files')
@@ -211,16 +374,21 @@ class TestPostmanCodeGen:
     autogen_config_stream = None
     postman_collection: dict
     autogen_config: dict
+    arguments_check_collection: dict
 
     @classmethod
     def setup_class(cls):
         collection_path = os.path.join(cls.test_files_path, 'VirusTotal.postman_collection.json')
         autogen_config_path = os.path.join(cls.test_files_path, 'VirusTotal-autogen-config.json')
+        arguments_check_collection_path = os.path.join(cls.test_files_path, 'arguments_check_collection.json')
         with open(collection_path) as f:
             cls.postman_collection = json.load(f)
 
         with open(autogen_config_path) as f:
             cls.autogen_config = json.load(f)
+
+        with open(arguments_check_collection_path) as f:
+            cls.arguments_check_collection = json.load(f)
 
         cls.postman_collection_stream = open(collection_path)
         cls.autogen_config_stream = open(autogen_config_path)
@@ -295,6 +463,28 @@ class TestPostmanCodeGen:
         )
 
         assert autogen_config.command_prefix == 'virustotal'
+
+    def test_command_arguments_names_duplication(self):
+        """
+        Given
+        - postman collection with one command, that has some arguments with the same name (suffix)
+
+        When
+        - generating config file
+
+        Then
+        - ensure the number of arguments generated is the same as the number of arguments in the command (if not, some arguments
+        are generated as one with the same name)
+        """
+        autogen_config = postman_to_autogen_configuration(
+            collection=self.arguments_check_collection,
+            command_prefix=None,
+
+            name=None,
+            context_path_prefix=None,
+            category=None
+        )
+        assert len(autogen_config.commands[0].arguments) == 15
 
     def test_context_output_path(self):
         """

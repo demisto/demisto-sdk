@@ -69,7 +69,8 @@ class Repo:
             'GenericTypes': [],
             'GenericFields': [],
             'GenericModules': [],
-            'GenericDefinitions': []
+            'GenericDefinitions': [],
+            'Jobs': []
         })
 
     def __del__(self):
@@ -204,6 +205,9 @@ class Repo:
         generic_definition.update({'name': f'generic_{name} - generic_definition'})
         generic_definition.update({'auditable': False})
 
+        pack.create_job(is_feed=False, name=name)
+        pack.create_job(is_feed=True, name=f'{name}_all_feeds')
+
         return pack
 
     def setup_content_repo(self, number_of_packs):
@@ -237,3 +241,11 @@ class Repo:
         file_path = os.path.join(self.path, file_name)
         with open(file_path, 'w') as f:
             f.write(file_content)
+
+    def add_pack_metadata_file(self, pack_path, file_content):
+        file_path = os.path.join(pack_path, 'pack_metadata.json')
+        if file_content:
+            with open(file_path, 'w') as f:
+                f.write(file_content)
+        else:
+            shutil.copy('demisto_sdk/tests/test_files/DummyPackScriptIsXsoarOnly/pack_metadata.json', file_path)

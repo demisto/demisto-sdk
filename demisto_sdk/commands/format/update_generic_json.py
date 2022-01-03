@@ -4,6 +4,8 @@ import click
 import ujson
 import yaml
 
+from demisto_sdk.commands.common.constants import \
+    DEFAULT_CONTENT_ITEM_TO_VERSION
 from demisto_sdk.commands.common.tools import find_type, is_uuid, print_error
 from demisto_sdk.commands.format.format_constants import (
     ARGUMENTS_DEFAULT_VALUES, GENERIC_OBJECTS_FILE_TYPES, TO_VERSION_5_9_9)
@@ -56,13 +58,14 @@ class BaseUpdateJSON(BaseUpdate):
             self.set_fromVersion(from_version=self.from_version, file_type=source_file_type)
         else:
             self.set_fromVersion(from_version=self.from_version)
+        self.sync_data_to_master()
 
     def set_toVersion(self):
         """
         Sets toVersion key in file
         Relevant for old entities such as layouts and classifiers.
         """
-        if not self.data.get('toVersion') or LooseVersion(self.data.get('toVersion', '99.99.99')) >= TO_VERSION_5_9_9:
+        if not self.data.get('toVersion') or LooseVersion(self.data.get('toVersion', DEFAULT_CONTENT_ITEM_TO_VERSION)) >= TO_VERSION_5_9_9:
             if self.verbose:
                 click.echo('Setting toVersion field')
             self.data['toVersion'] = TO_VERSION_5_9_9
@@ -83,7 +86,9 @@ class BaseUpdateJSON(BaseUpdate):
             # We want to keep 'false' and 0 values, and avoid removing fields that are required in the schema.
             if field in self.data and self.data[field] in (None, '', [], {}) and \
                     not schema_data.get('mapping', {}).get(field, {}).get('required'):
-                self.data.pop(field)
+                # We don't want to remove the defaultRows key in grid, even if it is empty
+                if not (field == 'defaultRows' and self.data.get('type', '') == 'grid'):
+                    self.data.pop(field)
 
     def update_id(self, field='name') -> None:
         """Updates the id to be the same as the provided field ."""
@@ -94,7 +99,7 @@ class BaseUpdateJSON(BaseUpdate):
         if field not in self.data:
             print_error(f'Missing {field} field in file {self.source_file} - add this field manually')
             return None
-        if is_uuid(self.data['id']):
+        if 'id' in self.data and is_uuid(self.data['id']):  # only happens if id had been defined
             updated_integration_id_dict[self.data['id']] = self.data[field]
         self.data['id'] = self.data[field]
 

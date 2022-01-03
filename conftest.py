@@ -66,6 +66,14 @@ def repo(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Repo:
     return get_repo(request, tmp_path_factory)
 
 
+@pytest.fixture(scope='module')
+def module_repo(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Repo:
+    from demisto_sdk.commands.find_dependencies.tests.find_dependencies_test import \
+        working_repo
+
+    return working_repo(get_repo(request, tmp_path_factory))
+
+
 @pytest.fixture
 def playbook(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Playbook:
     """Mocking tmp_path

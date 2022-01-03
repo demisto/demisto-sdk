@@ -30,17 +30,18 @@ from demisto_sdk.tests.constants_test import (
     INTEGRATION_TARGET, INVALID_DASHBOARD_PATH, INVALID_INTEGRATION_ID_PATH,
     INVALID_INTEGRATION_YML_1, INVALID_INTEGRATION_YML_2,
     INVALID_INTEGRATION_YML_3, INVALID_INTEGRATION_YML_4,
-    INVALID_LAYOUT_CONTAINER_PATH, INVALID_LAYOUT_PATH,
-    INVALID_PLAYBOOK_ID_PATH, INVALID_PLAYBOOK_PATH, INVALID_REPUTATION_FILE,
-    INVALID_WIDGET_PATH, LAYOUT_TARGET, LAYOUTS_CONTAINER_TARGET,
-    PLAYBOOK_PACK_TARGET, PLAYBOOK_TARGET, VALID_DASHBOARD_PATH,
-    VALID_INTEGRATION_ID_PATH, VALID_INTEGRATION_TEST_PATH,
-    VALID_LAYOUT_CONTAINER_PATH, VALID_LAYOUT_PATH,
-    VALID_PLAYBOOK_ARCSIGHT_ADD_DOMAIN_PATH, VALID_PLAYBOOK_ID_PATH,
-    VALID_REPUTATION_FILE, VALID_TEST_PLAYBOOK_PATH, VALID_WIDGET_PATH,
-    WIDGET_TARGET)
+    INVALID_INTEGRATION_YML_5, INVALID_LAYOUT_CONTAINER_PATH,
+    INVALID_LAYOUT_PATH, INVALID_PLAYBOOK_ID_PATH, INVALID_PLAYBOOK_PATH,
+    INVALID_REPUTATION_FILE, INVALID_WIDGET_PATH, LAYOUT_TARGET,
+    LAYOUTS_CONTAINER_TARGET, PLAYBOOK_PACK_TARGET, PLAYBOOK_TARGET,
+    VALID_DASHBOARD_PATH, VALID_INTEGRATION_ID_PATH,
+    VALID_INTEGRATION_TEST_PATH, VALID_LAYOUT_CONTAINER_PATH,
+    VALID_LAYOUT_PATH, VALID_PLAYBOOK_ARCSIGHT_ADD_DOMAIN_PATH,
+    VALID_PLAYBOOK_ID_PATH, VALID_REPUTATION_FILE, VALID_TEST_PLAYBOOK_PATH,
+    VALID_WIDGET_PATH, WIDGET_TARGET)
 from TestSuite.json_based import JSONBased
 from TestSuite.pack import Pack
+from TestSuite.test_tools import ChangeCWD
 
 
 class TestStructureValidator:
@@ -265,14 +266,12 @@ class TestStructureValidator:
         assert not structure.is_valid_file_extension()
 
     def test_is_field_with_open_ended(self, pack: Pack):
-        from demisto_sdk.commands.common.hook_validations.incident_field import \
-            TypeFields
         field_content = {
             'cliName': 'sanityname',
             'name': 'sanity name',
             'id': 'incident',
             'content': True,
-            'type': TypeFields.IncidentFieldTypeMultiSelect.value,
+            'type': 'multiSelect',
             'openEnded': True
         }
         incident_field: JSONBased = pack.create_incident_field(
@@ -283,14 +282,12 @@ class TestStructureValidator:
         assert structure.is_valid_scheme()
 
     def test_is_indicator_with_open_ended(self, pack: Pack):
-        from demisto_sdk.commands.common.hook_validations.incident_field import \
-            TypeFields
         field_content = {
             'cliName': 'sanityname',
             'name': 'sanity name',
             'id': 'incident',
             'content': True,
-            'type': TypeFields.IncidentFieldTypeMultiSelect.value,
+            'type': 'multiSelect',
             'openEnded': True
         }
         incident_field: JSONBased = pack.create_indicator_field(
@@ -299,6 +296,52 @@ class TestStructureValidator:
         )
         structure = StructureValidator(incident_field.path)
         assert structure.is_valid_scheme()
+
+    @pytest.mark.parametrize('is_feed', (True, False))
+    @pytest.mark.parametrize('missing_field',
+                             ('isFeed', 'selectedFeeds', 'isAllFeeds', 'name', 'id', 'fromVersion', 'playbookId'))
+    def test_job_missing_field(self, repo, capsys, is_feed: bool, missing_field: str):
+        """
+        Given
+                A Job object in a repo, with one of the required fields missing
+        When
+                Validating the file
+        Then
+                Ensure the structure validator raises a suitable error
+        """
+        pack = repo.create_pack()
+        job = pack.create_job(is_feed=is_feed, name='job_name')
+        job.remove(missing_field)
+
+        validator = StructureValidator(job.path, is_new_file=True)
+        with ChangeCWD(repo.path):
+            assert not validator.is_valid_file()
+        captured = capsys.readouterr().out
+        assert f'Missing the field "{missing_field}" in root' in captured
+
+    def test_invalid_yml(self, capsys):
+        """
+        Given
+                An integration yml file, with duplicate field "display: Fetch indicators"
+
+        When
+                Validating the file
+        Then
+                Ensure the structure validator raises a suitable error
+        """
+        validator = StructureValidator(file_path=INVALID_INTEGRATION_YML_5,
+                                       predefined_scheme='integration')
+        exception = f"[ERROR]: {INVALID_INTEGRATION_YML_5}: [ST113] - There is problem with the yml file. The error: while constructing a mapping\n" \
+                    f"  in \"{INVALID_INTEGRATION_YML_5}\", line 6, column 3\n" \
+                    f"found duplicate key \"display\" with value \"Fetch indicators\" (original value: \"Fetch indicators\")\n" \
+                    f"  in \"{INVALID_INTEGRATION_YML_5}\", line 8, column 3\n\n" \
+                    f"To suppress this check see:\n" \
+                    f"    http://yaml.readthedocs.io/en/latest/api.html#duplicate-keys\n\n" \
+                    f"Duplicate keys will become an error in future releases, and are errors\n" \
+                    f"by default when using the new API.\n\n"
+        assert not validator.is_valid_yml()
+        err_msg = capsys.readouterr()
+        assert exception in err_msg
 
 
 class TestGetMatchingRegex:

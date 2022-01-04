@@ -214,8 +214,8 @@ class LintManager:
             for pkg in pkgs:
                 print_v(f"Found changed package {Colors.Fg.cyan}{pkg}{Colors.reset}",
                         log_verbose=self._verbose)
-        if pkg:
-            print(f"Executing lint and test on {Colors.Fg.cyan}{len(self._pkgs)}{Colors.reset} integrations and scripts")
+        if pkgs:
+            print(f"Executing lint and test on {Colors.Fg.cyan}{pkgs}{Colors.reset} integrations and scripts")
 
         return pkgs
 

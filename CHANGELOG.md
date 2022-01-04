@@ -9,6 +9,7 @@
 * The **format** command will now add fromVersion 6.1.0 to indicator field of type html.
 * Added support for beta integrations in the **format** command.
 * Fixed an issue where the **postman-codegen** command failed when called with the `--config-out` flag.
+* Removed the integration documentation from the detailed description while performing **split** command to the unified yml file.
 
 # 1.5.5
 * Fixed an issue in the **update-release-notes** command, which did not work when changes were made in multiple packs.
@@ -38,7 +39,7 @@
 * Two entitles will not consider as duplicates if they share the same pack and the same source.
 * Fixed a bug when duplicates were found in **find_dependencies**.
 * Added function **get_current_repo** to `tools`.
-* The **postman-codegen** will not have duplicates arguments' name. It will rename them to the minimum distinguished shared path for each of them.
+* The **postman-codegen** will not have duplicates argument name. It will rename them to the minimum distinguished shared path for each of them.
 
 # 1.5.3
 * The **format** command will now set `unsearchable: True` for incident, indicator and generic fields.

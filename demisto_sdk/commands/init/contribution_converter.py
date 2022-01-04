@@ -264,7 +264,7 @@ class ContributionConverter:
             update_docker=True,
             verbose=True,
             assume_yes=True,
-            prev_ver='contrib',  # default is demisto/master
+            prev_ver='demisto/content:contrib'  # default is demisto/master
         )
 
     def generate_readme_for_pack_content_item(self, yml_path: str) -> None:

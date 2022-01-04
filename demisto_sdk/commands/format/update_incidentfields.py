@@ -31,7 +31,9 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
         try:
             click.secho(f'\n================= Updating file {self.source_file} =================', fg='bright_blue')
             super().update_json()
+            print('json updated')
             self.set_default_values_as_needed()
+            print('set default values')
             self.save_json_to_destination_file()
             return SUCCESS_RETURN_CODE
         except Exception as err:

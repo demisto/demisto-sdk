@@ -35,6 +35,7 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
             self.set_default_values_as_needed()
             print('set default values')
             self.save_json_to_destination_file()
+            print('file saved')
             return SUCCESS_RETURN_CODE
         except Exception as err:
             if self.verbose:

@@ -41,7 +41,10 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
                         fg='bright_red')
             user_answer = ''
             while not user_answer:
-                user_answer = input()
+                try:
+                    user_answer = input()
+                except EOFError:
+                    user_answer = 'n'
                 if user_answer in ['n', 'N', 'no', 'No']:
                     user_description = ''
                     self.data['description'] = user_description

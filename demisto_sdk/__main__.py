@@ -1615,9 +1615,9 @@ def postman_codegen(
 
     if config_out:
         path = Path(output) / f'config-{postman_config.name}.json'
-        with open(path, mode='w+') as f:
+        with path.open(mode='w+') as f:
             json.dump(postman_config.to_dict(), f, indent=4)
-            logger.info(f'Config file generated at:\n{os.path.abspath(path)}')
+        logger.info(f'Config file generated at:\n{str(path.absolute())}')
     else:
         # generate integration yml
         yml_path = postman_config.generate_integration_package(output, is_unified=True)

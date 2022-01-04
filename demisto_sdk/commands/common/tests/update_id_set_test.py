@@ -22,9 +22,9 @@ from demisto_sdk.commands.common.update_id_set import (
     get_indicator_type_data, get_layout_data, get_layoutscontainer_data,
     get_mapper_data, get_pack_metadata_data, get_playbook_data,
     get_report_data, get_script_data, get_values_for_keys_recursively,
-    get_widget_data, has_duplicate, merge_id_sets, process_general_items,
+    get_widget_data, has_duplicate, is_dict_have_alternative_key, merge_id_sets, process_general_items,
     process_incident_fields, process_integration, process_jobs, process_script,
-    re_create_id_set, should_skip_item_by_mp, is_dict_have_alternative_key)
+    re_create_id_set, should_skip_item_by_mp)
 from TestSuite.utils import IsEqualFunctions
 
 TESTS_DIR = f'{git_path()}/demisto_sdk/tests'

@@ -8,7 +8,7 @@
 * The **validate** command will validate that an indicator field of type html has fromVersion of 6.1.0 and above.
 * The **format** command will now add fromVersion 6.1.0 to indicator field of type html.
 * Added support for beta integrations in the **format** command.
-
+* Removed the integration documentation from the detailed description while performing **split** command to the unified yml file.
 
 # 1.5.5
 * Fixed an issue in the **update-release-notes** command, which did not work when changes were made in multiple packs.

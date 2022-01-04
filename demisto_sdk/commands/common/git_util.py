@@ -36,7 +36,7 @@ class GitUtil:
         current_branch_or_hash = self.get_current_git_branch_or_hash()
 
         # when checking branch against itself only return the last commit.
-        last_commit = self._only_last_commit(prev_ver, requested_status='M') if not include_untracked else None
+        last_commit = self._only_last_commit(prev_ver, requested_status='M')
         if last_commit:
             self.debug_print(debug=debug, status='Modified', staged=set(), committed=last_commit)
             return last_commit
@@ -405,8 +405,8 @@ class GitUtil:
 
         try:
             if requested_status != 'R':
-                print(f'This is the items: {self.repo.commit("HEAD~1").diff().iter_change_type(requested_status)}')
-                print('Items print successfully')
+                print(f'This is the items: {self.repo.commit("HEAD~1").diff()}')
+                print('Diffs print successfully')
                 return {Path(os.path.join(item.a_path)) for item in
                         self.repo.commit('HEAD~1').diff().iter_change_type(requested_status) if item.score == 100}
             else:

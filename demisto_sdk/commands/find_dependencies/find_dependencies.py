@@ -2032,7 +2032,7 @@ class PackDependencies:
             # print the found pack dependency results
             click.echo(click.style(f"Found dependencies result for {pack_name} pack:", bold=True))
             # flatten tuple keys to str to allow parsing to json
-            first_level_dependencies = {str(k): str(v) for k, v in first_level_dependencies.items()}
+            #first_level_dependencies = {str(k): str(v) for k, v in first_level_dependencies.items()}
             dependency_result = json.dumps(first_level_dependencies, indent=4)
             click.echo(click.style(dependency_result, bold=True))
 

@@ -429,7 +429,7 @@ class GitUtil:
             return None, prev_ver
 
         if prev_ver and '/' in prev_ver:
-            prev_ver_split = prev_ver.split('/')
+            remote, branch = prev_ver.split('/', 1)
             remote = prev_ver_split[0]
             remote = remote if self.check_if_remote_exists(remote) else str(self.repo.remote())
             branch = prev_ver_split[1]

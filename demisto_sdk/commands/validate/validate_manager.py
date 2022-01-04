@@ -1252,7 +1252,7 @@ class ValidateManager:
 
         # If git is connected - Use it to get prev_ver
         if self.git_util:
-            # If demisto exists in remotes if so set prev_ver as 'demisto/master'
+            # If demisto exists in remotes - set prev_ver as 'demisto/master'
             if self.git_util.check_if_remote_exists('demisto'):
                 return 'demisto/master'
 

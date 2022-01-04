@@ -252,7 +252,9 @@ class Linter:
                 self._facts["python_version"] = pynum
                 logger.info(f"{log_prompt} - Using python version from yml: {pynum}")
             # Get lint files
-            lint_files = set(self._pack_abs_dir.glob(["*.py", "!__init__.py", "!*.tmp"],
+            # lint_files = set(self._pack_abs_dir.glob(["*.py", "!__init__.py", "!*.tmp"],
+            #                                          flags=NEGATE))
+            lint_files = set((self._content_repo/'Packs_12').rglob(["*.py", "!__init__.py", "!*.tmp", "!CommonServer*.py", "!demistomock.py"],
                                                      flags=NEGATE))
         # Facts for Powershell pack
         elif self._pkg_lint_status["pack_type"] == TYPE_PWSH:
@@ -300,7 +302,8 @@ class Linter:
             files_to_ignore = repo.ignored(self._facts['lint_files'])
             for file in files_to_ignore:
                 logger.info(f"{log_prompt} - Skipping gitignore file {file}")
-            self._facts["lint_files"] = [path for path in self._facts['lint_files'] if path not in files_to_ignore]
+            a = str(self._facts["lint_files"][0])
+            self._facts["lint_files"] = [path for path in self._facts['lint_files'] if str(path) not in files_to_ignore]
 
         except (git.InvalidGitRepositoryError, git.NoSuchPathError):
             logger.debug("No gitignore files is available")
@@ -325,11 +328,13 @@ class Linter:
             no_mypy(bool): Whether to skip mypy.
             no_vulture(bool): Whether to skip Vulture.
         """
+        total_start_time = time.time()
         warning = []
         error = []
         other = []
         exit_code: int = 0
         for lint_check in ["flake8", "XSOAR_linter", "bandit", "mypy", "vulture"]:
+            specific_lint_start_time = time.time()
             exit_code = SUCCESS
             output = ""
             if self._facts["lint_files"] or self._facts["lint_unittest_files"]:
@@ -369,6 +374,14 @@ class Linter:
                 # if there were errors but they do not start with E
                 else:
                     self._pkg_lint_status[f"{lint_check}_errors"] = "\n".join(other)
+            
+            if output:
+                logger.info(f"{lint_check} execute time for pack: {self._pack_name} - was {int(time.time() - specific_lint_start_time)}s")
+
+        
+        total_time = int(time.time() - total_start_time)
+        logger.info(f"Linting on OS execute time for pack: {self._pack_name} - was {total_time}s")
+
 
     def _run_flake8(self, py_num: float, lint_files: List[Path]) -> Tuple[int, str]:
         """ Runs flake8 in pack dir

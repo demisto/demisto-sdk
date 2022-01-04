@@ -2,6 +2,13 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal"
+        },
+        {
             "name": "Python: Upload AbuseDB",
             "type": "python",
             "request": "launch",
@@ -22,9 +29,36 @@
             "args": [
                 "lint",
                 "-i",
-                "${env:CONTENT}/Packs/AbuseDB/Integrations/AbuseDB",
-                "-j",
-                "${env:CONTENT}/.demisto-sdk-report"
+                "${env:CONTENT}/Packs/AbuseDB/Integrations/AbuseDB"
+            ]
+        },
+        {
+            "name": "Python: Lint all with logs",
+            "type": "python",
+            "request": "launch",
+            "module": "demisto_sdk",
+            "cwd": "${env:CONTENT}",
+            "args": [
+                "lint",
+                "-a"
+            ]
+        },
+        {
+            "name": "Python: Lint all only mypy",
+            "type": "python",
+            "request": "launch",
+            "module": "demisto_sdk",
+            "cwd": "${env:CONTENT}",
+            "args": [
+                "lint",
+                "-a",
+                "--no-flake8",
+                "--no-bandit",
+                "--no-xsoar-linter",
+                "--no-vulture",
+                "--no-pylint",
+                "--no-test"
+
             ]
         }
     ]

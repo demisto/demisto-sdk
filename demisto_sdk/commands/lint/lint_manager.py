@@ -312,6 +312,8 @@ class LintManager:
                                                no_pwsh_test=no_pwsh_test, docker_engine=self._facts["docker_engine"])
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=parallel) as executor:
+            import time
+            start_time = time.time()
             return_exit_code: int = 0
             return_warning_code: int = 0
             results = []
@@ -370,6 +372,9 @@ class LintManager:
                 except Exception:
                     pass
                 return 1
+            
+            print_v(f"{Colors.Fg.green}Total lint take: {int(time.time() - start_time)}s", log_verbose=self._verbose)
+
 
         self._report_results(lint_status=lint_status,
                              pkgs_status=pkgs_status,

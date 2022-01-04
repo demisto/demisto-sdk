@@ -567,11 +567,14 @@ class GitUtil:
         modified_files: Set[Path] = self.modified_files(prev_ver=prev_ver, committed_only=committed_only,
                                                         staged_only=staged_only, debug=debug,
                                                         include_untracked=include_untracked)
+        print(f'This is all modified files {modified_files}')
         added_files: Set[Path] = self.added_files(prev_ver=prev_ver, committed_only=committed_only,
                                                   staged_only=staged_only, debug=debug,
                                                   include_untracked=include_untracked)
+        print(f'This is all added files {added_files}')
         renamed_files: Set[Path] = self.renamed_files(prev_ver=prev_ver, committed_only=committed_only,  # type: ignore[assignment]
                                                       staged_only=staged_only, debug=debug,
                                                       include_untracked=include_untracked,
                                                       get_only_current_file_names=True)
+        print(f'This is all renamed files {renamed_files}')
         return modified_files.union(added_files).union(renamed_files)

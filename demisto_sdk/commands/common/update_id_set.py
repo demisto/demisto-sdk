@@ -94,6 +94,29 @@ BUILT_IN_FIELDS = [
 ]
 
 
+def is_dict_have_alternative_key(dict_to_search: dict) -> bool:
+    """
+        Check if a key that ends with "_x2" exists in the dict (including inner levels)
+        Args:
+            dict_to_search (dict): the dict to search in
+
+        Returns: True if found such a key, else False
+
+        """
+
+    # start searching in the first level keys
+    for key in dict_to_search.keys():
+        if key.endswith('_x2'):
+            return True
+
+    for key, value in dict_to_search.items():
+        if isinstance(value, dict):
+            if is_dict_have_alternative_key(value):
+                return True
+
+    return False
+
+
 def should_skip_item_by_mp(file_path: str, marketplace: str, print_logs: bool = False):
     """
     Checks if the item given (as path) should be part of the current generated id set.
@@ -544,6 +567,9 @@ def get_playbook_data(file_path: str) -> dict:
         playbook_data['transformers'] = transformers
     if implementing_lists:
         playbook_data['lists'] = implementing_lists
+    if is_dict_have_alternative_key(data_dictionary):
+        playbook_data['has_alternative_meta'] = True
+
     return {id_: playbook_data}
 
 
@@ -578,6 +604,8 @@ def get_script_data(file_path, script_code=None):
         script_data['docker_image'] = docker_image
     if tests:
         script_data['tests'] = tests
+    if is_dict_have_alternative_key(data_dictionary):
+        script_data['has_alternative_meta'] = True
 
     return {id_: script_data}
 
@@ -775,6 +803,8 @@ def get_incident_field_data(path, incidents_types_list):
         data['incident_types'] = list(all_associated_types)
     if all_scripts:
         data['scripts'] = list(all_scripts)
+    if is_dict_have_alternative_key(json_data):
+        data['has_alternative_meta'] = True
 
     return {id_: data}
 
@@ -980,6 +1010,8 @@ def get_mapper_data(path):
         data['transformers'] = list(all_transformers)
     if definition_id:
         data['definitionId'] = definition_id
+    if is_dict_have_alternative_key(json_data):
+        data['has_alternative_meta'] = True
 
     return {id_: data}
 

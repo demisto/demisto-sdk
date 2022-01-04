@@ -83,7 +83,6 @@ UNFORMATTED_FILES = ['readme',
                      'image',
                      'javascriptfile',
                      'powershellfile',
-                     'betaintegration',
                      'doc_image',
                      'author_image'
                      ]
@@ -266,6 +265,9 @@ def run_format_on_file(input: str, file_type: str, from_version: str, **kwargs) 
     Returns:
         List of Success , List of Error.
     """
+
+    if file_type == 'betaintegration':
+        file_type = 'integration'
     schema_path = os.path.normpath(
         os.path.join(__file__, "..", "..", "common", SCHEMAS_PATH, '{}.yml'.format(file_type)))
     if file_type not in ('integration', 'script') and 'update_docker' in kwargs:

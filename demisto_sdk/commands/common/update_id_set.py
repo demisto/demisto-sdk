@@ -1602,7 +1602,7 @@ def merge_id_sets(first_id_set_dict: dict, second_id_set_dict: dict, print_logs:
             for obj in object_list:
                 obj_id = list(obj.keys())[0]
                 is_duplicate = has_duplicate(subset, obj_id, object_type, print_logs,
-                                             external_object=obj)
+                                             external_object=obj, is_create_new=False)
                 if is_duplicate:
                     duplicates.append(obj_id)
                 else:
@@ -2100,7 +2100,7 @@ def find_duplicates(id_set, print_logs, marketplace):
 
         dup_list = []
         for id_to_check in ids:
-            if has_duplicate(objects, id_to_check, object_type, print_logs):
+            if has_duplicate(objects, id_to_check, object_type, print_logs, is_create_new=True):
                 dup_list.append(id_to_check)
         lists_to_return.append(dup_list)
     if print_logs:
@@ -2111,19 +2111,21 @@ def find_duplicates(id_set, print_logs, marketplace):
 
     field_list = []
     for field_to_check in field_ids:
-        if has_duplicate(fields, field_to_check, 'Indicator and Incident Fields', print_logs):
+        if has_duplicate(fields, field_to_check, 'Indicator and Incident Fields', print_logs, is_create_new=True):
             field_list.append(field_to_check)
     lists_to_return.append(field_list)
 
     return lists_to_return
 
 
-def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=True, external_object=None):
+def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=True, external_object=None, is_create_new=False):
     """
     Finds if id_set_subset_list contains a duplicate items with the same id_to_check.
 
     Pass `external_object` to check if it exists in `id_set_subset_list`.
     Otherwise the function will check if `id_set_subset_list` contains 2 or more items with the id of `id_to_check`
+
+    Pass `is_create_new` if searching for duplicate while creating a new id-set.
 
     """
     duplicates = [duplicate for duplicate in id_set_subset_list if duplicate.get(id_to_check)]
@@ -2154,7 +2156,9 @@ def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=
 
         # If they have the same pack name and the same source they actually the same entity.
         # Added to support merge between two id-sets that contain the same pack.
-        if dict1.get('pack') == dict2.get('pack') and is_same_source(dict1.get('source'), dict2.get('source')):
+        if not is_create_new and \
+                dict1.get('pack') == dict2.get('pack') and\
+                is_same_source(dict1.get('source'), dict2.get('source')):
             return False
 
         # A: 3.0.0 - 3.6.0

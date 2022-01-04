@@ -206,6 +206,8 @@ mapping:
                   - include: arg_filters_schema
               scriptId:
                 type: str
+              scriptName:
+                type: str
               scriptArguments:
                 type: map
                 allowempty: True

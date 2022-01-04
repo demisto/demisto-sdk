@@ -147,14 +147,12 @@ class GitUtil:
         # get all committed files identified as added which are changed from prev_ver.
         # this can result in extra files identified which were not touched on this branch.
         if remote:
-            print('Yes remote')
             committed = {Path(os.path.join(item.a_path)) for item
                          in self.repo.remote(name=remote).refs[branch].commit.diff(
                 current_branch_or_hash).iter_change_type('A')}.union(untrue_rename_committed)
 
         # if remote does not exist we are checking against the commit sha1
         else:
-            print('No remote')
             committed = {Path(os.path.join(item.a_path)) for item
                          in self.repo.commit(rev=prev_ver).diff(
                 current_branch_or_hash).iter_change_type('A')}.union(untrue_rename_committed)
@@ -162,17 +160,12 @@ class GitUtil:
         # identify all files that were touched on this branch regardless of status
         # intersect these with all the committed files to identify the committed added files.
         all_branch_changed_files = self._get_all_changed_files(prev_ver)
-        print(f'all branch changed files {all_branch_changed_files}')
         committed = committed.intersection(all_branch_changed_files)
-        print(f'committed {committed}')
 
         # remove deleted files
         committed = committed - deleted
-        print(f'committed - deleted {committed}')
-        print(f'deleted {deleted}')
 
         if committed_only:
-            print('Yes committed only')
             self.debug_print(debug=debug, status='Added', staged=set(), committed=committed)
             return committed
 
@@ -181,11 +174,9 @@ class GitUtil:
         if include_untracked:
             # get all untracked added files
             untracked_added = self._get_untracked_files('A')
-            print(f'untracked_added files {untracked_added}')
 
             # get all untracked modified files
             untracked_modified = self._get_untracked_files('M')
-            print(f'untracked_modified files {untracked_modified}')
 
         # get all the files that are staged on the branch and identified as added.
         staged = {Path(os.path.join(item.a_path)) for item in
@@ -210,7 +201,6 @@ class GitUtil:
             return staged
 
         self.debug_print(debug=debug, status='Added', staged=staged, committed=committed)
-        print(f'staged {staged} and committed {committed}')
 
         return staged.union(committed)
 
@@ -577,14 +567,11 @@ class GitUtil:
         modified_files: Set[Path] = self.modified_files(prev_ver=prev_ver, committed_only=committed_only,
                                                         staged_only=staged_only, debug=debug,
                                                         include_untracked=include_untracked)
-        print(f'This is all modified files {modified_files}')
         added_files: Set[Path] = self.added_files(prev_ver=prev_ver, committed_only=committed_only,
                                                   staged_only=staged_only, debug=debug,
                                                   include_untracked=include_untracked)
-        print(f'This is all added files {added_files}')
         renamed_files: Set[Path] = self.renamed_files(prev_ver=prev_ver, committed_only=committed_only,  # type: ignore[assignment]
                                                       staged_only=staged_only, debug=debug,
                                                       include_untracked=include_untracked,
                                                       get_only_current_file_names=True)
-        print(f'This is all renamed files {renamed_files}')
         return modified_files.union(added_files).union(renamed_files)

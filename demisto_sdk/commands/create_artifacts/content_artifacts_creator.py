@@ -570,6 +570,7 @@ def dump_tests_conditionally(artifact_manager: ArtifactsManager) -> ArtifactsRep
 
     Returns:
         ArtifactsReport: ArtifactsReport object.
+
     """
     report = ArtifactsReport("TestPlaybooks:")
     for test in artifact_manager.content.test_playbooks:

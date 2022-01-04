@@ -2008,8 +2008,6 @@ def error_code(config, **kwargs):
 def exit_from_program(result=0, **kwargs):
     sys.exit(result)
 
-# todo: add download from demisto command
-
 
 if __name__ == '__main__':
     main()

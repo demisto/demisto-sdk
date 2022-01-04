@@ -234,7 +234,7 @@ class PackDependencies:
                     MINIMUM_DEPENDENCY_VERSION:
                 pack_name = item_details.get('pack')
                 pack_names.add(pack_name)
-                packs_and_items_dict.setdefault(pack_name, []).extend([(item_type, item_id)])
+                packs_and_items_dict.setdefault(pack_name, []).append((item_type, item_id))
 
         if not exclude_ignored_dependencies:
             return set(pack_names), packs_and_items_dict

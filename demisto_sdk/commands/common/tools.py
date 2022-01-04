@@ -31,10 +31,10 @@ from pebble import ProcessFuture, ProcessPool
 from ruamel.yaml import YAML
 
 from demisto_sdk.commands.common.constants import (
-    ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES, API_MODULES_PACK,
+    ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK,
     CLASSIFIERS_DIR, DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH,
     DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
-    DOC_FILES_DIR, FILE_PATH, ID_IN_COMMONFIELDS, ID_IN_ROOT,
+    DOC_FILES_DIR, ID_IN_COMMONFIELDS, ID_IN_ROOT,
     INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
     INDICATOR_TYPES_DIR, INTEGRATIONS_DIR, JOBS_DIR, LAYOUTS_DIR, LISTS_DIR,
     MARKETPLACE_KEY_PACK_METADATA, METADATA_FILE_NAME,
@@ -2279,7 +2279,7 @@ def get_api_module_dependencies(pkgs, id_set_path, verbose):
     for script in scripts:
         script_info = list(script.values())[0]
         script_name = script_info.get('name')
-        api_module = script_info.get(API_MODULES, [])
+        api_module = script_info.get('api_modules', [])
         if api_module in api_modules:
             if verbose:
                 print(f"found script {script_name} dependent on {api_module}")
@@ -2288,14 +2288,14 @@ def get_api_module_dependencies(pkgs, id_set_path, verbose):
     for integration in integrations:
         integration_info = list(integration.values())[0]
         integration_name = integration_info.get('name')
-        api_module = integration_info.get(API_MODULES, [])
+        api_module = integration_info.get('api_modules', [])
         if api_module in api_modules:
             if verbose:
                 print(f"found integration {integration_name} dependent on {api_module}")
             using_integrations.extend(list(integration.values()))
 
-    using_scripts_pkg_paths = [Path(script.get(FILE_PATH)).parent.absolute() for
+    using_scripts_pkg_paths = [Path(script.get('file_path')).parent.absolute() for
                                script in using_scripts]
-    using_integrations_pkg_paths = [Path(integration.get(FILE_PATH)).parent.absolute() for
+    using_integrations_pkg_paths = [Path(integration.get('file_path')).parent.absolute() for
                                     integration in using_integrations]
     return list(set(using_integrations_pkg_paths + using_scripts_pkg_paths))

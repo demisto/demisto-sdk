@@ -535,7 +535,6 @@ PACK_METADATA_FIELDS = (PACK_METADATA_NAME, PACK_METADATA_DESC, PACK_METADATA_SU
                         PACK_METADATA_CURR_VERSION, PACK_METADATA_AUTHOR, PACK_METADATA_URL, PACK_METADATA_CATEGORIES,
                         PACK_METADATA_TAGS, PACK_METADATA_USE_CASES, PACK_METADATA_KEYWORDS)
 API_MODULES_PACK = 'ApiModules'
-API_MODULES = 'api_modules'
 API_MODULE_PY_REGEX = r'{}{}/{}/{}/([^/]+)/([^.]+)\.py'.format(
     CAN_START_WITH_DOT_SLASH, PACKS_DIR, API_MODULES_PACK, SCRIPTS_DIR)
 API_MODULE_YML_REGEX = r'{}{}/{}/{}/([^/]+)/([^.]+)\.yml'.format(
@@ -544,7 +543,6 @@ API_MODULE_REGEXES = [
     API_MODULE_PY_REGEX,
     API_MODULE_YML_REGEX
 ]
-FILE_PATH = 'file_path'
 
 ID_IN_COMMONFIELDS = [  # entities in which 'id' key is under 'commonfields'
     'integration',

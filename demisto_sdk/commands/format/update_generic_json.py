@@ -50,13 +50,9 @@ class BaseUpdateJSON(BaseUpdate):
     def update_json(self):
         """Manager function for the generic JSON updates."""
         self.set_version_to_default()
-        print('version is default')
         self.remove_null_fields()
-        print('removed null fields')
         self.remove_unnecessary_keys()
-        print('removed unnecessary fields')
         self.remove_spaces_end_of_id_and_name()
-        print('removed unnecessary fields')
         source_file_type = find_type(self.source_file)
         if source_file_type in GENERIC_OBJECTS_FILE_TYPES:
             self.set_fromVersion(from_version=self.from_version, file_type=source_file_type)

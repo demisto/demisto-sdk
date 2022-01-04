@@ -112,17 +112,11 @@ class BaseUpdateYML(BaseUpdate):
         """Manager function for the generic YML updates."""
 
         self.set_fromVersion(from_version=self.from_version, file_type=file_type)
-        print('from version was set')
         self.remove_copy_and_dev_suffixes_from_name()
-        print('copy removed')
         self.remove_unnecessary_keys()
-        print('unnecessary keys removed')
         self.remove_spaces_end_of_id_and_name()
-        print('spaces remved')
         self.update_id_to_equal_name()
-        print('id to equal name')
         self.set_version_to_default(self.id_and_version_location)
-        print('version to default')
         self.copy_tests_from_old_file()
         if self.deprecate:
             self.update_deprecate(file_type=file_type)

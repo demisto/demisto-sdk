@@ -263,7 +263,6 @@ class ContributionConverter:
             update_docker=True,
             verbose=True,
             assume_yes=True,
-            include_untracked=True,
         )
 
     def generate_readme_for_pack_content_item(self, yml_path: str) -> None:

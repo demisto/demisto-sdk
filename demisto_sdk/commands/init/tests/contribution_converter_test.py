@@ -611,7 +611,7 @@ class TestEnsureUniquePackDirName:
                               side_efect=self.mock_format_manager())
         contribution_converter.format_converted_pack()
 
-        assert result.call_args[1].get('include_untracked')
+        assert result.call_args[1].get('prev_ver') == 'xsoar-contrib/master'
 
     def test_ensure_unique_pack_dir_name_with_conflict_and_version_suffix(self, contribution_converter):
         """Test the 'ensure_unique_pack_dir_name' method

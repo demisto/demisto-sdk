@@ -44,6 +44,7 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
                 try:
                     user_answer = input()
                 except EOFError:
+                    print('User answer is an error')
                     user_answer = 'n'
                 if user_answer in ['n', 'N', 'no', 'No']:
                     user_description = ''

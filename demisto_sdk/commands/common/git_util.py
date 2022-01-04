@@ -405,8 +405,6 @@ class GitUtil:
 
         try:
             if requested_status != 'R':
-                print(f'This is the items: {self.repo.commit("HEAD~1").diff()}')
-                print('Diffs print successfully')
                 return {Path(os.path.join(item.a_path)) for item in
                         self.repo.commit('HEAD~1').diff().iter_change_type(requested_status) if item.score == 100}
             else:

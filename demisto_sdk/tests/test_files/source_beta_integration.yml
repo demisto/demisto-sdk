@@ -1,0 +1,35 @@
+category: IT Services
+commonfields:
+  id: test integration
+  version: -1
+configuration:
+- display: Application ID
+  hidden: false
+  name: app_id
+  required: true
+  defaultvalue: 40191
+  type: 0
+description: description
+  service.
+display: test integration
+name: test integration
+script:
+  commands:
+  - deprecated: false
+    description: test command.
+    execution: false
+    name: command-test
+  dockerimage: demisto/pto:1.0.0.24047
+  feed: false
+  isfetch: true
+  longRunning: false
+  longRunningPort: false
+  runonce: false
+  script: '-'
+  subtype: python3
+  type: python
+fromversion: 6.0.0
+defaultmapperin: testing Incoming Mapper
+defaultclassifier: testing
+tests:
+- betaTest

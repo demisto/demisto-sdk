@@ -1768,15 +1768,11 @@ def is_object_in_id_set(object_name, pack_info_from_id_set):
     Returns:
 
     """
-    try:
-        content_items = pack_info_from_id_set['ContentItems']
-        for items_type, items_names in content_items.items():
-            if object_name in items_names:
-                return True
-        return False
-    except KeyError:
-        print('The id set given has missing keys in it, make sure you are using the latest id set version.')
-        raise
+    content_items = pack_info_from_id_set['ContentItems']
+    for items_type, items_names in content_items.items():
+        if object_name in items_names:
+            return True
+    return False
 
 
 def is_string_uuid(string_to_check: str):

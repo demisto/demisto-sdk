@@ -88,7 +88,6 @@ class Pack:
         """
         objects_path = (self._path / dir_name).glob(patterns=["*/"])
         for object_path in objects_path:
-            # TODO: check this case, when is used
             yield path_to_pack_object(object_path)
 
     @property

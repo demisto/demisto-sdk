@@ -5,6 +5,10 @@
 * Added error type text (`ERROR` or `WARNING`) to **validate** error prints.
 * Fixed an issue where the **format** command on test playbook did not format the ID to be equal to the name of the test playbook.
 * Enhanced the **update-release-notes** command to automatically commit release notes config file upon creation.
+* The **validate** command will validate that an indicator field of type html has fromVersion of 6.1.0 and above.
+* The **format** command will now add fromVersion 6.1.0 to indicator field of type html.
+* Added support for beta integrations in the **format** command.
+
 
 # 1.5.5
 * Fixed an issue in the **update-release-notes** command, which did not work when changes were made in multiple packs.

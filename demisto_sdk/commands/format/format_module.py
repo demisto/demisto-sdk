@@ -214,6 +214,8 @@ def get_files_to_format_from_git(supported_file_types: List[str], prev_ver: str,
     git_util = GitUtil()
     all_changed_files = git_util.get_all_changed_files(prev_ver=prev_ver, include_untracked=include_untracked)
 
+    print(f'This is the all changed files: {all_changed_files}')
+
     filtered_files = []
     for file_path in all_changed_files:
         str_file_path = str(file_path)

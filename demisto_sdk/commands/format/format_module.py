@@ -133,6 +133,7 @@ def format_manager(input: str = None,
         files = get_files_in_dir(input, supported_file_types)
 
     elif use_git:
+        print(f'This is the prev version {prev_ver}')
         files = get_files_to_format_from_git(supported_file_types, prev_ver, include_untracked)
 
     print(f'This is the files: {files}')

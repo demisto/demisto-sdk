@@ -264,7 +264,6 @@ class ContributionConverter:
             update_docker=True,
             verbose=True,
             assume_yes=True,
-            prev_ver='demisto:contrib/xsoar-contrib_MosheEichler-contrib-MarketplaceContribution_Xsoar-110'  # default is demisto/master
         )
 
     def generate_readme_for_pack_content_item(self, yml_path: str) -> None:

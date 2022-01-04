@@ -71,7 +71,7 @@ class PackUniqueFilesValidator(BaseValidator):
 
     def __init__(self, pack, pack_path=None, validate_dependencies=False, ignored_errors=None, print_as_warnings=False,
                  should_version_raise=False, id_set_path=None, suppress_print=False, private_repo=False,
-                 skip_id_set_creation=False, prev_ver=f'{main_branch}', json_file_path=None, support=None,
+                 skip_id_set_creation=False, prev_ver=main_branch, json_file_path=None, support=None,
                  empty_readme_check=True):
         """Inits the content pack validator with pack's name, pack's path, and unique files to content packs such as:
         secrets whitelist file, pack-ignore file, pack-meta file and readme file

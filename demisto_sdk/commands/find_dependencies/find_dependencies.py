@@ -72,7 +72,7 @@ def parse_for_pack_metadata(dependency_graph: nx.DiGraph, graph_root: str, verbo
                 additional_data['certification'] = dependency_data['certification']
             else:
                 additional_data['display_name'] = pack_name
-            additional_data.pop('depending_on_items_mandatorily', None)
+        additional_data.pop('depending_on_items_mandatorily', None)
         first_level_dependencies[dependency_id] = additional_data
 
     all_level_dependencies = [n for n in dependency_graph.nodes if dependency_graph.in_degree(n) > 0]
@@ -2032,7 +2032,7 @@ class PackDependencies:
             # print the found pack dependency results
             click.echo(click.style(f"Found dependencies result for {pack_name} pack:", bold=True))
             # flatten tuple keys to str to allow parsing to json
-            #first_level_dependencies = {str(k): str(v) for k, v in first_level_dependencies.items()}
+            # first_level_dependencies = {str(k): str(v) for k, v in first_level_dependencies.items()}
             dependency_result = json.dumps(first_level_dependencies, indent=4)
             click.echo(click.style(dependency_result, bold=True))
 

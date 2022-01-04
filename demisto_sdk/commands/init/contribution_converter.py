@@ -258,12 +258,12 @@ class ContributionConverter:
         )
         from_version = '6.0.0' if self.create_new else ''
         format_manager(
-            input=self.pack_dir_path,
             from_version=from_version,
             no_validate=True,
             update_docker=True,
             verbose=True,
             assume_yes=True,
+            include_untracked=True
         )
 
     def generate_readme_for_pack_content_item(self, yml_path: str) -> None:

@@ -2109,4 +2109,4 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def changed_pack_name(original_name, new_name):
-        return f'The pack name cannot be change. change the pack name from {new_name} to {original_name}.'
+        return f'Pack names cannot be changed. Please rename it back to {original_name} under pack_metadata.'

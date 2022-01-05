@@ -1,4 +1,17 @@
 # Changelog
+* Added 'deprecated' release notes template.
+* Fixed an issue where **run-test-playbook** command failed to get the task entries when the test playbook finished with errors.
+* Fixed an issue in **validate** command when running with `no-conf-json` argument to ignore the `conf.json` file.
+* Added error type text (`ERROR` or `WARNING`) to **validate** error prints.
+* Fixed an issue where the **format** command on test playbook did not format the ID to be equal to the name of the test playbook.
+* Enhanced the **update-release-notes** command to automatically commit release notes config file upon creation.
+* The **validate** command will validate that an indicator field of type html has fromVersion of 6.1.0 and above.
+* The **format** command will now add fromVersion 6.1.0 to indicator field of type html.
+* Added support for beta integrations in the **format** command.
+* Removed the integration documentation from the detailed description while performing **split** command to the unified yml file.
+
+# 1.5.5
+* Fixed an issue in the **update-release-notes** command, which did not work when changes were made in multiple packs.
 * Changed the **validate** command to fail on missing test-playbooks only if no unittests are found.
 * Fixed `to_kebab_case`, it will now deal with strings that have hyphens, commas or periods in them, changing them to be hyphens in the new string.
 * Fixed an issue in the **create-id-set** command, where the `source` value included the git token if it was specified in the remote url.
@@ -25,7 +38,7 @@
 * Two entitles will not consider as duplicates if they share the same pack and the same source.
 * Fixed a bug when duplicates were found in **find_dependencies**.
 * Added function **get_current_repo** to `tools`.
-* The **postman-codegen** will not have duplicates arguments' name. It will rename them to the minimum distinguished shared path for each of them.
+* The **postman-codegen** will not have duplicates argument name. It will rename them to the minimum distinguished shared path for each of them.
 
 # 1.5.3
 * The **format** command will now set `unsearchable: True` for incident, indicator and generic fields.

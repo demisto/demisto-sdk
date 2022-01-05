@@ -1,4 +1,5 @@
 import re
+from distutils.version import LooseVersion
 from enum import Enum
 from functools import reduce
 from typing import Dict, List
@@ -175,6 +176,9 @@ ENTITY_TYPE_TO_DIR = {
 }
 
 CONTENT_FILE_ENDINGS = ['py', 'yml', 'png', 'json', 'md']
+
+IGNORED_PACKS_IN_DEPENDENCY_CALC = ['NonSupported', 'Base']  # Packs that are ignored when calculating dependencies
+ALL_PACKS_DEPENDENCIES_DEFAULT_PATH = './all_packs_dependencies.json'
 
 CUSTOM_CONTENT_FILE_ENDINGS = ['yml', 'json']
 
@@ -1245,7 +1249,7 @@ MAX_FETCH = 'max_fetch'
 
 SKIP_RELEASE_NOTES_FOR_TYPES = (FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK,
                                 FileType.TEST_SCRIPT, FileType.DOC_IMAGE, FileType.AUTHOR_IMAGE, None,
-                                FileType.RELEASE_NOTES_CONFIG)
+                                FileType.RELEASE_NOTES_CONFIG, FileType.CONTRIBUTORS)
 
 LAYOUT_AND_MAPPER_BUILT_IN_FIELDS = ['indicatortype', 'source', 'comment', 'aggregatedreliability', 'detectedips',
                                      'detectedhosts', 'modified', 'expiration', 'timestamp', 'shortdesc',
@@ -1341,3 +1345,11 @@ class IronBankDockers:
 class MarketplaceVersions(Enum):
     XSOAR = 'xsoar'
     MarketplaceV2 = 'marketplacev2'
+
+
+INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {'html': LooseVersion('6.1.0'), 'grid': LooseVersion('5.5.0')}
+
+
+class IdSetKeys(Enum):
+    SCRIPTS = 'scripts'
+    INTEGRATIONS = 'integrations'

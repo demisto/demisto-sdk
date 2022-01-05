@@ -266,14 +266,12 @@ class TestStructureValidator:
         assert not structure.is_valid_file_extension()
 
     def test_is_field_with_open_ended(self, pack: Pack):
-        from demisto_sdk.commands.common.hook_validations.incident_field import \
-            TypeFields
         field_content = {
             'cliName': 'sanityname',
             'name': 'sanity name',
             'id': 'incident',
             'content': True,
-            'type': TypeFields.IncidentFieldTypeMultiSelect.value,
+            'type': 'multiSelect',
             'openEnded': True
         }
         incident_field: JSONBased = pack.create_incident_field(
@@ -284,14 +282,12 @@ class TestStructureValidator:
         assert structure.is_valid_scheme()
 
     def test_is_indicator_with_open_ended(self, pack: Pack):
-        from demisto_sdk.commands.common.hook_validations.incident_field import \
-            TypeFields
         field_content = {
             'cliName': 'sanityname',
             'name': 'sanity name',
             'id': 'incident',
             'content': True,
-            'type': TypeFields.IncidentFieldTypeMultiSelect.value,
+            'type': 'multiSelect',
             'openEnded': True
         }
         incident_field: JSONBased = pack.create_indicator_field(
@@ -335,7 +331,7 @@ class TestStructureValidator:
         """
         validator = StructureValidator(file_path=INVALID_INTEGRATION_YML_5,
                                        predefined_scheme='integration')
-        exception = f"{INVALID_INTEGRATION_YML_5}: [ST113] - There is problem with the yml file. The error: while constructing a mapping\n" \
+        exception = f"[ERROR]: {INVALID_INTEGRATION_YML_5}: [ST113] - There is problem with the yml file. The error: while constructing a mapping\n" \
                     f"  in \"{INVALID_INTEGRATION_YML_5}\", line 6, column 3\n" \
                     f"found duplicate key \"display\" with value \"Fetch indicators\" (original value: \"Fetch indicators\")\n" \
                     f"  in \"{INVALID_INTEGRATION_YML_5}\", line 8, column 3\n\n" \

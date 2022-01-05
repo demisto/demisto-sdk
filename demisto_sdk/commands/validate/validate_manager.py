@@ -1,5 +1,6 @@
 import os
 from configparser import ConfigParser, MissingSectionHeaderError
+from pathlib import Path
 from typing import Optional, Set, Tuple
 
 import click
@@ -403,6 +404,21 @@ class ValidateManager:
 
         return all(package_entities_validation_results)
 
+    def is_valid_pack_name(self, file_path, old_file_path):
+        if old_file_path:
+            old_file_path_posix = Path(old_file_path)
+            file_path_posix = Path(file_path)
+            if file_path_posix.parts[0] == old_file_path_posix.parts[0] == 'Packs' and \
+                    file_path_posix.parts[1] != old_file_path_posix.parts[1]:
+                original_name = old_file_path_posix.parts[1]
+                old_name = file_path_posix.parts[1]
+                error_message, error_code = Errors.changed_pack_name(original_name, old_name)
+                if self.handle_error(error_message=error_message, error_code=error_code, file_path=file_path,
+                                     drop_line=True):
+                    return False
+            return True
+        return True
+
     # flake8: noqa: C901
     def run_validations_on_file(self, file_path, pack_error_ignore_list, is_modified=False,
                                 old_file_path=None, modified_files=None, added_files=None):
@@ -419,6 +435,8 @@ class ValidateManager:
         Returns:
             bool. true if file is valid, false otherwise.
         """
+        if not self.is_valid_pack_name(file_path, old_file_path):
+            return False
         file_type = find_type(file_path)
 
         is_added_file = file_path in added_files if added_files else False

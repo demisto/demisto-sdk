@@ -1807,3 +1807,9 @@ def test_validate_contributors_file(repo):
 
     validate_manager = ValidateManager(check_is_unskipped=False, file_path=contributors_file.path, skip_conf_json=True)
     assert validate_manager.run_validation_on_specific_files()
+
+
+def test_validate_pack_name(repo):
+    validator_obj = ValidateManager()
+    assert validator_obj.is_valid_pack_name('Packs/original_pack/file', 'Packs/original_pack/file')
+    assert not validator_obj.is_valid_pack_name('Packs/original_pack/file', 'Packs/original_pack_v2/file')

@@ -10,6 +10,7 @@
 * Added support for beta integrations in the **format** command.
 * Fixed an issue where the **postman-codegen** command failed when called with the `--config-out` flag.
 * Removed the integration documentation from the detailed description while performing **split** command to the unified yml file.
+* Add to **validate** a validation for pack name to make sure it is unchanged.
 
 # 1.5.5
 * Fixed an issue in the **update-release-notes** command, which did not work when changes were made in multiple packs.

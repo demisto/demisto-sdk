@@ -1810,6 +1810,16 @@ def test_validate_contributors_file(repo):
 
 
 def test_validate_pack_name(repo):
+    """
+    Given:
+        A file in a pack to validate.
+    When:
+        Checking if the pack name of the file is valid (the pack name is not changed).
+    Then:
+        If new file or unchanged pack then `true`, else `false`.
+
+    """
     validator_obj = ValidateManager()
+    assert validator_obj.is_valid_pack_name('Packs/original_pack/file', None)
     assert validator_obj.is_valid_pack_name('Packs/original_pack/file', 'Packs/original_pack/file')
     assert not validator_obj.is_valid_pack_name('Packs/original_pack/file', 'Packs/original_pack_v2/file')

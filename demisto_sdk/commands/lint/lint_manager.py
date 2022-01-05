@@ -29,6 +29,7 @@ from demisto_sdk.commands.common.tools import (find_file, find_type,
                                                print_error, print_v,
                                                print_warning,
                                                retrieve_file_ending)
+from demisto_sdk.commands.lint import helpers
 from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, PWSH_CHECKS,
                                                PY_CHCEKS,
                                                build_skipped_exit_code,
@@ -326,11 +327,11 @@ class LintManager:
                                         req_3=self._facts["requirements_3"],
                                         docker_engine=self._facts["docker_engine"],
                                         docker_timeout=docker_timeout)
-
-            exit_code, output = linter._run_mypy(py_num=3.9, lint_files=[])
+            linter._pkg_lint_status['pkg'] = 'mypy_global_test'
+            exit_code, output = linter._run_mypy(py_num=2.7, lint_files=[])
         
             if exit_code:
-                    error, warning, other = linter.split_warnings_errors(output)
+                    error, warning, other = helpers.split_warnings_errors(output)
             if exit_code and warning:
                 linter._pkg_lint_status["warning_code"] |= EXIT_CODES['mypy']
                 linter._pkg_lint_status[f"mypy_warnings"] = "\n".join(warning)
@@ -342,6 +343,22 @@ class LintManager:
                 # if there were errors but they do not start with E
                 else:
                     linter._pkg_lint_status[f"mypy_errors"] = "\n".join(other)
+                pkg_status = linter._pkg_lint_status
+                pkgs_status[pkg_status["pkg"]] = pkg_status
+                if pkg_status["exit_code"]:
+                    for check, code in EXIT_CODES.items():
+                        if pkg_status["exit_code"] & code:
+                            lint_status[f"fail_packs_{check}"].append(pkg_status["pkg"])
+                    if not return_exit_code & pkg_status["exit_code"]:
+                        return_exit_code += pkg_status["exit_code"]
+                if pkg_status["warning_code"]:
+                    for check, code in EXIT_CODES.items():
+                        if pkg_status["warning_code"] & code:
+                            lint_status[f"warning_packs_{check}"].append(pkg_status["pkg"])
+                    if not return_warning_code & pkg_status["warning_code"]:
+                        return_warning_code += pkg_status["warning_code"]
+                if pkg_status["pack_type"] not in pkgs_type:
+                    pkgs_type.append(pkg_status["pack_type"])
             ############
             # Executing lint checks in different threads
             for pack in sorted(self._pkgs):

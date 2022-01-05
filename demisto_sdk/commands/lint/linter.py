@@ -254,7 +254,7 @@ class Linter:
             # Get lint files
             lint_files = set(self._pack_abs_dir.glob(["*.py", "!__init__.py", "!*.tmp"],
                                                      flags=NEGATE))
-            
+
         # Facts for Powershell pack
         elif self._pkg_lint_status["pack_type"] == TYPE_PWSH:
             # Get lint files
@@ -373,14 +373,12 @@ class Linter:
                 # if there were errors but they do not start with E
                 else:
                     self._pkg_lint_status[f"{lint_check}_errors"] = "\n".join(other)
-            
+
             if output:
                 logger.info(f"{lint_check} execute time for pack: {self._pack_name} - was {int(time.time() - specific_lint_start_time)}s")
 
-        
         total_time = int(time.time() - total_start_time)
         logger.info(f"Linting on OS execute time for pack: {self._pack_name} - was {total_time}s")
-
 
     def _run_flake8(self, py_num: float, lint_files: List[Path]) -> Tuple[int, str]:
         """ Runs flake8 in pack dir
@@ -529,7 +527,7 @@ class Linter:
         logger.info(f"{log_prompt} - Successfully finished")
 
         return SUCCESS, ""
-    
+
     def _run_mypy(self, py_num: float, lint_files: List[Path]) -> Tuple[int, str]:
         """ Run mypy in pack dir
 
@@ -544,26 +542,31 @@ class Linter:
         log_prompt = f"{self._pack_name} - Mypy"
         logger.info(f"{log_prompt} - Start")
         #############
-        #was added
+        # was added
 
-        lint_files = set((self._content_repo/'Packs').rglob(["*.py", "!__init__.py", "!*.tmp", "!CommonServer*.py", "!demistomock.py", "!conftest.py"], flags=NEGATE))
+        lint_files = set((self._content_repo / 'Packs').rglob(["*.py", "!__init__.py", "!*.tmp",
+                         "!CommonServer*.py", "!demistomock.py", "!conftest.py"], flags=NEGATE))
         try:
             repo = git.Repo(self._content_repo)
             files_to_ignore = repo.ignored(lint_files)
             for file in files_to_ignore:
                 logger.info(f"{log_prompt} - Skipping gitignore file {file}")
 
-            lint_files = [path for path in lint_files if str(path) not in files_to_ignore]
-            for lint_file in lint_files:
-                if lint_file.name.startswith('test_') or lint_file.name.endswith('_test.py'):
-                    lint_files.remove(lint_file)
+            lint_files = [path for path in lint_files if str(path) not in files_to_ignore
+                          and not (path.name.startswith('test_') or path.name.endswith('_test.py'))]
+            # lint_files_list = copy.deepcopy(lint_files)
+            # for lint_file in lint_files:
+            #     if lint_file.name.startswith('test_') or lint_file.name.endswith('_test.py'):
+            #         lint_files_list.remove(lint_file)
+
+            # lint_files = lint_files_list
 
         except (git.InvalidGitRepositoryError, git.NoSuchPathError):
             logger.debug("No gitignore files is available")
         #############
         with add_typing_module(lint_files=lint_files, python_version=py_num):
             stdout, stderr, exit_code = run_command_os(command=build_mypy_command(files=lint_files, version=py_num),
-                                                       cwd=self._pack_abs_dir)
+                                                       cwd=self._content_repo / 'Packs')
         logger.debug(f"{log_prompt} - Finished exit-code: {exit_code}")
         logger.debug(f"{log_prompt} - Finished stdout: {RL if stdout else ''}{stdout}")
         logger.debug(f"{log_prompt} - Finished stderr: {RL if stderr else ''}{stderr}")
@@ -577,7 +580,6 @@ class Linter:
         logger.info(f"{log_prompt} - Successfully finished")
 
         return SUCCESS, ""
-
 
     def _run_vulture(self, py_num: float, lint_files: List[Path]) -> Tuple[int, str]:
         """ Run mypy in pack dir

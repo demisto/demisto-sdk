@@ -16,8 +16,8 @@ outputs:
 - contextPath: HelloWorld.hello
   description: The result of hello
   type: String
-script: "\n\n\ndef main():\n    return_error('Not implemented.')\n\u200B\nif __name__\
-  \ in ('builtins', '__builtin__', '__main__'):\n    main()\n"
+script: "register_module_line('TestScriptPackage', 'start', __line__())\n\n\n\ndef main():\n    return_error('Not implemented.')\n\u200B\nif __name__\
+  \ in ('builtins', '__builtin__', '__main__'):\n    main()\n\nregister_module_line('TestScriptPackage', 'end', __line__())\n"
 system: false
 tags:
 - hello

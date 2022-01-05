@@ -42,8 +42,8 @@ script:
       type: String
   isfetch: false
   runonce: false
-  script: "\n\n\ndef main():\n    return_error('Not implemented.')\n\u200B\nif __name__\
-    \ in ('builtins', '__builtin__', '__main__'):\n    main()\n"
+  script: "register_module_line('TestIntegPackage', 'start', __line__())\n\n\n\ndef main():\n    return_error('Not implemented.')\n\u200B\nif __name__\
+    \ in ('builtins', '__builtin__', '__main__'):\n    main()\n\nregister_module_line('TestIntegPackage', 'end', __line__())\n"
   type: python
   subtype: python3
   dockerimage: demisto/python3:3.7.4.2245

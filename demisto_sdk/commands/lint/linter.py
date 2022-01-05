@@ -352,9 +352,9 @@ class Linter:
                 elif lint_check == "bandit" and not no_bandit:
                     exit_code, output = self._run_bandit(lint_files=self._facts["lint_files"])
 
-                # elif lint_check == "mypy" and not no_mypy:
-                    # exit_code, output = self._run_mypy(py_num=self._facts["python_version"],
-                    #                                    lint_files=self._facts["lint_files"])
+                elif lint_check == "mypy" and not no_mypy:
+                    exit_code, output = self._run_mypy(py_num=self._facts["python_version"],
+                                                       lint_files=self._facts["lint_files"])
                 elif lint_check == "vulture" and not no_vulture:
                     exit_code, output = self._run_vulture(py_num=self._facts["python_version"],
                                                           lint_files=self._facts["lint_files"])
@@ -498,7 +498,7 @@ class Linter:
 
         return SUCCESS, ""
 
-    def _run_mypy_orig(self, py_num: float, lint_files: List[Path]) -> Tuple[int, str]:
+    def _run_mypy(self, py_num: float, lint_files: List[Path]) -> Tuple[int, str]:
         """ Run mypy in pack dir
 
         Args:
@@ -528,7 +528,7 @@ class Linter:
 
         return SUCCESS, ""
 
-    def _run_mypy(self, py_num: float, lint_files: List[Path]) -> Tuple[int, str]:
+    def _run_mypy_test(self, py_num: float, lint_files: List[Path]) -> Tuple[int, str]:
         """ Run mypy in pack dir
 
         Args:

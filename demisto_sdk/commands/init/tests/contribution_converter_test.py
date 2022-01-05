@@ -11,6 +11,7 @@ from _pytest.tmpdir import TempPathFactory, _mk_tmp
 from mock import patch
 
 from demisto_sdk.commands.common.constants import LAYOUT, LAYOUTS_CONTAINER
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.init.contribution_converter import \
     ContributionConverter
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
@@ -377,7 +378,7 @@ def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock
 
 @patch('demisto_sdk.commands.split.ymlsplitter.get_python_version')
 @patch('demisto_sdk.commands.init.contribution_converter.get_content_path')
-def test_convert_contribution_zip_with_args(get_content_path_mock, get_python_version_mock, tmp_path):
+def test_convert_contribution_zip_with_args(get_content_path_mock, get_python_version_mock, tmp_path, mocker):
     """Convert a contribution zip to a pack and test that the converted pack's 'pack_metadata.json' is correct
 
     Args:
@@ -425,6 +426,10 @@ def test_convert_contribution_zip_with_args(get_content_path_mock, get_python_ve
 
     # target_dir should have been deleted after creation of the zip file
     assert not target_dir.exists()
+
+    mocker.patch.object(GitUtil, '__init__', return_value=None)
+    mocker.patch.object(GitUtil, 'added_files', return_value=set())
+    mocker.patch.object(GitUtil, 'modified_files', return_value=set())
 
     name = 'Test Pack'
     contribution_path = contrib_zip.created_zip_filepath

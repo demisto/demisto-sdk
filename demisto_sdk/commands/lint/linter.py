@@ -252,10 +252,9 @@ class Linter:
                 self._facts["python_version"] = pynum
                 logger.info(f"{log_prompt} - Using python version from yml: {pynum}")
             # Get lint files
-            # lint_files = set(self._pack_abs_dir.glob(["*.py", "!__init__.py", "!*.tmp"],
-            #                                          flags=NEGATE))
-            lint_files = set((self._content_repo/'Packs_12').rglob(["*.py", "!__init__.py", "!*.tmp", "!CommonServer*.py", "!demistomock.py"],
+            lint_files = set(self._pack_abs_dir.glob(["*.py", "!__init__.py", "!*.tmp"],
                                                      flags=NEGATE))
+            
         # Facts for Powershell pack
         elif self._pkg_lint_status["pack_type"] == TYPE_PWSH:
             # Get lint files
@@ -302,7 +301,7 @@ class Linter:
             files_to_ignore = repo.ignored(self._facts['lint_files'])
             for file in files_to_ignore:
                 logger.info(f"{log_prompt} - Skipping gitignore file {file}")
-            a = str(self._facts["lint_files"][0])
+
             self._facts["lint_files"] = [path for path in self._facts['lint_files'] if str(path) not in files_to_ignore]
 
         except (git.InvalidGitRepositoryError, git.NoSuchPathError):
@@ -353,9 +352,9 @@ class Linter:
                 elif lint_check == "bandit" and not no_bandit:
                     exit_code, output = self._run_bandit(lint_files=self._facts["lint_files"])
 
-                elif lint_check == "mypy" and not no_mypy:
-                    exit_code, output = self._run_mypy(py_num=self._facts["python_version"],
-                                                       lint_files=self._facts["lint_files"])
+                # elif lint_check == "mypy" and not no_mypy:
+                    # exit_code, output = self._run_mypy(py_num=self._facts["python_version"],
+                    #                                    lint_files=self._facts["lint_files"])
                 elif lint_check == "vulture" and not no_vulture:
                     exit_code, output = self._run_vulture(py_num=self._facts["python_version"],
                                                           lint_files=self._facts["lint_files"])
@@ -501,7 +500,7 @@ class Linter:
 
         return SUCCESS, ""
 
-    def _run_mypy(self, py_num: float, lint_files: List[Path]) -> Tuple[int, str]:
+    def _run_mypy_orig(self, py_num: float, lint_files: List[Path]) -> Tuple[int, str]:
         """ Run mypy in pack dir
 
         Args:
@@ -530,6 +529,55 @@ class Linter:
         logger.info(f"{log_prompt} - Successfully finished")
 
         return SUCCESS, ""
+    
+    def _run_mypy(self, py_num: float, lint_files: List[Path]) -> Tuple[int, str]:
+        """ Run mypy in pack dir
+
+        Args:
+            py_num(float): The python version in use
+            lint_files(List[Path]): file to perform lint
+
+        Returns:
+           int:  0 on successful else 1, errors
+           str: Bandit errors
+        """
+        log_prompt = f"{self._pack_name} - Mypy"
+        logger.info(f"{log_prompt} - Start")
+        #############
+        #was added
+
+        lint_files = set((self._content_repo/'Packs').rglob(["*.py", "!__init__.py", "!*.tmp", "!CommonServer*.py", "!demistomock.py", "!conftest.py"], flags=NEGATE))
+        try:
+            repo = git.Repo(self._content_repo)
+            files_to_ignore = repo.ignored(lint_files)
+            for file in files_to_ignore:
+                logger.info(f"{log_prompt} - Skipping gitignore file {file}")
+
+            lint_files = [path for path in lint_files if str(path) not in files_to_ignore]
+            for lint_file in lint_files:
+                if lint_file.name.startswith('test_') or lint_file.name.endswith('_test.py'):
+                    lint_files.remove(lint_file)
+
+        except (git.InvalidGitRepositoryError, git.NoSuchPathError):
+            logger.debug("No gitignore files is available")
+        #############
+        with add_typing_module(lint_files=lint_files, python_version=py_num):
+            stdout, stderr, exit_code = run_command_os(command=build_mypy_command(files=lint_files, version=py_num),
+                                                       cwd=self._pack_abs_dir)
+        logger.debug(f"{log_prompt} - Finished exit-code: {exit_code}")
+        logger.debug(f"{log_prompt} - Finished stdout: {RL if stdout else ''}{stdout}")
+        logger.debug(f"{log_prompt} - Finished stderr: {RL if stderr else ''}{stderr}")
+        if stderr or exit_code:
+            logger.info(f"{log_prompt}- Finished Finished errors found")
+            if stderr:
+                return FAIL, stderr
+            else:
+                return FAIL, stdout
+
+        logger.info(f"{log_prompt} - Successfully finished")
+
+        return SUCCESS, ""
+
 
     def _run_vulture(self, py_num: float, lint_files: List[Path]) -> Tuple[int, str]:
         """ Run mypy in pack dir

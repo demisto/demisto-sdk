@@ -317,6 +317,32 @@ class LintManager:
             return_exit_code: int = 0
             return_warning_code: int = 0
             results = []
+
+            ############
+            linter: Linter = Linter(pack_dir=Path('AbnormalSecurity'),
+                                        content_repo="" if not self._facts["content_repo"] else
+                                        Path(self._facts["content_repo"].working_dir),
+                                        req_2=self._facts["requirements_2"],
+                                        req_3=self._facts["requirements_3"],
+                                        docker_engine=self._facts["docker_engine"],
+                                        docker_timeout=docker_timeout)
+
+            exit_code, output = linter._run_mypy(py_num=3.9, lint_files=[])
+        
+            if exit_code:
+                    error, warning, other = linter.split_warnings_errors(output)
+            if exit_code and warning:
+                linter._pkg_lint_status["warning_code"] |= EXIT_CODES['mypy']
+                linter._pkg_lint_status[f"mypy_warnings"] = "\n".join(warning)
+            if exit_code & FAIL:
+                linter._pkg_lint_status["exit_code"] |= EXIT_CODES['mypy']
+                # if the error were extracted correctly as they start with E
+                if error:
+                    linter._pkg_lint_status[f"mypy_errors"] = "\n".join(error)
+                # if there were errors but they do not start with E
+                else:
+                    linter._pkg_lint_status[f"mypy_errors"] = "\n".join(other)
+            ############
             # Executing lint checks in different threads
             for pack in sorted(self._pkgs):
                 linter: Linter = Linter(pack_dir=pack,
@@ -358,6 +384,8 @@ class LintManager:
                             return_warning_code += pkg_status["warning_code"]
                     if pkg_status["pack_type"] not in pkgs_type:
                         pkgs_type.append(pkg_status["pack_type"])
+                
+
             except KeyboardInterrupt:
                 print_warning("Stop demisto-sdk lint - Due to 'Ctrl C' signal")
                 try:

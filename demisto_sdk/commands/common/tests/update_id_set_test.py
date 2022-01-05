@@ -13,7 +13,7 @@ from demisto_sdk.commands.common.constants import (DEFAULT_JOB_FROM_VERSION,
                                                    JOBS_DIR, FileType)
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.update_id_set import (
-    find_duplicates, get_classifier_data, get_dashboard_data,
+    does_dict_have_alternative_key, find_duplicates, get_classifier_data, get_dashboard_data,
     get_fields_by_script_argument,
     get_filters_and_transformers_from_complex_value,
     get_filters_and_transformers_from_playbook, get_general_data,
@@ -22,7 +22,7 @@ from demisto_sdk.commands.common.update_id_set import (
     get_indicator_type_data, get_layout_data, get_layoutscontainer_data,
     get_mapper_data, get_pack_metadata_data, get_playbook_data,
     get_report_data, get_script_data, get_values_for_keys_recursively,
-    get_widget_data, has_duplicate, is_dict_have_alternative_key, merge_id_sets, process_general_items,
+    get_widget_data, has_duplicate, merge_id_sets, process_general_items,
     process_incident_fields, process_integration, process_jobs, process_script,
     re_create_id_set, should_skip_item_by_mp)
 from TestSuite.utils import IsEqualFunctions
@@ -2931,6 +2931,6 @@ TEST_DICTS = [
 
 
 @pytest.mark.parametrize('dict_to_test, expected_result', TEST_DICTS)
-def test_is_dict_have_alternative_key(dict_to_test, expected_result):
-    result = is_dict_have_alternative_key(dict_to_test)
+def test_does_dict_have_alternative_key(dict_to_test, expected_result):
+    result = does_dict_have_alternative_key(dict_to_test)
     assert result == expected_result

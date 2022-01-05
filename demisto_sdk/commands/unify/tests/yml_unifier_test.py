@@ -341,6 +341,7 @@ def test_insert_module_code__verify_offsets(mocker):
     module_name = 'MicrosoftApiModule'
 
     code = YmlUnifier.insert_module_code(DUMMY_SCRIPT, import_name, module_name)
+    # get only the generated ApiModule code
     code = code[len(before_api_import):-len(after_api_import)]
 
     # we expect the start wrapper will have a negative number so adding it to the regex search
@@ -348,8 +349,10 @@ def test_insert_module_code__verify_offsets(mocker):
     end_offset = re.search(fr"register_module_line\('{module_name}', 'end', __line__\(\), wrapper=(\d+)\)\n", code)
 
     assert start_offset
+    # the number of lines before the register start match the wrapper value
     assert int(start_offset.group(1)) == len(code[:start_offset.span()[0]].splitlines())
     assert end_offset
+    # the number of lines after the register end match the wrapper value
     assert int(end_offset.group(1)) == len(code[end_offset.span()[1]:].splitlines())
 
 

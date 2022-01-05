@@ -363,7 +363,3 @@ def test_is_object_in_id_set():
     pack_name = 'Sample1'
     assert not is_object_in_id_set('indicator', packs_section[pack_name])
     assert is_object_in_id_set('scripts-sample_packs', packs_section[pack_name])
-    with pytest.raises(Exception) as e:
-        is_object_in_id_set('scripts-sample_packs', {"pack_name": {}})
-        if not e:
-            assert False

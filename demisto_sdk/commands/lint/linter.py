@@ -274,16 +274,15 @@ class Linter:
             lint_files = lint_files.difference(test_modules)
             self._facts["lint_files"] = list(lint_files)
 
+        # Remove unit_test and files that are in gitignore
         if self._facts["lint_files"]:
+            self._split_lint_files()
             self._remove_gitignore_files(log_prompt)
             for lint_file in self._facts["lint_files"]:
                 logger.info(f"{log_prompt} - Lint file {lint_file}")
         else:
             logger.info(f"{log_prompt} - Lint files not found")
 
-        # Remove files that are in gitignore
-
-        self._split_lint_files()
         return False
 
     def _remove_gitignore_files(self, log_prompt: str) -> None:
@@ -300,7 +299,7 @@ class Linter:
             files_to_ignore = repo.ignored(self._facts['lint_files'])
             for file in files_to_ignore:
                 logger.info(f"{log_prompt} - Skipping gitignore file {file}")
-            self._facts["lint_files"] = [path for path in self._facts['lint_files'] if path not in files_to_ignore]
+            self._facts["lint_files"] = [path for path in self._facts['lint_files'] if str(path) not in files_to_ignore]
 
         except (git.InvalidGitRepositoryError, git.NoSuchPathError):
             logger.debug("No gitignore files is available")

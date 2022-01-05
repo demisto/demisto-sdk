@@ -82,7 +82,7 @@ def rename_file_in_zip(path_to_zip: Union[os.PathLike, str], original_file_name:
 
 @patch('demisto_sdk.commands.split.ymlsplitter.get_python_version')
 @patch('demisto_sdk.commands.init.contribution_converter.get_content_path')
-def test_convert_contribution_zip_updated_pack(get_content_path_mock, get_python_version_mock, tmp_path):
+def test_convert_contribution_zip_updated_pack(get_content_path_mock, get_python_version_mock, tmp_path, mocker):
     """
     Create a fake contribution zip file and test that it is converted to a Pack correctly.
     The pack already exists, checking the update flow.
@@ -106,6 +106,9 @@ def test_convert_contribution_zip_updated_pack(get_content_path_mock, get_python
     - Ensure that readme file has not been changed.
 
     """
+    mocker.patch.object(GitUtil, '__init__', return_value=None)
+    mocker.patch.object(GitUtil, 'added_files', return_value=set())
+    mocker.patch.object(GitUtil, 'modified_files', return_value=set())
     # Create all Necessary Temporary directories
     # create temp directory for the repo
     repo_dir = tmp_path / 'content_repo'
@@ -159,7 +162,7 @@ def test_convert_contribution_zip_updated_pack(get_content_path_mock, get_python
 
 @patch('demisto_sdk.commands.split.ymlsplitter.get_python_version')
 @patch('demisto_sdk.commands.init.contribution_converter.get_content_path')
-def test_convert_contribution_zip_outputs_structure(get_content_path_mock, get_python_version_mock, tmp_path):
+def test_convert_contribution_zip_outputs_structure(get_content_path_mock, get_python_version_mock, tmp_path, mocker):
     """Create a fake contribution zip file and test that it is converted to a Pack correctly
 
     Args:
@@ -180,6 +183,9 @@ def test_convert_contribution_zip_outputs_structure(get_content_path_mock, get_p
     - Ensure the unified yaml files of the integration and script have been removed from the output created by
       converting the contribution zip file
     """
+    mocker.patch.object(GitUtil, '__init__', return_value=None)
+    mocker.patch.object(GitUtil, 'added_files', return_value=set())
+    mocker.patch.object(GitUtil, 'modified_files', return_value=set())
     # ### SETUP ### #
     # Create all Necessary Temporary directories
     # create temp directory for the repo
@@ -266,7 +272,7 @@ def test_convert_contribution_zip_outputs_structure(get_content_path_mock, get_p
 
 @patch('demisto_sdk.commands.split.ymlsplitter.get_python_version')
 @patch('demisto_sdk.commands.init.contribution_converter.get_content_path')
-def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock, tmp_path):
+def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock, tmp_path, mocker):
     """Create a fake contribution zip file and test that it is converted to a Pack correctly
 
     Args:
@@ -287,6 +293,9 @@ def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock
     - Ensure script and integration are componentized and in valid directory structure
     - Ensure readme_files is not empty and the generated docs exists.
     """
+    mocker.patch.object(GitUtil, '__init__', return_value=None)
+    mocker.patch.object(GitUtil, 'added_files', return_value=set())
+    mocker.patch.object(GitUtil, 'modified_files', return_value=set())
     # Create all Necessary Temporary directories
     # create temp directory for the repo
     repo_dir = tmp_path / 'content_repo'
@@ -405,6 +414,10 @@ def test_convert_contribution_zip_with_args(get_content_path_mock, get_python_ve
     - Ensure that the pack's 'pack_metadata.json' file's 'githubUser' field a list containing only 'octocat'
     - Ensure that the pack's 'pack_metadata.json' file's 'email' field is the empty string
     """
+    mocker.patch.object(GitUtil, '__init__', return_value=None)
+    mocker.patch.object(GitUtil, 'added_files', return_value=set())
+    mocker.patch.object(GitUtil, 'modified_files', return_value=set())
+
     # Create all Necessary Temporary directories
     # create temp directory for the repo
     repo_dir = tmp_path / 'content_repo'
@@ -426,10 +439,6 @@ def test_convert_contribution_zip_with_args(get_content_path_mock, get_python_ve
 
     # target_dir should have been deleted after creation of the zip file
     assert not target_dir.exists()
-
-    mocker.patch.object(GitUtil, '__init__', return_value=None)
-    mocker.patch.object(GitUtil, 'added_files', return_value=set())
-    mocker.patch.object(GitUtil, 'modified_files', return_value=set())
 
     name = 'Test Pack'
     contribution_path = contrib_zip.created_zip_filepath

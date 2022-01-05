@@ -11,6 +11,7 @@
 * Fixed an issue where the **postman-codegen** command failed when called with the `--config-out` flag.
 * Removed the integration documentation from the detailed description while performing **split** command to the unified yml file.
 * Add to **validate** a validation for pack name to make sure it is unchanged.
+* Removed the line which indicates the version of the product from the README.md file for new contributions.
 
 # 1.5.5
 * Fixed an issue in the **update-release-notes** command, which did not work when changes were made in multiple packs.
@@ -27,6 +28,7 @@
 * Enhancement for **split** command, replace `ApiModule` code block to `import` when splitting a YML.
 * Fixed an issue where indicator types were missing from the pack's content, when uploading using **zip-packs**.
 * The request data body format generated in the **postman-codegen** will use the python argument's name and not the raw data argument's name.
+* Added the flag '--filter-by-id-set' to **create-content-artifacts** to create artifacts only for items in the given id_set.json.
 
 # 1.5.4
 * Fixed an issue with the **format** command when contributing via the UI

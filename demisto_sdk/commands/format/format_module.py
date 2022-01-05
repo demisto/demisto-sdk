@@ -128,6 +128,7 @@ def format_manager(input: str = None,
     supported_file_types = ['json', 'yml', 'py', 'md']
     use_git = use_git or not input
 
+    files = None
     if input:
         files = get_files_in_dir(input, supported_file_types)
 
@@ -137,6 +138,8 @@ def format_manager(input: str = None,
     if output and not output.endswith(('yml', 'json', 'py')):
         raise Exception("The given output path is not a specific file path.\n"
                         "Only file path can be a output path.  Please specify a correct output.")
+
+    print(f'This files was found for format: {files}')
 
     log_list = []
     error_list: List[Tuple[int, int]] = []

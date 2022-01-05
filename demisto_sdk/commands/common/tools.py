@@ -1763,6 +1763,26 @@ def get_all_incident_and_indicator_fields_from_id_set(id_set_file, entity_type):
     return fields_list
 
 
+def is_object_in_id_set(object_name, pack_info_from_id_set):
+    """
+        Check if the given object is part of the packs items that are present in the Packs section in the id set.
+        This is assuming that the id set is based on the version that has, under each pack, the items it contains.
+
+    Args:
+        object_name: name of object of interest.
+        pack: the pack this object should belong to.
+        packs_section_from_id_set: the section under the key Packs in the previously given id set.
+
+    Returns:
+
+    """
+    content_items = pack_info_from_id_set.get('ContentItems', {})
+    for items_type, items_names in content_items.items():
+        if object_name in items_names:
+            return True
+    return False
+
+
 def is_string_uuid(string_to_check: str):
     """
     Check if a given string is from uuid type

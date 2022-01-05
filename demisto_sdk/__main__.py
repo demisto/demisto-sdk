@@ -515,6 +515,9 @@ def validate(config, **kwargs):
                                            'determines which artifacts are created for each pack. '
                                            'Default is the XSOAR marketplace, that has all of the packs '
                                            'artifacts.', default='xsoar', type=click.Choice(['xsoar', 'marketplacev2', 'v2']))
+@click.option('-fbi', '--filter-by-id-set', is_flag=True,
+              help='Whether to use the id set as content items guide, meaning only include in the packs the '
+                   'content items that appear in the id set.', default=False, hidden=True)
 def create_content_artifacts(**kwargs) -> int:
     """Generating the following artifacts:
        1. content_new - Contains all content objects of type json,yaml (from_version < 6.0.0)

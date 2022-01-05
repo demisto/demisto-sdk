@@ -104,6 +104,7 @@ def format_manager(input: str = None,
                    use_git: bool = False,
                    prev_ver: str = None,
                    include_untracked: bool = False,
+                   interactive: bool = True,
                    add_tests: bool = None):
     """
     Format_manager is a function that activated format command on different type of files.
@@ -119,6 +120,7 @@ def format_manager(input: str = None,
         use_git (bool): Use git to automatically recognize which files changed and run format on them
         prev_ver (str): Against which branch should the difference be recognized
         include_untracked (bool): Whether to include untracked files when checking against git
+        interactive (bool): Whether to run the format interactively or not (usually for contribution management)
         add_tests (bool): Whether to exclude tests automatically.
     Returns:
         int 0 in case of success 1 otherwise
@@ -169,7 +171,8 @@ def format_manager(input: str = None,
                                                                  update_docker=update_docker,
                                                                  assume_yes=assume_yes,
                                                                  deprecate=deprecate,
-                                                                 add_tests=add_tests)
+                                                                 add_tests=add_tests,
+                                                                 interactive=interactive)
                 if err_res:
                     log_list.extend([(err_res, print_error)])
                 if info_res:

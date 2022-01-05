@@ -46,7 +46,10 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
                     user_description = ''
                     self.data['description'] = user_description
                 elif user_answer in ['y', 'Y', 'yes', 'Yes']:
-                    user_description = input("Please enter the description\n")
+                    if self.interactive:
+                        user_description = input("Please enter the description\n")
+                    else:
+                        user_description = ''
                     self.data['description'] = user_description
                 else:
                     click.secho('Invalid input, would you like to add a description? [Y/n]', fg='bright_red')

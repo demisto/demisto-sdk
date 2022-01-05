@@ -59,7 +59,10 @@ class ReportJSONFormat(BaseUpdateJSON):
         if not self.data.get('type'):
             click.secho('No type is specified for this report, would you like me to update for you? [Y/n]',
                         fg='red')
-            user_answer = input()
+            if self.interactive:
+                user_answer = input()
+            else:
+                user_answer = 'n'
             # Checks if the user input is no
             if user_answer in ['n', 'N', 'No', 'no']:
                 print_error('Moving forward without updating type field')

@@ -1768,7 +1768,7 @@ def is_object_in_id_set(object_name, pack_info_from_id_set):
     Returns:
 
     """
-    content_items = pack_info_from_id_set['ContentItems']
+    content_items = pack_info_from_id_set.get('ContentItems', {})
     for items_type, items_names in content_items.items():
         if object_name in items_names:
             return True

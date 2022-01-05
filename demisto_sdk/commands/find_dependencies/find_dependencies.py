@@ -1298,8 +1298,14 @@ class PackDependencies:
                                      ('generic_definitions', 'GenericDefinitions'),
                                      ('lists', 'Lists'),
                                      ('jobs', 'Jobs')):
-
-            pack_items[pack_key] = PackDependencies._search_for_pack_items(pack_id, id_set.get(id_set_key, []))
+            if id_set_key not in id_set:
+                raise RuntimeError(
+                    "\n".join((f"Error: the {id_set_key} content type is missing from the id_set.",
+                               "This may mean the existing id_set was created with an outdated version "
+                               "of the Demisto SDK. Please delete content/Tests/id_set.json and "
+                               "run demisto-sdk find-dependencies again."))
+                )
+            pack_items[pack_key] = PackDependencies._search_for_pack_items(pack_id, id_set[id_set_key])
 
         if not sum(pack_items.values(), []):
             click.secho(f"Couldn't find any items for pack '{pack_id}'. Please make sure:\n"

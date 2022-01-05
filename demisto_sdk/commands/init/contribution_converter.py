@@ -266,16 +266,17 @@ class ContributionConverter:
             prev_ver='xsoar-contrib/master',  # default is demisto/master
         )
 
-    def generate_readme_for_pack_content_item(self, yml_path: str) -> None:
+    def generate_readme_for_pack_content_item(self, yml_path: str, is_contribution: bool = False) -> None:
         """ Runs the demisto-sdk's generate-docs command on a pack content item
 
         Args:
             yml_path: str: Content item yml path.
+            is_contribution: bool: Check if the content item is a new integration contribution or not.
         """
         file_type = find_type(yml_path)
         file_type = file_type.value if file_type else file_type
         if file_type == 'integration':
-            generate_integration_doc(yml_path)
+            generate_integration_doc(yml_path, is_contribution=is_contribution)
         if file_type == 'script':
             generate_script_doc(input_path=yml_path, examples=[])
         if file_type == 'playbook':
@@ -285,7 +286,7 @@ class ContributionConverter:
         readme_path = os.path.join(dir_output, 'README.md')
         self.readme_files.append(readme_path)
 
-    def generate_readmes_for_new_content_pack(self):
+    def generate_readmes_for_new_content_pack(self, is_contribution=False):
         """
         Generate the readme files for a new content pack.
         """
@@ -301,7 +302,7 @@ class ContributionConverter:
                                 or file_name.startswith('script-') \
                                 or file_name.startswith('automation-'):
                             unified_file = file
-                            self.generate_readme_for_pack_content_item(unified_file)
+                            self.generate_readme_for_pack_content_item(unified_file, is_contribution)
                             os.remove(unified_file)
             elif basename == 'Playbooks':
                 files = get_child_files(pack_subdir)
@@ -347,7 +348,7 @@ class ContributionConverter:
                     )
 
             if self.create_new:
-                self.generate_readmes_for_new_content_pack()
+                self.generate_readmes_for_new_content_pack(is_contribution=True)
 
             # format
             self.format_converted_pack()

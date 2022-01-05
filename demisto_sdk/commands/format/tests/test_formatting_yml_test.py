@@ -32,10 +32,11 @@ from demisto_sdk.tests.constants_test import (
     DESTINATION_FORMAT_SCRIPT_COPY, DESTINATION_FORMAT_TEST_PLAYBOOK,
     FEED_INTEGRATION_EMPTY_VALID, FEED_INTEGRATION_INVALID,
     FEED_INTEGRATION_VALID, GIT_ROOT, INTEGRATION_PATH, PLAYBOOK_PATH,
-    PLAYBOOK_WITH_INCIDENT_INDICATOR_SCRIPTS, SOURCE_FORMAT_INTEGRATION_COPY,
-    SOURCE_FORMAT_INTEGRATION_INVALID, SOURCE_FORMAT_INTEGRATION_VALID,
-    SOURCE_FORMAT_PLAYBOOK, SOURCE_FORMAT_PLAYBOOK_COPY,
-    SOURCE_FORMAT_SCRIPT_COPY, SOURCE_FORMAT_TEST_PLAYBOOK, TEST_PLAYBOOK_PATH)
+    PLAYBOOK_WITH_INCIDENT_INDICATOR_SCRIPTS, SOURCE_BETA_INTEGRATION_FILE,
+    SOURCE_FORMAT_INTEGRATION_COPY, SOURCE_FORMAT_INTEGRATION_INVALID,
+    SOURCE_FORMAT_INTEGRATION_VALID, SOURCE_FORMAT_PLAYBOOK,
+    SOURCE_FORMAT_PLAYBOOK_COPY, SOURCE_FORMAT_SCRIPT_COPY,
+    SOURCE_FORMAT_TEST_PLAYBOOK, TEST_PLAYBOOK_PATH)
 from TestSuite.test_tools import ChangeCWD
 
 ryaml = YAML()
@@ -653,6 +654,21 @@ class TestFormatting:
         res = formatter.update_tests()
         assert res is None
         assert formatter.data.get('tests') == ['VMWare Test']
+
+    def test_format_beta_integration(self):
+        """
+        Given
+            - A beta integration yml file
+        When
+            - Run format on it
+        Then
+            - Ensure the display name contains the word (Beta), the param beta is True
+        """
+
+        formatter = IntegrationYMLFormat(input=SOURCE_BETA_INTEGRATION_FILE)
+        formatter.update_beta_integration()
+        assert '(Beta)' in formatter.data['display']
+        assert formatter.data['beta'] is True
 
     def test_update_docker_format(self, tmpdir, mocker, monkeypatch):
         """Test that script and integration formatter update docker image tag

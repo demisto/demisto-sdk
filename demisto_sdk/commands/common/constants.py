@@ -177,6 +177,9 @@ ENTITY_TYPE_TO_DIR = {
 
 CONTENT_FILE_ENDINGS = ['py', 'yml', 'png', 'json', 'md']
 
+IGNORED_PACKS_IN_DEPENDENCY_CALC = ['NonSupported', 'Base']  # Packs that are ignored when calculating dependencies
+ALL_PACKS_DEPENDENCIES_DEFAULT_PATH = './all_packs_dependencies.json'
+
 CUSTOM_CONTENT_FILE_ENDINGS = ['yml', 'json']
 
 CONTENT_ENTITIES_DIRS = [
@@ -1345,3 +1348,8 @@ class MarketplaceVersions(Enum):
 
 
 INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {'html': LooseVersion('6.1.0'), 'grid': LooseVersion('5.5.0')}
+
+
+class IdSetKeys(Enum):
+    SCRIPTS = 'scripts'
+    INTEGRATIONS = 'integrations'

@@ -6,7 +6,7 @@ import os
 import re
 import sys
 import textwrap
-from typing import Any, Dict, List, Set
+from typing import Any, Dict, List, Set, Union
 
 # Third party packages
 import docker
@@ -14,7 +14,7 @@ import docker.errors
 import git
 import requests.exceptions
 import urllib3.exceptions
-from wcmatch.pathlib import Path
+from wcmatch.pathlib import Path, PosixPath
 
 from demisto_sdk.commands.common.constants import (PACKS_PACK_META_FILE_NAME,
                                                    TYPE_PWSH, TYPE_PYTHON,
@@ -22,6 +22,7 @@ from demisto_sdk.commands.common.constants import (PACKS_PACK_META_FILE_NAME,
 # Local packages
 from demisto_sdk.commands.common.logger import Colors
 from demisto_sdk.commands.common.tools import (find_file, find_type,
+                                               get_api_module_dependencies,
                                                get_content_path,
                                                get_file_displayed_name,
                                                get_json,
@@ -37,6 +38,7 @@ from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, PWSH_CHECKS,
 from demisto_sdk.commands.lint.linter import Linter
 
 logger = logging.getLogger('demisto-sdk')
+sha1Regex = re.compile(r'\b[0-9a-fA-F]{40}\b', re.M)
 
 
 class LintManager:
@@ -49,10 +51,15 @@ class LintManager:
         verbose(int): Whether to output a detailed response.
         quiet(bool): Whether to output a quiet response.
         log_path(str): Path to all levels of logs.
+        prev_ver(str): Previous branch or SHA1 commit to run checks against.
+        json_file_path(str): Path to a json file to write the run resutls to.
+        id_set_path(str): Path to an existing id_set.json.
+        check_dependent_api_module(bool): Whether to run lint also on the packs dependent on the modified api modules
+        files.
     """
 
     def __init__(self, input: str, git: bool, all_packs: bool, quiet: bool, verbose: int, prev_ver: str,
-                 json_file_path: str = ''):
+                 json_file_path: str = '', id_set_path: str = None, check_dependent_api_module: bool = False):
 
         # Verbosity level
         self._verbose = not quiet if quiet else verbose
@@ -62,14 +69,24 @@ class LintManager:
         self._all_packs = all_packs
         # Set 'git' to true if no packs have been specified, 'lint' should operate as 'lint -g'
         lint_no_packs_command = not git and not all_packs and not input
-        if lint_no_packs_command:
-            git = True
+        git = True if lint_no_packs_command else git
         # Filter packages to lint and test check
-        self._pkgs: List[Path] = self._get_packages(content_repo=self._facts["content_repo"],
-                                                    input=input,
-                                                    git=git,
-                                                    all_packs=all_packs,
-                                                    base_branch=self._prev_ver)
+        self._pkgs: List[PosixPath] = self._get_packages(content_repo=self._facts["content_repo"],
+                                                         input=input,
+                                                         git=git,
+                                                         all_packs=all_packs,
+                                                         base_branch=self._prev_ver)
+
+        self._id_set_path = id_set_path
+        if check_dependent_api_module:
+            print("Checking for packages dependent on the modified api module...")
+            dependent_on_api_module = get_api_module_dependencies(self._pkgs, self._id_set_path, self._verbose)
+            dependent_on_api_module = self._get_packages(content_repo=self._facts["content_repo"],
+                                                         input=dependent_on_api_module)
+            self._pkgs = list(set(self._pkgs + dependent_on_api_module))
+            print(f"Found {Colors.Fg.cyan}{len(dependent_on_api_module)}{Colors.reset} dependent packages."
+                  f" Executing lint and test on dependent packages as well.")
+
         if json_file_path:
             if os.path.isdir(json_file_path):
                 json_file_path = os.path.join(json_file_path, 'lint_outputs.json')
@@ -164,8 +181,8 @@ class LintManager:
         logger.debug("Docker daemon test passed")
         return facts
 
-    def _get_packages(self, content_repo: git.Repo, input: str, git: bool, all_packs: bool, base_branch: str) \
-            -> List[Path]:
+    def _get_packages(self, content_repo: git.Repo, input: Union[str, List[str]], git: bool = False, all_packs: bool = False,
+                      base_branch: str = 'master') -> List[PosixPath]:
         """ Get packages paths to run lint command.
 
         Args:
@@ -173,31 +190,32 @@ class LintManager:
             input(str): dir pack specified as argument.
             git(bool): Perform lint and test only on changed packs.
             all_packs(bool): Whether to run on all packages.
-            base_branch (str): Name of the branch to run the diff on.
+            base_branch (str): Name of the branch or sha1 commit to run the diff on.
 
         Returns:
-            List[Path]: Pkgs to run lint
+            List[PosixPath]: Pkgs to run lint
         """
         pkgs: list
         if all_packs or git:
             pkgs = LintManager._get_all_packages(content_dir=content_repo.working_dir)
         else:  # specific pack as input, -i flag has been used
             pkgs = []
-            for item in input.split(','):
+            if isinstance(input, str):
+                input = input.split(',')
+            for item in input:
                 is_pack = os.path.isdir(item) and os.path.exists(os.path.join(item, PACKS_PACK_META_FILE_NAME))
                 if is_pack:
                     pkgs.extend(LintManager._get_all_packages(content_dir=item))
                 else:
                     pkgs.append(Path(item))
-
-        total_found = len(pkgs)
         if git:
-            pkgs = self._filter_changed_packages(content_repo=content_repo,
-                                                 pkgs=pkgs, base_branch=base_branch)
+            pkgs = self._filter_changed_packages(content_repo=content_repo, pkgs=pkgs,
+                                                 base_branch=base_branch)
             for pkg in pkgs:
                 print_v(f"Found changed package {Colors.Fg.cyan}{pkg}{Colors.reset}",
                         log_verbose=self._verbose)
-        print(f"Execute lint and test on {Colors.Fg.cyan}{len(pkgs)}/{total_found}{Colors.reset} packages")
+        if pkgs:
+            print(f"Executing lint and test on {Colors.Fg.cyan}{pkgs}{Colors.reset} integrations and scripts")
 
         return pkgs
 
@@ -208,7 +226,7 @@ class LintManager:
         Returns:
             list: A list of integration, script and beta_integration names.
         """
-        # ￿Get packages from main content path
+        # Get packages from main content path
         content_main_pkgs: set = set(Path(content_dir).glob(['Integrations/*/',
                                                              'Scripts/*/', ]))
         # Get packages from packs path
@@ -220,27 +238,54 @@ class LintManager:
         return list(all_pkgs)
 
     @staticmethod
-    def _filter_changed_packages(content_repo: git.Repo, pkgs: List[Path], base_branch: str) -> List[Path]:
-        """ Checks which packages had changes using git (working tree, index, diff between HEAD and master in them and should
-        run on Lint.
-
+    def _get_packages_from_modified_files(modified_files):
+        r"""
+        Out of all modified files, return only the files relevant for linting, which are the packages
+        (scripts\integrations) under the pack.
         Args:
-            pkgs(List[Path]): pkgs to check
-            base_branch (str): Name of the branch to run the diff on.
+            modified_files: A list of paths of files recognized as modified.
 
         Returns:
-            List[Path]: A list of names of packages that should run.
+            A list of paths of modified packages (scripts/integrations)
         """
-        print(
-            f"Comparing to {Colors.Fg.cyan}{content_repo.remote()}/{base_branch}{Colors.reset} using branch {Colors.Fg.cyan}"
-            f"{content_repo.active_branch}{Colors.reset}")
+        return [path for path in modified_files if 'Scripts' in path.parts or 'Intergations' in path.parts]
+
+    @staticmethod
+    def _filter_changed_packages(content_repo: git.Repo, pkgs: List[PosixPath], base_branch: str) -> List[PosixPath]:
+        """ Checks which packages had changes in them and should run on Lint.
+        The diff is calculated using git, and is done by the following cases:
+        - case 1: If the active branch is 'master', the diff is between master and the previous commit.
+        - case 2: If the active branch is not master, and no other base branch is specified to comapre to,
+         the diff is between the active branch and master.
+        - case 3: If the base branch is specified, the diff is between the active branch (master\not master) and the given base branch.
+
+        Args:
+            pkgs(List[PosixPath]): pkgs to check
+            base_branch (str): Name of the branch or sha1 commit to run the diff on.
+
+        Returns:
+            List[PosixPath]: A list of names of packages that should run.
+        """
+
         staged_files = {content_repo.working_dir / Path(item.b_path).parent for item in
                         content_repo.active_branch.commit.tree.diff(None, paths=pkgs)}
-        if content_repo.active_branch == 'master':
+
+        if base_branch == 'master' and content_repo.active_branch.name == 'master':
+            # case 1: comparing master against the latest previous commit
             last_common_commit = content_repo.remote().refs.master.commit.parents[0]
+            print(f"Comparing {Colors.Fg.cyan}master{Colors.reset} to its {Colors.Fg.cyan}previous commit: "
+                  f"{last_common_commit} {Colors.reset}")
+
         else:
-            last_common_commit = content_repo.merge_base(content_repo.active_branch.commit,
-                                                         f'{content_repo.remote()}/{base_branch}')
+            # cases 2+3: compare the active branch (master\not master) against the given base branch (master\not master)
+            if sha1Regex.match(base_branch):  # if the base branch is given as a commit hash
+                last_common_commit = base_branch
+            else:
+                last_common_commit = content_repo.merge_base(content_repo.active_branch.commit,
+                                                             f'{content_repo.remote()}/{base_branch}')[0]
+            print(f"Comparing {Colors.Fg.cyan}{content_repo.active_branch}{Colors.reset} to"
+                  f" last common commit with {Colors.Fg.cyan}{last_common_commit}{Colors.reset}")
+
         changed_from_base = {content_repo.working_dir / Path(item.b_path).parent for item in
                              content_repo.active_branch.commit.tree.diff(last_common_commit, paths=pkgs)}
         all_changed = staged_files.union(changed_from_base)

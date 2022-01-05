@@ -3,6 +3,8 @@ from typing import Tuple
 
 import click
 
+from demisto_sdk.commands.common.constants import BETA_INTEGRATION_DISCLAIMER
+from demisto_sdk.commands.common.tools import find_type
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
@@ -28,23 +30,40 @@ class DescriptionFormat(BaseUpdate):
                  update_docker: bool = False,
                  **kwargs):
         super().__init__(input, output, path, from_version, no_validate, verbose=verbose, **kwargs)
+        description_type = input.replace('_description.md', '.yml')
+        self.is_beta = False
+        file_type = find_type(description_type)
+        if file_type:
+            self.is_beta = find_type(description_type).value == 'betaintegration'
+        with open(self.source_file, 'r') as f:
+            self.description_content = f.read()
 
     def remove_community_partner_details(self):
         """update description file to not contain community/partner details"""
 
-        with open(self.source_file, 'r') as f:
-            description_content = f.read()
-        formatted_description = re.sub('###.*Contributed Integration[\\S\n ]+?[*]{3}[\n]*', "", description_content)
-        formatted_description = formatted_description.rstrip("\n")
+        formatted_description = re.sub('###.*Contributed Integration[\\S\n ]+?[*]{3}[\n]*', "", self.description_content)
+        self.description_content = formatted_description.rstrip("\n")
 
-        with open(self.source_file, 'w') as f:
-            f.write(formatted_description)
+    def add_betaintegration_description(self):
+        """update description file of a beta integration to contain beta integration's description"""
+        if BETA_INTEGRATION_DISCLAIMER not in self.description_content:
+            self.description_content = BETA_INTEGRATION_DISCLAIMER + '\n' + self.description_content
+
+    def save_md_to_destination_file(self):
+        """Safely saves formatted YML data to destination file."""
+        if self.source_file != self.output_file and self.verbose:
+            click.secho(f'Saving output description file to {self.output_file} \n', fg='white')
+        with open(self.output_file, 'w') as f:
+            f.write(self.description_content)
         f.close()
 
     def run_format(self) -> int:
         try:
             click.secho(f'\n================= Updating file {self.source_file} ================= ', fg='bright_blue')
             self.remove_community_partner_details()
+            if self.is_beta:
+                self.add_betaintegration_description()
+            self.save_md_to_destination_file()
             return SUCCESS_RETURN_CODE
         except Exception as err:
             if self.verbose:

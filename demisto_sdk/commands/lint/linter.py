@@ -275,16 +275,15 @@ class Linter:
             lint_files = lint_files.difference(test_modules)
             self._facts["lint_files"] = list(lint_files)
 
+        # Remove files that are in gitignore
         if self._facts["lint_files"]:
+            self._split_lint_files()
             self._remove_gitignore_files(log_prompt)
             for lint_file in self._facts["lint_files"]:
                 logger.info(f"{log_prompt} - Lint file {lint_file}")
         else:
             logger.info(f"{log_prompt} - Lint files not found")
 
-        # Remove files that are in gitignore
-
-        self._split_lint_files()
         return False
 
     def _remove_gitignore_files(self, log_prompt: str) -> None:

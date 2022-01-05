@@ -182,7 +182,7 @@ def build_mypy_command(files: List[Path], version: float) -> str:
     command += " --show-absolute-path"
     # Disable cache creation
     # command += " --cache-dir=/dev/null"
-    command += " --cache-dir=/Users/ilappe/dev/demisto/content/Packs"
+    command += " --cache-dir=/Users/ilappe/dev/demisto/content/Packs/.mypy_cache"
     # Generating path patterns - file1 file2 file3,..
     files_list = [str(item) for item in files]
     command += " " + " ".join(files_list)

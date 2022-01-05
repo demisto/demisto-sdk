@@ -106,7 +106,7 @@ def does_dict_have_alternative_key(data: dict) -> bool:
 
     # start searching in the first level keys
     for key in data:
-        if key.endswith('_x2'):
+        if not isinstance(key, bool) and key.endswith('_x2'):
             return True
 
     for key, value in data.items():

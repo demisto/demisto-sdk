@@ -1,6 +1,9 @@
 import ast
 import json
+import logging
 from functools import partial
+
+import pytest
 
 from demisto_sdk.commands.common.constants import PB_Status
 from demisto_sdk.commands.test_content.Docker import Docker
@@ -264,26 +267,202 @@ def test_replacing_placeholders(mocker, tmp_path):
     assert '%%SERVER_HOST%%' in build_context.secret_conf.integrations[0].params.get('url')
 
 
-# def test_replacing_pb_inputs(mocker, ):
-#     def request_mocker(client, method, path, response_type):
-#         assert
-#
-#     test_playbook_configuration = TestConfiguration(
-#         generate_test_configuration(playbook_id='playbook_runnable_only_on_docker',
-#                                     integrations=['integration']), default_test_timeout=30)
-#     playbook_instance = TestPlaybook(mocker.MagicMock(), test_playbook_configuration)
-#     playbook_instance.integrations[0].integration_type = Docker.PYTHON_INTEGRATION_TYPE
-#     test_context = TestContext(build_context=mocker.MagicMock(),
-#                                playbook=playbook_instance,
-#                                client=mocker.MagicMock(),
-#                                server_context=mocker.MagicMock())
-#     new_configuration = {
-#             "integrations": "VMware Carbon Black EDR v2",
-#             "playbookID": "pb_test",
-#             "external_playbook_config": {"playbookID": "Isolate Endpoint - Generic V2",
-#                                         "input_parameters":{"Endpoint_hostname": {"simple": "test"}}}
-#         }
-#     current_config = {'id': 'ExamplePlaybook', 'version': 3, 'modified': '2021-12-27T07:38:25.309186328Z', 'sortValues': None, 'packID': 'CommonPlaybooks', 'itemVersion': '2.1.5', 'fromServerVersion': '5.5.0', 'toServerVersion': '', 'propagationLabels': [], 'packPropagationLabels': ['all'], 'vcShouldIgnore': False, 'vcShouldKeepItemLegacyProdMachine': False, 'commitMessage': '', 'shouldCommit': False, 'roles': [], 'allRead': False, 'allReadWrite': False, 'previousRoles': [], 'previousAllRead': False, 'previousAllReadWrite': False, 'hasRole': False, 'dbotCreatedBy': '', 'name': 'Isolate Endpoint - Generic V2', 'nameRaw': 'Isolate Endpoint - Generic V2', 'prevName': 'Isolate Endpoint - Generic V2', 'comment': 'This playbook isolates a given endpoint via various endpoint product integrations.\nMake sure to provide the valid playbook input for the integration you are using.', 'startTaskId': '0', 'tasks': {'0': {'id': '0', 'taskId': '20f01f93-7b37-4f3f-8c17-a466dac351ef', 'type': 'start', 'task': {'id': '20f01f93-7b37-4f3f-8c17-a466dac351ef', 'version': 2, 'modified': '2021-12-27T07:38:25.309055422Z', 'sortValues': None, 'name': '', 'playbookName': '', 'isLocked': False, 'type': '', 'conditions': None, 'isCommand': False, 'brand': ''}, 'nextTasks': {'#none#': ['6', '7', '9', '10', '11']}, 'scriptArguments': None, 'reputationCalc': 0, 'separateContext': False, 'restrictedCompletion': False, 'view': {'position': {'x': 910, 'y': 50}}, 'note': False, 'evidenceData': {'description': None, 'occurred': None, 'tags': None}, 'quietMode': 0, 'isOverSize': False, 'isAutoSwitchedToQuietMode': False}, '10': {'id': '10', 'taskId': '48226108-0787-44b0-80f6-cf333758b5e8', 'type': 'playbook', 'task': {'id': '48226108-0787-44b0-80f6-cf333758b5e8', 'version': 2, 'modified': '2021-12-27T07:38:25.309129176Z', 'sortValues': None, 'name': 'FireEye HX - Isolate Endpoint', 'description': 'This playbook will auto isolate endpoints by the endpoint ID that was provided in the playbook.', 'playbookName': 'FireEye HX - Isolate Endpoint', 'isLocked': False, 'type': 'playbook', 'conditions': None, 'isCommand': False, 'brand': ''}, 'nextTasks': {'#none#': ['2']}, 'scriptArguments': {'Endpoint_id': {'simple': '${inputs.Endpoint_id}', 'complex': None}, 'Hostname': {'simple': '${inputs.Endpoint_hostname}', 'complex': None}}, 'reputationCalc': 0, 'separateContext': True, 'restrictedCompletion': False, 'loop': {'scriptName': '', 'exitCondition': '', 'wait': 1, 'max': 100}, 'view': {'position': {'x': 1770, 'y': 195}}, 'note': False, 'evidenceData': {'description': None, 'occurred': None, 'tags': None}, 'skipUnavailable': True, 'quietMode': 0, 'isOverSize': False, 'isAutoSwitchedToQuietMode': False}, '11': {'id': '11', 'taskId': '04a17761-3b84-492f-87c6-ef29fc4adc7d', 'type': 'playbook', 'task': {'id': '04a17761-3b84-492f-87c6-ef29fc4adc7d', 'version': 3, 'modified': '2021-12-27T07:38:25.309039378Z', 'sortValues': None, 'name': 'Block Endpoint - Carbon Black Response V2', 'description': 'Carbon Black Response - isolate an endpoint for a given hostname.', 'playbookId': 'Block Endpoint - Carbon Black Response V2', 'playbookName': '', 'isLocked': False, 'type': 'playbook', 'conditions': None, 'isCommand': False, 'brand': ''}, 'nextTasks': {'#none#': ['2']}, 'scriptArguments': {'Hostname': {'simple': '${inputs.Endpoint_hostname}', 'complex': None}, 'Sensor_id': {'simple': '${inputs.Endpoint_id}', 'complex': None}}, 'reputationCalc': 0, 'separateContext': True, 'restrictedCompletion': False, 'loop': {'scriptName': '', 'exitCondition': '', 'wait': 1, 'max': 100}, 'view': {'position': {'x': 910, 'y': 195}}, 'note': False, 'evidenceData': {'description': None, 'occurred': None, 'tags': None}, 'skipUnavailable': True, 'quietMode': 0, 'isOverSize': False, 'isAutoSwitchedToQuietMode': False}, '2': {'id': '2', 'taskId': '050d36dd-0ec3-4490-827e-e210ac5e9a04', 'type': 'title', 'task': {'id': '050d36dd-0ec3-4490-827e-e210ac5e9a04', 'version': 2, 'modified': '2021-12-27T07:38:25.309073299Z', 'sortValues': None, 'name': 'Done', 'playbookName': '', 'isTitleTask': True, 'isLocked': False, 'type': 'title', 'conditions': None, 'isCommand': False, 'brand': ''}, 'nextTasks': None, 'scriptArguments': None, 'reputationCalc': 0, 'separateContext': False, 'restrictedCompletion': False, 'view': {'position': {'x': 910, 'y': 370}}, 'note': False, 'evidenceData': {'description': None, 'occurred': None, 'tags': None}, 'quietMode': 0, 'isOverSize': False, 'isAutoSwitchedToQuietMode': False}, '6': {'id': '6', 'taskId': '31a268a0-3862-4dcb-8549-b55d0ad936a0', 'type': 'playbook', 'task': {'id': '31a268a0-3862-4dcb-8549-b55d0ad936a0', 'version': 2, 'modified': '2021-12-27T07:38:25.309087067Z', 'sortValues': None, 'name': 'Isolate Endpoint - Cybereason', 'description': 'This playbook isolates an endpoint based on the hostname provided.', 'playbookName': 'Isolate Endpoint - Cybereason', 'isLocked': False, 'type': 'playbook', 'conditions': None, 'isCommand': False, 'brand': ''}, 'nextTasks': {'#none#': ['2']}, 'scriptArguments': {'Hostname': {'simple': '${inputs.Endpoint_hostname}', 'complex': None}}, 'reputationCalc': 0, 'separateContext': True, 'restrictedCompletion': False, 'loop': {'scriptName': '', 'exitCondition': '', 'wait': 1, 'max': 100}, 'view': {'position': {'x': 50, 'y': 195}}, 'note': False, 'evidenceData': {'description': None, 'occurred': None, 'tags': None}, 'skipUnavailable': True, 'quietMode': 0, 'isOverSize': False, 'isAutoSwitchedToQuietMode': False}, '7': {'id': '7', 'taskId': '46562ad2-14ed-4064-8ce8-9adfb791d660', 'type': 'playbook', 'task': {'id': '46562ad2-14ed-4064-8ce8-9adfb791d660', 'version': 2, 'modified': '2021-12-27T07:38:25.30910066Z', 'sortValues': None, 'name': 'Cortex XDR - Isolate Endpoint', 'description': "This playbook accepts an XDR endpoint ID and isolates it using the 'Palo Alto Networks Cortex XDR - Investigation and Response' integration.", 'playbookName': 'Cortex XDR - Isolate Endpoint', 'isLocked': False, 'type': 'playbook', 'conditions': None, 'isCommand': False, 'brand': ''}, 'nextTasks': {'#none#': ['2']}, 'scriptArguments': {'endpoint_id': {'simple': '${inputs.Endpoint_id}', 'complex': None}, 'hostname': {'simple': '${inputs.Endpoint_hostname}', 'complex': None}, 'ip_list': {'simple': '${inputs.Endpoint_ip}', 'complex': None}}, 'reputationCalc': 0, 'separateContext': True, 'restrictedCompletion': False, 'loop': {'scriptName': '', 'exitCondition': '', 'wait': 1, 'max': 100}, 'view': {'position': {'x': 480, 'y': 195}}, 'note': False, 'evidenceData': {'description': None, 'occurred': None, 'tags': None}, 'skipUnavailable': True, 'quietMode': 0, 'isOverSize': False, 'isAutoSwitchedToQuietMode': False}, '9': {'id': '9', 'taskId': '2604374d-9538-4451-8064-2f5bb5c6dd81', 'type': 'playbook', 'task': {'id': '2604374d-9538-4451-8064-2f5bb5c6dd81', 'version': 2, 'modified': '2021-12-27T07:38:25.309115045Z', 'sortValues': None, 'name': 'Crowdstrike Falcon - Isolate Endpoint', 'description': 'This playbook will auto isolate endpoints by the device ID that was provided in the playbook.', 'playbookName': 'Crowdstrike Falcon - Isolate Endpoint', 'isLocked': False, 'type': 'playbook', 'conditions': None, 'isCommand': False, 'brand': ''}, 'nextTasks': {'#none#': ['2']}, 'scriptArguments': {'Device_id': {'simple': '${inputs.Endpoint_id}', 'complex': None}}, 'reputationCalc': 0, 'separateContext': True, 'restrictedCompletion': False, 'loop': {'scriptName': '', 'exitCondition': '', 'wait': 1, 'max': 100}, 'view': {'position': {'x': 1340, 'y': 195}}, 'note': False, 'evidenceData': {'description': None, 'occurred': None, 'tags': None}, 'skipUnavailable': True, 'quietMode': 0, 'isOverSize': False, 'isAutoSwitchedToQuietMode': False}}, 'taskIds': ['04a17761-3b84-492f-87c6-ef29fc4adc7d', '20f01f93-7b37-4f3f-8c17-a466dac351ef', '050d36dd-0ec3-4490-827e-e210ac5e9a04', '31a268a0-3862-4dcb-8549-b55d0ad936a0', '46562ad2-14ed-4064-8ce8-9adfb791d660', '2604374d-9538-4451-8064-2f5bb5c6dd81', '48226108-0787-44b0-80f6-cf333758b5e8'], 'scriptIds': [], 'commands': [], 'brands': [], 'system': True, 'view': {'linkLabelsPosition': {}, 'paper': {'dimensions': {'height': 385, 'width': 2100, 'x': 50, 'y': 50}}}, 'inputs': [{'key': 'Endpoint_hostname', 'value': {'simple': '', 'complex': None}, 'required': False, 'description': 'The hostname of the endpoint to isolate.', 'playbookInputQuery': None}, {'key': 'ManualHunting.DetectedHosts', 'value': {'simple': '', 'complex': None}, 'required': False, 'description': 'Hosts that were detected as infected during the manual hunting.', 'playbookInputQuery': None}, {'key': 'Endpoint_ip', 'value': {'simple': '', 'complex': None}, 'required': False, 'description': 'The IP of the endpoint to isolate.', 'playbookInputQuery': None}, {'key': 'Endpoint_id', 'value': {'simple': '', 'complex': None}, 'required': False, 'description': 'The ID of the endpoint to isolate.', 'playbookInputQuery': None}], 'outputs': [{'contextPath': 'CbResponse.Sensors.CbSensorID', 'description': 'Carbon Black Response Sensors ids that has been isolated.', 'type': 'string'}, {'contextPath': 'Endpoint', 'description': 'The isolated enpoint.', 'type': 'string'}, {'contextPath': 'Traps.Isolate.EndpointID', 'description': 'The ID of the endpoint.', 'type': 'string'}, {'contextPath': 'Traps.IsolateResult.Status', 'description': 'The status of the isolation operation.', 'type': 'string'}, {'contextPath': 'Cybereason.Machine', 'description': 'Cybereason machine name.', 'type': ''}, {'contextPath': 'Cybereason.IsIsolated', 'description': 'Whether the machine is isolated.', 'type': ''}, {'contextPath': 'Endpoint.Hostname', 'description': 'Hostname of the endpoint.', 'type': ''}, {'contextPath': 'PaloAltoNetworksXDR.Endpoint.endpoint_id', 'description': 'The endpoint ID.', 'type': ''}, {'contextPath': 'PaloAltoNetworksXDR.Endpoint.endpoint_name', 'description': 'The endpoint name.', 'type': ''}, {'contextPath': 'PaloAltoNetworksXDR.Endpoint.endpoint_status', 'description': 'The status of the endpoint.', 'type': ''}, {'contextPath': 'PaloAltoNetworksXDR.Endpoint.ip', 'description': "The endpoint's IP address.", 'type': ''}, {'contextPath': 'PaloAltoNetworksXDR.Endpoint.is_isolated', 'description': 'Whether the endpoint is isolated.', 'type': ''}, {'contextPath': 'CbResponse.Sensors.Status', 'description': 'Sensor status.', 'type': 'unknown'}, {'contextPath': 'CbResponse.Sensors.Isolated', 'description': 'Whether the sensor is isolated.', 'type': 'unknown'}]}
-#     demisto_client.generic_request_func
-#
-#     TestContext.replace_external_playbook_configuration()
+CASES = [
+    (  # case one input is found
+        {'id': 'pb_test',
+         'inputs': [{'key': 'Endpoint_hostname', 'value': {'simple': '', 'complex': None}, 'required': False,
+                     'description': 'The hostname of the endpoint to isolate.', 'playbookInputQuery': None},
+                    {'key': 'ManualHunting.DetectedHosts', 'value': {'simple': '', 'complex': None}, 'required': False,
+                     'description': 'Hosts that were detected as infected during the manual hunting.',
+                     'playbookInputQuery': None},
+                    {'key': 'Endpoint_ip', 'value': {'simple': '', 'complex': None}, 'required': False,
+                     'description': 'The IP of the endpoint to isolate.', 'playbookInputQuery': None},
+                    {'key': 'Endpoint_id', 'value': {'simple': '', 'complex': None}, 'required': False,
+                     'description': 'The ID of the endpoint to isolate.', 'playbookInputQuery': None}],
+         },
+        {
+            "playbookID": "pb_test",
+            "input_parameters": {
+                "Endpoint_hostname": {
+                    "simple": "test"
+                },
+            }
+        },
+        [{'key': 'Endpoint_hostname', 'value': {'simple': 'test', 'complex': None}, 'required': False,
+          'description': 'The hostname of the endpoint to isolate.', 'playbookInputQuery': None}, {
+             'key': 'ManualHunting.DetectedHosts', 'value': {'simple': '', 'complex': None}, 'required': False,
+             'description': 'Hosts that were detected as infected during the manual hunting.',
+             'playbookInputQuery': None}, {'key': 'Endpoint_ip', 'value': {'simple': '', 'complex': None},
+                                           'required': False, 'description': 'The IP of the endpoint to isolate.',
+                                           'playbookInputQuery': None}, {'key': 'Endpoint_id',
+                                                                         'value': {'simple': '', 'complex': None},
+                                                                         'required': False,
+                                                                         'description': 'The ID of the endpoint to isolate.',
+                                                                         'playbookInputQuery': None}]
+
+    ),
+]
+
+
+@pytest.mark.parametrize('current, new_configuration, expected', CASES)
+def test_replacing_pb_inputs(mocker, current, new_configuration, expected):
+    from demisto_sdk.commands.test_content.TestContentClasses import demisto_client, \
+        replace_external_playbook_configuration
+    from demisto_client.demisto_api import DefaultApi
+
+    class clientMock(DefaultApi):
+        def generic_request(self, path, method, body=None, **kwargs):
+            if path == '/about' and method == 'GET':
+                return ("{'demistoVersion': '6.5.0'}", None, None)
+
+    def generic_request_func(self, path, method, body=None, **kwargs):
+        if path == '/playbook/inputs/pb_test' and method == 'POST':
+            assert body == expected
+        elif path == '/playbook/pb_test' and method == 'GET':
+            return current, None, None
+        else:
+            assert False  # Unexpected path
+
+    mocker.patch.object(demisto_client, 'generic_request_func', side_effect=generic_request_func)
+
+    replace_external_playbook_configuration(clientMock(), new_configuration)
+
+
+BAD_CASES = [
+    (  # case no configuration found
+        {'id': 'pb_test',
+         'inputs': [{'key': 'Endpoint_hostname', 'value': {'simple': '', 'complex': None}, 'required': False,
+                     'description': 'The hostname of the endpoint to isolate.', 'playbookInputQuery': None},
+                    {'key': 'ManualHunting.DetectedHosts', 'value': {'simple': '', 'complex': None}, 'required': False,
+                     'description': 'Hosts that were detected as infected during the manual hunting.',
+                     'playbookInputQuery': None},
+                    {'key': 'Endpoint_ip', 'value': {'simple': '', 'complex': None}, 'required': False,
+                     'description': 'The IP of the endpoint to isolate.', 'playbookInputQuery': None},
+                    {'key': 'Endpoint_id', 'value': {'simple': '', 'complex': None}, 'required': False,
+                     'description': 'The ID of the endpoint to isolate.', 'playbookInputQuery': None}],
+         },
+        {},
+        '6.5.0',
+        'External Playbook Configuration not provided, skipping re-configuration.'
+    ),
+    (  # case configuration found in older version
+        {'id': 'pb_test',
+         'inputs': [{'key': 'Endpoint_hostname', 'value': {'simple': '', 'complex': None}, 'required': False,
+                     'description': 'The hostname of the endpoint to isolate.', 'playbookInputQuery': None},
+                    {'key': 'ManualHunting.DetectedHosts', 'value': {'simple': '', 'complex': None}, 'required': False,
+                     'description': 'Hosts that were detected as infected during the manual hunting.',
+                     'playbookInputQuery': None},
+                    {'key': 'Endpoint_ip', 'value': {'simple': '', 'complex': None}, 'required': False,
+                     'description': 'The IP of the endpoint to isolate.', 'playbookInputQuery': None},
+                    {'key': 'Endpoint_id', 'value': {'simple': '', 'complex': None}, 'required': False,
+                     'description': 'The ID of the endpoint to isolate.', 'playbookInputQuery': None}],
+         },
+        {
+            "playbookID": "pb_test",
+            "input_parameters": {
+                "Endpoint_hostname": {
+                    "simple": "test"
+                },
+            }
+        },
+        '6.0.0',
+        'External Playbook not supported in versions previous to 6.2.0, skipping re-configuration.'
+    ),
+]
+
+
+@pytest.mark.parametrize('current, new_configuration, version, expected_error', BAD_CASES)
+def test_replacing_pb_inputs_fails_with_build_pass(mocker, current, new_configuration, version, expected_error):
+    from demisto_sdk.commands.test_content.TestContentClasses import demisto_client, \
+        replace_external_playbook_configuration
+    from demisto_client.demisto_api import DefaultApi
+
+    class clientMock(DefaultApi):
+        def generic_request(self, path, method, body=None, **kwargs):
+            if path == '/about' and method == 'GET':
+                return str({'demistoVersion': version}), None, None
+
+    class LoggerMock(logging.Logger):
+        def info(self, text, **kwargs):
+            if text not in ['External Playbook in use, starting re-configuration.', 'Saved current configuration.']:
+                assert text == expected_error
+
+    def generic_request_func(self, path, method, body=None, **kwargs):
+        if path == '/playbook/inputs/pb_test' and method == 'POST':
+            return
+        elif path == '/playbook/pb_test' and method == 'GET':
+            return current, None, None
+        else:
+            assert False  # Unexpected path
+
+    mocker.patch.object(demisto_client, 'generic_request_func', side_effect=generic_request_func)
+
+    replace_external_playbook_configuration(clientMock(), new_configuration, LoggerMock('test logger'))
+
+
+BAD_CASES_BUILD_FAIL = [
+    (  # case configuration not found.
+        {"id": "createPlaybookErr", "status": 400, "title": "Could not create playbook",
+         "detail": "Could not create playbook", "error": "Item not found (8)", "encrypted": None, "multires": None},
+        {
+            "playbookID": "pb_test",
+            "input_parameters": {
+                "Endpoint_hostname": {
+                    "simple": "test"
+                },
+            }
+        },
+        '6.2.0',
+        'External Playbook was not found or has no inputs.'
+    ),
+    (  # case configuration was found but wrong input key given.
+        {'id': 'pb_test',
+         'inputs': [{'key': 'Endpoint_hostname', 'value': {'simple': '', 'complex': None}, 'required': False,
+                     'description': 'The hostname of the endpoint to isolate.', 'playbookInputQuery': None},
+                    {'key': 'ManualHunting.DetectedHosts', 'value': {'simple': '', 'complex': None}, 'required': False,
+                     'description': 'Hosts that were detected as infected during the manual hunting.',
+                     'playbookInputQuery': None},
+                    {'key': 'Endpoint_ip', 'value': {'simple': '', 'complex': None}, 'required': False,
+                     'description': 'The IP of the endpoint to isolate.', 'playbookInputQuery': None},
+                    {'key': 'Endpoint_id', 'value': {'simple': '', 'complex': None}, 'required': False,
+                     'description': 'The ID of the endpoint to isolate.', 'playbookInputQuery': None}],
+         },
+        {
+            "playbookID": "pb_test",
+            "input_parameters": {
+                "Endpoint_hostnames": {
+                    "simple": "test"
+                },
+            }
+        },
+        '6.2.0',
+        'Some input keys was not found in playbook: Endpoint_hostnames.'
+    ),
+
+]
+
+
+@pytest.mark.parametrize('current, new_configuration, version, expected_error', BAD_CASES_BUILD_FAIL)
+def test_replacing_pb_inputs_fails_with_build_fail(mocker, current, new_configuration, version, expected_error):
+    from demisto_sdk.commands.test_content.TestContentClasses import demisto_client, \
+        replace_external_playbook_configuration
+    from demisto_client.demisto_api import DefaultApi
+
+    class clientMock(DefaultApi):
+        def generic_request(self, path, method, body=None, **kwargs):
+            if path == '/about' and method == 'GET':
+                return str({'demistoVersion': version}), None, None
+
+    def generic_request_func(self, path, method, body=None, **kwargs):
+        if path == '/playbook/inputs/pb_test' and method == 'POST':
+            return
+        elif path == '/playbook/pb_test' and method == 'GET':
+            return current, None, None
+        else:
+            assert False  # Unexpected path
+
+    mocker.patch.object(demisto_client, 'generic_request_func', side_effect=generic_request_func)
+
+    with pytest.raises(Exception) as e:
+        replace_external_playbook_configuration(clientMock(), new_configuration)
+    assert str(e.value) == expected_error

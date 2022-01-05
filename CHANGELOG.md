@@ -9,6 +9,7 @@
 * The **format** command will now add fromVersion 6.1.0 to indicator field of type html.
 * Added support for beta integrations in the **format** command.
 * Removed the integration documentation from the detailed description while performing **split** command to the unified yml file.
+* Removed the line which indicates the version of the product from the README.md file for new contributions.
 
 # 1.5.5
 * Fixed an issue in the **update-release-notes** command, which did not work when changes were made in multiple packs.

@@ -645,6 +645,25 @@ class TestGenerateIntegrationDoc:
                        "Corporate. Default is Basic." in fake_data
                 assert "Number of users to return. Max 300. Default is 30." in fake_data
 
+    def test_generate_integration_doc_new_contribution(self):
+        """
+        Given
+            - YML file representing a new integration contribution.
+        When
+            - Running generate_integration_doc command on the integration.
+        Then
+            - Validate that the integration README was created correctly,
+             specifically that the `xx version` line does not exists in the file.
+    """
+        fake_readme = os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), 'fake_new_contribution_README.md')
+        # Generate doc
+        generate_integration_doc(TEST_INTEGRATION_PATH, is_contribution=True)
+        with open(fake_readme) as fake_file:
+            with open(os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), 'README.md')) as real_file:
+                fake_data = fake_file.read()
+                assert fake_data == real_file.read()
+                assert "This integration was integrated and tested with version xx of" not in fake_data
+
     def test_integration_doc_credentials_display_missing(self):
         """
         Given

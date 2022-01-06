@@ -2332,11 +2332,10 @@ def get_scripts_and_commands_from_yml_data(data, file_type):
         data: The yml data as extracted with get_yaml
         file_type: The FileType of the data provided.
 
-    Return (list of found command names, list of found command sources, list of found script and playbook names)
+    Return (list of found { 'id': command name, 'source': command source }, list of found script and playbook names)
     """
     commands = []
-    command_names = []
-    command_sources = []
+    detailed_commands = []
     scripts_and_pbs = []
     if file_type == FileType.TEST_PLAYBOOK or file_type == FileType.PLAYBOOK:
         tasks = data.get('tasks')
@@ -2370,10 +2369,13 @@ def get_scripts_and_commands_from_yml_data(data, file_type):
     for command in commands:
         command_parts = command.split('|||')
         if len(command_parts) == 2:
-            command_sources.append(command_parts[0])
-            command_names.append(command_parts[1])
+            detailed_commands.append({
+                'id': command_parts[1],
+                'source': command_parts[0]
+            })
         else:
-            command_sources.append('')
-            command_names.append(command_parts[0])
+            detailed_commands.append({
+                'id': command_parts[0]
+            })
 
-    return command_names, command_sources, scripts_and_pbs
+    return detailed_commands, scripts_and_pbs

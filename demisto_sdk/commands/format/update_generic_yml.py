@@ -135,7 +135,8 @@ class BaseUpdateYML(BaseUpdate):
             test_playbook_ids = []
             file_entity_type = find_type(self.source_file, _dict=self.data, file_type='yml')
             file_id = get_entity_id_by_entity_type(self.data, ENTITY_TYPE_TO_DIR.get(file_entity_type.value, ""))
-            commands, command_sources, scripts = get_scripts_and_commands_from_yml_data(self.data, file_entity_type)
+            commands, scripts = get_scripts_and_commands_from_yml_data(self.data, file_entity_type)
+            commands_names = [command.get('id') for command in commands]
             try:
                 # Collecting the test playbooks
                 test_playbooks_files = [tpb_file for tpb_file in listdir_fullpath(test_playbook_dir_path) if
@@ -148,16 +149,17 @@ class BaseUpdateYML(BaseUpdate):
                         test_playbook_ids.append(test_playbook_id)
                     else:
                         added = False
-                        tpb_command_names, tpb_command_sources, tpb_scripts = get_scripts_and_commands_from_yml_data(
+                        tpb_commands, tpb_scripts = get_scripts_and_commands_from_yml_data(
                             test_playbook_data, FileType.TEST_PLAYBOOK)
 
-                        for index, tpb_command_name in enumerate(tpb_command_names):
-                            tpb_command_source = tpb_command_sources[index]
+                        for tpb_command in tpb_commands:
+                            tpb_command_name = tpb_command.get('id')
+                            tpb_command_source = tpb_command.get('source', '')
                             if tpb_command_source and file_id and file_id != tpb_command_source:
                                 continue
 
-                            if not added and tpb_command_name in commands:
-                                command_source = command_sources[commands.index(tpb_command_name)]
+                            if not added and tpb_command_name in commands_names:
+                                command_source = commands[commands_names.index(tpb_command_name)].get('source', '')
                                 if command_source == tpb_command_source or command_source == '':
                                     test_playbook_ids.append(test_playbook_id)
                                     added = True

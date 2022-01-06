@@ -41,7 +41,7 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
         if 'description' not in set(self.data.keys()):
             click.secho('No description is specified for this playbook, would you like to add a description? [Y/n]',
                         fg='bright_red')
-            user_answer = ''
+            user_answer = 'y' if self.assume_yes else ''
             while not user_answer:
                 user_answer = input()
                 if user_answer in ['n', 'N', 'no', 'No']:

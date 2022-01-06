@@ -488,7 +488,7 @@ class TestScripts:
     SCRIPT_DATA = {
         "DummyScript": {
             "name": "DummyScript",
-            "file_path": TESTS_DIR + "/test_files/DummyPack/Scripts/DummyScript.yml",
+            "file_path": TESTS_DIR + "/test_files/DummyPack/Scripts/DummyScript2.yml",
             "source": ['github.com', 'demisto', 'demisto-sdk'],
             "fromversion": "5.0.0",
             "docker_image": "demisto/python3:3.7.3.286",
@@ -541,7 +541,7 @@ class TestScripts:
         """
         Test for getting the script data
         """
-        file_path = TESTS_DIR + '/test_files/DummyPack/Scripts/DummyScript.yml'
+        file_path = TESTS_DIR + '/test_files/DummyPack/Scripts/DummyScript2.yml'
         data = get_script_data(file_path)
 
         assert IsEqualFunctions.is_lists_equal(list(data.keys()), list(TestScripts.SCRIPT_DATA.keys()))

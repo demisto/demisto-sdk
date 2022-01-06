@@ -405,18 +405,22 @@ class ValidateManager:
         return all(package_entities_validation_results)
 
     def is_valid_pack_name(self, file_path, old_file_path):
-        if old_file_path:
-            old_file_path_posix = Path(old_file_path)
-            file_path_posix = Path(file_path)
-            # The path is relative to git, so we expect it to be 'Packs/{pack_name}
-            if file_path_posix.parts[0] == old_file_path_posix.parts[0] == 'Packs' and \
-                    file_path_posix.parts[1] != old_file_path_posix.parts[1]:
-                original_name = old_file_path_posix.parts[1]
-                error_message, error_code = Errors.changed_pack_name(original_name)
-                if self.handle_error(error_message=error_message, error_code=error_code, file_path=file_path,
-                                     drop_line=True):
-                    return False
+        """
+        Valid pack name is currently considered to be a new pack name or an existing pack.
+        If pack name is changed, will return `False`.
+        """
+        if not old_file_path:
             return True
+        old_file_path_posix = Path(old_file_path)
+        file_path_posix = Path(file_path)
+        # The path is relative to git, so we expect it to be 'Packs/{pack_name}'
+        if file_path_posix.parts[0] == old_file_path_posix.parts[0] == 'Packs' and \
+                file_path_posix.parts[1] != old_file_path_posix.parts[1]:
+            original_name = old_file_path_posix.parts[1]
+            error_message, error_code = Errors.changed_pack_name(original_name)
+            if self.handle_error(error_message=error_message, error_code=error_code, file_path=file_path,
+                                 drop_line=True):
+                return False
         return True
 
     # flake8: noqa: C901

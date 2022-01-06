@@ -5,6 +5,7 @@ import shutil
 import subprocess
 import tempfile
 from io import open
+from pathlib import Path
 
 import yaml
 from ruamel.yaml import YAML
@@ -74,13 +75,13 @@ class YmlSplitter:
     def get_output_path(self):
         """Get processed output path
         """
-        output_path = os.path.abspath(self.output)
-        if self.autocreate_dir and (output_path.endswith("Integrations") or output_path.endswith("Scripts")):
+        output_path = Path(self.output)
+        if self.autocreate_dir and (output_path.name == "Integrations" or output_path.name == "Scripts"):
             code_name = self.yml_data.get("name")
             if not code_name:
-                raise ValueError(f'Failed determining Integration/Script name when trying to auto create sub dir at: {output_path}'
+                raise ValueError(f'Failed determining Integration/Script name when trying to auto create sub dir at: {str(self.output)}'
                                  '\nRun with option --no-auto-create-dir to skip auto creation of target dir.')
-            output_path += (os.path.sep + pascal_case(code_name))
+            output_path = output_path / pascal_case(code_name)
         return output_path
 
     def extract_to_package_format(self) -> int:
@@ -95,8 +96,8 @@ class YmlSplitter:
             print_error(str(ex))
             return 1
         self.print_logs("Starting migration of: {} to dir: {}".format(self.input, output_path), log_color=LOG_COLORS.NATIVE)
-        os.makedirs(output_path, exist_ok=True)
-        base_name = os.path.basename(output_path) if not self.base_name else self.base_name
+        output_path.mkdir(exist_ok=True)
+        base_name = output_path.name if not self.base_name else self.base_name
         code_file = "{}/{}".format(output_path, base_name)
         self.extract_code(code_file)
         script = self.yml_data['script']
@@ -129,7 +130,7 @@ class YmlSplitter:
         found_readme = False
         if self.readme:
             yml_readme = os.path.splitext(self.input)[0] + '_README.md'
-            readme = output_path + '/README.md'
+            readme = output_path / '/README.md'
             if os.path.exists(yml_readme):
                 found_readme = True
                 self.print_logs(f"Copying {readme} to {readme}", log_color=LOG_COLORS.NATIVE)
@@ -192,7 +193,7 @@ class YmlSplitter:
                         self.print_logs("pipenv install skipped! It doesn't seem you have pipenv installed.\n"
                                         "Make sure to install it with: pip3 install pipenv.\n"
                                         f"Then run in the package dir: pipenv install --dev\n.Err: {err}", LOG_COLORS.YELLOW)
-                    arg_path = os.path.relpath(output_path)
+                    arg_path = output_path.relative_to()
                     self.print_logs("\nCompleted: setting up package: {}\n".format(arg_path), LOG_COLORS.GREEN)
                     next_steps: str = "Next steps: \n" \
                                       "* Install additional py packages for unit testing (if needed): cd {};" \

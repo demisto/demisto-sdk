@@ -1,5 +1,6 @@
 import base64
 import os
+from pathlib import Path
 
 import yaml
 
@@ -125,7 +126,7 @@ def test_get_output_path():
                             file_type='integration',
                             output=out)
     res = extractor.get_output_path()
-    assert res == out + "/Zoom"
+    assert res == Path(out + "/Zoom")
 
 
 def test_extract_to_package_format_pwsh(tmpdir):

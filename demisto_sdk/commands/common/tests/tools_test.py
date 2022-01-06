@@ -28,7 +28,7 @@ from demisto_sdk.commands.common.tools import (
     get_to_version, get_yaml, has_remote_configured, is_origin_content_repo,
     is_pack_path, is_uuid, retrieve_file_ending, run_command_os,
     server_version_compare, to_kebab_case)
-from demisto_sdk.tests.constants_test import (IGNORED_PNG,
+from demisto_sdk.tests.constants_test import (DUMMY_SCRIPT_PATH, IGNORED_PNG,
                                               INDICATORFIELD_EXTRA_FIELDS,
                                               SOURCE_FORMAT_INTEGRATION_COPY,
                                               TEST_PLAYBOOK,
@@ -1515,19 +1515,27 @@ def test_to_kebab_case(input_str, output_str):
 YML_DATA_CASES = [(get_yaml(VALID_INTEGRATION_TEST_PATH), FileType.INTEGRATION,
                    ['PagerDutyGetAllSchedules', 'PagerDutyGetUsersOnCall', 'PagerDutyGetUsersOnCallNow',
                     'PagerDutyIncidents', 'PagerDutySubmitEvent', 'PagerDutyGetContactMethods',
-                    'PagerDutyGetUsersNotification'], []),
-                  (get_yaml(VALID_SCRIPT_PATH), FileType.SCRIPT, ['send-notification'], ['TestCreateDuplicates']),
-                  (get_yaml(TEST_PLAYBOOK), FileType.TEST_PLAYBOOK, ['Gmail|||gmail-search'],
+                    'PagerDutyGetUsersNotification'], ['', '', '', '', '', '', ''], []),
+                  (get_yaml(VALID_SCRIPT_PATH), FileType.SCRIPT, ['send-notification'], [''], ['TestCreateDuplicates']),
+                  (get_yaml(TEST_PLAYBOOK), FileType.TEST_PLAYBOOK, ['gmail-search'], ['Gmail'],
                    ['ReadFile', 'Get Original Email - Gmail']),
-                  (get_yaml(VALID_PLAYBOOK_ID_PATH), FileType.PLAYBOOK, ['Builtin|||setIncident',
-                                                                         'Builtin|||closeInvestigation',
-                                                                         'Builtin|||setIncident'],
+                  (get_yaml(VALID_PLAYBOOK_ID_PATH), FileType.PLAYBOOK, ['setIncident',
+                                                                         'closeInvestigation',
+                                                                         'setIncident'],
+                   ['Builtin', 'Builtin', 'Builtin'],
                    ['Account Enrichment - Generic', 'EmailAskUser', 'ADGetUser', 'IP Enrichment - Generic',
-                    'IP Enrichment - Generic', 'AssignAnalystToIncident', 'access_investigation_-_generic'])]
+                    'IP Enrichment - Generic', 'AssignAnalystToIncident', 'access_investigation_-_generic']),
+                  (get_yaml(VALID_INTEGRATION_TEST_PATH), FileType.INTEGRATION,
+                   ['PagerDutyGetAllSchedules', 'PagerDutyGetUsersOnCall', 'PagerDutyGetUsersOnCallNow',
+                    'PagerDutyIncidents', 'PagerDutySubmitEvent', 'PagerDutyGetContactMethods',
+                    'PagerDutyGetUsersNotification'], ['', '', '', '', '', '', ''], []),
+                  (get_yaml(DUMMY_SCRIPT_PATH), FileType.SCRIPT,  # Empty case
+                   [], [], ['DummyScriptUnified'])]
 
 
-@pytest.mark.parametrize('data, file_type, expected_commands, expected_scripts', YML_DATA_CASES)
-def test_get_scripts_and_commands_from_yml_data(data, file_type, expected_commands, expected_scripts):
-    commands, scripts = get_scripts_and_commands_from_yml_data(data=data, file_type=file_type)
+@pytest.mark.parametrize('data, file_type, expected_commands, expected_sources, expected_scripts', YML_DATA_CASES)
+def test_get_scripts_and_commands_from_yml_data(data, file_type, expected_commands, expected_sources, expected_scripts):
+    commands, commands_sources, scripts = get_scripts_and_commands_from_yml_data(data=data, file_type=file_type)
     assert commands == expected_commands
+    assert commands_sources == expected_sources
     assert scripts == expected_scripts

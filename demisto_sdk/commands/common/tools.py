@@ -2216,6 +2216,10 @@ def get_pack_dir(path):
     return []
 
 
+def listdir_fullpath(dir_name: str) -> List[str]:
+    return [os.path.join(dir_name, f) for f in os.listdir(dir_name)]
+
+
 def get_scripts_and_commands_from_yml_data(data, file_type):
     """Get the used scripts and commands from the yml data
 
@@ -2223,10 +2227,12 @@ def get_scripts_and_commands_from_yml_data(data, file_type):
         data: The yml data as extracted with get_yaml
         file_type: The FileType of the data provided.
 
-    Return (list of found command names, list of found script names)
+    Return (list of found command names, list of found script and playbook names)
     """
     commands = []
-    scripts = []
+    command_names = []
+    command_sources = []
+    scripts_and_pbs = []
     if file_type == FileType.TEST_PLAYBOOK or file_type == FileType.PLAYBOOK:
         tasks = data.get('tasks')
         for task_num in tasks.keys():
@@ -2238,16 +2244,16 @@ def get_scripts_and_commands_from_yml_data(data, file_type):
                     commands.append(inner_task.get('script'))
                 else:
                     if task_type == 'playbook':
-                        scripts.append(inner_task.get('playbookName'))
+                        scripts_and_pbs.append(inner_task.get('playbookName'))
                     elif inner_task.get('scriptName'):
-                        scripts.append(inner_task.get('scriptName'))
+                        scripts_and_pbs.append(inner_task.get('scriptName'))
         if file_type == FileType.PLAYBOOK:
             playbook_id = get_entity_id_by_entity_type(data, PLAYBOOKS_DIR)
-            scripts.append(playbook_id)
+            scripts_and_pbs.append(playbook_id)
 
     if file_type == FileType.SCRIPT:
         script_id = get_entity_id_by_entity_type(data, SCRIPTS_DIR)
-        scripts = [script_id]
+        scripts_and_pbs = [script_id]
         if data.get('dependson'):
             commands = data.get('dependson').get('must', [])
 
@@ -2256,4 +2262,13 @@ def get_scripts_and_commands_from_yml_data(data, file_type):
         for integration_command in integration_commands:
             commands.append(integration_command.get('name'))
 
-    return commands, scripts
+    for command in commands:
+        command_parts = command.split('|||')
+        if len(command_parts) == 2:
+            command_sources.append(command_parts[0])
+            command_names.append(command_parts[1])
+        else:
+            command_sources.append('')
+            command_names.append(command_parts[0])
+
+    return command_names, command_sources, scripts_and_pbs

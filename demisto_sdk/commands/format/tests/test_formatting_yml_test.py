@@ -646,10 +646,9 @@ class TestFormatting:
             - Ensure `tests` field gets the Test Playbook ID
         """
         test_files_path = os.path.join(git_path(), 'demisto_sdk', 'tests')
-        vmware_integration_yml_path = os.path.join(test_files_path, 'test_files', 'Packs',
-                                                   'Phishing',
-                                                   'Integrations', 'integration-VMware.yml')
-        formatter = IntegrationYMLFormat(input=vmware_integration_yml_path, output='')
+        integration_yml_path = os.path.join(test_files_path, 'test_files', 'Packs', 'Phishing',
+                                            'Integrations', 'integration-VMware.yml')
+        formatter = IntegrationYMLFormat(input=integration_yml_path, output='')
         res = formatter.update_tests()
         assert res is None
         assert formatter.data.get('tests') == ['VMWare Test']
@@ -666,10 +665,9 @@ class TestFormatting:
             - Ensure `tests` field gets the Test Playbook ID
         """
         test_files_path = os.path.join(git_path(), 'demisto_sdk', 'tests')
-        phishing_playbook_yml_path = os.path.join(test_files_path, 'test_files', 'Packs',
-                                                  'Phishing',
-                                                  'Playbooks', 'Phishing_Investigation_-_Generic_v2_-_6_0.yml')
-        formatter = PlaybookYMLFormat(input=phishing_playbook_yml_path, output='')
+        playbook_yml_path = os.path.join(test_files_path, 'test_files', 'Packs', 'Phishing',
+                                         'Playbooks', 'Phishing_Investigation_-_Generic_v2_-_6_0.yml')
+        formatter = PlaybookYMLFormat(input=playbook_yml_path, output='')
         formatter.update_tests()
         assert set(formatter.data.get('tests')) == {'playbook-checkEmailAuthenticity-test',
                                                     'Phishing v2 - Test - Actual Incident'}
@@ -686,10 +684,9 @@ class TestFormatting:
             - Ensure `tests` field gets the Test Playbook ID
         """
         test_files_path = os.path.join(git_path(), 'demisto_sdk', 'tests')
-        email_auth_script_yml_path = os.path.join(test_files_path, 'test_files', 'Packs',
-                                                  'Phishing', 'Scripts',
-                                                  'CheckEmailAuthenticity.yml')
-        formatter = ScriptYMLFormat(input=email_auth_script_yml_path, output='')
+        script_yml_path = os.path.join(test_files_path, 'test_files', 'Packs', 'Phishing', 'Scripts',
+                                       'CheckEmailAuthenticity.yml')
+        formatter = ScriptYMLFormat(input=script_yml_path, output='')
         formatter.update_tests()
         assert formatter.data.get('tests') == ['playbook-checkEmailAuthenticity-test']
 

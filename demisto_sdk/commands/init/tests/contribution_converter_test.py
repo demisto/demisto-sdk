@@ -595,7 +595,7 @@ class TestEnsureUniquePackDirName:
         Args:
             contribution_converter (fixture): An instance of the ContributionConverter class
 
-        Scenario: Formatting the added/modified files by checking against "xsoar-contrib/master" repo
+        Scenario: Formatting the added/modified files by including the untracked files in a non-interactive mode
 
         Given
         - ContributionConverter class
@@ -604,7 +604,7 @@ class TestEnsureUniquePackDirName:
         - Running the format_converted_pack method to format the files
 
         Then
-        - Ensure the repo we are comparing with is "xsoar-contrib/master"
+        - Ensure that we format the untracked files as well and the interactive flag is set to false
         """
         contribution_converter.create_new = new_pack
         result = mocker.patch('demisto_sdk.commands.init.contribution_converter.format_manager',

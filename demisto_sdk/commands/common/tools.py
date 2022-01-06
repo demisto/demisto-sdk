@@ -2326,13 +2326,13 @@ def listdir_fullpath(dir_name: str) -> List[str]:
 
 
 def get_scripts_and_commands_from_yml_data(data, file_type):
-    """Get the used scripts and commands from the yml data
+    """Get the used scripts, playbooks and commands from the yml data
 
     Args:
         data: The yml data as extracted with get_yaml
         file_type: The FileType of the data provided.
 
-    Return (list of found command names, list of found script and playbook names)
+    Return (list of found command names, list of found command sources, list of found script and playbook names)
     """
     commands = []
     command_names = []

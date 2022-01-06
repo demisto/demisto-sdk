@@ -72,6 +72,7 @@ class DocReviewer:
         self.malformed_rn_files = set()  # type:Set
 
     def find_known_words_from_pack(self, file_path):
+        """Find known words in file_path's pack."""
         if file_path.startswith('Packs'):
             pack_name = file_path.split('/')[1]
             known_words_path = f"Packs/{pack_name}/{self.PACKS_KNOWN_WORDS_PATH}"
@@ -125,6 +126,7 @@ class DocReviewer:
 
     def get_files_to_run_on(self, file_path):
         """Get all the relevant files that the spell-check could work on"""
+        print(f"HELLO THERE {find_type(file_path)}")
         if self.git_util:
             self.get_files_from_git()
 
@@ -172,10 +174,10 @@ class DocReviewer:
             click.secho("Could not find any relevant files - Aborting.")
             return True
 
-        self.add_known_words()
         for file in self.files:
             click.echo(f'\nChecking file {file}')
             self.update_known_words_from_pack(file)
+            self.add_known_words()
             self.unknown_words = {}
             if file.endswith('.md'):
                 self.check_md_file(file)

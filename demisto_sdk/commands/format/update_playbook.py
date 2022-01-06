@@ -261,8 +261,6 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
             super().run_format()
             return SUCCESS_RETURN_CODE
         except Exception as err:
-            import traceback
-            print(traceback.format_exc())
             if self.verbose:
                 click.secho(f'\nFailed to update file {self.source_file}. Error: {err}', fg='red')
             return ERROR_RETURN_CODE

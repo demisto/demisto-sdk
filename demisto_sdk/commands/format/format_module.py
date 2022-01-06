@@ -130,7 +130,6 @@ def format_manager(input: str = None,
     supported_file_types = ['json', 'yml', 'py', 'md']
     use_git = use_git or not input
 
-    files = None
     if input:
         files = get_files_in_dir(input, supported_file_types)
 

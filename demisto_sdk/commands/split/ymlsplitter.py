@@ -96,7 +96,7 @@ class YmlSplitter:
             print_error(str(ex))
             return 1
         self.print_logs("Starting migration of: {} to dir: {}".format(self.input, output_path), log_color=LOG_COLORS.NATIVE)
-        output_path.mkdir(exist_ok=True)
+        output_path.mkdir(parents=True, exist_ok=True)
         base_name = output_path.name if not self.base_name else self.base_name
         code_file = "{}/{}".format(output_path, base_name)
         self.extract_code(code_file)

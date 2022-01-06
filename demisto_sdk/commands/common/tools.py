@@ -46,6 +46,8 @@ from demisto_sdk.commands.common.constants import (
     TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR,
     XSOAR_CONFIG_FILE, FileType, GitContentConfig, IdSetKeys,
     MarketplaceVersions, urljoin)
+from demisto_sdk.commands.common.content.objects.abstract_objects.general_object import \
+    GeneralObject
 from demisto_sdk.commands.common.git_util import GitUtil
 
 urllib3.disable_warnings()
@@ -2319,3 +2321,11 @@ def get_api_module_dependencies(pkgs, id_set_path, verbose):
     using_integrations_pkg_paths = [Path(integration.get('file_path')).parent.absolute() for
                                     integration in using_integrations]
     return list(set(using_integrations_pkg_paths + using_scripts_pkg_paths))
+
+
+def alternate_item_fields(content_item: GeneralObject):
+    item_keys = content_item.keys()
+    for field in item_keys:
+        if field.endswith('_x2'):
+            content_item[field[:-3]] = content_item[field]
+            content_item.pop(field)

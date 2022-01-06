@@ -27,7 +27,7 @@ from demisto_sdk.commands.common.content import (Content, ContentError,
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     JSONContentObject, Script, TextObject, YAMLContentObject,
     YAMLContentUnifiedObject)
-from demisto_sdk.commands.common.tools import arg_to_list, open_id_set_file
+from demisto_sdk.commands.common.tools import arg_to_list, open_id_set_file, alternate_item_fields
 
 from .artifacts_report import ArtifactsReport, ObjectReport
 
@@ -226,7 +226,8 @@ class ContentItemsHandler:
             return
 
         self.server_min_version = max(self.server_min_version, content_object.from_version)
-
+        alternate_item_fields(content_object)
+        #add check to see if in the id set it is marked as having '_x2'
         self.content_folder_name_to_func[content_object_directory](content_object)
 
     def add_script_as_content_item(self, content_object: ContentObject):

@@ -13,6 +13,8 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION, INTEGRATIONS_DIR, LAYOUTS_DIR, PACKS_DIR,
     PACKS_PACK_IGNORE_FILE_NAME, PLAYBOOKS_DIR, SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR, FileType)
+from demisto_sdk.commands.common.content import Content
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import (
     LOG_COLORS, arg_to_list, compare_context_path_in_yml_and_readme,
@@ -329,17 +331,23 @@ class TestGetRemoteFileLocally:
     FILE_NAME = 'somefile.json'
     FILE_CONTENT = '{"id": "some_file"}'
 
+    git_util = GitUtil(repo=Content.git())
+    main_branch = git_util.handle_prev_ver()[1]
+
     def setup_method(self):
         # create local git repo
         example_repo = git.Repo.init(self.REPO_NAME)
-        example_repo.git.checkout('-b', 'origin/master')
+        origin_branch = self.main_branch
+        if not origin_branch.startswith('origin'):
+            origin_branch = 'origin/' + origin_branch
+        example_repo.git.checkout('-b', f'{origin_branch}')
         with open(os.path.join(self.REPO_NAME, self.FILE_NAME), 'w+') as somefile:
             somefile.write(self.FILE_CONTENT)
         example_repo.git.add(self.FILE_NAME)
         example_repo.git.config('user.email', 'automatic@example.com')
         example_repo.git.config('user.name', 'AutomaticTest')
         example_repo.git.commit('-m', 'test_commit', '-a')
-        example_repo.git.checkout('-b', 'master')
+        example_repo.git.checkout('-b', self.main_branch)
 
     def test_get_file_from_master_when_in_private_repo(self, mocker):
         mocker.patch.object(tools, 'is_external_repository', return_value=True)

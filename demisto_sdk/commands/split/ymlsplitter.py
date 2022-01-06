@@ -76,7 +76,7 @@ class YmlSplitter:
         """Get processed output path
         """
         output_path = Path(self.output)
-        if self.autocreate_dir and (output_path.name == "Integrations" or output_path.name == "Scripts"):
+        if self.autocreate_dir and output_path.name in {'Integrations', 'Scripts'}:
             code_name = self.yml_data.get("name")
             if not code_name:
                 raise ValueError(f'Failed determining Integration/Script name when trying to auto create sub dir at: {str(self.output)}'
@@ -129,9 +129,9 @@ class YmlSplitter:
         # check if there is a README and if found, set found_readme to True
         found_readme = False
         if self.readme:
-            yml_readme = os.path.splitext(self.input)[0] + '_README.md'
+            yml_readme = Path(self.input).stem + '_README.md'
             readme = output_path / 'README.md'
-            if os.path.exists(yml_readme):
+            if Path(yml_readme).exists():
                 found_readme = True
                 self.print_logs(f"Copying {readme} to {readme}", log_color=LOG_COLORS.NATIVE)
                 shutil.copy(yml_readme, readme)
@@ -203,7 +203,7 @@ class YmlSplitter:
                     next_steps += "* When ready, remove from git the old yml and/or README and add the new package:\n" \
                                   "    git rm {}\n".format(self.input)
                     if found_readme:
-                        next_steps += "    git rm {}\n".format(os.path.splitext(self.input)[0] + '_README.md')
+                        next_steps += "    git rm {}\n".format(Path(self.input).stem + '_README.md')
                     next_steps += "    git add {}\n".format(arg_path)
                     self.print_logs(next_steps, log_color=LOG_COLORS.NATIVE)
 

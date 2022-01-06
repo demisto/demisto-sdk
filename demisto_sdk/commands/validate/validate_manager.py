@@ -408,6 +408,7 @@ class ValidateManager:
         if old_file_path:
             old_file_path_posix = Path(old_file_path)
             file_path_posix = Path(file_path)
+            # The path is relative to git, so we expect it to be 'Packs/{pack_name}
             if file_path_posix.parts[0] == old_file_path_posix.parts[0] == 'Packs' and \
                     file_path_posix.parts[1] != old_file_path_posix.parts[1]:
                 original_name = old_file_path_posix.parts[1]

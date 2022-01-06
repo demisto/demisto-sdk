@@ -130,7 +130,7 @@ class YmlSplitter:
         found_readme = False
         if self.readme:
             yml_readme = os.path.splitext(self.input)[0] + '_README.md'
-            readme = output_path / '/README.md'
+            readme = output_path / 'README.md'
             if os.path.exists(yml_readme):
                 found_readme = True
                 self.print_logs(f"Copying {readme} to {readme}", log_color=LOG_COLORS.NATIVE)

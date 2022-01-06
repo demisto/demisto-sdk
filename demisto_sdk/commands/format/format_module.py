@@ -104,8 +104,8 @@ def format_manager(input: str = None,
                    use_git: bool = False,
                    prev_ver: str = None,
                    include_untracked: bool = False,
-                   interactive: bool = True,
-                   add_tests: bool = None):
+                   add_tests: bool = None,
+                   interactive: bool = True):
     """
     Format_manager is a function that activated format command on different type of files.
     Args:
@@ -141,8 +141,6 @@ def format_manager(input: str = None,
         raise Exception("The given output path is not a specific file path.\n"
                         "Only file path can be a output path.  Please specify a correct output.")
 
-    print(f'This files was found for format: {files}')
-
     log_list = []
     error_list: List[Tuple[int, int]] = []
     if files:
@@ -165,14 +163,14 @@ def format_manager(input: str = None,
                 info_res, err_res, skip_res = run_format_on_file(input=file_path,
                                                                  file_type=file_type,
                                                                  from_version=from_version,
+                                                                 interactive=interactive,
                                                                  output=output,
                                                                  no_validate=no_validate,
                                                                  verbose=verbose,
                                                                  update_docker=update_docker,
                                                                  assume_yes=assume_yes,
                                                                  deprecate=deprecate,
-                                                                 add_tests=add_tests,
-                                                                 interactive=interactive)
+                                                                 add_tests=add_tests)
                 if err_res:
                     log_list.extend([(err_res, print_error)])
                 if info_res:
@@ -261,13 +259,14 @@ def update_content_entity_ids(files: List[str], verbose: bool):
             f.truncate()
 
 
-def run_format_on_file(input: str, file_type: str, from_version: str, **kwargs) -> \
+def run_format_on_file(input: str, file_type: str, from_version: str, interactive: bool, **kwargs) -> \
         Tuple[List[str], List[str], List[str]]:
     """Run the relevent format of file type.
     Args:
         input (str): The input file path.
         file_type (str): The type of input file
         from_version (str): The fromVersion value that was set by User.
+        interactive (bool): Whether to run the format interactively or not (usually for contribution management)
     Returns:
         List of Success , List of Error.
     """
@@ -282,9 +281,8 @@ def run_format_on_file(input: str, file_type: str, from_version: str, **kwargs) 
     if file_type not in ('integration', 'playbook', 'script') and 'add_tests' in kwargs:
         # adding tests is relevant only for integrations, playbooks and scripts.
         del kwargs['add_tests']
-    update_object = FILE_TYPE_AND_LINKED_CLASS[file_type](input=input, path=schema_path,
-                                                          from_version=from_version,
-                                                          **kwargs)
+    update_object = FILE_TYPE_AND_LINKED_CLASS[file_type](input=input, path=schema_path, from_version=from_version,
+                                                          interactive=interactive, **kwargs)
     format_res, validate_res = update_object.format_file()  # type: ignore
     CONTENT_ENTITY_IDS_TO_UPDATE.update(update_object.updated_ids)
     return logger(input, format_res, validate_res)

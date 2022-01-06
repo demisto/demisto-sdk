@@ -57,9 +57,9 @@ class ReportJSONFormat(BaseUpdateJSON):
         ['pdf', 'csv', 'docx']
         """
         if not self.data.get('type'):
-            click.secho('No type is specified for this report, would you like me to update for you? [Y/n]',
-                        fg='red')
             if self.interactive:
+                click.secho('No type is specified for this report, would you like me to update for you? [Y/n]',
+                            fg='red')
                 user_answer = input()
             else:
                 user_answer = 'n'

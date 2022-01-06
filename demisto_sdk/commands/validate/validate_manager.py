@@ -411,8 +411,7 @@ class ValidateManager:
             if file_path_posix.parts[0] == old_file_path_posix.parts[0] == 'Packs' and \
                     file_path_posix.parts[1] != old_file_path_posix.parts[1]:
                 original_name = old_file_path_posix.parts[1]
-                old_name = file_path_posix.parts[1]
-                error_message, error_code = Errors.changed_pack_name(original_name, old_name)
+                error_message, error_code = Errors.changed_pack_name(original_name)
                 if self.handle_error(error_message=error_message, error_code=error_code, file_path=file_path,
                                      drop_line=True):
                     return False

@@ -2108,5 +2108,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def changed_pack_name(original_name, new_name):
-        return f'Pack folder names cannot be changed, please rename it back to {original_name}. If you wish to rename the pack, you can edit the name field in pack_metadata.json, and the pack will be shown in the Marketplace accordingly.'
+    def changed_pack_name(original_name):
+        return f'Pack folder names cannot be changed, please rename it back to {original_name}.' \
+               f' If you wish to rename the pack, you can edit the name field in pack_metadata.json,' \
+               f' and the pack will be shown in the Marketplace accordingly.'

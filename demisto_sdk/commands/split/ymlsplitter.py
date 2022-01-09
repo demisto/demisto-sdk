@@ -98,7 +98,7 @@ class YmlSplitter:
         self.print_logs("Starting migration of: {} to dir: {}".format(self.input, output_path), log_color=LOG_COLORS.NATIVE)
         output_path.mkdir(parents=True, exist_ok=True)
         base_name = output_path.name if not self.base_name else self.base_name
-        code_file = "{}/{}".format(output_path, base_name)
+        code_file = output_path / base_name
         self.extract_code(code_file)
         script = self.yml_data['script']
         lang_type: str = script['type'] if self.file_type == 'integration' else self.yml_data['type']
@@ -238,8 +238,7 @@ class YmlSplitter:
         else:
             lang_type = self.yml_data['type']
         ext = TYPE_TO_EXTENSION[lang_type]
-        if not code_file_path.endswith(ext):
-            code_file_path += ext
+        code_file_path = code_file_path.with_suffix(ext)
         self.print_logs("Extracting code to: {} ...".format(code_file_path), log_color=LOG_COLORS.NATIVE)
         with open(code_file_path, 'wt') as code_file:
             if lang_type == TYPE_PYTHON and self.demisto_mock:

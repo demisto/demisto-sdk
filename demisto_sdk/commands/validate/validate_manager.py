@@ -1,6 +1,5 @@
 import os
 from configparser import ConfigParser, MissingSectionHeaderError
-from pathlib import Path
 from typing import Optional, Set, Tuple
 
 import click

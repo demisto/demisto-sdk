@@ -93,7 +93,7 @@ class LintManager:
             "requirements_3": None,
             "requirements_2": None,
             "test_modules": None,
-            "docker_engine": False
+            "docker_engine": True
         }
         # Check env requirements satisfied - bootstrap in use
         validate_env()

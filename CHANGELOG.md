@@ -3,6 +3,15 @@
 * Added 'deprecated' release notes template.
 * Fixed an issue where **run-test-playbook** command failed to get the task entries when the test playbook finished with errors.
 * Fixed an issue in **validate** command when running with `no-conf-json` argument to ignore the `conf.json` file.
+* Added error type text (`ERROR` or `WARNING`) to **validate** error prints.
+* Fixed an issue where the **format** command on test playbook did not format the ID to be equal to the name of the test playbook.
+* Enhanced the **update-release-notes** command to automatically commit release notes config file upon creation.
+* The **validate** command will validate that an indicator field of type html has fromVersion of 6.1.0 and above.
+* The **format** command will now add fromVersion 6.1.0 to indicator field of type html.
+* Added support for beta integrations in the **format** command.
+* Fixed an issue where the **postman-codegen** command failed when called with the `--config-out` flag.
+* Removed the integration documentation from the detailed description while performing **split** command to the unified yml file.
+* Removed the line which indicates the version of the product from the README.md file for new contributions.
 
 # 1.5.5
 * Fixed an issue in the **update-release-notes** command, which did not work when changes were made in multiple packs.
@@ -19,6 +28,7 @@
 * Enhancement for **split** command, replace `ApiModule` code block to `import` when splitting a YML.
 * Fixed an issue where indicator types were missing from the pack's content, when uploading using **zip-packs**.
 * The request data body format generated in the **postman-codegen** will use the python argument's name and not the raw data argument's name.
+* Added the flag '--filter-by-id-set' to **create-content-artifacts** to create artifacts only for items in the given id_set.json.
 
 # 1.5.4
 * Fixed an issue with the **format** command when contributing via the UI
@@ -32,7 +42,7 @@
 * Two entitles will not consider as duplicates if they share the same pack and the same source.
 * Fixed a bug when duplicates were found in **find_dependencies**.
 * Added function **get_current_repo** to `tools`.
-* The **postman-codegen** will not have duplicates arguments' name. It will rename them to the minimum distinguished shared path for each of them.
+* The **postman-codegen** will not have duplicates argument name. It will rename them to the minimum distinguished shared path for each of them.
 
 # 1.5.3
 * The **format** command will now set `unsearchable: True` for incident, indicator and generic fields.

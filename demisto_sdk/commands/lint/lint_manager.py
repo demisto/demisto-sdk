@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import re
+import time
 import sys
 import textwrap
 from typing import Any, Dict, List, Set
@@ -30,6 +31,7 @@ from demisto_sdk.commands.common.tools import (find_file, find_type,
                                                print_warning,
                                                retrieve_file_ending)
 from demisto_sdk.commands.lint import helpers
+from demisto_sdk.commands.lint.dockers_manager import DockersManager
 from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, PWSH_CHECKS,
                                                PY_CHCEKS,
                                                build_skipped_exit_code,
@@ -249,7 +251,7 @@ class LintManager:
 
         return list(pkgs_to_check)
 
-    def run_dev_packages(self, parallel: int, no_flake8: bool, no_xsoar_linter: bool, no_bandit: bool, no_mypy: bool,
+    def run_dev_packages_orig(self, parallel: int, no_flake8: bool, no_xsoar_linter: bool, no_bandit: bool, no_mypy: bool,
                          no_pylint: bool, no_coverage: bool, coverage_report: str,
                          no_vulture: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
                          keep_container: bool,
@@ -436,6 +438,205 @@ class LintManager:
         if return_exit_code:
             return_exit_code = FAIL
         return return_exit_code
+
+    def run_dev_packages(self, parallel: int, no_flake8: bool, no_xsoar_linter: bool, no_bandit: bool, no_mypy: bool,
+                         no_pylint: bool, no_coverage: bool, coverage_report: str,
+                         no_vulture: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
+                         keep_container: bool,
+                         test_xml: str, failure_report: str, docker_timeout: int) -> int:
+        """ Runs the Lint command on all given packages.
+
+        Args:
+            parallel(int): Whether to run command on multiple threads
+            no_flake8(bool): Whether to skip flake8
+            no_xsoar_linter(bool): Whether to skip xsoar linter
+            no_bandit(bool): Whether to skip bandit
+            no_mypy(bool): Whether to skip mypy
+            no_vulture(bool): Whether to skip vulture
+            no_pylint(bool): Whether to skip pylint
+            no_coverage(bool): Run pytest without coverage report
+            coverage_report(str): the directory fo exporting the coverage data
+            no_test(bool): Whether to skip pytest
+            no_pwsh_analyze(bool): Whether to skip powershell code analyzing
+            no_pwsh_test(bool): whether to skip powershell tests
+            keep_container(bool): Whether to keep the test container
+            test_xml(str): Path for saving pytest xml results
+            failure_report(str): Path for store failed packs report
+            docker_timeout(int): timeout for docker requests
+
+        Returns:
+            int: exit code by fail exit codes by var EXIT_CODES
+        """
+        lint_status: Dict = {
+            "fail_packs_flake8": [],
+            "fail_packs_XSOAR_linter": [],
+            "fail_packs_bandit": [],
+            "fail_packs_mypy": [],
+            "fail_packs_vulture": [],
+            "fail_packs_pylint": [],
+            "fail_packs_pytest": [],
+            "fail_packs_pwsh_analyze": [],
+            "fail_packs_pwsh_test": [],
+            "fail_packs_image": [],
+            "warning_packs_flake8": [],
+            "warning_packs_XSOAR_linter": [],
+            "warning_packs_bandit": [],
+            "warning_packs_mypy": [],
+            "warning_packs_vulture": [],
+            "warning_packs_pylint": [],
+            "warning_packs_pytest": [],
+            "warning_packs_pwsh_analyze": [],
+            "warning_packs_pwsh_test": [],
+            "warning_packs_image": [],
+        }
+
+        # Python or powershell or both
+        pkgs_type = []
+
+        # Detailed packages status
+        pkgs_status = {}
+
+        # Skiped lint and test codes
+        skipped_code = build_skipped_exit_code(no_flake8=no_flake8, no_bandit=no_bandit, no_mypy=no_mypy,
+                                               no_vulture=no_vulture, no_xsoar_linter=no_xsoar_linter,
+                                               no_pylint=no_pylint, no_test=no_test, no_pwsh_analyze=no_pwsh_analyze,
+                                               no_pwsh_test=no_pwsh_test, docker_engine=self._facts["docker_engine"])
+
+        docker_manager = DockersManager(content_repo=Path(self._facts["content_repo"].working_dir),
+                                        pkgs=self._pkgs, modules=self._facts["test_modules"],
+                                        docker_timeout=docker_timeout,
+                                        req_2=self._facts["requirements_2"],
+                                        req_3=self._facts["requirements_3"],
+                                        )
+        start = time.time()
+        docker_manager.prepare_required_images()
+        logger.info(f'Docker manager run: {time.time() - start}')
+        with concurrent.futures.ThreadPoolExecutor(max_workers=parallel) as executor:
+            
+            start_time = time.time()
+            return_exit_code: int = 0
+            return_warning_code: int = 0
+            results = []
+
+            ############
+            # linter: Linter = Linter(pack_dir=Path('AbnormalSecurity'),
+            #                             content_repo="" if not self._facts["content_repo"] else
+            #                             Path(self._facts["content_repo"].working_dir),
+            #                             req_2=self._facts["requirements_2"],
+            #                             req_3=self._facts["requirements_3"],
+            #                             docker_engine=self._facts["docker_engine"],
+            #                             docker_timeout=docker_timeout)
+            # linter._pkg_lint_status['pkg'] = 'mypy_global_test'
+            # exit_code, output = linter._run_mypy(py_num=2.7, lint_files=[])
+        
+            # if exit_code:
+            #         error, warning, other = helpers.split_warnings_errors(output)
+            # if exit_code and warning:
+            #     linter._pkg_lint_status["warning_code"] |= EXIT_CODES['mypy']
+            #     linter._pkg_lint_status[f"mypy_warnings"] = "\n".join(warning)
+            # if exit_code & FAIL:
+            #     linter._pkg_lint_status["exit_code"] |= EXIT_CODES['mypy']
+            #     # if the error were extracted correctly as they start with E
+            #     if error:
+            #         linter._pkg_lint_status[f"mypy_errors"] = "\n".join(error)
+            #     # if there were errors but they do not start with E
+            #     else:
+            #         linter._pkg_lint_status[f"mypy_errors"] = "\n".join(other)
+            #     pkg_status = linter._pkg_lint_status
+            #     pkgs_status[pkg_status["pkg"]] = pkg_status
+            #     if pkg_status["exit_code"]:
+            #         for check, code in EXIT_CODES.items():
+            #             if pkg_status["exit_code"] & code:
+            #                 lint_status[f"fail_packs_{check}"].append(pkg_status["pkg"])
+            #         if not return_exit_code & pkg_status["exit_code"]:
+            #             return_exit_code += pkg_status["exit_code"]
+            #     if pkg_status["warning_code"]:
+            #         for check, code in EXIT_CODES.items():
+            #             if pkg_status["warning_code"] & code:
+            #                 lint_status[f"warning_packs_{check}"].append(pkg_status["pkg"])
+            #         if not return_warning_code & pkg_status["warning_code"]:
+            #             return_warning_code += pkg_status["warning_code"]
+            #     if pkg_status["pack_type"] not in pkgs_type:
+            #         pkgs_type.append(pkg_status["pack_type"])
+            ############
+            # Executing lint checks in different threads
+            for pack in sorted(self._pkgs):
+                linter: Linter = Linter(pack_dir=pack,
+                                        content_repo="" if not self._facts["content_repo"] else
+                                        Path(self._facts["content_repo"].working_dir),
+                                        req_2=self._facts["requirements_2"],
+                                        req_3=self._facts["requirements_3"],
+                                        docker_engine=self._facts["docker_engine"],
+                                        docker_timeout=docker_timeout,
+                                        docker_manager=docker_manager)
+                results.append(executor.submit(linter.run_dev_packages,
+                                               no_flake8=no_flake8,
+                                               no_bandit=no_bandit,
+                                               no_mypy=no_mypy,
+                                               no_vulture=no_vulture,
+                                               no_xsoar_linter=no_xsoar_linter,
+                                               no_pylint=no_pylint,
+                                               no_test=no_test,
+                                               no_pwsh_analyze=no_pwsh_analyze,
+                                               no_pwsh_test=no_pwsh_test,
+                                               modules=self._facts["test_modules"],
+                                               keep_container=keep_container,
+                                               test_xml=test_xml,
+                                               no_coverage=no_coverage))
+            try:
+                for future in concurrent.futures.as_completed(results):
+                    pkg_status = future.result()
+                    pkgs_status[pkg_status["pkg"]] = pkg_status
+                    if pkg_status["exit_code"]:
+                        for check, code in EXIT_CODES.items():
+                            if pkg_status["exit_code"] & code:
+                                lint_status[f"fail_packs_{check}"].append(pkg_status["pkg"])
+                        if not return_exit_code & pkg_status["exit_code"]:
+                            return_exit_code += pkg_status["exit_code"]
+                    if pkg_status["warning_code"]:
+                        for check, code in EXIT_CODES.items():
+                            if pkg_status["warning_code"] & code:
+                                lint_status[f"warning_packs_{check}"].append(pkg_status["pkg"])
+                        if not return_warning_code & pkg_status["warning_code"]:
+                            return_warning_code += pkg_status["warning_code"]
+                    if pkg_status["pack_type"] not in pkgs_type:
+                        pkgs_type.append(pkg_status["pack_type"])
+                
+
+            except KeyboardInterrupt:
+                print_warning("Stop demisto-sdk lint - Due to 'Ctrl C' signal")
+                try:
+                    executor.shutdown(wait=False)
+                except Exception:
+                    pass
+                return 1
+            except Exception as e:
+                print_warning(f"Stop demisto-sdk lint - Due to Exception {e}")
+                try:
+                    executor.shutdown(wait=False)
+                except Exception:
+                    pass
+                return 1
+            
+            print_v(f"{Colors.Fg.green}Total lint take: {int(time.time() - start_time)}s", log_verbose=self._verbose)
+
+
+        self._report_results(lint_status=lint_status,
+                             pkgs_status=pkgs_status,
+                             return_exit_code=return_exit_code,
+                             return_warning_code=return_warning_code,
+                             skipped_code=int(skipped_code),
+                             pkgs_type=pkgs_type,
+                             no_coverage=no_coverage,
+                             coverage_report=coverage_report)
+        self._create_failed_packs_report(lint_status=lint_status, path=failure_report)
+
+        # check if there were any errors during lint run , if so set to FAIL as some error codes are bigger
+        # then 512 and will not cause failure on the exit code.
+        if return_exit_code:
+            return_exit_code = FAIL
+        return return_exit_code
+
 
     def _report_results(self, lint_status: dict, pkgs_status: dict, return_exit_code: int, return_warning_code: int,
                         skipped_code: int,

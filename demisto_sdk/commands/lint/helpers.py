@@ -16,6 +16,7 @@ from typing import Dict, Generator, List, Optional, Union
 # Third party packages
 import coverage
 import docker
+from docker.client import DockerClient
 import docker.errors
 import git
 import requests
@@ -281,7 +282,7 @@ def add_tmp_lint_files(content_repo: git.Repo, pack_path: Path, lint_files: List
 
 
 @lru_cache(maxsize=100)
-def get_python_version_from_image(image: str, timeout: int = 60, log_prompt: str = "") -> float:
+def get_python_version_from_image(image: str, timeout: int = 60, log_prompt: str = "", docker_client: DockerClient = None) -> float:
     """ Get python version from docker image
 
     Args:
@@ -297,7 +298,7 @@ def get_python_version_from_image(image: str, timeout: int = 60, log_prompt: str
 
     docker_user = os.getenv('DOCKERHUB_USER')
     docker_pass = os.getenv('DOCKERHUB_PASSWORD')
-    docker_client = docker.from_env(timeout=timeout)
+    docker_client = docker_client or docker.from_env(timeout=timeout)
     docker_client.login(username=docker_user,
                         password=docker_pass,
                         registry="https://index.docker.io/v1")

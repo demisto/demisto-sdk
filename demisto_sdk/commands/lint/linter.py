@@ -31,6 +31,7 @@ from demisto_sdk.commands.lint.commands_builder import (
     build_bandit_command, build_flake8_command, build_mypy_command,
     build_pwsh_analyze_command, build_pwsh_test_command, build_pylint_command,
     build_pytest_command, build_vulture_command, build_xsoar_linter_command)
+from demisto_sdk.commands.lint.dockers_manager import DockersManager
 from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, RERUN, RL,
                                                SUCCESS, WARNING,
                                                add_tmp_lint_files,
@@ -57,13 +58,14 @@ class Linter:
     """
 
     def __init__(self, pack_dir: Path, content_repo: Path, req_3: list, req_2: list, docker_engine: bool,
-                 docker_timeout: int):
+                 docker_timeout: int, docker_manager: DockersManager = None):
         self._req_3 = req_3
         self._req_2 = req_2
         self._content_repo = content_repo
         self._pack_abs_dir = pack_dir
         self._pack_name = None
         self.docker_timeout = docker_timeout
+        self._docker_mgr = docker_manager
         # Docker client init
         if docker_engine:
             self._docker_client: docker.DockerClient = docker.from_env(timeout=docker_timeout)
@@ -639,10 +641,11 @@ class Linter:
             # Creating image if pylint specified or found tests and tests specified
             image_id = ""
             errors = ""
-            for trial in range(2):
-                image_id, errors = self._docker_image_create(docker_base_image=image)
-                if not errors:
-                    break
+            image_id = self._docker_mgr.get_test_image_for_base_image(base_image=image[0])
+            # for trial in range(2):
+            #     image_id, errors = self._docker_image_create(docker_base_image=image)
+            #     if not errors:
+            #         break
 
             if image_id and not errors:
                 # Set image creation status

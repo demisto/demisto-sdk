@@ -811,11 +811,12 @@ def get_pack_name(file_path):
     """
     file_path = Path(file_path)
     parts = file_path.parts
-    if len(parts) < 2:
+    if 'Packs' not in parts:
         return None
-    if parts[0] != 'Packs':
+    pack_name_index = parts.index('Packs') + 1
+    if len(parts) <= pack_name_index:
         return None
-    return parts[1]
+    return parts[pack_name_index]
 
 
 def get_pack_names_from_files(file_paths, skip_file_types=None):

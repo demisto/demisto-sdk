@@ -53,8 +53,8 @@ class YmlSplitter:
                  no_common_server: bool = False, no_auto_create_dir: bool = False, configuration: Configuration = None,
                  base_name: str = '', no_readme: bool = False, no_pipenv: bool = False,
                  no_logging: bool = False, no_basic_fmt: bool = False, new_module_file: bool = False):
-        self.input = input
-        self.output = output
+        self.input = Path(input)
+        self.output = Path(output)
         self.demisto_mock = not no_demisto_mock
         self.common_server = not no_common_server
         self.file_type = file_type
@@ -75,11 +75,11 @@ class YmlSplitter:
     def get_output_path(self):
         """Get processed output path
         """
-        output_path = Path(self.output)
+        output_path = self.output
         if self.autocreate_dir and output_path.name in {'Integrations', 'Scripts'}:
             code_name = self.yml_data.get("name")
             if not code_name:
-                raise ValueError(f'Failed determining Integration/Script name when trying to auto create sub dir at: {str(self.output)}'
+                raise ValueError(f'Failed determining Integration/Script name when trying to auto create sub dir at: {self.output}'
                                  '\nRun with option --no-auto-create-dir to skip auto creation of target dir.')
             output_path = output_path / pascal_case(code_name)
         return output_path
@@ -129,9 +129,9 @@ class YmlSplitter:
         # check if there is a README and if found, set found_readme to True
         found_readme = False
         if self.readme:
-            yml_readme = Path(self.input).stem + '_README.md'
+            yml_readme = self.input.parent / f'{self.input.stem}_README.md'
             readme = output_path / 'README.md'
-            if Path(yml_readme).exists():
+            if yml_readme.exists():
                 found_readme = True
                 self.print_logs(f"Copying {readme} to {readme}", log_color=LOG_COLORS.NATIVE)
                 shutil.copy(yml_readme, readme)
@@ -203,7 +203,7 @@ class YmlSplitter:
                     next_steps += "* When ready, remove from git the old yml and/or README and add the new package:\n" \
                                   "    git rm {}\n".format(self.input)
                     if found_readme:
-                        next_steps += "    git rm {}\n".format(Path(self.input).stem + '_README.md')
+                        next_steps += "    git rm {}\n".format(self.input.parent / f'{self.input.stem}_README.md')
                     next_steps += "    git add {}\n".format(arg_path)
                     self.print_logs(next_steps, log_color=LOG_COLORS.NATIVE)
 
@@ -229,7 +229,7 @@ class YmlSplitter:
         """
         common_server = self.common_server
         if common_server:
-            common_server = "CommonServerPython" not in self.input and 'CommonServerPowerShell' not in self.input
+            common_server = "CommonServerPython" not in str(self.input) and 'CommonServerPowerShell' not in str(self.input)
 
         script = self.yml_data['script']
         if self.file_type == 'integration':  # in integration the script is stored at a second level

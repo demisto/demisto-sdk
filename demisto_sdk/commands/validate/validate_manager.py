@@ -411,13 +411,10 @@ class ValidateManager:
         """
         if not old_file_path:
             return True
-        old_file_path_posix = Path(old_file_path)
-        file_path_posix = Path(file_path)
-        # The path is relative to git, so we expect it to be 'Packs/{pack_name}'
-        if file_path_posix.parts[0] == old_file_path_posix.parts[0] == 'Packs' and \
-                file_path_posix.parts[1] != old_file_path_posix.parts[1]:
-            original_name = old_file_path_posix.parts[1]
-            error_message, error_code = Errors.changed_pack_name(original_name)
+        original_pack_name = get_pack_name(old_file_path)
+        new_pack_name = get_pack_name(file_path)
+        if original_pack_name != new_pack_name:
+            error_message, error_code = Errors.changed_pack_name(original_pack_name)
             if self.handle_error(error_message=error_message, error_code=error_code, file_path=file_path,
                                  drop_line=True):
                 return False

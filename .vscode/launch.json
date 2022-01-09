@@ -44,6 +44,24 @@
             ]
         },
         {
+            "name": "Python: Lint all only pylint",
+            "type": "python",
+            "request": "launch",
+            "module": "demisto_sdk",
+            "cwd": "/Users/ilappe/dev/test_repo/content",
+            "args": [
+                "lint",
+                "-a",
+                "--no-flake8",
+                "--no-bandit",
+                "--no-xsoar-linter",
+                "--no-vulture",
+                "--no-mypy",
+                "--no-test"
+
+            ]
+        }
+        {
             "name": "Python: Lint all only mypy",
             "type": "python",
             "request": "launch",

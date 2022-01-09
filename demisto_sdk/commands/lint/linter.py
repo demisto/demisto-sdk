@@ -789,9 +789,11 @@ class Linter:
         for trial in range(build_tries):
             try:
                 logger.info(f"{log_prompt} - Copy pack dir to image {test_image_name}")
+                build_image_start = time.time()
                 docker_image_final = self._docker_client.images.build(path=str(dockerfile_path.parent),
                                                                       dockerfile=dockerfile_path.stem,
                                                                       forcerm=True)
+                logger.info(f'Build image test files take: {time.time() - build_image_start}s')
                 test_image_name = docker_image_final[0].short_id
                 break
             except Exception as e:

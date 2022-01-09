@@ -253,6 +253,7 @@ class YmlSplitter:
                     code_file.write(". $PSScriptRoot\\CommonServerPowerShell.ps1\n")
                     self.lines_inserted_at_code_start += 1
             script = self.replace_imported_code(script)
+            script = self.replace_section_headers_code(script)
             code_file.write(script)
             if script and script[-1] != '\n':
                 # make sure files end with a new line (pyml seems to strip the last newline)
@@ -325,3 +326,9 @@ class YmlSplitter:
                 self.print_logs(f'Replacing code block with `{imported_line}`', LOG_COLORS.NATIVE)
                 script = script.replace(match.group(), imported_line)
         return script
+
+    def replace_section_headers_code(self, script):
+        """
+        remove the auto-generated section headers if they exist.
+        """
+        return re.sub(r"register_module_line\('.+', '(?:start|end)', __line__\(\)\)\n", '', script)

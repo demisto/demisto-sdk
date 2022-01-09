@@ -49,9 +49,24 @@ from demisto_sdk.tests.constants_test import (IGNORED_PNG,
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     LAYOUT, MAPPER, OLD_CLASSIFIER, REPUTATION)
 from TestSuite.pack import Pack
+from TestSuite.integration import Integration
+from TestSuite.json_based import JSONBased
 from TestSuite.playbook import Playbook
 from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
+
+
+@pytest.fixture()
+def malformed_integration_yml(integration) -> Integration:
+    integration.yml.write("1: 2\n//")
+    return integration
+
+
+@pytest.fixture()
+def malformed_incident_field(pack) -> JSONBased:
+    incident_field = pack.create_incident_field("malformed")
+    incident_field.write_as_text("{\n '1': '1'")
+    return incident_field
 
 
 class TestGenericFunctions:
@@ -121,6 +136,32 @@ class TestGenericFunctions:
         output = find_type(VALID_BETA_INTEGRATION_PATH, ignore_sub_categories=True)
         assert output == FileType.INTEGRATION, \
             f'find_type({VALID_BETA_INTEGRATION_PATH}) returns: {output} instead {FileType.INTEGRATION}'
+
+    def test_find_type_with_invalid_yml(self, malformed_integration_yml):
+        """
+        Given
+        - A malformed yml file.
+
+        When
+        - Running find_type.
+
+        Then
+        - Ensure no exception/error is raised and None is returned.
+        """
+        assert not find_type(malformed_integration_yml.yml.path)
+
+    def test_find_type_with_invalid_json(self, malformed_incident_field):
+        """
+        Given
+        - A malformed json file.
+
+        When
+        - Running find_type.
+
+        Then
+        - Ensure no exception/error is raised and None is returned.
+        """
+        assert not find_type(malformed_incident_field.path)
 
     def test_find_type_no_file(self):
         """

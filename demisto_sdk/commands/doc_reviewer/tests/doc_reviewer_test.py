@@ -2,7 +2,6 @@ from typing import List
 
 import pytest
 
-
 from demisto_sdk.commands.doc_reviewer.doc_reviewer import DocReviewer
 
 

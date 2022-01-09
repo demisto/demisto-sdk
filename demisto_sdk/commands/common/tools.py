@@ -2,6 +2,7 @@ import argparse
 import glob
 import io
 import json
+import logging
 import os
 import re
 import shlex
@@ -53,6 +54,7 @@ urllib3.disable_warnings()
 # inialize color palette
 colorama.init()
 
+logger = logging.getLogger("demisto-sdk")
 ryaml = YAML()
 ryaml.preserve_quotes = True
 ryaml.allow_duplicate_keys = True
@@ -1131,15 +1133,26 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
 # flake8: noqa: C901
 
 
-def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignore_sub_categories: bool = False):
+def find_type(
+    path: str = '',
+    _dict=None,
+    file_type: Optional[str] = None,
+    ignore_sub_categories: bool = False,
+    ignore_invalid_schema_file: bool = False
+):
     """
     returns the content file type
 
     Arguments:
-        path - a path to the file
+         path (str): a path to the file.
+        _dict (dict): file dict representation if exists.
+        file_type (str): a string representation of the file type.
+        ignore_sub_categories (bool): ignore the sub categories, True to ignore, False otherwise.
+        ignore_invalid_schema_file (bool): whether to ignore raising error on invalid schema files,
+            True to ignore, False otherwise.
 
     Returns:
-        string representing the content file type
+        FileType: string representing of the content file type, None otherwise.
     """
     type_by_path = find_type_by_path(path)
     if type_by_path:
@@ -1151,6 +1164,12 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
     except FileNotFoundError:
         # unable to find the file - hence can't identify it
         return None
+    except ValueError as err:
+        logger.debug(str(err))
+        if ignore_invalid_schema_file:
+            # invalid file schema
+            return None
+        raise
 
     if file_type == 'yml':
         if 'category' in _dict:

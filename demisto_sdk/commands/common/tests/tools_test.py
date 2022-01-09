@@ -48,9 +48,9 @@ from demisto_sdk.tests.constants_test import (IGNORED_PNG,
                                               VALID_WIDGET_PATH)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     LAYOUT, MAPPER, OLD_CLASSIFIER, REPUTATION)
-from TestSuite.pack import Pack
 from TestSuite.integration import Integration
 from TestSuite.json_based import JSONBased
+from TestSuite.pack import Pack
 from TestSuite.playbook import Playbook
 from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
@@ -148,7 +148,7 @@ class TestGenericFunctions:
         Then
         - Ensure no exception/error is raised and None is returned.
         """
-        assert not find_type(malformed_integration_yml.yml.path)
+        assert not find_type(malformed_integration_yml.yml.path, ignore_invalid_schema_file=True)
 
     def test_find_type_with_invalid_json(self, malformed_incident_field):
         """
@@ -161,7 +161,7 @@ class TestGenericFunctions:
         Then
         - Ensure no exception/error is raised and None is returned.
         """
-        assert not find_type(malformed_incident_field.path)
+        assert not find_type(malformed_incident_field.path, ignore_invalid_schema_file=True)
 
     def test_find_type_no_file(self):
         """

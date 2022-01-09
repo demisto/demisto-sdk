@@ -49,12 +49,12 @@ class YmlSplitter:
         lines_inserted_at_code_start (int): the amount of lines inserted at the beginning of the code file
     """
 
-    def __init__(self, input: str, output: str, file_type: str, no_demisto_mock: bool = False,
+    def __init__(self, input: str, output: str = '', file_type: str = '', no_demisto_mock: bool = False,
                  no_common_server: bool = False, no_auto_create_dir: bool = False, configuration: Configuration = None,
                  base_name: str = '', no_readme: bool = False, no_pipenv: bool = False,
                  no_logging: bool = False, no_basic_fmt: bool = False, new_module_file: bool = False):
         self.input = Path(input)
-        self.output = Path(output)
+        self.output = Path(output) if output else Path(self.input.parent)
         self.demisto_mock = not no_demisto_mock
         self.common_server = not no_common_server
         self.file_type = file_type

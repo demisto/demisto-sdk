@@ -131,6 +131,15 @@ def test_get_output_path():
     assert res == Path(out + "/Zoom")
 
 
+def test_get_output_path_empty_output():
+    input_path = Path(f'{git_path()}/demisto_sdk/tests/test_files/integration-Zoom.yml')
+    extractor = YmlSplitter(input=str(input_path),
+                            file_type='integration'
+                            )
+    res = extractor.get_output_path()
+    assert res == input_path.parent
+
+
 def test_extract_to_package_format_pwsh(tmpdir):
     out = tmpdir.join('Integrations')
     extractor = YmlSplitter(input=f'{git_path()}/demisto_sdk/tests/test_files/integration-powershell_ssh_remote.yml',

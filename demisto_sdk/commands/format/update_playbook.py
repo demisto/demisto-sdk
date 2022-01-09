@@ -28,9 +28,11 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
                  verbose: bool = False,
                  assume_yes: bool = False,
                  deprecate: bool = False,
-                 add_tests: bool = False):
+                 add_tests: bool = False,
+                 interactive: bool = True):
         super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
-                         verbose=verbose, assume_yes=assume_yes, deprecate=deprecate, add_tests=add_tests)
+                         verbose=verbose, assume_yes=assume_yes, deprecate=deprecate, add_tests=add_tests,
+                         interactive=interactive)
 
     def add_description(self):
         """Add empty description to playbook and tasks."""
@@ -39,14 +41,17 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
         if 'description' not in set(self.data.keys()):
             click.secho('No description is specified for this playbook, would you like to add a description? [Y/n]',
                         fg='bright_red')
-            user_answer = ''
+            user_answer = 'y' if self.assume_yes else ''
             while not user_answer:
                 user_answer = input()
                 if user_answer in ['n', 'N', 'no', 'No']:
                     user_description = ''
                     self.data['description'] = user_description
                 elif user_answer in ['y', 'Y', 'yes', 'Yes']:
-                    user_description = input("Please enter the description\n")
+                    if self.interactive:
+                        user_description = input("Please enter the description\n")
+                    else:
+                        user_description = ''
                     self.data['description'] = user_description
                 else:
                     click.secho('Invalid input, would you like to add a description? [Y/n]', fg='bright_red')

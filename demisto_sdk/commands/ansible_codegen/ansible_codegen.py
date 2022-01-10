@@ -3,7 +3,7 @@ import os
 import re
 import shutil
 import sys
-from typing import Optional
+from typing import Optional, List
 
 import autopep8
 import yaml
@@ -44,9 +44,9 @@ class AnsibleIntegration:
         self.creds_mapping = None
         self.host_type = 'local'
         self.test_command = None
-        self.command_prefix = None
-        self.ansible_modules: list = []
-        self.ignored_args = None
+        self.command_prefix: Optional[str] = None
+        self.ansible_modules: list[str] = []
+        self.ignored_args: Optional[List[str]] = None
         self.ansible_docs: dict = {}
         self.commands: dict = {}
         self.example_commands: list = []
@@ -67,31 +67,33 @@ class AnsibleIntegration:
             except Exception as e:
                 print_error(f'Failed to load configuration file: {e}')
 
-        self.name = self.codegen_configuration.get('name')
-        self.host_type = self.codegen_configuration.get('host_type')
-        self.display = self.codegen_configuration.get('display')
-        self.category = self.codegen_configuration.get('category')
-        self.description = self.codegen_configuration.get('description')
+        self.name = str(self.codegen_configuration.get('name'))
+        self.host_type = str(self.codegen_configuration.get('host_type'))
+        self.display = str(self.codegen_configuration.get('display'))
+        self.category = str(self.codegen_configuration.get('category'))
+        self.description = str(self.codegen_configuration.get('description'))
         self.test_command = self.codegen_configuration.get('test_command', None)
         self.command_prefix = self.codegen_configuration.get('command_prefix', None)
-        self.ansible_modules = self.codegen_configuration.get('ansible_modules')
+        self.ansible_modules = list(self.codegen_configuration.get('ansible_modules', []))
         self.ignored_args = self.codegen_configuration.get('ignored_args', None)
         self.parameters = self.codegen_configuration.get('parameters', [])
         self.creds_mapping = self.codegen_configuration.get('creds_mapping', None)
 
         # Add concurrency tunable relating to non-local based targets
         if self.host_type != 'local':
-            concurrency_factor = {}
-            concurrency_factor['display'] = "Concurrency Factor"
-            concurrency_factor['name'] = "concurrency"
-            concurrency_factor['type'] = 0
-            concurrency_factor['required'] = True
-            concurrency_factor['defaultvalue'] = "4"
-            concurrency_factor['additionalinfo'] = "If multiple hosts are specified in a command, how many hosts should be interacted with concurrently."
+            display = "Concurrency Factor"
+            name = "concurrency"
+            type = 0
+            required = True
+            defaultvalue = "4"
+            additionalinfo = "If multiple hosts are specified in a command, how many hosts should be interacted with concurrently."
+
+            concurrency_factor = XSOARIntegration.Configuration(name=name, display=display,
+                                                                type_=type, required=required, defaultvalue=defaultvalue, additionalinfo=additionalinfo)
             self.parameters.append(concurrency_factor)
 
         # Set a command_prefix if not already provided
-        if self.command_prefix is None:
+        if (self.command_prefix is None) and (self.name is not None):
             if len(self.name.split(' ')) == 1:  # If the config `name` is a single word then trust the caps
                 self.command_prefix = self.name.lower()
             else:
@@ -102,6 +104,9 @@ class AnsibleIntegration:
         Fetches the ansible documentation for the modules specified from the container image.
         Requires docker to function
         """
+        if self.container_image is None:
+            exit("Need a container Image to be specified")
+
         # Lookup ansible module docs from container
         self.print_with_verbose('Creating container for module documentation lookup...')
         lookup_container = ContainerRunner(
@@ -126,7 +131,7 @@ class AnsibleIntegration:
                 sys.exit(1)
 
             try:
-                self.ansible_docs.update(json.loads(ansibledoc_lookup))
+                self.ansible_docs.update(json.loads(ansibledoc_lookup))  # type: ignore[arg-type]
             except Exception as e:
                 print_error(f'Failed to load the ansible-docs for module {module}: {e}')
                 sys.exit(1)
@@ -276,8 +281,8 @@ def main() -> None:
             # In case ansible module has been provided in collection namespace form. We want just the module name
             ansible_module = ansible_module.split(".")[-1]
 
-            if not to_kebab_case(ansible_module).startswith(self.command_prefix + '-'):
-                demisto_command = self.command_prefix + '-' + to_kebab_case(ansible_module)
+            if not to_kebab_case(ansible_module).startswith(f"{self.command_prefix}-"):
+                demisto_command = f"{self.command_prefix}-{to_kebab_case(ansible_module)}"
             else:
                 demisto_command = to_kebab_case(ansible_module)
 
@@ -408,7 +413,7 @@ if __name__ in ('__main__', '__builtin__', 'builtins'):
             print_error(f'Error copying image and description files - {err}')
             return '', ''
 
-    def generate_command_example(self, module: str, command_name: str) -> str:
+    def generate_command_example(self, module: str, command_name: str) -> list:
         """
         Reads ansible-docs examples and outputs a equivalent XSOAR command example.
 
@@ -419,7 +424,7 @@ if __name__ in ('__main__', '__builtin__', 'builtins'):
 
         example_command = ""
 
-        module_examples = self.ansible_docs.get(module).get("doc").get("examples")  # Pull up the examples section
+        module_examples = self.ansible_docs.get(module, {}).get("doc", {}).get("examples")  # Pull up the examples section
         # If there are multiple just use the first, it's normally the most straight forward
         module_example = module_examples.split("- name:")[0]
 
@@ -431,13 +436,14 @@ if __name__ in ('__main__', '__builtin__', 'builtins'):
             for line in module_example.split("\n")[1:]:  # Quick yaml to dict skipping the task "- name" line
                 for arg, value in line.split(": ").items():
                     # Skip args that the config says to ignore
-                    if arg in self.ignored_args:
+                    if (self.ignored_args) and (str(arg) in self.ignored_args):
                         continue
                     value = str(value).replace("\n", "\"")
                     value = str(value).replace("\\", "\\\\")
                     example_command += "%s=\"%s\" " % (arg, value)
 
         self.example_commands.append(example_command)
+        return self.example_commands
 
     def save_command_examples(self, directory: str) -> str:
         """
@@ -499,16 +505,16 @@ if __name__ in ('__main__', '__builtin__', 'builtins'):
 
             command_name = ''
             command_description = ''
-            command_doc = self.ansible_docs.get(module).get("doc")
-            command_namespace = command_doc.get("collection").split(".")[0]
-            command_collection = command_doc.get("collection").split(".")[1]
+            command_doc = self.ansible_docs.get(module, {}).get("doc")
+            command_namespace = command_doc.get("collection", {}).split(".")[0]
+            command_collection = command_doc.get("collection", {}).split(".")[1]
             command_module = command_doc.get("module")
             command_options = command_doc.get("options")
-            command_returns = self.ansible_docs.get(module).get("return")
+            command_returns = self.ansible_docs.get(module, {}).get("return")
 
-            if not to_kebab_case(module).startswith(self.command_prefix +
-                                                    '-'):  # Don't double up with the prefix, if the module name already has the prefix
-                command_name = self.command_prefix + '-' + to_kebab_case(module)
+            # Don't double up with the prefix, if the module name already has the prefix
+            if not to_kebab_case(module).startswith(f"{self.command_prefix}-"):
+                command_name = f"{self.command_prefix}-{to_kebab_case(module)}"
             else:
                 command_name = to_kebab_case(module)
             module_online_help = f"{ANSIBLE_ONLINE_DOCS_URL_BASE}{command_namespace}/{command_collection}/{command_module}_module.html"
@@ -521,8 +527,8 @@ if __name__ in ('__main__', '__builtin__', 'builtins'):
             # Add static arguments if integration uses host based targets
             if self.host_type in REMOTE_HOST_TYPES:
                 remote_host_desc = "hostname or IP of target. Optionally the port can be specified using :PORT. \
-                If multiple targets are specified using an array, the integration will use the configured concurrency \
-                    factor for high performance."
+If multiple targets are specified using an array, the integration will use the configured concurrency \
+factor for high performance."
                 args.append(
                     XSOARIntegration.Script.Command.Argument(
                         name="host",
@@ -537,11 +543,10 @@ if __name__ in ('__main__', '__builtin__', 'builtins'):
                     if arg in self.ignored_args:
                         continue
 
-                    argument = {}
-                    argument['name'] = str(arg)
+                    name = str(arg)
 
                     if isinstance(option.get('description'), list):
-                        argument['description'] = ""
+                        description = ""
                         for line_of_doco in option.get('description'):
                             if not line_of_doco.isspace():
                                 clean_line_of_doco = line_of_doco.strip()  # remove begin/end whitespace
@@ -550,46 +555,51 @@ if __name__ in ('__main__', '__builtin__', 'builtins'):
                                 # https://docs.ansible.com/ansible/latest/dev_guide/developing_modules_documenting.html#linking-within-module-documentation
                                 clean_line_of_doco = re.sub('[ILUCMB]\\((.+?)\\)', '`\\g<1>`', clean_line_of_doco)
 
-                                argument['description'] = argument['description'] + ' ' + clean_line_of_doco
-                        argument['description'] = argument['description'].strip()
+                                description = f"{description} {clean_line_of_doco}"
+                        description = description.strip()
                     else:
-                        argument['description'] = str(option.get('description'))
+                        description = str(option.get('description'))
 
-                    # if arg is deprecicated skip it
-                    if argument['description'].startswith('`Deprecated'):
+                    # if arg is deprecated skip it
+                    if description.startswith('`Deprecated'):
                         print("Skipping arg %s as it is Deprecated" % str(arg))
                         continue
 
+                    required = False
                     if option.get('required') is True:
-                        argument['required'] = True
+                        required = True
 
                     # Ansible docs have a empty list/dict as defaults....
-                    if str(option.get('default')) not in ['[]', '{}']:
+                    defaultValue = ""
+                    if option.get('default') not in ['[]', '{}']:
                         if option.get('default') is not None:
                             # The default True/False str cast of bool can be confusing. Using Yes/No instead.
                             if type(option.get('default')) is bool:
                                 if option.get('default') is True:
-                                    argument['defaultValue'] = "Yes"
+                                    defaultValue = "Yes"
                                 if option.get('default') is False:
-                                    argument['defaultValue'] = "No"
+                                    defaultValue = "No"
                             else:
-                                argument['defaultValue'] = str(option.get('default'))
+                                defaultValue = str(option.get('default'))
 
+                    predefined = None
+                    auto = None
                     if option.get('choices') is not None:
-                        argument['predefined'] = []
-                        argument['auto'] = "PREDEFINED"
-                        for choice in option.get('choices'):
-                            argument['predefined'].append(str(choice))
+                        predefined = list(option.get('choices'))
+                        auto = "PREDEFINED"
                     else:
                         # Ansible Docs don't explicitly mark true/false as choices for bools, so
                         # we must do add it ourselves
                         if type(option.get('default')) is bool:
-                            argument['predefined'] = ['Yes', 'No']
-                            argument['auto'] = "PREDEFINED"
+                            predefined = ['Yes', 'No']
+                            auto = "PREDEFINED"
 
+                    isArray = False
                     if option.get('type') in ["list", "dict"]:
-                        argument['isArray'] = True
+                        isArray = True
 
+                    argument = XSOARIntegration.Script.Command.Argument(name=name, description=description,
+                                                                        is_array=isArray, required=required, auto=auto, predefined=predefined, defaultValue=defaultValue)
                     args.append(argument)
 
             # Add Outputs

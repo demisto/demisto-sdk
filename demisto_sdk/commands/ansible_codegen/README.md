@@ -56,7 +56,7 @@ Optional key:value pairs to translate XSOAR param to ansible arguments. Used in 
 Which ansible module should be used as the integration test command. This should be a module that can run with just the integration config parameters. Omit option if such testing is not possible
 
 * **command_prefix**
-Prefix all the generated XSOAR commands with this value. Omit config or set to None to not add any prefix  
+Prefix all the generated XSOAR commands with this value. Omit config or set to None to not add any prefix
 
 * **host_type**
 The Ansible connection type. Use one of: 'ssh', 'winrm', 'nxos', 'ios', 'local'. Modules that run locally and use their own connection mechanism should use the value 'local'.
@@ -95,7 +95,7 @@ The suggested workflow is as follows:
 
     ``` bash
     $ demisto-sdk ansible-codegen --base_name example
-    Created empty configuration file example_config.yml. 
+    Created empty configuration file example_config.yml.
     Run the command again with the created configuration file (after populating it): demisto-sdk ansible-codegen -cf "example_config.yml" -ci "demisto/ansible-runner:1.0.0.24037" -n "example"
     ```
 

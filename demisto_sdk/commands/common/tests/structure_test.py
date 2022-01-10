@@ -343,6 +343,60 @@ class TestStructureValidator:
         err_msg = capsys.readouterr()
         assert exception in err_msg
 
+    def test_validate_field_with_aliases__valid(self, pack: Pack):
+        """
+        Given
+            Incident field with a valid Aliases field.
+        When
+            Validating the item.
+        Then
+            Ensures the schema is valid.
+        """
+        field_content = {
+            'cliName': 'mainfield',
+            'name': 'main field',
+            'id': 'incident',
+            'content': True,
+            'type': 'longText',
+            'Aliases': [{
+                "cliName": "alias field",
+                "type": "shortText"
+            }]
+        }
+        incident_field: JSONBased = pack.create_incident_field(
+            'incident-field-test',
+            content=field_content
+        )
+        structure = StructureValidator(incident_field.path)
+        assert structure.is_valid_scheme()
+
+    def test_validate_field_with_aliases__invalid_type(self, pack: Pack):
+        """
+        Given
+            - Incident field with a Aliases field that has an entry with an invalid type.
+        When
+            - Validating the item.
+        Then
+            - Ensures the schema is invalid.
+        """
+        field_content = {
+            'cliName': 'mainfield',
+            'name': 'main field',
+            'id': 'incident',
+            'content': True,
+            'type': 'longText',
+            'Aliases': [{
+                "cliName": "alias field",
+                "type": "UNKNOWN"
+            }]
+        }
+        incident_field: JSONBased = pack.create_incident_field(
+            'incident-field-test',
+            content=field_content
+        )
+        structure = StructureValidator(incident_field.path)
+        assert not structure.is_valid_scheme()
+
 
 class TestGetMatchingRegex:
     INPUTS = [

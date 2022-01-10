@@ -103,4 +103,5 @@ schema;aliases_schema:
       type: str
     type:
       type: str
-
+      enum: [ 'shortText', 'longText', 'boolean', 'singleSelect', 'multiSelect', 'date', 'user', 'role', 'number',
+              'attachments', 'tagsSelect', 'internal', 'url', 'markdown', 'grid', 'timer', 'html' ]

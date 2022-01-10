@@ -103,10 +103,10 @@ mapping:
     sequence:
       - type: str
         enum: [ 'xsoar', 'marketplacev2' ]
-    Aliases:
-      type: seq
-      sequence:
-        - include: aliases_schema
+  Aliases:
+    type: seq
+    sequence:
+      - include: aliases_schema
 
 schema;aliases_schema:
   type: map
@@ -115,4 +115,5 @@ schema;aliases_schema:
       type: str
     type:
       type: str
-
+      enum: [ 'shortText', 'longText', 'boolean', 'singleSelect', 'multiSelect', 'date', 'user', 'role', 'number',
+              'attachments', 'tagsSelect', 'internal', 'url', 'markdown', 'grid', 'timer', 'html' ]

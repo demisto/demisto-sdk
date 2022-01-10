@@ -125,7 +125,6 @@ class DocReviewer:
 
     def get_files_to_run_on(self, file_path):
         """Get all the relevant files that the spell-check could work on"""
-        print(f"HELLO THERE {find_type(file_path)}")
         if self.git_util:
             self.get_files_from_git()
 

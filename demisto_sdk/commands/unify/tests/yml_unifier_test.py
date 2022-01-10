@@ -346,7 +346,7 @@ def test_insert_module_code__verify_offsets(mocker):
 
     # we expect the start wrapper will have a negative number so adding it to the regex search
     start_offset = re.search(rf"register_module_line\('{module_name}', 'start', __line__\(\), wrapper=-(\d+)\)\n", code)
-    end_offset = re.search(fr"register_module_line\('{module_name}', 'end', __line__\(\), wrapper=(\d+)\)\n", code)
+    end_offset = re.search(rf"register_module_line\('{module_name}', 'end', __line__\(\), wrapper=(\d+)\)\n", code)
 
     assert start_offset
     # the number of lines before the register start match the wrapper value

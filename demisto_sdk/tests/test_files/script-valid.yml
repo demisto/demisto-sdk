@@ -17,3 +17,6 @@ runonce: false
 fromversion: 5.0.0
 tests:
   - PagerDuty Test
+dependson:
+  must:
+  - send-notification

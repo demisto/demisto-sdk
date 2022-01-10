@@ -34,6 +34,7 @@ VALID_JSON_FILE_FOR_UNIT_TESTING = f'{GIT_ROOT}/demisto_sdk/tests/test_files/fak
 VALID_DOC_FILES_PATH_FOR_UNIT_TESTING = f"{GIT_ROOT}/demisto_sdk/tests/test_files/content_slim/Packs/Sample01/" \
                                         f"doc_files/sample_packs.png"
 
+DUMMY_SCRIPT_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/Packs/DummyPack/Scripts/DummyScriptUnified.yml"
 VALID_INTEGRATION_TEST_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-test.yml"
 INVALID_INTEGRATION_WITH_NO_TEST_PLAYBOOK = 'demisto_sdk/tests/test_files/integration-test-with-no-test-playbook.yml'
 VALID_INTEGRATION_ID_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-valid-id-test.yml"
@@ -97,6 +98,7 @@ SCRIPT_TARGET = f"{PACK_TARGET}/Scripts/script-test.yml"
 SCRIPT_RELEASE_NOTES_TARGET = f"{PACK_TARGET}/Scripts/script-test_CHANGELOG.md"
 INTEGRATION_RELEASE_NOTES_TARGET = f"{PACK_TARGET}/Integrations/integration-test_CHANGELOG.md"
 SOURCE_FORMAT_INTEGRATION_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_New_Integration_copy.yml"
+SOURCE_BETA_INTEGRATION_FILE = f"{GIT_ROOT}/demisto_sdk/tests/test_files/source_beta_integration.yml"
 DESTINATION_FORMAT_INTEGRATION_COPY = "new_format_New_Integration_copy.yml"
 SOURCE_FORMAT_SCRIPT_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_New_script_copy.yml"
 DESTINATION_FORMAT_SCRIPT_COPY = "new_format_New_script_copy.yml"
@@ -129,6 +131,10 @@ SOURCE_FORMAT_INCIDENTTYPE_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/form
 SOURCE_DESCRIPTION_WITH_CONTRIB_DETAILS = f"{GIT_ROOT}/demisto_sdk/tests/test_files/description_with_contrib_details.md"
 SOURCE_DESCRIPTION_FORMATTED_CONTRIB_DETAILS = f"{GIT_ROOT}/demisto_sdk/tests/test_files/" \
                                                f"description_formatted_contrib_details.md"
+SOURCE_DESCRIPTION_WITHOUT_BETA_DESCRIPTION = f"{GIT_ROOT}/demisto_sdk/tests/test_files/" \
+                                              f"description_without_beta_description-test.md"
+SOURCE_DESCRIPTION_FORMATTED_WITH_BETA_DESCRIPTION = f"{GIT_ROOT}/demisto_sdk/tests/test_files/" \
+    f"description_formatted_with_beta_description-test.md"
 DESTINATION_FORMAT_DESCRIPTION_COPY = "Description/formatted_description-test.md"
 DESCRIPTION_PATH = "Description"
 DESTINATION_FORMAT_INCIDENTTYPE_COPY = "IncidentTypes/incidenttype-copy.json"

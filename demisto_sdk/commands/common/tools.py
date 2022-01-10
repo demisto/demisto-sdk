@@ -7,14 +7,16 @@ import re
 import shlex
 import sys
 import urllib.parse
+from concurrent.futures import as_completed
 from configparser import ConfigParser, MissingSectionHeaderError
 from contextlib import contextmanager
 from distutils.version import LooseVersion
 from enum import Enum
 from functools import lru_cache, partial
-from pathlib import Path
+from pathlib import Path, PosixPath
 from subprocess import DEVNULL, PIPE, Popen, check_output
-from typing import Callable, Dict, List, Match, Optional, Tuple, Type, Union
+from typing import (Callable, Dict, List, Match, Optional, Set, Tuple, Type,
+                    Union)
 
 import click
 import colorama
@@ -25,6 +27,7 @@ import requests
 import urllib3
 import yaml
 from packaging.version import parse
+from pebble import ProcessFuture, ProcessPool
 from ruamel.yaml import YAML
 
 from demisto_sdk.commands.common.constants import (
@@ -41,8 +44,8 @@ from demisto_sdk.commands.common.constants import (
     PACKS_README_FILE_NAME, PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR,
     RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR,
-    XSOAR_CONFIG_FILE, FileType, GitContentConfig, MarketplaceVersions,
-    urljoin)
+    XSOAR_CONFIG_FILE, FileType, GitContentConfig, IdSetKeys,
+    MarketplaceVersions, urljoin)
 from demisto_sdk.commands.common.git_util import GitUtil
 
 urllib3.disable_warnings()
@@ -856,6 +859,10 @@ def filter_files_by_type(file_paths=None, skip_file_types=None) -> set:
 
 def pack_name_to_path(pack_name):
     return os.path.join(PACKS_DIR, pack_name)
+
+
+def pack_name_to_posix_path(pack_name):
+    return PosixPath(pack_name_to_path(pack_name))
 
 
 def get_pack_ignore_file_path(pack_name):
@@ -1674,12 +1681,13 @@ def camel_to_snake(camel: str) -> str:
 
 
 def open_id_set_file(id_set_path):
-    id_set = None
+    id_set = {}
     try:
         with open(id_set_path, 'r') as id_set_file:
             id_set = json.load(id_set_file)
     except IOError:
         print_warning("Could not open id_set file")
+        raise
     finally:
         return id_set
 
@@ -1753,6 +1761,26 @@ def get_all_incident_and_indicator_fields_from_id_set(id_set_file, entity_type):
                 elif entity_type == 'layout':
                     fields_list.append(field.replace('incident_', '').replace('indicator_', ''))
     return fields_list
+
+
+def is_object_in_id_set(object_name, pack_info_from_id_set):
+    """
+        Check if the given object is part of the packs items that are present in the Packs section in the id set.
+        This is assuming that the id set is based on the version that has, under each pack, the items it contains.
+
+    Args:
+        object_name: name of object of interest.
+        pack: the pack this object should belong to.
+        packs_section_from_id_set: the section under the key Packs in the previously given id set.
+
+    Returns:
+
+    """
+    content_items = pack_info_from_id_set.get('ContentItems', {})
+    for items_type, items_names in content_items.items():
+        if object_name in items_names:
+            return True
+    return False
 
 
 def is_string_uuid(string_to_check: str):
@@ -2214,3 +2242,140 @@ def get_pack_dir(path):
         if parts[index] == 'Packs':
             return parts[:index + 2]
     return []
+
+
+@contextmanager
+def ProcessPoolHandler() -> ProcessPool:
+    """ Process pool Handler which terminate all processes in case of Exception.
+
+    Yields:
+        ProcessPool: Pebble process pool.
+    """
+    with ProcessPool(max_workers=3) as pool:
+        try:
+            yield pool
+        except Exception:
+            print_error("Gracefully release all resources due to Error...")
+            raise
+        finally:
+            pool.close()
+            pool.join()
+
+
+def wait_futures_complete(futures: List[ProcessFuture], done_fn: Callable):
+    """Wait for all futures to complete, Raise exception if occurred.
+
+    Args:
+        futures: futures to wait for.
+        done_fn: Function to run on result.
+    Raises:
+        Exception: Raise caught exception for further cleanups.
+    """
+    for future in as_completed(futures):
+        try:
+            result = future.result()
+            done_fn(result)
+        except Exception as e:
+            print_error(e)
+            raise
+
+
+def get_api_module_dependencies(pkgs, id_set_path, verbose):
+    """
+    Get all paths to integrations and scripts dependent on api modules that are found in the modified files.
+    Args:
+        pkgs: the pkgs paths found as modified to run lint on (including the api module files)
+        id_set_path: path to id set
+        verbose: print found dependencies or not
+    Returns:
+        a list of the paths to the scripts and integration found dependent on the modified api modules.
+    """
+
+    id_set = open_id_set_file(id_set_path)
+    api_modules = [pkg.name for pkg in pkgs if API_MODULES_PACK in pkg.parts]
+    scripts = id_set.get(IdSetKeys.SCRIPTS.value, [])
+    integrations = id_set.get(IdSetKeys.INTEGRATIONS.value, [])
+    using_scripts, using_integrations = [], []
+    for script in scripts:
+        script_info = list(script.values())[0]
+        script_name = script_info.get('name')
+        api_module = script_info.get('api_modules', [])
+        if api_module in api_modules:
+            if verbose:
+                print(f"found script {script_name} dependent on {api_module}")
+            using_scripts.extend(list(script.values()))
+
+    for integration in integrations:
+        integration_info = list(integration.values())[0]
+        integration_name = integration_info.get('name')
+        api_module = integration_info.get('api_modules', [])
+        if api_module in api_modules:
+            if verbose:
+                print(f"found integration {integration_name} dependent on {api_module}")
+            using_integrations.extend(list(integration.values()))
+
+    using_scripts_pkg_paths = [Path(script.get('file_path')).parent.absolute() for
+                               script in using_scripts]
+    using_integrations_pkg_paths = [Path(integration.get('file_path')).parent.absolute() for
+                                    integration in using_integrations]
+    return list(set(using_integrations_pkg_paths + using_scripts_pkg_paths))
+
+
+def listdir_fullpath(dir_name: str) -> List[str]:
+    return [os.path.join(dir_name, f) for f in os.listdir(dir_name)]
+
+
+def get_scripts_and_commands_from_yml_data(data, file_type):
+    """Get the used scripts, playbooks and commands from the yml data
+
+    Args:
+        data: The yml data as extracted with get_yaml
+        file_type: The FileType of the data provided.
+
+    Return (list of found { 'id': command name, 'source': command source }, list of found script and playbook names)
+    """
+    commands = []
+    detailed_commands = []
+    scripts_and_pbs = []
+    if file_type == FileType.TEST_PLAYBOOK or file_type == FileType.PLAYBOOK:
+        tasks = data.get('tasks')
+        for task_num in tasks.keys():
+            task = tasks[task_num]
+            inner_task = task.get('task')
+            task_type = task.get('type')
+            if inner_task and task_type == 'regular' or task_type == 'playbook':
+                if inner_task.get('iscommand'):
+                    commands.append(inner_task.get('script'))
+                else:
+                    if task_type == 'playbook':
+                        scripts_and_pbs.append(inner_task.get('playbookName'))
+                    elif inner_task.get('scriptName'):
+                        scripts_and_pbs.append(inner_task.get('scriptName'))
+        if file_type == FileType.PLAYBOOK:
+            playbook_id = get_entity_id_by_entity_type(data, PLAYBOOKS_DIR)
+            scripts_and_pbs.append(playbook_id)
+
+    if file_type == FileType.SCRIPT:
+        script_id = get_entity_id_by_entity_type(data, SCRIPTS_DIR)
+        scripts_and_pbs = [script_id]
+        if data.get('dependson'):
+            commands = data.get('dependson').get('must', [])
+
+    if file_type == FileType.INTEGRATION:
+        integration_commands = data.get('script', {}).get('commands')
+        for integration_command in integration_commands:
+            commands.append(integration_command.get('name'))
+
+    for command in commands:
+        command_parts = command.split('|||')
+        if len(command_parts) == 2:
+            detailed_commands.append({
+                'id': command_parts[1],
+                'source': command_parts[0]
+            })
+        else:
+            detailed_commands.append({
+                'id': command_parts[0]
+            })
+
+    return detailed_commands, scripts_and_pbs

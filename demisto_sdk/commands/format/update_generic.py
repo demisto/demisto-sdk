@@ -41,6 +41,7 @@ class BaseUpdate:
             from_version_key (str): The fromVersion key in file, different between yml and json files.
             verbose (bool): Whether to print a verbose log
             assume_yes (bool): Whether to assume "yes" as answer to all prompts and run non-interactively
+            interactive (bool): Whether to run the format interactively or not (usually for contribution management)
     """
 
     def __init__(self,
@@ -51,6 +52,7 @@ class BaseUpdate:
                  no_validate: bool = False,
                  verbose: bool = False,
                  assume_yes: bool = False,
+                 interactive: bool = True,
                  deprecate: bool = False,
                  **kwargs):
         self.source_file = input
@@ -63,6 +65,7 @@ class BaseUpdate:
         self.from_version = from_version
         self.no_validate = no_validate
         self.assume_yes = assume_yes
+        self.interactive = interactive
         self.updated_ids: Dict = {}
         if not self.no_validate:
             self.validate_manager = ValidateManager(silence_init_prints=True, skip_conf_json=True,

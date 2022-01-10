@@ -112,7 +112,8 @@ class AnsibleIntegration:
         ansibledoc_version = str(lookup_container.exec(command=f"ansible-doc --version").get("Outputs"))
         if "ansible-doc 2." not in ansibledoc_version:    # Tested with ansible-doc 2.12.1
             print_error(
-                f'ansible-doc 2.x not found in container or not compatible version. Is Ansible installed in container image?\nansible-docs reports: {ansibledoc_version}')
+                f'ansible-doc 2.x not found in container or not compatible version. Is Ansible installed in container image?\n\
+                ansible-docs reports: {ansibledoc_version}')
             sys.exit(1)
 
         for module in self.ansible_modules:
@@ -154,7 +155,7 @@ class AnsibleIntegration:
 
         # Check that all required config options set
         for required_key in REQUIRED_KEYS:
-            if self.codegen_configuration.get(required_key, False) == False:
+            if self.codegen_configuration.get(required_key, False) is False:
                 validation = False
                 validation_message += f"\n  * Missing required key config in config yaml: {key}"
 
@@ -519,7 +520,9 @@ if __name__ in ('__main__', '__builtin__', 'builtins'):
 
             # Add static arguments if integration uses host based targets
             if self.host_type in REMOTE_HOST_TYPES:
-                remote_host_desc = "hostname or IP of target. Optionally the port can be specified using :PORT. If multiple targets are specified using an array, the integration will use the configured concurrency factor for high performance."
+                remote_host_desc = "hostname or IP of target. Optionally the port can be specified using :PORT. \
+                If multiple targets are specified using an array, the integration will use the configured concurrency \
+                    factor for high performance."
                 args.append(
                     XSOARIntegration.Script.Command.Argument(
                         name="host",
@@ -557,7 +560,7 @@ if __name__ in ('__main__', '__builtin__', 'builtins'):
                         print("Skipping arg %s as it is Deprecated" % str(arg))
                         continue
 
-                    if option.get('required') == True:
+                    if option.get('required') is True:
                         argument['required'] = True
 
                     # Ansible docs have a empty list/dict as defaults....

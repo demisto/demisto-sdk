@@ -141,7 +141,7 @@ class DocReviewer:
         click.secho('If these are not misspelled consider adding them to a known_words file:\n'
                     '  Pack related words: content/Packs/<PackName>/known_words.txt\n'
                     '  Not pack specific words: content/Tests/known_words.txt\n'
-                    'To test locally add --packs-known-words or --known_words flags.', fg='yellow')
+                    'To test locally add --use-packs-known-words or --known-words flags.', fg='yellow')
 
     def print_file_report(self):
         if self.files_without_misspells:

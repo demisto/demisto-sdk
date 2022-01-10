@@ -3,22 +3,21 @@ import os
 import re
 import shutil
 import sys
-from typing import Optional, List
+from typing import List, Optional
 
 import autopep8
 import yaml
 
-from demisto_sdk.commands.common.docker_util import \
-    ContainerRunner
-from demisto_sdk.commands.common.tools import to_pascal_case, to_kebab_case, print_error
-from demisto_sdk.commands.common.constants import (FileType)
-from demisto_sdk.commands.generate_integration.XSOARIntegration import \
-    XSOARIntegration
-from demisto_sdk.commands.common.hook_validations.structure import \
-    StructureValidator
+from demisto_sdk.commands.common.constants import FileType
+from demisto_sdk.commands.common.docker_util import ContainerRunner
 from demisto_sdk.commands.common.hook_validations.integration import \
     IntegrationValidator
-
+from demisto_sdk.commands.common.hook_validations.structure import \
+    StructureValidator
+from demisto_sdk.commands.common.tools import (print_error, to_kebab_case,
+                                               to_pascal_case)
+from demisto_sdk.commands.generate_integration.XSOARIntegration import \
+    XSOARIntegration
 
 ILLEGAL_CODE_NAMES = ['type', 'from', 'id', 'filter', 'list']
 NAME_FIX = '_'
@@ -260,13 +259,13 @@ def main() -> None:
         if self.test_command is not None:
             test_command = self.test_command
             code += '''            # This is the call made when pressing the integration Test button.
-            result = generic_ansible('%s', '%s', args, int_params, host_type)
+            result = generic_ansible('{}', '{}', args, int_params, host_type)
 
             if result:
                 return_results('ok')
             else:
                 return_results(result)
-''' % (name.lower(), test_command)
+'''.format(name.lower(), test_command)
         else:
             code += '''            # This is the call made when pressing the integration Test button.
             return_results('This integration does not support testing from this screen. \\
@@ -286,8 +285,8 @@ def main() -> None:
             else:
                 demisto_command = to_kebab_case(ansible_module)
 
-            code += "\n        elif command == '%s':\n            return_results(generic_ansible('%s', '%s', args, int_params, host_type, creds_mapping))" % (
-                demisto_command, name.lower(), ansible_module,)
+            code += "\n        elif command == '{}':\n            return_results(generic_ansible('{}', '{}', args, int_params, host_type, creds_mapping))".format(
+                demisto_command, name.lower(), ansible_module)
 
         code += '''
     # Log exceptions and return errors
@@ -448,7 +447,7 @@ if __name__ in ('__main__', '__builtin__', 'builtins'):
                     continue
                 value = str(value).replace("\n", "\"")
                 value = str(value).replace("\\", "\\\\")
-                example_command += "%s=\"%s\" " % (arg, value)
+                example_command += "{}=\"{}\" ".format(arg, value)
 
         self.example_commands.append(example_command)
         return self.example_commands
@@ -624,7 +623,9 @@ factor for high performance."
                         isArray = True
 
                     argument = XSOARIntegration.Script.Command.Argument(name=name, description=description,
-                        is_array=isArray, required=required, auto=auto, predefined=predefined, defaultValue=defaultValue)
+                                                                        is_array=isArray, required=required, 
+                                                                        auto=auto, predefined=predefined, 
+                                                                        defaultValue=defaultValue)
                     args.append(argument)
 
             # Add Outputs

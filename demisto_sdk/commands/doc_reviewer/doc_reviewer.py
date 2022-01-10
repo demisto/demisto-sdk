@@ -3,7 +3,7 @@ import re
 import ssl
 import string
 import sys
-from typing import Dict, Set
+from typing import Dict, List, Set
 
 import click
 import nltk
@@ -60,7 +60,7 @@ class DocReviewer:
         self.known_pack_words_file_path = ''
 
         self.current_pack = None
-        self.files = set()  # type:Set
+        self.files = list()  # type:List
         self.spellchecker = SpellChecker()
         self.unknown_words = {}  # type:Dict
         self.no_camel_case = no_camel_case
@@ -77,7 +77,6 @@ class DocReviewer:
             pack_name = file_path.split('/')[1]
             known_words_path = f"Packs/{pack_name}/{self.PACKS_KNOWN_WORDS_PATH}"
             if os.path.isfile(known_words_path):
-
                 return known_words_path
 
             click.secho(f'\nNo known words file was found within pack: {known_words_path}', fg='yellow')
@@ -108,7 +107,7 @@ class DocReviewer:
             for file_name in files:
                 full_path = (os.path.join(root, file_name))
                 if find_type(full_path) in self.SUPPORTED_FILE_TYPES:
-                    self.files.add(str(full_path))
+                    self.files.append(str(full_path))
 
     def gather_all_changed_files(self):
         modified = self.git_util.modified_files(prev_ver=self.prev_ver)  # type: ignore[union-attr]
@@ -122,7 +121,7 @@ class DocReviewer:
         for file in self.gather_all_changed_files():
             file = str(file)
             if os.path.isfile(file) and find_type(file) in self.SUPPORTED_FILE_TYPES:
-                self.files.add(file)
+                self.files.append(file)
 
     def get_files_to_run_on(self, file_path):
         """Get all the relevant files that the spell-check could work on"""
@@ -134,10 +133,11 @@ class DocReviewer:
             self.get_all_md_and_yml_files_in_dir(file_path)
 
         elif find_type(file_path) in self.SUPPORTED_FILE_TYPES:
-            self.files.add(file_path)
+            self.files.append(file_path)
 
-    def print_unknown_words(self):
-        for word, corrections in self.unknown_words.items():
+    @staticmethod
+    def print_unknown_words(unknown_words):
+        for word, corrections in unknown_words.items():
             click.secho(f'  - {word} - did you mean: {corrections}', fg='bright_red')
 
     def print_file_report(self):
@@ -188,7 +188,7 @@ class DocReviewer:
             if self.unknown_words:
                 click.secho(f"\n - Words that might be misspelled were found in "
                             f"{file}:", fg='bright_red')
-                self.print_unknown_words()
+                self.print_unknown_words(unknown_words=self.unknown_words)
                 self.found_misspelled = True
                 self.files_with_misspells.add(file)
 
@@ -209,10 +209,15 @@ class DocReviewer:
                 click.secho(f'\nUsing known words file found within pack: {known_pack_words_file_path}', fg='yellow')
                 if self.known_pack_words_file_path:
                     # Remove old known_words packs file
-                    self.spellchecker.word_frequency.remove_text_file(self.known_pack_words_file_path)
+                    with open(self.known_pack_words_file_path) as previous_packs_known_words_file:
+                        previous_words = previous_packs_known_words_file.readlines()
+                        previous_packs_known_words = [word.rstrip() for word in previous_words]
+
+                    self.spellchecker.word_frequency.remove_words(previous_packs_known_words)
+
                 # Add the new known_words packs file
+                self.spellchecker.word_frequency.load_text_file(known_pack_words_file_path)
                 self.known_pack_words_file_path = known_pack_words_file_path
-                self.spellchecker.word_frequency.load_text_file(self.known_pack_words_file_path)
 
     def add_known_words(self):
         """Add known words to the spellchecker from external and internal files"""
@@ -264,6 +269,9 @@ class DocReviewer:
             word = self.remove_punctuation(word)
             if word.isalpha() and self.spellchecker.unknown([word]):
                 self.unknown_words[word] = list(self.spellchecker.candidates(word))[:5]
+
+        if word in self.unknown_words.keys() and word in self.unknown_words[word]:
+            self.unknown_words[word].remove(word)
 
     def check_md_file(self, file_path):
         """Runs spell check on .md file. Adds unknown words to given unknown_words set.

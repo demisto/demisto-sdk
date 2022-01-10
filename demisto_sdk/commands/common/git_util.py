@@ -438,8 +438,8 @@ class GitUtil:
                 branch = prev_ver
             else:
                 try:  # try to get the main branch
-                    print('*** , type(self.repo.heads): ' + str(type(self.repo.heads)))
                     print('*** , self.repo.heads: ' + str(self.repo.heads))
+                    print('*** , self.repo.remotes: ' + str(self.repo.remotes))
                     branch = self.repo.heads.main.name
                 except AttributeError:  # if main does not exist, get master
                     try:

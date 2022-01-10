@@ -437,6 +437,7 @@ class GitUtil:
             if prev_ver:
                 branch = prev_ver
             else:
+                branch = ''
                 try:  # try to get the main branch
                     for current_remote in self.repo.remotes:
                         for current_remote_ref in current_remote.refs:

@@ -96,16 +96,19 @@ class XSOARIntegration:
 
     class Configuration:
         def __init__(self, name: str, display: str, type_: int, required: bool, defaultvalue: str = '',
-                     options: Optional[list] = None):
+                     options: Optional[list] = None, additionalinfo: Optional[str] = None):
             self.name = name
             self.display = display
             self.defaultvalue = defaultvalue
             self.type = type_
             self.required = required
+            self.additionalinfo = additionalinfo
             if options:
                 self.options = options
             if defaultvalue:
                 self.defaultvalue = defaultvalue
+            if additionalinfo:
+                self.additionalinfo = additionalinfo
 
     class Script:
         def __init__(self, script: str, type_: str, subtype: str, dockerimage: str, isfetch: bool,
@@ -134,15 +137,18 @@ class XSOARIntegration:
 
             class Argument:
                 def __init__(self, name: str, description: str, required: bool, auto: Optional[str] = None,
-                             predefined: Optional[str] = None, is_array: bool = False):
+                             predefined: Optional[str] = None, is_array: bool = False, defaultValue: Optional[str] = None):
                     self.name = name
                     self.description = description
                     self.required = required
                     self.isArray = is_array
+                    self.defaultValue = defaultValue
                     if auto:
                         self.auto = auto
                     if predefined:
                         self.predefined = predefined
+                    if defaultValue:
+                        self.defaultValue = defaultValue
 
             class Output:
                 def __init__(self, type_: str, context_path: str, description: str):

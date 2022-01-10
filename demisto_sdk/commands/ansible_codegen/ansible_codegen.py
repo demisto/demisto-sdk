@@ -114,7 +114,7 @@ class AnsibleIntegration:
             container_name="demisto-sdk-ansiblecodegen-lookup")
 
         # Make sure ansible-docs is present in container
-        ansibledoc_version = str(lookup_container.exec(command=f"ansible-doc --version").get("Outputs"))
+        ansibledoc_version = str(lookup_container.exec(command="ansible-doc --version").get("Outputs"))
         if "ansible-doc 2." not in ansibledoc_version:    # Tested with ansible-doc 2.12.1
             print_error(
                 f'ansible-doc 2.x not found in container or not compatible version. Is Ansible installed in container image?\n\
@@ -184,7 +184,7 @@ class AnsibleIntegration:
             schema_check = structure_validator.is_valid_scheme()
             if schema_check is False:
                 validation = False
-                validation_message += f"\n  * Failed Schema validation"
+                validation_message += "\n  * Failed Schema validation"
 
             # Param Validation tests
             param_valid = all([integration_validator.has_no_duplicate_params,
@@ -199,19 +199,19 @@ class AnsibleIntegration:
 
             if param_valid is not True:
                 validation = False
-                validation_message += f"\n  * Failed Param validation"
+                validation_message += "\n  * Failed Param validation"
 
             # Check category
             category_valid = integration_validator.is_valid_category
             if category_valid is False:
                 validation = False
-                validation_message += f"\n  * Invalid category"
+                validation_message += "\n  * Invalid category"
 
             # Check Docker image is valid
             container_image_valid = integration_validator.is_docker_image_valid
             if container_image_valid is False:
                 validation = False
-                validation_message += f"\n  * Failed container image validation"
+                validation_message += "\n  * Failed container image validation"
 
         return(validation, validation_message)
 
@@ -502,7 +502,6 @@ if __name__ in ('__main__', '__builtin__', 'builtins'):
         if self.verbose:
             print(text)
 
-
     def get_command_name(self, module: str) -> str:
         """
         Determines what the XSOAR command name should be fore the module.
@@ -513,14 +512,13 @@ if __name__ in ('__main__', '__builtin__', 'builtins'):
         # In case ansible module has been provided in collection namespace form. We want just the module name
         module = module.split(".")[-1]
 
-        command_name=""
+        command_name = ""
         # Don't double up with the prefix, if the module name already has the prefix
         if to_kebab_case(module).startswith(f"{self.command_prefix}-"):
             command_name = to_kebab_case(module)
         else:
             command_name = f"{self.command_prefix}-{to_kebab_case(module)}"
         return command_name
-
 
     def get_yaml_commands(self) -> list:
         """
@@ -626,7 +624,7 @@ factor for high performance."
                         isArray = True
 
                     argument = XSOARIntegration.Script.Command.Argument(name=name, description=description,
-                                                                        is_array=isArray, required=required, auto=auto, predefined=predefined, defaultValue=defaultValue)
+                        is_array=isArray, required=required, auto=auto, predefined=predefined, defaultValue=defaultValue)
                     args.append(argument)
 
             # Add Outputs

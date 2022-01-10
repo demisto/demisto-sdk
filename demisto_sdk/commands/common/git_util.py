@@ -440,6 +440,10 @@ class GitUtil:
                 try:  # try to get the main branch
                     print('*** , self.repo.heads: ' + str(self.repo.heads))
                     print('*** , self.repo.remotes: ' + str(self.repo.remotes))
+                    for current_remote in self.repo.remotes:
+                        print('*** , current_remote.refs: ' + str(current_remote.refs))
+                        for current_remote_ref in current_remote.refs:
+                            print('*** , current_remote_ref: ' + str(current_remote_ref))
                     branch = self.repo.heads.main.name
                 except AttributeError:  # if main does not exist, get master
                     try:

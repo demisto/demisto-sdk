@@ -13,6 +13,7 @@ SECOND_KNOWN_WORDS_PATH = 'another_known_words_for_tests.txt'  # Contains: nomno
 
 
 class TestUsingKnownWordsFiles:
+    """Test class to setup the known words files."""
     @staticmethod
     def setup():
         with open(FIRST_KNOWN_WORDS_PATH, 'w+') as file_to_check:
@@ -31,6 +32,7 @@ class TestUsingKnownWordsFiles:
 
 
 class TestSingleInputFile(TestUsingKnownWordsFiles):
+    """Test class for single input file"""
     FILE_PATH_TO_CHECK = 'some_file.md'
 
     def teardown(self):
@@ -45,6 +47,19 @@ class TestSingleInputFile(TestUsingKnownWordsFiles):
                                [FIRST_KNOWN_WORDS_PATH], False)])
     def test_having_two_known_words_files(self, mocker, file_content, unknown_words, known_words_file_paths,
                                           review_success):
+        """
+        Given:
+            - A release notes file with two misspelled words.
+            - Different variations of known_words files.
+
+        When:
+            - Running doc_reviewer with known_words_file_paths.
+
+        Then:
+            - Ensure the review result is appropriate.
+            - Make sure a review has taken place.
+            - Enusure the unknown words are as expected.
+        """
         with open(self.FILE_PATH_TO_CHECK, 'w+') as file_to_check:
             file_to_check.write(file_content)
 
@@ -63,6 +78,19 @@ class TestSingleInputFile(TestUsingKnownWordsFiles):
                               ("This is nomnomone, nomnomtwo", {"nomnomone"}, [], False)])
     def test_adding_known_words_from_pack(self, mocker, file_content, unknown_words, known_words_file_paths,
                                           review_success):
+        """
+        Given:
+            - A release notes file with two misspelled words.
+            - Different variations of known_words files.
+
+        When:
+            - Running doc_reviewer with known_words_file_paths and load_known_words_from_pack option.
+
+        Then:
+            - Ensure the review result is appropriate.
+            - Make sure a review has taken place.
+            - Enusure the unknown words are as expected.
+        """
         with open(self.FILE_PATH_TO_CHECK, 'w+') as file_to_check:
             file_to_check.write(file_content)
 
@@ -117,6 +145,19 @@ class TestTwoInputFiles(TestUsingKnownWordsFiles):
     def test_having_two_file_paths(self, mocker, first_path, second_path, first_file_content,
                                    second_file_content, unknown_word_calls, known_words_file_paths, review_success,
                                    misspelled_files_num):
+        """
+        Given:
+            - 2 release notes files with two misspelled words each.
+            - Different variations of known_words files.
+
+        When:
+            - Running doc_reviewer with known_words_file_paths.
+
+        Then:
+            - Ensure the review result is appropriate.
+            - Make sure a review has taken place.
+            - Enusure the unknown words are as expected for each file.
+        """
         with open(self.FIRST_FILE_PATH, 'w+') as file_to_check:
             file_to_check.write(first_file_content)
 
@@ -153,6 +194,19 @@ class TestTwoInputFiles(TestUsingKnownWordsFiles):
     def test_two_files_adding_known_words_from_pack(self, mocker, first_path, second_path, first_file_content,
                                                     second_file_content, unknown_word_calls, known_words_file_paths,
                                                     packs_unknown_words, review_success, misspelled_files_num):
+        """
+        Given:
+            - 2 release notes files with two misspelled words each.
+            - Different variations of known_words files.
+
+        When:
+            - Running doc_reviewer with known_words_file_paths and load_known_words_from_pack option.
+
+        Then:
+            - Ensure the review result is appropriate.
+            - Make sure a review has taken place.
+            - Enusure the unknown words are as expected for each file.
+        """
         with open(self.FIRST_FILE_PATH, 'w+') as file_to_check:
             file_to_check.write(first_file_content)
 
@@ -187,6 +241,16 @@ class TestTwoInputFiles(TestUsingKnownWordsFiles):
                            ""),  # No known_words file there.
                           (".", "some_fake_path", "")])
 def test_find_known_words_from_pack(repo_path, file_path, expected_result):
+    """
+    Given:
+        - Different file paths.
+
+    When:
+        - Running DocReviewer.find_known_words_from_pack.
+
+    Then:
+        - Ensure the found path result is appropriate.
+    """
     with ChangeCWD(repo_path):
         doc_reviewer = DocReviewer(file_paths=[])
         assert doc_reviewer.find_known_words_from_pack(file_path) == expected_result

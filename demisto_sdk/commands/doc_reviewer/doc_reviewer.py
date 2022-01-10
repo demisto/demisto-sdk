@@ -139,6 +139,10 @@ class DocReviewer:
     def print_unknown_words(unknown_words):
         for word, corrections in unknown_words.items():
             click.secho(f'  - {word} - did you mean: {corrections}', fg='bright_red')
+        click.secho('If these are not misspelled consider adding them to a known_words file:\n'
+                    '  Pack related words: content/Packs/<PackName>/known_words.txt\n'
+                    '  Not pack specific words: content/Tests/known_words.txt\n'
+                    'To test locally add --packs-known-words or --known_words flags.', fg='yellow')
 
     def print_file_report(self):
         if self.files_without_misspells:
@@ -203,9 +207,10 @@ class DocReviewer:
         return True
 
     def update_known_words_from_pack(self, file_path):
+        """Update spellchecker with the file's pack's known words."""
         if self.load_known_words_from_pack:
             known_pack_words_file_path = self.find_known_words_from_pack(file_path)
-            if known_pack_words_file_path and self.known_pack_words_file_path != known_pack_words_file_path:
+            if self.known_pack_words_file_path != known_pack_words_file_path:
                 click.secho(f'\nUsing known words file found within pack: {known_pack_words_file_path}', fg='yellow')
                 if self.known_pack_words_file_path:
                     # Remove old known_words packs file
@@ -214,7 +219,9 @@ class DocReviewer:
                         previous_packs_known_words = [word.rstrip() for word in previous_words]
 
                     self.spellchecker.word_frequency.remove_words(previous_packs_known_words)
+                    self.known_pack_words_file_path = ''
 
+            if known_pack_words_file_path:
                 # Add the new known_words packs file
                 self.spellchecker.word_frequency.load_text_file(known_pack_words_file_path)
                 self.known_pack_words_file_path = known_pack_words_file_path
@@ -271,6 +278,7 @@ class DocReviewer:
                 self.unknown_words[word] = list(self.spellchecker.candidates(word))[:5]
 
         if word in self.unknown_words.keys() and word in self.unknown_words[word]:
+            # Do not suggest the same word as a correction.
             self.unknown_words[word].remove(word)
 
     def check_md_file(self, file_path):

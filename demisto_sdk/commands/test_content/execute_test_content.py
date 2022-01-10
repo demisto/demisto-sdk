@@ -22,7 +22,7 @@ def _handle_github_response(response, logging_module) -> dict:
     return res_dict
 
 
-def _add_pr_comment(comment, logging_module):
+def _add_pr_comment(skipped_integrations_comment, coverage_report_comment, logging_module):
     token = os.environ['CONTENT_GITHUB_TOKEN']
     branch_name = os.environ['CI_COMMIT_BRANCH']
     sha1 = os.environ['CI_COMMIT_SHA']
@@ -50,10 +50,14 @@ def _add_pr_comment(comment, logging_module):
                     if COVERAGE_REPORT_COMMENT in existing_comment.get('body'):
                         comment_url = existing_comment.get('url')
                         requests.delete(comment_url, headers=headers, verify=False)
-                skipped_tests_res = requests.post(issue_url, json={'body': comment}, headers=headers, verify=False)
-                _handle_github_response(skipped_tests_res, logging_module)
-                coverage_report_res = requests.post(issue_url, json={'body': comment}, headers=headers, verify=False)
-                _handle_github_response(coverage_report_res, logging_module)
+                if skipped_integrations_comment:
+                    skipped_tests_res = requests.post(issue_url, json={'body': skipped_integrations_comment},
+                                                      headers=headers, verify=False)
+                    _handle_github_response(skipped_tests_res, logging_module)
+                if coverage_report_comment:
+                    coverage_report_res = requests.post(issue_url, json={'body': coverage_report_comment},
+                                                        headers=headers, verify=False)
+                    _handle_github_response(coverage_report_res, logging_module)
         else:
             logging_module.warning('Add pull request comment failed: There is more then one open pull '
                                    f'request for branch {branch_name}.', real_time=True)
@@ -81,8 +85,12 @@ def execute_test_content(**kwargs):
             and build_context.build_name != 'master' \
             and not build_context.is_nightly:
         skipped_integrations = '\n- '.join(build_context.tests_data_keeper.playbook_skipped_integration)
-        comment = f'{SKIPPED_CONTENT_COMMENT}:\n- {skipped_integrations}'
-        _add_pr_comment(comment, logging_manager)
+        skipped_integrations_comment = f'{SKIPPED_CONTENT_COMMENT}:\n- {skipped_integrations}'
+        build_number = build_context.get_build_number()
+        coverage_link = \
+            f'https://{build_number}-60525392-gh.circle-artifacts.com/0/artifacts/coverage_report/html/index.html'
+        coverage_report_comment = f'{COVERAGE_REPORT_COMMENT}:\n {coverage_link}'
+        _add_pr_comment(skipped_integrations_comment, coverage_report_comment, logging_manager)
     build_context.tests_data_keeper.print_test_summary(build_context.isAMI, logging_manager)
     build_context.tests_data_keeper.create_result_files()
     if build_context.tests_data_keeper.failed_playbooks:

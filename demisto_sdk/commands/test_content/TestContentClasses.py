@@ -749,6 +749,9 @@ class BuildContext:
 
         return user_id
 
+    def get_build_number(self):
+        return self.build_number
+
 
 class TestResults:
 

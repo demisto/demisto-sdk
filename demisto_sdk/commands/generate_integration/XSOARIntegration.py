@@ -102,7 +102,6 @@ class XSOARIntegration:
             self.defaultvalue = defaultvalue
             self.type = type_
             self.required = required
-            self.additionalinfo = additionalinfo
             if options:
                 self.options = options
             if defaultvalue:
@@ -142,7 +141,6 @@ class XSOARIntegration:
                     self.description = description
                     self.required = required
                     self.isArray = is_array
-                    self.defaultValue = defaultValue
                     if auto:
                         self.auto = auto
                     if predefined:

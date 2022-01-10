@@ -176,7 +176,7 @@ def test_review_release_notes_valid(repo):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [DOC_REVIEW, '-i', rn.path], catch_exceptions=False)
         assert 'No misspelled words found' in result.stdout
-        assert f'Release notes {rn.path} look good!' in result.stdout
+        assert f' - Release notes {rn.path} match a known template.' in result.stdout
 
 
 def test_review_release_notes_invalid(repo):

@@ -163,7 +163,7 @@ class YAMLContentUnifiedObject(YAMLContentObject):
 
         TODO:
             1. Handling case where object changed and need to be serialized.
-            2. Spcific handling if unified and unit-tests or code.
+            2. Specific handling if unified and unit-tests or code.
         """
         created_files: List[Path] = []
         dest_dir = self._create_target_dump_dir(dest_dir)

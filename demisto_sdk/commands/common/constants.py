@@ -1353,3 +1353,49 @@ INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {'html': LooseVersion('6.1.0'), 'grid': Lo
 class IdSetKeys(Enum):
     SCRIPTS = 'scripts'
     INTEGRATIONS = 'integrations'
+    PLAYBOOKS = "playbooks"
+    TEST_PLAYBOOKS = "TestPlaybooks"
+    CLASSIFIERS = "Classifiers"
+    INCIDENT_FIELDS = "IncidentFields"
+    INCIDENT_TYPES = "IncidentTypes"
+    INDICATOR_FIELDS = "IndicatorFields"
+    INDICATOR_TYPES = "IndicatorTypes"
+    LISTS = "Lists"
+    JOBS = "Jobs"
+    MAPPERS = "Mappers"
+    PACKS = "Packs"
+    GENERIC_TYPES = "GenericTypes"
+    GENERIC_FIELDS = "GenericFields"
+    GENERIC_MODULES = "GenericModules"
+    GENERIC_DEFINITIONS = "GenericDefinitions"
+    LAYOUTS = "Layouts"
+    REPORTS = "Reports"
+    WIDGETS = "Widgets"
+    DASHBOARDS = "Dashboards"
+
+FileType_TO_IdSetKeys = {
+    FileType.INTEGRATION: IdSetKeys.INTEGRATIONS.value,
+    FileType.BETA_INTEGRATION: IdSetKeys.INTEGRATIONS.value,
+    FileType.PLAYBOOK: IdSetKeys.PLAYBOOKS.value,
+    FileType.SCRIPT: IdSetKeys.SCRIPTS.value,
+    FileType.TEST_SCRIPT: IdSetKeys.SCRIPTS.value,
+    FileType.TEST_PLAYBOOK: IdSetKeys.PLAYBOOKS.value,
+    FileType.DASHBOARD: IdSetKeys.DASHBOARDS.value,
+    FileType.WIDGET: IdSetKeys.WIDGETS.value,
+    FileType.REPORT: IdSetKeys.REPORTS.value,
+    FileType.OLD_CLASSIFIER: IdSetKeys.CLASSIFIERS.value,
+    FileType.CLASSIFIER: IdSetKeys.CLASSIFIERS.value,
+    FileType.MAPPER: IdSetKeys.MAPPERS.value,
+    FileType.LAYOUT: IdSetKeys.LAYOUTS.value,
+    FileType.LAYOUTS_CONTAINER: IdSetKeys.LAYOUTS.value,
+    FileType.LISTS: IdSetKeys.LISTS.value,
+    FileType.REPUTATION: IdSetKeys.INDICATOR_TYPES.value,
+    FileType.INDICATOR_FIELD: IdSetKeys.INDICATOR_FIELDS.value,
+    FileType.INCIDENT_FIELD: IdSetKeys.INCIDENT_FIELDS.value,
+    FileType.INCIDENT_TYPE: IdSetKeys.INCIDENT_TYPES.value,
+    FileType.GENERIC_TYPE: IdSetKeys.GENERIC_TYPES.value,
+    FileType.GENERIC_FIELD: IdSetKeys.GENERIC_FIELDS.value,
+    FileType.GENERIC_MODULE: IdSetKeys.GENERIC_MODULES.value,
+    FileType.GENERIC_DEFINITION: IdSetKeys.GENERIC_DEFINITIONS.value,
+    FileType.JOB: IdSetKeys.JOBS.value
+}

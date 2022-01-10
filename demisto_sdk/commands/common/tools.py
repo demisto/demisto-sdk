@@ -45,9 +45,7 @@ from demisto_sdk.commands.common.constants import (
     RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR,
     XSOAR_CONFIG_FILE, FileType, GitContentConfig, IdSetKeys,
-    MarketplaceVersions, urljoin)
-from demisto_sdk.commands.common.content.objects.abstract_objects.general_object import \
-    GeneralObject
+    MarketplaceVersions, urljoin, FileType_TO_IdSetKeys)
 from demisto_sdk.commands.common.git_util import GitUtil
 
 urllib3.disable_warnings()
@@ -2323,9 +2321,41 @@ def get_api_module_dependencies(pkgs, id_set_path, verbose):
     return list(set(using_integrations_pkg_paths + using_scripts_pkg_paths))
 
 
-def alternate_item_fields(content_item: GeneralObject):
-    item_keys = content_item.keys()
-    for field in item_keys:
+def alternate_item_fields(content_item):
+    """
+    Go over all of the given content item fields and if there is a field with an alternative name, which is marked
+    by '_x2', use that value as the value of the original field (the corresponding one without the '_x2' suffix).
+    Args:
+        content_item: content item object
+
+    """
+    current_dict = content_item.to_dict() if type(content_item) is not dict else content_item
+    copy_dict = current_dict.copy()  # for modifyting dict while iterating
+    for field, value in copy_dict.items():
         if field.endswith('_x2'):
-            content_item[field[:-3]] = content_item[field]
-            content_item.pop(field)
+            current_dict[field[:-3]] = value
+            current_dict.pop(field)
+        elif type(field) is dict:
+            alternate_item_fields(field)
+
+def should_alternate_name_by_item(content_item, id_set):
+    """
+    Go over the given content item and check if it should be modified to use its alternative fields, which is determined
+    by the field 'has_alternative_names' in the id set. # TODO: verify
+    Args:
+        content_item: content item object
+        id_set: parsed id set dict
+
+    Returns: True if should alterante fields, false otherwise
+
+    """
+    commonfields = content_item.get('commonfields')
+    item_id = commonfields.get('id') if commonfields else content_item.get('id')
+
+    item_type = content_item.type()
+    id_set_item_type = id_set.get(FileType_TO_IdSetKeys.get(item_type))
+    for item in id_set_item_type:
+        if list(item.keys())[0] == item_id:
+            return item.get(item_id, {}).get('has_alternative_name', False)
+    return False
+

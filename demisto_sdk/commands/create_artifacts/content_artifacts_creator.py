@@ -27,7 +27,8 @@ from demisto_sdk.commands.common.content import (Content, ContentError,
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     JSONContentObject, Script, TextObject, YAMLContentObject,
     YAMLContentUnifiedObject)
-from demisto_sdk.commands.common.tools import arg_to_list, open_id_set_file, alternate_item_fields
+from demisto_sdk.commands.common.tools import arg_to_list, open_id_set_file, alternate_item_fields, \
+    should_alternate_name_by_item
 
 from .artifacts_report import ArtifactsReport, ObjectReport
 
@@ -54,7 +55,7 @@ class ArtifactsManager:
     def __init__(self, artifacts_path: str, zip: bool, packs: bool, content_version: str, suffix: str,
                  cpus: int, marketplace: str = 'xsoar', id_set_path: str = '', pack_names: str = 'all', signature_key: str = '',
                  sign_directory: Path = None, remove_test_playbooks: bool = True,
-                 filter_by_id_set: bool = False):
+                 filter_by_id_set: bool = False, alternate_fields: bool = False):
         """ Content artifacts configuration
 
         Args:
@@ -86,12 +87,16 @@ class ArtifactsManager:
         self.filter_by_id_set = filter_by_id_set
         self.pack_names = arg_to_list(pack_names)
         self.packs_section_from_id_set = {}
+        self.alternate_fields = alternate_fields
         # run related arguments
         self.content_new_path = self.artifacts_path / 'content_new'
         self.content_test_path = self.artifacts_path / 'content_test'
         self.content_packs_path = self.artifacts_path / 'content_packs'
         self.content_all_path = self.artifacts_path / 'all_content'
         self.content_uploadable_zips_path = self.artifacts_path / 'uploadable_packs'
+
+        if self.filter_by_id_set or self.alternate_fields:
+            self.id_set = open_id_set_file(id_set_path)  # TODO: add to dependencies
 
         # inits
         self.content = Content.from_cwd()
@@ -101,12 +106,12 @@ class ArtifactsManager:
         self.exit_code = EX_SUCCESS
 
         if self.filter_by_id_set:
-            id_set = open_id_set_file(id_set_path)
-            self.packs_section_from_id_set = id_set.get('Packs', {})
+            packs_section_from_id_set = self.id_set.get('Packs', {})
             if self.pack_names == ['all']:
-                self.pack_names = list(self.packs_section_from_id_set.keys())
+                self.pack_names = list(packs_section_from_id_set.keys())
             else:
-                self.pack_names = list(set(self.packs_section_from_id_set.keys()).intersection(set(self.pack_names)))
+                self.pack_names = list(set(packs_section_from_id_set.keys()).intersection(set(self.pack_names)))
+
 
     def create_content_artifacts(self) -> int:
         with ArtifactsDirsHandler(self), ProcessPoolHandler(self) as pool:
@@ -115,11 +120,11 @@ class ArtifactsManager:
             futures.extend(dump_packs(self, pool))
             # content/TestPlaybooks
             if not self.remove_test_playbooks:
-                futures.append(pool.schedule(dump_tests_conditionally, args=(self,)))
+                futures.append(pool.schedule(dump_tests_conditionally, args=(self,), timeout=10000))
             # content/content-descriptor.json
-            futures.append(pool.schedule(dump_content_descriptor, args=(self,)))
+            futures.append(pool.schedule(dump_content_descriptor, args=(self,), timeout=10000))
             # content/Documentation/doc-*.json
-            futures.append(pool.schedule(dump_content_documentations, args=(self,)))
+            futures.append(pool.schedule(dump_content_documentations, args=(self,), timeout=10000))
             # Wait for all futures to be finished
             wait_futures_complete(futures, self)
             # Add suffix
@@ -161,7 +166,7 @@ class ArtifactsManager:
 
 
 class ContentItemsHandler:
-    def __init__(self):
+    def __init__(self, id_set=None, alternate_fields=False):
         self.server_min_version = parse('1.0.0')
         self.content_items: Dict[ContentItems, List] = {
             ContentItems.SCRIPTS: [],
@@ -205,6 +210,8 @@ class ContentItemsHandler:
             GENERIC_MODULES_DIR: self.add_generic_module_as_content_item,
             GENERIC_DEFINITIONS_DIR: self.add_generic_definition_as_content_item
         }
+        self.id_set = id_set
+        self.alternate_fields = alternate_fields
 
     def handle_content_item(self, content_object: ContentObject):
         """Verifies the validity of the content object and parses it to the correct entities list.
@@ -226,8 +233,12 @@ class ContentItemsHandler:
             return
 
         self.server_min_version = max(self.server_min_version, content_object.from_version)
-        alternate_item_fields(content_object)
-        #add check to see if in the id set it is marked as having '_x2'
+
+        if self.alternate_fields:
+            if should_alternate_name_by_item(content_object, self.id_set):
+                alternate_item_fields(content_object)
+                content_object.modified = True
+
         self.content_folder_name_to_func[content_object_directory](content_object)
 
     def add_script_as_content_item(self, content_object: ContentObject):
@@ -609,7 +620,7 @@ def dump_packs(artifact_manager: ArtifactsManager, pool: ProcessPool) -> List[Pr
         for pack_name in artifact_manager.pack_names:
             if pack_name not in IGNORED_PACKS and pack_name in artifact_manager.packs:
                 futures.append(pool.schedule(dump_pack,
-                                             args=(artifact_manager, artifact_manager.packs[pack_name])
+                                             args=(artifact_manager, artifact_manager.packs[pack_name]), timeout=10000,
                                              ))
 
     return futures
@@ -643,7 +654,7 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
     pack.metadata.load_user_metadata(pack.id, pack.path.name, pack.path, logger)
     pack.filter_items_by_id_set = artifact_manager.filter_by_id_set
     pack.pack_info_from_id_set = artifact_manager.packs_section_from_id_set
-    content_items_handler = ContentItemsHandler()
+    content_items_handler = ContentItemsHandler(artifact_manager.id_set, artifact_manager.alternate_fields)
     is_feed_pack = False
 
     for classifier in pack.classifiers:
@@ -1105,3 +1116,4 @@ def sign_packs(artifact_manager: ArtifactsManager):
     elif artifact_manager.signDirectory or artifact_manager.signature_key:
         logger.error('Failed to sign packs. In order to do so, you need to provide both signature_key and '
                      'sign_directory arguments.')
+

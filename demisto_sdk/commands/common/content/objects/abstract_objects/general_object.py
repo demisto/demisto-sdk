@@ -17,6 +17,7 @@ class GeneralObject(object):
         """
         self._path = self._fix_path(path)
         self._prefix = file_name_prefix
+        self._modified = False
 
     @staticmethod
     @abstractmethod
@@ -27,6 +28,14 @@ class GeneralObject(object):
     @property
     def path(self) -> Path:
         return self._path
+
+    @property
+    def modified(self) -> bool:
+        return self._modified
+
+    @modified.setter
+    def modified(self, modified: bool):
+       self._modified = modified
 
     @abstractmethod
     def _unserialize(self):
@@ -89,9 +98,10 @@ class GeneralObject(object):
         TODO:
             1. Implement dump of modified object.
         """
-        dest_file = self._create_target_dump_dir(dest_dir) / self.normalize_file_name()
 
-        return [copyfile(src=self.path, dst=dest_file)]
+        dest_file = self._create_target_dump_dir(dest_dir) / self.normalize_file_name()
+        return [copyfile(src=self._path, dst=dest_file)]
+
 
     def type(self):
         return None

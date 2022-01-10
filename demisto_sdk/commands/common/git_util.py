@@ -438,18 +438,21 @@ class GitUtil:
                 branch = prev_ver
             else:
                 try:  # try to get the main branch
-                    print('*** , self.repo.heads: ' + str(self.repo.heads))
-                    print('*** , self.repo.remotes: ' + str(self.repo.remotes))
                     for current_remote in self.repo.remotes:
-                        print('*** , current_remote.refs: ' + str(current_remote.refs))
                         for current_remote_ref in current_remote.refs:
-                            print('*** , current_remote_ref: ' + str(current_remote_ref))
-                    branch = self.repo.heads.main.name
+                            if 'origin/main' == current_remote_ref:
+                                branch = 'main'
+                                break
+                            elif 'origin/master' == current_remote_ref:
+                                branch = 'master'
+                                break
                 except AttributeError:  # if main does not exist, get master
                     try:
                         branch = self.repo.heads.master.name
                     except AttributeError:
                         raise Exception("Unable to find main or master branch from current working directory - aborting.")
+                if not branch:
+                    raise Exception("Unable to find main or master branch from current working directory - aborting.")
         return remote, branch
 
     def get_current_git_branch_or_hash(self) -> str:

@@ -1834,6 +1834,11 @@ def ansible_codegen(**kwargs):
     Then, the command is run a second time with the integration configuration to generate the actual integration files.
     """
 
+    from demisto_sdk.commands.ansible_codegen.ansible_codegen import \
+        AnsibleIntegration
+    from demisto_sdk.commands.common.hook_validations.docker import \
+        DockerImageValidator
+
     if not kwargs.get('output_dir'):
         output_dir = os.getcwd()
     else:
@@ -1844,24 +1849,23 @@ def ansible_codegen(**kwargs):
         try:
             os.mkdir(output_dir)
         except Exception as err:
-            tools.print_error(f'Error creating directory {output_dir} - {err}')
+            print_error(f'Error creating directory {output_dir} - {err}')
             sys.exit(1)
     if not os.path.isdir(output_dir):
-        tools.print_error(f'The directory provided "{output_dir}" is not a directory')
+        print_error(f'The directory provided "{output_dir}" is not a directory')
         sys.exit(1)
 
-    config_file = kwargs['config_file']
     base_name = kwargs.get('base_name')
     if base_name is None:
         base_name = 'GeneratedIntegration'
 
     verbose = kwargs.get('verbose', False)
     fix_code = kwargs.get('fix_code', False)
-
+    
     container_image = kwargs.get('container_image')
     if container_image is None:
         container_image = "demisto/ansible-runner:" + DockerImageValidator.get_docker_image_latest_tag_request('demisto/ansible-runner')
-
+   
     file_path = None
     if kwargs.get('config_file'):
         file_path = kwargs.get('config_file')
@@ -1872,7 +1876,7 @@ def ansible_codegen(**kwargs):
     if not kwargs.get('config_file'):
         integration.save_empty_config(output_dir)
         config_path = os.path.join(output_dir, f'{base_name}_config.yml')
-        tools.print_success(f'Created empty configuration file {config_path}. ')
+        print_success(f'Created empty configuration file {config_path}. ')
         command_to_run = f'demisto-sdk ansible-codegen -cf "{config_path}" -ci "{container_image}" -n "{base_name}" -o "{output_dir}"'
         if verbose:
             command_to_run = command_to_run + ' -v'
@@ -1897,9 +1901,9 @@ def ansible_codegen(**kwargs):
 
     click.echo('Generating integration files...')
     if integration.save_package():
-        tools.print_success(f'Successfully finished generating integration code and saved it in {output_dir}')
+        print_success(f'Successfully finished generating integration code and saved it in {output_dir}')
     else:
-        tools.print_error(f'There was an error creating the package in {output_dir}')
+        print_error(f'There was an error creating the package in {output_dir}')
         sys.exit(1)
 
 # ====================== test-content command ====================== #

@@ -285,7 +285,8 @@ def main() -> None:
             else:
                 demisto_command = to_kebab_case(ansible_module)
 
-            code += "\n        elif command == '{}':\n            return_results(generic_ansible('{}', '{}', args, int_params, host_type, creds_mapping))".format(
+            code += "\n        elif command == '{}':\n            return_results(\
+generic_ansible('{}', '{}', args, int_params, host_type, creds_mapping))".format(
                 demisto_command, name.lower(), ansible_module)
 
         code += '''
@@ -623,8 +624,8 @@ factor for high performance."
                         isArray = True
 
                     argument = XSOARIntegration.Script.Command.Argument(name=name, description=description,
-                                                                        is_array=isArray, required=required, 
-                                                                        auto=auto, predefined=predefined, 
+                                                                        is_array=isArray, required=required,
+                                                                        auto=auto, predefined=predefined,
                                                                         defaultValue=defaultValue)
                     args.append(argument)
 

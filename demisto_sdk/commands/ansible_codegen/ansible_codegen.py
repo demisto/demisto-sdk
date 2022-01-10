@@ -428,7 +428,7 @@ if __name__ in ('__main__', '__builtin__', 'builtins'):
         module_examples = self.ansible_docs.get(module, {}).get("examples").strip()  # Pull up the examples section
         if module_examples is None:
             self.print_with_verbose(f"{module} has no examples")
-            return
+            return []
 
         # If there are multiple just use the first, it's normally the most straight forward
         module_example = module_examples.split("- name:")[1].strip()

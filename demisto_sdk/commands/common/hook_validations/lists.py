@@ -23,7 +23,6 @@ class ListsValidator(ContentEntityValidator):
         Returns:
             bool. Whether the list is valid or not
         """
-        # Lists files have fromServerVersion instead of fromVersion
         validations: List = [
             self._is_valid_version(),
             self.is_valid_from_server_version(),
@@ -52,4 +51,8 @@ class ListsValidator(ContentEntityValidator):
                                      file_path=None):
                     return False
             return True
-        return False
+        else:
+            error_message, error_code = Errors.missing_from_version_in_list()
+            self.handle_error(error_message, error_code, suggested_fix=Errors.suggest_fix(self.file_path),
+                              file_path=self.file_path)
+            return False

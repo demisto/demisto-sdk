@@ -14,6 +14,7 @@ TEST_CONTENT_REPO = TEST_DATA / 'content_slim'
 LIST_GOOD = TEST_CONTENT_REPO / PACKS_DIR / 'Sample01' / LISTS_DIR / 'list-checked_integrations.json'
 LIST_BAD_FROM_VERSION = TEST_CONTENT_REPO / PACKS_DIR / 'Sample01' / LISTS_DIR / 'bad_from_version.json'
 LIST_BAD_VERSION = TEST_CONTENT_REPO / PACKS_DIR / 'Sample01' / LISTS_DIR / 'bad_version.json'
+LIST_BAD_FORMAT = TEST_CONTENT_REPO / PACKS_DIR / 'Sample01' / LISTS_DIR / 'list-bad_format.json'
 
 
 def mock_structure(file_path=None, current_file=None, old_file=None):
@@ -34,8 +35,12 @@ def mock_structure(file_path=None, current_file=None, old_file=None):
 
 class TestListValidator:
 
-    @pytest.mark.parametrize('list_path, is_valid', [(LIST_GOOD, True), (LIST_BAD_VERSION, False),
-                                                     (LIST_BAD_FROM_VERSION, False)])
+    @pytest.mark.parametrize('list_path, is_valid', [
+        (LIST_GOOD, True),
+        (LIST_BAD_VERSION, False),
+        (LIST_BAD_FROM_VERSION, False),
+        (LIST_BAD_FORMAT, False)
+    ])
     def test_is_valid_list(self, list_path, is_valid):
         """
         Given

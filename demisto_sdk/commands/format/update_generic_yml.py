@@ -164,11 +164,13 @@ class BaseUpdateYML(BaseUpdate):
                                 if command_source == tpb_command_source or command_source == '':
                                     test_playbook_ids.append(test_playbook_id)
                                     added = True
+                                    break
 
-                        for tpb_script in tpb_scripts:
-                            if not added and tpb_script in scripts:
-                                test_playbook_ids.append(test_playbook_id)
-                                added = True
+                        if not added:
+                            for tpb_script in tpb_scripts:
+                                if tpb_script in scripts:
+                                    test_playbook_ids.append(test_playbook_id)
+                                    break
 
                 self.data['tests'] = test_playbook_ids
             except FileNotFoundError:

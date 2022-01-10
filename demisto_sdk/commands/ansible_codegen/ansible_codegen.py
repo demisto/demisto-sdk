@@ -413,34 +413,42 @@ if __name__ in ('__main__', '__builtin__', 'builtins'):
             print_error(f'Error copying image and description files - {err}')
             return '', ''
 
-    def generate_command_example(self, module: str, command_name: str) -> list:
+    def generate_command_example(self, module: str) -> list:
         """
         Reads ansible-docs examples and outputs a equivalent XSOAR command example.
 
         Returns:
             example_command: List of command examples
         """
-        self.print_with_verbose('Looking up command example for {module}...')
+        self.print_with_verbose(f"Looking up command example for {module}...")
 
         example_command = ""
+        command_name = self.get_command_name(module)
 
-        module_examples = self.ansible_docs.get(module, {}).get("doc", {}).get("examples")  # Pull up the examples section
+        module_examples = self.ansible_docs.get(module, {}).get("examples").strip()  # Pull up the examples section
+        if module_examples is None:
+            self.print_with_verbose(f"{module} has no examples")
+            return
+
         # If there are multiple just use the first, it's normally the most straight forward
-        module_example = module_examples.split("- name:")[0]
+        module_example = module_examples.split("- name:")[1].strip()
 
         # Get actual example
         example_command = f"!{command_name} "  # Start of command
         if self.host_type in REMOTE_HOST_TYPES:  # Add a example host target
             example_command += "host=\"123.123.123.123\" "
         if module_example is not None:
-            for line in module_example.split("\n")[1:]:  # Quick yaml to dict skipping the task "- name" line
-                for arg, value in line.split(": ").items():
-                    # Skip args that the config says to ignore
-                    if (self.ignored_args) and (str(arg) in self.ignored_args):
-                        continue
-                    value = str(value).replace("\n", "\"")
-                    value = str(value).replace("\\", "\\\\")
-                    example_command += "%s=\"%s\" " % (arg, value)
+            module_example_lines = module_example.split("\n")
+            for line in module_example_lines[2:]:  # Quick yaml to list skipping the first task "- name" line
+                split_line = line.split(": ")
+                arg = split_line[0].strip()
+                value = split_line[1].strip()
+                # Skip args that the config says to ignore
+                if (self.ignored_args) and (str(split_line) in self.ignored_args):
+                    continue
+                value = str(value).replace("\n", "\"")
+                value = str(value).replace("\\", "\\\\")
+                example_command += "%s=\"%s\" " % (arg, value)
 
         self.example_commands.append(example_command)
         return self.example_commands
@@ -458,7 +466,11 @@ if __name__ in ('__main__', '__builtin__', 'builtins'):
         command_examples_file = os.path.join(directory, 'command_examples')
         try:
             with open(command_examples_file, 'w') as fp:
-                fp.writelines(self.example_commands)
+
+                for module in self.ansible_modules:
+                    self.generate_command_example(module=module)
+
+                fp.write('\n'.join(self.example_commands))
                 return command_examples_file
         except Exception as err:
             print_error(f'Error writing {command_examples_file} - {err}')
@@ -490,6 +502,26 @@ if __name__ in ('__main__', '__builtin__', 'builtins'):
         if self.verbose:
             print(text)
 
+
+    def get_command_name(self, module: str) -> str:
+        """
+        Determines what the XSOAR command name should be fore the module.
+
+        Returns:
+            command_name: XSOAR friendly command name
+        """
+        # In case ansible module has been provided in collection namespace form. We want just the module name
+        module = module.split(".")[-1]
+
+        command_name=""
+        # Don't double up with the prefix, if the module name already has the prefix
+        if to_kebab_case(module).startswith(f"{self.command_prefix}-"):
+            command_name = to_kebab_case(module)
+        else:
+            command_name = f"{self.command_prefix}-{to_kebab_case(module)}"
+        return command_name
+
+
     def get_yaml_commands(self) -> list:
         """
         Looks up the Ansible module documentation and format it into XSOAR
@@ -503,7 +535,7 @@ if __name__ in ('__main__', '__builtin__', 'builtins'):
 
         for module in self.ansible_modules:
 
-            command_name = ''
+            command_name = self.get_command_name(module)
             command_description = ''
             command_doc = self.ansible_docs.get(module, {}).get("doc")
             command_namespace = command_doc.get("collection", {}).split(".")[0]
@@ -512,11 +544,6 @@ if __name__ in ('__main__', '__builtin__', 'builtins'):
             command_options = command_doc.get("options")
             command_returns = self.ansible_docs.get(module, {}).get("return")
 
-            # Don't double up with the prefix, if the module name already has the prefix
-            if not to_kebab_case(module).startswith(f"{self.command_prefix}-"):
-                command_name = f"{self.command_prefix}-{to_kebab_case(module)}"
-            else:
-                command_name = to_kebab_case(module)
             module_online_help = f"{ANSIBLE_ONLINE_DOCS_URL_BASE}{command_namespace}/{command_collection}/{command_module}_module.html"
             command_description = str(command_doc.get('short_description')) + \
                 "\n Further documentation available at " + module_online_help

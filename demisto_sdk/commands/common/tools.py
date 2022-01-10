@@ -1169,7 +1169,7 @@ def find_type(
         if ignore_invalid_schema_file:
             # invalid file schema
             return None
-        raise
+        raise err
 
     if file_type == 'yml':
         if 'category' in _dict:

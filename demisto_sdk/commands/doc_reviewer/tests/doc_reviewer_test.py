@@ -5,42 +5,17 @@ import pytest
 from demisto_sdk.commands.doc_reviewer.doc_reviewer import DocReviewer
 
 
-def doc_reviewer(
-    file_path: str,
-    known_words_file_path: str = None,
-    no_camel_case: bool = False,
-    no_failure: bool = False,
-    expand_dictionary: bool = False,
-    templates: bool = False,
-    use_git: bool = False,
-    prev_ver: str = None,
-    release_notes_only: bool = False
-) -> DocReviewer:
-
-    return DocReviewer(
-        file_path=file_path,
-        known_words_file_path=known_words_file_path,
-        no_camel_case=no_camel_case,
-        no_failure=no_failure,
-        expand_dictionary=expand_dictionary,
-        templates=templates,
-        use_git=use_git,
-        prev_ver=prev_ver,
-        release_notes_only=release_notes_only
-    )
-
-
 @pytest.fixture()
 def doc_reviewer_with_malformed_integration_yml(integration) -> DocReviewer:
     integration.yml.write("1: 2\n//")
-    return doc_reviewer(file_path=integration.yml.path, release_notes_only=True)
+    return DocReviewer(file_path=integration.yml.path, release_notes_only=True)
 
 
 @pytest.fixture()
 def doc_reviewer_with_malformed_incident_field(pack) -> DocReviewer:
     incident_field = pack.create_incident_field("malformed")
     incident_field.write_as_text("{\n '1': '1'")
-    return doc_reviewer(file_path=incident_field.path, release_notes_only=True)
+    return DocReviewer(file_path=incident_field.path, release_notes_only=True)
 
 
 def test_doc_review_with_release_notes_is_skipped_on_invalid_yml_file(

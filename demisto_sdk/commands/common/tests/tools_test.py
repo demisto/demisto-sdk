@@ -148,7 +148,10 @@ class TestGenericFunctions:
         Then
         - Ensure no exception/error is raised and None is returned.
         """
-        assert not find_type(malformed_integration_yml.yml.path, ignore_invalid_schema_file=True)
+        try:
+            assert not find_type(malformed_integration_yml.yml.path, ignore_invalid_schema_file=True)
+        except ValueError as err:
+            assert False, str(err)
 
     def test_find_type_with_invalid_json(self, malformed_incident_field):
         """
@@ -161,7 +164,10 @@ class TestGenericFunctions:
         Then
         - Ensure no exception/error is raised and None is returned.
         """
-        assert not find_type(malformed_incident_field.path, ignore_invalid_schema_file=True)
+        try:
+            assert not find_type(malformed_incident_field.path, ignore_invalid_schema_file=True)
+        except ValueError as err:
+            assert False, str(err)
 
     def test_find_type_no_file(self):
         """

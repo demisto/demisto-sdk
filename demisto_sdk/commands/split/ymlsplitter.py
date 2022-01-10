@@ -1,5 +1,6 @@
 import base64
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -17,6 +18,10 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                get_pipenv_dir,
                                                get_python_version, pascal_case,
                                                print_color, print_error)
+from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
+
+REGEX_MODULE = r"### GENERATED CODE ###((.|\s)+?)### END GENERATED CODE ###"
+INTEGRATIONS_DOCS_REFERENCE = 'https://xsoar.pan.dev/docs/reference/integrations/'
 
 
 def get_pip_requirements(docker_image: str):
@@ -246,6 +251,8 @@ class YmlSplitter:
                 if lang_type == TYPE_PWSH:
                     code_file.write(". $PSScriptRoot\\CommonServerPowerShell.ps1\n")
                     self.lines_inserted_at_code_start += 1
+            script = self.replace_imported_code(script)
+            script = self.replace_section_headers_code(script)
             code_file.write(script)
             if script and script[-1] != '\n':
                 # make sure files end with a new line (pyml seems to strip the last newline)
@@ -268,6 +275,18 @@ class YmlSplitter:
                 image_file.write(base64.decodebytes(image_b64.encode('utf-8')))
         return 0
 
+    def remove_integration_documentation(self, detailed_description):
+        if "[View Integration Documentation]" in detailed_description:
+            normalized_integration_id = YmlUnifier.normalize_integration_id(self.yml_data['commonfields']['id'])
+            integration_doc_link = INTEGRATIONS_DOCS_REFERENCE + normalized_integration_id
+            documentation = f'[View Integration Documentation]({integration_doc_link})'
+            if '\n\n---\n' + documentation in detailed_description:
+                detailed_description = detailed_description.replace('\n\n---\n' + documentation, "")
+            elif documentation in detailed_description:
+                detailed_description = detailed_description.replace(documentation, "")
+
+        return detailed_description
+
     def extract_long_description(self, output_path) -> int:
         """Extracts the detailed description from the yml_file.
 
@@ -278,6 +297,7 @@ class YmlSplitter:
             return 0  # no long description in script type
         long_description = self.yml_data.get('detaileddescription')
         if long_description:
+            long_description = self.remove_integration_documentation(long_description)
             self.print_logs("Extracting long description to: {} ...".format(output_path), log_color=LOG_COLORS.NATIVE)
             with open(output_path, 'w', encoding='utf-8') as desc_file:
                 desc_file.write(long_description)
@@ -292,3 +312,22 @@ class YmlSplitter:
         """
         if self.logging:
             print_color(log_msg, log_color)
+
+    def replace_imported_code(self, script):
+        # this is how we check that generated code exists, and the syntax of the generated code is up to date
+        if '### GENERATED CODE ###:' in script and \
+                '### END GENERATED CODE ###' in script:
+            matches = re.finditer(REGEX_MODULE, script)
+            for match in matches:
+                code = match.group(1)
+                lines = code.split('\n')
+                imported_line = lines[0][2:]  # the first two chars are not part of the code
+                self.print_logs(f'Replacing code block with `{imported_line}`', LOG_COLORS.NATIVE)
+                script = script.replace(match.group(), imported_line)
+        return script
+
+    def replace_section_headers_code(self, script):
+        """
+        remove the auto-generated section headers if they exist.
+        """
+        return re.sub(r"register_module_line\('.+', '(?:start|end)', __line__\(\)\)\n", '', script)

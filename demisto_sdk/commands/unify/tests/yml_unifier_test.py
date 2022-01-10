@@ -38,27 +38,27 @@ do the following:
 '''
 
 DUMMY_SCRIPT = '''
-    def main():
-    """ COMMANDS MANAGER / SWITCH PANEL """
-        command = demisto.command()
-        args = demisto.args()
-        LOG(f'Command being called is {command}')
+def main():
+""" COMMANDS MANAGER / SWITCH PANEL """
+    command = demisto.command()
+    args = demisto.args()
+    LOG(f'Command being called is {command}')
 
-        params = demisto.params()
-
-
-    try:
-        if command == 'test-module':
-            demisto.results('ok')
-    except Exception as e:
-        return_error(str(e))
+    params = demisto.params()
 
 
-    from MicrosoftApiModule import *  # noqa: E402
+try:
+    if command == 'test-module':
+        demisto.results('ok')
+except Exception as e:
+    return_error(str(e))
 
-    if __name__ in ["builtins", "__main__"]:
-        main()
-    '''
+
+from MicrosoftApiModule import *  # noqa: E402
+
+if __name__ in ["builtins", "__main__"]:
+    main()
+'''
 
 DUMMY_MODULE = '''
 import requests
@@ -311,12 +311,49 @@ def test_check_api_module_imports():
 def test_insert_module_code(mocker, import_name):
     mocker.patch.object(YmlUnifier, '_get_api_module_code', return_value=DUMMY_MODULE)
     module_name = 'MicrosoftApiModule'
-    new_code = DUMMY_SCRIPT.replace(import_name, '\n### GENERATED CODE ###\n# This code was inserted in place of an API'
-                                                 ' module.{}\n'.format(DUMMY_MODULE))
+    module_code = f'\n### GENERATED CODE ###' \
+                  f': {import_name}\n' \
+                  f'# This code was inserted in place of an API module.\n' \
+                  f"register_module_line('MicrosoftApiModule', 'start', __line__(), wrapper=-3)\n" \
+                  f'{DUMMY_MODULE}\n' \
+                  f"register_module_line('MicrosoftApiModule', 'end', __line__(), wrapper=1)\n" \
+                  f'### END GENERATED CODE ###'
+
+    new_code = DUMMY_SCRIPT.replace(import_name, module_code)
 
     code = YmlUnifier.insert_module_code(DUMMY_SCRIPT, import_name, module_name)
 
     assert code == new_code
+
+
+def test_insert_module_code__verify_offsets(mocker):
+    """
+    When:
+        replacing ApiModule code
+    Given:
+        a script with an ApiModule import
+    Then:
+        verify the wrapper of the section line numbers are correct.
+    """
+    mocker.patch.object(YmlUnifier, '_get_api_module_code', return_value=DUMMY_MODULE)
+    import_name = 'from MicrosoftApiModule import *  # noqa: E402'
+    before_api_import, after_api_import = DUMMY_SCRIPT.split(import_name, 1)
+    module_name = 'MicrosoftApiModule'
+
+    code = YmlUnifier.insert_module_code(DUMMY_SCRIPT, import_name, module_name)
+    # get only the generated ApiModule code
+    code = code[len(before_api_import):-len(after_api_import)]
+
+    # we expect the start wrapper will have a negative number so adding it to the regex search
+    start_offset = re.search(rf"register_module_line\('{module_name}', 'start', __line__\(\), wrapper=-(\d+)\)\n", code)
+    end_offset = re.search(rf"register_module_line\('{module_name}', 'end', __line__\(\), wrapper=(\d+)\)\n", code)
+
+    assert start_offset
+    # the number of lines before the register start match the wrapper value
+    assert int(start_offset.group(1)) == len(code[:start_offset.span()[0]].splitlines())
+    assert end_offset
+    # the number of lines after the register end match the wrapper value
+    assert int(end_offset.group(1)) == len(code[end_offset.span()[1]:].splitlines())
 
 
 @pytest.mark.parametrize('package_path, dir_name, file_path', [
@@ -763,7 +800,7 @@ XSOAR_UNIFY = PARTNER_UNIFY.copy()
 COMMUNITY_UNIFY = PARTNER_UNIFY.copy()
 PARTNER_UNIFY_EMAIL_LIST = PARTNER_UNIFY.copy()
 
-INTEGRATION_YAML = {'display': 'test', 'script': {'type': 'python'}}
+INTEGRATION_YAML = {'name': 'IntegrationName', 'display': 'test', 'script': {'type': 'python'}}
 
 PARTNER_DISPLAY_NAME = 'test (Partner Contribution)'
 COMMUNITY_DISPLAY_NAME = 'test (Community Contribution)'

@@ -11,6 +11,7 @@ from _pytest.tmpdir import TempPathFactory, _mk_tmp
 from mock import patch
 
 from demisto_sdk.commands.common.constants import LAYOUT, LAYOUTS_CONTAINER
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.init.contribution_converter import \
     ContributionConverter
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
@@ -81,7 +82,7 @@ def rename_file_in_zip(path_to_zip: Union[os.PathLike, str], original_file_name:
 
 @patch('demisto_sdk.commands.split.ymlsplitter.get_python_version')
 @patch('demisto_sdk.commands.init.contribution_converter.get_content_path')
-def test_convert_contribution_zip_updated_pack(get_content_path_mock, get_python_version_mock, tmp_path):
+def test_convert_contribution_zip_updated_pack(get_content_path_mock, get_python_version_mock, tmp_path, mocker):
     """
     Create a fake contribution zip file and test that it is converted to a Pack correctly.
     The pack already exists, checking the update flow.
@@ -105,6 +106,9 @@ def test_convert_contribution_zip_updated_pack(get_content_path_mock, get_python
     - Ensure that readme file has not been changed.
 
     """
+    mocker.patch.object(GitUtil, '__init__', return_value=None)
+    mocker.patch.object(GitUtil, 'added_files', return_value=set())
+    mocker.patch.object(GitUtil, 'modified_files', return_value=set())
     # Create all Necessary Temporary directories
     # create temp directory for the repo
     repo_dir = tmp_path / 'content_repo'
@@ -158,7 +162,7 @@ def test_convert_contribution_zip_updated_pack(get_content_path_mock, get_python
 
 @patch('demisto_sdk.commands.split.ymlsplitter.get_python_version')
 @patch('demisto_sdk.commands.init.contribution_converter.get_content_path')
-def test_convert_contribution_zip_outputs_structure(get_content_path_mock, get_python_version_mock, tmp_path):
+def test_convert_contribution_zip_outputs_structure(get_content_path_mock, get_python_version_mock, tmp_path, mocker):
     """Create a fake contribution zip file and test that it is converted to a Pack correctly
 
     Args:
@@ -179,6 +183,9 @@ def test_convert_contribution_zip_outputs_structure(get_content_path_mock, get_p
     - Ensure the unified yaml files of the integration and script have been removed from the output created by
       converting the contribution zip file
     """
+    mocker.patch.object(GitUtil, '__init__', return_value=None)
+    mocker.patch.object(GitUtil, 'added_files', return_value=set())
+    mocker.patch.object(GitUtil, 'modified_files', return_value=set())
     # ### SETUP ### #
     # Create all Necessary Temporary directories
     # create temp directory for the repo
@@ -265,7 +272,7 @@ def test_convert_contribution_zip_outputs_structure(get_content_path_mock, get_p
 
 @patch('demisto_sdk.commands.split.ymlsplitter.get_python_version')
 @patch('demisto_sdk.commands.init.contribution_converter.get_content_path')
-def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock, tmp_path):
+def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock, tmp_path, mocker):
     """Create a fake contribution zip file and test that it is converted to a Pack correctly
 
     Args:
@@ -286,6 +293,9 @@ def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock
     - Ensure script and integration are componentized and in valid directory structure
     - Ensure readme_files is not empty and the generated docs exists.
     """
+    mocker.patch.object(GitUtil, '__init__', return_value=None)
+    mocker.patch.object(GitUtil, 'added_files', return_value=set())
+    mocker.patch.object(GitUtil, 'modified_files', return_value=set())
     # Create all Necessary Temporary directories
     # create temp directory for the repo
     repo_dir = tmp_path / 'content_repo'
@@ -377,8 +387,8 @@ def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock
 
 @patch('demisto_sdk.commands.split.ymlsplitter.get_python_version')
 @patch('demisto_sdk.commands.init.contribution_converter.get_content_path')
-def test_convert_contribution_zip_with_args(get_content_path_mock, get_python_version_mock, tmp_path):
-    '''Convert a contribution zip to a pack and test that the converted pack's 'pack_metadata.json' is correct
+def test_convert_contribution_zip_with_args(get_content_path_mock, get_python_version_mock, tmp_path, mocker):
+    """Convert a contribution zip to a pack and test that the converted pack's 'pack_metadata.json' is correct
 
     Args:
         get_content_path_mock (MagicMock): Patch of the 'get_content_path' function to return the fake repo directory
@@ -403,7 +413,11 @@ def test_convert_contribution_zip_with_args(get_content_path_mock, get_python_ve
     - Ensure that the pack's 'pack_metadata.json' file's 'author' field is 'Octocat Smith'
     - Ensure that the pack's 'pack_metadata.json' file's 'githubUser' field a list containing only 'octocat'
     - Ensure that the pack's 'pack_metadata.json' file's 'email' field is the empty string
-    '''
+    """
+    mocker.patch.object(GitUtil, '__init__', return_value=None)
+    mocker.patch.object(GitUtil, 'added_files', return_value=set())
+    mocker.patch.object(GitUtil, 'modified_files', return_value=set())
+
     # Create all Necessary Temporary directories
     # create temp directory for the repo
     repo_dir = tmp_path / 'content_repo'
@@ -447,6 +461,7 @@ def test_convert_contribution_zip_with_args(get_content_path_mock, get_python_ve
         assert metadata.get('description', '') == description
         assert metadata.get('author', '') == author
         assert metadata.get('githubUser', []) == [gh_user]
+        assert metadata.get('marketplaces', []) == ['xsoar', 'marketplacev2']
         assert not metadata.get('email')
 
 
@@ -594,7 +609,7 @@ class TestEnsureUniquePackDirName:
         Args:
             contribution_converter (fixture): An instance of the ContributionConverter class
 
-        Scenario: Formatting the added/modified files by checking against "xsoar-contrib/master" repo
+        Scenario: Formatting the added/modified files by including the untracked files in a non-interactive mode
 
         Given
         - ContributionConverter class
@@ -603,14 +618,15 @@ class TestEnsureUniquePackDirName:
         - Running the format_converted_pack method to format the files
 
         Then
-        - Ensure the repo we are comparing with is "xsoar-contrib/master"
+        - Ensure that we format the untracked files as well and the interactive flag is set to false
         """
         contribution_converter.create_new = new_pack
         result = mocker.patch('demisto_sdk.commands.init.contribution_converter.format_manager',
                               side_efect=self.mock_format_manager())
         contribution_converter.format_converted_pack()
 
-        assert result.call_args[1].get('prev_ver') == 'xsoar-contrib/master'
+        assert result.call_args[1].get('include_untracked')
+        assert result.call_args[1].get('interactive') is False
 
     def test_ensure_unique_pack_dir_name_with_conflict_and_version_suffix(self, contribution_converter):
         """Test the 'ensure_unique_pack_dir_name' method

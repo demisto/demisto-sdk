@@ -86,3 +86,8 @@ schema;field_schema:
           type: bool
     unsearchable:
           type: bool
+    marketplaces:
+      type: seq
+      sequence:
+        - type: str
+          enum: ['xsoar', 'marketplacev2']

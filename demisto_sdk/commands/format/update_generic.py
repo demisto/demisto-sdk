@@ -5,6 +5,7 @@ from distutils.version import LooseVersion
 from typing import Any, Dict, Optional, Set, Union
 
 import click
+import dictdiffer
 import yaml
 from ruamel.yaml import YAML
 
@@ -40,6 +41,7 @@ class BaseUpdate:
             from_version_key (str): The fromVersion key in file, different between yml and json files.
             verbose (bool): Whether to print a verbose log
             assume_yes (bool): Whether to assume "yes" as answer to all prompts and run non-interactively
+            interactive (bool): Whether to run the format interactively or not (usually for contribution management)
     """
 
     def __init__(self,
@@ -50,7 +52,9 @@ class BaseUpdate:
                  no_validate: bool = False,
                  verbose: bool = False,
                  assume_yes: bool = False,
-                 deprecate: bool = False):
+                 interactive: bool = True,
+                 deprecate: bool = False,
+                 **kwargs):
         self.source_file = input
         self.output_file = self.set_output_file_path(output)
         self.verbose = verbose
@@ -61,6 +65,7 @@ class BaseUpdate:
         self.from_version = from_version
         self.no_validate = no_validate
         self.assume_yes = assume_yes
+        self.interactive = interactive
         self.updated_ids: Dict = {}
         if not self.no_validate:
             self.validate_manager = ValidateManager(silence_init_prints=True, skip_conf_json=True,
@@ -370,3 +375,8 @@ class BaseUpdate:
 
             else:
                 return SUCCESS_RETURN_CODE
+
+    def sync_data_to_master(self):
+        if self.old_file:
+            diff = dictdiffer.diff(self.old_file, self.data)
+            self.data = dictdiffer.patch(diff, self.old_file)

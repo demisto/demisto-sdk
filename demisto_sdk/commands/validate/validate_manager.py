@@ -49,6 +49,8 @@ from demisto_sdk.commands.common.hook_validations.incident_field import \
     IncidentFieldValidator
 from demisto_sdk.commands.common.hook_validations.incident_type import \
     IncidentTypeValidator
+from demisto_sdk.commands.common.hook_validations.indicator_field import \
+    IndicatorFieldValidator
 from demisto_sdk.commands.common.hook_validations.integration import \
     IntegrationValidator
 from demisto_sdk.commands.common.hook_validations.job import JobValidator
@@ -179,7 +181,10 @@ class ValidateManager:
         if no_docker_checks:
             self.skip_docker_checks = True
 
-        if self.check_is_unskipped or not self.skip_conf_json:
+        if self.skip_conf_json:
+            self.check_is_unskipped = False
+
+        if not self.skip_conf_json:
             self.conf_json_validator = ConfJsonValidator()
             self.conf_json_data = self.conf_json_validator.conf_data
 
@@ -521,10 +526,12 @@ class ValidateManager:
         elif file_type == FileType.AUTHOR_IMAGE:
             return self.validate_author_image(file_path, pack_error_ignore_list)
 
-        # incident fields and indicator fields are using the same validation.
-        elif file_type in (FileType.INCIDENT_FIELD, FileType.INDICATOR_FIELD):
-
+        elif file_type == FileType.INCIDENT_FIELD:
             return self.validate_incident_field(structure_validator, pack_error_ignore_list, is_modified, is_added_file)
+
+        elif file_type == FileType.INDICATOR_FIELD:
+            return self.validate_indicator_field(structure_validator, pack_error_ignore_list, is_modified,
+                                                 is_added_file)
 
         elif file_type == FileType.REPUTATION:
             return self.validate_reputation(structure_validator, pack_error_ignore_list)
@@ -570,6 +577,10 @@ class ValidateManager:
 
         elif file_type == FileType.JOB:
             return self.validate_job(structure_validator, pack_error_ignore_list)
+
+        elif file_type == FileType.CONTRIBUTORS:
+            # This is temporarily - need to add a proper contributors validations
+            return True
 
         else:
             error_message, error_code = Errors.file_type_not_supported()
@@ -875,6 +886,20 @@ class ValidateManager:
                                                           use_git=self.use_git,
                                                           is_added_file=is_added_file)
 
+    def validate_indicator_field(self, structure_validator, pack_error_ignore_list, is_modified, is_added_file):
+        indicator_field_validator = IndicatorFieldValidator(structure_validator, ignored_errors=pack_error_ignore_list,
+                                                            print_as_warnings=self.print_ignored_errors,
+                                                            json_file_path=self.json_file_path)
+        if is_modified and self.is_backward_check:
+            return all([indicator_field_validator.is_valid_file(validate_rn=False, is_new_file=not is_modified,
+                                                                use_git=self.use_git,
+                                                                is_added_file=is_added_file),
+                        indicator_field_validator.is_backward_compatible()])
+        else:
+            return indicator_field_validator.is_valid_file(validate_rn=False, is_new_file=not is_modified,
+                                                           use_git=self.use_git,
+                                                           is_added_file=is_added_file)
+
     def validate_reputation(self, structure_validator, pack_error_ignore_list):
         reputation_validator = ReputationValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                                    print_as_warnings=self.print_ignored_errors,
@@ -896,7 +921,8 @@ class ValidateManager:
                                                 is_circle=self.is_circle)
 
     def validate_pre_process_rule(self, structure_validator, pack_error_ignore_list):
-        pre_process_rules_validator = PreProcessRuleValidator(structure_validator, ignored_errors=pack_error_ignore_list,
+        pre_process_rules_validator = PreProcessRuleValidator(structure_validator,
+                                                              ignored_errors=pack_error_ignore_list,
                                                               print_as_warnings=self.print_ignored_errors,
                                                               json_file_path=self.json_file_path)
         return pre_process_rules_validator.is_valid_pre_process_rule(validate_rn=False, id_set_file=self.id_set_file,
@@ -1224,11 +1250,17 @@ class ValidateManager:
         if prev_ver:
             return prev_ver
 
-        # check if git is connected and if demisto exists in remotes if so set prev_ver as 'demisto/master'
-        if self.git_util and self.git_util.check_if_remote_exists('demisto'):
-            return 'demisto/master'
+        # If git is connected - Use it to get prev_ver
+        if self.git_util:
+            # If demisto exists in remotes - set prev_ver as 'demisto/master'
+            if self.git_util.check_if_remote_exists('demisto'):
+                return 'demisto/master'
 
-        # default to 'origin/master' if none of the above apply
+            # Otherwise, use git to get the primary branch
+            _, branch = self.git_util.handle_prev_ver()
+            return 'origin/' + branch
+
+        # Default to 'origin/master'
         return 'origin/master'
 
     def setup_git_params(self):
@@ -1252,8 +1284,8 @@ class ValidateManager:
             # when running against git while on release branch - show errors but don't fail the validation
             self.always_valid = True
 
-        # on master don't check RN
-        elif self.branch_name == 'master':
+        # On main or master don't check RN
+        elif self.branch_name in ['master', 'main']:
             self.skip_pack_rn_validation = True
             error_message, error_code = Errors.running_on_master_with_git()
             if self.handle_error(error_message, error_code, file_path='General',
@@ -1554,14 +1586,15 @@ class ValidateManager:
         all_modified_files = modified_files.union(old_format_files)
         modified_packs_that_should_have_version_raised = get_pack_names_from_files(all_modified_files, skip_file_types={
             FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT,
-            FileType.DOC_IMAGE, FileType.AUTHOR_IMAGE})
+            FileType.DOC_IMAGE, FileType.AUTHOR_IMAGE, FileType.CONTRIBUTORS})
 
         # also existing packs with added files which are not test-playbook, test-script readme or release notes
         # should have their version raised
         modified_packs_that_should_have_version_raised = modified_packs_that_should_have_version_raised.union(
             get_pack_names_from_files(added_files, skip_file_types={
                 FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK,
-                FileType.TEST_SCRIPT, FileType.DOC_IMAGE, FileType.AUTHOR_IMAGE}) - self.new_packs)
+                FileType.TEST_SCRIPT, FileType.DOC_IMAGE, FileType.AUTHOR_IMAGE,
+                FileType.CONTRIBUTORS}) - self.new_packs)
 
         return modified_packs_that_should_have_version_raised
 

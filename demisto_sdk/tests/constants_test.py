@@ -97,6 +97,7 @@ SCRIPT_TARGET = f"{PACK_TARGET}/Scripts/script-test.yml"
 SCRIPT_RELEASE_NOTES_TARGET = f"{PACK_TARGET}/Scripts/script-test_CHANGELOG.md"
 INTEGRATION_RELEASE_NOTES_TARGET = f"{PACK_TARGET}/Integrations/integration-test_CHANGELOG.md"
 SOURCE_FORMAT_INTEGRATION_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_New_Integration_copy.yml"
+SOURCE_BETA_INTEGRATION_FILE = f"{GIT_ROOT}/demisto_sdk/tests/test_files/source_beta_integration.yml"
 DESTINATION_FORMAT_INTEGRATION_COPY = "new_format_New_Integration_copy.yml"
 SOURCE_FORMAT_SCRIPT_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_New_script_copy.yml"
 DESTINATION_FORMAT_SCRIPT_COPY = "new_format_New_script_copy.yml"
@@ -116,6 +117,7 @@ INVALID_INTEGRATION_YML_1 = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integratio
 INVALID_INTEGRATION_YML_2 = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-invalid-yml2.yml"
 INVALID_INTEGRATION_YML_3 = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-invalid-yml3.yml"
 INVALID_INTEGRATION_YML_4 = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-invalid-yml4.yml"
+INVALID_INTEGRATION_YML_5 = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-invalid-yml5.yml"
 VALID_REPUTATION_FILE = f"{GIT_ROOT}/demisto_sdk/tests/test_files/reputation-cidr-valid.json"
 INVALID_REPUTATION_FILE = f"{GIT_ROOT}/demisto_sdk/tests/test_files/reputation-cidr-invalid.json"
 INVALID_NO_HIDDEN_PARAMS = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-invalid-no-hidden-params.yml"
@@ -128,6 +130,10 @@ SOURCE_FORMAT_INCIDENTTYPE_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/form
 SOURCE_DESCRIPTION_WITH_CONTRIB_DETAILS = f"{GIT_ROOT}/demisto_sdk/tests/test_files/description_with_contrib_details.md"
 SOURCE_DESCRIPTION_FORMATTED_CONTRIB_DETAILS = f"{GIT_ROOT}/demisto_sdk/tests/test_files/" \
                                                f"description_formatted_contrib_details.md"
+SOURCE_DESCRIPTION_WITHOUT_BETA_DESCRIPTION = f"{GIT_ROOT}/demisto_sdk/tests/test_files/" \
+                                              f"description_without_beta_description-test.md"
+SOURCE_DESCRIPTION_FORMATTED_WITH_BETA_DESCRIPTION = f"{GIT_ROOT}/demisto_sdk/tests/test_files/" \
+    f"description_formatted_with_beta_description-test.md"
 DESTINATION_FORMAT_DESCRIPTION_COPY = "Description/formatted_description-test.md"
 DESCRIPTION_PATH = "Description"
 DESTINATION_FORMAT_INCIDENTTYPE_COPY = "IncidentTypes/incidenttype-copy.json"

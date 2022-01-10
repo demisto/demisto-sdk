@@ -1,8 +1,33 @@
 # Changelog
+* Added 'deprecated' release notes template.
+* Fixed an issue where **run-test-playbook** command failed to get the task entries when the test playbook finished with errors.
+* Fixed an issue in **validate** command when running with `no-conf-json` argument to ignore the `conf.json` file.
+* Added error type text (`ERROR` or `WARNING`) to **validate** error prints.
+* Fixed an issue where the **format** command on test playbook did not format the ID to be equal to the name of the test playbook.
+* Enhanced the **update-release-notes** command to automatically commit release notes config file upon creation.
+* The **validate** command will validate that an indicator field of type html has fromVersion of 6.1.0 and above.
+* The **format** command will now add fromVersion 6.1.0 to indicator field of type html.
+* Added support for beta integrations in the **format** command.
+* Fixed an issue where the **postman-codegen** command failed when called with the `--config-out` flag.
+* Removed the integration documentation from the detailed description while performing **split** command to the unified yml file.
+* Removed the line which indicates the version of the product from the README.md file for new contributions.
+
+# 1.5.5
+* Fixed an issue in the **update-release-notes** command, which did not work when changes were made in multiple packs.
 * Changed the **validate** command to fail on missing test-playbooks only if no unittests are found.
 * Fixed `to_kebab_case`, it will now deal with strings that have hyphens, commas or periods in them, changing them to be hyphens in the new string.
 * Fixed an issue in the **create-id-set** command, where the `source` value included the git token if it was specified in the remote url.
 * Fixed an issue in the **merge-id-set** command, where merging fails because of duplicates but the packs are in the XSOAR repo but in different version control.
+* Fixed missing `Lists` Content Item as valid `IDSetType`
+* Added enhancement for **generate-docs**. It is possible to provide both file or a comma seperated list as `examples`. Also, it's possible to provide more than one example for a script or a command.
+* Added feature in **format** to sync YML and JSON files to the `master` file structure.
+* Added option to specify `Incident Type`, `Incoming Mapper` and `Classifier` when configuring instance in **test-content**
+* added a new command **run-test-playbook** to run a test playbook in a given XSOAR instance.
+* Fixed an issue in **format** when running on a modified YML, that the `id` value is not changed to its old `id` value.
+* Enhancement for **split** command, replace `ApiModule` code block to `import` when splitting a YML.
+* Fixed an issue where indicator types were missing from the pack's content, when uploading using **zip-packs**.
+* The request data body format generated in the **postman-codegen** will use the python argument's name and not the raw data argument's name.
+* Added the flag '--filter-by-id-set' to **create-content-artifacts** to create artifacts only for items in the given id_set.json.
 
 # 1.5.4
 * Fixed an issue with the **format** command when contributing via the UI
@@ -16,7 +41,7 @@
 * Two entitles will not consider as duplicates if they share the same pack and the same source.
 * Fixed a bug when duplicates were found in **find_dependencies**.
 * Added function **get_current_repo** to `tools`.
-* The **postman-codegen** will not have duplicates arguments' name. It will rename them to the minimum distinguished shared path for each of them.
+* The **postman-codegen** will not have duplicates argument name. It will rename them to the minimum distinguished shared path for each of them.
 
 # 1.5.3
 * The **format** command will now set `unsearchable: True` for incident, indicator and generic fields.

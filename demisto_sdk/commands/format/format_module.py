@@ -83,7 +83,6 @@ UNFORMATTED_FILES = ['readme',
                      'image',
                      'javascriptfile',
                      'powershellfile',
-                     'betaintegration',
                      'doc_image',
                      'author_image'
                      ]
@@ -106,7 +105,7 @@ def format_manager(input: str = None,
                    prev_ver: str = None,
                    include_untracked: bool = False,
                    add_tests: bool = None,
-                   ):
+                   interactive: bool = True):
     """
     Format_manager is a function that activated format command on different type of files.
     Args:
@@ -121,6 +120,7 @@ def format_manager(input: str = None,
         use_git (bool): Use git to automatically recognize which files changed and run format on them
         prev_ver (str): Against which branch should the difference be recognized
         include_untracked (bool): Whether to include untracked files when checking against git
+        interactive (bool): Whether to run the format interactively or not (usually for contribution management)
         add_tests (bool): Whether to exclude tests automatically.
     Returns:
         int 0 in case of success 1 otherwise
@@ -162,6 +162,7 @@ def format_manager(input: str = None,
                 info_res, err_res, skip_res = run_format_on_file(input=file_path,
                                                                  file_type=file_type,
                                                                  from_version=from_version,
+                                                                 interactive=interactive,
                                                                  output=output,
                                                                  no_validate=no_validate,
                                                                  verbose=verbose,
@@ -257,17 +258,20 @@ def update_content_entity_ids(files: List[str], verbose: bool):
             f.truncate()
 
 
-def run_format_on_file(input: str, file_type: str, from_version: str, **kwargs) -> \
+def run_format_on_file(input: str, file_type: str, from_version: str, interactive: bool, **kwargs) -> \
         Tuple[List[str], List[str], List[str]]:
     """Run the relevent format of file type.
     Args:
         input (str): The input file path.
         file_type (str): The type of input file
         from_version (str): The fromVersion value that was set by User.
-        old_file (bool): Whether the file is a added file = new or a modified file = old.
+        interactive (bool): Whether to run the format interactively or not (usually for contribution management)
     Returns:
         List of Success , List of Error.
     """
+
+    if file_type == 'betaintegration':
+        file_type = 'integration'
     schema_path = os.path.normpath(
         os.path.join(__file__, "..", "..", "common", SCHEMAS_PATH, '{}.yml'.format(file_type)))
     if file_type not in ('integration', 'script') and 'update_docker' in kwargs:
@@ -276,9 +280,8 @@ def run_format_on_file(input: str, file_type: str, from_version: str, **kwargs) 
     if file_type not in ('integration', 'playbook', 'script') and 'add_tests' in kwargs:
         # adding tests is relevant only for integrations, playbooks and scripts.
         del kwargs['add_tests']
-    update_object = FILE_TYPE_AND_LINKED_CLASS[file_type](input=input, path=schema_path,
-                                                          from_version=from_version,
-                                                          **kwargs)
+    update_object = FILE_TYPE_AND_LINKED_CLASS[file_type](input=input, path=schema_path, from_version=from_version,
+                                                          interactive=interactive, **kwargs)
     format_res, validate_res = update_object.format_file()  # type: ignore
     CONTENT_ENTITY_IDS_TO_UPDATE.update(update_object.updated_ids)
     return logger(input, format_res, validate_res)

@@ -1917,7 +1917,7 @@ def replace_external_playbook_configuration(client: DefaultApi, external_playboo
 
     external_playbook_id = external_playbook_configuration['playbookID']
     external_playbook_path = f'/playbook/{external_playbook_id}'
-    res, _, _ = demisto_client.generic_request_func(self=client, method='GET',
+    res, _, _ = demisto_client.generic_request_func(client, method='GET',
                                                     path=external_playbook_path, response_type='object')
     # Save Default Configuration.
     inputs = res.get('inputs', [])
@@ -1949,7 +1949,7 @@ def replace_external_playbook_configuration(client: DefaultApi, external_playboo
     saving_inputs_path = f'/playbook/inputs/{external_playbook_id}'
     try:
         if changed_keys:
-            demisto_client.generic_request_func(self=client, method='POST', path=saving_inputs_path, body=inputs)
+            demisto_client.generic_request_func(client, method='POST', path=saving_inputs_path, body=inputs)
             restore_needed = True
     except Exception as e:
         raise Exception(f"Could not change inputs in playbook configuration. Error: {e}")
@@ -1963,7 +1963,7 @@ def restore_external_playbook_configuration(client: DefaultApi, restore_path: st
                                             logger_module: logging.Logger = logging.getLogger('demisto-sdk')):
     logger_module.info("Restoring External Playbook parameters.")
 
-    res, _, _ = demisto_client.generic_request_func(self=client, method='POST',
+    res, _, _ = demisto_client.generic_request_func(client, method='POST',
                                                     path=restore_path,
                                                     body=restore_values)
 

@@ -456,7 +456,7 @@ def test_replacing_pb_inputs_fails_with_build_fail(mocker, current, new_configur
             if path == '/about' and method == 'GET':
                 return str({'demistoVersion': version}), None, None
 
-    def generic_request_func(path, method, body=None, **kwargs):
+    def generic_request_func(self, path, method, body=None, **kwargs):
         if path == '/playbook/inputs/pb_test' and method == 'POST':
             return
         elif path == '/playbook/pb_test' and method == 'GET':

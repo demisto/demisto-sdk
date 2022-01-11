@@ -292,13 +292,15 @@ CASES = [
           'description': 'The hostname of the endpoint to isolate.', 'playbookInputQuery': None},
          {'key': 'ManualHunting.DetectedHosts', 'value': {'simple': '', 'complex': None}, 'required': False,
           'description': 'Hosts that were detected as infected during the manual hunting.',
-          'playbookInputQuery': None}, {'key': 'Endpoint_ip', 'value': {'simple': '', 'complex': None},
-                                        'required': False, 'description': 'The IP of the endpoint to isolate.',
-                                        'playbookInputQuery': None}, {'key': 'Endpoint_id',
-                                                                      'value': {'simple': '', 'complex': None},
-                                                                      'required': False,
-                                                                      'description': 'The ID of the endpoint to isolate.',
-                                                                      'playbookInputQuery': None}]
+          'playbookInputQuery': None},
+         {'key': 'Endpoint_ip', 'value': {'simple': '', 'complex': None},
+          'required': False, 'description': 'The IP of the endpoint to isolate.',
+          'playbookInputQuery': None},
+         {'key': 'Endpoint_id',
+          'value': {'simple': '', 'complex': None},
+          'required': False,
+          'description': 'The ID of the endpoint to isolate.',
+          'playbookInputQuery': None}]
 
     ),
 ]
@@ -306,6 +308,14 @@ CASES = [
 
 @pytest.mark.parametrize('current, new_configuration, expected', CASES)
 def test_replacing_pb_inputs(mocker, current, new_configuration, expected):
+    """
+
+    Given: Configuration with inputs to change
+            Found configuration but running on older versions of server.
+    When: Using the external configuration in conf.json in order to change playbook inputs on testing flow in build
+    Then: Make sure the server request are correct
+
+    """
     from demisto_client.demisto_api import DefaultApi
 
     from demisto_sdk.commands.test_content.TestContentClasses import (
@@ -374,6 +384,14 @@ BAD_CASES = [
 
 @pytest.mark.parametrize('current, new_configuration, version, expected_error', BAD_CASES)
 def test_replacing_pb_inputs_fails_with_build_pass(mocker, current, new_configuration, version, expected_error):
+    """
+
+    Given: Missing configuration
+            Found configuration but running on older versions of server.
+    When: Using the external configuration in conf.json in order to change playbook inputs on testing flow in build
+    Then: Make sure the build pass without errors
+
+    """
     from demisto_client.demisto_api import DefaultApi
 
     from demisto_sdk.commands.test_content.TestContentClasses import (
@@ -446,6 +464,14 @@ BAD_CASES_BUILD_FAIL = [
 
 @pytest.mark.parametrize('current, new_configuration, version, expected_error', BAD_CASES_BUILD_FAIL)
 def test_replacing_pb_inputs_fails_with_build_fail(mocker, current, new_configuration, version, expected_error):
+    """
+
+    Given: Bad configuration - external playbooks is wrong
+            Bad configuration - wrong input names
+    When: Using the external configuration in conf.json in order to change playbook inputs on testing flow in build
+    Then: Make sure the error contains the relevant issue.
+
+    """
     from demisto_client.demisto_api import DefaultApi
 
     from demisto_sdk.commands.test_content.TestContentClasses import (

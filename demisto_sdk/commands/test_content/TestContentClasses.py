@@ -1897,7 +1897,7 @@ class ServerContext:
 
 def replace_external_playbook_configuration(client: DefaultApi, external_playbook_configuration: dict,
                                             logger_module: logging.Logger = logging.getLogger('demisto-sdk')):
-    """ takes external configuration of shape {"playbookID": "Isolate Endpoint - Generic V2",
+    """ Takes external configuration of shape {"playbookID": "Isolate Endpoint - Generic V2",
                                                "input_parameters":{"Endpoint_hostname": ["simple", "test"]}
         and changes the specified playbook configuration to the mentioned one.
         Returns (Whether the Playbook changed, The values to restore, the path to use when restoring)
@@ -1921,7 +1921,6 @@ def replace_external_playbook_configuration(client: DefaultApi, external_playboo
                                                     path=external_playbook_path, response_type='object')
     # Save Default Configuration.
     inputs = res.get('inputs', [])
-    print(f'Before change: {res}')
     if not inputs:
         raise Exception("External Playbook was not found or has no inputs.")
 

@@ -1932,7 +1932,6 @@ def replace_external_playbook_configuration(client: DefaultApi, external_playboo
                                                "input_parameters":{"Endpoint_hostname": {"simple", "test"}}}"""
     changed_keys = []
     failed_keys = []
-    print(f'config: {external_playbook_configuration["input_parameters"]}')
     # Change Configuration for external pb.
     for input_ in external_playbook_configuration["input_parameters"]:
         matching_record = list(filter(lambda x: x.get('key') == input_, inputs))
@@ -1956,9 +1955,6 @@ def replace_external_playbook_configuration(client: DefaultApi, external_playboo
     except Exception as e:
         raise Exception(f"Could not change inputs in playbook configuration. Error: {e}")
 
-    res2, _, _ = demisto_client.generic_request_func(self=client, method='GET',
-                                                    path=external_playbook_path, response_type='object')
-    print(f'After change: {res2}')
     logger_module.info(f"Re-configured {external_playbook_id} successfully with {len(changed_keys)} new values.")
 
     return restore_needed, inputs_default, saving_inputs_path
@@ -1971,8 +1967,5 @@ def restore_external_playbook_configuration(client: DefaultApi, restore_path: st
     res, _, _ = demisto_client.generic_request_func(self=client, method='POST',
                                                     path=restore_path,
                                                     body=restore_values)
-    res2, _, _ = demisto_client.generic_request_func(self=client, method='GET',
-                                                     path='/playbook/Isolate Endpoint - Generic V2', response_type='object')
-    print(f'After change: {res2}')
 
     logger_module.info(f"Restored External Playbook successfully.")

@@ -422,6 +422,27 @@ class GitUtil:
 
         return remote in self.repo.remotes
 
+    @staticmethod
+    def find_primary_branch(repo: Repo) -> str:
+        # Try to get the main branch
+        if not repo:
+            # Null input
+            return ''
+        if not hasattr(repo, 'remotes'):
+            # No remotes
+            return ''
+        for current_remote in repo.remotes:
+            # No refs in this remote
+            if not hasattr(current_remote, 'refs'):
+                return ''
+            for current_remote_ref in current_remote.refs:
+                current_remote_ref_str = str(current_remote_ref)
+                if 'origin/main' == current_remote_ref_str:
+                    return 'main'
+                elif 'origin/master' == current_remote_ref_str:
+                    return 'master'
+        return ''
+
     def handle_prev_ver(self, prev_ver: str = ''):
         # check for sha1 in regex
         sha1_pattern = re.compile(r'\b[0-9a-f]{40}\b', flags=re.IGNORECASE)
@@ -438,16 +459,7 @@ class GitUtil:
             if prev_ver:
                 branch = prev_ver
             else:
-                # Try to get the main branch
-                for current_remote in self.repo.remotes:
-                    for current_remote_ref in current_remote.refs:
-                        current_remote_ref_str = str(current_remote_ref)
-                        if 'origin/main' == current_remote_ref_str:
-                            branch = 'main'
-                            break
-                        elif 'origin/master' == current_remote_ref_str:
-                            branch = 'master'
-                            break
+                branch = self.find_primary_branch(repo=self.repo)
                 if not branch:
                     raise Exception("Unable to find main or master branch from current working directory - aborting.")
         return remote, branch

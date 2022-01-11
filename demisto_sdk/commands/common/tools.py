@@ -1692,7 +1692,7 @@ def open_id_set_file(id_set_path):
         return id_set
 
 
-def get_demisto_version(demisto_client: demisto_client) -> str:
+def get_demisto_version(client: demisto_client) -> str:
     """
     Args:
         demisto_client: A configured demisto_client instance
@@ -1701,7 +1701,7 @@ def get_demisto_version(demisto_client: demisto_client) -> str:
         the server version of the Demisto instance.
     """
     try:
-        resp = demisto_client.generic_request('/about', 'GET')
+        resp = client.generic_request('/about', 'GET')
         about_data = json.loads(resp[0].replace("'", '"'))
         return parse(about_data.get('demistoVersion'))  # type: ignore
     except Exception:

@@ -468,4 +468,4 @@ def test_replacing_pb_inputs_fails_with_build_fail(mocker, current, new_configur
 
     with pytest.raises(Exception) as e:
         replace_external_playbook_configuration(clientMock(), new_configuration)
-    assert str(e.value) == expected_error
+    assert expected_error in str(e)

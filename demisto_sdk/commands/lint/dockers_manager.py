@@ -21,9 +21,11 @@ from ruamel.yaml import YAML
 import urllib3
 from wcmatch.pathlib import NEGATE, Path
 from typing import Any, Dict, List, Optional, Tuple
+from demisto_sdk.commands.common.constants import TYPE_PYTHON
 
 from demisto_sdk.commands.common.tools import get_all_docker_images
 from demisto_sdk.commands.lint.helpers import add_tmp_lint_files, get_python_version_from_image
+from demisto_sdk.commands.lint.mandatory_files_manager import LintFilesInfoHelper
 
 
 logger = logging.getLogger('demisto-sdk')
@@ -47,40 +49,42 @@ def temp_dir(parent_dir: Path, dir_name: str):
 
 class DockersManager:
 
-    def __init__(self, content_repo: Path, pkgs: List[Path], modules: dict, docker_timeout: int, req_3: list, req_2: list) -> None:
+    def __init__(self, content_repo: Path, pkgs: List[Path], lint_files_helper: LintFilesInfoHelper, docker_timeout: int, req_3: list, req_2: list) -> None:
         self._content_repo = content_repo
         self._images_data: Dict = {}
         self._image_to_test_image_map: Dict = {}
         self._pkgs = pkgs
-        self._modules = modules
+        self._lint_files_helper = lint_files_helper
         self._docker_client: docker.DockerClient = docker.from_env(timeout=docker_timeout)
         self._docker_hub_login = self._docker_login(self._docker_client)
         self._req_3 = req_3
         self._req_2 = req_2
+        self._images_facts = {}
 
     def prepare_required_images(self):
-
-        self._add_mandatory_modules()
-
-        self.collect_lint_files_and_py_version()
-        results = []
-        with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
-            for image_name, image_files_and_v in self._images_data.items(): 
-                py_version = image_files_and_v[0]
-                lint_files = image_files_and_v[1]
-                results.append(executor.submit(self._docker_image_create, [image_name, py_version], lint_files))                    
-            
-            for future in concurrent.futures.as_completed(results):
-                image_name, test_image, errors = future.result()
-                if not errors:
-                    self._image_to_test_image_map[image_name] = test_image
+        
+        start_time = time.time()
+        try:
+            self.gather_images_facts()
+            results = []
+            with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+                for image_name, image_fact in self._images_facts.items(): 
+                    results.append(executor.submit(self._docker_image_create, image_name, image_fact))                    
+                
+                for future in concurrent.futures.as_completed(results):
+                    image_name, test_image, errors = future.result()
+                    if not errors:
+                        self._image_to_test_image_map[image_name] = test_image
+        finally:
+            logger.info(f'Preparing required images take: {time.time() - start_time}s')
+        
 
     #  def _add_mandatory_modules(self):
 
     #      for pack_path in self._pkgs:
     #         add_tmp_lint_files(self._content_repo, pack_path=pack_path, )      
         
-    def _docker_image_create(self, docker_base_image: List[Any], lint_files: List[Path]) -> Tuple[str, str]:
+    def _docker_image_create(self, image_name: str, image_fact: Dict) -> Tuple[str, str]:
         """ Create docker image:
             1. Installing 'build base' if required in alpine images version - https://wiki.alpinelinux.org/wiki/GCC
             2. Installing pypi packs - if only pylint required - only pylint installed otherwise all pytest and pylint
@@ -89,42 +93,46 @@ class DockersManager:
                 demisto_sdk/commands/lint/templates/dockerfile.jinja2
 
         Args:
-            docker_base_image(list): docker image to use as base for installing dev deps and python version.
+            image_name(str): the docker image to use as base, python version, pack type
 
         Returns:
             str, str. image name to use and errors string.
         """
         docker_client: docker.DockerClient = docker.from_env(timeout=60)
-        image_name = docker_base_image[0]
         temp_dir_name = f'temp_lint_data_{hashlib.md5(image_name.encode("utf-8")).hexdigest()}'
+        py_version = image_fact['py_version']
+        pakcs_type = image_fact['packs_type']
         with temp_dir(self._content_repo, temp_dir_name): 
             log_prompt = ''
             test_image_id = ""
             # Get requirements file for image
             requirements = []
-            if 2 < docker_base_image[1] < 3:
+            if 2 < py_version < 3:
                 requirements = self._req_2
-            elif docker_base_image[1] >= 3:
+            elif py_version > 3:
                 requirements = self._req_3
             
             docker_context_dir = self._content_repo/temp_dir_name
-            for lint_file in lint_files:
-                shutil.copy(src=lint_file, dst=docker_context_dir)
+            for file in image_fact['image_files']:
+                if file.exists():
+                    shutil.copy(src=file, dst=docker_context_dir)
+                else:
+                    logger.info(f'File not found: {str(file)}')
             # Using DockerFile template
             file_loader = FileSystemLoader(Path(__file__).parent / 'templates')
             env = Environment(loader=file_loader, lstrip_blocks=True, trim_blocks=True, autoescape=True)
             template = env.get_template('dockerfile.jinja2')
             try:
-                dockerfile = template.render(image=docker_base_image[0],
+                dockerfile = template.render(image=image_name,
                                             pypi_packs=requirements,
-                                            pack_type='python',
+                                            pack_type=pakcs_type,
                                             copy_pack=False)
             except exceptions.TemplateError as e:
                 logger.debug(f"{log_prompt} - Error when build image - {e.message()}")
                 return test_image_id, str(e)
             # Trying to pull image based on dockerfile hash, will check if something changed
             errors = ""
-            test_image_name = f'devtest{docker_base_image[0]}-{hashlib.md5(dockerfile.encode("utf-8")).hexdigest()}'
+            test_image_name = f'devtest{image_name}-{hashlib.md5(dockerfile.encode("utf-8")).hexdigest()}'
             test_image = None
             try:
                 logger.info(f"{log_prompt} - Trying to pull existing image {test_image_name}")
@@ -134,7 +142,7 @@ class DockersManager:
             # Creatng new image if existing image isn't found
             if not test_image:
                 logger.info(
-                    f"{log_prompt} - Creating image based on {docker_base_image[0]} - Could take 2-3 minutes at first "
+                    f"{log_prompt} - Creating image based on {image_name} - Could take 2-3 minutes at first "
                     f"time")
                 try:
                     with io.BytesIO() as f:
@@ -194,43 +202,53 @@ class DockersManager:
     def get_test_image_for_base_image(self, base_image: str):
         return self._image_to_test_image_map.get(base_image)
 
-    def collect_lint_files_and_py_version(self):
+    def gather_images_facts(self):
         """
         """
-        
+        start_time = time.time()
         for pack_path in sorted(self._pkgs):
-            yml_file: Optional[Path] = pack_path.glob([r'*.yaml', r'*.yml', r'!*unified*.yml'], flags=NEGATE)
-
-            if not yml_file:
-                logger.info(f"{pack_path} - Skipping no yaml file found in {pack_path}")
-                continue
-            else:
-                try:
-                    yml_file = next(yml_file)
-                except StopIteration:
-                    return True
             
-            # Parsing pack yaml - in order to get the dockr images
-            try:
-                script_obj: Dict = {}
-                yml_obj: Dict = YAML().load(yml_file)
-                if isinstance(yml_obj, dict):
-                    script_obj = yml_obj.get('script', {}) if isinstance(yml_obj.get('script'), dict) else yml_obj
-                    # py_version = 3 if (script_obj.get('subtype', 'python3') == 'python3') else 2.7
-
-
-                images = [[image, -1] for image in get_all_docker_images(script_obj=script_obj)]
+            script_obj: Dict = self._get_script_obj_from_pack_yml(pack_path=pack_path)
+            if script_obj:
+                images = [image for image in get_all_docker_images(script_obj=script_obj)]
+                pack_type = script_obj.get('type', TYPE_PYTHON)
                 if images:
-                    lint_files = self.get_lint_files(pack_path=pack_path)
-                    image_name = images[-1][0]
-                    image_data = self._images_data.get(image_name)
-                    if not image_data:
-                        image_lint_files = []
-                        py_version = get_python_version_from_image(image=image_name, docker_client=self._docker_client)
-                        self._images_data[image_name] = (py_version, image_lint_files)
-                    image_lint_files.extend(lint_files)
-            except (FileNotFoundError, IOError, KeyError):
-                logger.info(f'Unable to parse package yml {yml_file}')
+                    image_name = images[-1]
+                    image_facts = self._images_facts.get(image_name)
+                    if image_facts is None:
+                        self._images_facts[image_name] = image_facts = {}
+                        image_facts['py_version'] = get_python_version_from_image(image=image_name, docker_client=self._docker_client)
+                        image_facts['packs_type'] = pack_type
+                        image_facts['image_files'] = set()
+
+                    lint_files = self._lint_files_helper.get_lint_files_for_pack(pack_path=pack_path, pack_type=pack_type)
+                    mandatory_files = self._lint_files_helper.get_mandatory_files_for_pack(pack_path=pack_path, pack_type=pack_type)
+                    image_facts['image_files'].update(lint_files)
+                    image_facts['image_files'].update(mandatory_files)
+        
+        logger.info(f'Collecting images facts take: {time.time() - start_time}s')
+
+    
+    def _get_script_obj_from_pack_yml(self, pack_path: Path):
+        
+        yml_file: Optional[Path] = pack_path.glob([r'*.yaml', r'*.yml', r'!*unified*.yml'], flags=NEGATE)
+
+        if not yml_file:
+            logger.info(f"{pack_path.name} - Skipping no yaml file found in {pack_path}")
+            return None
+        else:
+            try:
+                yml_file = next(yml_file)
+            except StopIteration:
+                return None
+        
+        # Parsing pack yaml - in order to get the dockr images
+        try:
+            yml_obj: Dict = YAML().load(yml_file)
+            if isinstance(yml_obj, dict):
+                return yml_obj.get('script', {}) if isinstance(yml_obj.get('script'), dict) else yml_obj
+        except (FileNotFoundError, IOError, KeyError):
+            logger.info(f'Unable to parse package yml {yml_file}')
 
     def get_lint_files_for_image(self, image_name: str):
 

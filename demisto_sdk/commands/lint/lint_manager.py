@@ -461,16 +461,14 @@ class LintManager:
                                                no_vulture=no_vulture, no_xsoar_linter=no_xsoar_linter,
                                                no_pylint=no_pylint, no_test=no_test, no_pwsh_analyze=no_pwsh_analyze,
                                                no_pwsh_test=no_pwsh_test, docker_engine=self._facts["docker_engine"])
-
-        # docker_manager = DockersManager(content_repo=Path(self._facts["content_repo"].working_dir),
-        #                                 pkgs=self._pkgs, modules=self._facts["test_modules"],
-        #                                 docker_timeout=docker_timeout,
-        #                                 req_2=self._facts["requirements_2"],
-        #                                 req_3=self._facts["requirements_3"],
-        #                                 )
-        start = time.time()
-        # docker_manager.prepare_required_images()
-        logger.info(f'Docker manager run: {time.time() - start}')
+        lint_files_helper = LintFilesInfoHelper(self._facts["content_repo"], modules=self._facts["test_modules"])
+        docker_manager = DockersManager(content_repo=Path(self._facts["content_repo"].working_dir),
+                                        pkgs=self._pkgs, lint_files_helper=lint_files_helper,
+                                        docker_timeout=docker_timeout,
+                                        req_2=self._facts["requirements_2"],
+                                        req_3=self._facts["requirements_3"]
+                                        )
+        docker_manager.prepare_required_images()
         with concurrent.futures.ThreadPoolExecutor(max_workers=parallel) as executor:
             
             start_time = time.time()
@@ -521,7 +519,6 @@ class LintManager:
             ############
             # Executing lint checks in different threads
             for pack in sorted(self._pkgs):
-                LintFilesInfoHelper(self._facts["content_repo"], modules=self._facts["test_modules"]).get_mandatory_files_for_pack(pack, 'python')
                 linter: Linter = Linter(pack_dir=pack,
                                         content_repo="" if not self._facts["content_repo"] else
                                         Path(self._facts["content_repo"].working_dir),

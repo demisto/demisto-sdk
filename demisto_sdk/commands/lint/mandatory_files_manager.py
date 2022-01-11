@@ -1,24 +1,23 @@
 
-import logging
 import copy
-from sys import modules
-from docker.models.images import Image
-import git
+import logging
 import re
 from contextlib import contextmanager
 from shutil import rmtree
-import requests
-
-from ruamel.yaml import YAML
-import urllib3
-from wcmatch.pathlib import NEGATE, Path
+from sys import modules
 from typing import Any, Dict, List, Optional, Tuple
 
-from demisto_sdk.commands.common.tools import get_all_docker_images
-from demisto_sdk.commands.lint.helpers import add_tmp_lint_files, get_python_version_from_image
+import git
+import requests
+import urllib3
 from demisto_sdk.commands.common.constants import (TYPE_PWSH, TYPE_PYTHON,
                                                    DemistoException)
-
+from demisto_sdk.commands.common.tools import get_all_docker_images
+from demisto_sdk.commands.lint.helpers import (add_tmp_lint_files,
+                                               get_python_version_from_image)
+from docker.models.images import Image
+from ruamel.yaml import YAML
+from wcmatch.pathlib import NEGATE, Path
 
 logger = logging.getLogger('demisto-sdk')
 
@@ -29,7 +28,7 @@ class LintFilesInfoHelper:
         self._mandatory_per_pack = {}
         self._lint_files_per_pack = {}
         self._content_repo = ontent_repo
-        self._mandatory_modules = modules
+
         self._mandatory_files_per_type = {TYPE_PYTHON: {module for module in modules if module.exists() and module.suffix == '.py'},
                                           TYPE_PWSH: {module for module in modules if module.suffix == '.ps1'}}
 
@@ -99,8 +98,7 @@ class LintFilesInfoHelper:
 
                     mandatory_files.extend(self.get_requiered_api_modules(lint_files))
 
-                if mandatory_files:
-                    self._mandatory_per_pack[pack_path.name] = mandatory_files
+                self._mandatory_per_pack[pack_path.name] = mandatory_files
 
             except Exception as e:
                 logger.error(f'can not add mandatory files for pack {pack_path}: {str(e)}')

@@ -356,6 +356,7 @@ class Linter:
                 elif lint_check == "mypy" and not no_mypy:
                     exit_code, output = self._run_mypy(py_num=self._facts["python_version"],
                                                        lint_files=self._facts["lint_files"])
+                    logger.info(f"{lint_check} execute time for pack: {self._pack_name} - was {time.time() - specific_lint_start_time}s")
                 elif lint_check == "vulture" and not no_vulture:
                     exit_code, output = self._run_vulture(py_num=self._facts["python_version"],
                                                           lint_files=self._facts["lint_files"])
@@ -374,9 +375,6 @@ class Linter:
                 # if there were errors but they do not start with E
                 else:
                     self._pkg_lint_status[f"{lint_check}_errors"] = "\n".join(other)
-
-            
-            logger.info(f"{lint_check} execute time for pack: {self._pack_name} - was {time.time() - specific_lint_start_time}s")
 
         total_time = int(time.time() - total_start_time)
         logger.info(f"Linting on OS execute time for pack: {self._pack_name} - was {total_time}s")
@@ -725,10 +723,10 @@ class Linter:
             image_id = ""
             errors = ""
             image_id = self._docker_mgr.get_test_image_for_base_image(base_image=image[0])
-            for trial in range(2):
-                image_id, errors = self._docker_image_create(docker_base_image=image)
-                if not errors:
-                    break
+            # for trial in range(2):
+            #     image_id, errors = self._docker_image_create(docker_base_image=image)
+            #     if not errors:
+            #         break
 
             if image_id and not errors:
                 # Set image creation status
@@ -770,10 +768,10 @@ class Linter:
 
             # Add image status to images
             self._pkg_lint_status["images"].append(status)
-            try:
-                self._docker_client.images.remove(image_id)
-            except (docker.errors.ImageNotFound, docker.errors.APIError):
-                pass
+            # try:
+            #     self._docker_client.images.remove(image_id)
+            # except (docker.errors.ImageNotFound, docker.errors.APIError):
+            #     pass
 
     
     def _docker_login(self) -> bool:

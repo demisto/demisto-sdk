@@ -1119,9 +1119,8 @@ class Integration:
         # define module instance:
         print(f'### conf: {instance_configuration}')
         params = self.configuration.params  # type: ignore
-        incident_configuration = params.get('incident_configuration', {})
 
-        module_instance = self.create_module(instance_name, configuration, incident_configuration)
+        module_instance = self.create_module(instance_name, configuration, instance_configuration)
 
         # set server keys
         self._set_server_keys(client, server_context)

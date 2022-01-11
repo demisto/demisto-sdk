@@ -1,4 +1,5 @@
 # Changelog
+* Added a comment with a link to the coverage report in a content pull request
 
 # 1.5.6
 * Added 'deprecated' release notes template.

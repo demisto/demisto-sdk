@@ -295,14 +295,26 @@ def get_python_version_from_image(image: str, timeout: int = 60, log_prompt: str
     # skip pwoershell images
     if 'pwsh' in image or 'powershell' in image:
         return 3.8
+    
+    if '/python:2' in image:
+        version_index = image.index('python:') + len('python:')
+        return float(image[version_index:version_index+3])
+    if '/python3:3' in image:
+        version_index = image.index('python3:') + len('python3:')
+        return float(image[version_index:version_index+3])
 
+    # if the docker_client passed as argument we assome the login was done 
+    should_login = docker_client is None
+    
     docker_user = os.getenv('DOCKERHUB_USER')
     docker_pass = os.getenv('DOCKERHUB_PASSWORD')
     docker_client = docker_client or docker.from_env(timeout=timeout)
-    docker_client.login(username=docker_user,
-                        password=docker_pass,
-                        registry="https://index.docker.io/v1")
-    py_num = 3.8
+    
+    if should_login:
+        docker_client.login(username=docker_user,
+                            password=docker_pass,
+                            registry="https://index.docker.io/v1")
+        py_num = 3.8
     # Run three times
     for attempt in range(3):
         try:

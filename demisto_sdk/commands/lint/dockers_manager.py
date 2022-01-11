@@ -23,7 +23,7 @@ from wcmatch.pathlib import NEGATE, Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from demisto_sdk.commands.common.tools import get_all_docker_images
-from demisto_sdk.commands.lint.helpers import get_python_version_from_image
+from demisto_sdk.commands.lint.helpers import add_tmp_lint_files, get_python_version_from_image
 
 
 logger = logging.getLogger('demisto-sdk')
@@ -53,12 +53,14 @@ class DockersManager:
         self._image_to_test_image_map: Dict = {}
         self._pkgs = pkgs
         self._modules = modules
-        # self._docker_client: docker.DockerClient = docker.from_env(timeout=docker_timeout)
-        # self._docker_hub_login = self._docker_login()
+        self._docker_client: docker.DockerClient = docker.from_env(timeout=docker_timeout)
+        self._docker_hub_login = self._docker_login(self._docker_client)
         self._req_3 = req_3
         self._req_2 = req_2
 
     def prepare_required_images(self):
+
+        self._add_mandatory_modules()
 
         self.collect_lint_files_and_py_version()
         results = []
@@ -72,7 +74,11 @@ class DockersManager:
                 image_name, test_image, errors = future.result()
                 if not errors:
                     self._image_to_test_image_map[image_name] = test_image
-                    
+
+    #  def _add_mandatory_modules(self):
+
+    #      for pack_path in self._pkgs:
+    #         add_tmp_lint_files(self._content_repo, pack_path=pack_path, )      
         
     def _docker_image_create(self, docker_base_image: List[Any], lint_files: List[Path]) -> Tuple[str, str]:
         """ Create docker image:
@@ -196,7 +202,7 @@ class DockersManager:
             yml_file: Optional[Path] = pack_path.glob([r'*.yaml', r'*.yml', r'!*unified*.yml'], flags=NEGATE)
 
             if not yml_file:
-                logger.info(f"{pack_path} - Skipping no yaml file found {yml_file}")
+                logger.info(f"{pack_path} - Skipping no yaml file found in {pack_path}")
                 continue
             else:
                 try:
@@ -210,18 +216,18 @@ class DockersManager:
                 yml_obj: Dict = YAML().load(yml_file)
                 if isinstance(yml_obj, dict):
                     script_obj = yml_obj.get('script', {}) if isinstance(yml_obj.get('script'), dict) else yml_obj
-                    py_version = 3 if (script_obj.get('subtype', 'python3') == 'python3') else 2.7
+                    # py_version = 3 if (script_obj.get('subtype', 'python3') == 'python3') else 2.7
 
 
                 images = [[image, -1] for image in get_all_docker_images(script_obj=script_obj)]
                 if images:
-                    lint_files = self.get_all_lint_files(pack_path=pack_path)
-
-                    image_data = self._images_data.get(images[0][0])
+                    lint_files = self.get_lint_files(pack_path=pack_path)
+                    image_name = images[-1][0]
+                    image_data = self._images_data.get(image_name)
                     if not image_data:
                         image_lint_files = []
-                        # py_version = get_python_version_from_image(images[0][0], docker_client=self._docker_client)
-                        self._images_data[images[0][0]] = (py_version, image_lint_files)
+                        py_version = get_python_version_from_image(image=image_name, docker_client=self._docker_client)
+                        self._images_data[image_name] = (py_version, image_lint_files)
                     image_lint_files.extend(lint_files)
             except (FileNotFoundError, IOError, KeyError):
                 logger.info(f'Unable to parse package yml {yml_file}')
@@ -233,7 +239,7 @@ class DockersManager:
         
         return  self._lint_files_per_image.get(image_name)
         
-    def get_all_lint_files(self, pack_path: Path):
+    def get_lint_files(self, pack_path: Path):
 
 
         lint_files = set(pack_path.glob(["*.py", "!__init__.py", "!*.tmp"], flags=NEGATE))

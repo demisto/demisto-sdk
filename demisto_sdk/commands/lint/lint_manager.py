@@ -38,6 +38,7 @@ from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, PWSH_CHECKS,
                                                generate_coverage_report,
                                                get_test_modules, validate_env)
 from demisto_sdk.commands.lint.linter import Linter
+from demisto_sdk.commands.lint.mandatory_files_manager import LintFilesInfoHelper
 
 logger = logging.getLogger('demisto-sdk')
 
@@ -251,7 +252,7 @@ class LintManager:
 
         return list(pkgs_to_check)
 
-    def run_dev_packages(self, parallel: int, no_flake8: bool, no_xsoar_linter: bool, no_bandit: bool, no_mypy: bool,
+    def run_dev_packages_orig(self, parallel: int, no_flake8: bool, no_xsoar_linter: bool, no_bandit: bool, no_mypy: bool,
                          no_pylint: bool, no_coverage: bool, coverage_report: str,
                          no_vulture: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
                          keep_container: bool,
@@ -321,47 +322,6 @@ class LintManager:
             return_warning_code: int = 0
             results = []
 
-            ############
-            # linter: Linter = Linter(pack_dir=Path('AbnormalSecurity'),
-            #                             content_repo="" if not self._facts["content_repo"] else
-            #                             Path(self._facts["content_repo"].working_dir),
-            #                             req_2=self._facts["requirements_2"],
-            #                             req_3=self._facts["requirements_3"],
-            #                             docker_engine=self._facts["docker_engine"],
-            #                             docker_timeout=docker_timeout)
-            # linter._pkg_lint_status['pkg'] = 'mypy_global_test'
-            # exit_code, output = linter._run_mypy(py_num=2.7, lint_files=[])
-        
-            # if exit_code:
-            #         error, warning, other = helpers.split_warnings_errors(output)
-            # if exit_code and warning:
-            #     linter._pkg_lint_status["warning_code"] |= EXIT_CODES['mypy']
-            #     linter._pkg_lint_status[f"mypy_warnings"] = "\n".join(warning)
-            # if exit_code & FAIL:
-            #     linter._pkg_lint_status["exit_code"] |= EXIT_CODES['mypy']
-            #     # if the error were extracted correctly as they start with E
-            #     if error:
-            #         linter._pkg_lint_status[f"mypy_errors"] = "\n".join(error)
-            #     # if there were errors but they do not start with E
-            #     else:
-            #         linter._pkg_lint_status[f"mypy_errors"] = "\n".join(other)
-            #     pkg_status = linter._pkg_lint_status
-            #     pkgs_status[pkg_status["pkg"]] = pkg_status
-            #     if pkg_status["exit_code"]:
-            #         for check, code in EXIT_CODES.items():
-            #             if pkg_status["exit_code"] & code:
-            #                 lint_status[f"fail_packs_{check}"].append(pkg_status["pkg"])
-            #         if not return_exit_code & pkg_status["exit_code"]:
-            #             return_exit_code += pkg_status["exit_code"]
-            #     if pkg_status["warning_code"]:
-            #         for check, code in EXIT_CODES.items():
-            #             if pkg_status["warning_code"] & code:
-            #                 lint_status[f"warning_packs_{check}"].append(pkg_status["pkg"])
-            #         if not return_warning_code & pkg_status["warning_code"]:
-            #             return_warning_code += pkg_status["warning_code"]
-            #     if pkg_status["pack_type"] not in pkgs_type:
-            #         pkgs_type.append(pkg_status["pack_type"])
-            ############
             # Executing lint checks in different threads
             for pack in sorted(self._pkgs):
                 linter: Linter = Linter(pack_dir=pack,
@@ -439,7 +399,7 @@ class LintManager:
             return_exit_code = FAIL
         return return_exit_code
 
-    def run_dev_packages_test(self, parallel: int, no_flake8: bool, no_xsoar_linter: bool, no_bandit: bool, no_mypy: bool,
+    def run_dev_packages(self, parallel: int, no_flake8: bool, no_xsoar_linter: bool, no_bandit: bool, no_mypy: bool,
                          no_pylint: bool, no_coverage: bool, coverage_report: str,
                          no_vulture: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
                          keep_container: bool,
@@ -508,9 +468,9 @@ class LintManager:
         #                                 req_2=self._facts["requirements_2"],
         #                                 req_3=self._facts["requirements_3"],
         #                                 )
-        # start = time.time()
+        start = time.time()
         # docker_manager.prepare_required_images()
-        # logger.info(f'Docker manager run: {time.time() - start}')
+        logger.info(f'Docker manager run: {time.time() - start}')
         with concurrent.futures.ThreadPoolExecutor(max_workers=parallel) as executor:
             
             start_time = time.time()
@@ -561,14 +521,15 @@ class LintManager:
             ############
             # Executing lint checks in different threads
             for pack in sorted(self._pkgs):
+                LintFilesInfoHelper(self._facts["content_repo"], modules=self._facts["test_modules"]).get_mandatory_files_for_pack(pack, 'python')
                 linter: Linter = Linter(pack_dir=pack,
                                         content_repo="" if not self._facts["content_repo"] else
                                         Path(self._facts["content_repo"].working_dir),
                                         req_2=self._facts["requirements_2"],
                                         req_3=self._facts["requirements_3"],
                                         docker_engine=self._facts["docker_engine"],
-                                        docker_timeout=docker_timeout)
-                                        # docker_manager=docker_manager)
+                                        docker_timeout=docker_timeout,
+                                        docker_manager=docker_manager)
                 results.append(executor.submit(linter.run_dev_packages,
                                                no_flake8=no_flake8,
                                                no_bandit=no_bandit,

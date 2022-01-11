@@ -510,10 +510,11 @@ class Linter:
            int:  0 on successful else 1, errors
            str: Bandit errors
         """
-        ####
-        mypy_cache_exist = (self._content_repo/'.mypy_cache').exists()
-        logger.info(f'mypy cache {"exist" if mypy_cache_exist else "does not exist"} at {str(self._content_repo/".mypy_cache")}')
-        ####
+
+        if logger.isEnabledFor(logging.DEBUG):
+            mypy_cache_exist = (self._content_repo/'.mypy_cache').exists()
+            logger.debug(f'mypy cache {"exist" if mypy_cache_exist else "does not exist"} at {str(self._content_repo/".mypy_cache")}')
+
         log_prompt = f"{self._pack_name} - Mypy"
         logger.info(f"{log_prompt} - Start")
         with add_typing_module(lint_files=lint_files, python_version=py_num):
@@ -617,7 +618,7 @@ class Linter:
 
         return SUCCESS, ""
 
-    def _run_lint_on_docker_image(self, no_pylint: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
+    def _run_lint_on_docker_image_orig(self, no_pylint: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
                                   keep_container: bool, test_xml: str, no_coverage: bool):
         """ Run lint check on docker image
 
@@ -645,7 +646,6 @@ class Linter:
             # Creating image if pylint specified or found tests and tests specified
             image_id = ""
             errors = ""
-            # image_id = self._docker_mgr.get_test_image_for_base_image(base_image=image[0])
             for trial in range(2):
                 image_id, errors = self._docker_image_create(docker_base_image=image)
                 if not errors:
@@ -696,6 +696,86 @@ class Linter:
             except (docker.errors.ImageNotFound, docker.errors.APIError):
                 pass
 
+    def _run_lint_on_docker_image(self, no_pylint: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
+                                  keep_container: bool, test_xml: str, no_coverage: bool):
+        """ Run lint check on docker image
+
+        Args:
+            no_pylint(bool): Whether to skip pylint
+            no_test(bool): Whether to skip pytest
+            no_pwsh_analyze(bool): Whether to skip powershell code analyzing
+            no_pwsh_test(bool): whether to skip powershell tests
+            keep_container(bool): Whether to keep the test container
+            test_xml(str): Path for saving pytest xml results
+            no_coverage(bool): Run pytest without coverage report
+
+        """
+        for image in self._facts["images"]:
+            # Docker image status - visualize
+            status = {
+                "image": image[0],
+                "image_errors": "",
+                "pylint_errors": "",
+                "pytest_errors": "",
+                "pytest_json": {},
+                "pwsh_analyze_errors": "",
+                "pwsh_test_errors": ""
+            }
+            # Creating image if pylint specified or found tests and tests specified
+            image_id = ""
+            errors = ""
+            image_id = self._docker_mgr.get_test_image_for_base_image(base_image=image[0])
+            for trial in range(2):
+                image_id, errors = self._docker_image_create(docker_base_image=image)
+                if not errors:
+                    break
+
+            if image_id and not errors:
+                # Set image creation status
+                for check in ["pylint", "pytest", "pwsh_analyze", "pwsh_test"]:
+                    exit_code = SUCCESS
+                    output = ""
+                    for trial in range(2):
+                        if self._pkg_lint_status["pack_type"] == TYPE_PYTHON:
+                            # Perform pylint
+                            if not no_pylint and check == "pylint" and self._facts["lint_files"]:
+                                exit_code, output = self._docker_run_pylint(test_image=image_id,
+                                                                            keep_container=keep_container)
+                            # Perform pytest
+                            elif not no_test and self._facts["test"] and check == "pytest":
+                                exit_code, output, test_json = self._docker_run_pytest(test_image=image_id,
+                                                                                       keep_container=keep_container,
+                                                                                       test_xml=test_xml,
+                                                                                       no_coverage=no_coverage)
+                                status["pytest_json"] = test_json
+                        elif self._pkg_lint_status["pack_type"] == TYPE_PWSH:
+                            # Perform powershell analyze
+                            if not no_pwsh_analyze and check == "pwsh_analyze" and self._facts["lint_files"]:
+                                exit_code, output = self._docker_run_pwsh_analyze(test_image=image_id,
+                                                                                  keep_container=keep_container)
+                            # Perform powershell test
+                            elif not no_pwsh_test and check == "pwsh_test":
+                                exit_code, output = self._docker_run_pwsh_test(test_image=image_id,
+                                                                               keep_container=keep_container)
+                        # If lint check perfrom and failed on reason related to enviorment will run twice,
+                        # But it failing in second time it will count as test failure.
+                        if (exit_code == RERUN and trial == 1) or exit_code == FAIL or exit_code == SUCCESS:
+                            if exit_code in [RERUN, FAIL]:
+                                self._pkg_lint_status["exit_code"] |= EXIT_CODES[check]
+                                status[f"{check}_errors"] = output
+                            break
+            else:
+                status["image_errors"] = str(errors)
+                self._pkg_lint_status["exit_code"] += EXIT_CODES["image"]
+
+            # Add image status to images
+            self._pkg_lint_status["images"].append(status)
+            try:
+                self._docker_client.images.remove(image_id)
+            except (docker.errors.ImageNotFound, docker.errors.APIError):
+                pass
+
+    
     def _docker_login(self) -> bool:
         """ Login to docker-hub using environment variables:
                 1. DOCKERHUB_USER - User for docker hub.

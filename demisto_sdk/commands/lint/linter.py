@@ -375,8 +375,8 @@ class Linter:
                 else:
                     self._pkg_lint_status[f"{lint_check}_errors"] = "\n".join(other)
 
-            if output:
-                logger.info(f"{lint_check} execute time for pack: {self._pack_name} - was {int(time.time() - specific_lint_start_time)}s")
+            
+            logger.info(f"{lint_check} execute time for pack: {self._pack_name} - was {time.time() - specific_lint_start_time}s")
 
         total_time = int(time.time() - total_start_time)
         logger.info(f"Linting on OS execute time for pack: {self._pack_name} - was {total_time}s")

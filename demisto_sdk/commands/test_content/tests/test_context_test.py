@@ -289,16 +289,16 @@ CASES = [
             }
         },
         [{'key': 'Endpoint_hostname', 'value': {'simple': 'test', 'complex': None}, 'required': False,
-          'description': 'The hostname of the endpoint to isolate.', 'playbookInputQuery': None}, {
-             'key': 'ManualHunting.DetectedHosts', 'value': {'simple': '', 'complex': None}, 'required': False,
-             'description': 'Hosts that were detected as infected during the manual hunting.',
-             'playbookInputQuery': None}, {'key': 'Endpoint_ip', 'value': {'simple': '', 'complex': None},
-                                           'required': False, 'description': 'The IP of the endpoint to isolate.',
-                                           'playbookInputQuery': None}, {'key': 'Endpoint_id',
-                                                                         'value': {'simple': '', 'complex': None},
-                                                                         'required': False,
-                                                                         'description': 'The ID of the endpoint to isolate.',
-                                                                         'playbookInputQuery': None}]
+          'description': 'The hostname of the endpoint to isolate.', 'playbookInputQuery': None},
+         {'key': 'ManualHunting.DetectedHosts', 'value': {'simple': '', 'complex': None}, 'required': False,
+          'description': 'Hosts that were detected as infected during the manual hunting.',
+          'playbookInputQuery': None}, {'key': 'Endpoint_ip', 'value': {'simple': '', 'complex': None},
+                                        'required': False, 'description': 'The IP of the endpoint to isolate.',
+                                        'playbookInputQuery': None}, {'key': 'Endpoint_id',
+                                                                      'value': {'simple': '', 'complex': None},
+                                                                      'required': False,
+                                                                      'description': 'The ID of the endpoint to isolate.',
+                                                                      'playbookInputQuery': None}]
 
     ),
 ]
@@ -306,9 +306,10 @@ CASES = [
 
 @pytest.mark.parametrize('current, new_configuration, expected', CASES)
 def test_replacing_pb_inputs(mocker, current, new_configuration, expected):
-    from demisto_sdk.commands.test_content.TestContentClasses import demisto_client, \
-        replace_external_playbook_configuration
     from demisto_client.demisto_api import DefaultApi
+
+    from demisto_sdk.commands.test_content.TestContentClasses import (
+        demisto_client, replace_external_playbook_configuration)
 
     class clientMock(DefaultApi):
         def generic_request(self, path, method, body=None, **kwargs):
@@ -373,9 +374,10 @@ BAD_CASES = [
 
 @pytest.mark.parametrize('current, new_configuration, version, expected_error', BAD_CASES)
 def test_replacing_pb_inputs_fails_with_build_pass(mocker, current, new_configuration, version, expected_error):
-    from demisto_sdk.commands.test_content.TestContentClasses import demisto_client, \
-        replace_external_playbook_configuration
     from demisto_client.demisto_api import DefaultApi
+
+    from demisto_sdk.commands.test_content.TestContentClasses import (
+        demisto_client, replace_external_playbook_configuration)
 
     class clientMock(DefaultApi):
         def generic_request(self, path, method, body=None, **kwargs):
@@ -444,9 +446,10 @@ BAD_CASES_BUILD_FAIL = [
 
 @pytest.mark.parametrize('current, new_configuration, version, expected_error', BAD_CASES_BUILD_FAIL)
 def test_replacing_pb_inputs_fails_with_build_fail(mocker, current, new_configuration, version, expected_error):
-    from demisto_sdk.commands.test_content.TestContentClasses import demisto_client, \
-        replace_external_playbook_configuration
     from demisto_client.demisto_api import DefaultApi
+
+    from demisto_sdk.commands.test_content.TestContentClasses import (
+        demisto_client, replace_external_playbook_configuration)
 
     class clientMock(DefaultApi):
         def generic_request(self, path, method, body=None, **kwargs):

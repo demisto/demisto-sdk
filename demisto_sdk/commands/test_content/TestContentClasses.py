@@ -146,7 +146,6 @@ class Conf:
         self.docker_thresholds = conf.get('docker_thresholds', {}).get('images', {})
 
 
-
 class TestPlaybook:
 
     def __init__(self,
@@ -1962,10 +1961,10 @@ def replace_external_playbook_configuration(client: DefaultApi, external_playboo
 
 def restore_external_playbook_configuration(client: DefaultApi, restore_path: str, restore_values: dict,
                                             logger_module: logging.Logger = logging.getLogger('demisto-sdk')):
-    logger_module.info(f"Restoring External Playbook parameters.")
+    logger_module.info("Restoring External Playbook parameters.")
 
     res, _, _ = demisto_client.generic_request_func(self=client, method='POST',
                                                     path=restore_path,
                                                     body=restore_values)
 
-    logger_module.info(f"Restored External Playbook successfully.")
+    logger_module.info("Restored External Playbook successfully.")

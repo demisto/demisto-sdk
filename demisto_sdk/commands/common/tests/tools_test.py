@@ -13,8 +13,6 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION, INTEGRATIONS_DIR, LAYOUTS_DIR, PACKS_DIR,
     PACKS_PACK_IGNORE_FILE_NAME, PLAYBOOKS_DIR, SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR, FileType)
-from demisto_sdk.commands.common.content import Content
-from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import (
     LOG_COLORS, arg_to_list, compare_context_path_in_yml_and_readme,
@@ -26,12 +24,14 @@ from demisto_sdk.commands.common.tools import (
     get_last_remote_release_version, get_latest_release_notes_text,
     get_pack_metadata, get_relative_path_from_packs_dir,
     get_release_note_entries, get_release_notes_file_path, get_ryaml,
-    get_test_playbook_id, get_to_version, has_remote_configured,
-    is_origin_content_repo, is_pack_path, is_uuid, retrieve_file_ending,
-    run_command_os, server_version_compare, to_kebab_case)
-from demisto_sdk.tests.constants_test import (IGNORED_PNG,
+    get_scripts_and_commands_from_yml_data, get_test_playbook_id,
+    get_to_version, get_yaml, has_remote_configured, is_origin_content_repo,
+    is_pack_path, is_uuid, retrieve_file_ending, run_command_os,
+    server_version_compare, to_kebab_case)
+from demisto_sdk.tests.constants_test import (DUMMY_SCRIPT_PATH, IGNORED_PNG,
                                               INDICATORFIELD_EXTRA_FIELDS,
                                               SOURCE_FORMAT_INTEGRATION_COPY,
+                                              TEST_PLAYBOOK,
                                               VALID_BETA_INTEGRATION_PATH,
                                               VALID_DASHBOARD_PATH,
                                               VALID_GENERIC_DEFINITION_PATH,
@@ -331,23 +331,17 @@ class TestGetRemoteFileLocally:
     FILE_NAME = 'somefile.json'
     FILE_CONTENT = '{"id": "some_file"}'
 
-    git_util = GitUtil(repo=Content.git())
-    main_branch = git_util.handle_prev_ver()[1]
-
     def setup_method(self):
         # create local git repo
         example_repo = git.Repo.init(self.REPO_NAME)
-        origin_branch = self.main_branch
-        if not origin_branch.startswith('origin'):
-            origin_branch = 'origin/' + origin_branch
-        example_repo.git.checkout('-b', f'{origin_branch}')
+        example_repo.git.checkout('-b', 'origin/master')
         with open(os.path.join(self.REPO_NAME, self.FILE_NAME), 'w+') as somefile:
             somefile.write(self.FILE_CONTENT)
         example_repo.git.add(self.FILE_NAME)
         example_repo.git.config('user.email', 'automatic@example.com')
         example_repo.git.config('user.name', 'AutomaticTest')
         example_repo.git.commit('-m', 'test_commit', '-a')
-        example_repo.git.checkout('-b', self.main_branch)
+        example_repo.git.checkout('-b', 'master')
 
     def test_get_file_from_master_when_in_private_repo(self, mocker):
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
@@ -1516,3 +1510,32 @@ KEBAB_CASES = [('Scan File', 'scan-file'),
 @pytest.mark.parametrize('input_str, output_str', KEBAB_CASES)
 def test_to_kebab_case(input_str, output_str):
     assert to_kebab_case(input_str) == output_str
+
+
+YML_DATA_CASES = [(get_yaml(VALID_INTEGRATION_TEST_PATH), FileType.INTEGRATION,
+                   [{'id': 'PagerDutyGetAllSchedules'}, {'id': 'PagerDutyGetUsersOnCall'},
+                    {'id': 'PagerDutyGetUsersOnCallNow'}, {'id': 'PagerDutyIncidents'}, {'id': 'PagerDutySubmitEvent'},
+                    {'id': 'PagerDutyGetContactMethods'}, {'id': 'PagerDutyGetUsersNotification'}], []),
+                  (get_yaml(VALID_SCRIPT_PATH), FileType.SCRIPT, [{'id': 'send-notification'}], ['TestCreateDuplicates']),
+                  (get_yaml(TEST_PLAYBOOK), FileType.TEST_PLAYBOOK, [{'id': 'gmail-search', 'source': 'Gmail'}],
+                   ['ReadFile', 'Get Original Email - Gmail']),
+                  (get_yaml(VALID_PLAYBOOK_ID_PATH), FileType.PLAYBOOK, [{'id': 'setIncident', 'source': 'Builtin'},
+                                                                         {'id': 'closeInvestigation',
+                                                                          'source': 'Builtin'},
+                                                                         {'id': 'setIncident', 'source': 'Builtin'}],
+                   ['Account Enrichment - Generic', 'EmailAskUser', 'ADGetUser', 'IP Enrichment - Generic',
+                    'IP Enrichment - Generic', 'AssignAnalystToIncident', 'access_investigation_-_generic']),
+                  (get_yaml(VALID_INTEGRATION_TEST_PATH), FileType.INTEGRATION,
+                   [{'id': 'PagerDutyGetAllSchedules'}, {'id': 'PagerDutyGetUsersOnCall'},
+                    {'id': 'PagerDutyGetUsersOnCallNow'},
+                    {'id': 'PagerDutyIncidents'}, {'id': 'PagerDutySubmitEvent'}, {'id': 'PagerDutyGetContactMethods'},
+                    {'id': 'PagerDutyGetUsersNotification'}], []),
+                  (get_yaml(DUMMY_SCRIPT_PATH), FileType.SCRIPT,  # Empty case
+                   [], ['DummyScriptUnified'])]
+
+
+@pytest.mark.parametrize('data, file_type, expected_commands, expected_scripts', YML_DATA_CASES)
+def test_get_scripts_and_commands_from_yml_data(data, file_type, expected_commands, expected_scripts):
+    commands, scripts = get_scripts_and_commands_from_yml_data(data=data, file_type=file_type)
+    assert commands == expected_commands
+    assert scripts == expected_scripts

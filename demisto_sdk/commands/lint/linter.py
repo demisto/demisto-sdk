@@ -752,7 +752,8 @@ class Linter:
 
         if test_image_id:
             logger.info(f"{log_prompt} - Image {test_image_id} created successfully")
-            logger.info(f'{log_prompt} - Build image with copy dir take: {time.time() - copy_dir_time_start}s')
+        
+        logger.info(f'{log_prompt} - Build image with copy dir take: {time.time() - copy_dir_time_start}s')
 
         return test_image_name, errors
 

@@ -3,24 +3,24 @@ from typing import List
 import pytest
 
 from demisto_sdk.commands.doc_reviewer.doc_reviewer import DocReviewer
+from TestSuite.yml import YAML
+from TestSuite.json_based import JSONBased
 
 
 @pytest.fixture()
-def doc_reviewer_with_malformed_integration_yml(integration) -> DocReviewer:
+def malformed_integration_yml(integration) -> YAML:
     integration.yml.write("1: 2\n//")
-    return DocReviewer(file_path=integration.yml.path, release_notes_only=True)
+    return integration.yml
 
 
 @pytest.fixture()
-def doc_reviewer_with_malformed_incident_field(pack) -> DocReviewer:
+def malformed_incident_field(pack) -> JSONBased:
     incident_field = pack.create_incident_field("malformed")
     incident_field.write_as_text("{\n '1': '1'")
-    return DocReviewer(file_path=incident_field.path, release_notes_only=True)
+    return incident_field
 
 
-def test_doc_review_with_release_notes_is_skipped_on_invalid_yml_file(
-    doc_reviewer_with_malformed_integration_yml: DocReviewer
-):
+def test_doc_review_with_release_notes_is_skipped_on_invalid_yml_file(malformed_integration_yml):
     """
     Given -
         malformed yml integration file.
@@ -31,14 +31,17 @@ def test_doc_review_with_release_notes_is_skipped_on_invalid_yml_file(
     Then -
         Ensure that no exception/error is raised.
     """
-    assert doc_reviewer_with_malformed_integration_yml.run_doc_review(), (
-        f"doc-review --release-notes failed on file - {doc_reviewer_with_malformed_integration_yml.file_path}"
-    )
+    path = malformed_integration_yml.path
+
+    try:
+        doc_reviewer = DocReviewer(file_path=path, release_notes_only=True)
+        assert doc_reviewer.run_doc_review()
+        assert not doc_reviewer.files
+    except ValueError as err:
+        assert False, str(err)
 
 
-def test_doc_review_with_release_notes_is_skipped_on_invalid_json_file(
-    doc_reviewer_with_malformed_incident_field: DocReviewer
-):
+def test_doc_review_with_release_notes_is_skipped_on_invalid_json_file(malformed_incident_field: JSONBased):
     """
     Given -
         malformed json incident type.
@@ -49,9 +52,39 @@ def test_doc_review_with_release_notes_is_skipped_on_invalid_json_file(
     Then -
         Ensure that no exception/error is raised.
     """
-    assert doc_reviewer_with_malformed_incident_field.run_doc_review(), (
-        f"doc-review --release-notes failed on file - {doc_reviewer_with_malformed_incident_field.file_path}"
+    path = malformed_incident_field.path
+
+    try:
+        doc_reviewer = DocReviewer(file_path=path, release_notes_only=True)
+        assert doc_reviewer.run_doc_review()
+        assert not doc_reviewer.files
+    except ValueError as err:
+        assert False, str(err)
+
+
+def test_get_files_from_git_with_invalid_files(mocker, malformed_integration_yml, malformed_incident_field):
+    """
+    Given -
+        malformed json/yml.
+
+    When -
+        Collecting files from git.
+
+    Then -
+        Ensure that no exception/error is raised and that the malformed files were not added to the files for review.
+    """
+    mocker.patch.object(
+        DocReviewer,
+        'gather_all_changed_files',
+        return_value=[
+            malformed_integration_yml.path,
+            malformed_incident_field.path
+        ]
     )
+
+    doc_reviewer = DocReviewer(file_path='', release_notes_only=True)
+    doc_reviewer.get_files_from_git()
+    assert not doc_reviewer.files
 
 
 def test_camel_case_split():

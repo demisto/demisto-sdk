@@ -1117,7 +1117,6 @@ class Integration:
         )
 
         # define module instance:
-        print(f'### conf: {instance_configuration}')
         params = self.configuration.params  # type: ignore
 
         module_instance = self.create_module(instance_name, configuration, instance_configuration)

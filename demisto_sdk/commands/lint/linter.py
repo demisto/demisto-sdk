@@ -724,6 +724,7 @@ class Linter:
                 errors = str(e)
         else:
             logger.info(f"{log_prompt} - Found existing image {test_image_name}")
+        copy_dir_time_start = time.time()
         dockerfile_path = Path(self._pack_abs_dir / ".Dockerfile")
         dockerfile = template.render(image=test_image_name,
                                      copy_pack=True)
@@ -751,6 +752,7 @@ class Linter:
 
         if test_image_id:
             logger.info(f"{log_prompt} - Image {test_image_id} created successfully")
+            logger.info(f'{log_prompt} - Build image with copy dir take: {time.time() - copy_dir_time_start}s')
 
         return test_image_name, errors
 

@@ -3,8 +3,8 @@ from typing import List
 import pytest
 
 from demisto_sdk.commands.doc_reviewer.doc_reviewer import DocReviewer
-from TestSuite.yml import YAML
 from TestSuite.json_based import JSONBased
+from TestSuite.yml import YAML
 
 
 @pytest.fixture()

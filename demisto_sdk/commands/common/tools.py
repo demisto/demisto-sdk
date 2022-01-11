@@ -1164,12 +1164,12 @@ def find_type(
     except FileNotFoundError:
         # unable to find the file - hence can't identify it
         return None
-    except ValueError as err:
-        logger.debug(str(err))
-        if ignore_invalid_schema_file:
-            # invalid file schema
-            return None
-        raise err
+    # except ValueError as err:
+    #     logger.debug(str(err))
+    #     if ignore_invalid_schema_file:
+    #         # invalid file schema
+    #         return None
+    #     raise err
 
     if file_type == 'yml':
         if 'category' in _dict:

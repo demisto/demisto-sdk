@@ -1113,6 +1113,7 @@ class Integration:
         )
 
         # define module instance:
+        print(f'### conf: {self.build_context.conf}')
         params = self.configuration.params  # type: ignore
         incident_configuration = params.get('incident_configuration', {})
 

@@ -86,7 +86,7 @@ def execute_test_content(**kwargs):
             and not build_context.is_nightly:
         skipped_integrations = '\n- '.join(build_context.tests_data_keeper.playbook_skipped_integration)
         skipped_integrations_comment = f'{SKIPPED_CONTENT_COMMENT}:\n- {skipped_integrations}'
-        build_number = build_context.get_build_number()
+        build_number = build_context.build_number
         coverage_link = \
             f'https://{build_number}-60525392-gh.circle-artifacts.com/0/artifacts/coverage_report/html/index.html'
         coverage_report_comment = f'{COVERAGE_REPORT_COMMENT}:\n {coverage_link}'

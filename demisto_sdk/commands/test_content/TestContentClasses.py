@@ -470,6 +470,8 @@ class BuildContext:
         self.slack_user_id = self._retrieve_slack_user_id()
         self.all_integrations_configurations = self._get_all_integration_config(self.instances_ips)
 
+        print(os.environ)
+
     def _get_all_integration_config(self, instances_ips: dict) -> Optional[list]:
         """
         Gets all integration configuration as it exists on the demisto server

@@ -108,6 +108,7 @@ class TestConfiguration:
         self.context_print_dt = test_configuration.get('context_print_dt')
         self.test_integrations: List[str] = self._parse_integrations_conf(test_configuration)
         self.test_instance_names: List[str] = self._parse_instance_names_conf(test_configuration)
+        self.instance_configuration: dict = test_configuration.get('instance_configuration', {})
         self.external_playbook_config: dict = test_configuration.get('external_playbook_config', {})
 
     @staticmethod
@@ -252,7 +253,8 @@ class TestPlaybook:
                 return False
         return True
 
-    def configure_integrations(self, client: DefaultApi, server_context: 'ServerContext') -> bool:
+    def configure_integrations(self, client: DefaultApi, server_context: 'ServerContext',
+                               instance_configuration: dict) -> bool:
         """
         Configures all integrations that the playbook uses and return a boolean indicating the result
         Args:
@@ -268,6 +270,7 @@ class TestPlaybook:
                                                                        self.configuration.playbook_id,
                                                                        self.is_mockable,
                                                                        server_context,
+                                                                       instance_configuration,
                                                                        )
             if not instance_created:
                 self.build_context.logging_module.error(
@@ -1080,6 +1083,7 @@ class Integration:
                                     playbook_id: str,
                                     is_mockable: bool,
                                     server_context: 'ServerContext',
+                                    instance_configuration: dict
                                     ) -> bool:
         """
         Create an instance of the integration in the server specified in the demisto client instance.
@@ -1116,9 +1120,8 @@ class Integration:
 
         # define module instance:
         params = self.configuration.params  # type: ignore
-        incident_configuration = params.get('incident_configuration', {})
 
-        module_instance = self.create_module(instance_name, configuration, incident_configuration)
+        module_instance = self.create_module(instance_name, configuration, instance_configuration)
 
         # set server keys
         self._set_server_keys(client, server_context)
@@ -1418,8 +1421,9 @@ class TestContext:
         """
         try:
             self.build_context.logging_module.info(f'ssh tunnel command:\n{self.tunnel_command}')
+            instance_configuration = self.playbook.configuration.instance_configuration
 
-            if not self.playbook.configure_integrations(self.client, self.server_context):
+            if not self.playbook.configure_integrations(self.client, self.server_context, instance_configuration):
                 return PB_Status.FAILED
 
             test_module_result = self.playbook.run_test_module_on_integrations(self.client)

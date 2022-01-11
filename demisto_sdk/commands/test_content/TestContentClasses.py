@@ -1427,7 +1427,7 @@ class TestContext:
 
             test_module_result = self.playbook.run_test_module_on_integrations(self.client)
             if not test_module_result:
-                # self.playbook.disable_integrations(self.client, self.server_context)
+                self.playbook.disable_integrations(self.client, self.server_context)
                 return PB_Status.FAILED
 
             incident = self.playbook.create_incident(self.client)

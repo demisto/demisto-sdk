@@ -324,11 +324,13 @@ class Linter:
             no_mypy(bool): Whether to skip mypy.
             no_vulture(bool): Whether to skip Vulture.
         """
+        total_start_time = time.time()
         warning = []
         error = []
         other = []
         exit_code: int = 0
         for lint_check in ["flake8", "XSOAR_linter", "bandit", "mypy", "vulture"]:
+            specific_lint_start_time = time.time()
             exit_code = SUCCESS
             output = ""
             if self._facts["lint_files"] or self._facts["lint_unittest_files"]:
@@ -368,6 +370,12 @@ class Linter:
                 # if there were errors but they do not start with E
                 else:
                     self._pkg_lint_status[f"{lint_check}_errors"] = "\n".join(other)
+
+            
+            logger.info(f"{lint_check} execute time for pack: {self._pack_name} - was {time.time() - specific_lint_start_time}s")
+
+        total_time = int(time.time() - total_start_time)
+        logger.info(f"Linting on OS execute time for pack: {self._pack_name} - was {total_time}s")
 
     def _run_flake8(self, py_num: float, lint_files: List[Path]) -> Tuple[int, str]:
         """ Runs flake8 in pack dir

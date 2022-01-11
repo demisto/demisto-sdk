@@ -55,8 +55,7 @@ def _add_pr_comment(skipped_integrations_comment, coverage_report_comment, loggi
                                                       headers=headers, verify=False)
                     _handle_github_response(skipped_tests_res, logging_module)
                 if coverage_report_comment:
-                    comment = {'comment': coverage_report_comment, 'os env': os.environ}
-                    coverage_report_res = requests.post(issue_url, json={'body': comment},
+                    coverage_report_res = requests.post(issue_url, json={'body': os.environ.get('CIRCLE_BUILD_NUM')},
                                                         headers=headers, verify=False)
                     _handle_github_response(coverage_report_res, logging_module)
         else:

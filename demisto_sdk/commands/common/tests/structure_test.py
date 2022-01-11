@@ -266,14 +266,12 @@ class TestStructureValidator:
         assert not structure.is_valid_file_extension()
 
     def test_is_field_with_open_ended(self, pack: Pack):
-        from demisto_sdk.commands.common.hook_validations.incident_field import \
-            TypeFields
         field_content = {
             'cliName': 'sanityname',
             'name': 'sanity name',
             'id': 'incident',
             'content': True,
-            'type': TypeFields.IncidentFieldTypeMultiSelect.value,
+            'type': 'multiSelect',
             'openEnded': True
         }
         incident_field: JSONBased = pack.create_incident_field(
@@ -284,14 +282,12 @@ class TestStructureValidator:
         assert structure.is_valid_scheme()
 
     def test_is_indicator_with_open_ended(self, pack: Pack):
-        from demisto_sdk.commands.common.hook_validations.incident_field import \
-            TypeFields
         field_content = {
             'cliName': 'sanityname',
             'name': 'sanity name',
             'id': 'incident',
             'content': True,
-            'type': TypeFields.IncidentFieldTypeMultiSelect.value,
+            'type': 'multiSelect',
             'openEnded': True
         }
         incident_field: JSONBased = pack.create_indicator_field(
@@ -346,6 +342,60 @@ class TestStructureValidator:
         assert not validator.is_valid_yml()
         err_msg = capsys.readouterr()
         assert exception in err_msg
+
+    def test_validate_field_with_aliases__valid(self, pack: Pack):
+        """
+        Given
+            Incident field with a valid Aliases field.
+        When
+            Validating the item.
+        Then
+            Ensures the schema is valid.
+        """
+        field_content = {
+            'cliName': 'mainfield',
+            'name': 'main field',
+            'id': 'incident',
+            'content': True,
+            'type': 'longText',
+            'Aliases': [{
+                "cliName": "alias field",
+                "type": "shortText"
+            }]
+        }
+        incident_field: JSONBased = pack.create_incident_field(
+            'incident-field-test',
+            content=field_content
+        )
+        structure = StructureValidator(incident_field.path)
+        assert structure.is_valid_scheme()
+
+    def test_validate_field_with_aliases__invalid_type(self, pack: Pack):
+        """
+        Given
+            - Incident field with a Aliases field that has an entry with an invalid type.
+        When
+            - Validating the item.
+        Then
+            - Ensures the schema is invalid.
+        """
+        field_content = {
+            'cliName': 'mainfield',
+            'name': 'main field',
+            'id': 'incident',
+            'content': True,
+            'type': 'longText',
+            'Aliases': [{
+                "cliName": "alias field",
+                "type": "UNKNOWN"
+            }]
+        }
+        incident_field: JSONBased = pack.create_incident_field(
+            'incident-field-test',
+            content=field_content
+        )
+        structure = StructureValidator(incident_field.path)
+        assert not structure.is_valid_scheme()
 
 
 class TestGetMatchingRegex:

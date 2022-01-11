@@ -770,6 +770,8 @@ class TestResults:
             self.empty_files.append(playbook_id)
 
     def create_result_files(self):
+        with open("./Tests/succeeded_tests.txt", "w") as succeeded_tests_file:
+            succeeded_tests_file.write('\n'.join(self.succeeded_playbooks))
         with open("./Tests/failed_tests.txt", "w") as failed_tests_file:
             failed_tests_file.write('\n'.join(self.failed_playbooks))
         with open('./Tests/skipped_tests.txt', "w") as skipped_tests_file:

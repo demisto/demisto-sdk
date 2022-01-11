@@ -94,6 +94,29 @@ BUILT_IN_FIELDS = [
 ]
 
 
+def does_dict_have_alternative_key(data: dict) -> bool:
+    """
+        Check if a key that ends with "_x2" exists in the dict (including inner levels)
+        Args:
+            data (dict): the data dict to search in
+
+        Returns: True if found such a key, else False
+
+    """
+
+    # start searching in the first level keys
+    for key in data:
+        if isinstance(key, str) and key.endswith('_x2'):
+            return True
+
+    for key, value in data.items():
+        if isinstance(value, dict):
+            if does_dict_have_alternative_key(value):
+                return True
+
+    return False
+
+
 def should_skip_item_by_mp(file_path: str, marketplace: str, print_logs: bool = False):
     """
     Checks if the item given (as path) should be part of the current generated id set.
@@ -544,6 +567,9 @@ def get_playbook_data(file_path: str) -> dict:
         playbook_data['transformers'] = transformers
     if implementing_lists:
         playbook_data['lists'] = implementing_lists
+    if does_dict_have_alternative_key(data_dictionary):
+        playbook_data['has_alternative_meta'] = True
+
     return {id_: playbook_data}
 
 
@@ -578,6 +604,8 @@ def get_script_data(file_path, script_code=None):
         script_data['docker_image'] = docker_image
     if tests:
         script_data['tests'] = tests
+    if does_dict_have_alternative_key(data_dictionary):
+        script_data['has_alternative_meta'] = True
 
     return {id_: script_data}
 
@@ -775,6 +803,8 @@ def get_incident_field_data(path, incidents_types_list):
         data['incident_types'] = list(all_associated_types)
     if all_scripts:
         data['scripts'] = list(all_scripts)
+    if does_dict_have_alternative_key(json_data):
+        data['has_alternative_meta'] = True
 
     return {id_: data}
 
@@ -980,6 +1010,8 @@ def get_mapper_data(path):
         data['transformers'] = list(all_transformers)
     if definition_id:
         data['definitionId'] = definition_id
+    if does_dict_have_alternative_key(json_data):
+        data['has_alternative_meta'] = True
 
     return {id_: data}
 
@@ -1602,7 +1634,7 @@ def merge_id_sets(first_id_set_dict: dict, second_id_set_dict: dict, print_logs:
             for obj in object_list:
                 obj_id = list(obj.keys())[0]
                 is_duplicate = has_duplicate(subset, obj_id, object_type, print_logs,
-                                             external_object=obj)
+                                             external_object=obj, is_create_new=False)
                 if is_duplicate:
                     duplicates.append(obj_id)
                 else:
@@ -2100,7 +2132,7 @@ def find_duplicates(id_set, print_logs, marketplace):
 
         dup_list = []
         for id_to_check in ids:
-            if has_duplicate(objects, id_to_check, object_type, print_logs):
+            if has_duplicate(objects, id_to_check, object_type, print_logs, is_create_new=True):
                 dup_list.append(id_to_check)
         lists_to_return.append(dup_list)
     if print_logs:
@@ -2111,19 +2143,21 @@ def find_duplicates(id_set, print_logs, marketplace):
 
     field_list = []
     for field_to_check in field_ids:
-        if has_duplicate(fields, field_to_check, 'Indicator and Incident Fields', print_logs):
+        if has_duplicate(fields, field_to_check, 'Indicator and Incident Fields', print_logs, is_create_new=True):
             field_list.append(field_to_check)
     lists_to_return.append(field_list)
 
     return lists_to_return
 
 
-def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=True, external_object=None):
+def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=True, external_object=None, is_create_new=False):
     """
     Finds if id_set_subset_list contains a duplicate items with the same id_to_check.
 
     Pass `external_object` to check if it exists in `id_set_subset_list`.
     Otherwise the function will check if `id_set_subset_list` contains 2 or more items with the id of `id_to_check`
+
+    Pass `is_create_new` if searching for duplicate while creating a new id-set.
 
     """
     duplicates = [duplicate for duplicate in id_set_subset_list if duplicate.get(id_to_check)]
@@ -2154,7 +2188,9 @@ def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=
 
         # If they have the same pack name and the same source they actually the same entity.
         # Added to support merge between two id-sets that contain the same pack.
-        if dict1.get('pack') == dict2.get('pack') and is_same_source(dict1.get('source'), dict2.get('source')):
+        if not is_create_new and \
+                dict1.get('pack') == dict2.get('pack') and\
+                is_same_source(dict1.get('source'), dict2.get('source')):
             return False
 
         # A: 3.0.0 - 3.6.0

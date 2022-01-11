@@ -53,6 +53,7 @@ class UpdateRN:
         self.master_version = self.get_master_version()
         self.rn_path = ''
         self.is_bc = is_bc
+        self.bc_path = ''
 
     @staticmethod
     def change_image_or_desc_file_path(file_path: str) -> str:
@@ -151,6 +152,11 @@ class UpdateRN:
                 run_command(f'git add {rn_path}', exit_on_error=False)
             except RuntimeError:
                 print_warning(f'Could not add the release note files to git: {rn_path}')
+            if self.is_bc and self.bc_path:
+                try:
+                    run_command(f'git add {self.bc_path}', exit_on_error=False)
+                except RuntimeError:
+                    print_warning(f'Could not add the release note config file to git: {rn_path}')
             if self.existing_rn_changed:
                 print_color(f"Finished updating release notes for {self.pack}.", LOG_COLORS.GREEN)
                 if not self.text:
@@ -183,6 +189,7 @@ class UpdateRN:
         if not self.is_bc:
             return
         bc_file_path: str = f'''{self.pack_path}/ReleaseNotes/{new_version.replace('.', '_')}.json'''
+        self.bc_path = bc_file_path
         bc_file_data: dict = dict()
         if os.path.exists(bc_file_path):
             with open(bc_file_path, 'r') as f:

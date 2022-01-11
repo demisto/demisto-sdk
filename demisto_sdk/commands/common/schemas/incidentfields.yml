@@ -7,7 +7,7 @@ mapping:
   incidentFields:
     type: seq
     sequence:
-    - include: field_schema
+      - include: field_schema
 
 schema;field_schema:
   type: map
@@ -83,11 +83,25 @@ schema;field_schema:
     unmapped:
       type: bool
     content:
-          type: bool
+      type: bool
     unsearchable:
-          type: bool
+      type: bool
     marketplaces:
       type: seq
       sequence:
         - type: str
-          enum: ['xsoar', 'marketplacev2']
+          enum: [ 'xsoar', 'marketplacev2' ]
+    Aliases:
+      type: seq
+      sequence:
+        - include: aliases_schema
+
+schema;aliases_schema:
+  type: map
+  mapping:
+    cliName:
+      type: str
+    type:
+      type: str
+      enum: [ 'shortText', 'longText', 'boolean', 'singleSelect', 'multiSelect', 'date', 'user', 'role', 'number',
+              'attachments', 'tagsSelect', 'internal', 'url', 'markdown', 'grid', 'timer', 'html' ]

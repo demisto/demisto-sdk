@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, mock_open
 
 import mitmproxy
 import pytest
-from mitmproxy.http import HTTPFlow, HTTPRequest
+from mitmproxy.http import HTTPFlow, Request
 from mitmproxy.net.http import Headers
 
 from demisto_sdk.commands.test_content.timestamp_replacer import \
@@ -14,16 +14,16 @@ from demisto_sdk.commands.test_content.timestamp_replacer import \
 
 @pytest.fixture()
 def flow():
-    request = HTTPRequest(first_line_format='first_line',
-                          host=b'localhost',
-                          path=b'/test/',
-                          http_version=b'1.1',
-                          port=1234,
-                          method=b'',
-                          scheme=b'',
-                          headers=Headers([(b"Host", b"example.com")]),
-                          content=None,
-                          timestamp_start=111.1)
+    request = Request(first_line_format='first_line',
+                      host=b'localhost',
+                      path=b'/test/',
+                      http_version=b'1.1',
+                      port=1234,
+                      method=b'',
+                      scheme=b'',
+                      headers=Headers([(b"Host", b"example.com")]),
+                      content=None,
+                      timestamp_start=111.1)
     flow = HTTPFlow(client_conn=MagicMock(),
                     server_conn=MagicMock())
     flow.request = request

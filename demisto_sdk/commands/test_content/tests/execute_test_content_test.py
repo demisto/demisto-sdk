@@ -23,7 +23,6 @@ class MockTestResults:
 
 
 class MockBuildContext:
-    build_number = 123456
     instances_ips = {}
     unmockable_tests_to_run = Queue()
     mockable_tests_to_run = Queue()
@@ -37,9 +36,11 @@ MOCK_ENV_VARIABLES = {
     'CONTENT_GITHUB_TOKEN': '123456',
     'CI_COMMIT_BRANCH': 'mock_branch',
     'CI_COMMIT_SHA': '1234567890abcdef',
+    'CIRCLE_BUILD_NUM': '123456'
 }
 
 
+# https://github.com/getsentry/responses
 @responses.activate
 def test_execute_test_content(mocker):
     expected_results = [

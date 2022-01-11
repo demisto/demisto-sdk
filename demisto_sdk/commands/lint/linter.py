@@ -641,11 +641,11 @@ class Linter:
             # Creating image if pylint specified or found tests and tests specified
             image_id = ""
             errors = ""
-            image_id = self._docker_mgr.get_test_image_for_base_image(base_image=image[0])
-            # for trial in range(2):
-            #     image_id, errors = self._docker_image_create(docker_base_image=image)
-            #     if not errors:
-            #         break
+            # image_id = self._docker_mgr.get_test_image_for_base_image(base_image=image[0])
+            for trial in range(2):
+                image_id, errors = self._docker_image_create(docker_base_image=image)
+                if not errors:
+                    break
 
             if image_id and not errors:
                 # Set image creation status

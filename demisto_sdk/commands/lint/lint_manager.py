@@ -502,15 +502,15 @@ class LintManager:
                                                no_pylint=no_pylint, no_test=no_test, no_pwsh_analyze=no_pwsh_analyze,
                                                no_pwsh_test=no_pwsh_test, docker_engine=self._facts["docker_engine"])
 
-        docker_manager = DockersManager(content_repo=Path(self._facts["content_repo"].working_dir),
-                                        pkgs=self._pkgs, modules=self._facts["test_modules"],
-                                        docker_timeout=docker_timeout,
-                                        req_2=self._facts["requirements_2"],
-                                        req_3=self._facts["requirements_3"],
-                                        )
-        start = time.time()
-        docker_manager.prepare_required_images()
-        logger.info(f'Docker manager run: {time.time() - start}')
+        # docker_manager = DockersManager(content_repo=Path(self._facts["content_repo"].working_dir),
+        #                                 pkgs=self._pkgs, modules=self._facts["test_modules"],
+        #                                 docker_timeout=docker_timeout,
+        #                                 req_2=self._facts["requirements_2"],
+        #                                 req_3=self._facts["requirements_3"],
+        #                                 )
+        # start = time.time()
+        # docker_manager.prepare_required_images()
+        # logger.info(f'Docker manager run: {time.time() - start}')
         with concurrent.futures.ThreadPoolExecutor(max_workers=parallel) as executor:
             
             start_time = time.time()
@@ -567,8 +567,8 @@ class LintManager:
                                         req_2=self._facts["requirements_2"],
                                         req_3=self._facts["requirements_3"],
                                         docker_engine=self._facts["docker_engine"],
-                                        docker_timeout=docker_timeout,
-                                        docker_manager=docker_manager)
+                                        docker_timeout=docker_timeout)
+                                        # docker_manager=docker_manager)
                 results.append(executor.submit(linter.run_dev_packages,
                                                no_flake8=no_flake8,
                                                no_bandit=no_bandit,

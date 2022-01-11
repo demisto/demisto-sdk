@@ -4,7 +4,7 @@
 """
     Demisto SDK
 """
-import configparser
+import os
 
 from setuptools import find_packages, setup  # noqa: H301
 
@@ -16,13 +16,25 @@ NAME = "demisto-sdk"
 # prerequisite: setuptools
 # http://pypi.python.org/pypi/setuptools
 
-# Converting Pipfile to requirements style list because setup expects requirements.txt file.
-parser = configparser.ConfigParser()
-parser.read("Pipfile")
-install_requires = [f'{key}{value}'.replace('\"', '').replace('*', '') for key, value in parser['packages'].items()]
-
 with open('README.md', 'r') as f:
     readme = f.read()
+
+try:
+    # pip >=20
+    from pip._internal.network.session import PipSession
+    from pip._internal.req import parse_requirements
+except ImportError:
+    try:
+        # 10.0.0 <= pip <= 19.3.1
+        from pip._internal.download import PipSession  # type: ignore[no-redef]
+        from pip._internal.req import parse_requirements
+    except ImportError:
+        # pip <= 9.0.3
+        from pip.download import PipSession  # type: ignore[no-redef]
+        from pip.req import parse_requirements  # type: ignore[no-redef]
+
+requirements = parse_requirements(os.path.join(os.path.dirname(__file__), 'requirements.txt'), session=PipSession())
+install_requires = [str(requirement.requirement) for requirement in requirements]
 
 setup(
     use_scm_version={

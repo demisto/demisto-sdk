@@ -442,13 +442,10 @@ class GitUtil:
                 for current_remote in self.repo.remotes:
                     for current_remote_ref in current_remote.refs:
                         current_remote_ref_str = str(current_remote_ref)
-                        print('*** , ' + str(type(current_remote_ref)) + ', current_remote_ref: ' + str(current_remote_ref))
                         if 'origin/main' == current_remote_ref_str:
-                            print('*** , Found main branch')
                             branch = 'main'
                             break
                         elif 'origin/master' == current_remote_ref_str:
-                            print('*** , Found master branch')
                             branch = 'master'
                             break
                 if not branch:

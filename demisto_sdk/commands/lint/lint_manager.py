@@ -251,7 +251,7 @@ class LintManager:
 
         return list(pkgs_to_check)
 
-    def run_dev_packages_orig(self, parallel: int, no_flake8: bool, no_xsoar_linter: bool, no_bandit: bool, no_mypy: bool,
+    def run_dev_packages(self, parallel: int, no_flake8: bool, no_xsoar_linter: bool, no_bandit: bool, no_mypy: bool,
                          no_pylint: bool, no_coverage: bool, coverage_report: str,
                          no_vulture: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
                          keep_container: bool,
@@ -439,7 +439,7 @@ class LintManager:
             return_exit_code = FAIL
         return return_exit_code
 
-    def run_dev_packages(self, parallel: int, no_flake8: bool, no_xsoar_linter: bool, no_bandit: bool, no_mypy: bool,
+    def run_dev_packages_test(self, parallel: int, no_flake8: bool, no_xsoar_linter: bool, no_bandit: bool, no_mypy: bool,
                          no_pylint: bool, no_coverage: bool, coverage_report: str,
                          no_vulture: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
                          keep_container: bool,

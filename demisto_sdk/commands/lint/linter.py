@@ -510,6 +510,10 @@ class Linter:
            int:  0 on successful else 1, errors
            str: Bandit errors
         """
+        ####
+        mypy_cache_exist = (self._content_repo/'.mypy_cache').exists()
+        logger.info(f'mypy cache {"exist" if mypy_cache_exist else "does not exist"} at {str(self._content_repo/".mypy_cache")}')
+        ####
         log_prompt = f"{self._pack_name} - Mypy"
         logger.info(f"{log_prompt} - Start")
         with add_typing_module(lint_files=lint_files, python_version=py_num):

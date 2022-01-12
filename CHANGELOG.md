@@ -1,6 +1,6 @@
 # Changelog
 
-* Added an enhancement to handle empty `output` in **split** command.
+* Added an enhancement to **split** to handle empty `output`
 
 # 1.5.6
 * Added 'deprecated' release notes template.

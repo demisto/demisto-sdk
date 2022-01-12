@@ -15,8 +15,7 @@ from enum import Enum
 from functools import lru_cache, partial
 from pathlib import Path, PosixPath
 from subprocess import DEVNULL, PIPE, Popen, check_output
-from typing import (Callable, Dict, List, Match, Optional, Tuple, Type,
-                    Union)
+from typing import Callable, Dict, List, Match, Optional, Tuple, Type, Union
 
 import click
 import colorama

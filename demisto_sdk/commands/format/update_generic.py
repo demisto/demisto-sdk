@@ -7,13 +7,13 @@ from typing import Any, Dict, Optional, Set, Union
 import click
 import dictdiffer
 
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION, INTEGRATION, PLAYBOOK)
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_dict_from_file,
                                                get_pack_metadata,
                                                get_remote_file,
                                                is_file_from_content_repo)
+from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 from demisto_sdk.commands.format.format_constants import (
     DEFAULT_VERSION, ERROR_RETURN_CODE, GENERIC_OBJECTS_DEFAULT_FROMVERSION,
     GENERIC_OBJECTS_FILE_TYPES, NEW_FILE_DEFAULT_5_5_0_FROMVERSION,
@@ -22,6 +22,7 @@ from demisto_sdk.commands.format.format_constants import (
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
 xsoar_yaml = XSOAR_YAML()
+
 
 class BaseUpdate:
     """BaseUpdate is the base class for all format commands.

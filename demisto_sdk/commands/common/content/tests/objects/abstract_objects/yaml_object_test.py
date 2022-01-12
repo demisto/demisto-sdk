@@ -1,5 +1,4 @@
 import pytest
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 
 from demisto_sdk.commands.common.constants import PACKS_DIR, PLAYBOOKS_DIR
 from demisto_sdk.commands.common.content.errors import (ContentInitializeError,
@@ -7,6 +6,7 @@ from demisto_sdk.commands.common.content.errors import (ContentInitializeError,
 from demisto_sdk.commands.common.content.objects.abstract_objects import \
     YAMLObject
 from demisto_sdk.commands.common.tools import src_root
+from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 
 TEST_DATA = src_root() / 'tests' / 'test_files'
 TEST_CONTENT_REPO = TEST_DATA / 'content_slim'
@@ -14,6 +14,7 @@ TEST_VALID_YAML = TEST_CONTENT_REPO / PACKS_DIR / 'Sample01' / PLAYBOOKS_DIR / '
 TEST_NOT_VALID_YAML = TEST_DATA / 'malformed.yaml'
 
 xsoar_yaml = XSOAR_YAML(typ='rt', width=50000)
+
 
 class TestValidYAML:
     def test_valid_yaml_file_path(self):

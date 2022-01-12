@@ -7,12 +7,11 @@ import click
 
 from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
                                                print_error)
+from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 from demisto_sdk.commands.format.format_constants import (
     DEFAULT_VERSION, ERROR_RETURN_CODE, NEW_FILE_DEFAULT_5_FROMVERSION,
     SKIP_RETURN_CODE, SUCCESS_RETURN_CODE, VERSION_6_0_0)
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
-
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 
 xsoar_yaml = XSOAR_YAML()
 

@@ -14,7 +14,6 @@ from demisto_client.demisto_api.rest import ApiException
 from dictor import dictor
 from flatten_dict import unflatten
 from mergedeep import merge
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 from tabulate import tabulate
 from urllib3.exceptions import MaxRetryError
 
@@ -34,6 +33,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                get_yaml, get_yml_paths_in_dir,
                                                print_color,
                                                retrieve_file_ending)
+from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 

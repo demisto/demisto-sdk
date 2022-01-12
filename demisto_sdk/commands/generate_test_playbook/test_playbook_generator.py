@@ -3,9 +3,9 @@ from pathlib import Path
 from typing import Dict, Optional
 
 import click
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 
 from demisto_sdk.commands.common.constants import FileType
+from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 from demisto_sdk.commands.upload.uploader import Uploader
 
 xsoar_yaml = XSOAR_YAML()

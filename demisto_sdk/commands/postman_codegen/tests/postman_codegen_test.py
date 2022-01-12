@@ -11,6 +11,7 @@ from click.testing import CliRunner
 import demisto_sdk.commands.common.tools as tools
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 from demisto_sdk.commands.generate_integration.code_generator import (
     IntegrationGeneratorArg, IntegrationGeneratorConfig,
     IntegrationGeneratorOutput)
@@ -19,9 +20,8 @@ from demisto_sdk.commands.postman_codegen.postman_codegen import (
     find_shared_args_path, flatten_collections, generate_command_outputs,
     postman_to_autogen_configuration, update_min_unique_path)
 
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
-
 xsoar_yaml = XSOAR_YAML()
+
 
 class TestPostmanHelpers:
     def test_create_body_format(self):

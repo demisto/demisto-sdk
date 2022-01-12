@@ -4,11 +4,11 @@ import os
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import DEFAULT_IMAGE_BASE64
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
-
 xsoar_yaml = XSOAR_YAML()
+
 
 def test_extract_long_description(tmpdir):
 

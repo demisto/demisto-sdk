@@ -17,6 +17,7 @@ from demisto_sdk.commands.common.hook_validations.integration import \
     IntegrationValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import LOG_COLORS, is_string_uuid
+from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
@@ -36,7 +37,6 @@ from demisto_sdk.tests.constants_test import (
     SOURCE_FORMAT_PLAYBOOK_COPY, SOURCE_FORMAT_SCRIPT_COPY,
     SOURCE_FORMAT_TEST_PLAYBOOK, TEST_PLAYBOOK_PATH)
 from TestSuite.test_tools import ChangeCWD
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 
 xsoar_yaml = XSOAR_YAML()
 
@@ -1283,5 +1283,3 @@ class TestFormatting:
         base_yml = IntegrationYMLFormat(input=playbook.yml.path)
         base_yml.update_id_to_equal_name()
         assert base_yml.data.get('id') == uid
-
-

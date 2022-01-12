@@ -2,12 +2,13 @@ import glob
 import os
 
 import pytest
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 
 from demisto_sdk.commands.common.hook_validations.description import \
     DescriptionValidator
+from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 from TestSuite.test_tools import ChangeCWD
 
+xsoar_yaml = XSOAR_YAML()
 
 @pytest.mark.parametrize('integration_obj', [
     ({'script': {'script': 'Here Comes The Script'},
@@ -32,7 +33,7 @@ def test_is_duplicate_description_unified_deprecated_integration(mocker, tmp_pat
     integration_dir = tmp_path / 'Packs' / 'SomePack' / 'Integrations' / 'SomeIntegration'
     integration_dir.mkdir(parents=True)
     unified_integration_yml = integration_dir / 'SomeIntegration.yml'
-    YAML(typ='safe', pure=True).dump(integration_obj, unified_integration_yml.open('w'))
+    xsoar_yaml.dump(integration_obj, unified_integration_yml.open('w'))
     description_validator = DescriptionValidator(str(unified_integration_yml))
     assert description_validator.is_duplicate_description()
     assert not DescriptionValidator.handle_error.called

@@ -13,10 +13,9 @@ from mock import patch
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml
+from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
 from TestSuite.test_tools import ChangeCWD
-
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 
 xsoar_yaml = XSOAR_YAML()
 
@@ -370,7 +369,7 @@ def test_insert_script_to_yml(package_path, dir_name, file_path):
         unifier.dir_name = dir_name
         unifier.is_script_package = dir_name == 'Scripts'
         with open(file_path + ".yml", "r") as yml:
-            test_yml_data = yaml.safe_load(yml)
+            test_yml_data = xsoar_yaml.load(yml)
 
         test_yml_unified = copy.deepcopy(test_yml_data)
 
@@ -404,7 +403,7 @@ def test_insert_script_to_yml_exceptions(package_path, dir_name, file_path):
         unifier.dir_name = dir_name
         unifier.is_script_package = dir_name == 'Scripts'
         with open(file_path + ".yml", "r") as yml:
-            test_yml_data = yaml.safe_load(yml)
+            test_yml_data = xsoar_yaml.load(yml)
         if dir_name == "Scripts":
             test_yml_data['script'] = 'blah'
         else:

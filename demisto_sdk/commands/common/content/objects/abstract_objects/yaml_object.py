@@ -1,13 +1,12 @@
 from typing import Union
 
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 from ruamel.yaml.scanner import ScannerError
 from wcmatch.pathlib import EXTGLOB, NEGATE, Path
 
 import demisto_sdk.commands.common.content.errors as exc
+from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 
 from .dictionary_based_object import DictionaryBasedObject
-
 
 xsoar_yml = XSOAR_YAML(typ='rt', width=50000)
 

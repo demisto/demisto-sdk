@@ -10,7 +10,6 @@ from typing import Dict, List, Tuple, Union
 
 import click
 from inflection import dasherize, underscore
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 from ruamel.yaml.scalarstring import FoldedScalarString
 
 from demisto_sdk.commands.common.constants import (
@@ -24,6 +23,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, arg_to_list,
                                                print_color, print_error,
                                                print_warning,
                                                server_version_compare)
+from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 
 PACK_METADATA_PATH = 'pack_metadata.json'
 CONTRIBUTOR_DISPLAY_NAME = ' ({} Contribution)'
@@ -85,7 +85,7 @@ class YmlUnifier:
                 self.yml_path = path
                 break
 
-        self.xsoar_yaml = XSOAR_YAML(width=50000) # make sure long lines will not break (relevant for code section)
+        self.xsoar_yaml = XSOAR_YAML(width=50000)  # make sure long lines will not break (relevant for code section)
         if self.yml_path:
             with io.open(self.yml_path, 'r', encoding='utf8') as yml_file:
                 self.yml_data = self.xsoar_yaml.load(yml_file)

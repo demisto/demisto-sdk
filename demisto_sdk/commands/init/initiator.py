@@ -24,11 +24,11 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                get_common_server_path,
                                                get_pack_name, print_error,
                                                print_v, print_warning)
+from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
 
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
-
 xsoar_yaml = XSOAR_YAML()
+
 
 def extract_values_from_nested_dict_to_a_set(given_dictionary: dict, return_set: set):
     """Recursively extracts values from a nested dictionary to a set.

@@ -9,6 +9,7 @@ from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 
 xsoar_yaml = XSOAR_YAML()
 
+
 class Playbook:
     def __init__(self, tmpdir: Path, name, repo, is_test_playbook: bool = False):
         # Save entities

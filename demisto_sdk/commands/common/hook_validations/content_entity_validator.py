@@ -4,7 +4,6 @@ from abc import abstractmethod
 from distutils.version import LooseVersion
 from typing import Optional
 
-
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION, ENTITY_NAME_SEPARATORS,
     EXCLUDED_DISPLAY_NAME_WORDS, FEATURE_BRANCHES,
@@ -18,7 +17,6 @@ from demisto_sdk.commands.common.tools import (_get_file_id,
                                                get_file_displayed_name,
                                                is_test_config_match,
                                                run_command)
-
 from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 
 xsoar_yaml = XSOAR_YAML()

@@ -1,13 +1,14 @@
 from typing import Callable, List, Optional
 
 import pytest
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 from wcmatch.pathlib import Path
 
+from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 from demisto_sdk.commands.lint import linter
 from demisto_sdk.commands.lint.linter import Linter
 
 xsoar_yaml = XSOAR_YAML()
+
 
 @pytest.fixture
 def linter_obj(mocker) -> Linter:

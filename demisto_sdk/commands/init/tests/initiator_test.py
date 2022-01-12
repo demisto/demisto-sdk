@@ -12,10 +12,9 @@ from demisto_sdk.commands.common.constants import (
     INTEGRATION_CATEGORIES, MARKETPLACE_LIVE_DISCUSSIONS, MARKETPLACES,
     PACK_INITIAL_VERSION, PACK_SUPPORT_OPTIONS, XSOAR_AUTHOR, XSOAR_SUPPORT,
     XSOAR_SUPPORT_URL)
+from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 from demisto_sdk.commands.init.initiator import Initiator
 from TestSuite.test_tools import ChangeCWD
-
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 
 xsoar_yaml = XSOAR_YAML()
 

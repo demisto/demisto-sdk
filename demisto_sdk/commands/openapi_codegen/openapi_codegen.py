@@ -11,6 +11,7 @@ import autopep8
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.tools import camel_to_snake, print_error
+from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 from demisto_sdk.commands.generate_integration.base_code import (
     BASE_ARGUMENT, BASE_BASIC_AUTH, BASE_CLIENT, BASE_CODE_TEMPLATE,
     BASE_CREDENTIALS, BASE_DATA, BASE_FUNCTION, BASE_HEADER,
@@ -18,8 +19,6 @@ from demisto_sdk.commands.generate_integration.base_code import (
     BASE_TOKEN)
 from demisto_sdk.commands.generate_integration.XSOARIntegration import \
     XSOARIntegration
-
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 
 xsoar_yaml = XSOAR_YAML()
 

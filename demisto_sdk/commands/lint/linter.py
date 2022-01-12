@@ -18,7 +18,6 @@ import git
 import requests.exceptions
 import urllib3.exceptions
 from jinja2 import Environment, FileSystemLoader, exceptions
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 from wcmatch.pathlib import NEGATE, Path
 
 from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
@@ -27,6 +26,7 @@ from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
 # Local packages
 from demisto_sdk.commands.common.tools import (get_all_docker_images,
                                                run_command_os)
+from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 from demisto_sdk.commands.lint.commands_builder import (
     build_bandit_command, build_flake8_command, build_mypy_command,
     build_pwsh_analyze_command, build_pwsh_test_command, build_pylint_command,
@@ -44,6 +44,7 @@ from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, RERUN, RL,
 
 logger = logging.getLogger('demisto-sdk')
 xsoar_yaml = XSOAR_YAML()
+
 
 class Linter:
     """ Linter used to activate lint command on single package

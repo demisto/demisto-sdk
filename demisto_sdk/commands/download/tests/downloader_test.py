@@ -4,7 +4,6 @@ from pathlib import Path
 
 import pytest
 from mock import patch
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 
 from demisto_sdk.commands.common.constants import (
     CLASSIFIERS_DIR, CONNECTIONS_DIR, CONTENT_ENTITIES_DIRS, DASHBOARDS_DIR,
@@ -16,9 +15,11 @@ from demisto_sdk.commands.common.constants import (
     SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR)
 from demisto_sdk.commands.common.tools import (get_child_files, get_json,
                                                get_yaml)
+from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 from demisto_sdk.commands.download.downloader import Downloader
 
 xsoar_yaml = XSOAR_YAML()
+
 
 def ordered(obj):
     if isinstance(obj, dict):

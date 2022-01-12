@@ -13,6 +13,7 @@ from TestSuite.yml import YML
 
 xsoar_yaml = XSOAR_YAML()
 
+
 class Integration:
     def __init__(self, tmpdir: Path, name, repo, create_unified: Optional[bool] = False):
         # Save entities

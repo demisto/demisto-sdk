@@ -48,7 +48,7 @@ def test_execute_test_content(mocker):
         'The collected tests are related to this pull request and might be critical:\n- demo integration',
 
         'Link to the coverage report of the integration:\n '
-        'https://xsoar.docs.pan.run/-/content/-/jobs/123456/artifacts/artifacts/coverage_report/html/index.html'
+        'https://xsoar.docs.pan.run/-/content/-/jobs/123451/artifacts/artifacts/coverage_report/html/index.html'
     ]
     results = []
 

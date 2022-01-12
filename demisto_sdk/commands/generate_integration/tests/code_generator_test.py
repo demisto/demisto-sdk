@@ -127,10 +127,9 @@ class TestCodeGenerator:
 
         yaml_obj = autogen_config.generate_integration_yml().to_dict()
         with open(os.path.join(self.test_integration_dir, 'VirusTotalTest.yml'), mode='r') as f:
-            expected_yml = f.read()
+            expected_yml = xsoar_yaml.load(f)
 
-        actual_yml = xsoar_yaml.dump(yaml_obj)
-        assert expected_yml == actual_yml
+        assert expected_yml == yaml_obj
 
     def test_generate_integration_package(self, tmpdir, mocker):
         """

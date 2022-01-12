@@ -9,17 +9,15 @@ xsoar_yaml = XSOAR_YAML()
 
 class YAML(File):
     def __init__(self, tmp_path: Path, repo_path: str, yml: Optional[dict] = None):
-        if yml is None:
-            init_yml = ''
-        else:
-            init_yml = xsoar_yaml.dump(yml)
-        super().__init__(tmp_path, repo_path, init_yml)
+        if yml:
+            self.write_dict(yml)
+        super().__init__(tmp_path, repo_path)
 
     def write_dict(self, yml: dict):
-        self.write(xsoar_yaml.dump(yml))
+        xsoar_yaml.dump(yml, self._tmp_path.open('w+'))
 
     def read_dict(self):
-        return xsoar_yaml.load(self.read())
+        return xsoar_yaml.load(self._tmp_path.open())
 
     def update(self, update_obj: dict):
         yml_contents = self.read_dict()

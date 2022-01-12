@@ -13,5 +13,5 @@ class XSOAR_YAML:
     def load(self, stream):
         return self.xsoar_yaml.load(stream)
 
-    def dump(self, data, stream, **kwargs):
+    def dump(self, data, stream=None, **kwargs):
         return self.xsoar_yaml.dump(data, stream, **kwargs)

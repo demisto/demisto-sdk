@@ -1,5 +1,6 @@
 import base64
 import os
+from pathlib import Path
 
 import yaml
 
@@ -115,7 +116,7 @@ def test_extract_code_pwsh(tmpdir):
 
     extractor.extract_code(extractor.output)
     # notice that we passed without an extension. Extractor should be adding .ps1
-    with open(extractor.output + '.ps1', 'r', encoding='utf-8') as temp_code:
+    with open(extractor.output.with_suffix('.ps1'), 'r', encoding='utf-8') as temp_code:
         file_data = temp_code.read()
         assert '. $PSScriptRoot\\CommonServerPowerShell.ps1\n' in file_data
         assert file_data[-1] == '\n'
@@ -127,7 +128,16 @@ def test_get_output_path():
                             file_type='integration',
                             output=out)
     res = extractor.get_output_path()
-    assert res == out + "/Zoom"
+    assert res == Path(out + "/Zoom")
+
+
+def test_get_output_path_empty_output():
+    input_path = Path(f'{git_path()}/demisto_sdk/tests/test_files/integration-Zoom.yml')
+    extractor = YmlSplitter(input=str(input_path),
+                            file_type='integration'
+                            )
+    res = extractor.get_output_path()
+    assert res == input_path.parent
 
 
 def test_extract_to_package_format_pwsh(tmpdir):

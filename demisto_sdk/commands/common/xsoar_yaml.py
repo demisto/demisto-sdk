@@ -29,4 +29,3 @@ class XSOAR_YAML:
         if sort_keys:
             data = XSOAR_YAML._order_dict(data)
         return self.xsoar_yaml.dump(data, stream, **kwargs)
-

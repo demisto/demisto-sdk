@@ -2,10 +2,9 @@ from pathlib import Path
 from typing import Optional
 
 from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
+from TestSuite.file import File
 
 xsoar_yaml = XSOAR_YAML()
-
-from TestSuite.file import File
 
 
 class YAML(File):

@@ -328,16 +328,26 @@ class Pack:
         server_version = get_demisto_version(client)
         return LooseVersion(server_version.base_version) >= LooseVersion(server_version_to_check)  # type: ignore
 
-    def upload(self, logger: logging.Logger, client: demisto_client):
+    def upload(self, logger: logging.Logger, client: demisto_client, skip_validation: bool):
         """
         Upload the pack zip to demisto_client,
         from 6.5 server version we have the option to use skip_verify arg instead of server configuration.
         Args:
             logger (logging.Logger): System logger already initialized.
             client: The demisto_client object of the desired XSOAR machine to upload to.
+            skip_validation: if true will skip upload packs validation.
         Returns:
             The result of the upload command from demisto_client
         """
+        if self.is_server_version_ge(client, '6.6.0'):
+            try:
+                logger.info('Uploading...')
+                return client.upload_content_packs(
+                    file=self.path, skip_verify='true', skip_validation=skip_validation)  # type: ignore
+
+            except Exception as err:
+                raise Exception(f'Failed to upload pack, error: {err}')
+
         if self.is_server_version_ge(client, '6.5.0'):
             try:
                 logger.info('Uploading...')

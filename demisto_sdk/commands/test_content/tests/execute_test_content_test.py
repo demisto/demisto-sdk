@@ -23,6 +23,7 @@ class MockTestResults:
 
 
 class MockBuildContext:
+    build_number = '123456'
     instances_ips = {}
     unmockable_tests_to_run = Queue()
     mockable_tests_to_run = Queue()
@@ -36,7 +37,6 @@ MOCK_ENV_VARIABLES = {
     'CONTENT_GITHUB_TOKEN': '123456',
     'CI_COMMIT_BRANCH': 'mock_branch',
     'CI_COMMIT_SHA': '1234567890abcdef',
-    'CIRCLE_BUILD_NUM': '123456'
 }
 
 
@@ -48,7 +48,7 @@ def test_execute_test_content(mocker):
         'The collected tests are related to this pull request and might be critical:\n- demo integration',
 
         'Link to the coverage report of the integration:\n '
-        'https://123456-60525392-gh.circle-artifacts.com/0/artifacts/coverage_report/html/index.html'
+        'https://xsoar.docs.pan.run/-/content/-/jobs/123456/artifacts/artifacts/coverage_report/html/index.html'
     ]
     results = []
 

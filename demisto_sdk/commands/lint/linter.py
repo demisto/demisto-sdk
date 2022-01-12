@@ -646,7 +646,7 @@ class Linter:
             except (docker.errors.ImageNotFound, docker.errors.APIError):
                 pass
         
-        logger.info(f'run_lint_on_docker_image take: {time.time() - start_total_time }s')
+        logger.info(f'{self._pack_name} - run_lint_on_docker_image take: {time.time() - start_total_time }s')
         
 
     def _docker_login(self) -> bool:

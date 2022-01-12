@@ -6,7 +6,7 @@ from ruamel import yaml
 from TestSuite.file import File
 
 
-class YAML(File):
+class YML(File):
     def __init__(self, tmp_path: Path, repo_path: str, yml: Optional[dict] = None):
         if yml is None:
             init_yml = ''

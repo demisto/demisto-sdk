@@ -3,12 +3,17 @@ import shutil
 from pathlib import Path
 from typing import List, Optional
 
-import yaml
+from ruamel.yaml import YAML
+
 
 from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
 from TestSuite.file import File
 from TestSuite.test_tools import suite_join_path
-from TestSuite.yml import YAML
+from TestSuite.yml import YML
+
+ryaml = YAML()
+ryaml.preserve_quotes = True
+ryaml.allow_duplicate_keys = True
 
 
 class Integration:
@@ -27,7 +32,7 @@ class Integration:
 
         self.path = str(self._tmpdir_integration_path)
         self.code = File(self._tmpdir_integration_path / f'{self.name}.py', self._repo.path)
-        self.yml = YAML(self._tmpdir_integration_path / f'{self.name}.yml', self._repo.path)
+        self.yml = YML(self._tmpdir_integration_path / f'{self.name}.yml', self._repo.path)
         self.readme = File(self._tmpdir_integration_path / 'README.md', self._repo.path)
         self.description = File(self._tmpdir_integration_path / f'{self.name}_description.md', self._repo.path)
         self.changelog = File(self._tmpdir_integration_path / 'CHANGELOG.md', self._repo.path)
@@ -70,7 +75,7 @@ class Integration:
         with open(suite_join_path(default_integration_dir, 'sample.py')) as code_file:
             code = str(code_file.read())
         with open(suite_join_path(default_integration_dir, 'sample.yml')) as yml_file:
-            yml = yaml.safe_load(yml_file)
+            yml = ryaml.load(yml_file)
             yml['name'] = yml['commonfields']['id'] = name
             if commands:
                 for command in commands:

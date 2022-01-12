@@ -1,11 +1,15 @@
 from pathlib import Path
 from typing import Optional
 
-import yaml
-
 from TestSuite.file import File
 from TestSuite.test_tools import suite_join_path
-from TestSuite.yml import YAML
+from TestSuite.yml import YML
+
+from ruamel.yaml import YAML
+
+ryaml = YAML()
+ryaml.preserve_quotes = True
+ryaml.allow_duplicate_keys = True
 
 
 class Playbook:
@@ -17,7 +21,7 @@ class Playbook:
         self.is_test_playbook = is_test_playbook
 
         self.path = str(tmpdir)
-        self.yml = YAML(tmpdir / f'{self.name}.yml', self._repo.path)
+        self.yml = YML(tmpdir / f'{self.name}.yml', self._repo.path)
 
         if not self.is_test_playbook:
             self.readme = File(tmpdir / 'README.md', self._repo.path)
@@ -50,13 +54,13 @@ class Playbook:
         """
         default_playbook_dir = 'assets/default_playbook'
         with open(suite_join_path(default_playbook_dir, 'playbook-sample.yml')) as yml_file:
-            yml = yaml.safe_load(yml_file)
+            yml = ryaml.load(yml_file)
             yml['id'] = yml['name'] = name
             self.build(yml=yml)
 
     def create_default_test_playbook(self, name: str = 'SamplePlaybookTest'):
         default_test_playbook_dir = 'assets/default_playbook'
         with open(suite_join_path(default_test_playbook_dir, 'playbook-sample.yml')) as yml_file:
-            yml = yaml.safe_load(yml_file)
+            yml = ryaml.load(yml_file)
             yml['id'] = yml['name'] = name
             self.build(yml=yml)

@@ -2,11 +2,15 @@ import os
 import shutil
 from pathlib import Path
 
-import yaml
-
 from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
 from TestSuite.integration import Integration
 from TestSuite.test_tools import suite_join_path
+
+from ruamel.yaml import YAML
+
+ryaml = YAML()
+ryaml.allow_duplicate_keys = True
+ryaml.preserve_quotes = True  # type: ignore
 
 
 class Script(Integration):
@@ -27,7 +31,7 @@ class Script(Integration):
         with open(suite_join_path(default_script_dir, 'sample_script.py')) as code_file:
             code = str(code_file.read())
         with open(suite_join_path(default_script_dir, 'sample_script.yml')) as yml_file:
-            yml = yaml.load(yml_file, Loader=yaml.FullLoader)
+            yml = ryaml.load(yml_file)
             yml['name'] = yml['commonfields']['id'] = name
         with open(suite_join_path(default_script_dir, 'sample_script_image.png'), 'rb') as image_file:
             image = image_file.read()

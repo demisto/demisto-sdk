@@ -25,7 +25,6 @@ import git
 import giturlparse
 import requests
 import urllib3
-import yaml
 from packaging.version import parse
 from pebble import ProcessFuture, ProcessPool
 from ruamel.yaml import YAML
@@ -71,23 +70,6 @@ LOG_VERBOSE = False
 LAYOUT_CONTAINER_FIELDS = {'details', 'detailsV2', 'edit', 'close', 'mobile', 'quickView', 'indicatorsQuickView',
                            'indicatorsDetails'}
 SDK_PYPI_VERSION = r'https://pypi.org/pypi/demisto-sdk/json'
-
-
-class XsoarLoader(yaml.SafeLoader):
-    """
-    New yaml loader based on SafeLoader which can handle the XSOAR related changes in yml.
-    """
-
-    def reference(self, node):
-        """
-        !reference - found in gitlab ci files.
-        handle !reference tag by turning its line into a string.
-        """
-        build_string = '!reference ' + str(self.construct_sequence(node))
-        return self.construct_yaml_str(yaml.ScalarNode(tag='!reference', value=build_string))
-
-
-XsoarLoader.add_constructor('!reference', XsoarLoader.reference)
 
 
 def set_log_verbose(verbose: bool):
@@ -369,7 +351,7 @@ def filter_packagify_changes(modified_files, added_files, removed_files, tag='ma
                 updated_added_files.add(file_path)
                 continue
             with open(file_path) as f:
-                details = yaml.safe_load(f.read())
+                details = ryaml.load(f)
 
             uniq_identifier = '_'.join([
                 details['name'],
@@ -477,7 +459,7 @@ def get_file(file_path, type_of_file):
             stream = io.StringIO(replaced)
             try:
                 if type_of_file in ('yml', '.yml'):
-                    data_dictionary = yaml.load(stream, Loader=XsoarLoader)
+                    data_dictionary = ryaml.load(stream)
 
                 else:
                     data_dictionary = json.load(stream)
@@ -1646,7 +1628,7 @@ def get_content_file_type_dump(file_path: str) -> Callable[[str], str]:
     file_extension = os.path.splitext(file_path)[-1]
     curr_string_transformer: Union[partial[str], Type[str], Callable] = str
     if file_extension in ['.yml', '.yaml']:
-        curr_string_transformer = yaml.dump
+        curr_string_transformer = ryaml.dump
     elif file_extension == '.json':
         curr_string_transformer = partial(json.dumps, indent=4)
     return curr_string_transformer

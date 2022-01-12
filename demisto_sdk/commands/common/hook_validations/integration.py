@@ -3,8 +3,6 @@ import re
 from pathlib import Path
 from typing import Dict, Optional
 
-import yaml
-
 from demisto_sdk.commands.common.constants import (
     BANG_COMMAND_ARGS_MAPPING_DICT, BANG_COMMAND_NAMES, DBOT_SCORES_DICT,
     DEFAULT_CONTENT_ITEM_FROM_VERSION, DEPRECATED_REGEXES,
@@ -31,7 +29,14 @@ from demisto_sdk.commands.common.tools import (
     get_file_version_suffix_if_exists, get_files_in_dir, get_pack_name,
     is_iron_bank_pack, print_error, server_version_compare)
 
+from ruamel.yaml import YAML
+
+ryaml = YAML()
+ryaml.allow_duplicate_keys = True
+ryaml.preserve_quotes = True  # type: ignore
+
 default_additional_info = load_default_additional_info_dict()
+
 
 
 class IntegrationValidator(ContentEntityValidator):
@@ -907,7 +912,7 @@ class IntegrationValidator(ContentEntityValidator):
             for param in FETCH_REQUIRED_PARAMS:
                 if param not in params:
                     error_message, error_code = Errors.parameter_missing_from_yml(param.get('name'),
-                                                                                  yaml.dump(param))
+                                                                                  ryaml.dump(param))
                     if self.handle_error(error_message, error_code, file_path=self.file_path,
                                          suggested_fix=Errors.suggest_fix(self.file_path)):
                         fetch_params_exist = False
@@ -934,13 +939,13 @@ class IntegrationValidator(ContentEntityValidator):
 
             if not first_fetch_param:
                 error_message, error_code = Errors.parameter_missing_from_yml_not_community_contributor(
-                    'first_fetch', yaml.dump(FIRST_FETCH_PARAM))
+                    'first_fetch', ryaml.dump(FIRST_FETCH_PARAM))
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     fetch_params_exist = False
 
             if not max_fetch_param:
                 error_message, error_code = Errors.parameter_missing_from_yml_not_community_contributor(
-                    'max_fetch', yaml.dump(MAX_FETCH_PARAM))
+                    'max_fetch', ryaml.dump(MAX_FETCH_PARAM))
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     fetch_params_exist = False
 
@@ -982,7 +987,7 @@ class IntegrationValidator(ContentEntityValidator):
             if not is_valid:
                 param_structure = dict(equal_key_values, **contained_key_values, name=required_param.get('name'))
                 error_message, error_code = Errors.parameter_missing_for_feed(required_param.get('name'),
-                                                                              yaml.dump(param_structure))
+                                                                              ryaml.dump(param_structure))
                 if self.handle_error(error_message, error_code, file_path=self.file_path,
                                      suggested_fix=Errors.suggest_fix(self.file_path)):
                     params_exist = False

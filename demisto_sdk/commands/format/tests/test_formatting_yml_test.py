@@ -36,7 +36,9 @@ from demisto_sdk.tests.constants_test import (
     SOURCE_FORMAT_PLAYBOOK_COPY, SOURCE_FORMAT_SCRIPT_COPY,
     SOURCE_FORMAT_TEST_PLAYBOOK, TEST_PLAYBOOK_PATH)
 from TestSuite.test_tools import ChangeCWD
-from demisto_sdk.commands.common.yml import XSOAR_YAML
+from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
+
+xsoar_yaml = XSOAR_YAML()
 
 INTEGRATION_TEST_ARGS = (SOURCE_FORMAT_INTEGRATION_COPY, DESTINATION_FORMAT_INTEGRATION_COPY, IntegrationYMLFormat,
                          'New Integration_copy', 'integration')
@@ -273,7 +275,7 @@ class TestFormatting:
             format_obj = IntegrationYMLFormat(src_file, output=dest, path=schema_path, verbose=True)
         assert format_obj.run_format() == 0
         with open(dest) as f:
-            data = XSOAR_YAML.load(f)
+            data = xsoar_yaml.load(f)
         assert data['fromversion'] == '5.5.0'
         assert data['commonfields']['version'] == -1
 
@@ -301,7 +303,7 @@ class TestFormatting:
         assert os.path.isfile(saved_file_path)
 
         with open(saved_file_path, 'r') as f:
-            yaml_content = XSOAR_YAML.load(f)
+            yaml_content = xsoar_yaml.load(f)
             assert 'yes' in yaml_content['tasks']['27']['nexttasks']
         os.remove(saved_file_path)
 
@@ -493,7 +495,7 @@ class TestFormatting:
         )
         res = format_manager(input=target, verbose=True)
         with open(target, 'r') as f:
-            yaml_content = XSOAR_YAML.load(f)
+            yaml_content = xsoar_yaml.load(f)
             params = yaml_content['configuration']
             for param in params:
                 if 'defaultvalue' in param and param['name'] != 'feed':
@@ -530,7 +532,7 @@ class TestFormatting:
         shutil.copyfile(source, target)
         res = format_manager(input=target, verbose=True)
         with open(target, 'r') as f:
-            yaml_content = XSOAR_YAML.load(f)
+            yaml_content = xsoar_yaml.load(f)
             params = yaml_content['configuration']
             for counter, param in enumerate(params):
                 if 'defaultvalue' in param and param['name'] != 'feed':
@@ -718,7 +720,7 @@ class TestFormatting:
         # test example script file with version before 5.0.0
         src_file = f'{test_files_dir}/SlackAsk.yml'
         with open(src_file) as f:
-            data = XSOAR_YAML.load(f)
+            data = xsoar_yaml.load(f)
         org_docker = data['dockerimage']
         assert data['fromversion'] < '5.0.0'
         assert not data.get(

@@ -43,7 +43,7 @@ from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, RERUN, RL,
                                                stream_docker_container_output)
 
 logger = logging.getLogger('demisto-sdk')
-
+xsoar_yaml = XSOAR_YAML()
 
 class Linter:
     """ Linter used to activate lint command on single package
@@ -193,7 +193,7 @@ class Linter:
         try:
 
             script_obj: Dict = {}
-            yml_obj: Dict = YAML().load(yml_file)
+            yml_obj: Dict = xsoar_yaml.load(yml_file)
             if isinstance(yml_obj, dict):
                 script_obj = yml_obj.get('script', {}) if isinstance(yml_obj.get('script'), dict) else yml_obj
             self._facts['is_script'] = True if 'Scripts' in yml_file.parts else False

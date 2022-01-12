@@ -50,11 +50,6 @@ PLAYBOOK_TEST_ARGS = (SOURCE_FORMAT_PLAYBOOK_COPY, DESTINATION_FORMAT_PLAYBOOK_C
 BASIC_YML_TEST_PACKS = [INTEGRATION_TEST_ARGS, SCRIPT_TEST_ARGS, PLAYBOOK_TEST_ARGS]
 
 
-def order_dict(dictionary):
-    return {k: order_dict(v) if isinstance(v, dict) else v
-            for k, v in sorted(dictionary.items())}
-
-
 class TestFormatting:
     @pytest.mark.parametrize('source_path, destination_path, formatter, yml_title, file_type', BASIC_YML_TEST_PACKS)
     def test_yml_preserve_comment(self, source_path, destination_path, formatter, yml_title, file_type, capsys):
@@ -1165,7 +1160,7 @@ class TestFormatting:
             yml_example = xsoar_yaml.load(f)
         sorted_yml_file = tmp_path / 'test.yml'
         with sorted_yml_file.open('w') as f:
-            xsoar_yaml.dump(order_dict(yml_example), f)  # sorting the keys to have different order
+            xsoar_yaml.dump(yml_example, f, sort_keys=True)  # sorting the keys to have different order
         mocker.patch.object(BaseUpdateYML, 'get_id_and_version_path_object', return_value={'id': "vmware"})
         mocker.patch.object(update_generic, 'get_remote_file', return_value=yml_example)
         base_update_yml = BaseUpdateYML(input=str(sorted_yml_file))

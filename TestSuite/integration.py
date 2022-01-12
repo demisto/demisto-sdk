@@ -7,7 +7,7 @@ from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
 from TestSuite.file import File
 from TestSuite.test_tools import suite_join_path
-from TestSuite.yml import YML
+from TestSuite.yml import YAML
 
 xsoar_yaml = XSOAR_YAML()
 
@@ -28,7 +28,7 @@ class Integration:
 
         self.path = str(self._tmpdir_integration_path)
         self.code = File(self._tmpdir_integration_path / f'{self.name}.py', self._repo.path)
-        self.yml = YML(self._tmpdir_integration_path / f'{self.name}.yml', self._repo.path)
+        self.yml = YAML(self._tmpdir_integration_path / f'{self.name}.yml', self._repo.path)
         self.readme = File(self._tmpdir_integration_path / 'README.md', self._repo.path)
         self.description = File(self._tmpdir_integration_path / f'{self.name}_description.md', self._repo.path)
         self.changelog = File(self._tmpdir_integration_path / 'CHANGELOG.md', self._repo.path)

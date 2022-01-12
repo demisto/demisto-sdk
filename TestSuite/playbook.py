@@ -4,7 +4,7 @@ from typing import Optional
 from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 from TestSuite.file import File
 from TestSuite.test_tools import suite_join_path
-from TestSuite.yml import YML
+from TestSuite.yml import YAML
 
 xsoar_yaml = XSOAR_YAML()
 
@@ -18,7 +18,7 @@ class Playbook:
         self.is_test_playbook = is_test_playbook
 
         self.path = str(tmpdir)
-        self.yml = YML(tmpdir / f'{self.name}.yml', self._repo.path)
+        self.yml = YAML(tmpdir / f'{self.name}.yml', self._repo.path)
 
         if not self.is_test_playbook:
             self.readme = File(tmpdir / 'README.md', self._repo.path)

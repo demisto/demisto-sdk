@@ -224,7 +224,7 @@ class Linter:
             if self._facts["docker_engine"]:
                 # Getting python version from docker image - verifying if not valid docker image configured
                 for image in self._facts["images"]:
-                    py_num: float = get_python_version_from_image(image=image[0], timeout=self.docker_timeout, log_prompt=log_prompt)
+                    py_num: str = get_python_version_from_image(image=image[0], timeout=self.docker_timeout, log_prompt=log_prompt)
                     image[1] = py_num
                     logger.info(f"{self._pack_name} - Facts - {image[0]} - Python {py_num}")
                     if not self._facts["python_version"]:
@@ -247,7 +247,7 @@ class Linter:
                         self._pkg_lint_status["errors"].append('Unable to parse test-requirements.txt in package')
             elif not self._facts["python_version"]:
                 # get python version from yml
-                pynum = 3.7 if (script_obj.get('subtype', 'python3') == 'python3') else 2.7
+                pynum = '3.7' if (script_obj.get('subtype', 'python3') == 'python3') else '2.7'
                 self._facts["python_version"] = pynum
                 logger.info(f"{log_prompt} - Using python version from yml: {pynum}")
             # Get lint files

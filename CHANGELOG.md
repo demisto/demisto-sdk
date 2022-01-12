@@ -1,5 +1,7 @@
 # Changelog
 
+* Fix an issue when running **validate** or **format** in a gitlab repository but can’t determine the project id.
+
 # 1.5.6
 * Added 'deprecated' release notes template.
 * Fixed an issue where **run-test-playbook** command failed to get the task entries when the test playbook finished with errors.

@@ -113,7 +113,6 @@ class GitContentConfig:
         if not res.ok:
             return None
         try:
-            res = res.json()
-            return res[0].get('id', None) if res else None
+            return res.json()[0].get('id', None) if res else None
         except JSONDecodeError:
             return None

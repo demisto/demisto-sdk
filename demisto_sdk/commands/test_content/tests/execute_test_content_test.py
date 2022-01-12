@@ -45,7 +45,7 @@ MOCK_ENV_VARIABLES = {
 def test_execute_test_content(mocker):
     expected_results = [
         'The following integrations/tests were collected by the CI build but are currently skipped. '
-        'The collected tests are related to this pull request and might be critical.:\n- demo integration',
+        'The collected tests are related to this pull request and might be critical:\n- demo integration',
 
         'Link to the coverage report of the integration:\n '
         'https://123456-60525392-gh.circle-artifacts.com/0/artifacts/coverage_report/html/index.html'

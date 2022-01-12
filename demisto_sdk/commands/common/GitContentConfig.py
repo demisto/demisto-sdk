@@ -1,5 +1,6 @@
 import os
 from functools import lru_cache
+from json import JSONDecodeError
 from typing import Iterable, Optional
 from urllib.parse import urljoin, urlparse
 
@@ -111,5 +112,8 @@ class GitContentConfig:
                            verify=False)
         if not res.ok:
             return None
-        res = res.json()
+        try:
+            res = res.json()
+        except JSONDecodeError:
+            return None
         return res[0].get('id', None) if res else None

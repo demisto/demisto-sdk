@@ -20,11 +20,11 @@ import requests
 from ruamel.yaml import YAML
 import urllib3
 from wcmatch.pathlib import NEGATE, Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 from demisto_sdk.commands.common.constants import TYPE_PYTHON
 
 from demisto_sdk.commands.common.tools import get_all_docker_images
-from demisto_sdk.commands.lint.helpers import add_tmp_lint_files, get_python_version_from_image
+from demisto_sdk.commands.lint.helpers import add_tmp_lint_files, get_python_version_from_image, is_lint_available_for_pack_type
 from demisto_sdk.commands.lint.mandatory_files_manager import LintFilesInfoHelper
 
 
@@ -61,7 +61,7 @@ class DockersManager:
         self._req_2 = req_2
         self._images_facts = {}
 
-    def prepare_required_images(self):
+    def build_required_images(self):
         
         start_time = time.time()
         try:
@@ -76,7 +76,7 @@ class DockersManager:
                     if not errors:
                         self._image_to_test_image_map[image_name] = test_image
         finally:
-            logger.info(f'Preparing required images take: {time.time() - start_time}s')
+            logger.info(f'Build required images take: {time.time() - start_time}s')
         
 
     #  def _add_mandatory_modules(self):
@@ -206,29 +206,51 @@ class DockersManager:
         """
         """
         start_time = time.time()
-        for pack_path in sorted(self._pkgs):
-            
-            script_obj: Dict = self._get_script_obj_from_pack_yml(pack_path=pack_path)
-            if script_obj:
-                images = [image for image in get_all_docker_images(script_obj=script_obj)]
-                pack_type = script_obj.get('type', TYPE_PYTHON)
-                if images:
-                    image_name = images[-1]
-                    image_facts = self._images_facts.get(image_name)
-                    if image_facts is None:
-                        self._images_facts[image_name] = image_facts = {}
-                        image_facts['py_version'] = get_python_version_from_image(image=image_name, docker_client=self._docker_client)
-                        image_facts['packs_type'] = pack_type
-                        image_facts['image_files'] = set()
-
-                    lint_files = self._lint_files_helper.get_lint_files_for_pack(pack_path=pack_path, pack_type=pack_type)
-                    mandatory_files = self._lint_files_helper.get_mandatory_files_for_pack(pack_path=pack_path, pack_type=pack_type)
-                    image_facts['image_files'].update(lint_files)
-                    image_facts['image_files'].update(mandatory_files)
+        futures = []
+        with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+                for pack_path in sorted(self._pkgs):
+                    futures.append(executor.submit(self.gather_single_iamge_facts, pack_path)) 
+                
+                for future in concurrent.futures.as_completed(futures):
+                    image_name, image_facts = future.result()
+                    if image_name and image_facts:
+                        cached_image_facts = self._images_facts.get(image_name)
+                        if cached_image_facts is None:
+                            self._images_facts[image_name] = cached_image_facts = image_facts
+                        
+                        image_failes = image_facts.get('image_files', set())
+                        cached_image_facts.get('image_files', set()).update(image_failes)
         
         logger.info(f'Collecting images facts take: {time.time() - start_time}s')
 
-    
+    def gather_single_iamge_facts(self, pack_path: Path) -> Tuple[str, dict]:
+
+        log_prompt = f'Pack {pack_path.name} collect docker image facts'
+        script_obj: Dict = self._get_script_obj_from_pack_yml(pack_path=pack_path)
+        if script_obj:
+            pack_type = script_obj.get('type', TYPE_PYTHON)
+            if not is_lint_available_for_pack_type(pack_type):
+                logger.info(f'{log_prompt} - Skipping due to not Python, Powershell package - Pack is {pack_type}')
+                return None, None
+            
+            images = [image for image in get_all_docker_images(script_obj=script_obj)]
+            if images:
+                image_name = images[-1]
+                image_facts = {}
+                image_facts['py_version'] = get_python_version_from_image(image=image_name, docker_client=self._docker_client)
+                image_facts['packs_type'] = pack_type
+                image_facts['image_files'] = self._get_files_to_copy_to_image(pack_path, pack_type)
+                return image_name, image_facts
+            else:
+                logger.info(f'{log_prompt} - Skipping due to not images was found')
+        else:
+            logger.info(f'{log_prompt} - Skipping due to not script object was found')
+
+    def _get_files_to_copy_to_image(self, pack_path: Path, pack_type: str) -> Set:
+        lint_files = self._lint_files_helper.get_lint_files_for_pack(pack_path=pack_path, pack_type=pack_type)
+        mandatory_files = self._lint_files_helper.get_mandatory_files_for_pack(pack_path=pack_path, pack_type=pack_type)
+        return lint_files and mandatory_files and lint_files | mandatory_files 
+
     def _get_script_obj_from_pack_yml(self, pack_path: Path):
         
         yml_file: Optional[Path] = pack_path.glob([r'*.yaml', r'*.yml', r'!*unified*.yml'], flags=NEGATE)

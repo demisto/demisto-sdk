@@ -356,7 +356,7 @@ class Linter:
                 elif lint_check == "mypy" and not no_mypy:
                     exit_code, output = self._run_mypy(py_num=self._facts["python_version"],
                                                        lint_files=self._facts["lint_files"])
-                    logger.info(f"{lint_check} execute time for pack: {self._pack_name} - was {time.time() - specific_lint_start_time}s")
+                    # logger.info(f"{lint_check} execute time for pack: {self._pack_name} - was {time.time() - specific_lint_start_time}s")
                 elif lint_check == "vulture" and not no_vulture:
                     exit_code, output = self._run_vulture(py_num=self._facts["python_version"],
                                                           lint_files=self._facts["lint_files"])

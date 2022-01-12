@@ -559,3 +559,6 @@ def generate_coverage_report(html=False, xml=False, report=True, cov_dir='covera
         except coverage.misc.CoverageException as warning:
             logger.warning(str(warning))
             return
+
+def is_lint_available_for_pack_type(pack_type: str) -> bool:
+    return pack_type in [TYPE_PWSH, TYPE_PYTHON]

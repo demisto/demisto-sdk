@@ -5,12 +5,9 @@ from TestSuite.file import File
 from TestSuite.test_tools import suite_join_path
 from TestSuite.yml import YML
 
-from ruamel.yaml import YAML
+from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 
-ryaml = YAML()
-ryaml.preserve_quotes = True
-ryaml.allow_duplicate_keys = True
-
+xsoar_yaml = XSOAR_YAML()
 
 class Playbook:
     def __init__(self, tmpdir: Path, name, repo, is_test_playbook: bool = False):
@@ -54,13 +51,13 @@ class Playbook:
         """
         default_playbook_dir = 'assets/default_playbook'
         with open(suite_join_path(default_playbook_dir, 'playbook-sample.yml')) as yml_file:
-            yml = ryaml.load(yml_file)
+            yml = xsoar_yaml.load(yml_file)
             yml['id'] = yml['name'] = name
             self.build(yml=yml)
 
     def create_default_test_playbook(self, name: str = 'SamplePlaybookTest'):
         default_test_playbook_dir = 'assets/default_playbook'
         with open(suite_join_path(default_test_playbook_dir, 'playbook-sample.yml')) as yml_file:
-            yml = ryaml.load(yml_file)
+            yml = xsoar_yaml.load(yml_file)
             yml['id'] = yml['name'] = name
             self.build(yml=yml)

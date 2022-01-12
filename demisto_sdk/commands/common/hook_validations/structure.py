@@ -25,12 +25,9 @@ from demisto_sdk.commands.common.tools import (get_remote_file,
 from demisto_sdk.commands.format.format_constants import \
     OLD_FILE_DEFAULT_1_FROMVERSION
 
-from ruamel.yaml import YAML
+from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 
-ryaml = YAML()
-ryaml.allow_duplicate_keys = True
-ryaml.preserve_quotes = True  # type: ignore
-
+xsoar_yaml = XSOAR_YAML()
 
 class StructureValidator(BaseValidator):
     """Structure validator is designed to validate the correctness of the file structure we enter to content repo.
@@ -48,7 +45,7 @@ class StructureValidator(BaseValidator):
     SCHEMAS_PATH = "schemas"
 
     FILE_SUFFIX_TO_LOAD_FUNCTION = {
-        '.yml': ryaml.load,
+        '.yml': xsoar_yaml.load,
         '.json': json.load,
     }
 
@@ -512,7 +509,7 @@ class StructureValidator(BaseValidator):
         if path.suffix == '.yml':
             try:
                 with open(self.file_path, 'r') as yf:
-                    yaml_obj = ryaml.load(yf)  # noqa: F841
+                    yaml_obj = xsoar_yaml.load(yf)  # noqa: F841
             except Exception as e:
                 error_message, error_code = Errors.invalid_yml_file(e)
                 self.handle_error(error_message, error_code, file_path=self.file_path)

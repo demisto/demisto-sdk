@@ -1,5 +1,5 @@
 import pytest
-from ruamel.yaml import YAML
+from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 
 from demisto_sdk.commands.common.constants import PACKS_DIR, PLAYBOOKS_DIR
 from demisto_sdk.commands.common.content.errors import (ContentInitializeError,

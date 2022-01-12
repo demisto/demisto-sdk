@@ -6,8 +6,6 @@ from pathlib import Path
 from typing import Callable
 
 import pytest
-import yaml
-import yamlordereddictloader
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
@@ -16,6 +14,10 @@ from demisto_sdk.commands.common.constants import (
     XSOAR_SUPPORT_URL)
 from demisto_sdk.commands.init.initiator import Initiator
 from TestSuite.test_tools import ChangeCWD
+
+from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
+
+xsoar_yaml = XSOAR_YAML()
 
 DIR_NAME = 'DirName'
 PACK_NAME = 'PackName'
@@ -326,7 +328,7 @@ def test_yml_reformatting(monkeypatch, tmp_path, initiator):
 
     p = d / f'{integration_id}.yml'
     with p.open(mode='w') as f:
-        yaml.dump(
+        xsoar_yaml.dump(
             {
                 'commonfields': {
                     'id': ''
@@ -340,7 +342,7 @@ def test_yml_reformatting(monkeypatch, tmp_path, initiator):
     initiator.dir_name = dir_name
     initiator.yml_reformatting(current_suffix=initiator.HELLO_WORLD_INTEGRATION, integration=True)
     with open(full_output_path / f'{dir_name}.yml', 'r') as f:
-        yml_dict = yaml.load(f, Loader=yamlordereddictloader.SafeLoader)
+        yml_dict = xsoar_yaml.load(f)
         assert yml_dict == OrderedDict({
             'commonfields': OrderedDict({
                 'id': 'HelloWorld'

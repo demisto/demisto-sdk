@@ -1,6 +1,6 @@
 from typing import Union
 
-from ruamel.yaml import YAML
+from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 from ruamel.yaml.scanner import ScannerError
 from wcmatch.pathlib import EXTGLOB, NEGATE, Path
 

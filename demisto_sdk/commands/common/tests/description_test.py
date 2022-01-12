@@ -2,7 +2,7 @@ import glob
 import os
 
 import pytest
-from ruamel.yaml import YAML
+from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 
 from demisto_sdk.commands.common.hook_validations.description import \
     DescriptionValidator

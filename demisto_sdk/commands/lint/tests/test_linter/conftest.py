@@ -1,7 +1,7 @@
 from typing import Callable, List, Optional
 
 import pytest
-from ruamel.yaml import YAML
+from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.lint import linter

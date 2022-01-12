@@ -19,12 +19,9 @@ from demisto_sdk.commands.common.tools import (_get_file_id,
                                                is_test_config_match,
                                                run_command)
 
-from ruamel.yaml import YAML
+from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 
-ryaml = YAML()
-ryaml.allow_duplicate_keys = True
-ryaml.preserve_quotes = True  # type: ignore
-
+xsoar_yaml = XSOAR_YAML()
 
 
 class ContentEntityValidator(BaseValidator):
@@ -205,7 +202,7 @@ class ContentEntityValidator(BaseValidator):
                 missing_test_playbook_configurations = json.dumps(
                     {'integrations': content_item_id, 'playbookID': '<TestPlaybook ID>'},
                     indent=4)
-                no_tests_key = ryaml.dump({'tests': ['No tests']})
+                no_tests_key = xsoar_yaml.dump({'tests': ['No tests']})
                 error_message, error_code = Errors.integration_not_registered(self.file_path,
                                                                               missing_test_playbook_configurations,
                                                                               no_tests_key)

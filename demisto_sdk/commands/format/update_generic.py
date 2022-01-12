@@ -6,8 +6,8 @@ from typing import Any, Dict, Optional, Set, Union
 
 import click
 import dictdiffer
-from ruamel.yaml import YAML
 
+from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION, INTEGRATION, PLAYBOOK)
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_dict_from_file,
@@ -21,10 +21,7 @@ from demisto_sdk.commands.format.format_constants import (
     VERSION_6_0_0)
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
-ryaml = YAML()
-ryaml.allow_duplicate_keys = True
-ryaml.preserve_quotes = True  # type: ignore
-
+xsoar_yaml = XSOAR_YAML()
 
 class BaseUpdate:
     """BaseUpdate is the base class for all format commands.
@@ -74,7 +71,7 @@ class BaseUpdate:
         if not self.source_file:
             raise Exception('Please provide <source path>, <optional - destination path>.')
         try:
-            self.data, self.file_type = get_dict_from_file(self.source_file, use_ryaml=True)
+            self.data, self.file_type = get_dict_from_file(self.source_file, use_xsoar_yaml=True)
         except Exception:
             raise Exception(F'Provided file {self.source_file} is not a valid file.')
         self.from_version_key = self.set_from_version_key_name()
@@ -114,7 +111,7 @@ class BaseUpdate:
     def remove_unnecessary_keys(self):
         """Removes keys that are in file but not in schema of file type"""
         with open(self.schema_path, 'r') as file_obj:
-            schema = ryaml.load(file_obj)
+            schema = xsoar_yaml.load(file_obj)
             extended_schema = self.recursive_extend_schema(schema, schema)
         if self.verbose:
             print('Removing Unnecessary fields from file')
@@ -317,7 +314,7 @@ class BaseUpdate:
             List of keys that should be deleted in file
         """
         with open(self.schema_path, 'r') as file_obj:
-            a = ryaml.load(file_obj)
+            a = xsoar_yaml.load(file_obj)
         schema_fields = a.get('mapping').keys()
         arguments_to_remove = set(self.data.keys()) - set(schema_fields)
         return arguments_to_remove

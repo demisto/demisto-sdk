@@ -15,7 +15,7 @@ from enum import Enum
 from functools import lru_cache, partial
 from pathlib import Path, PosixPath
 from subprocess import DEVNULL, PIPE, Popen, check_output
-from typing import (Callable, Dict, List, Match, Optional, Set, Tuple, Type,
+from typing import (Callable, Dict, List, Match, Optional, Tuple, Type,
                     Union)
 
 import click
@@ -27,7 +27,6 @@ import requests
 import urllib3
 from packaging.version import parse
 from pebble import ProcessFuture, ProcessPool
-from ruamel.yaml import YAML
 
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK, CLASSIFIERS_DIR,
@@ -46,15 +45,14 @@ from demisto_sdk.commands.common.constants import (
     XSOAR_CONFIG_FILE, FileType, GitContentConfig, IdSetKeys,
     MarketplaceVersions, urljoin)
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
+
+xsoar_yaml = XSOAR_YAML()
 
 urllib3.disable_warnings()
 
 # inialize color palette
 colorama.init()
-
-ryaml = YAML()
-ryaml.preserve_quotes = True
-ryaml.allow_duplicate_keys = True
 
 
 class LOG_COLORS:
@@ -294,7 +292,7 @@ def get_remote_file(
     if full_file_path.endswith('json'):
         details = res.json() if res.ok else json.loads(local_content)
     elif full_file_path.endswith('yml'):
-        details = ryaml.load(file_content)
+        details = xsoar_yaml.load(file_content)
     # if neither yml nor json then probably a CHANGELOG or README file.
     else:
         details = {}
@@ -351,7 +349,7 @@ def filter_packagify_changes(modified_files, added_files, removed_files, tag='ma
                 updated_added_files.add(file_path)
                 continue
             with open(file_path) as f:
-                details = ryaml.load(f)
+                details = xsoar_yaml.load(f)
 
             uniq_identifier = '_'.join([
                 details['name'],
@@ -459,7 +457,7 @@ def get_file(file_path, type_of_file):
             stream = io.StringIO(replaced)
             try:
                 if type_of_file in ('yml', '.yml'):
-                    data_dictionary = ryaml.load(stream)
+                    data_dictionary = xsoar_yaml.load(stream)
 
                 else:
                     data_dictionary = json.load(stream)
@@ -476,7 +474,7 @@ def get_yaml(file_path):
     return get_file(file_path, 'yml')
 
 
-def get_ryaml(file_path: str) -> dict:
+def get_xsoar_yaml(file_path: str) -> dict:
     """
     Get yml file contents using ruaml
 
@@ -488,7 +486,7 @@ def get_ryaml(file_path: str) -> dict:
     """
     try:
         with open(os.path.expanduser(file_path), 'r') as yf:
-            data = ryaml.load(yf)
+            data = xsoar_yaml.load(yf)
     except FileNotFoundError as e:
         click.echo(f'File {file_path} not found. Error was: {str(e)}', nl=True)
     except Exception as e:
@@ -1017,14 +1015,14 @@ def get_dev_requirements(py_version, envs_dirs_base):
     return requirements
 
 
-def get_dict_from_file(path: str, use_ryaml: bool = False,
+def get_dict_from_file(path: str, use_xsoar_yaml: bool = False,
                        raises_error: bool = True) -> Tuple[Dict, Union[str, None]]:
     """
     Get a dict representing the file
 
     Arguments:
         path - a path to the file
-        use_ryaml - Whether to use ryaml for file loading or not
+        use_xsoar_yaml - Whether to use xsoar_yaml for file loading or not
         raises_error - Whether to raise a FileNotFound error if `path` is not a valid file.
 
     Returns:
@@ -1033,8 +1031,8 @@ def get_dict_from_file(path: str, use_ryaml: bool = False,
     try:
         if path:
             if path.endswith('.yml'):
-                if use_ryaml:
-                    return get_ryaml(path), 'yml'
+                if use_xsoar_yaml:
+                    return get_xsoar_yaml(path), 'yml'
                 return get_yaml(path), 'yml'
             elif path.endswith('.json'):
                 return get_json(path), 'json'
@@ -1628,7 +1626,7 @@ def get_content_file_type_dump(file_path: str) -> Callable[[str], str]:
     file_extension = os.path.splitext(file_path)[-1]
     curr_string_transformer: Union[partial[str], Type[str], Callable] = str
     if file_extension in ['.yml', '.yaml']:
-        curr_string_transformer = ryaml.dump
+        curr_string_transformer = XSOAR_YAML.dump
     elif file_extension == '.json':
         curr_string_transformer = partial(json.dumps, indent=4)
     return curr_string_transformer
@@ -1903,11 +1901,8 @@ def compare_context_path_in_yml_and_readme(yml_dict, readme_content):
 
 
 def write_yml(yml_path: str, yml_data: Dict):
-    ryaml = YAML()
-    ryaml.allow_duplicate_keys = True
-    ryaml.preserve_quotes = True
     with open(yml_path, 'w') as f:
-        ryaml.dump(yml_data, f)  # ruamel preservers multilines
+        xsoar_yaml.dump(yml_data, f)  # ruamel preservers multilines
 
 
 def to_kebab_case(s: str):

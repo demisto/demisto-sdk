@@ -7,7 +7,6 @@ from collections import OrderedDict
 import click
 import pytest
 from mock import Mock, patch
-from ruamel.yaml import YAML
 
 from demisto_sdk.commands.common.constants import (FEED_REQUIRED_PARAMS,
                                                    FETCH_REQUIRED_PARAMS,
@@ -37,10 +36,7 @@ from demisto_sdk.tests.constants_test import (
     SOURCE_FORMAT_PLAYBOOK_COPY, SOURCE_FORMAT_SCRIPT_COPY,
     SOURCE_FORMAT_TEST_PLAYBOOK, TEST_PLAYBOOK_PATH)
 from TestSuite.test_tools import ChangeCWD
-
-ryaml = YAML()
-ryaml.preserve_quotes = True
-ryaml.allow_duplicate_keys = True
+from demisto_sdk.commands.common.yml import XSOAR_YAML
 
 INTEGRATION_TEST_ARGS = (SOURCE_FORMAT_INTEGRATION_COPY, DESTINATION_FORMAT_INTEGRATION_COPY, IntegrationYMLFormat,
                          'New Integration_copy', 'integration')
@@ -73,7 +69,7 @@ class TestFormatting:
         schema_path = os.path.normpath(
             os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format(file_type)))
         base_yml = formatter(source_path, path=schema_path)
-        ryaml.dump(base_yml.data, sys.stdout)
+        XSOAR_YAML.dump(base_yml.data, sys.stdout)
         stdout, _ = capsys.readouterr()
         assert '# comment' in stdout
 
@@ -277,7 +273,7 @@ class TestFormatting:
             format_obj = IntegrationYMLFormat(src_file, output=dest, path=schema_path, verbose=True)
         assert format_obj.run_format() == 0
         with open(dest) as f:
-            data = ryaml.load(f)
+            data = XSOAR_YAML.load(f)
         assert data['fromversion'] == '5.5.0'
         assert data['commonfields']['version'] == -1
 
@@ -305,7 +301,7 @@ class TestFormatting:
         assert os.path.isfile(saved_file_path)
 
         with open(saved_file_path, 'r') as f:
-            yaml_content = ryaml.load(f)
+            yaml_content = XSOAR_YAML.load(f)
             assert 'yes' in yaml_content['tasks']['27']['nexttasks']
         os.remove(saved_file_path)
 
@@ -497,7 +493,7 @@ class TestFormatting:
         )
         res = format_manager(input=target, verbose=True)
         with open(target, 'r') as f:
-            yaml_content = ryaml.load(f)
+            yaml_content = XSOAR_YAML.load(f)
             params = yaml_content['configuration']
             for param in params:
                 if 'defaultvalue' in param and param['name'] != 'feed':
@@ -534,7 +530,7 @@ class TestFormatting:
         shutil.copyfile(source, target)
         res = format_manager(input=target, verbose=True)
         with open(target, 'r') as f:
-            yaml_content = ryaml.load(f)
+            yaml_content = XSOAR_YAML.load(f)
             params = yaml_content['configuration']
             for counter, param in enumerate(params):
                 if 'defaultvalue' in param and param['name'] != 'feed':
@@ -722,7 +718,7 @@ class TestFormatting:
         # test example script file with version before 5.0.0
         src_file = f'{test_files_dir}/SlackAsk.yml'
         with open(src_file) as f:
-            data = ryaml.load(f)
+            data = XSOAR_YAML.load(f)
         org_docker = data['dockerimage']
         assert data['fromversion'] < '5.0.0'
         assert not data.get(
@@ -736,7 +732,7 @@ class TestFormatting:
 
         assert format_obj.run_format() == 0
         with open(dest) as f:
-            data = ryaml.load(f)
+            data = xsoar_yaml.load(f)
         assert data['dockerimage'].endswith(f':{test_tag}')
         assert data['dockerimage45'] == org_docker
 
@@ -746,7 +742,7 @@ class TestFormatting:
                                           update_docker=True)
         assert format_obj.run_format() == 0
         with open(dest) as f:
-            data = ryaml.load(f)
+            data = xsoar_yaml.load(f)
         assert data['script']['dockerimage'].endswith(f':{test_tag}')
         assert not data['script'].get('dockerimage45')
 
@@ -777,12 +773,12 @@ class TestFormatting:
         integration_yml_file_1 = tmp_path / 'Integration1.yml'
         integration_obj = {'dockerimage': docker_image,
                            'fromversion': '5.0.0'}
-        ryaml.dump(integration_obj, integration_yml_file_1.open('w'))
+        xsoar_yaml.dump(integration_obj, integration_yml_file_1.open('w'))
 
         format_obj = ScriptYMLFormat(str(integration_yml_file_1), update_docker=True)
         format_obj.update_docker_image()
         with open(str(integration_yml_file_1)) as f:
-            data = ryaml.load(f)
+            data = xsoar_yaml.load(f)
         assert data.get('dockerimage') == docker_image
 
     def test_recursive_extend_schema(self):
@@ -1164,10 +1160,10 @@ class TestFormatting:
                                                    'VMware',
                                                    'Integrations', 'integration-VMware.yml')
         with open(vmware_integration_yml_path) as f:
-            yml_example = ryaml.load(f)
+            yml_example = xsoar_yaml.load(f)
         sorted_yml_file = tmp_path / 'test.yml'
         with sorted_yml_file.open('w') as f:
-            ryaml.dump(order_dict(yml_example), f)  # sorting the keys to have different order
+            xsoar_yaml.dump(order_dict(yml_example), f)  # sorting the keys to have different order
         mocker.patch.object(BaseUpdateYML, 'get_id_and_version_path_object', return_value={'id': "vmware"})
         mocker.patch.object(update_generic, 'get_remote_file', return_value=yml_example)
         base_update_yml = BaseUpdateYML(input=str(sorted_yml_file))
@@ -1189,18 +1185,18 @@ class TestFormatting:
                                                    'VMware',
                                                    'Integrations', 'integration-VMware.yml')
         with open(vmware_integration_yml_path) as f:
-            yml_example = ryaml.load(f)
+            yml_example = xsoar_yaml.load(f)
         sorted_yml_file = tmp_path / 'test.yml'
         with sorted_yml_file.open('w') as f:
-            ryaml.dump(order_dict(yml_example), f)  # sorting the keys to have different order
+            xsoar_yaml.dump(order_dict(yml_example), f)  # sorting the keys to have different order
         with sorted_yml_file.open() as f:
-            sorted_yml = ryaml.load(f)
+            sorted_yml = xsoar_yaml.load(f)
         sorted_yml['description'] = 'test'
         sorted_yml['configuration'][0]['defaultvalue'] = 'test'
         del sorted_yml['configuration'][1]['defaultvalue']
         sorted_yml['script']['commands'][0]['outputs'].append({"contextPath": "VMWare.test", "description": "VM test"})
         with sorted_yml_file.open('w') as f:
-            ryaml.dump(sorted_yml, f)
+            xsoar_yaml.dump(sorted_yml, f)
 
         mocker.patch.object(BaseUpdateYML, 'get_id_and_version_path_object', return_value={'id': "vmware"})
         mocker.patch.object(update_generic, 'get_remote_file', return_value=yml_example)

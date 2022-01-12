@@ -5,7 +5,7 @@ from shutil import copyfile
 from typing import List, Tuple
 
 import pytest
-from ruamel.yaml import YAML
+from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 
 from demisto_sdk.commands.common.constants import (
     CODE_FILES_REGEX, PACKAGE_YML_FILE_REGEX,

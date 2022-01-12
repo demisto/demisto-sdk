@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import Dict, List, Optional, Union
 
 import pytest
-import yaml
 from click.testing import CliRunner
 
 import demisto_sdk.commands.common.tools as tools
@@ -20,6 +19,9 @@ from demisto_sdk.commands.postman_codegen.postman_codegen import (
     find_shared_args_path, flatten_collections, generate_command_outputs,
     postman_to_autogen_configuration, update_min_unique_path)
 
+from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
+
+xsoar_yaml = XSOAR_YAML()
 
 class TestPostmanHelpers:
     def test_create_body_format(self):
@@ -567,7 +569,7 @@ class TestPostmanCodeGen:
 
         integration_code = config.generate_integration_python_code()
         integration_obj = config.generate_integration_yml()
-        integration_yml = yaml.dump(integration_obj.to_dict())
+        integration_yml = xsoar_yaml.dump(integration_obj.to_dict())
 
         assert "foo = args.get('foo')" in integration_code
         assert "virus_name = args.get('virus_name')" in integration_code
@@ -631,7 +633,7 @@ class TestPostmanCodeGen:
 
         integration_code = config.generate_integration_python_code()
         integration_obj = config.generate_integration_yml()
-        integration_yml = yaml.dump(integration_obj.to_dict())
+        integration_yml = xsoar_yaml.dump(integration_obj.to_dict())
 
         assert "foo_a = args.get('foo_a')" in integration_code
         assert "def test_report_request(self, foo_a, resource_b, a, b, c)" in integration_code
@@ -834,7 +836,7 @@ class TestPostmanCodeGen:
 
         integration_code = config.generate_integration_python_code()
         integration_obj = config.generate_integration_yml()
-        integration_yml = yaml.dump(integration_obj.to_dict())
+        integration_yml = xsoar_yaml.dump(integration_obj.to_dict())
 
         assert 'def test_create_group_request(self, test_name, test_id, test_key):' in integration_code
         assert 'data = {"test_filter": {"test_key": test_key}, "test_id": test_id, "test_name": test_name}' in integration_code

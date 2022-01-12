@@ -7,8 +7,6 @@ from distutils.version import LooseVersion
 from typing import Dict, List
 
 import click
-import yaml
-import yamlordereddictloader
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
@@ -28,6 +26,9 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                print_v, print_warning)
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
 
+from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
+
+xsoar_yaml = XSOAR_YAML()
 
 def extract_values_from_nested_dict_to_a_set(given_dictionary: dict, return_set: set):
     """Recursively extracts values from a nested dictionary to a set.
@@ -552,7 +553,7 @@ class Initiator:
             integration (bool): Indicates if integration yml is being reformatted.
         """
         with open(os.path.join(self.full_output_path, f"{current_suffix}.yml")) as f:
-            yml_dict = yaml.load(f, Loader=yamlordereddictloader.SafeLoader)
+            yml_dict = xsoar_yaml.load(f)
         yml_dict["commonfields"]["id"] = self.id
         yml_dict['name'] = self.id
 
@@ -570,11 +571,7 @@ class Initiator:
                 options_list=INTEGRATION_CATEGORIES, option_message="\nIntegration category options: \n")
 
         with open(os.path.join(self.full_output_path, f"{self.dir_name}.yml"), 'w') as f:
-            yaml.dump(
-                yml_dict,
-                f,
-                Dumper=yamlordereddictloader.SafeDumper,
-                default_flow_style=False)
+            xsoar_yaml.dump(yml_dict, f)
 
         os.remove(os.path.join(self.full_output_path, f"{current_suffix}.yml"))
 

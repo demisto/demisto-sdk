@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 from mock import patch
-from ruamel.yaml import YAML
+from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 
 from demisto_sdk.commands.common.constants import (
     CLASSIFIERS_DIR, CONNECTIONS_DIR, CONTENT_ENTITIES_DIRS, DASHBOARDS_DIR,
@@ -18,6 +18,7 @@ from demisto_sdk.commands.common.tools import (get_child_files, get_json,
                                                get_yaml)
 from demisto_sdk.commands.download.downloader import Downloader
 
+xsoar_yaml = XSOAR_YAML()
 
 def ordered(obj):
     if isinstance(obj, dict):
@@ -412,8 +413,6 @@ class TestMergeExistingFile:
         mocker.patch.object(Downloader, 'get_corresponding_pack_file_object', return_value={})
         with patch.object(Downloader, "__init__", lambda a, b, c: None):
             downloader = Downloader('', '')
-            ryaml = YAML()
-            ryaml.preserve_quotes = True
             downloader.output_pack_path = env.PACK_INSTANCE_PATH
             downloader.log_verbose = False
             downloader.pack_content = env.PACK_CONTENT
@@ -428,8 +427,6 @@ class TestMergeExistingFile:
     def test_merge_and_extract_existing_file_js(self, tmp_path):
         with patch.object(Downloader, "__init__", lambda a, b, c: None):
             downloader = Downloader('', '')
-            ryaml = YAML()
-            ryaml.preserve_quotes = True
             downloader.log_verbose = False
             downloader.num_merged_files = 0
             downloader.num_added_files = 0
@@ -450,8 +447,6 @@ class TestMergeExistingFile:
 
         with patch.object(Downloader, "__init__", lambda a, b, c: None):
             downloader = Downloader('', '')
-            ryaml = YAML()
-            ryaml.preserve_quotes = True
             downloader.log_verbose = False
             downloader.pack_content = env.PACK_CONTENT
             downloader.run_format = False
@@ -502,8 +497,6 @@ class TestMergeExistingFile:
 
         with patch.object(Downloader, "__init__", lambda a, b, c: None):
             downloader = Downloader('', '')
-            ryaml = YAML()
-            ryaml.preserve_quotes = True
             downloader.pack_content = env.PACK_CONTENT
             downloader.run_format = False
             downloader.num_merged_files = 0
@@ -606,15 +599,13 @@ class TestMergeExistingFile:
                 assert ordered(corr_file) == ordered(pack_file_object)
 
     def test_update_data_yml(self, tmp_path):
-        ryaml = YAML()
-        ryaml.preserve_quotes = True
         env = Environment(tmp_path)
         downloader = Downloader(output='', input='', regex='')
         downloader.update_data(env.CUSTOM_CONTENT_INTEGRATION_PATH,
                                f'{env.INTEGRATION_INSTANCE_PATH}/TestIntegration.yml', 'yml')
 
         with open(env.CUSTOM_CONTENT_INTEGRATION_PATH, 'r') as yf:
-            file_yaml_object = ryaml.load(yf)
+            file_yaml_object = xsoar_yaml.load(yf)
         for field in DELETED_YML_FIELDS_BY_DEMISTO:
             obj = file_yaml_object
             dotted_path_list = field.split('.')

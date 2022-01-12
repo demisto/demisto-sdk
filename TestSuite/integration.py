@@ -3,7 +3,7 @@ import shutil
 from pathlib import Path
 from typing import List, Optional
 
-from ruamel.yaml import YAML
+from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 
 
 from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
@@ -11,10 +11,7 @@ from TestSuite.file import File
 from TestSuite.test_tools import suite_join_path
 from TestSuite.yml import YML
 
-ryaml = YAML()
-ryaml.preserve_quotes = True
-ryaml.allow_duplicate_keys = True
-
+xsoar_yaml = XSOAR_YAML()
 
 class Integration:
     def __init__(self, tmpdir: Path, name, repo, create_unified: Optional[bool] = False):
@@ -75,7 +72,7 @@ class Integration:
         with open(suite_join_path(default_integration_dir, 'sample.py')) as code_file:
             code = str(code_file.read())
         with open(suite_join_path(default_integration_dir, 'sample.yml')) as yml_file:
-            yml = ryaml.load(yml_file)
+            yml = xsoar_yaml.load(yml_file)
             yml['name'] = yml['commonfields']['id'] = name
             if commands:
                 for command in commands:

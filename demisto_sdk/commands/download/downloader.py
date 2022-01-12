@@ -14,7 +14,7 @@ from demisto_client.demisto_api.rest import ApiException
 from dictor import dictor
 from flatten_dict import unflatten
 from mergedeep import merge
-from ruamel.yaml import YAML
+from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 from tabulate import tabulate
 from urllib3.exceptions import MaxRetryError
 
@@ -711,14 +711,12 @@ class Downloader:
                                           dictor(pack_obj_data, field)}, splitter='dot')
 
         if file_ending == 'yml':
-            ryaml = YAML()
-            ryaml.preserve_quotes = True  # type: ignore
             with open(file_path_to_write, 'r') as yf:
-                file_yaml_object = ryaml.load(yf)
+                file_yaml_object = xsoar_yaml.load(yf)
             if pack_obj_data:
                 merge(file_yaml_object, preserved_data)
             with open(file_path_to_write, 'w') as yf:
-                ryaml.dump(file_yaml_object, yf)
+                xsoar_yaml.dump(file_yaml_object, yf)
 
         elif file_ending == 'json':
             file_data: dict = get_json(file_path_to_write)

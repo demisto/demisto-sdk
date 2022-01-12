@@ -10,7 +10,7 @@ from typing import Dict, List, Tuple, Union
 
 import click
 from inflection import dasherize, underscore
-from ruamel.yaml import YAML
+from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 from ruamel.yaml.scalarstring import FoldedScalarString
 
 from demisto_sdk.commands.common.constants import (
@@ -85,12 +85,10 @@ class YmlUnifier:
                 self.yml_path = path
                 break
 
-        self.ryaml = YAML()
-        self.ryaml.preserve_quotes = True
-        self.ryaml.width = 50000  # make sure long lines will not break (relevant for code section)
+        self.xsoar_yaml = XSOAR_YAML(width=50000) # make sure long lines will not break (relevant for code section)
         if self.yml_path:
             with io.open(self.yml_path, 'r', encoding='utf8') as yml_file:
-                self.yml_data = self.ryaml.load(yml_file)
+                self.yml_data = self.xsoar_yaml.load(yml_file)
         else:
             self.yml_data = {}
             print_error(f'No yml found in path: {self.package_path}')
@@ -157,7 +155,7 @@ class YmlUnifier:
                                  ' or rename this package (for example if it is a v2).')
 
             with io.open(file_path, mode='w', encoding='utf-8') as file_:
-                self.ryaml.dump(file_data, file_)
+                self.xsoar_yaml.dump(file_data, file_)
 
         return output_map
 

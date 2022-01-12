@@ -174,14 +174,14 @@ def get_test_modules(content_repo: Optional[git.Repo], is_external_repo: bool) -
 
 
 @contextmanager
-def add_typing_module(lint_files: List[Path], python_version: float):
+def add_typing_module(lint_files: List[Path], python_version: str):
     """ Check for typing import for python2 packages
             1. Entrance - Add import typing in the begining of the file.
             2. Closing - change back to original.
 
         Args:
             lint_files(list): File to execute lint - for adding typing in python 2.7
-            python_version(float): The package python version.
+            python_version(str): The package python version.
 
         Raises:
             IOError: if can't write to files due permissions or other reasons
@@ -190,7 +190,7 @@ def add_typing_module(lint_files: List[Path], python_version: float):
     back_lint_files: List[Path] = []
     try:
         # Add typing import if needed to python version 2 packages
-        if python_version < 3:
+        if float(python_version) < 3:
             for lint_file in lint_files:
                 data = lint_file.read_text(encoding="utf-8")
                 typing_regex = "(from typing import|import typing)"

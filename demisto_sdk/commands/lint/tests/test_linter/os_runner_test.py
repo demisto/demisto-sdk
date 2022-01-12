@@ -87,7 +87,7 @@ class TestMypy:
         mocker.patch.object(linter, 'run_command_os')
         linter.run_command_os.return_value = ('Success: no issues found', '', 0)
 
-        exit_code, output = linter_obj._run_mypy(lint_files=lint_files, py_num=3.7)
+        exit_code, output = linter_obj._run_mypy(lint_files=lint_files, py_num='3.7')
 
         assert exit_code == 0b0, "Exit code should be 0"
         assert output == '', "Output should be empty"
@@ -99,7 +99,7 @@ class TestMypy:
         expected_output = 'Error code found'
         linter.run_command_os.return_value = (expected_output, '', 1)
 
-        exit_code, output = linter_obj._run_mypy(lint_files=lint_files, py_num=3.7)
+        exit_code, output = linter_obj._run_mypy(lint_files=lint_files, py_num='3.7')
 
         assert exit_code == 0b1, "Exit code should be 1"
         assert output == expected_output, "Output should be empty"
@@ -111,7 +111,7 @@ class TestMypy:
         expected_output = 'Error code found'
         linter.run_command_os.return_value = ('not good', expected_output, 1)
 
-        exit_code, output = linter_obj._run_mypy(lint_files=lint_files, py_num=3.7)
+        exit_code, output = linter_obj._run_mypy(lint_files=lint_files, py_num='3.7')
 
         assert exit_code == 0b1, "Exit code should be 1"
         assert output == expected_output, "Output should be empty"

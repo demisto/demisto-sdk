@@ -487,11 +487,11 @@ class Linter:
 
         return SUCCESS, ""
 
-    def _run_mypy(self, py_num: float, lint_files: List[Path]) -> Tuple[int, str]:
+    def _run_mypy(self, py_num: str, lint_files: List[Path]) -> Tuple[int, str]:
         """ Run mypy in pack dir
 
         Args:
-            py_num(float): The python version in use
+            py_num(str): The python version in use
             lint_files(List[Path]): file to perform lint
 
         Returns:

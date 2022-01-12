@@ -152,12 +152,12 @@ def build_xsoar_linter_command(files: List[Path], py_num: str, support_level: st
     return command
 
 
-def build_mypy_command(files: List[Path], version: float) -> str:
+def build_mypy_command(files: List[Path], version: str) -> str:
     """ Build command to execute with mypy module
         https://mypy.readthedocs.io/en/stable/command_line.html
     Args:
         files(List[Path]): files to execute lint
-        version(float): python varsion X.Y (3.7, 2.7 ..)
+        version(str): python varsion X.Y (3.7, 2.7 ..)
 
     Returns:
         str: mypy command

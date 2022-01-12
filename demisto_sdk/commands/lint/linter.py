@@ -369,11 +369,11 @@ class Linter:
                 else:
                     self._pkg_lint_status[f"{lint_check}_errors"] = "\n".join(other)
 
-    def _run_flake8(self, py_num: float, lint_files: List[Path]) -> Tuple[int, str]:
+    def _run_flake8(self, py_num: str, lint_files: List[Path]) -> Tuple[int, str]:
         """ Runs flake8 in pack dir
 
         Args:
-            py_num(float): The python version in use
+            py_num(str): The python version in use
             lint_files(List[Path]): file to perform lint
 
         Returns:
@@ -398,7 +398,7 @@ class Linter:
 
         return SUCCESS, ""
 
-    def _run_xsoar_linter(self, py_num: float, lint_files: List[Path]) -> Tuple[int, str]:
+    def _run_xsoar_linter(self, py_num: str, lint_files: List[Path]) -> Tuple[int, str]:
         """ Runs Xsaor linter in pack dir
 
         Args:
@@ -420,7 +420,7 @@ class Linter:
                 myenv['PYTHONPATH'] = str(self._pack_abs_dir)
             if self._facts['is_long_running']:
                 myenv['LONGRUNNING'] = 'True'
-            if py_num < 3:
+            if float(py_num) < 3:
                 myenv['PY2'] = 'True'
             myenv['is_script'] = str(self._facts['is_script'])
             # as Xsoar checker is a pylint plugin and runs as part of pylint code, we can not pass args to it.
@@ -517,11 +517,11 @@ class Linter:
 
         return SUCCESS, ""
 
-    def _run_vulture(self, py_num: float, lint_files: List[Path]) -> Tuple[int, str]:
+    def _run_vulture(self, py_num: str, lint_files: List[Path]) -> Tuple[int, str]:
         """ Run mypy in pack dir
 
         Args:
-            py_num(float): The python version in use
+            py_num(str): The python version in use
             lint_files(List[Path]): file to perform lint
 
         Returns:

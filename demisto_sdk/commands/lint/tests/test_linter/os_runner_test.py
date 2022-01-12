@@ -13,7 +13,7 @@ class TestFlake8:
         mocker.patch.object(linter, 'run_command_os')
         linter.run_command_os.return_value = ('', '', 0)
 
-        exit_code, output = linter_obj._run_flake8(lint_files=lint_files, py_num=3.7)
+        exit_code, output = linter_obj._run_flake8(lint_files=lint_files, py_num='3.7')
 
         assert exit_code == 0b0, "Exit code should be 0"
         assert output == '', "Output should be empty"
@@ -25,7 +25,7 @@ class TestFlake8:
         expected_output = 'Error code found'
         linter.run_command_os.return_value = (expected_output, '', 1)
 
-        exit_code, output = linter_obj._run_flake8(lint_files=lint_files, py_num=3.7)
+        exit_code, output = linter_obj._run_flake8(lint_files=lint_files, py_num='3.7')
 
         assert exit_code == 0b1, "Exit code should be 1"
         assert output == expected_output, "Output should be empty"
@@ -37,7 +37,7 @@ class TestFlake8:
         expected_output = 'Error code found'
         linter.run_command_os.return_value = ('not good', expected_output, 1)
 
-        exit_code, output = linter_obj._run_flake8(lint_files=lint_files, py_num=3.7)
+        exit_code, output = linter_obj._run_flake8(lint_files=lint_files, py_num='3.7')
 
         assert exit_code == 0b1, "Exit code should be 1"
         assert output == expected_output, "Output should be empty"
@@ -124,7 +124,7 @@ class TestVulture:
         mocker.patch.object(linter, 'run_command_os')
         linter.run_command_os.return_value = ('', '', 0)
 
-        exit_code, output = linter_obj._run_vulture(lint_files=lint_files, py_num=3.7)
+        exit_code, output = linter_obj._run_vulture(lint_files=lint_files, py_num='3.7')
 
         assert exit_code == 0b0, "Exit code should be 0"
         assert output == '', "Output should be empty"
@@ -136,7 +136,7 @@ class TestVulture:
         expected_output = 'Error code found'
         linter.run_command_os.return_value = (expected_output, '', 1)
 
-        exit_code, output = linter_obj._run_vulture(lint_files=lint_files, py_num=3.7)
+        exit_code, output = linter_obj._run_vulture(lint_files=lint_files, py_num='3.7')
 
         assert exit_code == 0b1, "Exit code should be 1"
         assert output == expected_output, "Output should be empty"
@@ -148,7 +148,7 @@ class TestVulture:
         expected_output = 'Error code found'
         linter.run_command_os.return_value = ('not good', expected_output, 1)
 
-        exit_code, output = linter_obj._run_vulture(lint_files=lint_files, py_num=3.7)
+        exit_code, output = linter_obj._run_vulture(lint_files=lint_files, py_num='3.7')
 
         assert exit_code == 0b1, "Exit code should be 1"
         assert output == expected_output, "Output should be empty"

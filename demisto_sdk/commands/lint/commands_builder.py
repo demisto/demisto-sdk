@@ -20,17 +20,18 @@ from demisto_sdk.commands.lint.resources.pylint_plugins.xsoar_level_checker impo
 excluded_files = ["CommonServerPython.py", "demistomock.py", "CommonServerUserPython.py", "conftest.py", "venv"]
 
 
-def get_python_exec(py_num: float, is_py2: bool = False) -> str:
+def get_python_exec(py_num: str, is_py2: bool = False) -> str:
     """ Get python executable
 
     Args:
-        py_num(float): Python version X.Y
+        py_num(str): Python version X.Y
         is_py2(bool): for python 2 version, Set True if the returned result should have python2 or False for python.
 
     Returns:
         str: python executable
     """
-    if py_num < 3:
+    py_ver = float(py_num)
+    if py_ver < 3:
         if is_py2:
             py_str = "2"
         else:
@@ -41,12 +42,12 @@ def get_python_exec(py_num: float, is_py2: bool = False) -> str:
     return f"python{py_str}"
 
 
-def build_flake8_command(files: List[Path], py_num: float) -> str:
+def build_flake8_command(files: List[Path], py_num: str) -> str:
     """ Build command for executing flake8 lint check
         https://flake8.pycqa.org/en/latest/user/invocation.html
     Args:
         files(List[Path]): files to execute lint
-        py_num(float): The python version in use
+        py_num(str): The python version in use
 
     Returns:
         str: flake8 command
@@ -93,10 +94,10 @@ def build_bandit_command(files: List[Path]) -> str:
     return command
 
 
-def build_xsoar_linter_command(files: List[Path], py_num: float, support_level: str = "base") -> str:
+def build_xsoar_linter_command(files: List[Path], py_num: str, support_level: str = "base") -> str:
     """ Build command to execute with xsoar linter module
     Args:
-        py_num(float): The python version in use
+        py_num(str): The python version in use
         files(List[Path]): files to execute lint
         support_level: Support level for the file
 
@@ -189,11 +190,11 @@ def build_mypy_command(files: List[Path], version: float) -> str:
     return command
 
 
-def build_vulture_command(files: List[Path], pack_path: Path, py_num: float) -> str:
+def build_vulture_command(files: List[Path], pack_path: Path, py_num: str) -> str:
     """ Build command to execute with pylint module
         https://github.com/jendrikseipp/vulture
     Args:
-        py_num(float): The python version in use
+        py_num(str): The python version in use
         files(List[Path]): files to execute lint
         pack_path(Path): Package path
 

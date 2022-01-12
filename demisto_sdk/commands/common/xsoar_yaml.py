@@ -21,7 +21,7 @@ class XSOAR_YAML:
     def dump(self, data, stream=None, sort_keys=False, **kwargs):
         if stream is None:
             import yaml
-            return yaml.dump(data)
+            return yaml.dump(data, sort_keys=sort_keys)
         if sort_keys:
             data = XSOAR_YAML._order_dict(data)
         return self._ryaml.dump(data, stream, **kwargs)

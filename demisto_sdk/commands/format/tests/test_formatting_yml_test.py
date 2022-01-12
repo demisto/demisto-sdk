@@ -71,7 +71,7 @@ class TestFormatting:
         schema_path = os.path.normpath(
             os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format(file_type)))
         base_yml = formatter(source_path, path=schema_path)
-        XSOAR_YAML.dump(base_yml.data, sys.stdout)
+        xsoar_yaml.dump(base_yml.data, sys.stdout)
         stdout, _ = capsys.readouterr()
         assert '# comment' in stdout
 

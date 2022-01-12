@@ -122,5 +122,5 @@ This will upload the custom packs from the config file, a custom pack can be zip
 demisto-sdk upload -i Packs/HelloWorld -z --skip-validation
 ```
 This will zip the pack `HelloWorld` and will upload without any validation the zip file `uploadable_packs.zip` as a pack to the designated Cortex XSOAR Marketplace.
-This `skip validation` parameter is for migration from custom content entities to custom content packs. 
+This `skip validation` parameter is for migration from custom content entities to custom content packs.
 <br/><br/>

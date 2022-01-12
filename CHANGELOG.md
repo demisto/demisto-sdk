@@ -1,5 +1,7 @@
 # Changelog
 
+* Added an enhancement to handle empty `output` in **split** command.
+
 # 1.5.6
 * Added 'deprecated' release notes template.
 * Fixed an issue where **run-test-playbook** command failed to get the task entries when the test playbook finished with errors.

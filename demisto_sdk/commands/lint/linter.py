@@ -15,6 +15,7 @@ import docker
 import docker.errors
 import docker.models.containers
 import git
+from jinja2.tests import test_sameas
 import requests.exceptions
 import urllib3.exceptions
 from jinja2 import Environment, FileSystemLoader, exceptions
@@ -174,6 +175,7 @@ class Linter:
             bool: Indicating if to continue further or not, if False exit Thread, Else continue.
         """
         # Looking for pkg yaml
+        start_time = time.time()
         yml_file: Optional[Path] = self._pack_abs_dir.glob([r'*.yaml', r'*.yml', r'!*unified*.yml'], flags=NEGATE)
 
         if not yml_file:
@@ -192,7 +194,7 @@ class Linter:
         logger.info(f"{log_prompt} - Using yaml file {yml_file}")
         # Parsing pack yaml - in order to verify if check needed
         try:
-
+            parsing_yml_start_time = time.time()
             script_obj: Dict = {}
             yml_obj: Dict = YAML().load(yml_file)
             if isinstance(yml_obj, dict):
@@ -201,6 +203,7 @@ class Linter:
             self._facts['is_long_running'] = script_obj.get('longRunning')
             self._facts['commands'] = self._get_commands_list(script_obj)
             self._pkg_lint_status["pack_type"] = script_obj.get('type')
+            logger.info(f'{log_prompt} parsing yml take: {time.time() - parsing_yml_start_time}')
         except (FileNotFoundError, IOError, KeyError):
             self._pkg_lint_status["errors"].append('Unable to parse package yml')
             return True
@@ -211,6 +214,7 @@ class Linter:
             return True
         # Docker images
         if self._facts["docker_engine"]:
+            get_docker_img_start_time = time.time()
             logger.info(f"{log_prompt} - Pulling docker images, can take up to 1-2 minutes if not exists locally ")
             self._facts["images"] = [[image, -1] for image in get_all_docker_images(script_obj=script_obj)]
             # Gather environment variables for docker execution
@@ -218,6 +222,8 @@ class Linter:
                 "CI": os.getenv("CI", False),
                 "DEMISTO_LINT_UPDATE_CERTS": os.getenv('DEMISTO_LINT_UPDATE_CERTS', "yes")
             }
+
+            logger.info(f'{log_prompt} get_all_docker_images take: {time.time() - get_docker_img_start_time}')
         lint_files = set()
         # Facts for python pack
         if self._pkg_lint_status["pack_type"] == TYPE_PYTHON:
@@ -225,11 +231,13 @@ class Linter:
             if self._facts["docker_engine"]:
                 # Getting python version from docker image - verifying if not valid docker image configured
                 for image in self._facts["images"]:
+                    get_py_ver_start_time = time.time()
                     py_num: float = get_python_version_from_image(image=image[0], timeout=self.docker_timeout, log_prompt=log_prompt)
                     image[1] = py_num
                     logger.info(f"{self._pack_name} - Facts - {image[0]} - Python {py_num}")
                     if not self._facts["python_version"]:
                         self._facts["python_version"] = py_num
+                    logger.info(f'{log_prompt} get_python_version_from_image tkae: {time.time() - get_py_ver_start_time}')
                 # Checking whatever *test* exists in package
                 self._facts["test"] = True if next(self._pack_abs_dir.glob([r'test_*.py', r'*_test.py']),
                                                    None) else False
@@ -283,6 +291,7 @@ class Linter:
         else:
             logger.info(f"{log_prompt} - Lint files not found")
 
+        logger.info(f'{log_prompt} total ake: {time.time() - start_time}')
         return False
 
     def _remove_gitignore_files(self, log_prompt: str) -> None:
@@ -618,7 +627,7 @@ class Linter:
                             elif not no_pwsh_test and check == "pwsh_test":
                                 exit_code, output = self._docker_run_pwsh_test(test_image=image_id,
                                                                              keep_container=keep_container)
-                        logger.info(f'{check}')
+                        logger.info(f'{check} on the pack {self._pack_name} take: {time.time() - start_time}')
                         # If lint check perfrom and failed on reason related to enviorment will run twice,
                         # But it failing in second time it will count as test failure.
                         if (exit_code == RERUN and trial == 1) or exit_code == FAIL or exit_code == SUCCESS:
@@ -673,6 +682,7 @@ class Linter:
         Returns:
             str, str. image name to use and errors string.
         """
+        start_time = time.time()
         log_prompt = f"{self._pack_name} - Image create"
         test_image_id = ""
         # Get requirements file for image
@@ -730,7 +740,6 @@ class Linter:
                 errors = str(e)
         else:
             logger.info(f"{log_prompt} - Found existing image {test_image_name}")
-        copy_dir_time_start = time.time()
         dockerfile_path = Path(self._pack_abs_dir / ".Dockerfile")
         dockerfile = template.render(image=test_image_name,
                                      copy_pack=True)
@@ -759,7 +768,7 @@ class Linter:
         if test_image_id:
             logger.info(f"{log_prompt} - Image {test_image_id} created successfully")
         
-        logger.info(f'{log_prompt} - Build image with copy dir take: {time.time() - copy_dir_time_start}s')
+        logger.info(f'{log_prompt} - Build image take: {time.time() - start_time}s')
 
         return test_image_name, errors
 

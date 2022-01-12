@@ -1185,7 +1185,7 @@ class TestFormatting:
             yml_example = xsoar_yaml.load(f)
         sorted_yml_file = tmp_path / 'test.yml'
         with sorted_yml_file.open('w') as f:
-            xsoar_yaml.dump(order_dict(yml_example), f)  # sorting the keys to have different order
+            xsoar_yaml.dump(yml_example, f, sort_keys=True)  # sorting the keys to have different order
         with sorted_yml_file.open() as f:
             sorted_yml = xsoar_yaml.load(f)
         sorted_yml['description'] = 'test'

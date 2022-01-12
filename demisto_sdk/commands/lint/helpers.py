@@ -185,6 +185,8 @@ def add_typing_module(lint_files: List[Path], python_version: float):
         Raises:
             IOError: if can't write to files due permissions or other reasons
     """
+    import time
+    start_time = time.time()
     added_modules: List[Path] = []
     back_lint_files: List[Path] = []
     try:
@@ -202,6 +204,7 @@ def add_typing_module(lint_files: List[Path], python_version: float):
                     original_file.write_text("from typing import *  # noqa: F401" + '\n' + data)
                     back_lint_files.append(back_file)
                     added_modules.append(original_file)
+        logger.info(f'mypy add_typing_module take: {time.time() - start_time}s')
         yield
     except Exception:
         pass

@@ -570,6 +570,7 @@ class Linter:
             no_coverage(bool): Run pytest without coverage report
 
         """
+        start_total_time = time.time()
         for image in self._facts["images"]:
             # Docker image status - visualize
             status = {
@@ -595,6 +596,7 @@ class Linter:
                     exit_code = SUCCESS
                     output = ""
                     for trial in range(2):
+                        start_time = time.time()
                         if self._pkg_lint_status["pack_type"] == TYPE_PYTHON:
                             # Perform pylint
                             if not no_pylint and check == "pylint" and self._facts["lint_files"]:
@@ -615,7 +617,8 @@ class Linter:
                             # Perform powershell test
                             elif not no_pwsh_test and check == "pwsh_test":
                                 exit_code, output = self._docker_run_pwsh_test(test_image=image_id,
-                                                                               keep_container=keep_container)
+                                                                             keep_container=keep_container)
+                        logger.info(f'{check}')
                         # If lint check perfrom and failed on reason related to enviorment will run twice,
                         # But it failing in second time it will count as test failure.
                         if (exit_code == RERUN and trial == 1) or exit_code == FAIL or exit_code == SUCCESS:
@@ -633,6 +636,9 @@ class Linter:
                 self._docker_client.images.remove(image_id)
             except (docker.errors.ImageNotFound, docker.errors.APIError):
                 pass
+        
+        logger.info(f'run_lint_on_docker_image take: {time.time() - start_total_time }s')
+        
 
     def _docker_login(self) -> bool:
         """ Login to docker-hub using environment variables:

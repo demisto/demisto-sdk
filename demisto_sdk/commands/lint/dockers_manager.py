@@ -247,9 +247,9 @@ class DockersManager:
             logger.info(f'{log_prompt} - Skipping due to not script object was found')
 
     def _get_files_to_copy_to_image(self, pack_path: Path, pack_type: str) -> Set:
-        lint_files = self._lint_files_helper.get_lint_files_for_pack(pack_path=pack_path, pack_type=pack_type)
+        pack_files = self._lint_files_helper.get_pack_files(pack_path=pack_path, pack_type=pack_type)
         mandatory_files = self._lint_files_helper.get_mandatory_files_for_pack(pack_path=pack_path, pack_type=pack_type)
-        return lint_files and mandatory_files and lint_files | mandatory_files 
+        return pack_files and mandatory_files and pack_files | mandatory_files 
 
     def _get_script_obj_from_pack_yml(self, pack_path: Path):
         

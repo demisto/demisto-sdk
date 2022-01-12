@@ -167,6 +167,127 @@ class Linter:
             self._pkg_lint_status['exit_code'] += FAIL
         return self._pkg_lint_status
 
+    def _gather_facts_orig(self, modules: dict) -> bool:
+        """ Gathering facts about the package - python version, docker images, valid docker image, yml parsing
+        Args:
+            modules(dict): Test mandatory modules to be ignore in lint check
+
+        Returns:
+            bool: Indicating if to continue further or not, if False exit Thread, Else continue.
+        """
+        # Looking for pkg yaml
+        yml_file: Optional[Path] = self._pack_abs_dir.glob([r'*.yaml', r'*.yml', r'!*unified*.yml'], flags=NEGATE)
+
+        if not yml_file:
+            logger.info(f"{self._pack_abs_dir} - Skipping no yaml file found {yml_file}")
+            self._pkg_lint_status["errors"].append('Unable to find yml file in package')
+            return True
+        else:
+            try:
+                yml_file = next(yml_file)
+            except StopIteration:
+                return True
+        # Get pack name
+        self._pack_name = yml_file.stem
+        log_prompt = f"{self._pack_name} - Facts"
+        self._pkg_lint_status["pkg"] = yml_file.stem
+        logger.info(f"{log_prompt} - Using yaml file {yml_file}")
+        # Parsing pack yaml - in order to verify if check needed
+        try:
+
+            script_obj: Dict = {}
+            yml_obj: Dict = YAML().load(yml_file)
+            if isinstance(yml_obj, dict):
+                script_obj = yml_obj.get('script', {}) if isinstance(yml_obj.get('script'), dict) else yml_obj
+            self._facts['is_script'] = True if 'Scripts' in yml_file.parts else False
+            self._facts['is_long_running'] = script_obj.get('longRunning')
+            self._facts['commands'] = self._get_commands_list(script_obj)
+            self._pkg_lint_status["pack_type"] = script_obj.get('type')
+        except (FileNotFoundError, IOError, KeyError):
+            self._pkg_lint_status["errors"].append('Unable to parse package yml')
+            return True
+        # return no check needed if not python pack
+        if self._pkg_lint_status["pack_type"] not in (TYPE_PYTHON, TYPE_PWSH):
+            logger.info(f"{log_prompt} - Skipping due to not Python, Powershell package - Pack is"
+                        f" {self._pkg_lint_status['pack_type']}")
+            return True
+        # Docker images
+        if self._facts["docker_engine"]:
+            logger.info(f"{log_prompt} - Pulling docker images, can take up to 1-2 minutes if not exists locally ")
+            self._facts["images"] = [[image, -1] for image in get_all_docker_images(script_obj=script_obj)]
+            # Gather environment variables for docker execution
+            self._facts["env_vars"] = {
+                "CI": os.getenv("CI", False),
+                "DEMISTO_LINT_UPDATE_CERTS": os.getenv('DEMISTO_LINT_UPDATE_CERTS', "yes")
+            }
+        lint_files = set()
+        # Facts for python pack
+        if self._pkg_lint_status["pack_type"] == TYPE_PYTHON:
+            self._update_support_level()
+            if self._facts["docker_engine"]:
+                # Getting python version from docker image - verifying if not valid docker image configured
+                for image in self._facts["images"]:
+                    py_num: float = get_python_version_from_image(image=image[0], timeout=self.docker_timeout, log_prompt=log_prompt)
+                    image[1] = py_num
+                    logger.info(f"{self._pack_name} - Facts - {image[0]} - Python {py_num}")
+                    if not self._facts["python_version"]:
+                        self._facts["python_version"] = py_num
+                # Checking whatever *test* exists in package
+                self._facts["test"] = True if next(self._pack_abs_dir.glob([r'test_*.py', r'*_test.py']),
+                                                   None) else False
+                if self._facts["test"]:
+                    logger.info(f"{log_prompt} - Tests found")
+                else:
+                    logger.info(f"{log_prompt} - Tests not found")
+                # Gather package requirements embedded test-requirements.py file
+                test_requirements = self._pack_abs_dir / 'test-requirements.txt'
+                if test_requirements.exists():
+                    try:
+                        additional_req = test_requirements.read_text(encoding='utf-8').strip().split('\n')
+                        self._facts["additional_requirements"].extend(additional_req)
+                        logger.info(f"{log_prompt} - Additional package Pypi packages found - {additional_req}")
+                    except (FileNotFoundError, IOError):
+                        self._pkg_lint_status["errors"].append('Unable to parse test-requirements.txt in package')
+            elif not self._facts["python_version"]:
+                # get python version from yml
+                pynum = 3.7 if (script_obj.get('subtype', 'python3') == 'python3') else 2.7
+                self._facts["python_version"] = pynum
+                logger.info(f"{log_prompt} - Using python version from yml: {pynum}")
+            # Get lint files
+            lint_files = set(self._pack_abs_dir.glob(["*.py", "!__init__.py", "!*.tmp"],
+                                                     flags=NEGATE))
+
+        # Facts for Powershell pack
+        elif self._pkg_lint_status["pack_type"] == TYPE_PWSH:
+            # Get lint files
+            lint_files = set(
+                self._pack_abs_dir.glob(["*.ps1", "!*Tests.ps1", "CommonServerPowerShell.ps1", "demistomock.ps1'"],
+                                        flags=NEGATE))
+
+        # Add CommonServer to the lint checks
+        if 'commonserver' in self._pack_abs_dir.name.lower():
+            # Powershell
+            if self._pkg_lint_status["pack_type"] == TYPE_PWSH:
+                self._facts["lint_files"] = [Path(self._pack_abs_dir / 'CommonServerPowerShell.ps1')]
+            # Python
+            elif self._pkg_lint_status["pack_type"] == TYPE_PYTHON:
+                self._facts["lint_files"] = [Path(self._pack_abs_dir / 'CommonServerPython.py')]
+        else:
+            test_modules = {self._pack_abs_dir / module.name for module in modules.keys()}
+            lint_files = lint_files.difference(test_modules)
+            self._facts["lint_files"] = list(lint_files)
+
+        # Remove files that are in gitignore
+        if self._facts["lint_files"]:
+            self._split_lint_files()
+            self._remove_gitignore_files(log_prompt)
+            for lint_file in self._facts["lint_files"]:
+                logger.info(f"{log_prompt} - Lint file {lint_file}")
+        else:
+            logger.info(f"{log_prompt} - Lint files not found")
+
+        return False
+
     def _gather_facts(self, modules: dict) -> bool:
         """ Gathering facts about the package - python version, docker images, valid docker image, yml parsing
         Args:
@@ -287,6 +408,7 @@ class Linter:
             logger.info(f"{log_prompt} - Lint files not found")
 
         return False
+
 
     def _remove_gitignore_files(self, log_prompt: str) -> None:
         """

@@ -21,19 +21,32 @@ from wcmatch.pathlib import NEGATE, EXTGLOB, Path
 
 logger = logging.getLogger('demisto-sdk')
 
-PACK_GLOB_FILES_PATTERNS = {
+PACK_LINT_FILES_PATTERNS = {
     TYPE_PYTHON: "!(__init__|*_test|test_*).py",
     TYPE_PWSH: "!(*.Tests).ps1"
+}
+
+PACK_ALL_FILES_PATTERNS = {
+    TYPE_PYTHON: "*.py",
+    TYPE_PWSH: "*.ps1"
 }
 class LintFilesInfoHelper:
 
     def __init__(self, ontent_repo: git.Repo, mandatory_modules: Dict[Path, bytes]) -> None:
         self._mandatory_per_pack = {}
-        self._lint_files_per_pack = {}
+        self._packs_files = {}
         self._content_repo = ontent_repo
 
         self._mandatory_files_per_type = {TYPE_PYTHON: {module for module in mandatory_modules if module.exists() and module.suffix == '.py'},
                                           TYPE_PWSH: {module for module in mandatory_modules if module.suffix == '.ps1'}}
+
+    def get_pack_files(self, pack_path: Path, pack_type: str) -> set[Path]:
+        pack_files: set[Path] = self._packs_files.get(pack_path.name)
+        if pack_files is None:
+            glob_pattern = PACK_ALL_FILES_PATTERNS[pack_type]
+            pack_files = set(pack_path.glob(glob_pattern, flags=NEGATE|EXTGLOB))
+            self._packs_files[pack_path.name] = pack_files
+        return pack_files
 
     def get_lint_files_for_pack(self, pack_path: Path, pack_type: str):
 
@@ -42,33 +55,31 @@ class LintFilesInfoHelper:
         if not is_lint_available_for_pack_type(pack_type):
             logger.info(f'{log_prompt} - No lint files available due to not Python, Powershell package - Pack is {pack_type}')
             return None
+
+        if 'commonserver' in pack_path.name.lower():
+            common_server_file = 'CommonServerPython.py' if pack_type == TYPE_PYTHON else 'CommonServerPowerShell.ps1'
+            return {pack_path / common_server_file}
         
-        lint_files: List[Path] = self._lint_files_per_pack.get(pack_path.name)
-        if lint_files is None:
+        pack_files: set[Path] = self._packs_files.get(pack_path.name)
+        lint_files_pattern = PACK_LINT_FILES_PATTERNS[pack_type]
+        lint_files = {file for file in pack_files if file.match(lint_files_pattern, flags=NEGATE|EXTGLOB)}
+        
 
-            glob_patterns = PACK_GLOB_FILES_PATTERNS[pack_type]
-            lint_files = set(pack_path.glob(glob_patterns, flags=NEGATE|EXTGLOB))
-
-            # Add CommonServer to the lint checks
-            if 'commonserver' in pack_path.name.lower():
-                common_server_file = 'CommonServerPython.py' if pack_type == TYPE_PYTHON else 'CommonServerPowerShell.ps1'
-                lint_files = {pack_path / common_server_file}
-            else:
-                mandatory_modules = self._mandatory_files_per_type[pack_type]
-                test_modules = {pack_path / module.name for module in mandatory_modules}
-                lint_files = lint_files.difference(test_modules)
+        # skip the test_modules like demistomock.py etc        
+        mandatory_modules = self._mandatory_files_per_type[pack_type]
+        test_modules = {pack_path / module.name for module in mandatory_modules}
+        lint_files = lint_files.difference(test_modules)
 
             # Remove files that are in gitignore
             
-            if lint_files:
-                files_to_ignore = set(self._content_repo.ignored(lint_files))
-                for file in files_to_ignore:
-                    logger.info(f"{log_prompt} - Skipping gitignore file {file}")
-                    lint_files.remove(file)
-            else:
-                logger.info(f"{log_prompt} - Lint files not found")
+        if lint_files:
+            files_to_ignore = set(self._content_repo.ignored(lint_files))
+            for file in files_to_ignore:
+                logger.info(f"{log_prompt} - Skipping gitignore file {file}")
+                lint_files.remove(file)
+        else:
+            logger.info(f"{log_prompt} - Lint files not found")
 
-            self._lint_files_per_pack[pack_path.name] = lint_files
         return lint_files
 
     def get_mandatory_files_for_pack(self, pack_path: Path, pack_type: str):

@@ -1,6 +1,7 @@
 # Changelog
 
-* Added an enhancement to **split** to handle empty `output`
+* Added an enhancement to **split** to handle empty `output`.
+* Fixed an issue in **validate** failed with no error message for lists (when no fromVersion field was found).
 
 # 1.5.6
 * Added 'deprecated' release notes template.

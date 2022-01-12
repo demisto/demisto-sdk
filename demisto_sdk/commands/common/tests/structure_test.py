@@ -45,6 +45,7 @@ from TestSuite.test_tools import ChangeCWD
 
 xsoar_yaml = XSOAR_YAML()
 
+
 class TestStructureValidator:
     INPUTS_TARGETS = [
         LAYOUTS_CONTAINER_TARGET,

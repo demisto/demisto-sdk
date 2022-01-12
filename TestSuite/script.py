@@ -2,11 +2,10 @@ import os
 import shutil
 from pathlib import Path
 
+from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
 from TestSuite.integration import Integration
 from TestSuite.test_tools import suite_join_path
-
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 
 xsoar_yaml = XSOAR_YAML()
 

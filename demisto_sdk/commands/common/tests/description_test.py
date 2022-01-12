@@ -10,6 +10,7 @@ from TestSuite.test_tools import ChangeCWD
 
 xsoar_yaml = XSOAR_YAML()
 
+
 @pytest.mark.parametrize('integration_obj', [
     ({'script': {'script': 'Here Comes The Script'},
       'category': 'ok'}),

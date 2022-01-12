@@ -17,10 +17,10 @@ class YML(File):
         super().__init__(tmp_path, repo_path, init_yml)
 
     def write_dict(self, yml: dict):
-        xsoar_yaml.dump(yml, self)
+        self.write(xsoar_yaml.dump(yml))
 
     def read_dict(self):
-        return xsoar_yaml.load(self)
+        return xsoar_yaml.load(self.read())
 
     def update(self, update_obj: dict):
         yml_contents = self.read_dict()

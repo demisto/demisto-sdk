@@ -13,7 +13,7 @@ class YML(File):
         if yml is None:
             init_yml = ''
         else:
-            init_yml = yaml.dump(yml)
+            init_yml = xsoar_yaml.dump(yml)
         super().__init__(tmp_path, repo_path, init_yml)
 
     def write_dict(self, yml: dict):

@@ -1,5 +1,3 @@
-from io import StringIO
-
 from ruamel.yaml import YAML
 
 
@@ -22,11 +20,8 @@ class XSOAR_YAML:
 
     def dump(self, data, stream=None, sort_keys=False, **kwargs):
         if stream is None:
-            string_stream = StringIO()
-            self._ryaml.dump(data, string_stream)
-            output_str = string_stream.getvalue()
-            string_stream.close()
-            return output_str
+            import yaml
+            return yaml.dump(data)
         if sort_keys:
             data = XSOAR_YAML._order_dict(data)
         return self._ryaml.dump(data, stream, **kwargs)

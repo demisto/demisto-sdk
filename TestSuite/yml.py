@@ -1,7 +1,9 @@
 from pathlib import Path
 from typing import Optional
 
-from ruamel import yaml
+from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
+
+xsoar_yaml = XSOAR_YAML()
 
 from TestSuite.file import File
 
@@ -15,10 +17,10 @@ class YML(File):
         super().__init__(tmp_path, repo_path, init_yml)
 
     def write_dict(self, yml: dict):
-        super().write(yaml.dump(yml))
+        xsoar_yaml.dump(yml, self)
 
     def read_dict(self):
-        return yaml.safe_load(self.read())
+        return xsoar_yaml.load(self)
 
     def update(self, update_obj: dict):
         yml_contents = self.read_dict()

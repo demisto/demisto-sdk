@@ -37,6 +37,8 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 
+xsoar_yaml = XSOAR_YAML()
+
 
 class Downloader:
     """

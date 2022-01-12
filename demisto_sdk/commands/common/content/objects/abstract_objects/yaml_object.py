@@ -8,9 +8,8 @@ import demisto_sdk.commands.common.content.errors as exc
 
 from .dictionary_based_object import DictionaryBasedObject
 
-RUYAML = YAML(typ='rt')
-RUYAML.preserve_quotes = True  # type: ignore
-RUYAML.width = 50000  # type: ignore
+
+xsoar_yml = XSOAR_YAML(typ='rt', width=50000)
 
 
 class YAMLObject(DictionaryBasedObject):
@@ -48,7 +47,7 @@ class YAMLObject(DictionaryBasedObject):
     def _unserialize(self):
         """Load yaml to dictionary"""
         try:
-            self._as_dict = RUYAML.load(self.path)
+            self._as_dict = xsoar_yml.load(self.path)
         except ScannerError as e:
             raise exc.ContentSerializeError(self, self.path, e.problem)
 

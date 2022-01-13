@@ -1,4 +1,5 @@
 # Changelog
+Fixed an issue were the **validate** command did not handle properly contributor's absolute images in readme files.
 
 # 1.5.7
 * Fixed an issue where reading remote yaml files failed.

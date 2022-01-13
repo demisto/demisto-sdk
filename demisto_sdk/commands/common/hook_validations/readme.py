@@ -12,14 +12,12 @@ from urllib.parse import urlparse
 
 import click
 import requests
-from git import InvalidGitRepositoryError
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 
 from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
                                                 Errors)
-from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.tools import (
@@ -251,7 +249,8 @@ class ReadMeValidator(BaseValidator):
         # If error was found, print it only if its not a pack readme. For pack readme, the PackUniqueFilesValidator
         # class handles the errors and printing.
         should_print_error = not is_pack_readme
-        relative_images = re.findall(r'(\!\[.*?\])\(((?!http).*?)\)$', self.readme_content, re.IGNORECASE | re.MULTILINE)
+        relative_images = re.findall(r'(\!\[.*?\])\(((?!http).*?)\)$', self.readme_content,
+                                     re.IGNORECASE | re.MULTILINE)
         relative_images += re.findall(  # HTML image tag
             r'(<img.*?src\s*=\s*"((?!http).*?)")', self.readme_content,
             re.IGNORECASE | re.MULTILINE)
@@ -316,13 +315,15 @@ class ReadMeValidator(BaseValidator):
                     branch_or_hash = third_elem if third_elem not in ['raw', 'blob'] else url_path_elem_list[3]
                     if not re.match(sha_pattern, branch_or_hash):  # the url does not contain the commit hash
                         if url_path_elem_list[0] != 'demisto' or branch_or_hash not in ['master', 'main']:
-                            error_message, error_code = Errors.invalid_readme_image_error(prefix + f'({img_url})',
-                                                                                          error_type='branch_name_readme_absolute_error')
+                            error_message, error_code = \
+                                Errors.invalid_readme_image_error(prefix + f'({img_url})',
+                                                                  error_type='branch_name_readme_absolute_error')
                     else:
                         response = requests.get(img_url, verify=False, timeout=10)
                         if response.status_code != 200:
-                            error_message, error_code = Errors.invalid_readme_image_error(prefix + f'({img_url})',
-                                                                                          error_type='general_readme_absolute_error')
+                            error_message, error_code = \
+                                Errors.invalid_readme_image_error(prefix + f'({img_url})',
+                                                                  error_type='general_readme_absolute_error')
             except Exception as ex:
                 click.secho(f"Could not validate the image link: {img_url}\n {ex}", fg='yellow')
                 continue

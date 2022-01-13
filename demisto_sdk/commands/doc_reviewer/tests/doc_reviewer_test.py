@@ -1,7 +1,12 @@
 from typing import List
 
-from demisto_sdk.commands.doc_reviewer.doc_reviewer import DocReviewer
+import pytest
+from _pytest.fixtures import FixtureRequest
 
+from demisto_sdk.commands.doc_reviewer.doc_reviewer import DocReviewer
+from TestSuite.pack import Pack
+from _pytest.tmpdir import TempPathFactory
+from conftest import get_pack, get_playbook, get_integration
 
 def test_camel_case_split():
     """
@@ -28,3 +33,19 @@ def test_camel_case_split():
     assert 'Is' in result
     assert 'Also' in result
     assert 'Camel' in result
+
+
+def test_doc_review_is_performed_only_on_release_notes(pack: Pack):
+    """
+    Given
+        - a pack
+
+    When
+        - Running doc-review with release-notes only.
+
+    Then
+        - Ensure The files that were doc-reviewed are only release-notes.
+    """
+    doc_reviewer = DocReviewer(file_path=pack.path, release_notes_only=True)
+    assert doc_reviewer.run_doc_review()
+    assert doc_reviewer.files == pack.release_notes

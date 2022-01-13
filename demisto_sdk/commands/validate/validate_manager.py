@@ -153,7 +153,11 @@ class ValidateManager:
                 self.git_util = None  # type: ignore[assignment]
                 self.branch_name = ''
 
-        self.prev_ver = self.setup_prev_ver(prev_ver)
+        if prev_ver and not prev_ver.startswith('origin'):
+            self.prev_ver = self.setup_prev_ver('origin/' + prev_ver)
+        else:
+            self.prev_ver = self.setup_prev_ver(prev_ver)
+
         self.check_only_schema = False
         self.always_valid = False
         self.ignored_files = set()

@@ -82,6 +82,8 @@ class SecretsValidator(object):
         self.white_list_path = white_list_path
         self.ignore_entropy = ignore_entropy
         self.prev_ver = prev_ver
+        if self.prev_ver and not self.prev_ver.startswith('origin'):
+            self.prev_ver = 'origin/' + self.prev_ver
 
     def get_secrets(self, branch_name, is_circle):
         secret_to_location_mapping = {}

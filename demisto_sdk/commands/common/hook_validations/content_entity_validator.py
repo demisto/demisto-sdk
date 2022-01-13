@@ -105,6 +105,8 @@ class ContentEntityValidator(BaseValidator):
         """
         git_util = GitUtil(repo=Content.git())
         main_branch = git_util.handle_prev_ver()[1]
+        if not main_branch.startswith('origin'):
+            main_branch = 'origin/' + main_branch
 
         diff_string_config_yml = run_command(f"git diff {main_branch} .circleci/config.yml")
         if re.search(r'[+-][ ]+CONTENT_VERSION: ".*', diff_string_config_yml):

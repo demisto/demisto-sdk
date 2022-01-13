@@ -48,25 +48,10 @@ from demisto_sdk.tests.constants_test import (DUMMY_SCRIPT_PATH, IGNORED_PNG,
                                               VALID_WIDGET_PATH)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     LAYOUT, MAPPER, OLD_CLASSIFIER, REPUTATION)
-from TestSuite.json_based import JSONBased
 from TestSuite.pack import Pack
 from TestSuite.playbook import Playbook
 from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
-from TestSuite.yml import YAML
-
-
-@pytest.fixture()
-def malformed_integration_yml(integration) -> YAML:
-    integration.yml.write("1: 2\n//")
-    return integration.yml
-
-
-@pytest.fixture()
-def malformed_incident_field(pack) -> JSONBased:
-    incident_field = pack.create_incident_field("malformed")
-    incident_field.write_as_text("{\n '1': '1'")
-    return incident_field
 
 
 class TestGenericFunctions:

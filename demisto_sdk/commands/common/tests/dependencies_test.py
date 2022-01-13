@@ -5,15 +5,15 @@ from typing import List
 
 import pytest
 
+from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
+from demisto_sdk.commands.find_dependencies.find_dependencies import \
+    PackDependencies
 from TestSuite.integration import Integration
 from TestSuite.json_based import JSONBased
 from TestSuite.playbook import Playbook
 from TestSuite.script import Script
 from TestSuite.test_tools import ChangeCWD
 from TestSuite.utils import IsEqualFunctions
-from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
-from demisto_sdk.commands.find_dependencies.find_dependencies import \
-    PackDependencies
 
 
 def update_id_set(repo):
@@ -869,7 +869,7 @@ def create_inputs_for_method(repo, current_pack, inputs_arguments):
     dependencies = set()
 
     inputs_values = {inputs_arguments[0]:
-                         get_entity_by_pack_number_and_entity_type(repo, current_pack, inputs_arguments[0])}
+                     get_entity_by_pack_number_and_entity_type(repo, current_pack, inputs_arguments[0])}
 
     inputs_arguments = inputs_arguments[1:]
     # Ignores the `CommonTypes` pack in the flow, so only numeric packs will be chosen

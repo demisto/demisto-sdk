@@ -5,6 +5,7 @@
 * Added the ability to add classifiers and mappers to conf.json.
 * Added the Alias field to the incident field schema.
 * Fixed an issue in **validate** failed with no error message for lists (when no fromVersion field was found).
+* Added option to specify `External Playbook Configuration` to change inputs of Playbooks triggered as part of **test-content**
 
 # 1.5.6
 * Added 'deprecated' release notes template.

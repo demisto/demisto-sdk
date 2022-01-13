@@ -1,6 +1,15 @@
 # Changelog
 * Added the '--use-packs-known-words' argument to the **doc-review** command
-* Changed the **format** command to update the tests field according to the test_playbooks' commands and scripts.
+
+# 1.5.7
+* Fixed an issue where reading remote yaml files failed.
+* Fixed an issue in **validate** failed with no error message for lists (when no fromVersion field was found).
+* Fixed an issue when running **validate** or **format** in a gitlab repository, and failing to determine its project id.
+* Added an enhancement to **split**, handling an empty output argument.
+* Added the ability to add classifiers and mappers to conf.json.
+* Added the Alias field to the incident field schema.
+
+# 1.5.6
 * Added 'deprecated' release notes template.
 * Fixed an issue where **run-test-playbook** command failed to get the task entries when the test playbook finished with errors.
 * Fixed an issue in **validate** command when running with `no-conf-json` argument to ignore the `conf.json` file.

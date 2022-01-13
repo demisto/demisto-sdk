@@ -55,7 +55,6 @@ urllib3.disable_warnings()
 colorama.init()
 
 
-
 class LOG_COLORS:
     NATIVE = colorama.Style.RESET_ALL
     RED = colorama.Fore.RED

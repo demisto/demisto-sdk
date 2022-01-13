@@ -1,5 +1,7 @@
-from ruamel.yaml import YAML
 from io import StringIO
+
+from ruamel.yaml import YAML
+
 
 class XSOAR_YAML:
     def __init__(self, preserve_quotes=True, allow_duplicate_keys=True, width=None, typ=None):
@@ -10,6 +12,9 @@ class XSOAR_YAML:
 
     @staticmethod
     def _order_dict(data):
+        """
+        Alternative for PyYAML `sort_keys` argument
+        """
         return {k: XSOAR_YAML._order_dict(v) if isinstance(v, dict) else v
                 for k, v in sorted(data.items())}
 

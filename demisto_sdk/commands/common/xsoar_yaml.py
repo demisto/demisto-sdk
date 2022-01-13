@@ -3,11 +3,10 @@ from io import StringIO
 
 class XSOAR_YAML:
     def __init__(self, preserve_quotes=True, allow_duplicate_keys=True, width=None, typ=None):
-        self._ryaml = YAML()
+        self._ryaml = YAML(typ=typ)
         self._ryaml.preserve_quotes = preserve_quotes
         self._ryaml.allow_duplicate_keys = allow_duplicate_keys
         self._ryaml.width = width
-        self._ryaml.typ = typ
 
     @staticmethod
     def _order_dict(data):

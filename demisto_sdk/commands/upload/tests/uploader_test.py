@@ -1019,9 +1019,9 @@ class TestZippedPackUpload:
         mocker.patch.object(Uploader, 'notify_user_should_override_packs', return_value=True)
 
         # run
-        click.Context(command=upload).invoke(upload, input=input)
+        click.Context(command=upload).invoke(upload, input=input, skip_validation=True)
 
-        skip_value = API_CLIENT.upload_content_packs.call_args[1]['skip_validate']
+        skip_value = API_CLIENT.upload_content_packs.call_args[1]['skip_validation']
         uploaded_file_path = API_CLIENT.upload_content_packs.call_args[1]['file']
 
         assert str(uploaded_file_path) == input

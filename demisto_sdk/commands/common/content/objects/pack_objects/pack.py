@@ -339,11 +339,11 @@ class Pack:
         Returns:
             The result of the upload command from demisto_client
         """
-        if self.is_server_version_ge(client, '6.6.0'):
+        if self.is_server_version_ge(client, '6.6.0') and skip_validation:
             try:
                 logger.info('Uploading...')
                 return client.upload_content_packs(
-                    file=self.path, skip_verify='true', skip_validation=skip_validation)  # type: ignore
+                    file=self.path, skip_verify='true', skip_validation='true')  # type: ignore
 
             except Exception as err:
                 raise Exception(f'Failed to upload pack, error: {err}')

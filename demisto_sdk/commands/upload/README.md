@@ -64,7 +64,7 @@ Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up.
 
 * **--skip-validation**
 
-    if true will skip upload packs validation, use just when migrate existing custom content to packs.
+    if true will skip all upload packs validations, use just when migrate existing custom content entities to custom content packs to override all the entities with the packs.
 
 ### Examples
 ```

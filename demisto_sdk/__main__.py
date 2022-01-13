@@ -1905,8 +1905,8 @@ def doc_review(**kwargs):
     """Check the spelling in .md and .yml files as well as review release notes"""
     from demisto_sdk.commands.doc_reviewer.doc_reviewer import DocReviewer
     doc_reviewer = DocReviewer(
-        file_paths=list(kwargs.get('input', [])),
-        known_words_file_paths=list(kwargs.get('known_words', [])),
+        file_paths=kwargs.get('input', []),
+        known_words_file_paths=kwargs.get('known_words', []),
         no_camel_case=kwargs.get('no_camel_case'),
         no_failure=kwargs.get('always_true'),
         expand_dictionary=kwargs.get('expand_dictionary'),
@@ -1914,7 +1914,7 @@ def doc_review(**kwargs):
         use_git=kwargs.get('use_git'),
         prev_ver=kwargs.get('prev_ver'),
         release_notes_only=kwargs.get('release_notes'),
-        load_known_words_from_pack=kwargs.get('use_packs_known_words')
+        load_known_words_from_pack=kwargs.get('use_packs_known_words'),
     )
     result = doc_reviewer.run_doc_review()
     if result:

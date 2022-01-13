@@ -3,14 +3,17 @@ import re
 import ssl
 import string
 import sys
-from typing import Dict, List, Set
+from configparser import ConfigParser
+from pathlib import Path
+from typing import Dict, List, Optional, Set, Tuple
 
 import click
 import nltk
 from nltk.corpus import brown, webtext
 from spellchecker import SpellChecker
 
-from demisto_sdk.commands.common.constants import FileType
+from demisto_sdk.commands.common.constants import (PACKS_PACK_IGNORE_FILE_NAME,
+                                                   FileType)
 from demisto_sdk.commands.common.content import (Integration, Playbook,
                                                  ReleaseNote, Script,
                                                  path_to_pack_object)
@@ -33,9 +36,9 @@ class DocReviewer:
                             FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT]
     PACKS_KNOWN_WORDS_PATH = "known_words.txt"
 
-    def __init__(self, file_paths: list = [], known_words_file_paths: list = [], no_camel_case: bool = False,
-                 no_failure: bool = False, expand_dictionary: bool = False, templates: bool = False,
-                 use_git: bool = False, prev_ver: str = None, release_notes_only: bool = False,
+    def __init__(self, file_paths: Optional[List] = None, known_words_file_paths: Optional[List] = None,
+                 no_camel_case: bool = False, no_failure: bool = False, expand_dictionary: bool = False,
+                 templates: bool = False, use_git: bool = False, prev_ver: str = None, release_notes_only: bool = False,
                  load_known_words_from_pack: bool = False):
         if templates:
             ReleaseNotesChecker(template_examples=True)
@@ -45,7 +48,7 @@ class DocReviewer:
         elif not file_paths and not use_git:
             use_git = True
 
-        self.file_paths = file_paths
+        self.file_paths = file_paths if file_paths else []
         self.git_util = None
         self.prev_ver = prev_ver if prev_ver else 'demisto/master'
 
@@ -55,12 +58,12 @@ class DocReviewer:
         if release_notes_only:
             self.SUPPORTED_FILE_TYPES = [FileType.RELEASE_NOTES]
 
-        self.known_words_file_paths = known_words_file_paths
+        self.known_words_file_paths = known_words_file_paths if known_words_file_paths else []
         self.load_known_words_from_pack = load_known_words_from_pack
         self.known_pack_words_file_path = ''
 
         self.current_pack = None
-        self.files = list()  # type:List
+        self.files: list = []
         self.spellchecker = SpellChecker()
         self.unknown_words = {}  # type:Dict
         self.no_camel_case = no_camel_case
@@ -71,20 +74,35 @@ class DocReviewer:
         self.files_without_misspells = set()  # type:Set
         self.malformed_rn_files = set()  # type:Set
 
-    def find_known_words_from_pack(self, file_path):
-        """Find known words in file_path's pack."""
-        if file_path.startswith('Packs'):
-            pack_name = file_path.split('/')[1]
-            known_words_path = f"Packs/{pack_name}/{self.PACKS_KNOWN_WORDS_PATH}"
-            if os.path.isfile(known_words_path):
-                return known_words_path
+    @staticmethod
+    def find_known_words_from_pack(file_path: str) -> Tuple[str, list]:
+        """Find known words in file_path's pack.
 
-            click.secho(f'\nNo known words file was found within pack: {known_words_path}', fg='yellow')
-            return ''
+        Args:
+            file_path: The path of the file within the pack
+
+        Return (the known words file path or '' if it was not found, list of known words)
+        """
+        file_path_obj = Path(file_path)
+        if 'Packs' in file_path_obj.parts:
+            pack_name = file_path_obj.parts[file_path_obj.parts.index('Packs') + 1]
+            packs_ignore_path = os.path.join("Packs", pack_name, PACKS_PACK_IGNORE_FILE_NAME)
+            if os.path.isfile(packs_ignore_path):
+                config = ConfigParser(allow_no_value=True)
+                config.read(packs_ignore_path)
+                if 'known_words' in config.sections():
+                    packs_known_words = [known_word for known_word in config['known_words']]
+                    return (packs_ignore_path, packs_known_words)
+                else:
+                    click.secho(f'\nNo [known_words] section was found within: {packs_ignore_path}', fg='yellow')
+                    return (packs_ignore_path, [])
+
+            click.secho(f'\nNo .pack-ignore file was found within pack: {packs_ignore_path}', fg='yellow')
+            return '', []
 
         click.secho(f'\nCould not load pack\'s known words file since no pack structure was found for {file_path}'
                     f'\nMake sure you are running from the content directory.', fg='bright_red')
-        return ''
+        return '', []
 
     @staticmethod
     def is_camel_case(word):
@@ -139,7 +157,7 @@ class DocReviewer:
         for word, corrections in unknown_words.items():
             click.secho(f'  - {word} - did you mean: {corrections}', fg='bright_red')
         click.secho('If these are not misspelled consider adding them to a known_words file:\n'
-                    '  Pack related words: content/Packs/<PackName>/known_words.txt\n'
+                    '  Pack related words: content/Packs/<PackName>/.pack-ignore under the [known_words] section.\n'
                     '  Not pack specific words: content/Tests/known_words.txt\n'
                     'To test locally add --use-packs-known-words or --known-words flags.', fg='yellow')
 
@@ -177,10 +195,12 @@ class DocReviewer:
             click.secho("Could not find any relevant files - Aborting.")
             return True
 
+        self.add_known_words()
         for file in self.files:
             click.echo(f'\nChecking file {file}')
-            self.update_known_words_from_pack(file)
-            self.add_known_words()
+            restarted_spellchecker = self.update_known_words_from_pack(file)
+            if restarted_spellchecker:
+                self.add_known_words()
             self.unknown_words = {}
             if file.endswith('.md'):
                 self.check_md_file(file)
@@ -205,25 +225,32 @@ class DocReviewer:
 
         return True
 
-    def update_known_words_from_pack(self, file_path):
-        """Update spellchecker with the file's pack's known words."""
+    def update_known_words_from_pack(self, file_path: str) -> bool:
+        """Update spellchecker with the file's pack's known words.
+
+        Args:
+            file_path: The path of the file to update the spellchecker with the packs known words.
+
+        Return True if spellchecker was restarted, False otherwise
+        """
+        restarted_spellchecker = False
         if self.load_known_words_from_pack:
-            known_pack_words_file_path = self.find_known_words_from_pack(file_path)
+            known_pack_words_file_path, known_words = self.find_known_words_from_pack(file_path)
             if self.known_pack_words_file_path != known_pack_words_file_path:
                 click.secho(f'\nUsing known words file found within pack: {known_pack_words_file_path}', fg='yellow')
                 if self.known_pack_words_file_path:
-                    # Remove old known_words packs file
-                    with open(self.known_pack_words_file_path) as previous_packs_known_words_file:
-                        previous_words = previous_packs_known_words_file.readlines()
-                        previous_packs_known_words = [word.rstrip() for word in previous_words]
-
-                    self.spellchecker.word_frequency.remove_words(previous_packs_known_words)
+                    # Restart Spellchecker to remove old known_words packs file
+                    self.spellchecker = SpellChecker()
                     self.known_pack_words_file_path = ''
+                    restarted_spellchecker = True
 
             if known_pack_words_file_path:
-                # Add the new known_words packs file
-                self.spellchecker.word_frequency.load_text_file(known_pack_words_file_path)
                 self.known_pack_words_file_path = known_pack_words_file_path
+                if known_words:
+                    # Add the new known_words packs file
+                    self.spellchecker.word_frequency.load_words(known_words)
+
+        return restarted_spellchecker
 
     def add_known_words(self):
         """Add known words to the spellchecker from external and internal files"""

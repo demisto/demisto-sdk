@@ -1,5 +1,5 @@
 # Changelog
-* Added the '--use-packs-known-words' to **doc-review** command
+* Added the '--use-packs-known-words' argument to the **doc-review** command
 * Changed the **format** command to update the tests field according to the test_playbooks' commands and scripts.
 * Added 'deprecated' release notes template.
 * Fixed an issue where **run-test-playbook** command failed to get the task entries when the test playbook finished with errors.

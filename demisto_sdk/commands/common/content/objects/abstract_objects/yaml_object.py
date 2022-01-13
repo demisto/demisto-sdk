@@ -57,7 +57,7 @@ class YAMLObject(DictionaryBasedObject):
          """
         dest_file = self._create_target_dump_dir(dest_dir) / self.normalize_file_name()
         with open(dest_file, 'w') as file:
-            yaml.dump(dict(self.to_dict()), file)
+            RUYAML.dump(self._as_dict, file)
         return [dest_file]
 
     def dump(self, dest_dir: Optional[Union[Path, str]] = None):

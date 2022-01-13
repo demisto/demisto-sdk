@@ -17,6 +17,7 @@ from pathlib import Path, PosixPath
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from typing import (Callable, Dict, List, Match, Optional, Set, Tuple, Type,
                     Union)
+from ruamel.yaml.comments import CommentedMap
 
 import click
 import colorama
@@ -2329,14 +2330,15 @@ def alternate_item_fields(content_item):
         content_item: content item object
 
     """
-    current_dict = content_item.to_dict() if type(content_item) is not dict else content_item
+    as_dict_types = (dict, CommentedMap)
+    current_dict = content_item.to_dict() if type(content_item) not in as_dict_types else content_item
     copy_dict = current_dict.copy()  # for modifyting dict while iterating
     for field, value in copy_dict.items():
         if field.endswith('_x2'):
             current_dict[field[:-3]] = value
             current_dict.pop(field)
-        elif type(field) is dict:
-            alternate_item_fields(field)
+        elif isinstance(current_dict[field], as_dict_types):
+            alternate_item_fields(current_dict[field])
 
 def should_alternate_name_by_item(content_item, id_set):
     """

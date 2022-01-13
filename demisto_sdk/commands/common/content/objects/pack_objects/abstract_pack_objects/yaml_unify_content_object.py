@@ -107,7 +107,8 @@ class YAMLContentUnifiedObject(YAMLContentObject):
         # Directory configuration - Integrations or Scripts
         unify_dir = SCRIPTS_DIR if self._content_type == FileType.SCRIPT else INTEGRATIONS_DIR
         # Unify step
-        unifier = YmlUnifier(input=str(self.path.parent), dir_name=unify_dir, output=dest_dir, force=True)
+        unifier = YmlUnifier(input=str(self.path.parent), dir_name=unify_dir, output=dest_dir, force=True,
+                             yml_modified_data=self.to_dict())
         created_files: List[str] = unifier.merge_script_package_to_yml()
         # Validate that unify succeed - there is not exception raised in unify module.
         if not created_files:

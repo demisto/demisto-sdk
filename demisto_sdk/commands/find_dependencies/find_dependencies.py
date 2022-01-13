@@ -1800,7 +1800,6 @@ class PackDependencies:
                     if verbose:
                         print(f'Found {dependency_name} pack is mandatory for {pack}')
                     dependency_graph.nodes()[dependency_name]['mandatory_for_packs'].append(pack)
-            # ('type_item_b', 'item_b'): {'pack3': [('type_item_3', 'item3')], 'pack2': [('type_item_2', 'item2')]}
 
             for dependent_item, items_depending_on_item in dependencies_items.items():
                 for pack_of_item_dependent_on, items_dependent_on in items_depending_on_item.items():

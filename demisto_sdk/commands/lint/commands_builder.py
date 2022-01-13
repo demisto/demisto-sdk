@@ -215,7 +215,7 @@ def build_vulture_command(files: List[Path], pack_path: Path, py_num: str) -> st
     return command
 
 
-def build_pylint_command(files: List[Path], docker_version: Optional[float] = None) -> str:
+def build_pylint_command(files: List[Path], docker_version: Optional[str] = None) -> str:
     """ Build command to execute with pylint module
         https://docs.pylint.org/en/1.6.0/run.html#invoking-pylint
     Args:
@@ -232,7 +232,8 @@ def build_pylint_command(files: List[Path], docker_version: Optional[float] = No
     # disable xsoar linter messages
     disable = ['bad-option-value']
     # TODO: remove when pylint will update its version to support py3.9
-    if docker_version and docker_version >= 3.9:
+
+    if docker_version and float(docker_version) >= 3.9:
         disable.append('unsubscriptable-object')
     command += f" --disable={','.join(disable)}"
     # Disable specific errors

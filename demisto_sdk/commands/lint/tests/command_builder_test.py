@@ -124,7 +124,7 @@ def test_build_pylint_command_3_9_docker():
     from demisto_sdk.commands.lint.commands_builder import build_pylint_command
     NamedFile = namedtuple('File', 'name')
     files = [NamedFile('file1')]
-    output = build_pylint_command(files, 3.9)
+    output = build_pylint_command(files, '3.9')
     assert output.endswith(files[0].name)
     assert 'disable=bad-option-value,unsubscriptable-object' in output
 

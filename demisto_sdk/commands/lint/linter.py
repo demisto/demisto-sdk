@@ -565,7 +565,7 @@ class Linter:
         for image in self._facts["images"]:
             # Docker image status - visualize
             status = {
-                "image": image[0],
+                "image": float(image[0]),
                 "image_errors": "",
                 "pylint_errors": "",
                 "pytest_errors": "",

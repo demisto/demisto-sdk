@@ -1,26 +1,12 @@
 from typing import List
 
-import pytest
-
+from demisto_sdk.commands.common.tests.tools_test import (  # noqa F401
+    malformed_incident_field, malformed_integration_yml)
 from demisto_sdk.commands.doc_reviewer.doc_reviewer import DocReviewer
 from TestSuite.json_based import JSONBased
-from TestSuite.yml import YAML
 
 
-@pytest.fixture()
-def malformed_integration_yml(integration) -> YAML:
-    integration.yml.write("1: 2\n//")
-    return integration.yml
-
-
-@pytest.fixture()
-def malformed_incident_field(pack) -> JSONBased:
-    incident_field = pack.create_incident_field("malformed")
-    incident_field.write_as_text("{\n '1': '1'")
-    return incident_field
-
-
-def test_doc_review_with_release_notes_is_skipped_on_invalid_yml_file(malformed_integration_yml):
+def test_doc_review_with_release_notes_is_skipped_on_invalid_yml_file(malformed_integration_yml):  # noqa F811
     """
     Given -
         malformed yml integration file.
@@ -41,7 +27,7 @@ def test_doc_review_with_release_notes_is_skipped_on_invalid_yml_file(malformed_
         assert False, str(err)
 
 
-def test_doc_review_with_release_notes_is_skipped_on_invalid_json_file(malformed_incident_field: JSONBased):
+def test_doc_review_with_release_notes_is_skipped_on_invalid_json_file(malformed_incident_field: JSONBased):  # noqa F811
     """
     Given -
         malformed json incident type.
@@ -62,7 +48,7 @@ def test_doc_review_with_release_notes_is_skipped_on_invalid_json_file(malformed
         assert False, str(err)
 
 
-def test_get_files_from_git_with_invalid_files(mocker, malformed_integration_yml, malformed_incident_field):
+def test_get_files_from_git_with_invalid_files(mocker, malformed_integration_yml, malformed_incident_field):  # noqa F811
     """
     Given -
         malformed json/yml.
@@ -81,10 +67,12 @@ def test_get_files_from_git_with_invalid_files(mocker, malformed_integration_yml
             malformed_incident_field.path
         ]
     )
-
-    doc_reviewer = DocReviewer(file_path='', release_notes_only=True)
-    doc_reviewer.get_files_from_git()
-    assert not doc_reviewer.files
+    try:
+        doc_reviewer = DocReviewer(file_path='', release_notes_only=True)
+        doc_reviewer.get_files_from_git()
+        assert not doc_reviewer.files
+    except ValueError as err:
+        assert False, str(err)
 
 
 def test_camel_case_split():

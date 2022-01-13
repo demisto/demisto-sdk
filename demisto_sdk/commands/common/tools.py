@@ -1165,9 +1165,9 @@ def find_type(
         # unable to find the file - hence can't identify it
         return None
     except ValueError as err:
-        logger.debug(str(err))
         if ignore_invalid_schema_file:
             # invalid file schema
+            logger.debug(str(err))
             return None
         raise err
 

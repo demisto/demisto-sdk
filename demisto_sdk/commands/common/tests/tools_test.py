@@ -48,18 +48,18 @@ from demisto_sdk.tests.constants_test import (DUMMY_SCRIPT_PATH, IGNORED_PNG,
                                               VALID_WIDGET_PATH)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     LAYOUT, MAPPER, OLD_CLASSIFIER, REPUTATION)
-from TestSuite.integration import Integration
 from TestSuite.json_based import JSONBased
 from TestSuite.pack import Pack
 from TestSuite.playbook import Playbook
 from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
+from TestSuite.yml import YAML
 
 
 @pytest.fixture()
-def malformed_integration_yml(integration) -> Integration:
+def malformed_integration_yml(integration) -> YAML:
     integration.yml.write("1: 2\n//")
-    return integration
+    return integration.yml
 
 
 @pytest.fixture()
@@ -149,7 +149,7 @@ class TestGenericFunctions:
         - Ensure no exception/error is raised and None is returned.
         """
         try:
-            assert not find_type(malformed_integration_yml.yml.path, ignore_invalid_schema_file=True)
+            assert not find_type(malformed_integration_yml.path, ignore_invalid_schema_file=True)
         except ValueError as err:
             assert False, str(err)
 

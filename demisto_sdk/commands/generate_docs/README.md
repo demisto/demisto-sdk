@@ -14,8 +14,9 @@ For integration - Top use-cases. Number the steps by '*' (i.e. '\* foo. * bar.')
 * **-c, --command**
 A comma-separated command names to generate doc for, will ignore the rest of the commands. e.g xdr-get-incidents,xdr-update-incident
 * **-e, --examples**
-Integrations: path for file containing command examples. Each command should be in a separate line.
-  Scripts: the script example surrounded by quotes. For example: `-e '!ConvertFile entry_id=<entry_id>'`
+- Path for a file containing examples. Each command should be in a separate line. or a comma separated list of commands
+- Comma separated list of examples, wrapped by quotes.
+If the file or list contains a command with more than one example, all of them will be used.
 * **-p, --permissions**
 Permissions in the documentation.
 * **-cp, --command-permissions**

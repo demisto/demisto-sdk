@@ -1,5 +1,78 @@
 # Changelog
+
+* Fix an issue when running **validate** or **format** in a gitlab repository but can’t determine the project id.
+* Added an enhancement to **split**, handling an empty `output` argument.
+* Added the ability to add classifiers and mappers to conf.json.
+* Added the Alias field to the incident field schema.
+* Fixed an issue in **validate** failed with no error message for lists (when no fromVersion field was found).
+
+# 1.5.6
+* Added 'deprecated' release notes template.
+* Fixed an issue where **run-test-playbook** command failed to get the task entries when the test playbook finished with errors.
+* Fixed an issue in **validate** command when running with `no-conf-json` argument to ignore the `conf.json` file.
+* Added error type text (`ERROR` or `WARNING`) to **validate** error prints.
+* Fixed an issue where the **format** command on test playbook did not format the ID to be equal to the name of the test playbook.
+* Enhanced the **update-release-notes** command to automatically commit release notes config file upon creation.
+* The **validate** command will validate that an indicator field of type html has fromVersion of 6.1.0 and above.
+* The **format** command will now add fromVersion 6.1.0 to indicator field of type html.
+* Added support for beta integrations in the **format** command.
+* Fixed an issue where the **postman-codegen** command failed when called with the `--config-out` flag.
+* Removed the integration documentation from the detailed description while performing **split** command to the unified yml file.
+* Removed the line which indicates the version of the product from the README.md file for new contributions.
+
+# 1.5.5
+* Fixed an issue in the **update-release-notes** command, which did not work when changes were made in multiple packs.
+* Changed the **validate** command to fail on missing test-playbooks only if no unittests are found.
+* Fixed `to_kebab_case`, it will now deal with strings that have hyphens, commas or periods in them, changing them to be hyphens in the new string.
+* Fixed an issue in the **create-id-set** command, where the `source` value included the git token if it was specified in the remote url.
+* Fixed an issue in the **merge-id-set** command, where merging fails because of duplicates but the packs are in the XSOAR repo but in different version control.
+* Fixed missing `Lists` Content Item as valid `IDSetType`
+* Added enhancement for **generate-docs**. It is possible to provide both file or a comma seperated list as `examples`. Also, it's possible to provide more than one example for a script or a command.
+* Added feature in **format** to sync YML and JSON files to the `master` file structure.
+* Added option to specify `Incident Type`, `Incoming Mapper` and `Classifier` when configuring instance in **test-content**
+* added a new command **run-test-playbook** to run a test playbook in a given XSOAR instance.
+* Fixed an issue in **format** when running on a modified YML, that the `id` value is not changed to its old `id` value.
+* Enhancement for **split** command, replace `ApiModule` code block to `import` when splitting a YML.
+* Fixed an issue where indicator types were missing from the pack's content, when uploading using **zip-packs**.
+* The request data body format generated in the **postman-codegen** will use the python argument's name and not the raw data argument's name.
+* Added the flag '--filter-by-id-set' to **create-content-artifacts** to create artifacts only for items in the given id_set.json.
+
+# 1.5.4
+* Fixed an issue with the **format** command when contributing via the UI
+* The **format** command will now not remove the `defaultRows` key from incident, indicator and generic fields with `type: grid`.
+* Fixed an issue with the **validate** command when a layoutscontainer did not have the `fromversion` field set.
+* added a new command **update-xsoar-config-file** to handle your XSOAR Configuration File.
+* Added `skipVerify` argument in **upload** command to skip pack signature verification.
+* Fixed an issue when the **run** command  failed running when there’s more than one playground, by explicitly using the current user’s playground.
+* Added support for Job content item in the **format**, **validate**, **upload**, **create-id-set**, **find-dependecies** and **create-content-artifacts** commands.
+* Added a **source** field to the **id_set** entitles.
+* Two entitles will not consider as duplicates if they share the same pack and the same source.
+* Fixed a bug when duplicates were found in **find_dependencies**.
+* Added function **get_current_repo** to `tools`.
+* The **postman-codegen** will not have duplicates argument name. It will rename them to the minimum distinguished shared path for each of them.
+
+# 1.5.3
+* The **format** command will now set `unsearchable: True` for incident, indicator and generic fields.
+* Fixed an issue where the **update-release-notes** command crashes with `--help` flag.
+* Added validation to the **validate** command that verifies the `unsearchable` key in incident, indicator and generic fields is set to true.
+* Removed a validation that DBotRole should be set for automation that requires elevated permissions to the `XSOAR-linter` in the **lint** command.
+* Fixed an issue in **Validate** command where playbooks conditional tasks were mishandeled.
+* Added a validation to prevent contributors from using the `fromlicense` key as a configuration parameter in an integration's YML
+* Added a validation to ensure that the type for **API token** (and similar) parameters are configured correctly as a `credential` type in the integration configuration YML.
+* Added an assertion that checks for duplicated requests' names when generating an integration from a postman collection.
+* Added support for [.env files](https://pypi.org/project/python-dotenv/). You can now add a `.env` file to your repository with the logging information instead of setting a global environment variables.
+* When running **lint** command with --keep-container flag, the docker images are committed.
+* The **validate** command will not return missing test playbook error when given a script with dynamic-section tag.
+
+# 1.5.2
+* Added a validation to **update-release-notes** command to ensure that the `--version` flag argument is in the right format.
+* added a new command **coverage-analyze** to generate and print coverage reports.
+* Fixed an issue in **validate** in repositories which are not in GitHub or GitLab
 * Added a validation that verifies that readme image absolute links do not contain the working branch name.
+* Added support for List content item in the **format**, **validate**, **download**, **upload**, **create-id-set**, **find-dependecies** and **create-content-artifacts** commands.
+* Added a validation to ensure reputation command's default argument is set as an array input.
+* Added the `--fail-duplicates` flag for the **merge-id-set** command which will fail the command if duplicates are found.
+* Added the `--fail-duplicates` flag for the **create-id-set** command which will fail the command if duplicates are found.
 
 # 1.5.1
 * Fixed an issue where **validate** command failed to recognized test playbooks for beta integrations as valid tests.
@@ -10,6 +83,8 @@
 * Fixed an issue where there **validate** command on release notes file crashed when author image was added or modified.
 * Added input handling when running **find-dependencies**, replacing string manipulations.
 * Fixed an issue where the **validate** command did not handle multiple playbooks with the same name in the id_set.
+* Added support for GitLab repositories in **validate**
+
 # 1.5.0
 * Fixed an issue where **upload** command failed to upload packs not under content structure.
 * Added support for **init** command to run from non-content repo.

@@ -1,6 +1,8 @@
 import re
 from distutils.version import LooseVersion
 
+from demisto_sdk.commands.common.constants import \
+    DEFAULT_CONTENT_ITEM_FROM_VERSION
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
@@ -52,9 +54,9 @@ class ReputationValidator(ContentEntityValidator):
     def is_valid_expiration(self):
         # type: () -> bool
         """Validate that the expiration field of a 5.5 reputation file is numeric."""
-        from_version = self.current_file.get("fromVersion", "0.0.0")
-        if LooseVersion(from_version) >= LooseVersion("5.5.0"):
-            expiration = self.current_file.get('expiration', "")
+        from_version = self.current_file.get('fromVersion', DEFAULT_CONTENT_ITEM_FROM_VERSION)
+        if LooseVersion(from_version) >= LooseVersion('5.5.0'):
+            expiration = self.current_file.get('expiration', '')
             if not isinstance(expiration, int) or expiration < 0:
                 error_message, error_code = Errors.reputation_expiration_should_be_numeric()
                 if self.handle_error(error_message, error_code, file_path=self.file_path):

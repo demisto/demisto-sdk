@@ -4,8 +4,10 @@ from distutils.version import LooseVersion
 
 import click
 
-from demisto_sdk.commands.common.constants import \
-    LAYOUT_AND_MAPPER_BUILT_IN_FIELDS
+from demisto_sdk.commands.common.constants import (
+    DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
+    LAYOUT_AND_MAPPER_BUILT_IN_FIELDS,
+    LAYOUTS_CONTAINERS_OLDEST_SUPPORTED_VERSION)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
@@ -17,12 +19,12 @@ FROM_VERSION_LAYOUTS_CONTAINER = '6.0.0'
 
 
 class LayoutBaseValidator(ContentEntityValidator, ABC):
-    def __init__(self, structure_validator=True, ignored_errors=False, print_as_warnings=False,
+    def __init__(self, structure_validator, ignored_errors=False, print_as_warnings=False,
                  json_file_path=None, **kwargs):
         super().__init__(structure_validator, ignored_errors, print_as_warnings,
                          json_file_path=json_file_path, **kwargs)
-        self.from_version = self.current_file.get('fromVersion')
-        self.to_version = self.current_file.get('toVersion')
+        self.from_version = self.current_file.get('fromVersion', DEFAULT_CONTENT_ITEM_FROM_VERSION)
+        self.to_version = self.current_file.get('toVersion', DEFAULT_CONTENT_ITEM_TO_VERSION)
 
     def is_valid_layout(self, validate_rn=True, id_set_file=None, is_circle=False) -> bool:
         """Check whether the layout is valid or not.
@@ -78,9 +80,12 @@ class LayoutBaseValidator(ContentEntityValidator, ABC):
 
 
 class LayoutsContainerValidator(LayoutBaseValidator):
+    def __init__(self, structure_validator, **kwargs):
+        super().__init__(structure_validator, oldest_supported_version=LAYOUTS_CONTAINERS_OLDEST_SUPPORTED_VERSION, **kwargs)
+
     def is_valid_layout(self, validate_rn=True, id_set_file=None, is_circle=False) -> bool:
         return all([super().is_valid_layout(),
-                    self.is_id_equals_name()
+                    self.is_id_equals_name(),
                     ])
 
     def is_valid_from_version(self) -> bool:

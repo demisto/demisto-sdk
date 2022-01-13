@@ -825,7 +825,7 @@ def test_format_incident_type_layout_id(repo):
         assert layout_content['name'] == layout_content['id']
 
     with open(playbook.yml.path) as playbook_file:
-        playbook_content = yaml.load(playbook_file.read())
+        playbook_content = yaml.load(playbook_file, yaml.Loader)
         assert playbook_content['name'] == playbook_content['id']
 
     with open(incident_type.path) as incident_type_file:

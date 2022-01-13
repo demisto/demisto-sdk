@@ -13,11 +13,10 @@ from inflection import dasherize, underscore
 from ruamel.yaml import YAML
 from ruamel.yaml.scalarstring import FoldedScalarString
 
-from demisto_sdk.commands.common.constants import (DEFAULT_IMAGE_PREFIX,
-                                                   DIR_TO_PREFIX,
-                                                   INTEGRATIONS_DIR,
-                                                   SCRIPTS_DIR,
-                                                   TYPE_TO_EXTENSION, FileType)
+from demisto_sdk.commands.common.constants import (
+    DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
+    DEFAULT_IMAGE_PREFIX, DIR_TO_PREFIX, INTEGRATIONS_DIR, SCRIPTS_DIR,
+    TYPE_TO_EXTENSION, FileType)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.tools import (LOG_COLORS, arg_to_list,
                                                find_type, get_pack_name,
@@ -126,13 +125,13 @@ class YmlUnifier:
             yml_unified45 = copy.deepcopy(yml_unified)
 
             # validate that this is a script/integration which targets both 4.5 and 5.0+.
-            if server_version_compare(yml_data.get('fromversion', '0.0.0'), '5.0.0') >= 0:
+            if server_version_compare(yml_data.get('fromversion', DEFAULT_CONTENT_ITEM_FROM_VERSION), '5.0.0') >= 0:
                 raise ValueError(f'Failed: {self.dest_path}. dockerimage45 set for 5.0 and later only')
 
             yml_unified['fromversion'] = '5.0.0'
 
             # validate that this is a script/integration which targets both 4.5 and 5.0+.
-            if server_version_compare(yml_data.get('toversion', '99.99.99'), '5.0.0') < 0:
+            if server_version_compare(yml_data.get('toversion', DEFAULT_CONTENT_ITEM_TO_VERSION), '5.0.0') < 0:
                 raise ValueError(f'Failed: {self.dest_path}. dockerimage45 set for 4.5 and earlier only')
 
             yml_unified45['toversion'] = '4.5.9'
@@ -294,6 +293,11 @@ class YmlUnifier:
 
         if script_type == '.py':
             clean_code = self.clean_python_code(script_code)
+            if 'CommonServer' not in yml_data['name']:
+                # CommonServerPython has those line hard-coded so there is no need to add them here.
+                clean_code = f"register_module_line('{yml_data['name']}', 'start', __line__())\n" \
+                    f'{clean_code}\n' \
+                    f"register_module_line('{yml_data['name']}', 'end', __line__())\n"
         elif script_type == '.ps1':
             clean_code = self.clean_pwsh_code(script_code)
         else:
@@ -365,8 +369,14 @@ class YmlUnifier:
         module_path = os.path.join('./Packs', 'ApiModules', 'Scripts', module_name, module_name + '.py')
         module_code = YmlUnifier._get_api_module_code(module_name, module_path)
 
-        module_code = '\n### GENERATED CODE ###\n# This code was inserted in place of an API module.{}\n' \
-            .format(module_code)
+        # the wrapper numbers represents the number of generated lines added
+        # before (negative) or after (positive) the registration line
+        module_code = f'\n### GENERATED CODE ###: {module_import}\n' \
+                      f'# This code was inserted in place of an API module.\n' \
+                      f"register_module_line('{module_name}', 'start', __line__(), wrapper=-3)\n" \
+                      f'{module_code}\n' \
+                      f"register_module_line('{module_name}', 'end', __line__(), wrapper=1)\n" \
+                      f'### END GENERATED CODE ###'
 
         return script_code.replace(module_import, module_code)
 

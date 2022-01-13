@@ -118,6 +118,11 @@ mapping:
     type: bool
   autoUpdateDockerImage:
     type: bool
+  marketplaces:
+    type: seq
+    sequence:
+      - type: str
+        enum: ['xsoar', 'marketplacev2']
 
 # integration->configuration
 schema;configuration_schema:

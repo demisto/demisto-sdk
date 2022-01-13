@@ -14,7 +14,7 @@ class GenericFieldValidator(ContentEntityValidator):
     GenericFieldValidator is designed to validate the correctness of the file structure we enter to content repo.
     """
 
-    def is_valid_file(self, validate_rn=True, is_new_file=False, use_git=False):
+    def is_valid_file(self, validate_rn=True, is_new_file=False, use_git=False, is_added_file=False):
         """
         Check whether the generic field is valid or not
         """
@@ -23,6 +23,9 @@ class GenericFieldValidator(ContentEntityValidator):
             self.is_valid_group(),
             self.is_valid_id_prefix()
         ]
+
+        if is_added_file:
+            answers.append(self.is_valid_unsearchable_key())
 
         return all(answers)
 
@@ -54,4 +57,19 @@ class GenericFieldValidator(ContentEntityValidator):
         if self.handle_error(error_message, error_code, file_path=self.file_path):
             return False
 
+        return True
+
+    def is_valid_unsearchable_key(self):
+        # type: () -> bool
+        """Validate that the unsearchable key is set to true
+        Returns:
+            bool. Whether the file's unsearchable key is set to true.
+        """
+        generic_field_unsearchable = self.current_file.get('unsearchable', True)
+        if generic_field_unsearchable:
+            return True
+        error_message, error_code = Errors.unsearchable_key_should_be_true_generic_field()
+        if self.handle_error(error_message, error_code, file_path=self.file_path,
+                             suggested_fix=Errors.suggest_fix(self.file_path)):
+            return False
         return True

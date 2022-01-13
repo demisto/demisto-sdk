@@ -1,9 +1,11 @@
 import base64
 import os
+import re
 import shutil
 import subprocess
 import tempfile
 from io import open
+from pathlib import Path
 
 import yaml
 from ruamel.yaml import YAML
@@ -17,6 +19,10 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                get_pipenv_dir,
                                                get_python_version, pascal_case,
                                                print_color, print_error)
+from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
+
+REGEX_MODULE = r"### GENERATED CODE ###((.|\s)+?)### END GENERATED CODE ###"
+INTEGRATIONS_DOCS_REFERENCE = 'https://xsoar.pan.dev/docs/reference/integrations/'
 
 
 def get_pip_requirements(docker_image: str):
@@ -43,12 +49,12 @@ class YmlSplitter:
         lines_inserted_at_code_start (int): the amount of lines inserted at the beginning of the code file
     """
 
-    def __init__(self, input: str, output: str, file_type: str, no_demisto_mock: bool = False,
+    def __init__(self, input: str, output: str = '', file_type: str = '', no_demisto_mock: bool = False,
                  no_common_server: bool = False, no_auto_create_dir: bool = False, configuration: Configuration = None,
                  base_name: str = '', no_readme: bool = False, no_pipenv: bool = False,
                  no_logging: bool = False, no_basic_fmt: bool = False, new_module_file: bool = False):
-        self.input = input
-        self.output = output
+        self.input = Path(input)
+        self.output = Path(output) if output else Path(self.input.parent)
         self.demisto_mock = not no_demisto_mock
         self.common_server = not no_common_server
         self.file_type = file_type
@@ -69,13 +75,13 @@ class YmlSplitter:
     def get_output_path(self):
         """Get processed output path
         """
-        output_path = os.path.abspath(self.output)
-        if self.autocreate_dir and (output_path.endswith("Integrations") or output_path.endswith("Scripts")):
+        output_path = self.output
+        if self.autocreate_dir and output_path.name in {'Integrations', 'Scripts'}:
             code_name = self.yml_data.get("name")
             if not code_name:
-                raise ValueError(f'Failed determining Integration/Script name when trying to auto create sub dir at: {output_path}'
+                raise ValueError(f'Failed determining Integration/Script name when trying to auto create sub dir at: {self.output}'
                                  '\nRun with option --no-auto-create-dir to skip auto creation of target dir.')
-            output_path += (os.path.sep + pascal_case(code_name))
+            output_path = output_path / pascal_case(code_name)
         return output_path
 
     def extract_to_package_format(self) -> int:
@@ -90,9 +96,9 @@ class YmlSplitter:
             print_error(str(ex))
             return 1
         self.print_logs("Starting migration of: {} to dir: {}".format(self.input, output_path), log_color=LOG_COLORS.NATIVE)
-        os.makedirs(output_path, exist_ok=True)
-        base_name = os.path.basename(output_path) if not self.base_name else self.base_name
-        code_file = "{}/{}".format(output_path, base_name)
+        output_path.mkdir(parents=True, exist_ok=True)
+        base_name = output_path.name if not self.base_name else self.base_name
+        code_file = output_path / base_name
         self.extract_code(code_file)
         script = self.yml_data['script']
         lang_type: str = script['type'] if self.file_type == 'integration' else self.yml_data['type']
@@ -123,9 +129,9 @@ class YmlSplitter:
         # check if there is a README and if found, set found_readme to True
         found_readme = False
         if self.readme:
-            yml_readme = os.path.splitext(self.input)[0] + '_README.md'
-            readme = output_path + '/README.md'
-            if os.path.exists(yml_readme):
+            yml_readme = self.input.parent / f'{self.input.stem}_README.md'
+            readme = output_path / 'README.md'
+            if yml_readme.exists():
                 found_readme = True
                 self.print_logs(f"Copying {readme} to {readme}", log_color=LOG_COLORS.NATIVE)
                 shutil.copy(yml_readme, readme)
@@ -187,7 +193,7 @@ class YmlSplitter:
                         self.print_logs("pipenv install skipped! It doesn't seem you have pipenv installed.\n"
                                         "Make sure to install it with: pip3 install pipenv.\n"
                                         f"Then run in the package dir: pipenv install --dev\n.Err: {err}", LOG_COLORS.YELLOW)
-                    arg_path = os.path.relpath(output_path)
+                    arg_path = output_path.relative_to()
                     self.print_logs("\nCompleted: setting up package: {}\n".format(arg_path), LOG_COLORS.GREEN)
                     next_steps: str = "Next steps: \n" \
                                       "* Install additional py packages for unit testing (if needed): cd {};" \
@@ -197,7 +203,7 @@ class YmlSplitter:
                     next_steps += "* When ready, remove from git the old yml and/or README and add the new package:\n" \
                                   "    git rm {}\n".format(self.input)
                     if found_readme:
-                        next_steps += "    git rm {}\n".format(os.path.splitext(self.input)[0] + '_README.md')
+                        next_steps += "    git rm {}\n".format(self.input.parent / f'{self.input.stem}_README.md')
                     next_steps += "    git add {}\n".format(arg_path)
                     self.print_logs(next_steps, log_color=LOG_COLORS.NATIVE)
 
@@ -223,7 +229,7 @@ class YmlSplitter:
         """
         common_server = self.common_server
         if common_server:
-            common_server = "CommonServerPython" not in self.input and 'CommonServerPowerShell' not in self.input
+            common_server = "CommonServerPython" not in str(self.input) and 'CommonServerPowerShell' not in str(self.input)
 
         script = self.yml_data['script']
         if self.file_type == 'integration':  # in integration the script is stored at a second level
@@ -232,8 +238,7 @@ class YmlSplitter:
         else:
             lang_type = self.yml_data['type']
         ext = TYPE_TO_EXTENSION[lang_type]
-        if not code_file_path.endswith(ext):
-            code_file_path += ext
+        code_file_path = code_file_path.with_suffix(ext)
         self.print_logs("Extracting code to: {} ...".format(code_file_path), log_color=LOG_COLORS.NATIVE)
         with open(code_file_path, 'wt') as code_file:
             if lang_type == TYPE_PYTHON and self.demisto_mock:
@@ -246,6 +251,8 @@ class YmlSplitter:
                 if lang_type == TYPE_PWSH:
                     code_file.write(". $PSScriptRoot\\CommonServerPowerShell.ps1\n")
                     self.lines_inserted_at_code_start += 1
+            script = self.replace_imported_code(script)
+            script = self.replace_section_headers_code(script)
             code_file.write(script)
             if script and script[-1] != '\n':
                 # make sure files end with a new line (pyml seems to strip the last newline)
@@ -268,6 +275,18 @@ class YmlSplitter:
                 image_file.write(base64.decodebytes(image_b64.encode('utf-8')))
         return 0
 
+    def remove_integration_documentation(self, detailed_description):
+        if "[View Integration Documentation]" in detailed_description:
+            normalized_integration_id = YmlUnifier.normalize_integration_id(self.yml_data['commonfields']['id'])
+            integration_doc_link = INTEGRATIONS_DOCS_REFERENCE + normalized_integration_id
+            documentation = f'[View Integration Documentation]({integration_doc_link})'
+            if '\n\n---\n' + documentation in detailed_description:
+                detailed_description = detailed_description.replace('\n\n---\n' + documentation, "")
+            elif documentation in detailed_description:
+                detailed_description = detailed_description.replace(documentation, "")
+
+        return detailed_description
+
     def extract_long_description(self, output_path) -> int:
         """Extracts the detailed description from the yml_file.
 
@@ -278,6 +297,7 @@ class YmlSplitter:
             return 0  # no long description in script type
         long_description = self.yml_data.get('detaileddescription')
         if long_description:
+            long_description = self.remove_integration_documentation(long_description)
             self.print_logs("Extracting long description to: {} ...".format(output_path), log_color=LOG_COLORS.NATIVE)
             with open(output_path, 'w', encoding='utf-8') as desc_file:
                 desc_file.write(long_description)
@@ -292,3 +312,22 @@ class YmlSplitter:
         """
         if self.logging:
             print_color(log_msg, log_color)
+
+    def replace_imported_code(self, script):
+        # this is how we check that generated code exists, and the syntax of the generated code is up to date
+        if '### GENERATED CODE ###:' in script and \
+                '### END GENERATED CODE ###' in script:
+            matches = re.finditer(REGEX_MODULE, script)
+            for match in matches:
+                code = match.group(1)
+                lines = code.split('\n')
+                imported_line = lines[0][2:]  # the first two chars are not part of the code
+                self.print_logs(f'Replacing code block with `{imported_line}`', LOG_COLORS.NATIVE)
+                script = script.replace(match.group(), imported_line)
+        return script
+
+    def replace_section_headers_code(self, script):
+        """
+        remove the auto-generated section headers if they exist.
+        """
+        return re.sub(r"register_module_line\('.+', '(?:start|end)', __line__\(\)\)\n", '', script)

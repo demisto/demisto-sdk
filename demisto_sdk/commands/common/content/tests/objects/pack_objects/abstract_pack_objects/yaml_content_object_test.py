@@ -1,4 +1,6 @@
-from demisto_sdk.commands.common.constants import PACKS_DIR, SCRIPTS_DIR
+from demisto_sdk.commands.common.constants import (
+    DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
+    PACKS_DIR, SCRIPTS_DIR)
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_content_object import \
     YAMLContentObject
 from demisto_sdk.commands.common.tools import src_root
@@ -13,13 +15,13 @@ def test_from_version_no_to_version(datadir):
     from packaging.version import parse
     obj = YAMLContentObject(TEST_YAML_NO_TO_VERSION, "script")
     assert obj.from_version == parse("6.0.0")
-    assert obj.to_version == parse("99.99.99")
+    assert obj.to_version == parse(DEFAULT_CONTENT_ITEM_TO_VERSION)
 
 
 def test_to_version_no_from_version(datadir):
     from packaging.version import parse
     obj = YAMLContentObject(TEST_YAML_NO_FROM_VERSION, "script")
-    assert obj.from_version == parse("0.0.0")
+    assert obj.from_version == parse(DEFAULT_CONTENT_ITEM_FROM_VERSION)
     assert obj.to_version == parse("5.0.0")
 
 

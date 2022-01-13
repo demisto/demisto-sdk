@@ -1,6 +1,8 @@
 import re
 from distutils.version import LooseVersion
 
+from demisto_sdk.commands.common.constants import \
+    DEFAULT_CONTENT_ITEM_FROM_VERSION
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
@@ -93,8 +95,8 @@ class IncidentTypeValidator(ContentEntityValidator):
         fields_to_include = ['hours', 'days', 'weeks', 'hoursR', 'daysR', 'weeksR']
 
         try:
-            from_version = self.current_file.get("fromVersion", "0.0.0")
-            if LooseVersion(from_version) >= LooseVersion("5.0.0"):
+            from_version = self.current_file.get('fromVersion', DEFAULT_CONTENT_ITEM_FROM_VERSION)
+            if LooseVersion(from_version) >= LooseVersion('5.0.0'):
                 for field in fields_to_include:
                     int_field = self.current_file.get(field, -1)
                     if not isinstance(int_field, int) or int_field < 0:

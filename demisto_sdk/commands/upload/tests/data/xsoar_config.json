@@ -1,0 +1,15 @@
+{
+    "custom_packs": [
+        {
+            "id": "TestPackZip",
+            "url": "./data/TestPack.zip"
+        },
+        {
+            "id": "TestPack",
+            "url": "Packs/TestPack"
+        }
+    ],
+    "marketplace_packs": [],
+    "lists": [],
+    "jobs": []
+}

@@ -831,7 +831,7 @@ class TestIntegrationValidation:
         assert result.exit_code == 1
         assert result.stderr == ""
 
-    def test_negative__hidden_param(self):
+    def test_negative__hidden_param(self, mocker):
         """
         Given
         - Integration with not allowed hidden params: ["server", "credentials"].
@@ -843,6 +843,9 @@ class TestIntegrationValidation:
         - Ensure validation fails.
         - Ensure failure message on hidden params.
         """
+        mocker.patch.object(IntegrationValidator, 'has_no_fromlicense_key_in_contributions_integration', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'is_api_token_in_credential_type', return_value=True)
+
         integration_path = join(TEST_FILES_PATH, 'integration-invalid-no-hidden-params.yml')
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [VALIDATE_CMD, "-i", integration_path, "--no-conf-json",
@@ -1097,7 +1100,7 @@ class TestClassifierValidation:
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', classifier.path], catch_exceptions=False)
         assert f"Validating {classifier.path} as classifier" in result.stdout
-        assert 'fromVersion field can not be higher than toVersion field' in result.stdout
+        assert 'The `fromVersion` field cannot be higher or equal to the `toVersion` field.' in result.stdout
         assert result.exit_code == 1
 
     def test_missing_mandatory_field_in_new_classifier(self, mocker, repo):
@@ -1395,7 +1398,7 @@ class TestMapperValidation:
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', mapper.path], catch_exceptions=False)
         assert f"Validating {mapper.path} as mapper" in result.stdout
-        assert 'fromVersion field can not be higher than toVersion field' in result.stdout
+        assert 'The `fromVersion` field cannot be higher or equal to the `toVersion` field.' in result.stdout
         assert result.exit_code == 1
 
     def test_invalid_mapper_type(self, mocker, repo):

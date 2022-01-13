@@ -53,6 +53,7 @@ class UpdateRN:
         self.master_version = self.get_master_version()
         self.rn_path = ''
         self.is_bc = is_bc
+        self.bc_path = ''
 
     @staticmethod
     def change_image_or_desc_file_path(file_path: str) -> str:
@@ -118,7 +119,7 @@ class UpdateRN:
                 docker_image_name = None
             changed_files[(file_name, file_type)] = {
                 'description': get_file_description(packfile, file_type),
-                'is_new_file': True if packfile in self.added_files else False,
+                'is_new_file': packfile in self.added_files,
                 'fromversion': get_from_version_at_update_rn(packfile),
                 'dockerimage': docker_image_name,
                 'path': packfile
@@ -151,6 +152,11 @@ class UpdateRN:
                 run_command(f'git add {rn_path}', exit_on_error=False)
             except RuntimeError:
                 print_warning(f'Could not add the release note files to git: {rn_path}')
+            if self.is_bc and self.bc_path:
+                try:
+                    run_command(f'git add {self.bc_path}', exit_on_error=False)
+                except RuntimeError:
+                    print_warning(f'Could not add the release note config file to git: {rn_path}')
             if self.existing_rn_changed:
                 print_color(f"Finished updating release notes for {self.pack}.", LOG_COLORS.GREEN)
                 if not self.text:
@@ -183,6 +189,7 @@ class UpdateRN:
         if not self.is_bc:
             return
         bc_file_path: str = f'''{self.pack_path}/ReleaseNotes/{new_version.replace('.', '_')}.json'''
+        self.bc_path = bc_file_path
         bc_file_data: dict = dict()
         if os.path.exists(bc_file_path):
             with open(bc_file_path, 'r') as f:
@@ -581,9 +588,8 @@ class UpdateRN:
                 continue
 
             _header_by_type = RN_HEADER_BY_FILE_TYPE.get(_type)
-
             if _type in (FileType.CONNECTION, FileType.INCIDENT_TYPE, FileType.REPUTATION, FileType.LAYOUT,
-                         FileType.INCIDENT_FIELD):
+                         FileType.INCIDENT_FIELD, FileType.JOB):
                 rn_desc = f'\n- **{content_name}**'
 
             elif _type in (FileType.GENERIC_TYPE, FileType.GENERIC_FIELD):
@@ -727,7 +733,7 @@ def get_file_description(path, file_type) -> str:
         yml_file = get_yaml(path)
         return yml_file.get('comment', '')
 
-    elif file_type in (FileType.CLASSIFIER, FileType.REPORT, FileType.WIDGET, FileType.DASHBOARD):
+    elif file_type in (FileType.CLASSIFIER, FileType.REPORT, FileType.WIDGET, FileType.DASHBOARD, FileType.JOB):
         json_file = get_json(path)
         return json_file.get('description', '')
 

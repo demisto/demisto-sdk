@@ -100,32 +100,17 @@ def workflow_still_running(workflow_id: str, test_playbook) -> bool:
     else:
         try:
             test_playbook.build_context.logging_module.debug(
-                f'Getting status for circle workflow with id: {workflow_id}')
-            workflow_details_response = requests.get(f'https://circleci.com/api/v2/workflow/{workflow_id}',
-                                                     headers={'Accept': 'application/json'},
-                                                     auth=(CIRCLE_STATUS_TOKEN, ''))
+                f'Getting status for gitlab pipeline with id: {workflow_id}')
+            api_v4_url = os.environ.get('CI_API_V4_URL')
+            ci_project_id = os.environ.get('CI_PROJECT_ID')
+            workflow_details_response = requests.get(
+                f'{api_v4_url}/projects/{ci_project_id}/pipelines/{workflow_id}',
+                headers={'PRIVATE-TOKEN': GITLAB_STATUS_TOKEN})
             workflow_details_response.raise_for_status()
         except Exception:
-            if os.getenv('CIRCLECI'):
-                test_playbook.build_context.logging_module.warning(
-                    f'Failed to check status for circle workflow with id {workflow_id}, '
-                    'assuming it\'s a working gitlab pipeline')
-                return True
             test_playbook.build_context.logging_module.exception(
-                f'Failed to get circleci response about workflow with id {workflow_id}. will try again with gitlab CI')
-            try:
-                test_playbook.build_context.logging_module.debug(
-                    f'Getting status for gitlab pipeline with id: {workflow_id}')
-                api_v4_url = os.environ.get('CI_API_V4_URL')
-                ci_project_id = os.environ.get('CI_PROJECT_ID')
-                workflow_details_response = requests.get(
-                    f'{api_v4_url}/projects/{ci_project_id}/pipelines/{workflow_id}',
-                    headers={'PRIVATE-TOKEN': GITLAB_STATUS_TOKEN})
-                workflow_details_response.raise_for_status()
-            except Exception:
-                test_playbook.build_context.logging_module.exception(
-                    f'Failed to get gitlab-ci response about pipeline with id {workflow_id}.')
-                return True
+                f'Failed to get gitlab-ci response about pipeline with id {workflow_id}.')
+            return True
         return workflow_details_response.json().get('status') not in ('canceled', 'success', 'failed')
 
 

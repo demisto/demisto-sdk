@@ -469,6 +469,52 @@ def test_force_update_release_no_pack_given(demisto_client, repo):
     assert 'Please add a specific pack in order to force' in result.stdout
 
 
+def test_update_release_notes_specific_version_invalid(demisto_client, repo):
+    """
+        Given
+        - Nothing have changed.
+
+        When
+        - Running demisto-sdk update-release-notes command with --version flag but not in the right format.
+
+        Then
+        - Ensure that an error is printed.
+    """
+    runner = CliRunner(mix_stderr=True)
+    result = runner.invoke(main, [UPDATE_RN_COMMAND, '-i', join('Packs', 'ThinkCanary'), '-v', '3.x.t'])
+    assert 'The format of version should be in x.y.z format, e.g: <2.1.3>' in result.stdout
+
+
+def test_update_release_notes_specific_version_valid(demisto_client, mocker, repo):
+    """
+    Given
+    - Azure feed pack path has changed.
+
+    When
+    - Running demisto-sdk update-release-notes command with --version flag.
+
+    Then
+    - Ensure release notes file created with no errors
+    - Ensure the new version is taken from local metadata file.
+    """
+
+    modified_files = {join(AZURE_FEED_PACK_PATH, 'Integrations', 'FeedAzureValid', 'FeedAzureValid.yml')}
+    mocker.patch.object(UpdateRN, 'is_bump_required', return_value=True)
+    mocker.patch.object(ValidateManager, 'setup_git_params', return_value='')
+    mocker.patch.object(UpdateReleaseNotesManager, 'get_git_changed_files',
+                        return_value=(modified_files, {'1_1_0.md'}, set()))
+    mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value={'currentVersion': '1.1.0'})
+    mocker.patch('demisto_sdk.commands.common.tools.get_pack_name', return_value='FeedAzureValid')
+    mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
+    with ChangeCWD(repo.path):
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [UPDATE_RN_COMMAND, '-i', join('Packs', 'FeedAzureValid'), '-v', '4.0.0'])
+    assert result.exit_code == 0
+    assert not result.exception
+    assert 'Changes were detected. Bumping FeedAzureValid to version: 4.0.0' in result.stdout
+    assert 'Finished updating release notes for FeedAzureValid.' in result.stdout
+
+
 def test_force_update_release(demisto_client, mocker, repo):
     """
     Given

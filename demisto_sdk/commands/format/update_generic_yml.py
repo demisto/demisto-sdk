@@ -5,13 +5,14 @@ from typing import Dict, List, Optional
 import click
 from ruamel.yaml import YAML
 
-from demisto_sdk.commands.common.constants import (INTEGRATION, PLAYBOOK,
+from demisto_sdk.commands.common.constants import (ENTITY_TYPE_TO_DIR,
+                                                   INTEGRATION, PLAYBOOK,
                                                    TEST_PLAYBOOKS_DIR,
                                                    FileType)
-from demisto_sdk.commands.common.tools import (_get_file_id, find_type,
-                                               get_entity_id_by_entity_type,
-                                               get_not_registered_tests,
-                                               get_yaml, is_uuid)
+from demisto_sdk.commands.common.tools import (
+    _get_file_id, find_type, get_entity_id_by_entity_type,
+    get_not_registered_tests, get_scripts_and_commands_from_yml_data, get_yaml,
+    is_uuid, listdir_fullpath)
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 
 ryaml = YAML()
@@ -46,9 +47,9 @@ class BaseUpdateYML(BaseUpdate):
                  assume_yes: bool = False,
                  deprecate: bool = False,
                  add_tests: bool = True,
-                 ):
+                 interactive: bool = True):
         super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
-                         verbose=verbose, assume_yes=assume_yes)
+                         verbose=verbose, assume_yes=assume_yes, interactive=interactive)
         self.id_and_version_location = self.get_id_and_version_path_object()
         self.deprecate = deprecate
         self.add_tests = add_tests
@@ -67,9 +68,12 @@ class BaseUpdateYML(BaseUpdate):
         Returns:
             Dict. Holds the id and version fields.
         """
+        return self.get_id_and_version_for_data(self.data)
+
+    def get_id_and_version_for_data(self, data):
         yml_type = self.__class__.__name__
         path = self.ID_AND_VERSION_PATH_BY_YML_TYPE[yml_type]
-        return self.data.get(path, self.data)
+        return data.get(path, data)
 
     def update_id_to_equal_name(self) -> None:
         """Updates the id of the YML to be the same as it's name
@@ -82,6 +86,13 @@ class BaseUpdateYML(BaseUpdate):
             if is_uuid(self.id_and_version_location['id']):
                 updated_integration_id[self.id_and_version_location['id']] = self.data['name']
             self.id_and_version_location['id'] = self.data['name']
+        else:
+            current_id = self.id_and_version_location.get('id')
+            old_id = self.get_id_and_version_for_data(self.old_file).get('id')
+            if current_id != old_id:
+                click.secho(f'The modified YML file corresponding to the path: {self.relative_content_path} ID does not match the ID in remote YML file.'
+                            f' Changing the YML ID from {current_id} back to {old_id}.')
+                self.id_and_version_location['id'] = old_id
         if updated_integration_id:
             self.updated_ids.update(updated_integration_id)
 
@@ -109,9 +120,9 @@ class BaseUpdateYML(BaseUpdate):
         self.update_id_to_equal_name()
         self.set_version_to_default(self.id_and_version_location)
         self.copy_tests_from_old_file()
-
         if self.deprecate:
             self.update_deprecate(file_type=file_type)
+        self.sync_data_to_master()
 
     def update_tests(self) -> None:
         """
@@ -123,21 +134,48 @@ class BaseUpdateYML(BaseUpdate):
             pack_path = os.path.dirname(os.path.dirname(os.path.abspath(self.source_file)))
             test_playbook_dir_path = os.path.join(pack_path, TEST_PLAYBOOKS_DIR)
             test_playbook_ids = []
+            file_entity_type = find_type(self.source_file, _dict=self.data, file_type='yml')
+            file_id = get_entity_id_by_entity_type(self.data, ENTITY_TYPE_TO_DIR.get(file_entity_type.value, ""))
+            commands, scripts = get_scripts_and_commands_from_yml_data(self.data, file_entity_type)
+            commands_names = [command.get('id') for command in commands]
             try:
-                test_playbooks_files = os.listdir(test_playbook_dir_path)
-                if test_playbooks_files:
-                    for file_path in test_playbooks_files:  # iterate over the test playbooks in the dir
-                        is_yml_file = file_path.endswith('.yml')
-                        # concat as we might not be in content repo
-                        tpb_file_path = os.path.join(test_playbook_dir_path, file_path)
-                        if is_yml_file and find_type(tpb_file_path) == FileType.TEST_PLAYBOOK:
-                            test_playbook_data = get_yaml(tpb_file_path)
-                            test_playbook_id = get_entity_id_by_entity_type(test_playbook_data,
-                                                                            content_entity='')
-                            test_playbook_ids.append(test_playbook_id)
-                    self.data['tests'] = test_playbook_ids
+                # Collecting the test playbooks
+                test_playbooks_files = [tpb_file for tpb_file in listdir_fullpath(test_playbook_dir_path) if
+                                        find_type(tpb_file) == FileType.TEST_PLAYBOOK]
+                for tpb_file_path in test_playbooks_files:  # iterate over the test playbooks in the dir
+                    test_playbook_data = get_yaml(tpb_file_path)
+                    test_playbook_id = get_entity_id_by_entity_type(test_playbook_data,
+                                                                    content_entity='')
+                    if not scripts and not commands:  # Better safe than sorry
+                        test_playbook_ids.append(test_playbook_id)
+                    else:
+                        added = False
+                        tpb_commands, tpb_scripts = get_scripts_and_commands_from_yml_data(
+                            test_playbook_data, FileType.TEST_PLAYBOOK)
+
+                        for tpb_command in tpb_commands:
+                            tpb_command_name = tpb_command.get('id')
+                            tpb_command_source = tpb_command.get('source', '')
+                            if tpb_command_source and file_id and file_id != tpb_command_source:
+                                continue
+
+                            if not added and tpb_command_name in commands_names:
+                                command_source = commands[commands_names.index(tpb_command_name)].get('source', '')
+                                if command_source == tpb_command_source or command_source == '':
+                                    test_playbook_ids.append(test_playbook_id)
+                                    added = True
+                                    break
+
+                        if not added:
+                            for tpb_script in tpb_scripts:
+                                if tpb_script in scripts:
+                                    test_playbook_ids.append(test_playbook_id)
+                                    break
+
+                self.data['tests'] = test_playbook_ids
             except FileNotFoundError:
                 pass
+
             if not test_playbook_ids:
                 # In case no_interactive flag was given - modify the tests without confirmation
                 if self.assume_yes or not self.add_tests:

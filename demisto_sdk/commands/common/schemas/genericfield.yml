@@ -100,3 +100,5 @@ mapping:
     required: true
   template:
     type: str
+  openEnded:
+    type: bool

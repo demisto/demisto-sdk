@@ -58,6 +58,9 @@ Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up.
 
     Verbose output
 
+* **--input-config-file**
+
+    The path to the config file to download all the custom packs from
 
 ### Examples
 ```
@@ -106,3 +109,8 @@ This will upload the integration YML file `integration-GoogleCloudTranslate.yml`
 demisto-sdk upload -i Integrations/GoogleCloudTranslate/integration-GoogleCloudTranslate.yml --verbose
 ```
 This will upload the integration YML file `integration-GoogleCloudTranslate.yml` to the Cortex XSOAR instance and **print the response returned from the API**.
+```
+demisto-sdk upload --input-config-file demisto_sdk/commands/upload/tests/data/xsoar_config.json
+```
+This will upload the custom packs from the config file, a custom pack can be zipped file or unzipped file.
+<br/><br/>

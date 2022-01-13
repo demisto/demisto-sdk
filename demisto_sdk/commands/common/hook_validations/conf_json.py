@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 from demisto_sdk.commands.common.constants import (API_MODULES_PACK, CONF_PATH,
                                                    FileType)
@@ -16,6 +17,7 @@ class ConfJsonValidator(BaseValidator):
         conf_data (dict): The data from the conf.json file in our repo.
     """
     CONF_PATH = "./Tests/conf.json"
+    DYNAMIC_SECTION_TAG = 'dynamic-section'
 
     def __init__(self, ignored_errors=None, print_as_warnings=False, suppress_print=False, json_file_path=None):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
@@ -101,9 +103,12 @@ class ConfJsonValidator(BaseValidator):
             file_path: The file path of the entity to check.
             test_playbook_ids: test_playbook_ids unrelated to `tests` field in the file.
 
-        Retrun:
+        Returns:
             True if the content entity has at least one unskipped test playbook.
         """
+        # If it has a dynamic section tag, it shouldn't have a test playbook.
+        if self.DYNAMIC_SECTION_TAG in current_file.get('tags', []):
+            return True
         if test_playbook_ids is None:
             test_playbook_ids = []
         test_playbooks_unskip_status = {}
@@ -123,7 +128,7 @@ class ConfJsonValidator(BaseValidator):
             else:
                 test_playbooks_unskip_status[test_playbook_id] = True
 
-        if not any(test_playbooks_unskip_status.values()):
+        if not any(test_playbooks_unskip_status.values()) and not self.has_unittest(file_path):
             error_message, error_code = Errors.all_entity_test_playbooks_are_skipped(entity_id)
             if self.handle_error(error_message, error_code, file_path=file_path):
                 self._is_valid = False
@@ -140,3 +145,19 @@ class ConfJsonValidator(BaseValidator):
                     test_playbook_ids.append(test['playbookID'])
 
         return self.has_unskipped_test_playbook(integration_data, integration_id, file_path, test_playbook_ids)
+
+    def get_test_path(self, file_path):
+        """ Gets a yml path and returns the matching integration's test."""
+        test_path = Path(file_path)
+        test_file_name = test_path.parts[-1].replace('.yml', '_test.py')
+        return test_path.parent / test_file_name
+
+    def has_unittest(self, file_path):
+        """ Checks if the tests file exist. If so, Test Playbook is not a must. """
+        test_path = self.get_test_path(file_path)
+
+        # We only check existence as we have coverage report to check the actual tests
+        if not test_path.exists():
+            return False
+
+        return True

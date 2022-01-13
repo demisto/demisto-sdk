@@ -1,7 +1,8 @@
 import os
 import random
 
-from demisto_sdk.commands.common.constants import DEFAULT_ID_SET_PATH
+from demisto_sdk.commands.common.constants import (
+    DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_ID_SET_PATH)
 from demisto_sdk.commands.common.tools import (get_from_version, get_yaml,
                                                open_id_set_file, print_error,
                                                print_warning)
@@ -23,11 +24,17 @@ def generate_script_doc(input_path, examples, output: str = None, permissions: s
             output = os.path.dirname(os.path.realpath(input_path))
 
         if examples:
-            if not examples.startswith('!'):
-                examples = f'!{examples}'
+            if os.path.isfile(examples):
+                with open(examples, 'r') as examples_file:
+                    examples = examples_file.read().splitlines()
+            else:
+                examples = examples.split(',')
+                for i, example in enumerate(examples):
+                    if not example.startswith('!'):
+                        examples[i] = f'!{examples}'
 
-            example_dict, build_errors = build_example_dict([examples], insecure)
-            script_name = examples.split(' ')[0][1:]
+            example_dict, build_errors = build_example_dict(examples, insecure)
+            script_name = list(example_dict.keys())[0] if example_dict else None
             example_section, example_errors = generate_script_example(script_name, example_dict)
             errors.extend(build_errors)
             errors.extend(example_errors)
@@ -135,7 +142,7 @@ def get_script_info(script_path):
 
     res = [{'Name': 'Script Type', 'Description': script_type},
            {'Name': 'Tags', 'Description': tags}]
-    if from_version != '0.0.0':
+    if from_version != DEFAULT_CONTENT_ITEM_FROM_VERSION:
         res.append({'Name': 'Cortex XSOAR Version', 'Description': from_version})
     return res
 
@@ -217,34 +224,28 @@ def get_used_in(id_set, script_id):
 
 
 def generate_script_example(script_name, example=None):
-    errors: list = []
-    if example:
-        script_example = example[script_name][0]
-        md_example = example[script_name][1]
-        context_example = example[script_name][2]
+    results = []
+    errors = []
+    if not example:
+        errors.append(f'did not get any example for {script_name}. please add it manually.')
     else:
-        return '', [f'did not get any example for {script_name}. please add it manually.']
+        examples = example.get(script_name, None)
+        if not examples:
+            return '', [f'did not get any example for {script_name}. please add it manually.']
+        results.extend(['', '## Script Examples'])
+        for script_example, md_example, context_example in examples:
+            results.extend(['### Example command', f'```{script_example}```'])
+            if context_example:
+                results.extend(['### Context Example',
+                                '```json',
+                                '{}'.format(context_example),
+                                '```',
+                                '', ])
+            if md_example:
+                results.extend(['### Human Readable Output',
+                                '{}'.format('>'.join(f'\n{md_example}'.splitlines(True))),
+                                # prefix human readable with quote
+                                '',
+                                ])
 
-    example = [
-        '',
-        '## Script Example',
-        '```{}```'.format(script_example),
-        '',
-    ]
-    if context_example:
-        example.extend([
-            '## Context Example',
-            '```json',
-            '{}'.format(context_example),
-            '```',
-            '',
-        ])
-
-        if md_example:
-            example.extend([
-                '## Human Readable Output',
-                '{}'.format('>'.join(f'\n{md_example}'.splitlines(True))),  # prefix human readable with quote
-                '',
-            ])
-
-    return example, errors
+    return results, errors

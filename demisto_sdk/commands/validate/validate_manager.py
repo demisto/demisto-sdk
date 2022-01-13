@@ -11,10 +11,10 @@ from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK, AUTHOR_IMAGE_FILE_NAME, CONTENT_ENTITIES_DIRS,
-    DEFAULT_ID_SET_PATH, GENERIC_FIELDS_DIR, GENERIC_TYPES_DIR,
-    IGNORED_PACK_NAMES, OLDEST_SUPPORTED_VERSION, PACKS_DIR,
+    DEFAULT_CONTENT_ITEM_TO_VERSION, DEFAULT_ID_SET_PATH, GENERIC_FIELDS_DIR,
+    GENERIC_TYPES_DIR, IGNORED_PACK_NAMES, OLDEST_SUPPORTED_VERSION, PACKS_DIR,
     PACKS_PACK_META_FILE_NAME, SKIP_RELEASE_NOTES_FOR_TYPES,
-    TESTS_AND_DOC_DIRECTORIES, FileType, PathLevel)
+    VALIDATION_USING_GIT_IGNORABLE_DATA, FileType, PathLevel)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
                                                 FOUND_FILES_AND_ERRORS,
@@ -49,10 +49,14 @@ from demisto_sdk.commands.common.hook_validations.incident_field import \
     IncidentFieldValidator
 from demisto_sdk.commands.common.hook_validations.incident_type import \
     IncidentTypeValidator
+from demisto_sdk.commands.common.hook_validations.indicator_field import \
+    IndicatorFieldValidator
 from demisto_sdk.commands.common.hook_validations.integration import \
     IntegrationValidator
+from demisto_sdk.commands.common.hook_validations.job import JobValidator
 from demisto_sdk.commands.common.hook_validations.layout import (
     LayoutsContainerValidator, LayoutValidator)
+from demisto_sdk.commands.common.hook_validations.lists import ListsValidator
 from demisto_sdk.commands.common.hook_validations.mapper import MapperValidator
 from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
     PackUniqueFilesValidator
@@ -138,7 +142,7 @@ class ValidateManager:
 
         try:
             self.git_util = GitUtil(repo=Content.git())
-            self.branch_name = self.git_util.get_current_working_branch()
+            self.branch_name = self.git_util.get_current_git_branch_or_hash()
         except (InvalidGitRepositoryError, TypeError):
             # if we are using git - fail the validation by raising the exception.
             if self.use_git:
@@ -177,7 +181,10 @@ class ValidateManager:
         if no_docker_checks:
             self.skip_docker_checks = True
 
-        if self.check_is_unskipped or not self.skip_conf_json:
+        if self.skip_conf_json:
+            self.check_is_unskipped = False
+
+        if not self.skip_conf_json:
             self.conf_json_validator = ConfJsonValidator()
             self.conf_json_data = self.conf_json_validator.conf_data
 
@@ -414,6 +421,8 @@ class ValidateManager:
         """
         file_type = find_type(file_path)
 
+        is_added_file = file_path in added_files if added_files else False
+
         if file_type in self.skipped_file_types or file_path.endswith('_unified.yml'):
             self.ignored_files.add(file_path)
             return True
@@ -517,9 +526,12 @@ class ValidateManager:
         elif file_type == FileType.AUTHOR_IMAGE:
             return self.validate_author_image(file_path, pack_error_ignore_list)
 
-        # incident fields and indicator fields are using the same validation.
-        elif file_type in (FileType.INCIDENT_FIELD, FileType.INDICATOR_FIELD):
-            return self.validate_incident_field(structure_validator, pack_error_ignore_list, is_modified)
+        elif file_type == FileType.INCIDENT_FIELD:
+            return self.validate_incident_field(structure_validator, pack_error_ignore_list, is_modified, is_added_file)
+
+        elif file_type == FileType.INDICATOR_FIELD:
+            return self.validate_indicator_field(structure_validator, pack_error_ignore_list, is_modified,
+                                                 is_added_file)
 
         elif file_type == FileType.REPUTATION:
             return self.validate_reputation(structure_validator, pack_error_ignore_list)
@@ -532,6 +544,9 @@ class ValidateManager:
 
         elif file_type == FileType.PRE_PROCESS_RULES:
             return self.validate_pre_process_rule(structure_validator, pack_error_ignore_list)
+
+        elif file_type == FileType.LISTS:
+            return self.validate_lists(structure_validator, pack_error_ignore_list)
 
         elif file_type == FileType.DASHBOARD:
             return self.validate_dashboard(structure_validator, pack_error_ignore_list)
@@ -549,7 +564,7 @@ class ValidateManager:
             return self.validate_widget(structure_validator, pack_error_ignore_list)
 
         elif file_type == FileType.GENERIC_FIELD:
-            return self.validate_generic_field(structure_validator, pack_error_ignore_list)
+            return self.validate_generic_field(structure_validator, pack_error_ignore_list, is_added_file)
 
         elif file_type == FileType.GENERIC_TYPE:
             return self.validate_generic_type(structure_validator, pack_error_ignore_list)
@@ -559,6 +574,13 @@ class ValidateManager:
 
         elif file_type == FileType.GENERIC_DEFINITION:
             return self.validate_generic_definition(structure_validator, pack_error_ignore_list)
+
+        elif file_type == FileType.JOB:
+            return self.validate_job(structure_validator, pack_error_ignore_list)
+
+        elif file_type == FileType.CONTRIBUTORS:
+            # This is temporarily - need to add a proper contributors validations
+            return True
 
         else:
             error_message, error_code = Errors.file_type_not_supported()
@@ -850,17 +872,33 @@ class ValidateManager:
                                            json_file_path=self.json_file_path)
         return report_validator.is_valid_file(validate_rn=False)
 
-    def validate_incident_field(self, structure_validator, pack_error_ignore_list, is_modified):
+    def validate_incident_field(self, structure_validator, pack_error_ignore_list, is_modified, is_added_file):
         incident_field_validator = IncidentFieldValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                                           print_as_warnings=self.print_ignored_errors,
                                                           json_file_path=self.json_file_path)
         if is_modified and self.is_backward_check:
             return all([incident_field_validator.is_valid_file(validate_rn=False, is_new_file=not is_modified,
-                                                               use_git=self.use_git),
+                                                               use_git=self.use_git,
+                                                               is_added_file=is_added_file),
                         incident_field_validator.is_backward_compatible()])
         else:
             return incident_field_validator.is_valid_file(validate_rn=False, is_new_file=not is_modified,
-                                                          use_git=self.use_git)
+                                                          use_git=self.use_git,
+                                                          is_added_file=is_added_file)
+
+    def validate_indicator_field(self, structure_validator, pack_error_ignore_list, is_modified, is_added_file):
+        indicator_field_validator = IndicatorFieldValidator(structure_validator, ignored_errors=pack_error_ignore_list,
+                                                            print_as_warnings=self.print_ignored_errors,
+                                                            json_file_path=self.json_file_path)
+        if is_modified and self.is_backward_check:
+            return all([indicator_field_validator.is_valid_file(validate_rn=False, is_new_file=not is_modified,
+                                                                use_git=self.use_git,
+                                                                is_added_file=is_added_file),
+                        indicator_field_validator.is_backward_compatible()])
+        else:
+            return indicator_field_validator.is_valid_file(validate_rn=False, is_new_file=not is_modified,
+                                                           use_git=self.use_git,
+                                                           is_added_file=is_added_file)
 
     def validate_reputation(self, structure_validator, pack_error_ignore_list):
         reputation_validator = ReputationValidator(structure_validator, ignored_errors=pack_error_ignore_list,
@@ -883,11 +921,18 @@ class ValidateManager:
                                                 is_circle=self.is_circle)
 
     def validate_pre_process_rule(self, structure_validator, pack_error_ignore_list):
-        pre_process_rules_validator = PreProcessRuleValidator(structure_validator, ignored_errors=pack_error_ignore_list,
+        pre_process_rules_validator = PreProcessRuleValidator(structure_validator,
+                                                              ignored_errors=pack_error_ignore_list,
                                                               print_as_warnings=self.print_ignored_errors,
                                                               json_file_path=self.json_file_path)
         return pre_process_rules_validator.is_valid_pre_process_rule(validate_rn=False, id_set_file=self.id_set_file,
                                                                      is_ci=self.is_circle)
+
+    def validate_lists(self, structure_validator, pack_error_ignore_list):
+        lists_validator = ListsValidator(structure_validator, ignored_errors=pack_error_ignore_list,
+                                         print_as_warnings=self.print_ignored_errors,
+                                         json_file_path=self.json_file_path)
+        return lists_validator.is_valid_list()
 
     def validate_dashboard(self, structure_validator, pack_error_ignore_list):
         dashboard_validator = DashboardValidator(structure_validator, ignored_errors=pack_error_ignore_list,
@@ -938,12 +983,12 @@ class ValidateManager:
                                            json_file_path=self.json_file_path)
         return widget_validator.is_valid_file(validate_rn=False)
 
-    def validate_generic_field(self, structure_validator, pack_error_ignore_list):
+    def validate_generic_field(self, structure_validator, pack_error_ignore_list, is_added_file):
         generic_field_validator = GenericFieldValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                                         print_as_warnings=self.print_ignored_errors,
                                                         json_file_path=self.json_file_path)
 
-        return generic_field_validator.is_valid_file(validate_rn=False)
+        return generic_field_validator.is_valid_file(validate_rn=False, is_added_file=is_added_file)
 
     def validate_generic_type(self, structure_validator, pack_error_ignore_list):
         generic_type_validator = GenericTypeValidator(structure_validator, ignored_errors=pack_error_ignore_list,
@@ -975,6 +1020,7 @@ class ValidateManager:
         * .pack-ignore: Validates that the file exists and that all regexes in it can be compiled
         * README.md file: Validates that the file exists and image links are valid
         * 2.pack_metadata.json: Validates that the file exists and that it has a valid structure
+        * Author_image.png: Validates that the file isn't empty, dimension of 120*50 and that image size is up to 4kb
         Runs validation on the pack dependencies
         Args:
             should_version_raise: Whether we should check if the version of the metadata was raised
@@ -1008,6 +1054,17 @@ class ValidateManager:
             author_valid = self.validate_author_image(author_image_path, pack_error_ignore_list)
 
         return files_valid and author_valid
+
+    def validate_job(self, structure_validator, pack_error_ignore_list):
+        job_validator = JobValidator(structure_validator,
+                                     pack_error_ignore_list,
+                                     print_as_warnings=self.print_ignored_errors,
+                                     json_file_path=self.json_file_path)
+        is_valid = job_validator.is_valid_file()
+        if not is_valid:
+            click.secho(job_validator.get_errors(), fg="bright_red")
+
+        return is_valid
 
     def validate_modified_files(self, modified_files):
         click.secho(f'\n================= Running validation on modified files =================',
@@ -1202,7 +1259,7 @@ class ValidateManager:
 
     def setup_git_params(self):
         """Setting up the git relevant params"""
-        self.branch_name = self.git_util.get_current_working_branch() if (self.git_util and not self.branch_name) \
+        self.branch_name = self.git_util.get_current_git_branch_or_hash() if (self.git_util and not self.branch_name) \
             else self.branch_name
 
         # check remote validity
@@ -1340,7 +1397,7 @@ class ValidateManager:
                 file_path = str(path)
 
             try:
-                formatted_path = self.format_file_path(file_path, old_path, old_format_files)
+                formatted_path = self.check_file_relevance_and_format_path(file_path, old_path, old_format_files)
                 if formatted_path:
                     filtered_set.add(formatted_path)
 
@@ -1353,19 +1410,20 @@ class ValidateManager:
 
         return filtered_set, old_format_files
 
-    def format_file_path(self, file_path, old_path, old_format_files):
+    def check_file_relevance_and_format_path(self, file_path, old_path, old_format_files):
         """Determines if a file is relevant for validation and create any modification to the file_path if needed"""
 
         if file_path.split(os.path.sep)[0] in ('.gitlab', '.circleci', '.github'):
             return None
 
         file_type = find_type(file_path)
-        # ignore unrecognized file types, unified.yml, doc data and test_data
-        if not file_type or file_path.endswith('_unified.yml') or \
-                any(test_dir in str(file_path) for test_dir in TESTS_AND_DOC_DIRECTORIES):
-            if self.print_ignored_files:
-                click.secho(f"ignoring file {file_path}", fg='yellow')
-            self.ignored_files.add(file_path)
+
+        if self.ignore_files_irrelevant_for_validation(file_path):
+            return None
+
+        if not file_type:
+            error_message, error_code = Errors.file_type_not_supported()
+            self.handle_error(error_message, error_code, file_path=file_path)
             return None
 
         # redirect non-test code files to the associated yml file
@@ -1375,7 +1433,7 @@ class ValidateManager:
                 file_path = file_path.replace('.py', '.yml').replace('.ps1', '.yml').replace('.js', '.yml')
 
                 if old_path:
-                    old_path = old_path.replace('.py', '.yml').replace('.ps1', ',yml').replace('.js', '.yml')
+                    old_path = old_path.replace('.py', '.yml').replace('.ps1', '.yml').replace('.js', '.yml')
             else:
                 return None
 
@@ -1391,6 +1449,34 @@ class ValidateManager:
         # else return the file path
         else:
             return file_path
+
+    def ignore_files_irrelevant_for_validation(self, file_path: str) -> bool:
+        """
+        Will ignore files that are not in the packs directory, are .txt files or are in the
+        VALIDATION_USING_GIT_IGNORABLE_DATA tuple.
+
+        Args:
+            file_path: path of file to check if should be ignored.
+        Returns: True if file is ignored, false otherwise
+        """
+
+        if PACKS_DIR not in file_path:
+            self.ignore_file(file_path)
+            return True
+
+        if file_path.endswith(".txt"):
+            self.ignore_file(file_path)
+            return True
+
+        if any(name in str(file_path) for name in VALIDATION_USING_GIT_IGNORABLE_DATA):
+            self.ignore_file(file_path)
+            return True
+        return False
+
+    def ignore_file(self, file_path: str) -> None:
+        if self.print_ignored_files:
+            click.secho(f"ignoring file {file_path}", fg='yellow')
+        self.ignored_files.add(file_path)
 
     """ ######################################## Validate Tools ############################################### """
 
@@ -1494,14 +1580,15 @@ class ValidateManager:
         all_modified_files = modified_files.union(old_format_files)
         modified_packs_that_should_have_version_raised = get_pack_names_from_files(all_modified_files, skip_file_types={
             FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT,
-            FileType.DOC_IMAGE, FileType.AUTHOR_IMAGE})
+            FileType.DOC_IMAGE, FileType.AUTHOR_IMAGE, FileType.CONTRIBUTORS})
 
         # also existing packs with added files which are not test-playbook, test-script readme or release notes
         # should have their version raised
         modified_packs_that_should_have_version_raised = modified_packs_that_should_have_version_raised.union(
             get_pack_names_from_files(added_files, skip_file_types={
                 FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK,
-                FileType.TEST_SCRIPT, FileType.DOC_IMAGE, FileType.AUTHOR_IMAGE}) - self.new_packs)
+                FileType.TEST_SCRIPT, FileType.DOC_IMAGE, FileType.AUTHOR_IMAGE,
+                FileType.CONTRIBUTORS}) - self.new_packs)
 
         return modified_packs_that_should_have_version_raised
 
@@ -1564,7 +1651,7 @@ class ValidateManager:
         is_deprecated = current_file.get("deprecated")
 
         toversion_is_old = "toversion" in current_file and \
-                           version.parse(current_file.get("toversion", "99.99.99")) < \
+                           version.parse(current_file.get("toversion", DEFAULT_CONTENT_ITEM_TO_VERSION)) < \
                            version.parse(OLDEST_SUPPORTED_VERSION)
 
         if is_deprecated or toversion_is_old:

@@ -1,0 +1,97 @@
+{
+  "item": [
+    {
+      "name": "Collections",
+      "item": [
+        {
+          "name": "Create Collection",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"collection\": {\n        \"info\": {\n            \"name\": \"Sample Collection 909\",\n            \"description\": \"This is just a sample collection.\",\n            \"schema\": \"https://schema.getpostman.com/json/collection/v2.1.0/collection.json\"\n        },\n        \"item\": [\n            {\n                \"name\": \"This is a folder\",\n                \"item\": [\n                    {\n                        \"name\": \"Sample POST Request\",\n                        \"request\": {\n                            \"url\": \"https://postman-echo.com/post\",\n                            \"method\": \"POST\",\n                            \"header\": [\n                                {\n                                    \"key\": \"Content-Type\",\n                                    \"value\": \"application/json\"\n                                }\n                            ],\n                            \"body\": {\n                                \"mode\": \"raw\",\n                                \"raw\": \"{\\\"data\\\": \\\"123\\\"}\"\n                            },\n                            \"description\": \"This is a sample POST Request\"\n                        }\n                    }\n                ]\n            },\n            {\n                \"name\": \"Sample GET Request\",\n                \"request\": {\n                    \"url\": \"https://postman-echo/get\",\n                    \"method\": \"GET\",\n                    \"description\": \"This is a sample GET Request\"\n                }\n            }\n        ]\n    }\n}"
+            },
+            "url": {
+              "raw": "https://api.getpostman.com/collections",
+              "protocol": "https",
+              "host": [
+                "api",
+                "getpostman",
+                "com"
+              ],
+              "path": [
+                "collections"
+              ]
+            },
+            "description": "This endpoint allows you to create collections using the Postman Collection v2 format. For more information about the v2 schema, check the format [here](https://schema.getpostman.com/json/collection/v2.0.0/docs/index.html).\n\nOn successful creation of the collection, the response returns the collection `name`, `id` and the `uid`.\n\nYou can also specify the context of a workspace to create a collection in directly by passing the `workspace` as a query param.\n\n> Requires <a href=\"#authentication\">API Key</a> as `X-Api-Key` request header or `apikey` URL query parameter."
+          },
+          "response": [
+            {
+              "name": "Create Collection in a Workspace",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "name": "Content-Type",
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"collection\": {\n        \"info\": {\n            \"name\": \"Sample Collection 65\",\n            \"description\": \"This is just a sample collection.\",\n            \"schema\": \"https://schema.getpostman.com/json/collection/v2.1.0/collection.json\"\n        },\n        \"item\": [\n            {\n                \"name\": \"This is a folder\",\n                \"item\": [\n                    {\n                        \"name\": \"Sample POST Request\",\n                        \"request\": {\n                            \"url\": \"https://postman-echo.com/post\",\n                            \"method\": \"POST\",\n                            \"header\": [\n                                {\n                                    \"key\": \"Content-Type\",\n                                    \"value\": \"application/json\"\n                                }\n                            ],\n                            \"body\": {\n                                \"mode\": \"raw\",\n                                \"raw\": \"{\\\"data\\\": \\\"123\\\"}\"\n                            },\n                            \"description\": \"This is a sample POST Request\"\n                        }\n                    }\n                ]\n            },\n            {\n                \"name\": \"Sample GET Request\",\n                \"request\": {\n                    \"url\": \"https://postman-echo/get\",\n                    \"method\": \"GET\",\n                    \"description\": \"This is a sample GET Request\"\n                }\n            }\n        ]\n    }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "https://api.getpostman.com/collections?workspace={{workspace_id}}",
+                  "protocol": "https",
+                  "host": [
+                    "api",
+                    "getpostman",
+                    "com"
+                  ],
+                  "path": [
+                    "collections"
+                  ],
+                  "query": [
+                    {
+                      "key": "workspace",
+                      "value": "{{workspace_id}}",
+                      "description": "The workspace ID in which the collection is to be created"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "name": "Content-Type",
+                  "description": {
+                    "content": "",
+                    "type": "text/plain"
+                  }
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"collection\": {\n        \"id\": \"2412a72c-1d8e-491b-aced-93809c0e94\",\n        \"name\": \"Sample Collection\",\n        \"uid\": \"5852-2412a72c-1d8e-491b-aced-93809c0e94\"\n    }\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

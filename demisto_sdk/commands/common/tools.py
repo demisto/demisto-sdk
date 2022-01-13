@@ -7,12 +7,13 @@ import re
 import shlex
 import sys
 import urllib.parse
+from concurrent.futures import as_completed
 from configparser import ConfigParser, MissingSectionHeaderError
 from contextlib import contextmanager
 from distutils.version import LooseVersion
 from enum import Enum
 from functools import lru_cache, partial
-from pathlib import Path
+from pathlib import Path, PosixPath
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from typing import (Callable, Dict, List, Match, Optional, Set, Tuple, Type,
                     Union)
@@ -21,24 +22,30 @@ import click
 import colorama
 import demisto_client
 import git
+import giturlparse
 import requests
 import urllib3
 import yaml
 from packaging.version import parse
+from pebble import ProcessFuture, ProcessPool
 from ruamel.yaml import YAML
 
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK, CLASSIFIERS_DIR,
-    DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH, DOC_FILES_DIR,
-    ID_IN_COMMONFIELDS, ID_IN_ROOT, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
-    INDICATOR_FIELDS_DIR, INTEGRATIONS_DIR, LAYOUTS_DIR,
+    DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH,
+    DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
+    DOC_FILES_DIR, ID_IN_COMMONFIELDS, ID_IN_ROOT, INCIDENT_FIELDS_DIR,
+    INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR,
+    INTEGRATIONS_DIR, JOBS_DIR, LAYOUTS_DIR, LISTS_DIR,
+    MARKETPLACE_KEY_PACK_METADATA, METADATA_FILE_NAME,
     OFFICIAL_CONTENT_ID_SET_PATH, PACK_METADATA_IRON_BANK_TAG,
     PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
     PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
     PACKS_README_FILE_NAME, PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR,
     RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR,
-    XSOAR_CONFIG_FILE, FileType, GitContentConfig, urljoin)
+    XSOAR_CONFIG_FILE, FileType, GitContentConfig, IdSetKeys,
+    MarketplaceVersions, urljoin)
 from demisto_sdk.commands.common.git_util import GitUtil
 
 urllib3.disable_warnings()
@@ -305,7 +312,7 @@ def get_remote_file(
     if full_file_path.endswith('json'):
         details = res.json() if res.ok else json.loads(local_content)
     elif full_file_path.endswith('yml'):
-        details = yaml.safe_load(file_content)  # type: ignore[arg-type]
+        details = ryaml.load(file_content)
     # if neither yml nor json then probably a CHANGELOG or README file.
     else:
         details = {}
@@ -350,8 +357,8 @@ def filter_packagify_changes(modified_files, added_files, removed_files, tag='ma
             if details:
                 uniq_identifier = '_'.join([
                     details['name'],
-                    details.get('fromversion', '0.0.0'),
-                    details.get('toversion', '99.99.99')
+                    details.get('fromversion', DEFAULT_CONTENT_ITEM_FROM_VERSION),
+                    details.get('toversion', DEFAULT_CONTENT_ITEM_TO_VERSION)
                 ])
                 packagify_diff[uniq_identifier] = file_path
 
@@ -366,8 +373,8 @@ def filter_packagify_changes(modified_files, added_files, removed_files, tag='ma
 
             uniq_identifier = '_'.join([
                 details['name'],
-                details.get('fromversion', '0.0.0'),
-                details.get('toversion', '99.99.99')
+                details.get('fromversion', DEFAULT_CONTENT_ITEM_FROM_VERSION),
+                details.get('toversion', DEFAULT_CONTENT_ITEM_TO_VERSION)
             ])
             if uniq_identifier in packagify_diff:
                 # if name appears as added and removed, this is packagify process - treat as modified.
@@ -469,7 +476,7 @@ def get_file(file_path, type_of_file):
             # revert str to stream for loader
             stream = io.StringIO(replaced)
             try:
-                if 'yml' == type_of_file:
+                if type_of_file in ('yml', '.yml'):
                     data_dictionary = yaml.load(stream, Loader=XsoarLoader)
 
                 else:
@@ -597,31 +604,31 @@ def get_from_version(file_path):
 
     if data_dictionary:
         from_version = data_dictionary.get('fromversion') if 'fromversion' in data_dictionary \
-            else data_dictionary.get('fromVersion', '0.0.0')
-        if from_version == "":
-            return "0.0.0"
+            else data_dictionary.get('fromVersion', DEFAULT_CONTENT_ITEM_FROM_VERSION)
+        if from_version == '':
+            return DEFAULT_CONTENT_ITEM_FROM_VERSION
 
-        if not re.match(r"^\d{1,2}\.\d{1,2}\.\d{1,2}$", from_version):
-            raise ValueError("{} fromversion is invalid \"{}\". "
-                             "Should be of format: \"x.x.x\". for example: \"4.5.0\"".format(file_path, from_version))
+        if not re.match(r'^\d{1,2}\.\d{1,2}\.\d{1,2}$', from_version):
+            raise ValueError(f'{file_path} fromversion is invalid "{from_version}". '
+                             'Should be of format: "x.x.x". for example: "4.5.0"')
 
         return from_version
 
-    return '0.0.0'
+    return DEFAULT_CONTENT_ITEM_FROM_VERSION
 
 
 def get_to_version(file_path):
     data_dictionary = get_yaml(file_path)
 
     if data_dictionary:
-        to_version = data_dictionary.get('toversion', '99.99.99')
-        if not re.match(r"^\d{1,2}\.\d{1,2}\.\d{1,2}$", to_version):
-            raise ValueError("{} toversion is invalid \"{}\". "
-                             "Should be of format: \"x.x.x\". for example: \"4.5.0\"".format(file_path, to_version))
+        to_version = data_dictionary.get('toversion', DEFAULT_CONTENT_ITEM_TO_VERSION)
+        if not re.match(r'^\d{1,2}\.\d{1,2}\.\d{1,2}$', to_version):
+            raise ValueError(f'{file_path} toversion is invalid "{to_version}". '
+                             'Should be of format: "x.x.x". for example: "4.5.0"')
 
         return to_version
 
-    return '99.99.99'
+    return DEFAULT_CONTENT_ITEM_TO_VERSION
 
 
 def str2bool(v):
@@ -854,6 +861,10 @@ def pack_name_to_path(pack_name):
     return os.path.join(PACKS_DIR, pack_name)
 
 
+def pack_name_to_posix_path(pack_name):
+    return PosixPath(pack_name_to_path(pack_name))
+
+
 def get_pack_ignore_file_path(pack_name):
     return os.path.join(PACKS_DIR, pack_name, PACKS_PACK_IGNORE_FILE_NAME)
 
@@ -1055,7 +1066,7 @@ def get_dict_from_file(path: str, use_ryaml: bool = False,
 
 
 @lru_cache()
-def find_type_by_path(path: str = '') -> Optional[FileType]:
+def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
     """Find docstring by file path only
     This function is here as we want to implement lru_cache and we can do it on `find_type`
     as dict is not hashable.
@@ -1066,43 +1077,52 @@ def find_type_by_path(path: str = '') -> Optional[FileType]:
     Returns:
         FileType: The file type if found. else None;
     """
-    if path.endswith('.md'):
-        if 'README' in path:
+    path = Path(path)
+    if path.suffix == '.md':
+        if 'README' in path.name:
             return FileType.README
 
-        if RELEASE_NOTES_DIR in path:  # [-2] is the file's dir name
+        if RELEASE_NOTES_DIR in path.parts:
             return FileType.RELEASE_NOTES
 
-        if 'description' in path:
+        if 'description' in path.name:
             return FileType.DESCRIPTION
+
+        if 'CONTRIBUTORS' in path.name:
+            return FileType.CONTRIBUTORS
 
         return FileType.CHANGELOG
 
-    if path.endswith('.json'):
-        if RELEASE_NOTES_DIR in path:
+    if path.suffix == '.json':
+        if RELEASE_NOTES_DIR in path.parts:
             return FileType.RELEASE_NOTES_CONFIG
+        elif LISTS_DIR in os.path.dirname(path):
+            return FileType.LISTS
+        elif JOBS_DIR in path.parts:
+            return FileType.JOB
+        elif INDICATOR_TYPES_DIR in path.parts:
+            return FileType.REPUTATION
 
     # integration image
-    if path.endswith('_image.png') and not path.endswith("Author_image.png"):
+    if path.name.endswith('_image.png'):
+        if path.name.endswith("Author_image.png"):
+            return FileType.AUTHOR_IMAGE
         return FileType.IMAGE
 
-    if path.endswith("Author_image.png"):
-        return FileType.AUTHOR_IMAGE
-
     # doc files images
-    if path.endswith('.png') and DOC_FILES_DIR in path:
+    if path.suffix == ".png" and DOC_FILES_DIR in path.parts:
         return FileType.DOC_IMAGE
 
-    if path.endswith('.ps1'):
+    if path.suffix == '.ps1':
         return FileType.POWERSHELL_FILE
 
-    if path.endswith('.py'):
+    if path.suffix == '.py':
         return FileType.PYTHON_FILE
 
-    if path.endswith('.js'):
+    if path.suffix == '.js':
         return FileType.JAVASCRIPT_FILE
 
-    if path.endswith(XSOAR_CONFIG_FILE):
+    if path.name.endswith(XSOAR_CONFIG_FILE):
         return FileType.XSOAR_CONFIG
 
     return None
@@ -1195,11 +1215,17 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
                 'newEventFilters' in _dict and 'readyNewEventFilters' in _dict:
             return FileType.PRE_PROCESS_RULES
 
+        if 'allRead' in _dict and 'truncated' in _dict:
+            return FileType.LISTS
+
         if 'definitionIds' in _dict and 'views' in _dict:
             return FileType.GENERIC_MODULE
 
         if 'auditable' in _dict:
             return FileType.GENERIC_DEFINITION
+
+        if isinstance(_dict, dict) and {'isAllFeeds', 'selectedFeeds', 'isFeed'}.issubset(_dict.keys()):
+            return FileType.JOB
 
         # When using it for all files validation- sometimes 'id' can be integer
         if 'id' in _dict:
@@ -1576,6 +1602,10 @@ def is_path_of_pre_process_rules_directory(path: str) -> bool:
     return os.path.basename(path) == PRE_PROCESS_RULES_DIR
 
 
+def is_path_of_lists_directory(path: str) -> bool:
+    return os.path.basename(path) == LISTS_DIR
+
+
 def is_path_of_classifier_directory(path: str) -> bool:
     """Returns true if directory is integration directory false if not.
     """
@@ -1651,12 +1681,13 @@ def camel_to_snake(camel: str) -> str:
 
 
 def open_id_set_file(id_set_path):
-    id_set = None
+    id_set = {}
     try:
         with open(id_set_path, 'r') as id_set_file:
             id_set = json.load(id_set_file)
     except IOError:
         print_warning("Could not open id_set file")
+        raise
     finally:
         return id_set
 
@@ -1732,6 +1763,26 @@ def get_all_incident_and_indicator_fields_from_id_set(id_set_file, entity_type):
     return fields_list
 
 
+def is_object_in_id_set(object_name, pack_info_from_id_set):
+    """
+        Check if the given object is part of the packs items that are present in the Packs section in the id set.
+        This is assuming that the id set is based on the version that has, under each pack, the items it contains.
+
+    Args:
+        object_name: name of object of interest.
+        pack: the pack this object should belong to.
+        packs_section_from_id_set: the section under the key Packs in the previously given id set.
+
+    Returns:
+
+    """
+    content_items = pack_info_from_id_set.get('ContentItems', {})
+    for items_type, items_names in content_items.items():
+        if object_name in items_names:
+            return True
+    return False
+
+
 def is_string_uuid(string_to_check: str):
     """
     Check if a given string is from uuid type
@@ -1794,7 +1845,7 @@ def get_file_displayed_name(file_path):
     elif file_type in [FileType.MAPPER, FileType.CLASSIFIER, FileType.INCIDENT_FIELD, FileType.INCIDENT_TYPE,
                        FileType.INDICATOR_FIELD, FileType.LAYOUTS_CONTAINER, FileType.PRE_PROCESS_RULES,
                        FileType.DASHBOARD, FileType.WIDGET,
-                       FileType.REPORT]:
+                       FileType.REPORT, FileType.JOB]:
         return get_json(file_path).get('name')
     elif file_type == FileType.OLD_CLASSIFIER:
         return get_json(file_path).get('brandName')
@@ -1887,7 +1938,7 @@ def to_kebab_case(s: str):
     """
     if s:
         new_s = s.lower()
-        new_s = re.sub(' +', '-', new_s)
+        new_s = re.sub('[ ,.-]+', '-', new_s)
         new_s = re.sub('[^A-Za-z0-9-]+', '', new_s)
         m = re.search('[a-z0-9]+(-[a-z]+)*', new_s)
         if m:
@@ -2134,3 +2185,197 @@ def get_script_or_sub_playbook_tasks_from_playbook(searched_entity_name: str, ma
             searched_tasks.append(task_data)
 
     return searched_tasks
+
+
+def get_current_repo() -> Tuple[str, str, str]:
+    try:
+        git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
+        parsed_git = giturlparse.parse(git_repo.remotes.origin.url)
+        host = parsed_git.host
+        if '@' in host:
+            host = host.split('@')[1]
+        return host, parsed_git.owner, parsed_git.repo
+    except git.InvalidGitRepositoryError:
+        print_warning('git repo is not found')
+        return "Unknown source", '', ''
+
+
+def get_mp_types_from_metadata_by_item(file_path):
+    """
+    Get the supporting marketplaces for the given content item, defined by the mp field in the metadata.
+    If the field doesnt exist in the pack's metadata, consider as xsoar only.
+    Args:
+        file_path: path to content item in content repo
+
+    Returns:
+        list of names of supporting marketplaces (current options are marketplacev2 and xsoar)
+    """
+    if METADATA_FILE_NAME in Path(file_path).parts:  # for when the type is pack, the item we get is the metadata path
+        metadata_path = file_path
+    else:
+        metadata_path_parts = get_pack_dir(file_path)
+        metadata_path = Path(*metadata_path_parts) / METADATA_FILE_NAME
+
+    try:
+        with open(metadata_path, 'r') as metadata_file:
+            metadata = json.load(metadata_file)
+            marketplaces = metadata.get(MARKETPLACE_KEY_PACK_METADATA)
+            if not marketplaces:
+                return [MarketplaceVersions.XSOAR.value]
+            return marketplaces
+    except FileNotFoundError:
+        return []
+
+
+def get_pack_dir(path):
+    """
+    Used for testing packs where the location of the "Packs" dir is not constant.
+    Args:
+        path: path of current file
+
+    Returns:
+        the path starting from Packs dir
+
+    """
+    parts = Path(path).parts
+    for index in range(len(parts)):
+        if parts[index] == 'Packs':
+            return parts[:index + 2]
+    return []
+
+
+@contextmanager
+def ProcessPoolHandler() -> ProcessPool:
+    """ Process pool Handler which terminate all processes in case of Exception.
+
+    Yields:
+        ProcessPool: Pebble process pool.
+    """
+    with ProcessPool(max_workers=3) as pool:
+        try:
+            yield pool
+        except Exception:
+            print_error("Gracefully release all resources due to Error...")
+            raise
+        finally:
+            pool.close()
+            pool.join()
+
+
+def wait_futures_complete(futures: List[ProcessFuture], done_fn: Callable):
+    """Wait for all futures to complete, Raise exception if occurred.
+
+    Args:
+        futures: futures to wait for.
+        done_fn: Function to run on result.
+    Raises:
+        Exception: Raise caught exception for further cleanups.
+    """
+    for future in as_completed(futures):
+        try:
+            result = future.result()
+            done_fn(result)
+        except Exception as e:
+            print_error(e)
+            raise
+
+
+def get_api_module_dependencies(pkgs, id_set_path, verbose):
+    """
+    Get all paths to integrations and scripts dependent on api modules that are found in the modified files.
+    Args:
+        pkgs: the pkgs paths found as modified to run lint on (including the api module files)
+        id_set_path: path to id set
+        verbose: print found dependencies or not
+    Returns:
+        a list of the paths to the scripts and integration found dependent on the modified api modules.
+    """
+
+    id_set = open_id_set_file(id_set_path)
+    api_modules = [pkg.name for pkg in pkgs if API_MODULES_PACK in pkg.parts]
+    scripts = id_set.get(IdSetKeys.SCRIPTS.value, [])
+    integrations = id_set.get(IdSetKeys.INTEGRATIONS.value, [])
+    using_scripts, using_integrations = [], []
+    for script in scripts:
+        script_info = list(script.values())[0]
+        script_name = script_info.get('name')
+        api_module = script_info.get('api_modules', [])
+        if api_module in api_modules:
+            if verbose:
+                print(f"found script {script_name} dependent on {api_module}")
+            using_scripts.extend(list(script.values()))
+
+    for integration in integrations:
+        integration_info = list(integration.values())[0]
+        integration_name = integration_info.get('name')
+        api_module = integration_info.get('api_modules', [])
+        if api_module in api_modules:
+            if verbose:
+                print(f"found integration {integration_name} dependent on {api_module}")
+            using_integrations.extend(list(integration.values()))
+
+    using_scripts_pkg_paths = [Path(script.get('file_path')).parent.absolute() for
+                               script in using_scripts]
+    using_integrations_pkg_paths = [Path(integration.get('file_path')).parent.absolute() for
+                                    integration in using_integrations]
+    return list(set(using_integrations_pkg_paths + using_scripts_pkg_paths))
+
+
+def listdir_fullpath(dir_name: str) -> List[str]:
+    return [os.path.join(dir_name, f) for f in os.listdir(dir_name)]
+
+
+def get_scripts_and_commands_from_yml_data(data, file_type):
+    """Get the used scripts, playbooks and commands from the yml data
+
+    Args:
+        data: The yml data as extracted with get_yaml
+        file_type: The FileType of the data provided.
+
+    Return (list of found { 'id': command name, 'source': command source }, list of found script and playbook names)
+    """
+    commands = []
+    detailed_commands = []
+    scripts_and_pbs = []
+    if file_type == FileType.TEST_PLAYBOOK or file_type == FileType.PLAYBOOK:
+        tasks = data.get('tasks')
+        for task_num in tasks.keys():
+            task = tasks[task_num]
+            inner_task = task.get('task')
+            task_type = task.get('type')
+            if inner_task and task_type == 'regular' or task_type == 'playbook':
+                if inner_task.get('iscommand'):
+                    commands.append(inner_task.get('script'))
+                else:
+                    if task_type == 'playbook':
+                        scripts_and_pbs.append(inner_task.get('playbookName'))
+                    elif inner_task.get('scriptName'):
+                        scripts_and_pbs.append(inner_task.get('scriptName'))
+        if file_type == FileType.PLAYBOOK:
+            playbook_id = get_entity_id_by_entity_type(data, PLAYBOOKS_DIR)
+            scripts_and_pbs.append(playbook_id)
+
+    if file_type == FileType.SCRIPT:
+        script_id = get_entity_id_by_entity_type(data, SCRIPTS_DIR)
+        scripts_and_pbs = [script_id]
+        if data.get('dependson'):
+            commands = data.get('dependson').get('must', [])
+
+    if file_type == FileType.INTEGRATION:
+        integration_commands = data.get('script', {}).get('commands')
+        for integration_command in integration_commands:
+            commands.append(integration_command.get('name'))
+
+    for command in commands:
+        command_parts = command.split('|||')
+        if len(command_parts) == 2:
+            detailed_commands.append({
+                'id': command_parts[1],
+                'source': command_parts[0]
+            })
+        else:
+            detailed_commands.append({
+                'id': command_parts[0]
+            })
+
+    return detailed_commands, scripts_and_pbs

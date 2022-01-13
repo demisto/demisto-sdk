@@ -100,3 +100,13 @@ class TestLayoutValidator:
         validator = LayoutsContainerValidator(structure)
 
         assert validator.is_id_equals_name() == result
+
+    @staticmethod
+    def test_is_valid_layout_container():
+        layout = {
+            'version': -1,
+            'name': 'test layout container',
+        }
+        structure = mock_structure('', layout)
+        validator = LayoutsContainerValidator(structure)
+        assert not validator.is_valid_layout(validate_rn=False)

@@ -43,6 +43,16 @@ mapping:
                     type: str
                   newButtonDefinitionId:
                     type: str
+                  tableView:
+                    type: bool
+                  tableViewWidgetGroups:
+                    type: seq
+                    sequence:
+                      - type: str
+                  tableViewColumns:
+                    type: seq
+                    sequence:
+                      - type: str
                   dashboard:
                     type: any
     required: true

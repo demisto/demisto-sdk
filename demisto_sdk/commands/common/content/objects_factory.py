@@ -3,12 +3,14 @@ from typing import Union
 from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import OLD_INDICATOR_TYPE, FileType
+from demisto_sdk.commands.common.content.objects.abstract_objects.general_object import \
+    GeneralObject
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     AgentTool, AuthorImage, ChangeLog, Classifier, ClassifierMapper,
     Connection, Contributors, Dashboard, DocFile, GenericDefinition,
     GenericField, GenericModule, GenericType, IncidentField, IncidentType,
-    IndicatorField, IndicatorType, Integration, Layout, LayoutsContainer,
-    OldClassifier, OldIndicatorType, PackIgnore, PackMetaData, Playbook,
+    IndicatorField, IndicatorType, Integration, Job, Layout, LayoutsContainer,
+    Lists, OldClassifier, OldIndicatorType, PackIgnore, PackMetaData, Playbook,
     PreProcessRule, Readme, ReleaseNote, ReleaseNoteConfig, Report, Script,
     SecretIgnore, Widget)
 from demisto_sdk.commands.common.content.objects.root_objects import \
@@ -33,6 +35,7 @@ TYPE_CONVERSION_BY_FileType = {
     FileType.LAYOUT: Layout,
     FileType.LAYOUTS_CONTAINER: LayoutsContainer,
     FileType.PRE_PROCESS_RULES: PreProcessRule,
+    FileType.LISTS: Lists,
     FileType.REPUTATION: IndicatorType,
     FileType.INDICATOR_FIELD: IndicatorField,
     FileType.INCIDENT_FIELD: IncidentField,
@@ -51,7 +54,8 @@ TYPE_CONVERSION_BY_FileType = {
     FileType.GENERIC_TYPE: GenericType,
     FileType.GENERIC_FIELD: GenericField,
     FileType.GENERIC_MODULE: GenericModule,
-    FileType.GENERIC_DEFINITION: GenericDefinition
+    FileType.GENERIC_DEFINITION: GenericDefinition,
+    FileType.JOB: Job
 }
 
 TYPE_CONVERSION_BY_FILE_NAME = {
@@ -63,7 +67,7 @@ TYPE_CONVERSION_BY_FILE_NAME = {
 }
 
 
-def path_to_pack_object(path: Union[Path, str]) -> object:
+def path_to_pack_object(path: Union[Path, str]) -> GeneralObject:
     """ Create content object by path, By the following steps:
             1. Try determinist file name -> pack_metadata.json, .secrets-ignore, .pack-ignore, reputations.json
             2. If 'Tools' in path -> Object is AgentTool.

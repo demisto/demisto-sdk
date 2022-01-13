@@ -591,7 +591,7 @@ class IntegrationGeneratorConfig:
 
                 logger.info(f'Generated integration yml at:\n{os.path.abspath(path)}')
 
-            return
+            return path
 
         package_dir = Path(output_dir, self.name)
         if not os.path.exists(package_dir):

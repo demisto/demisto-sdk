@@ -2,13 +2,15 @@ import os
 import re
 from copy import deepcopy
 from distutils.version import LooseVersion
-from typing import Dict, Optional, Set, Union
+from typing import Any, Dict, Optional, Set, Union
 
 import click
+import dictdiffer
 import yaml
 from ruamel.yaml import YAML
 
-from demisto_sdk.commands.common.constants import INTEGRATION, PLAYBOOK
+from demisto_sdk.commands.common.constants import (
+    DEFAULT_CONTENT_ITEM_FROM_VERSION, INTEGRATION, PLAYBOOK)
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_dict_from_file,
                                                get_pack_metadata,
                                                get_remote_file,
@@ -39,6 +41,7 @@ class BaseUpdate:
             from_version_key (str): The fromVersion key in file, different between yml and json files.
             verbose (bool): Whether to print a verbose log
             assume_yes (bool): Whether to assume "yes" as answer to all prompts and run non-interactively
+            interactive (bool): Whether to run the format interactively or not (usually for contribution management)
     """
 
     def __init__(self,
@@ -49,7 +52,9 @@ class BaseUpdate:
                  no_validate: bool = False,
                  verbose: bool = False,
                  assume_yes: bool = False,
-                 deprecate: bool = False):
+                 interactive: bool = True,
+                 deprecate: bool = False,
+                 **kwargs):
         self.source_file = input
         self.output_file = self.set_output_file_path(output)
         self.verbose = verbose
@@ -60,6 +65,7 @@ class BaseUpdate:
         self.from_version = from_version
         self.no_validate = no_validate
         self.assume_yes = assume_yes
+        self.interactive = interactive
         self.updated_ids: Dict = {}
         if not self.no_validate:
             self.validate_manager = ValidateManager(silence_init_prints=True, skip_conf_json=True,
@@ -94,13 +100,17 @@ class BaseUpdate:
             return output_file_path
 
     def set_version_to_default(self, location=None):
-        """Replaces the version of the YML to default."""
+        self.set_default_value('version', DEFAULT_VERSION, location)
+
+    def set_default_value(self, key: str, value: Any, location=None):
+        """Replaces the version to default."""
         if self.verbose:
-            click.echo(f'Setting JSON version to default: {DEFAULT_VERSION}')
+            click.echo(f'Setting {key} to default={value}' +
+                       ' in custom location' if location else '')
         if location:
-            location['version'] = DEFAULT_VERSION
+            location[key] = value
         else:
-            self.data['version'] = DEFAULT_VERSION
+            self.data[key] = value
 
     def remove_unnecessary_keys(self):
         """Removes keys that are in file but not in schema of file type"""
@@ -229,7 +239,7 @@ class BaseUpdate:
             else:
                 self.data[self.from_version_key] = from_version
         else:
-            if LooseVersion(self.data.get(self.from_version_key, '0.0.0')) < \
+            if LooseVersion(self.data.get(self.from_version_key, DEFAULT_CONTENT_ITEM_FROM_VERSION)) < \
                     LooseVersion(GENERIC_OBJECTS_DEFAULT_FROMVERSION):
                 self.data[self.from_version_key] = GENERIC_OBJECTS_DEFAULT_FROMVERSION
 
@@ -274,7 +284,7 @@ class BaseUpdate:
 
             # If it is new pack, and it has from version lower than 5.5.0, ask to set it to 5.5.0
             # Playbook has its own validation in update_fromversion_by_user() function in update_playbook.py
-            elif LooseVersion(self.data.get(self.from_version_key, '0.0.0')) < \
+            elif LooseVersion(self.data.get(self.from_version_key, DEFAULT_CONTENT_ITEM_FROM_VERSION)) < \
                     LooseVersion(NEW_FILE_DEFAULT_5_5_0_FROMVERSION) and file_type != PLAYBOOK:
                 if self.assume_yes:
                     self.data[self.from_version_key] = NEW_FILE_DEFAULT_5_5_0_FROMVERSION
@@ -365,3 +375,8 @@ class BaseUpdate:
 
             else:
                 return SUCCESS_RETURN_CODE
+
+    def sync_data_to_master(self):
+        if self.old_file:
+            diff = dictdiffer.diff(self.old_file, self.data)
+            self.data = dictdiffer.patch(diff, self.old_file)

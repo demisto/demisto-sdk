@@ -4,9 +4,11 @@ from typing import Tuple
 import click
 
 from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
+                                                   BETA_INTEGRATION,
                                                    FEED_REQUIRED_PARAMS,
                                                    FETCH_REQUIRED_PARAMS,
                                                    INTEGRATION, TYPE_PWSH)
+from demisto_sdk.commands.common.tools import find_type
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
@@ -41,6 +43,10 @@ class IntegrationYMLFormat(BaseUpdateYML):
         self.update_docker = update_docker
         if not from_version and self.data.get("script", {}).get("type") == TYPE_PWSH:
             self.from_version = '5.5.0'
+        self.is_beta = False
+        integration_type = find_type(input)
+        if integration_type:
+            self.is_beta = find_type(input).value == 'betaintegration'
 
     def update_proxy_insecure_param_to_default(self):
         """Updates important integration arguments names and description."""
@@ -59,6 +65,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
     def set_params_default_additional_info(self):
         from demisto_sdk.commands.common.default_additional_info_loader import \
             load_default_additional_info_dict
+
         default_additional_info = load_default_additional_info_dict()
 
         if self.verbose:
@@ -147,10 +154,14 @@ class IntegrationYMLFormat(BaseUpdateYML):
             ScriptYMLFormat.update_docker_image_in_script(self.data['script'], self.source_file,
                                                           self.data.get(self.from_version_key))
 
+    def update_beta_integration(self):
+        self.data['display'] = self.data['name'] + ' (Beta)'
+        self.data['beta'] = True
+
     def run_format(self) -> int:
         try:
             click.secho(f'\n================= Updating file {self.source_file} =================', fg='bright_blue')
-            super().update_yml(file_type=INTEGRATION)
+            super().update_yml(file_type=BETA_INTEGRATION if self.is_beta else INTEGRATION)
             self.update_tests()
             self.update_conf_json('integration')
             self.update_proxy_insecure_param_to_default()
@@ -159,7 +170,12 @@ class IntegrationYMLFormat(BaseUpdateYML):
             self.set_fetch_params_in_config()
             self.set_feed_params_in_config()
             self.update_docker_image()
+
+            if self.is_beta:
+                self.update_beta_integration()
+
             self.save_yml_to_destination_file()
+
             return SUCCESS_RETURN_CODE
         except Exception as err:
             if self.verbose:

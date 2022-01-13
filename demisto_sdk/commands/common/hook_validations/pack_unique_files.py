@@ -397,6 +397,12 @@ class PackUniqueFilesValidator(BaseValidator):
                                            self.pack_meta_file):
                             return False
 
+            # check metadata categories isn't an empty list
+            if not metadata[PACK_METADATA_CATEGORIES]:
+                if self._add_error(Errors.pack_metadata_missing_categories(self.pack_meta_file),
+                                   self.pack_meta_file):
+                    return False
+
             # if the field 'certification' exists, check that its value is set to 'certified' or 'verified'
             certification = metadata.get(PACK_METADATA_CERTIFICATION)
             if certification and certification not in ALLOWED_CERTIFICATION_VALUES:

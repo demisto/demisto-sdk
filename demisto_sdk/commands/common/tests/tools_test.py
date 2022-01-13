@@ -9,29 +9,29 @@ import pytest
 import requests
 
 from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
-                                                   LAYOUTS_DIR, PACKS_DIR,
-                                                   PACKS_PACK_IGNORE_FILE_NAME,
-                                                   PLAYBOOKS_DIR, SCRIPTS_DIR,
-                                                   TEST_PLAYBOOKS_DIR,
-                                                   FileType)
+from demisto_sdk.commands.common.constants import (
+    DEFAULT_CONTENT_ITEM_TO_VERSION, INTEGRATIONS_DIR, LAYOUTS_DIR, PACKS_DIR,
+    PACKS_PACK_IGNORE_FILE_NAME, PLAYBOOKS_DIR, SCRIPTS_DIR,
+    TEST_PLAYBOOKS_DIR, FileType)
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import (
     LOG_COLORS, arg_to_list, compare_context_path_in_yml_and_readme,
     filter_files_by_type, filter_files_on_pack, filter_packagify_changes,
-    find_type, get_code_lang, get_dict_from_file, get_entity_id_by_entity_type,
-    get_entity_name_by_entity_type, get_file_displayed_name,
-    get_file_version_suffix_if_exists, get_files_in_dir,
-    get_ignore_pack_skipped_tests, get_last_release_version,
+    find_type, get_code_lang, get_current_repo, get_dict_from_file,
+    get_entity_id_by_entity_type, get_entity_name_by_entity_type,
+    get_file_displayed_name, get_file_version_suffix_if_exists,
+    get_files_in_dir, get_ignore_pack_skipped_tests, get_last_release_version,
     get_last_remote_release_version, get_latest_release_notes_text,
     get_pack_metadata, get_relative_path_from_packs_dir,
     get_release_note_entries, get_release_notes_file_path, get_ryaml,
-    get_test_playbook_id, get_to_version, has_remote_configured,
-    is_origin_content_repo, is_pack_path, is_uuid, retrieve_file_ending,
-    run_command_os, server_version_compare)
-from demisto_sdk.tests.constants_test import (IGNORED_PNG,
+    get_scripts_and_commands_from_yml_data, get_test_playbook_id,
+    get_to_version, get_yaml, has_remote_configured, is_origin_content_repo,
+    is_pack_path, is_uuid, retrieve_file_ending, run_command_os,
+    server_version_compare, to_kebab_case)
+from demisto_sdk.tests.constants_test import (DUMMY_SCRIPT_PATH, IGNORED_PNG,
                                               INDICATORFIELD_EXTRA_FIELDS,
                                               SOURCE_FORMAT_INTEGRATION_COPY,
+                                              TEST_PLAYBOOK,
                                               VALID_BETA_INTEGRATION_PATH,
                                               VALID_DASHBOARD_PATH,
                                               VALID_GENERIC_DEFINITION_PATH,
@@ -815,7 +815,7 @@ def test_get_to_version_no_to_version(repo):
     with ChangeCWD(repo.path):
         to_ver = get_to_version(integration.yml.path)
 
-        assert to_ver == '99.99.99'
+        assert to_ver == DEFAULT_CONTENT_ITEM_TO_VERSION
 
 
 def test_get_file_displayed_name__integration(repo):
@@ -1475,3 +1475,67 @@ def test_get_test_playbook_id():
     test_playbook_name, test_playbook_pack = get_test_playbook_id(test_playbook_id_set, test_name)
     assert test_playbook_name == 'HelloWorld-Test'
     assert test_playbook_pack == 'HelloWorld'
+
+
+@pytest.mark.parametrize(
+    'url, expected_name',
+    [
+        ('ssh://git@github.com/demisto/content-dist.git', ('github.com', 'demisto', 'content-dist')),
+        ('git@github.com:demisto/content-dist.git', ('github.com', 'demisto', 'content-dist')),
+        ('https://github.com/demisto/content-dist.git', ('github.com', 'demisto', 'content-dist')),
+        ('https://github.com/demisto/content-dist', ('github.com', 'demisto', 'content-dist')),
+        ('https://code.pan.run/xsoar/content-dist', ('code.pan.run', 'xsoar', 'content-dist')),  # gitlab
+        ('https://code.pan.run/xsoar/content-dist.git', ('code.pan.run', 'xsoar', 'content-dist')),
+        ('https://gitlab-ci-token:token@code.pan.run/xsoar/content-dist.git', ('code.pan.run', 'xsoar', 'content-dist'))
+    ]
+)
+def test_get_current_repo(mocker, url, expected_name):
+    import giturlparse
+    mocker.patch.object(giturlparse, 'parse', return_value=giturlparse.parse(url))
+    name = get_current_repo()
+    assert name == expected_name
+
+
+KEBAB_CASES = [('Scan File', 'scan-file'),
+               ('Scan File-', 'scan-file'),
+               ('Scan.File', 'scan-file'),
+               ('*scan,file', 'scan-file'),
+               ('Scan     File', 'scan-file'),
+               ('Scan - File', 'scan-file'),
+               ('Scan-File', 'scan-file'),
+               ('Scan- File', 'scan-file'),
+               ('Scan -File', 'scan-file')]
+
+
+@pytest.mark.parametrize('input_str, output_str', KEBAB_CASES)
+def test_to_kebab_case(input_str, output_str):
+    assert to_kebab_case(input_str) == output_str
+
+
+YML_DATA_CASES = [(get_yaml(VALID_INTEGRATION_TEST_PATH), FileType.INTEGRATION,
+                   [{'id': 'PagerDutyGetAllSchedules'}, {'id': 'PagerDutyGetUsersOnCall'},
+                    {'id': 'PagerDutyGetUsersOnCallNow'}, {'id': 'PagerDutyIncidents'}, {'id': 'PagerDutySubmitEvent'},
+                    {'id': 'PagerDutyGetContactMethods'}, {'id': 'PagerDutyGetUsersNotification'}], []),
+                  (get_yaml(VALID_SCRIPT_PATH), FileType.SCRIPT, [{'id': 'send-notification'}], ['TestCreateDuplicates']),
+                  (get_yaml(TEST_PLAYBOOK), FileType.TEST_PLAYBOOK, [{'id': 'gmail-search', 'source': 'Gmail'}],
+                   ['ReadFile', 'Get Original Email - Gmail']),
+                  (get_yaml(VALID_PLAYBOOK_ID_PATH), FileType.PLAYBOOK, [{'id': 'setIncident', 'source': 'Builtin'},
+                                                                         {'id': 'closeInvestigation',
+                                                                          'source': 'Builtin'},
+                                                                         {'id': 'setIncident', 'source': 'Builtin'}],
+                   ['Account Enrichment - Generic', 'EmailAskUser', 'ADGetUser', 'IP Enrichment - Generic',
+                    'IP Enrichment - Generic', 'AssignAnalystToIncident', 'access_investigation_-_generic']),
+                  (get_yaml(VALID_INTEGRATION_TEST_PATH), FileType.INTEGRATION,
+                   [{'id': 'PagerDutyGetAllSchedules'}, {'id': 'PagerDutyGetUsersOnCall'},
+                    {'id': 'PagerDutyGetUsersOnCallNow'},
+                    {'id': 'PagerDutyIncidents'}, {'id': 'PagerDutySubmitEvent'}, {'id': 'PagerDutyGetContactMethods'},
+                    {'id': 'PagerDutyGetUsersNotification'}], []),
+                  (get_yaml(DUMMY_SCRIPT_PATH), FileType.SCRIPT,  # Empty case
+                   [], ['DummyScriptUnified'])]
+
+
+@pytest.mark.parametrize('data, file_type, expected_commands, expected_scripts', YML_DATA_CASES)
+def test_get_scripts_and_commands_from_yml_data(data, file_type, expected_commands, expected_scripts):
+    commands, scripts = get_scripts_and_commands_from_yml_data(data=data, file_type=file_type)
+    assert commands == expected_commands
+    assert scripts == expected_scripts

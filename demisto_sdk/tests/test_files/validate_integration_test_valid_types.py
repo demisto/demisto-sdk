@@ -182,7 +182,7 @@ INDICATOR_FIELD = {
     "systemAssociatedTypes": None,
     "associatedToAll": False,
     "unmapped": False,
-    "unsearchable": False,
+    "unsearchable": True,
     "caseInsensitive": True,
     "columns": None,
     "defaultRows": None,
@@ -542,7 +542,7 @@ INCIDENT_FIELD = {
     "threshold": 72,
     "type": "shortText",
     "unmapped": False,
-    "unsearchable": False,
+    "unsearchable": True,
     "useAsKpi": False,
     "validationRegex": "",
     "version": -1,
@@ -575,10 +575,11 @@ GENERIC_FIELD = {
     "threshold": 72,
     "type": "shortText",
     "unmapped": False,
-    "unsearchable": False,
+    "unsearchable": True,
     "useAsKpi": False,
     "version": -1,
-    "fromVersion": "6.5.0"
+    "fromVersion": "6.5.0",
+    "openEnded": False
 }
 
 GENERIC_TYPE = {

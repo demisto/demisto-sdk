@@ -30,7 +30,7 @@ def test_generate_outputs_json_to_outputs_flow(mocker, args, excpected_stdout):
 
 
 @pytest.mark.parametrize('args, excpected_stdout', [
-    ('', 'To use the generate_integration_context version'),
+    ('-e', 'requires an argument'),
     (['-e', '<example>'], 'command please include an `input` argument'),
     (['-e', '<example>', '-i', '123'], 'Input file 123 was not found'),
 ])

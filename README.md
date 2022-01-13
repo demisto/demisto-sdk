@@ -17,7 +17,7 @@ The library uses python 3.7+.
 1. **Demisto server demisto-sdk integration** - In order that demisto-sdk and Cortex XSOAR (Demisto) server communicate, perfrom the following steps:
 
    1. Get an API key for Demisto-server - `Settings` -> `Integrations` -> `API keys` -> `Get your Key` (copy it, you will be to copy it once)
-   1. Add the following parameters to your environment (can be done globally in `~/.zshrc` or `~/.bashrc` files):
+   1. Add the following parameters to your environment. You can also use a [.env file](https://pypi.org/project/python-dotenv/), the demisto-sdk will automatically load that file.:
 
       ```bash
       export DEMISTO_BASE_URL=<http or https>://<demisto-server url or ip>:<port>
@@ -75,7 +75,7 @@ Supported commands:
 1. [Download](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/download/README.md)
 1. [Generate-docs](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/generate_docs/README.md)
 1. [Generate-test-playbook](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/generate_test_playbook/README.md)
-1. [Json-to-outputs](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/json_to_outputs/README.md)
+1. [Generate-outputs](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/generate_outputs/README.md)
 1. [Update-release-notes](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/update_release_notes/README.md)
 1. [Zip-packs](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/zip_packs/README.md)
 1. [openapi-codegen](https://xsoar.pan.dev/docs/integrations/openapi-codegen)

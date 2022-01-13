@@ -7,7 +7,8 @@ from typing import Optional
 import yaml
 
 from demisto_sdk.commands.common.constants import (
-    ENTITY_NAME_SEPARATORS, EXCLUDED_DISPLAY_NAME_WORDS, FEATURE_BRANCHES,
+    DEFAULT_CONTENT_ITEM_FROM_VERSION, ENTITY_NAME_SEPARATORS,
+    EXCLUDED_DISPLAY_NAME_WORDS, FEATURE_BRANCHES,
     GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION, OLDEST_SUPPORTED_VERSION)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
@@ -25,8 +26,8 @@ class ContentEntityValidator(BaseValidator):
     CONF_PATH = "./Tests/conf.json"
 
     def __init__(self, structure_validator, ignored_errors=None, print_as_warnings=False, skip_docker_check=False,
-                 suppress_print=False, json_file_path=None):
-        # type: (StructureValidator, dict, bool, bool, bool, Optional[str]) -> None
+                 suppress_print=False, json_file_path=None, oldest_supported_version=None):
+        # type: (StructureValidator, dict, bool, bool, bool, Optional[str], Optional[str]) -> None
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          suppress_print=suppress_print, json_file_path=json_file_path)
         self.structure_validator = structure_validator
@@ -37,6 +38,7 @@ class ContentEntityValidator(BaseValidator):
         self.skip_docker_check = skip_docker_check
         self.prev_ver = structure_validator.prev_ver
         self.branch_name = structure_validator.branch_name
+        self.oldest_supported_version = oldest_supported_version or OLDEST_SUPPORTED_VERSION
 
     def is_valid_file(self, validate_rn=True):
         tests = [
@@ -239,20 +241,19 @@ class ContentEntityValidator(BaseValidator):
         if not self.should_run_fromversion_validation():
             return True
 
-        if self.file_path.endswith('json'):
-            if LooseVersion(self.current_file.get('fromVersion', '0.0.0')) < LooseVersion(OLDEST_SUPPORTED_VERSION):
-                error_message, error_code = Errors.no_minimal_fromversion_in_file('fromVersion',
-                                                                                  OLDEST_SUPPORTED_VERSION)
-                if self.handle_error(error_message, error_code, file_path=self.file_path,
-                                     suggested_fix=Errors.suggest_fix(self.file_path)):
-                    return False
+        if self.file_path.endswith('.json'):
+            from_version_field = 'fromVersion'
         elif self.file_path.endswith('.yml'):
-            if LooseVersion(self.current_file.get('fromversion', '0.0.0')) < LooseVersion(OLDEST_SUPPORTED_VERSION):
-                error_message, error_code = Errors.no_minimal_fromversion_in_file('fromversion',
-                                                                                  OLDEST_SUPPORTED_VERSION)
-                if self.handle_error(error_message, error_code, file_path=self.file_path,
-                                     suggested_fix=Errors.suggest_fix(self.file_path)):
-                    return False
+            from_version_field = 'fromversion'
+        else:
+            return True
+
+        if LooseVersion(self.current_file.get(from_version_field, DEFAULT_CONTENT_ITEM_FROM_VERSION)) < LooseVersion(self.oldest_supported_version):
+            error_message, error_code = Errors.no_minimal_fromversion_in_file(from_version_field,
+                                                                              self.oldest_supported_version)
+            if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                 suggested_fix=Errors.suggest_fix(self.file_path)):
+                return False
 
         return True
 
@@ -264,7 +265,7 @@ class ContentEntityValidator(BaseValidator):
         if not self.should_run_fromversion_validation():
             return True
 
-        if LooseVersion(self.current_file.get('fromVersion', '0.0.0')) < \
+        if LooseVersion(self.current_file.get('fromVersion', DEFAULT_CONTENT_ITEM_FROM_VERSION)) < \
                 LooseVersion(GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION):
             error_message, error_code = Errors.no_minimal_fromversion_in_file('fromVersion',
                                                                               GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION)

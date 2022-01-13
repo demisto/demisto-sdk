@@ -53,6 +53,9 @@ If there are files that exist both in the output directory and are specified in 
 
     Verbose output.
 
+* **-r, --regex**
+
+    Regex Pattern. When specified, download all the custom content files with a name that matches this regex pattern.
 
 ### Asumptions
 For consistency, we assume that for each integration or script the folder containing it will have the same name as the integration/script name with no separators. For example the integration `Test Integration_Full-Name`, will be under `~/.../Packs/TestPack/Integrations/TestIntegrationFullName/`.
@@ -105,4 +108,10 @@ demisto-sdk download -lf
 ```
 This will print the list of all custom content files available to be downloaded from Demisto instance.
 -i / --input & -o / --output should not be provided.
+<br/><br/>
+```
+demisto-sdk download -o Packs/Phishing -r *Pishing*
+```
+Regex Pattern. When specified, download all the custom content files with a name that matches this regex pattern.
+-o / --output should not be provided.
 <br/><br/>

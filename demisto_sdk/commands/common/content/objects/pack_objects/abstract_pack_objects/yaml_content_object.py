@@ -4,6 +4,8 @@ from typing import List, Optional, Union
 from packaging.version import LegacyVersion, Version, parse
 from wcmatch.pathlib import EXTGLOB, Path
 
+from demisto_sdk.commands.common.constants import (
+    DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION)
 from demisto_sdk.commands.common.content.objects.abstract_objects import \
     YAMLObject
 from demisto_sdk.commands.common.content.objects.pack_objects.change_log.change_log import \
@@ -68,7 +70,7 @@ class YAMLContentObject(YAMLObject):
             1. Version object - https://github.com/pypa/packaging
             2. Attribute info - https://xsoar.pan.dev/docs/integrations/yaml-file#version-and-tests
         """
-        return parse(self.get('fromversion', '0.0.0'))
+        return parse(self.get('fromversion', DEFAULT_CONTENT_ITEM_FROM_VERSION))
 
     @property
     def to_version(self) -> Union[Version, LegacyVersion]:
@@ -81,7 +83,7 @@ class YAMLContentObject(YAMLObject):
             1. Version object - https://github.com/pypa/packaging
             2. Attribute info - https://xsoar.pan.dev/docs/integrations/yaml-file#version-and-tests
         """
-        return parse(self.get('toversion', '99.99.99'))
+        return parse(self.get('toversion', DEFAULT_CONTENT_ITEM_TO_VERSION))
 
     def dump(self, dest_dir: Optional[Union[str, Path]] = None, yaml: Optional[bool] = True,
              change_log: Optional[bool] = False, readme: Optional[bool] = False) -> List[Path]:

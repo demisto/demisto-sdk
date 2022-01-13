@@ -7,7 +7,8 @@ import pytest
 values = [[Path("file1.py")], [Path("file1.py"), Path("file2.py")]]
 
 
-@pytest.mark.parametrize(argnames="py_num , expected_exec", argvalues=[('3.7', 'python3'), ('2.7', 'python')])
+@pytest.mark.parametrize(argnames="py_num , expected_exec", argvalues=[('3.7', 'python3'), ('2.7', 'python'),
+                                                                       ('3.10', 'python3'), ('2.3.1', 'python')])
 def test_get_python_exec(py_num, expected_exec):
     """Get python exec"""
     from demisto_sdk.commands.lint.commands_builder import get_python_exec
@@ -125,6 +126,16 @@ def test_build_pylint_command_3_9_docker():
     NamedFile = namedtuple('File', 'name')
     files = [NamedFile('file1')]
     output = build_pylint_command(files, '3.9')
+    assert output.endswith(files[0].name)
+    assert 'disable=bad-option-value,unsubscriptable-object' in output
+
+
+def test_build_pylint_command_3_9_1_docker():
+    """Build Pylint command"""
+    from demisto_sdk.commands.lint.commands_builder import build_pylint_command
+    NamedFile = namedtuple('File', 'name')
+    files = [NamedFile('file1')]
+    output = build_pylint_command(files, '3.9.1')
     assert output.endswith(files[0].name)
     assert 'disable=bad-option-value,unsubscriptable-object' in output
 

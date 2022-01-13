@@ -2,6 +2,7 @@
 import os
 from pathlib import Path
 from typing import List, Optional
+from packaging.version import parse
 
 from demisto_sdk.commands.lint.resources.pylint_plugins.base_checker import \
     base_msg
@@ -30,7 +31,7 @@ def get_python_exec(py_num: str, is_py2: bool = False) -> str:
     Returns:
         str: python executable
     """
-    py_ver = float(py_num)
+    py_ver = parse(py_num).major
     if py_ver < 3:
         if is_py2:
             py_str = "2"
@@ -233,8 +234,13 @@ def build_pylint_command(files: List[Path], docker_version: Optional[str] = None
     disable = ['bad-option-value']
     # TODO: remove when pylint will update its version to support py3.9
 
-    if docker_version and float(docker_version) >= 3.9:
-        disable.append('unsubscriptable-object')
+    if docker_version:
+        py_ver = parse(docker_version)
+        major = py_ver.major
+        minor = py_ver.minor
+
+        if major == 3 and minor == 9:
+            disable.append('unsubscriptable-object')
     command += f" --disable={','.join(disable)}"
     # Disable specific errors
     command += " -d duplicate-string-formatting-argument"

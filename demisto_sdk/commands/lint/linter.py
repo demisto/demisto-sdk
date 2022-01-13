@@ -20,6 +20,7 @@ import urllib3.exceptions
 from jinja2 import Environment, FileSystemLoader, exceptions
 from ruamel.yaml import YAML
 from wcmatch.pathlib import NEGATE, Path
+from packaging.version import parse
 
 from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    PACKS_PACK_META_FILE_NAME,
@@ -420,7 +421,9 @@ class Linter:
                 myenv['PYTHONPATH'] = str(self._pack_abs_dir)
             if self._facts['is_long_running']:
                 myenv['LONGRUNNING'] = 'True'
-            if float(py_num) < 3:
+
+            py_ver = parse(py_num).major
+            if py_ver < 3:
                 myenv['PY2'] = 'True'
             myenv['is_script'] = str(self._facts['is_script'])
             # as Xsoar checker is a pylint plugin and runs as part of pylint code, we can not pass args to it.
@@ -664,10 +667,11 @@ class Linter:
         # Get requirements file for image
         requirements = []
 
-        py_num = float(docker_base_image[1])
-        if 2 < py_num < 3:
+        py_ver = parse(docker_base_image[1]).major
+
+        if py_ver == 2:
             requirements = self._req_2
-        elif py_num > 3:
+        elif py_ver == 3:
             requirements = self._req_3
         # Using DockerFile template
         file_loader = FileSystemLoader(Path(__file__).parent / 'templates')

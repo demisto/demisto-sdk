@@ -1,10 +1,12 @@
 # Changelog
 
-* Fix an issue when running **validate** or **format** in a gitlab repository but can’t determine the project id.
-* Added an enhancement to **split**, handling an empty `output` argument.
+# 1.5.7
+* Fixed an issue where reading remote yaml files failed.
+* Fixed an issue in **validate** failed with no error message for lists (when no fromVersion field was found).
+* Fixed an issue when running **validate** or **format** in a gitlab repository, and failing to determine its project id.
+* Added an enhancement to **split**, handling an empty output argument.
 * Added the ability to add classifiers and mappers to conf.json.
 * Added the Alias field to the incident field schema.
-* Fixed an issue in **validate** failed with no error message for lists (when no fromVersion field was found).
 
 # 1.5.6
 * Added 'deprecated' release notes template.

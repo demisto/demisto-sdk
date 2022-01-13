@@ -40,8 +40,8 @@
                 "--no-bandit",
                 "--no-xsoar-linter",
                 "--no-vulture",
-                "--no-mypy",
-                "--no-test"
+                "--no-mypy"
+                // "--no-pylint"
 
             ]
         },

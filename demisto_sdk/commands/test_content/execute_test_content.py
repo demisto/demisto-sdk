@@ -86,8 +86,11 @@ def execute_test_content(**kwargs):
             and not build_context.is_nightly:
         skipped_integrations = '\n- '.join(build_context.tests_data_keeper.playbook_skipped_integration)
         skipped_integrations_comment = f'{SKIPPED_CONTENT_COMMENT}:\n- {skipped_integrations}'
-        build_number = int(build_context.build_number) - 5
-        coverage_link = f'https://xsoar.docs.pan.run/-/content/-/jobs/{build_number}/artifacts/artifacts/coverage_report/html/index.html'
+        build_number = build_context.build_number
+        build_job = os.environ.get('UT_JOB_ID')
+        build_job1 = os.environ.get('UTT_JOB_ID')
+        coverage_link = f'https://xsoar.docs.pan.run/-/content/-/jobs/{build_number}-{build_job}-{build_job1}' \
+                        f'/artifacts/artifacts/coverage_report/html/index.html'
         coverage_report_comment = f'{COVERAGE_REPORT_COMMENT}:\n {coverage_link}'
         _add_pr_comment(skipped_integrations_comment, coverage_report_comment, logging_manager)
     build_context.tests_data_keeper.print_test_summary(build_context.isAMI, logging_manager)

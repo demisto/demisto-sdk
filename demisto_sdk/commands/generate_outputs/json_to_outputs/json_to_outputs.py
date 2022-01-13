@@ -206,7 +206,7 @@ def parse_json(data, command_name, prefix, verbose=False, interactive=False, des
     if return_object:
         return outputs
 
-    yaml_output = xsoar_yaml.dump(outputs)
+    yaml_output = xsoar_yaml.dump(outputs, sort_keys=True)
     return yaml_output
 
 

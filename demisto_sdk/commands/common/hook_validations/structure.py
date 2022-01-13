@@ -470,7 +470,7 @@ class StructureValidator(BaseValidator):
         curr = self.current_file
         key_list = []
         for single_path in error_path:
-            if type(curr) is list:
+            if isinstance(curr, list):
                 curr = curr[int(single_path)]
 
                 # if the error is from arguments of file

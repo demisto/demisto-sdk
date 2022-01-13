@@ -10,7 +10,9 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION, ENTITY_NAME_SEPARATORS,
     EXCLUDED_DISPLAY_NAME_WORDS, FEATURE_BRANCHES,
     GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION, OLDEST_SUPPORTED_VERSION)
+from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
@@ -101,7 +103,10 @@ class ContentEntityValidator(BaseValidator):
         Returns:
             (bool): is release branch
         """
-        diff_string_config_yml = run_command("git diff origin/master .circleci/config.yml")
+        git_util = GitUtil(repo=Content.git())
+        main_branch = git_util.handle_prev_ver()[1]
+
+        diff_string_config_yml = run_command(f"git diff {main_branch} .circleci/config.yml")
         if re.search(r'[+-][ ]+CONTENT_VERSION: ".*', diff_string_config_yml):
             return True
         return False

@@ -437,9 +437,9 @@ class GitUtil:
                 return ''
             for current_remote_ref in current_remote.refs:
                 current_remote_ref_str = str(current_remote_ref)
-                if 'origin/main' == current_remote_ref_str:
+                if current_remote_ref_str == 'origin/main':
                     return 'main'
-                elif 'origin/master' == current_remote_ref_str:
+                elif current_remote_ref_str == 'origin/master':
                     return 'master'
         return ''
 

@@ -24,6 +24,7 @@ import git
 import giturlparse
 import requests
 import urllib3
+import yaml
 from packaging.version import parse
 from pebble import ProcessFuture, ProcessPool
 
@@ -52,6 +53,7 @@ urllib3.disable_warnings()
 
 # inialize color palette
 colorama.init()
+
 
 
 class LOG_COLORS:
@@ -1625,7 +1627,7 @@ def get_content_file_type_dump(file_path: str) -> Callable[[str], str]:
     file_extension = os.path.splitext(file_path)[-1]
     curr_string_transformer: Union[partial[str], Type[str], Callable] = str
     if file_extension in ['.yml', '.yaml']:
-        curr_string_transformer = XSOAR_YAML.dump
+        curr_string_transformer = xsoar_yaml.dump
     elif file_extension == '.json':
         curr_string_transformer = partial(json.dumps, indent=4)
     return curr_string_transformer

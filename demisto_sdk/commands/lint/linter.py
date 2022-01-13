@@ -565,7 +565,7 @@ class Linter:
         for image in self._facts["images"]:
             # Docker image status - visualize
             status = {
-                "image": float(image[0]),
+                "image": image[0],
                 "image_errors": "",
                 "pylint_errors": "",
                 "pytest_errors": "",
@@ -663,9 +663,11 @@ class Linter:
         test_image_id = ""
         # Get requirements file for image
         requirements = []
-        if 2 < docker_base_image[1] < 3:
+
+        py_num = float(docker_base_image[1])
+        if 2 < py_num < 3:
             requirements = self._req_2
-        elif docker_base_image[1] > 3:
+        elif py_num > 3:
             requirements = self._req_3
         # Using DockerFile template
         file_loader = FileSystemLoader(Path(__file__).parent / 'templates')

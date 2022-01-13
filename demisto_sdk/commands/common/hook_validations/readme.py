@@ -291,11 +291,6 @@ class ReadMeValidator(BaseValidator):
             list: List of the errors found
         """
         error_list = []
-        working_branch_name: str = ''
-        try:
-            working_branch_name = GitUtil().get_current_git_branch_or_hash()
-        except InvalidGitRepositoryError:
-            pass
         should_print_error = not is_pack_readme  # pack readme errors are handled and printed during the pack unique
         # files validation.
         absolute_links = re.findall(
@@ -311,16 +306,23 @@ class ReadMeValidator(BaseValidator):
                 # a link that contains a branch name (other than master) is invalid since the branch will be deleted
                 # after merge to master. in the url path (after '.com'), the third element should be the branch name.
                 # example 'https://raw.githubusercontent.com/demisto/content/<branch-name>/Packs/.../image.png'
+                # we allow third element to be a commit hash (no matter what is the repo).
+                # we allow third element to be master or main(new source code repositories created on GitHub will
+                # be named "main" instead of "master") if the repo is the internal demisto repo.
                 url_path_elem_list = urlparse(img_url).path.split('/')[1:]
-                if len(url_path_elem_list) >= 3 and \
-                        (url_path_elem_list[2] == working_branch_name and working_branch_name != 'master'):
-                    error_message, error_code = Errors.invalid_readme_image_error(prefix + f'({img_url})',
-                                                                                  error_type='branch_name_readme_absolute_error')
-                else:
-                    response = requests.get(img_url, verify=False, timeout=10)
-                    if response.status_code != 200:
-                        error_message, error_code = Errors.invalid_readme_image_error(prefix + f'({img_url})',
-                                                                                      error_type='general_readme_absolute_error')
+                sha_pattern = re.compile(r'\b[0-9a-f]{40}\b')
+                if len(url_path_elem_list) >= 4:
+                    third_elem = url_path_elem_list[2]
+                    branch_or_hash = third_elem if third_elem not in ['raw', 'blob'] else url_path_elem_list[3]
+                    if not re.match(sha_pattern, branch_or_hash):  # the url does not contain the commit hash
+                        if url_path_elem_list[0] != 'demisto' or branch_or_hash not in ['master', 'main']:
+                            error_message, error_code = Errors.invalid_readme_image_error(prefix + f'({img_url})',
+                                                                                          error_type='branch_name_readme_absolute_error')
+                    else:
+                        response = requests.get(img_url, verify=False, timeout=10)
+                        if response.status_code != 200:
+                            error_message, error_code = Errors.invalid_readme_image_error(prefix + f'({img_url})',
+                                                                                          error_type='general_readme_absolute_error')
             except Exception as ex:
                 click.secho(f"Could not validate the image link: {img_url}\n {ex}", fg='yellow')
                 continue

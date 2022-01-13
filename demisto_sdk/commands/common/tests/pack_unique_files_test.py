@@ -585,19 +585,19 @@ class TestPackUniqueFilesValidator:
 
         with requests_mock.Mocker() as m:
             # Mock get requests
-            m.get('https://github.com/demisto/content/raw/test1.png',
+            m.get('https://github.com/demisto/content/raw/423313b69b375288d3ee2183bfb55d2ee6fe018c/test1.png',
                   status_code=200, text="Test1")
-            m.get('https://raw.githubusercontent.com/demisto/content/raw/test1.png',
+            m.get('https://raw.githubusercontent.com/demisto/content/raw/423313b69b375288d3ee2183bfb55d2ee6fe018c/test1.png',
                   status_code=200, text="Test1")
-            m.get('https://raw.githubusercontent.com/demisto/content/raw/test1.jpg',
+            m.get('https://raw.githubusercontent.com/demisto/content/raw/423313b69b375288d3ee2183bfb55d2ee6fe018c/test1.jpg',
                   status_code=200, text="Test1")
 
             result = self.validator.validate_pack_readme_images()
             errors = self.validator.get_errors()
         assert result
-        assert 'please repair it:\n![Identity with High Risk Score](https://github.com/demisto/content/raw/test1.png)' not in errors
-        assert 'please repair it:\n![Identity with High Risk Score](https://raw.githubusercontent.com/demisto/content/raw/test1.png)' not in errors
-        assert 'please repair it:\n(https://raw.githubusercontent.com/demisto/content/raw/test1.jpg)' not in errors
+        assert 'please repair it:\n![Identity with High Risk Score](https://github.com/demisto/content/raw/423313b69b375288d3ee2183bfb55d2ee6fe018c/test1.png)' not in errors
+        assert 'please repair it:\n![Identity with High Risk Score](https://raw.githubusercontent.com/demisto/content/raw/423313b69b375288d3ee2183bfb55d2ee6fe018c/test1.png)' not in errors
+        assert 'please repair it:\n(https://raw.githubusercontent.com/demisto/content/raw/423313b69b375288d3ee2183bfb55d2ee6fe018c/test1.jpg)' not in errors
 
     def test_validate_pack_readme_invalid_images(self):
         """
@@ -615,11 +615,11 @@ class TestPackUniqueFilesValidator:
 
         with requests_mock.Mocker() as m:
             # Mock get requests
-            m.get('https://github.com/demisto/content/raw/test1.png',
+            m.get('https://github.com/demisto/content/raw/423313b69b375288d3ee2183bfb55d2ee6fe018c/test1.png',
                   status_code=404, text="Test1")
-            m.get('https://raw.githubusercontent.com/demisto/content/raw/test1.png',
+            m.get('https://raw.githubusercontent.com/demisto/content/raw/423313b69b375288d3ee2183bfb55d2ee6fe018c/test1.png',
                   status_code=404, text="Test1")
-            m.get('https://raw.githubusercontent.com/demisto/content/raw/test1.jpg',
+            m.get('https://raw.githubusercontent.com/demisto/content/raw/423313b69b375288d3ee2183bfb55d2ee6fe018c/test1.jpg',
                   status_code=404, text="Test1")
 
             result = self.validator.validate_pack_readme_images()
@@ -630,11 +630,53 @@ class TestPackUniqueFilesValidator:
         assert 'Detected the following image relative path: (../../doc_files/Access_investigation_-_Generic_4_5.png)' in errors
         assert 'Image link was not found, either insert it or remove it:\n![Account Enrichment](Insert the link to your image here)' in errors
 
-        assert 'please repair it:\n![Identity with High Risk Score](https://github.com/demisto/content/raw/test1.png)' in errors
-        assert 'please repair it:\n![Identity with High Risk Score](https://raw.githubusercontent.com/demisto/content/raw/test1.png)' in errors
-        assert 'please repair it:\n(https://raw.githubusercontent.com/demisto/content/raw/test1.jpg)' in errors
+        assert 'please repair it:\n![Identity with High Risk Score](https://github.com/demisto/content/raw/423313b69b375288d3ee2183bfb55d2ee6fe018c/test1.png)' in errors
+        assert 'please repair it:\n![Identity with High Risk Score](https://raw.githubusercontent.com/demisto/content/raw/423313b69b375288d3ee2183bfb55d2ee6fe018c/test1.png)' in errors
+        assert 'please repair it:\n(https://raw.githubusercontent.com/demisto/content/raw/423313b69b375288d3ee2183bfb55d2ee6fe018c/test1.jpg)' in errors
         # this path is not an image path and should not be shown.
-        assert 'https://github.com/demisto/content/raw/test3.png' not in errors
+        assert 'https://github.com/demisto/content/raw/423313b69b375288d3ee2183bfb55d2ee6fe018c/test3.png' not in errors
+
+    def test_validate_pack_readme_contributions_external_invalid_images(self, mocker):
+        """
+            Given
+                - A pack README file with invalid absolute paths in it (external repo):
+            When
+                - Run validate on pack README file
+            Then
+                - Ensure:
+                    - Validation fails
+                    - Invalid absolute image paths were caught correctly
+        """
+        self.validator = PackUniqueFilesValidator(os.path.join(self.FILES_PATH, 'ContributionExternal'))
+        result = self.validator.validate_pack_readme_images()
+        errors = self.validator.get_errors()
+        assert not result
+        assert 'please change it to the commit hash:\n![](https://raw.githubusercontent.com' in errors
+        assert 'please change it to the commit hash:\n![](https://github.com/my-repo' in errors
+
+    def test_validate_pack_readme_contributions_internal_invalid_images(self, mocker):
+        """
+            Given
+                - A pack README file with invalid absolute paths in it (external repo):
+            When
+                - Run validate on pack README file
+            Then
+                - Ensure:
+                    - Validation fails
+                    - Invalid absolute image paths were caught correctly
+        """
+
+        self.validator = PackUniqueFilesValidator(os.path.join(self.FILES_PATH, 'ContributionInternal'))
+        with requests_mock.Mocker() as m:
+            # Mock get requests
+            m.get('https://github.com/demisto/content/raw/0bc8b78953fc735f29224735f9a6bf8a804c5539/Packs/test1.png',
+                  status_code=200, text="Test1")
+
+            result = self.validator.validate_pack_readme_images()
+            errors = self.validator.get_errors()
+        assert not result
+        assert 'branch name was found in the URL, please change it to the commit hash:' not in errors
+        assert 'https://github.com/demisto/content/raw/0bc8b78953fc735f29224735f9a6bf8a804c5539' not in errors
 
     @pytest.mark.parametrize('readme_content, is_valid', [
         ('Hey there, just testing', True),

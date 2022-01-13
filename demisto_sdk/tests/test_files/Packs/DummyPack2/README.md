@@ -9,9 +9,9 @@ This integration was integrated and tested with version 1.0.1 of PhishTank.
 ![Account Enrichment](Insert the link to your image here)
 
 ##### images absolute paths
-![Identity with High Risk Score](https://github.com/demisto/content/raw/test1.png)
-![Identity with High Risk Score](https://raw.githubusercontent.com/demisto/content/raw/test1.png)
-<img src="https://raw.githubusercontent.com/demisto/content/raw/test1.jpg" width="757" height="54">
+![Identity with High Risk Score](https://github.com/demisto/content/raw/423313b69b375288d3ee2183bfb55d2ee6fe018c/test1.png)
+![Identity with High Risk Score](https://raw.githubusercontent.com/demisto/content/raw/423313b69b375288d3ee2183bfb55d2ee6fe018c/test1.png)
+<img src="https://raw.githubusercontent.com/demisto/content/raw/423313b69b375288d3ee2183bfb55d2ee6fe018c/test1.jpg" width="757" height="54">
 
 #### paths that should not be caught
 !command host="ip" action="test" src="https://github.com/demisto/content/raw/test3.png" state="present"

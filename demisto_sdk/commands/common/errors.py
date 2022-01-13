@@ -1638,7 +1638,8 @@ class Errors:
 
     @staticmethod
     def branch_name_in_readme_image_absolute_path_error(path):
-        return f'Branch name was found in the URL, please change it to the commit hash:\n{path}'
+        return f'Branch name was found in the URL, please change it to the commit hash' \
+               f' (https://xsoar.pan.dev/docs/documentation/readme_file#absolute-image-urls):\n{path}'
 
     @staticmethod
     def invalid_readme_insert_image_link_error(path):

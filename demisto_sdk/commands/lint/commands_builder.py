@@ -151,7 +151,7 @@ def build_xsoar_linter_command(files: List[Path], py_num: float, support_level: 
     return command
 
 
-def build_mypy_command(files: List[Path], version: float) -> str:
+def build_mypy_command(files: List[Path], version: float, content_repo: Path = None) -> str:
     """ Build command to execute with mypy module
         https://mypy.readthedocs.io/en/stable/command_line.html
     Args:
@@ -181,7 +181,8 @@ def build_mypy_command(files: List[Path], version: float) -> str:
     # Get the full path to the file.
     command += " --show-absolute-path"
     # Disable cache creation
-    command += " --cache-dir=/dev/null"
+    # command += " --cache-dir=/dev/null"
+    command += f" --cache-dir={str(content_repo/'.mypy_cache') if content_repo else '/dev/null'}"
     # Generating path patterns - file1 file2 file3,..
     files_list = [str(item) for item in files]
     command += " " + " ".join(files_list)

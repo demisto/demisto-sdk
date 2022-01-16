@@ -356,6 +356,8 @@ class LintManager:
                                                no_pylint=no_pylint, no_test=no_test, no_pwsh_analyze=no_pwsh_analyze,
                                                no_pwsh_test=no_pwsh_test, docker_engine=self._facts["docker_engine"])
 
+        parallel = os.cpu_count() - 1
+        logger.info(f'Run linters in parallel on {parallel} workers')
         with concurrent.futures.ThreadPoolExecutor(max_workers=parallel) as executor:
             return_exit_code: int = 0
             return_warning_code: int = 0

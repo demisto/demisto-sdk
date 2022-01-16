@@ -121,11 +121,11 @@ class ArtifactsManager:
             futures.extend(dump_packs(self, pool))
             # content/TestPlaybooks
             if not self.remove_test_playbooks:
-                futures.append(pool.schedule(dump_tests_conditionally, args=(self,), timeout=10000))
+                futures.append(pool.schedule(dump_tests_conditionally, args=(self,)))
             # content/content-descriptor.json
-            futures.append(pool.schedule(dump_content_descriptor, args=(self,), timeout=10000))
+            futures.append(pool.schedule(dump_content_descriptor, args=(self,)))
             # content/Documentation/doc-*.json
-            futures.append(pool.schedule(dump_content_documentations, args=(self,), timeout=10000))
+            futures.append(pool.schedule(dump_content_documentations, args=(self,)))
             # Wait for all futures to be finished
             wait_futures_complete(futures, self)
             # Add suffix
@@ -621,7 +621,7 @@ def dump_packs(artifact_manager: ArtifactsManager, pool: ProcessPool) -> List[Pr
         for pack_name in artifact_manager.pack_names:
             if pack_name not in IGNORED_PACKS and pack_name in artifact_manager.packs:
                 futures.append(pool.schedule(dump_pack,
-                                             args=(artifact_manager, artifact_manager.packs[pack_name]), timeout=10000,
+                                             args=(artifact_manager, artifact_manager.packs[pack_name]),
                                              ))
 
     return futures

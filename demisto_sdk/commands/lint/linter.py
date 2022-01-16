@@ -18,9 +18,9 @@ import git
 import requests.exceptions
 import urllib3.exceptions
 from jinja2 import Environment, FileSystemLoader, exceptions
+from packaging.version import parse
 from ruamel.yaml import YAML
 from wcmatch.pathlib import NEGATE, Path
-from packaging.version import parse
 
 from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    PACKS_PACK_META_FILE_NAME,

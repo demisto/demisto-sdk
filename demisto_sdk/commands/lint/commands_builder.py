@@ -2,6 +2,7 @@
 import os
 from pathlib import Path
 from typing import List, Optional
+
 from packaging.version import parse
 
 from demisto_sdk.commands.lint.resources.pylint_plugins.base_checker import \

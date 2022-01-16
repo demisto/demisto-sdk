@@ -682,11 +682,15 @@ class Linter:
                         try:
                             copy_dir_to_container(container, self._pack_abs_dir, Path('./devwork'))
                         except Exception:
-                            logger.info(f'{container_name} - Fail to copy the pack dir to the container, will try additional time')
-                            if trial == 1:
+                            if trial == 0:
+                                logger.info(f'{container_name} - Fail to copy the pack dir to the container, will try additional time')
+                                continue
+                            else:
+                                exit_code = FAIL
                                 errors = f'{container_name} - Fail 2 times to copy the pack dir to the container - exit'
-                        if not errors:
-                            break
+                                logger.info(errors)
+                        
+                        break
                 
                     logger.info(f'create docker container take: {time.time() - create_container_start}s')
                 

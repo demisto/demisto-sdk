@@ -684,6 +684,7 @@ class Linter:
         errors = ""
         test_image_name = f'devtest{docker_base_image[0]}-{hashlib.md5(dockerfile.encode("utf-8")).hexdigest()}'
         test_image = None
+        pull_image_start_time = time.time()
         try:
             logger.info(f"{log_prompt} - Trying to pull existing image {test_image_name}")
             test_image = self._docker_client.images.pull(test_image_name)
@@ -717,6 +718,7 @@ class Linter:
                 errors = str(e)
         else:
             logger.info(f"{log_prompt} - Found existing image {test_image_name}")
+            logger.info(f"{log_prompt} - Time to pull the image take: {time.time() - pull_image_start_time}s")
         dockerfile_path = Path(self._pack_abs_dir / ".Dockerfile")
         dockerfile = template.render(image=test_image_name,
                                      copy_pack=True)

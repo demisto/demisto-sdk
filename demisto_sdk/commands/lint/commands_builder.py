@@ -238,14 +238,15 @@ def build_pylint_command(files: List[Path], docker_version: Optional[float] = No
     # Disable specific errors
     command += " -d duplicate-string-formatting-argument"
     # Message format
-    command += " --msg-template='{abspath}:{line}:{column}: {msg_id} {obj}: {msg}'"
+    # command += " --msg-template='{abspath}:{line}:{column}: {msg_id} {obj}: {msg}'"
     # List of members which are set dynamically and missed by pylint inference system, and so shouldn't trigger
     # E1101 when accessed.
     command += " --generated-members=requests.packages.urllib3,requests.codes.ok"
+
+    command = command.split(' ') + ["--msg-template='{abspath}:{line}:{column}: {msg_id} {obj}: {msg}'"]
     # Generating path patterns - file1 file2 file3,..
     files_list = [file.name for file in files]
-    command += " " + " ".join(files_list)
-    return command
+    return command + files_list
 
 
 def build_pytest_command(test_xml: str = "", json: bool = False, cov: str = "") -> str:

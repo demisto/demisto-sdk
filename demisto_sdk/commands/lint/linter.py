@@ -36,7 +36,7 @@ from demisto_sdk.commands.lint.commands_builder import (
 from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, RERUN, RL,
                                                SUCCESS, WARNING,
                                                add_tmp_lint_files,
-                                               add_typing_module,
+                                               add_typing_module, copy_dir_to_container,
                                                coverage_report_editor,
                                                get_file_from_container,
                                                get_python_version_from_image,
@@ -551,7 +551,7 @@ class Linter:
 
         return SUCCESS, ""
 
-    def _run_lint_on_docker_image(self, no_pylint: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
+    def _run_lint_on_docker_image_orig(self, no_pylint: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
                                   keep_container: bool, test_xml: str, no_coverage: bool):
         """ Run lint check on docker image
 
@@ -628,6 +628,122 @@ class Linter:
                 self._docker_client.images.remove(image_id)
             except (docker.errors.ImageNotFound, docker.errors.APIError):
                 pass
+
+    def _run_lint_on_docker_image(self, no_pylint: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
+                                  keep_container: bool, test_xml: str, no_coverage: bool):
+        """ Run lint check on docker image
+
+        Args:
+            no_pylint(bool): Whether to skip pylint
+            no_test(bool): Whether to skip pytest
+            no_pwsh_analyze(bool): Whether to skip powershell code analyzing
+            no_pwsh_test(bool): whether to skip powershell tests
+            keep_container(bool): Whether to keep the test container
+            test_xml(str): Path for saving pytest xml results
+            no_coverage(bool): Run pytest without coverage report
+
+        """
+        start_total_time = time.time()
+        container_name = f"{self._pack_name}-docker-container"
+        self._docker_remove_container(container_name)
+
+        try:
+            
+            for image in self._facts["images"]:
+                # Docker image status - visualize
+                status = {
+                    "image": image[0],
+                    "image_errors": "",
+                    "pylint_errors": "",
+                    "pytest_errors": "",
+                    "pytest_json": {},
+                    "pwsh_analyze_errors": "",
+                    "pwsh_test_errors": ""
+                }
+                # Creating image if pylint specified or found tests and tests specified
+                image_id = ""
+                errors = ""
+                container = None
+                if self._pkg_lint_status["pack_type"] == TYPE_PYTHON:
+                    create_container_start = time.time()
+                    for trial in range(2):
+                        test_image, errors = self._docker_image_create(docker_base_image=image)
+                        if not errors:
+                            break
+                    container: docker.models.containers.Container= self._docker_client.containers.run(
+                        test_image,
+                        command=["sleep 100000"],
+                        name=container_name,
+                        user=f"{os.getuid()}:4000",
+                        detach=True,
+                        environment=self._facts["env_vars"]
+                    )
+                    for trial in range(2):
+                        try:
+                            copy_dir_to_container(container, self._pack_abs_dir, Path('./devwork'))
+                        except Exception:
+                            logger.info(f'{container_name} - Fail to copy the pack dir to the container, will try additional time')
+                            if trial == 1:
+                                errors = f'{container_name} - Fail 2 times to copy the pack dir to the container - exit'
+                        if not errors:
+                            break
+                
+                    logger.info(f'create docker container take: {time.time() - create_container_start}s')
+                
+
+                if not errors:
+                    # Set image creation status
+                    for check in ["pylint", "pytest", "pwsh_analyze", "pwsh_test"]:
+                        exit_code = SUCCESS
+                        output = ""
+                        for trial in range(2):
+                            start_time = time.time()
+                            if self._pkg_lint_status["pack_type"] == TYPE_PYTHON:
+                                # Perform pylint
+                                if not no_pylint and check == "pylint" and self._facts["lint_files"]:
+                                    exit_code, output = self._docker_run_pylint(container, test_image=image_id,
+                                                                                keep_container=keep_container)
+                                # Perform pytest
+                                elif not no_test and self._facts["test"] and check == "pytest":
+                                    exit_code, output, test_json = self._docker_run_pytest(container, test_image=image_id,
+                                                                                        keep_container=keep_container,
+                                                                                        test_xml=test_xml,
+                                                                                        no_coverage=no_coverage)
+                                    status["pytest_json"] = test_json
+                            elif self._pkg_lint_status["pack_type"] == TYPE_PWSH:
+                                # Perform powershell analyze
+                                if not no_pwsh_analyze and check == "pwsh_analyze" and self._facts["lint_files"]:
+                                    exit_code, output = self._docker_run_pwsh_analyze(test_image=image_id,
+                                                                                    keep_container=keep_container)
+                                # Perform powershell test
+                                elif not no_pwsh_test and check == "pwsh_test":
+                                    exit_code, output = self._docker_run_pwsh_test(test_image=image_id,
+                                                                                keep_container=keep_container)
+                            logger.info(f'{check} on the pack {self._pack_name} take: {time.time() - start_time}')
+                            # If lint check perfrom and failed on reason related to enviorment will run twice,
+                            # But it failing in second time it will count as test failure.
+                            if (exit_code == RERUN and trial == 1) or exit_code == FAIL or exit_code == SUCCESS:
+                                if exit_code in [RERUN, FAIL]:
+                                    self._pkg_lint_status["exit_code"] |= EXIT_CODES[check]
+                                    status[f"{check}_errors"] = output
+                                break
+                else:
+                    status["image_errors"] = str(errors)
+                    self._pkg_lint_status["exit_code"] += EXIT_CODES["image"]
+
+                # Add image status to images
+                self._pkg_lint_status["images"].append(status)
+                
+        finally:
+            try:
+                if container:
+                    container.remove(force=True)
+                # self._docker_client.images.remove(image_id)
+            except (docker.errors.ImageNotFound, docker.errors.APIError):
+                pass
+
+            
+        logger.info(f'{self._pack_name} - run_lint_on_docker_image take: {time.time() - start_total_time }s')
 
     def _docker_login(self) -> bool:
         """ Login to docker-hub using environment variables:
@@ -747,6 +863,9 @@ class Linter:
         logger.info(f'{log_prompt} - Time to get base test image take: {time.time() - get_base_test_iamge_start_time}s')
         logger.info(f'{log_prompt} - Get base test iamge cache info: {docker_get_base_test_iamge.cache_info()}')
 
+        if self._pkg_lint_status["pack_type"] == TYPE_PYTHON:
+            return test_image_name, errors
+
         if not errors:
             file_loader = FileSystemLoader(Path(__file__).parent / 'templates')
             env = Environment(loader=file_loader, lstrip_blocks=True, trim_blocks=True, autoescape=True)
@@ -794,7 +913,7 @@ class Linter:
             if platform.system() != 'Darwin' or 'Connection broken' not in str(err):
                 raise
 
-    def _docker_run_pylint(self, test_image: str, keep_container: bool) -> Tuple[int, str]:
+    def _docker_run_pylint_orig(self, test_image: str, keep_container: bool) -> Tuple[int, str]:
         """ Run Pylint in created test image
 
         Args:
@@ -867,7 +986,137 @@ class Linter:
             output = str(e)
         return exit_code, output
 
-    def _docker_run_pytest(self, test_image: str, keep_container: bool, test_xml: str, no_coverage: bool = False) -> Tuple[int, str, dict]:
+    def _docker_run_pylint(self, container_obj: docker.models.containers.Container, test_image: str, keep_container: bool) -> Tuple[int, str]:
+        """ Run Pylint in created test image
+
+        Args:
+            test_image(str): test image id/name
+            keep_container(bool): True if to keep container after execution finished
+
+        Returns:
+            int: 0 on successful, errors 1, need to retry 2
+            str: Container log
+        """
+        log_prompt = f'{self._pack_name} - Pylint - Image {test_image}'
+        logger.info(f"{log_prompt} - Start")
+
+        # Run container
+        exit_code = SUCCESS
+        output = ""
+        try:
+            command = build_pylint_command(self._facts["lint_files"], docker_version=self._facts.get('python_version'))
+            container_exit_code, outputs = container_obj.exec_run(command)
+
+            # stream_docker_container_output(container_obj.logs(stream=True))
+            # # wait for container to finish
+            # container_status = container_obj.wait(condition="exited")
+            # # Get container exit code
+            # container_exit_code = container_status.get("StatusCode")
+            # Getting container logs
+            container_log = container_obj.logs().decode("utf-8")
+            logger.info(f"{log_prompt} - exit-code: {container_exit_code}")
+            if container_exit_code in [1, 2]:
+                # 1-fatal message issued
+                # 2-Error message issued
+                exit_code = FAIL
+                output = outputs
+                logger.info(f"{log_prompt} - Finished errors found")
+            elif container_exit_code in [4, 8, 16]:
+                # 4-Warning message issued
+                # 8-refactor message issued
+                # 16-convention message issued
+                logger.info(f"{log_prompt} - Successfully finished - warnings found")
+                exit_code = SUCCESS
+            elif container_exit_code == 32:
+                # 32-usage error
+                logger.critical(f"{log_prompt} - Finished - Usage error")
+                exit_code = RERUN
+            else:
+                logger.info(f"{log_prompt} - Successfully finished")
+        except Exception as e:
+            logger.exception(f"{log_prompt} - Unable to run pylint")
+            exit_code = RERUN
+            output = str(e)
+        return exit_code, output
+
+
+    def _docker_run_pytest(self, container_obj: docker.models.containers.Container, test_image: str, keep_container: bool, test_xml: str, no_coverage: bool = False) -> Tuple[int, str, dict]:
+        """ Run Pytest in created test image
+
+        Args:
+            test_image(str): Test image id/name
+            keep_container(bool): True if to keep container after execution finished
+            test_xml(str): Xml saving path
+            no_coverage(bool): Run pytest without coverage report
+        Returns:
+            int: 0 on successful, errors 1, need to retry 2
+            str: Unit test json report
+        """
+        log_prompt = f'{self._pack_name} - Pytest - Image {test_image}'
+        logger.info(f"{log_prompt} - Start")
+        
+        # Collect tests
+        exit_code = SUCCESS
+        output = ''
+        test_json = {}
+        try:
+            # Running pytest container
+            cov = '' if no_coverage else self._pack_abs_dir.stem
+            uid = os.getuid() or 4000
+            logger.debug(f'{log_prompt} - user uid for running lint/test: {uid}')  # lgtm[py/clear-text-logging-sensitive-data]
+            container_exit_code, output = container_obj.exec_run(build_pytest_command(test_xml=test_xml, json=True,cov=cov).split(' '))
+
+            # Getting container logs
+            logger.info(f"{log_prompt} - exit-code: {container_exit_code}")
+            if container_exit_code in [0, 1, 2, 5]:
+                # 0-All tests passed
+                # 1-Tests were collected and run but some of the tests failed
+                # 2-Test execution was interrupted by the user
+                # 5-No tests were collected
+                if test_xml:
+                    test_data_xml = get_file_from_container(container_obj=container_obj,
+                                                            container_path="/devwork/report_pytest.xml")
+                    xml_apth = Path(test_xml) / f'{self._pack_name}_pytest.xml'
+                    with open(file=xml_apth, mode='bw') as f:
+                        f.write(test_data_xml)  # type: ignore
+
+                if not no_coverage:
+                    cov_file_path = os.path.join(self._pack_abs_dir, '.coverage')
+                    cov_data = get_file_from_container(container_obj=container_obj,
+                                                       container_path="/devwork/.coverage")
+                    cov_data = cov_data if isinstance(cov_data, bytes) else cov_data.encode()
+                    with open(cov_file_path, 'wb') as coverage_file:
+                        coverage_file.write(cov_data)
+                    coverage_report_editor(cov_file_path, os.path.join(self._pack_abs_dir, f'{self._pack_abs_dir.stem}.py'))
+
+                test_json = json.loads(get_file_from_container(container_obj=container_obj,
+                                                               container_path="/devwork/report_pytest.json",
+                                                               encoding="utf-8"))
+                for test in test_json.get('report', {}).get("tests"):
+                    if test.get("call", {}).get("longrepr"):
+                        test["call"]["longrepr"] = test["call"]["longrepr"].split('\n')
+                if container_exit_code in [0, 5]:
+                    logger.info(f"{log_prompt} - Successfully finished")
+                    exit_code = SUCCESS
+                elif container_exit_code in [2]:
+                    # output = output # container_obj.logs().decode('utf-8')
+                    exit_code = FAIL
+                else:
+                    logger.info(f"{log_prompt} - Finished errors found")
+                    exit_code = FAIL
+            elif container_exit_code in [3, 4]:
+                # 3-Internal error happened while executing tests
+                # 4-pytest command line usage error
+                logger.critical(f"{log_prompt} - Usage error")
+                exit_code = RERUN
+                output = container_obj.logs().decode('utf-8')
+        except (docker.errors.ImageNotFound, docker.errors.APIError) as e:
+            logger.critical(f"{log_prompt} - Unable to run pytest container {e}")
+            exit_code = RERUN
+
+        return exit_code, output, test_json
+
+    def _docker_run_pytest_orig(self, test_image: str, keep_container: bool, test_xml: str, no_coverage: bool = False) -> Tuple[int, str, dict]:
         """ Run Pytest in created test image
 
         Args:

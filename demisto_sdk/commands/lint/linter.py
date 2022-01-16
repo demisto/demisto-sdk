@@ -668,12 +668,12 @@ class Linter:
         # Get requirements file for image
         requirements = []
 
-        py_ver = parse(docker_base_image[1]).major
-
-        if py_ver == 2:
-            requirements = self._req_2
-        elif py_ver == 3:
-            requirements = self._req_3
+        if docker_base_image[1] != -1:
+            py_ver = parse(docker_base_image[1]).major
+            if py_ver == 2:
+                requirements = self._req_2
+            elif py_ver == 3:
+                requirements = self._req_3
         # Using DockerFile template
         file_loader = FileSystemLoader(Path(__file__).parent / 'templates')
         env = Environment(loader=file_loader, lstrip_blocks=True, trim_blocks=True, autoescape=True)

@@ -683,7 +683,8 @@ class Linter:
                             copy_dir_to_container(container, self._pack_abs_dir, Path('./devwork'))
                         except Exception as e:
                             if trial < 2:
-                                logger.info(f'{container_name} - Fail to copy the pack dir to the container, will try additional 2 times')
+                                logger.info(f'{container_name} - Fail to copy the pack dir to the container, sleep for second and will try additional 2 times')
+                                time.sleep(1)
                                 continue
                             else:
                                 exit_code = FAIL

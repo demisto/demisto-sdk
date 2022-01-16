@@ -1,4 +1,5 @@
 # Changelog
+* Fixed an issue where the command **doc-review** along with the argument `--release-notes` failed on yml/json files with invalid schema.
 
 # 1.5.7
 * Fixed an issue where reading remote yaml files failed.

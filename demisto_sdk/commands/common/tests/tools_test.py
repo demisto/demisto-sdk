@@ -122,6 +122,38 @@ class TestGenericFunctions:
         assert output == FileType.INTEGRATION, \
             f'find_type({VALID_BETA_INTEGRATION_PATH}) returns: {output} instead {FileType.INTEGRATION}'
 
+    def test_find_type_with_invalid_yml(self, malformed_integration_yml):
+        """
+        Given
+        - A malformed yml file.
+
+        When
+        - Running find_type.
+
+        Then
+        - Ensure no exception/error is raised and None is returned.
+        """
+        try:
+            assert not find_type(malformed_integration_yml.path, ignore_invalid_schema_file=True)
+        except ValueError as err:
+            assert False, str(err)
+
+    def test_find_type_with_invalid_json(self, malformed_incident_field):
+        """
+        Given
+        - A malformed json file.
+
+        When
+        - Running find_type.
+
+        Then
+        - Ensure no exception/error is raised and None is returned.
+        """
+        try:
+            assert not find_type(malformed_incident_field.path, ignore_invalid_schema_file=True)
+        except ValueError as err:
+            assert False, str(err)
+
     def test_find_type_no_file(self):
         """
         Given

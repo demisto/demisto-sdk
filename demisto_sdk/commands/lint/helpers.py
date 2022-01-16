@@ -280,7 +280,7 @@ def add_tmp_lint_files(content_repo: git.Repo, pack_path: Path, lint_files: List
         pass
 
 
-@lru_cache(maxsize=100)
+@lru_cache(maxsize=400)
 def get_python_version_from_image(image: str, timeout: int = 60, log_prompt: str = "") -> float:
     """ Get python version from docker image
 

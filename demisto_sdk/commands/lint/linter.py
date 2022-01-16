@@ -13,6 +13,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 # 3-rd party packages
 import docker
+from docker.client import DockerClient
 import docker.errors
 import docker.models.containers
 import git
@@ -646,8 +647,7 @@ class Linter:
             return self._docker_client.ping()
         except docker.errors.APIError:
             return False
-    
-    @lru_cache(maxsize=400)
+
     def _docker_get_base_test_iamge(self, docker_base_image: str, image_py_version: float):
         """
         Return the image contained the dev required modules that builded on top of the base image 
@@ -715,7 +715,6 @@ class Linter:
 
         return test_image_name, errors
 
-
     def _docker_image_create(self, docker_base_image: List[Any]) -> Tuple[str, str]:
         """ Create docker image:
             1. Installing 'build base' if required in alpine images version - https://wiki.alpinelinux.org/wiki/GCC
@@ -735,10 +734,19 @@ class Linter:
         test_image_id = ""
 
         get_base_test_iamge_start_time = time.time()
-        test_image_name, errors = self._docker_get_base_test_iamge(docker_base_image = docker_base_image[0], image_py_version=docker_base_image[1])
+        base_image = docker_base_image[0]
+        image_py_version = docker_base_image[1]
+        requirements = []
+        if 2 < image_py_version < 3:
+            requirements = self._req_2
+        elif image_py_version > 3:
+            requirements = self._req_3
+        requirements_tuple = tuple(requirements) # we need it be hashable for using it in lru_cache
+        test_image_name, errors = docker_get_base_test_iamge(base_image, requirements_tuple, pack_type=self._pkg_lint_status["pack_type"])
+        # test_image_name, errors = self._docker_get_base_test_iamge(docker_base_image=docker_base_image[0], image_py_version=docker_base_image[1])
         logger.info(f'{log_prompt} - Time to get base test image take: {time.time() - get_base_test_iamge_start_time}s')
-        logger.info(f'{log_prompt} - Get base test iamge cache info: {self._docker_get_base_test_iamge.cache_info()}')
-        
+        logger.info(f'{log_prompt} - Get base test iamge cache info: {docker_get_base_test_iamge.cache_info()}')
+
         if not errors:
             file_loader = FileSystemLoader(Path(__file__).parent / 'templates')
             env = Environment(loader=file_loader, lstrip_blocks=True, trim_blocks=True, autoescape=True)
@@ -746,7 +754,7 @@ class Linter:
 
             dockerfile_path = Path(self._pack_abs_dir / ".Dockerfile")
             dockerfile = template.render(image=test_image_name,
-                                        copy_pack=True)
+                                         copy_pack=True)
             with open(dockerfile_path, mode="w+") as file:
                 file.write(str(dockerfile))
             # we only do retries in CI env where docker build is sometimes flacky
@@ -755,8 +763,8 @@ class Linter:
                 try:
                     logger.info(f"{log_prompt} - Copy pack dir to image {test_image_name}")
                     docker_image_final = self._docker_client.images.build(path=str(dockerfile_path.parent),
-                                                                        dockerfile=dockerfile_path.stem,
-                                                                        forcerm=True)
+                                                                          dockerfile=dockerfile_path.stem,
+                                                                          forcerm=True)
                     test_image_name = docker_image_final[0].short_id
                     break
                 except Exception as e:
@@ -772,7 +780,6 @@ class Linter:
         if test_image_id:
             logger.info(f"{log_prompt} - Image {test_image_id} created successfully")
             logger.info(f"{log_prompt} - Time to create image take: {time.time() - start_time}s")
-
 
         return test_image_name, errors
 
@@ -1100,3 +1107,90 @@ class Linter:
         except Exception:
             logger.debug("Failed getting the commands from the yml file")
         return commands_list
+
+
+global_docker_client = docker.from_env(timeout=60)
+
+
+@lru_cache(maxsize=400)
+def docker_get_base_test_iamge(docker_base_image: str, requirements_tuple: tuple, pack_type: str):
+    """
+    Return the image contained the dev required modules that builded on top of the base image 
+    """
+
+    log_prompt = "Image create"
+    test_image_id = ""
+
+    # Using DockerFile template
+    file_loader = FileSystemLoader(Path(__file__).parent / 'templates')
+    env = Environment(loader=file_loader, lstrip_blocks=True, trim_blocks=True, autoescape=True)
+    template = env.get_template('dockerfile.jinja2')
+    try:
+        dockerfile = template.render(image=docker_base_image,
+                                     pypi_packs=requirements_tuple,  # + self._facts["additional_requirements"],
+                                     pack_type=pack_type,
+                                     copy_pack=False)
+    except exceptions.TemplateError as e:
+        logger.debug(f"{log_prompt} - Error when build image - {e.message()}")
+        return test_image_id, str(e)
+    # Trying to pull image based on dockerfile hash, will check if something changed
+    errors = ""
+    test_image_name = f'devtest{docker_base_image}-{hashlib.md5(dockerfile.encode("utf-8")).hexdigest()}'
+    test_image = None
+    pull_image_start_time = time.time()
+    try:
+        logger.info(f"{log_prompt} - Trying to pull existing image {test_image_name}")
+        test_image = global_docker_client.images.pull(test_image_name)
+    except (docker.errors.APIError, docker.errors.ImageNotFound):
+        logger.info(f"{log_prompt} - Unable to find image {test_image_name}")
+    # Creatng new image if existing image isn't found
+    if not test_image:
+        logger.info(
+            f"{log_prompt} - Creating image based on {docker_base_image} - Could take 2-3 minutes at first "
+            f"time")
+        try:
+            with io.BytesIO() as f:
+                f.write(dockerfile.encode('utf-8'))
+                f.seek(0)
+                global_docker_client.images.build(fileobj=f,
+                                                  tag=test_image_name,
+                                                  forcerm=True)
+
+                if perform_docker_login(global_docker_client):
+                    for trial in range(2):
+                        try:
+                            global_docker_client.images.push(test_image_name)
+                            logger.info(f"{log_prompt} - Image {test_image_name} pushed to repository")
+                            break
+                        except (requests.exceptions.ConnectionError, urllib3.exceptions.ReadTimeoutError,
+                                requests.exceptions.ReadTimeout):
+                            logger.info(f"{log_prompt} - Unable to push image {test_image_name} to repository")
+
+        except (docker.errors.BuildError, docker.errors.APIError, Exception) as e:
+            logger.critical(f"{log_prompt} - Build errors occurred {e}")
+            errors = str(e)
+    else:
+        logger.info(f"{log_prompt} - Found existing image {test_image_name}")
+        logger.info(f"{log_prompt} - Time to pull the image take: {time.time() - pull_image_start_time}s")
+
+    return test_image_name, errors
+
+
+def perform_docker_login(docker_client: DockerClient) -> bool:
+    """ Login to docker-hub using environment variables:
+            1. DOCKERHUB_USER - User for docker hub.
+            2. DOCKERHUB_PASSWORD - Password for docker-hub.
+        Used in Circle-CI for pushing into repo devtestdemisto
+
+    Returns:
+        bool: True if logged in successfully.
+    """
+    docker_user = os.getenv('DOCKERHUB_USER')
+    docker_pass = os.getenv('DOCKERHUB_PASSWORD')
+    try:
+        docker_client.login(username=docker_user,
+                            password=docker_pass,
+                            registry="https://index.docker.io/v1")
+        return docker_client.ping()
+    except docker.errors.APIError:
+        return False

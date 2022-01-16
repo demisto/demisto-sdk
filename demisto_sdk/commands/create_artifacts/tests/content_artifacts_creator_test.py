@@ -30,7 +30,7 @@ def same_folders(src1, src2):
     if dcmp.left_only or dcmp.right_only:
         return False
     for sub_dcmp in dcmp.subdirs.values():
-        return same_folders(sub_dcmp.left, sub_dcmp.right)
+        same_folders(sub_dcmp.left, sub_dcmp.right)
 
     return True
 
@@ -381,9 +381,12 @@ def mock_single_pack_git(mocker):
 
 
 def test_use_alternative_fields(mock_single_pack_git):
-    import demisto_sdk.commands.common.tools as tools
     from demisto_sdk.commands.create_artifacts.content_artifacts_creator import \
         ArtifactsManager
+    RUYAML = YAML(typ='rt')
+    RUYAML.preserve_quotes = True  # type: ignore
+    RUYAML.width = 50000  # type: ignore
+
     with temp_dir() as temp:
         config = ArtifactsManager(artifacts_path=temp,
                                   content_version='6.0.0',
@@ -394,9 +397,7 @@ def test_use_alternative_fields(mock_single_pack_git):
                                   alternate_fields=True,
                                   id_set_path=ALTERNATIVE_FIELDS_ID_SET_PATH)
         exit_code = config.create_content_artifacts()
-        RUYAML = YAML(typ='rt')
-        RUYAML.preserve_quotes = True  # type: ignore
-        RUYAML.width = 50000  # type: ignore
+
         assert exit_code == 0
         assert same_folders(temp, ARTIFACTS_EXPECTED_RESULTS / 'content_with_alternative_fields')
         pack_path = PosixPath(temp, 'content_packs', 'DummyPackAlternativeFields')

@@ -240,7 +240,7 @@ def build_pylint_command(files: List[Path], docker_version: Optional[str] = None
         major = py_ver.major
         minor = py_ver.minor
 
-        if major == 3 and minor == 9:
+        if major == 3 and minor >= 9:
             disable.append('unsubscriptable-object')
     command += f" --disable={','.join(disable)}"
     # Disable specific errors

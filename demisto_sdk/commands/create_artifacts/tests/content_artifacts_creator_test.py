@@ -1,11 +1,13 @@
+import json
+import os
 from contextlib import contextmanager
 from filecmp import cmp, dircmp
-from pathlib import Path
+from pathlib import Path, PosixPath
 from shutil import copyfile, copytree, rmtree
-from ruamel.yaml import YAML
-import json, os
+
 import pytest
-from pathlib import PosixPath
+from ruamel.yaml import YAML
+
 from demisto_sdk.commands.common.constants import PACKS_DIR, TEST_PLAYBOOKS_DIR
 from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.common.tools import (is_object_in_id_set,
@@ -20,6 +22,7 @@ COMMON_SERVER = UNIT_TEST_DATA / 'common_server'
 ARTIFACTS_EXPECTED_RESULTS = TEST_DATA / 'artifacts'
 PARTIAL_ID_SET_PATH = UNIT_TEST_DATA / 'id_set_missing_packs_and_items.json'
 ALTERNATIVE_FIELDS_ID_SET_PATH = UNIT_TEST_DATA / 'id_set_alrenative_fields.json'
+
 
 def same_folders(src1, src2):
     """Assert if folder contains different files"""
@@ -365,6 +368,7 @@ def test_is_object_in_id_set():
     assert not is_object_in_id_set('indicator', packs_section[pack_name])
     assert is_object_in_id_set('scripts-sample_packs', packs_section[pack_name])
 
+
 @pytest.fixture()
 def mock_single_pack_git(mocker):
     """Mock git Repo object"""
@@ -375,10 +379,11 @@ def mock_single_pack_git(mocker):
     Content.git().working_tree_dir = TEST_DATA / 'content_repo_with_alternative_fields'
     yield
 
+
 def test_use_alternative_fields(mock_single_pack_git):
+    import demisto_sdk.commands.common.tools as tools
     from demisto_sdk.commands.create_artifacts.content_artifacts_creator import \
         ArtifactsManager
-    import demisto_sdk.commands.common.tools as tools
     with temp_dir() as temp:
         config = ArtifactsManager(artifacts_path=temp,
                                   content_version='6.0.0',
@@ -394,7 +399,7 @@ def test_use_alternative_fields(mock_single_pack_git):
         RUYAML.width = 50000  # type: ignore
         assert exit_code == 0
         assert same_folders(temp, ARTIFACTS_EXPECTED_RESULTS / 'content_with_alternative_fields')
-        pack_path = PosixPath(temp,'content_packs', 'DummyPackAlternativeFields')
+        pack_path = PosixPath(temp, 'content_packs', 'DummyPackAlternativeFields')
 
         # Check Integration
         integration_yml = dict(RUYAML.load(PosixPath(pack_path, 'Integrations', 'integration-sample_packs.yml')))
@@ -419,5 +424,3 @@ def test_use_alternative_fields(mock_single_pack_git):
             incident_field_json = json.load(json_file)
         assert not [key for key in incident_field_json if key.endswith('_x2')]
         assert incident_field_json['name'] == 'name_x2'
-
-

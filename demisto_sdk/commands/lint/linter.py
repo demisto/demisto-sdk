@@ -678,16 +678,16 @@ class Linter:
                         detach=True,
                         environment=self._facts["env_vars"]
                     )
-                    for trial in range(2):
+                    for trial in range(3):
                         try:
                             copy_dir_to_container(container, self._pack_abs_dir, Path('./devwork'))
-                        except Exception:
-                            if trial == 0:
-                                logger.info(f'{container_name} - Fail to copy the pack dir to the container, will try additional time')
+                        except Exception as e:
+                            if trial < 2:
+                                logger.info(f'{container_name} - Fail to copy the pack dir to the container, will try additional 2 times')
                                 continue
                             else:
                                 exit_code = FAIL
-                                errors = f'{container_name} - Fail 2 times to copy the pack dir to the container - exit'
+                                errors = f'{container_name} - Fail 3 times to copy the pack dir to the container - exit {str(e)}'
                                 logger.info(errors)
                         
                         break

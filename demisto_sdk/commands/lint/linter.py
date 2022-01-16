@@ -664,14 +664,14 @@ class Linter:
                 image_id = ""
                 errors = ""
                 container = None
+                for trial in range(2):
+                    image_id, errors = self._docker_image_create(docker_base_image=image)
+                    if not errors:
+                        break
                 if self._pkg_lint_status["pack_type"] == TYPE_PYTHON:
-                    create_container_start = time.time()
-                    for trial in range(2):
-                        test_image, errors = self._docker_image_create(docker_base_image=image)
-                        if not errors:
-                            break
+                    create_container_start = time.time()    
                     container: docker.models.containers.Container= self._docker_client.containers.run(
-                        test_image,
+                        image_id,
                         command=["sleep 100000"],
                         name=container_name,
                         user=f"{os.getuid()}:4000",
@@ -690,7 +690,6 @@ class Linter:
                 
                     logger.info(f'create docker container take: {time.time() - create_container_start}s')
                 
-
                 if not errors:
                     # Set image creation status
                     for check in ["pylint", "pytest", "pwsh_analyze", "pwsh_test"]:

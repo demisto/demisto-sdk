@@ -2145,7 +2145,7 @@ def calculate_single_pack_dependencies(pack: str, dependency_graph: object, verb
             del additional_data['mandatory_for_items']
             del additional_data['depending_on_packs']
             del additional_data['depending_on_items_mandatorily']
-            # This could be added as a value to the output, see issue XXX #TODO: fix
+            # This could be added as a value to the output, see issue 45798
 
         first_level_dependencies, all_level_dependencies = parse_for_pack_metadata(subgraph, pack)
     except Exception:

@@ -1,0 +1,21 @@
+commonfields:
+  version: -1
+  id: id_x2
+script: ''
+type: javascript
+tags:
+- Utility
+enabled: true
+outputs:
+- contextPath: IncidentOwner.name
+  description: Incident owner full name
+- contextPath: IncidentOwner.email
+  description: Incident owner email address
+- contextPath: IncidentOwner.phone
+  description: Incident owner phone number
+- contextPath: IncidentOwner.roles
+  description: Incident owner roles
+scripttarget: 0
+fromversion: 5.0.0
+name: name_x2
+comment: comment_x2

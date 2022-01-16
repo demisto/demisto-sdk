@@ -1,5 +1,5 @@
-from typing import Union, Optional
-import yaml
+from typing import Optional, Union
+
 from ruamel.yaml import YAML
 from ruamel.yaml.scanner import ScannerError
 from wcmatch.pathlib import EXTGLOB, NEGATE, Path
@@ -65,4 +65,3 @@ class YAMLObject(DictionaryBasedObject):
             return self._serialize(dest_dir)
         else:
             return super().dump(dest_dir)
-

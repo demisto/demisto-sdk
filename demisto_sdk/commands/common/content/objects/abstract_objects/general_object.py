@@ -35,7 +35,7 @@ class GeneralObject(object):
 
     @modified.setter
     def modified(self, modified: bool):
-       self._modified = modified
+        self._modified = modified
 
     @abstractmethod
     def _unserialize(self):
@@ -95,13 +95,10 @@ class GeneralObject(object):
         Returns:
             List[Path]: List of path created in given directory.
 
-        TODO:
-            1. Implement dump of modified object.
         """
 
         dest_file = self._create_target_dump_dir(dest_dir) / self.normalize_file_name()
         return [copyfile(src=self._path, dst=dest_file)]
-
 
     def type(self):
         return None

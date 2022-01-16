@@ -520,7 +520,6 @@ def validate(config, **kwargs):
                    'content items that appear in the id set.', default=False, hidden=True)
 @click.option('-af', '--alternate-fields', is_flag=True,
               help='Use the alternative fields if such are present in the yml or json of the content item.', default=False, hidden=True)
-
 def create_content_artifacts(**kwargs) -> int:
     """Generating the following artifacts:
        1. content_new - Contains all content objects of type json,yaml (from_version < 6.0.0)

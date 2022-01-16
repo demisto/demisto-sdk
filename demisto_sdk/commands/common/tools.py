@@ -17,7 +17,6 @@ from pathlib import Path, PosixPath
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from typing import (Callable, Dict, List, Match, Optional, Set, Tuple, Type,
                     Union)
-from ruamel.yaml.comments import CommentedMap
 
 import click
 import colorama
@@ -30,6 +29,7 @@ import yaml
 from packaging.version import parse
 from pebble import ProcessFuture, ProcessPool
 from ruamel.yaml import YAML
+from ruamel.yaml.comments import CommentedMap
 
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK, CLASSIFIERS_DIR,
@@ -45,8 +45,8 @@ from demisto_sdk.commands.common.constants import (
     PACKS_README_FILE_NAME, PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR,
     RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR,
-    XSOAR_CONFIG_FILE, FileType, GitContentConfig, IdSetKeys,
-    MarketplaceVersions, urljoin, FileType_TO_IdSetKeys)
+    XSOAR_CONFIG_FILE, FileType, FileType_TO_IdSetKeys, GitContentConfig,
+    IdSetKeys, MarketplaceVersions, urljoin)
 from demisto_sdk.commands.common.git_util import GitUtil
 
 urllib3.disable_warnings()
@@ -2340,6 +2340,7 @@ def alternate_item_fields(content_item):
         elif isinstance(current_dict[field], as_dict_types):
             alternate_item_fields(current_dict[field])
 
+
 def should_alternate_name_by_item(content_item, id_set):
     """
     Go over the given content item and check if it should be modified to use its alternative fields, which is determined
@@ -2360,4 +2361,3 @@ def should_alternate_name_by_item(content_item, id_set):
         if list(item.keys())[0] == item_id:
             return item.get(item_id, {}).get('has_alternative_name', False)
     return False
-

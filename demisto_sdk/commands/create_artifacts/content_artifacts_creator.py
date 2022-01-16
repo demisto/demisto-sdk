@@ -27,8 +27,9 @@ from demisto_sdk.commands.common.content import (Content, ContentError,
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     JSONContentObject, Script, TextObject, YAMLContentObject,
     YAMLContentUnifiedObject)
-from demisto_sdk.commands.common.tools import arg_to_list, open_id_set_file, alternate_item_fields, \
-    should_alternate_name_by_item
+from demisto_sdk.commands.common.tools import (alternate_item_fields,
+                                               arg_to_list, open_id_set_file,
+                                               should_alternate_name_by_item)
 
 from .artifacts_report import ArtifactsReport, ObjectReport
 
@@ -80,13 +81,14 @@ class ArtifactsManager:
         self.suffix = suffix
         self.cpus = cpus
         self.id_set_path = id_set_path
+        self.id_set: dict = {}
         self.signature_key = signature_key
         self.signDirectory = sign_directory
         self.remove_test_playbooks = remove_test_playbooks
         self.marketplace = marketplace.lower()
         self.filter_by_id_set = filter_by_id_set
         self.pack_names = arg_to_list(pack_names)
-        self.packs_section_from_id_set = {}
+        self.packs_section_from_id_set: dict = {}
         self.alternate_fields = alternate_fields
         # run related arguments
         self.content_new_path = self.artifacts_path / 'content_new'
@@ -96,7 +98,7 @@ class ArtifactsManager:
         self.content_uploadable_zips_path = self.artifacts_path / 'uploadable_packs'
 
         if self.filter_by_id_set or self.alternate_fields:
-            self.id_set = open_id_set_file(id_set_path)  # TODO: add to dependencies
+            self.id_set = open_id_set_file(id_set_path)
 
         # inits
         self.content = Content.from_cwd()
@@ -111,7 +113,6 @@ class ArtifactsManager:
                 self.pack_names = list(packs_section_from_id_set.keys())
             else:
                 self.pack_names = list(set(packs_section_from_id_set.keys()).intersection(set(self.pack_names)))
-
 
     def create_content_artifacts(self) -> int:
         with ArtifactsDirsHandler(self), ProcessPoolHandler(self) as pool:
@@ -1116,4 +1117,3 @@ def sign_packs(artifact_manager: ArtifactsManager):
     elif artifact_manager.signDirectory or artifact_manager.signature_key:
         logger.error('Failed to sign packs. In order to do so, you need to provide both signature_key and '
                      'sign_directory arguments.')
-

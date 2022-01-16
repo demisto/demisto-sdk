@@ -1,5 +1,6 @@
 # STD python packages
 import copy
+from functools import lru_cache
 import hashlib
 import io
 import json
@@ -67,7 +68,7 @@ class Linter:
         # Docker client init
         if docker_engine:
             self._docker_client: docker.DockerClient = docker.from_env(timeout=docker_timeout)
-            self._docker_hub_login = self._docker_login()
+            #  self._docker_hub_login = self._docker_login()
         # Facts gathered regarding pack lint and test
         self._facts: Dict[str, Any] = {
             "images": [],
@@ -645,35 +646,27 @@ class Linter:
             return self._docker_client.ping()
         except docker.errors.APIError:
             return False
-
-    def _docker_image_create(self, docker_base_image: List[Any]) -> Tuple[str, str]:
-        """ Create docker image:
-            1. Installing 'build base' if required in alpine images version - https://wiki.alpinelinux.org/wiki/GCC
-            2. Installing pypi packs - if only pylint required - only pylint installed otherwise all pytest and pylint
-               installed, packages which being install can be found in path demisto_sdk/commands/lint/dev_envs
-            3. The docker image build done by Dockerfile template located in
-                demisto_sdk/commands/lint/templates/dockerfile.jinja2
-
-        Args:
-            docker_base_image(list): docker image to use as base for installing dev deps and python version.
-
-        Returns:
-            str, str. image name to use and errors string.
+    
+    @lru_cache(maxsize=400)
+    def _docker_get_base_test_iamge(self, docker_base_image: str, image_py_version: float):
         """
+        Return the image contained the dev required modules that builded on top of the base image 
+        """
+
         log_prompt = f"{self._pack_name} - Image create"
         test_image_id = ""
         # Get requirements file for image
         requirements = []
-        if 2 < docker_base_image[1] < 3:
+        if 2 < image_py_version < 3:
             requirements = self._req_2
-        elif docker_base_image[1] > 3:
+        elif image_py_version > 3:
             requirements = self._req_3
         # Using DockerFile template
         file_loader = FileSystemLoader(Path(__file__).parent / 'templates')
         env = Environment(loader=file_loader, lstrip_blocks=True, trim_blocks=True, autoescape=True)
         template = env.get_template('dockerfile.jinja2')
         try:
-            dockerfile = template.render(image=docker_base_image[0],
+            dockerfile = template.render(image=docker_base_image,
                                          pypi_packs=requirements + self._facts["additional_requirements"],
                                          pack_type=self._pkg_lint_status["pack_type"],
                                          copy_pack=False)
@@ -682,7 +675,7 @@ class Linter:
             return test_image_id, str(e)
         # Trying to pull image based on dockerfile hash, will check if something changed
         errors = ""
-        test_image_name = f'devtest{docker_base_image[0]}-{hashlib.md5(dockerfile.encode("utf-8")).hexdigest()}'
+        test_image_name = f'devtest{docker_base_image}-{hashlib.md5(dockerfile.encode("utf-8")).hexdigest()}'
         test_image = None
         pull_image_start_time = time.time()
         try:
@@ -693,7 +686,7 @@ class Linter:
         # Creatng new image if existing image isn't found
         if not test_image:
             logger.info(
-                f"{log_prompt} - Creating image based on {docker_base_image[0]} - Could take 2-3 minutes at first "
+                f"{log_prompt} - Creating image based on {docker_base_image} - Could take 2-3 minutes at first "
                 f"time")
             try:
                 with io.BytesIO() as f:
@@ -703,7 +696,7 @@ class Linter:
                                                      tag=test_image_name,
                                                      forcerm=True)
 
-                    if self._docker_hub_login:
+                    if self._docker_login():
                         for trial in range(2):
                             try:
                                 self._docker_client.images.push(test_image_name)
@@ -719,33 +712,67 @@ class Linter:
         else:
             logger.info(f"{log_prompt} - Found existing image {test_image_name}")
             logger.info(f"{log_prompt} - Time to pull the image take: {time.time() - pull_image_start_time}s")
-        dockerfile_path = Path(self._pack_abs_dir / ".Dockerfile")
-        dockerfile = template.render(image=test_image_name,
-                                     copy_pack=True)
-        with open(dockerfile_path, mode="w+") as file:
-            file.write(str(dockerfile))
-        # we only do retries in CI env where docker build is sometimes flacky
-        build_tries = int(os.getenv('DEMISTO_SDK_DOCKER_BUILD_TRIES', 3)) if os.getenv('CI') else 1
-        for trial in range(build_tries):
-            try:
-                logger.info(f"{log_prompt} - Copy pack dir to image {test_image_name}")
-                docker_image_final = self._docker_client.images.build(path=str(dockerfile_path.parent),
-                                                                      dockerfile=dockerfile_path.stem,
-                                                                      forcerm=True)
-                test_image_name = docker_image_final[0].short_id
-                break
-            except Exception as e:
-                logger.exception(f"{log_prompt} - errors occurred when building image in dir {e}")
-                if trial >= build_tries:
-                    errors = str(e)
-                else:
-                    logger.info(f"{log_prompt} - sleeping 2 seconds and will retry build after")
-                    time.sleep(2)
-        if dockerfile_path.exists():
-            dockerfile_path.unlink()
+
+        return test_image_name, errors
+
+
+    def _docker_image_create(self, docker_base_image: List[Any]) -> Tuple[str, str]:
+        """ Create docker image:
+            1. Installing 'build base' if required in alpine images version - https://wiki.alpinelinux.org/wiki/GCC
+            2. Installing pypi packs - if only pylint required - only pylint installed otherwise all pytest and pylint
+               installed, packages which being install can be found in path demisto_sdk/commands/lint/dev_envs
+            3. The docker image build done by Dockerfile template located in
+                demisto_sdk/commands/lint/templates/dockerfile.jinja2
+
+        Args:
+            docker_base_image(list): docker image to use as base for installing dev deps and python version.
+
+        Returns:
+            str, str. image name to use and errors string.
+        """
+        start_time = time.time()
+        log_prompt = f"{self._pack_name} - Image create"
+        test_image_id = ""
+
+        get_base_test_iamge_start_time = time.time()
+        test_image_name, errors = self._docker_get_base_test_iamge(docker_base_image = docker_base_image[0], image_py_version=docker_base_image[1])
+        logger.info(f'{log_prompt} - Time to get base test image take: {time.time() - get_base_test_iamge_start_time}s')
+        logger.info(f'{log_prompt} - Get base test iamge cache info: {self._docker_get_base_test_iamge.cache_info()}')
+        
+        if not errors:
+            file_loader = FileSystemLoader(Path(__file__).parent / 'templates')
+            env = Environment(loader=file_loader, lstrip_blocks=True, trim_blocks=True, autoescape=True)
+            template = env.get_template('dockerfile.jinja2')
+
+            dockerfile_path = Path(self._pack_abs_dir / ".Dockerfile")
+            dockerfile = template.render(image=test_image_name,
+                                        copy_pack=True)
+            with open(dockerfile_path, mode="w+") as file:
+                file.write(str(dockerfile))
+            # we only do retries in CI env where docker build is sometimes flacky
+            build_tries = int(os.getenv('DEMISTO_SDK_DOCKER_BUILD_TRIES', 3)) if os.getenv('CI') else 1
+            for trial in range(build_tries):
+                try:
+                    logger.info(f"{log_prompt} - Copy pack dir to image {test_image_name}")
+                    docker_image_final = self._docker_client.images.build(path=str(dockerfile_path.parent),
+                                                                        dockerfile=dockerfile_path.stem,
+                                                                        forcerm=True)
+                    test_image_name = docker_image_final[0].short_id
+                    break
+                except Exception as e:
+                    logger.exception(f"{log_prompt} - errors occurred when building image in dir {e}")
+                    if trial >= build_tries:
+                        errors = str(e)
+                    else:
+                        logger.info(f"{log_prompt} - sleeping 2 seconds and will retry build after")
+                        time.sleep(2)
+            if dockerfile_path.exists():
+                dockerfile_path.unlink()
 
         if test_image_id:
             logger.info(f"{log_prompt} - Image {test_image_id} created successfully")
+            logger.info(f"{log_prompt} - Time to create image take: {time.time() - start_time}s")
+
 
         return test_image_name, errors
 

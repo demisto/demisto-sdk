@@ -982,7 +982,7 @@ def test_dependencies(mocker, repo, test_number):
     if f'pack_{pack_to_verify}' in dependencies:
         dependencies.remove(f'pack_{pack_to_verify}')
 
-    assert IsEqualFunctions.is_lists_equal(list(dependencies), list(dependencies_from_pack_metadata))
+    assert IsEqualFunctions.is_sets_equal(dependencies, dependencies_from_pack_metadata)
 
 
 @pytest.mark.parametrize('entity_class', CLASSES)

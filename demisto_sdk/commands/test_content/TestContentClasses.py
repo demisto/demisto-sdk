@@ -1904,6 +1904,7 @@ def replace_external_playbook_configuration(client: DefaultApi, external_playboo
     """ Takes external configuration of shape {"playbookID": "Isolate Endpoint - Generic V2",
                                                "input_parameters":{"Endpoint_hostname": ["simple", "test"]}
         and changes the specified playbook configuration to the mentioned one.
+        If playbook's inputs had changed, revert will be needed.
         Returns (Whether the Playbook changed, The values to restore, the path to use when restoring)
         Only to be used with server version 6.2 and above. """
     if not external_playbook_configuration:

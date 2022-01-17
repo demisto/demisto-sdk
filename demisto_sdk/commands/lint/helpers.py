@@ -384,7 +384,7 @@ def copy_dir_to_container(container_obj: Container, host_path: Path, container_p
     Raises:
         IOError: Rase IO error if unable to create temp file
     """
-    excluded_regex = "(__init__.py|.*.back)"
+    excluded_regex = "(__init__.py|.*.back$)"
     file_like_object = io.BytesIO()
     old_cwd = os.getcwd()
     with tarfile.open(fileobj=file_like_object, mode='w:gz') as archive:

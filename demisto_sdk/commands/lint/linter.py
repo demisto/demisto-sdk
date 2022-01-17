@@ -650,6 +650,10 @@ class Linter:
         try:
             
             for image in self._facts["images"]:
+                contianer_id = hashlib.md5(image[0].encode("utf-8")).hexdigest()
+                container_name = f"{self._pack_name}-docker-container-{contianer_id}"
+                self._docker_remove_container(container_name)
+
                 # Docker image status - visualize
                 status = {
                     "image": image[0],
@@ -999,31 +1003,27 @@ class Linter:
 
         Returns:
             int: 0 on successful, errors 1, need to retry 2
-            str: Container log
+            str: Execution output
         """
         log_prompt = f'{self._pack_name} - Pylint - Image {test_image}'
         logger.info(f"{log_prompt} - Start")
 
-        # Run container
+        # Run command on the ontainer
         exit_code = SUCCESS
         output = ""
         try:
-            command = build_pylint_command(self._facts["lint_files"], docker_version=self._facts.get('python_version'))
-            container_exit_code, outputs = container_obj.exec_run(command)
 
-            # stream_docker_container_output(container_obj.logs(stream=True))
-            # # wait for container to finish
-            # container_status = container_obj.wait(condition="exited")
-            # # Get container exit code
-            # container_exit_code = container_status.get("StatusCode")
-            # Getting container logs
-            container_log = container_obj.logs().decode("utf-8")
+            command = build_pylint_command(self._facts["lint_files"], docker_version=self._facts.get('python_version'))
+            container_exit_code, output = container_obj.exec_run(command)
             logger.info(f"{log_prompt} - exit-code: {container_exit_code}")
+            
+            if output:
+                output = output.decode("utf-8")
+
             if container_exit_code in [1, 2]:
                 # 1-fatal message issued
                 # 2-Error message issued
                 exit_code = FAIL
-                output = outputs
                 logger.info(f"{log_prompt} - Finished errors found")
             elif container_exit_code in [4, 8, 16]:
                 # 4-Warning message issued

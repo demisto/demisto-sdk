@@ -5,7 +5,6 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
-import dictdiffer
 
 import pytest
 
@@ -552,7 +551,7 @@ class TestScripts:
         const_data = TestScripts.SCRIPT_DATA.get('DummyScript')
         returned_data = data.get('DummyScript')
 
-        assert IsEqualFunctions.is_dicts_equal(returned_data, const_data,simple_comparison=True)
+        assert IsEqualFunctions.is_dicts_equal(returned_data, const_data, simple_comparison=True)
 
     @staticmethod
     def test_get_script_data_with_alternative_fields_top_level():
@@ -575,7 +574,7 @@ class TestScripts:
         const_data = TestScripts.SCRIPT_DATA_ALTERNATIVE_TOP_LEVEL.get('DummyScript')
         returned_data = data.get('DummyScript')
 
-        assert IsEqualFunctions.is_dicts_equal(returned_data, const_data,simple_comparison=True)
+        assert IsEqualFunctions.is_dicts_equal(returned_data, const_data, simple_comparison=True)
 
     @staticmethod
     def test_get_script_data_with_alternative_fields_second_level():
@@ -599,7 +598,7 @@ class TestScripts:
         const_data = TestScripts.SCRIPT_DATA_ALTERNATIVE_SECOND_LEVEL.get('DummyScript')
         returned_data = data.get('DummyScript')
 
-        assert IsEqualFunctions.is_dicts_equal(returned_data, const_data,True)
+        assert IsEqualFunctions.is_dicts_equal(returned_data, const_data, True)
 
     @staticmethod
     def test_process_script__sanity_package(mocker):
@@ -625,7 +624,7 @@ class TestScripts:
         const_data = TestScripts.PACK_SCRIPT_DATA.get('DummyScript')
         returned_data = data.get('DummyScript')
 
-        assert IsEqualFunctions.is_dicts_equal(returned_data, const_data,simple_comparison=True)
+        assert IsEqualFunctions.is_dicts_equal(returned_data, const_data, simple_comparison=True)
 
     @staticmethod
     def test_process_script__marketplace_mismatch(mocker):

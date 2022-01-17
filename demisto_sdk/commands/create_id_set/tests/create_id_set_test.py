@@ -4,11 +4,11 @@ import shutil
 from collections import OrderedDict
 from tempfile import mkdtemp
 
-from TestSuite.test_tools import ChangeCWD
-from TestSuite.utils import IsEqualFunctions
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.update_id_set import ID_SET_ENTITIES
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
+from TestSuite.test_tools import ChangeCWD
+from TestSuite.utils import IsEqualFunctions
 
 TESTS_DIR = f'{git_path()}/demisto_sdk/tests'
 
@@ -108,13 +108,13 @@ class TestIDSetCreator:
 
         pack_to_create_id_set_on = repo.create_pack('pack_to_create_id_set_on')
         pack_to_create_id_set_on.create_integration(yml={'commonfields': {'id': 'id1'}, 'category': '', 'name':
-            'integration to create id set', 'script': {'type': 'python'}},
+                                                         'integration to create id set', 'script': {'type': 'python'}},
                                                     name='integration1')
         packs.append(pack_to_create_id_set_on)
 
         pack_to_not_create_id_set_on = repo.create_pack('pack_to_not_create_id_set_on')
         pack_to_not_create_id_set_on.create_integration(yml={'commonfields': {'id2': 'id'}, 'category': '', 'name':
-            'integration to not create id set'}, name='integration2')
+                                                             'integration to not create id set'}, name='integration2')
         packs.append(pack_to_not_create_id_set_on)
 
         id_set_creator = IDSetCreator(self.file_path, pack_to_create_id_set_on.path)

@@ -12,7 +12,7 @@ class IsEqualFunctions:
 
         for k, v in dict1.items():
             if isinstance(v, dict):
-                return IsEqualFunctions.is_dicts_equal(v, dict2[k], check_value_type)
+                return IsEqualFunctions.is_dicts_equal(v, dict2[k], simple_comparison)
             if isinstance(v, list):
                 return IsEqualFunctions.is_lists_equal(v, dict2[k])
             if isinstance(v, set):

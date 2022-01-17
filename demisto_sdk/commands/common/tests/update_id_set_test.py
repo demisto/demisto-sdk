@@ -448,7 +448,9 @@ class TestIntegrations:
             const_data = constant.get('Dummy Integration')
             returned_data = returned.get('Dummy Integration')
 
-            assert IsEqualFunctions.is_dicts_equal(returned_data, const_data),tuple(dictdiffer.diff(returned_data,const_data))
+            assert IsEqualFunctions.is_dicts_equal(returned_data,
+                                                   const_data,
+                                                   simple_comparison=False)
 
     @staticmethod
     def test_process_integration__exception(mocker):
@@ -550,7 +552,7 @@ class TestScripts:
         const_data = TestScripts.SCRIPT_DATA.get('DummyScript')
         returned_data = data.get('DummyScript')
 
-        assert IsEqualFunctions.is_dicts_equal(returned_data, const_data)
+        assert IsEqualFunctions.is_dicts_equal(returned_data, const_data,simple_comparison=True)
 
     @staticmethod
     def test_get_script_data_with_alternative_fields_top_level():
@@ -573,7 +575,7 @@ class TestScripts:
         const_data = TestScripts.SCRIPT_DATA_ALTERNATIVE_TOP_LEVEL.get('DummyScript')
         returned_data = data.get('DummyScript')
 
-        assert IsEqualFunctions.is_dicts_equal(returned_data, const_data)
+        assert IsEqualFunctions.is_dicts_equal(returned_data, const_data,simple_comparison=True)
 
     @staticmethod
     def test_get_script_data_with_alternative_fields_second_level():
@@ -597,7 +599,7 @@ class TestScripts:
         const_data = TestScripts.SCRIPT_DATA_ALTERNATIVE_SECOND_LEVEL.get('DummyScript')
         returned_data = data.get('DummyScript')
 
-        assert IsEqualFunctions.is_dicts_equal(returned_data, const_data)
+        assert IsEqualFunctions.is_dicts_equal(returned_data, const_data,True)
 
     @staticmethod
     def test_process_script__sanity_package(mocker):
@@ -623,7 +625,7 @@ class TestScripts:
         const_data = TestScripts.PACK_SCRIPT_DATA.get('DummyScript')
         returned_data = data.get('DummyScript')
 
-        assert IsEqualFunctions.is_dicts_equal(returned_data, const_data)
+        assert IsEqualFunctions.is_dicts_equal(returned_data, const_data,simple_comparison=True)
 
     @staticmethod
     def test_process_script__marketplace_mismatch(mocker):
@@ -760,7 +762,9 @@ class TestPlaybooks:
         file_path = TESTS_DIR + '/test_files/DummyPack/Playbooks/DummyPlaybook.yml'
         data = get_playbook_data(file_path)['Dummy Playbook']
 
-        assert IsEqualFunctions.is_dicts_equal(data, TestPlaybooks.PLAYBOOK_DATA,simple_comparison=True)
+        assert IsEqualFunctions.is_dicts_equal(data,
+                                               TestPlaybooks.PLAYBOOK_DATA,
+                                               simple_comparison=False)
 
     @staticmethod
     def test_get_playbook_data_with_alternative_fields_top_level():
@@ -778,7 +782,9 @@ class TestPlaybooks:
         file_path = TESTS_DIR + '/test_files/alternative_meta_fields/Playbook-top_level_alternative_fields.yml'
         data = get_playbook_data(file_path)['Dummy Playbook']
 
-        assert IsEqualFunctions.is_dicts_equal(data, TestPlaybooks.PLAYBOOK_DATA_ALTERNATIVE_FIELDS_TOP_LEVEL)
+        assert IsEqualFunctions.is_dicts_equal(data,
+                                               TestPlaybooks.PLAYBOOK_DATA_ALTERNATIVE_FIELDS_TOP_LEVEL,
+                                               simple_comparison=False)
 
     @staticmethod
     def test_get_playbook_data_with_alternative_fields_second_level():
@@ -795,7 +801,9 @@ class TestPlaybooks:
         """
         file_path = TESTS_DIR + '/test_files/alternative_meta_fields/Playbook-second_level_alternative_fields.yml'
         data = get_playbook_data(file_path)['Dummy Playbook']
-        assert IsEqualFunctions.is_dicts_equal(data, TestPlaybooks.PLAYBOOK_DATA_ALTERNATIVE_FIELDS_SECOND_LEVEL)
+        assert IsEqualFunctions.is_dicts_equal(data,
+                                               TestPlaybooks.PLAYBOOK_DATA_ALTERNATIVE_FIELDS_SECOND_LEVEL,
+                                               simple_comparison=False)
 
     @staticmethod
     def test_get_playbook_data_2():

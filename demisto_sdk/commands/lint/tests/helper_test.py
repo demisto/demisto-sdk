@@ -54,8 +54,9 @@ def test_build_skipped_exit_code(no_flake8: bool, no_xsoar_linter: bool, no_band
                                             no_pwsh_analyze, no_pwsh_test, docker_engine)
 
 
-@pytest.mark.parametrize(argnames="image, output, expected", argvalues=[('alpine', b'3.7\n', 3.7),
-                                                                        ('alpine-3', b'2.7\n', 2.7)])
+@pytest.mark.parametrize(argnames="image, output, expected", argvalues=[('alpine', b'3.7\n', '3.7'),
+                                                                        ('alpine-3', b'2.7\n', '2.7'),
+                                                                        ('alpine-310', b'3.10\n', '3.10')])
 def test_get_python_version_from_image(image: str, output: bytes, expected: float, mocker):
     from demisto_sdk.commands.lint import helpers
     mocker.patch.object(helpers, 'docker')

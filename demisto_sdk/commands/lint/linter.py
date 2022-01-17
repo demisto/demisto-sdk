@@ -18,6 +18,7 @@ import git
 import requests.exceptions
 import urllib3.exceptions
 from jinja2 import Environment, FileSystemLoader, exceptions
+from packaging.version import parse
 from ruamel.yaml import YAML
 from wcmatch.pathlib import NEGATE, Path
 
@@ -224,7 +225,8 @@ class Linter:
             if self._facts["docker_engine"]:
                 # Getting python version from docker image - verifying if not valid docker image configured
                 for image in self._facts["images"]:
-                    py_num: float = get_python_version_from_image(image=image[0], timeout=self.docker_timeout, log_prompt=log_prompt)
+                    py_num: str = get_python_version_from_image(image=image[0], timeout=self.docker_timeout,
+                                                                log_prompt=log_prompt)
                     image[1] = py_num
                     logger.info(f"{self._pack_name} - Facts - {image[0]} - Python {py_num}")
                     if not self._facts["python_version"]:
@@ -247,7 +249,7 @@ class Linter:
                         self._pkg_lint_status["errors"].append('Unable to parse test-requirements.txt in package')
             elif not self._facts["python_version"]:
                 # get python version from yml
-                pynum = 3.7 if (script_obj.get('subtype', 'python3') == 'python3') else 2.7
+                pynum = '3.7' if (script_obj.get('subtype', 'python3') == 'python3') else '2.7'
                 self._facts["python_version"] = pynum
                 logger.info(f"{log_prompt} - Using python version from yml: {pynum}")
             # Get lint files
@@ -369,11 +371,11 @@ class Linter:
                 else:
                     self._pkg_lint_status[f"{lint_check}_errors"] = "\n".join(other)
 
-    def _run_flake8(self, py_num: float, lint_files: List[Path]) -> Tuple[int, str]:
+    def _run_flake8(self, py_num: str, lint_files: List[Path]) -> Tuple[int, str]:
         """ Runs flake8 in pack dir
 
         Args:
-            py_num(float): The python version in use
+            py_num(str): The python version in use
             lint_files(List[Path]): file to perform lint
 
         Returns:
@@ -398,7 +400,7 @@ class Linter:
 
         return SUCCESS, ""
 
-    def _run_xsoar_linter(self, py_num: float, lint_files: List[Path]) -> Tuple[int, str]:
+    def _run_xsoar_linter(self, py_num: str, lint_files: List[Path]) -> Tuple[int, str]:
         """ Runs Xsaor linter in pack dir
 
         Args:
@@ -420,7 +422,9 @@ class Linter:
                 myenv['PYTHONPATH'] = str(self._pack_abs_dir)
             if self._facts['is_long_running']:
                 myenv['LONGRUNNING'] = 'True'
-            if py_num < 3:
+
+            py_ver = parse(py_num).major
+            if py_ver < 3:
                 myenv['PY2'] = 'True'
             myenv['is_script'] = str(self._facts['is_script'])
             # as Xsoar checker is a pylint plugin and runs as part of pylint code, we can not pass args to it.
@@ -487,11 +491,11 @@ class Linter:
 
         return SUCCESS, ""
 
-    def _run_mypy(self, py_num: float, lint_files: List[Path]) -> Tuple[int, str]:
+    def _run_mypy(self, py_num: str, lint_files: List[Path]) -> Tuple[int, str]:
         """ Run mypy in pack dir
 
         Args:
-            py_num(float): The python version in use
+            py_num(str): The python version in use
             lint_files(List[Path]): file to perform lint
 
         Returns:
@@ -517,11 +521,11 @@ class Linter:
 
         return SUCCESS, ""
 
-    def _run_vulture(self, py_num: float, lint_files: List[Path]) -> Tuple[int, str]:
+    def _run_vulture(self, py_num: str, lint_files: List[Path]) -> Tuple[int, str]:
         """ Run mypy in pack dir
 
         Args:
-            py_num(float): The python version in use
+            py_num(str): The python version in use
             lint_files(List[Path]): file to perform lint
 
         Returns:
@@ -663,10 +667,13 @@ class Linter:
         test_image_id = ""
         # Get requirements file for image
         requirements = []
-        if 2 < docker_base_image[1] < 3:
-            requirements = self._req_2
-        elif docker_base_image[1] > 3:
-            requirements = self._req_3
+
+        if docker_base_image[1] != -1:
+            py_ver = parse(docker_base_image[1]).major
+            if py_ver == 2:
+                requirements = self._req_2
+            elif py_ver == 3:
+                requirements = self._req_3
         # Using DockerFile template
         file_loader = FileSystemLoader(Path(__file__).parent / 'templates')
         env = Environment(loader=file_loader, lstrip_blocks=True, trim_blocks=True, autoescape=True)

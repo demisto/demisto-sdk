@@ -44,12 +44,11 @@ ID_SET_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Cla
 
 CONTENT_MP_V2_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
                           'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
-                          'Mappers', 'Packs', 'Lists', 'Jobs']
+                          'Mappers', 'Packs', 'Lists']
 
 ID_SET_MP_V2_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Classifiers',
                          'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
-                         'Mappers', 'Lists', 'Jobs']
-
+                         'Mappers', 'Lists']
 
 BUILT_IN_FIELDS = [
     "name",
@@ -94,7 +93,25 @@ BUILT_IN_FIELDS = [
 ]
 
 
-def should_skip_item_by_mp(file_path: str, marketplace: str, print_logs: bool = False):
+def add_item_to_exclusion_dict(excluded_items_from_id_set: dict, file_path: str, item_id: str) -> None:
+    """
+    Adds an item to the exclusion dict
+
+    Args:
+        excluded_items_from_id_set: the dict that holds the excluded items, aggregated by packs
+        file_path: the file path of the item
+        item_id: the ID of the item
+
+    """
+    pack_name = get_pack_name(file_path)
+    item_type = find_type(file_path, ignore_sub_categories=True).value
+
+    item_type = "classifier" if item_type == "classifier_5_9_9" else item_type
+    excluded_items_from_id_set[pack_name] = {(item_type, item_id)}  # set of tuples
+
+
+def should_skip_item_by_mp(file_path: str, marketplace: str, excluded_items_from_id_set: dict,
+                           print_logs: bool = False):
     """
     Checks if the item given (as path) should be part of the current generated id set.
      The checks are in this order:
@@ -106,6 +123,8 @@ def should_skip_item_by_mp(file_path: str, marketplace: str, print_logs: bool = 
     Args:
         file_path: path to content item
         marketplace: the marketplace this current generated id set is for
+        excluded_items_from_id_set: the dict that holds the excluded items, aggregated by packs
+        print_logs: whether to pring logs
 
     Returns: True if should be skipped, else False
 
@@ -115,19 +134,28 @@ def should_skip_item_by_mp(file_path: str, marketplace: str, print_logs: bool = 
     file_type = Path(file_path).suffix
     try:
         item_data = get_file(file_path, file_type)
-        if item_data.get('marketplaces'):
-            if marketplace not in item_data.get('marketplaces'):
-                if print_logs:
-                    print(f'Skipping {file_path} due to mismatch with the given marketplace')
-                return True
     except (ValueError, FileNotFoundError, IsADirectoryError):
         return True
 
+    if item_data.get('marketplaces'):
+        if marketplace not in item_data.get('marketplaces'):
+            if print_logs:
+                print(f'Skipping {file_path} due to mismatch with the given marketplace')
+            if "pack_metadata" not in file_path:  # only add pack items to the exclusion dict, not whole packs
+                add_item_to_exclusion_dict(excluded_items_from_id_set, file_path,
+                                           item_data.get("id", item_data.get('commonfields', {}).get('id', '')))
+            return True
+
     # second check, check the metadata of the pack
-    if marketplace not in get_mp_types_from_metadata_by_item(file_path):
+    elif marketplace not in get_mp_types_from_metadata_by_item(file_path):
         if print_logs:
             print(f'Skipping {file_path} due to mismatch with the given marketplace')
+        if "pack_metadata" not in file_path:  # only add pack items to the exclusion dict, not whole packs
+            add_item_to_exclusion_dict(excluded_items_from_id_set, file_path,
+                                       item_data.get("id", item_data.get('commonfields', {}).get('id', '')))
         return True
+
+    return False
 
 
 def build_tasks_graph(playbook_data):
@@ -894,7 +922,7 @@ def get_pack_metadata_data(file_path, print_logs: bool, marketplace: str = 'xsoa
         if print_logs:
             print(f'adding {file_path} to id_set')
 
-        if should_skip_item_by_mp(file_path, marketplace, print_logs):
+        if should_skip_item_by_mp(file_path, marketplace, {}, print_logs):
             return {}
 
         if print_logs:
@@ -1064,7 +1092,7 @@ def get_depends_on(data_dict):
     return depends_on_list, command_to_integration
 
 
-def process_integration(file_path: str, print_logs: bool, marketplace: str = 'xsoar') -> list:
+def process_integration(file_path: str, print_logs: bool, marketplace: str = 'xsoar') -> Tuple[list, dict]:
     """
     Process integration dir or file
 
@@ -1074,13 +1102,14 @@ def process_integration(file_path: str, print_logs: bool, marketplace: str = 'xs
         marketplace (str): the marketplace this id set is designated for (xsoar or )
 
     Returns:
-        list: integration data list (may be empty)
+        integration data list (may be empty), a dict of excluded items from the id set
     """
     res = []
+    excluded_items_from_id_set = {}
     try:
         if os.path.isfile(file_path):
-            if should_skip_item_by_mp(file_path, marketplace, print_logs):
-                return []
+            if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, print_logs):
+                return [], excluded_items_from_id_set
             if find_type(file_path) in (FileType.INTEGRATION, FileType.BETA_INTEGRATION):
                 if print_logs:
                     print(f'adding {file_path} to id_set')
@@ -1089,8 +1118,8 @@ def process_integration(file_path: str, print_logs: bool, marketplace: str = 'xs
             # package integration
             package_name = os.path.basename(file_path)
             file_path = os.path.join(file_path, '{}.yml'.format(package_name))
-            if should_skip_item_by_mp(file_path, marketplace, print_logs):
-                return []
+            if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, print_logs):
+                return [], excluded_items_from_id_set
             if os.path.isfile(file_path):
                 # locally, might have leftover dirs without committed files
                 if print_logs:
@@ -1100,15 +1129,16 @@ def process_integration(file_path: str, print_logs: bool, marketplace: str = 'xs
         print_error(f'failed to process {file_path}, Error: {str(exp)}')
         raise
 
-    return res
+    return res, excluded_items_from_id_set
 
 
-def process_script(file_path: str, print_logs: bool, marketplace: str = 'xsoar') -> list:
+def process_script(file_path: str, print_logs: bool, marketplace: str = 'xsoar') -> Tuple[list, dict]:
     res = []
+    excluded_items_from_id_set = {}
     try:
         if os.path.isfile(file_path):
-            if should_skip_item_by_mp(file_path, marketplace, print_logs):
-                return []
+            if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, print_logs):
+                return [], excluded_items_from_id_set
             if find_type(file_path) == FileType.SCRIPT:
                 if print_logs:
                     print(f'adding {file_path} to id_set')
@@ -1117,8 +1147,8 @@ def process_script(file_path: str, print_logs: bool, marketplace: str = 'xsoar')
             # package script
             unifier = YmlUnifier(file_path)
             yml_path, code = unifier.get_script_or_integration_package_data()
-            if should_skip_item_by_mp(yml_path, marketplace, print_logs):
-                return []
+            if should_skip_item_by_mp(yml_path, marketplace, excluded_items_from_id_set, print_logs):
+                return [], excluded_items_from_id_set
             if print_logs:
                 print(f'adding {file_path} to id_set')
             res.append(get_script_data(yml_path, script_code=code))
@@ -1126,10 +1156,11 @@ def process_script(file_path: str, print_logs: bool, marketplace: str = 'xsoar')
         print_error(f'failed to process {file_path}, Error: {str(exp)}')
         raise
 
-    return res
+    return res, excluded_items_from_id_set
 
 
-def process_incident_fields(file_path: str, print_logs: bool, incidents_types_list: list, marketplace: str = 'xsoar') -> list:
+def process_incident_fields(file_path: str, print_logs: bool, incidents_types_list: list, marketplace: str = 'xsoar') -> \
+        Tuple[list, dict]:
     """
     Process a incident_fields JSON file
     Args:
@@ -1138,12 +1169,13 @@ def process_incident_fields(file_path: str, print_logs: bool, incidents_types_li
         incidents_types_list: List of all the incident types in the system.
 
     Returns:
-        a list of incident field data.
+        a list of incident field data, a dict of excluded items from the id set
     """
     res = []
+    excluded_items_from_id_set = {}
     try:
-        if should_skip_item_by_mp(file_path, marketplace, print_logs):
-            return []
+        if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, print_logs):
+            return [], excluded_items_from_id_set
         if find_type(file_path) == FileType.INCIDENT_FIELD:
             if print_logs:
                 print(f'adding {file_path} to id_set')
@@ -1151,10 +1183,11 @@ def process_incident_fields(file_path: str, print_logs: bool, incidents_types_li
     except Exception as exp:  # noqa
         print_error(f'failed to process {file_path}, Error: {str(exp)}')
         raise
-    return res
+    return res, excluded_items_from_id_set
 
 
-def process_indicator_types(file_path: str, print_logs: bool, all_integrations: list, marketplace: str = 'xsoar') -> list:
+def process_indicator_types(file_path: str, print_logs: bool, all_integrations: list, marketplace: str = 'xsoar') -> \
+        Tuple[list, dict]:
     """
     Process a indicator types JSON file
     Args:
@@ -1163,14 +1196,16 @@ def process_indicator_types(file_path: str, print_logs: bool, all_integrations: 
         all_integrations: The integrations section in the id-set
 
     Returns:
-        a list of indicator type data.
+        a list of indicator type data, a dict of excluded items from the id set
     """
     res = []
+    excluded_items_from_id_set = {}
+
     try:
-        if should_skip_item_by_mp(file_path, marketplace, print_logs):
+        if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, print_logs):
             if print_logs:
                 print(f'Skipping {file_path} due to mismatch with the marketplace this id set is generated for.')
-            return []
+            return [], excluded_items_from_id_set
         # ignore old reputations.json files
         if not os.path.basename(file_path) == 'reputations.json' and find_type(file_path) == FileType.REPUTATION:
             if print_logs:
@@ -1180,11 +1215,11 @@ def process_indicator_types(file_path: str, print_logs: bool, all_integrations: 
         print_error(f'failed to process {file_path}, Error: {str(exp)}')
         raise
 
-    return res
+    return res, excluded_items_from_id_set
 
 
 def process_generic_items(file_path: str, print_logs: bool, marketplace: str = 'xsoar',
-                          generic_types_list: list = None) -> list:
+                          generic_types_list: list = None) -> Tuple[list, dict]:
     """
     Process a generic field JSON file
     Args:
@@ -1194,12 +1229,14 @@ def process_generic_items(file_path: str, print_logs: bool, marketplace: str = '
         generic_modules_list: List of all the generic modules in the system.
 
     Returns:
-        a list of generic items data: fields or types.
+        a list of generic items data: fields or types, a dict of excluded items from the id set
     """
     res = []
+    excluded_items_from_id_set = {}
+
     try:
-        if should_skip_item_by_mp(file_path, marketplace, print_logs):
-            return []
+        if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, print_logs):
+            return [], excluded_items_from_id_set
         if find_type(file_path) == FileType.GENERIC_FIELD:
             if print_logs:
                 print(f'adding {file_path} to id_set')
@@ -1211,7 +1248,7 @@ def process_generic_items(file_path: str, print_logs: bool, marketplace: str = '
     except Exception as exp:  # noqa
         print_error(f'failed to process {file_path}, Error: {str(exp)}')
         raise
-    return res
+    return res, excluded_items_from_id_set
 
 
 def process_jobs(file_path: str, print_logs: bool, marketplace: str = 'xsoar') -> list:
@@ -1226,7 +1263,7 @@ def process_jobs(file_path: str, print_logs: bool, marketplace: str = 'xsoar') -
     """
     result: List = []
     try:
-        if should_skip_item_by_mp(file_path, marketplace, print_logs):
+        if should_skip_item_by_mp(file_path, marketplace, {}, print_logs):
             return []
         if find_type(file_path) == FileType.JOB:
             if print_logs:
@@ -1239,7 +1276,7 @@ def process_jobs(file_path: str, print_logs: bool, marketplace: str = 'xsoar') -
 
 
 def process_general_items(file_path: str, print_logs: bool, expected_file_types: Tuple[FileType],
-                          data_extraction_func: Callable, marketplace: str = 'xsoar') -> list:
+                          data_extraction_func: Callable, marketplace: str = 'xsoar') -> Tuple[list, dict]:
     """
     Process a general item file.
     expected file in one of the following:
@@ -1261,13 +1298,14 @@ def process_general_items(file_path: str, print_logs: bool, expected_file_types:
         data_extraction_func: a function that given a file path will return an id-set data dict.
         marketplace: the marketplace this id set is generated for
     Returns:
-        a list of item data.
+        a list of item data, a dict of excluded items from the id set
     """
     res = []
+    excluded_items_from_id_set = {}
     try:
         if find_type(file_path) in expected_file_types:
-            if should_skip_item_by_mp(file_path, marketplace, print_logs):
-                return []
+            if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, print_logs):
+                return [], excluded_items_from_id_set
             if print_logs:
                 print(f'adding {file_path} to id_set')
             res.append(data_extraction_func(file_path))
@@ -1275,7 +1313,7 @@ def process_general_items(file_path: str, print_logs: bool, expected_file_types:
         print_error(f'failed to process {file_path}, Error: {str(exp)}')
         raise
 
-    return res
+    return res, excluded_items_from_id_set
 
 
 def process_test_playbook_path(file_path: str, print_logs: bool, marketplace: str = 'xsoar') -> tuple:
@@ -1294,7 +1332,7 @@ def process_test_playbook_path(file_path: str, print_logs: bool, marketplace: st
     try:
         if print_logs:
             print(f'adding {file_path} to id_set')
-        if should_skip_item_by_mp(file_path, marketplace, print_logs):
+        if should_skip_item_by_mp(file_path, marketplace, {}, print_logs):
             return None, None
         if find_type(file_path) == FileType.TEST_SCRIPT:
             script = get_script_data(file_path)
@@ -1707,6 +1745,8 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     lists_list = []
     jobs_list = []
     packs_dict: Dict[str, Dict] = {}
+    excluded_items_from_id_set = {}
+    excluded_items_by_type = {}
 
     pool = Pool(processes=int(cpu_count()))
 
@@ -1727,46 +1767,52 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
 
         if 'Integrations' in objects_to_create:
             print_color("\nStarting iteration over Integrations", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_integration,
-                                        print_logs=print_logs,
-                                        marketplace=marketplace,
-                                        ),
-                                get_integrations_paths(pack_to_create)):
+            for arr, excluded_items in pool.map(partial(process_integration,
+                                                        print_logs=print_logs,
+                                                        marketplace=marketplace,
+                                                        ),
+                                                get_integrations_paths(pack_to_create)):
 
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('integrations', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('integrations',
+                                                                                               []).append(_id)
                 integration_list.extend(arr)
+                update_excluded_items_dict(excluded_items_from_id_set, excluded_items, excluded_items_by_type)
 
         progress_bar.update(1)
 
         if 'Playbooks' in objects_to_create:
             print_color("\nStarting iteration over Playbooks", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_general_items,
-                                        print_logs=print_logs,
-                                        expected_file_types=(FileType.PLAYBOOK,),
-                                        data_extraction_func=get_playbook_data,
-                                        marketplace=marketplace,
-                                        ),
-                                get_playbooks_paths(pack_to_create)):
+            for arr, excluded_items in pool.map(partial(process_general_items,
+                                                        print_logs=print_logs,
+                                                        expected_file_types=(FileType.PLAYBOOK,),
+                                                        data_extraction_func=get_playbook_data,
+                                                        marketplace=marketplace
+                                                        ),
+                                                get_playbooks_paths(pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('playbooks', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('playbooks', []).append(
+                            _id)
                 playbooks_list.extend(arr)
+                update_excluded_items_dict(excluded_items_from_id_set, excluded_items, excluded_items_by_type)
 
         progress_bar.update(1)
 
         if 'Scripts' in objects_to_create:
             print_color("\nStarting iteration over Scripts", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_script,
-                                        print_logs=print_logs,
-                                        marketplace=marketplace,
-                                        ),
-                                get_general_paths(SCRIPTS_DIR, pack_to_create)):
+            for arr, excluded_items in pool.map(partial(process_script,
+                                                        print_logs=print_logs,
+                                                        marketplace=marketplace,
+                                                        ),
+                                                get_general_paths(SCRIPTS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('scripts', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('scripts', []).append(
+                            _id)
                 scripts_list.extend(arr)
+                update_excluded_items_dict(excluded_items_from_id_set, excluded_items, excluded_items_by_type)
 
         progress_bar.update(1)
 
@@ -1786,217 +1832,245 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
 
         if 'Classifiers' in objects_to_create:
             print_color("\nStarting iteration over Classifiers", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_general_items,
-                                        print_logs=print_logs,
-                                        expected_file_types=(FileType.CLASSIFIER, FileType.OLD_CLASSIFIER),
-                                        data_extraction_func=get_classifier_data,
-                                        marketplace=marketplace,
-                                        ),
-                                get_general_paths(CLASSIFIERS_DIR, pack_to_create)):
+            for arr, excluded_items in pool.map(partial(process_general_items,
+                                                        print_logs=print_logs,
+                                                        expected_file_types=(
+                                                        FileType.CLASSIFIER, FileType.OLD_CLASSIFIER),
+                                                        data_extraction_func=get_classifier_data,
+                                                        marketplace=marketplace,
+                                                        ),
+                                                get_general_paths(CLASSIFIERS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('classifiers', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('classifiers',
+                                                                                               []).append(_id)
                 classifiers_list.extend(arr)
+                update_excluded_items_dict(excluded_items_from_id_set, excluded_items, excluded_items_by_type)
 
         progress_bar.update(1)
 
         if 'Dashboards' in objects_to_create:
             print_color("\nStarting iteration over Dashboards", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_general_items,
-                                        print_logs=print_logs,
-                                        expected_file_types=(FileType.DASHBOARD,),
-                                        data_extraction_func=get_dashboard_data,
-                                        marketplace=marketplace,
-                                        ),
-                                get_general_paths(DASHBOARDS_DIR, pack_to_create)):
+            for arr, excluded_items in pool.map(partial(process_general_items,
+                                                        print_logs=print_logs,
+                                                        expected_file_types=(FileType.DASHBOARD,),
+                                                        data_extraction_func=get_dashboard_data,
+                                                        marketplace=marketplace,
+                                                        ),
+                                                get_general_paths(DASHBOARDS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('dashboards', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('dashboards', []).append(
+                            _id)
                 dashboards_list.extend(arr)
+                update_excluded_items_dict(excluded_items_from_id_set, excluded_items, excluded_items_by_type)
 
         progress_bar.update(1)
 
         if 'IncidentTypes' in objects_to_create:
             print_color("\nStarting iteration over Incident Types", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_general_items,
-                                        print_logs=print_logs,
-                                        expected_file_types=(FileType.INCIDENT_TYPE,),
-                                        data_extraction_func=get_incident_type_data,
-                                        marketplace=marketplace,
-                                        ),
-                                get_general_paths(INCIDENT_TYPES_DIR, pack_to_create)):
+            for arr, excluded_items in pool.map(partial(process_general_items,
+                                                        print_logs=print_logs,
+                                                        expected_file_types=(FileType.INCIDENT_TYPE,),
+                                                        data_extraction_func=get_incident_type_data,
+                                                        marketplace=marketplace,
+                                                        ),
+                                                get_general_paths(INCIDENT_TYPES_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('incidentTypes', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('incidentTypes',
+                                                                                               []).append(_id)
                 incident_type_list.extend(arr)
+                update_excluded_items_dict(excluded_items_from_id_set, excluded_items, excluded_items_by_type)
 
         progress_bar.update(1)
 
         # Has to be called after 'IncidentTypes' is called
         if 'IncidentFields' in objects_to_create:
             print_color("\nStarting iteration over Incident Fields", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_incident_fields,
-                                        print_logs=print_logs,
-                                        incidents_types_list=incident_type_list,
-                                        marketplace=marketplace,
-                                        ),
-                                get_general_paths(INCIDENT_FIELDS_DIR, pack_to_create)):
+            for arr, excluded_items in pool.map(partial(process_incident_fields,
+                                                        print_logs=print_logs,
+                                                        incidents_types_list=incident_type_list,
+                                                        marketplace=marketplace,
+                                                        ),
+                                                get_general_paths(INCIDENT_FIELDS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('incidentFields', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('incidentFields',
+                                                                                               []).append(_id)
                 incident_fields_list.extend(arr)
+                update_excluded_items_dict(excluded_items_from_id_set, excluded_items, excluded_items_by_type)
 
         progress_bar.update(1)
 
         if 'IndicatorFields' in objects_to_create:
             print_color("\nStarting iteration over Indicator Fields", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_general_items,
-                                        print_logs=print_logs,
-                                        expected_file_types=(FileType.INDICATOR_FIELD,),
-                                        data_extraction_func=get_general_data,
-                                        marketplace=marketplace,
-                                        ),
-                                get_general_paths(INDICATOR_FIELDS_DIR, pack_to_create)):
+            for arr, excluded_items in pool.map(partial(process_general_items,
+                                                        print_logs=print_logs,
+                                                        expected_file_types=(FileType.INDICATOR_FIELD,),
+                                                        data_extraction_func=get_general_data,
+                                                        marketplace=marketplace,
+                                                        ),
+                                                get_general_paths(INDICATOR_FIELDS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('indicatorFields', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('indicatorFields',
+                                                                                               []).append(_id)
                 indicator_fields_list.extend(arr)
+                update_excluded_items_dict(excluded_items_from_id_set, excluded_items, excluded_items_by_type)
 
         progress_bar.update(1)
 
         # Has to be called after 'Integrations' is called
         if 'IndicatorTypes' in objects_to_create:
             print_color("\nStarting iteration over Indicator Types", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_indicator_types,
-                                        print_logs=print_logs,
-                                        all_integrations=integration_list,
-                                        marketplace=marketplace,
-                                        ),
-                                get_general_paths(INDICATOR_TYPES_DIR, pack_to_create)):
+            for arr, excluded_items in pool.map(partial(process_indicator_types,
+                                                        print_logs=print_logs,
+                                                        all_integrations=integration_list,
+                                                        marketplace=marketplace,
+                                                        ),
+                                                get_general_paths(INDICATOR_TYPES_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('indicatorTypes', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('indicatorTypes',
+                                                                                               []).append(_id)
                 indicator_types_list.extend(arr)
+                update_excluded_items_dict(excluded_items_from_id_set, excluded_items, excluded_items_by_type)
 
         progress_bar.update(1)
 
         if 'Layouts' in objects_to_create:
             print_color("\nStarting iteration over Layouts", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_general_items,
-                                        print_logs=print_logs,
-                                        expected_file_types=(FileType.LAYOUT,),
-                                        data_extraction_func=get_layout_data,
-                                        marketplace=marketplace,
-                                        ),
-                                get_general_paths(LAYOUTS_DIR, pack_to_create)):
+            for arr, excluded_items in pool.map(partial(process_general_items,
+                                                        print_logs=print_logs,
+                                                        expected_file_types=(FileType.LAYOUT,),
+                                                        data_extraction_func=get_layout_data,
+                                                        marketplace=marketplace,
+                                                        ),
+                                                get_general_paths(LAYOUTS_DIR, pack_to_create)):
                 layouts_list.extend(arr)
-            for arr in pool.map(partial(process_general_items,
-                                        print_logs=print_logs,
-                                        expected_file_types=(FileType.LAYOUTS_CONTAINER,),
-                                        data_extraction_func=get_layoutscontainer_data,
-                                        marketplace=marketplace,
-                                        ),
-                                get_general_paths(LAYOUTS_DIR, pack_to_create)):
+                update_excluded_items_dict(excluded_items_from_id_set, excluded_items, excluded_items_by_type)
+
+            for arr, excluded_items in pool.map(partial(process_general_items,
+                                                        print_logs=print_logs,
+                                                        expected_file_types=(FileType.LAYOUTS_CONTAINER,),
+                                                        data_extraction_func=get_layoutscontainer_data,
+                                                        marketplace=marketplace,
+                                                        ),
+                                                get_general_paths(LAYOUTS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('layouts', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('layouts', []).append(
+                            _id)
                 layouts_list.extend(arr)
+                update_excluded_items_dict(excluded_items_from_id_set, excluded_items, excluded_items_by_type)
 
         progress_bar.update(1)
 
         if 'Reports' in objects_to_create:
             print_color("\nStarting iteration over Reports", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_general_items,
-                                        print_logs=print_logs,
-                                        expected_file_types=(FileType.REPORT,),
-                                        data_extraction_func=get_report_data,
-                                        marketplace=marketplace,
-                                        ),
-                                get_general_paths(REPORTS_DIR, pack_to_create)):
+            for arr, excluded_items in pool.map(partial(process_general_items,
+                                                        print_logs=print_logs,
+                                                        expected_file_types=(FileType.REPORT,),
+                                                        data_extraction_func=get_report_data,
+                                                        marketplace=marketplace,
+                                                        ),
+                                                get_general_paths(REPORTS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('reports', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('reports', []).append(
+                            _id)
                 reports_list.extend(arr)
+                update_excluded_items_dict(excluded_items_from_id_set, excluded_items, excluded_items_by_type)
 
         progress_bar.update(1)
 
         if 'Widgets' in objects_to_create:
             print_color("\nStarting iteration over Widgets", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_general_items,
-                                        print_logs=print_logs,
-                                        expected_file_types=(FileType.WIDGET,),
-                                        data_extraction_func=get_widget_data,
-                                        marketplace=marketplace,
-                                        ),
-                                get_general_paths(WIDGETS_DIR, pack_to_create)):
+            for arr, excluded_items in pool.map(partial(process_general_items,
+                                                        print_logs=print_logs,
+                                                        expected_file_types=(FileType.WIDGET,),
+                                                        data_extraction_func=get_widget_data,
+                                                        marketplace=marketplace,
+                                                        ),
+                                                get_general_paths(WIDGETS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('widgets', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('widgets', []).append(
+                            _id)
                 widgets_list.extend(arr)
+                update_excluded_items_dict(excluded_items_from_id_set, excluded_items, excluded_items_by_type)
 
         progress_bar.update(1)
 
         if 'Mappers' in objects_to_create:
             print_color("\nStarting iteration over Mappers", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_general_items,
-                                        print_logs=print_logs,
-                                        expected_file_types=(FileType.MAPPER,),
-                                        data_extraction_func=get_mapper_data,
-                                        marketplace=marketplace,
-                                        ),
-                                get_general_paths(MAPPERS_DIR, pack_to_create)):
+            for arr, excluded_items in pool.map(partial(process_general_items,
+                                                        print_logs=print_logs,
+                                                        expected_file_types=(FileType.MAPPER,),
+                                                        data_extraction_func=get_mapper_data,
+                                                        marketplace=marketplace,
+                                                        ),
+                                                get_general_paths(MAPPERS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('mappers', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('mappers', []).append(
+                            _id)
                 mappers_list.extend(arr)
+                update_excluded_items_dict(excluded_items_from_id_set, excluded_items, excluded_items_by_type)
 
         progress_bar.update(1)
 
         if 'Lists' in objects_to_create:
             print_color("\nStarting iteration over Lists", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_general_items,
-                                        print_logs=print_logs,
-                                        expected_file_types=(FileType.LISTS,),
-                                        data_extraction_func=get_list_data,
-                                        marketplace=marketplace,
-                                        ),
-                                get_general_paths(LISTS_DIR, pack_to_create)):
+            for arr, excluded_items in pool.map(partial(process_general_items,
+                                                        print_logs=print_logs,
+                                                        expected_file_types=(FileType.LISTS,),
+                                                        data_extraction_func=get_list_data,
+                                                        marketplace=marketplace,
+                                                        ),
+                                                get_general_paths(LISTS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
                         packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('lists', []).append(_id)
                 lists_list.extend(arr)
+                update_excluded_items_dict(excluded_items_from_id_set, excluded_items, excluded_items_by_type)
 
         progress_bar.update(1)
 
         if 'GenericDefinitions' in objects_to_create:
             print_color("\nStarting iteration over Generic Definitions", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_general_items,
-                                        expected_file_types=(FileType.GENERIC_DEFINITION,),
-                                        data_extraction_func=get_general_data,
-                                        print_logs=print_logs,
-                                        marketplace=marketplace,
-                                        ),
-                                get_general_paths(GENERIC_DEFINITIONS_DIR, pack_to_create)):
+            for arr, excluded_items in pool.map(partial(process_general_items,
+                                                        expected_file_types=(FileType.GENERIC_DEFINITION,),
+                                                        data_extraction_func=get_general_data,
+                                                        print_logs=print_logs,
+                                                        marketplace=marketplace,
+                                                        ),
+                                                get_general_paths(GENERIC_DEFINITIONS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('genericDefinitions', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('genericDefinitions',
+                                                                                               []).append(_id)
                 generic_definitions_list.extend(arr)
+                update_excluded_items_dict(excluded_items_from_id_set, excluded_items, excluded_items_by_type)
 
         progress_bar.update(1)
 
         if 'GenericModules' in objects_to_create:
             print_color("\nStarting iteration over Generic Modules", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_general_items,
-                                        print_logs=print_logs,
-                                        expected_file_types=(FileType.GENERIC_MODULE,),
-                                        data_extraction_func=get_generic_module_data,
-                                        marketplace=marketplace,
-                                        ),
-                                get_general_paths(GENERIC_MODULES_DIR, pack_to_create)):
+            for arr, excluded_items in pool.map(partial(process_general_items,
+                                                        print_logs=print_logs,
+                                                        expected_file_types=(FileType.GENERIC_MODULE,),
+                                                        data_extraction_func=get_generic_module_data,
+                                                        marketplace=marketplace,
+                                                        ),
+                                                get_general_paths(GENERIC_MODULES_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('genericModules', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('genericModules',
+                                                                                               []).append(_id)
                 generic_modules_list.extend(arr)
+                update_excluded_items_dict(excluded_items_from_id_set, excluded_items, excluded_items_by_type)
 
         progress_bar.update(1)
 
@@ -2009,15 +2083,17 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                 get_generic_entities_paths(GENERIC_TYPES_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('genericTypes', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('genericTypes',
+                                                                                               []).append(_id)
                 generic_types_list.extend(arr)
+                update_excluded_items_dict(excluded_items_from_id_set, excluded_items, excluded_items_by_type)
 
         progress_bar.update(1)
 
         # Has to be called after 'GenericTypes' is called
         if 'GenericFields' in objects_to_create:
             print_color("\nStarting iteration over Generic Fields", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_generic_items,
+            for arr, excluded_items in pool.map(partial(process_generic_items,
                                         print_logs=print_logs,
                                         generic_types_list=generic_types_list,
                                         marketplace=marketplace,
@@ -2025,8 +2101,10 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                 get_generic_entities_paths(GENERIC_FIELDS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('genericFields', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('genericFields',
+                                                                                               []).append(_id)
                 generic_fields_list.extend(arr)
+                update_excluded_items_dict(excluded_items_from_id_set, excluded_items, excluded_items_by_type)
 
         progress_bar.update(1)
 
@@ -2080,11 +2158,12 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
 
     exec_time = time.time() - start_time
     print_color("Finished the creation of the id_set. Total time: {} seconds".format(exec_time), LOG_COLORS.GREEN)
+
     duplicates = find_duplicates(new_ids_dict, print_logs, marketplace)
     if any(duplicates) and fail_on_duplicates:
         raise Exception(f'The following ids were found duplicates\n{json.dumps(duplicates, indent=4)}\n')
 
-    return new_ids_dict
+    return new_ids_dict, excluded_items_from_id_set, excluded_items_by_type
 
 
 def find_duplicates(id_set, print_logs, marketplace):
@@ -2118,7 +2197,8 @@ def find_duplicates(id_set, print_logs, marketplace):
     return lists_to_return
 
 
-def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=True, external_object=None, is_create_new=False):
+def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=True, external_object=None,
+                  is_create_new=False):
     """
     Finds if id_set_subset_list contains a duplicate items with the same id_to_check.
 
@@ -2157,7 +2237,7 @@ def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=
         # If they have the same pack name and the same source they actually the same entity.
         # Added to support merge between two id-sets that contain the same pack.
         if not is_create_new and \
-                dict1.get('pack') == dict2.get('pack') and\
+                dict1.get('pack') == dict2.get('pack') and \
                 is_same_source(dict1.get('source'), dict2.get('source')):
             return False
 
@@ -2202,3 +2282,34 @@ def is_same_source(source1, source2) -> bool:
 def sort(data):
     data.sort(key=lambda r: list(r.keys())[0].lower())  # Sort data by key value
     return data
+
+
+def update_excluded_items_dict(excluded_items_from_id_set: dict, excluded_items_to_add: dict,
+                               excluded_items_by_type: dict):
+    """
+    Adds the items from 'excluded_items_to_add' to the exclusion dicts.
+
+    Args:
+        excluded_items_from_id_set: the current dictionary of items to exclude from the id_set, aggregated by packs
+        excluded_items_to_add: a dictionary of items to exclude from the id_set, aggregated by packs
+        excluded_items_by_type: a dictionary of items to exclude from the id_set, aggregated by type
+
+    Example of excluded_items_by_pack:
+    {
+        'Expanse': {('integration', 'Expanse')},
+        'ExpanseV2': {('script', 'ExpanseEvidenceDynamicSection'), ('indicatorfield', 'indicator_expansedomain')}
+        ...
+    }
+
+    Example of excluded_items_by_type:
+    {
+        'integration': {'integration1', 'integration2' ...}
+        'script' : {'script1' ...},
+        'playbook' : {...}
+        ...
+    }
+    """
+    for key, val in excluded_items_to_add.items():
+        excluded_items_from_id_set.setdefault(key, set()).update(val)
+        for tuple_item in val:
+            excluded_items_by_type.setdefault(tuple_item[0], set()).update([tuple_item[1]])

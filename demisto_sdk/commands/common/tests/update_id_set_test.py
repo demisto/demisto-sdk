@@ -5,6 +5,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+import dictdiffer
 
 import pytest
 
@@ -447,7 +448,7 @@ class TestIntegrations:
             const_data = constant.get('Dummy Integration')
             returned_data = returned.get('Dummy Integration')
 
-            assert IsEqualFunctions.is_dicts_equal(returned_data, const_data)
+            assert IsEqualFunctions.is_dicts_equal(returned_data, const_data),tuple(dictdiffer.diff(returned_data,const_data))
 
     @staticmethod
     def test_process_integration__exception(mocker):
@@ -674,8 +675,8 @@ class TestPlaybooks:
             "StopScheduledTask",
         ],
         "implementing_playbooks": [
-            "Calculate Severity - Standard",
             "Palo Alto Networks - Malware Remediation",
+            "Calculate Severity - Standard"
         ],
         "command_to_integration": {
             "xdr-update-incident": "",
@@ -686,6 +687,7 @@ class TestPlaybooks:
         ],
         "skippable_tasks": [
             "StopScheduledTask",
+            "Palo Alto Networks - Malware Remediation",
             "autofocus-sample-analysis"
         ]
     }
@@ -698,8 +700,8 @@ class TestPlaybooks:
         "filters": ["isEqualString"],
         "transformers": ["uniq"],
         "implementing_scripts": [
-            "XDRSyncScript",
             "StopScheduledTask",
+            "XDRSyncScript"
         ],
         "implementing_playbooks": [
             "Calculate Severity - Standard",
@@ -714,6 +716,7 @@ class TestPlaybooks:
         ],
         "skippable_tasks": [
             "StopScheduledTask",
+            "Palo Alto Networks - Malware Remediation",
             "autofocus-sample-analysis"
         ],
         "has_alternative_meta": True
@@ -743,6 +746,7 @@ class TestPlaybooks:
         ],
         "skippable_tasks": [
             "StopScheduledTask",
+            "Palo Alto Networks - Malware Remediation",
             "autofocus-sample-analysis"
         ],
         "has_alternative_meta": True
@@ -756,7 +760,7 @@ class TestPlaybooks:
         file_path = TESTS_DIR + '/test_files/DummyPack/Playbooks/DummyPlaybook.yml'
         data = get_playbook_data(file_path)['Dummy Playbook']
 
-        assert IsEqualFunctions.is_dicts_equal(data, TestPlaybooks.PLAYBOOK_DATA)
+        assert IsEqualFunctions.is_dicts_equal(data, TestPlaybooks.PLAYBOOK_DATA,simple_comparison=True)
 
     @staticmethod
     def test_get_playbook_data_with_alternative_fields_top_level():
@@ -791,7 +795,6 @@ class TestPlaybooks:
         """
         file_path = TESTS_DIR + '/test_files/alternative_meta_fields/Playbook-second_level_alternative_fields.yml'
         data = get_playbook_data(file_path)['Dummy Playbook']
-
         assert IsEqualFunctions.is_dicts_equal(data, TestPlaybooks.PLAYBOOK_DATA_ALTERNATIVE_FIELDS_SECOND_LEVEL)
 
     @staticmethod

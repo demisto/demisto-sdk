@@ -1870,8 +1870,8 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
             for arr, excluded_items_from_iteration in pool.map(partial(process_general_items,
                                                                        print_logs=print_logs,
                                                                        expected_file_types=(
-                                                                               FileType.CLASSIFIER,
-                                                                               FileType.OLD_CLASSIFIER),
+                                                                           FileType.CLASSIFIER,
+                                                                           FileType.OLD_CLASSIFIER),
                                                                        data_extraction_func=get_classifier_data,
                                                                        marketplace=marketplace,
                                                                        ),
@@ -1997,7 +1997,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
             for arr, excluded_items_from_iteration in pool.map(partial(process_general_items,
                                                                        print_logs=print_logs,
                                                                        expected_file_types=(
-                                                                       FileType.LAYOUTS_CONTAINER,),
+                                                                           FileType.LAYOUTS_CONTAINER,),
                                                                        data_extraction_func=get_layoutscontainer_data,
                                                                        marketplace=marketplace,
                                                                        ),
@@ -2091,7 +2091,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
             print_color("\nStarting iteration over Generic Definitions", LOG_COLORS.GREEN)
             for arr, excluded_items_from_iteration in pool.map(partial(process_general_items,
                                                                        expected_file_types=(
-                                                                       FileType.GENERIC_DEFINITION,),
+                                                                           FileType.GENERIC_DEFINITION,),
                                                                        data_extraction_func=get_general_data,
                                                                        print_logs=print_logs,
                                                                        marketplace=marketplace,

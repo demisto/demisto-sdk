@@ -565,7 +565,7 @@ class TestDependsOnScriptAndIntegration:
                                {('script', 'DummyScript'): {'HelloWorld': [('script', 'HelloWorldScript')]}}),
                               ("PrismaCloudComputeParseAuditAlert", {("PrismaCloudCompute", True)},
                                {('script', 'DummyScript'):
-                                    {'PrismaCloudCompute': [('script', 'PrismaCloudComputeParseAuditAlert')]}})
+                                {'PrismaCloudCompute': [('script', 'PrismaCloudComputeParseAuditAlert')]}})
                               ])
     def test_collect_scripts_depends_on_script_with_items(self, dependency_script, expected_pack, expected_items,
                                                           module_repo):
@@ -1337,10 +1337,10 @@ class TestDependsOnPlaybook:
         """
         expected_packs = {('SafeBreach', True), ('CommonScripts', True), ('CommonTypes', True)}
         expected_items = {('playbook', 'SafeBreach - Compare and Validate Insight Indicators'):
-                              {'SafeBreach': [('integration', 'SafeBreach')],
-                               'CommonScripts': [('script', 'ChangeContext'), ('script', 'Set'),
-                                                 ('script', 'SetAndHandleEmpty')],
-                               'CommonTypes': [('incident_field', 'indicator_accounttype')]}}
+                          {'SafeBreach': [('integration', 'SafeBreach')],
+                           'CommonScripts': [('script', 'ChangeContext'), ('script', 'Set'),
+                                             ('script', 'SetAndHandleEmpty')],
+                           'CommonTypes': [('incident_field', 'indicator_accounttype')]}}
         test_input = [
             {
                 "SafeBreach - Compare and Validate Insight Indicators": {
@@ -1739,9 +1739,9 @@ class TestDependsOnIncidentField:
             - Extracting the packs that the incident field depends on with the items causing the dependency.
         """
         expected_result = (
-        {('Phishing', True), ('Carbon_Black_Enterprise_Response', True)}, {('incident_field', 'Dummy Incident Field'): {
-            'Carbon_Black_Enterprise_Response': [('script', 'CBLiveFetchFiles')],
-            'Phishing': [('script', 'CheckEmailAuthenticity')]}})
+            {('Phishing', True), ('Carbon_Black_Enterprise_Response', True)}, {('incident_field', 'Dummy Incident Field'): {
+                'Carbon_Black_Enterprise_Response': [('script', 'CBLiveFetchFiles')],
+                'Phishing': [('script', 'CheckEmailAuthenticity')]}})
 
         test_input = [
             {
@@ -1981,8 +1981,8 @@ class TestDependsOnIncidentType:
         """
         expected_result = ({('AutoFocus', True), ('Volatility', True)},
                            {('incidenttype', 'Dummy Incident Type'):
-                                {'AutoFocus': [('playbook', 'Autofocus Query Samples, Sessions and Tags')],
-                                 'Volatility': [('script', 'AnalyzeMemImage')]}})
+                            {'AutoFocus': [('playbook', 'Autofocus Query Samples, Sessions and Tags')],
+                             'Volatility': [('script', 'AnalyzeMemImage')]}})
 
         test_input = [
             {
@@ -2217,8 +2217,8 @@ class TestDependsOnMappers:
             - Extracting the packs that the mapper depends on as optional dependencies and the items causing the mandatory dependency.
         """
         expected_result = (
-        {('BruteForce', False), ('PrismaCloud', False), ('AccessInvestigation', False), ('CommonTypes', True)},
-        {('mapper', 'Dummy Mapper'): {'CommonTypes': [('incidentfield', 'incident_accountid')]}})
+            {('BruteForce', False), ('PrismaCloud', False), ('AccessInvestigation', False), ('CommonTypes', True)},
+            {('mapper', 'Dummy Mapper'): {'CommonTypes': [('incidentfield', 'incident_accountid')]}})
 
         test_input = [
             {
@@ -2490,7 +2490,7 @@ class TestDependsOnJob:
             - Ensure depended-on packs are extracted and the items causing the mandatory dependencies.
         """
         expected_result = (
-        {('Pcysys', True)}, {('job', 'jobby'): {'Pcysys': [('playbook', 'Pentera Run Scan')]}})  # playbook dependant
+            {('Pcysys', True)}, {('job', 'jobby'): {'Pcysys': [('playbook', 'Pentera Run Scan')]}})  # playbook dependant
 
         selected_feeds = []
 
@@ -2583,8 +2583,8 @@ class TestDependsOnReports:
 SEARCH_PACKS_INPUT = [
     (['type'], 'IncidentFields', (set(), dict()), 'incident_field'),
     (
-    ['emailaddress'], 'IncidentFields', ({'Compliance'}, {'Compliance': [('incident_field', 'incident_emailaddress')]}),
-    'incident_field'),
+        ['emailaddress'], 'IncidentFields', ({'Compliance'}, {'Compliance': [('incident_field', 'incident_emailaddress')]}),
+        'incident_field'),
     (['E-mail Address'], 'IncidentFields',
      ({'Compliance'}, {'Compliance': [('incident_field', 'incident_emailaddress')]}), 'incident_field'),
     (['adminemail'], 'IndicatorFields',
@@ -2712,10 +2712,10 @@ class TestDependencyGraph:
 
             dependencies_items = {'pack1': {
                 ('type_item_a', 'item_a'): {'pack2': [('type_item_2', 'item2')], 'pack3': [('type_item_3', 'item3')]}},
-                                  'pack2': {('type_item_b', 'item_b'): {'pack3': [('type_item_3', 'item3')],
-                                                                        'pack2': [('type_item_2', 'item2')]}},
-                                  'pack3': {},
-                                  'pack4': {('type_item_c', 'item_c'): {'pack4': [('type_item_4', 'item4')]}}}
+                'pack2': {('type_item_b', 'item_b'): {'pack3': [('type_item_3', 'item3')],
+                                                      'pack2': [('type_item_2', 'item2')]}},
+                'pack3': {},
+                'pack4': {('type_item_c', 'item_c'): {'pack4': [('type_item_4', 'item4')]}}}
 
             return dependencies[pack_id], dependencies_items[pack_id]
 
@@ -3008,11 +3008,11 @@ def get_mock_dependency_graph():
 
     graph.add_node('pack1', mandatory_for_packs=[], depending_on_items_mandatorily={
         ('type_item_a', 'item_a'): {'pack2': ('type_item_2', 'item2'), 'pack3': ('type_item_3', 'item3')}},
-                   mandatory_for_items={}, depending_on_packs=[('pack2', True), ('pack3', True)])
+        mandatory_for_items={}, depending_on_packs=[('pack2', True), ('pack3', True)])
     graph.add_node('pack2', mandatory_for_packs=['pack1'], depending_on_items_mandatorily={
         ('type_item_b', 'item_b'): {'pack3': ('type_item_3', 'item3'), 'pack2': ('type_item_2', 'item2')}},
-                   mandatory_for_items={('type_item_2', 'item2'): {'pack1': ('type_item_a', 'item_a')}},
-                   depending_on_packs=[('pack3', True), ('pack2', True)])
+        mandatory_for_items={('type_item_2', 'item2'): {'pack1': ('type_item_a', 'item_a')}},
+        depending_on_packs=[('pack3', True), ('pack2', True)])
     graph.add_node('pack3', mandatory_for_packs=['pack1', 'pack2'], depending_on_items_mandatorily={},
                    mandatory_for_items={('type_item_3', 'item3'): {'pack1': ('type_item_a', 'item_a'),
                                                                    'pack2': ('type_item_b', 'item_b')}},

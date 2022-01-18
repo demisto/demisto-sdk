@@ -1945,7 +1945,7 @@ class PackDependencies:
             update_pack_metadata: bool = False,
             verbose: bool = False,
             use_pack_metadata: bool = False,
-            input_paths: Tuple = None,
+            input_paths: list = None,
             all_packs_dependencies: bool = False,
             get_dependent_on: bool = False,
             output_path: str = None,
@@ -2122,7 +2122,7 @@ def calculate_single_pack_depends_on(pack: str, dependency_graph: nx.DiGraph, ve
                             print(f'Parsing info of dependent items {dep_item} from {dep_pack} on item {item} from '
                                   f'{pack} from graph')
                         if first_level_dependencies[man_pack].get('dependent_items'):
-                            first_level_dependencies[man_pack]['dependent_items'].append(
+                            first_level_dependencies[man_pack]['dependent_items'].append(  # type:ignore
                                 (item, dep_item))  # type:ignore
                         else:
                             first_level_dependencies[man_pack]['dependent_items'] = [(item, dep_item)]  # type:ignore

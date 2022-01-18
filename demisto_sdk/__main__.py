@@ -363,7 +363,7 @@ def zip_packs(**kwargs) -> int:
 @click.option(
     '-g', '--use-git', is_flag=True, show_default=True,
     default=False,
-    help='Validate changes using git - this will check current branch\'s changes against origin/master. '
+    help='Validate changes using git - this will check current branch\'s changes against origin/master or origin/main. '
          'If the --post-commit flag is supplied: validation will run only on the current branch\'s changed files '
          'that have been committed. '
          'If the --post-commit flag is not supplied: validation will run on all changed files in the current branch, '

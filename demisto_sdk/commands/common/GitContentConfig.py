@@ -111,5 +111,8 @@ class GitContentConfig:
                            verify=False)
         if not res.ok:
             return None
-        res = res.json()
-        return res[0].get('id', None) if res else None
+        try:
+            search_results = res.json()
+            return search_results[0].get('id', None) if search_results else None
+        except Exception:
+            return None

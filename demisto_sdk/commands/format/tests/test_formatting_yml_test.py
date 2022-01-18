@@ -647,10 +647,9 @@ class TestFormatting:
             - Ensure `tests` field gets the Test Playbook ID
         """
         test_files_path = os.path.join(git_path(), 'demisto_sdk', 'tests')
-        vmware_integration_yml_path = os.path.join(test_files_path, 'test_files', 'content_repo_example', 'Packs',
-                                                   'VMware',
-                                                   'Integrations', 'integration-VMware.yml')
-        formatter = IntegrationYMLFormat(input=vmware_integration_yml_path, output='')
+        integration_yml_path = os.path.join(test_files_path, 'test_files', 'Packs', 'Phishing',
+                                            'Integrations', 'integration-VMware.yml')
+        formatter = IntegrationYMLFormat(input=integration_yml_path, output='')
         res = formatter.update_tests()
         assert res is None
         assert formatter.data.get('tests') == ['VMWare Test']
@@ -669,6 +668,43 @@ class TestFormatting:
         formatter.update_beta_integration()
         assert '(Beta)' in formatter.data['display']
         assert formatter.data['beta'] is True
+
+    @patch('builtins.input', lambda *args: 'no')
+    def test_update_tests_on_playbook_with_test_playbook(self):
+        """
+        Given
+            - An integration file.
+        When
+            - Run format on the integration
+        Then
+            - Ensure run_format return value is 0
+            - Ensure `tests` field gets the Test Playbook ID
+        """
+        test_files_path = os.path.join(git_path(), 'demisto_sdk', 'tests')
+        playbook_yml_path = os.path.join(test_files_path, 'test_files', 'Packs', 'Phishing',
+                                         'Playbooks', 'Phishing_Investigation_-_Generic_v2_-_6_0.yml')
+        formatter = PlaybookYMLFormat(input=playbook_yml_path, output='')
+        formatter.update_tests()
+        assert set(formatter.data.get('tests')) == {'playbook-checkEmailAuthenticity-test',
+                                                    'Phishing v2 - Test - Actual Incident'}
+
+    @patch('builtins.input', lambda *args: 'no')
+    def test_update_tests_on_script_with_test_playbook(self):
+        """
+        Given
+            - An integration file.
+        When
+            - Run format on the integration
+        Then
+            - Ensure run_format return value is 0
+            - Ensure `tests` field gets the Test Playbook ID
+        """
+        test_files_path = os.path.join(git_path(), 'demisto_sdk', 'tests')
+        script_yml_path = os.path.join(test_files_path, 'test_files', 'Packs', 'Phishing', 'Scripts',
+                                       'CheckEmailAuthenticity.yml')
+        formatter = ScriptYMLFormat(input=script_yml_path, output='')
+        formatter.update_tests()
+        assert formatter.data.get('tests') == ['playbook-checkEmailAuthenticity-test']
 
     def test_update_docker_format(self, tmpdir, mocker, monkeypatch):
         """Test that script and integration formatter update docker image tag

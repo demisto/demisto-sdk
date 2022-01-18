@@ -107,6 +107,7 @@ class TestConfiguration:
         self.context_print_dt = test_configuration.get('context_print_dt')
         self.test_integrations: List[str] = self._parse_integrations_conf(test_configuration)
         self.test_instance_names: List[str] = self._parse_instance_names_conf(test_configuration)
+        self.instance_configuration: dict = test_configuration.get('instance_configuration', {})
 
     @staticmethod
     def _parse_integrations_conf(test_configuration):
@@ -250,7 +251,8 @@ class TestPlaybook:
                 return False
         return True
 
-    def configure_integrations(self, client: DefaultApi, server_context: 'ServerContext') -> bool:
+    def configure_integrations(self, client: DefaultApi, server_context: 'ServerContext',
+                               instance_configuration: dict) -> bool:
         """
         Configures all integrations that the playbook uses and return a boolean indicating the result
         Args:
@@ -266,6 +268,7 @@ class TestPlaybook:
                                                                        self.configuration.playbook_id,
                                                                        self.is_mockable,
                                                                        server_context,
+                                                                       instance_configuration,
                                                                        )
             if not instance_created:
                 self.build_context.logging_module.error(
@@ -770,6 +773,8 @@ class TestResults:
             self.empty_files.append(playbook_id)
 
     def create_result_files(self):
+        with open("./Tests/succeeded_tests.txt", "w") as succeeded_tests_file:
+            succeeded_tests_file.write('\n'.join(self.succeeded_playbooks))
         with open("./Tests/failed_tests.txt", "w") as failed_tests_file:
             failed_tests_file.write('\n'.join(self.failed_playbooks))
         with open('./Tests/skipped_tests.txt', "w") as skipped_tests_file:
@@ -1076,6 +1081,7 @@ class Integration:
                                     playbook_id: str,
                                     is_mockable: bool,
                                     server_context: 'ServerContext',
+                                    instance_configuration: dict
                                     ) -> bool:
         """
         Create an instance of the integration in the server specified in the demisto client instance.
@@ -1112,9 +1118,8 @@ class Integration:
 
         # define module instance:
         params = self.configuration.params  # type: ignore
-        incident_configuration = params.get('incident_configuration', {})
 
-        module_instance = self.create_module(instance_name, configuration, incident_configuration)
+        module_instance = self.create_module(instance_name, configuration, instance_configuration)
 
         # set server keys
         self._set_server_keys(client, server_context)
@@ -1414,8 +1419,9 @@ class TestContext:
         """
         try:
             self.build_context.logging_module.info(f'ssh tunnel command:\n{self.tunnel_command}')
+            instance_configuration = self.playbook.configuration.instance_configuration
 
-            if not self.playbook.configure_integrations(self.client, self.server_context):
+            if not self.playbook.configure_integrations(self.client, self.server_context, instance_configuration):
                 return PB_Status.FAILED
 
             test_module_result = self.playbook.run_test_module_on_integrations(self.client)

@@ -1618,7 +1618,7 @@ class ValidateManager:
         id_set = {}
         if not os.path.isfile(id_set_path):
             if not skip_id_set_creation:
-                id_set = IDSetCreator(print_logs=False).create_id_set()
+                id_set, _, _ = IDSetCreator(print_logs=False).create_id_set()
 
         else:
             id_set = open_id_set_file(id_set_path)

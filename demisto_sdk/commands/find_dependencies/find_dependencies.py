@@ -1554,7 +1554,7 @@ class PackDependencies:
         """
         pack_items = dict()
 
-        for pack_key, id_set_key in (('scripts', 'scripts',),
+        for pack_key, id_set_key in (('scripts', 'scripts'),
                                      ('playbooks', 'playbooks'),
                                      ('layouts', 'Layouts'),
                                      ('incidents_fields', 'IncidentFields'),
@@ -2024,7 +2024,7 @@ class PackDependencies:
             if skip_id_set_creation:
                 return {}
 
-            id_set = IDSetCreator(print_logs=False).create_id_set()
+            id_set, _, _ = IDSetCreator(print_logs=False).create_id_set()
 
         if is_external_repository():
             print_warning('Running in a private repository, will download the id set from official content')

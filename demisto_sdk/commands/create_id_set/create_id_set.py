@@ -106,5 +106,5 @@ def get_id_set(id_set_path: str) -> dict:
     if id_set_path:
         id_set = open_id_set_file(id_set_path)
     else:
-        id_set = IDSetCreator(print_logs=False).create_id_set()
+        id_set, _, _ = IDSetCreator(print_logs=False).create_id_set()
     return id_set

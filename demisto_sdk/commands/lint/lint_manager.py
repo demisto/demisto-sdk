@@ -93,7 +93,7 @@ class LintManager:
                 json_file_path = os.path.join(json_file_path, 'lint_outputs.json')
         if failed_unit_test_file:
             if os.path.isdir(failed_unit_test_file):
-                json_file_path = os.path.join(failed_unit_test_file, 'failed_unit_tests.json')
+                failed_unit_test_file = os.path.join(failed_unit_test_file, 'failed_unit_tests.txt')
         self.failed_unit_test_file = failed_unit_test_file
         self.json_file_path = json_file_path
         self.linters_error_list: list = []

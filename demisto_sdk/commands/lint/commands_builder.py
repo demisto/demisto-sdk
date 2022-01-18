@@ -245,7 +245,7 @@ def build_pylint_command(files: List[Path], docker_version: Optional[float] = No
 
     command = command.split(' ') + ["--msg-template='{abspath}:{line}:{column}: {msg_id} {obj}: {msg}'"]
     # Generating path patterns - file1 file2 file3,..
-    files_list = [file.name for file in files]
+    files_list = [f'pack_files/{file.name}' for file in files]
     return command + files_list
 
 

@@ -676,7 +676,7 @@ class Linter:
                     # run container with sleep command to be live container for the linters
                     create_container_start = time.time() 
                     volume = {
-                            str(self._pack_abs_dir): {'bind': '/devwork/', 'mode': 'rw'}
+                            str(self._pack_abs_dir): {'bind': '/devwork/pack_files', 'mode': 'ro'}
                     }
                     container: docker.models.containers.Container= self._docker_client.containers.run(
                         image_id,
@@ -1075,6 +1075,7 @@ class Linter:
             cov = '' if no_coverage else self._pack_abs_dir.stem
             uid = os.getuid() or 4000
             logger.debug(f'{log_prompt} - user uid for running lint/test: {uid}')  # lgtm[py/clear-text-logging-sensitive-data]
+            container_obj.exec_run("cp -r pack_files/test_data .".split(" "))
             container_exit_code, output = container_obj.exec_run(build_pytest_command(test_xml=test_xml, json=True,cov=cov).split(' '))
 
             # Getting container logs

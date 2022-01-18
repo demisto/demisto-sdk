@@ -651,8 +651,8 @@ class LintManager:
                                               repl="",
                                               string=test_case.get("name"))
                                 print(f"yuval name is {name}\n\n\n")
-                                with open(self.failed_unit_test_file, 'w+') as f:
-                                    json.dump(name, f)
+                                with open(self.failed_unit_test_file, 'a') as f:
+                                    f.write(name + '\n')
                                 print(wrapper_test.fill(name))
                                 if test_case.get("call", {}).get("longrepr"):
                                     print(wrapper_docker_image.fill(image['image']))

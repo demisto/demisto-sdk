@@ -116,6 +116,18 @@ def does_dict_have_alternative_key(data: dict) -> bool:
 
     return False
 
+def get_alternative_name_and_id(data: dict):
+    """
+
+    Args:
+        data:
+
+    Returns:
+
+    """
+    id_x2 = data.get('commonfields').get('id_x2') if data.get('commonfields') else data.get('id_x2')
+    name_x2 = data.get('name_x2')
+    return {k: v in {'id_x2': id_x2, 'name_x2': name_x2}.items() }
 
 def should_skip_item_by_mp(file_path: str, marketplace: str, print_logs: bool = False):
     """

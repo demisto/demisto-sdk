@@ -619,6 +619,8 @@ def secrets(config, **kwargs):
               type=click.Path(resolve_path=True))
 @click.option("-j", "--json-file", help="The JSON file path to which to output the command results.",
               type=click.Path(resolve_path=True))
+@click.option("-ut", "--failed_unit_test_file", help="The text file path to which to output the failed ut results.",
+              type=click.Path(resolve_path=True))
 @click.option("--no-coverage", is_flag=True, help="Do NOT run coverage report.")
 @click.option(
     "--coverage-report", help="Specify directory for the coverage report files",
@@ -656,6 +658,7 @@ def lint(**kwargs):
         quiet=kwargs.get('quiet'),  # type: ignore[arg-type]
         prev_ver=kwargs.get('prev_ver'),  # type: ignore[arg-type]
         json_file_path=kwargs.get('json_file'),  # type: ignore[arg-type]
+        failed_unit_test_file=kwargs.get('failed_unit_test_file'),  # type: ignore[arg-type]
         id_set_path=kwargs.get('id_set_path'),  # type: ignore[arg-type]
         check_dependent_api_module=kwargs.get('check_dependent_api_module'),  # type: ignore[arg-type]
     )

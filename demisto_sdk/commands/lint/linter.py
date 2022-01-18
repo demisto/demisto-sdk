@@ -673,30 +673,36 @@ class Linter:
                     if not errors:
                         break
                 if self._pkg_lint_status["pack_type"] == TYPE_PYTHON:
-                    create_container_start = time.time()    
+                    # run container with sleep command to be live container for the linters
+                    create_container_start = time.time() 
+                    volume = {
+                            str(self._pack_abs_dir): {'bind': '/devwork/', 'mode': 'rw'}
+                    }
                     container: docker.models.containers.Container= self._docker_client.containers.run(
                         image_id,
                         command=["sleep 100000"],
                         name=container_name,
                         user=f"{os.getuid()}:4000",
                         detach=True,
+                        volumes=volume,
                         environment=self._facts["env_vars"]
                     )
-                    for trial in range(3):
-                        try:
-                            copy_dir_to_container(container, self._pack_abs_dir, Path('./devwork'))
-                        except Exception as e:
-                            if trial < 2:
-                                sleep_time_sec = trial + 1
-                                logger.info(f'{container_name} - Fail to copy the pack dir to the container, sleep for {sleep_time_sec} secunds and will try additional {2 - trial} times')
-                                time.sleep(sleep_time_sec)
-                                continue
-                            else:
-                                exit_code = FAIL
-                                errors = f'{container_name} - Fail 3 times to copy the pack dir to the container - exit {str(e)}'
-                                logger.info(errors)
+                    # for trial in range(3):
+                    #     try:
+                    #         # copy the pack files to the created container
+                    #         copy_dir_to_container(container, self._pack_abs_dir, Path('./devwork'))
+                    #     except Exception as e:
+                    #         if trial < 2:
+                    #             sleep_time_sec = trial + 1
+                    #             logger.info(f'{container_name} - Fail to copy the pack dir to the container, sleep for {sleep_time_sec} secunds and will try additional {2 - trial} times')
+                    #             time.sleep(sleep_time_sec)
+                    #             continue
+                    #         else:
+                    #             exit_code = FAIL
+                    #             errors = f'{container_name} - Fail 3 times to copy the pack dir to the container - exit {str(e)}'
+                    #             logger.info(errors)
                         
-                        break
+                    #     break
                 
                     logger.info(f'create docker container take: {time.time() - create_container_start}s')
                 
@@ -1093,7 +1099,10 @@ class Linter:
                     with open(cov_file_path, 'wb') as coverage_file:
                         coverage_file.write(cov_data)
                     coverage_report_editor(cov_file_path, os.path.join(self._pack_abs_dir, f'{self._pack_abs_dir.stem}.py'))
-
+                # test_json = ''
+                # with open(self._pack_abs_dir / 'report_pytest.json', 'r') as test_json_file:
+                #     test_json = json.load(test_json_file)
+                
                 test_json = json.loads(get_file_from_container(container_obj=container_obj,
                                                                container_path="/devwork/report_pytest.json",
                                                                encoding="utf-8"))

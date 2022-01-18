@@ -1127,7 +1127,7 @@ class TestIncidentFields:
                                 'test_data', 'incidentfield-to-test.json')
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
 
-        res = process_incident_fields(test_dir, True, [])
+        res, _ = process_incident_fields(test_dir, True, [])
         assert len(res) == 1
         result = res[0]
         result = result.get('incidentfield-test')

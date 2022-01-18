@@ -1,9 +1,10 @@
+import json
+
 from click.testing import CliRunner
 
 from demisto_sdk.__main__ import main
 from TestSuite.test_tools import ChangeCWD
 from TestSuite.utils import IsEqualFunctions
-import json
 
 CREATE_ID_SET_CMD = "create-id-set"
 
@@ -22,10 +23,11 @@ class TestCreateIdSet:  # Use classes to speed up test - multi threaded py pytes
             - Ensure no error occurs.
             - Ensure items are being excluded from the id set
         """
-        from demisto_sdk.tests.test_files.create_id_set import excluded_items_by_pack, excluded_items_by_type, \
-            packs_dependencies_results
-        import demisto_sdk.commands.find_dependencies.find_dependencies as find_dependencies
         import demisto_sdk.commands.create_id_set.create_id_set as cis
+        import demisto_sdk.commands.find_dependencies.find_dependencies as find_dependencies
+        from demisto_sdk.tests.test_files.create_id_set import (
+            excluded_items_by_pack, excluded_items_by_type,
+            packs_dependencies_results)
 
         pack = repo.create_pack('CreateIdSetPack')
         integration = pack.create_integration('integration')
@@ -39,9 +41,6 @@ class TestCreateIdSet:  # Use classes to speed up test - multi threaded py pytes
                             side_effect=[(packs_dependencies_results.data, {}), ({}, {})])
         mocker.patch.object(cis, 're_create_id_set',
                             return_value=(mock_id_set, excluded_items_by_pack.data, excluded_items_by_type.data))
-
-        with open('/Users/rshalem/dev/demisto/demisto-sdk/demisto_sdk/tests/test_files/create_id_set/excluded_items_by_pack.py', 'w', encoding='utf-8') as f:
-            json.dump(excluded_items_by_pack.data, f, ensure_ascii=False, indent=4)
 
         mocker.patch("click.secho")
 

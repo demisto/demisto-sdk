@@ -25,6 +25,7 @@ configuration:
   required: false
 script:
   script: |
+    register_module_line('Zoom', 'start', __line__())
     import datetime
     import jwt
     import requests
@@ -206,6 +207,7 @@ script:
             return_error('Download of recording failed: [%d] - %s' % (res.status_code, res.text))
     else:
         return_error('Unrecognized command: ' + demisto.command())
+    register_module_line('Zoom', 'end', __line__())
   type: python
   commands:
   - name: zoom-create-user

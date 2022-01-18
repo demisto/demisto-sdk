@@ -233,7 +233,10 @@ class Downloader:
         """
         input_files_regex_match = []
         if self.regex:
-            for input_file in self.input_files:
+            custom_content_objects: list = self.get_custom_content_objects()
+            names_list: list = [cco['name'] for cco in custom_content_objects]
+
+            for input_file in names_list:
                 if re.search(self.regex, input_file):
                     input_files_regex_match.append(input_file)
             self.input_files = input_files_regex_match

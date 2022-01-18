@@ -227,8 +227,8 @@ ERROR_CODE = {
     "incident_type_non_existent_playbook_id": {'code': "IT104", 'ui_applicable': False, 'related_field': ''},
 
     # LI - Lists
-    "invalid_from_server_version_in_lists": {'code': "LI100", 'ui_applicable': False,
-                                             'related_field': 'fromVersion'},
+    "invalid_from_server_version_in_lists": {'code': "LI100", 'ui_applicable': False, 'related_field': 'fromVersion'},
+    "missing_from_version_in_list": {'code': "LI101", 'ui_applicable': False, 'related_field': 'fromVersion'},
 
     # LO - Layouts
     "invalid_version_in_layout": {'code': "LO100", 'ui_applicable': False, 'related_field': 'version'},
@@ -1825,6 +1825,11 @@ class Errors:
     @error_code_decorator
     def invalid_from_server_version_in_lists(version_field):
         return f'{version_field} field in a list item needs to be at least 6.5.0'
+
+    @staticmethod
+    @error_code_decorator
+    def missing_from_version_in_list():
+        return 'Must have fromVersion field in list'
 
     @staticmethod
     @error_code_decorator

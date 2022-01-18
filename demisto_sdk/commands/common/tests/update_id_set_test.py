@@ -13,7 +13,7 @@ from demisto_sdk.commands.common.constants import (DEFAULT_JOB_FROM_VERSION,
                                                    JOBS_DIR, FileType)
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.update_id_set import (
-    add_item_to_exclusion_dict,
+    add_item_to_exclusion_dict, does_dict_have_alternative_key,
     find_duplicates, get_classifier_data, get_dashboard_data,
     get_fields_by_script_argument,
     get_filters_and_transformers_from_complex_value,
@@ -489,13 +489,41 @@ class TestScripts:
     SCRIPT_DATA = {
         "DummyScript": {
             "name": "DummyScript",
-            "file_path": TESTS_DIR + "/test_files/DummyPack/Scripts/DummyScript.yml",
+            "file_path": TESTS_DIR + "/test_files/DummyPack/Scripts/DummyScript2.yml",
             "source": ['github.com', 'demisto', 'demisto-sdk'],
             "fromversion": "5.0.0",
             "docker_image": "demisto/python3:3.7.3.286",
             "tests": [
                 "No test - no need to test widget"
             ]
+        }
+    }
+
+    SCRIPT_DATA_ALTERNATIVE_TOP_LEVEL = {
+        "DummyScript": {
+            "name": "DummyScript",
+            "file_path": TESTS_DIR + '/test_files/alternative_meta_fields/Script-top_level_alternative_fields.yml',
+            "source": ['github.com', 'demisto', 'demisto-sdk'],
+            "fromversion": "5.0.0",
+            "docker_image": "demisto/python3:3.7.3.286",
+            "tests": [
+                "No test - no need to test widget"
+            ],
+            "has_alternative_meta": True
+        }
+    }
+
+    SCRIPT_DATA_ALTERNATIVE_SECOND_LEVEL = {
+        "DummyScript": {
+            "name": "DummyScript",
+            "file_path": TESTS_DIR + '/test_files/alternative_meta_fields/Script-second_level_alternative_fields.yml',
+            "source": ['github.com', 'demisto', 'demisto-sdk'],
+            "fromversion": "5.0.0",
+            "docker_image": "demisto/python3:3.7.3.286",
+            "tests": [
+                "No test - no need to test widget"
+            ],
+            "has_alternative_meta": True
         }
     }
 
@@ -514,12 +542,59 @@ class TestScripts:
         """
         Test for getting the script data
         """
-        file_path = TESTS_DIR + '/test_files/DummyPack/Scripts/DummyScript.yml'
+        file_path = TESTS_DIR + '/test_files/DummyPack/Scripts/DummyScript2.yml'
         data = get_script_data(file_path)
 
         assert IsEqualFunctions.is_lists_equal(list(data.keys()), list(TestScripts.SCRIPT_DATA.keys()))
 
         const_data = TestScripts.SCRIPT_DATA.get('DummyScript')
+        returned_data = data.get('DummyScript')
+
+        assert IsEqualFunctions.is_dicts_equal(returned_data, const_data)
+
+    @staticmethod
+    def test_get_script_data_with_alternative_fields_top_level():
+        """
+        Given
+            - A script file which contains alternative fields in the top level of the yml.
+
+        When
+            - parsing scripts files
+
+        Then
+            - parsing all the data from file successfully
+            - making sure the entry has a field called "has_alternative_meta" set to True
+        """
+        file_path = TESTS_DIR + '/test_files/alternative_meta_fields/Script-top_level_alternative_fields.yml'
+        data = get_script_data(file_path)
+
+        assert IsEqualFunctions.is_lists_equal(list(data.keys()), list(TestScripts.SCRIPT_DATA_ALTERNATIVE_TOP_LEVEL.keys()))
+
+        const_data = TestScripts.SCRIPT_DATA_ALTERNATIVE_TOP_LEVEL.get('DummyScript')
+        returned_data = data.get('DummyScript')
+
+        assert IsEqualFunctions.is_dicts_equal(returned_data, const_data)
+
+    @staticmethod
+    def test_get_script_data_with_alternative_fields_second_level():
+        """
+        Given
+            - A script file which contains alternative fields in the second level of the yml.
+
+        When
+            - parsing scripts files
+
+        Then
+            - parsing all the data from file successfully
+            - making sure the entry has a field called "has_alternative_meta" set to True
+        """
+        file_path = TESTS_DIR + '/test_files/alternative_meta_fields/Script-second_level_alternative_fields.yml'
+        data = get_script_data(file_path)
+
+        assert IsEqualFunctions.is_lists_equal(list(data.keys()),
+                                               list(TestScripts.SCRIPT_DATA_ALTERNATIVE_SECOND_LEVEL.keys()))
+
+        const_data = TestScripts.SCRIPT_DATA_ALTERNATIVE_SECOND_LEVEL.get('DummyScript')
         returned_data = data.get('DummyScript')
 
         assert IsEqualFunctions.is_dicts_equal(returned_data, const_data)
@@ -616,6 +691,64 @@ class TestPlaybooks:
         ]
     }
 
+    PLAYBOOK_DATA_ALTERNATIVE_FIELDS_TOP_LEVEL = {
+        "name": "Dummy Playbook",
+        "file_path": TESTS_DIR + "/test_files/alternative_meta_fields/Playbook-top_level_alternative_fields.yml",
+        "source": ['github.com', 'demisto', 'demisto-sdk'],
+        "fromversion": "4.5.0",
+        "filters": ["isEqualString"],
+        "transformers": ["uniq"],
+        "implementing_scripts": [
+            "XDRSyncScript",
+            "StopScheduledTask",
+        ],
+        "implementing_playbooks": [
+            "Calculate Severity - Standard",
+            "Palo Alto Networks - Malware Remediation",
+        ],
+        "command_to_integration": {
+            "xdr-update-incident": "",
+            "autofocus-sample-analysis": ""
+        },
+        "tests": [
+            "No Test"
+        ],
+        "skippable_tasks": [
+            "StopScheduledTask",
+            "autofocus-sample-analysis"
+        ],
+        "has_alternative_meta": True
+    }
+
+    PLAYBOOK_DATA_ALTERNATIVE_FIELDS_SECOND_LEVEL = {
+        "name": "Dummy Playbook",
+        "file_path": TESTS_DIR + "/test_files/alternative_meta_fields/Playbook-second_level_alternative_fields.yml",
+        "source": ['github.com', 'demisto', 'demisto-sdk'],
+        "fromversion": "4.5.0",
+        "filters": ["isEqualString"],
+        "transformers": ["uniq"],
+        "implementing_scripts": [
+            "XDRSyncScript",
+            "StopScheduledTask",
+        ],
+        "implementing_playbooks": [
+            "Calculate Severity - Standard",
+            "Palo Alto Networks - Malware Remediation",
+        ],
+        "command_to_integration": {
+            "xdr-update-incident": "",
+            "autofocus-sample-analysis": ""
+        },
+        "tests": [
+            "No Test"
+        ],
+        "skippable_tasks": [
+            "StopScheduledTask",
+            "autofocus-sample-analysis"
+        ],
+        "has_alternative_meta": True
+    }
+
     @staticmethod
     def test_get_playbook_data():
         """
@@ -625,6 +758,42 @@ class TestPlaybooks:
         data = get_playbook_data(file_path)['Dummy Playbook']
 
         assert IsEqualFunctions.is_dicts_equal(data, TestPlaybooks.PLAYBOOK_DATA)
+
+    @staticmethod
+    def test_get_playbook_data_with_alternative_fields_top_level():
+        """
+        Given
+            - A playbook file which contains alternative fields in the top level of the yml.
+
+        When
+            - parsing playbooks files
+
+        Then
+            - parsing all the data from file successfully
+            - making sure the entry has a field called "has_alternative_meta" set to True
+        """
+        file_path = TESTS_DIR + '/test_files/alternative_meta_fields/Playbook-top_level_alternative_fields.yml'
+        data = get_playbook_data(file_path)['Dummy Playbook']
+
+        assert IsEqualFunctions.is_dicts_equal(data, TestPlaybooks.PLAYBOOK_DATA_ALTERNATIVE_FIELDS_TOP_LEVEL)
+
+    @staticmethod
+    def test_get_playbook_data_with_alternative_fields_second_level():
+        """
+        Given
+            - A playbook file which contains alternative fields in the second level of the yml.
+
+        When
+            - parsing playbooks files
+
+        Then
+            - parsing all the data from file successfully
+            - making sure the entry has a field called "has_alternative_meta" set to True
+        """
+        file_path = TESTS_DIR + '/test_files/alternative_meta_fields/Playbook-second_level_alternative_fields.yml'
+        data = get_playbook_data(file_path)['Dummy Playbook']
+
+        assert IsEqualFunctions.is_dicts_equal(data, TestPlaybooks.PLAYBOOK_DATA_ALTERNATIVE_FIELDS_SECOND_LEVEL)
 
     @staticmethod
     def test_get_playbook_data_2():
@@ -970,6 +1139,33 @@ class TestIncidentFields:
         assert 'scripts' in result.keys()
 
     @staticmethod
+    def test_process_incident_fields_with_alternative_fields(mocker):
+        """
+        Given
+                - An incident-field file which contains alternative fields
+
+            When
+                - parsing incident-field files
+
+            Then
+                - parsing all the data from file successfully
+                - making sure the entry has a field called "has_alternative_meta"
+        """
+        test_dir = os.path.join(git_path(), 'demisto_sdk', 'tests', 'test_files', 'alternative_meta_fields',
+                                'incidentfield-top_level_alternative_fields.json')
+        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
+
+        res = process_incident_fields(test_dir, True, [])
+        assert len(res) == 1
+        result = res[0]
+        result = result.get('incidentfield_upload_id')
+        assert 'name' in result.keys()
+        assert 'file_path' in result.keys()
+        assert 'fromversion' in result.keys()
+        assert 'incident_types' in result.keys()
+        assert 'has_alternative_meta' in result.keys()
+
+    @staticmethod
     def test_process_incident_fields__no_types_scripts(mocker):
         """
         Given
@@ -1172,6 +1368,39 @@ class TestMappers:
         assert 'dummy incident field 2' in result['incident_fields']
         assert 'dummy incident field 3' in result['incident_fields']
         assert 'occurred' not in result['incident_fields']
+
+    @staticmethod
+    def test_process_mappers_alternative_field():
+        """
+        Given
+            - A mapper file which contains alternative fields
+
+        When
+            - parsing mapper files
+
+        Then
+            - parsing all the data from file successfully
+            - making sure the entry has a field called "has_alternative_meta"
+        """
+        test_file = os.path.join(git_path(), 'demisto_sdk', 'tests', 'test_files', 'alternative_meta_fields',
+                                 'mapper-top_level_alternative_name.json')
+
+        res = get_mapper_data(test_file)
+        result = res.get('dummy mapper')
+        assert 'name' in result.keys()
+        assert 'file_path' in result.keys()
+        assert 'fromversion' in result.keys()
+        assert 'incident_types' in result.keys()
+        assert 'incident_fields' in result.keys()
+        assert 'dummy incident type' in result['incident_types']
+        assert 'dummy incident type 1' in result['incident_types']
+        assert 'dummy incident type 2' in result['incident_types']
+        assert 'dummy incident field' in result['incident_fields']
+        assert 'dummy incident field 1' in result['incident_fields']
+        assert 'dummy incident field 2' in result['incident_fields']
+        assert 'dummy incident field 3' in result['incident_fields']
+        assert 'occurred' not in result['incident_fields']
+        assert 'has_alternative_meta' in result.keys()
 
     @staticmethod
     def test_process_mappers__no_types_fields():
@@ -2662,6 +2891,50 @@ def test_should_skip_item_by_mp(mocker):
     res2 = should_skip_item_by_mp(script_path, 'mpv2', {})
     assert res1
     assert res2
+
+
+TEST_DICTS = [
+    (
+        {
+            "key1": "val1",
+            "key2": "val2"
+        },
+        False
+    ),
+    (
+        {
+            "key1": "val1",
+            "key2": {
+                "key1": "val1",
+                "key2": "val2"
+            }
+        },
+        False
+    ),
+    (
+        {
+            "key1": "val1",
+            "key2_x2": "val2"
+        },
+        True
+    ),
+    (
+        {
+            "key1": "val1",
+            "key2": {
+                "kay1": "val1",
+                "key2_x2": "val2"
+            }
+        },
+        True
+    )
+]
+
+
+@pytest.mark.parametrize('dict_to_test, expected_result', TEST_DICTS)
+def test_does_dict_have_alternative_key(dict_to_test, expected_result):
+    result = does_dict_have_alternative_key(dict_to_test)
+    assert result == expected_result
 
 
 def test_should_skip_item_by_mp_no_update_excluded_dict(mocker):

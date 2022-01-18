@@ -110,6 +110,28 @@ def add_item_to_exclusion_dict(excluded_items_from_id_set: dict, file_path: str,
     excluded_items_from_id_set[pack_name] = {(item_type, item_id)}  # set of tuples
 
 
+def does_dict_have_alternative_key(data: dict) -> bool:
+    """
+        Check if a key that ends with "_x2" exists in the dict (including inner levels)
+        Args:
+            data (dict): the data dict to search in
+
+        Returns: True if found such a key, else False
+
+    """
+
+    # start searching in the first level keys
+    for key in data:
+        if isinstance(key, str) and key.endswith('_x2'):
+            return True
+
+    for key, value in data.items():
+        if isinstance(value, dict):
+            if does_dict_have_alternative_key(value):
+                return True
+
+    return False
+
 def should_skip_item_by_mp(file_path: str, marketplace: str, excluded_items_from_id_set: dict,
                            print_logs: bool = False):
     """
@@ -572,6 +594,9 @@ def get_playbook_data(file_path: str) -> dict:
         playbook_data['transformers'] = transformers
     if implementing_lists:
         playbook_data['lists'] = implementing_lists
+    if does_dict_have_alternative_key(data_dictionary):
+        playbook_data['has_alternative_meta'] = True
+
     return {id_: playbook_data}
 
 
@@ -606,6 +631,8 @@ def get_script_data(file_path, script_code=None):
         script_data['docker_image'] = docker_image
     if tests:
         script_data['tests'] = tests
+    if does_dict_have_alternative_key(data_dictionary):
+        script_data['has_alternative_meta'] = True
 
     return {id_: script_data}
 
@@ -803,6 +830,8 @@ def get_incident_field_data(path, incidents_types_list):
         data['incident_types'] = list(all_associated_types)
     if all_scripts:
         data['scripts'] = list(all_scripts)
+    if does_dict_have_alternative_key(json_data):
+        data['has_alternative_meta'] = True
 
     return {id_: data}
 
@@ -1008,6 +1037,8 @@ def get_mapper_data(path):
         data['transformers'] = list(all_transformers)
     if definition_id:
         data['definitionId'] = definition_id
+    if does_dict_have_alternative_key(json_data):
+        data['has_alternative_meta'] = True
 
     return {id_: data}
 

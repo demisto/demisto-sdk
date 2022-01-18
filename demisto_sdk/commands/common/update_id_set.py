@@ -132,6 +132,7 @@ def does_dict_have_alternative_key(data: dict) -> bool:
 
     return False
 
+
 def should_skip_item_by_mp(file_path: str, marketplace: str, excluded_items_from_id_set: dict,
                            print_logs: bool = False):
     """

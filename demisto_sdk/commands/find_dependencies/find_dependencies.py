@@ -23,7 +23,8 @@ from demisto_sdk.commands.common.tools import (ProcessPoolHandler,
                                                print_error, print_success,
                                                print_warning,
                                                wait_futures_complete)
-from demisto_sdk.commands.common.update_id_set import merge_id_sets, update_excluded_items_dict
+from demisto_sdk.commands.common.update_id_set import (
+    merge_id_sets, update_excluded_items_dict)
 from demisto_sdk.commands.create_id_set.create_id_set import (IDSetCreator,
                                                               get_id_set)
 
@@ -561,9 +562,8 @@ class PackDependencies:
                         update_items_dependencies(pack_dependencies_data, items_dependencies, 'playbook', playbook_id,
                                                   packs_and_items_dict)
 
-            implementing_scripts = playbook_data.get('implementing_scripts', []) + \
-                                   playbook_data.get('filters', []) + \
-                                   playbook_data.get('transformers', [])
+            implementing_scripts = playbook_data.get('implementing_scripts', []) + playbook_data.get('filters', []) + \
+                playbook_data.get('transformers', [])
 
             # searching for packs of implementing scripts
             dependencies, mandatory_packs_and_scripts_dict = PackDependencies. \
@@ -1146,7 +1146,7 @@ class PackDependencies:
             else:
                 packs_found_from_incident_types, packs_and_incident_types_dict = PackDependencies. \
                     _search_packs_by_items_names(
-                    related_types, id_set['IncidentTypes'], exclude_ignored_dependencies, 'incidenttype')
+                        related_types, id_set['IncidentTypes'], exclude_ignored_dependencies, 'incidenttype')
 
                 # mappers dependencies from incident types should be marked as optional unless CommonTypes Pack,
                 # as customers do not have to use the OOTB mapping.
@@ -1162,7 +1162,7 @@ class PackDependencies:
                 related_fields = mapper_data.get('incident_fields', [])
                 packs_found_from_incident_fields, packs_and_incident_fields_dict = PackDependencies. \
                     _search_packs_by_items_names_or_ids(
-                    related_fields, id_set['IncidentFields'], exclude_ignored_dependencies, 'Both', 'incidentfield')
+                        related_fields, id_set['IncidentFields'], exclude_ignored_dependencies, 'Both', 'incidentfield')
 
                 # mappers dependencies from incident fields should be marked as optional unless CommonTypes pack,
                 # as customers do not have to use the OOTB mapping.
@@ -1374,8 +1374,8 @@ class PackDependencies:
             related_definitions = generic_field_data.get('definitionId')
             packs_found_from_definitions, packs_and_definitions_dict = PackDependencies. \
                 _search_packs_by_items_names_or_ids(
-                related_definitions, id_set['GenericDefinitions'], exclude_ignored_dependencies,
-                'Both', 'generic_definition')
+                    related_definitions, id_set['GenericDefinitions'], exclude_ignored_dependencies,
+                    'Both', 'generic_definition')
 
             if packs_found_from_definitions:
                 pack_dependencies_data = PackDependencies. \
@@ -1440,8 +1440,8 @@ class PackDependencies:
             related_definitions = generic_module_data.get('definitionIds')
             packs_found_from_definitions, packs_and_definitions_dict = PackDependencies. \
                 _search_packs_by_items_names_or_ids(
-                related_definitions, id_set['GenericDefinitions'], exclude_ignored_dependencies,
-                'Both', 'generic_definition')
+                    related_definitions, id_set['GenericDefinitions'], exclude_ignored_dependencies,
+                    'Both', 'generic_definition')
 
             if packs_found_from_definitions:
                 pack_dependencies_data = PackDependencies. \
@@ -1456,7 +1456,7 @@ class PackDependencies:
                 related_dashboards = related_views.get(view, {}).get('dashboards', [])
                 packs_found_from_dashboards, packs_and_dashboards_dict = PackDependencies. \
                     _search_packs_by_items_names_or_ids(
-                    related_dashboards, id_set['Dashboards'], exclude_ignored_dependencies, 'dashboard')
+                        related_dashboards, id_set['Dashboards'], exclude_ignored_dependencies, 'dashboard')
 
                 if packs_found_from_dashboards:
                     pack_dependencies_data = PackDependencies. \
@@ -1730,11 +1730,11 @@ class PackDependencies:
         )
 
         pack_dependencies = (
-                scripts_dependencies | playbooks_dependencies | layouts_dependencies | incidents_fields_dependencies |
-                indicators_types_dependencies | integrations_dependencies | incidents_types_dependencies |
-                classifiers_dependencies | mappers_dependencies | widget_dependencies | dashboards_dependencies |
-                reports_dependencies | generic_types_dependencies | generic_modules_dependencies |
-                generic_fields_dependencies | jobs_dependencies
+            scripts_dependencies | playbooks_dependencies | layouts_dependencies | incidents_fields_dependencies |
+            indicators_types_dependencies | integrations_dependencies | incidents_types_dependencies |
+            classifiers_dependencies | mappers_dependencies | widget_dependencies | dashboards_dependencies |
+            reports_dependencies | generic_types_dependencies | generic_modules_dependencies |
+            generic_fields_dependencies | jobs_dependencies
         )
 
         items_depenencies = {**scripts_items_dependencies, **playbooks_items_dependencies, **widgets_items_dependencies,
@@ -2389,7 +2389,8 @@ def remove_dependencies_from_id_set(id_set: dict, excluded_items_by_pack: dict, 
     while additional_items_to_exclude:
         additional_items_to_exclude = calculate_dependencies(additional_items_to_exclude, unfiltered_id_set)
         if additional_items_to_exclude:
-            print_success(f"Adding the following packs to the exclusion list: {list(additional_items_to_exclude.keys())}")
+            print_success(
+                f"Adding the following packs to the exclusion list: {list(additional_items_to_exclude.keys())}")
             update_excluded_items_dict(excluded_items_by_pack, additional_items_to_exclude, excluded_items_by_type)
 
     save_dict_of_sets('all_removed_items_from_id_set.json', excluded_items_by_pack)
@@ -2424,19 +2425,21 @@ def calculate_dependencies(excluded_items: dict, id_set: dict) -> dict:
     Returns:
         a dict of items that need to be excluded from the id set in the future
     """
-    dependent_items_to_exclude_from_id_set = {}
+    dependent_items_to_exclude_from_id_set: dict = {}
 
     packs_list = [f'Packs/{pack}' for pack in excluded_items]
 
     packs_dependencies_result, _ = get_packs_dependent_on_given_packs(packs_list, '', '', False, id_set)
 
     for excluded_pack, excluded_pack_entities_set in excluded_items.items():
-        mandatory_dependent_packs_dict = packs_dependencies_result.get(excluded_pack, {}).get('packsDependentOnThisPackMandatorily', {})
+        mandatory_dependent_packs_dict = packs_dependencies_result.get(excluded_pack, {}).get(
+            'packsDependentOnThisPackMandatorily', {})
 
         for mandatory_pack_name, mandatory_pack_details in mandatory_dependent_packs_dict.items():
             for entity_dependent_on, dependent_entities_list in mandatory_pack_details.get('dependent_items', []):
                 if entity_dependent_on in excluded_pack_entities_set:  # check the type and name of the entity
-                    dependent_items_to_exclude_from_id_set.setdefault(mandatory_pack_name, set()).update(dependent_entities_list)
+                    dependent_items_to_exclude_from_id_set.setdefault(mandatory_pack_name, set()).update(
+                        dependent_entities_list)
 
     return dependent_items_to_exclude_from_id_set
 

@@ -1137,7 +1137,7 @@ def process_integration(file_path: str, print_logs: bool, marketplace: str = 'xs
         integration data list (may be empty), a dict of excluded items from the id set
     """
     res = []
-    excluded_items_from_id_set = {}
+    excluded_items_from_id_set: dict = {}
     try:
         if os.path.isfile(file_path):
             if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, print_logs):
@@ -1166,7 +1166,7 @@ def process_integration(file_path: str, print_logs: bool, marketplace: str = 'xs
 
 def process_script(file_path: str, print_logs: bool, marketplace: str = 'xsoar') -> Tuple[list, dict]:
     res = []
-    excluded_items_from_id_set = {}
+    excluded_items_from_id_set: dict = {}
     try:
         if os.path.isfile(file_path):
             if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, print_logs):
@@ -1204,7 +1204,7 @@ def process_incident_fields(file_path: str, print_logs: bool, incidents_types_li
         a list of incident field data, a dict of excluded items from the id set
     """
     res = []
-    excluded_items_from_id_set = {}
+    excluded_items_from_id_set: dict = {}
     try:
         if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, print_logs):
             return [], excluded_items_from_id_set
@@ -1231,7 +1231,7 @@ def process_indicator_types(file_path: str, print_logs: bool, all_integrations: 
         a list of indicator type data, a dict of excluded items from the id set
     """
     res = []
-    excluded_items_from_id_set = {}
+    excluded_items_from_id_set: dict = {}
 
     try:
         if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, print_logs):
@@ -1264,7 +1264,7 @@ def process_generic_items(file_path: str, print_logs: bool, marketplace: str = '
         a list of generic items data: fields or types, a dict of excluded items from the id set
     """
     res = []
-    excluded_items_from_id_set = {}
+    excluded_items_from_id_set: dict = {}
 
     try:
         if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, print_logs):
@@ -1333,7 +1333,7 @@ def process_general_items(file_path: str, print_logs: bool, expected_file_types:
         a list of item data, a dict of excluded items from the id set
     """
     res = []
-    excluded_items_from_id_set = {}
+    excluded_items_from_id_set: dict = {}
     try:
         if find_type(file_path) in expected_file_types:
             if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, print_logs):
@@ -1777,8 +1777,8 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     lists_list = []
     jobs_list = []
     packs_dict: Dict[str, Dict] = {}
-    excluded_items_by_pack = {}
-    excluded_items_by_type = {}
+    excluded_items_by_pack: Dict[str, set] = {}
+    excluded_items_by_type: Dict[str, set] = {}
 
     pool = Pool(processes=int(cpu_count()))
 

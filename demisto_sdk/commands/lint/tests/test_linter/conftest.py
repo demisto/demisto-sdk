@@ -50,7 +50,7 @@ def create_integration(mocker) -> Callable:
                             flake8: bool = False, bandit: bool = False, mypy: bool = False, vulture: bool = False,
                             pylint: bool = False, test: bool = False, no_tests: bool = False, yml: bool = False,
                             js_type: bool = False, type_script_key: bool = False, image: bool = False,
-                            image_py_num: float = 3.7, test_reqs: bool = False) -> Path:
+                            image_py_num: str = '3.7', test_reqs: bool = False) -> Path:
         """ Creates tmp content repositry for integration test
 
         Args:
@@ -68,7 +68,7 @@ def create_integration(mocker) -> Callable:
             js_type(bool): True for definig pack as JavaScript in yml.
             type_script_key(bool): True for define type in script key.
             image(str): Image to define in yml.
-            image_py_num(float): Image python version.
+            image_py_num(str): Image python version.
             test_reqs(bool): True to include a test-requirements.txt file.
 
         Returns:

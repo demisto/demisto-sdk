@@ -9,7 +9,8 @@ from demisto_sdk.commands.common.constants import (DEFAULT_JOB_FROM_VERSION,
                                                    FileType)
 from demisto_sdk.commands.find_dependencies.find_dependencies import (
     PackDependencies, calculate_single_pack_dependencies,
-    get_packs_dependent_on_given_packs)
+    get_packs_dependent_on_given_packs, remove_items_from_content_entities_sections,
+    remove_items_from_packs_section)
 from TestSuite.test_tools import ChangeCWD
 from TestSuite.utils import IsEqualFunctions
 
@@ -3013,29 +3014,118 @@ class TestGetDependentOnGivenPack:
             (('type_item_3', 'item3'), ('type_item_b', 'item_b'))]
 
 
+ID_SET = {
+    "integrations": [{'integration1': {}}, {'integration2': {}}],
+    "scripts": [{'script1': {}}, {'script2': {}}],
+    "playbooks": [{'playbook1': {}}, {'playbook2': {}}],
+    "Classifiers": [{'classifier1': {}}, {'classifier2': {}}],
+    "Dashboards": [{'dashboard1': {}}, {'dashboard2': {}}],
+    "IncidentFields": [{'field1': {}}, {'field2': {}}],
+    "IncidentTypes": [{'type1': {}}, {'type2': {}}],
+    "IndicatorFields": [{'field1': {}}, {'field2': {}}],
+    "IndicatorTypes": [{'type1': {}}, {'type2': {}}],
+    "Layouts": [{'layout1': {}}, {'layout2': {}}],
+    "Reports": [{'report1': {}}, {'report2': {}}],
+    "Widgets": [{'widget1': {}}, {'widget2': {}}],
+    "Mappers": [{'mapper1': {}}, {'mapper2': {}}],
+    "Lists": [{'list1': {}}, {'list2': {}}],
+    "Packs": {
+        "pack1": {
+            "name": "pack1",
+            "ContentItems": {
+                "playbooks": [
+                    "playbook1"
+                ]
+            }
+        },
+        "pack2": {
+            "name": "pack2",
+            "ContentItems": {
+                "scripts": [
+                    "script1",
+                    "script2"
+                ]
+            }
+        }
+    }
+}
+
+
 def test_remove_items_from_content_entities_sections():
+    """
+    Given
+        - id set
+        - items that need to be excluded from the all entities sections in the id set except the 'Packs' section
+    When
+        - removing items dependencies from id set
+    Then
+        - assuring the items were successfully removed from the id set
+    """
     excluded_items_by_type = {
         'integration': {'integration1'},
         'script': {'script1'},
-        'playbook': {'playbook1'}
+        'playbook': {'playbook1'},
+        "classifier": {'classifier1'},
+        "incidentfield": {'field1'},
+        "incidenttype": {'type1'},
+        "indicatorfield": {'field1'},
+        "indicatortype": {'type1'},
+        "mapper": {'mapper1'},
+        "dashboard": {'dashboard1'},
+        "widget": {'widget1'},
+        "list": {'list1'},
+        "report": {'report1'},
+        "layout": {'layout1'}
     }
 
-    id_set = {
-        "integrations": [{'integration1': {}}, {'integration2': {}}],
-        "scripts": [{'script1': {}}, {'script2': {}}],
-        "playbooks": [{'playbook1': {}}, {'playbook2': {}}],
-        "TestPlaybooks": [{'playbook1': {}}],
-        "Classifiers": [{'classifier': {}}, {'classifier2': {}}],
-        "Dashboards": [],
-        "IncidentFields": [],
-        "IncidentTypes": [],
-        "IndicatorFields": [],
-        "IndicatorTypes": [],
-        "Layouts": [],
-        "Reports": [],
-        "Widgets": [],
-        "Mappers": [],
-        "Packs": {}
+    expected_id_set_entities_section = {
+        "integrations": [{'integration2': {}}],
+        "scripts": [{'script2': {}}],
+        "playbooks": [{'playbook2': {}}],
+        "Classifiers": [{'classifier2': {}}],
+        "Dashboards": [{'dashboard2': {}}],
+        "IncidentFields": [{'field2': {}}],
+        "IncidentTypes": [{'type2': {}}],
+        "IndicatorFields": [{'field2': {}}],
+        "IndicatorTypes": [{'type2': {}}],
+        "Layouts": [{'layout2': {}}],
+        "Reports": [{'report2': {}}],
+        "Widgets": [{'widget2': {}}],
+        "Mappers": [{'mapper2': {}}],
+        "Lists": [{'list2': {}}],
     }
 
-    test_remove_items_from_content_entities_sections()
+    id_set = ID_SET.copy()
+    remove_items_from_content_entities_sections(id_set, excluded_items_by_type)
+    id_set.pop("Packs")
+    assert IsEqualFunctions.is_dicts_equal(id_set, expected_id_set_entities_section)
+
+
+def test_remove_items_from_packs_section():
+    """
+    Given
+        - id set
+        - items that need to be excluded from the 'Packs' section in the id set
+    When
+        - removing items dependencies from id set
+    Then
+        - assuring the items were successfully removed from the id set
+        - assuring packs without content items are being removed from the id set
+    """
+    excluded_items_by_pack = {'pack1': {('playbook', 'playbook1')},
+                              'pack2': {('script', 'script1')}}
+
+    expected_id_set_packs_section = {
+            "pack2": {
+                "name": "pack2",
+                "ContentItems": {
+                    "scripts": [
+                        "script2"
+                    ]
+                }
+            }
+        }
+
+    id_set = ID_SET.copy()
+    remove_items_from_packs_section(id_set, excluded_items_by_pack)
+    assert IsEqualFunctions.is_dicts_equal(id_set.get("Packs"), expected_id_set_packs_section)

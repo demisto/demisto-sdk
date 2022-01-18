@@ -2714,8 +2714,6 @@ def test_add_item_to_exclusion_dict():
         - return True since this item should be skipped.
     """
 
-    'demisto_sdk/tests/test_files/Packs/CortexXDR/Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR.yml'
-
     expected_result = {'CortexXDR': {('integration', 'Cortex XDR')}}
     excluded_items_from_id_set = {}
     file_path = os.path.join(TESTS_DIR, 'test_files', 'Packs', 'CortexXDR', 'Integrations', 'PaloAltoNetworks_XDR',
@@ -2723,5 +2721,3 @@ def test_add_item_to_exclusion_dict():
     add_item_to_exclusion_dict(excluded_items_from_id_set, file_path, "Cortex XDR")
 
     assert IsEqualFunctions.is_dicts_equal(expected_result, excluded_items_from_id_set)
-
-

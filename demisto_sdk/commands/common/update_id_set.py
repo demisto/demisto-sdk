@@ -2188,7 +2188,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     if any(duplicates) and fail_on_duplicates:
         raise Exception(f'The following ids were found duplicates\n{json.dumps(duplicates, indent=4)}\n')
 
-    return new_ids_dict, excluded_items_from_id_set, excluded_items_by_type
+    return new_ids_dict, excluded_items_by_pack, excluded_items_by_type
 
 
 def find_duplicates(id_set, print_logs, marketplace):

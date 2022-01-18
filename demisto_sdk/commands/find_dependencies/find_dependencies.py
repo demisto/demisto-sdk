@@ -2422,7 +2422,7 @@ def calculate_dependencies(excluded_items: dict, id_set: dict) -> dict:
         excluded_items: a dictionary of excluded items from the id_set, aggregated by packs.
         id_set: Unfiltered id_set to calculate the dependencies
     Returns:
-        #todo: add
+        a dict of items that need to be excluded from the id set in the future
     """
     dependent_items_to_exclude_from_id_set = {}
 
@@ -2454,7 +2454,7 @@ def convert_entity_types_to_id_set_headers(excluded_items_by_type: dict):
         "script": "scripts",
         "playbook": "playbooks",
         "classifier": "Classifiers",
-        "incidentfield": "IncidentField",
+        "incidentfield": "IncidentFields",
         "incidenttype": "IncidentTypes",
         "indicatorfield": "IndicatorFields",
         "indicatortype": "IndicatorTypes",
@@ -2462,7 +2462,8 @@ def convert_entity_types_to_id_set_headers(excluded_items_by_type: dict):
         "dashboard": "Dashboards",
         "widget": "Widgets",
         "list": "Lists",
-        "report": "Reports"
+        "report": "Reports",
+        "layout": "Layouts"
     }
 
     for key in entity_type_to_header:
@@ -2488,11 +2489,23 @@ def remove_items_from_packs_section(id_set: dict, excluded_items_by_pack: dict) 
             continue
 
         for item_type, item_name in pack_items:
-            pack_content_items.get(f'{item_type}s', {}).remove(item_name)
+            item_type = item_type_to_content_items_header(item_type)
+            pack_content_items.get(f'{item_type}s', []).remove(item_name)
 
         # if no content items left, remove the pack from the id_set
         if pack not in constants.ALLOWED_EMPTY_PACKS and not sum(pack_content_items.values(), []):
             packs_section_from_id_set.pop(pack)
+
+
+def item_type_to_content_items_header(item_type):
+    converter = {
+        "incidenttype": "incidentType",
+        "indicatortype": "indicatorType",
+        "indicatorfield": "indicatorField",
+        "incidentfield": "incidentField"
+    }
+
+    return converter.get(item_type, item_type)
 
 
 def remove_items_from_content_entities_sections(id_set: dict, excluded_items_by_type: dict):

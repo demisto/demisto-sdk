@@ -35,15 +35,18 @@
             "cwd": "/Users/ilappe/dev/test_repo/content",
             "args": [
                 "lint",
-                "-a",
+                // "-a",
+                "-i",
+                "/Users/ilappe/dev/test_repo/content/Packs/Anomali_ThreatStream",
                 "--no-flake8",
                 "--no-bandit",
                 "--no-xsoar-linter",
                 "--no-vulture",
-                "--no-mypy"
-                // "--no-pylint"
+                "--no-mypy",
+                //"--no-pylint"
 
             ]
-        },
+        }
     ]
 }
+

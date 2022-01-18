@@ -1895,7 +1895,7 @@ class TestDependsOnIntegrations:
                            {('integration', 'Dummy Integration'): {'HelloWorld': [('classifier', 'HelloWorld')],
                                                                    'Claroty': [('mapper', 'CBAlerts-mapper')],
                                                                    'EWS': [('mapper', 'EWS v2-mapper')],
-                                                                   'CrisisManagement': [('incident_type', 'HR Ticket')]}})
+                                                                   'CrisisManagement': [('incidenttype', 'HR Ticket')]}})
 
         test_input = [
             {
@@ -1966,7 +1966,7 @@ class TestDependsOnIncidentType:
             - Extracting the packs that the incident type depends on and the items causing mandatory dependencies.
         """
         expected_result = ({('AutoFocus', True), ('Volatility', True)},
-                           {('incident_type', 'Dummy Incident Type'):
+                           {('incidenttype', 'Dummy Incident Type'):
                             {'AutoFocus': [('playbook', 'Autofocus Query Samples, Sessions and Tags')],
                              'Volatility': [('script', 'AnalyzeMemImage')]}})
 
@@ -2203,7 +2203,7 @@ class TestDependsOnMappers:
             - Extracting the packs that the mapper depends on as optional dependencies and the items causing the mandatory dependency.
         """
         expected_result = ({('BruteForce', False), ('PrismaCloud', False), ('AccessInvestigation', False), ('CommonTypes', True)},
-                           {('mapper', 'Dummy Mapper'): {'CommonTypes': [('incident_field', 'incident_accountid')]}})
+                           {('mapper', 'Dummy Mapper'): {'CommonTypes': [('incidentfield', 'incident_accountid')]}})
 
         test_input = [
             {
@@ -3011,3 +3011,31 @@ class TestGetDependentOnGivenPack:
             (('type_item_3', 'item3'), ('type_item_a', 'item_a'))]
         assert dependent_packs_dict['pack3']['packsDependentOnThisPackMandatorily']['pack2']['dependent_items'] == [
             (('type_item_3', 'item3'), ('type_item_b', 'item_b'))]
+
+
+def test_remove_items_from_content_entities_sections():
+    excluded_items_by_type = {
+        'integration': {'integration1'},
+        'script': {'script1'},
+        'playbook': {'playbook1'}
+    }
+
+    id_set = {
+        "integrations": [{'integration1': {}}, {'integration2': {}}],
+        "scripts": [{'script1': {}}, {'script2': {}}],
+        "playbooks": [{'playbook1': {}}, {'playbook2': {}}],
+        "TestPlaybooks": [{'playbook1': {}}],
+        "Classifiers": [{'classifier': {}}, {'classifier2': {}}],
+        "Dashboards": [],
+        "IncidentFields": [],
+        "IncidentTypes": [],
+        "IndicatorFields": [],
+        "IndicatorTypes": [],
+        "Layouts": [],
+        "Reports": [],
+        "Widgets": [],
+        "Mappers": [],
+        "Packs": {}
+    }
+
+    test_remove_items_from_content_entities_sections()

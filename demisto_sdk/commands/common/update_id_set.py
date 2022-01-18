@@ -2076,11 +2076,11 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
 
         if 'GenericTypes' in objects_to_create:
             print_color("\nStarting iteration over Generic Types", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_generic_items,
-                                        print_logs=print_logs,
-                                        marketplace=marketplace,
-                                        ),
-                                get_generic_entities_paths(GENERIC_TYPES_DIR, pack_to_create)):
+            for arr, excluded_items in pool.map(partial(process_generic_items,
+                                                        print_logs=print_logs,
+                                                        marketplace=marketplace,
+                                                        ),
+                                                get_generic_entities_paths(GENERIC_TYPES_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
                         packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('genericTypes',

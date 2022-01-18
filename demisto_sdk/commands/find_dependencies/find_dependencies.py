@@ -2266,7 +2266,7 @@ def calculate_all_packs_dependencies(id_set_path: str, output_path: str, verbose
 
 
 def get_packs_dependent_on_given_packs(packs: list, id_set_path: str, output_path: str = None,
-                                       verbose: bool = False, id_set: dict = {}) -> Tuple:
+                                       verbose: bool = False, id_set: dict = None) -> Tuple:
     """
 
     Args:
@@ -2379,16 +2379,11 @@ def remove_dependencies_from_id_set(id_set: dict, excluded_items_by_pack: dict, 
 
     """
 
-    if not excluded_items_by_pack:  # no items has been excluded from the id_set, no need to remove dependencies
-        return
-
-    save_dict_of_sets('Tests/items_removed_manually.json', excluded_items_by_pack)
+    save_dict_of_sets('items_removed_manually_from_id_set.json', excluded_items_by_pack)
 
     print_success("Starting to remove dependencies of excluded items from id_set")
 
-    unfiltered_id_set = get_id_set('')  # create an unfiltered id_set to calculate the dependencies
-    # f = open("/Users/rshalem/dev/demisto/demisto-sdk/demisto_sdk/test_unfiltered_id_set.json")
-    # unfiltered_id_set = json.load(f)
+    unfiltered_id_set = get_id_set(id_set_path='')  # create an unfiltered id_set to calculate the dependencies
     additional_items_to_exclude = excluded_items_by_pack
 
     while additional_items_to_exclude:
@@ -2397,7 +2392,7 @@ def remove_dependencies_from_id_set(id_set: dict, excluded_items_by_pack: dict, 
             print_success(f"Adding the following packs to the exclusion list: {list(additional_items_to_exclude.keys())}")
             update_excluded_items_dict(excluded_items_by_pack, additional_items_to_exclude, excluded_items_by_type)
 
-    save_dict_of_sets('Tests/all_removed_items.json', excluded_items_by_pack)
+    save_dict_of_sets('all_removed_items_from_id_set.json', excluded_items_by_pack)
 
     remove_items_from_packs_section(id_set, excluded_items_by_pack)
     remove_items_from_content_entities_sections(id_set, excluded_items_by_type)
@@ -2426,8 +2421,8 @@ def calculate_dependencies(excluded_items: dict, id_set: dict) -> dict:
     Args:
         excluded_items: a dictionary of excluded items from the id_set, aggregated by packs.
         id_set: Unfiltered id_set to calculate the dependencies
-
-
+    Returns:
+        #todo: add
     """
     dependent_items_to_exclude_from_id_set = {}
 
@@ -2435,15 +2430,13 @@ def calculate_dependencies(excluded_items: dict, id_set: dict) -> dict:
 
     packs_dependencies_result, _ = get_packs_dependent_on_given_packs(packs_list, '', '', False, id_set)
 
-    for excluded_pack, excluded_pack_entities_list in excluded_items.items():
+    for excluded_pack, excluded_pack_entities_set in excluded_items.items():
         mandatory_dependent_packs_dict = packs_dependencies_result.get(excluded_pack, {}).get('packsDependentOnThisPackMandatorily', {})
-        if not mandatory_dependent_packs_dict:  # this pack has no mandatory dependent packs
-            continue
-        else:
-            for mandatory_pack_name, mandatory_pack_details in mandatory_dependent_packs_dict.items():
-                for entity_dependent_on, dependent_entities_list in mandatory_pack_details.get('dependent_items', []):
-                    if entity_dependent_on in excluded_pack_entities_list:  # check the type and name of the entity
-                        dependent_items_to_exclude_from_id_set.setdefault(mandatory_pack_name, set()).update(dependent_entities_list)
+
+        for mandatory_pack_name, mandatory_pack_details in mandatory_dependent_packs_dict.items():
+            for entity_dependent_on, dependent_entities_list in mandatory_pack_details.get('dependent_items', []):
+                if entity_dependent_on in excluded_pack_entities_set:  # check the type and name of the entity
+                    dependent_items_to_exclude_from_id_set.setdefault(mandatory_pack_name, set()).update(dependent_entities_list)
 
     return dependent_items_to_exclude_from_id_set
 
@@ -2477,18 +2470,18 @@ def convert_entity_types_to_id_set_headers(excluded_items_by_type: dict):
             excluded_items_by_type[entity_type_to_header[key]] = excluded_items_by_type.pop(key)
 
 
-def remove_items_from_packs_section(id_set: dict, excluded_items: dict) -> None:
+def remove_items_from_packs_section(id_set: dict, excluded_items_by_pack: dict) -> None:
     """
     Given the excluded items dict, remove the items from the 'ContentItems' entry of the relevant pack in the id set.
 
     Args:
         id_set: id_set to remove entities from
-        excluded_items: a dictionary of items that need to be excluded from the id_set, aggregated by packs.
+        excluded_items_by_pack: a dictionary of items that need to be excluded from the id_set, aggregated by packs.
 
     """
 
     packs_section_from_id_set = id_set["Packs"]
-    for pack, pack_items in excluded_items.items():
+    for pack, pack_items in excluded_items_by_pack.items():
         pack_content_items = packs_section_from_id_set.get(pack, {}).get("ContentItems")
 
         if not pack_content_items:  # This pack has been excluded from the id_set
@@ -2523,6 +2516,6 @@ def remove_items_from_content_entities_sections(id_set: dict, excluded_items_by_
 
     for entity_type, entities_list in excluded_items_by_type.items():
         entity_list_from_id_set = id_set.get(entity_type, [])
-        for i, item in enumerate(entity_list_from_id_set[:]):  # run on a copy of the list so we can modify it
+        for item in entity_list_from_id_set[:]:  # run on a copy of the list so we can modify it
             if list(item.keys())[0] in entities_list:
-                del entity_list_from_id_set[i]
+                entity_list_from_id_set.remove(item)

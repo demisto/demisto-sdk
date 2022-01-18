@@ -1403,7 +1403,6 @@ def create_id_set(**kwargs):
     id_set, excluded_items_by_pack, excluded_items_by_type = id_set_creator.create_id_set()
     if excluded_items_by_pack:
         remove_dependencies_from_id_set(id_set, excluded_items_by_pack, excluded_items_by_type)
-        id_set_creator.id_set = id_set
         id_set_creator.save_id_set()
 
 

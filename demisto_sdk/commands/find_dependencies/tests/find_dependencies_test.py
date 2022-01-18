@@ -1340,7 +1340,7 @@ class TestDependsOnPlaybook:
                           {'SafeBreach': [('integration', 'SafeBreach')],
                            'CommonScripts': [('script', 'ChangeContext'), ('script', 'Set'),
                                              ('script', 'SetAndHandleEmpty')],
-                           'CommonTypes': [('incident_field', 'indicator_accounttype')]}}
+                           'CommonTypes': [('incidentfield', 'indicator_accounttype')]}}
         test_input = [
             {
                 "SafeBreach - Compare and Validate Insight Indicators": {

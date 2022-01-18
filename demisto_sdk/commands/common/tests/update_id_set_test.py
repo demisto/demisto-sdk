@@ -426,14 +426,14 @@ class TestIntegrations:
         non_unified_file_path = os.path.join(TESTS_DIR, 'test_files',
                                              'DummyPack', 'Integrations', 'DummyIntegration')
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
-        res = process_integration(non_unified_file_path, True)
+        res, _ = process_integration(non_unified_file_path, True)
         assert len(res) == 1
         non_unified_integration_data = res[0]
 
         unified_file_path = os.path.join(TESTS_DIR, 'test_files',
                                          'DummyPack', 'Integrations', 'integration-DummyIntegration.yml')
 
-        res = process_integration(unified_file_path, True)
+        res, _ = process_integration(unified_file_path, True)
         assert len(res) == 1
         unified_integration_data = res[0]
 
@@ -481,7 +481,7 @@ class TestIntegrations:
         """
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=True)
         test_file_path = os.path.join(TESTS_DIR, 'test_files', 'invalid_file_structures', 'integration.yml')
-        res = process_integration(test_file_path, print_logs=False)
+        res, _ = process_integration(test_file_path, print_logs=False)
         assert res == []
 
 
@@ -614,7 +614,7 @@ class TestScripts:
         test_file_path = os.path.join(TESTS_DIR, 'test_files',
                                       'Packs', 'DummyPack', 'Scripts', 'DummyScript')
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
-        res = process_script(test_file_path, True)
+        res, _ = process_script(test_file_path, True)
         assert len(res) == 1
         data = res[0]
 
@@ -640,7 +640,7 @@ class TestScripts:
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=True)
         test_file_path = os.path.join(TESTS_DIR, 'test_files', 'invalid_file_structures', 'integration.yml')
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
-        res = process_script(test_file_path, print_logs=False)
+        res, _ = process_script(test_file_path, print_logs=False)
         assert res == []
 
     @staticmethod
@@ -1040,7 +1040,7 @@ class TestLayouts:
                                  'test_data', 'layout-to-test.json')
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
 
-        res = process_general_items(test_file, True, (FileType.LAYOUT,), get_layout_data)
+        res, _ = process_general_items(test_file, True, (FileType.LAYOUT,), get_layout_data)
         assert len(res) == 1
         result = res[0]
         result = result.get('urlRep')
@@ -1069,7 +1069,7 @@ class TestLayouts:
                                  'test_data', 'layout-to-test-no-types-fields.json')
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
 
-        res = process_general_items(test_file, False, (FileType.LAYOUT,), get_layout_data)
+        res, _ = process_general_items(test_file, False, (FileType.LAYOUT,), get_layout_data)
         assert len(res) == 1
         result = res[0]
         result = result.get('urlRep')
@@ -1096,7 +1096,7 @@ class TestLayouts:
                                  'test_data', 'layoutscontainer-to-test.json')
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
 
-        res = process_general_items(test_file, True, (FileType.LAYOUTS_CONTAINER,), get_layoutscontainer_data)
+        res, _ = process_general_items(test_file, True, (FileType.LAYOUTS_CONTAINER,), get_layoutscontainer_data)
         assert len(res) == 1
         result = res[0]
         result = result.get('layouts_container_test')
@@ -1155,7 +1155,7 @@ class TestIncidentFields:
                                 'incidentfield-top_level_alternative_fields.json')
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
 
-        res = process_incident_fields(test_dir, True, [])
+        res, _ = process_incident_fields(test_dir, True, [])
         assert len(res) == 1
         result = res[0]
         result = result.get('incidentfield_upload_id')
@@ -1182,7 +1182,7 @@ class TestIncidentFields:
                                 'test_data', 'incidentfield-to-test-no-types_scripts.json')
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
 
-        res = process_incident_fields(test_dir, True, [])
+        res, _ = process_incident_fields(test_dir, True, [])
         assert len(res) == 1
         result = res[0]
         result = result.get('incidentfield-test')
@@ -1206,7 +1206,7 @@ class TestIncidentFields:
         test_dir = os.path.join(git_path(), 'demisto_sdk', 'commands', 'create_id_set', 'tests',
                                 'test_data', 'incidentfield-to-test-no-types_scripts.json')
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=True)
-        res = process_incident_fields(test_dir, True, [])
+        res, _ = process_incident_fields(test_dir, True, [])
         assert res == []
 
 

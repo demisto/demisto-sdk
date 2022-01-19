@@ -61,10 +61,9 @@ class TestCreateIdSet:  # Use classes to speed up test - multi threaded py pytes
 
             with open('./id_set_result.json') as id_set_result_json:
                 id_set_result = json.load(id_set_result_json)
-        #
-        # with open('demisto_sdk/tests/test_files/create_id_set/id_set_after_removal.json', 'w', encoding='utf-8') as f:
-        #     json.dump(id_set_result, f, ensure_ascii=False, indent=4)
-        with open('demisto_sdk/tests/test_files/create_id_set/id_set_after_removing_dependencies.json') as expected_id_set_json:
+
+        with open('demisto_sdk/tests/test_files/create_id_set/id_set_after_removing_dependencies.json') as \
+                expected_id_set_json:
             expected_id_set = json.load(expected_id_set_json)
 
         assert IsEqualFunctions.is_dicts_equal(id_set_result, expected_id_set)

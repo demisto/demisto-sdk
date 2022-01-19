@@ -2384,9 +2384,7 @@ def remove_dependencies_from_id_set(id_set: dict, excluded_items_by_pack: dict, 
 
     print_success("Starting to remove dependencies of excluded items from id_set")
 
-    # unfiltered_id_set = get_id_set(id_set_path='')  # create an unfiltered id_set to calculate the dependencies
-    with open('/Users/rshalem/dev/demisto/demisto-sdk/demisto_sdk/tests/test_files/create_id_set/unfiltered_id_set.json') as id_set_file:
-        unfiltered_id_set = json.load(id_set_file)
+    unfiltered_id_set = get_id_set(id_set_path='')  # create an unfiltered id_set to calculate the dependencies
     additional_items_to_exclude = excluded_items_by_pack
 
     while additional_items_to_exclude:

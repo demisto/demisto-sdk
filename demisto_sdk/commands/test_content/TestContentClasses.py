@@ -167,6 +167,7 @@ class TestPlaybook:
         self.integrations_to_lock = [
             integration for integration in self.integrations if
             integration.name not in self.build_context.conf.parallel_integrations]
+        self.number_of_times_executed = 0
 
     def __str__(self):
         return f'"{self.configuration.playbook_id}"'
@@ -1547,7 +1548,7 @@ class TestContext:
 
     def _add_to_failed_playbooks(self, is_second_playback_run: bool = False) -> None:
         """
-        Adds the playbook to the succeeded playbooks list
+        Adds the playbook to the failed playbooks list
 
         Args:
             is_second_playback_run: Is The playbook run on a second playback after a freshly created record
@@ -1562,6 +1563,15 @@ class TestContext:
             playbook_name_to_add += ' (Second Playback)'
         self.build_context.logging_module.error(f'Test failed: {self}')
         self.build_context.tests_data_keeper.failed_playbooks.add(playbook_name_to_add)
+
+    def _remove_from_failed_playbooks(self) -> None:
+        """
+        Removes the playbook from the failed playbooks list
+        """
+        playbook_name_to_remove = self.playbook.configuration.playbook_id
+        failed_playbooks = self.build_context.tests_data_keeper.failed_playbooks
+        if playbook_name_to_remove in failed_playbooks:
+            failed_playbooks.remove(playbook_name_to_remove)
 
     @staticmethod
     def _get_circle_memory_data() -> Tuple[str, str]:
@@ -1649,6 +1659,7 @@ class TestContext:
             if is_record_run:
                 return
             self._add_to_succeeded_playbooks()
+            self._remove_from_failed_playbooks()
 
         elif status == PB_Status.FAILED_DOCKER_TEST:
             self._add_to_failed_playbooks()
@@ -1813,6 +1824,10 @@ class ServerContext:
                                         self).execute_test(self.proxy)
             if test_executed:
                 self.executed_tests.add(test_playbook.configuration.playbook_id)
+                if test_playbook.configuration.playbook_id in self.build_context.tests_data_keeper.failed_playbooks:
+                    test_playbook.number_of_times_executed += 1
+                    if test_playbook.number_of_times_executed < 3:
+                        queue.put(test_playbook)
             else:
                 queue.put(test_playbook)
             queue.task_done()

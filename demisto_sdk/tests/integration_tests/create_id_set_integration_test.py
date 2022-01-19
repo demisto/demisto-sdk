@@ -10,6 +10,11 @@ CREATE_ID_SET_CMD = "create-id-set"
 
 
 class TestCreateIdSet:  # Use classes to speed up test - multi threaded py pytest
+    @staticmethod
+    def open_json_file(file_path):
+        with open(file_path) as json_file:
+            return json.load(json_file)
+
     def test_create_id_set_with_excluded_items(self, mocker, repo):
         """
         Given
@@ -33,17 +38,15 @@ class TestCreateIdSet:  # Use classes to speed up test - multi threaded py pytes
         integration = pack.create_integration('integration')
         integration.create_default_integration()
 
-        with open('demisto_sdk/tests/test_files/create_id_set/unfiltered_id_set.json') as id_set_file:
-            mock_id_set = json.load(id_set_file)
-        mocker.patch.object(find_dependencies, "save_dict_of_sets")
+        mock_id_set = self.open_json_file('demisto_sdk/tests/test_files/create_id_set/unfiltered_id_set.json')
+        id_set_after_manual_removal = self.open_json_file('demisto_sdk/tests/test_files/create_id_set/id_set_after_manual_removal.json')
+
         mocker.patch.object(cis, 'get_id_set', return_value=mock_id_set)
         mocker.patch.object(find_dependencies, "get_packs_dependent_on_given_packs",
                             side_effect=[(packs_dependencies_results.data, {}), ({}, {})])
-        with open('demisto_sdk/tests/test_files/create_id_set/id_set_after_manual_removal.json') as id_set_file:
-            id_set_after_manual_removal = json.load(id_set_file)
-        mocker.patch.object(cis, 're_create_id_set',
-                            return_value=(id_set_after_manual_removal, excluded_items_by_pack.data,
-                                          excluded_items_by_type.data))
+        mocker.patch.object(cis, 're_create_id_set', return_value=(id_set_after_manual_removal,
+                                                                   excluded_items_by_pack.data,
+                                                                   excluded_items_by_type.data))
 
         # Change working dir to repo
         with ChangeCWD(integration.repo_path):
@@ -57,12 +60,9 @@ class TestCreateIdSet:  # Use classes to speed up test - multi threaded py pytes
             result = runner.invoke(main, [CREATE_ID_SET_CMD, '-o', './id_set_result.json', '--marketplace', 'marketplacev2'],
                                    catch_exceptions=False)
 
-            with open('./id_set_result.json') as id_set_result_json:
-                id_set_result = json.load(id_set_result_json)
+            id_set_result = self.open_json_file('./id_set_result.json')
 
-        with open('demisto_sdk/tests/test_files/create_id_set/id_set_after_removing_dependencies.json') as \
-                expected_id_set_json:
-            expected_id_set = json.load(expected_id_set_json)
+        expected_id_set = self.open_json_file('demisto_sdk/tests/test_files/create_id_set/id_set_after_removing_dependencies.json')
 
         assert IsEqualFunctions.is_dicts_equal(id_set_result, expected_id_set)
         assert result.exit_code == 0
@@ -100,18 +100,17 @@ class TestCreateIdSet:  # Use classes to speed up test - multi threaded py pytes
         integration = pack.create_integration('integration')
         integration.create_default_integration()
 
-        with open('demisto_sdk/tests/test_files/create_id_set/unfiltered_id_set.json') as id_set_file:
-            mock_id_set = json.load(id_set_file)
-        mocker.patch.object(find_dependencies, "save_dict_of_sets")
+        mock_id_set = self.open_json_file('demisto_sdk/tests/test_files/create_id_set/unfiltered_id_set.json')
+        id_set_after_manual_removal = self.open_json_file('demisto_sdk/tests/test_files/create_id_set/mini_id_set/id_set_after_manual_removal.json')
+
         mocker.patch.object(cis, 'get_id_set', return_value=mock_id_set)
         mocker.patch.object(find_dependencies, "get_packs_dependent_on_given_packs",
                             side_effect=[(packs_dependencies_results.first_iteration, {}),
-                                         (packs_dependencies_results.second_iteration, {}), ({}, {})])
-        with open('demisto_sdk/tests/test_files/create_id_set/mini_id_set/id_set_after_manual_removal.json') as id_set_file:
-            id_set_after_manual_removal = json.load(id_set_file)
-        mocker.patch.object(cis, 're_create_id_set',
-                            return_value=(id_set_after_manual_removal, excluded_items_by_pack.data,
-                                          excluded_items_by_type.data))
+                                         (packs_dependencies_results.second_iteration, {}),
+                                         ({}, {})])
+        mocker.patch.object(cis, 're_create_id_set', return_value=(id_set_after_manual_removal,
+                                                                   excluded_items_by_pack.data,
+                                                                   excluded_items_by_type.data))
 
         # Change working dir to repo
         with ChangeCWD(integration.repo_path):
@@ -125,12 +124,9 @@ class TestCreateIdSet:  # Use classes to speed up test - multi threaded py pytes
             result = runner.invoke(main, [CREATE_ID_SET_CMD, '-o', './id_set_result.json', '--marketplace', 'marketplacev2'],
                                    catch_exceptions=False)
 
-            with open('./id_set_result.json') as id_set_result_json:
-                id_set_result = json.load(id_set_result_json)
+            id_set_result = self.open_json_file('./id_set_result.json')
 
-        with open('demisto_sdk/tests/test_files/create_id_set/mini_id_set/id_set_after_removing_dependencies.json') as \
-                expected_id_set_json:
-            expected_id_set = json.load(expected_id_set_json)
+        expected_id_set = self.open_json_file('demisto_sdk/tests/test_files/create_id_set/mini_id_set/id_set_after_removing_dependencies.json')
 
         assert IsEqualFunctions.is_dicts_equal(id_set_result, expected_id_set)
         assert result.exit_code == 0

@@ -1077,9 +1077,9 @@ class Linter:
             uid = os.getuid() or 4000
             logger.debug(f'{log_prompt} - user uid for running lint/test: {uid}')  # lgtm[py/clear-text-logging-sensitive-data]
             #container_obj.exec_run("cp -r pack_files/test_data .".split(" "))
-            container_exit_code, output = container_obj.exec_run(build_pytest_command(test_xml=test_xml, json=True,cov=cov).split(' '))
-
-            # Getting container logs
+            container_exit_code, b_output = container_obj.exec_run(build_pytest_command(test_xml=test_xml, json=True,cov=cov).split(' '))
+            output = b_output.decode('utf-8')
+            
             logger.info(f"{log_prompt} - exit-code: {container_exit_code}")
             if container_exit_code in [0, 1, 2, 5]:
                 # 0-All tests passed
@@ -1115,7 +1115,6 @@ class Linter:
                     logger.info(f"{log_prompt} - Successfully finished")
                     exit_code = SUCCESS
                 elif container_exit_code in [2]:
-                    # output = output # container_obj.logs().decode('utf-8')
                     exit_code = FAIL
                 else:
                     logger.info(f"{log_prompt} - Finished errors found")
@@ -1125,7 +1124,6 @@ class Linter:
                 # 4-pytest command line usage error
                 logger.critical(f"{log_prompt} - Usage error")
                 exit_code = RERUN
-                output = container_obj.logs().decode('utf-8')
         except (docker.errors.ImageNotFound, docker.errors.APIError) as e:
             logger.critical(f"{log_prompt} - Unable to run pytest container {e}")
             exit_code = RERUN

@@ -37,7 +37,7 @@
                 "lint",
                 // "-a",
                 "-i",
-                "/Users/ilappe/dev/test_repo/content/Packs/Active_Directory_Query",
+                "Packs/Akamai_SIEM",
                 "--no-flake8",
                 "--no-bandit",
                 "--no-xsoar-linter",

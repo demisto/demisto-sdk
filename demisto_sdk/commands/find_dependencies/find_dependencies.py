@@ -1945,7 +1945,7 @@ class PackDependencies:
             update_pack_metadata: bool = False,
             verbose: bool = False,
             use_pack_metadata: bool = False,
-            input_paths: list = None,
+            input_paths: Tuple = None,
             all_packs_dependencies: bool = False,
             get_dependent_on: bool = False,
             output_path: str = None,
@@ -2383,7 +2383,9 @@ def remove_dependencies_from_id_set(id_set: dict, excluded_items_by_pack: dict, 
 
     print_success("Starting to remove dependencies of excluded items from id_set")
 
-    unfiltered_id_set = get_id_set(id_set_path='')  # create an unfiltered id_set to calculate the dependencies
+    # unfiltered_id_set = get_id_set(id_set_path='')  # create an unfiltered id_set to calculate the dependencies
+    with open('/Users/rshalem/dev/demisto/demisto-sdk/demisto_sdk/tests/test_files/create_id_set/unfiltered_id_set.json') as id_set_file:
+        unfiltered_id_set = json.load(id_set_file)
     additional_items_to_exclude = excluded_items_by_pack
 
     while additional_items_to_exclude:
@@ -2493,7 +2495,10 @@ def remove_items_from_packs_section(id_set: dict, excluded_items_by_pack: dict) 
 
         for item_type, item_name in pack_items:
             item_type = item_type_to_content_items_header(item_type)
-            pack_content_items.get(f'{item_type}s', []).remove(item_name)
+            try:
+                pack_content_items.get(f'{item_type}s', []).remove(item_name)
+            except ValueError:  # This content item has already been excluded from the id_set
+                pass
 
         # if no content items left, remove the pack from the id_set
         if pack not in constants.ALLOWED_EMPTY_PACKS and not sum(pack_content_items.values(), []):

@@ -1077,6 +1077,7 @@ class Linter:
             uid = os.getuid() or 4000
             logger.debug(f'{log_prompt} - user uid for running lint/test: {uid}')  # lgtm[py/clear-text-logging-sensitive-data]
             #container_obj.exec_run("cp -r pack_files/test_data .".split(" "))
+            logger.info(f'{log_prompt} - about to run test on the binded dir')
             container_exit_code, b_output = container_obj.exec_run(build_pytest_command(test_xml=test_xml, json=True,cov=cov).split(' '))
             output = b_output.decode('utf-8')
             

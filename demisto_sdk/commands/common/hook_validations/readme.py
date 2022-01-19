@@ -299,6 +299,7 @@ class ReadMeValidator(BaseValidator):
         for link in absolute_links:
             error_message: str = ''
             error_code: str = ''
+            error_found = False
             prefix = '' if 'src' in link[0] else link[0].strip()
             img_url = link[1].strip()  # striping in case there are whitespaces at the beginning/ending of url.
             try:
@@ -318,21 +319,24 @@ class ReadMeValidator(BaseValidator):
                             error_message, error_code = \
                                 Errors.invalid_readme_image_error(prefix + f'({img_url})',
                                                                   error_type='branch_name_readme_absolute_error')
-                    else:
-                        response = requests.get(img_url, verify=False, timeout=10)
-                        if response.status_code != 200:
-                            error_message, error_code = \
-                                Errors.invalid_readme_image_error(prefix + f'({img_url})',
-                                                                  error_type='general_readme_absolute_error')
+                            error_found = True
+
+                if not error_found:
+                    response = requests.get(img_url, verify=False, timeout=10)
+                    if response.status_code != 200:
+                        error_message, error_code = \
+                            Errors.invalid_readme_image_error(prefix + f'({img_url})',
+                                                              error_type='general_readme_absolute_error')
+
+                if error_message and error_code:
+                    formatted_error = \
+                        self.handle_error(error_message, error_code, file_path=self.file_path,
+                                          should_print=should_print_error)
+                    error_list.append(formatted_error)
+
             except Exception as ex:
                 click.secho(f"Could not validate the image link: {img_url}\n {ex}", fg='yellow')
                 continue
-
-            if error_message and error_code:
-                formatted_error = \
-                    self.handle_error(error_message, error_code, file_path=self.file_path,
-                                      should_print=should_print_error)
-                error_list.append(formatted_error)
 
         return error_list
 

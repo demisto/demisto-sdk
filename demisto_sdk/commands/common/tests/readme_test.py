@@ -420,10 +420,13 @@ def test_verify_readme_image_paths(mocker):
         # Mock get requests
         m.get('https://github.com/demisto/test1.png',
               status_code=404, text="Test1")
-        m.get('https://github.com/demisto/content/raw/test2.png',
+        m.get('https://github.com/demisto/content/test2.png',
               status_code=404, text="Test2")
         m.get('https://github.com/demisto/test3.png',
               status_code=200, text="Test3")
+        m.get('https://raw.githubusercontent.com/demisto/content/1234eeeeffffab234cdadede2342cbffc3234567/Packs/'
+              'CommonPlaybooks/doc_files/some_image.png',
+              status_code=200, text="Test4")
 
         result = readme_validator.verify_readme_image_paths()
     sys.stdout = sys.__stdout__  # reset stdout.
@@ -433,13 +436,13 @@ def test_verify_readme_image_paths(mocker):
            '![Identity with High Risk Score](../../default.png)' in captured_output
     assert 'The following image relative path is not valid, please recheck it:\n' \
            '![Identity with High Risk Score](default.png)' not in captured_output
-    assert 'Branch name was found in the URL, please change it to the commit hash:\n' \
-           '![branch in url]' in captured_output
-    assert 'Branch name was found in the URL, please change it to the commit hash:\n' \
-           '![commit hash in url]' not in captured_output
+    assert 'Branch name was found in the URL, please change it to the commit hash ' \
+           '(https://xsoar.pan.dev/docs/documentation/readme_file#absolute-image-urls):\n![branch in url]' in captured_output
+    assert 'Branch name was found in the URL, please change it to the commit hash ' \
+           '(https://xsoar.pan.dev/docs/documentation/readme_file#absolute-image-urls):\n![commit hash in url]' not in captured_output
     assert 'please repair it:\n' \
            '![Identity with High Risk Score](https://github.com/demisto/test1.png)' in captured_output
-    assert 'please repair it:\n(https://github.com/demisto/content/raw/test2.png)' in captured_output
+    assert 'please repair it:\n(https://github.com/demisto/content/test2.png)' in captured_output
     assert 'please repair it:\n' \
            '![Identity with High Risk Score](https://github.com/demisto/test3.png)' \
            not in captured_output

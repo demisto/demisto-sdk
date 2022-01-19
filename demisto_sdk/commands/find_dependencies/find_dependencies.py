@@ -1968,7 +1968,8 @@ class PackDependencies:
                                                            get_dependent_on)
 
         if get_dependent_on:
-            dependent_packs, _ = get_packs_dependent_on_given_packs(input_paths, id_set_path, output_path, verbose)
+            dependent_packs, _ = get_packs_dependent_on_given_packs(input_paths, id_set_path,
+                                                                    output_path, verbose)  # type: ignore[arg-type]
             print_success("Found the following dependent packs:")
             dependent_packs = json.dumps(dependent_packs, indent=4)
             click.echo(click.style(dependent_packs, bold=True))

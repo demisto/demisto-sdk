@@ -2391,7 +2391,7 @@ def remove_dependencies_from_id_set(id_set: dict, excluded_items_by_pack: dict, 
         if additional_items_to_exclude:
             print_success(
                 f"Adding the following packs to the exclusion list: {list(additional_items_to_exclude.keys())}")
-            update_excluded_items_dict(excluded_items_by_pack, additional_items_to_exclude, excluded_items_by_type)
+            update_excluded_items_dict(excluded_items_by_pack, excluded_items_by_type, additional_items_to_exclude)
 
     save_dict_of_sets('all_removed_items_from_id_set.json', excluded_items_by_pack)
 

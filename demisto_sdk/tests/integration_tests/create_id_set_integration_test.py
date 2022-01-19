@@ -34,10 +34,6 @@ class TestCreateIdSet:  # Use classes to speed up test - multi threaded py pytes
             excluded_items_by_pack, excluded_items_by_type,
             packs_dependencies_results)
 
-        pack = repo.create_pack('CreateIdSetPack')
-        integration = pack.create_integration('integration')
-        integration.create_default_integration()
-
         mock_id_set = self.open_json_file('demisto_sdk/tests/test_files/create_id_set/unfiltered_id_set.json')
         id_set_after_manual_removal = self.open_json_file('demisto_sdk/tests/test_files/create_id_set/id_set_after_manual_removal.json')
 
@@ -49,7 +45,7 @@ class TestCreateIdSet:  # Use classes to speed up test - multi threaded py pytes
                                                                    excluded_items_by_type.data))
 
         # Change working dir to repo
-        with ChangeCWD(integration.repo_path):
+        with ChangeCWD(repo.path):
             # Circle froze on 3.7 dut to high usage of processing power.
             # pool = Pool(processes=cpu_count() * 2) is the line that in charge of the multiprocessing initiation,
             # so changing `cpu_count` return value to 1 still gives you multiprocessing but with only 2 processors,
@@ -96,10 +92,6 @@ class TestCreateIdSet:  # Use classes to speed up test - multi threaded py pytes
             excluded_items_by_pack, excluded_items_by_type,
             packs_dependencies_results)
 
-        pack = repo.create_pack('CreateIdSetPack')
-        integration = pack.create_integration('integration')
-        integration.create_default_integration()
-
         mock_id_set = self.open_json_file('demisto_sdk/tests/test_files/create_id_set/unfiltered_id_set.json')
         id_set_after_manual_removal = self.open_json_file('demisto_sdk/tests/test_files/create_id_set/mini_id_set/id_set_after_manual_removal.json')
 
@@ -113,7 +105,7 @@ class TestCreateIdSet:  # Use classes to speed up test - multi threaded py pytes
                                                                    excluded_items_by_type.data))
 
         # Change working dir to repo
-        with ChangeCWD(integration.repo_path):
+        with ChangeCWD(repo.path):
             # Circle froze on 3.7 dut to high usage of processing power.
             # pool = Pool(processes=cpu_count() * 2) is the line that in charge of the multiprocessing initiation,
             # so changing `cpu_count` return value to 1 still gives you multiprocessing but with only 2 processors,

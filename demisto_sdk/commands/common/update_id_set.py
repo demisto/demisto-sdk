@@ -2342,14 +2342,14 @@ def sort(data):
 
 
 def update_excluded_items_dict(excluded_items_by_pack: dict, excluded_items_by_type: dict,
-                               excluded_items_from_iteration: dict):
+                               excluded_items_to_add: dict):
     """
     Adds the items from 'excluded_items_to_add' to the exclusion dicts.
 
     Args:
         excluded_items_by_pack: the current dictionary of items to exclude from the id_set, aggregated by packs
         excluded_items_by_type: a dictionary of items to exclude from the id_set, aggregated by type
-        excluded_items_from_iteration: a dictionary of items to add to the exclusion dict, aggregated by packs
+        excluded_items_to_add: a dictionary of items to add to the exclusion dict, aggregated by packs
 
     Example of excluded_items_by_pack:
     {
@@ -2366,7 +2366,7 @@ def update_excluded_items_dict(excluded_items_by_pack: dict, excluded_items_by_t
         ...
     }
     """
-    for key, val in excluded_items_from_iteration.items():
+    for key, val in excluded_items_to_add.items():
         excluded_items_by_pack.setdefault(key, set()).update(val)
         for tuple_item in val:
             excluded_items_by_type.setdefault(tuple_item[0], set()).update([tuple_item[1]])

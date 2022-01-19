@@ -45,8 +45,6 @@ class TestCreateIdSet:  # Use classes to speed up test - multi threaded py pytes
                             return_value=(id_set_after_manual_removal, excluded_items_by_pack.data,
                                           excluded_items_by_type.data))
 
-        mocker.patch("click.secho")
-
         # Change working dir to repo
         with ChangeCWD(integration.repo_path):
             # Circle froze on 3.7 dut to high usage of processing power.
@@ -114,8 +112,6 @@ class TestCreateIdSet:  # Use classes to speed up test - multi threaded py pytes
         mocker.patch.object(cis, 're_create_id_set',
                             return_value=(id_set_after_manual_removal, excluded_items_by_pack.data,
                                           excluded_items_by_type.data))
-
-        mocker.patch("click.secho")
 
         # Change working dir to repo
         with ChangeCWD(integration.repo_path):

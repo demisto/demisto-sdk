@@ -2467,7 +2467,7 @@ def convert_entity_types_to_id_set_headers(excluded_items_by_type: dict):
         "widget": "Widgets",
         "list": "Lists",
         "report": "Reports",
-        "layout": "Layouts"
+        "layout": "Layouts",
     }
 
     for key in entity_type_to_header:

@@ -77,7 +77,7 @@ class TestIDSetCreator:
         mocker.patch.object(uis, 'cpu_count', return_value=1)
         id_set_creator = IDSetCreator(output=None)
 
-        id_set = id_set_creator.create_id_set()
+        id_set, _, _ = id_set_creator.create_id_set()
         assert not os.path.exists(self.file_path)
         assert id_set is not None
 

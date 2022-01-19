@@ -225,8 +225,7 @@ class Linter:
             if self._facts["docker_engine"]:
                 # Getting python version from docker image - verifying if not valid docker image configured
                 for image in self._facts["images"]:
-                    py_num: str = get_python_version_from_image(image=image[0], timeout=self.docker_timeout,
-                                                                log_prompt=log_prompt)
+                    py_num: str = get_python_version_from_image(image=image[0], timeout=self.docker_timeout)
                     image[1] = py_num
                     logger.info(f"{self._pack_name} - Facts - {image[0]} - Python {py_num}")
                     if not self._facts["python_version"]:
@@ -505,8 +504,8 @@ class Linter:
         log_prompt = f"{self._pack_name} - Mypy"
         logger.info(f"{log_prompt} - Start")
         with add_typing_module(lint_files=lint_files, python_version=py_num):
-            stdout, stderr, exit_code = run_command_os(command=build_mypy_command(files=lint_files, version=py_num),
-                                                       cwd=self._pack_abs_dir)
+            mypy_command = build_mypy_command(files=lint_files, version=py_num, content_repo=self._content_repo)
+            stdout, stderr, exit_code = run_command_os(command=mypy_command, cwd=self._pack_abs_dir)
         logger.debug(f"{log_prompt} - Finished exit-code: {exit_code}")
         logger.debug(f"{log_prompt} - Finished stdout: {RL if stdout else ''}{stdout}")
         logger.debug(f"{log_prompt} - Finished stderr: {RL if stderr else ''}{stderr}")

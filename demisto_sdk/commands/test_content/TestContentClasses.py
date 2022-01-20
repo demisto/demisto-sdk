@@ -473,6 +473,7 @@ class BuildContext:
         self.conf_unmockable_tests = self._get_unmockable_tests_from_conf()
         self.unmockable_test_ids: Set[str] = set()
         self.mockable_tests_to_run, self.unmockable_tests_to_run = self._get_tests_to_run()
+        self.failed_test_queue: Queue = Queue()
         self.slack_user_id = self._retrieve_slack_user_id()
         self.all_integrations_configurations = self._get_all_integration_config(self.instances_ips)
 
@@ -1634,7 +1635,7 @@ class TestContext:
         with acquire_test_lock(self.playbook) as lock:
             if lock:
                 status = self._incident_and_docker_test()
-                self._handle_status(status)
+                self._handle_status(status, mockable=False)
             else:
                 return False
         return True
@@ -1642,7 +1643,8 @@ class TestContext:
     def _handle_status(self, status: str,
                        is_first_playback_run: bool = False,
                        is_second_playback_run: bool = False,
-                       is_record_run: bool = False) -> None:
+                       is_record_run: bool = False,
+                       mockable: bool = True) -> None:
         """
         Handles the playbook execution run
         - Logs according to the results
@@ -1671,6 +1673,11 @@ class TestContext:
                 self._add_to_failed_playbooks(is_second_playback_run=True)
                 return
             self._add_to_failed_playbooks()
+            if not mockable and self.playbook.number_of_times_executed < 3:
+                self.playbook.number_of_times_executed += 1
+                self.build_context.logging_module.info(
+                    f'%%%%%%%% unmockable call: number of times {self.playbook.number_of_times_executed}')
+                self.build_context.failed_test_queue.put(self.playbook.configuration.playbook_id)
             if not self.build_context.is_local_run:
                 self._notify_failed_test()
 
@@ -1824,10 +1831,6 @@ class ServerContext:
                                         self).execute_test(self.proxy)
             if test_executed:
                 self.executed_tests.add(test_playbook.configuration.playbook_id)
-                if test_playbook.configuration.playbook_id in self.build_context.tests_data_keeper.failed_playbooks:
-                    test_playbook.number_of_times_executed += 1
-                    if test_playbook.number_of_times_executed < 3:
-                        queue.put(test_playbook)
             else:
                 queue.put(test_playbook)
             queue.task_done()
@@ -1845,6 +1848,9 @@ class ServerContext:
                                               username=self.build_context.secret_conf.server_username,
                                               password=self.build_context.secret_conf.server_password,
                                               server=self.server_url)
+
+    def _execute_failed_tests(self):
+        self._execute_tests(self.build_context.failed_test_queue)
 
     def _reset_tests_round_if_necessary(self, test_playbook: TestPlaybook, queue_: Queue) -> None:
         """
@@ -1898,6 +1904,8 @@ class ServerContext:
             self._execute_mockable_tests()
             self.build_context.logging_module.info('Running mock-disabled tests', real_time=True)
             self._execute_unmockable_tests()
+            self.build_context.logging_module.info('Running failed tests', real_time=True)
+            self._execute_failed_tests()
             self.build_context.logging_module.info(f'Finished tests with server url - {self.server_url}',
                                                    real_time=True)
             self.build_context.tests_data_keeper.add_proxy_related_test_data(self.proxy)

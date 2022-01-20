@@ -160,6 +160,7 @@ def build_mypy_command(files: List[Path], version: str, content_repo: Path = Non
     Args:
         files(List[Path]): files to execute lint
         version(str): python varsion X.Y (3.7, 2.7 ..)
+        content_repo(Path): path of the content repo
 
     Returns:
         str: mypy command

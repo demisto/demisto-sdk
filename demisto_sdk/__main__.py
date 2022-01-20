@@ -1397,9 +1397,16 @@ def generate_docs(**kwargs):
 def create_id_set(**kwargs):
     """Create the content dependency tree by ids."""
     from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
+    from demisto_sdk.commands.find_dependencies.find_dependencies import \
+        remove_dependencies_from_id_set
+
     check_configuration_file('create-id-set', kwargs)
     id_set_creator = IDSetCreator(**kwargs)
-    id_set_creator.create_id_set()
+    id_set, excluded_items_by_pack, excluded_items_by_type = id_set_creator.create_id_set()
+
+    if excluded_items_by_pack:
+        remove_dependencies_from_id_set(id_set, excluded_items_by_pack, excluded_items_by_type)
+        id_set_creator.save_id_set()
 
 
 # ====================== merge-id-sets ====================== #

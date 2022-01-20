@@ -469,6 +469,7 @@ def get_last_remote_release_version():
     return ''
 
 
+@lru_cache(maxsize=300)
 def get_file(file_path, type_of_file):
     data_dictionary = None
     with open(os.path.expanduser(file_path), mode="r", encoding="utf8") as f:
@@ -496,6 +497,7 @@ def get_yaml(file_path):
     return get_file(file_path, 'yml')
 
 
+@lru_cache(maxsize=300)
 def get_ryaml(file_path: str) -> dict:
     """
     Get yml file contents using ruaml

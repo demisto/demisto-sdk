@@ -54,6 +54,7 @@ giturlparse = "*"
 pytest-freezegun = "*"
 python-dotenv = "*"
 importlib-resources = "*"
+demisto-sdk = {editable = true, path = "."}
 
 [dev-packages]
 mitmproxy = "==5.1.0"

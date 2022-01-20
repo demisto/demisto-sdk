@@ -2078,3 +2078,8 @@ class Errors:
     @error_code_decorator
     def missing_default_additional_info(params: List[str]):
         return f'The additionalinfo of params {params} is empty.'
+
+    @staticmethod
+    @error_code_decorator
+    def wrong_version_format():
+        return f'Wrong version format in metadata.json change to a 0.0.0 type format'

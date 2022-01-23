@@ -151,7 +151,6 @@ class TestPackMetadataValidator:
         assert not validator.validate_pack_meta_file()
         assert "[PA129] - pack_metadata.json - Missing categories" in validator.get_errors()
 
-
     def test_metadata_validator_invalid_version_add_error(self, mocker):
         """
         Given:
@@ -173,4 +172,3 @@ class TestPackMetadataValidator:
         validator = PackUniqueFilesValidator('fake')
         assert not validator.validate_pack_meta_file()
         assert "[PA130] - Wrong version format in metadata.json change to a 0.0.0 type format" in validator.get_errors()
-

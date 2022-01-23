@@ -2114,4 +2114,4 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def wrong_version_format():
-        return f'Wrong version format in metadata.json change to a 0.0.0 type format'
+        return 'Wrong version format in metadata.json change to a 0.0.0 type format'

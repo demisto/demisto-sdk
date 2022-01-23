@@ -1,7 +1,7 @@
 import os
-from concurrent.futures._base import as_completed
+from concurrent.futures._base import as_completed, Future
 from configparser import ConfigParser, MissingSectionHeaderError
-from typing import Optional, Set, Tuple
+from typing import Callable, List, Optional, Set, Tuple
 
 import click
 from colorama import Fore

@@ -298,15 +298,12 @@ class PackUniqueFilesValidator(BaseValidator):
         current_meta_file_content = get_json(metadata_file_path)
         old_version = old_meta_file_content.get('currentVersion', '0.0.0')
         current_version = current_meta_file_content.get('currentVersion', '0.0.0')
-        if self._is_version_format(old_version) and self._is_version_format(current_version):
-            if LooseVersion(old_version) < LooseVersion(current_version):
-                return True
-            elif self._add_error(Errors.pack_metadata_version_should_be_raised(self.pack, old_version), metadata_file_path):
-                return False
-
-        return True
-
-
+        if LooseVersion(old_version) < LooseVersion(current_version):
+            return True
+        elif self._add_error(Errors.pack_metadata_version_should_be_raised(self.pack, old_version),
+                             metadata_file_path):
+            return False
+        return False
 
     def validate_pack_name(self, metadata_file_content: Dict) -> bool:
         # check validity of pack metadata mandatory fields
@@ -413,7 +410,7 @@ class PackUniqueFilesValidator(BaseValidator):
 
             # check format of metadata version
             version = metadata.get(PACK_METADATA_CURR_VERSION, '0.0.0')
-            if not self._is_version_format():
+            if not self._is_version_format(version):
                 return False
 
         except (ValueError, TypeError):
@@ -514,7 +511,7 @@ class PackUniqueFilesValidator(BaseValidator):
         """
         match_obj = re.match(VERSION_REGEX, version)
         if not match_obj:
-            self._add_error(Errors.wrong_version_format(version))
+            self._add_error(Errors.wrong_version_format(), self.pack_meta_file)
             return False
         return True
 

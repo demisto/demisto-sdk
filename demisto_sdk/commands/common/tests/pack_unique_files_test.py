@@ -776,3 +776,4 @@ class TestPackUniqueFilesValidator:
             assert not res
             assert f'Partners must provide a non-empty author image under the path {author_image_path}.' in \
                    self.validator.get_errors()
+

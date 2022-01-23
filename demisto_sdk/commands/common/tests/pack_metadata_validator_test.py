@@ -37,6 +37,7 @@ class TestPackMetadataValidator:
         os.path.join(FILES_PATH, 'pack_metadata_invalid_category.json'),
         os.path.join(FILES_PATH, 'pack_metadata_invalid_keywords.json'),
         os.path.join(FILES_PATH, 'pack_metadata_invalid_tags.json'),
+        os.path.join(FILES_PATH, 'pack_metadata_invalid_format_version.json'),
     ])
     def test_metadata_validator_invalid__non_breaking(self, mocker, metadata):
         mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
@@ -149,3 +150,27 @@ class TestPackMetadataValidator:
         validator = PackUniqueFilesValidator('fake')
         assert not validator.validate_pack_meta_file()
         assert "[PA129] - pack_metadata.json - Missing categories" in validator.get_errors()
+
+
+    def test_metadata_validator_invalid_version_add_error(self, mocker):
+        """
+        Given:
+            - pack metadata.json file with wrong version type
+
+        When:
+            - validating meta data structure
+
+        Then:
+            - Ensure false is returned and the correct error is added to the validation object error list
+        """
+        metadata = os.path.join(self.__class__.FILES_PATH, 'pack_metadata_invalid_format_version.json')
+        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
+        mocker.patch.object(PackUniqueFilesValidator, '_read_file_content',
+                            return_value=TestPackMetadataValidator.read_file(metadata))
+        mocker.patch.object(PackUniqueFilesValidator, '_is_pack_file_exists', return_value=True)
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
+
+        validator = PackUniqueFilesValidator('fake')
+        assert not validator.validate_pack_meta_file()
+        assert "[PA130] - Wrong version format in metadata.json change to a 0.0.0 type format" in validator.get_errors()
+

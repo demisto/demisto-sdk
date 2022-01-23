@@ -26,19 +26,6 @@
                 "-j",
                 "${env:CONTENT}/.demisto-sdk-report"
             ]
-        },
-        {
-            "name": "Python: Lint All",
-            "type": "python",
-            "request": "launch",
-            "module": "demisto_sdk",
-            "cwd": "/Users/ilappe/dev/test_repo/content",
-            "args": [
-                "lint",
-                "-i",
-                "Packs/Gmail",
-                "--no-xsoar-linter"
-            ]
         }
     ]
 }

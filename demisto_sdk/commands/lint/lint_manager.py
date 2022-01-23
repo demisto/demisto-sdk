@@ -34,7 +34,9 @@ from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, PWSH_CHECKS,
                                                PY_CHCEKS,
                                                build_skipped_exit_code,
                                                generate_coverage_report,
-                                               get_test_modules, validate_env)
+                                               get_test_modules,
+                                               time_measurements_reporter,
+                                               validate_env)
 from demisto_sdk.commands.lint.linter import Linter
 
 logger = logging.getLogger('demisto-sdk')
@@ -416,15 +418,17 @@ class LintManager:
                     pass
                 return 1
 
-        self._report_results(lint_status=lint_status,
-                             pkgs_status=pkgs_status,
-                             return_exit_code=return_exit_code,
-                             return_warning_code=return_warning_code,
-                             skipped_code=int(skipped_code),
-                             pkgs_type=pkgs_type,
-                             no_coverage=no_coverage,
-                             coverage_report=coverage_report)
-        self._create_failed_packs_report(lint_status=lint_status, path=failure_report)
+        with time_measurements_reporter(self.get_time_measurements_methods()):
+            self._report_results(lint_status=lint_status,
+                                 pkgs_status=pkgs_status,
+                                 return_exit_code=return_exit_code,
+                                 return_warning_code=return_warning_code,
+                                 skipped_code=int(skipped_code),
+                                 pkgs_type=pkgs_type,
+                                 no_coverage=no_coverage,
+                                 coverage_report=coverage_report)
+
+            self._create_failed_packs_report(lint_status=lint_status, path=failure_report)
 
         # check if there were any errors during lint run , if so set to FAIL as some error codes are bigger
         # then 512 and will not cause failure on the exit code.
@@ -472,6 +476,26 @@ class LintManager:
 
         self.report_summary(pkg=self._pkgs, lint_status=lint_status, all_packs=self._all_packs)
         self.create_json_output()
+
+    @staticmethod
+    def get_time_measurements_methods():
+        """
+        Get the methods decorated with `@timer` decorator
+        """
+        return [
+            Linter.run_dev_packages,
+            Linter._gather_facts,
+            Linter._run_lint_in_host,
+            Linter._run_flake8,
+            Linter._run_bandit,
+            Linter._run_xsoar_linter,
+            Linter._run_mypy,
+            Linter._run_flake8,
+            Linter._run_lint_on_docker_image,
+            Linter._docker_image_create,
+            Linter._docker_run_pylint,
+            Linter._docker_run_pytest
+        ]
 
     @staticmethod
     def report_pass_lint_checks(return_exit_code: int, skipped_code: int, pkgs_type: list):

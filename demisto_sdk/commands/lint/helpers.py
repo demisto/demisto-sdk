@@ -8,8 +8,10 @@ import shutil
 import sqlite3
 import tarfile
 import textwrap
+import time
+from collections import namedtuple
 from contextlib import contextmanager
-from functools import lru_cache
+from functools import lru_cache, wraps
 from pathlib import Path
 from typing import Dict, Generator, List, Optional, Union
 
@@ -21,10 +23,12 @@ import git
 import requests
 from docker.models.containers import Container
 from packaging.version import parse
+from tabulate import tabulate
 
 # Local packages
 from demisto_sdk.commands.common.constants import (TYPE_PWSH, TYPE_PYTHON,
                                                    DemistoException)
+from demisto_sdk.commands.common.logger import Colors
 from demisto_sdk.commands.common.tools import print_warning, run_command_os
 
 # Python2 requirements
@@ -554,3 +558,56 @@ def generate_coverage_report(html=False, xml=False, report=True, cov_dir='covera
         except coverage.misc.CoverageException as warning:
             logger.warning(str(warning))
             return
+
+
+def timer(func):
+
+    StatInfo = namedtuple("StatInfo", ["total_time", "call_count", "avg_time"])
+
+    total_time = 0.0
+    call_count = 0
+
+    @wraps(func)
+    def wrapper_timer(*args, **kwargs):
+        nonlocal total_time, call_count
+
+        tic = time.perf_counter()
+        value = func(*args, **kwargs)
+        toc = time.perf_counter()
+
+        elapsed_time = toc - tic
+
+        total_time += elapsed_time
+        call_count += 1
+
+        return value
+
+    def stat_info():
+        return StatInfo(total_time, call_count, total_time / call_count if call_count != 0 else 0)
+
+    wrapper_timer.stat_info = stat_info  # type: ignore[attr-defined]
+    return wrapper_timer
+
+
+@contextmanager
+def time_measurements_reporter(methods_to_report: List):
+    """
+    Context manager for reporting time measurements
+
+    Args:
+        methods_to_report(List): list of fuctions that wrapped by the `@timer` decorator to report the time measurements for them.
+    """
+    try:
+        yield
+    finally:
+        sentence = " Time measurements stat "
+        print(f"\n{Colors.Fg.cyan}{'#' * len(sentence)}")
+        print(f"{sentence}")
+        print(f"{'#' * len(sentence)}{Colors.reset}")
+
+        headers = ['Function', 'Avg', 'Total', 'Call count']
+        method_states = [[func.__qualname__, func.stat_info().avg_time, func.stat_info().total_time, func.stat_info().call_count]
+                         for func in methods_to_report]
+        list.sort(method_states, key=lambda method_stat: method_stat[2], reverse=True)
+        stat_info_table = tabulate(method_states, headers=headers)
+        print(stat_info_table)

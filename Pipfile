@@ -69,6 +69,7 @@ requests-mock = "*"
 tox-pyenv = "*"
 Deprecated = "*"
 pipfile-requirements = "*"
+py-spy = "*"
 
 [requires]
 python_version = "3.9"

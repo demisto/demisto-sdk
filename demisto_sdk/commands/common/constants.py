@@ -1,4 +1,5 @@
 import re
+from distutils.version import LooseVersion
 from enum import Enum
 from functools import reduce
 from typing import Dict, List
@@ -69,6 +70,8 @@ GENERIC_TYPE = 'generictype'
 GENERIC_MODULE = 'genericmodule'
 GENERIC_DEFINITION = 'genericdefinition'
 JOB = 'job'
+
+MARKETPLACE_KEY_PACK_METADATA = 'marketplaces'
 
 
 class FileType(Enum):
@@ -173,6 +176,10 @@ ENTITY_TYPE_TO_DIR = {
 }
 
 CONTENT_FILE_ENDINGS = ['py', 'yml', 'png', 'json', 'md']
+
+IGNORED_PACKS_IN_DEPENDENCY_CALC = ['NonSupported', 'Base']  # Packs that are ignored when calculating dependencies
+ALL_PACKS_DEPENDENCIES_DEFAULT_PATH = './all_packs_dependencies.json'
+ALLOWED_EMPTY_PACKS = ['Cortex911']  # Packs that are allowed to be without content items in the id_set
 
 CUSTOM_CONTENT_FILE_ENDINGS = ['yml', 'json']
 
@@ -1056,6 +1063,7 @@ XSOAR_SUPPORT_URL = "https://www.paloaltonetworks.com/cortex"
 MARKETPLACE_LIVE_DISCUSSIONS = \
     'https://live.paloaltonetworks.com/t5/cortex-xsoar-discussions/bd-p/Cortex_XSOAR_Discussions'
 EXCLUDED_DISPLAY_NAME_WORDS = ['partner', 'community']
+MARKETPLACES = ['xsoar', 'marketplacev2']
 
 DEFAULT_CONTENT_ITEM_FROM_VERSION = '0.0.0'
 DEFAULT_CONTENT_ITEM_TO_VERSION = '99.99.99'
@@ -1243,7 +1251,7 @@ MAX_FETCH = 'max_fetch'
 
 SKIP_RELEASE_NOTES_FOR_TYPES = (FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK,
                                 FileType.TEST_SCRIPT, FileType.DOC_IMAGE, FileType.AUTHOR_IMAGE, None,
-                                FileType.RELEASE_NOTES_CONFIG)
+                                FileType.RELEASE_NOTES_CONFIG, FileType.CONTRIBUTORS)
 
 LAYOUT_AND_MAPPER_BUILT_IN_FIELDS = ['indicatortype', 'source', 'comment', 'aggregatedreliability', 'detectedips',
                                      'detectedhosts', 'modified', 'expiration', 'timestamp', 'shortdesc',
@@ -1252,6 +1260,8 @@ LAYOUT_AND_MAPPER_BUILT_IN_FIELDS = ['indicatortype', 'source', 'comment', 'aggr
 UUID_REGEX = r'[0-9a-f]{8}\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\b[0-9a-f]{12}'
 
 DEFAULT_ID_SET_PATH = "./Tests/id_set.json"
+MP_V2_ID_SET_PATH = "./Tests/id_set_mp_v2.json"
+METADATA_FILE_NAME = 'pack_metadata.json'
 
 CONTEXT_OUTPUT_README_TABLE_HEADER = '| **Path** | **Type** | **Description** |'
 
@@ -1332,3 +1342,16 @@ UUID_REGEX = r'([\w]{8}-[\w]{4}-[\w]{4}-[\w]{4}-[\w]{8,12})'
 
 class IronBankDockers:
     API_LINK = 'https://repo1.dso.mil/api/v4/projects/dsop%2Fopensource%2Fpalo-alto-networks%2Fdemisto%2F'
+
+
+class MarketplaceVersions(Enum):
+    XSOAR = 'xsoar'
+    MarketplaceV2 = 'marketplacev2'
+
+
+INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {'html': LooseVersion('6.1.0'), 'grid': LooseVersion('5.5.0')}
+
+
+class IdSetKeys(Enum):
+    SCRIPTS = 'scripts'
+    INTEGRATIONS = 'integrations'

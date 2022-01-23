@@ -7,11 +7,13 @@ import logging
 import os
 import re
 import string
+from pathlib import Path
 from typing import List, Optional, Tuple
 
 import click
 import yaml
 from pykwalify.core import Core
+from ruamel.yaml import YAML
 
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
@@ -88,6 +90,7 @@ class StructureValidator(BaseValidator):
                 self.is_valid_file_path(),
                 self.is_valid_scheme(),
                 self.is_file_id_without_slashes(),
+                self.is_valid_yml()
             ]
 
             if self.old_file:  # In case the file is modified
@@ -492,6 +495,26 @@ class StructureValidator(BaseValidator):
             if self.handle_error(error_message, error_code, self.file_path):
                 return False
 
+        return True
+
+    def is_valid_yml(self):
+        # type: () -> bool
+        """Checks if given file is valid yml file
+
+        Returns:
+            (bool): Is file is valid
+        """
+        path = Path(self.file_path)
+        if path.suffix == '.yml':
+            try:
+                ryaml = YAML()
+                ryaml.preserve_quotes = True
+                with open(self.file_path, 'r') as yf:
+                    yaml_obj = ryaml.load(yf)  # noqa: F841
+            except Exception as e:
+                error_message, error_code = Errors.invalid_yml_file(e)
+                self.handle_error(error_message, error_code, file_path=self.file_path)
+                return False
         return True
 
 

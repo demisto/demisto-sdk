@@ -293,6 +293,11 @@ class YmlUnifier:
 
         if script_type == '.py':
             clean_code = self.clean_python_code(script_code)
+            if 'CommonServer' not in yml_data['name']:
+                # CommonServerPython has those line hard-coded so there is no need to add them here.
+                clean_code = f"register_module_line('{yml_data['name']}', 'start', __line__())\n" \
+                    f'{clean_code}\n' \
+                    f"register_module_line('{yml_data['name']}', 'end', __line__())\n"
         elif script_type == '.ps1':
             clean_code = self.clean_pwsh_code(script_code)
         else:
@@ -364,8 +369,14 @@ class YmlUnifier:
         module_path = os.path.join('./Packs', 'ApiModules', 'Scripts', module_name, module_name + '.py')
         module_code = YmlUnifier._get_api_module_code(module_name, module_path)
 
-        module_code = '\n### GENERATED CODE ###\n# This code was inserted in place of an API module.{}\n' \
-            .format(module_code)
+        # the wrapper numbers represents the number of generated lines added
+        # before (negative) or after (positive) the registration line
+        module_code = f'\n### GENERATED CODE ###: {module_import}\n' \
+                      f'# This code was inserted in place of an API module.\n' \
+                      f"register_module_line('{module_name}', 'start', __line__(), wrapper=-3)\n" \
+                      f'{module_code}\n' \
+                      f"register_module_line('{module_name}', 'end', __line__(), wrapper=1)\n" \
+                      f'### END GENERATED CODE ###'
 
         return script_code.replace(module_import, module_code)
 

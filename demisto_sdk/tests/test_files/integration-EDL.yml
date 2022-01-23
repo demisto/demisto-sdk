@@ -1,0 +1,1134 @@
+category: Data Enrichment & Threat Intelligence
+commonfields:
+  id: EDL
+  version: -1
+configuration:
+- additionalinfo: The query to run to update the EDL. To view expected results, you can run the following command from the Cortex XSOAR CLI `!findIndicators query=<your query>`
+  display: Indicator Query
+  name: indicators_query
+  required: false
+  type: 0
+- additionalinfo: Maximum number of items in the EDL
+  defaultvalue: '2500'
+  display: EDL Size
+  hidden: false
+  name: edl_size
+  required: true
+  type: 0
+- additionalinfo: Enabling this will prevent automatic EDL refresh
+  display: Update EDL On Demand Only
+  name: on_demand
+  required: false
+  type: 8
+- additionalinfo: How often to refresh the EDL (e.g., 5 minutes, 12 hours, 7 days, 3 months, 1 year). For performance reasons, we do not recommend setting this value to less than 1 minute.
+  defaultvalue: 5 minutes
+  display: Refresh Rate
+  name: cache_refresh_rate
+  required: false
+  type: 0
+- defaultvalue: 'true'
+  display: Long Running Instance
+  name: longRunning
+  required: false
+  type: 8
+  hidden: true
+- additionalinfo: Will run the EDL service on this port from within Cortex XSOAR. Requires a unique port for each long-running integration instance. Do not use the same port for multiple instances.
+  display: Listen Port
+  name: longRunningPort
+  required: true
+  type: 0
+- display: Certificate (Required for HTTPS)
+  name: certificate
+  required: false
+  type: 12
+- display: Private Key (Required for HTTPS)
+  name: key
+  required: false
+  type: 14
+- additionalinfo: Uses basic authentication for accessing the EDL. If empty, no authentication is enforced.
+  display: Username
+  name: credentials
+  required: false
+  type: 9
+- additionalinfo: If selected, a URL that includes a port number will be reformatted to remove the port. For example, 'www.example.com:9999/path' would become 'www.example.com/path'.
+  defaultvalue: 'true'
+  display: Strip Ports from URLs
+  name: url_port_stripping
+  required: false
+  type: 8
+- additionalinfo: If selected, any URL entry that is not compliant with PAN-OS EDL URL format is dropped instead of being rewritten.
+  display: PAN-OS URL Drop Invalid Entries
+  hidden: false
+  name: drop_invalids
+  required: false
+  type: 8
+- additionalinfo: If selected, add to an empty EDL the comment "# Empty EDL".
+  display: Add Comment To Empty EDL
+  hidden: false
+  name: add_comment_if_empty
+  required: false
+  defaultvalue: true
+  type: 8
+- defaultvalue: Don't Collapse
+  display: 'Should Collapse IPs:'
+  hidden: false
+  name: collapse_ips
+  options:
+  - Don't Collapse
+  - To CIDRS
+  - To Ranges
+  required: false
+  type: 15
+- additionalinfo: Internal page size used when querying Cortex XSOAR for the EDL. By default, this value shouldn't be changed.
+  defaultvalue: '2000'
+  display: XSOAR Indicator Page Size
+  hidden: false
+  name: page_size
+  required: false
+  type: 0
+- additionalinfo: "NGINX global directives to be passed on the command line using the -g option. Each directive should end with `;`. For example: `worker_processes 4; timer_resolution 100ms;`. Advanced configuration to be used only if instructed by Cortex XSOAR Support."
+  display: NGINX Global Directives
+  hidden: false
+  name: nginx_global_directives
+  required: false
+  type: 0
+- additionalinfo: "NGINX server configuration. To be used instead of the default NGINX_SERVER_CONF used in the integration code. Advanced configuration to be used only if instructed by Cortex XSOAR Support."
+  display: NGINX Server Conf
+  hidden: false
+  name: nginx_server_conf
+  required: false
+  type: 12
+- additionalinfo: "Legacy Queries: When enabled, the integration will query the Server using full queries. Enable this query mode, if you've been instructed by Support, or you've encountered in the log errors of the form: msgpack: invalid code."
+  display: 'Advanced: Use Legacy Queries'
+  hidden: false
+  name: use_legacy_query
+  required: false
+  type: 8
+description: This integration provides External Dynamic List (EDL) as a service for the system indicators (Outbound feed).
+display: Palo Alto Networks PAN-OS EDL Service
+name: EDL
+script:
+  commands:
+  - arguments:
+    - default: false
+      description: The query used to retrieve indicators from the system.
+      isArray: false
+      name: query
+      required: true
+      secret: false
+    - default: false
+      description: The maximum number of entries in the EDL. If no value is provided, will use the value specified in the "EDL Size" parameter configured in the instance configuration.
+      isArray: false
+      name: edl_size
+      required: false
+      secret: false
+    - auto: PREDEFINED
+      default: false
+      defaultValue: false
+      description: If True, any URL entry that is not compliant with PAN-OS EDL URL format is dropped instead of being rewritten.
+      isArray: false
+      name: drop_invalids
+      predefined:
+      - 'False'
+      - 'True'
+      required: false
+      secret: false
+    - auto: PREDEFINED
+      default: false
+      defaultValue: false
+      description: If set to True, a URL that includes a port number will be reformatted to remove the port. For example, 'www.example.com:9999/path' would become 'www.example.com/path'.
+      isArray: false
+      name: url_port_stripping
+      predefined:
+      - 'False'
+      - 'True'
+      required: false
+      secret: false
+    - auto: PREDEFINED
+      default: false
+      defaultValue: false
+      description: If selected, add to an empty EDL the comment "# Empty EDL".
+      isArray: false
+      name: add_comment_if_empty
+      predefined:
+      - 'False'
+      - 'True'
+      required: false
+      secret: false
+    - auto: PREDEFINED
+      default: false
+      defaultValue: Don't Collapse
+      description: Whether to collapse IPs to ranges or CIDRs.
+      isArray: false
+      name: collapse_ips
+      predefined:
+      - Don't Collapse
+      - To CIDRS
+      - To Ranges
+      required: false
+      secret: false
+    - default: false
+      defaultValue: '0'
+      description: The starting entry index from which to export the indicators.
+      isArray: false
+      name: offset
+      required: false
+      secret: false
+    deprecated: false
+    description: Updates values stored in the EDL (only available On-Demand).
+    execution: false
+    name: edl-update
+  dockerimage: demisto/flask-nginx:1.0.0.23674
+  feed: false
+  isfetch: false
+  longRunning: true
+  longRunningPort: true
+  runonce: false
+  script: >2
+
+
+
+
+    import re
+
+
+    from base64 import b64decode
+
+    from flask import Flask, Response, request
+
+    from netaddr import IPSet
+
+    from typing import Any, Dict, cast, Iterable
+
+    from math import ceil
+
+    import urllib3
+
+    import dateparser
+
+    import hashlib
+
+
+    # Disable insecure warnings
+
+    urllib3.disable_warnings()
+
+
+    ''' GLOBAL VARIABLES '''
+
+    INTEGRATION_NAME: str = 'EDL'
+
+    PAGE_SIZE: int = 2000
+
+    PAN_OS_MAX_URL_LEN = 255
+
+    APP: Flask = Flask('demisto-edl')
+
+    EDL_LIMIT_ERR_MSG: str = 'Please provide a valid integer for EDL Size'
+
+    EDL_OFFSET_ERR_MSG: str = 'Please provide a valid integer for Starting Index'
+
+    EDL_COLLAPSE_ERR_MSG: str = 'The Collapse parameter can only get the following: 0 - Dont Collapse, ' \
+                                '1 - Collapse to Ranges, 2 - Collapse to CIDRS'
+    EDL_MISSING_REFRESH_ERR_MSG: str = 'Refresh Rate must be "number date_range_unit", examples: (2 hours, 4 minutes, ' \
+                                       '6 months, 1 day, etc.)'
+    # based on func ToIoC https://github.com/demisto/server/blob/master/domain/insight.go
+
+    EDL_FILTER_FIELDS: Optional[str] = "name,type"
+
+    EDL_ON_DEMAND_KEY: str = 'UpdateEDL'
+
+    EDL_ON_DEMAND_CACHE_PATH: str = ''
+
+    EDL_SEARCH_LOOP_LIMIT: int = 10
+
+
+    ''' REFORMATTING REGEXES '''
+
+    _PROTOCOL_REMOVAL = re.compile('^(?:[a-z]+:)*//')
+
+    _PORT_REMOVAL = re.compile(r'^((?:[a-z]+:)*//([a-z0-9\-\.]+)|([a-z0-9\-\.]+))(?:\:[0-9]+)*')
+
+    _URL_WITHOUT_PORT = r'\g<1>'
+
+    _INVALID_TOKEN_REMOVAL = re.compile(r'(?:[^\./+=\?&]+\*[^\./+=\?&]*)|(?:[^\./+=\?&]*\*[^\./+=\?&]+)')
+
+
+    DONT_COLLAPSE = "Don't Collapse"
+
+    COLLAPSE_TO_CIDR = "To CIDRS"
+
+    COLLAPSE_TO_RANGES = "To Ranges"
+
+
+    '''Request Arguments Class'''
+
+
+
+    class RequestArguments:
+        CTX_QUERY_KEY = 'last_query'
+        CTX_LIMIT_KEY = 'last_limit'
+        CTX_OFFSET_KEY = 'last_offset'
+        CTX_INVALIDS_KEY = 'drop_invalids'
+        CTX_PORT_STRIP_KEY = 'url_port_stripping'
+        CTX_COLLAPSE_IPS_KEY = 'collapse_ips'
+        CTX_EMPTY_EDL_COMMENT_KEY = 'add_comment_if_empty'
+
+        def __init__(self,
+                     query: str,
+                     limit: int = 10000,
+                     offset: int = 0,
+                     url_port_stripping: bool = False,
+                     drop_invalids: bool = False,
+                     collapse_ips: str = DONT_COLLAPSE,
+                     add_comment_if_empty: bool = True):
+
+            self.query = query
+            self.limit = try_parse_integer(limit, EDL_LIMIT_ERR_MSG)
+            self.offset = try_parse_integer(offset, EDL_OFFSET_ERR_MSG)
+            self.url_port_stripping = url_port_stripping
+            self.drop_invalids = drop_invalids
+            self.collapse_ips = collapse_ips
+            self.add_comment_if_empty = add_comment_if_empty
+
+        def to_context_json(self):
+            return {
+                self.CTX_QUERY_KEY: self.query,
+                self.CTX_LIMIT_KEY: self.limit,
+                self.CTX_OFFSET_KEY: self.offset,
+                self.CTX_INVALIDS_KEY: self.drop_invalids,
+                self.CTX_PORT_STRIP_KEY: self.url_port_stripping,
+                self.CTX_COLLAPSE_IPS_KEY: self.collapse_ips,
+                self.CTX_EMPTY_EDL_COMMENT_KEY: self.add_comment_if_empty,
+            }
+
+        @classmethod
+        def from_context_json(cls, ctx_dict):
+            """Returns an initiated instance of the class from a json"""
+            return cls(
+                **assign_params(
+                    query=ctx_dict.get(cls.CTX_QUERY_KEY),
+                    limit=ctx_dict.get(cls.CTX_LIMIT_KEY),
+                    offset=ctx_dict.get(cls.CTX_OFFSET_KEY),
+                    drop_invalids=ctx_dict.get(cls.CTX_INVALIDS_KEY),
+                    url_port_stripping=ctx_dict.get(cls.CTX_PORT_STRIP_KEY),
+                    collapse_ips=ctx_dict.get(cls.CTX_COLLAPSE_IPS_KEY),
+                    add_comment_if_empty=ctx_dict.get(cls.CTX_EMPTY_EDL_COMMENT_KEY),
+                )
+            )
+
+
+    ''' HELPER FUNCTIONS '''
+
+
+
+    def iterable_to_str(iterable: Iterable, delimiter: str = '\n') -> str:
+        """
+        Transforms an iterable object to an str, with a custom delimiter between each item
+        """
+        str_res = ""
+        if iterable:
+            try:
+                iter(iterable)
+            except TypeError:
+                raise DemistoException(f'non iterable object provided to iterable_to_str: {iterable}')
+            str_res = delimiter.join(map(str, iterable))
+        return str_res
+
+
+    def create_new_edl(request_args: RequestArguments) -> str:
+        """
+        Gets indicators from XSOAR server using IndicatorsSearcher and formats them
+
+        Parameters:
+            request_args: Request arguments
+
+        Returns: Formatted indicators to display in EDL
+        """
+        limit = request_args.offset + request_args.limit
+        indicator_searcher = IndicatorsSearcher(
+            filter_fields=EDL_FILTER_FIELDS,
+            query=request_args.query,
+            size=PAGE_SIZE,
+            limit=limit
+        )
+        iocs: List[dict] = []
+        formatted_iocs: set = set()
+        loop_counter = 0
+        while not indicator_searcher.is_search_done() and loop_counter < EDL_SEARCH_LOOP_LIMIT:
+            new_iocs = find_indicators_to_limit(indicator_searcher)
+            iocs.extend(new_iocs)
+            formatted_iocs = format_indicators(iocs, request_args)
+            indicator_searcher.limit += limit - len(formatted_iocs)
+            loop_counter += 1
+        return iterable_to_str(list(formatted_iocs)[request_args.offset:limit])
+
+
+    def find_indicators_to_limit(indicator_searcher: IndicatorsSearcher) -> List[dict]:
+        """
+        Finds indicators using while loop with demisto.searchIndicators, and returns result and last page
+
+        Parameters:
+            indicator_searcher (IndicatorsSearcher): The indicator searcher used to look for indicators
+
+        Returns:
+            (list): List of Indicators dict with value,indicator_type keys
+        """
+        iocs: List[dict] = []
+        for ioc_res in indicator_searcher:
+            fetched_iocs = ioc_res.get('iocs') or []
+            # save only the value and type of each indicator
+            iocs.extend({'value': ioc.get('value'), 'indicator_type': ioc.get('indicator_type')}
+                        for ioc in fetched_iocs)
+        return iocs
+
+
+    def ip_groups_to_cidrs(ip_range_groups: Iterable):
+        """Collapse ip groups list to CIDRs
+
+        Args:
+            ip_range_groups (Iterable): an Iterable of lists containing connected IPs
+
+        Returns:
+            Set. a set of CIDRs.
+        """
+        ip_ranges = set()
+        for cidr in ip_range_groups:
+            # handle single ips
+            if len(cidr) == 1:
+                # CIDR with a single IP appears with "/32" suffix so handle them differently
+                ip_ranges.add(str(cidr[0]))
+                continue
+
+            ip_ranges.add(str(cidr))
+
+        return ip_ranges
+
+
+    def ip_groups_to_ranges(ip_range_groups: Iterable):
+        """Collapse ip groups to ranges.
+
+        Args:
+            ip_range_groups (Iterable): a list of lists containing connected IPs
+
+        Returns:
+            Set. a set of Ranges.
+        """
+        ip_ranges = set()
+        for group in ip_range_groups:
+            # handle single ips
+            if len(group) == 1:
+                ip_ranges.add(str(group[0]))
+                continue
+
+            ip_ranges.add(str(group))
+
+        return ip_ranges
+
+
+    def ips_to_ranges(ips: Iterable, collapse_ips: str):
+        """Collapse IPs to Ranges or CIDRs.
+
+        Args:
+            ips (Iterable): a group of IP strings.
+            collapse_ips (str): Whether to collapse to Ranges or CIDRs.
+
+        Returns:
+            Set. a list to Ranges or CIDRs.
+        """
+
+        if collapse_ips == COLLAPSE_TO_RANGES:
+            ips_range_groups = IPSet(ips).iter_ipranges()
+            return ip_groups_to_ranges(ips_range_groups)
+
+        else:
+            cidrs = IPSet(ips).iter_cidrs()
+            return ip_groups_to_cidrs(cidrs)
+
+
+    def format_indicators(iocs: list, request_args: RequestArguments) -> set:
+        """
+        Create a list result of formatted_indicators
+         * Empty list:
+             1) if add_comment_if_empty, return {'# Empty EDL'}
+         * IP / CIDR:
+             1) if collapse_ips, collapse IPs/CIDRs
+         * URL:
+             1) if drop_invalids, drop invalids (length > 254 or has invalid chars)
+        * Other indicator types:
+            1) if drop_invalids, drop invalids (has invalid chars)
+            2) if port_stripping, strip ports
+        """
+        formatted_indicators = set()
+        ipv4_formatted_indicators = set()
+        ipv6_formatted_indicators = set()
+        for ioc in iocs:
+            indicator = ioc.get('value')
+            if not indicator:
+                continue
+            ioc_type = ioc.get('indicator_type')
+            # protocol stripping
+            indicator = _PROTOCOL_REMOVAL.sub('', indicator)
+
+            if ioc_type not in [FeedIndicatorType.IP, FeedIndicatorType.IPv6,
+                                FeedIndicatorType.CIDR, FeedIndicatorType.IPv6CIDR]:
+                # Port stripping
+                indicator_with_port = indicator
+                # remove port from indicator - from demisto.com:369/rest/of/path -> demisto.com/rest/of/path
+                indicator = _PORT_REMOVAL.sub(_URL_WITHOUT_PORT, indicator)
+                # check if removing the port changed something about the indicator
+                if indicator != indicator_with_port and not request_args.url_port_stripping:
+                    # if port was in the indicator and url_port_stripping param not set - ignore the indicator
+                    continue
+                # Reformatting to PAN-OS URL format
+                with_invalid_tokens_indicator = indicator
+                # mix of text and wildcard in domain field handling
+                indicator = _INVALID_TOKEN_REMOVAL.sub('*', indicator)
+                # check if the indicator held invalid tokens
+                if request_args.drop_invalids:
+                    if with_invalid_tokens_indicator != indicator:
+                        # invalid tokens in indicator - ignore the indicator
+                        continue
+                    if ioc_type == FeedIndicatorType.URL and len(indicator) >= PAN_OS_MAX_URL_LEN:
+                        # URL indicator exceeds allowed length - ignore the indicator
+                        continue
+
+                # for PAN-OS *.domain.com does not match domain.com
+                # we should provide both
+                # this could generate more than num entries according to PAGE_SIZE
+                if indicator.startswith('*.'):
+                    formatted_indicators.add(indicator.lstrip('*.'))
+
+            if request_args.collapse_ips != DONT_COLLAPSE and ioc_type in (FeedIndicatorType.IP, FeedIndicatorType.CIDR):
+                ipv4_formatted_indicators.add(indicator)
+
+            elif request_args.collapse_ips != DONT_COLLAPSE and ioc_type == FeedIndicatorType.IPv6:
+                ipv6_formatted_indicators.add(indicator)
+
+            else:
+                formatted_indicators.add(indicator)
+
+        if len(ipv4_formatted_indicators) > 0:
+            ipv4_formatted_indicators = ips_to_ranges(ipv4_formatted_indicators, request_args.collapse_ips)
+            formatted_indicators.update(ipv4_formatted_indicators)
+
+        if len(ipv6_formatted_indicators) > 0:
+            ipv6_formatted_indicators = ips_to_ranges(ipv6_formatted_indicators, request_args.collapse_ips)
+            formatted_indicators.update(ipv6_formatted_indicators)
+        return formatted_indicators
+
+
+    def get_edl_on_demand():
+        """
+        Use the local file system to store the on-demand result, using a lock to
+        limit access to the file from multiple threads.
+        """
+        ctx = get_integration_context()
+        if EDL_ON_DEMAND_KEY in ctx:
+            ctx.pop(EDL_ON_DEMAND_KEY, None)
+            request_args = RequestArguments.from_context_json(ctx)
+            edl = create_new_edl(request_args)
+            with open(EDL_ON_DEMAND_CACHE_PATH, 'w') as file:
+                file.write(edl)
+            set_integration_context(ctx)
+        else:
+            with open(EDL_ON_DEMAND_CACHE_PATH, 'r') as file:
+                edl = file.read()
+        return edl
+
+
+    def validate_basic_authentication(headers: dict, username: str, password: str) -> bool:
+        """
+        Checks whether the authentication is valid.
+        :param headers: The headers of the http request
+        :param username: The integration's username
+        :param password: The integration's password
+        :return: Boolean which indicates whether the authentication is valid or not
+        """
+        credentials: str = headers.get('Authorization', '')
+        if not credentials or 'Basic ' not in credentials:
+            return False
+        encoded_credentials: str = credentials.split('Basic ')[1]
+        credentials: str = b64decode(encoded_credentials).decode('utf-8')
+        if ':' not in credentials:
+            return False
+        credentials_list = credentials.split(':')
+        if len(credentials_list) != 2:
+            return False
+        user, pwd = credentials_list
+        return user == username and pwd == password
+
+
+    def get_bool_arg_or_param(args: dict, params: dict, key: str):
+        val = args.get(key)
+        return val.lower() == 'true' if isinstance(val, str) else params.get(key, False)
+
+
+    ''' ROUTE FUNCTIONS '''
+
+
+
+    @APP.route('/', methods=['GET'])
+
+    def route_edl() -> Response:
+        """
+        Main handler for values saved in the integration context
+        """
+        params = demisto.params()
+
+        credentials = params.get('credentials') if params.get('credentials') else {}
+        username: str = credentials.get('identifier', '')
+        password: str = credentials.get('password', '')
+        cache_refresh_rate: str = params.get('cache_refresh_rate')
+        if username and password:
+            headers: dict = cast(Dict[Any, Any], request.headers)
+            if not validate_basic_authentication(headers, username, password):
+                err_msg: str = 'Basic authentication failed. Make sure you are using the right credentials.'
+                demisto.debug(err_msg)
+                return Response(err_msg, status=401, mimetype='text/plain', headers=[
+                    ('WWW-Authenticate', 'Basic realm="Login Required"'),
+                ])
+
+        request_args = get_request_args(request.args, params)
+        on_demand = params.get('on_demand')
+        created = datetime.now(timezone.utc)
+        edl = get_edl_on_demand() if on_demand else create_new_edl(request_args)
+        etag = f'"{hashlib.sha1(edl.encode()).hexdigest()}"'  # guardrails-disable-line
+        query_time = (datetime.now(timezone.utc) - created).total_seconds()
+        edl_size = 0
+        if edl.strip():
+            edl_size = edl.count('\n') + 1  # add 1 as last line doesn't have a \n
+        if len(edl) == 0 and request_args.add_comment_if_empty:
+            edl = '# Empty EDL'
+        max_age = ceil((datetime.now() - dateparser.parse(cache_refresh_rate)).total_seconds())  # type: ignore[operator]
+        demisto.debug(f'Returning edl of size: [{edl_size}], created: [{created}], query time seconds: [{query_time}],'
+                      f' max age: [{max_age}], etag: [{etag}]')
+        resp = Response(edl, status=200, mimetype='text/plain', headers=[
+            ('X-EDL-Created', created.isoformat()),
+            ('X-EDL-Query-Time-Secs', "{:.3f}".format(query_time)),
+            ('X-EDL-Size', str(edl_size)),
+            ('ETag', etag),
+        ])
+        resp.cache_control.max_age = max_age
+        resp.cache_control[
+            'stale-if-error'] = '600'  # number of seconds we are willing to serve stale content when there is an error
+        return resp
+
+
+    def get_request_args(request_args: dict, params: dict) -> RequestArguments:
+        """
+        Processing a flask request arguments and generates a RequestArguments instance from it.
+        Args:
+            request_args: Flask request arguments
+            params: Integration configuration parameters
+
+        Returns:
+            RequestArguments instance with processed arguments
+        """
+        limit = try_parse_integer(request_args.get('n', params.get('edl_size') or 10000), EDL_LIMIT_ERR_MSG)
+        offset = try_parse_integer(request_args.get('s', 0), EDL_OFFSET_ERR_MSG)
+        query = request_args.get('q', params.get('indicators_query') or '')
+        strip_port = request_args.get('sp', params.get('url_port_stripping') or False)
+        drop_invalids = request_args.get('di', params.get('drop_invalids') or False)
+        collapse_ips = request_args.get('tr', params.get('collapse_ips', DONT_COLLAPSE))
+        add_comment_if_empty = request_args.get('ce', params.get('add_comment_if_empty', True))
+
+        # handle flags
+        if drop_invalids == '':
+            drop_invalids = True
+
+        if strip_port == '':
+            strip_port = True
+
+        if collapse_ips not in [DONT_COLLAPSE, COLLAPSE_TO_CIDR, COLLAPSE_TO_RANGES]:
+            collapse_ips = try_parse_integer(collapse_ips, EDL_COLLAPSE_ERR_MSG)
+
+            if collapse_ips not in [0, 1, 2]:
+                raise DemistoException(EDL_COLLAPSE_ERR_MSG)
+
+            collapse_options = {
+                0: DONT_COLLAPSE,
+                1: COLLAPSE_TO_RANGES,
+                2: COLLAPSE_TO_CIDR
+            }
+            collapse_ips = collapse_options[collapse_ips]
+        return RequestArguments(query,
+                                limit,
+                                offset,
+                                strip_port,
+                                drop_invalids,
+                                collapse_ips,
+                                add_comment_if_empty)
+
+
+    ''' COMMAND FUNCTIONS '''
+
+
+
+    def test_module(_: Dict, params: Dict):
+        """
+        Validates:
+            1. Valid port.
+            2. Valid cache_refresh_rate
+        """
+        get_params_port(params)
+        on_demand = params.get('on_demand', None)
+        if not on_demand:
+            try_parse_integer(params.get('edl_size'), EDL_LIMIT_ERR_MSG)  # validate EDL Size was set
+            cache_refresh_rate = params.get('cache_refresh_rate', '')
+            if not cache_refresh_rate:
+                raise ValueError(EDL_MISSING_REFRESH_ERR_MSG)
+            # validate cache_refresh_rate value
+            range_split = cache_refresh_rate.split(' ')
+            if len(range_split) != 2:
+                raise ValueError(EDL_MISSING_REFRESH_ERR_MSG)
+            try_parse_integer(range_split[0], 'Invalid time value for the Refresh Rate. Must be a valid integer.')
+            if not range_split[1] in ['minute', 'minutes', 'hour', 'hours', 'day', 'days', 'month', 'months', 'year',
+                                      'years']:
+                raise ValueError(
+                    'Invalid time unit for the Refresh Rate. Must be minutes, hours, days, months, or years.')
+            parse_date_range(cache_refresh_rate, to_timestamp=True)
+        run_long_running(params, is_test=True)
+        return 'ok', {}, {}
+
+
+    def update_edl_command(args: Dict, params: Dict):
+        """
+        Updates the context to update the EDL values on demand the next time it runs
+        """
+        on_demand = params.get('on_demand')
+        if not on_demand:
+            raise DemistoException(
+                '"Update EDL On Demand" is off. If you want to update the EDL manually please toggle it on.')
+        limit = try_parse_integer(args.get('edl_size', params.get('edl_size')), EDL_LIMIT_ERR_MSG)
+        query = args.get('query', '')
+        collapse_ips = args.get('collapse_ips', DONT_COLLAPSE)
+        url_port_stripping = get_bool_arg_or_param(args, params, 'url_port_stripping')
+        drop_invalids = get_bool_arg_or_param(args, params, 'drop_invalids')
+        add_comment_if_empty = get_bool_arg_or_param(args, params, 'add_comment_if_empty')
+        offset = try_parse_integer(args.get('offset', 0), EDL_OFFSET_ERR_MSG)
+        request_args = RequestArguments(query,
+                                        limit,
+                                        offset,
+                                        url_port_stripping,
+                                        drop_invalids,
+                                        collapse_ips,
+                                        add_comment_if_empty)
+        ctx = request_args.to_context_json()
+        ctx[EDL_ON_DEMAND_KEY] = True
+        set_integration_context(ctx)
+        hr = 'EDL will be updated the next time you access it'
+        return hr, {}, {}
+
+
+    def initialize_edl_context(params: dict):
+        global EDL_ON_DEMAND_CACHE_PATH
+        limit = try_parse_integer(params.get('edl_size'), EDL_LIMIT_ERR_MSG)
+        query = params.get('indicators_query', '')
+        collapse_ips = params.get('collapse_ips', DONT_COLLAPSE)
+        url_port_stripping = params.get('url_port_stripping', False)
+        drop_invalids = params.get('drop_invalids', False)
+        add_comment_if_empty = params.get('add_comment_if_empty', True)
+        offset = 0
+        request_args = RequestArguments(query,
+                                        limit,
+                                        offset,
+                                        url_port_stripping,
+                                        drop_invalids,
+                                        collapse_ips,
+                                        add_comment_if_empty)
+        EDL_ON_DEMAND_CACHE_PATH = demisto.uniqueFile()
+        ctx = request_args.to_context_json()
+        ctx[EDL_ON_DEMAND_KEY] = True
+        set_integration_context(ctx)
+
+
+    def main():
+        """
+        Main
+        """
+        global PAGE_SIZE, EDL_FILTER_FIELDS
+        params = demisto.params()
+        try:
+            PAGE_SIZE = max(1, int(params.get('page_size') or PAGE_SIZE))
+        except ValueError:
+            demisto.debug(f'Non integer "page_size" provided: {params.get("page_size")}. defaulting to {PAGE_SIZE}')
+        if params.get('use_legacy_query'):
+            # workaround for "msgpack: invalid code" error
+            EDL_FILTER_FIELDS = None
+        credentials = params.get('credentials') if params.get('credentials') else {}
+        username: str = credentials.get('identifier', '')
+        password: str = credentials.get('password', '')
+        if (username and not password) or (password and not username):
+            err_msg: str = 'If using credentials, both username and password should be provided.'
+            demisto.debug(err_msg)
+            raise DemistoException(err_msg)
+        command = demisto.command()
+        demisto.debug(f'Command being called is {command}')
+        commands = {
+            'test-module': test_module,
+            'edl-update': update_edl_command,
+        }
+
+        try:
+            initialize_edl_context(params)
+            if command == 'long-running-execution':
+                run_long_running(params)
+            elif command in commands:
+                readable_output, outputs, raw_response = commands[command](demisto.args(), params)
+                return_outputs(readable_output, outputs, raw_response)
+            else:
+                raise NotImplementedError(f'Command "{command}" is not implemented.')
+        except Exception as e:
+            err_msg = f'Error in {INTEGRATION_NAME} Integration [{e}]'
+            return_error(err_msg)
+
+
+
+    ### GENERATED CODE ###: from NGINXApiModule import *  # noqa: E402
+
+    # This code was inserted in place of an API module.
+
+
+
+
+
+    from multiprocessing import Process
+
+    from gevent.pywsgi import WSGIServer
+
+    import subprocess
+
+    import gevent
+
+    from signal import SIGUSR1
+
+    import requests
+
+    from flask.logging import default_handler
+
+    from typing import Any, Dict
+
+    import os
+
+    import traceback
+
+    from string import Template
+
+
+
+    class Handler:
+        @staticmethod
+        def write(msg: str):
+            demisto.info(msg)
+
+
+    class ErrorHandler:
+        @staticmethod
+        def write(msg: str):
+            demisto.error(f'wsgi error: {msg}')
+
+
+    DEMISTO_LOGGER: Handler = Handler()
+
+    ERROR_LOGGER: ErrorHandler = ErrorHandler()
+
+
+
+    # nginx server params
+
+    NGINX_SERVER_ACCESS_LOG = '/var/log/nginx/access.log'
+
+    NGINX_SERVER_ERROR_LOG = '/var/log/nginx/error.log'
+
+    NGINX_SERVER_CONF_FILE = '/etc/nginx/conf.d/default.conf'
+
+    NGINX_SSL_KEY_FILE = '/etc/nginx/ssl/ssl.key'
+
+    NGINX_SSL_CRT_FILE = '/etc/nginx/ssl/ssl.crt'
+
+    NGINX_SSL_CERTS = f'''
+        ssl_certificate {NGINX_SSL_CRT_FILE};
+        ssl_certificate_key {NGINX_SSL_KEY_FILE};
+    '''
+
+    NGINX_SERVER_CONF = '''
+
+    server {
+
+        listen $port default_server $ssl;
+
+        $sslcerts
+
+        proxy_cache_key $scheme$proxy_host$request_uri$extra_cache_key;
+
+        # Static test file
+        location = /nginx-test {
+            alias /var/lib/nginx/html/index.html;
+            default_type text/html;
+        }
+
+        # Proxy everything to python
+        location / {
+            proxy_pass http://localhost:$serverport/;
+            add_header X-Proxy-Cache $upstream_cache_status;
+            # allow bypassing the cache with an arg of nocache=1 ie http://server:7000/?nocache=1
+            proxy_cache_bypass $arg_nocache;
+        }
+    }
+
+
+    '''
+
+
+
+    def create_nginx_server_conf(file_path: str, port: int, params: Dict):
+        """Create nginx conf file
+
+        Args:
+            file_path (str): path of server conf file
+            port (int): listening port. server port to proxy to will be port+1
+            params (Dict): additional nginx params
+
+        Raises:
+            DemistoException: raised if there is a detected config error
+        """
+        params = demisto.params() if not params else params
+        template_str = params.get('nginx_server_conf') or NGINX_SERVER_CONF
+        certificate: str = params.get('certificate', '')
+        private_key: str = params.get('key', '')
+        ssl = ''
+        sslcerts = ''
+        serverport = port + 1
+        extra_cache_key = ''
+        if (certificate and not private_key) or (private_key and not certificate):
+            raise DemistoException('If using HTTPS connection, both certificate and private key should be provided.')
+        if certificate and private_key:
+            demisto.debug('Using HTTPS for nginx conf')
+            with open(NGINX_SSL_CRT_FILE, 'wt') as f:
+                f.write(certificate)
+            with open(NGINX_SSL_KEY_FILE, 'wt') as f:
+                f.write(private_key)
+            ssl = 'ssl'  # to be included in the listen directive
+            sslcerts = NGINX_SSL_CERTS
+        credentials = params.get('credentials') or {}
+        if credentials.get('identifier'):
+            extra_cache_key = "$http_authorization"
+        server_conf = Template(template_str).safe_substitute(port=port, serverport=serverport, ssl=ssl,
+                                                             sslcerts=sslcerts, extra_cache_key=extra_cache_key)
+        with open(file_path, mode='wt+') as f:
+            f.write(server_conf)
+
+
+    def start_nginx_server(port: int, params: Dict = {}) -> subprocess.Popen:
+        params = demisto.params() if not params else params
+        create_nginx_server_conf(NGINX_SERVER_CONF_FILE, port, params)
+        nginx_global_directives = 'daemon off;'
+        global_directives_conf = params.get('nginx_global_directives')
+        if global_directives_conf:
+            nginx_global_directives = f'{nginx_global_directives} {global_directives_conf}'
+        directive_args = ['-g', nginx_global_directives]
+        # we first do a test that all config is good and log it
+        try:
+            nginx_test_command = ['nginx', '-T']
+            nginx_test_command.extend(directive_args)
+            test_output = subprocess.check_output(nginx_test_command, stderr=subprocess.STDOUT, text=True)
+            demisto.info(f'ngnix test passed. command: [{nginx_test_command}]')
+            demisto.debug(f'nginx test ouput:\n{test_output}')
+        except subprocess.CalledProcessError as err:
+            raise ValueError(f"Failed testing nginx conf. Return code: {err.returncode}. Output: {err.output}")
+        nginx_command = ['nginx']
+        nginx_command.extend(directive_args)
+        res = subprocess.Popen(nginx_command, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        demisto.info(f'done starting nginx with pid: {res.pid}')
+        return res
+
+
+    def nginx_log_process(nginx_process: subprocess.Popen):
+        try:
+            old_access = NGINX_SERVER_ACCESS_LOG + '.old'
+            old_error = NGINX_SERVER_ERROR_LOG + '.old'
+            log_access = False
+            log_error = False
+            # first check if one of the logs are missing. This may happen on rare ocations that we renamed and deleted the file
+            # before nginx completed the role over of the logs
+            missing_log = False
+            if not os.path.isfile(NGINX_SERVER_ACCESS_LOG):
+                missing_log = True
+                demisto.info(f'Missing access log: {NGINX_SERVER_ACCESS_LOG}. Will send roll signal to nginx.')
+            if not os.path.isfile(NGINX_SERVER_ERROR_LOG):
+                missing_log = True
+                demisto.info(f'Missing error log: {NGINX_SERVER_ERROR_LOG}. Will send roll signal to nginx.')
+            if missing_log:
+                nginx_process.send_signal(int(SIGUSR1))
+                demisto.info(f'Done sending roll signal to nginx (pid: {nginx_process.pid}) after detecting missing log file.'
+                             ' Will skip this iteration.')
+                return
+            if os.path.getsize(NGINX_SERVER_ACCESS_LOG):
+                log_access = True
+                os.rename(NGINX_SERVER_ACCESS_LOG, old_access)
+            if os.path.getsize(NGINX_SERVER_ERROR_LOG):
+                log_error = True
+                os.rename(NGINX_SERVER_ERROR_LOG, old_error)
+            if log_access or log_error:
+                # nginx rolls the logs when getting sigusr1
+                nginx_process.send_signal(int(SIGUSR1))
+                gevent.sleep(0.5)  # sleep 0.5 to let nginx complete the roll
+            if log_access:
+                with open(old_access, 'rt') as f:
+                    start = 1
+                    for lines in batch(f.readlines(), 100):
+                        end = start + len(lines)
+                        demisto.info(f'nginx access log ({start}-{end-1}): ' + ''.join(lines))
+                        start = end
+                os.unlink(old_access)
+            if log_error:
+                with open(old_error, 'rt') as f:
+                    start = 1
+                    for lines in batch(f.readlines(), 100):
+                        end = start + len(lines)
+                        demisto.error(f'nginx error log ({start}-{end-1}): ' + ''.join(lines))
+                        start = end
+                os.unlink(old_error)
+        except Exception as e:
+            demisto.error(f'Failed nginx log processing: {e}. Exception: {traceback.format_exc()}')
+
+
+    def nginx_log_monitor_loop(nginx_process: subprocess.Popen):
+        """An endless loop to monitor nginx logs. Meant to be spawned as a greenlet.
+        Will run every minute and if needed will dump the nginx logs and roll them if needed.
+
+        Args:
+            nginx_process (subprocess.Popen): the nginx process. Will send signal for log rolling.
+        """
+        while True:
+            gevent.sleep(60)
+            nginx_log_process(nginx_process)
+
+
+    def test_nginx_server(port: int, params: Dict):
+        nginx_process = start_nginx_server(port, params)
+        # let nginx startup
+        time.sleep(0.5)
+        try:
+            protocol = 'https' if params.get('key') else 'http'
+            res = requests.get(f'{protocol}://localhost:{port}/nginx-test',
+                               verify=False, proxies={"http": "", "https": ""})  # nosec guardrails-disable-line
+            res.raise_for_status()
+            welcome = 'Welcome to nginx'
+            if welcome not in res.text:
+                raise ValueError(f'Unexpected response from nginx-text (does not contain "{welcome}"): {res.text}')
+        finally:
+            try:
+                nginx_process.terminate()
+                nginx_process.wait(1.0)
+            except Exception as ex:
+                demisto.error(f'failed stoping test nginx process: {ex}')
+
+
+    def try_parse_integer(int_to_parse: Any, err_msg: str) -> int:
+        """
+        Tries to parse an integer, and if fails will throw DemistoException with given err_msg
+        """
+        try:
+            res = int(int_to_parse)
+        except (TypeError, ValueError):
+            raise DemistoException(err_msg)
+        return res
+
+
+    def get_params_port(params: Dict = None) -> int:
+        """
+        Gets port from the integration parameters
+        """
+        params = demisto.params() if not params else params
+        port_mapping: str = params.get('longRunningPort', '')
+        err_msg: str
+        port: int
+        if port_mapping:
+            err_msg = f'Listen Port must be an integer. {port_mapping} is not valid.'
+            if ':' in port_mapping:
+                port = try_parse_integer(port_mapping.split(':')[1], err_msg)
+            else:
+                port = try_parse_integer(port_mapping, err_msg)
+        else:
+            raise ValueError('Please provide a Listen Port.')
+        return port
+
+
+    def run_long_running(params: Dict = None, is_test: bool = False):
+        """
+        Start the long running server
+        :param params: Demisto params
+        :param is_test: Indicates whether it's test-module run or regular run
+        :return: None
+        """
+        params = demisto.params() if not params else params
+        nginx_process = None
+        nginx_log_monitor = None
+
+        try:
+
+            nginx_port = get_params_port()
+            server_port = nginx_port + 1
+            # set our own log handlers
+            APP.logger.removeHandler(default_handler)  # type: ignore[name-defined] # pylint: disable=E0602
+            integration_logger = IntegrationLogger()
+            integration_logger.buffering = False
+            log_handler = DemistoHandler(integration_logger)
+            log_handler.setFormatter(
+                logging.Formatter("flask log: [%(asctime)s] %(levelname)s in %(module)s: %(message)s")
+            )
+            APP.logger.addHandler(log_handler)  # type: ignore[name-defined] # pylint: disable=E0602
+            demisto.debug('done setting demisto handler for logging')
+            server = WSGIServer(('0.0.0.0', server_port),
+                                APP, log=DEMISTO_LOGGER,  # type: ignore[name-defined] # pylint: disable=E0602
+                                error_log=ERROR_LOGGER)
+            if is_test:
+                test_nginx_server(nginx_port, params)
+                server_process = Process(target=server.serve_forever)
+                server_process.start()
+                time.sleep(5)
+                try:
+                    server_process.terminate()
+                    server_process.join(1.0)
+                except Exception as ex:
+                    demisto.error(f'failed stoping test wsgi server process: {ex}')
+
+            else:
+                nginx_process = start_nginx_server(nginx_port, params)
+                nginx_log_monitor = gevent.spawn(nginx_log_monitor_loop, nginx_process)
+                demisto.updateModuleHealth('')
+                server.serve_forever()
+        except Exception as e:
+            error_message = str(e)
+            demisto.error(f'An error occurred: {error_message}. Exception: {traceback.format_exc()}')
+            demisto.updateModuleHealth(f'An error occurred: {error_message}')
+            raise ValueError(error_message)
+
+        finally:
+            if nginx_process:
+                try:
+                    nginx_process.terminate()
+                except Exception as ex:
+                    demisto.error(f'Failed stopping nginx process when exiting: {ex}')
+            if nginx_log_monitor:
+                try:
+                    nginx_log_monitor.kill(timeout=1.0)
+                except Exception as ex:
+                    demisto.error(f'Failed stopping nginx_log_monitor when exiting: {ex}')
+
+    ### END GENERATED CODE ###
+
+
+
+    if __name__ in ['__main__', '__builtin__', 'builtins']:
+        main()
+  subtype: python3
+  type: python
+tests:
+- Test_EDL
+- EDL Performance Test
+fromversion: 5.5.0
+image: data:image/png;base64,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
+detaileddescription: "## How to Access the EDL Service\n\nThere are two ways that you can access the EDL service.\n\n### Access the EDL Service by URL and Port (HTTP)\nIn a web browser, go to **http://*demisto_address*:*listen_port***.\n\n\n### Access the EDL Service by Instance Name (HTTPS)\n**Note: The EDL will be open to the same network the XSOAR Server is accessible. Make sure you are aware of the network risks. Enabling strong authentication is highly recommended if the route is open to the public.**\n\nTo access the EDL service by instance name, make sure ***Instance execute external*** is enabled. \n\n1. In Cortex XSOAR, go to **Settings > About > Troubleshooting**.\n2. In the **Server Configuration** section, verify that the `instance.execute.external.<instance_name>` key is set to `true`. If this key does not exist, click **+ Add Server Configuration** and add the `instance.execute.external.<instance_name>` and set the value to `true`. See [this documentation](https://xsoar.pan.dev/docs/reference/articles/long-running-invoke) for further information.\n3. In a web browser, go to `https://<cortex-xsoar_address>/instance/execute/<instance_name>/`.\n  * In Multi Tenant environments, go to `https://<cortex-xsoar_address>/acc-<account name>/instance/execute/<instance_name>/`\n\n\n### Modify Request Parameters Through the URL\nUse the following arguments in the URL to modify the request:\n\n1. **n** - The maximum number of entries in the output. If no value is provided, will use the value specified in the *List Size* parameter configured in the instance configuration.\n * Example: https://{cortex-xsoar_instance}/instance/execute/{EDL_instance_name}?n=50\n2. **s** - The starting entry index from which to export the indicators.\n * Example: https://{cortex-xsoar_instance}/instance/execute/{EDL_instance_name}?s=10&n=50\n3. **q** - The query used to retrieve indicators from the system. Make sure to [URL encode](https://www.w3schools.com/tags/ref_urlencode.ASP).\n * Example: https://{cortex-xsoar_instance}/instance/execute/{EDL_instance_name}?q=type:IP+and+reputation:Bad\n4. **sp** - If set will strip ports off URLs, otherwise will ignore URLs with ports.\n * Example: https://{cortex-xsoar_instance}/instance/execute/{EDL_instance_name}?v=panosurl&sp \n5. **di** - If set will ignore URLs that are not compliant with PAN-OS URL format instead of being rewritten.\n * Example: https://{cortex-xsoar_instance}/instance/execute/{EDL_instance_name}?v=panosurl&di\n6. **tr** - Whether to collapse IPs. \n    * 0 - Do not collapse. \n    * 1 - Collapse to ranges.\n    * 2 - Collapse to CIDRs.\n * Example: https://{cortex-xsoar_instance}/instance/execute/{EDL_instance_name}?q=\"type:ip and sourceBrand:my_source\"&tr=1\n\n### When running in On-Demand mode\nMake sure you run the `!edl-update` command for the first time to initialize the export process.\n\n\n---\n[View Integration Documentation](https://xsoar.pan.dev/docs/reference/integrations/edl)"

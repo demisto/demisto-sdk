@@ -13,7 +13,7 @@ class TestFlake8:
         mocker.patch.object(linter, 'run_command_os')
         linter.run_command_os.return_value = ('', '', 0)
 
-        exit_code, output = linter_obj._run_flake8(lint_files=lint_files, py_num=3.7)
+        exit_code, output = linter_obj._run_flake8(lint_files=lint_files, py_num='3.7')
 
         assert exit_code == 0b0, "Exit code should be 0"
         assert output == '', "Output should be empty"
@@ -25,7 +25,7 @@ class TestFlake8:
         expected_output = 'Error code found'
         linter.run_command_os.return_value = (expected_output, '', 1)
 
-        exit_code, output = linter_obj._run_flake8(lint_files=lint_files, py_num=3.7)
+        exit_code, output = linter_obj._run_flake8(lint_files=lint_files, py_num='3.7')
 
         assert exit_code == 0b1, "Exit code should be 1"
         assert output == expected_output, "Output should be empty"
@@ -37,7 +37,7 @@ class TestFlake8:
         expected_output = 'Error code found'
         linter.run_command_os.return_value = ('not good', expected_output, 1)
 
-        exit_code, output = linter_obj._run_flake8(lint_files=lint_files, py_num=3.7)
+        exit_code, output = linter_obj._run_flake8(lint_files=lint_files, py_num='3.7')
 
         assert exit_code == 0b1, "Exit code should be 1"
         assert output == expected_output, "Output should be empty"
@@ -87,7 +87,7 @@ class TestMypy:
         mocker.patch.object(linter, 'run_command_os')
         linter.run_command_os.return_value = ('Success: no issues found', '', 0)
 
-        exit_code, output = linter_obj._run_mypy(lint_files=lint_files, py_num=3.7)
+        exit_code, output = linter_obj._run_mypy(lint_files=lint_files, py_num='3.7')
 
         assert exit_code == 0b0, "Exit code should be 0"
         assert output == '', "Output should be empty"
@@ -99,7 +99,7 @@ class TestMypy:
         expected_output = 'Error code found'
         linter.run_command_os.return_value = (expected_output, '', 1)
 
-        exit_code, output = linter_obj._run_mypy(lint_files=lint_files, py_num=3.7)
+        exit_code, output = linter_obj._run_mypy(lint_files=lint_files, py_num='3.7')
 
         assert exit_code == 0b1, "Exit code should be 1"
         assert output == expected_output, "Output should be empty"
@@ -111,7 +111,7 @@ class TestMypy:
         expected_output = 'Error code found'
         linter.run_command_os.return_value = ('not good', expected_output, 1)
 
-        exit_code, output = linter_obj._run_mypy(lint_files=lint_files, py_num=3.7)
+        exit_code, output = linter_obj._run_mypy(lint_files=lint_files, py_num='3.7')
 
         assert exit_code == 0b1, "Exit code should be 1"
         assert output == expected_output, "Output should be empty"
@@ -124,7 +124,7 @@ class TestVulture:
         mocker.patch.object(linter, 'run_command_os')
         linter.run_command_os.return_value = ('', '', 0)
 
-        exit_code, output = linter_obj._run_vulture(lint_files=lint_files, py_num=3.7)
+        exit_code, output = linter_obj._run_vulture(lint_files=lint_files, py_num='3.7')
 
         assert exit_code == 0b0, "Exit code should be 0"
         assert output == '', "Output should be empty"
@@ -136,7 +136,7 @@ class TestVulture:
         expected_output = 'Error code found'
         linter.run_command_os.return_value = (expected_output, '', 1)
 
-        exit_code, output = linter_obj._run_vulture(lint_files=lint_files, py_num=3.7)
+        exit_code, output = linter_obj._run_vulture(lint_files=lint_files, py_num='3.7')
 
         assert exit_code == 0b1, "Exit code should be 1"
         assert output == expected_output, "Output should be empty"
@@ -148,7 +148,7 @@ class TestVulture:
         expected_output = 'Error code found'
         linter.run_command_os.return_value = ('not good', expected_output, 1)
 
-        exit_code, output = linter_obj._run_vulture(lint_files=lint_files, py_num=3.7)
+        exit_code, output = linter_obj._run_vulture(lint_files=lint_files, py_num='3.7')
 
         assert exit_code == 0b1, "Exit code should be 1"
         assert output == expected_output, "Output should be empty"
@@ -340,13 +340,13 @@ class TestRunLintInHost:
         from demisto_sdk.commands.lint.linter import EXIT_CODES
         unittest_path = lint_files[0].parent / 'intergration_sample_test.py'
         mocker.patch.dict(linter_obj._facts, {
-            "images": [["image", 3.7]],
+            "images": [["image", '3.7']],
             "test": False,
             "version_two": False,
             "lint_files": [],
             "lint_unittest_files": [unittest_path],
             "additional_requirements": [],
-            "python_version": 3.7,
+            "python_version": '3.7',
         })
         mocker.patch.object(linter_obj, '_run_flake8')
         linter_obj._run_flake8.return_value = (0b1, 'Error')
@@ -389,13 +389,13 @@ class TestRunLintInHost:
         from demisto_sdk.commands.lint.linter import EXIT_CODES
         unittest_path = lint_files[0].parent / 'intergration_sample_test.py'
         mocker.patch.dict(linter_obj._facts, {
-            "images": [["image", 3.7]],
+            "images": [["image", '3.7']],
             "test": False,
             "version_two": False,
             "lint_files": lint_files,
             "lint_unittest_files": [unittest_path],
             "additional_requirements": [],
-            "python_version": 3.7,
+            "python_version": '3.7',
         })
         mocker.patch.object(linter_obj, '_run_flake8')
         linter_obj._run_flake8.return_value = (0b1, 'Error')

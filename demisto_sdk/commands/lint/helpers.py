@@ -20,6 +20,7 @@ import docker.errors
 import git
 import requests
 from docker.models.containers import Container
+from packaging.version import parse
 
 # Local packages
 from demisto_sdk.commands.common.constants import (TYPE_PWSH, TYPE_PYTHON,
@@ -173,14 +174,14 @@ def get_test_modules(content_repo: Optional[git.Repo], is_external_repo: bool) -
 
 
 @contextmanager
-def add_typing_module(lint_files: List[Path], python_version: float):
+def add_typing_module(lint_files: List[Path], python_version: str):
     """ Check for typing import for python2 packages
             1. Entrance - Add import typing in the begining of the file.
             2. Closing - change back to original.
 
         Args:
             lint_files(list): File to execute lint - for adding typing in python 2.7
-            python_version(float): The package python version.
+            python_version(str): The package python version.
 
         Raises:
             IOError: if can't write to files due permissions or other reasons
@@ -189,7 +190,8 @@ def add_typing_module(lint_files: List[Path], python_version: float):
     back_lint_files: List[Path] = []
     try:
         # Add typing import if needed to python version 2 packages
-        if python_version < 3:
+        py_ver = parse(python_version).major
+        if py_ver < 3:
             for lint_file in lint_files:
                 data = lint_file.read_text(encoding="utf-8")
                 typing_regex = "(from typing import|import typing)"
@@ -281,7 +283,7 @@ def add_tmp_lint_files(content_repo: git.Repo, pack_path: Path, lint_files: List
 
 
 @lru_cache(maxsize=100)
-def get_python_version_from_image(image: str, timeout: int = 60, log_prompt: str = "") -> float:
+def get_python_version_from_image(image: str, timeout: int = 60, log_prompt: str = "") -> str:
     """ Get python version from docker image
 
     Args:
@@ -289,11 +291,11 @@ def get_python_version_from_image(image: str, timeout: int = 60, log_prompt: str
         timeout(int): Docker client request timeout
 
     Returns:
-        float: Python version X.Y (3.7, 3.6, ..)
+        str: Python version X.Y (3.7, 3.6, ..)
     """
     # skip pwoershell images
     if 'pwsh' in image or 'powershell' in image:
-        return 3.8
+        return '3.8'
 
     docker_user = os.getenv('DOCKERHUB_USER')
     docker_pass = os.getenv('DOCKERHUB_PASSWORD')
@@ -301,7 +303,7 @@ def get_python_version_from_image(image: str, timeout: int = 60, log_prompt: str
     docker_client.login(username=docker_user,
                         password=docker_pass,
                         registry="https://index.docker.io/v1")
-    py_num = 3.8
+    py_num = '3.8'
     # Run three times
     for attempt in range(3):
         try:
@@ -317,7 +319,8 @@ def get_python_version_from_image(image: str, timeout: int = 60, log_prompt: str
             # Get python version
             py_num = container_obj.logs()
             if isinstance(py_num, bytes):
-                py_num = float(py_num)
+                py_num = parse(py_num.decode("utf-8")).base_version
+
                 for _ in range(2):
                     # Try to remove the container two times.
                     try:

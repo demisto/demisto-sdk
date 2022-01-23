@@ -7,12 +7,16 @@ mapping:
       id:
         type: str
         required: True
+      id_x2:
+        type: str
       version:
         type: int
         required: True
   name:
     type: str
     required: True
+  name_x2:
+    type: str
   script:
     type: str
     required: True
@@ -27,6 +31,8 @@ mapping:
   comment:
     type: str
     required: True
+  comment_x2:
+    type: str
   enabled:
     type: bool
   system:
@@ -42,6 +48,9 @@ mapping:
   timeout:
     type: text
   dependson:
+    type: map
+    allowempty: True
+  dependson_x2:
     type: map
     allowempty: True
   outputs:
@@ -89,6 +98,11 @@ mapping:
     type: bool
   autoUpdateDockerImage:
     type: bool
+  marketplaces:
+    type: seq
+    sequence:
+      - type: str
+        enum: ['xsoar', 'marketplacev2']
 
 # script->args
 schema;argument_schema:
@@ -100,6 +114,8 @@ schema;argument_schema:
     description:
       type: str
       required: True
+    description_x2:
+      type: str
     defaultValue:
       type: str
     required:
@@ -131,6 +147,8 @@ schema;output_schema:
     description:
       type: str
       required: True
+    description_x2:
+      type: str
     type:
       type: str
 
@@ -144,5 +162,7 @@ schema;important_schema:
     description:
       type: str
       required: True
+    description_x2:
+      type: str
     related:
       type: str

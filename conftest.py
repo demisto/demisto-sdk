@@ -8,9 +8,11 @@ from _pytest.fixtures import FixtureRequest
 from _pytest.tmpdir import TempPathFactory, _mk_tmp
 
 from TestSuite.integration import Integration
+from TestSuite.json_based import JSONBased
 from TestSuite.pack import Pack
 from TestSuite.playbook import Playbook
 from TestSuite.repo import Repo
+from TestSuite.yml import YAML
 
 # Helper Functions
 
@@ -66,11 +68,38 @@ def repo(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Repo:
     return get_repo(request, tmp_path_factory)
 
 
+@pytest.fixture(scope='module')
+def module_repo(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Repo:
+    from demisto_sdk.commands.find_dependencies.tests.find_dependencies_test import \
+        working_repo
+
+    return working_repo(get_repo(request, tmp_path_factory))
+
+
 @pytest.fixture
 def playbook(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Playbook:
     """Mocking tmp_path
     """
     return get_playbook(request, tmp_path_factory)
+
+
+@pytest.fixture()
+def malformed_integration_yml(integration) -> YAML:
+    """
+    Provides an invalid integration yml structure.
+    """
+    integration.yml.write("1: 2\n//")
+    return integration.yml
+
+
+@pytest.fixture()
+def malformed_incident_field(pack) -> JSONBased:
+    """
+    Provides an invalid incident field json structure.
+    """
+    incident_field = pack.create_incident_field("malformed")
+    incident_field.write_as_text("{\n '1': '1'")
+    return incident_field
 
 
 @pytest.fixture(scope='session', autouse=True)

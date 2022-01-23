@@ -15,8 +15,8 @@ import click
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     AUTOMATION, ENTITY_TYPE_TO_DIR, INTEGRATION, INTEGRATIONS_DIR,
-    MARKETPLACE_LIVE_DISCUSSIONS, PACK_INITIAL_VERSION, SCRIPT, SCRIPTS_DIR,
-    XSOAR_AUTHOR, XSOAR_SUPPORT, XSOAR_SUPPORT_URL)
+    MARKETPLACE_LIVE_DISCUSSIONS, MARKETPLACES, PACK_INITIAL_VERSION, SCRIPT,
+    SCRIPTS_DIR, XSOAR_AUTHOR, XSOAR_SUPPORT, XSOAR_SUPPORT_URL)
 from demisto_sdk.commands.common.tools import (LOG_COLORS, capital_case,
                                                find_type,
                                                get_child_directories,
@@ -263,19 +263,21 @@ class ContributionConverter:
             update_docker=True,
             verbose=True,
             assume_yes=True,
-            prev_ver='xsoar-contrib/master'  # default is demisto/master
+            include_untracked=True,
+            interactive=False,
         )
 
-    def generate_readme_for_pack_content_item(self, yml_path: str) -> None:
+    def generate_readme_for_pack_content_item(self, yml_path: str, is_contribution: bool = False) -> None:
         """ Runs the demisto-sdk's generate-docs command on a pack content item
 
         Args:
             yml_path: str: Content item yml path.
+            is_contribution: bool: Check if the content item is a new integration contribution or not.
         """
         file_type = find_type(yml_path)
         file_type = file_type.value if file_type else file_type
         if file_type == 'integration':
-            generate_integration_doc(yml_path)
+            generate_integration_doc(yml_path, is_contribution=is_contribution)
         if file_type == 'script':
             generate_script_doc(input_path=yml_path, examples=[])
         if file_type == 'playbook':
@@ -285,7 +287,7 @@ class ContributionConverter:
         readme_path = os.path.join(dir_output, 'README.md')
         self.readme_files.append(readme_path)
 
-    def generate_readmes_for_new_content_pack(self):
+    def generate_readmes_for_new_content_pack(self, is_contribution=False):
         """
         Generate the readme files for a new content pack.
         """
@@ -301,7 +303,7 @@ class ContributionConverter:
                                 or file_name.startswith('script-') \
                                 or file_name.startswith('automation-'):
                             unified_file = file
-                            self.generate_readme_for_pack_content_item(unified_file)
+                            self.generate_readme_for_pack_content_item(unified_file, is_contribution)
                             os.remove(unified_file)
             elif basename == 'Playbooks':
                 files = get_child_files(pack_subdir)
@@ -347,7 +349,7 @@ class ContributionConverter:
                     )
 
             if self.create_new:
-                self.generate_readmes_for_new_content_pack()
+                self.generate_readmes_for_new_content_pack(is_contribution=True)
 
             # format
             self.format_converted_pack()
@@ -463,6 +465,7 @@ class ContributionConverter:
         metadata_dict['useCases'] = zipped_metadata.get('useCases') if zipped_metadata.get('useCases') else []
         metadata_dict['keywords'] = zipped_metadata.get('keywords') if zipped_metadata.get('keywords') else []
         metadata_dict['githubUser'] = [self.gh_user] if self.gh_user else []
+        metadata_dict['marketplaces'] = zipped_metadata.get('marketplaces') or MARKETPLACES
         metadata_dict = ContributionConverter.create_pack_metadata(data=metadata_dict)
         metadata_path = os.path.join(self.pack_dir_path, 'pack_metadata.json')
         with open(metadata_path, 'w') as pack_metadata_file:
@@ -490,7 +493,8 @@ class ContributionConverter:
             'categories': [],
             'tags': [],
             'useCases': [],
-            'keywords': []
+            'keywords': [],
+            'marketplaces': [],
         }
 
         if data:

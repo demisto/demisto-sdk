@@ -29,8 +29,8 @@ def test_integration_secrets_incident_field_positive(mocker, repo):
     pack = repo.create_pack('pack')
     integration = pack.create_integration('integration')
     mock_git(mocker)
-    mocker.patch(
-        "demisto_sdk.__main__.SecretsValidator.get_all_diff_text_files",
+    mocker.patch.object(
+        SecretsValidator, 'get_all_diff_text_files',
         return_value=[
             integration.yml.rel_path
         ]
@@ -65,8 +65,8 @@ def test_integration_secrets_integration_negative(mocker, repo):
     # Change working dir to repo
     secret_string = 'Dynamics365ForMarketingEmail'
     integration.yml.write({'this is a secrets': secret_string})
-    mocker.patch(
-        "demisto_sdk.__main__.SecretsValidator.get_all_diff_text_files",
+    mocker.patch.object(
+        SecretsValidator, 'get_all_diff_text_files',
         return_value=[integration.yml.rel_path]
     )
     with ChangeCWD(repo.path):
@@ -104,8 +104,8 @@ def test_integration_secrets_integration_positive(mocker, repo):
         generic_strings=[
             secret_string
         ])
-    mocker.patch(
-        "demisto_sdk.__main__.SecretsValidator.get_all_diff_text_files",
+    mocker.patch.object(
+        SecretsValidator, "get_all_diff_text_files",
         return_value=[integration.code.rel_path]
     )
     with ChangeCWD(integration.repo_path):
@@ -133,8 +133,8 @@ def test_integration_secrets_integration_global_whitelist_positive_using_git(moc
     integration = pack.create_integration('integration')
     mock_git(mocker)
     # Mock git diff
-    mocker.patch(
-        "demisto_sdk.__main__.SecretsValidator.get_all_diff_text_files",
+    mocker.patch.object(
+        SecretsValidator, "get_all_diff_text_files",
         return_value=[integration.code.rel_path]
     )
     # Change working dir to repo

@@ -1677,7 +1677,7 @@ class TestContext:
                 self.playbook.number_of_times_executed += 1
                 self.build_context.logging_module.info(
                     f'%%%%%%%% unmockable call: number of times {self.playbook.number_of_times_executed}')
-                self.build_context.failed_test_queue.put(self.playbook.configuration.playbook_id)
+                self.build_context.failed_test_queue.put(self.playbook)
             if not self.build_context.is_local_run:
                 self._notify_failed_test()
 

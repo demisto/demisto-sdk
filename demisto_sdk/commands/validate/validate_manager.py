@@ -321,10 +321,10 @@ class ValidateManager:
 
         click.secho('\n================= Validating all files =================', fg="bright_cyan")
 
-        readme_validator = ReadMeValidator(file_path='', ignored_errors='',
-                                           print_as_warnings=self.print_ignored_errors,
-                                           json_file_path=self.json_file_path)
-        readme_validator.start_mdx_server()
+        # readme_validator = ReadMeValidator(file_path='', ignored_errors='',
+        #                                    print_as_warnings=self.print_ignored_errors,
+        #                                    json_file_path=self.json_file_path)
+        # readme_validator.start_mdx_server()
 
         all_packs_valid = set()
 
@@ -346,7 +346,7 @@ class ValidateManager:
                 count += 1
             wait_futures_complete(futures_list=futures, done_fn=lambda x: all_packs_valid.add(x))
 
-        ReadMeValidator.stop_mdx_server()
+        # ReadMeValidator.stop_mdx_server()
 
         return all(all_packs_valid)
 

@@ -45,9 +45,9 @@ from demisto_sdk.commands.common.constants import (
     PACKS_README_FILE_NAME, PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR,
     RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR,
-    XSOAR_CONFIG_FILE, FileType, GitContentConfig, IdSetKeys,
-    MarketplaceVersions, urljoin)
+    XSOAR_CONFIG_FILE, FileType, IdSetKeys, MarketplaceVersions, urljoin)
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.GitContentConfig import GitContentConfig
 
 urllib3.disable_warnings()
 
@@ -238,12 +238,12 @@ def get_remote_file(
     git_config = GitContentConfig(github_repo)
     if git_config.is_gitlab:
         full_file_path_quote_plus = urllib.parse.quote_plus(full_file_path)
-        git_path = urljoin(git_config.BASE_RAW_GITLAB_LINK, 'files', full_file_path_quote_plus, 'raw')
+        git_path = urljoin(git_config.base_api, 'files', full_file_path_quote_plus, 'raw')
         tag = tag.replace('origin/', '')
     else:  # github
         # 'origin/' prefix is used to compared with remote branches but it is not a part of the github url.
         tag = tag.replace('origin/', '').replace('demisto/', '')
-        git_path = urljoin(git_config.CONTENT_GITHUB_LINK, tag, full_file_path)
+        git_path = urljoin(git_config.base_api, tag, full_file_path)
 
     local_content = '{}'
 
@@ -252,8 +252,8 @@ def get_remote_file(
     try:
         external_repo = is_external_repository()
         if external_repo:
-            github_token = git_config.Credentials.GITHUB_TOKEN
-            gitlab_token = git_config.Credentials.GITLAB_TOKEN
+            github_token = git_config.Credentials.github_token
+            gitlab_token = git_config.Credentials.gitlab_token
             if gitlab_token and git_config.is_gitlab:
                 res = requests.get(git_path,
                                    params={'ref': tag},
@@ -280,7 +280,7 @@ def get_remote_file(
                 if not res.ok:
                     if not suppress_print:
                         click.secho(
-                            f'You are working in a private repository: "{git_config.CURRENT_REPOSITORY}".\n'
+                            f'You are working in a private repository: "{git_config.current_repository}".\n'
                             f'The github token in your environment is undefined.\n'
                             f'Getting file from local repository instead. \n'
                             f'If you wish to get the file from the remote repository, \n'
@@ -634,6 +634,8 @@ def get_to_version(file_path):
 
 
 def str2bool(v):
+    if isinstance(v, bool):
+        return v
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
         return True
 
@@ -2210,7 +2212,9 @@ def get_current_repo() -> Tuple[str, str, str]:
     try:
         git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
         parsed_git = giturlparse.parse(git_repo.remotes.origin.url)
-        host = urllib.parse.urlparse(parsed_git.url).hostname  # this for ignoring tokens inside the url
+        host = parsed_git.host
+        if '@' in host:
+            host = host.split('@')[1]
         return host, parsed_git.owner, parsed_git.repo
     except git.InvalidGitRepositoryError:
         print_warning('git repo is not found')

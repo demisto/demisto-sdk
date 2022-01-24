@@ -21,7 +21,8 @@ from demisto_sdk.commands.common.constants import (
     LAYOUTS_DIR, MARKETPLACE_LIVE_DISCUSSIONS, MARKETPLACES,
     PACK_INITIAL_VERSION, PACK_SUPPORT_OPTIONS, PLAYBOOKS_DIR, REPORTS_DIR,
     SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR, XSOAR_AUTHOR, XSOAR_SUPPORT,
-    XSOAR_SUPPORT_URL, GitContentConfig)
+    XSOAR_SUPPORT_URL)
+from demisto_sdk.commands.common.GitContentConfig import GitContentConfig
 from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                get_common_server_path,
                                                get_pack_name, print_error,

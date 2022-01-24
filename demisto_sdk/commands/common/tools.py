@@ -236,7 +236,7 @@ def get_remote_file(
 
     """
     git_config = GitContentConfig(github_repo)
-    if git_config.GITLAB_ID:
+    if git_config.is_gitlab:
         full_file_path_quote_plus = urllib.parse.quote_plus(full_file_path)
         git_path = urljoin(git_config.BASE_RAW_GITLAB_LINK, 'files', full_file_path_quote_plus, 'raw')
         tag = tag.replace('origin/', '')
@@ -254,7 +254,7 @@ def get_remote_file(
         if external_repo:
             github_token = git_config.Credentials.GITHUB_TOKEN
             gitlab_token = git_config.Credentials.GITLAB_TOKEN
-            if gitlab_token and git_config.GITLAB_ID:
+            if gitlab_token and git_config.is_gitlab:
                 res = requests.get(git_path,
                                    params={'ref': tag},
                                    headers={'PRIVATE-TOKEN': gitlab_token},
@@ -2210,9 +2210,7 @@ def get_current_repo() -> Tuple[str, str, str]:
     try:
         git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
         parsed_git = giturlparse.parse(git_repo.remotes.origin.url)
-        host = parsed_git.host
-        if '@' in host:
-            host = host.split('@')[1]
+        host = urllib.parse.urlparse(parsed_git.url).hostname  # this for ignoring tokens inside the url
         return host, parsed_git.owner, parsed_git.repo
     except git.InvalidGitRepositoryError:
         print_warning('git repo is not found')

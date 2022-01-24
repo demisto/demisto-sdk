@@ -1677,6 +1677,8 @@ class TestContext:
                 self.playbook.number_of_times_executed += 1
                 self.build_context.logging_module.info(
                     f'%%%%%%%% unmockable call: number of times {self.playbook.number_of_times_executed}')
+                self.build_context.logging_module.info(
+                    f'%%%%%%%% playbook {self.playbook}')
                 self.build_context.failed_test_queue.put(self.playbook)
             if not self.build_context.is_local_run:
                 self._notify_failed_test()
@@ -1821,7 +1823,6 @@ class ServerContext:
         while queue.unfinished_tasks:
             try:
                 test_playbook: TestPlaybook = queue.get(block=False)
-                self.build_context.logging_module.info(f'%%%%%%%% Failed Test Playbook: {test_playbook}')
                 self._reset_tests_round_if_necessary(test_playbook, queue)
             except Empty:
                 continue

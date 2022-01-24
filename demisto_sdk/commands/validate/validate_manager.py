@@ -1095,16 +1095,13 @@ class ValidateManager:
         click.secho(f'\n================= Running validation for deleted files =================',
                     fg="bright_cyan")
 
-        if deleted_files:
-            for file_path in deleted_files:
-                error_message, error_code = Errors.deleted_file(file_path)
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
-                    self.is_valid = False
+        is_valid = True
+        for file_path in deleted_files:
+            error_message, error_code = Errors.deleted_file(file_path)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                is_valid = False
 
-            return False
-        else:
-            click.secho(f'\nno deleted files were found.')
-        return True
+        return is_valid
 
     def validate_changed_packs_unique_files(self, modified_files, added_files, old_format_files, changed_meta_files):
         click.secho(f'\n================= Running validation on changed pack unique files =================',

@@ -553,7 +553,7 @@ class GitUtil:
     def get_all_changed_files(self, prev_ver: str = 'master', committed_only: bool = False,
                               staged_only: bool = False, debug: bool = False,
                               include_untracked: bool = False) -> Set[Path]:
-        """Get a set of all changed files in the branch (modified, added and renamed)
+        """Get a set of all changed files in the branch (modified, added, deleted and renamed)
 
         Args:
             prev_ver (str): The base branch against which the comparison is made.
@@ -574,4 +574,6 @@ class GitUtil:
                                                       staged_only=staged_only, debug=debug,
                                                       include_untracked=include_untracked,
                                                       get_only_current_file_names=True)
-        return modified_files.union(added_files).union(renamed_files)
+        deleted_files: Set[Path] = self.git_util.deleted_files(prev_ver=self.prev_ver, committed_only=self.is_circle,
+                                                    staged_only=self.staged, include_untracked=self.include_untracked)
+        return modified_files.union(added_files).union(renamed_files).union(deleted_files)

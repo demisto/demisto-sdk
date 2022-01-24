@@ -392,8 +392,8 @@ ERROR_CODE = {
         'ui_applicable': False,
         'related_field': 'name'
     },
-    "deleted_file": {
-        'code': "ST113",
+    "file_cannot_be_deleted": {
+        'code': "BA113",
         'ui_applicable': False,
         'related_field': ''
     },
@@ -425,8 +425,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def deleted_file(file_path: str):
-        return f"file {file_path} was deleted from git, please restore the file."
+    def file_cannot_be_deleted(file_path: str):
+        return f"The file {file_path} cannot be deleted. Please restore the file."
 
     @staticmethod
     def suggest_fix(file_path: str, *args: Any, cmd: str = 'format') -> str:

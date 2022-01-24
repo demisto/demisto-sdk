@@ -846,6 +846,11 @@ def format(
     help="Skip certificate validation", is_flag=True
 )
 @click.option(
+    "--skip_validation", is_flag=True,
+    help="Only for upload zipped packs, "
+         "if true will skip upload packs validation, use just when migrate existing custom content to packs."
+)
+@click.option(
     "-v", "--verbose",
     help="Verbose output", is_flag=True
 )

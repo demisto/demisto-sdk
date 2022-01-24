@@ -1821,6 +1821,7 @@ class ServerContext:
         while queue.unfinished_tasks:
             try:
                 test_playbook: TestPlaybook = queue.get(block=False)
+                self.build_context.logging_module.info(f'%%%%%%%% Failed Test Playbook: {test_playbook}')
                 self._reset_tests_round_if_necessary(test_playbook, queue)
             except Empty:
                 continue

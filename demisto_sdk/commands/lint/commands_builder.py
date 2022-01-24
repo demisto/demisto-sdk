@@ -3,6 +3,8 @@ import os
 from pathlib import Path
 from typing import List, Optional
 
+from packaging.version import parse
+
 from demisto_sdk.commands.lint.resources.pylint_plugins.base_checker import \
     base_msg
 from demisto_sdk.commands.lint.resources.pylint_plugins.certified_partner_level_checker import \
@@ -20,17 +22,18 @@ from demisto_sdk.commands.lint.resources.pylint_plugins.xsoar_level_checker impo
 excluded_files = ["CommonServerPython.py", "demistomock.py", "CommonServerUserPython.py", "conftest.py", "venv"]
 
 
-def get_python_exec(py_num: float, is_py2: bool = False) -> str:
+def get_python_exec(py_num: str, is_py2: bool = False) -> str:
     """ Get python executable
 
     Args:
-        py_num(float): Python version X.Y
+        py_num(str): Python version X.Y
         is_py2(bool): for python 2 version, Set True if the returned result should have python2 or False for python.
 
     Returns:
         str: python executable
     """
-    if py_num < 3:
+    py_ver = parse(py_num).major
+    if py_ver < 3:
         if is_py2:
             py_str = "2"
         else:
@@ -41,12 +44,12 @@ def get_python_exec(py_num: float, is_py2: bool = False) -> str:
     return f"python{py_str}"
 
 
-def build_flake8_command(files: List[Path], py_num: float) -> str:
+def build_flake8_command(files: List[Path], py_num: str) -> str:
     """ Build command for executing flake8 lint check
         https://flake8.pycqa.org/en/latest/user/invocation.html
     Args:
         files(List[Path]): files to execute lint
-        py_num(float): The python version in use
+        py_num(str): The python version in use
 
     Returns:
         str: flake8 command
@@ -93,10 +96,10 @@ def build_bandit_command(files: List[Path]) -> str:
     return command
 
 
-def build_xsoar_linter_command(files: List[Path], py_num: float, support_level: str = "base") -> str:
+def build_xsoar_linter_command(files: List[Path], py_num: str, support_level: str = "base") -> str:
     """ Build command to execute with xsoar linter module
     Args:
-        py_num(float): The python version in use
+        py_num(str): The python version in use
         files(List[Path]): files to execute lint
         support_level: Support level for the file
 
@@ -151,12 +154,12 @@ def build_xsoar_linter_command(files: List[Path], py_num: float, support_level: 
     return command
 
 
-def build_mypy_command(files: List[Path], version: float) -> str:
+def build_mypy_command(files: List[Path], version: str) -> str:
     """ Build command to execute with mypy module
         https://mypy.readthedocs.io/en/stable/command_line.html
     Args:
         files(List[Path]): files to execute lint
-        version(float): python varsion X.Y (3.7, 2.7 ..)
+        version(str): python varsion X.Y (3.7, 2.7 ..)
 
     Returns:
         str: mypy command
@@ -189,11 +192,11 @@ def build_mypy_command(files: List[Path], version: float) -> str:
     return command
 
 
-def build_vulture_command(files: List[Path], pack_path: Path, py_num: float) -> str:
+def build_vulture_command(files: List[Path], pack_path: Path, py_num: str) -> str:
     """ Build command to execute with pylint module
         https://github.com/jendrikseipp/vulture
     Args:
-        py_num(float): The python version in use
+        py_num(str): The python version in use
         files(List[Path]): files to execute lint
         pack_path(Path): Package path
 
@@ -214,7 +217,7 @@ def build_vulture_command(files: List[Path], pack_path: Path, py_num: float) -> 
     return command
 
 
-def build_pylint_command(files: List[Path], docker_version: Optional[float] = None) -> str:
+def build_pylint_command(files: List[Path], docker_version: Optional[str] = None) -> str:
     """ Build command to execute with pylint module
         https://docs.pylint.org/en/1.6.0/run.html#invoking-pylint
     Args:
@@ -231,8 +234,14 @@ def build_pylint_command(files: List[Path], docker_version: Optional[float] = No
     # disable xsoar linter messages
     disable = ['bad-option-value']
     # TODO: remove when pylint will update its version to support py3.9
-    if docker_version and docker_version >= 3.9:
-        disable.append('unsubscriptable-object')
+
+    if docker_version:
+        py_ver = parse(docker_version)
+        major = py_ver.major
+        minor = py_ver.minor
+
+        if major == 3 and minor >= 9:
+            disable.append('unsubscriptable-object')
     command += f" --disable={','.join(disable)}"
     # Disable specific errors
     command += " -d duplicate-string-formatting-argument"

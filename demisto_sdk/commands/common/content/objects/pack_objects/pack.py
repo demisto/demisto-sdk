@@ -1,7 +1,7 @@
 import logging
 import subprocess
 from distutils.version import LooseVersion
-from typing import Any, Iterator, Optional, Union
+from typing import Any, Dict, Iterator, Optional, Union
 
 import demisto_client
 from wcmatch.pathlib import Path
@@ -26,7 +26,8 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    RELEASE_NOTES_DIR,
                                                    REPORTS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
-                                                   TOOLS_DIR, WIDGETS_DIR)
+                                                   TOOLS_DIR, WIDGETS_DIR,
+                                                   FileType)
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     AgentTool, AuthorImage, Classifier, ClassifierMapper, Connection,
     Contributors, Dashboard, DocFile, GenericDefinition, GenericField,
@@ -36,7 +37,8 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     ReleaseNoteConfig, Report, Script, SecretIgnore, Widget)
 from demisto_sdk.commands.common.content.objects_factory import \
     path_to_pack_object
-from demisto_sdk.commands.common.tools import get_demisto_version
+from demisto_sdk.commands.common.tools import (get_demisto_version,
+                                               is_object_in_id_set)
 from demisto_sdk.commands.test_content import tools
 
 TURN_VERIFICATION_ERROR_MSG = "Can not set the pack verification configuration key,\nIn the server - go to Settings -> troubleshooting\
@@ -51,6 +53,8 @@ class Pack:
         # in case the given path are a Pack and not zipped pack - we init the metadata from the pack
         if not str(path).endswith('.zip'):
             self._metadata = PackMetaData(self._path.joinpath('metadata.json'))
+        self._filter_items_by_id_set = False
+        self._pack_info_from_id_set: Dict[Any, Any] = {}
 
     def _content_files_list_generator_factory(self, dir_name: str, suffix: str) -> Iterator[Any]:
         """Generic content objects iterable generator
@@ -64,7 +68,14 @@ class Pack:
         """
         objects_path = (self._path / dir_name).glob(patterns=[f"*.{suffix}", f"*/*.{suffix}"])
         for object_path in objects_path:
-            yield path_to_pack_object(object_path)
+            content_object = path_to_pack_object(object_path)
+            # skip content items that are not displayed in the id set, if the corresponding flag is used
+            if self._filter_items_by_id_set and content_object.type().value not in [FileType.RELEASE_NOTES.value,
+                                                                                    FileType.RELEASE_NOTES_CONFIG.value]:
+                if is_object_in_id_set(content_object.get('name'), self._pack_info_from_id_set):
+                    yield content_object
+            else:
+                yield content_object
 
     def _content_dirs_list_generator_factory(self, dir_name) -> Iterator[Any]:
         """Generic content objects iterable generator
@@ -273,6 +284,22 @@ class Pack:
 
         return obj
 
+    @property
+    def filter_items_by_id_set(self) -> bool:
+        return self._filter_items_by_id_set
+
+    @filter_items_by_id_set.setter
+    def filter_items_by_id_set(self, filter_by_id_set: bool):
+        self._filter_items_by_id_set = filter_by_id_set
+
+    @property
+    def pack_info_from_id_set(self) -> dict:
+        return self._pack_info_from_id_set
+
+    @pack_info_from_id_set.setter
+    def pack_info_from_id_set(self, pack_section_from_id_set: dict):
+        self._pack_info_from_id_set = pack_section_from_id_set.get(self.id, {}) if pack_section_from_id_set else {}
+
     def sign_pack(self, logger: logging.Logger, dumped_pack_dir: Path, sign_directory: Path):
         """ Signs pack folder and creates signature file.
 
@@ -301,16 +328,26 @@ class Pack:
         server_version = get_demisto_version(client)
         return LooseVersion(server_version.base_version) >= LooseVersion(server_version_to_check)  # type: ignore
 
-    def upload(self, logger: logging.Logger, client: demisto_client):
+    def upload(self, logger: logging.Logger, client: demisto_client, skip_validation: bool):
         """
         Upload the pack zip to demisto_client,
         from 6.5 server version we have the option to use skip_verify arg instead of server configuration.
         Args:
             logger (logging.Logger): System logger already initialized.
             client: The demisto_client object of the desired XSOAR machine to upload to.
+            skip_validation: if true will skip upload packs validation.
         Returns:
             The result of the upload command from demisto_client
         """
+        if self.is_server_version_ge(client, '6.6.0') and skip_validation:
+            try:
+                logger.info('Uploading...')
+                return client.upload_content_packs(
+                    file=self.path, skip_verify='true', skip_validation='true')  # type: ignore
+
+            except Exception as err:
+                raise Exception(f'Failed to upload pack, error: {err}')
+
         if self.is_server_version_ge(client, '6.5.0'):
             try:
                 logger.info('Uploading...')

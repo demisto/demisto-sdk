@@ -94,7 +94,8 @@ class Uploader:
             client (DefaultApi): Demisto-SDK client object.
         """
 
-    def __init__(self, input: str, insecure: bool = False, verbose: bool = False, pack_names: list = None):
+    def __init__(self, input: str, insecure: bool = False, verbose: bool = False, pack_names: list = None,
+                 skip_validation: bool = False):
         self.path = input
         self.log_verbose = verbose
         verify = (not insecure) if insecure else None  # set to None so demisto_client will use env var DEMISTO_VERIFY_SSL
@@ -104,6 +105,7 @@ class Uploader:
         self.unuploaded_due_to_version: List[Tuple[str, str, Version, Version, Version]] = []
         self.demisto_version = get_demisto_version(self.client)
         self.pack_names = pack_names
+        self.skip_upload_packs_validation = skip_validation
 
     def upload(self):
         """Upload the pack / directory / file to the remote Cortex XSOAR instance.
@@ -121,7 +123,7 @@ class Uploader:
 
         # uploading a pack zip
         elif self.path.endswith('.zip'):
-            status_code = self.zipped_pack_uploader(path=self.path)
+            status_code = self.zipped_pack_uploader(path=self.path, skip_validation=self.skip_upload_packs_validation)
 
         # Uploading a file
         elif os.path.isfile(self.path):
@@ -274,7 +276,7 @@ class Uploader:
                 status_code = self.entity_dir_uploader(entity_folder) or status_code
         return status_code
 
-    def zipped_pack_uploader(self, path: str) -> int:
+    def zipped_pack_uploader(self, path: str, skip_validation: bool) -> int:
 
         zipped_pack = Pack(path)
 
@@ -285,7 +287,7 @@ class Uploader:
                 self.pack_names = [zipped_pack.path.stem]
 
             if self.notify_user_should_override_packs():
-                zipped_pack.upload(logger, self.client)
+                zipped_pack.upload(logger, self.client, skip_validation)
                 self.successfully_uploaded_files.extend([(pack_name, FileType.PACK.value) for pack_name in self.pack_names])
                 return SUCCESS_RETURN_CODE
 

@@ -41,7 +41,7 @@ class GitContentConfig:
 
     def __init__(self, repo_name: Optional[str] = None):
         self.Credentials = GitCredentials()
-        self.is_gitlab = bool(distutils.util.strtobool(os.getenv(GitContentConfig.ENV_IS_GITLAB_NAME, False)))
+        self.is_gitlab = bool(distutils.util.strtobool(os.getenv(GitContentConfig.ENV_IS_GITLAB_NAME, "false")))
         self.base_repo_url = os.getenv(GitContentConfig.ENV_REPO_URL_NAME)
 
         if not repo_name:

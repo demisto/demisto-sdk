@@ -1678,6 +1678,8 @@ class TestContext:
                 self.build_context.logging_module.info(
                     f'%%%%%%%% unmockable call: number of times {self.playbook.number_of_times_executed}')
                 self.build_context.logging_module.info(
+                    '^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^')
+                self.build_context.logging_module.info(
                     f'%%%%%%%% playbook {self.playbook}')
                 self.build_context.failed_test_queue.put(self.playbook)
             if not self.build_context.is_local_run:

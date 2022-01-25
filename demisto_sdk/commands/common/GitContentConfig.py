@@ -26,7 +26,7 @@ class GitContentConfig:
     """Holds links, credentials and other content related github configuration
 
     Attributes:
-        Credentials: Credentials to the git.
+        credentials: Credentials to the git.
     """
     BASE_RAW_GITHUB_LINK = r'https://raw.{GITHUB_HOST}/'
     SDK_API_GITHUB_RELEASES = r'https://api.github.com/repos/demisto/demisto-sdk/releases'
@@ -40,7 +40,7 @@ class GitContentConfig:
     ENV_REPO_URL_NAME = 'DEMISTO_SDK_REPO_URL'
 
     def __init__(self, repo_name: Optional[str] = None):
-        self.Credentials = GitCredentials()
+        self.credentials = GitCredentials()
         self.is_gitlab = bool(distutils.util.strtobool(os.getenv(GitContentConfig.ENV_IS_GITLAB_NAME, "false")))
         self.base_repo_url = os.getenv(GitContentConfig.ENV_REPO_URL_NAME)
 
@@ -117,7 +117,7 @@ class GitContentConfig:
         try:
             res = requests.get(f"https://{gitlab_hostname}/api/v4/projects",
                                params={'search': repo},
-                               headers={'PRIVATE-TOKEN': self.Credentials.gitlab_token},
+                               headers={'PRIVATE-TOKEN': self.credentials.gitlab_token},
                                timeout=10,
                                verify=False)
             if not res.ok:

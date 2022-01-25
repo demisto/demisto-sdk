@@ -252,8 +252,8 @@ def get_remote_file(
     try:
         external_repo = is_external_repository()
         if external_repo:
-            github_token = git_config.Credentials.github_token
-            gitlab_token = git_config.Credentials.gitlab_token
+            github_token = git_config.credentials.github_token
+            gitlab_token = git_config.credentials.gitlab_token
             if gitlab_token and git_config.is_gitlab:
                 res = requests.get(git_path,
                                    params={'ref': tag},
@@ -285,8 +285,8 @@ def get_remote_file(
                             f'Getting file from local repository instead. \n'
                             f'If you wish to get the file from the remote repository, \n'
                             f'Please define your github or gitlab token in your environment.\n'
-                            f'`export {git_config.Credentials.ENV_GITHUB_TOKEN_NAME}=<TOKEN> or`\n'
-                            f'export {git_config.Credentials.ENV_GITLAB_TOKEN_NAME}=<TOKEN>', fg='yellow'
+                            f'`export {git_config.credentials.ENV_GITHUB_TOKEN_NAME}=<TOKEN> or`\n'
+                            f'export {git_config.credentials.ENV_GITLAB_TOKEN_NAME}=<TOKEN>', fg='yellow'
                         )
                         click.echo("Getting file from local environment")
                     # Get from local git origin/master instead

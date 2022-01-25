@@ -217,3 +217,22 @@ class TestGitContentConfig:
         assert git_config.current_repository == GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
         assert not git_config.is_gitlab
         assert git_config.base_api == DEFAULT_GITHUB_BASE_API
+
+    def test_provide_repo_name(self):
+        """
+        Given:
+            A repo name argument to git config
+        When:
+            Calling git config to other repo instead of the one that configured in the env
+        Then:
+            The git config should be as the repo name provided
+        """
+
+        git_config = GitContentConfig(GitContentConfig.OFFICIAL_CONTENT_REPO_NAME)
+        assert git_config.current_repository == GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
+        assert git_config.base_api == DEFAULT_GITHUB_BASE_API
+
+        git_config = GitContentConfig('org/repo')
+        assert git_config.current_repository == 'org/repo'
+        assert git_config.base_api == 'https://raw.githubusercontent.com/org/repo'
+

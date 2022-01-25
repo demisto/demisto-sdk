@@ -94,16 +94,36 @@ BUILT_IN_FIELDS = [
 ]
 
 
-def does_dict_have_alternative_key(data: dict) -> bool:
+def get_alternative_fields(data: dict) -> dict:
     """
-        Check if a key that ends with "_x2" exists in the dict (including inner levels)
-        Args:
-            data (dict): the data dict to search in
+    Check if the data dict has fields ending with '_x2'. First check if there are alternative name and id
+    and return them, if not then check all other fields.
+    Args:
+        data (dict): the data dict to search in
 
-        Returns: True if found such a key, else False
+    Returns: True if found such a key, else False
+    """
+    # We first check specifically for name and id, not in the recursive call, to avoid catching cases of
+    # nested items having an alternative name or id.
+    id_x2 = data.get('commonfields').get('id_x2') if data.get('commonfields') else data.get('id_x2')
+    name_x2 = data.get('name_x2')
+    if id_x2 or name_x2:
+        return {'id_x2': id_x2, 'name_x2': name_x2}
+
+    return {'other_x2': True} if iterate_dict_alternative_fields(data) else {}
+          # TODO: think about a better way
+
+
+
+def iterate_dict_alternative_fields(data: dict):
+    """
+    Check if a key that ends with "_x2" exists in the dict (including inner levels)
+    Args:
+        data (dict): the data dict to search in
+
+    Returns: True if found such a key, else False
 
     """
-
     # start searching in the first level keys
     for key in data:
         if isinstance(key, str) and key.endswith('_x2'):
@@ -111,23 +131,10 @@ def does_dict_have_alternative_key(data: dict) -> bool:
 
     for key, value in data.items():
         if isinstance(value, dict):
-            if does_dict_have_alternative_key(value):
+            if iterate_dict_alternative_fields(value):
                 return True
 
     return False
-
-def get_alternative_name_and_id(data: dict):
-    """
-
-    Args:
-        data:
-
-    Returns:
-
-    """
-    id_x2 = data.get('commonfields').get('id_x2') if data.get('commonfields') else data.get('id_x2')
-    name_x2 = data.get('name_x2')
-    return {k: v in {'id_x2': id_x2, 'name_x2': name_x2}.items() }
 
 def should_skip_item_by_mp(file_path: str, marketplace: str, print_logs: bool = False):
     """
@@ -557,6 +564,8 @@ def get_playbook_data(file_path: str) -> dict:
 
     transformers, filters = get_filters_and_transformers_from_playbook(data_dictionary)
 
+    alternative_fields = get_alternative_fields(data_dictionary)
+
     if implementing_scripts:
         playbook_data['implementing_scripts'] = implementing_scripts
     if implementing_playbooks:
@@ -579,8 +588,12 @@ def get_playbook_data(file_path: str) -> dict:
         playbook_data['transformers'] = transformers
     if implementing_lists:
         playbook_data['lists'] = implementing_lists
-    if does_dict_have_alternative_key(data_dictionary):
+    if alternative_fields:
         playbook_data['has_alternative_meta'] = True
+    if alternative_fields.get('id_x2'):
+        playbook_data['id_x2'] = alternative_fields['id_x2']
+    if alternative_fields.get('name_x2'):
+        playbook_data['name_x2'] = alternative_fields['name_x2']
 
     return {id_: playbook_data}
 
@@ -604,6 +617,7 @@ def get_script_data(file_path, script_code=None):
 
     script_data = create_common_entity_data(path=file_path, name=name, to_version=toversion, from_version=fromversion,
                                             pack=pack)
+    alternative_fields = get_alternative_fields(data_dictionary)
     if deprecated:
         script_data['deprecated'] = deprecated
     if depends_on:
@@ -616,8 +630,12 @@ def get_script_data(file_path, script_code=None):
         script_data['docker_image'] = docker_image
     if tests:
         script_data['tests'] = tests
-    if does_dict_have_alternative_key(data_dictionary):
+    if alternative_fields:
         script_data['has_alternative_meta'] = True
+    if alternative_fields.get('id_x2'):
+        script_data['id_x2'] = alternative_fields['id_x2']
+    if alternative_fields.get('name_x2'):
+        script_data['name_x2'] = alternative_fields['name_x2']
 
     return {id_: script_data}
 
@@ -810,14 +828,17 @@ def get_incident_field_data(path, incidents_types_list):
         all_scripts = all_scripts.union({field_calculations_scripts})
 
     data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
-
+    alternative_fields = get_alternative_fields(json_data)
     if all_associated_types:
         data['incident_types'] = list(all_associated_types)
     if all_scripts:
         data['scripts'] = list(all_scripts)
-    if does_dict_have_alternative_key(json_data):
+    if alternative_fields:
         data['has_alternative_meta'] = True
-
+    if alternative_fields.get('id_x2'):
+        data['id_x2'] = alternative_fields['id_x2']
+    if alternative_fields.get('name_x2'):
+        data['name_x2'] = alternative_fields['name_x2']
     return {id_: data}
 
 
@@ -1012,6 +1033,8 @@ def get_mapper_data(path):
 
     incidents_fields = {incident_field for incident_field in incidents_fields if incident_field not in BUILT_IN_FIELDS}
     data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
+    alternative_fields = get_alternative_fields(json_data)
+
     if incidents_types:
         data['incident_types'] = list(incidents_types)
     if incidents_fields:
@@ -1022,8 +1045,12 @@ def get_mapper_data(path):
         data['transformers'] = list(all_transformers)
     if definition_id:
         data['definitionId'] = definition_id
-    if does_dict_have_alternative_key(json_data):
+    if alternative_fields:
         data['has_alternative_meta'] = True
+    if alternative_fields.get('id_x2'):
+        data['id_x2'] = alternative_fields['id_x2']
+    if alternative_fields.get('name_x2'):
+        data['name_x2'] = alternative_fields['name_x2']
 
     return {id_: data}
 

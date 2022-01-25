@@ -43,7 +43,7 @@ from demisto_sdk.commands.common.hook_validations.generic_module import \
     GenericModuleValidator
 from demisto_sdk.commands.common.hook_validations.generic_type import \
     GenericTypeValidator
-from demisto_sdk.commands.common.hook_validations.id import IDSetValidations
+from demisto_sdk.commands.common.hook_validations.id import IDSetValidations, validate_alternative_fields_of_nested_item
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.hook_validations.incident_field import \
     IncidentFieldValidator
@@ -130,6 +130,7 @@ class ValidateManager:
                                           json_file_path=json_file_path).handle_error
         self.file_path = file_path
         self.id_set_path = id_set_path or DEFAULT_ID_SET_PATH
+
         # create the id_set only once per run.
         self.id_set_file = self.get_id_set_file(self.skip_id_set_creation, self.id_set_path)
 
@@ -138,7 +139,7 @@ class ValidateManager:
                                                    ignored_errors=None,
                                                    print_as_warnings=self.print_ignored_errors,
                                                    id_set_file=self.id_set_file,
-                                                   json_file_path=json_file_path) if validate_id_set else None
+                                                   json_file_path=json_file_path) if validate_id_set else None # TODO: run also when running local with id set
 
         try:
             self.git_util = GitUtil(repo=Content.git())
@@ -473,6 +474,11 @@ class ValidateManager:
         # id_set validation
         if self.id_set_validations and not self.id_set_validations.is_file_valid_in_set(file_path, file_type,
                                                                                         pack_error_ignore_list):
+            return False
+
+        if not validate_alternative_fields_of_nested_item(file_path, file_type, self.id_set_file):
+            self.handle_error(error_message='Alternative fields were found for nested item in file, please add them to the file.',
+                              file_path=file_path, error_code='ADD', suggested_fix='Add the field to the file') # TODO: extend comment
             return False
 
         # conf.json validation

@@ -24,6 +24,8 @@ mapping:
     type: str
   fieldCalcScript:
     type: str
+  fieldCalcScript_x2:
+    type: str
   cliName:
     type: str
     required: True
@@ -39,6 +41,8 @@ mapping:
   required:
     type: bool
   script:
+    type: str
+  script_x2:
     type: str
   neverSetAsRequired:
     type: bool

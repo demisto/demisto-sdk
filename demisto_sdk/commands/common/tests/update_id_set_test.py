@@ -13,7 +13,7 @@ from demisto_sdk.commands.common.constants import (DEFAULT_JOB_FROM_VERSION,
                                                    JOBS_DIR, FileType)
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.update_id_set import (
-    does_dict_have_alternative_key, find_duplicates, get_classifier_data,
+    iterate_dict_alternative_fields, find_duplicates, get_classifier_data,
     get_dashboard_data, get_fields_by_script_argument,
     get_filters_and_transformers_from_complex_value,
     get_filters_and_transformers_from_playbook, get_general_data,
@@ -2931,6 +2931,6 @@ TEST_DICTS = [
 
 
 @pytest.mark.parametrize('dict_to_test, expected_result', TEST_DICTS)
-def test_does_dict_have_alternative_key(dict_to_test, expected_result):
-    result = does_dict_have_alternative_key(dict_to_test)
+def test_iterate_dict_alternative_fields(dict_to_test, expected_result):
+    result = iterate_dict_alternative_fields(dict_to_test)
     assert result == expected_result

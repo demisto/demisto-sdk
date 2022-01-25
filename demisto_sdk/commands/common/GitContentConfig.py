@@ -53,6 +53,7 @@ class GitContentConfig:
                 self.current_repository = GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
         else:
             self.current_repository = repo_name
+            self.base_repo_url = 'githubusercontent.com'
         if not self.is_gitlab:
             # DO NOT USE os.path.join on URLs, it may cause errors
             self.base_api = urljoin(GitContentConfig.BASE_RAW_GITHUB_LINK.format(GITHUB_HOST=self.base_repo_url),

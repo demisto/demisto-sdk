@@ -46,8 +46,7 @@ class GitContentConfig:
 
         if not repo_name:
             try:
-                urls = list(GitUtil().repo.remote().urls)
-                parsed_git = self._get_repository_properties(urls)
+                parsed_git = GitContentConfig._get_repository_properties()
                 self._set_repo_config(parsed_git)
             except (InvalidGitRepositoryError, AttributeError):  # No repository
                 self.current_repository = GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
@@ -63,10 +62,11 @@ class GitContentConfig:
                                                                          GITLAB_ID=self.gitlab_id)
 
     @staticmethod
-    def _get_repository_properties(urls: Iterable) -> Optional[giturlparse.result.GitUrlParsed]:
+    def _get_repository_properties() -> Optional[giturlparse.result.GitUrlParsed]:
         """Returns the git repository of the cwd.
         if not running in a git repository, will return an empty string
         """
+        urls = list(GitUtil().repo.remote().urls)
         for url in urls:
             parsed_git = giturlparse.parse(url)
             if parsed_git and parsed_git.host and parsed_git.repo:

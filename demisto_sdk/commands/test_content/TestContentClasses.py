@@ -1673,15 +1673,15 @@ class TestContext:
                 self._add_to_failed_playbooks(is_second_playback_run=True)
                 return
             self._add_to_failed_playbooks()
-            if not mockable and self.playbook.number_of_times_executed < 3:
-                self.playbook.number_of_times_executed += 1
+            self.playbook.number_of_times_executed += 1
+            self.build_context.logging_module.info(
+                '^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^')
+            if not mockable:
                 self.build_context.logging_module.info(
                     f'%%%%%%%% unmockable call: number of times {self.playbook.number_of_times_executed}')
-                self.build_context.logging_module.info(
-                    '^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^')
-                self.build_context.logging_module.info(
-                    f'%%%%%%%% playbook {self.playbook}')
-                self.build_context.failed_test_queue.put(self.playbook)
+                if self.playbook.number_of_times_executed < 3:
+                    self.build_context.failed_test_queue.put(self.playbook)
+
             if not self.build_context.is_local_run:
                 self._notify_failed_test()
 

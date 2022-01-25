@@ -236,4 +236,3 @@ class TestGitContentConfig:
         git_config = GitContentConfig(custom_repo_name)
         assert git_config.current_repository == custom_repo_name
         assert git_config.base_api == f'https://raw.githubusercontent.com/{custom_repo_name}'
-

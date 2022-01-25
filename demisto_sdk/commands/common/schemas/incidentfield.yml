@@ -107,6 +107,8 @@ mapping:
     type: seq
     sequence:
       - include: aliases_schema
+  x2_fields:
+    type: str
 
 schema;aliases_schema:
   type: map

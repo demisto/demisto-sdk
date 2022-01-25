@@ -62,6 +62,10 @@ Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up.
 
     The path to the config file to download all the custom packs from
 
+* **--skip-validation**
+
+    if true will skip all upload packs validations, use just when migrate existing custom content entities to custom content packs to override all the entities with the packs.
+
 ### Examples
 ```
 demisto-sdk upload -i Packs/HelloWorld/Integrations/HelloWorld/
@@ -113,4 +117,10 @@ This will upload the integration YML file `integration-GoogleCloudTranslate.yml`
 demisto-sdk upload --input-config-file demisto_sdk/commands/upload/tests/data/xsoar_config.json
 ```
 This will upload the custom packs from the config file, a custom pack can be zipped file or unzipped file.
+<br/><br/>
+```
+demisto-sdk upload -i Packs/HelloWorld -z --skip-validation
+```
+This will zip the pack `HelloWorld` and will upload without any validation the zip file `uploadable_packs.zip` as a pack to the designated Cortex XSOAR Marketplace.
+This `skip validation` parameter is for migration from custom content entities to custom content packs.
 <br/><br/>

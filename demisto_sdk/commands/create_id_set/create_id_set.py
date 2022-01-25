@@ -34,16 +34,17 @@ class IDSetCreator:
         self.marketplace = marketplace.lower()
 
     def create_id_set(self):
-        self.id_set = re_create_id_set(
+        self.id_set, excluded_items_by_pack, excluded_items_by_type = re_create_id_set(
             id_set_path=self.output,
             pack_to_create=self.input,
             print_logs=self.print_logs,
             fail_on_duplicates=self.fail_duplicates,
             marketplace=self.marketplace
         )
+
         self.add_command_to_implementing_integrations_mapping()
         self.save_id_set()
-        return self.id_set
+        return self.id_set, excluded_items_by_pack, excluded_items_by_type
 
     def add_command_to_implementing_integrations_mapping(self):
         """
@@ -105,5 +106,5 @@ def get_id_set(id_set_path: str) -> dict:
     if id_set_path:
         id_set = open_id_set_file(id_set_path)
     else:
-        id_set = IDSetCreator(print_logs=False).create_id_set()
+        id_set, _, _ = IDSetCreator(print_logs=False).create_id_set()
     return id_set

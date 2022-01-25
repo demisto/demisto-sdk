@@ -13,8 +13,9 @@ from demisto_sdk.commands.common.constants import (DEFAULT_JOB_FROM_VERSION,
                                                    JOBS_DIR, FileType)
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.update_id_set import (
-    does_dict_have_alternative_key, find_duplicates, get_classifier_data,
-    get_dashboard_data, get_fields_by_script_argument,
+    add_item_to_exclusion_dict, does_dict_have_alternative_key,
+    find_duplicates, get_classifier_data, get_dashboard_data,
+    get_fields_by_script_argument,
     get_filters_and_transformers_from_complex_value,
     get_filters_and_transformers_from_playbook, get_general_data,
     get_generic_field_data, get_generic_module_data, get_generic_type_data,
@@ -425,14 +426,14 @@ class TestIntegrations:
         non_unified_file_path = os.path.join(TESTS_DIR, 'test_files',
                                              'DummyPack', 'Integrations', 'DummyIntegration')
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
-        res = process_integration(non_unified_file_path, True)
+        res, _ = process_integration(non_unified_file_path, True)
         assert len(res) == 1
         non_unified_integration_data = res[0]
 
         unified_file_path = os.path.join(TESTS_DIR, 'test_files',
                                          'DummyPack', 'Integrations', 'integration-DummyIntegration.yml')
 
-        res = process_integration(unified_file_path, True)
+        res, _ = process_integration(unified_file_path, True)
         assert len(res) == 1
         unified_integration_data = res[0]
 
@@ -480,7 +481,7 @@ class TestIntegrations:
         """
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=True)
         test_file_path = os.path.join(TESTS_DIR, 'test_files', 'invalid_file_structures', 'integration.yml')
-        res = process_integration(test_file_path, print_logs=False)
+        res, _ = process_integration(test_file_path, print_logs=False)
         assert res == []
 
 
@@ -613,7 +614,7 @@ class TestScripts:
         test_file_path = os.path.join(TESTS_DIR, 'test_files',
                                       'Packs', 'DummyPack', 'Scripts', 'DummyScript')
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
-        res = process_script(test_file_path, True)
+        res, _ = process_script(test_file_path, True)
         assert len(res) == 1
         data = res[0]
 
@@ -639,7 +640,7 @@ class TestScripts:
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=True)
         test_file_path = os.path.join(TESTS_DIR, 'test_files', 'invalid_file_structures', 'integration.yml')
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
-        res = process_script(test_file_path, print_logs=False)
+        res, _ = process_script(test_file_path, print_logs=False)
         assert res == []
 
     @staticmethod
@@ -1039,7 +1040,7 @@ class TestLayouts:
                                  'test_data', 'layout-to-test.json')
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
 
-        res = process_general_items(test_file, True, (FileType.LAYOUT,), get_layout_data)
+        res, _ = process_general_items(test_file, True, (FileType.LAYOUT,), get_layout_data)
         assert len(res) == 1
         result = res[0]
         result = result.get('urlRep')
@@ -1068,7 +1069,7 @@ class TestLayouts:
                                  'test_data', 'layout-to-test-no-types-fields.json')
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
 
-        res = process_general_items(test_file, False, (FileType.LAYOUT,), get_layout_data)
+        res, _ = process_general_items(test_file, False, (FileType.LAYOUT,), get_layout_data)
         assert len(res) == 1
         result = res[0]
         result = result.get('urlRep')
@@ -1095,7 +1096,7 @@ class TestLayouts:
                                  'test_data', 'layoutscontainer-to-test.json')
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
 
-        res = process_general_items(test_file, True, (FileType.LAYOUTS_CONTAINER,), get_layoutscontainer_data)
+        res, _ = process_general_items(test_file, True, (FileType.LAYOUTS_CONTAINER,), get_layoutscontainer_data)
         assert len(res) == 1
         result = res[0]
         result = result.get('layouts_container_test')
@@ -1126,7 +1127,7 @@ class TestIncidentFields:
                                 'test_data', 'incidentfield-to-test.json')
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
 
-        res = process_incident_fields(test_dir, True, [])
+        res, _ = process_incident_fields(test_dir, True, [])
         assert len(res) == 1
         result = res[0]
         result = result.get('incidentfield-test')
@@ -1154,7 +1155,7 @@ class TestIncidentFields:
                                 'incidentfield-top_level_alternative_fields.json')
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
 
-        res = process_incident_fields(test_dir, True, [])
+        res, _ = process_incident_fields(test_dir, True, [])
         assert len(res) == 1
         result = res[0]
         result = result.get('incidentfield_upload_id')
@@ -1181,7 +1182,7 @@ class TestIncidentFields:
                                 'test_data', 'incidentfield-to-test-no-types_scripts.json')
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
 
-        res = process_incident_fields(test_dir, True, [])
+        res, _ = process_incident_fields(test_dir, True, [])
         assert len(res) == 1
         result = res[0]
         result = result.get('incidentfield-test')
@@ -1205,7 +1206,7 @@ class TestIncidentFields:
         test_dir = os.path.join(git_path(), 'demisto_sdk', 'commands', 'create_id_set', 'tests',
                                 'test_data', 'incidentfield-to-test-no-types_scripts.json')
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=True)
-        res = process_incident_fields(test_dir, True, [])
+        res, _ = process_incident_fields(test_dir, True, [])
         assert res == []
 
 
@@ -2005,7 +2006,7 @@ class TestGenericFunctions:
                                  'test_data', 'classifier-to-test.json')
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
 
-        res = process_general_items(test_file, True, (FileType.CLASSIFIER,), get_classifier_data)
+        res, _ = process_general_items(test_file, True, (FileType.CLASSIFIER,), get_classifier_data)
         assert len(res) == 1
         result = res[0]
         result = result.get('dummy classifier')
@@ -2032,7 +2033,7 @@ class TestGenericFunctions:
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=True)
         test_file = os.path.join(git_path(), 'demisto_sdk', 'commands', 'create_id_set', 'tests',
                                  'test_data', 'classifier-to-test.json')
-        res = process_general_items(test_file, True, (FileType.CLASSIFIER,), get_classifier_data)
+        res, _ = process_general_items(test_file, True, (FileType.CLASSIFIER,), get_classifier_data)
         assert res == []
 
     @staticmethod
@@ -2884,10 +2885,10 @@ def test_should_skip_item_by_mp(mocker):
     """
     import demisto_sdk.commands.common.update_id_set as uis
     mocker.patch.object(uis, 'get_mp_types_from_metadata_by_item', return_value=['xsoar'])
-    pack_path = os.path.join(TESTS_DIR, 'test_files', 'DummyPackXsoarMPOnly')
-    script_path = os.path.join(TESTS_DIR, 'test_files', 'DummyPackScriptIsXsoarOnly', 'Scripts', 'DummyScript')
-    res1 = should_skip_item_by_mp(pack_path, 'mpv2')
-    res2 = should_skip_item_by_mp(script_path, 'mpv2')
+    pack_path = os.path.join(TESTS_DIR, 'test_files', 'DummyPackXsoarMPOnly', 'pack_metadata.json')
+    script_path = os.path.join(TESTS_DIR, 'test_files', 'DummyPackScriptIsXsoarOnly', 'Scripts', 'DummyScript.yml')
+    res1 = should_skip_item_by_mp(pack_path, 'mpv2', {})
+    res2 = should_skip_item_by_mp(script_path, 'mpv2', {})
     assert res1
     assert res2
 
@@ -2934,3 +2935,62 @@ TEST_DICTS = [
 def test_does_dict_have_alternative_key(dict_to_test, expected_result):
     result = does_dict_have_alternative_key(dict_to_test)
     assert result == expected_result
+
+
+def test_should_skip_item_by_mp_no_update_excluded_dict(mocker):
+    """
+    Given
+        - path of a pack which related only to xsoar marketplace, the current marketplace this id set is generated for.
+    When
+        - checking if it should be part of the mpV2 id set.
+    Then
+        - return True since this item should be skipped.
+        - don't update the excluded item dict since we only want to add content items and not packs
+
+    """
+    import demisto_sdk.commands.common.update_id_set as uis
+    excluded_items_dict = {}
+    mocker.patch.object(uis, 'get_mp_types_from_metadata_by_item', return_value=['xsoar'])
+    pack_path = os.path.join(TESTS_DIR, 'test_files', 'DummyPackXsoarMPOnly', 'pack_metadata.json')
+    res1 = should_skip_item_by_mp(pack_path, 'mpv2', excluded_items_dict)
+    assert res1
+    assert not excluded_items_dict
+
+
+def test_should_skip_item_by_mp_update_excluded_dict(mocker):
+    """
+    Given
+        - path of a script which related only to xsoar, the current marketplace this id set is generated for.
+    When
+        - checking if it should be part of the mpV2 id set.
+    Then
+        - return True since this item should be skipped.
+        - update the excluded item dict since we want to add content items to the dict
+
+    """
+    import demisto_sdk.commands.common.update_id_set as uis
+    excluded_items_dict = {}
+    mocker.patch.object(uis, 'get_mp_types_from_metadata_by_item', return_value=['xsoar'])
+    script_path = os.path.join(TESTS_DIR, 'test_files', 'DummyPackScriptIsXsoarOnly', 'Scripts', 'DummyScript.yml')
+    res2 = should_skip_item_by_mp(script_path, 'mpv2', excluded_items_dict)
+    assert excluded_items_dict
+    assert res2
+
+
+def test_add_item_to_exclusion_dict():
+    """
+    Given
+        - path of content item, the current marketplace this id set is generated for.
+    When
+        - when creating the id set, checking a content item that is 'xsoar only' if it should be part of the mpV2 id set.
+    Then
+        - return True since this item should be skipped.
+    """
+
+    expected_result = {'CortexXDR': {('integration', 'Cortex XDR')}}
+    excluded_items_from_id_set = {}
+    file_path = os.path.join(TESTS_DIR, 'test_files', 'Packs', 'CortexXDR', 'Integrations', 'PaloAltoNetworks_XDR',
+                             'PaloAltoNetworks_XDR.yml')
+    add_item_to_exclusion_dict(excluded_items_from_id_set, file_path, "Cortex XDR")
+
+    assert IsEqualFunctions.is_dicts_equal(expected_result, excluded_items_from_id_set)

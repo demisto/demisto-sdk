@@ -105,6 +105,7 @@ class GitContentConfig:
                     click.secho(f'Found custom github url - defaulting to demisto/content. '
                                 f'Configure `{GitContentConfig.ENV_REPO_URL_NAME}` to the repository address', fg='yellow')
                     self.current_repository = GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
+                    self.base_repo_url = 'githubusercontent.com'
             elif not self.base_repo_url or 'github.com' in self.base_repo_url.lower():  # found github.com
                 self.current_repository = f'{parsed_git.owner}/{parsed_git.repo}'
                 self.base_repo_url = 'githubusercontent.com'

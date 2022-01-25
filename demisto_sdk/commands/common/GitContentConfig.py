@@ -1,7 +1,11 @@
-import distutils.util
+"""
+This is module to store the git configuration of the content repo
+"""
+import json
+import logging
 import os
 from functools import lru_cache
-from typing import Iterable, Optional, Tuple
+from typing import Optional, Tuple
 from urllib.parse import urljoin
 
 import click
@@ -33,17 +37,18 @@ class GitContentConfig:
     OFFICIAL_CONTENT_REPO_NAME = 'demisto/content'
     CONTENT_GITHUB_UPSTREAM = r'upstream.*demisto/content'
     CONTENT_GITHUB_ORIGIN = r'origin.*demisto/content'
+    GITHUB_USER_CONTENT = 'githubusercontent.com'
 
     BASE_RAW_GITLAB_LINK = "https://{GITLAB_HOST}/api/v4/projects/{GITLAB_ID}/repository"
 
-    ENV_IS_GITLAB_NAME = 'DEMISTO_SDK_IS_GITLAB'
-    ENV_REPO_URL_NAME = 'DEMISTO_SDK_REPO_URL'
+    ENV_REPO_HOSTNAME_NAME = 'DEMISTO_SDK_REPO_HOSTNAME'
 
-    def __init__(self, repo_name: Optional[str] = None):
+    def __init__(self, repo_name: Optional[str] = None, repo_hostname: Optional[str] = None):
         self.credentials = GitCredentials()
-        self.is_gitlab = bool(distutils.util.strtobool(os.getenv(GitContentConfig.ENV_IS_GITLAB_NAME, "false")))
-        self.base_repo_url = os.getenv(GitContentConfig.ENV_REPO_URL_NAME)
-
+        self.repo_hostname = repo_hostname or os.getenv(GitContentConfig.ENV_REPO_HOSTNAME_NAME) or GitContentConfig.GITHUB_USER_CONTENT
+        self.is_gitlab = False
+        if 'github.com' in self.repo_hostname:
+            self.repo_hostname = GitContentConfig.GITHUB_USER_CONTENT
         if not repo_name:
             try:
                 parsed_git = GitContentConfig._get_repository_properties()
@@ -52,13 +57,12 @@ class GitContentConfig:
                 self.current_repository = GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
         else:
             self.current_repository = repo_name
-            self.base_repo_url = 'githubusercontent.com'
         if not self.is_gitlab:
             # DO NOT USE os.path.join on URLs, it may cause errors
-            self.base_api = urljoin(GitContentConfig.BASE_RAW_GITHUB_LINK.format(GITHUB_HOST=self.base_repo_url),
+            self.base_api = urljoin(GitContentConfig.BASE_RAW_GITHUB_LINK.format(GITHUB_HOST=self.repo_hostname),
                                     self.current_repository)
         else:
-            self.base_api = GitContentConfig.BASE_RAW_GITLAB_LINK.format(GITLAB_HOST=self.base_repo_url,
+            self.base_api = GitContentConfig.BASE_RAW_GITLAB_LINK.format(GITLAB_HOST=self.repo_hostname,
                                                                          GITLAB_ID=self.gitlab_id)
 
     @staticmethod
@@ -78,42 +82,42 @@ class GitContentConfig:
             # default to content repo if the repo is not found
             click.secho('Could not find the repository name - defaulting to demisto/content', fg='yellow')
             self.current_repository = GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
+            self.repo_hostname = GitContentConfig.GITHUB_USER_CONTENT
             return
         hostname = parsed_git.host
         if '@' in hostname:
             hostname = hostname.split('@')[1]  # to get proper hostname, without the username or tokens
         gitlab_hostname, gitlab_id = (self._search_gitlab_id(hostname, parsed_git.repo)) or \
-                                     (self._search_gitlab_id(self.base_repo_url, parsed_git.repo)) or \
+                                     (self._search_gitlab_id(self.repo_hostname, parsed_git.repo)) or \
                                      (None, None)
 
-        if self.is_gitlab and not gitlab_id:
+        if 'github.com' not in hostname and not gitlab_id:
             click.secho(f'If your repo is in private gitlab repo, '
                         f'configure `{GitCredentials.ENV_GITLAB_TOKEN_NAME}` environment variable '
-                        f'or configure `{GitContentConfig.ENV_REPO_URL_NAME}` environment variable', fg='yellow')
+                        f'or configure `{GitContentConfig.ENV_REPO_HOSTNAME_NAME}` environment variable', fg='yellow')
             click.secho('Could not find the repository name on gitlab - defaulting to demisto/content', fg='yellow')
             self.is_gitlab = False
             self.current_repository = GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
-            self.base_repo_url = 'githubusercontent.com'
+            self.repo_hostname = GitContentConfig.GITHUB_USER_CONTENT
             return
 
         if gitlab_id:
             self.is_gitlab = True
             self.gitlab_id: int = gitlab_id
-            self.base_repo_url = gitlab_hostname
+            self.repo_hostname = gitlab_hostname
         else:  # github
-            if not self.base_repo_url and 'github.com' not in hostname:  # if custom github found
+            if not os.getenv(GitContentConfig.ENV_REPO_HOSTNAME_NAME) and 'github.com' not in hostname:
                 click.secho(f'Found custom github url - defaulting to demisto/content. '
-                            f'Configure `{GitContentConfig.ENV_REPO_URL_NAME}` to the repository address', fg='yellow')
+                            f'Configure `{GitContentConfig.ENV_REPO_HOSTNAME_NAME}` to the repository address. '
+                            f'defaulting to demisto/content', fg='yellow')
                 self.current_repository = GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
-                self.base_repo_url = 'githubusercontent.com'
-            elif not self.base_repo_url or 'github.com' in self.base_repo_url.lower():  # found github.com
-                self.current_repository = f'{parsed_git.owner}/{parsed_git.repo}'
-                self.base_repo_url = 'githubusercontent.com'
-            else:  # custom github is configured properly
+            else:
                 self.current_repository = f'{parsed_git.owner}/{parsed_git.repo}'
 
     @lru_cache(maxsize=10)
     def _search_gitlab_id(self, gitlab_hostname: str, repo: str) -> Optional[Tuple[Optional[str], Optional[int]]]:
+        if not gitlab_hostname or gitlab_hostname == GitContentConfig.GITHUB_USER_CONTENT or 'github.com' in gitlab_hostname:
+            return None
         try:
             res = requests.get(f"https://{gitlab_hostname}/api/v4/projects",
                                params={'search': repo},
@@ -123,9 +127,11 @@ class GitContentConfig:
             if not res.ok:
                 return None
             search_results = res.json()
-            gitlab_id = search_results[0].get('id', None) if search_results else None
+            assert search_results and isinstance(search_results, list) and isinstance(search_results[0], dict)
+            gitlab_id = search_results[0].get('id')
             if not gitlab_id:
                 return None
             return gitlab_hostname, gitlab_id
-        except Exception:
+        except (requests.exceptions.ConnectionError, json.JSONDecodeError, AssertionError) as e:
+            logging.getLogger('demisto-sdk').debug(str(e), exc_info=True)
             return None

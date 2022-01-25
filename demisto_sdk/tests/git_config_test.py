@@ -92,7 +92,7 @@ class TestGitContentConfig:
                             return_value=None)
         custom_github = 'my-own-github-url.com'
         url = f'https://{custom_github}/org/repo'
-        mocker.patch.dict(os.environ, {'DEMISTO_SDK_REPO_URL': custom_github})
+        mocker.patch.dict(os.environ, {GitContentConfig.ENV_REPO_HOSTNAME_NAME: custom_github})
         mocker.patch.object(Repo, 'remote', return_value=Urls([url]))
         git_config = GitContentConfig()
         assert not git_config.is_gitlab
@@ -130,7 +130,6 @@ class TestGitContentConfig:
         mocker.patch.object(GitContentConfig,
                             '_search_gitlab_id',
                             return_value=None)
-        mocker.patch.dict(os.environ, {'DEMISTO_SDK_IS_GITLAB': 'true'})
         url = 'https://code.pan.run/xsoar/very-private-repo'
         mocker.patch.object(Repo, 'remote', return_value=Urls([url]))
         click_mock = mocker.patch.object(click, 'secho')
@@ -139,7 +138,7 @@ class TestGitContentConfig:
         assert git_config.current_repository == GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
         assert git_config.base_api == DEFAULT_GITHUB_BASE_API
         message = click_mock.call_args_list[0][0][0]
-        assert GitContentConfig.ENV_REPO_URL_NAME in message
+        assert GitContentConfig.ENV_REPO_HOSTNAME_NAME in message
         assert GitCredentials.ENV_GITLAB_TOKEN_NAME in message
 
     def test_get_repo_name_gitlab_invalid(self, mocker):
@@ -208,8 +207,11 @@ class TestGitContentConfig:
 
         repo = "no-real-repo"
         host = 'code.pan.run'
-        search_api_url = f'https://code.pan.run/api/v4/projects?search={repo}'
-        requests_mock.get(search_api_url, json=[])
+        search_api_url1 = f'https://code.pan.run/api/v4/projects?search={repo}'
+        search_api_url2 = 'https://code.pan.run/api/v4/projects?search=test'
+
+        requests_mock.get(search_api_url1, json=[])
+        requests_mock.get(search_api_url2, json=[])
         mocker.patch.object(Repo, 'remote', return_value=Urls(["https://code.pan.run/xsoar/test"]))
 
         git_config = GitContentConfig()

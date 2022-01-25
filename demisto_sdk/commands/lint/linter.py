@@ -34,6 +34,7 @@ from demisto_sdk.commands.lint.commands_builder import (
     build_pytest_command, build_vulture_command, build_xsoar_linter_command)
 from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, RERUN, RL,
                                                SUCCESS, WARNING,
+                                               TimeMeasureMgr,
                                                add_tmp_lint_files,
                                                add_typing_module,
                                                coverage_report_editor,
@@ -41,8 +42,7 @@ from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, RERUN, RL,
                                                get_python_version_from_image,
                                                pylint_plugin,
                                                split_warnings_errors,
-                                               stream_docker_container_output,
-                                               timer)
+                                               stream_docker_container_output)
 
 logger = logging.getLogger('demisto-sdk')
 
@@ -106,7 +106,7 @@ class Linter:
             "warning_code": SUCCESS,
         }
 
-    @timer
+    @TimeMeasureMgr.timer
     def run_dev_packages(self, no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool, no_vulture: bool,
                          no_xsoar_linter: bool, no_pwsh_analyze: bool, no_pwsh_test: bool, no_test: bool, modules: dict,
                          keep_container: bool, test_xml: str, no_coverage: bool) -> dict:
@@ -168,7 +168,7 @@ class Linter:
             self._pkg_lint_status['exit_code'] += FAIL
         return self._pkg_lint_status
 
-    @timer
+    @TimeMeasureMgr.timer
     def _gather_facts(self, modules: dict) -> bool:
         """ Gathering facts about the package - python version, docker images, valid docker image, yml parsing
         Args:
@@ -318,7 +318,7 @@ class Linter:
                 self._facts['lint_unittest_files'].append(lint_file)
                 self._facts["lint_files"].remove(lint_file)
 
-    @timer
+    @TimeMeasureMgr.timer
     def _run_lint_in_host(self, no_flake8: bool, no_bandit: bool, no_mypy: bool, no_vulture: bool,
                           no_xsoar_linter: bool):
         """ Run lint check on host
@@ -374,7 +374,7 @@ class Linter:
                 else:
                     self._pkg_lint_status[f"{lint_check}_errors"] = "\n".join(other)
 
-    @timer
+    @TimeMeasureMgr.timer
     def _run_flake8(self, py_num: str, lint_files: List[Path]) -> Tuple[int, str]:
         """ Runs flake8 in pack dir
 
@@ -404,7 +404,7 @@ class Linter:
 
         return SUCCESS, ""
 
-    @timer
+    @TimeMeasureMgr.timer
     def _run_xsoar_linter(self, py_num: str, lint_files: List[Path]) -> Tuple[int, str]:
         """ Runs Xsaor linter in pack dir
 
@@ -468,7 +468,7 @@ class Linter:
 
         return status, stdout
 
-    @timer
+    @TimeMeasureMgr.timer
     def _run_bandit(self, lint_files: List[Path]) -> Tuple[int, str]:
         """ Run bandit in pack dir
 
@@ -497,7 +497,7 @@ class Linter:
 
         return SUCCESS, ""
 
-    @timer
+    @TimeMeasureMgr.timer
     def _run_mypy(self, py_num: str, lint_files: List[Path]) -> Tuple[int, str]:
         """ Run mypy in pack dir
 
@@ -528,7 +528,7 @@ class Linter:
 
         return SUCCESS, ""
 
-    @timer
+    @TimeMeasureMgr.timer
     def _run_vulture(self, py_num: str, lint_files: List[Path]) -> Tuple[int, str]:
         """ Run mypy in pack dir
 
@@ -560,7 +560,7 @@ class Linter:
 
         return SUCCESS, ""
 
-    @timer
+    @TimeMeasureMgr.timer
     def _run_lint_on_docker_image(self, no_pylint: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
                                   keep_container: bool, test_xml: str, no_coverage: bool):
         """ Run lint check on docker image
@@ -658,7 +658,7 @@ class Linter:
         except docker.errors.APIError:
             return False
 
-    @timer
+    @TimeMeasureMgr.timer
     def _docker_image_create(self, docker_base_image: List[Any]) -> Tuple[str, str]:
         """ Create docker image:
             1. Installing 'build base' if required in alpine images version - https://wiki.alpinelinux.org/wiki/GCC
@@ -774,7 +774,7 @@ class Linter:
             if platform.system() != 'Darwin' or 'Connection broken' not in str(err):
                 raise
 
-    @timer
+    @TimeMeasureMgr.timer
     def _docker_run_pylint(self, test_image: str, keep_container: bool) -> Tuple[int, str]:
         """ Run Pylint in created test image
 
@@ -848,7 +848,7 @@ class Linter:
             output = str(e)
         return exit_code, output
 
-    @timer
+    @TimeMeasureMgr.timer
     def _docker_run_pytest(self, test_image: str, keep_container: bool, test_xml: str, no_coverage: bool = False) -> Tuple[int, str, dict]:
         """ Run Pytest in created test image
 

@@ -101,18 +101,14 @@ class GitContentConfig:
             self.gitlab_id: int = gitlab_id
             self.base_repo_url = gitlab_hostname
         else:  # github
-            if not self.base_repo_url:  # if the env variable not configured, check if this is a custom hostname or not
-                if 'github.com' not in hostname:
+            if not self.base_repo_url and 'github.com' not in hostname:  # if custom github found
                     click.secho(f'Found custom github url - defaulting to demisto/content. '
                                 f'Configure `{GitContentConfig.ENV_REPO_URL_NAME}` to the repository address', fg='yellow')
                     self.current_repository = GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
-                else:
-                    self.current_repository = f'{parsed_git.owner}/{parsed_git.repo}'
-                self.base_repo_url = 'githubusercontent.com'
-            elif 'github.com' in self.base_repo_url.lower():
+            elif not self.base_repo_url or 'github.com' in self.base_repo_url.lower():  # found github.com
                 self.current_repository = f'{parsed_git.owner}/{parsed_git.repo}'
                 self.base_repo_url = 'githubusercontent.com'
-            else:
+            else:  # custom github is configured properly
                 self.current_repository = f'{parsed_git.owner}/{parsed_git.repo}'
 
     @lru_cache(maxsize=10)

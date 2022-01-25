@@ -9,6 +9,7 @@ import pytest
 import requests
 
 from demisto_sdk.commands.common import tools
+from demisto_sdk.commands.common.GitContentConfig import GitCredentials
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION, INTEGRATIONS_DIR, LAYOUTS_DIR, PACKS_DIR,
     PACKS_PACK_IGNORE_FILE_NAME, PLAYBOOKS_DIR, SCRIPTS_DIR,
@@ -390,7 +391,8 @@ class TestGetRemoteFileLocally:
             ok = False
 
         mocker.patch.object(requests, 'get', return_value=Response)
-        mocker.patch.object(os, 'getenv', return_value=None)
+        mocker.patch.dict(os.environ, {GitCredentials.ENV_GITHUB_TOKEN_NAME: '',
+                                       GitCredentials.ENV_GITLAB_TOKEN_NAME: ''})
         some_file_json = tools.get_remote_file(os.path.join(self.REPO_NAME, self.FILE_NAME),
                                                github_repo=self.REPO_NAME)
         assert some_file_json

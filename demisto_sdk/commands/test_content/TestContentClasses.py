@@ -43,6 +43,7 @@ FAILED_MATCH_INSTANCE_MSG = "{} Failed to run.\n There are {} instances of {}, p
                             "the instance_name argument in conf.json. The options are:\n{}"
 ENTRY_TYPE_ERROR = 4
 DEFAULT_INTERVAL = 4
+MAX_RETRIES = 3
 SLACK_MEM_CHANNEL_ID = 'CM55V7J8K'
 
 __all__ = ['BuildContext',
@@ -168,6 +169,7 @@ class TestPlaybook:
             integration for integration in self.integrations if
             integration.name not in self.build_context.conf.parallel_integrations]
         self.number_of_times_executed = 0
+        self.number_of_successful_runs = 0
 
     def __str__(self):
         return f'"{self.configuration.playbook_id}"'
@@ -1635,6 +1637,7 @@ class TestContext:
         with acquire_test_lock(self.playbook) as lock:
             if lock:
                 status = self._incident_and_docker_test()
+                self.playbook.number_of_times_executed += 1
                 self._handle_status(status, mockable=False)
             else:
                 return False
@@ -1660,30 +1663,50 @@ class TestContext:
             # we need the second playback to pass as well.
             if is_record_run:
                 return
-            self._add_to_succeeded_playbooks()
-            self._remove_from_failed_playbooks()
+            # if test playbook passed in the first execution we will not add him to the failed_test_queue, otherwise
+            # we will because we are interested in the majority.
+            if self.playbook.number_of_times_executed > 1 and self.playbook.number_of_times_executed < MAX_RETRIES:
+                self.build_context.logging_module.info('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^')
+                self.build_context.logging_module.info('Playbook failed in the past and now passed, still adding to failed_test_queue')
+                self.playbook.number_of_successful_runs += 1
+                self.build_context.failed_test_queue.put(self.playbook)
+            # first execution
+            else:
+                self.build_context.logging_module.info('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^')
+                self.build_context.logging_module.info('Playbook passed on first run, adding to succeeded_playbooks')
+                self._add_to_succeeded_playbooks()
 
         elif status == PB_Status.FAILED_DOCKER_TEST:
             self._add_to_failed_playbooks()
 
-        else:
+        else:  # Failed
             if is_first_playback_run:
                 return
             if is_second_playback_run:
                 self._add_to_failed_playbooks(is_second_playback_run=True)
                 return
             self._add_to_failed_playbooks()
-            self.playbook.number_of_times_executed += 1
-            self.build_context.logging_module.info(
-                '^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^')
+            self.build_context.logging_module.info('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^')
+            self.build_context.logging_module.info('Playbook Failed, adding to failed playbooks')
+
             if not mockable:
                 self.build_context.logging_module.info(
                     f'%%%%%%%% unmockable call: number of times {self.playbook.number_of_times_executed}')
-                if self.playbook.number_of_times_executed < 3:
+                if self.playbook.number_of_times_executed < MAX_RETRIES:
+                    self.build_context.logging_module.info('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^')
+                    self.build_context.logging_module.info('unmockable Playbook Failed, adding to failed_test_queue')
                     self.build_context.failed_test_queue.put(self.playbook)
 
             if not self.build_context.is_local_run:
                 self._notify_failed_test()
+
+        if self.playbook.number_of_times_executed == MAX_RETRIES and self.playbook.number_of_successful_runs > MAX_RETRIES // 2:
+            self.build_context.logging_module.info('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^')
+            self.build_context.logging_module.info(f'Playbook was executed exactly {MAX_RETRIES} times, the majority of passed times is {MAX_RETRIES // 2}')
+            self.build_context.logging_module.info('Adding to succeeded_playbooks')
+            self.build_context.logging_module.info('Removing from failed_playbooks')
+            self._add_to_succeeded_playbooks()
+            self._remove_from_failed_playbooks()
 
     def _execute_mockable_test(self, proxy: MITMProxy):
         """

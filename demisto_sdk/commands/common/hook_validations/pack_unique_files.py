@@ -68,6 +68,8 @@ class PackUniqueFilesValidator(BaseValidator):
 
     git_util = GitUtil(repo=Content.git())
     main_branch = git_util.handle_prev_ver()[1]
+    if not main_branch.startswith('origin'):
+        main_branch = 'origin/' + main_branch
 
     def __init__(self, pack, pack_path=None, validate_dependencies=False, ignored_errors=None, print_as_warnings=False,
                  should_version_raise=False, id_set_path=None, suppress_print=False, private_repo=False,

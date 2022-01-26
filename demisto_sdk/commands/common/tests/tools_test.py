@@ -26,12 +26,14 @@ from demisto_sdk.commands.common.tools import (
     get_last_remote_release_version, get_latest_release_notes_text,
     get_pack_metadata, get_relative_path_from_packs_dir,
     get_release_note_entries, get_release_notes_file_path, get_ryaml,
-    get_test_playbook_id, get_to_version, has_remote_configured,
-    is_origin_content_repo, is_pack_path, is_uuid, retrieve_file_ending,
-    run_command_os, server_version_compare, to_kebab_case)
-from demisto_sdk.tests.constants_test import (IGNORED_PNG,
+    get_scripts_and_commands_from_yml_data, get_test_playbook_id,
+    get_to_version, get_yaml, has_remote_configured, is_origin_content_repo,
+    is_pack_path, is_uuid, retrieve_file_ending, run_command_os,
+    server_version_compare, to_kebab_case)
+from demisto_sdk.tests.constants_test import (DUMMY_SCRIPT_PATH, IGNORED_PNG,
                                               INDICATORFIELD_EXTRA_FIELDS,
                                               SOURCE_FORMAT_INTEGRATION_COPY,
+                                              TEST_PLAYBOOK,
                                               VALID_BETA_INTEGRATION_PATH,
                                               VALID_DASHBOARD_PATH,
                                               VALID_GENERIC_DEFINITION_PATH,
@@ -121,6 +123,38 @@ class TestGenericFunctions:
         output = find_type(VALID_BETA_INTEGRATION_PATH, ignore_sub_categories=True)
         assert output == FileType.INTEGRATION, \
             f'find_type({VALID_BETA_INTEGRATION_PATH}) returns: {output} instead {FileType.INTEGRATION}'
+
+    def test_find_type_with_invalid_yml(self, malformed_integration_yml):
+        """
+        Given
+        - A malformed yml file.
+
+        When
+        - Running find_type.
+
+        Then
+        - Ensure no exception/error is raised and None is returned.
+        """
+        try:
+            assert not find_type(malformed_integration_yml.path, ignore_invalid_schema_file=True)
+        except ValueError as err:
+            assert False, str(err)
+
+    def test_find_type_with_invalid_json(self, malformed_incident_field):
+        """
+        Given
+        - A malformed json file.
+
+        When
+        - Running find_type.
+
+        Then
+        - Ensure no exception/error is raised and None is returned.
+        """
+        try:
+            assert not find_type(malformed_incident_field.path, ignore_invalid_schema_file=True)
+        except ValueError as err:
+            assert False, str(err)
 
     def test_find_type_no_file(self):
         """
@@ -1516,3 +1550,32 @@ KEBAB_CASES = [('Scan File', 'scan-file'),
 @pytest.mark.parametrize('input_str, output_str', KEBAB_CASES)
 def test_to_kebab_case(input_str, output_str):
     assert to_kebab_case(input_str) == output_str
+
+
+YML_DATA_CASES = [(get_yaml(VALID_INTEGRATION_TEST_PATH), FileType.INTEGRATION,
+                   [{'id': 'PagerDutyGetAllSchedules'}, {'id': 'PagerDutyGetUsersOnCall'},
+                    {'id': 'PagerDutyGetUsersOnCallNow'}, {'id': 'PagerDutyIncidents'}, {'id': 'PagerDutySubmitEvent'},
+                    {'id': 'PagerDutyGetContactMethods'}, {'id': 'PagerDutyGetUsersNotification'}], []),
+                  (get_yaml(VALID_SCRIPT_PATH), FileType.SCRIPT, [{'id': 'send-notification'}], ['TestCreateDuplicates']),
+                  (get_yaml(TEST_PLAYBOOK), FileType.TEST_PLAYBOOK, [{'id': 'gmail-search', 'source': 'Gmail'}],
+                   ['ReadFile', 'Get Original Email - Gmail']),
+                  (get_yaml(VALID_PLAYBOOK_ID_PATH), FileType.PLAYBOOK, [{'id': 'setIncident', 'source': 'Builtin'},
+                                                                         {'id': 'closeInvestigation',
+                                                                          'source': 'Builtin'},
+                                                                         {'id': 'setIncident', 'source': 'Builtin'}],
+                   ['Account Enrichment - Generic', 'EmailAskUser', 'ADGetUser', 'IP Enrichment - Generic',
+                    'IP Enrichment - Generic', 'AssignAnalystToIncident', 'access_investigation_-_generic']),
+                  (get_yaml(VALID_INTEGRATION_TEST_PATH), FileType.INTEGRATION,
+                   [{'id': 'PagerDutyGetAllSchedules'}, {'id': 'PagerDutyGetUsersOnCall'},
+                    {'id': 'PagerDutyGetUsersOnCallNow'},
+                    {'id': 'PagerDutyIncidents'}, {'id': 'PagerDutySubmitEvent'}, {'id': 'PagerDutyGetContactMethods'},
+                    {'id': 'PagerDutyGetUsersNotification'}], []),
+                  (get_yaml(DUMMY_SCRIPT_PATH), FileType.SCRIPT,  # Empty case
+                   [], ['DummyScriptUnified'])]
+
+
+@pytest.mark.parametrize('data, file_type, expected_commands, expected_scripts', YML_DATA_CASES)
+def test_get_scripts_and_commands_from_yml_data(data, file_type, expected_commands, expected_scripts):
+    commands, scripts = get_scripts_and_commands_from_yml_data(data=data, file_type=file_type)
+    assert commands == expected_commands
+    assert scripts == expected_scripts

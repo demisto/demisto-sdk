@@ -2,6 +2,7 @@ import argparse
 import glob
 import io
 import json
+import logging
 import os
 import re
 import shlex
@@ -54,6 +55,7 @@ urllib3.disable_warnings()
 # inialize color palette
 colorama.init()
 
+logger = logging.getLogger("demisto-sdk")
 ryaml = YAML()
 ryaml.preserve_quotes = True
 ryaml.allow_duplicate_keys = True
@@ -313,7 +315,7 @@ def get_remote_file(
     if full_file_path.endswith('json'):
         details = res.json() if res.ok else json.loads(local_content)
     elif full_file_path.endswith('yml'):
-        details = yaml.safe_load(file_content)  # type: ignore[arg-type]
+        details = ryaml.load(file_content)
     # if neither yml nor json then probably a CHANGELOG or README file.
     else:
         details = {}
@@ -1132,15 +1134,26 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
 # flake8: noqa: C901
 
 
-def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignore_sub_categories: bool = False):
+def find_type(
+    path: str = '',
+    _dict=None,
+    file_type: Optional[str] = None,
+    ignore_sub_categories: bool = False,
+    ignore_invalid_schema_file: bool = False
+):
     """
     returns the content file type
 
     Arguments:
-        path - a path to the file
+         path (str): a path to the file.
+        _dict (dict): file dict representation if exists.
+        file_type (str): a string representation of the file type.
+        ignore_sub_categories (bool): ignore the sub categories, True to ignore, False otherwise.
+        ignore_invalid_schema_file (bool): whether to ignore raising error on invalid schema files,
+            True to ignore, False otherwise.
 
     Returns:
-        string representing the content file type
+        FileType: string representing of the content file type, None otherwise.
     """
     type_by_path = find_type_by_path(path)
     if type_by_path:
@@ -1152,6 +1165,12 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
     except FileNotFoundError:
         # unable to find the file - hence can't identify it
         return None
+    except ValueError as err:
+        if ignore_invalid_schema_file:
+            # invalid file schema
+            logger.debug(str(err))
+            return None
+        raise err
 
     if file_type == 'yml':
         if 'category' in _dict:
@@ -1693,7 +1712,7 @@ def open_id_set_file(id_set_path):
         return id_set
 
 
-def get_demisto_version(demisto_client: demisto_client) -> str:
+def get_demisto_version(client: demisto_client) -> str:
     """
     Args:
         demisto_client: A configured demisto_client instance
@@ -1702,7 +1721,7 @@ def get_demisto_version(demisto_client: demisto_client) -> str:
         the server version of the Demisto instance.
     """
     try:
-        resp = demisto_client.generic_request('/about', 'GET')
+        resp = client.generic_request('/about', 'GET')
         about_data = json.loads(resp[0].replace("'", '"'))
         return parse(about_data.get('demistoVersion'))  # type: ignore
     except Exception:
@@ -2320,6 +2339,66 @@ def get_api_module_dependencies(pkgs, id_set_path, verbose):
     using_integrations_pkg_paths = [Path(integration.get('file_path')).parent.absolute() for
                                     integration in using_integrations]
     return list(set(using_integrations_pkg_paths + using_scripts_pkg_paths))
+
+
+def listdir_fullpath(dir_name: str) -> List[str]:
+    return [os.path.join(dir_name, f) for f in os.listdir(dir_name)]
+
+
+def get_scripts_and_commands_from_yml_data(data, file_type):
+    """Get the used scripts, playbooks and commands from the yml data
+
+    Args:
+        data: The yml data as extracted with get_yaml
+        file_type: The FileType of the data provided.
+
+    Return (list of found { 'id': command name, 'source': command source }, list of found script and playbook names)
+    """
+    commands = []
+    detailed_commands = []
+    scripts_and_pbs = []
+    if file_type == FileType.TEST_PLAYBOOK or file_type == FileType.PLAYBOOK:
+        tasks = data.get('tasks')
+        for task_num in tasks.keys():
+            task = tasks[task_num]
+            inner_task = task.get('task')
+            task_type = task.get('type')
+            if inner_task and task_type == 'regular' or task_type == 'playbook':
+                if inner_task.get('iscommand'):
+                    commands.append(inner_task.get('script'))
+                else:
+                    if task_type == 'playbook':
+                        scripts_and_pbs.append(inner_task.get('playbookName'))
+                    elif inner_task.get('scriptName'):
+                        scripts_and_pbs.append(inner_task.get('scriptName'))
+        if file_type == FileType.PLAYBOOK:
+            playbook_id = get_entity_id_by_entity_type(data, PLAYBOOKS_DIR)
+            scripts_and_pbs.append(playbook_id)
+
+    if file_type == FileType.SCRIPT:
+        script_id = get_entity_id_by_entity_type(data, SCRIPTS_DIR)
+        scripts_and_pbs = [script_id]
+        if data.get('dependson'):
+            commands = data.get('dependson').get('must', [])
+
+    if file_type == FileType.INTEGRATION:
+        integration_commands = data.get('script', {}).get('commands')
+        for integration_command in integration_commands:
+            commands.append(integration_command.get('name'))
+
+    for command in commands:
+        command_parts = command.split('|||')
+        if len(command_parts) == 2:
+            detailed_commands.append({
+                'id': command_parts[1],
+                'source': command_parts[0]
+            })
+        else:
+            detailed_commands.append({
+                'id': command_parts[0]
+            })
+
+    return detailed_commands, scripts_and_pbs
 
 
 def alternate_item_fields(content_item):

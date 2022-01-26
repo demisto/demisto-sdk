@@ -153,7 +153,11 @@ class ValidateManager:
                 self.git_util = None  # type: ignore[assignment]
                 self.branch_name = ''
 
-        self.prev_ver = self.setup_prev_ver(prev_ver)
+        if prev_ver and not prev_ver.startswith('origin'):
+            self.prev_ver = self.setup_prev_ver('origin/' + prev_ver)
+        else:
+            self.prev_ver = self.setup_prev_ver(prev_ver)
+
         self.check_only_schema = False
         self.always_valid = False
         self.ignored_files = set()
@@ -1252,7 +1256,7 @@ class ValidateManager:
 
         # If git is connected - Use it to get prev_ver
         if self.git_util:
-            # If demisto exists in remotes - set prev_ver as 'demisto/master'
+            # If demisto exists in remotes if so set prev_ver as 'demisto/master'
             if self.git_util.check_if_remote_exists('demisto'):
                 return 'demisto/master'
 
@@ -1624,7 +1628,7 @@ class ValidateManager:
         id_set = {}
         if not os.path.isfile(id_set_path):
             if not skip_id_set_creation:
-                id_set = IDSetCreator(print_logs=False).create_id_set()
+                id_set, _, _ = IDSetCreator(print_logs=False).create_id_set()
 
         else:
             id_set = open_id_set_file(id_set_path)

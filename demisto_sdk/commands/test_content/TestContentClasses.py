@@ -1665,7 +1665,7 @@ class TestContext:
                 return
             # if test playbook passed in the first execution we will not add him to the failed_test_queue, otherwise
             # we will because we are interested in the majority.
-            if self.playbook.number_of_times_executed > 1 and self.playbook.number_of_times_executed < MAX_RETRIES:
+            if 1 < self.playbook.number_of_times_executed <= MAX_RETRIES:
                 self.build_context.logging_module.info('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^')
                 self.build_context.logging_module.info('Playbook failed in the past and now passed, still adding to failed_test_queue')
                 self.playbook.number_of_successful_runs += 1

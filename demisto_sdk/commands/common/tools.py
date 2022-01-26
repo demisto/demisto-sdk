@@ -29,7 +29,7 @@ import yaml
 from packaging.version import parse
 from pebble import ProcessFuture, ProcessPool
 from ruamel.yaml import YAML
-from ruamel.yaml.comments import CommentedMap
+from ruamel.yaml.comments import CommentedMap, CommentedSeq
 
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK, CLASSIFIERS_DIR,
@@ -45,7 +45,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_README_FILE_NAME, PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR,
     RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR,
-    XSOAR_CONFIG_FILE, FileType, FileType_TO_IdSetKeys, GitContentConfig,
+    XSOAR_CONFIG_FILE, FileType, FileTypeToIDSetKeys, GitContentConfig,
     IdSetKeys, MarketplaceVersions, urljoin)
 from demisto_sdk.commands.common.git_util import GitUtil
 
@@ -2331,6 +2331,7 @@ def alternate_item_fields(content_item):
 
     """
     as_dict_types = (dict, CommentedMap)
+    as_list_types = (list, CommentedSeq)
     current_dict = content_item.to_dict() if type(content_item) not in as_dict_types else content_item
     copy_dict = current_dict.copy()  # for modifyting dict while iterating
     for field, value in copy_dict.items():
@@ -2339,12 +2340,16 @@ def alternate_item_fields(content_item):
             current_dict.pop(field)
         elif isinstance(current_dict[field], as_dict_types):
             alternate_item_fields(current_dict[field])
+        elif isinstance(current_dict[field], as_list_types):
+            for item in current_dict[field]:
+                if isinstance(item, as_dict_types):
+                    alternate_item_fields(item)
 
 
-def should_alternate_name_by_item(content_item, id_set):
+def should_alternate_field_by_item(content_item, id_set):
     """
     Go over the given content item and check if it should be modified to use its alternative fields, which is determined
-    by the field 'has_alternative_names' in the id set. # TODO: verify
+    by the field 'has_alternative_names' in the id set.
     Args:
         content_item: content item object
         id_set: parsed id set dict
@@ -2356,7 +2361,7 @@ def should_alternate_name_by_item(content_item, id_set):
     item_id = commonfields.get('id') if commonfields else content_item.get('id')
 
     item_type = content_item.type()
-    id_set_item_type = id_set.get(FileType_TO_IdSetKeys.get(item_type))
+    id_set_item_type = id_set.get(FileTypeToIDSetKeys.get(item_type))
     for item in id_set_item_type:
         if list(item.keys())[0] == item_id:
             return item.get(item_id, {}).get('has_alternative_name', False)

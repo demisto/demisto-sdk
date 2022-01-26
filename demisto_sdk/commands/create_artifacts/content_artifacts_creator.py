@@ -29,7 +29,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     YAMLContentUnifiedObject)
 from demisto_sdk.commands.common.tools import (alternate_item_fields,
                                                arg_to_list, open_id_set_file,
-                                               should_alternate_name_by_item)
+                                               should_alternate_field_by_item)
 
 from .artifacts_report import ArtifactsReport, ObjectReport
 
@@ -236,7 +236,7 @@ class ContentItemsHandler:
         self.server_min_version = max(self.server_min_version, content_object.from_version)
 
         if self.alternate_fields:
-            if should_alternate_name_by_item(content_object, self.id_set):
+            if should_alternate_field_by_item(content_object, self.id_set):
                 alternate_item_fields(content_object)
                 content_object.modified = True
 

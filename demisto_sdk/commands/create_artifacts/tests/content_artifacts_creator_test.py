@@ -424,5 +424,5 @@ def test_use_alternative_fields(mock_single_pack_git):
         # Check IncidentField
         with open(os.path.join(pack_path, 'IncidentFields', 'incidentfield-sample_packs.json')) as json_file:
             incident_field_json = json.load(json_file)
-        assert not [key for key in incident_field_json if key.endswith('_x2')]
+        assert any(key.endswith('_x2') for key in incident_field_json)
         assert incident_field_json['name'] == 'name_x2'

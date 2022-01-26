@@ -762,7 +762,7 @@ class BuildContext:
 class TestResults:
 
     def __init__(self, unmockable_integrations):
-        self.succeeded_playbooks = []
+        self.succeeded_playbooks = set()
         self.failed_playbooks = set()
         self.skipped_tests = dict()
         self.skipped_integrations = dict()
@@ -1547,7 +1547,7 @@ class TestContext:
         """
         Adds the playbook to the succeeded playbooks list
         """
-        self.build_context.tests_data_keeper.succeeded_playbooks.append(self.playbook.configuration.playbook_id)
+        self.build_context.tests_data_keeper.succeeded_playbooks.add(self.playbook.configuration.playbook_id)
 
     def _add_to_failed_playbooks(self, is_second_playback_run: bool = False) -> None:
         """
@@ -1669,7 +1669,9 @@ class TestContext:
                 self.build_context.logging_module.info('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^')
                 self.build_context.logging_module.info('Playbook failed in the past and now passed, still adding to failed_test_queue')
                 self.playbook.number_of_successful_runs += 1
-                self.build_context.failed_test_queue.put(self.playbook)
+                # don't add to queue in the last run
+                if self.playbook.number_of_times_executed != MAX_RETRIES:
+                    self.build_context.failed_test_queue.put(self.playbook)
             # first execution
             else:
                 self.build_context.logging_module.info('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^')
@@ -1702,7 +1704,8 @@ class TestContext:
 
         if self.playbook.number_of_times_executed == MAX_RETRIES and self.playbook.number_of_successful_runs > MAX_RETRIES // 2:
             self.build_context.logging_module.info('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^')
-            self.build_context.logging_module.info(f'Playbook was executed exactly {MAX_RETRIES} times, the majority of passed times is {MAX_RETRIES // 2}')
+            self.build_context.logging_module.info(
+                f'Playbook was executed exactly {MAX_RETRIES} times, the majority of passed times is {self.playbook.number_of_successful_runs}')
             self.build_context.logging_module.info('Adding to succeeded_playbooks')
             self.build_context.logging_module.info('Removing from failed_playbooks')
             self._add_to_succeeded_playbooks()

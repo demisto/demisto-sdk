@@ -7,7 +7,7 @@ import pytest
 from git import Repo
 
 from demisto_sdk.commands.common.GitContentConfig import (GitContentConfig,
-                                                          GitCredentials)
+                                                          GitCredentials, GitProvider)
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 
 GIT_ROOT = "{}".format(git_path())
@@ -74,7 +74,11 @@ class TestGitContentConfig:
         mocker.patch.object(Repo, 'remote', return_value=Urls([url]))
         git_config = GitContentConfig()
         assert not hasattr(git_config, "current_repository")  # does not relevant to gitlab at all
-        assert git_config.is_gitlab
+        assert git_config.git_provider == GitProvider.GitLab
+        assert git_config.base_api == GitContentConfig.BASE_RAW_GITLAB_LINK.format(GITLAB_HOST='code.pan.run',
+                                                                                   GITLAB_ID=3606)
+
+        git_config = GitContentConfig(repo_hostname='code.pan.run', git_provider=GitProvider.GitLab)
         assert git_config.base_api == GitContentConfig.BASE_RAW_GITLAB_LINK.format(GITLAB_HOST='code.pan.run',
                                                                                    GITLAB_ID=3606)
 
@@ -92,10 +96,17 @@ class TestGitContentConfig:
                             return_value=None)
         custom_github = 'my-own-github-url.com'
         url = f'https://{custom_github}/org/repo'
-        mocker.patch.dict(os.environ, {GitContentConfig.ENV_REPO_HOSTNAME_NAME: custom_github})
+        mocker.patch.dict(os.environ, {GitContentConfig.ENV_REPO_HOSTNAME_NAME: custom_github})  # test with env var
         mocker.patch.object(Repo, 'remote', return_value=Urls([url]))
         git_config = GitContentConfig()
-        assert not git_config.is_gitlab
+        assert git_config.git_provider == GitProvider.GitHub
+        assert git_config.current_repository == 'org/repo'
+        assert git_config.base_api == f'https://raw.{custom_github}/org/repo'
+
+        mocker.patch.dict(os.environ, {})
+        mocker.patch.object(Repo, 'remote', return_value=Urls([url]))
+        git_config = GitContentConfig(repo_hostname=custom_github)  # test with argument
+        assert git_config.git_provider == GitProvider.GitHub
         assert git_config.current_repository == 'org/repo'
         assert git_config.base_api == f'https://raw.{custom_github}/org/repo'
 
@@ -133,8 +144,8 @@ class TestGitContentConfig:
         url = 'https://code.pan.run/xsoar/very-private-repo'
         mocker.patch.object(Repo, 'remote', return_value=Urls([url]))
         click_mock = mocker.patch.object(click, 'secho')
-        git_config = GitContentConfig()
-        assert not git_config.is_gitlab
+        git_config = GitContentConfig(git_provider=GitProvider.GitLab)
+        assert git_config.git_provider == GitProvider.GitHub
         assert git_config.current_repository == GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
         assert git_config.base_api == DEFAULT_GITHUB_BASE_API
         message = click_mock.call_args_list[0][0][0]
@@ -217,10 +228,10 @@ class TestGitContentConfig:
         git_config = GitContentConfig()
         assert git_config._search_gitlab_id(host, repo) is None
         assert git_config.current_repository == GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
-        assert not git_config.is_gitlab
+        assert git_config.git_provider == GitProvider.GitHub
         assert git_config.base_api == DEFAULT_GITHUB_BASE_API
 
-    def test_provide_repo_name(self):
+    def test_provide_repo_name(self, mocker):
         """
         Given:
             A repo name argument to git config
@@ -238,3 +249,13 @@ class TestGitContentConfig:
         git_config = GitContentConfig(custom_repo_name)
         assert git_config.current_repository == custom_repo_name
         assert git_config.base_api == f'https://raw.githubusercontent.com/{custom_repo_name}'
+
+        mocker.patch.object(GitContentConfig,
+                            '_search_gitlab_id',
+                            return_value=0)
+        git_config = GitContentConfig(custom_repo_name, git_provider=GitProvider.GitLab)
+        assert git_config.current_repository == custom_repo_name
+        assert git_config.base_api == f'https://gitlab.com/api/v4/projects/0/repository'
+
+
+

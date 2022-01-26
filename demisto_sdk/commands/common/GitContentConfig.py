@@ -19,8 +19,8 @@ from demisto_sdk.commands.common.git_util import GitUtil
 
 
 class GitProvider(enum.Enum):
-    GitHub: str
-    GitLab: str
+    GitHub = 'github'
+    GitLab = 'gitlab'
 
 
 class GitCredentials:
@@ -109,7 +109,7 @@ class GitContentConfig:
                                      (self._search_gitlab_id(self.repo_hostname, parsed_git.repo)) or \
                                      (None, None)
 
-        if 'github.com' not in hostname and not gitlab_id:
+        if self.git_provider == GitProvider.GitLab and not gitlab_id:
             click.secho(f'If your repo is in private gitlab repo, '
                         f'configure `{GitCredentials.ENV_GITLAB_TOKEN_NAME}` environment variable '
                         f'or configure `{GitContentConfig.ENV_REPO_HOSTNAME_NAME}` environment variable', fg='yellow')

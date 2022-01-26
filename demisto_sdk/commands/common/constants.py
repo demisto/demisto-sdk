@@ -1374,7 +1374,7 @@ class IdSetKeys(Enum):
     DASHBOARDS = "Dashboards"
 
 
-FileType_TO_IdSetKeys = {
+FileTypeToIDSetKeys = {
     FileType.INTEGRATION: IdSetKeys.INTEGRATIONS.value,
     FileType.BETA_INTEGRATION: IdSetKeys.INTEGRATIONS.value,
     FileType.PLAYBOOK: IdSetKeys.PLAYBOOKS.value,

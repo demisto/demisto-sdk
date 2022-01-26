@@ -247,7 +247,7 @@ class TestGetRemoteFile:
     def test_get_remote_file_sanity(self):
         hello_world_yml = tools.get_remote_file(
             'Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml',
-            github_repo=self.content_repo
+            git_repo=self.content_repo
         )
         assert hello_world_yml
         assert hello_world_yml['commonfields']['id'] == 'HelloWorld'
@@ -256,7 +256,7 @@ class TestGetRemoteFile:
         hello_world_py = tools.get_remote_file(
             'Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.py',
             return_content=True,
-            github_repo=self.content_repo
+            git_repo=self.content_repo
         )
         assert hello_world_py
 
@@ -264,7 +264,7 @@ class TestGetRemoteFile:
         hello_world_py = tools.get_remote_file(
             'Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.py',
             return_content=True,
-            github_repo=self.content_repo
+            git_repo=self.content_repo
         )
         hello_world_text = hello_world_py.decode()
         assert isinstance(hello_world_py, bytes)
@@ -276,7 +276,7 @@ class TestGetRemoteFile:
         hello_world_yml = tools.get_remote_file(
             'Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml',
             'master',
-            github_repo=self.content_repo
+            git_repo=self.content_repo
         )
         assert hello_world_yml
         assert hello_world_yml['commonfields']['id'] == 'HelloWorld'
@@ -285,7 +285,7 @@ class TestGetRemoteFile:
         gmail_yml = tools.get_remote_file(
             'Integrations/Gmail/Gmail.yml',
             '19.10.0',
-            github_repo=self.content_repo
+            git_repo=self.content_repo
         )
         assert gmail_yml
         assert gmail_yml['commonfields']['id'] == 'Gmail'
@@ -294,7 +294,7 @@ class TestGetRemoteFile:
         gmail_yml = tools.get_remote_file(
             'Integrations/Gmail/Gmail.yml',
             'origin/19.10.0',
-            github_repo=self.content_repo
+            git_repo=self.content_repo
         )
         assert gmail_yml
         assert gmail_yml['commonfields']['id'] == 'Gmail'
@@ -303,7 +303,7 @@ class TestGetRemoteFile:
         invalid_yml = tools.get_remote_file(
             'Integrations/File/File.yml',
             '19.10.0',
-            github_repo=self.content_repo
+            git_repo=self.content_repo
         )
         assert not invalid_yml
 
@@ -311,7 +311,7 @@ class TestGetRemoteFile:
         invalid_yml = tools.get_remote_file(
             'Integrations/Gmail/Gmail.yml',
             'NoSuchBranch',
-            github_repo=self.content_repo
+            git_repo=self.content_repo
         )
         assert not invalid_yml
 
@@ -319,7 +319,7 @@ class TestGetRemoteFile:
         invalid_yml = tools.get_remote_file(
             'Integrations/Gmail/Gmail.yml',
             'origin/NoSuchBranch',
-            github_repo=self.content_repo
+            git_repo=self.content_repo
         )
         assert not invalid_yml
 
@@ -327,7 +327,7 @@ class TestGetRemoteFile:
         hello_world_readme = tools.get_remote_file(
             'Packs/HelloWorld/README.md',
             'master',
-            github_repo=self.content_repo
+            git_repo=self.content_repo
         )
         assert hello_world_readme == {}
 
@@ -394,7 +394,7 @@ class TestGetRemoteFileLocally:
         mocker.patch.dict(os.environ, {GitCredentials.ENV_GITHUB_TOKEN_NAME: '',
                                        GitCredentials.ENV_GITLAB_TOKEN_NAME: ''})
         some_file_json = tools.get_remote_file(os.path.join(self.REPO_NAME, self.FILE_NAME),
-                                               github_repo=self.REPO_NAME)
+                                               git_repo=self.REPO_NAME)
         assert some_file_json
         assert some_file_json['id'] == 'some_file'
 

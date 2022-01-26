@@ -208,7 +208,7 @@ def get_core_pack_list() -> list:
         return core_pack_list
     if not is_external_repository():
         core_pack_list = get_remote_file(
-            'Tests/Marketplace/core_packs_list.json', github_repo=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
+            'Tests/Marketplace/core_packs_list.json', git_repo=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
         ) or []
     else:
         # no core packs in external repos.
@@ -2028,7 +2028,7 @@ def get_approved_usecases() -> list:
     """
     return get_remote_file(
         'Tests/Marketplace/approved_usecases.json',
-        github_repo=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
+        git_repo=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
     ).get('approved_list', [])
 
 
@@ -2040,7 +2040,7 @@ def get_approved_tags() -> list:
     """
     return get_remote_file(
         'Tests/Marketplace/approved_tags.json',
-        github_repo=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
+        git_repo=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
     ).get('approved_list', [])
 
 
@@ -2117,7 +2117,7 @@ def get_release_note_entries(version='') -> list:
 
     changelog_file_content = get_remote_file(full_file_path='CHANGELOG.md',
                                              return_content=True,
-                                             github_repo='demisto/demisto-sdk').decode('utf-8').split('\n')
+                                             git_repo='demisto/demisto-sdk').decode('utf-8').split('\n')
 
     if not version or 'dev' in version:
         version = 'Changelog'

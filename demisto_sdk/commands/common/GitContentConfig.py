@@ -23,7 +23,6 @@ class GitProvider(enum.Enum):
     GitLab: str
 
 
-
 class GitCredentials:
     ENV_GITHUB_TOKEN_NAME = 'DEMISTO_SDK_GITHUB_TOKEN'
     ENV_GITLAB_TOKEN_NAME = 'DEMISTO_SDK_GITLAB_TOKEN'

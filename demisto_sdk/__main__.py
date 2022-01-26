@@ -779,6 +779,9 @@ def coverage_analyze(**kwargs):
     is_flag=True,
     help='Whether to answer manually to add tests configuration prompt when running interactively.'
 )
+@click.option(
+    "-s", "--id-set-path", help="The path of the id_set json file.",
+    type=click.Path(exists=True, resolve_path=True))
 def format(
         input: Path,
         output: Path,
@@ -791,7 +794,8 @@ def format(
         use_git: bool,
         prev_ver: str,
         include_untracked: bool,
-        add_tests: bool
+        add_tests: bool,
+        id_set_path: str
 ):
     """Run formatter on a given script/playbook/integration/incidentfield/indicatorfield/
     incidenttype/indicatortype/layout/dashboard/classifier/mapper/widget/report file/genericfield/generictype/
@@ -811,6 +815,7 @@ def format(
         prev_ver=prev_ver,
         include_untracked=include_untracked,
         add_tests=add_tests,
+        id_set_path=id_set_path,
     )
 
 

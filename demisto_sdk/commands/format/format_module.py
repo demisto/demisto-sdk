@@ -105,7 +105,8 @@ def format_manager(input: str = None,
                    prev_ver: str = None,
                    include_untracked: bool = False,
                    add_tests: bool = None,
-                   interactive: bool = True):
+                   interactive: bool = True,
+                   id_set_path: str = None):
     """
     Format_manager is a function that activated format command on different type of files.
     Args:
@@ -122,6 +123,7 @@ def format_manager(input: str = None,
         include_untracked (bool): Whether to include untracked files when checking against git
         interactive (bool): Whether to run the format interactively or not (usually for contribution management)
         add_tests (bool): Whether to exclude tests automatically.
+        id_set_path (str): The path of the id_set.json file.
     Returns:
         int 0 in case of success 1 otherwise
     """
@@ -169,7 +171,8 @@ def format_manager(input: str = None,
                                                                  update_docker=update_docker,
                                                                  assume_yes=assume_yes,
                                                                  deprecate=deprecate,
-                                                                 add_tests=add_tests)
+                                                                 add_tests=add_tests,
+                                                                 id_set_path=id_set_path)
                 if err_res:
                     log_list.extend([(err_res, print_error)])
                 if info_res:

@@ -1,7 +1,10 @@
 from typing import Tuple
 
 import click
+import ujson
 
+from demisto_sdk.commands.common.tools import (get_dict_from_file,
+                                               open_id_set_file)
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
@@ -26,11 +29,13 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
                  **kwargs):
         super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
                          verbose=verbose, **kwargs)
+        self.id_set_path = kwargs.get('id_set_path')
 
     def run_format(self) -> int:
         try:
             click.secho(f'\n================= Updating file {self.source_file} =================', fg='bright_blue')
             super().update_json()
+            self.format_marketpalces_for_aliases()
             self.set_default_values_as_needed()
             self.save_json_to_destination_file()
             return SUCCESS_RETURN_CODE
@@ -38,6 +43,44 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
             if self.verbose:
                 click.secho(f'\nFailed to update file {self.source_file}. Error: {err}', fg='red')
             return ERROR_RETURN_CODE
+
+    def format_marketpalces_for_aliases(self):
+        """
+         When formatting incident field with aliases,
+         the function will update the marketplaces in the fields mapped by the aliases to be XSOAR marketplace only.
+        """
+
+        aliases = self.data.get('Aliases', {})
+        if aliases and self.id_set_path:
+
+            incident_fields_dict = self.get_incident_fileds_as_dict_from_id_set()
+            for alias in aliases:
+                alais_field = incident_fields_dict.get(f'incident_{alias.get("cliName")}')
+                if alais_field:
+                    alias_field_file_path = alais_field.get('file_path')
+                    alias_orig_field, _ = get_dict_from_file(path=alias_field_file_path)
+                    marketplaces = alias_orig_field.get('marketplaces')
+                    if marketplaces and (len(marketplaces) != 1 or marketplaces[0] != 'xsoar'):
+                        alias_orig_field['marketplaces'] = ['xsoar']
+                        click.secho(f'\n================= Updating file {alias_field_file_path} =================', fg='bright_blue')
+                        self.save_alias_field_file(dest_file_path=alias_field_file_path, field_data=alias_orig_field)
+
+    def get_incident_fileds_as_dict_from_id_set(self):
+        incident_fields_dict = {}
+        if self.id_set_path:
+            id_set = open_id_set_file(self.id_set_path)
+            incident_field_list = id_set.get('IncidentFields')
+            for incident_field in incident_field_list:
+                field_id = list(incident_field.keys())[0]
+                incident_fields_dict[field_id] = incident_field[field_id]
+
+        return incident_fields_dict
+
+    def save_alias_field_file(self, dest_file_path, field_data):
+        """Save formatted JSON data to destination file."""
+        with open(dest_file_path, 'w') as file:
+            ujson.dump(field_data, file, indent=4, encode_html_chars=True, escape_forward_slashes=False,
+                       ensure_ascii=False)
 
     def format_file(self) -> Tuple[int, int]:
         """Manager function for the incident fields JSON updater."""

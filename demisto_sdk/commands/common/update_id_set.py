@@ -825,6 +825,8 @@ def get_incident_field_data(path, incidents_types_list):
     if field_calculations_scripts:
         all_scripts = all_scripts.union({field_calculations_scripts})
 
+    marketplaces = json_data.get('marketplaces')
+
     data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
 
     if all_associated_types:
@@ -833,6 +835,9 @@ def get_incident_field_data(path, incidents_types_list):
         data['scripts'] = list(all_scripts)
     if does_dict_have_alternative_key(json_data):
         data['has_alternative_meta'] = True
+
+    if marketplaces:
+        data['marketplaces'] = marketplaces
 
     return {id_: data}
 

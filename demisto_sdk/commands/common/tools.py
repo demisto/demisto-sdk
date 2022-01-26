@@ -47,7 +47,7 @@ from demisto_sdk.commands.common.constants import (
     TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR,
     XSOAR_CONFIG_FILE, FileType, IdSetKeys, MarketplaceVersions, urljoin)
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.GitContentConfig import GitContentConfig
+from demisto_sdk.commands.common.GitContentConfig import GitContentConfig, GitProvider
 
 urllib3.disable_warnings()
 
@@ -220,7 +220,6 @@ def get_local_remote_file(
         full_file_path: str,
         tag: str = 'master',
         return_content: bool = False,
-        suppress_print: bool = False,
 ):
     repo = git.Repo(search_parent_directories=True)
     repo_git_util = GitUtil(repo)
@@ -235,18 +234,17 @@ def get_remote_file_from_api(
         return_content: bool = False,
         suppress_print: bool = False,
         git_repo: Optional[str] = None,
-        git_hostname: Optional[str] = None
+        git_provider: GitProvider = GitProvider.GitHub,
+        git_hostname: Optional[str] = None,
 ):
     # 'origin/' prefix is used to compared with remote branches but it is not a part of the github url.
     tag = tag.replace('origin/', '').replace('demisto/', '')
-    git_config = GitContentConfig(git_repo, git_hostname)
-    if git_config.is_gitlab:
+    git_config = GitContentConfig(git_repo, git_provider, git_hostname)
+    if git_config.git_provider == GitProvider.GitHub:
         full_file_path_quote_plus = urllib.parse.quote_plus(full_file_path)
         git_path = urljoin(git_config.base_api, 'files', full_file_path_quote_plus, 'raw')
-        tag = tag.replace('origin/', '')
     else:  # github
         # 'origin/' prefix is used to compared with remote branches but it is not a part of the github url.
-        tag = tag.replace('origin/', '').replace('demisto/', '')
         git_path = urljoin(git_config.base_api, tag, full_file_path)
 
     github_token: Optional[str] = None
@@ -254,7 +252,7 @@ def get_remote_file_from_api(
     try:
         github_token = git_config.credentials.github_token
         gitlab_token = git_config.credentials.gitlab_token
-        if git_config.is_gitlab:
+        if git_config.git_provider == GitProvider.GitLab:
             res = requests.get(git_path,
                                params={'ref': tag},
                                headers={'PRIVATE-TOKEN': gitlab_token},
@@ -299,10 +297,6 @@ def get_remote_file_from_api(
     return get_file_details(res.text, full_file_path, return_content)
 
 
-
-
-
-
 def get_file_details(
         file_content: str,
         full_file_path: str,
@@ -327,7 +321,8 @@ def get_remote_file(
         return_content: bool = False,
         suppress_print: bool = False,
         git_repo: Optional[str] = None,
-        git_hostname: Optional[str] = None
+        git_provider: GitProvider = GitProvider.GitHub,
+        git_hostname: Optional[str] = None,
 ):
     """
     Args:
@@ -337,18 +332,19 @@ def get_remote_file(
         suppress_print: whether to suppress the warning message in case the file was not found.
         git_repo: The repository to grab the file from
         git_hostname: The hostname to run with (for instance `github.com`)
+        git_provider: Enum to specify git provider
     Returns:
         The file content in the required format.
 
     """
     if not git_repo:
         try:
-            return get_local_remote_file(full_file_path, tag, return_content, suppress_print)
+            return get_local_remote_file(full_file_path, tag, return_content)
         except Exception as e:
             if not suppress_print:
                 click.secho(f"Could not get local remote file because of: {str(e)}\n"
                             f"Searching the remote file content with the API.")
-    return get_remote_file_from_api(full_file_path, tag, return_content, suppress_print, git_repo, git_hostname)
+    return get_remote_file_from_api(full_file_path, tag, return_content, suppress_print, git_repo, git_provider, git_hostname)
 
 
 def filter_files_on_pack(pack: str, file_paths_list=str()) -> set:

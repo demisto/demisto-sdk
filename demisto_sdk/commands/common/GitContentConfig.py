@@ -48,7 +48,6 @@ class GitContentConfig:
 
     BASE_RAW_GITLAB_LINK = "https://{GITLAB_HOST}/api/v4/projects/{GITLAB_ID}/repository"
 
-
     ENV_REPO_HOSTNAME_NAME = 'DEMISTO_SDK_REPO_HOSTNAME'
 
     def __init__(self, repo_name: Optional[str] = None, git_provider: Optional[GitProvider] = None, repo_hostname: Optional[str] = None):
@@ -56,6 +55,7 @@ class GitContentConfig:
         self.repo_hostname = repo_hostname or os.getenv(GitContentConfig.ENV_REPO_HOSTNAME_NAME)
         if not git_provider:
             git_provider = GitProvider.GitHub
+        self.git_provider = git_provider
         if not self.repo_hostname:
             self.repo_hostname = GitContentConfig.GITHUB_USER_CONTENT if git_provider == GitProvider.GitHub else "gitlab.com"
 
@@ -76,13 +76,13 @@ class GitContentConfig:
             self.current_repository = repo_name
             self.gitlab_id = self._search_gitlab_id(self.repo_hostname, repo_name)
 
-        if self.is_gitlab:
-            self.base_api = GitContentConfig.BASE_RAW_GITLAB_LINK.format(GITLAB_HOST=self.repo_hostname,
-                                                                         GITLAB_ID=self.gitlab_id)
-        else:
+        if self.git_provider == GitProvider.GitHub:
             # DO NOT USE os.path.join on URLs, it may cause errors
             self.base_api = urljoin(GitContentConfig.BASE_RAW_GITHUB_LINK.format(GITHUB_HOST=self.repo_hostname),
                                     self.current_repository)
+        else:  # gitlab
+            self.base_api = GitContentConfig.BASE_RAW_GITLAB_LINK.format(GITLAB_HOST=self.repo_hostname,
+                                                                         GITLAB_ID=self.gitlab_id)
 
     @staticmethod
     def _get_repository_properties() -> Optional[giturlparse.result.GitUrlParsed]:
@@ -115,13 +115,13 @@ class GitContentConfig:
                         f'configure `{GitCredentials.ENV_GITLAB_TOKEN_NAME}` environment variable '
                         f'or configure `{GitContentConfig.ENV_REPO_HOSTNAME_NAME}` environment variable', fg='yellow')
             click.secho('Could not find the repository name on gitlab - defaulting to demisto/content', fg='yellow')
-            self.is_gitlab = False
+            self.git_provider = GitProvider.GitHub
             self.current_repository = GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
             self.repo_hostname = GitContentConfig.GITHUB_USER_CONTENT
             return
 
         if gitlab_id:
-            self.is_gitlab = True
+            self.git_provider = GitProvider.GitLab
             self.gitlab_id: int = gitlab_id
             self.repo_hostname = gitlab_hostname
         else:  # github

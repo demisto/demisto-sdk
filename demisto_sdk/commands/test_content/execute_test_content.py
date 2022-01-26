@@ -11,7 +11,7 @@ from demisto_sdk.commands.test_content.TestContentClasses import (
 
 SKIPPED_CONTENT_COMMENT = 'The following integrations/tests were collected by the CI build but are currently skipped. ' \
                           'The collected tests are related to this pull request and might be critical.'
-COVERAGE_REPORT_COMMENT = 'Link to the unit tests coverage report \n'
+COVERAGE_REPORT_COMMENT = 'Link to the unit tests coverage report'
 
 
 def _handle_github_response(response, logging_module) -> dict:

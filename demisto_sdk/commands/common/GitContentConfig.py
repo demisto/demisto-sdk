@@ -1,6 +1,7 @@
 """
 This is module to store the git configuration of the content repo
 """
+import enum
 import json
 import logging
 import os
@@ -15,6 +16,12 @@ import requests
 from git import InvalidGitRepositoryError
 
 from demisto_sdk.commands.common.git_util import GitUtil
+
+
+class GitProvider(enum.Enum):
+    GitHub: str
+    GitLab: str
+
 
 
 class GitCredentials:
@@ -41,29 +48,41 @@ class GitContentConfig:
 
     BASE_RAW_GITLAB_LINK = "https://{GITLAB_HOST}/api/v4/projects/{GITLAB_ID}/repository"
 
+
     ENV_REPO_HOSTNAME_NAME = 'DEMISTO_SDK_REPO_HOSTNAME'
 
-    def __init__(self, repo_name: Optional[str] = None, repo_hostname: Optional[str] = None):
+    def __init__(self, repo_name: Optional[str] = None, git_provider: Optional[GitProvider] = None, repo_hostname: Optional[str] = None):
         self.credentials = GitCredentials()
-        self.repo_hostname = repo_hostname or os.getenv(GitContentConfig.ENV_REPO_HOSTNAME_NAME) or GitContentConfig.GITHUB_USER_CONTENT
-        self.is_gitlab = False
+        self.repo_hostname = repo_hostname or os.getenv(GitContentConfig.ENV_REPO_HOSTNAME_NAME)
+        if not git_provider:
+            git_provider = GitProvider.GitHub
+        if not self.repo_hostname:
+            self.repo_hostname = GitContentConfig.GITHUB_USER_CONTENT if git_provider == GitProvider.GitHub else "gitlab.com"
+
         if 'github.com' in self.repo_hostname:
             self.repo_hostname = GitContentConfig.GITHUB_USER_CONTENT
-        if not repo_name:
+
+        if 'gitlab.com' in self.repo_hostname:
+            self.repo_hostname = 'gitlab.com'
+
+        if not repo_name:  # repo_name is not specified, parsing the remote url the get the details
             try:
                 parsed_git = GitContentConfig._get_repository_properties()
                 self._set_repo_config(parsed_git)
             except (InvalidGitRepositoryError, AttributeError):  # No repository
+                click.secho('No repository was found - defaulting to demisto/content', fg='yellow')
                 self.current_repository = GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
         else:
             self.current_repository = repo_name
-        if not self.is_gitlab:
+            self.gitlab_id = self._search_gitlab_id(self.repo_hostname, repo_name)
+
+        if self.is_gitlab:
+            self.base_api = GitContentConfig.BASE_RAW_GITLAB_LINK.format(GITLAB_HOST=self.repo_hostname,
+                                                                         GITLAB_ID=self.gitlab_id)
+        else:
             # DO NOT USE os.path.join on URLs, it may cause errors
             self.base_api = urljoin(GitContentConfig.BASE_RAW_GITHUB_LINK.format(GITHUB_HOST=self.repo_hostname),
                                     self.current_repository)
-        else:
-            self.base_api = GitContentConfig.BASE_RAW_GITLAB_LINK.format(GITLAB_HOST=self.repo_hostname,
-                                                                         GITLAB_ID=self.gitlab_id)
 
     @staticmethod
     def _get_repository_properties() -> Optional[giturlparse.result.GitUrlParsed]:

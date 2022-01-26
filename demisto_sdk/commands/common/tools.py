@@ -216,26 +216,30 @@ def get_core_pack_list() -> list:
     return core_pack_list
 
 
-# @lru_cache(maxsize=64)
-def get_remote_file(
+def get_local_remote_file(
         full_file_path: str,
         tag: str = 'master',
         return_content: bool = False,
         suppress_print: bool = False,
-        github_repo: Optional[str] = None
 ):
-    """
-    Args:
-        full_file_path:The full path of the file.
-        tag: The branch name. default is 'master'
-        return_content: Determines whether to return the file's raw content or the dict representation of it.
-        suppress_print: whether to suppress the warning message in case the file was not found.
-        github_repo: The repository to grab the file from
-    Returns:
-        The file content in the required format.
+    repo = git.Repo(search_parent_directories=True)
+    repo_git_util = GitUtil(repo)
+    git_path = repo_git_util.get_local_remote_file_path(full_file_path, tag)
+    local_content = repo_git_util.get_local_remote_file_content(git_path)
+    return get_file_details(local_content, full_file_path, return_content)
 
-    """
-    git_config = GitContentConfig(github_repo)
+
+def get_remote_file_from_api(
+        full_file_path: str,
+        tag: str = 'master',
+        return_content: bool = False,
+        suppress_print: bool = False,
+        git_repo: Optional[str] = None,
+        git_hostname: Optional[str] = None
+):
+    # 'origin/' prefix is used to compared with remote branches but it is not a part of the github url.
+    tag = tag.replace('origin/', '').replace('demisto/', '')
+    git_config = GitContentConfig(git_repo, git_hostname)
     if git_config.is_gitlab:
         full_file_path_quote_plus = urllib.parse.quote_plus(full_file_path)
         git_path = urljoin(git_config.base_api, 'files', full_file_path_quote_plus, 'raw')
@@ -245,80 +249,106 @@ def get_remote_file(
         tag = tag.replace('origin/', '').replace('demisto/', '')
         git_path = urljoin(git_config.base_api, tag, full_file_path)
 
-    local_content = '{}'
-
     github_token: Optional[str] = None
     gitlab_token: Optional[str] = None
     try:
-        external_repo = is_external_repository()
-        if external_repo:
-            github_token = git_config.credentials.github_token
-            gitlab_token = git_config.credentials.gitlab_token
-            if gitlab_token and git_config.is_gitlab:
-                res = requests.get(git_path,
-                                   params={'ref': tag},
-                                   headers={'PRIVATE-TOKEN': gitlab_token},
-                                   verify=False)
-                res.raise_for_status()
-            elif github_token:
-                res = requests.get(git_path, verify=False, timeout=10, headers={
-                    'Authorization': f"Bearer {github_token}",
-                    'Accept': f'application/vnd.github.VERSION.raw',
-                })  # Sometime we need headers
-                if not res.ok:  # sometime we need param token
-                    res = requests.get(
-                        git_path,
-                        verify=False,
-                        timeout=10,
-                        params={'token': github_token}
-                    )
-                res.raise_for_status()
-            else:
-                # If no token defined, maybe it's a open repo. 🤷‍♀️
-                res = requests.get(git_path, verify=False, timeout=10)
-                # And maybe it's just not defined. 😢
-                if not res.ok:
-                    if not suppress_print:
-                        click.secho(
-                            f'You are working in a private repository: "{git_config.current_repository}".\n'
-                            f'The github token in your environment is undefined.\n'
-                            f'Getting file from local repository instead. \n'
-                            f'If you wish to get the file from the remote repository, \n'
-                            f'Please define your github or gitlab token in your environment.\n'
-                            f'`export {git_config.credentials.ENV_GITHUB_TOKEN_NAME}=<TOKEN> or`\n'
-                            f'export {git_config.credentials.ENV_GITLAB_TOKEN_NAME}=<TOKEN>', fg='yellow'
-                        )
-                        click.echo("Getting file from local environment")
-                    # Get from local git origin/master instead
-                    repo = git.Repo(os.path.dirname(full_file_path), search_parent_directories=True)
-                    repo_git_util = GitUtil(repo)
-                    git_path = repo_git_util.get_local_remote_file_path(full_file_path, tag)
-                    local_content = repo_git_util.get_local_remote_file_content(git_path)
-        else:
-            res = requests.get(git_path, verify=False, timeout=10)
+        github_token = git_config.credentials.github_token
+        gitlab_token = git_config.credentials.gitlab_token
+        if git_config.is_gitlab:
+            res = requests.get(git_path,
+                               params={'ref': tag},
+                               headers={'PRIVATE-TOKEN': gitlab_token},
+                               verify=False)
             res.raise_for_status()
+        else:  # Github
+            res = requests.get(git_path, verify=False, timeout=10, headers={
+                'Authorization': f"Bearer {github_token}" if github_token else None,
+                'Accept': f'application/vnd.github.VERSION.raw',
+            })  # Sometime we need headers
+            if not res.ok:  # sometime we need param token
+                res = requests.get(
+                    git_path,
+                    verify=False,
+                    timeout=10,
+                    params={'token': github_token}
+                )
+
+        res.raise_for_status()
     except Exception as exc:
         # Replace token secret if needed
         err_msg: str = str(exc).replace(github_token, 'XXX') if github_token else str(exc)
         err_msg = err_msg.replace(gitlab_token, 'XXX') if gitlab_token else err_msg
         if not suppress_print:
+            if is_external_repository():
+                click.secho(
+                    f'You are working in a private repository: "{git_config.current_repository}".\n'
+                    f'The github/gitlab token in your environment is undefined.\n'
+                    f'Getting file from local repository instead. \n'
+                    f'If you wish to get the file from the remote repository, \n'
+                    f'Please define your github or gitlab token in your environment.\n'
+                    f'`export {git_config.credentials.ENV_GITHUB_TOKEN_NAME}=<TOKEN> or`\n'
+                    f'export {git_config.credentials.ENV_GITLAB_TOKEN_NAME}=<TOKEN>', fg='yellow'
+                )
+
             click.secho(
                 f'Could not find the old entity file under "{git_path}".\n'
                 'please make sure that you did not break backward compatibility.\n'
                 f'Reason: {err_msg}', fg='yellow'
             )
         return {}
-    file_content = res.content if res.ok else local_content
+    return get_file_details(res.text, full_file_path, return_content)
+
+
+
+
+
+
+def get_file_details(
+        file_content: str,
+        full_file_path: str,
+        return_content: bool = False,
+):
     if return_content:
-        return file_content
-    if full_file_path.endswith('json'):
-        details = res.json() if res.ok else json.loads(local_content)
+        file_details = file_content
+    elif full_file_path.endswith('json'):
+        file_details = json.loads(file_content)
     elif full_file_path.endswith('yml'):
-        details = ryaml.load(file_content)
+        file_details = ryaml.load(file_content)
     # if neither yml nor json then probably a CHANGELOG or README file.
     else:
-        details = {}
-    return details
+        file_details = {}
+    return file_details
+
+
+# @lru_cache(maxsize=64)
+def get_remote_file(
+        full_file_path: str,
+        tag: str = 'master',
+        return_content: bool = False,
+        suppress_print: bool = False,
+        git_repo: Optional[str] = None,
+        git_hostname: Optional[str] = None
+):
+    """
+    Args:
+        full_file_path:The full path of the file.
+        tag: The branch name. default is 'master'
+        return_content: Determines whether to return the file's raw content or the dict representation of it.
+        suppress_print: whether to suppress the warning message in case the file was not found.
+        git_repo: The repository to grab the file from
+        git_hostname: The hostname to run with (for instance `github.com`)
+    Returns:
+        The file content in the required format.
+
+    """
+    if not git_repo:
+        try:
+            return get_local_remote_file(full_file_path, tag, return_content, suppress_print)
+        except Exception as e:
+            if not suppress_print:
+                click.secho(f"Could not get local remote file because of: {str(e)}\n"
+                            f"Searching the remote file content with the API.")
+    return get_remote_file_from_api(full_file_path, tag, return_content, suppress_print, git_repo, git_hostname)
 
 
 def filter_files_on_pack(pack: str, file_paths_list=str()) -> set:
@@ -1136,11 +1166,11 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
 
 
 def find_type(
-    path: str = '',
-    _dict=None,
-    file_type: Optional[str] = None,
-    ignore_sub_categories: bool = False,
-    ignore_invalid_schema_file: bool = False
+        path: str = '',
+        _dict=None,
+        file_type: Optional[str] = None,
+        ignore_sub_categories: bool = False,
+        ignore_invalid_schema_file: bool = False
 ):
     """
     returns the content file type

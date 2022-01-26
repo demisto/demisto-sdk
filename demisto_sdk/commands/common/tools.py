@@ -2332,7 +2332,7 @@ def alternate_item_fields(content_item):
     """
     as_dict_types = (dict, CommentedMap)
     current_dict = content_item.to_dict() if not isinstance(content_item, as_dict_types) else content_item
-    copy_dict = current_dict.copy()  # for modifyting dict while iterating
+    copy_dict = current_dict.copy()  # for modifying dict while iterating
     for field, value in copy_dict.items():
         if field.endswith('_x2'):
             current_dict[field[:-3]] = value

@@ -11,6 +11,7 @@ from demisto_sdk.commands.test_content.TestContentClasses import (
 
 SKIPPED_CONTENT_COMMENT = 'The following integrations/tests were collected by the CI build but are currently skipped. ' \
                           'The collected tests are related to this pull request and might be critical.'
+COVERAGE_REPORT_COMMENT = 'Link to the unit tests coverage report \n'
 
 
 def _handle_github_response(response, logging_module) -> dict:
@@ -41,6 +42,9 @@ def _add_pr_comment(comment, logging_module):
                 issue_comments = _handle_github_response(response, logging_module)
                 for existing_comment in issue_comments:
                     if SKIPPED_CONTENT_COMMENT in existing_comment.get('body'):
+                        comment_url = existing_comment.get('url')
+                        requests.delete(comment_url, headers=headers, verify=False)
+                    if COVERAGE_REPORT_COMMENT in existing_comment.get('body'):
                         comment_url = existing_comment.get('url')
                         requests.delete(comment_url, headers=headers, verify=False)
                 response = requests.post(issue_url, json={'body': comment}, headers=headers, verify=False)

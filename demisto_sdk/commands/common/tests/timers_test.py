@@ -1,35 +1,41 @@
-from unittest.mock import patch
+import logging
+import tempfile
+from pathlib import Path
 
-from demisto_sdk.commands.common.timers import TimeMeasureMgr
+from demisto_sdk.commands.common.timers import (CSV_HEADERS,
+                                                report_time_measurements,
+                                                timer)
+
+logger = logging.getLogger('demisto-sdk')
 
 
-@patch('builtins.print')
-def test_timers__happy_path(mock_print):
+def test_timers__happy_path(mocker):
     """
     Given -
         method to measure it's run time
     When -
         running this method
     Then -
-        verify the output as expected
+        verify the output as expected and the csv file output was created
     """
-    @TimeMeasureMgr.timer(group_name='test_group')
+    mocker.patch.object(logger, 'info')
+
+    @timer(group_name='test_group')
     def some_func():
         pass
 
     # call some method with timer decorator
-    with TimeMeasureMgr.time_measurements_reporter(group_name='test_group'):
-        some_func()
-        some_func()
+    some_func()
+    some_func()
 
-    assert some_func.stat_info().call_count == 2
+    with tempfile.TemporaryDirectory() as dir:
+        report_time_measurements(group_name='test_group', time_measurements_dir=str(dir))
+        assert some_func.stat_info().call_count == 2
+        assert all(header in logger.info.call_args[0][0] for header in CSV_HEADERS)
+        assert (Path(dir) / 'test_group_time_measurements.csv').exists()
 
-    headers = ['Function', 'Avg', 'Total', 'Call count']
-    assert all(header in mock_print.call_args[0][0] for header in headers)
 
-
-@patch('builtins.print')
-def test_timers__no_group_exist(mock_print):
+def test_timers__no_group_exist(mocker):
     """
     Given -
         time_measurements_reporter to report for non existing group
@@ -38,14 +44,18 @@ def test_timers__no_group_exist(mock_print):
     Then -
         verify the output as expected
     """
-    @TimeMeasureMgr.timer(group_name='test_group')
+
+    mocker.patch.object(logger, 'info')
+    mocker.patch('demisto_sdk.commands.common.timers.write_measure_to_file')
+
+    @timer(group_name='test_group')
     def some_func():
         pass
 
     # call some method with timer decorator
     not_exist_group = 'not_exist_group'
-    with TimeMeasureMgr.time_measurements_reporter(group_name='not_exist_group'):
-        some_func()
+    some_func()
+    report_time_measurements(not_exist_group)
 
     assert some_func.stat_info().call_count == 1
-    assert f'There is no timers registered for the group {not_exist_group}' in mock_print.call_args[0][0]
+    assert f'There is no timers registered for the group {not_exist_group}' in logger.info.call_args[0][0]

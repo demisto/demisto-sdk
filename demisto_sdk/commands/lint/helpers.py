@@ -297,14 +297,9 @@ def get_python_version_from_image(image: str, timeout: int = 60) -> str:
     if 'pwsh' in image or 'powershell' in image:
         return '3.8'
 
-    if '/python:2' in image:
-        version_index = image.index('python:') + len('python:')
-        version = parse(image[version_index:])
-        return f'{version.major}.{version.minor}'
-    if '/python3:3' in image:
-        version_index = image.index('python3:') + len('python3:')
-        version = parse(image[version_index:])
-        return f'{version.major}.{version.minor}'
+    match_group = re.match(r'[\d\w]+/python3?:(?P<python_version>[23]\.\d+)', image)
+    if match_group:
+        return match_group.groupdict()['python_version']
 
     docker_client = docker.from_env(timeout=timeout)
 
@@ -554,64 +549,3 @@ def generate_coverage_report(html=False, xml=False, report=True, cov_dir='covera
         except coverage.misc.CoverageException as warning:
             logger.warning(str(warning))
             return
-
-
-# class TimeMeasureMgr:
-#     """
-#     Class to orgenaize the `timer` decorator and `time measurements reporter` usnage.
-#     when using the `timer` decorator it will register the wrapped function to be reported by `time measurements reporter`
-
-#     """
-#     StatInfo = namedtuple("StatInfo", ["total_time", "call_count", "avg_time"])
-
-#     registered_timers: set = set()
-
-#     @staticmethod
-#     def timer(func):
-
-#         total_time = 0.0
-#         call_count = 0
-
-#         @wraps(func)
-#         def wrapper_timer(*args, **kwargs):
-#             nonlocal total_time, call_count
-
-#             tic = time.perf_counter()
-#             value = func(*args, **kwargs)
-#             toc = time.perf_counter()
-
-#             elapsed_time = toc - tic
-
-#             total_time += elapsed_time
-#             call_count += 1
-
-#             return value
-
-#         def stat_info():
-#             return TimeMeasureMgr.StatInfo(total_time, call_count, total_time / call_count if call_count != 0 else 0)
-
-#         wrapper_timer.stat_info = stat_info  # type: ignore[attr-defined]
-
-#         TimeMeasureMgr.registered_timers.add(wrapper_timer)
-#         return wrapper_timer
-
-#     @staticmethod
-#     @contextmanager
-#     def time_measurements_reporter():
-#         """
-#         Context manager for reporting time measurements
-#         """
-#         try:
-#             yield
-#         finally:
-#             sentence = " Time measurements stat "
-#             print(f"\n{Colors.Fg.cyan}{'#' * len(sentence)}")
-#             print(f"{sentence}")
-#             print(f"{'#' * len(sentence)}{Colors.reset}")
-
-#             headers = ['Function', 'Avg', 'Total', 'Call count']
-#             method_states = [[func.__qualname__, func.stat_info().avg_time, func.stat_info().total_time, func.stat_info().call_count]
-#                              for func in TimeMeasureMgr.registered_timers]
-#             list.sort(method_states, key=lambda method_stat: method_stat[2], reverse=True)
-#             stat_info_table = tabulate(method_states, headers=headers)
-#             print(stat_info_table)

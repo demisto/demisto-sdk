@@ -1,6 +1,5 @@
 # STD python packages
 import logging
-import os
 import time
 from collections import namedtuple
 from functools import wraps
@@ -91,7 +90,7 @@ def report_time_measurements(group_name='Common', time_measurements_dir='time_me
         write_measure_to_file(time_measurements_dir=time_measurements_dir, group_name=group_name, csv_data=method_states)
 
     else:
-        logger.info(f'There is no timers registered for the group {group_name}')
+        logger.debug(f'There is no timers registered for the group {group_name}')
 
 
 def write_mesure_to_logger(csv_data):
@@ -111,7 +110,7 @@ def write_measure_to_file(time_measurements_dir, group_name, csv_data):
     try:
         time_measurements_path = Path(time_measurements_dir)
         if not time_measurements_path.exists():
-            os.mkdir(time_measurements_path)
+            time_measurements_path.mkdir(parents=True)
         with open(time_measurements_path / f'{group_name}_time_measurements.csv', 'w+') as file:
             file.write(','.join(CSV_HEADERS))
             for stat in csv_data:

@@ -45,7 +45,7 @@ def test_timers__no_group_exist(mocker):
         verify the output as expected
     """
 
-    mocker.patch.object(logger, 'info')
+    mocker.patch.object(logger, 'debug')
     mocker.patch('demisto_sdk.commands.common.timers.write_measure_to_file')
 
     @timer(group_name='test_group')
@@ -58,4 +58,4 @@ def test_timers__no_group_exist(mocker):
     report_time_measurements(not_exist_group)
 
     assert some_func.stat_info().call_count == 1
-    assert f'There is no timers registered for the group {not_exist_group}' in logger.info.call_args[0][0]
+    assert f'There is no timers registered for the group {not_exist_group}' in logger.debug.call_args[0][0]

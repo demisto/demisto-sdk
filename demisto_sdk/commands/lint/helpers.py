@@ -282,6 +282,27 @@ def add_tmp_lint_files(content_repo: git.Repo, pack_path: Path, lint_files: List
         pass
 
 
+DOCKER_CLIENT = None
+
+
+def init_global_docker_client(timeout: int = 60, log_prompt: str = ''):
+
+    global DOCKER_CLIENT
+    if DOCKER_CLIENT is None:
+        try:
+            logger.info(f'{log_prompt} - init and login the docker client')
+            DOCKER_CLIENT = docker.from_env(timeout=timeout)
+            docker_user = os.getenv('DOCKERHUB_USER')
+            docker_pass = os.getenv('DOCKERHUB_PASSWORD')
+            DOCKER_CLIENT.login(username=docker_user,
+                                password=docker_pass,
+                                registry="https://index.docker.io/v1")
+        except Exception:
+            logger.exception(f'{log_prompt} - failed to login to docker registry')
+
+    return DOCKER_CLIENT
+
+
 @lru_cache(maxsize=300)
 def get_python_version_from_image(image: str, timeout: int = 60) -> str:
     """ Get python version from docker image
@@ -301,11 +322,11 @@ def get_python_version_from_image(image: str, timeout: int = 60) -> str:
     if match_group:
         return match_group.groupdict()['python_version']
 
-    docker_client = docker.from_env(timeout=timeout)
-
     py_num = '3.8'
     # Run three times
     log_prompt = 'Get python version from image'
+    docker_client = init_global_docker_client(timeout=timeout, log_prompt=log_prompt)
+
     for attempt in range(3):
         try:
             command = "python -c \"import sys; print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))\""

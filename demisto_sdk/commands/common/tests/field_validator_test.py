@@ -442,3 +442,20 @@ class TestFieldValidator:
         structure = StructureValidator(indicator_field.path)
         validator = FieldBaseValidator(structure, {'some-type'}, set())
         assert not validator.does_not_have_empty_select_values()
+
+    @pytest.mark.parametrize('min_version, from_version, expected', IS_VALID_FROM_VERSION_FIELD)
+    def test_is_valid_aliases_field(self, pack, min_version: LooseVersion, from_version: str, expected: bool):
+        """
+        Given
+        - A field.
+
+        When
+        - Validating the expected version is meeting the expected minimal version.
+
+        Then
+        - Ensure the expected bool is returned according to whether the condition above is satisfied.
+        """
+        indicator_field = pack.create_indicator_field('incident_1', {'type': 'html', 'fromVersion': from_version})
+        structure = StructureValidator(indicator_field.path)
+        validator = FieldBaseValidator(structure, set(), set())
+        assert validator.is_valid_from_version_field(min_version, reason_for_min_version='') == expected

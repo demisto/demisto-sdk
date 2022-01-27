@@ -4,7 +4,7 @@ This module is designed to validate the correctness of incident field entities i
 import re
 from distutils.version import LooseVersion
 from enum import IntEnum
-from typing import Set
+from typing import List, Set
 
 from demisto_sdk.commands.common.constants import \
     DEFAULT_CONTENT_ITEM_FROM_VERSION
@@ -96,7 +96,7 @@ class FieldBaseValidator(ContentEntityValidator):
             self.is_valid_version(),
             self.is_valid_required(),
             self.does_not_have_empty_select_values(),
-            self.is_valid_aliases_field()
+            self.is_aliased_fields_are_valid()
         ]
 
         core_packs_list = get_core_pack_list()
@@ -366,42 +366,54 @@ class FieldBaseValidator(ContentEntityValidator):
                 return False
         return True
 
-    def is_valid_aliases_field(self) -> bool:
+    def is_aliased_fields_are_valid(self) -> bool:
         """
-        Validates that the marketplaces field defined in the incident fields mapped by the aliases are corrcet
-        and contian the `xsoar` marketplace only
-        Args:
-            min_from_version (LooseVersion): Minimum from version to the field.
-            reason_for_min_version (str): Reason for the requested min version. Used for better error message.
+        Validates that the aliased fileds are valid.
+        invalid aliased filed are
+        1. field with marketplaces other than [`xsoar`]
+        2. filed with alias (aliased field with alias)
 
         Returns:
-            (bool): True if marketplaces contian only the `xsoar` marketplace or no marketplaces exist.
+            (bool): True if aliased fields are valid.
         """
-
+        is_invalid = None
         aliases = self.current_file.get('Aliases', {})
         if aliases and self.id_set_file:
-            incident_fields_dict = self.get_incident_fileds_as_dict_from_id_set()
-            if any(self.is_invalid_alias(alias.get("cliName"), incident_fields_dict) for alias in aliases):
-                error_message, error_code = Errors.select_values_cannot_contain_empty_values()
-                if self.handle_error(error_message, error_code, file_path=self.file_path,
-                                     warning=self.structure_validator.quite_bc):
-                    return False
-        return True
+            aliased_fields = self.get_incident_fields_by_aliases(aliases)
+            aliases_with_invalid_marketplace = [alias.get("cliName") for alias in aliased_fields if self.is_alias_has_invalid_marketplaces(alias)]
 
-        # if any(select_value == '' for select_value in (self.current_file.get('selectValues') or [])):
-        #     error_message, error_code = Errors.select_values_cannot_contain_empty_values()
-        #     if self.handle_error(error_message, error_code, file_path=self.file_path,
-        #                          warning=self.structure_validator.quite_bc):
-        #         return False
-        # return True
-    def is_invalid_alias(self, alias_cli: str, incident_fields_dict: dict):
-        alais_field = incident_fields_dict.get(f'incident_{alias_cli}')
-        if alais_field:
-            alias_field_file_path = alais_field.get('file_path')
-            alias_orig_field, _ = get_dict_from_file(path=alias_field_file_path)
-            marketplaces = alias_orig_field.get('marketplaces')
-            return marketplaces and (len(marketplaces) != 1 or marketplaces[0] != 'xsoar')
+            if aliases_with_invalid_marketplace:
+                error_message, error_code = Errors.invalid_marketplaces_in_alias(aliases_with_invalid_marketplace)
+                is_invalid = self.handle_error(error_message, error_code, file_path=self.file_path,
+                                               warning=self.structure_validator.quite_bc)
+
+            aliases_with_inner_alias = [alias.get("cliName") for alias in aliased_fields if self.is_alias_has_inner_alias(alias)]
+            if aliases_with_inner_alias:
+                error_message, error_code = Errors.aliases_with_inner_alias(aliases_with_inner_alias)
+                is_invalid = self.handle_error(error_message, error_code, file_path=self.file_path,
+                                               warning=self.structure_validator.quite_bc)
+
+        return not is_invalid
+
+    def get_incident_fields_by_aliases(self, aliases: dict) -> List[dict]:
+        res = []
+        incident_fields_dict = self.get_incident_fileds_as_dict_from_id_set()
+        for alias in aliases:
+            alias_data = incident_fields_dict.get(f'incident_{alias.get("cliName")}')
+            if alias_data:
+                alias_file_path = alias_data.get('file_path')
+                aliased_field, _ = get_dict_from_file(path=alias_file_path)
+                res.append(aliased_field)
+        return res
+
+    def is_alias_has_invalid_marketplaces(self, aliased_field: dict) -> bool:
+        if aliased_field:
+            marketplaces = aliased_field.get('marketplaces')
+            return marketplaces is not None and (len(marketplaces) != 1 or marketplaces[0] != 'xsoar')
         return False
+
+    def is_alias_has_inner_alias(self, aliased_field: dict) -> bool:
+        return aliased_field is not None and 'Aliases' in aliased_field
 
     def get_incident_fileds_as_dict_from_id_set(self):
         incident_fields_dict = {}

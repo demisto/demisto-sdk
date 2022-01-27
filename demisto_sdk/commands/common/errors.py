@@ -146,6 +146,10 @@ ERROR_CODE = {
                                                        'related_field': 'unsearchable'},
     'select_values_cannot_contain_empty_values': {'code': "IF116", 'ui_applicable': False,
                                                   'related_field': 'selectValues'},
+    "invalid_marketplaces_in_alias": {'code': "IF117", 'ui_applicable': True, 'related_field': 'Aliases'},
+    "aliases_with_inner_alias": {'code': "IF118", 'ui_applicable': True, 'related_field': 'Aliases'},
+
+
 
     # IM - Images
     "no_image_given": {'code': "IM100", 'ui_applicable': True, 'related_field': 'image'},
@@ -2109,3 +2113,17 @@ class Errors:
     @error_code_decorator
     def invalid_yml_file(error):
         return f'There is problem with the yml file. The error: {error}'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_marketplaces_in_alias(invalid_aliases: List[str]):
+        return 'The following aliases have invalid marketplaces filed value.'\
+            f'\n{invalid_aliases}\n' \
+            'value of marketplaces should be ["xsoar"] only.'
+
+    @staticmethod
+    @error_code_decorator
+    def aliases_with_inner_alias(invalid_aliases: List[str]):
+        return 'The following aliases have invalid aliases filed.'\
+            f'\n{invalid_aliases}\n' \
+            'aliased fields can not have alias filed in them.'

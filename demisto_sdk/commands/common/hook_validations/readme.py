@@ -13,7 +13,7 @@ from urllib.parse import urlparse
 import click
 import requests
 from git import InvalidGitRepositoryError
-from requests.adapters import HTTPAdapter
+from requests.adapters import HTTPAdapter, PoolManager
 from urllib3.util import Retry
 
 from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
@@ -201,8 +201,8 @@ class ReadMeValidator(BaseValidator):
             return True
         # use some heuristics to try to figure out if this is html
         return self.readme_content.startswith('<p>') or \
-            self.readme_content.startswith('<!DOCTYPE html>') or \
-            ('<thead>' in self.readme_content and '<tbody>' in self.readme_content)
+               self.readme_content.startswith('<!DOCTYPE html>') or \
+               ('<thead>' in self.readme_content and '<tbody>' in self.readme_content)
 
     def is_image_path_valid(self) -> bool:
         """ Validate images absolute paths, and prints the suggested path if its not valid.
@@ -319,7 +319,8 @@ class ReadMeValidator(BaseValidator):
                         Errors.invalid_readme_image_error(prefix + f'({img_url})',
                                                           error_type='branch_name_readme_absolute_error')
                 else:
-                    response = requests.get(img_url, verify=False, timeout=10, stream=True)  # stream avoids downloading
+                    response = PoolManager(retries=Retry(total=5, backoff_factor=1))\
+                                           .request('GET', img_url, verify=False, timeout=10, stream=True)
                     if response.status_code != 200:
                         error_message, error_code = \
                             Errors.invalid_readme_image_error(prefix + f'({img_url})',

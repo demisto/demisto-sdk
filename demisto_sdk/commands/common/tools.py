@@ -241,7 +241,7 @@ def get_remote_file_from_api(
     # 'origin/' prefix is used to compared with remote branches but it is not a part of the github url.
     tag = tag.replace('origin/', '').replace('demisto/', '')
     git_config = GitContentConfig(git_repo, git_provider, git_hostname)
-    if git_config.git_provider == GitProvider.GitHub:
+    if git_config.git_provider == GitProvider.GitLab:
         full_file_path_quote_plus = urllib.parse.quote_plus(full_file_path)
         git_path = urljoin(git_config.base_api, 'files', full_file_path_quote_plus, 'raw')
     else:  # github

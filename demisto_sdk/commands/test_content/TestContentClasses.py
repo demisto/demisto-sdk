@@ -44,6 +44,8 @@ FAILED_MATCH_INSTANCE_MSG = "{} Failed to run.\n There are {} instances of {}, p
 ENTRY_TYPE_ERROR = 4
 DEFAULT_INTERVAL = 4
 MAX_RETRIES = 3
+RETRIES_THRESHOLD = MAX_RETRIES // 2
+
 SLACK_MEM_CHANNEL_ID = 'CM55V7J8K'
 
 __all__ = ['BuildContext',
@@ -111,6 +113,7 @@ class TestConfiguration:
         self.test_instance_names: List[str] = self._parse_instance_names_conf(test_configuration)
         self.instance_configuration: dict = test_configuration.get('instance_configuration', {})
         self.external_playbook_config: dict = test_configuration.get('external_playbook_config', {})
+        self.is_first_playback_failed: bool = False
 
     @staticmethod
     def _parse_integrations_conf(test_configuration):
@@ -1567,15 +1570,6 @@ class TestContext:
         self.build_context.logging_module.error(f'Test failed: {self}')
         self.build_context.tests_data_keeper.failed_playbooks.add(playbook_name_to_add)
 
-    def _remove_from_failed_playbooks(self) -> None:
-        """
-        Removes the playbook from the failed playbooks list
-        """
-        playbook_name_to_remove = self.playbook.configuration.playbook_id
-        failed_playbooks = self.build_context.tests_data_keeper.failed_playbooks
-        if playbook_name_to_remove in failed_playbooks:
-            failed_playbooks.remove(playbook_name_to_remove)
-
     @staticmethod
     def _get_circle_memory_data() -> Tuple[str, str]:
         """
@@ -1638,7 +1632,7 @@ class TestContext:
             if lock:
                 status = self._incident_and_docker_test()
                 self.playbook.number_of_times_executed += 1
-                self._handle_status(status, mockable=False)
+                self._handle_status(status)
             else:
                 return False
         return True
@@ -1646,8 +1640,7 @@ class TestContext:
     def _handle_status(self, status: str,
                        is_first_playback_run: bool = False,
                        is_second_playback_run: bool = False,
-                       is_record_run: bool = False,
-                       mockable: bool = True) -> None:
+                       is_record_run: bool = False) -> None:
         """
         Handles the playbook execution run
         - Logs according to the results
@@ -1657,59 +1650,62 @@ class TestContext:
             is_first_playback_run: Is the playbook runs in playback mode
             is_second_playback_run: Is The playbook run on a second playback after a freshly created record
         """
+        use_retries_mechanism = self.server_context.use_retries_mechanism
+        number_of_times_executed = self.playbook.number_of_times_executed
+        should_add_to_failed_queue = False
+
         if status == PB_Status.COMPLETED:
             self.build_context.logging_module.success(f'PASS: {self} succeed')
+            self.playbook.number_of_successful_runs += 1
             # It's not enough that the record run will pass to declare the test as successful,
             # we need the second playback to pass as well.
             if is_record_run:
                 return
-            # if test playbook passed in the first execution we will not add him to the failed_test_queue, otherwise
-            # we will because we are interested in the majority.
-            if 1 < self.playbook.number_of_times_executed <= MAX_RETRIES:
-                self.build_context.logging_module.info('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^')
-                self.build_context.logging_module.info('Playbook failed in the past and now passed, still adding to failed_test_queue')
-                self.playbook.number_of_successful_runs += 1
-                # don't add to queue in the last run
-                if self.playbook.number_of_times_executed != MAX_RETRIES:
-                    self.build_context.failed_test_queue.put(self.playbook)
-            # first execution
-            else:
-                self.build_context.logging_module.info('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^')
-                self.build_context.logging_module.info('Playbook passed on first run, adding to succeeded_playbooks')
+            # success on the first run, no more action is needed.
+            if number_of_times_executed == 1 or is_first_playback_run:
                 self._add_to_succeeded_playbooks()
+                return
+
+            if use_retries_mechanism:
+                if 1 < number_of_times_executed < MAX_RETRIES:
+                    self.build_context.logging_module.info('Playbook failed in one of the previous runs and now passes. It should be added'
+                                                           'to the failed queue until it is proven to be consistent.')
+                    should_add_to_failed_queue = True
 
         elif status == PB_Status.FAILED_DOCKER_TEST:
             self._add_to_failed_playbooks()
 
-        else:  # Failed
+        else:  # test-playbook failed
             if is_first_playback_run:
                 return
             if is_second_playback_run:
                 self._add_to_failed_playbooks(is_second_playback_run=True)
                 return
-            self._add_to_failed_playbooks()
-            self.build_context.logging_module.info('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^')
-            self.build_context.logging_module.info('Playbook Failed, adding to failed playbooks')
 
-            if not mockable:
-                self.build_context.logging_module.info(
-                    f'%%%%%%%% unmockable call: number of times {self.playbook.number_of_times_executed}')
-                if self.playbook.number_of_times_executed < MAX_RETRIES:
-                    self.build_context.logging_module.info('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^')
-                    self.build_context.logging_module.info('unmockable Playbook Failed, adding to failed_test_queue')
-                    self.build_context.failed_test_queue.put(self.playbook)
+            if use_retries_mechanism:
+                should_add_to_failed_queue = True
+            else:
+                self._add_to_failed_playbooks()
 
             if not self.build_context.is_local_run:
                 self._notify_failed_test()
 
-        if self.playbook.number_of_times_executed == MAX_RETRIES and self.playbook.number_of_successful_runs > MAX_RETRIES // 2:
-            self.build_context.logging_module.info('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^')
-            self.build_context.logging_module.info(
-                f'Playbook was executed exactly {MAX_RETRIES} times, the majority of passed times is {self.playbook.number_of_successful_runs}')
-            self.build_context.logging_module.info('Adding to succeeded_playbooks')
-            self.build_context.logging_module.info('Removing from failed_playbooks')
-            self._add_to_succeeded_playbooks()
-            self._remove_from_failed_playbooks()
+        if use_retries_mechanism:
+            if number_of_times_executed == MAX_RETRIES:
+                # check if in most executions, the test passed.
+                if self.playbook.number_of_successful_runs > RETRIES_THRESHOLD:
+                    self.build_context.logging_module.info(
+                        f'Test-Playbook was executed {MAX_RETRIES} times, and passed {self.playbook.number_of_successful_runs} times.'
+                        f' Adding to succeeded playbooks')
+                    self._add_to_succeeded_playbooks()
+                else:
+                    self.build_context.logging_module.info(
+                        f'Test-Playbook was executed {MAX_RETRIES} times, and passed {self.playbook.number_of_successful_runs} times.'
+                        f' Adding to failed playbooks')
+                    self._add_to_failed_playbooks()
+            else:
+                if should_add_to_failed_queue:
+                    self.build_context.failed_test_queue.put(self.playbook)
 
     def _execute_mockable_test(self, proxy: MITMProxy):
         """
@@ -1719,17 +1715,19 @@ class TestContext:
         Returns:
             True if test has finished it's execution else False
         """
-        if proxy.has_mock_file(self.playbook.configuration.playbook_id):
-            # Running first playback run on mock file
-            self.build_context.logging_module.info(f'------ Test {self} start ------ (Mock: Playback)')
-            with run_with_mock(proxy, self.playbook.configuration.playbook_id) as result_holder:
-                status = self._incident_and_docker_test()
-                result_holder[RESULT] = status == PB_Status.COMPLETED
-            self._handle_status(status, is_first_playback_run=True)
-            if status in (PB_Status.COMPLETED, PB_Status.FAILED_DOCKER_TEST):
-                return True
-            self.build_context.logging_module.warning(
-                "Test failed with mock, recording new mock file. (Mock: Recording)")
+        if not self.playbook.configuration.is_first_playback_failed:
+            if proxy.has_mock_file(self.playbook.configuration.playbook_id):
+                # Running first playback run on mock file
+                self.build_context.logging_module.info(f'------ Test {self} start ------ (Mock: Playback)')
+                with run_with_mock(proxy, self.playbook.configuration.playbook_id) as result_holder:
+                    status = self._incident_and_docker_test()
+                    result_holder[RESULT] = status == PB_Status.COMPLETED
+                self._handle_status(status, is_first_playback_run=True)
+                if status in (PB_Status.COMPLETED, PB_Status.FAILED_DOCKER_TEST):
+                    return True
+                self.build_context.logging_module.warning(
+                    "Test failed with mock, recording new mock file. (Mock: Recording)")
+                self.playbook.configuration.is_first_playback_failed = True
 
         # Running on record mode since playback has failed or mock file was not found
         self.build_context.logging_module.info(f'------ Test {self} start ------ (Mock: Recording)')
@@ -1737,6 +1735,7 @@ class TestContext:
             if lock:
                 with run_with_mock(proxy, self.playbook.configuration.playbook_id, record=True) as result_holder:
                     status = self._incident_and_docker_test()
+                    self.playbook.number_of_times_executed += 1
                     self._handle_status(status, is_record_run=True)
                     completed = status == PB_Status.COMPLETED
                     result_holder[RESULT] = completed
@@ -1745,7 +1744,7 @@ class TestContext:
                 return False
 
         # Running playback after successful record to verify the record is valid for future runs
-        if completed:
+        if completed and self.playbook.configuration.playbook_id in self.build_context.tests_data_keeper.succeeded_playbooks:
             self.build_context.logging_module.info(
                 f'------ Test {self} start ------ (Mock: Second playback)')
             with run_with_mock(proxy, self.playbook.configuration.playbook_id) as result_holder:
@@ -1814,7 +1813,8 @@ class TestContext:
 
 class ServerContext:
 
-    def __init__(self, build_context: BuildContext, server_private_ip: str, tunnel_port: int = None):
+    def __init__(self, build_context: BuildContext, server_private_ip: str, tunnel_port: int = None,
+                 use_retries_mechanism: bool = True):
         self.build_context = build_context
         self.server_ip = server_private_ip
         self.tunnel_port = tunnel_port
@@ -1829,6 +1829,7 @@ class ServerContext:
         self.executed_tests: Set[str] = set()
         self.executed_in_current_round: Set[str] = set()
         self.prev_system_conf: dict = {}
+        self.use_retries_mechanism: bool = use_retries_mechanism
 
     def _execute_unmockable_tests(self):
         """

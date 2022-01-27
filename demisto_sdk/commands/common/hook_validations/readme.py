@@ -201,8 +201,8 @@ class ReadMeValidator(BaseValidator):
             return True
         # use some heuristics to try to figure out if this is html
         return self.readme_content.startswith('<p>') or \
-               self.readme_content.startswith('<!DOCTYPE html>') or \
-               ('<thead>' in self.readme_content and '<tbody>' in self.readme_content)
+            self.readme_content.startswith('<!DOCTYPE html>') or \
+            ('<thead>' in self.readme_content and '<tbody>' in self.readme_content)
 
     def is_image_path_valid(self) -> bool:
         """ Validate images absolute paths, and prints the suggested path if its not valid.
@@ -320,7 +320,7 @@ class ReadMeValidator(BaseValidator):
                                                           error_type='branch_name_readme_absolute_error')
                 else:
                     response = PoolManager(retries=Retry(total=5, backoff_factor=1))\
-                                           .request('GET', img_url, verify=False, timeout=10, stream=True)
+                        .request('GET', img_url, verify=False, timeout=10, stream=True)
                     if response.status_code != 200:
                         error_message, error_code = \
                             Errors.invalid_readme_image_error(prefix + f'({img_url})',

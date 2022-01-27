@@ -29,6 +29,9 @@ def _add_pr_comment(comment, logging_module):
     query = '?q={}+repo:demisto/content+org:demisto+is:pr+is:open+head:{}+is:open'.format(sha1, branch_name)
     url = 'https://api.github.com/search/issues'
     headers = {'Authorization': 'Bearer ' + token}
+
+    is_skipped_tests_comment = 'The following integrations/tests were collected' in comment
+
     try:
         response = requests.get(url + query, headers=headers, verify=False)
         res = _handle_github_response(response, logging_module)
@@ -42,10 +45,10 @@ def _add_pr_comment(comment, logging_module):
                 issue_comments = _handle_github_response(response, logging_module)
                 print(issue_comments)
                 for existing_comment in issue_comments:
-                    if SKIPPED_CONTENT_COMMENT in existing_comment.get('body'):
+                    if is_skipped_tests_comment and SKIPPED_CONTENT_COMMENT in existing_comment.get('body'):
                         comment_url = existing_comment.get('url')
                         requests.delete(comment_url, headers=headers, verify=False)
-                    if COVERAGE_REPORT_COMMENT in existing_comment.get('body'):
+                    if not is_skipped_tests_comment and COVERAGE_REPORT_COMMENT in existing_comment.get('body'):
                         comment_url = existing_comment.get('url')
                         requests.delete(comment_url, headers=headers, verify=False)
                 response = requests.post(issue_url, json={'body': comment}, headers=headers, verify=False)

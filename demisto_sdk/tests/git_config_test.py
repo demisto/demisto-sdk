@@ -78,7 +78,8 @@ class TestGitContentConfig:
         assert git_config.base_api == GitContentConfig.BASE_RAW_GITLAB_LINK.format(GITLAB_HOST='code.pan.run',
                                                                                    GITLAB_ID=3606)
 
-        git_config = GitContentConfig(repo_hostname='code.pan.run', git_provider=GitProvider.GitLab)
+        # We give the repo hostname, but there is a response from the remote url hostname
+        git_config = GitContentConfig(repo_hostname='my-gitlab-hostname.com', git_provider=GitProvider.GitLab)
         assert git_config.base_api == GitContentConfig.BASE_RAW_GITLAB_LINK.format(GITLAB_HOST='code.pan.run',
                                                                                    GITLAB_ID=3606)
 

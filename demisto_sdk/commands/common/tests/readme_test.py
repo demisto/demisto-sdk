@@ -425,10 +425,10 @@ def test_verify_readme_image_paths(mocker):
         m.get('https://github.com/demisto/test3.png',
               status_code=200, text="Test3")
 
-        result = readme_validator.verify_readme_image_paths()
+        is_valid = readme_validator.verify_readme_image_paths()
     sys.stdout = sys.__stdout__  # reset stdout.
     captured_output = captured_output.getvalue()
-    assert not result
+    assert not is_valid
     assert 'The following image relative path is not valid, please recheck it:\n' \
            '![Identity with High Risk Score](../../default.png)' in captured_output
     assert 'The following image relative path is not valid, please recheck it:\n' \
@@ -437,9 +437,13 @@ def test_verify_readme_image_paths(mocker):
            '![branch in url]' in captured_output
     assert 'Branch name was found in the URL, please change it to the commit hash:\n' \
            '![commit hash in url]' not in captured_output
-    assert 'please repair it:\n' \
-           '![Identity with High Risk Score](https://github.com/demisto/test1.png)' in captured_output
-    assert 'please repair it:\n(https://github.com/demisto/content/raw/test2.png)' in captured_output
+    assert ''': got HTTP response code 404
+The following image link seems to be broken, please repair it:
+![Identity with High Risk Score](https://github.com/demisto/test1.png)''' in captured_output
+    assert ''' [RM108] - Error in readme image: got HTTP response code 404
+The following image link seems to be broken, please repair it:
+(https://github.com/demisto/content/raw/test2.png)''' in captured_output
     assert 'please repair it:\n' \
            '![Identity with High Risk Score](https://github.com/demisto/test3.png)' \
            not in captured_output
+    assert 'got HTTP response code 404' in captured_output

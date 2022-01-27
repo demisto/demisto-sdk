@@ -251,7 +251,8 @@ class ReadMeValidator(BaseValidator):
         # If error was found, print it only if its not a pack readme. For pack readme, the PackUniqueFilesValidator
         # class handles the errors and printing.
         should_print_error = not is_pack_readme
-        relative_images = re.findall(r'(\!\[.*?\])\(((?!http).*?)\)$', self.readme_content, re.IGNORECASE | re.MULTILINE)
+        relative_images = re.findall(r'(\!\[.*?\])\(((?!http).*?)\)$', self.readme_content,
+                                     re.IGNORECASE | re.MULTILINE)
         relative_images += re.findall(  # HTML image tag
             r'(<img.*?src\s*=\s*"((?!http).*?)")', self.readme_content,
             re.IGNORECASE | re.MULTILINE)
@@ -314,13 +315,16 @@ class ReadMeValidator(BaseValidator):
                 url_path_elem_list = urlparse(img_url).path.split('/')[1:]
                 if len(url_path_elem_list) >= 3 and \
                         (url_path_elem_list[2] == working_branch_name and working_branch_name != 'master'):
-                    error_message, error_code = Errors.invalid_readme_image_error(prefix + f'({img_url})',
-                                                                                  error_type='branch_name_readme_absolute_error')
+                    error_message, error_code = \
+                        Errors.invalid_readme_image_error(prefix + f'({img_url})',
+                                                          error_type='branch_name_readme_absolute_error')
                 else:
-                    response = requests.get(img_url, verify=False, timeout=10)
+                    response = requests.get(img_url, verify=False, timeout=10, stream=True)  # stream avoids downloading
                     if response.status_code != 200:
-                        error_message, error_code = Errors.invalid_readme_image_error(prefix + f'({img_url})',
-                                                                                      error_type='general_readme_absolute_error')
+                        error_message, error_code = \
+                            Errors.invalid_readme_image_error(prefix + f'({img_url})',
+                                                              error_type='general_readme_absolute_error',
+                                                              http_code=response.status_code)
             except Exception as ex:
                 click.secho(f"Could not validate the image link: {img_url}\n {ex}", fg='yellow')
                 continue

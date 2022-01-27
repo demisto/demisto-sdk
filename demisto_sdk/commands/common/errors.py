@@ -1646,14 +1646,19 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_readme_image_error(path, error_type):
-        return 'Error in readme image:\n' + {
-            'pack_readme_relative_error': Errors.pack_readme_image_relative_path_error,
-            'general_readme_relative_error': Errors.invalid_readme_image_relative_path_error,
-            'general_readme_absolute_error': Errors.invalid_readme_image_absolute_path_error,
-            'branch_name_readme_absolute_error': Errors.branch_name_in_readme_image_absolute_path_error,
-            'insert_image_link_error': Errors.invalid_readme_insert_image_link_error
-        }.get(error_type, lambda x: f'Something went wrong when testing {x}')(path)
+    def invalid_readme_image_error(path: str, error_type: str, http_code: Optional[int] = None):
+        error = 'Error in readme image: '
+        if http_code:
+            error += f'got HTTP response code {http_code}'
+
+        error_body = {'pack_readme_relative_error': Errors.pack_readme_image_relative_path_error,
+                      'general_readme_relative_error': Errors.invalid_readme_image_relative_path_error,
+                      'general_readme_absolute_error': Errors.invalid_readme_image_absolute_path_error,
+                      'branch_name_readme_absolute_error': Errors.branch_name_in_readme_image_absolute_path_error,
+                      'insert_image_link_error': Errors.invalid_readme_insert_image_link_error} \
+            .get(error_type, lambda x: f'Unexpected error when testing {x}')(path)
+
+        return error + f"\n{error_body}"
 
     @staticmethod
     @error_code_decorator

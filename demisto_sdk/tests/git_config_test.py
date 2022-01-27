@@ -7,7 +7,8 @@ import pytest
 from git import Repo
 
 from demisto_sdk.commands.common.GitContentConfig import (GitContentConfig,
-                                                          GitCredentials, GitProvider)
+                                                          GitCredentials,
+                                                          GitProvider)
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 
 GIT_ROOT = "{}".format(git_path())
@@ -256,7 +257,4 @@ class TestGitContentConfig:
                             return_value=0)
         git_config = GitContentConfig(custom_repo_name, git_provider=GitProvider.GitLab)
         assert git_config.current_repository == custom_repo_name
-        assert git_config.base_api == f'https://gitlab.com/api/v4/projects/0/repository'
-
-
-
+        assert git_config.base_api == 'https://gitlab.com/api/v4/projects/0/repository'

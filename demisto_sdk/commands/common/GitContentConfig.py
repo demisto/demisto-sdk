@@ -49,11 +49,9 @@ class GitContentConfig:
 
     ENV_REPO_HOSTNAME_NAME = 'DEMISTO_SDK_REPO_HOSTNAME'
 
-    def __init__(self, repo_name: Optional[str] = None, git_provider: Optional[GitProvider] = None, repo_hostname: Optional[str] = None):
+    def __init__(self, repo_name: Optional[str] = None, git_provider: Optional[GitProvider] = GitProvider.GitHub, repo_hostname: Optional[str] = None):
         self.credentials = GitCredentials()
         self.repo_hostname = repo_hostname or os.getenv(GitContentConfig.ENV_REPO_HOSTNAME_NAME)
-        if not git_provider:
-            git_provider = GitProvider.GitHub
         self.git_provider = git_provider
         if not self.repo_hostname:
             self.repo_hostname = GitContentConfig.GITHUB_USER_CONTENT if git_provider == GitProvider.GitHub else "gitlab.com"
@@ -73,7 +71,18 @@ class GitContentConfig:
                 self.current_repository = GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
         else:
             self.current_repository = repo_name
-            self.gitlab_id = self._search_gitlab_id(self.repo_hostname, repo_name)
+            repo_hostname, gitlab_id = self._search_gitlab_id(self.repo_hostname, repo_name) or (None, None)
+            if gitlab_id:
+                self.gitlab_id = gitlab_id
+            else:
+                click.secho(f'If your repo is in private gitlab repo, '
+                            f'configure `{GitCredentials.ENV_GITLAB_TOKEN_NAME}` environment variable '
+                            f'or configure `{GitContentConfig.ENV_REPO_HOSTNAME_NAME}` environment variable',
+                            fg='yellow')
+                click.secho('Could not find the repository name on gitlab - defaulting to demisto/content', fg='yellow')
+                self.git_provider = GitProvider.GitHub
+                self.current_repository = GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
+                self.repo_hostname = GitContentConfig.GITHUB_USER_CONTENT
 
         if self.git_provider == GitProvider.GitHub:
             # DO NOT USE os.path.join on URLs, it may cause errors
@@ -88,7 +97,7 @@ class GitContentConfig:
         """Returns the git repository of the cwd.
         if not running in a git repository, will return an empty string
         """
-        urls = list(GitUtil().repo.remote().urls)
+        urls = GitUtil().repo.remote().urls
         for url in urls:
             parsed_git = giturlparse.parse(url)
             if parsed_git and parsed_git.host and parsed_git.repo:
@@ -103,7 +112,7 @@ class GitContentConfig:
             self.repo_hostname = GitContentConfig.GITHUB_USER_CONTENT
             return
         hostname = parsed_git.host
-        if '@' in hostname:
+        if '@' in hostname:  # the library sometimes returns hostname as <username>@<hostname>
             hostname = hostname.split('@')[1]  # to get proper hostname, without the username or tokens
         gitlab_hostname, gitlab_id = (self._search_gitlab_id(hostname, parsed_git.repo)) or \
                                      (self._search_gitlab_id(self.repo_hostname, parsed_git.repo)) or \
@@ -121,7 +130,7 @@ class GitContentConfig:
 
         if gitlab_id:
             self.git_provider = GitProvider.GitLab
-            self.gitlab_id: int = gitlab_id
+            self.gitlab_id = gitlab_id
             self.repo_hostname = gitlab_hostname
         else:  # github
             if self.repo_hostname == GitContentConfig.GITHUB_USER_CONTENT and 'github.com' not in hostname:

@@ -47,7 +47,8 @@ from demisto_sdk.commands.common.constants import (
     TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR,
     XSOAR_CONFIG_FILE, FileType, IdSetKeys, MarketplaceVersions, urljoin)
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.GitContentConfig import GitContentConfig, GitProvider
+from demisto_sdk.commands.common.GitContentConfig import (GitContentConfig,
+                                                          GitProvider)
 
 urllib3.disable_warnings()
 
@@ -298,10 +299,10 @@ def get_remote_file_from_api(
 
 
 def get_file_details(
-        file_content: str,
+        file_content,
         full_file_path: str,
         return_content: bool = False,
-):
+) -> Union[str, Dict]:
     if return_content:
         file_details = file_content
     elif full_file_path.endswith('json'):

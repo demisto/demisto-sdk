@@ -61,8 +61,8 @@ def test_build_skipped_exit_code(no_flake8: bool, no_xsoar_linter: bool, no_band
                                                                         ('demisto/python:2.7.18.24398', '', '2.7')])
 def test_get_python_version_from_image(image: str, output: bytes, expected: float, mocker):
     from demisto_sdk.commands.lint import helpers
-    mocker.patch.object(helpers, 'docker')
-    helpers.docker.from_env().containers.run().logs.return_value = output
+    mocker.patch.object(helpers, 'init_global_docker_client')
+    helpers.init_global_docker_client().containers.run().logs.return_value = output
     assert expected == helpers.get_python_version_from_image(image)
 
 

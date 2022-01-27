@@ -1,7 +1,7 @@
 # STD python packages
 import logging
 import time
-from collections import namedtuple
+from collections import defaultdict, namedtuple
 from functools import wraps
 from pathlib import Path
 
@@ -11,15 +11,13 @@ from tabulate import tabulate
 # Local packages
 from demisto_sdk.commands.common.logger import Colors
 
-# from typing import Dict, List
-
 logger = logging.getLogger('demisto-sdk')
 
 CSV_HEADERS = ['Function', 'Avg', 'Total', 'Call count']
 
 StatInfo = namedtuple("StatInfo", ["total_time", "call_count", "avg_time"])
 
-registered_timers: dict = {}
+registered_timers: dict = defaultdict(set)
 
 
 def timer(group_name='Common'):
@@ -53,8 +51,8 @@ def timer(group_name='Common'):
 
         wrapper_timer.stat_info = stat_info  # type: ignore[attr-defined]
 
-        if group_name not in registered_timers:
-            registered_timers[group_name] = set()
+        # if group_name not in registered_timers:
+        #     registered_timers[group_name] = set()
 
         registered_timers[group_name].add(wrapper_timer)
         return wrapper_timer

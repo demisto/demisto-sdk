@@ -185,7 +185,7 @@ def build_mypy_command(files: List[Path], version: str, content_repo: Path = Non
     # Get the full path to the file.
     command += " --show-absolute-path"
     # Point cache to be .mypy_cache in the content repo
-    command += f" --cache-dir={str(content_repo/'.mypy_cache') if content_repo else '/dev/null'}"
+    command += f" --cache-dir={content_repo/'.mypy_cache' if content_repo else '/dev/null'}"
     # Generating path patterns - file1 file2 file3,..
     files_list = [str(item) for item in files]
     command += " " + " ".join(files_list)

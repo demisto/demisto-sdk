@@ -51,9 +51,6 @@ def timer(group_name='Common'):
 
         wrapper_timer.stat_info = stat_info  # type: ignore[attr-defined]
 
-        # if group_name not in registered_timers:
-        #     registered_timers[group_name] = set()
-
         registered_timers[group_name].add(wrapper_timer)
         return wrapper_timer
 

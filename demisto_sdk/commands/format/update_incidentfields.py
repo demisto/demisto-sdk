@@ -50,6 +50,9 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
          the function will update the marketplaces in the fields mapped by the aliases to be XSOAR marketplace only.
         """
 
+        if not self.id_set_path:
+            click.secho('Skiping update mapped aliases as id_set_path argument are missed', fg='yellow')
+
         aliases = self.data.get('Aliases', {})
         if aliases and self.id_set_path:
 

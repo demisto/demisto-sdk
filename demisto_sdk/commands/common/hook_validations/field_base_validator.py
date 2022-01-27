@@ -12,6 +12,7 @@ from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 from demisto_sdk.commands.common.tools import (get_core_pack_list,
+                                               get_dict_from_file,
                                                get_pack_metadata,
                                                get_pack_name)
 
@@ -57,11 +58,12 @@ class FieldBaseValidator(ContentEntityValidator):
     """
 
     def __init__(self, structure_validator, field_types: Set[str], prohibited_cli_names: Set[str], ignored_errors=False,
-                 print_as_warnings=False, json_file_path=None, **kwargs):
+                 print_as_warnings=False, json_file_path=None, id_set_file=None, **kwargs):
         super().__init__(structure_validator, ignored_errors, print_as_warnings,
                          json_file_path=json_file_path, **kwargs)
         self.field_types = field_types
         self.prohibited_cli_names = prohibited_cli_names
+        self.id_set_file = id_set_file
 
     def is_backward_compatible(self):
         """
@@ -93,7 +95,8 @@ class FieldBaseValidator(ContentEntityValidator):
             self.is_valid_cli_name(),
             self.is_valid_version(),
             self.is_valid_required(),
-            self.does_not_have_empty_select_values()
+            self.does_not_have_empty_select_values(),
+            self.is_valid_aliases_field()
         ]
 
         core_packs_list = get_core_pack_list()
@@ -362,3 +365,50 @@ class FieldBaseValidator(ContentEntityValidator):
                                  warning=self.structure_validator.quite_bc):
                 return False
         return True
+
+    def is_valid_aliases_field(self) -> bool:
+        """
+        Validates that the marketplaces field defined in the incident fields mapped by the aliases are corrcet
+        and contian the `xsoar` marketplace only
+        Args:
+            min_from_version (LooseVersion): Minimum from version to the field.
+            reason_for_min_version (str): Reason for the requested min version. Used for better error message.
+
+        Returns:
+            (bool): True if marketplaces contian only the `xsoar` marketplace or no marketplaces exist.
+        """
+
+        aliases = self.current_file.get('Aliases', {})
+        if aliases and self.id_set_file:
+            incident_fields_dict = self.get_incident_fileds_as_dict_from_id_set()
+            if any(self.is_invalid_alias(alias.get("cliName"), incident_fields_dict) for alias in aliases):
+                error_message, error_code = Errors.select_values_cannot_contain_empty_values()
+                if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                     warning=self.structure_validator.quite_bc):
+                    return False
+        return True
+
+        # if any(select_value == '' for select_value in (self.current_file.get('selectValues') or [])):
+        #     error_message, error_code = Errors.select_values_cannot_contain_empty_values()
+        #     if self.handle_error(error_message, error_code, file_path=self.file_path,
+        #                          warning=self.structure_validator.quite_bc):
+        #         return False
+        # return True
+    def is_invalid_alias(self, alias_cli: str, incident_fields_dict: dict):
+        alais_field = incident_fields_dict.get(f'incident_{alias_cli}')
+        if alais_field:
+            alias_field_file_path = alais_field.get('file_path')
+            alias_orig_field, _ = get_dict_from_file(path=alias_field_file_path)
+            marketplaces = alias_orig_field.get('marketplaces')
+            return marketplaces and (len(marketplaces) != 1 or marketplaces[0] != 'xsoar')
+        return False
+
+    def get_incident_fileds_as_dict_from_id_set(self):
+        incident_fields_dict = {}
+        if self.id_set_file:
+            incident_field_list = self.id_set_file.get('IncidentFields')
+            for incident_field in incident_field_list:
+                field_id = list(incident_field.keys())[0]
+                incident_fields_dict[field_id] = incident_field[field_id]
+
+        return incident_fields_dict

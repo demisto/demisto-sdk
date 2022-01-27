@@ -1,1 +1,3 @@
 demisto-sdk/demisto_sdk/commands/validate/validate_manager.py @idovandijk
+Pipfile* @dorschw
+/.circleci/ @dorschw

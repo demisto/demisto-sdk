@@ -55,7 +55,6 @@ python-dotenv = "*"
 importlib-resources = "*"
 dictdiffer = "*"
 setuptools = "*"
-responses = "*"
 
 [dev-packages]
 mitmproxy = "==5.1.0"
@@ -70,6 +69,7 @@ requests-mock = "*"
 tox-pyenv = "*"
 Deprecated = "*"
 pipfile-requirements = "*"
+responses = "*"
 
 [requires]
 python_version = "3.9"

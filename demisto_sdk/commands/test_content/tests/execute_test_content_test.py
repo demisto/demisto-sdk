@@ -1,6 +1,5 @@
 import json
 import os
-from queue import Queue
 from unittest import mock
 
 import pytest
@@ -8,30 +7,6 @@ import responses
 
 from demisto_sdk.commands.test_content.execute_test_content import (
     COVERAGE_REPORT_COMMENT, SKIPPED_CONTENT_COMMENT, _add_pr_comment)
-
-
-class MockTestResults:
-    playbook_skipped_integration = {'demo integration'}
-    failed_playbooks = False
-
-    @staticmethod
-    def print_test_summary(is_ami, logging_module):
-        return
-
-    @staticmethod
-    def create_result_files():
-        return
-
-
-class MockBuildContext:
-    instances_ips = {}
-    unmockable_tests_to_run = Queue()
-    mockable_tests_to_run = Queue()
-    build_name = 'mock'
-    is_nightly = False
-    tests_data_keeper = MockTestResults
-    isAMI = False
-
 
 MOCK_ENV_VARIABLES = {
     'CONTENT_GITHUB_TOKEN': '123456',

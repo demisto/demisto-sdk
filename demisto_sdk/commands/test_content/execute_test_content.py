@@ -43,7 +43,6 @@ def _add_pr_comment(comment, logging_module):
                 # new comment:
                 response = requests.get(issue_url, headers=headers, verify=False)
                 issue_comments = _handle_github_response(response, logging_module)
-                print(issue_comments)
                 for existing_comment in issue_comments:
                     if is_skipped_tests_comment and SKIPPED_CONTENT_COMMENT in existing_comment.get('body'):
                         comment_url = existing_comment.get('url')

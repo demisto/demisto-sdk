@@ -49,7 +49,6 @@ def test_add_pr_comment(mocker, comment):
         results.update(body)
         return 200, headers, json.dumps(body)
 
-    # mocker.patch('demisto_sdk.commands.test_content.execute_test_content.BuildContext', return_value=MockBuildContext)
     mocker.patch('demisto_sdk.commands.test_content.execute_test_content._handle_github_response',
                  side_effect=mock_handle_github_response)
     url = 'https://api.github.com/search/issues'

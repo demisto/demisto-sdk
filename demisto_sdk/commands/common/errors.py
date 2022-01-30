@@ -1618,6 +1618,12 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def broken_link_in_readme(broken_urls, line_nums):
+        return f"{[({'The url': url}, {'In line': line}) for url, line in zip(broken_urls, line_nums)]} " \
+               f"Seems to be broken. Please correct them or add them to the ignore file."
+
+    @staticmethod
+    @error_code_decorator
     def image_path_error(path, alternative_path):
         return f'Detected following image url:\n{path}\n' \
                f'Which is not the raw link. You probably want to use the following raw image url:\n{alternative_path}'

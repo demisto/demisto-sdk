@@ -91,7 +91,8 @@ class ReadMeValidator(BaseValidator):
             self.verify_readme_is_not_too_short(),
             self.is_context_different_in_yml(),
             self.verify_demisto_in_readme_content(),
-            self.verify_template_not_in_readme()
+            self.verify_template_not_in_readme(),
+            self.verify_no_broken_url()
         ])
 
     def mdx_verify(self) -> bool:
@@ -521,6 +522,40 @@ class ReadMeValidator(BaseValidator):
                 is_valid = False
 
         return is_valid
+
+    def verify_no_broken_url(self):
+        """
+        Checks if there are no broken urls(For example 404 http error) in the file.
+
+        Return:
+            True if all urls in file are fixed exist in the README content, and False otherwise.
+        """
+
+        invalid_urls = []
+        invalid_lines = []
+
+        with open('Path_to_ignore_urls_file', 'r') as f:
+            ignore_urls = f.read().split('\n')
+
+        for line_num, line in enumerate(self.readme_content.split('\n')):
+            if urls := re.findall(r"((www\.|http://|https://)(www\.)*.*?(?=(www\.|http://|https://|$)))", line):
+                for url in urls:
+                    if url not in ignore_urls:
+                        try:
+                            if requests.head(url, verify=False).status_code not in [200, 401, 403]:
+                                invalid_urls += urls
+                                invalid_lines.append(line_num + 1)
+                        except requests.exceptions.ConnectionError as e:
+                            invalid_urls += urls
+                            invalid_lines.append(line_num + 1)
+                            print(e)
+
+        if invalid_urls:
+            error_message, error_code = Errors.broken_link_in_readme(invalid_urls, invalid_lines)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+
+        return True
 
     @staticmethod
     def start_mdx_server(handle_error: Optional[Callable] = None, file_path: Optional[str] = None) -> bool:

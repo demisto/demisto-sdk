@@ -1,4 +1,5 @@
 from distutils.version import LooseVersion
+from typing import List
 
 import pytest
 from mock import patch
@@ -443,19 +444,56 @@ class TestFieldValidator:
         validator = FieldBaseValidator(structure, {'some-type'}, set())
         assert not validator.does_not_have_empty_select_values()
 
-    @pytest.mark.parametrize('min_version, from_version, expected', IS_VALID_FROM_VERSION_FIELD)
-    def test_is_valid_aliases_field(self, pack, min_version: LooseVersion, from_version: str, expected: bool):
+    @pytest.mark.parametrize('marketplaces, expected', [
+        (['xsoar', 'invalid_market'], False),
+        (['invalid_market'], False),
+        (['xsoar'], True),
+        (None, True),
+    ])
+    def test_is_valid_marketplaces_in_aliased_field(self, pack, marketplaces: List[str], expected: bool):
         """
         Given
-        - A field.
+        - A field with aliases values.
 
         When
-        - Validating the expected version is meeting the expected minimal version.
+        - Validating the aliased fields are valid.
 
         Then
-        - Ensure the expected bool is returned according to whether the condition above is satisfied.
+        - Ensure the expected bool is returned according to whether the marketplaces of the aliased fileds are valid.
         """
-        indicator_field = pack.create_indicator_field('incident_1', {'type': 'html', 'fromVersion': from_version})
-        structure = StructureValidator(indicator_field.path)
-        validator = FieldBaseValidator(structure, set(), set())
-        assert validator.is_valid_from_version_field(min_version, reason_for_min_version='') == expected
+
+        tested_field = pack.create_incident_field('tested_field', {'Aliases': [{'cliName': 'aliased_field'}]})
+
+        aliased_field = pack.create_incident_field('aliased_field', {'marketplaces': marketplaces, 'cliName': 'aliased_field'})
+        mocked_id_set = {
+            'IncidentFields': [{'incident_aliased_field': {'name': 'incident_aliased_field', 'file_path': aliased_field.path}}]
+        }
+        structure = StructureValidator(tested_field.path)
+        validator = FieldBaseValidator(structure, set(), set(), id_set_file=mocked_id_set)
+        assert validator.is_aliased_fields_are_valid() == expected
+
+    @pytest.mark.parametrize('aliased_field_data, expected', [
+        ({'Aliases': [{'cliName': 'test'}], 'cliName': 'aliased_field'}, False),
+        ({'cliName': 'aliased_field'}, True),
+    ])
+    def test_is_inner_alias_in_aliased_field(self, pack, aliased_field_data: dict, expected: bool):
+        """
+        Given
+        - A field with aliases values.
+
+        When
+        - Validating the aliased fields are valid.
+
+        Then
+        - Ensure the expected bool is returned according to whether the aliased field have inner alias or not.
+        """
+
+        tested_field = pack.create_incident_field('tested_field', {'Aliases': [{'cliName': 'aliased_field'}]})
+
+        aliased_field = pack.create_incident_field('aliased_field', aliased_field_data)
+        mocked_id_set = {
+            'IncidentFields': [{'incident_aliased_field': {'name': 'incident_aliased_field', 'file_path': aliased_field.path}}]
+        }
+        structure = StructureValidator(tested_field.path)
+        validator = FieldBaseValidator(structure, set(), set(), id_set_file=mocked_id_set)
+        assert validator.is_aliased_fields_are_valid() == expected

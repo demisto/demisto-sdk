@@ -56,7 +56,7 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
         aliases = self.data.get('Aliases', {})
         if aliases and self.id_set_path:
 
-            incident_fields_dict = self.get_incident_fileds_as_dict_from_id_set()
+            incident_fields_dict = self.get_incident_fields_as_dict_from_id_set()
             for alias in aliases:
                 alais_field = incident_fields_dict.get(f'incident_{alias.get("cliName")}')
                 if alais_field:
@@ -68,7 +68,7 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
                         click.secho(f'\n================= Updating file {alias_field_file_path} =================', fg='bright_blue')
                         self.save_alias_field_file(dest_file_path=alias_field_file_path, field_data=alias_orig_field)
 
-    def get_incident_fileds_as_dict_from_id_set(self):
+    def get_incident_fields_as_dict_from_id_set(self):
         incident_fields_dict = {}
         if self.id_set_path:
             id_set = open_id_set_file(self.id_set_path)

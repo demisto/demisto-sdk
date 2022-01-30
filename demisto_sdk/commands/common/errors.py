@@ -1649,7 +1649,7 @@ class Errors:
     def invalid_readme_image_error(path: str, error_type: str, http_code: Optional[int] = None):
         error = 'Error in readme image: '
         if http_code:
-            error += f'got HTTP response code {http_code}'
+            error += f'got HTTP response code {http_code} '
 
         error_body = {'pack_readme_relative_error': Errors.pack_readme_image_relative_path_error,
                       'general_readme_relative_error': Errors.invalid_readme_image_relative_path_error,

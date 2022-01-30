@@ -74,16 +74,16 @@ class GitContentConfig:
             repo_hostname, gitlab_id = self._search_gitlab_id(self.repo_hostname, repo_name) or (None, None)
             if gitlab_id:
                 self.gitlab_id = gitlab_id
-            else:
-                if self.git_provider == GitProvider.GitLab:
+                self.git_provider = GitProvider.GitLab
+            if not gitlab_id and self.git_provider == GitProvider.GitLab:
                     click.secho(f'If your repo is in private gitlab repo, '
                                 f'configure `{GitCredentials.ENV_GITLAB_TOKEN_NAME}` environment variable '
                                 f'or configure `{GitContentConfig.ENV_REPO_HOSTNAME_NAME}` environment variable',
                                 fg='yellow')
                     click.secho('Could not find the repository name on gitlab - defaulting to demisto/content', fg='yellow')
-                self.git_provider = GitProvider.GitHub
-                self.current_repository = GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
-                self.repo_hostname = GitContentConfig.GITHUB_USER_CONTENT
+                    self.git_provider = GitProvider.GitHub
+                    self.current_repository = GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
+                    self.repo_hostname = GitContentConfig.GITHUB_USER_CONTENT
 
         if self.git_provider == GitProvider.GitHub:
             # DO NOT USE os.path.join on URLs, it may cause errors

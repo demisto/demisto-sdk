@@ -21,15 +21,15 @@ from demisto_sdk.tests.constants_test import (
 files = [
 
     # ---------------------------------------- For Valid file -------------------------------------------------
-    (Path(f"{XSOAR_LINTER_PY3_VALID}"), 3.8, 'base', False, 0, [], []),
-    (Path(f"{XSOAR_LINTER_PY3_VALID}"), 3.8, 'base', True, 0, [],
+    (Path(f"{XSOAR_LINTER_PY3_VALID}"), '3.8', 'base', False, 0, [], []),
+    (Path(f"{XSOAR_LINTER_PY3_VALID}"), '3.8', 'base', True, 0, [],
      ['test-module', 'kace-machines-list', 'kace-assets-list', 'kace-queues-list', 'kace-tickets-list']),
 
 
     # -------------------------------------------- For Invalid file -------------------------------------------------
 
     # -------------------- For Invalid file with support level base and long running True -----------------------
-    (Path(f"{XSOAR_LINTER_PY3_INVALID}"), 3.8, 'base', True, 1, [
+    (Path(f"{XSOAR_LINTER_PY3_INVALID}"), '3.8', 'base', True, 1, [
         'Print is found, Please remove all prints from the code.',
         "test-module command is not implemented in the python file, it is essential for every"
         " integration. Please add it to your code. For more information see: "
@@ -37,7 +37,7 @@ files = [
     ], []),
 
     # -------------------- For Invalid file with support level base and long running False -----------------------
-    (Path(f"{XSOAR_LINTER_PY3_INVALID}"), 3.8, 'base', False, 1, [
+    (Path(f"{XSOAR_LINTER_PY3_INVALID}"), '3.8', 'base', False, 1, [
         'Print is found, Please remove all prints from the code.',
         'Sleep is found, Please remove all sleep statements from the code.',
         'Invalid CommonServerPython import was found. Please change the import to: from CommonServerPython import *',
@@ -50,7 +50,7 @@ files = [
     ], ['kace-machines-list', 'kace-assets-list', 'kace-queues-list', 'kace-tickets-list', 'error']),
 
     # ------------- For Invalid file with support level certified partner and long running False ------------------
-    (Path(f"{XSOAR_LINTER_PY3_INVALID}"), 3.8, 'certified partner', False, 1,
+    (Path(f"{XSOAR_LINTER_PY3_INVALID}"), '3.8', 'certified partner', False, 1,
      ['Sys.exit use is found, Please use return instead.',
       'Sleep is found, Please remove all sleep statements from the code.',
       "test-module command is not implemented in the python file, it is essential for every"
@@ -59,7 +59,7 @@ files = [
       ], []),
 
     # ------------- For Invalid file with support level certified partner and long running True ---------------------
-    (Path(f"{XSOAR_LINTER_PY3_INVALID}"), 3.8, 'certified partner', True, 1,
+    (Path(f"{XSOAR_LINTER_PY3_INVALID}"), '3.8', 'certified partner', True, 1,
      ['Sys.exit use is found, Please use return instead.',
       "test-module command is not implemented in the python file, it is essential for every"
       " integration. Please add it to your code. For more information see: "
@@ -67,7 +67,7 @@ files = [
       ], []),
 
     # ------------- For Invalid file with support level community and long running False ------------------
-    (Path(f"{XSOAR_LINTER_PY3_INVALID}"), 3.8, 'community', False, 1,
+    (Path(f"{XSOAR_LINTER_PY3_INVALID}"), '3.8', 'community', False, 1,
      ['Print is found, Please remove all prints from the code.',
       "test-module command is not implemented in the python file, it is essential for every"
       " integration. Please add it to your code. For more information see: "
@@ -75,7 +75,7 @@ files = [
       ], []),
 
     # ------------- For Invalid file with default support level and long running False ------------------
-    (Path(f"{XSOAR_LINTER_PY3_INVALID}"), 3.8, '', False, 1,
+    (Path(f"{XSOAR_LINTER_PY3_INVALID}"), '3.8', '', False, 1,
      ['exit is found, Please remove all exit()', 'quit is found, Please remove all quit()',
       "test-module command is not implemented in the python file, it is essential for every"
       " integration. Please add it to your code. For more information see: "
@@ -83,7 +83,7 @@ files = [
       ], []),
 
     # ------------- For Invalid file with xsoar support level and long running False ------------------
-    (Path(f"{XSOAR_LINTER_PY3_INVALID}"), 3.8, 'xsoar', False, 1,
+    (Path(f"{XSOAR_LINTER_PY3_INVALID}"), '3.8', 'xsoar', False, 1,
      ['exit is found, Please remove all exit()', 'quit is found, Please remove all quit()',
       "test-module command is not implemented in the python file, it is essential for every"
       " integration. Please add it to your code. For more information see: "
@@ -94,18 +94,18 @@ files = [
     # -------------------------------- For Warning file which is relevant from partner level and bigger---------------
 
     # -------------------------------- For Warning file with support level partner------------------------------------
-    (Path(f"{XSOAR_LINTER_PY3_INVALID_WARNINGS_PARTNER}"), 3.8, 'partner', False, 4,
+    (Path(f"{XSOAR_LINTER_PY3_INVALID_WARNINGS_PARTNER}"), '3.8', 'partner', False, 4,
      ['try and except statements were not found in main function.',
       'return_error should be used in main function. Please add it.',
       'return_error used too many times, should be used only once in the code, in main function.'
       ], []),
 
     # -------------------------------- For Warning file with support level community-----------------------------------
-    (Path(f"{XSOAR_LINTER_PY3_INVALID_WARNINGS_PARTNER}"), 3.8, 'community', False, 0,
+    (Path(f"{XSOAR_LINTER_PY3_INVALID_WARNINGS_PARTNER}"), '3.8', 'community', False, 0,
      [], []),
 
     # -------------------------------- For Warning file with support level xsoar-----------------------------------
-    (Path(f"{XSOAR_LINTER_PY3_INVALID_WARNINGS_PARTNER}"), 3.8, 'xsoar', False, 4,
+    (Path(f"{XSOAR_LINTER_PY3_INVALID_WARNINGS_PARTNER}"), '3.8', 'xsoar', False, 4,
      ['return_error should be used in main function. Please add it.',
       'return_error used too many times, should be used only once in the code, in main function.'], []),
 
@@ -113,7 +113,7 @@ files = [
     # --------------------------------------- For Warning file -------------------------------------------------------
 
     # --------------------- For Warning file with support level certified partner -----------------------------------
-    (Path(f"{XSOAR_LINTER_PY3_INVALID_WARNINGS}"), 3.8, 'certified partner', False, 4,
+    (Path(f"{XSOAR_LINTER_PY3_INVALID_WARNINGS}"), '3.8', 'certified partner', False, 4,
      ['Demisto.log is found, Please remove all demisto.log usage and exchange it with',
       'Main function wasnt found in the file, Please add main()',
       'Do not use return_outputs function. Please return CommandResults object instead.',
@@ -123,7 +123,7 @@ files = [
       ], []),
     # --------------------- For Warning file with support level xsoar------------- -----------------------------------
 
-    (Path(f"{XSOAR_LINTER_PY3_INVALID_WARNINGS}"), 3.8, 'xsoar', False, 4,
+    (Path(f"{XSOAR_LINTER_PY3_INVALID_WARNINGS}"), '3.8', 'xsoar', False, 4,
      ['Function arguments are missing type annotations. Please add type annotations',
       'It is best practice to use .get when accessing the arg/params dict object rather then direct access.'], []),
 ]

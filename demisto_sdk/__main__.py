@@ -363,7 +363,7 @@ def zip_packs(**kwargs) -> int:
 @click.option(
     '-g', '--use-git', is_flag=True, show_default=True,
     default=False,
-    help='Validate changes using git - this will check current branch\'s changes against origin/master. '
+    help='Validate changes using git - this will check current branch\'s changes against origin/master or origin/main. '
          'If the --post-commit flag is supplied: validation will run only on the current branch\'s changed files '
          'that have been committed. '
          'If the --post-commit flag is not supplied: validation will run on all changed files in the current branch, '
@@ -515,6 +515,9 @@ def validate(config, **kwargs):
                                            'determines which artifacts are created for each pack. '
                                            'Default is the XSOAR marketplace, that has all of the packs '
                                            'artifacts.', default='xsoar', type=click.Choice(['xsoar', 'marketplacev2', 'v2']))
+@click.option('-fbi', '--filter-by-id-set', is_flag=True,
+              help='Whether to use the id set as content items guide, meaning only include in the packs the '
+                   'content items that appear in the id set.', default=False, hidden=True)
 def create_content_artifacts(**kwargs) -> int:
     """Generating the following artifacts:
        1. content_new - Contains all content objects of type json,yaml (from_version < 6.0.0)
@@ -630,6 +633,8 @@ def secrets(config, **kwargs):
 @click.option("-cdam", "--check-dependent-api-module", is_flag=True, help="Run unit tests and lint on all packages that "
               "are dependent on the found "
               "modified api modules.", default=True)
+@click.option("--time-measurements-dir", help="Specify directory for the time measurements report file",
+              type=PathsParamType())
 def lint(**kwargs):
     """Lint command will perform:
         1. Package in host checks - flake8, bandit, mypy, vulture.
@@ -673,6 +678,7 @@ def lint(**kwargs):
         no_coverage=kwargs.get('no_coverage'),  # type: ignore[arg-type]
         coverage_report=kwargs.get('coverage_report'),  # type: ignore[arg-type]
         docker_timeout=kwargs.get('docker_timeout'),  # type: ignore[arg-type]
+        time_measurements_dir=kwargs.get('time_measurements_dir'),  # type: ignore[arg-type]
     )
 
 
@@ -841,6 +847,11 @@ def format(
 @click.option(
     "--insecure",
     help="Skip certificate validation", is_flag=True
+)
+@click.option(
+    "--skip_validation", is_flag=True,
+    help="Only for upload zipped packs, "
+         "if true will skip upload packs validation, use just when migrate existing custom content to packs."
 )
 @click.option(
     "-v", "--verbose",
@@ -1394,9 +1405,16 @@ def generate_docs(**kwargs):
 def create_id_set(**kwargs):
     """Create the content dependency tree by ids."""
     from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
+    from demisto_sdk.commands.find_dependencies.find_dependencies import \
+        remove_dependencies_from_id_set
+
     check_configuration_file('create-id-set', kwargs)
     id_set_creator = IDSetCreator(**kwargs)
-    id_set_creator.create_id_set()
+    id_set, excluded_items_by_pack, excluded_items_by_type = id_set_creator.create_id_set()
+
+    if excluded_items_by_pack:
+        remove_dependencies_from_id_set(id_set, excluded_items_by_pack, excluded_items_by_type)
+        id_set_creator.save_id_set()
 
 
 # ====================== merge-id-sets ====================== #
@@ -1638,10 +1656,9 @@ def postman_codegen(
     )
 
     if config_out:
-        path = output / f'config-{postman_config.name}.json'
-        with open(path, mode='w+') as f:
-            json.dump(postman_config.to_dict(), f, indent=4)
-            logger.info(f'Config file generated at:\n{os.path.abspath(path)}')
+        path = Path(output) / f'config-{postman_config.name}.json'
+        path.write_text(json.dumps(postman_config.to_dict(), indent=4))
+        logger.info(f'Config file generated at:\n{str(path.absolute())}')
     else:
         # generate integration yml
         yml_path = postman_config.generate_integration_package(output, is_unified=True)

@@ -2,6 +2,7 @@ from distutils.version import LooseVersion
 from typing import Any, Dict, List, Optional
 
 import decorator
+from requests import Response
 
 from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
                                                    CONF_PATH,
@@ -1646,10 +1647,11 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_readme_image_error(path: str, error_type: str, http_code: Optional[int] = None):
+    def invalid_readme_image_error(path: str, error_type: str, response: Optional[Response] = None):
         error = 'Error in readme image: '
-        if http_code:
-            error += f'got HTTP response code {http_code} '
+        if response is not None:
+            error += f'got HTTP response code {response.status_code}'
+            error += f', reason = {response.reason}' if response.reason else " "
 
         error_body = {'pack_readme_relative_error': Errors.pack_readme_image_relative_path_error,
                       'general_readme_relative_error': Errors.invalid_readme_image_relative_path_error,

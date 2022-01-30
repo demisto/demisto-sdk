@@ -324,11 +324,12 @@ class ReadMeValidator(BaseValidator):
                     session.mount("https://", adapter)
                     session.mount("http://", adapter)
                     response = session.get(img_url, timeout=10, stream=True)
+
                     if response.status_code != 200:
                         error_message, error_code = \
                             Errors.invalid_readme_image_error(prefix + f'({img_url})',
                                                               error_type='general_readme_absolute_error',
-                                                              http_code=response.status_code)
+                                                              response=response)
             except Exception as ex:
                 click.secho(f"Could not validate the image link: {img_url}\n {ex}", fg='yellow')
                 continue

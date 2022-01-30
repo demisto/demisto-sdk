@@ -75,11 +75,12 @@ class GitContentConfig:
             if gitlab_id:
                 self.gitlab_id = gitlab_id
             else:
-                click.secho(f'If your repo is in private gitlab repo, '
-                            f'configure `{GitCredentials.ENV_GITLAB_TOKEN_NAME}` environment variable '
-                            f'or configure `{GitContentConfig.ENV_REPO_HOSTNAME_NAME}` environment variable',
-                            fg='yellow')
-                click.secho('Could not find the repository name on gitlab - defaulting to demisto/content', fg='yellow')
+                if self.git_provider == GitProvider.GitLab:
+                    click.secho(f'If your repo is in private gitlab repo, '
+                                f'configure `{GitCredentials.ENV_GITLAB_TOKEN_NAME}` environment variable '
+                                f'or configure `{GitContentConfig.ENV_REPO_HOSTNAME_NAME}` environment variable',
+                                fg='yellow')
+                    click.secho('Could not find the repository name on gitlab - defaulting to demisto/content', fg='yellow')
                 self.git_provider = GitProvider.GitHub
                 self.current_repository = GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
                 self.repo_hostname = GitContentConfig.GITHUB_USER_CONTENT

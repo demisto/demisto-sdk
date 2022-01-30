@@ -295,7 +295,7 @@ class FieldBaseValidator(ContentEntityValidator):
         Returns:
             (bool): True if field name starts with `itemPrefixes` or pack name, false otherwise.
         """
-        ignored_packs = ['Common Types', 'CoreAlertFields']
+        ignored_packs = ['Common Types', 'Core Alert Fields']
         pack_metadata = get_pack_metadata(self.file_path)
         pack_name = pack_metadata.get('name')
         name_prefixes = pack_metadata.get('itemPrefix', []) if pack_metadata.get('itemPrefix') else [pack_name]

@@ -307,7 +307,7 @@ class TestDuplicates:
 
         # Check for duplicates for a new id-set,
         # In this case all the examples above should be considered as duplicates
-        assert has_duplicate(id_set['Layouts'], 'urlRep', 'Layouts', False, is_create_new=True),\
+        assert has_duplicate(id_set['Layouts'], 'urlRep', 'Layouts', False, is_create_new=True), \
             "if it's a new pack it is always a duplicate"
 
     @staticmethod
@@ -447,9 +447,7 @@ class TestIntegrations:
             const_data = constant.get('Dummy Integration')
             returned_data = returned.get('Dummy Integration')
 
-            assert IsEqualFunctions.is_dicts_equal(returned_data,
-                                                   const_data,
-                                                   simple_comparison=False)
+            assert IsEqualFunctions.is_dicts_equal(returned_data, const_data)
 
     @staticmethod
     def test_process_integration__exception(mocker):
@@ -551,7 +549,7 @@ class TestScripts:
         const_data = TestScripts.SCRIPT_DATA.get('DummyScript')
         returned_data = data.get('DummyScript')
 
-        assert IsEqualFunctions.is_dicts_equal(returned_data, const_data, simple_comparison=True)
+        assert IsEqualFunctions.is_dicts_equal(returned_data, const_data)
 
     @staticmethod
     def test_get_script_data_with_alternative_fields_top_level():
@@ -569,12 +567,13 @@ class TestScripts:
         file_path = TESTS_DIR + '/test_files/alternative_meta_fields/Script-top_level_alternative_fields.yml'
         data = get_script_data(file_path)
 
-        assert IsEqualFunctions.is_lists_equal(list(data.keys()), list(TestScripts.SCRIPT_DATA_ALTERNATIVE_TOP_LEVEL.keys()))
+        assert IsEqualFunctions.is_lists_equal(list(data.keys()),
+                                               list(TestScripts.SCRIPT_DATA_ALTERNATIVE_TOP_LEVEL.keys()))
 
         const_data = TestScripts.SCRIPT_DATA_ALTERNATIVE_TOP_LEVEL.get('DummyScript')
         returned_data = data.get('DummyScript')
 
-        assert IsEqualFunctions.is_dicts_equal(returned_data, const_data, simple_comparison=True)
+        assert IsEqualFunctions.is_dicts_equal(returned_data, const_data)
 
     @staticmethod
     def test_get_script_data_with_alternative_fields_second_level():
@@ -598,7 +597,7 @@ class TestScripts:
         const_data = TestScripts.SCRIPT_DATA_ALTERNATIVE_SECOND_LEVEL.get('DummyScript')
         returned_data = data.get('DummyScript')
 
-        assert IsEqualFunctions.is_dicts_equal(returned_data, const_data, True)
+        assert IsEqualFunctions.is_dicts_equal(returned_data, const_data)
 
     @staticmethod
     def test_process_script__sanity_package(mocker):
@@ -624,7 +623,7 @@ class TestScripts:
         const_data = TestScripts.PACK_SCRIPT_DATA.get('DummyScript')
         returned_data = data.get('DummyScript')
 
-        assert IsEqualFunctions.is_dicts_equal(returned_data, const_data, simple_comparison=True)
+        assert IsEqualFunctions.is_dicts_equal(returned_data, const_data)
 
     @staticmethod
     def test_process_script__marketplace_mismatch(mocker):
@@ -760,10 +759,7 @@ class TestPlaybooks:
         """
         file_path = TESTS_DIR + '/test_files/DummyPack/Playbooks/DummyPlaybook.yml'
         data = get_playbook_data(file_path)['Dummy Playbook']
-
-        assert IsEqualFunctions.is_dicts_equal(data,
-                                               TestPlaybooks.PLAYBOOK_DATA,
-                                               simple_comparison=False)
+        assert IsEqualFunctions.is_dicts_equal(data, TestPlaybooks.PLAYBOOK_DATA, lists_as_sets=True)
 
     @staticmethod
     def test_get_playbook_data_with_alternative_fields_top_level():
@@ -783,7 +779,7 @@ class TestPlaybooks:
 
         assert IsEqualFunctions.is_dicts_equal(data,
                                                TestPlaybooks.PLAYBOOK_DATA_ALTERNATIVE_FIELDS_TOP_LEVEL,
-                                               simple_comparison=False)
+                                               lists_as_sets=True)
 
     @staticmethod
     def test_get_playbook_data_with_alternative_fields_second_level():
@@ -802,7 +798,7 @@ class TestPlaybooks:
         data = get_playbook_data(file_path)['Dummy Playbook']
         assert IsEqualFunctions.is_dicts_equal(data,
                                                TestPlaybooks.PLAYBOOK_DATA_ALTERNATIVE_FIELDS_SECOND_LEVEL,
-                                               simple_comparison=False)
+                                               lists_as_sets=True)
 
     @staticmethod
     def test_get_playbook_data_2():

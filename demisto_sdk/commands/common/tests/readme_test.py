@@ -400,7 +400,8 @@ def test_verify_template_not_in_readme(repo):
 
 def test_verify_readme_image_paths(mocker):
     """
-    Given
+
+ Given
         - A README file (not pack README) with valid/invalid relative image
          paths and valid/invalid absolute image paths in it.
     When

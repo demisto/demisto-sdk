@@ -1,6 +1,5 @@
 import os
 from concurrent.futures._base import as_completed, Future
-from concurrent.futures.thread import ThreadPoolExecutor
 from configparser import ConfigParser, MissingSectionHeaderError
 from typing import Callable, List, Optional, Set, Tuple
 
@@ -8,6 +7,7 @@ import click
 from colorama import Fore
 from git import InvalidGitRepositoryError
 from packaging import version
+from pebble import ProcessPool
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
@@ -321,10 +321,10 @@ class ValidateManager:
 
         click.secho('\n================= Validating all files =================', fg="bright_cyan")
 
-        # readme_validator = ReadMeValidator(file_path='', ignored_errors='',
-        #                                    print_as_warnings=self.print_ignored_errors,
-        #                                    json_file_path=self.json_file_path)
-        # readme_validator.start_mdx_server()
+        readme_validator = ReadMeValidator(file_path='', ignored_errors='',
+                                           print_as_warnings=self.print_ignored_errors,
+                                           json_file_path=self.json_file_path)
+        readme_validator.start_mdx_server()
 
         all_packs_valid = set()
 
@@ -337,16 +337,16 @@ class ValidateManager:
         num_of_packs = len(all_packs)
         all_packs.sort(key=str.lower)
 
-        with ThreadPoolExecutor(max_workers=4) as executor:
+        with ProcessPool(max_workers=2) as executor:
             futures = []
             for pack_path in all_packs:
                 self.completion_percentage = format((count / num_of_packs) * 100, ".2f")  # type: ignore
                 futures.append(
-                    executor.submit(self.run_validations_on_pack, pack_path))
+                    executor.schedule(self.run_validations_on_pack, args=(pack_path,)))
                 count += 1
             wait_futures_complete(futures_list=futures, done_fn=lambda x: all_packs_valid.add(x))
 
-        # ReadMeValidator.stop_mdx_server()
+        ReadMeValidator.stop_mdx_server()
 
         return all(all_packs_valid)
 

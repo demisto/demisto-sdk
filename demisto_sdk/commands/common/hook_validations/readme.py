@@ -112,7 +112,6 @@ class ReadMeValidator(BaseValidator):
 
     def mdx_verify_server(self) -> bool:
         if not ReadMeValidator._MDX_SERVER_PROCESS:
-            print('BLABLA')
             server_started = ReadMeValidator.start_mdx_server(handle_error=self.handle_error,
                                                               file_path=str(self.file_path))
             if not server_started:
@@ -554,4 +553,4 @@ class ReadMeValidator(BaseValidator):
         return FOUND_FILES_AND_ERRORS, FOUND_FILES_AND_IGNORED_ERRORS
 
 
-atexit.register(ReadMeValidator.stop_mdx_server)
+# atexit.register(ReadMeValidator.stop_mdx_server)

@@ -552,4 +552,4 @@ class ReadMeValidator(BaseValidator):
         return FOUND_FILES_AND_ERRORS, FOUND_FILES_AND_IGNORED_ERRORS
 
 
-# atexit.register(ReadMeValidator.stop_mdx_server)
+atexit.register(ReadMeValidator.stop_mdx_server)

@@ -479,6 +479,7 @@ class ValidateManager:
                 else:
                     validation_print += f' {Fore.GREEN}[{self.completion_percentage}%]{Fore.RESET}'
 
+            # lock1
             click.echo(validation_print)
 
         structure_validator = StructureValidator(file_path, predefined_scheme=file_type,

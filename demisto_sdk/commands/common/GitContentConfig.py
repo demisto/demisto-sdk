@@ -72,10 +72,10 @@ class GitContentConfig:
         else:
             self.current_repository = repo_name
             repo_hostname, gitlab_id = self._search_gitlab_id(self.repo_hostname, repo_name) or (None, None)
-            if gitlab_id:
+            if gitlab_id is not None:
                 self.gitlab_id = gitlab_id
                 self.git_provider = GitProvider.GitLab
-            if not gitlab_id and self.git_provider == GitProvider.GitLab:
+            if gitlab_id is None and self.git_provider == GitProvider.GitLab:
                 click.secho(f'If your repo is in private gitlab repo, '
                             f'configure `{GitCredentials.ENV_GITLAB_TOKEN_NAME}` environment variable '
                             f'or configure `{GitContentConfig.ENV_REPO_HOSTNAME_NAME}` environment variable',
@@ -119,7 +119,7 @@ class GitContentConfig:
                                      (self._search_gitlab_id(self.repo_hostname, parsed_git.repo)) or \
                                      (None, None)
 
-        if self.git_provider == GitProvider.GitLab and not gitlab_id:
+        if self.git_provider == GitProvider.GitLab and gitlab_id is None:
             click.secho(f'If your repo is in private gitlab repo, '
                         f'configure `{GitCredentials.ENV_GITLAB_TOKEN_NAME}` environment variable '
                         f'or configure `{GitContentConfig.ENV_REPO_HOSTNAME_NAME}` environment variable', fg='yellow')
@@ -129,7 +129,7 @@ class GitContentConfig:
             self.repo_hostname = GitContentConfig.GITHUB_USER_CONTENT
             return
 
-        if gitlab_id:
+        if gitlab_id is not None:
             self.git_provider = GitProvider.GitLab
             self.gitlab_id = gitlab_id
             self.repo_hostname = gitlab_hostname
@@ -158,7 +158,7 @@ class GitContentConfig:
             search_results = res.json()
             assert search_results and isinstance(search_results, list) and isinstance(search_results[0], dict)
             gitlab_id = search_results[0].get('id')
-            if not gitlab_id:
+            if gitlab_id is None:
                 return None
             return gitlab_hostname, gitlab_id
         except (requests.exceptions.ConnectionError, json.JSONDecodeError, AssertionError) as e:

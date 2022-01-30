@@ -74,9 +74,11 @@ class TestFormatting:
         assert '# comment' in stdout
 
     @pytest.mark.parametrize('source_path, destination_path, formatter, yml_title, file_type', BASIC_YML_TEST_PACKS)
-    def test_basic_yml_updates(self, source_path, destination_path, formatter, yml_title, file_type):
+    def test_basic_yml_updates(self, mocker, source_path, destination_path, formatter, yml_title, file_type):
         schema_path = os.path.normpath(
             os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format(file_type)))
+        from demisto_sdk.commands.format import update_generic
+        mocker.patch.object(update_generic, 'get_remote_file', return_value={})
         base_yml = formatter(source_path, path=schema_path)
         base_yml.update_yml(file_type=file_type)
         assert yml_title not in str(base_yml.data)

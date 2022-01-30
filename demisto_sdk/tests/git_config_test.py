@@ -254,7 +254,7 @@ class TestGitContentConfig:
 
         mocker.patch.object(GitContentConfig,
                             '_search_gitlab_id',
-                            return_value=0)
+                            return_value=('gitlab.com', 0))
         git_config = GitContentConfig(custom_repo_name, git_provider=GitProvider.GitLab)
         assert git_config.current_repository == custom_repo_name
         assert git_config.base_api == 'https://gitlab.com/api/v4/projects/0/repository'

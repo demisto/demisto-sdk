@@ -438,10 +438,10 @@ def test_verify_readme_image_paths(mocker):
            '![branch in url]' in captured_output
     assert 'Branch name was found in the URL, please change it to the commit hash:\n' \
            '![commit hash in url]' not in captured_output
-    assert '''[RM108] - Error in readme image: got HTTP response code 404
+    assert '''[RM108] - Error in readme image: got HTTP response code 404 
 The following image link seems to be broken, please repair it:
 ![Identity with High Risk Score](https://github.com/demisto/test1.png)''' in captured_output
-    assert '''[RM108] - Error in readme image: got HTTP response code 404
+    assert '''[RM108] - Error in readme image: got HTTP response code 404 
 The following image link seems to be broken, please repair it:
 (https://github.com/demisto/content/raw/test2.png)''' in captured_output
     assert 'please repair it:\n' \

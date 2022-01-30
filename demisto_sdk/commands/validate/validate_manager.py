@@ -1,4 +1,3 @@
-import multiprocessing
 import os
 from concurrent.futures._base import as_completed, Future
 from concurrent.futures.thread import ThreadPoolExecutor
@@ -6,12 +5,9 @@ from configparser import ConfigParser, MissingSectionHeaderError
 from typing import Callable, List, Optional, Set, Tuple
 
 import click
-import pebble
 from colorama import Fore
 from git import InvalidGitRepositoryError
-from lock import lock
 from packaging import version
-from pebble import ProcessPool
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration

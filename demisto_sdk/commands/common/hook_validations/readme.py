@@ -70,8 +70,8 @@ class ReadMeValidator(BaseValidator):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          suppress_print=suppress_print, json_file_path=json_file_path)
         self.content_path = get_content_path()
-        self.file_path = Path(file_path)
-        if self.file_path:
+        if file_path:
+            self.file_path = Path(file_path)
             self.pack_path = self.file_path.parent
             self.node_modules_path = self.content_path / Path('node_modules')
             with open(self.file_path) as f:

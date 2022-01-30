@@ -2118,7 +2118,7 @@ def get_release_note_entries(version='') -> list:
 
     changelog_file_content = get_remote_file(full_file_path='CHANGELOG.md',
                                              return_content=True,
-                                             git_repo='demisto/demisto-sdk').decode('utf-8').split('\n')
+                                             git_repo='demisto/demisto-sdk').split('\n')
 
     if not version or 'dev' in version:
         version = 'Changelog'

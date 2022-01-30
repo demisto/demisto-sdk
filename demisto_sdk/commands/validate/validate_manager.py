@@ -4,7 +4,6 @@ from configparser import ConfigParser, MissingSectionHeaderError
 from typing import Callable, List, Optional, Set, Tuple
 
 import click
-import lock as lock
 import pebble
 from colorama import Fore
 from git import InvalidGitRepositoryError

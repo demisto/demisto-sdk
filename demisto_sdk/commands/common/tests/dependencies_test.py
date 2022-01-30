@@ -1090,7 +1090,7 @@ def test_dependencies_case_1(mocker, repo):
     expected_dependencies = {'bar', 'CommonTypes'}
     dependencies_from_pack_metadata = pack_foo.pack_metadata.read_json_as_dict().get('dependencies').keys()
 
-    assert set(expected_dependencies) == set(dependencies_from_pack_metadata)
+    assert expected_dependencies == set(dependencies_from_pack_metadata)
 
 
 def test_dependencies_case_2(mocker, repo):
@@ -1147,4 +1147,4 @@ def test_dependencies_case_2(mocker, repo):
     expected_dependencies = {'bar', 'CommonTypes'}
     dependencies_from_pack_metadata = repo.packs[0].pack_metadata.read_json_as_dict().get('dependencies').keys()
 
-    assert set(expected_dependencies) == set(dependencies_from_pack_metadata)
+    assert expected_dependencies == set(dependencies_from_pack_metadata)

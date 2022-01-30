@@ -1127,7 +1127,7 @@ def get_depends_on(data_dict):
     return depends_on_list, command_to_integration
 
 
-def process_integration(file_path: str, print_logs: bool, marketplace: str = 'xsoar') -> Tuple[list, dict]:
+def process_integration(file_path: str, print_logs: bool, marketplace: str = '') -> Tuple[list, dict]:
     """
     Process integration dir or file
 
@@ -1167,7 +1167,7 @@ def process_integration(file_path: str, print_logs: bool, marketplace: str = 'xs
     return res, excluded_items_from_id_set
 
 
-def process_script(file_path: str, print_logs: bool, marketplace: str = 'xsoar') -> Tuple[list, dict]:
+def process_script(file_path: str, print_logs: bool, marketplace: str = '') -> Tuple[list, dict]:
     res = []
     excluded_items_from_id_set: dict = {}
     try:
@@ -1194,7 +1194,7 @@ def process_script(file_path: str, print_logs: bool, marketplace: str = 'xsoar')
     return res, excluded_items_from_id_set
 
 
-def process_incident_fields(file_path: str, print_logs: bool, incidents_types_list: list, marketplace: str = 'xsoar') -> \
+def process_incident_fields(file_path: str, print_logs: bool, incidents_types_list: list, marketplace: str = '') -> \
         Tuple[list, dict]:
     """
     Process a incident_fields JSON file
@@ -1221,7 +1221,7 @@ def process_incident_fields(file_path: str, print_logs: bool, incidents_types_li
     return res, excluded_items_from_id_set
 
 
-def process_indicator_types(file_path: str, print_logs: bool, all_integrations: list, marketplace: str = 'xsoar') -> \
+def process_indicator_types(file_path: str, print_logs: bool, all_integrations: list, marketplace: str = '') -> \
         Tuple[list, dict]:
     """
     Process a indicator types JSON file
@@ -1253,7 +1253,7 @@ def process_indicator_types(file_path: str, print_logs: bool, all_integrations: 
     return res, excluded_items_from_id_set
 
 
-def process_generic_items(file_path: str, print_logs: bool, marketplace: str = 'xsoar',
+def process_generic_items(file_path: str, print_logs: bool, marketplace: str = '',
                           generic_types_list: list = None) -> Tuple[list, dict]:
     """
     Process a generic field JSON file
@@ -1286,7 +1286,7 @@ def process_generic_items(file_path: str, print_logs: bool, marketplace: str = '
     return res, excluded_items_from_id_set
 
 
-def process_jobs(file_path: str, print_logs: bool, marketplace: str = 'xsoar') -> list:
+def process_jobs(file_path: str, print_logs: bool, marketplace: str = '') -> list:
     """
     Process a JSON file representing a Job object.
     Args:
@@ -1311,7 +1311,7 @@ def process_jobs(file_path: str, print_logs: bool, marketplace: str = 'xsoar') -
 
 
 def process_general_items(file_path: str, print_logs: bool, expected_file_types: Tuple[FileType],
-                          data_extraction_func: Callable, marketplace: str = 'xsoar') -> Tuple[list, dict]:
+                          data_extraction_func: Callable, marketplace: str = '') -> Tuple[list, dict]:
     """
     Process a general item file.
     expected file in one of the following:
@@ -1351,7 +1351,7 @@ def process_general_items(file_path: str, print_logs: bool, expected_file_types:
     return res, excluded_items_from_id_set
 
 
-def process_test_playbook_path(file_path: str, print_logs: bool, marketplace: str = 'xsoar') -> tuple:
+def process_test_playbook_path(file_path: str, print_logs: bool, marketplace: str = '') -> tuple:
     """
     Process a yml file in the test playbook dir. Maybe either a script or playbook
 

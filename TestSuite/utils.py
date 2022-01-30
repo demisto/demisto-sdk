@@ -11,17 +11,22 @@ class IsEqualFunctions:
         if dict1.keys() != dict2.keys():
             return False
 
-        for k, v in dict1.items():
-            if isinstance(v, dict):
-                return IsEqualFunctions.is_dicts_equal(v, dict2[k], lists_as_sets)
+        for k, v1 in dict1.items():
+            v2 = dict2[k]
 
-            if isinstance(v, list):
+            if isinstance(v1, dict):
+                comparison = IsEqualFunctions.is_dicts_equal(v1, v2, lists_as_sets)
+            elif isinstance(v1, list):
                 if lists_as_sets:
-                    return set(v) == set(dict2[k])
+                    comparison = set(v1) == set(v2)
                 else:
-                    return v == dict2[k]
+                    comparison = v1 == v2
+            elif isinstance(v1, set):
+                comparison = set(v1) == set(v2)
+            else:
+                comparison = v1 == v2
 
-            if isinstance(v, set):
-                return set(v) == set(dict2[k])
+            if not comparison:
+                return False
 
-            return v == dict2[k]
+        return True

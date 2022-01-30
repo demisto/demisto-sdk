@@ -1020,6 +1020,7 @@ def test_specific_entity(mocker, repo, entity_class):
 
     assert set(dependencies) == set(dependencies_from_pack_metadata)
 
+
 def mock_is_external_repo(mocker, is_external_repo_return):
     return mocker.patch(
         'demisto_sdk.commands.find_dependencies.find_dependencies.is_external_repository',

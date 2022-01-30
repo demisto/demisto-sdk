@@ -5,8 +5,6 @@ import networkx as nx
 import pytest
 
 import demisto_sdk.commands.create_id_set.create_id_set as cis
-from TestSuite.test_tools import ChangeCWD
-from TestSuite.utils import IsEqualFunctions
 from demisto_sdk.commands.common.constants import (DEFAULT_JOB_FROM_VERSION,
                                                    FileType)
 from demisto_sdk.commands.find_dependencies.find_dependencies import (
@@ -14,6 +12,8 @@ from demisto_sdk.commands.find_dependencies.find_dependencies import (
     get_packs_dependent_on_given_packs,
     remove_items_from_content_entities_sections,
     remove_items_from_packs_section)
+from TestSuite.test_tools import ChangeCWD
+from TestSuite.utils import IsEqualFunctions
 
 
 def create_a_pack_entity(pack, entity_type: FileType = None, entity_id: str = None, entity_name: str = None,
@@ -565,7 +565,7 @@ class TestDependsOnScriptAndIntegration:
                                {('script', 'DummyScript'): {'HelloWorld': [('script', 'HelloWorldScript')]}}),
                               ("PrismaCloudComputeParseAuditAlert", {("PrismaCloudCompute", True)},
                                {('script', 'DummyScript'):
-                                    {'PrismaCloudCompute': [('script', 'PrismaCloudComputeParseAuditAlert')]}})
+                                {'PrismaCloudCompute': [('script', 'PrismaCloudComputeParseAuditAlert')]}})
                               ])
     def test_collect_scripts_depends_on_script_with_items(self, dependency_script, expected_pack, expected_items,
                                                           module_repo):
@@ -1337,10 +1337,10 @@ class TestDependsOnPlaybook:
         """
         expected_packs = {('SafeBreach', True), ('CommonScripts', True), ('CommonTypes', True)}
         expected_items = {('playbook', 'SafeBreach - Compare and Validate Insight Indicators'):
-                              {'SafeBreach': [('integration', 'SafeBreach')],
-                               'CommonScripts': [('script', 'ChangeContext'), ('script', 'Set'),
-                                                 ('script', 'SetAndHandleEmpty')],
-                               'CommonTypes': [('incidentfield', 'indicator_accounttype')]}}
+                          {'SafeBreach': [('integration', 'SafeBreach')],
+                           'CommonScripts': [('script', 'ChangeContext'), ('script', 'Set'),
+                                             ('script', 'SetAndHandleEmpty')],
+                           'CommonTypes': [('incidentfield', 'indicator_accounttype')]}}
         test_input = [
             {
                 "SafeBreach - Compare and Validate Insight Indicators": {
@@ -1982,8 +1982,8 @@ class TestDependsOnIncidentType:
         """
         expected_result = ({('AutoFocus', True), ('Volatility', True)},
                            {('incidenttype', 'Dummy Incident Type'):
-                                {'AutoFocus': [('playbook', 'Autofocus Query Samples, Sessions and Tags')],
-                                 'Volatility': [('script', 'AnalyzeMemImage')]}})
+                            {'AutoFocus': [('playbook', 'Autofocus Query Samples, Sessions and Tags')],
+                             'Volatility': [('script', 'AnalyzeMemImage')]}})
 
         test_input = [
             {
@@ -3011,11 +3011,11 @@ def get_mock_dependency_graph():
 
     graph.add_node('pack1', mandatory_for_packs=[], depending_on_items_mandatorily={
         ('type_item_a', 'item_a'): {'pack2': ('type_item_2', 'item2'), 'pack3': ('type_item_3', 'item3')}},
-                   mandatory_for_items={}, depending_on_packs=[('pack2', True), ('pack3', True)])
+        mandatory_for_items={}, depending_on_packs=[('pack2', True), ('pack3', True)])
     graph.add_node('pack2', mandatory_for_packs=['pack1'], depending_on_items_mandatorily={
         ('type_item_b', 'item_b'): {'pack3': ('type_item_3', 'item3'), 'pack2': ('type_item_2', 'item2')}},
-                   mandatory_for_items={('type_item_2', 'item2'): {'pack1': ('type_item_a', 'item_a')}},
-                   depending_on_packs=[('pack3', True), ('pack2', True)])
+        mandatory_for_items={('type_item_2', 'item2'): {'pack1': ('type_item_a', 'item_a')}},
+        depending_on_packs=[('pack3', True), ('pack2', True)])
     graph.add_node('pack3', mandatory_for_packs=['pack1', 'pack2'], depending_on_items_mandatorily={},
                    mandatory_for_items={('type_item_3', 'item3'): {'pack1': ('type_item_a', 'item_a'),
                                                                    'pack2': ('type_item_b', 'item_b')}},

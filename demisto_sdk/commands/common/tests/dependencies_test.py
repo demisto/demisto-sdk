@@ -13,7 +13,6 @@ from TestSuite.json_based import JSONBased
 from TestSuite.playbook import Playbook
 from TestSuite.script import Script
 from TestSuite.test_tools import ChangeCWD
-from TestSuite.utils import IsEqualFunctions
 
 
 def update_id_set(repo):

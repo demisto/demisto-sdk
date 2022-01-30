@@ -153,6 +153,9 @@ def should_skip_item_by_mp(file_path: str, marketplace: str, excluded_items_from
 
     """
 
+    if not marketplace:
+        return False
+
     # first check, check field 'marketplaces' in the item's file
     file_type = Path(file_path).suffix
     try:
@@ -1690,7 +1693,7 @@ def merge_id_sets(first_id_set_dict: dict, second_id_set_dict: dict, print_logs:
 
 def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_create=None,  # noqa : C901
                      objects_to_create: list = None, print_logs: bool = True, fail_on_duplicates: bool = False,
-                     marketplace: str = 'xsoar'):
+                     marketplace: str = ''):
     """Re create the id-set
 
     Args:

@@ -1,5 +1,7 @@
+import multiprocessing
 import os
 from concurrent.futures._base import as_completed, Future
+from concurrent.futures.thread import ThreadPoolExecutor
 from configparser import ConfigParser, MissingSectionHeaderError
 from typing import Callable, List, Optional, Set, Tuple
 
@@ -7,6 +9,7 @@ import click
 import pebble
 from colorama import Fore
 from git import InvalidGitRepositoryError
+from lock import lock
 from packaging import version
 from pebble import ProcessPool
 
@@ -338,12 +341,12 @@ class ValidateManager:
         num_of_packs = len(all_packs)
         all_packs.sort(key=str.lower)
 
-        with ProcessPool(max_workers=4) as executor:
+        with ThreadPoolExecutor(max_workers=4) as executor:
             futures = []
             for pack_path in all_packs:
                 self.completion_percentage = format((count / num_of_packs) * 100, ".2f")  # type: ignore
                 futures.append(
-                    executor.schedule(self.run_validations_on_pack, args=(pack_path,)))
+                    executor.submit(self.run_validations_on_pack, pack_path))
                 count += 1
             wait_futures_complete(futures_list=futures, done_fn=lambda x: all_packs_valid.add(x))
 
@@ -767,7 +770,6 @@ class ValidateManager:
                                                      json_file_path=self.json_file_path)
         return description_validator.is_valid_file()
 
-    @pebble.synchronized([ProcessPool])
     def validate_readme(self, file_path, pack_error_ignore_list):
         readme_validator = ReadMeValidator(file_path, ignored_errors=pack_error_ignore_list,
                                            print_as_warnings=self.print_ignored_errors,

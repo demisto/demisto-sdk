@@ -70,12 +70,13 @@ class ReadMeValidator(BaseValidator):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          suppress_print=suppress_print, json_file_path=json_file_path)
         self.content_path = get_content_path()
-        self.file_path = Path(file_path)
-        self.pack_path = self.file_path.parent
-        self.node_modules_path = self.content_path / Path('node_modules')
-        with open(self.file_path) as f:
-            readme_content = f.read()
-        self.readme_content = readme_content
+        if file_path:
+            self.file_path = Path(file_path)
+            self.pack_path = self.file_path.parent
+            self.node_modules_path = self.content_path / Path('node_modules')
+            with open(self.file_path) as f:
+                readme_content = f.read()
+            self.readme_content = readme_content
 
     def is_valid_file(self) -> bool:
         """Check whether the readme file is valid or not
@@ -111,6 +112,7 @@ class ReadMeValidator(BaseValidator):
 
     def mdx_verify_server(self) -> bool:
         if not ReadMeValidator._MDX_SERVER_PROCESS:
+            print('BLABLA')
             server_started = ReadMeValidator.start_mdx_server(handle_error=self.handle_error,
                                                               file_path=str(self.file_path))
             if not server_started:

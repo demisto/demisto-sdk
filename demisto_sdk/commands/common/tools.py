@@ -225,8 +225,10 @@ def get_local_remote_file(
     repo = git.Repo(search_parent_directories=True)  # the full file path could be a git file path
     repo_git_util = GitUtil(repo)
     git_path = repo_git_util.get_local_remote_file_path(full_file_path, tag)
-    local_content = repo_git_util.get_local_remote_file_content(git_path)
-    return get_file_details(local_content, full_file_path, return_content)
+    file_content = repo_git_util.get_local_remote_file_content(git_path)
+    if return_content:
+        return file_content
+    return get_file_details(file_content, full_file_path)
 
 
 def get_remote_file_from_api(
@@ -295,17 +297,17 @@ def get_remote_file_from_api(
                 f'Reason: {err_msg}', fg='yellow'
             )
         return {}
-    return get_file_details(res.text, full_file_path, return_content)
+    file_content = res.text
+    if return_content:
+        return file_content
+    return get_file_details(file_content, full_file_path)
 
 
 def get_file_details(
         file_content,
         full_file_path: str,
-        return_content: bool = False,
-) -> Union[str, Dict]:
-    if return_content:
-        file_details = file_content
-    elif full_file_path.endswith('json'):
+) -> Dict:
+    if full_file_path.endswith('json'):
         file_details = json.loads(file_content)
     elif full_file_path.endswith('yml'):
         file_details = ryaml.load(file_content)

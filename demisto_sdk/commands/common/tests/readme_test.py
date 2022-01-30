@@ -2,16 +2,14 @@ import glob
 import io
 import os
 import sys
-from typing import NamedTuple
 
 import pytest
 import requests_mock
-from urllib3 import PoolManager
 
-from TestSuite.test_tools import ChangeCWD
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from TestSuite.test_tools import ChangeCWD
 
 VALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-valid.md'
 INVALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-invalid.md'
@@ -419,15 +417,15 @@ def test_verify_readme_image_paths(mocker):
     readme_validator = ReadMeValidator(IMAGES_MD)
     mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='branch_name')
 
-    mocked_response = NamedTuple('result', [('status', int)])
-
-    mocked_responses = {'https://github.com/demisto/test1.png': mocked_response(404),
-                        'https://github.com/demisto/content/raw/test2.png': mocked_response(404),
-                        'https://github.com/demisto/test3.png': mocked_response(200)}
-
-    mocker.patch.object(PoolManager, 'request',
-                        side_effect=lambda method, url, timeout, preload_content: mocked_responses[url])
-    is_valid = readme_validator.verify_readme_image_paths()
+    with requests_mock.Mocker() as m:
+        # Mock get requests
+        m.get('https://github.com/demisto/test1.png',
+              status_code=404, text="Test1")
+        m.get('https://github.com/demisto/content/raw/test2.png',
+              status_code=404, text="Test2")
+        m.get('https://github.com/demisto/test3.png',
+              status_code=200, text="Test3")
+        is_valid = readme_validator.verify_readme_image_paths()
 
     sys.stdout = sys.__stdout__  # reset stdout.
     captured_output = captured_output.getvalue()
@@ -440,12 +438,12 @@ def test_verify_readme_image_paths(mocker):
            '![branch in url]' in captured_output
     assert 'Branch name was found in the URL, please change it to the commit hash:\n' \
            '![commit hash in url]' not in captured_output
-    assert ''' [RM108] - Error in readme image: got HTTP response code 404 
-    The following image link seems to be broken, please repair it:
-    ![Identity with High Risk Score](https://github.com/demisto/test1.png)''' in captured_output
-    assert ''' [RM108] - Error in readme image: got HTTP response code 404 
-    The following image link seems to be broken, please repair it:
-    (https://github.com/demisto/content/raw/test2.png)''' in captured_output
+    assert '''[RM108] - Error in readme image: got HTTP response code 404
+The following image link seems to be broken, please repair it:
+![Identity with High Risk Score](https://github.com/demisto/test1.png)''' in captured_output
+    assert '''[RM108] - Error in readme image: got HTTP response code 404
+The following image link seems to be broken, please repair it:
+(https://github.com/demisto/content/raw/test2.png)''' in captured_output
     assert 'please repair it:\n' \
            '![Identity with High Risk Score](https://github.com/demisto/test3.png)' \
            not in captured_output

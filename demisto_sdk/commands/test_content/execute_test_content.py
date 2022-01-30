@@ -44,10 +44,8 @@ def _add_pr_comment(comment, logging_module):
                 response = requests.get(issue_url, headers=headers, verify=False)
                 issue_comments = _handle_github_response(response, logging_module)
                 for existing_comment in issue_comments:
-                    if is_skipped_tests_flow and SKIPPED_CONTENT_COMMENT in existing_comment.get('body', ''):
-                        comment_url = existing_comment.get('url')
-                        requests.delete(comment_url, headers=headers, verify=False)
-                    if not is_skipped_tests_flow and COVERAGE_REPORT_COMMENT in existing_comment.get('body', ''):
+                    if (is_skipped_tests_flow and SKIPPED_CONTENT_COMMENT in existing_comment.get('body', '')) or \
+                            (not is_skipped_tests_flow and COVERAGE_REPORT_COMMENT in existing_comment.get('body', '')):
                         comment_url = existing_comment.get('url')
                         requests.delete(comment_url, headers=headers, verify=False)
                 response = requests.post(issue_url, json={'body': comment}, headers=headers, verify=False)

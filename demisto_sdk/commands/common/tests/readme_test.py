@@ -6,10 +6,10 @@ import sys
 import pytest
 import requests_mock
 
+from TestSuite.test_tools import ChangeCWD
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from TestSuite.test_tools import ChangeCWD
 
 VALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-valid.md'
 INVALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-invalid.md'
@@ -438,12 +438,12 @@ def test_verify_readme_image_paths(mocker):
            '![branch in url]' in captured_output
     assert 'Branch name was found in the URL, please change it to the commit hash:\n' \
            '![commit hash in url]' not in captured_output
-    assert '''[RM108] - Error in readme image: got HTTP response code 404 
-The following image link seems to be broken, please repair it:
-![Identity with High Risk Score](https://github.com/demisto/test1.png)''' in captured_output
-    assert '''[RM108] - Error in readme image: got HTTP response code 404 
-The following image link seems to be broken, please repair it:
-(https://github.com/demisto/content/raw/test2.png)''' in captured_output
+    assert "\n".join(("[RM108] - Error in readme image: got HTTP response code 404 ",
+                      "The following image link seems to be broken, please repair it:",
+                      "![Identity with High Risk Score](https://github.com/demisto/test1.png)")) in captured_output
+    assert "\n".join(("[RM108] - Error in readme image: got HTTP response code 404 ",
+                      "The following image link seems to be broken, please repair it:",
+                      "(https://github.com/demisto/content/raw/test2.png)")) in captured_output
     assert 'please repair it:\n' \
            '![Identity with High Risk Score](https://github.com/demisto/test3.png)' \
            not in captured_output

@@ -448,7 +448,7 @@ class TestIntegrations:
             const_data = constant.get('Dummy Integration')
             returned_data = returned.get('Dummy Integration')
 
-            assert IsEqualFunctions.is_dicts_equal(returned_data, const_data)
+            assert IsEqualFunctions.is_dicts_equal(returned_data, const_data, lists_as_sets=True)
 
     @staticmethod
     def test_process_integration__exception(mocker):

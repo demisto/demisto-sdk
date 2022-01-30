@@ -90,7 +90,8 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 
-LOCKER = multiprocessing.RLock()
+global LOCKER
+LOCKER = multiprocessing.Manager().Lock()
 
 
 class ValidateManager:
@@ -346,7 +347,7 @@ class ValidateManager:
             for pack_path in all_packs:
                 self.completion_percentage = format((count / num_of_packs) * 100, ".2f")  # type: ignore
                 futures.append(
-                    executor.schedule(self.run_validations_on_pack, args=(pack_path,)))
+                    executor.schedule(self.run_validations_on_pack, args=(pack_path, LOCKER,)))
                 count += 1
             wait_futures_complete(futures_list=futures, done_fn=lambda x: all_packs_valid.add(x))
 
@@ -354,7 +355,7 @@ class ValidateManager:
 
         return all(all_packs_valid)
 
-    def run_validations_on_pack(self, pack_path):
+    def run_validations_on_pack(self, pack_path, locker):
         """Runs validation on all files in given pack. (i,g,a)
 
         Args:
@@ -372,13 +373,13 @@ class ValidateManager:
             content_entity_path = os.path.join(pack_path, content_dir)
             if content_dir in CONTENT_ENTITIES_DIRS:
                 pack_entities_validation_results.add(self.run_validation_on_content_entities(content_entity_path,
-                                                                                             pack_error_ignore_list))
+                                                                                             pack_error_ignore_list, locker))
             else:
                 self.ignored_files.add(content_entity_path)
 
         return all(pack_entities_validation_results)
 
-    def run_validation_on_content_entities(self, content_entity_dir_path, pack_error_ignore_list):
+    def run_validation_on_content_entities(self, content_entity_dir_path, pack_error_ignore_list, locker):
         """Gets non-pack folder and runs validation within it (Scripts, Integrations...)
 
         Returns:
@@ -400,7 +401,7 @@ class ValidateManager:
                 if os.path.isfile(file_path):
                     if file_path.endswith('.json') or file_path.endswith('.yml') or file_path.endswith('.md'):
                         content_entities_validation_results.add(self.run_validations_on_file(file_path,
-                                                                                             pack_error_ignore_list))
+                                                                                             pack_error_ignore_list, locker))
                     else:
                         self.ignored_files.add(file_path)
 
@@ -444,7 +445,7 @@ class ValidateManager:
 
     # flake8: noqa: C901
     def run_validations_on_file(self, file_path, pack_error_ignore_list, is_modified=False,
-                                old_file_path=None, modified_files=None, added_files=None):
+                                old_file_path=None, modified_files=None, added_files=None, locker=None):
         """Choose a validator to run for a single file. (i)
 
         Args:
@@ -540,9 +541,9 @@ class ValidateManager:
             return self.validate_description(file_path, pack_error_ignore_list)
 
         elif file_type == FileType.README:
-            LOCKER.acquire()
+            locker.acquire()
             is_valid = self.validate_readme(file_path, pack_error_ignore_list)
-            LOCKER.release()
+            locker.release()
             return is_valid
 
         elif file_type == FileType.REPORT:

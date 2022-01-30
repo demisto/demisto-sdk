@@ -950,7 +950,7 @@ def create_common_entity_data(path, name, to_version, from_version, pack):
     return data
 
 
-def get_pack_metadata_data(file_path, print_logs: bool, marketplace: str = 'xsoar'):
+def get_pack_metadata_data(file_path, print_logs: bool, marketplace: str = ''):
     try:
         if print_logs:
             print(f'adding {file_path} to id_set')

@@ -71,11 +71,12 @@ class ReadMeValidator(BaseValidator):
                          suppress_print=suppress_print, json_file_path=json_file_path)
         self.content_path = get_content_path()
         self.file_path = Path(file_path)
-        self.pack_path = self.file_path.parent
-        self.node_modules_path = self.content_path / Path('node_modules')
-        with open(self.file_path) as f:
-            readme_content = f.read()
-        self.readme_content = readme_content
+        if self.file_path:
+            self.pack_path = self.file_path.parent
+            self.node_modules_path = self.content_path / Path('node_modules')
+            with open(self.file_path) as f:
+                readme_content = f.read()
+            self.readme_content = readme_content
 
     def is_valid_file(self) -> bool:
         """Check whether the readme file is valid or not
@@ -552,4 +553,4 @@ class ReadMeValidator(BaseValidator):
         return FOUND_FILES_AND_ERRORS, FOUND_FILES_AND_IGNORED_ERRORS
 
 
-atexit.register(ReadMeValidator.stop_mdx_server)
+# atexit.register(ReadMeValidator.stop_mdx_server)

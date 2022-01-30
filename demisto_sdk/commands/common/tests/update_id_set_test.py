@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 
 import demisto_sdk.commands.common.update_id_set as uis
+from TestSuite.utils import IsEqualFunctions
 from demisto_sdk.commands.common.constants import (DEFAULT_JOB_FROM_VERSION,
                                                    JOBS_DIR, FileType)
 from demisto_sdk.commands.common.legacy_git_tools import git_path
@@ -26,7 +27,6 @@ from demisto_sdk.commands.common.update_id_set import (
     get_widget_data, has_duplicate, merge_id_sets, process_general_items,
     process_incident_fields, process_integration, process_jobs, process_script,
     re_create_id_set, should_skip_item_by_mp)
-from TestSuite.utils import IsEqualFunctions
 
 TESTS_DIR = f'{git_path()}/demisto_sdk/tests'
 
@@ -443,7 +443,7 @@ class TestIntegrations:
         ]
 
         for returned, constant in test_pairs:
-            assert IsEqualFunctions.is_lists_equal(list(returned.keys()), list(constant.keys()))
+            assert list(returned.keys()) == list(constant.keys())
 
             const_data = constant.get('Dummy Integration')
             returned_data = returned.get('Dummy Integration')
@@ -545,7 +545,7 @@ class TestScripts:
         file_path = TESTS_DIR + '/test_files/DummyPack/Scripts/DummyScript2.yml'
         data = get_script_data(file_path)
 
-        assert IsEqualFunctions.is_lists_equal(list(data.keys()), list(TestScripts.SCRIPT_DATA.keys()))
+        assert list(data.keys()) == list(TestScripts.SCRIPT_DATA.keys())
 
         const_data = TestScripts.SCRIPT_DATA.get('DummyScript')
         returned_data = data.get('DummyScript')
@@ -568,8 +568,7 @@ class TestScripts:
         file_path = TESTS_DIR + '/test_files/alternative_meta_fields/Script-top_level_alternative_fields.yml'
         data = get_script_data(file_path)
 
-        assert IsEqualFunctions.is_lists_equal(list(data.keys()),
-                                               list(TestScripts.SCRIPT_DATA_ALTERNATIVE_TOP_LEVEL.keys()))
+        assert list(data.keys()) == list(TestScripts.SCRIPT_DATA_ALTERNATIVE_TOP_LEVEL.keys())
 
         const_data = TestScripts.SCRIPT_DATA_ALTERNATIVE_TOP_LEVEL.get('DummyScript')
         returned_data = data.get('DummyScript')
@@ -592,8 +591,7 @@ class TestScripts:
         file_path = TESTS_DIR + '/test_files/alternative_meta_fields/Script-second_level_alternative_fields.yml'
         data = get_script_data(file_path)
 
-        assert IsEqualFunctions.is_lists_equal(list(data.keys()),
-                                               list(TestScripts.SCRIPT_DATA_ALTERNATIVE_SECOND_LEVEL.keys()))
+        assert (list(data.keys()) == list(TestScripts.SCRIPT_DATA_ALTERNATIVE_SECOND_LEVEL.keys()))
 
         const_data = TestScripts.SCRIPT_DATA_ALTERNATIVE_SECOND_LEVEL.get('DummyScript')
         returned_data = data.get('DummyScript')
@@ -619,7 +617,7 @@ class TestScripts:
         assert len(res) == 1
         data = res[0]
 
-        assert IsEqualFunctions.is_lists_equal(list(data.keys()), list(TestScripts.PACK_SCRIPT_DATA.keys()))
+        assert list(data.keys()) == list(TestScripts.PACK_SCRIPT_DATA.keys())
 
         const_data = TestScripts.PACK_SCRIPT_DATA.get('DummyScript')
         returned_data = data.get('DummyScript')

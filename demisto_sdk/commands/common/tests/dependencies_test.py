@@ -982,7 +982,7 @@ def test_dependencies(mocker, repo, test_number):
     if f'pack_{pack_to_verify}' in dependencies:
         dependencies.remove(f'pack_{pack_to_verify}')
 
-    assert IsEqualFunctions.is_sets_equal(dependencies, dependencies_from_pack_metadata)
+    assert dependencies == dependencies_from_pack_metadata
 
 
 @pytest.mark.parametrize('entity_class', CLASSES)
@@ -1018,8 +1018,7 @@ def test_specific_entity(mocker, repo, entity_class):
     if 'pack_0' in dependencies:
         dependencies.remove('pack_0')
 
-    assert IsEqualFunctions.is_sets_equal(dependencies, dependencies_from_pack_metadata)
-
+    assert set(dependencies) == set(dependencies_from_pack_metadata)
 
 def mock_is_external_repo(mocker, is_external_repo_return):
     return mocker.patch(
@@ -1091,7 +1090,7 @@ def test_dependencies_case_1(mocker, repo):
     expected_dependencies = {'bar', 'CommonTypes'}
     dependencies_from_pack_metadata = pack_foo.pack_metadata.read_json_as_dict().get('dependencies').keys()
 
-    assert IsEqualFunctions.is_sets_equal(expected_dependencies, dependencies_from_pack_metadata)
+    assert set(expected_dependencies) == set(dependencies_from_pack_metadata)
 
 
 def test_dependencies_case_2(mocker, repo):
@@ -1148,4 +1147,4 @@ def test_dependencies_case_2(mocker, repo):
     expected_dependencies = {'bar', 'CommonTypes'}
     dependencies_from_pack_metadata = repo.packs[0].pack_metadata.read_json_as_dict().get('dependencies').keys()
 
-    assert IsEqualFunctions.is_sets_equal(expected_dependencies, dependencies_from_pack_metadata)
+    assert set(expected_dependencies) == set(dependencies_from_pack_metadata)

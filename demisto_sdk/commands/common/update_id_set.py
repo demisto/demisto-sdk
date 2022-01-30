@@ -2196,7 +2196,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     new_ids_dict['Mappers'] = sort(mappers_list)
     new_ids_dict['Packs'] = packs_dict
 
-    if marketplace == MarketplaceVersions.XSOAR.value:
+    if marketplace != MarketplaceVersions.MarketplaceV2.value:
         new_ids_dict['GenericTypes'] = sort(generic_types_list)
         new_ids_dict['GenericFields'] = sort(generic_fields_list)
         new_ids_dict['GenericModules'] = sort(generic_modules_list)
@@ -2229,7 +2229,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
 def find_duplicates(id_set, print_logs, marketplace):
     lists_to_return = []
 
-    entities = ID_SET_ENTITIES if marketplace == 'xsoar' else ID_SET_MP_V2_ENTITIES
+    entities = ID_SET_ENTITIES if marketplace != 'marketplacev2' else ID_SET_MP_V2_ENTITIES
 
     for object_type in entities:
         if print_logs:

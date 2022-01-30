@@ -222,7 +222,7 @@ def get_local_remote_file(
         tag: str = 'master',
         return_content: bool = False,
 ):
-    repo = git.Repo(search_parent_directories=True)
+    repo = git.Repo(search_parent_directories=True)  # the full file path could be a git file path
     repo_git_util = GitUtil(repo)
     git_path = repo_git_util.get_local_remote_file_path(full_file_path, tag)
     local_content = repo_git_util.get_local_remote_file_content(git_path)

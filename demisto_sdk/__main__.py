@@ -363,7 +363,7 @@ def zip_packs(**kwargs) -> int:
 @click.option(
     '-g', '--use-git', is_flag=True, show_default=True,
     default=False,
-    help='Validate changes using git - this will check current branch\'s changes against origin/master. '
+    help='Validate changes using git - this will check current branch\'s changes against origin/master or origin/main. '
          'If the --post-commit flag is supplied: validation will run only on the current branch\'s changed files '
          'that have been committed. '
          'If the --post-commit flag is not supplied: validation will run on all changed files in the current branch, '
@@ -633,6 +633,8 @@ def secrets(config, **kwargs):
 @click.option("-cdam", "--check-dependent-api-module", is_flag=True, help="Run unit tests and lint on all packages that "
               "are dependent on the found "
               "modified api modules.", default=True)
+@click.option("--time-measurements-dir", help="Specify directory for the time measurements report file",
+              type=PathsParamType())
 def lint(**kwargs):
     """Lint command will perform:
         1. Package in host checks - flake8, bandit, mypy, vulture.
@@ -676,6 +678,7 @@ def lint(**kwargs):
         no_coverage=kwargs.get('no_coverage'),  # type: ignore[arg-type]
         coverage_report=kwargs.get('coverage_report'),  # type: ignore[arg-type]
         docker_timeout=kwargs.get('docker_timeout'),  # type: ignore[arg-type]
+        time_measurements_dir=kwargs.get('time_measurements_dir'),  # type: ignore[arg-type]
     )
 
 
@@ -844,6 +847,11 @@ def format(
 @click.option(
     "--insecure",
     help="Skip certificate validation", is_flag=True
+)
+@click.option(
+    "--skip_validation", is_flag=True,
+    help="Only for upload zipped packs, "
+         "if true will skip upload packs validation, use just when migrate existing custom content to packs."
 )
 @click.option(
     "-v", "--verbose",
@@ -1397,9 +1405,16 @@ def generate_docs(**kwargs):
 def create_id_set(**kwargs):
     """Create the content dependency tree by ids."""
     from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
+    from demisto_sdk.commands.find_dependencies.find_dependencies import \
+        remove_dependencies_from_id_set
+
     check_configuration_file('create-id-set', kwargs)
     id_set_creator = IDSetCreator(**kwargs)
-    id_set_creator.create_id_set()
+    id_set, excluded_items_by_pack, excluded_items_by_type = id_set_creator.create_id_set()
+
+    if excluded_items_by_pack:
+        remove_dependencies_from_id_set(id_set, excluded_items_by_pack, excluded_items_by_type)
+        id_set_creator.save_id_set()
 
 
 # ====================== merge-id-sets ====================== #

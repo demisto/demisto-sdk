@@ -16,7 +16,7 @@ from demisto_sdk.commands.common.update_id_set import re_create_id_set
 class IDSetCreator:
 
     def __init__(self, output: Optional[str] = '', input: Optional[str] = None, print_logs: bool = True,
-                 fail_duplicates: bool = False, marketplace: str = 'xsoar'):
+                 fail_duplicates: bool = False, marketplace: str = ''):
         """IDSetCreator
 
         Args:

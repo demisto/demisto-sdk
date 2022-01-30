@@ -247,7 +247,6 @@ def get_remote_file_from_api(
         full_file_path_quote_plus = urllib.parse.quote_plus(full_file_path)
         git_path = urljoin(git_config.base_api, 'files', full_file_path_quote_plus, 'raw')
     else:  # github
-        # 'origin/' prefix is used to compared with remote branches but it is not a part of the github url.
         git_path = urljoin(git_config.base_api, tag, full_file_path)
 
     github_token: Optional[str] = None

@@ -1,3 +1,4 @@
+import multiprocessing
 import os
 from concurrent.futures._base import as_completed, Future
 from configparser import ConfigParser, MissingSectionHeaderError
@@ -87,6 +88,9 @@ from demisto_sdk.commands.common.tools import (
     get_pack_ignore_file_path, get_pack_name, get_pack_names_from_files,
     get_relative_path_from_packs_dir, get_yaml, open_id_set_file)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
+
+
+LOCKER = multiprocessing.RLock()
 
 
 class ValidateManager:
@@ -536,7 +540,10 @@ class ValidateManager:
             return self.validate_description(file_path, pack_error_ignore_list)
 
         elif file_type == FileType.README:
-            return self.validate_readme(file_path, pack_error_ignore_list)
+            LOCKER.acquire()
+            is_valid = self.validate_readme(file_path, pack_error_ignore_list)
+            LOCKER.release()
+            return is_valid
 
         elif file_type == FileType.REPORT:
             return self.validate_report(structure_validator, pack_error_ignore_list)
@@ -766,7 +773,7 @@ class ValidateManager:
                                                      json_file_path=self.json_file_path)
         return description_validator.is_valid_file()
 
-    @pebble.synchronized([pebble.ProcessPool])
+    # @pebble.synchronized([pebble.ProcessPool])
     def validate_readme(self, file_path, pack_error_ignore_list):
         readme_validator = ReadMeValidator(file_path, ignored_errors=pack_error_ignore_list,
                                            print_as_warnings=self.print_ignored_errors,

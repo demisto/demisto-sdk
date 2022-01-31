@@ -100,12 +100,12 @@ class ReleaseNotesValidator(BaseValidator):
                 splited_release_notes_entities = self.get_entities_from_category("\n" + release_notes_categories.get(type))
                 for modified_yml_file in modified_yml_list:
                     modified_yml_dict = get_ryaml(modified_yml_file) or {}
-                    if (entity_name := modified_yml_dict.get(field)) in splited_release_notes_entities:
-                        docker_version = self.get_docker_version_from_rn(splited_release_notes_entities.get(entity_name) + "\n")
-                        if docker_version and (yml_docker_version := modified_yml_dict.get("script", {}).get("dockerimage")) != docker_version:
-                            error_list.append({'name': entity_name,
+                    if modified_yml_dict.get(field) in splited_release_notes_entities:
+                        docker_version = self.get_docker_version_from_rn(splited_release_notes_entities.get(modified_yml_dict.get(field)) + "\n")
+                        if docker_version and modified_yml_dict.get("script", {}).get("dockerimage") != docker_version:
+                            error_list.append({'name': modified_yml_dict.get(field),
                                                'rn_version': docker_version,
-                                               'yml_version': yml_docker_version})  # type:ignore
+                                               'yml_version': modified_yml_dict.get("script", {}).get("dockerimage")})  # type:ignore
         if len(error_list) > 0:
             error_message, error_code = Errors.release_notes_docker_image_not_match_yaml(rn_file_name, error_list)
             if self.handle_error(error_message, error_code, file_path=self.release_notes_file_path):

@@ -186,6 +186,9 @@ def should_skip_item_by_mp(file_path: str, marketplace: str, excluded_items_from
 
     """
 
+    if not marketplace:
+        return False
+
     # first check, check field 'marketplaces' in the item's file
     file_type = Path(file_path).suffix
     try:
@@ -1742,7 +1745,7 @@ def merge_id_sets(first_id_set_dict: dict, second_id_set_dict: dict, print_logs:
 
 def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_create=None,  # noqa : C901
                      objects_to_create: list = None, print_logs: bool = True, fail_on_duplicates: bool = False,
-                     marketplace: str = 'xsoar'):
+                     marketplace: str = ''):
     """Re create the id-set
 
     Args:
@@ -2269,7 +2272,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     new_ids_dict['Mappers'] = sort(mappers_list)
     new_ids_dict['Packs'] = packs_dict
 
-    if marketplace == MarketplaceVersions.XSOAR.value:
+    if marketplace != MarketplaceVersions.MarketplaceV2.value:
         new_ids_dict['GenericTypes'] = sort(generic_types_list)
         new_ids_dict['GenericFields'] = sort(generic_fields_list)
         new_ids_dict['GenericModules'] = sort(generic_modules_list)
@@ -2302,7 +2305,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
 def find_duplicates(id_set, print_logs, marketplace):
     lists_to_return = []
 
-    entities = ID_SET_ENTITIES if marketplace == 'xsoar' else ID_SET_MP_V2_ENTITIES
+    entities = ID_SET_ENTITIES if marketplace != 'marketplacev2' else ID_SET_MP_V2_ENTITIES
 
     for object_type in entities:
         if print_logs:

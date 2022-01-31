@@ -1400,8 +1400,8 @@ def generate_docs(**kwargs):
 )
 @click.option('-mp', '--marketplace', help='The marketplace the id set are created for, that determines which packs are'
                                            ' inserted to the id set, and which items are present in the id set for '
-                                           'each pack. Default is the XSOAR marketplace, that has all of the packs ',
-              default='xsoar')
+                                           'each pack. Default is all packs exists in the content repository.',
+              default='')
 def create_id_set(**kwargs):
     """Create the content dependency tree by ids."""
     from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator

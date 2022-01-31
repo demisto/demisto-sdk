@@ -344,7 +344,7 @@ class ValidateManager:
         all_packs.sort(key=str.lower)
 
         l = multiprocessing.Lock()
-        with pebble.ProcessPool(max_workers=2, initializer=init, initargs=(l,)) as executor:
+        with pebble.ProcessPool(max_workers=4, initializer=init, initargs=(l,)) as executor:
             futures = []
             for pack_path in all_packs:
                 self.completion_percentage = format((count / num_of_packs) * 100, ".2f")  # type: ignore

@@ -172,3 +172,31 @@ class TestPackMetadataValidator:
         validator = PackUniqueFilesValidator('fake')
         assert not validator.validate_pack_meta_file()
         assert "[PA130] - Wrong version format in metadata.json change to a 0.0.0 type format" in validator.get_errors()
+
+    version_checks = [
+        ("1.1.1", True),
+        ("12.1.5", True),
+        ("4.4.16", True),
+        ("blabla", False),
+        ("1.2", False),
+        ("0.", False),
+        ("1-2-1", False)
+    ]
+
+    @pytest.mark.parametrize('version,expected', version_checks)
+    def test_is_version_format(self, version, expected):
+        """
+                Given:
+                    - A version to be checked by the _is_version_format function
+
+                When:
+                    - We want to check the correctness of the version while the
+                        _is_pack_meta_file_structure_valid is validating the packs meta data
+
+                Then:
+                    - return True if the version is in the correct format and False otherwise
+
+
+        """
+        validator = PackUniqueFilesValidator('fake')
+        assert validator._is_version_format(version) == expected

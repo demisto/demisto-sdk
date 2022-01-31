@@ -310,7 +310,7 @@ class PackUniqueFilesValidator(BaseValidator):
         elif self._add_error(Errors.pack_metadata_version_should_be_raised(self.pack, old_version),
                              metadata_file_path):
             return False
-        return False
+        return True
 
     def validate_pack_name(self, metadata_file_content: Dict) -> bool:
         # check validity of pack metadata mandatory fields

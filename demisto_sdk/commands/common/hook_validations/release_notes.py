@@ -9,7 +9,8 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
-from demisto_sdk.commands.common.tools import (find_type,
+from demisto_sdk.commands.common.tools import (extract_docker_image_from_text,
+                                               find_type,
                                                get_latest_release_notes_text,
                                                get_pack_name,
                                                get_release_notes_file_path,
@@ -88,24 +89,25 @@ class ReleaseNotesValidator(BaseValidator):
             True if for all the modified yaml files, if there was a change in the docker image in the RN, it's the same version as the yaml.
             Otherwise, return False and a release_notes_docker_image_not_match_yaml Error
         """
-        splited_release_notes = self.get_categories_from_rn("\n" + self.latest_release_notes)
+        release_notes_categories = self.get_categories_from_rn("\n" + self.latest_release_notes)
         # renamed files will appear in the modified list as a tuple: (old path, new path)
         modified_files_list = [file[1] if isinstance(file, tuple) else file for file in (self.modified_files or [])]
         modified_yml_list = [file for file in modified_files_list if file.endswith('.yml')]
-        error_list = [self.release_notes_file_path[self.release_notes_file_path.rindex('/') + 1:]]
-        for key, field in zip(['Integrations', 'Scripts'], ['display', 'name']):
-            if(key in splited_release_notes):
-                splited_sections_dict = self.get_categories_from_rn(splited_release_notes.get(key), "##### ")
+        rn_file_name = self.release_notes_file_path[self.release_notes_file_path.rindex('/') + 1:]
+        error_list = []
+        for type, field in zip(['Integrations', 'Scripts'], ['display', 'name']):
+            if(type in release_notes_categories):
+                splited_release_notes_entities = self.get_entities_from_category("\n" + release_notes_categories.get(type))
                 for modified_yml_file in modified_yml_list:
                     modified_yml_dict = get_ryaml(modified_yml_file) or {}
-                    if modified_yml_dict.get(field) in splited_sections_dict:
-                        docker_version = self.get_docker_version_from_rn(splited_sections_dict.get(modified_yml_dict.get(field)) + "\n")
-                        if docker_version and modified_yml_dict.get("script", {}).get("dockerimage") != docker_version:
-                            error_list.append({'name': modified_yml_dict.get(field),
-                                               'rs_version': docker_version,
-                                               'yml_version': modified_yml_dict.get("script", {}).get("dockerimage")})  # type:ignore
-        if len(error_list) > 1:
-            error_message, error_code = Errors.release_notes_docker_image_not_match_yaml(error_list)
+                    if (entity_name := modified_yml_dict.get(field)) in splited_release_notes_entities:
+                        docker_version = self.get_docker_version_from_rn(splited_release_notes_entities.get(entity_name) + "\n")
+                        if docker_version and (yml_docker_version := modified_yml_dict.get("script", {}).get("dockerimage")) != docker_version:
+                            error_list.append({'name': entity_name,
+                                               'rn_version': docker_version,
+                                               'yml_version': yml_docker_version})  # type:ignore
+        if len(error_list) > 0:
+            error_message, error_code = Errors.release_notes_docker_image_not_match_yaml(rn_file_name, error_list)
             if self.handle_error(error_message, error_code, file_path=self.release_notes_file_path):
                 return False
 
@@ -120,30 +122,34 @@ class ReleaseNotesValidator(BaseValidator):
         Return:
             str. The docker image version if exists. otherwiser, return None.
         """
-        updates_list = section.split("- ")
+        updates_list = section.split("\n")
         for update in updates_list:
             if "Docker image" in update and "demisto/" in update:
-                match = (re.search(r'(demisto/.+:([0-9]+)(((\.)[0-9]+)+))', update))
-                if match:
-                    return match.group(1)
+                return extract_docker_image_from_text(update)
         return None
 
     @staticmethod
-    def get_categories_from_rn(rn: str, splitter: str = "\n#### "):
+    def get_information_from_rn(rn: str, splitter: str):
         """
             Extract the various categories from the release note according to the splitter
             rn : the relese notes
             splitter: a string to split by
         Return:
             dict. dictionary where each entry is the category name in the relese notes
-            and its value is the additions for that category.
+            and its value is the chnages for that category.
         """
-        splitted_text = (rn).split(splitter)
+        splitted_text = rn.split(splitter)
         splitted_categories_dict = {}
         for category in splitted_text:
             if category:
                 splitted_categories_dict[category[0:category.index("\n")]] = category[category.index("\n") + 1:]
         return splitted_categories_dict
+
+    def get_categories_from_rn(self, rn: str):
+        return self.get_information_from_rn(rn, "\n#### ")
+
+    def get_entities_from_category(self, rn: str):
+        return self.get_information_from_rn(rn, "\n##### ")
 
     @staticmethod
     def strip_exclusion_tag(release_notes_comments):

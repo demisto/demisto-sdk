@@ -127,6 +127,7 @@ class ReadMeValidator(BaseValidator):
             data=readme_content.encode('utf-8'),
             timeout=20
         )
+        ReadMeValidator.stop_mdx_server()
         if response.status_code != 200:
             error_message, error_code = Errors.readme_error(response.text)
             if self.handle_error(error_message, error_code, file_path=self.file_path):

@@ -2,7 +2,6 @@ from abc import abstractmethod
 from typing import Optional
 
 from wcmatch.pathlib import Path
-# this is a test
 
 class ContentError(Exception):
     def __init__(self, obj: object, obj_path: Path, additional_info: Optional[str] = ""):

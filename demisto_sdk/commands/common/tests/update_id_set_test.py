@@ -308,7 +308,7 @@ class TestDuplicates:
 
         # Check for duplicates for a new id-set,
         # In this case all the examples above should be considered as duplicates
-        assert has_duplicate(id_set['Layouts'], 'urlRep', 'Layouts', False, is_create_new=True),\
+        assert has_duplicate(id_set['Layouts'], 'urlRep', 'Layouts', False, is_create_new=True), \
             "if it's a new pack it is always a duplicate"
 
     @staticmethod
@@ -443,12 +443,12 @@ class TestIntegrations:
         ]
 
         for returned, constant in test_pairs:
-            assert IsEqualFunctions.is_lists_equal(list(returned.keys()), list(constant.keys()))
+            assert list(returned.keys()) == list(constant.keys())
 
             const_data = constant.get('Dummy Integration')
             returned_data = returned.get('Dummy Integration')
 
-            assert IsEqualFunctions.is_dicts_equal(returned_data, const_data)
+            assert IsEqualFunctions.is_dicts_equal(returned_data, const_data, lists_as_sets=True)
 
     @staticmethod
     def test_process_integration__exception(mocker):
@@ -545,7 +545,7 @@ class TestScripts:
         file_path = TESTS_DIR + '/test_files/DummyPack/Scripts/DummyScript2.yml'
         data = get_script_data(file_path)
 
-        assert IsEqualFunctions.is_lists_equal(list(data.keys()), list(TestScripts.SCRIPT_DATA.keys()))
+        assert list(data.keys()) == list(TestScripts.SCRIPT_DATA.keys())
 
         const_data = TestScripts.SCRIPT_DATA.get('DummyScript')
         returned_data = data.get('DummyScript')
@@ -568,7 +568,7 @@ class TestScripts:
         file_path = TESTS_DIR + '/test_files/alternative_meta_fields/Script-top_level_alternative_fields.yml'
         data = get_script_data(file_path)
 
-        assert IsEqualFunctions.is_lists_equal(list(data.keys()), list(TestScripts.SCRIPT_DATA_ALTERNATIVE_TOP_LEVEL.keys()))
+        assert list(data.keys()) == list(TestScripts.SCRIPT_DATA_ALTERNATIVE_TOP_LEVEL.keys())
 
         const_data = TestScripts.SCRIPT_DATA_ALTERNATIVE_TOP_LEVEL.get('DummyScript')
         returned_data = data.get('DummyScript')
@@ -591,8 +591,7 @@ class TestScripts:
         file_path = TESTS_DIR + '/test_files/alternative_meta_fields/Script-second_level_alternative_fields.yml'
         data = get_script_data(file_path)
 
-        assert IsEqualFunctions.is_lists_equal(list(data.keys()),
-                                               list(TestScripts.SCRIPT_DATA_ALTERNATIVE_SECOND_LEVEL.keys()))
+        assert (list(data.keys()) == list(TestScripts.SCRIPT_DATA_ALTERNATIVE_SECOND_LEVEL.keys()))
 
         const_data = TestScripts.SCRIPT_DATA_ALTERNATIVE_SECOND_LEVEL.get('DummyScript')
         returned_data = data.get('DummyScript')
@@ -618,7 +617,7 @@ class TestScripts:
         assert len(res) == 1
         data = res[0]
 
-        assert IsEqualFunctions.is_lists_equal(list(data.keys()), list(TestScripts.PACK_SCRIPT_DATA.keys()))
+        assert list(data.keys()) == list(TestScripts.PACK_SCRIPT_DATA.keys())
 
         const_data = TestScripts.PACK_SCRIPT_DATA.get('DummyScript')
         returned_data = data.get('DummyScript')
@@ -675,8 +674,8 @@ class TestPlaybooks:
             "StopScheduledTask",
         ],
         "implementing_playbooks": [
-            "Calculate Severity - Standard",
             "Palo Alto Networks - Malware Remediation",
+            "Calculate Severity - Standard"
         ],
         "command_to_integration": {
             "xdr-update-incident": "",
@@ -687,6 +686,7 @@ class TestPlaybooks:
         ],
         "skippable_tasks": [
             "StopScheduledTask",
+            "Palo Alto Networks - Malware Remediation",
             "autofocus-sample-analysis"
         ]
     }
@@ -699,8 +699,8 @@ class TestPlaybooks:
         "filters": ["isEqualString"],
         "transformers": ["uniq"],
         "implementing_scripts": [
-            "XDRSyncScript",
             "StopScheduledTask",
+            "XDRSyncScript"
         ],
         "implementing_playbooks": [
             "Calculate Severity - Standard",
@@ -715,6 +715,7 @@ class TestPlaybooks:
         ],
         "skippable_tasks": [
             "StopScheduledTask",
+            "Palo Alto Networks - Malware Remediation",
             "autofocus-sample-analysis"
         ],
         "has_alternative_meta": True
@@ -744,6 +745,7 @@ class TestPlaybooks:
         ],
         "skippable_tasks": [
             "StopScheduledTask",
+            "Palo Alto Networks - Malware Remediation",
             "autofocus-sample-analysis"
         ],
         "has_alternative_meta": True
@@ -756,8 +758,7 @@ class TestPlaybooks:
         """
         file_path = TESTS_DIR + '/test_files/DummyPack/Playbooks/DummyPlaybook.yml'
         data = get_playbook_data(file_path)['Dummy Playbook']
-
-        assert IsEqualFunctions.is_dicts_equal(data, TestPlaybooks.PLAYBOOK_DATA)
+        assert IsEqualFunctions.is_dicts_equal(data, TestPlaybooks.PLAYBOOK_DATA, lists_as_sets=True)
 
     @staticmethod
     def test_get_playbook_data_with_alternative_fields_top_level():
@@ -775,7 +776,9 @@ class TestPlaybooks:
         file_path = TESTS_DIR + '/test_files/alternative_meta_fields/Playbook-top_level_alternative_fields.yml'
         data = get_playbook_data(file_path)['Dummy Playbook']
 
-        assert IsEqualFunctions.is_dicts_equal(data, TestPlaybooks.PLAYBOOK_DATA_ALTERNATIVE_FIELDS_TOP_LEVEL)
+        assert IsEqualFunctions.is_dicts_equal(data,
+                                               TestPlaybooks.PLAYBOOK_DATA_ALTERNATIVE_FIELDS_TOP_LEVEL,
+                                               lists_as_sets=True)
 
     @staticmethod
     def test_get_playbook_data_with_alternative_fields_second_level():
@@ -792,8 +795,9 @@ class TestPlaybooks:
         """
         file_path = TESTS_DIR + '/test_files/alternative_meta_fields/Playbook-second_level_alternative_fields.yml'
         data = get_playbook_data(file_path)['Dummy Playbook']
-
-        assert IsEqualFunctions.is_dicts_equal(data, TestPlaybooks.PLAYBOOK_DATA_ALTERNATIVE_FIELDS_SECOND_LEVEL)
+        assert IsEqualFunctions.is_dicts_equal(data,
+                                               TestPlaybooks.PLAYBOOK_DATA_ALTERNATIVE_FIELDS_SECOND_LEVEL,
+                                               lists_as_sets=True)
 
     @staticmethod
     def test_get_playbook_data_2():

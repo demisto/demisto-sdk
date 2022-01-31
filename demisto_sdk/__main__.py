@@ -633,6 +633,8 @@ def secrets(config, **kwargs):
 @click.option("-cdam", "--check-dependent-api-module", is_flag=True, help="Run unit tests and lint on all packages that "
               "are dependent on the found "
               "modified api modules.", default=True)
+@click.option("--time-measurements-dir", help="Specify directory for the time measurements report file",
+              type=PathsParamType())
 def lint(**kwargs):
     """Lint command will perform:
         1. Package in host checks - flake8, bandit, mypy, vulture.
@@ -676,6 +678,7 @@ def lint(**kwargs):
         no_coverage=kwargs.get('no_coverage'),  # type: ignore[arg-type]
         coverage_report=kwargs.get('coverage_report'),  # type: ignore[arg-type]
         docker_timeout=kwargs.get('docker_timeout'),  # type: ignore[arg-type]
+        time_measurements_dir=kwargs.get('time_measurements_dir'),  # type: ignore[arg-type]
     )
 
 
@@ -844,6 +847,11 @@ def format(
 @click.option(
     "--insecure",
     help="Skip certificate validation", is_flag=True
+)
+@click.option(
+    "--skip_validation", is_flag=True,
+    help="Only for upload zipped packs, "
+         "if true will skip upload packs validation, use just when migrate existing custom content to packs."
 )
 @click.option(
     "-v", "--verbose",
@@ -1392,8 +1400,8 @@ def generate_docs(**kwargs):
 )
 @click.option('-mp', '--marketplace', help='The marketplace the id set are created for, that determines which packs are'
                                            ' inserted to the id set, and which items are present in the id set for '
-                                           'each pack. Default is the XSOAR marketplace, that has all of the packs ',
-              default='xsoar')
+                                           'each pack. Default is all packs exists in the content repository.',
+              default='')
 def create_id_set(**kwargs):
     """Create the content dependency tree by ids."""
     from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator

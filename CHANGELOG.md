@@ -1,5 +1,7 @@
 # Changelog
 * Added option to specify `External Playbook Configuration` to change inputs of Playbooks triggered as part of **test-content**
+* Improved performance of the **lint** command.
+* Improved performance of the **validate** command when checking README images.
 
 # 1.5.8
 * Fixed an issue where the command **doc-review** along with the argument `--release-notes` failed on yml/json files with invalid schema.

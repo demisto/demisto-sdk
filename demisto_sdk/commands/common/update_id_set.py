@@ -2318,6 +2318,7 @@ def find_duplicates(id_set, print_logs, marketplace):
             if has_duplicate(objects, id_to_check, object_type, print_logs, is_create_new=True):
                 dup_list.append(id_to_check)
         lists_to_return.append(dup_list)
+
     if print_logs:
         print_color("Checking diff for Incident and Indicator Fields", LOG_COLORS.GREEN)
 
@@ -2362,6 +2363,10 @@ def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=
         dict2_from_version = LooseVersion(dict2.get('fromversion', DEFAULT_CONTENT_ITEM_FROM_VERSION))
         dict1_to_version = LooseVersion(dict1.get('toversion', DEFAULT_CONTENT_ITEM_TO_VERSION))
         dict2_to_version = LooseVersion(dict2.get('toversion', DEFAULT_CONTENT_ITEM_TO_VERSION))
+
+        # Check whether the items belong to the same marketplaces
+        if not set(dict1.get('marketplaces', [])).intersection(set(dict2.get('marketplaces', []))):
+            continue
 
         # Checks if the Layouts kind is different then they are not duplicates
         if object_type == 'Layouts':

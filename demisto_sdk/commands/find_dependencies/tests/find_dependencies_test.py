@@ -481,7 +481,7 @@ class TestIdSetFilters:
         found_filtered_result = PackDependencies._search_for_pack_items(pack_id, module_repo.id_set.read_json_as_dict()[
             'scripts'])
 
-        assert IsEqualFunctions.is_lists_equal(found_filtered_result, expected_result)
+        assert found_filtered_result == expected_result
 
     @pytest.mark.parametrize("pack_id", ["pack_0", "pack_1", "pack_2"])
     def test_search_for_pack_playbook_item(self, pack_id, module_repo):
@@ -514,7 +514,7 @@ class TestIdSetFilters:
         found_filtered_result = PackDependencies._search_for_pack_items(pack_id, module_repo.id_set.read_json_as_dict()[
             'playbooks'])
 
-        assert IsEqualFunctions.is_lists_equal(found_filtered_result, expected_result)
+        assert found_filtered_result == expected_result
 
 
 class TestDependsOnScriptAndIntegration:
@@ -556,7 +556,7 @@ class TestDependsOnScriptAndIntegration:
                                                                       verbose=False,
                                                                       )
 
-        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+        assert set(found_result) == set(expected_result)
 
     @pytest.mark.parametrize("dependency_script,expected_pack,expected_items",
                              [("GetServerURL", {("GetServerURL", True)},
@@ -640,7 +640,7 @@ class TestDependsOnScriptAndIntegration:
                                                                       verbose=False,
                                                                       )
 
-        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+        assert set(found_result) == set(expected_result)
 
     @pytest.mark.parametrize("dependency_integration_command,expected_result",
                              [("sslbl-get-indicators",
@@ -722,7 +722,7 @@ class TestDependsOnScriptAndIntegration:
                                                                       verbose=False,
                                                                       )
 
-        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+        assert set(found_result) == set(expected_result)
 
     def test_collect_scripts__filter_toversion(self, module_repo):
         """
@@ -757,7 +757,7 @@ class TestDependsOnScriptAndIntegration:
                                                                       exclude_ignored_dependencies=False
                                                                       )
 
-        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+        assert set(found_result) == set(expected_result)
 
     def test_collect_scripts_depends_on_two_integrations(self, module_repo):
         """
@@ -792,7 +792,7 @@ class TestDependsOnScriptAndIntegration:
                                                                       verbose=False,
                                                                       )
 
-        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+        assert set(found_result) == set(expected_result)
 
     def test_collect_scripts_command_to_integration(self, module_repo):
         """
@@ -828,7 +828,7 @@ class TestDependsOnScriptAndIntegration:
                                                                       verbose=False,
                                                                       )
 
-        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+        assert set(found_result) == set(expected_result)
 
     def test_collect_scripts_script_executions(self, module_repo):
         """
@@ -865,7 +865,7 @@ class TestDependsOnScriptAndIntegration:
                                                                       verbose=False,
                                                                       )
 
-        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+        assert set(found_result) == set(expected_result)
 
     def test_collect_scripts_command_to_integrations_and_script_executions(self, module_repo):
         """
@@ -908,7 +908,7 @@ class TestDependsOnScriptAndIntegration:
                                                                       verbose=False,
                                                                       )
 
-        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+        assert set(found_result) == set(expected_result)
 
     def test_collect_scripts_depends_on_with_two_inputs(self, module_repo):
         """
@@ -952,7 +952,7 @@ class TestDependsOnScriptAndIntegration:
                                                                       verbose=False,
                                                                       )
 
-        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+        assert set(found_result) == set(expected_result)
 
     @pytest.mark.parametrize("generic_command", ['ip', 'domain', 'url', 'file', 'email', 'cve', 'cve-latest',
                                                  'cve-search', 'send-mail', 'send-notification'])
@@ -1022,7 +1022,7 @@ class TestDependsOnPlaybook:
                                                                         verbose=False,
                                                                         )
 
-        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+        assert set(found_result) == set(expected_result)
 
     @pytest.mark.parametrize("dependency_script,expected_result,expected_items",
                              [("GetServerURL", {("GetServerURL", True)},
@@ -1096,7 +1096,7 @@ class TestDependsOnPlaybook:
                                                                         verbose=False,
                                                                         )
 
-        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+        assert set(found_result) == set(expected_result)
 
     @pytest.mark.parametrize("integration_command,expected_result",
                              [("aws-get-indicators", {("FeedAWS", True)}),
@@ -1130,7 +1130,7 @@ class TestDependsOnPlaybook:
                                                                         verbose=False,
                                                                         )
 
-        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+        assert set(found_result) == set(expected_result)
 
     def test_collect_playbooks_dependencies_on_integrations_with_brand(self, module_repo):
         command = "ip"
@@ -1248,7 +1248,7 @@ class TestDependsOnPlaybook:
                                                                         verbose=False,
                                                                         )
 
-        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+        assert set(found_result) == set(expected_result)
 
     def test_collect_playbooks_dependencies_on_incident_fields__phishing_pack(self, module_repo):
         """
@@ -1286,7 +1286,7 @@ class TestDependsOnPlaybook:
                                                                         verbose=False,
                                                                         )
 
-        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+        assert set(found_result) == set(expected_result)
 
     def test_collect_playbooks_dependencies_on_incident_fields__commontypes_pack(self, module_repo):
         """
@@ -1322,7 +1322,7 @@ class TestDependsOnPlaybook:
                                                                         verbose=False,
                                                                         )
 
-        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+        assert set(found_result) == set(expected_result)
 
     def test_collect_playbooks_dependencies_on_indicator_fields(self, module_repo):
         """
@@ -1434,7 +1434,7 @@ class TestDependsOnPlaybook:
                                                                         verbose=False,
                                                                         )
 
-        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+        assert set(found_result) == set(expected_result)
 
     def test_collect_playbooks_dependencies_on_filter(self, module_repo):
         """
@@ -1466,7 +1466,7 @@ class TestDependsOnPlaybook:
                                                                         verbose=False,
                                                                         )
 
-        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+        assert set(found_result) == set(expected_result)
 
 
 class TestDependsOnLayout:
@@ -1518,7 +1518,7 @@ class TestDependsOnLayout:
                                                                       id_set=module_repo.id_set.read_json_as_dict(),
                                                                       verbose=False,
                                                                       )
-        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+        assert set(found_result) == set(expected_result)
 
     def test_collect_indicator_layouts_dependencies(self, module_repo):
         """
@@ -1558,7 +1558,7 @@ class TestDependsOnLayout:
                                                                       verbose=False,
                                                                       )
 
-        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+        assert set(found_result) == set(expected_result)
 
     def test_collect_indicator_layouts_dependencies_with_items(self, module_repo):
         """
@@ -1641,7 +1641,7 @@ class TestDependsOnLayout:
                                                                       exclude_ignored_dependencies=False,
                                                                       )
 
-        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+        assert set(found_result) == set(expected_result)
 
     def test_collect_generic_layouts_dependencies(self, module_repo):
         """
@@ -1679,7 +1679,7 @@ class TestDependsOnLayout:
                                                                       id_set=module_repo.id_set.read_json_as_dict(),
                                                                       verbose=False,
                                                                       )
-        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+        assert set(found_result) == set(expected_result)
 
 
 class TestDependsOnIncidentField:
@@ -1725,7 +1725,7 @@ class TestDependsOnIncidentField:
             verbose=False,
         )
 
-        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+        assert set(found_result) == set(expected_result)
 
     def test_collect_incident_field_dependencies_with_items(self, module_repo):
         """
@@ -1739,7 +1739,8 @@ class TestDependsOnIncidentField:
             - Extracting the packs that the incident field depends on with the items causing the dependency.
         """
         expected_result = (
-            {('Phishing', True), ('Carbon_Black_Enterprise_Response', True)}, {('incident_field', 'Dummy Incident Field'): {
+            {('Phishing', True), ('Carbon_Black_Enterprise_Response', True)},
+            {('incident_field', 'Dummy Incident Field'): {
                 'Carbon_Black_Enterprise_Response': [('script', 'CBLiveFetchFiles')],
                 'Phishing': [('script', 'CheckEmailAuthenticity')]}})
 
@@ -1813,7 +1814,7 @@ class TestDependsOnIndicatorType:
             verbose=False,
         )
 
-        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+        assert set(found_result) == set(expected_result)
 
     def test_collect_indicator_type_dependencies_with_items(self, module_repo):
         """
@@ -1892,7 +1893,7 @@ class TestDependsOnIntegrations:
             verbose=False,
         )
 
-        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+        assert set(found_result) == set(expected_result)
 
     def test_collect_integration_dependencies_with_ites(self, module_repo):
         """
@@ -1968,7 +1969,7 @@ class TestDependsOnIncidentType:
 
         )
 
-        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+        assert set(found_result) == set(expected_result)
 
     def test_collect_incident_type_dependencies_with_items(self, module_repo):
         """
@@ -2039,7 +2040,7 @@ class TestDependsOnClassifiers:
             verbose=False,
         )
 
-        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+        assert set(found_result) == set(expected_result)
 
     def test_collect_classifier_dependencies_with_items(self, module_repo):
         """
@@ -2106,7 +2107,7 @@ class TestDependsOnClassifiers:
             verbose=False,
         )
 
-        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+        assert set(found_result) == set(expected_result)
 
     def test_collect_classifier_dependencies_on_filter(self, module_repo):
         """
@@ -2136,7 +2137,7 @@ class TestDependsOnClassifiers:
             verbose=False,
         )
 
-        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+        assert set(found_result) == set(expected_result)
 
     def test_collect_generic_classifier_dependencies(self, module_repo):
         """
@@ -2166,7 +2167,7 @@ class TestDependsOnClassifiers:
             id_set=module_repo.id_set.read_json_as_dict(),
             verbose=False,
         )
-        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+        assert set(found_result) == set(expected_result)
 
 
 class TestDependsOnMappers:
@@ -2205,7 +2206,7 @@ class TestDependsOnMappers:
             id_set=module_repo.id_set.read_json_as_dict(),
             verbose=False,
         )
-        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+        assert set(found_result) == set(expected_result)
 
     def test_collect_mapper_dependencies_with_items(self, module_repo):
         """
@@ -2275,7 +2276,7 @@ class TestDependsOnMappers:
             verbose=False,
         )
 
-        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+        assert set(found_result) == set(expected_result)
 
     def test_collect_mapper_dependencies_on_filter(self, module_repo):
         """
@@ -2305,7 +2306,7 @@ class TestDependsOnMappers:
             verbose=False,
         )
 
-        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+        assert set(found_result) == set(expected_result)
 
 
 class TestDependsOnWidgets:
@@ -2339,7 +2340,7 @@ class TestDependsOnWidgets:
             verbose=False,
         )
 
-        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+        assert set(found_result) == set(expected_result)
 
     def test_collect_widgets_dependencies_with_item(self, module_repo):
         """
@@ -2407,7 +2408,7 @@ class TestDependsOnDashboard:
             header='Dashboards',
         )
 
-        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+        assert set(found_result) == set(expected_result)
 
     def test_collect_dashboard_dependencies_with_items(self, module_repo):
         """
@@ -2478,7 +2479,7 @@ class TestDependsOnJob:
         found_result = PackDependencies._collect_jobs_dependencies(test_job_data,
                                                                    module_repo.id_set.read_json_as_dict(),
                                                                    verbose=False)
-        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+        assert set(found_result) == set(expected_result)
 
     def test_collect_job_dependencies_with_items(self, module_repo: dict):
         """
@@ -2490,7 +2491,8 @@ class TestDependsOnJob:
             - Ensure depended-on packs are extracted and the items causing the mandatory dependencies.
         """
         expected_result = (
-            {('Pcysys', True)}, {('job', 'jobby'): {'Pcysys': [('playbook', 'Pentera Run Scan')]}})  # playbook dependant
+            {('Pcysys', True)},
+            {('job', 'jobby'): {'Pcysys': [('playbook', 'Pentera Run Scan')]}})  # playbook dependant
 
         selected_feeds = []
 
@@ -2543,7 +2545,7 @@ class TestDependsOnReports:
             header='Reports',
         )
 
-        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+        assert set(found_result) == set(expected_result)
 
     def test_collect_report_dependencies_with_items(self, module_repo):
         """
@@ -2583,7 +2585,8 @@ class TestDependsOnReports:
 SEARCH_PACKS_INPUT = [
     (['type'], 'IncidentFields', (set(), dict()), 'incident_field'),
     (
-        ['emailaddress'], 'IncidentFields', ({'Compliance'}, {'Compliance': [('incident_field', 'incident_emailaddress')]}),
+        ['emailaddress'], 'IncidentFields',
+        ({'Compliance'}, {'Compliance': [('incident_field', 'incident_emailaddress')]}),
         'incident_field'),
     (['E-mail Address'], 'IncidentFields',
      ({'Compliance'}, {'Compliance': [('incident_field', 'incident_emailaddress')]}), 'incident_field'),
@@ -2838,7 +2841,7 @@ class TestDependsOnGenericField:
             id_set=module_repo.id_set.read_json_as_dict(),
             verbose=False,
         )
-        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+        assert set(found_result) == set(expected_result)
 
 
 class TestDependsOnGenericType:
@@ -2873,7 +2876,7 @@ class TestDependsOnGenericType:
 
         )
 
-        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+        assert set(found_result) == set(expected_result)
 
 
 class TestDependsOnGenericModules:
@@ -2911,7 +2914,7 @@ class TestDependsOnGenericModules:
             id_set=module_repo.id_set.read_json_as_dict(),
             verbose=False,
         )
-        assert IsEqualFunctions.is_sets_equal(found_result, expected_result)
+        assert set(found_result) == set(expected_result)
 
 
 def find_pack_display_name_mock(pack_folder_name):

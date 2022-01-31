@@ -443,8 +443,8 @@ TEST_RELEASE_NOTES_TEST_BANK_4 = [
      "#### Scripts\n##### Script name\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.",
      {'Integrations': '##### Integration name\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.',
       'Scripts': '##### Script name\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.'}),
-    (ReleaseNotesValidator.get_categories_from_rn, "\n#### Integrations\n##### Integration name1\n-" +
-     "Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.\n" +
+    (ReleaseNotesValidator.get_categories_from_rn, "\n#### Integrations\n##### Integration name1\n" +
+    "- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.\n" +
      "##### Integration name2\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.",
      {'Integrations': "##### Integration name1\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.\n" +
       "##### Integration name2\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*."}),
@@ -471,7 +471,4 @@ def test_get_categories_from_rn(method_to_check, release_notes_content, filled_e
     - Case 2: Should Create a dict with one value for integration key that holds 2 integrations.
     - Case 3: Should Create a dict with two keys of integraition 1 and integration 2.
     """
-    print(method_to_check(ReleaseNotesValidator, release_notes_content))
-    print("\n\n")
-    print(filled_expected_result)
     assert method_to_check(ReleaseNotesValidator, release_notes_content) == filled_expected_result

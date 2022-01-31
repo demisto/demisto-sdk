@@ -287,6 +287,7 @@ class TestDuplicates:
                 'fromVersion': '5.0.0',
                 'kind': 'Details',
                 'path': 'Layouts/layout-details-urlrep.json',
+                'marketplaces': ['xsoar'],
                 'pack': first_pack,
                 'source': first_source
             }
@@ -297,6 +298,7 @@ class TestDuplicates:
                 'typeID': 'urlRep',
                 'kind': 'Details',
                 'path': 'Layouts/layout-details-urlrep2.json',
+                'marketplaces': ['xsoar'],
                 'pack': second_pack,
                 'source': second_source
             }
@@ -2767,7 +2769,8 @@ def test_merged_id_sets_with_duplicates(caplog):
         'playbooks': [
             {
                 'playbook_foo1': {
-                    'name': 'playbook_foo1'
+                    'name': 'playbook_foo1',
+                    'marketplaces': 'xsoar',
                 }
             }
         ],
@@ -2775,7 +2778,8 @@ def test_merged_id_sets_with_duplicates(caplog):
             {
                 'ScriptFoo': {
                     'name': 'ScriptFoo',
-                    'pack': 'ScriptFoo1'
+                    'pack': 'ScriptFoo1',
+                    'marketplaces': 'xsoar',
                 }
             }
         ]
@@ -2785,7 +2789,8 @@ def test_merged_id_sets_with_duplicates(caplog):
         'playbooks': [
             {
                 'playbook_foo2': {
-                    'name': 'playbook_foo2'
+                    'name': 'playbook_foo2',
+                    'marketplaces': 'xsoar',
                 }
             }
         ],
@@ -2793,7 +2798,8 @@ def test_merged_id_sets_with_duplicates(caplog):
             {
                 'ScriptFoo': {
                     'name': 'ScriptFoo',
-                    'pack': 'ScriptFoo2'
+                    'pack': 'ScriptFoo2',
+                    'marketplaces': 'xsoar',
                 }
             }
         ]
@@ -2828,7 +2834,8 @@ def test_merged_id_sets_with_legal_duplicates(caplog):
                 'playbook_foo1': {
                     'name': 'playbook_foo1',
                     'pack': 'foo_1',
-                    "source": ['github.com', 'demisto', 'repo1'],
+                    'marketplaces': 'xsoar',
+                    'source': ['github.com', 'demisto', 'repo1'],
                 }
             }
         ],
@@ -2837,7 +2844,8 @@ def test_merged_id_sets_with_legal_duplicates(caplog):
                 'Script_Foo1': {
                     'name': 'ScriptFoo',
                     'pack': 'foo_1',
-                    "source": ['github.com', 'demisto', 'repo1'],
+                    'marketplaces': 'xsoar',
+                    'source': ['github.com', 'demisto', 'repo1'],
                 }
             }
         ]
@@ -2849,7 +2857,8 @@ def test_merged_id_sets_with_legal_duplicates(caplog):
                 'playbook_foo1': {
                     'name': 'playbook_foo1',
                     'pack': 'foo_1',
-                    "source": ['github.com', 'demisto', 'repo2'],
+                    'marketplaces': 'xsoar',
+                    'source': ['github.com', 'demisto', 'repo2'],
                 }
             }
         ],

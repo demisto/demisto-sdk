@@ -90,11 +90,6 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 
-def init(l):
-    global lock
-    lock = l
-
-
 class ValidateManager:
     def __init__(
             self, is_backward_check=True, prev_ver=None, use_git=False, only_committed_files=False,
@@ -302,6 +297,11 @@ class ValidateManager:
 
         return all(files_validation_result)
 
+    def init(self, l):
+        global lock
+        lock = l
+
+
     def run_validation_on_all_packs(self):
         """Runs validations on all files in all packs in repo (-a option)
 
@@ -339,7 +339,7 @@ class ValidateManager:
         all_packs.sort(key=str.lower)
 
         l = multiprocessing.Lock()
-        with pebble.ProcessPool(max_workers=4, initializer=init, initargs=(l,)) as executor:
+        with pebble.ProcessPool(max_workers=4, initializer=self.init, initargs=(l,)) as executor:
             futures = []
             for pack_path in all_packs:
                 self.completion_percentage = format((count / num_of_packs) * 100, ".2f")  # type: ignore

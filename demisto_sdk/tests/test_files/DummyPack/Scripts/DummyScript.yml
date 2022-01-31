@@ -2,6 +2,7 @@ commonfields:
   id: DummyScript
   version: -1
 name: DummyScript
+name_x2: AlternativeScript
 script: ''
 type: python
 tags:
@@ -15,5 +16,6 @@ dockerimage: demisto/python3:3.7.3.286
 runas: DBotWeakRole
 fromversion: 5.0.0
 comment: Entry widget that returns the number of hosts in a Cortex XDR incident.
+comment_x2: this is a marketplace v2 comment.
 tests:
 - No test - no need to test widget

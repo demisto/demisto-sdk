@@ -63,24 +63,24 @@ class UpdateReleaseNotesManager:
             print_color('\nSuccessfully updated the following packs:\n' + '\n'.join(self.total_updated_packs),
                         LOG_COLORS.GREEN)
 
-    def filter_to_relevant_files(self, file_set: set, validate_manager: ValidateManager) -> Tuple[set, set]:
+    def filter_to_relevant_files(self, file_set: set, validate_manager: ValidateManager) -> Tuple[set, set, bool]:
         """
         Given a file set, filter it to only files which require RN and if given, from a specific pack
         """
         filtered_set = set()
-        if self.given_pack:
-            for file in file_set:
-                if isinstance(file, tuple):
-                    file_path = str(file[1])
+        for file in file_set:
+            if isinstance(file, tuple):
+                file_path = str(file[1])
 
-                else:
-                    file_path = str(file)
+            else:
+                file_path = str(file)
 
+            if self.given_pack:
                 file_pack_name = get_pack_name(file_path)
                 if not file_pack_name or file_pack_name not in self.given_pack:
                     continue
 
-                filtered_set.add(file)
+            filtered_set.add(file)
 
         return validate_manager.filter_to_relevant_files(filtered_set)
 
@@ -89,10 +89,10 @@ class UpdateReleaseNotesManager:
         """
         Filter the raw file sets to only the relevant files for RN
         """
-        filtered_modified, old_format_files = self.filter_to_relevant_files(modified_files, validate_manager)
-        filtered_renamed, _ = self.filter_to_relevant_files(renamed_files, validate_manager)
+        filtered_modified, old_format_files, _ = self.filter_to_relevant_files(modified_files, validate_manager)
+        filtered_renamed, _, _ = self.filter_to_relevant_files(renamed_files, validate_manager)
         filtered_modified = filtered_modified.union(filtered_renamed)
-        filtered_added, new_files_in_old_format = self.filter_to_relevant_files(added_files, validate_manager)
+        filtered_added, new_files_in_old_format, _ = self.filter_to_relevant_files(added_files, validate_manager)
         old_format_files = old_format_files.union(new_files_in_old_format)
         return filtered_modified, filtered_added, old_format_files
 

@@ -18,12 +18,14 @@ import git
 import requests.exceptions
 import urllib3.exceptions
 from jinja2 import Environment, FileSystemLoader, exceptions
+from packaging.version import parse
 from ruamel.yaml import YAML
 from wcmatch.pathlib import NEGATE, Path
 
 from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    PACKS_PACK_META_FILE_NAME,
                                                    TYPE_PWSH, TYPE_PYTHON)
+from demisto_sdk.commands.common.timers import timer
 # Local packages
 from demisto_sdk.commands.common.tools import (get_all_docker_images,
                                                run_command_os)
@@ -104,6 +106,7 @@ class Linter:
             "warning_code": SUCCESS,
         }
 
+    @timer(group_name='lint')
     def run_dev_packages(self, no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool, no_vulture: bool,
                          no_xsoar_linter: bool, no_pwsh_analyze: bool, no_pwsh_test: bool, no_test: bool, modules: dict,
                          keep_container: bool, test_xml: str, no_coverage: bool) -> dict:
@@ -165,6 +168,7 @@ class Linter:
             self._pkg_lint_status['exit_code'] += FAIL
         return self._pkg_lint_status
 
+    @timer(group_name='lint')
     def _gather_facts(self, modules: dict) -> bool:
         """ Gathering facts about the package - python version, docker images, valid docker image, yml parsing
         Args:
@@ -175,7 +179,6 @@ class Linter:
         """
         # Looking for pkg yaml
         yml_file: Optional[Path] = self._pack_abs_dir.glob([r'*.yaml', r'*.yml', r'!*unified*.yml'], flags=NEGATE)
-
         if not yml_file:
             logger.info(f"{self._pack_abs_dir} - Skipping no yaml file found {yml_file}")
             self._pkg_lint_status["errors"].append('Unable to find yml file in package')
@@ -225,7 +228,7 @@ class Linter:
             if self._facts["docker_engine"]:
                 # Getting python version from docker image - verifying if not valid docker image configured
                 for image in self._facts["images"]:
-                    py_num: float = get_python_version_from_image(image=image[0], timeout=self.docker_timeout, log_prompt=log_prompt)
+                    py_num: str = get_python_version_from_image(image=image[0], timeout=self.docker_timeout)
                     image[1] = py_num
                     logger.info(f"{self._pack_name} - Facts - {image[0]} - Python {py_num}")
                     if not self._facts["python_version"]:
@@ -248,7 +251,7 @@ class Linter:
                         self._pkg_lint_status["errors"].append('Unable to parse test-requirements.txt in package')
             elif not self._facts["python_version"]:
                 # get python version from yml
-                pynum = 3.7 if (script_obj.get('subtype', 'python3') == 'python3') else 2.7
+                pynum = '3.7' if (script_obj.get('subtype', 'python3') == 'python3') else '2.7'
                 self._facts["python_version"] = pynum
                 logger.info(f"{log_prompt} - Using python version from yml: {pynum}")
             # Get lint files
@@ -315,6 +318,7 @@ class Linter:
                 self._facts['lint_unittest_files'].append(lint_file)
                 self._facts["lint_files"].remove(lint_file)
 
+    @timer(group_name='lint')
     def _run_lint_in_host(self, no_flake8: bool, no_bandit: bool, no_mypy: bool, no_vulture: bool,
                           no_xsoar_linter: bool):
         """ Run lint check on host
@@ -370,11 +374,12 @@ class Linter:
                 else:
                     self._pkg_lint_status[f"{lint_check}_errors"] = "\n".join(other)
 
-    def _run_flake8(self, py_num: float, lint_files: List[Path]) -> Tuple[int, str]:
+    @timer(group_name='lint')
+    def _run_flake8(self, py_num: str, lint_files: List[Path]) -> Tuple[int, str]:
         """ Runs flake8 in pack dir
 
         Args:
-            py_num(float): The python version in use
+            py_num(str): The python version in use
             lint_files(List[Path]): file to perform lint
 
         Returns:
@@ -399,7 +404,8 @@ class Linter:
 
         return SUCCESS, ""
 
-    def _run_xsoar_linter(self, py_num: float, lint_files: List[Path]) -> Tuple[int, str]:
+    @timer(group_name='lint')
+    def _run_xsoar_linter(self, py_num: str, lint_files: List[Path]) -> Tuple[int, str]:
         """ Runs Xsaor linter in pack dir
 
         Args:
@@ -421,7 +427,9 @@ class Linter:
                 myenv['PYTHONPATH'] = str(self._pack_abs_dir)
             if self._facts['is_long_running']:
                 myenv['LONGRUNNING'] = 'True'
-            if py_num < 3:
+
+            py_ver = parse(py_num).major
+            if py_ver < 3:
                 myenv['PY2'] = 'True'
             myenv['is_script'] = str(self._facts['is_script'])
             # as Xsoar checker is a pylint plugin and runs as part of pylint code, we can not pass args to it.
@@ -460,6 +468,7 @@ class Linter:
 
         return status, stdout
 
+    @timer(group_name='lint')
     def _run_bandit(self, lint_files: List[Path]) -> Tuple[int, str]:
         """ Run bandit in pack dir
 
@@ -488,11 +497,12 @@ class Linter:
 
         return SUCCESS, ""
 
-    def _run_mypy(self, py_num: float, lint_files: List[Path]) -> Tuple[int, str]:
+    @timer(group_name='lint')
+    def _run_mypy(self, py_num: str, lint_files: List[Path]) -> Tuple[int, str]:
         """ Run mypy in pack dir
 
         Args:
-            py_num(float): The python version in use
+            py_num(str): The python version in use
             lint_files(List[Path]): file to perform lint
 
         Returns:
@@ -502,8 +512,8 @@ class Linter:
         log_prompt = f"{self._pack_name} - Mypy"
         logger.info(f"{log_prompt} - Start")
         with add_typing_module(lint_files=lint_files, python_version=py_num):
-            stdout, stderr, exit_code = run_command_os(command=build_mypy_command(files=lint_files, version=py_num),
-                                                       cwd=self._pack_abs_dir)
+            mypy_command = build_mypy_command(files=lint_files, version=py_num, content_repo=self._content_repo)
+            stdout, stderr, exit_code = run_command_os(command=mypy_command, cwd=self._pack_abs_dir)
         logger.debug(f"{log_prompt} - Finished exit-code: {exit_code}")
         logger.debug(f"{log_prompt} - Finished stdout: {RL if stdout else ''}{stdout}")
         logger.debug(f"{log_prompt} - Finished stderr: {RL if stderr else ''}{stderr}")
@@ -518,11 +528,12 @@ class Linter:
 
         return SUCCESS, ""
 
-    def _run_vulture(self, py_num: float, lint_files: List[Path]) -> Tuple[int, str]:
+    @timer(group_name='lint')
+    def _run_vulture(self, py_num: str, lint_files: List[Path]) -> Tuple[int, str]:
         """ Run mypy in pack dir
 
         Args:
-            py_num(float): The python version in use
+            py_num(str): The python version in use
             lint_files(List[Path]): file to perform lint
 
         Returns:
@@ -549,6 +560,7 @@ class Linter:
 
         return SUCCESS, ""
 
+    @timer(group_name='lint')
     def _run_lint_on_docker_image(self, no_pylint: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
                                   keep_container: bool, test_xml: str, no_coverage: bool):
         """ Run lint check on docker image
@@ -646,6 +658,7 @@ class Linter:
         except docker.errors.APIError:
             return False
 
+    @timer(group_name='lint')
     def _docker_image_create(self, docker_base_image: List[Any]) -> Tuple[str, str]:
         """ Create docker image:
             1. Installing 'build base' if required in alpine images version - https://wiki.alpinelinux.org/wiki/GCC
@@ -664,10 +677,13 @@ class Linter:
         test_image_id = ""
         # Get requirements file for image
         requirements = []
-        if 2 < docker_base_image[1] < 3:
-            requirements = self._req_2
-        elif docker_base_image[1] > 3:
-            requirements = self._req_3
+
+        if docker_base_image[1] != -1:
+            py_ver = parse(docker_base_image[1]).major
+            if py_ver == 2:
+                requirements = self._req_2
+            elif py_ver == 3:
+                requirements = self._req_3
         # Using DockerFile template
         file_loader = FileSystemLoader(Path(__file__).parent / 'templates')
         env = Environment(loader=file_loader, lstrip_blocks=True, trim_blocks=True, autoescape=True)
@@ -758,6 +774,7 @@ class Linter:
             if platform.system() != 'Darwin' or 'Connection broken' not in str(err):
                 raise
 
+    @timer(group_name='lint')
     def _docker_run_pylint(self, test_image: str, keep_container: bool) -> Tuple[int, str]:
         """ Run Pylint in created test image
 
@@ -831,6 +848,7 @@ class Linter:
             output = str(e)
         return exit_code, output
 
+    @timer(group_name='lint')
     def _docker_run_pytest(self, test_image: str, keep_container: bool, test_xml: str, no_coverage: bool = False) -> Tuple[int, str, dict]:
         """ Run Pytest in created test image
 

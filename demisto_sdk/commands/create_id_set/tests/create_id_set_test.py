@@ -12,6 +12,25 @@ from TestSuite.utils import IsEqualFunctions
 
 TESTS_DIR = f'{git_path()}/demisto_sdk/tests'
 
+METADATA = {
+    "name": "Pack0",
+    "description": "Export context data to an xlsx file.",
+    "support": "xsoar",
+    "currentVersion": "1.0.0",
+    "author": "Cortex XSOAR",
+    "url": "https://www.paloaltonetworks.com/cortex",
+    "email": "",
+    "created": "2020-08-13T15:13:06Z",
+    "categories": [],
+    "tags": [],
+    "useCases": [],
+    "keywords": [],
+    "marketplaces": [
+        "xsoar",
+        "marketplacev2"
+    ]
+}
+
 
 class TestIDSetCreator:
     def setup(self):
@@ -58,7 +77,7 @@ class TestIDSetCreator:
         mocker.patch.object(uis, 'cpu_count', return_value=1)
         id_set_creator = IDSetCreator(output=None)
 
-        id_set = id_set_creator.create_id_set()
+        id_set, _, _ = id_set_creator.create_id_set()
         assert not os.path.exists(self.file_path)
         assert id_set is not None
 
@@ -110,7 +129,7 @@ class TestIDSetCreator:
         assert private_id_set['integrations'][0].get('id2', {}).get('name', '') == ''
         assert private_id_set['Packs']['pack_to_create_id_set_on']['ContentItems']['integrations'] == ['id1']
 
-    def test_create_id_set_on_specific_empty_pack(self, repo):
+    def test_create_id_set_on_specific_empty_pack(self, repo, mocker):
         """
         Given
         - an empty pack to create from it ID set
@@ -124,6 +143,10 @@ class TestIDSetCreator:
 
         """
         pack = repo.create_pack()
+        repo.add_pack_metadata_file(pack.path, json.dumps(METADATA))
+
+        import demisto_sdk.commands.common.update_id_set as uis
+        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
 
         id_set_creator = IDSetCreator(self.file_path, pack.path)
 
@@ -150,7 +173,7 @@ def test_create_id_set_flow(repo, mocker):
 
     id_set_content = repo.id_set.read_json_as_dict()
     assert not IsEqualFunctions.is_dicts_equal(id_set_content, {})
-    assert IsEqualFunctions.is_lists_equal(list(id_set_content.keys()), ID_SET_ENTITIES + ['Packs'])
+    assert set(id_set_content.keys()) == set(ID_SET_ENTITIES + ['Packs'])
     for id_set_entity in ID_SET_ENTITIES:
         entity_content_in_id_set = id_set_content.get(id_set_entity)
         assert entity_content_in_id_set, f'ID set for {id_set_entity} is empty'

@@ -2,17 +2,19 @@ import argparse
 import glob
 import io
 import json
+import logging
 import os
 import re
 import shlex
 import sys
 import urllib.parse
+from concurrent.futures import as_completed
 from configparser import ConfigParser, MissingSectionHeaderError
 from contextlib import contextmanager
 from distutils.version import LooseVersion
 from enum import Enum
 from functools import lru_cache, partial
-from pathlib import Path
+from pathlib import Path, PosixPath
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from typing import (Callable, Dict, List, Match, Optional, Set, Tuple, Type,
                     Union)
@@ -26,6 +28,7 @@ import requests
 import urllib3
 import yaml
 from packaging.version import parse
+from pebble import ProcessFuture, ProcessPool
 from ruamel.yaml import YAML
 
 from demisto_sdk.commands.common.constants import (
@@ -35,13 +38,15 @@ from demisto_sdk.commands.common.constants import (
     DOC_FILES_DIR, ID_IN_COMMONFIELDS, ID_IN_ROOT, INCIDENT_FIELDS_DIR,
     INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR,
     INTEGRATIONS_DIR, JOBS_DIR, LAYOUTS_DIR, LISTS_DIR,
+    MARKETPLACE_KEY_PACK_METADATA, METADATA_FILE_NAME,
     OFFICIAL_CONTENT_ID_SET_PATH, PACK_METADATA_IRON_BANK_TAG,
     PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
     PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
     PACKS_README_FILE_NAME, PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR,
     RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR,
-    XSOAR_CONFIG_FILE, FileType, GitContentConfig, urljoin)
+    XSOAR_CONFIG_FILE, FileType, GitContentConfig, IdSetKeys,
+    MarketplaceVersions, urljoin)
 from demisto_sdk.commands.common.git_util import GitUtil
 
 urllib3.disable_warnings()
@@ -49,6 +54,7 @@ urllib3.disable_warnings()
 # inialize color palette
 colorama.init()
 
+logger = logging.getLogger("demisto-sdk")
 ryaml = YAML()
 ryaml.preserve_quotes = True
 ryaml.allow_duplicate_keys = True
@@ -308,7 +314,7 @@ def get_remote_file(
     if full_file_path.endswith('json'):
         details = res.json() if res.ok else json.loads(local_content)
     elif full_file_path.endswith('yml'):
-        details = yaml.safe_load(file_content)  # type: ignore[arg-type]
+        details = ryaml.load(file_content)
     # if neither yml nor json then probably a CHANGELOG or README file.
     else:
         details = {}
@@ -472,7 +478,7 @@ def get_file(file_path, type_of_file):
             # revert str to stream for loader
             stream = io.StringIO(replaced)
             try:
-                if 'yml' == type_of_file:
+                if type_of_file in ('yml', '.yml'):
                     data_dictionary = yaml.load(stream, Loader=XsoarLoader)
 
                 else:
@@ -857,6 +863,10 @@ def pack_name_to_path(pack_name):
     return os.path.join(PACKS_DIR, pack_name)
 
 
+def pack_name_to_posix_path(pack_name):
+    return PosixPath(pack_name_to_path(pack_name))
+
+
 def get_pack_ignore_file_path(pack_name):
     return os.path.join(PACKS_DIR, pack_name, PACKS_PACK_IGNORE_FILE_NAME)
 
@@ -1080,6 +1090,9 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
         if 'description' in path.name:
             return FileType.DESCRIPTION
 
+        if 'CONTRIBUTORS' in path.name:
+            return FileType.CONTRIBUTORS
+
         return FileType.CHANGELOG
 
     if path.suffix == '.json':
@@ -1120,15 +1133,26 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
 # flake8: noqa: C901
 
 
-def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignore_sub_categories: bool = False):
+def find_type(
+    path: str = '',
+    _dict=None,
+    file_type: Optional[str] = None,
+    ignore_sub_categories: bool = False,
+    ignore_invalid_schema_file: bool = False
+):
     """
     returns the content file type
 
     Arguments:
-        path - a path to the file
+         path (str): a path to the file.
+        _dict (dict): file dict representation if exists.
+        file_type (str): a string representation of the file type.
+        ignore_sub_categories (bool): ignore the sub categories, True to ignore, False otherwise.
+        ignore_invalid_schema_file (bool): whether to ignore raising error on invalid schema files,
+            True to ignore, False otherwise.
 
     Returns:
-        string representing the content file type
+        FileType: string representing of the content file type, None otherwise.
     """
     type_by_path = find_type_by_path(path)
     if type_by_path:
@@ -1140,6 +1164,12 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
     except FileNotFoundError:
         # unable to find the file - hence can't identify it
         return None
+    except ValueError as err:
+        if ignore_invalid_schema_file:
+            # invalid file schema
+            logger.debug(str(err))
+            return None
+        raise err
 
     if file_type == 'yml':
         if 'category' in _dict:
@@ -1670,17 +1700,18 @@ def camel_to_snake(camel: str) -> str:
 
 
 def open_id_set_file(id_set_path):
-    id_set = None
+    id_set = {}
     try:
         with open(id_set_path, 'r') as id_set_file:
             id_set = json.load(id_set_file)
     except IOError:
         print_warning("Could not open id_set file")
+        raise
     finally:
         return id_set
 
 
-def get_demisto_version(demisto_client: demisto_client) -> str:
+def get_demisto_version(client: demisto_client) -> str:
     """
     Args:
         demisto_client: A configured demisto_client instance
@@ -1689,7 +1720,7 @@ def get_demisto_version(demisto_client: demisto_client) -> str:
         the server version of the Demisto instance.
     """
     try:
-        resp = demisto_client.generic_request('/about', 'GET')
+        resp = client.generic_request('/about', 'GET')
         about_data = json.loads(resp[0].replace("'", '"'))
         return parse(about_data.get('demistoVersion'))  # type: ignore
     except Exception:
@@ -1749,6 +1780,26 @@ def get_all_incident_and_indicator_fields_from_id_set(id_set_file, entity_type):
                 elif entity_type == 'layout':
                     fields_list.append(field.replace('incident_', '').replace('indicator_', ''))
     return fields_list
+
+
+def is_object_in_id_set(object_id, pack_info_from_id_set):
+    """
+        Check if the given object is part of the packs items that are present in the Packs section in the id set.
+        This is assuming that the id set is based on the version that has, under each pack, the items it contains.
+
+    Args:
+        object_name: name of object of interest.
+        pack: the pack this object should belong to.
+        packs_section_from_id_set: the section under the key Packs in the previously given id set.
+
+    Returns:
+
+    """
+    content_items = pack_info_from_id_set.get('ContentItems', {})
+    for items_type, items_ids in content_items.items():
+        if object_id in items_ids:
+            return True
+    return False
 
 
 def is_string_uuid(string_to_check: str):
@@ -2181,3 +2232,184 @@ def get_current_repo() -> Tuple[str, str, str]:
     except git.InvalidGitRepositoryError:
         print_warning('git repo is not found')
         return "Unknown source", '', ''
+
+
+def get_mp_types_from_metadata_by_item(file_path):
+    """
+    Get the supporting marketplaces for the given content item, defined by the mp field in the metadata.
+    If the field doesnt exist in the pack's metadata, consider as xsoar only.
+    Args:
+        file_path: path to content item in content repo
+
+    Returns:
+        list of names of supporting marketplaces (current options are marketplacev2 and xsoar)
+    """
+    if METADATA_FILE_NAME in Path(file_path).parts:  # for when the type is pack, the item we get is the metadata path
+        metadata_path = file_path
+    else:
+        metadata_path_parts = get_pack_dir(file_path)
+        metadata_path = Path(*metadata_path_parts) / METADATA_FILE_NAME
+
+    try:
+        with open(metadata_path, 'r') as metadata_file:
+            metadata = json.load(metadata_file)
+            marketplaces = metadata.get(MARKETPLACE_KEY_PACK_METADATA)
+            if not marketplaces:
+                return [MarketplaceVersions.XSOAR.value]
+            return marketplaces
+    except FileNotFoundError:
+        return []
+
+
+def get_pack_dir(path):
+    """
+    Used for testing packs where the location of the "Packs" dir is not constant.
+    Args:
+        path: path of current file
+
+    Returns:
+        the path starting from Packs dir
+
+    """
+    parts = Path(path).parts
+    for index in range(len(parts)):
+        if parts[index] == 'Packs':
+            return parts[:index + 2]
+    return []
+
+
+@contextmanager
+def ProcessPoolHandler() -> ProcessPool:
+    """ Process pool Handler which terminate all processes in case of Exception.
+
+    Yields:
+        ProcessPool: Pebble process pool.
+    """
+    with ProcessPool(max_workers=3) as pool:
+        try:
+            yield pool
+        except Exception:
+            print_error("Gracefully release all resources due to Error...")
+            raise
+        finally:
+            pool.close()
+            pool.join()
+
+
+def wait_futures_complete(futures: List[ProcessFuture], done_fn: Callable):
+    """Wait for all futures to complete, Raise exception if occurred.
+
+    Args:
+        futures: futures to wait for.
+        done_fn: Function to run on result.
+    Raises:
+        Exception: Raise caught exception for further cleanups.
+    """
+    for future in as_completed(futures):
+        try:
+            result = future.result()
+            done_fn(result)
+        except Exception as e:
+            print_error(e)
+            raise
+
+
+def get_api_module_dependencies(pkgs, id_set_path, verbose):
+    """
+    Get all paths to integrations and scripts dependent on api modules that are found in the modified files.
+    Args:
+        pkgs: the pkgs paths found as modified to run lint on (including the api module files)
+        id_set_path: path to id set
+        verbose: print found dependencies or not
+    Returns:
+        a list of the paths to the scripts and integration found dependent on the modified api modules.
+    """
+
+    id_set = open_id_set_file(id_set_path)
+    api_modules = [pkg.name for pkg in pkgs if API_MODULES_PACK in pkg.parts]
+    scripts = id_set.get(IdSetKeys.SCRIPTS.value, [])
+    integrations = id_set.get(IdSetKeys.INTEGRATIONS.value, [])
+    using_scripts, using_integrations = [], []
+    for script in scripts:
+        script_info = list(script.values())[0]
+        script_name = script_info.get('name')
+        api_module = script_info.get('api_modules', [])
+        if api_module in api_modules:
+            if verbose:
+                print(f"found script {script_name} dependent on {api_module}")
+            using_scripts.extend(list(script.values()))
+
+    for integration in integrations:
+        integration_info = list(integration.values())[0]
+        integration_name = integration_info.get('name')
+        api_module = integration_info.get('api_modules', [])
+        if api_module in api_modules:
+            if verbose:
+                print(f"found integration {integration_name} dependent on {api_module}")
+            using_integrations.extend(list(integration.values()))
+
+    using_scripts_pkg_paths = [Path(script.get('file_path')).parent.absolute() for
+                               script in using_scripts]
+    using_integrations_pkg_paths = [Path(integration.get('file_path')).parent.absolute() for
+                                    integration in using_integrations]
+    return list(set(using_integrations_pkg_paths + using_scripts_pkg_paths))
+
+
+def listdir_fullpath(dir_name: str) -> List[str]:
+    return [os.path.join(dir_name, f) for f in os.listdir(dir_name)]
+
+
+def get_scripts_and_commands_from_yml_data(data, file_type):
+    """Get the used scripts, playbooks and commands from the yml data
+
+    Args:
+        data: The yml data as extracted with get_yaml
+        file_type: The FileType of the data provided.
+
+    Return (list of found { 'id': command name, 'source': command source }, list of found script and playbook names)
+    """
+    commands = []
+    detailed_commands = []
+    scripts_and_pbs = []
+    if file_type == FileType.TEST_PLAYBOOK or file_type == FileType.PLAYBOOK:
+        tasks = data.get('tasks')
+        for task_num in tasks.keys():
+            task = tasks[task_num]
+            inner_task = task.get('task')
+            task_type = task.get('type')
+            if inner_task and task_type == 'regular' or task_type == 'playbook':
+                if inner_task.get('iscommand'):
+                    commands.append(inner_task.get('script'))
+                else:
+                    if task_type == 'playbook':
+                        scripts_and_pbs.append(inner_task.get('playbookName'))
+                    elif inner_task.get('scriptName'):
+                        scripts_and_pbs.append(inner_task.get('scriptName'))
+        if file_type == FileType.PLAYBOOK:
+            playbook_id = get_entity_id_by_entity_type(data, PLAYBOOKS_DIR)
+            scripts_and_pbs.append(playbook_id)
+
+    if file_type == FileType.SCRIPT:
+        script_id = get_entity_id_by_entity_type(data, SCRIPTS_DIR)
+        scripts_and_pbs = [script_id]
+        if data.get('dependson'):
+            commands = data.get('dependson').get('must', [])
+
+    if file_type == FileType.INTEGRATION:
+        integration_commands = data.get('script', {}).get('commands')
+        for integration_command in integration_commands:
+            commands.append(integration_command.get('name'))
+
+    for command in commands:
+        command_parts = command.split('|||')
+        if len(command_parts) == 2:
+            detailed_commands.append({
+                'id': command_parts[1],
+                'source': command_parts[0]
+            })
+        else:
+            detailed_commands.append({
+                'id': command_parts[0]
+            })
+
+    return detailed_commands, scripts_and_pbs

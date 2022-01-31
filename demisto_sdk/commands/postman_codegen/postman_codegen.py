@@ -52,54 +52,31 @@ def postman_headers_to_conf_headers(postman_headers, skip_authorization_header: 
     return headers
 
 
-def create_body_format(body: Union[dict, list]):
+def create_body_format(body: Union[dict, list], args: List[IntegrationGeneratorArg] = None):
     """
-    {
-        "key1": "val1",
-        "key2": {
-            "key3": "val3"
-        },
-        "key4": [
-            {
-                "key5": "val5"
-            },
-            {
-                "key5": "val51"
-            },
-        ],
-        "key7": [
-            "a",
-            "b",
-            "c"
-        ]
-    }
+    Gets the raw body of a request and creates a request holding the argument's names in it (that we will get from the users),
+    instead of the values that the argument's had in postman. The argument's name are generated surrounded with {}.
 
-    ==>
-    {
-        "key1": "{key1}",
-        "key2": {
-            "key3": "{key3}"
-        },
-        "key4": [
-            {
-                "key5": "{key5}"
-            }
-        ],
-        "key7": "{key7}"
-    }
+    :param body: the raw body from postman
+    :param args: list of the arguments, holding their name and path in the object
     """
 
-    def format_value(d, o):
-        for k, v in d.items():
-            if isinstance(v, dict):
-                o[k] = {}
-                o[k] = format_value(v, o[k])
-            elif isinstance(v, list) and len(v) > 0 and isinstance(v[0], dict):
-                o[k] = [{}]
-                o[k][0] = format_value(v[0], o[k][0])
+    def format_value(input_body: Dict, output_body: Dict, path: tuple = ()):
+        for key, value in input_body.items():
+            if isinstance(value, dict):
+                output_body[key] = {}
+                output_body[key] = format_value(value, output_body[key], path + (key,))
+            elif isinstance(value, list) and len(value) > 0 and isinstance(value[0], dict):
+                output_body[key] = [{}]
+                output_body[key][0] = format_value(value[0], output_body[key][0], path + (key,))
             else:
-                o[k] = '{' + k + '}'
-        return o
+                output_body[key] = '{' + key + '}'
+                if args:
+                    for arg in args:
+                        if arg.in_object == list(path) and key == arg.name.split('_')[-1]:
+                            output_body[key] = '{' + arg.name + '}'
+                            break
+        return output_body
 
     if isinstance(body, dict):
         return format_value(body, {})
@@ -360,7 +337,6 @@ def convert_request_to_command(item: dict):
         if request_body.get('mode') == 'raw':
             try:
                 body_obj = json.loads(request_body.get('raw'))
-                body_format = create_body_format(body_obj)
                 flattened_json = flatten_json(body_obj)
                 shared_arg_to_split_position_dict = find_shared_args_path(flattened_json)
 
@@ -376,6 +352,8 @@ def convert_request_to_command(item: dict):
                         in_object=json_path
                     )
                     args.append(arg)
+
+                body_format = create_body_format(body_obj, args)
 
             except Exception:
                 logger.exception(f'Failed to parse {name} request body as JSON.')

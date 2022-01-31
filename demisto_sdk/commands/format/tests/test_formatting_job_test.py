@@ -25,7 +25,7 @@ def test_infer_selected_feeds(repo, is_feed: bool, all_feeds: bool):
     job.remove('selectedFeeds')
     assert 'selectedFeeds' not in job.read_json_as_dict()
 
-    run_format_on_file(job.path, JOB, DEFAULT_JOB_FROM_VERSION)
+    run_format_on_file(job.path, JOB, DEFAULT_JOB_FROM_VERSION, interactive=True)
 
     job_dict_after = job.read_json_as_dict()
     assert 'selectedFeeds' in job_dict_after
@@ -50,7 +50,7 @@ def test_add_default_fromversion(repo, is_feed: bool):
     job.remove('fromVersion')
     assert 'fromVersion' not in job.read_json_as_dict()
 
-    run_format_on_file(job.path, JOB, DEFAULT_JOB_FROM_VERSION)
+    run_format_on_file(job.path, JOB, DEFAULT_JOB_FROM_VERSION, interactive=True)
 
     job_dict_after = job.read_json_as_dict()
     assert 'fromVersion' in job_dict_after
@@ -70,6 +70,6 @@ def test_update_id(repo, is_feed: bool):
     pack = repo.create_pack()
     job = pack.create_job(is_feed)
     job.remove('id')
-    run_format_on_file(job.path, JOB, DEFAULT_JOB_FROM_VERSION)
+    run_format_on_file(job.path, JOB, DEFAULT_JOB_FROM_VERSION, interactive=True)
     job_dict_after = job.read_json_as_dict()
     assert job_dict_after['id'] == job.pure_name

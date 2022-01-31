@@ -1,6 +1,8 @@
+from distutils.version import LooseVersion
 from typing import Any, Dict, List, Optional
 
 import decorator
+from requests import Response
 
 from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
                                                    CONF_PATH,
@@ -15,11 +17,11 @@ ALLOWED_IGNORE_ERRORS = [
     'BA101', 'BA106', 'BA108', 'BA109', 'BA110', 'BA111', 'BA112', 'BA113',
     'DS107',
     'GF102',
-    'IF100', 'IF106', 'IF115',
+    'IF100', 'IF106', 'IF115', 'IF116',
     'IN109', 'IN110', 'IN122', 'IN124', 'IN126', 'IN128', 'IN135', 'IN136', 'IN139', 'IN144', 'IN145',
     'MP106',
     'PA113', 'PA116', 'PA124', 'PA125', 'PA127', 'PA129',
-    'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112', 'PB114', 'PB115', 'PB116',
+    'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112', 'PB114', 'PB115', 'PB116', 'PB107',
     'RM100', 'RM102', 'RM104', 'RM106',
     'RP102', 'RP104',
     'SC100', 'SC101', 'SC105', 'SC106',
@@ -115,7 +117,8 @@ ERROR_CODE = {
     # GF - Generic Fields
     "invalid_generic_field_group_value": {'code': "GF100", 'ui_applicable': False, 'related_field': 'group'},
     "invalid_generic_field_id": {'code': "GF101", 'ui_applicable': False, 'related_field': 'id'},
-    "unsearchable_key_should_be_true_generic_field": {'code': "GF102", 'ui_applicable': False, 'related_field': 'unsearchable'},
+    "unsearchable_key_should_be_true_generic_field": {'code': "GF102", 'ui_applicable': False,
+                                                      'related_field': 'unsearchable'},
 
     # ID - ID Set
     "id_set_conflicts": {'code': "ID100", 'ui_applicable': False, 'related_field': ''},
@@ -125,23 +128,25 @@ ERROR_CODE = {
 
     # IF - Incident Fields
     "invalid_incident_field_name": {'code': "IF100", 'ui_applicable': True, 'related_field': 'name'},
-    "invalid_incident_field_content_key_value": {'code': "IF101", 'ui_applicable': False, 'related_field': 'content'},
+    "invalid_field_content_key_value": {'code': "IF101", 'ui_applicable': False, 'related_field': 'content'},
     "invalid_incident_field_system_key_value": {'code': "IF102", 'ui_applicable': False, 'related_field': 'system'},
-    "invalid_incident_field_type": {'code': "IF103", 'ui_applicable': True, 'related_field': 'type'},
-    "invalid_incident_field_group_value": {'code': "IF104", 'ui_applicable': False, 'related_field': 'group'},
+    "invalid_field_type": {'code': "IF103", 'ui_applicable': True, 'related_field': 'type'},
+    "invalid_field_group_value": {'code': "IF104", 'ui_applicable': False, 'related_field': 'group'},
     "invalid_incident_field_cli_name_regex": {'code': "IF105", 'ui_applicable': False, 'related_field': 'cliName'},
     "invalid_incident_field_cli_name_value": {'code': "IF106", 'ui_applicable': True, 'related_field': 'cliName'},
     # missing 107
     "invalid_incident_field_or_type_from_version": {'code': "IF108", 'ui_applicable': False,
                                                     'related_field': 'fromVersion'},
-    "new_incident_field_required": {'code': "IF109", 'ui_applicable': True, 'related_field': 'required'},
+    "new_field_required": {'code': "IF109", 'ui_applicable': True, 'related_field': 'required'},
     "from_version_modified_after_rename": {'code': "IF110", 'ui_applicable': False, 'related_field': 'fromVersion'},
     "incident_field_type_change": {'code': "IF111", 'ui_applicable': False, 'related_field': 'type'},
-    "indicator_field_type_grid_minimal_version": {'code': "IF112", 'ui_applicable': False,
-                                                  'related_field': 'fromVersion'},
+    "field_version_is_not_correct": {'code': "IF112", 'ui_applicable': False, 'related_field': 'fromVersion'},
     "invalid_incident_field_prefix": {'code': "IF113", 'ui_applicable': False, 'related_field': 'name'},
     "incident_field_non_existent_script_id": {'code': "IF114", 'ui_applicable': False, 'related_field': ''},
-    "unsearchable_key_should_be_true_incident_field": {'code': "IF115", 'ui_applicable': False, 'related_field': 'unsearchable'},
+    "unsearchable_key_should_be_true_incident_field": {'code': "IF115", 'ui_applicable': False,
+                                                       'related_field': 'unsearchable'},
+    'select_values_cannot_contain_empty_values': {'code': "IF116", 'ui_applicable': False,
+                                                  'related_field': 'selectValues'},
 
     # IM - Images
     "no_image_given": {'code': "IM100", 'ui_applicable': True, 'related_field': 'image'},
@@ -208,7 +213,8 @@ ERROR_CODE = {
     "non_default_additional_info": {'code': "IN142", 'ui_applicable': True, 'related_field': 'additionalinfo'},
     "missing_default_additional_info": {'code': "IN143", 'ui_applicable': True, 'related_field': 'additionalinfo'},
     "wrong_is_array_argument": {'code': "IN144", 'ui_applicable': True, 'related_field': '<argument-name>.default'},
-    "api_token_is_not_in_credential_type": {'code': "IN145", 'ui_applicable': True, 'related_field': '<argument-name>.type'},
+    "api_token_is_not_in_credential_type": {'code': "IN145", 'ui_applicable': True,
+                                            'related_field': '<argument-name>.type'},
     "fromlicense_in_parameters": {'code': "IN146", 'ui_applicable': True,
                                   'related_field': '<parameter-name>.fromlicense'},
     "changed_integration_yml_fields": {'code': "IN147", "ui_applicable": False, 'related_field': 'script'},
@@ -222,8 +228,8 @@ ERROR_CODE = {
     "incident_type_non_existent_playbook_id": {'code': "IT104", 'ui_applicable': False, 'related_field': ''},
 
     # LI - Lists
-    "invalid_from_server_version_in_lists": {'code': "LI100", 'ui_applicable': False,
-                                             'related_field': 'fromVersion'},
+    "invalid_from_server_version_in_lists": {'code': "LI100", 'ui_applicable': False, 'related_field': 'fromVersion'},
+    "missing_from_version_in_list": {'code': "LI101", 'ui_applicable': False, 'related_field': 'fromVersion'},
 
     # LO - Layouts
     "invalid_version_in_layout": {'code': "LO100", 'ui_applicable': False, 'related_field': 'version'},
@@ -300,7 +306,8 @@ ERROR_CODE = {
     "content_entity_is_not_in_id_set": {'code': "PB117", 'ui_applicable': False, 'related_field': ''},
 
     # PP - Pre-Process Rules
-    "invalid_from_server_version_in_pre_process_rules": {'code': "PP100", 'ui_applicable': False, 'related_field': 'fromServerVersion'},
+    "invalid_from_server_version_in_pre_process_rules": {'code': "PP100", 'ui_applicable': False,
+                                                         'related_field': 'fromServerVersion'},
     "invalid_incident_field_in_pre_process_rules": {'code': "PP101", 'ui_applicable': False, 'related_field': ''},
 
     # RM - READMEs
@@ -358,6 +365,7 @@ ERROR_CODE = {
     "pykwalify_general_error": {'code': "ST110", 'ui_applicable': False, 'related_field': ''},
     "pykwalify_field_undefined_with_path": {'code': "ST111", 'ui_applicable': False, 'related_field': ''},
     "pykwalify_incorrect_enum": {'code': "ST112", 'ui_applicable': False, 'related_field': ''},
+    "invalid_yml_file": {'code': "ST113", 'ui_applicable': False, 'related_field': ''},
 
     # WD - Widgets
     "remove_field_from_widget": {'code': "WD100", 'ui_applicable': False, 'related_field': ''},
@@ -499,8 +507,15 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def indicator_field_type_grid_minimal_version(fromversion):
-        return f"The indicator field has a fromVersion of: {fromversion} but the minimal fromVersion is 5.5.0."
+    def field_version_is_not_correct(from_version_set: LooseVersion, expected_from_version: LooseVersion,
+                                     reason_for_version: str):
+        return f"The field has a fromVersion of: {from_version_set} but the minimal fromVersion " \
+               f"is {expected_from_version}.\nReason for minimum version is: {reason_for_version}"
+
+    @staticmethod
+    @error_code_decorator
+    def select_values_cannot_contain_empty_values():
+        return 'the field selectValues cannot contain empty values. Please remove.'
 
     @staticmethod
     @error_code_decorator
@@ -917,7 +932,7 @@ class Errors:
     def docker_not_on_the_latest_tag(docker_image_tag, docker_image_latest_tag, is_iron_bank=False) -> str:
         return f'The docker image tag is not the latest numeric tag, please update it.\n' \
                f'The docker image tag in the yml file is: {docker_image_tag}\n' \
-               f'The latest docker image tag in {"Iron Bank" if is_iron_bank else "docker hub" } ' \
+               f'The latest docker image tag in {"Iron Bank" if is_iron_bank else "docker hub"} ' \
                f'is: {docker_image_latest_tag}\n'
 
     @staticmethod
@@ -1294,23 +1309,23 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_incident_field_content_key_value(content_value):
-        return f"The content key must be set to {content_value}."
+    def invalid_field_content_key_value():
+        return "The content key must be set to True."
 
     @staticmethod
     @error_code_decorator
-    def invalid_incident_field_system_key_value(system_value):
-        return f"The system key must be set to {system_value}"
+    def invalid_incident_field_system_key_value():
+        return "The system key must be set to False"
 
     @staticmethod
     @error_code_decorator
-    def invalid_incident_field_type(file_type, type_fields):
+    def invalid_field_type(file_type, type_fields):
         return f"Type: `{file_type}` is not one of available types.\n" \
-               f"available types: {[value.value for value in type_fields]}"
+               f"available types: {type_fields}"
 
     @staticmethod
     @error_code_decorator
-    def invalid_incident_field_group_value(group):
+    def invalid_field_group_value(group):
         return f"Group {group} is not a group field."
 
     @staticmethod
@@ -1331,8 +1346,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def new_incident_field_required():
-        return 'New incident fields can not be required. change to:\nrequired: false.'
+    def new_field_required():
+        return 'New fields can not be required. change to:\nrequired: false.'
 
     @staticmethod
     @error_code_decorator
@@ -1642,14 +1657,20 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_readme_image_error(path, error_type):
-        return 'Error in readme image:\n' + {
-            'pack_readme_relative_error': Errors.pack_readme_image_relative_path_error,
-            'general_readme_relative_error': Errors.invalid_readme_image_relative_path_error,
-            'general_readme_absolute_error': Errors.invalid_readme_image_absolute_path_error,
-            'branch_name_readme_absolute_error': Errors.branch_name_in_readme_image_absolute_path_error,
-            'insert_image_link_error': Errors.invalid_readme_insert_image_link_error
-        }.get(error_type, lambda x: f'Something went wrong when testing {x}')(path)
+    def invalid_readme_image_error(path: str, error_type: str, response: Optional[Response] = None):
+        error = 'Error in readme image: '
+        if response is not None:
+            error += f'got HTTP response code {response.status_code}'
+            error += f', reason = {response.reason}' if response.reason else " "
+
+        error_body = {'pack_readme_relative_error': Errors.pack_readme_image_relative_path_error,
+                      'general_readme_relative_error': Errors.invalid_readme_image_relative_path_error,
+                      'general_readme_absolute_error': Errors.invalid_readme_image_absolute_path_error,
+                      'branch_name_readme_absolute_error': Errors.branch_name_in_readme_image_absolute_path_error,
+                      'insert_image_link_error': Errors.invalid_readme_insert_image_link_error} \
+            .get(error_type, lambda x: f'Unexpected error when testing {x}')(path)
+
+        return error + f"\n{error_body}"
 
     @staticmethod
     @error_code_decorator
@@ -1821,6 +1842,11 @@ class Errors:
     @error_code_decorator
     def invalid_from_server_version_in_lists(version_field):
         return f'{version_field} field in a list item needs to be at least 6.5.0'
+
+    @staticmethod
+    @error_code_decorator
+    def missing_from_version_in_list():
+        return 'Must have fromVersion field in list'
 
     @staticmethod
     @error_code_decorator
@@ -2095,3 +2121,8 @@ class Errors:
     def runas_is_dbotrole():
         return 'The runas value is DBotRole, it may cause access and exposure of sensitive data. ' \
                'Please consider changing it.'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_yml_file(error):
+        return f'There is problem with the yml file. The error: {error}'

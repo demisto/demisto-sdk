@@ -344,12 +344,12 @@ class ValidateManager:
         all_packs.sort(key=str.lower)
 
         l = multiprocessing.Lock()
-        with multiprocessing.Pool(processes=4, initializer=init, initargs=(l,)) as executor:
+        with pebble.ProcessPool(max_workers=2, initializer=init, initargs=(l,)) as executor:
             futures = []
             for pack_path in all_packs:
                 self.completion_percentage = format((count / num_of_packs) * 100, ".2f")  # type: ignore
                 futures.append(
-                    executor.apply_async(self.run_validations_on_pack, args=(pack_path,)))
+                    executor.schedule(self.run_validations_on_pack, args=(pack_path,)))
                 count += 1
             wait_futures_complete(futures_list=futures, done_fn=lambda x: all_packs_valid.add(x))
 

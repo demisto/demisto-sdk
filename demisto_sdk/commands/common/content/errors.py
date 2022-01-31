@@ -3,6 +3,7 @@ from typing import Optional
 
 from wcmatch.pathlib import Path
 
+
 class ContentError(Exception):
     def __init__(self, obj: object, obj_path: Path, additional_info: Optional[str] = ""):
         """Base class for exceptions in this module.

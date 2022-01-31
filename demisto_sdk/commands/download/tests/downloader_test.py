@@ -512,7 +512,7 @@ class TestMergeExistingFile:
             for param in parameters:
                 downloader.merge_existing_file(param['custom_content_object'], param['ending'])
                 assert os.path.isfile(param['instance_path'])
-                file_data = param['method'](param['instance_path'])
+                file_data = param['method'].__wrapped__(param['instance_path'])
                 for field in param['fields']:
                     if file_data.get(field):
                         assert True

@@ -327,11 +327,6 @@ class ValidateManager:
 
         click.secho('\n================= Validating all files =================', fg="bright_cyan")
 
-        # readme_validator = ReadMeValidator(file_path='', ignored_errors='',
-        #                                    print_as_warnings=self.print_ignored_errors,
-        #                                    json_file_path=self.json_file_path)
-        # readme_validator.start_mdx_server()
-
         all_packs_valid = set()
 
         if not self.skip_conf_json:
@@ -352,8 +347,6 @@ class ValidateManager:
                     executor.schedule(self.run_validations_on_pack, args=(pack_path,)))
                 count += 1
             wait_futures_complete(futures_list=futures, done_fn=lambda x: all_packs_valid.add(x))
-
-        # ReadMeValidator.stop_mdx_server()
 
         return all(all_packs_valid)
 
@@ -776,15 +769,11 @@ class ValidateManager:
                                                      json_file_path=self.json_file_path)
         return description_validator.is_valid_file()
 
-    # @pebble.synchronized([pebble.ProcessPool])
     def validate_readme(self, file_path, pack_error_ignore_list):
         readme_validator = ReadMeValidator(file_path, ignored_errors=pack_error_ignore_list,
                                            print_as_warnings=self.print_ignored_errors,
                                            json_file_path=self.json_file_path)
-        # lock.acquire()
-        is_valid = readme_validator.is_valid_file()
-        # lock.release()
-        return is_valid
+        return readme_validator.is_valid_file()
 
     def validate_test_playbook(self, structure_validator, pack_error_ignore_list):
         test_playbook_validator = TestPlaybookValidator(structure_validator=structure_validator,

@@ -217,7 +217,7 @@ def init_pack(content_repo: ContentGitRepo, monkeypatch: MonkeyPatch):
 
     Then: Validate lint, secrets and validate exit code is 0
     """
-    author_image_rel_path = Path("demisto-sdk/demisto-sdk/tests/test_files/artifacts/content/content_packs/AuthorImageTest/SanityCheck")
+    author_image_rel_path = Path("demisto-sdk/tests/test_files/artifacts/content/content_packs/AuthorImageTest/SanityCheck")
     author_image_abs_path = (author_image_rel_path / AUTHOR_IMAGE_FILE_NAME).absolute()
     monkeypatch.chdir(content_repo.content)
     runner = CliRunner(mix_stderr=False)

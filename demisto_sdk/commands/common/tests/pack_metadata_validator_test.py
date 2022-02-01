@@ -191,8 +191,7 @@ class TestPackMetadataValidator:
                     - A version to be checked by the _is_version_format function
 
                 When:
-                    - We want to check the correctness of the version while the
-                        _is_pack_meta_file_structure_valid is validating the packs meta data
+                    - Validating meta data structure.
 
                 Then:
                     - return True if the version is in the correct format and False otherwise

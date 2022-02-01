@@ -307,8 +307,7 @@ class PackUniqueFilesValidator(BaseValidator):
         current_version = current_meta_file_content.get('currentVersion', '0.0.0')
         if LooseVersion(old_version) < LooseVersion(current_version):
             return True
-        elif self._add_error(Errors.pack_metadata_version_should_be_raised(self.pack, old_version),
-                             metadata_file_path):
+        elif self._add_error(Errors.pack_metadata_version_should_be_raised(self.pack, old_version), metadata_file_path):
             return False
         return True
 

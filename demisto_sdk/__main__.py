@@ -649,6 +649,7 @@ def lint(**kwargs):
                   quiet=kwargs.get('quiet'),  # type: ignore[arg-type]
                   log_path=kwargs.get('log_path'))  # type: ignore[arg-type]
 
+
     check_configuration_file('lint', kwargs)
     lint_manager = LintManager(
         input=kwargs.get('input'),  # type: ignore[arg-type]

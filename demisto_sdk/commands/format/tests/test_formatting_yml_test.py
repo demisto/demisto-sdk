@@ -10,9 +10,8 @@ import yaml
 from mock import Mock, patch
 from ruamel.yaml import YAML
 
-from demisto_sdk.commands.common.constants import (FEED_REQUIRED_PARAMS,
-                                                   FETCH_REQUIRED_PARAMS,
-                                                   INTEGRATION)
+from demisto_sdk.commands.common.constants import (
+    FEED_REQUIRED_PARAMS, INCIDENT_FETCH_REQUIRED_PARAMS, INTEGRATION)
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.integration import \
@@ -498,7 +497,7 @@ class TestFormatting:
             for param in params:
                 if 'defaultvalue' in param and param['name'] != 'feed':
                     param.pop('defaultvalue')
-            for param in FETCH_REQUIRED_PARAMS:
+            for param in INCIDENT_FETCH_REQUIRED_PARAMS:
                 assert param in yaml_content['configuration']
         os.remove(target)
         os.rmdir(path)

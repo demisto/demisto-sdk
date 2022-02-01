@@ -3,11 +3,9 @@ from typing import Tuple
 
 import click
 
-from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
-                                                   BETA_INTEGRATION,
-                                                   FEED_REQUIRED_PARAMS,
-                                                   FETCH_REQUIRED_PARAMS,
-                                                   INTEGRATION, TYPE_PWSH)
+from demisto_sdk.commands.common.constants import (
+    BANG_COMMAND_NAMES, BETA_INTEGRATION, FEED_REQUIRED_PARAMS,
+    INCIDENT_FETCH_REQUIRED_PARAMS, INTEGRATION, TYPE_PWSH)
 from demisto_sdk.commands.common.tools import find_type
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
@@ -126,7 +124,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
             for param in params:
                 if 'defaultvalue' in param:
                     param.pop('defaultvalue')
-            for param in FETCH_REQUIRED_PARAMS:
+            for param in INCIDENT_FETCH_REQUIRED_PARAMS:
                 if param not in params:
                     self.data['configuration'].append(param)
 

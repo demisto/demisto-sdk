@@ -21,15 +21,88 @@ from demisto_sdk.commands.common.update_id_set import (
     get_filters_and_transformers_from_playbook, get_general_data,
     get_generic_field_data, get_generic_module_data, get_generic_type_data,
     get_incident_fields_by_playbook_input, get_incident_type_data,
-    get_indicator_type_data, get_layout_data, get_layoutscontainer_data,
-    get_mapper_data, get_pack_metadata_data, get_playbook_data,
-    get_report_data, get_script_data, get_values_for_keys_recursively,
-    get_widget_data, has_duplicate, merge_id_sets, process_general_items,
-    process_incident_fields, process_integration, process_jobs, process_script,
-    re_create_id_set, should_skip_item_by_mp)
+    get_indicator_type_data, get_item_marketplaces, get_layout_data,
+    get_layoutscontainer_data, get_mapper_data, get_pack_metadata_data,
+    get_playbook_data, get_report_data, get_script_data,
+    get_values_for_keys_recursively, get_widget_data, has_duplicate,
+    merge_id_sets, process_general_items, process_incident_fields,
+    process_integration, process_jobs, process_script, re_create_id_set,
+    should_skip_item_by_mp)
 from TestSuite.utils import IsEqualFunctions
 
 TESTS_DIR = f'{git_path()}/demisto_sdk/tests'
+
+
+class TestGetItemMarketplaces:
+    @staticmethod
+    def test_item_has_marketplaces_field():
+        """
+        Given
+            - item declares marketplaces
+        When
+            - getting the marketplaces of an item
+        Then
+            - return the item's marketplaces
+        """
+        item_data = {
+            'name': 'Integration',
+            'marketplaces': ['xsoar', 'marketplacev2'],
+        }
+        marketplaces = get_item_marketplaces('Packs/PackID/Integrations/Integration/Integration.yml', item_data=item_data)
+
+        assert 'xsoar' in marketplaces
+        assert 'marketplacev2' in marketplaces
+
+    @staticmethod
+    def test_only_pack_has_marketplaces():
+        """
+        Given
+            - item does not declare marketplaces
+            - pack declares marketplaces
+        When
+            - getting the marketplaces of an item
+        Then
+            - return the pack's marketplaces
+        """
+        item_data = {
+            'name': 'Integration',
+            'pack': 'PackID',
+        }
+        packs = {
+            'PackID': {
+                'id': 'PackID',
+                'marketplaces': ['xsoar', 'marketplacev2'],
+            }
+        }
+        marketplaces = get_item_marketplaces('Packs/PackID/Integrations/Integration/Integration.yml', item_data=item_data, packs=packs)
+
+        assert 'xsoar' in marketplaces
+        assert 'marketplacev2' in marketplaces
+
+    @staticmethod
+    def test_no_marketplaces_specified():
+        """
+        Given
+            - item does not declare marketplaces
+            - pack does not declare marketplaces
+        When
+            - getting the marketplaces of an item
+        Then
+            - return the default marketplaces (only xsoar)
+        """
+        item_data = {
+            'name': 'Integration',
+            'pack': 'PackID',
+        }
+        packs = {
+            'PackID': {
+                'id': 'PackID',
+            }
+        }
+        marketplaces = get_item_marketplaces('Packs/PackID/Integrations/Integration/Integration.yml', item_data=item_data, packs=packs)
+
+        assert len(marketplaces) == 1
+        assert 'xsoar' in marketplaces
 
 
 class TestPacksMetadata:

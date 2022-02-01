@@ -153,15 +153,16 @@ def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[st
     marketplaces = item_data.get('marketplaces', [])  # type: ignore
 
     # second check, check the metadata of the pack
-    if not marketplaces and 'pack_metadata' not in item_path:
-        pack_name = get_pack_name(item_path)
-        if packs:
-            marketplaces = packs.get(pack_name, {}).get('marketplaces', [MarketplaceVersions.XSOAR.value])
+    if not marketplaces:
+        if 'pack_metadata' in item_path:
+            # default supporting marketplace
+            marketplaces = [MarketplaceVersions.XSOAR.value]
         else:
-            marketplaces = get_mp_types_from_metadata_by_item(item_path)
-    else:
-        # default supporting marketplace
-        marketplaces = [MarketplaceVersions.XSOAR.value]
+            pack_name = get_pack_name(item_path)
+            if packs:
+                marketplaces = packs.get(pack_name, {}).get('marketplaces', [MarketplaceVersions.XSOAR.value])
+            else:
+                marketplaces = get_mp_types_from_metadata_by_item(item_path)
 
     return marketplaces
 

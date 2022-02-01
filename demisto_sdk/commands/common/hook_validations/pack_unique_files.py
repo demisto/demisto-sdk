@@ -506,7 +506,7 @@ class PackUniqueFilesValidator(BaseValidator):
                 return False
         return True
 
-    def _is_version_format(self, version: str) -> bool:
+    def _is_version_format_valid(self, version: str) -> bool:
         """
         checks if the meta-data version is in the correct format
         Args:

@@ -219,6 +219,7 @@ def init_pack(content_repo: ContentGitRepo, monkeypatch: MonkeyPatch):
     """
     author_image_rel_path = Path("demisto-sdk/tests/test_files/artifacts/content/content_packs/AuthorImageTest/SanityCheck")
     author_image_abs_path = (author_image_rel_path / AUTHOR_IMAGE_FILE_NAME).absolute()
+    assert author_image_abs_path.exists()
     monkeypatch.chdir(content_repo.content)
     runner = CliRunner(mix_stderr=False)
     res = runner.invoke(
@@ -226,7 +227,7 @@ def init_pack(content_repo: ContentGitRepo, monkeypatch: MonkeyPatch):
         input="\n".join(["y", "Sample", "description", "1", "1", "n", "6.0.0"])
     )
     assert res.exit_code == 0, f"Could not run the init command.\nstdout={res.stdout}\nstderr={res.stderr}\n" \
-                               f"author_image_abs_path={author_image_abs_path}"
+                               f"author_image_abs_path={author_image_abs_path}. {res.exc_info=}"
     content_repo.run_validations()
 
 

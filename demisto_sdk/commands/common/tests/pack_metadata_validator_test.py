@@ -173,6 +173,7 @@ class TestPackMetadataValidator:
         assert not validator.validate_pack_meta_file()
         assert "[PA130] - Wrong version format in metadata.json change to a 0.0.0 type format" in validator.get_errors()
 
+    # checks for the version
     version_checks = [
         ("1.1.1", True),
         ("12.1.5", True),

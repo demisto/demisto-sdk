@@ -220,7 +220,7 @@ class ValidateManager:
         """Initiates validation in accordance with mode (i,g,a)
         """
         if self.validate_all:
-            is_valid = self.run_validation_on_all_packs()
+            is_valid = self.run_validation_on_all_packs
         elif self.use_git:
             is_valid = self.run_validation_using_git()
         elif self.file_path:
@@ -288,7 +288,8 @@ class ValidateManager:
             elif file_level == PathLevel.PACK:
                 click.secho(f'\n================= Validating pack {path} =================',
                             fg="bright_cyan")
-                files_validation_result.add(self.run_validations_on_pack(path))
+                res, _, _ = self.run_validations_on_pack(path)
+                files_validation_result.add(res)
 
             else:
                 click.secho(f'\n================= Validating package {path} =================',
@@ -301,6 +302,21 @@ class ValidateManager:
         global lock
         lock = l
 
+    def wait_futures_complete(self, futures_list: List[Future], done_fn: Callable):
+        """Wait for all futures to complete, Raise exception if occurred.
+        Args:
+            futures_list: futures to wait for.
+            done_fn: Function to run on result.
+        Raises:
+            Exception: Raise caught exception for further cleanups.
+        """
+        for future in as_completed(futures_list):
+            try:
+                result = future.result()
+                done_fn(result[0], result[1], result[2])
+            except Exception as e:
+                click.secho(f'An error occurred while tried to collect result, Error: {e}', fg="bright_red")
+                raise
 
     def run_validation_on_all_packs(self):
         """Runs validations on all files in all packs in repo (-a option)
@@ -308,23 +324,6 @@ class ValidateManager:
         Returns:
             bool. true if all files are valid, false otherwise.
         """
-
-        def wait_futures_complete(futures_list: List[Future], done_fn: Callable):
-            """Wait for all futures to complete, Raise exception if occurred.
-            Args:
-                futures_list: futures to wait for.
-                done_fn: Function to run on result.
-            Raises:
-                Exception: Raise caught exception for further cleanups.
-            """
-            for future in as_completed(futures_list):
-                try:
-                    result = future.result()
-                    done_fn(result)
-                except Exception as e:
-                    click.secho(f'An error occurred while tried to collect result, Error: {e}', fg="bright_red")
-                    raise
-
         click.secho('\n================= Validating all files =================', fg="bright_cyan")
 
         all_packs_valid = set()
@@ -346,7 +345,8 @@ class ValidateManager:
                 futures.append(
                     executor.schedule(self.run_validations_on_pack, args=(pack_path,)))
                 count += 1
-            wait_futures_complete(futures_list=futures, done_fn=lambda x: all_packs_valid.add(x))
+            self.wait_futures_complete(futures_list=futures, done_fn=lambda x, y, z: all_packs_valid.add(x) and
+                                       FOUND_FILES_AND_ERRORS.extend(y) and FOUND_FILES_AND_IGNORED_ERRORS.extend(z))
 
         return all(all_packs_valid)
 
@@ -372,7 +372,7 @@ class ValidateManager:
             else:
                 self.ignored_files.add(content_entity_path)
 
-        return all(pack_entities_validation_results)
+        return all(pack_entities_validation_results), FOUND_FILES_AND_ERRORS, FOUND_FILES_AND_IGNORED_ERRORS
 
     def run_validation_on_content_entities(self, content_entity_dir_path, pack_error_ignore_list):
         """Gets non-pack folder and runs validation within it (Scripts, Integrations...)

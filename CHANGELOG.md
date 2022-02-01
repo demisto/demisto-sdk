@@ -1,4 +1,7 @@
 # Changelog
+
+
+# 1.5.9
 * Added option to specify `External Playbook Configuration` to change inputs of Playbooks triggered as part of **test-content**
 * Improved performance of the **lint** command.
 * Improved performance of the **validate** command when checking README images.

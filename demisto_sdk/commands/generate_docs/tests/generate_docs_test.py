@@ -565,7 +565,7 @@ def test_generate_script_doc(tmp_path, mocker):
     expected_readme = os.path.join(FILES_PATH, 'docs_test', 'set_expected-README.md')
     with open(id_set_file, 'r') as f:
         id_set = json.load(f)
-    patched = mocker.patch.object(IDSetCreator, 'create_id_set', return_value=id_set)
+    patched = mocker.patch.object(IDSetCreator, 'create_id_set', return_value=[id_set, {}, {}])
     mocker.patch.object(common, 'execute_command', side_effect=handle_example)
     # because used in is random
     mocker.patch('demisto_sdk.commands.generate_docs.generate_script_doc.get_used_in', return_value=[])

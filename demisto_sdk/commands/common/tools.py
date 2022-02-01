@@ -240,8 +240,6 @@ def get_remote_file_from_api(
         git_provider: GitProvider = GitProvider.GitHub,
         git_hostname: Optional[str] = None,
 ):
-    # 'origin/' prefix is used to compared with remote branches but it is not a part of the github url.
-    tag = tag.replace('origin/', '').replace('demisto/', '')
     git_config = GitContentConfig(git_repo, git_provider, git_hostname)
     if git_config.git_provider == GitProvider.GitLab:
         full_file_path_quote_plus = urllib.parse.quote_plus(full_file_path)
@@ -316,7 +314,7 @@ def get_file_details(
     return file_details
 
 
-# @lru_cache(maxsize=64)
+@lru_cache(maxsize=64)
 def get_remote_file(
         full_file_path: str,
         tag: str = 'master',
@@ -339,6 +337,7 @@ def get_remote_file(
         The file content in the required format.
 
     """
+    tag = tag.replace('origin/', '').replace('demisto/', '')
     if not git_repo:
         try:
             return get_local_remote_file(full_file_path, tag, return_content)

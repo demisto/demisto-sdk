@@ -227,7 +227,7 @@ def init_pack(content_repo: ContentGitRepo, monkeypatch: MonkeyPatch):
         input="\n".join(["y", "Sample", "description", "1", "1", "n", "6.0.0"])
     )
     assert res.exit_code == 0, f"Could not run the init command.\nstdout={res.stdout}\nstderr={res.stderr}\n" \
-                               f"author_image_abs_path={author_image_abs_path}. {res.exc_info=}"
+                               f"author_image_abs_path={author_image_abs_path}. exc_info={res.exc_info}"
     content_repo.run_validations()
 
 

@@ -162,7 +162,7 @@ class TestPackMetadataValidator:
         Then:
             - Ensure false is returned and the correct error is added to the validation object error list
         """
-        metadata = os.path.join(self.__class__.FILES_PATH, 'pack_metadata_invalid_format_version.json')
+        metadata = os.path.join(self.FILES_PATH, 'pack_metadata_invalid_format_version.json')
         mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
         mocker.patch.object(PackUniqueFilesValidator, '_read_file_content',
                             return_value=TestPackMetadataValidator.read_file(metadata))

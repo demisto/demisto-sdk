@@ -288,11 +288,11 @@ def get_remote_file_from_api(
                     f'export {git_config.credentials.ENV_GITLAB_TOKEN_NAME}=<TOKEN>', fg='yellow'
                 )
 
-            click.secho(
-                f'Could not find the old entity file under "{git_path}".\n'
-                'please make sure that you did not break backward compatibility.\n'
-                f'Reason: {err_msg}', fg='yellow'
-            )
+                click.secho(
+                    f'Could not find the old entity file under "{git_path}".\n'
+                    'please make sure that you did not break backward compatibility.\n'
+                    f'Reason: {err_msg}', fg='yellow'
+                )
         return {}
     file_content = res.text
     if return_content:
@@ -314,7 +314,7 @@ def get_file_details(
     return file_details
 
 
-@lru_cache(maxsize=64)
+# @lru_cache(maxsize=64)
 def get_remote_file(
         full_file_path: str,
         tag: str = 'master',

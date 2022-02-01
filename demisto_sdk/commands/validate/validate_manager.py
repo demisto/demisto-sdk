@@ -220,7 +220,7 @@ class ValidateManager:
         """Initiates validation in accordance with mode (i,g,a)
         """
         if self.validate_all:
-            is_valid = self.run_validation_on_all_packs
+            is_valid = self.run_validation_on_all_packs()
         elif self.use_git:
             is_valid = self.run_validation_using_git()
         elif self.file_path:

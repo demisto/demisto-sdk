@@ -492,20 +492,26 @@ def get_file(file_path, type_of_file):
     return {}
 
 
-def get_yaml(file_path):
+@lru_cache()
+def get_yaml(file_path, cache_clear=False):
+    if cache_clear:
+        get_yaml.cache_clear()
     return get_file(file_path, 'yml')
 
 
-def get_ryaml(file_path: str) -> dict:
+@lru_cache()
+def get_ryaml(file_path: str, cache_clear: bool = False) -> dict:
     """
     Get yml file contents using ruaml
 
     Args:
         file_path (string): The file path
-
+        cache_clear (bool): wether to clear the cache
     Returns:
         dict. The yml contents
     """
+    if cache_clear:
+        get_ryaml.cache_clear()
     try:
         with open(os.path.expanduser(file_path), 'r') as yf:
             data = ryaml.load(yf)
@@ -517,7 +523,10 @@ def get_ryaml(file_path: str) -> dict:
     return data
 
 
-def get_json(file_path):
+@lru_cache()
+def get_json(file_path, cache_clear=False):
+    if cache_clear:
+        get_json.cache_clear()
     return get_file(file_path, 'json')
 
 

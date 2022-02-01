@@ -133,7 +133,7 @@ def does_dict_have_alternative_key(data: dict) -> bool:
     return False
 
 
-def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[str, Dict] = None):
+def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[str, Dict] = None) -> List:
     """
     Return the supporting marketplaces of the item.
 
@@ -150,7 +150,7 @@ def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[st
         item_data = get_file(item_path, file_type)
 
     # first check, check field 'marketplaces' in the item's file
-    marketplaces = item_data.get('marketplaces')  # type: ignore
+    marketplaces = item_data.get('marketplaces', [])  # type: ignore
 
     # second check, check the metadata of the pack
     if not marketplaces and 'pack_metadata' not in item_path:
@@ -180,6 +180,7 @@ def should_skip_item_by_mp(file_path: str, marketplace: str, excluded_items_from
         file_path: path to content item
         marketplace: the marketplace this current generated id set is for
         excluded_items_from_id_set: the dict that holds the excluded items, aggregated by packs
+        packs: the pack mapping from the ID set.
         print_logs: whether to pring logs
 
     Returns: True if should be skipped, else False
@@ -1178,9 +1179,10 @@ def process_integration(file_path: str, packs: Dict[str, Dict], marketplace: str
     Process integration dir or file
 
     Arguments:
-        file_path (str): file path to integration file
-        print_logs (bool): whether to print logs to stdout
-        marketplace (str): the marketplace this id set is designated for (xsoar or )
+        file_path: file path to integration file
+        packs: the pack mapping from the ID set.
+        marketplace: the marketplace this id set is designated for.
+        print_logs: whether to print logs to stdout
 
     Returns:
         integration data list (may be empty), a dict of excluded items from the id set
@@ -1246,6 +1248,8 @@ def process_incident_fields(file_path: str, packs: Dict[str, Dict], marketplace:
     Process a incident_fields JSON file
     Args:
         file_path: The file path from incident field folder
+        packs: the pack mapping from the ID set.
+        marketplace: the marketplace this id set is designated for.
         print_logs: Whether to print logs to stdout.
         incident_types: List of all the incident types in the system.
 
@@ -1273,6 +1277,8 @@ def process_indicator_types(file_path: str, packs: Dict[str, Dict], marketplace:
     Process a indicator types JSON file
     Args:
         file_path: The file path from indicator type folder
+        packs: the pack mapping from the ID set.
+        marketplace: the marketplace this id set is designated for.
         print_logs: Whether to print logs to stdout
         all_integrations: The integrations section in the id-set
 
@@ -1305,9 +1311,10 @@ def process_generic_items(file_path: str, packs: Dict[str, Dict], marketplace: s
     Process a generic field JSON file
     Args:
         file_path: The file path from object field folder
+        packs: the pack mapping from the ID set.
+        marketplace: the marketplace this id set is designated for.
         print_logs: Whether to print logs to stdout.
         generic_types_list: List of all the generic types in the system.
-        generic_modules_list: List of all the generic modules in the system.
 
     Returns:
         a list of generic items data: fields or types, a dict of excluded items from the id set
@@ -1336,7 +1343,9 @@ def process_jobs(file_path: str, packs: Dict[str, Dict], marketplace: str, print
     """
     Process a JSON file representing a Job object.
     Args:
-        file_path: The file path from object field folder
+        file_path: The file path from object field folder.
+        packs: the pack mapping from the ID set.
+        marketplace: the marketplace this id set is designated for.
         print_logs: Whether to print logs to stdout.
 
     Returns:
@@ -1374,10 +1383,12 @@ def process_general_items(file_path: str, packs: Dict[str, Dict], marketplace: s
 
     Args:
         file_path: The file path from an item folder
+        packs: the pack mapping from the ID set.
+        marketplace: the marketplace this id set is designated for.
         print_logs: Whether to print logs to stdout
         expected_file_types: specific file type to parse, will ignore the rest
         data_extraction_func: a function that given a file path will return an id-set data dict.
-        marketplace: the marketplace this id set is generated for
+
     Returns:
         a list of item data, a dict of excluded items from the id set
     """
@@ -1402,8 +1413,10 @@ def process_test_playbook_path(file_path: str, packs: Dict[str, Dict], marketpla
     Process a yml file in the test playbook dir. Maybe either a script or playbook
 
     Arguments:
-        file_path {string} -- path to yaml file
-        print_logs {bool} -- whether to print logs to stdout
+        file_path: path to yaml file
+        packs: the pack mapping from the ID set.
+        marketplace: the marketplace this id set is designated for.
+        print_logs: whether to print logs to stdout
 
     Returns:
         pair -- first element is a playbook second is a script. each may be None
@@ -1749,14 +1762,14 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     """Re create the id-set
 
     Args:
-        id_set_path (str, optional): If passed an empty string will use default path (dependeing on mp type).
-        Pass in None to avoid saving the id-set.
+        id_set_path: If passed an empty string will use default path (dependeing on mp type).
+            Pass in None to avoid saving the id-set.
         pack_to_create: The input path. the default is the content repo.
-        objects_to_create (list, optional): The content items this id set will contain. Defaults are set
-        depending on the mp type.
+        objects_to_create: The content items this id set will contain. Defaults are set
+            depending on the mp type.
+        print_logs: Whether to print logs or not
         fail_on_duplicates: If value is True an error will be raised if duplicates are found
         marketplace: The marketplace the id set is created for.
-        print_logs: Whether to print logs or not
 
     Returns: id-set object
     """
@@ -2334,7 +2347,7 @@ def find_duplicates(id_set, print_logs, marketplace):
     return lists_to_return
 
 
-def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=True, external_object=None,
+def has_duplicate(id_set_subset_list, id_to_check, object_type, print_logs=True, external_object=None,
                   is_create_new=False):
     """
     Finds if id_set_subset_list contains a duplicate items with the same id_to_check.
@@ -2392,14 +2405,14 @@ def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=
             dict2_from_version <= dict1_from_version < dict2_to_version,  # will catch (C, B), (B, A), (C, A)
             dict2_from_version < dict1_to_version <= dict2_to_version,  # will catch (C, B), (C, A)
         ]):
-            print_warning(f'The following {object_type} have the same ID ({id_to_check}) and their versions overlap: '
+            print_warning(f'There are several {object_type} with the same ID ({id_to_check}) and their versions overlap: '
                           f'1) "{dict1_from_version}-{dict1_to_version}", '
                           f'2) "{dict2_from_version}-{dict2_to_version}".')
             return True
 
         if print_logs and dict1.get('name') != dict2.get('name'):
-            print_warning('The following {} have the same ID ({}) but different names: '
-                          '"{}", "{}".'.format(object_type, id_to_check, dict1.get('name'), dict2.get('name')))
+            print_warning(f'The following {object_type} have the same ID ({id_to_check}) but different names: '
+                          f'"{dict1.get("name")}", "{dict2.get("name")}".')
 
     return False
 

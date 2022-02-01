@@ -348,6 +348,41 @@ class TestDuplicates:
         has_duplicates = has_duplicate(id_set['Layouts'], 'urlRep', 'Layouts', False)
         assert has_duplicates is False
 
+    @staticmethod
+    def test_similar_items_on_different_marketplaces():
+        """
+        Given
+            - id_set with two integrations with the same IDs with different marketplaces.
+
+        When
+            - checking for duplicate
+
+        Then
+            - Ensure duplicates not found
+        """
+
+        integrations = [
+            {
+                'Integ': {
+                    'id': 'Integ',
+                    'name': 'Integ',
+                    'pack': 'Reut',
+                    'marketplaces': ['xsoar'],
+                }
+            },
+            {
+                'Integ': {
+                    'id': 'Integ',
+                    'name': 'Integ',
+                    'pack': 'Cactus',
+                    'marketplaces': ['marketplacev2'],
+                }
+
+            },
+        ]
+        has_duplicates = has_duplicate(integrations, 'Integ', 'integrations', print_logs=False)
+        assert not has_duplicates
+
 
 class TestIntegrations:
     INTEGRATION_DATA = {

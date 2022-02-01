@@ -2121,4 +2121,4 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def wrong_version_format():
-        return 'Wrong version format in metadata.json change to a 0.0.0 type format'
+        return 'Pack metadata version format is not valid. Please fill in a valid format (example: 0.0.0)'

@@ -187,16 +187,14 @@ class TestPackMetadataValidator:
     @pytest.mark.parametrize('version,expected', version_checks)
     def test_is_version_format(self, version, expected):
         """
-                Given:
-                    - A version to be checked by the _is_version_format function
+        Given:
+            - A version to be checked by the _is_version_format function
 
-                When:
-                    - Validating meta data structure.
+        When:
+            - Validating meta data structure.
 
-                Then:
-                    - return True if the version is in the correct format and False otherwise
-
-
+        Then:
+            - return True if the version is in the correct format and False otherwise
         """
         validator = PackUniqueFilesValidator('fake')
-        assert validator._is_version_format(version) == expected
+        assert validator._is_version_format_valid(version) == expected

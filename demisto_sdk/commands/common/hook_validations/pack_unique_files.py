@@ -416,7 +416,7 @@ class PackUniqueFilesValidator(BaseValidator):
 
             # check format of metadata version
             version = metadata.get(PACK_METADATA_CURR_VERSION, '0.0.0')
-            if not self._is_version_format(version):
+            if not self._is_version_format_valid(version):
                 return False
 
         except (ValueError, TypeError):

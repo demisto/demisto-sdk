@@ -26,10 +26,12 @@ from demisto_sdk.commands.common.constants import (
     LAYOUTS_DIR, LISTS_DIR, MAPPERS_DIR, MP_V2_ID_SET_PATH, REPORTS_DIR,
     SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR, FileType,
     MarketplaceVersions)
-from demisto_sdk.commands.common.tools import (
-    LOG_COLORS, find_type, get_current_repo, get_file, get_json,
-    get_mp_types_from_metadata_by_item, get_pack_name, get_yaml, print_color,
-    print_error, print_warning)
+from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
+                                               get_current_repo, get_file,
+                                               get_item_marketplaces, get_json,
+                                               get_pack_name, get_yaml,
+                                               print_color, print_error,
+                                               print_warning)
 from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
 
 CONTENT_ENTITIES = ['Packs', 'Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
@@ -131,40 +133,6 @@ def does_dict_have_alternative_key(data: dict) -> bool:
                 return True
 
     return False
-
-
-def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[str, Dict] = None) -> List:
-    """
-    Return the supporting marketplaces of the item.
-
-    Args:
-        item_path: the item path.
-        item_data: the item data.
-        packs: the pack mapping from the ID set.
-
-    Returns: the list of supporting marketplaces.
-    """
-
-    if not item_data:
-        file_type = Path(item_path).suffix
-        item_data = get_file(item_path, file_type)
-
-    # first check, check field 'marketplaces' in the item's file
-    marketplaces = item_data.get('marketplaces', [])  # type: ignore
-
-    # second check, check the metadata of the pack
-    if not marketplaces:
-        if 'pack_metadata' in item_path:
-            # default supporting marketplace
-            marketplaces = [MarketplaceVersions.XSOAR.value]
-        else:
-            pack_name = get_pack_name(item_path)
-            if packs:
-                marketplaces = packs.get(pack_name, {}).get('marketplaces', [MarketplaceVersions.XSOAR.value])
-            else:
-                marketplaces = get_mp_types_from_metadata_by_item(item_path)
-
-    return marketplaces
 
 
 def should_skip_item_by_mp(file_path: str, marketplace: str, excluded_items_from_id_set: dict,

@@ -2111,8 +2111,3 @@ class Errors:
     def runas_is_dbotrole():
         return 'The runas value is DBotRole, it may cause access and exposure of sensitive data. ' \
                'Please consider changing it.'
-
-    @staticmethod
-    @error_code_decorator
-    def invalid_yml_file(error):
-        return f'There is problem with the yml file. The error: {error}'

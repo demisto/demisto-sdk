@@ -498,23 +498,6 @@ class StructureValidator(BaseValidator):
 
         return True
 
-    def is_valid_yml(self):
-        # type: () -> bool
-        """Checks if given file is valid yml file
-
-        Returns:
-            (bool): Is file is valid
-        """
-        path = Path(self.file_path)
-        if path.suffix == '.yml':
-            try:
-                with open(self.file_path, 'r') as yf:
-                    yaml_obj = xsoar_yaml.load(yf)  # noqa: F841
-            except Exception as e:
-                error_message, error_code = Errors.invalid_yml_file(e)
-                self.handle_error(error_message, error_code, file_path=self.file_path)
-                return False
-        return True
 
 
 def checked_type_by_reg(file_path, compared_regexes=None, return_regex=False):

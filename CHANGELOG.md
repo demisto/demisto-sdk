@@ -1,5 +1,6 @@
 # Changelog
 * Fixed an issue in the **create-id-set** command where similar items from different marketplaces were reported as duplicated.
+* Fixed typo in demisto-sdk init
 
 # 1.5.9
 * Added option to specify `External Playbook Configuration` to change inputs of Playbooks triggered as part of **test-content**

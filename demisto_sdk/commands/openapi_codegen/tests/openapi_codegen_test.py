@@ -93,7 +93,7 @@ class TestOpenAPICodeGen:
 
         yaml_obj = integration.generate_yaml().to_dict()
 
-        assert xsoar_yaml.dump(yaml_obj) == xsoar_yaml.dump(expected_yaml)
+        assert yaml_obj == expected_yaml
 
     def test_python_file(self):
         """

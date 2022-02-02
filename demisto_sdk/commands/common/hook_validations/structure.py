@@ -7,7 +7,6 @@ import logging
 import os
 import re
 import string
-from pathlib import Path
 from typing import List, Optional, Tuple
 
 import click

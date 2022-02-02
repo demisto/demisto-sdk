@@ -12,10 +12,11 @@ from click.testing import CliRunner
 
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.constants import AUTHOR_IMAGE_FILE_NAME
-from TestSuite.test_tools import ChangeCWD
 from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
+from TestSuite.test_tools import ChangeCWD
 
 xsoar_yaml = XSOAR_YAML()
+
 
 class TestError(BaseException):
     __test__ = False

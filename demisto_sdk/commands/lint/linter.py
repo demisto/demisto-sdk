@@ -24,6 +24,7 @@ from wcmatch.pathlib import NEGATE, Path
 from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    PACKS_PACK_META_FILE_NAME,
                                                    TYPE_PWSH, TYPE_PYTHON)
+from demisto_sdk.commands.common.timers import timer
 # Local packages
 from demisto_sdk.commands.common.tools import (get_all_docker_images,
                                                run_command_os)
@@ -106,6 +107,7 @@ class Linter:
             "warning_code": SUCCESS,
         }
 
+    @timer(group_name='lint')
     def run_dev_packages(self, no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool, no_vulture: bool,
                          no_xsoar_linter: bool, no_pwsh_analyze: bool, no_pwsh_test: bool, no_test: bool, modules: dict,
                          keep_container: bool, test_xml: str, no_coverage: bool) -> dict:
@@ -167,6 +169,7 @@ class Linter:
             self._pkg_lint_status['exit_code'] += FAIL
         return self._pkg_lint_status
 
+    @timer(group_name='lint')
     def _gather_facts(self, modules: dict) -> bool:
         """ Gathering facts about the package - python version, docker images, valid docker image, yml parsing
         Args:
@@ -226,8 +229,7 @@ class Linter:
             if self._facts["docker_engine"]:
                 # Getting python version from docker image - verifying if not valid docker image configured
                 for image in self._facts["images"]:
-                    py_num: str = get_python_version_from_image(image=image[0], timeout=self.docker_timeout,
-                                                                log_prompt=log_prompt)
+                    py_num: str = get_python_version_from_image(image=image[0], timeout=self.docker_timeout)
                     image[1] = py_num
                     logger.info(f"{self._pack_name} - Facts - {image[0]} - Python {py_num}")
                     if not self._facts["python_version"]:
@@ -317,6 +319,7 @@ class Linter:
                 self._facts['lint_unittest_files'].append(lint_file)
                 self._facts["lint_files"].remove(lint_file)
 
+    @timer(group_name='lint')
     def _run_lint_in_host(self, no_flake8: bool, no_bandit: bool, no_mypy: bool, no_vulture: bool,
                           no_xsoar_linter: bool):
         """ Run lint check on host
@@ -372,6 +375,7 @@ class Linter:
                 else:
                     self._pkg_lint_status[f"{lint_check}_errors"] = "\n".join(other)
 
+    @timer(group_name='lint')
     def _run_flake8(self, py_num: str, lint_files: List[Path]) -> Tuple[int, str]:
         """ Runs flake8 in pack dir
 
@@ -401,6 +405,7 @@ class Linter:
 
         return SUCCESS, ""
 
+    @timer(group_name='lint')
     def _run_xsoar_linter(self, py_num: str, lint_files: List[Path]) -> Tuple[int, str]:
         """ Runs Xsaor linter in pack dir
 
@@ -464,6 +469,7 @@ class Linter:
 
         return status, stdout
 
+    @timer(group_name='lint')
     def _run_bandit(self, lint_files: List[Path]) -> Tuple[int, str]:
         """ Run bandit in pack dir
 
@@ -492,6 +498,7 @@ class Linter:
 
         return SUCCESS, ""
 
+    @timer(group_name='lint')
     def _run_mypy(self, py_num: str, lint_files: List[Path]) -> Tuple[int, str]:
         """ Run mypy in pack dir
 
@@ -506,8 +513,8 @@ class Linter:
         log_prompt = f"{self._pack_name} - Mypy"
         logger.info(f"{log_prompt} - Start")
         with add_typing_module(lint_files=lint_files, python_version=py_num):
-            stdout, stderr, exit_code = run_command_os(command=build_mypy_command(files=lint_files, version=py_num),
-                                                       cwd=self._pack_abs_dir)
+            mypy_command = build_mypy_command(files=lint_files, version=py_num, content_repo=self._content_repo)
+            stdout, stderr, exit_code = run_command_os(command=mypy_command, cwd=self._pack_abs_dir)
         logger.debug(f"{log_prompt} - Finished exit-code: {exit_code}")
         logger.debug(f"{log_prompt} - Finished stdout: {RL if stdout else ''}{stdout}")
         logger.debug(f"{log_prompt} - Finished stderr: {RL if stderr else ''}{stderr}")
@@ -522,6 +529,7 @@ class Linter:
 
         return SUCCESS, ""
 
+    @timer(group_name='lint')
     def _run_vulture(self, py_num: str, lint_files: List[Path]) -> Tuple[int, str]:
         """ Run mypy in pack dir
 
@@ -553,6 +561,7 @@ class Linter:
 
         return SUCCESS, ""
 
+    @timer(group_name='lint')
     def _run_lint_on_docker_image(self, no_pylint: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
                                   keep_container: bool, test_xml: str, no_coverage: bool):
         """ Run lint check on docker image
@@ -650,6 +659,7 @@ class Linter:
         except docker.errors.APIError:
             return False
 
+    @timer(group_name='lint')
     def _docker_image_create(self, docker_base_image: List[Any]) -> Tuple[str, str]:
         """ Create docker image:
             1. Installing 'build base' if required in alpine images version - https://wiki.alpinelinux.org/wiki/GCC
@@ -765,6 +775,7 @@ class Linter:
             if platform.system() != 'Darwin' or 'Connection broken' not in str(err):
                 raise
 
+    @timer(group_name='lint')
     def _docker_run_pylint(self, test_image: str, keep_container: bool) -> Tuple[int, str]:
         """ Run Pylint in created test image
 
@@ -838,6 +849,7 @@ class Linter:
             output = str(e)
         return exit_code, output
 
+    @timer(group_name='lint')
     def _docker_run_pytest(self, test_image: str, keep_container: bool, test_xml: str, no_coverage: bool = False) -> Tuple[int, str, dict]:
         """ Run Pytest in created test image
 

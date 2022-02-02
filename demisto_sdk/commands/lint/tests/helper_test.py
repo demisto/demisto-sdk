@@ -56,12 +56,38 @@ def test_build_skipped_exit_code(no_flake8: bool, no_xsoar_linter: bool, no_band
 
 @pytest.mark.parametrize(argnames="image, output, expected", argvalues=[('alpine', b'3.7\n', '3.7'),
                                                                         ('alpine-3', b'2.7\n', '2.7'),
-                                                                        ('alpine-310', b'3.10\n', '3.10')])
+                                                                        ('alpine-310', b'3.10\n', '3.10'),
+                                                                        ('demisto/python3:3.9.8.24399', '', '3.9'),
+                                                                        ('demisto/python:2.7.18.24398', '', '2.7')])
 def test_get_python_version_from_image(image: str, output: bytes, expected: float, mocker):
     from demisto_sdk.commands.lint import helpers
-    mocker.patch.object(helpers, 'docker')
-    helpers.docker.from_env().containers.run().logs.return_value = output
+    mocker.patch.object(helpers, 'init_global_docker_client')
+    helpers.init_global_docker_client().containers.run().logs.return_value = output
     assert expected == helpers.get_python_version_from_image(image)
+
+
+def test_cache_of_get_python_version_from_image():
+    """
+    Given -
+        docker image that should be alrady cached
+
+    When -
+        Try to get python version from am docker image
+
+    Then -
+        Validate the value returned from the cache
+    """
+    from demisto_sdk.commands.lint import helpers
+    image = 'demisto/python3:3.9.8.12345'
+
+    cache_info_before = helpers.get_python_version_from_image.cache_info()
+    helpers.get_python_version_from_image(image)
+    cache_info = helpers.get_python_version_from_image.cache_info()
+    assert cache_info.hits == cache_info_before.hits
+
+    helpers.get_python_version_from_image(image)
+    cache_info = helpers.get_python_version_from_image.cache_info()
+    assert cache_info.hits == cache_info_before.hits + 1
 
 
 @pytest.mark.parametrize(argnames="archive_response, expected_count, expected_exception",

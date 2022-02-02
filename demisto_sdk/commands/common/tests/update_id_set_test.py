@@ -2994,8 +2994,8 @@ def test_should_skip_item_by_mp(mocker):
     - return True since this item should be skipped.
 
     """
-    import demisto_sdk.commands.common.update_id_set as uis
-    mocker.patch.object(uis, 'get_mp_types_from_metadata_by_item', return_value=['xsoar'])
+    import demisto_sdk.commands.common.tools as tools
+    mocker.patch.object(tools, 'get_mp_types_from_metadata_by_item', return_value=['xsoar'])
     pack_path = os.path.join(TESTS_DIR, 'test_files', 'DummyPackXsoarMPOnly', 'pack_metadata.json')
     script_path = os.path.join(TESTS_DIR, 'test_files', 'DummyPackScriptIsXsoarOnly', 'Scripts', 'DummyScript.yml')
     res1 = should_skip_item_by_mp(pack_path, 'mpv2', {})

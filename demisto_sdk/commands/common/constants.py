@@ -937,6 +937,7 @@ class PB_Status:
     FAILED = 'failed'
     IN_PROGRESS = 'inprogress'
     FAILED_DOCKER_TEST = 'failed_docker_test'
+    SECOND_PLAYBACK = 'second_playback'
 
 
 # change log regexes

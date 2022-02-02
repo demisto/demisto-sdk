@@ -77,7 +77,7 @@ class TestIDSetCreator:
         mocker.patch.object(uis, 'cpu_count', return_value=1)
         id_set_creator = IDSetCreator(output=None)
 
-        id_set = id_set_creator.create_id_set()
+        id_set, _, _ = id_set_creator.create_id_set()
         assert not os.path.exists(self.file_path)
         assert id_set is not None
 
@@ -173,7 +173,7 @@ def test_create_id_set_flow(repo, mocker):
 
     id_set_content = repo.id_set.read_json_as_dict()
     assert not IsEqualFunctions.is_dicts_equal(id_set_content, {})
-    assert IsEqualFunctions.is_lists_equal(list(id_set_content.keys()), ID_SET_ENTITIES + ['Packs'])
+    assert set(id_set_content.keys()) == set(ID_SET_ENTITIES + ['Packs'])
     for id_set_entity in ID_SET_ENTITIES:
         entity_content_in_id_set = id_set_content.get(id_set_entity)
         assert entity_content_in_id_set, f'ID set for {id_set_entity} is empty'

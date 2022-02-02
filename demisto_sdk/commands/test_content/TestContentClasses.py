@@ -1797,8 +1797,8 @@ class TestContext:
                 self.build_context.logging_module.info(f'------ Test {self} start ------ (Mock: Playback)')
                 with run_with_mock(proxy, self.playbook.configuration.playbook_id) as result_holder:
                     status = self._incident_and_docker_test()
+                    status = self._update_playbook_status(status, is_first_playback_run=True)
                     result_holder[RESULT] = status == PB_Status.COMPLETED
-                status = self._update_playbook_status(status, is_first_playback_run=True)
                 if status in (PB_Status.COMPLETED, PB_Status.FAILED_DOCKER_TEST):
                     return True
                 self.build_context.logging_module.warning(
@@ -1824,8 +1824,8 @@ class TestContext:
                 f'------ Test {self} start ------ (Mock: Second playback)')
             with run_with_mock(proxy, self.playbook.configuration.playbook_id) as result_holder:
                 status = self._run_incident_test()
+                self._update_playbook_status(status, is_second_playback_run=True)
                 result_holder[RESULT] = status == PB_Status.COMPLETED
-            self._update_playbook_status(status, is_second_playback_run=True)
         return True
 
     def _is_runnable_on_current_server_instance(self) -> bool:

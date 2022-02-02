@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pytest
 
+import demisto_sdk.commands.common.tools as tools
 import demisto_sdk.commands.common.update_id_set as uis
 from demisto_sdk.commands.common.constants import (DEFAULT_JOB_FROM_VERSION,
                                                    JOBS_DIR, FileType,
@@ -83,8 +84,8 @@ class TestPacksMetadata:
         Then
             - parsing all the data from file successfully
         """
-        mocker.patch.object(uis, 'get_pack_name', return_value='Pack1')
-        mocker.patch.object(uis, 'get_mp_types_from_metadata_by_item', return_value=['xsoar', 'marketplacev2'])
+        mocker.patch.object(tools, 'get_pack_name', return_value='Pack1')
+        mocker.patch.object(tools, 'get_mp_types_from_metadata_by_item', return_value=['xsoar', 'marketplacev2'])
 
         pack = repo.create_pack("Pack1")
         pack.pack_metadata.write_json(metadata_file_content)
@@ -2938,27 +2939,6 @@ def test_get_filters_and_transformers_from_complex_value():
     assert 'StringContainsArray' in filters
 
 
-def test_should_skip_item_by_mp(mocker):
-    """
-    Given
-    - path of content item, the current marketplace this id set is generated for.
-    When
-    - when creating the id set, checking a content item that is 'xsoar only' if it should be part of the mpV2
-     id set.
-    Then
-    - return True since this item should be skipped.
-
-    """
-    import demisto_sdk.commands.common.update_id_set as uis
-    mocker.patch.object(uis, 'get_mp_types_from_metadata_by_item', return_value=['xsoar'])
-    pack_path = os.path.join(TESTS_DIR, 'test_files', 'DummyPackXsoarMPOnly', 'pack_metadata.json')
-    script_path = os.path.join(TESTS_DIR, 'test_files', 'DummyPackScriptIsXsoarOnly', 'Scripts', 'DummyScript.yml')
-    res1 = should_skip_item_by_mp(pack_path, 'mpv2', {})
-    res2 = should_skip_item_by_mp(script_path, 'mpv2', {})
-    assert res1
-    assert res2
-
-
 TEST_DICTS = [
     (
         {
@@ -3003,6 +2983,27 @@ def test_does_dict_have_alternative_key(dict_to_test, expected_result):
     assert result == expected_result
 
 
+def test_should_skip_item_by_mp(mocker):
+    """
+    Given
+    - path of content item, the current marketplace this id set is generated for.
+    When
+    - when creating the id set, checking a content item that is 'xsoar only' if it should be part of the mpV2
+     id set.
+    Then
+    - return True since this item should be skipped.
+
+    """
+    import demisto_sdk.commands.common.update_id_set as uis
+    mocker.patch.object(uis, 'get_mp_types_from_metadata_by_item', return_value=['xsoar'])
+    pack_path = os.path.join(TESTS_DIR, 'test_files', 'DummyPackXsoarMPOnly', 'pack_metadata.json')
+    script_path = os.path.join(TESTS_DIR, 'test_files', 'DummyPackScriptIsXsoarOnly', 'Scripts', 'DummyScript.yml')
+    res1 = should_skip_item_by_mp(pack_path, 'mpv2', {})
+    res2 = should_skip_item_by_mp(script_path, 'mpv2', {})
+    assert res1
+    assert res2
+
+
 def test_should_skip_item_by_mp_no_update_excluded_dict(mocker):
     """
     Given
@@ -3014,9 +3015,9 @@ def test_should_skip_item_by_mp_no_update_excluded_dict(mocker):
         - don't update the excluded item dict since we only want to add content items and not packs
 
     """
-    import demisto_sdk.commands.common.update_id_set as uis
+    import demisto_sdk.commands.common.tools as tools
     excluded_items_dict = {}
-    mocker.patch.object(uis, 'get_mp_types_from_metadata_by_item', return_value=['xsoar'])
+    mocker.patch.object(tools, 'get_mp_types_from_metadata_by_item', return_value=['xsoar'])
     pack_path = os.path.join(TESTS_DIR, 'test_files', 'DummyPackXsoarMPOnly', 'pack_metadata.json')
     res1 = should_skip_item_by_mp(pack_path, 'mpv2', excluded_items_dict)
     assert res1
@@ -3034,9 +3035,9 @@ def test_should_skip_item_by_mp_update_excluded_dict(mocker):
         - update the excluded item dict since we want to add content items to the dict
 
     """
-    import demisto_sdk.commands.common.update_id_set as uis
+    import demisto_sdk.commands.common.tools as tools
     excluded_items_dict = {}
-    mocker.patch.object(uis, 'get_mp_types_from_metadata_by_item', return_value=['xsoar'])
+    mocker.patch.object(tools, 'get_mp_types_from_metadata_by_item', return_value=['xsoar'])
     script_path = os.path.join(TESTS_DIR, 'test_files', 'DummyPackScriptIsXsoarOnly', 'Scripts', 'DummyScript.yml')
     res2 = should_skip_item_by_mp(script_path, 'mpv2', excluded_items_dict)
     assert excluded_items_dict

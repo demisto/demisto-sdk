@@ -26,7 +26,7 @@ from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 from demisto_sdk.commands.format.format_constants import \
     OLD_FILE_DEFAULT_1_FROMVERSION
 
-xsoar_yaml = XSOAR_YAML(allow_duplicate_keys=False)
+xsoar_yaml = XSOAR_YAML()
 
 
 class StructureValidator(BaseValidator):

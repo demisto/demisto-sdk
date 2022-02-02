@@ -91,7 +91,6 @@ class StructureValidator(BaseValidator):
                 self.is_valid_file_path(),
                 self.is_valid_scheme(),
                 self.is_file_id_without_slashes(),
-                self.is_valid_yml()
             ]
 
             if self.old_file:  # In case the file is modified

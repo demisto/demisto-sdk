@@ -80,15 +80,16 @@ def test_build_bandit_command(files):
     assert expected == output
 
 
-@pytest.mark.parametrize(argnames="files, py_num", argvalues=[(values[0], "2.7"), (values[1], "3.7")])
-def test_build_mypy_command(files, py_num):
+@pytest.mark.parametrize(argnames="files, py_num, content_path", argvalues=[(values[0], "2.7", None), (values[1], "3.7", Path('test_path'))])
+def test_build_mypy_command(files, py_num, content_path):
     """Build Mypy command"""
     from demisto_sdk.commands.lint.commands_builder import build_mypy_command
-    output = build_mypy_command(files, py_num)
+    expected_cache_dir = 'test_path/.mypy_cache' if content_path else '/dev/null'
+    output = build_mypy_command(files, py_num, content_path)
     files = [str(file) for file in files]
     expected = f"python3 -m mypy --python-version {py_num} --check-untyped-defs --ignore-missing-imports " \
                f"--follow-imports=silent --show-column-numbers --show-error-codes --pretty --allow-redefinition " \
-               f"--show-absolute-path --cache-dir=/dev/null {' '.join(files)}"
+               f"--show-absolute-path --cache-dir={expected_cache_dir} {' '.join(files)}"
     assert expected == output
 
 

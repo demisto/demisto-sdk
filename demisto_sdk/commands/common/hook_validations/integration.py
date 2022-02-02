@@ -902,6 +902,8 @@ class IntegrationValidator(ContentEntityValidator):
         if self.current_file.get('script', {}).get('isfetch') is True:
 
             # get the iten marketplaces to decide which are the required params
+            # if no marketplaces or xsoar in marketplaces - the required params will be INCIDENT_FETCH_REQUIRED_PARAMS (with Incident type etc. )
+            # otherwise it will be the ALERT_FETCH_REQUIRED_PARAMS (with Alert type etc. )
             marketplaces = get_item_marketplaces(item_path=self.file_path, item_data=self.current_file)
             is_xsoar_marketplace = not marketplaces or MarketplaceVersions.XSOAR.value in marketplaces
             fetch_required_params = INCIDENT_FETCH_REQUIRED_PARAMS if is_xsoar_marketplace else ALERT_FETCH_REQUIRED_PARAMS

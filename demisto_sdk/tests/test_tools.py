@@ -4,10 +4,12 @@ from pathlib import Path
 from typing import Callable
 
 import pytest
-import yaml
 from _pytest import tmpdir
 
 from demisto_sdk.commands.common.tools import get_content_file_type_dump
+from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
+
+xsoar_yaml = XSOAR_YAML()
 
 
 def create_temp_file(tmp_path: tmpdir.tmp_path, file_content: str, filename: str = 'file.txt') -> str:
@@ -27,8 +29,8 @@ def create_temp_file(tmp_path: tmpdir.tmp_path, file_content: str, filename: str
 
 
 CONTENT_PARSER_INPUT = [
-    ('file_path.yml', yaml.dump),
-    ('file_path.yaml', yaml.dump),
+    ('file_path.yml', xsoar_yaml.dump),
+    ('file_path.yaml', xsoar_yaml.dump),
     ('file_path.json', partial(json.dumps, indent=4)),
     ('file_path.other', str)
 ]

@@ -5,7 +5,6 @@ from pathlib import PosixPath
 from typing import List
 
 import pytest
-import yaml
 from click.testing import CliRunner
 
 from demisto_sdk.__main__ import main
@@ -14,6 +13,7 @@ from demisto_sdk.commands.common.hook_validations.playbook import \
     PlaybookValidator
 from demisto_sdk.commands.common.tools import (get_dict_from_file,
                                                is_test_config_match)
+from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 from demisto_sdk.commands.format import format_module, update_generic
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 from demisto_sdk.commands.format.update_integration import IntegrationYMLFormat
@@ -26,6 +26,9 @@ from demisto_sdk.tests.constants_test import (
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     GENERIC_DEFINITION, GENERIC_FIELD, GENERIC_MODULE, GENERIC_TYPE)
 from TestSuite.test_tools import ChangeCWD
+
+xsoar_yaml = XSOAR_YAML()
+
 
 with open(SOURCE_FORMAT_INTEGRATION_COPY) as of:
     SOURCE_FORMAT_INTEGRATION_YML = of.read()  # prevents overriding by other `format` calls.
@@ -333,7 +336,7 @@ def test_integration_format_remove_playbook_sourceplaybookid(tmp_path):
     assert '======= Updating file ' in result.stdout
     assert f'Format Status   on file: {source_playbook_path} - Success' in result.stdout
     with open(playbook_path) as f:
-        yaml_content = yaml.safe_load(f)
+        yaml_content = xsoar_yaml.load(f)
         assert 'sourceplaybookid' not in yaml_content
 
     assert not result.exception
@@ -825,7 +828,7 @@ def test_format_incident_type_layout_id(repo):
         assert layout_content['name'] == layout_content['id']
 
     with open(playbook.yml.path) as playbook_file:
-        playbook_content = yaml.load(playbook_file, yaml.Loader)
+        playbook_content = xsoar_yaml.load(playbook_file)
         assert playbook_content['name'] == playbook_content['id']
 
     with open(incident_type.path) as incident_type_file:

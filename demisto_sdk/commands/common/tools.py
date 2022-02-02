@@ -25,7 +25,6 @@ import git
 import giturlparse
 import requests
 import urllib3
-import yaml
 from packaging.version import parse
 from pebble import ProcessFuture, ProcessPool
 

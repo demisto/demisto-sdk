@@ -15,7 +15,7 @@ HISTORY_URL = 'https://storage.googleapis.com/marketplace-dist-dev/code-coverage
 logger = logging_setup(2)
 
 
-def get_coverage(date: Optional[datetime] = None, filename: Optional[str] = None) -> Optional[float]:
+def get_total_coverage(date: Optional[datetime] = None, filename: Optional[str] = None) -> Optional[float]:
     coverage_field = 'total_coverage'
     try:
         if filename:
@@ -49,7 +49,7 @@ def create_coverage_graph(filename: str, start_date: datetime):
     cover_list = []
     date_list = []
     for date in yield_dates(start_date, datetime.now()):
-        cover = get_coverage(date=date)
+        cover = get_total_coverage(date=date)
         if cover:
             cover_list.append(cover)
             date_list.append(date)

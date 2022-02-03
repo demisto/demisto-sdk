@@ -6,7 +6,8 @@ from typing import Callable
 import pytest
 from _pytest import tmpdir
 
-from demisto_sdk.commands.common.tools import get_content_file_type_dump, xsoar_yaml
+from demisto_sdk.commands.common.tools import (get_content_file_type_dump,
+                                               xsoar_yaml)
 
 
 def create_temp_file(tmp_path: tmpdir.tmp_path, file_content: str, filename: str = 'file.txt') -> str:

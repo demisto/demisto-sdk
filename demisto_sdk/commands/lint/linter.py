@@ -859,7 +859,7 @@ class Linter:
             no_coverage(bool): Run pytest without coverage report
         Returns:
             int: 0 on successful, errors 1, need to retry 2
-            str: Unit test json repo§rt
+            str: Unit test json report
         """
         log_prompt = f'{self._pack_name} - Pytest - Image {test_image}'
         logger.info(f"{log_prompt} - Start")

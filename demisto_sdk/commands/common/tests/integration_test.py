@@ -1092,8 +1092,8 @@ class TestIsFetchParamsExist:
 
     @pytest.mark.parametrize(argnames='marketpalces, configs, expected_is_valid', argvalues=[
         ([MarketplaceVersions.MarketplaceV2.value], INCIDENT_FETCH_REQUIRED_PARAMS, False),
-        ([MarketplaceVersions.XSOAR.value], INCIDENT_FETCH_REQUIRED_PARAMS, True),
         ([MarketplaceVersions.MarketplaceV2.value], ALERT_FETCH_REQUIRED_PARAMS, True),
+        ([MarketplaceVersions.XSOAR.value], INCIDENT_FETCH_REQUIRED_PARAMS, True),
         ([MarketplaceVersions.XSOAR.value], ALERT_FETCH_REQUIRED_PARAMS, False),
         ([MarketplaceVersions.XSOAR.value, MarketplaceVersions.MarketplaceV2.value], ALERT_FETCH_REQUIRED_PARAMS, False),
         ([MarketplaceVersions.XSOAR.value, MarketplaceVersions.MarketplaceV2.value], INCIDENT_FETCH_REQUIRED_PARAMS, True),

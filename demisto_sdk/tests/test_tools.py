@@ -27,8 +27,8 @@ def create_temp_file(tmp_path: tmpdir.tmp_path, file_content: str, filename: str
 
 
 CONTENT_PARSER_INPUT = [
-    ('file_path.yml', xsoar_yaml.dump),
-    ('file_path.yaml', xsoar_yaml.dump),
+    ('file_path.yml', xsoar_yaml.dumps),
+    ('file_path.yaml', xsoar_yaml.dumps),
     ('file_path.json', partial(json.dumps, indent=4)),
     ('file_path.other', str)
 ]

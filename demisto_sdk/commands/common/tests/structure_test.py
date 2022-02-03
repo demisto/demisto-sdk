@@ -147,8 +147,6 @@ class TestStructureValidator:
         (VALID_INTEGRATION_ID_PATH, True, POSITIVE_ERROR),
         (INVALID_INTEGRATION_ID_PATH, False, NEGATIVE_ERROR),
         (VALID_PLAYBOOK_ID_PATH, True, POSITIVE_ERROR),
-        (INVALID_PLAYBOOK_ID_PATH, False, NEGATIVE_ERROR)
-
     ]
 
     @pytest.mark.parametrize('path, answer, error', INPUTS_IS_FILE_WITHOUT_SLASH)

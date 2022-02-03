@@ -4,7 +4,6 @@ import os
 import re
 import subprocess
 import tempfile
-from contextlib import contextmanager
 from functools import lru_cache
 from pathlib import Path
 from threading import Lock
@@ -13,6 +12,7 @@ from urllib.parse import urlparse
 
 import click
 import requests
+from decorator import contextmanager
 from git import InvalidGitRepositoryError
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry

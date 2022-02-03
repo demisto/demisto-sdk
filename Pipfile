@@ -55,7 +55,7 @@ python-dotenv = "*"
 importlib-resources = "*"
 dictdiffer = "*"
 setuptools = "*"
-contextlib = "*"
+decorator = "*"
 
 [dev-packages]
 mitmproxy = "==5.1.0"

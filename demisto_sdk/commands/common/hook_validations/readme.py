@@ -12,6 +12,7 @@ from urllib.parse import urlparse
 
 import click
 import requests
+from decorator import contextmanager
 from git import InvalidGitRepositoryError
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
@@ -70,7 +71,6 @@ class ReadMeValidator(BaseValidator):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          suppress_print=suppress_print, json_file_path=json_file_path)
         self.content_path = get_content_path()
-        # if file_path:
         self.file_path = Path(file_path)
         self.pack_path = self.file_path.parent
         self.node_modules_path = self.content_path / Path('node_modules')
@@ -534,6 +534,7 @@ class ReadMeValidator(BaseValidator):
         return is_valid
 
     @staticmethod
+    @contextmanager
     def start_mdx_server(handle_error: Optional[Callable] = None, file_path: Optional[str] = None) -> bool:
         with ReadMeValidator._MDX_SERVER_LOCK:
             if not ReadMeValidator._MDX_SERVER_PROCESS:
@@ -550,7 +551,8 @@ class ReadMeValidator(BaseValidator):
 
                     else:
                         raise Exception(error_message)
-        return True
+        yield True
+        ReadMeValidator.stop_mdx_server()
 
     @staticmethod
     def stop_mdx_server():
@@ -563,4 +565,4 @@ class ReadMeValidator(BaseValidator):
         return FOUND_FILES_AND_ERRORS, FOUND_FILES_AND_IGNORED_ERRORS
 
 
-atexit.register(ReadMeValidator.stop_mdx_server)
+# atexit.register(ReadMeValidator.stop_mdx_server)

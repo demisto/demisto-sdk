@@ -298,10 +298,6 @@ class ValidateManager:
 
         return all(files_validation_result)
 
-    def init(self, l):
-        global lock
-        lock = l
-
     def wait_futures_complete(self, futures_list: List[Future], done_fn: Callable):
         """Wait for all futures to complete, Raise exception if occurred.
         Args:
@@ -337,18 +333,18 @@ class ValidateManager:
         num_of_packs = len(all_packs)
         all_packs.sort(key=str.lower)
 
-        l = multiprocessing.Lock()
-        with pebble.ProcessPool(max_workers=4, initializer=self.init, initargs=(l,)) as executor:
-            futures = []
-            for pack_path in all_packs:
-                self.completion_percentage = format((count / num_of_packs) * 100, ".2f")  # type: ignore
-                futures.append(
-                    executor.schedule(self.run_validations_on_pack, args=(pack_path,)))
-                count += 1
-            self.wait_futures_complete(futures_list=futures, done_fn=lambda x, y, z: all_packs_valid.add(x) and
-                                       FOUND_FILES_AND_ERRORS.extend(y) and FOUND_FILES_AND_IGNORED_ERRORS.extend(z))
+        with ReadMeValidator.start_mdx_server():
+            with pebble.ProcessPool(max_workers=4) as executor:
+                futures = []
+                for pack_path in all_packs:
+                    self.completion_percentage = format((count / num_of_packs) * 100, ".2f")  # type: ignore
+                    futures.append(
+                        executor.schedule(self.run_validations_on_pack, args=(pack_path,)))
+                    count += 1
+                self.wait_futures_complete(futures_list=futures, done_fn=lambda x, y, z: all_packs_valid.add(x) and
+                                           FOUND_FILES_AND_ERRORS.extend(y) and FOUND_FILES_AND_IGNORED_ERRORS.extend(z))
 
-        return all(all_packs_valid)
+            return all(all_packs_valid)
 
     def run_validations_on_pack(self, pack_path):
         """Runs validation on all files in given pack. (i,g,a)
@@ -536,9 +532,7 @@ class ValidateManager:
             return self.validate_description(file_path, pack_error_ignore_list)
 
         elif file_type == FileType.README:
-            lock.acquire()
             is_valid = self.validate_readme(file_path, pack_error_ignore_list)
-            lock.release()
             return is_valid
 
         elif file_type == FileType.REPORT:

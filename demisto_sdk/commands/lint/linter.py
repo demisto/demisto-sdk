@@ -390,11 +390,11 @@ class Linter:
         logger.info(f"{log_prompt} - Start")
         stdout, stderr, exit_code = run_command_os(command=build_flake8_command(lint_files, py_num),
                                                    cwd=self._content_repo)
-        logger.debug(f"{log_prompt} - Finished exit-code: {exit_code}")
-        logger.debug(f"{log_prompt} - Finished stdout: {RL if stdout else ''}{stdout}")
-        logger.debug(f"{log_prompt} - Finished stderr: {RL if stderr else ''}{stderr}")
+        logger.debug(f"{log_prompt} - Finished, exit-code: {exit_code}")
+        logger.debug(f"{log_prompt} - Finished, stdout: {RL if stdout else ''}{stdout}")
+        logger.debug(f"{log_prompt} - Finished, stderr: {RL if stderr else ''}{stderr}")
         if stderr or exit_code:
-            logger.info(f"{log_prompt}- Finished errors found")
+            logger.info(f"{log_prompt}- Finished, errors found")
             if stderr:
                 return FAIL, stderr
             else:
@@ -440,10 +440,10 @@ class Linter:
                 command=build_xsoar_linter_command(lint_files, py_num, self._facts.get('support_level', 'base')),
                 cwd=self._pack_abs_dir, env=myenv)
         if exit_code & FAIL_PYLINT:
-            logger.info(f"{log_prompt}- Finished errors found")
+            logger.info(f"{log_prompt}- Finished, errors found")
             status = FAIL
         if exit_code & WARNING:
-            logger.info(f"{log_prompt} - Finished warnings found")
+            logger.info(f"{log_prompt} - Finished, warnings found")
             if not status:
                 status = WARNING
         # if pylint did not run and failure exit code has been returned from run commnad
@@ -457,11 +457,11 @@ class Linter:
             else:
                 stdout = "Xsoar linter could not run, please make sure you have" \
                          " the necessary Pylint version for both py2 and py3"
-            logger.info(f"{log_prompt}- Finished errors found")
+            logger.info(f"{log_prompt}- Finished, errors found")
 
-        logger.debug(f"{log_prompt} - Finished exit-code: {exit_code}")
-        logger.debug(f"{log_prompt} - Finished stdout: {RL if stdout else ''}{stdout}")
-        logger.debug(f"{log_prompt} - Finished stderr: {RL if stderr else ''}{stderr}")
+        logger.debug(f"{log_prompt} - Finished, exit-code: {exit_code}")
+        logger.debug(f"{log_prompt} - Finished, stdout: {RL if stdout else ''}{stdout}")
+        logger.debug(f"{log_prompt} - Finished, stderr: {RL if stderr else ''}{stderr}")
 
         if not exit_code:
             logger.info(f"{log_prompt} - Successfully finished")
@@ -483,11 +483,11 @@ class Linter:
         logger.info(f"{log_prompt} - Start")
         stdout, stderr, exit_code = run_command_os(command=build_bandit_command(lint_files),
                                                    cwd=self._pack_abs_dir)
-        logger.debug(f"{log_prompt} - Finished exit-code: {exit_code}")
-        logger.debug(f"{log_prompt} - Finished stdout: {RL if stdout else ''}{stdout}")
-        logger.debug(f"{log_prompt} - Finished stderr: {RL if stderr else ''}{stderr}")
+        logger.debug(f"{log_prompt} - Finished, exit-code: {exit_code}")
+        logger.debug(f"{log_prompt} - Finished, stdout: {RL if stdout else ''}{stdout}")
+        logger.debug(f"{log_prompt} - Finished, stderr: {RL if stderr else ''}{stderr}")
         if stderr or exit_code:
-            logger.info(f"{log_prompt}- Finished Finished errors found")
+            logger.info(f"{log_prompt}- Finished, errors found")
             if stderr:
                 return FAIL, stderr
             else:
@@ -514,11 +514,11 @@ class Linter:
         with add_typing_module(lint_files=lint_files, python_version=py_num):
             mypy_command = build_mypy_command(files=lint_files, version=py_num, content_repo=self._content_repo)
             stdout, stderr, exit_code = run_command_os(command=mypy_command, cwd=self._pack_abs_dir)
-        logger.debug(f"{log_prompt} - Finished exit-code: {exit_code}")
-        logger.debug(f"{log_prompt} - Finished stdout: {RL if stdout else ''}{stdout}")
-        logger.debug(f"{log_prompt} - Finished stderr: {RL if stderr else ''}{stderr}")
+        logger.debug(f"{log_prompt} - Finished, exit-code: {exit_code}")
+        logger.debug(f"{log_prompt} - Finished, stdout: {RL if stdout else ''}{stdout}")
+        logger.debug(f"{log_prompt} - Finished, stderr: {RL if stderr else ''}{stderr}")
         if stderr or exit_code:
-            logger.info(f"{log_prompt}- Finished Finished errors found")
+            logger.info(f"{log_prompt}- Finished, errors found")
             if stderr:
                 return FAIL, stderr
             else:
@@ -546,11 +546,11 @@ class Linter:
                                                                                  pack_path=self._pack_abs_dir,
                                                                                  py_num=py_num),
                                                    cwd=self._pack_abs_dir)
-        logger.debug(f"{log_prompt} - Finished exit-code: {exit_code}")
-        logger.debug(f"{log_prompt} - Finished stdout: {RL if stdout else ''}{stdout}")
-        logger.debug(f"{log_prompt} - Finished stderr: {RL if stderr else ''}{stderr}")
+        logger.debug(f"{log_prompt} - Finished, exit-code: {exit_code}")
+        logger.debug(f"{log_prompt} - Finished, stdout: {RL if stdout else ''}{stdout}")
+        logger.debug(f"{log_prompt} - Finished, stderr: {RL if stderr else ''}{stderr}")
         if stderr or exit_code:
-            logger.info(f"{log_prompt}- Finished Finished errors found")
+            logger.info(f"{log_prompt}- Finished, errors found")
             if stderr:
                 return FAIL, stderr
             else:
@@ -820,7 +820,7 @@ class Linter:
                 # 2-Error message issued
                 exit_code = FAIL
                 output = container_log
-                logger.info(f"{log_prompt} - Finished errors found")
+                logger.info(f"{log_prompt} - Finished, errors found")
             elif container_exit_code in [4, 8, 16]:
                 # 4-Warning message issued
                 # 8-refactor message issued
@@ -919,7 +919,7 @@ class Linter:
                     output = container_obj.logs().decode('utf-8')
                     exit_code = FAIL
                 else:
-                    logger.error(f"{log_prompt} - Finished errors found")
+                    logger.error(f"{log_prompt} - Finished, errors found")
                     exit_code = FAIL
             elif container_exit_code in [3, 4]:
                 # 3-Internal error happened while executing tests
@@ -929,7 +929,7 @@ class Linter:
                 output = container_obj.logs().decode('utf-8')
             else:
                 # Any other container exit code
-                logger.error(f"{log_prompt} - Finished errors found")
+                logger.error(f"{log_prompt} - Finished, errors found")
                 exit_code = FAIL
             # Remove container if not needed
             if keep_container:
@@ -992,7 +992,7 @@ class Linter:
             if container_exit_code:
                 # 1-fatal message issued
                 # 2-Error message issued
-                logger.info(f"{log_prompt} - Finished errors found")
+                logger.info(f"{log_prompt} - Finished, errors found")
                 output = container_log
                 exit_code = FAIL
             else:
@@ -1057,7 +1057,7 @@ class Linter:
             if container_exit_code:
                 # 1-fatal message issued
                 # 2-Error message issued
-                logger.info(f"{log_prompt} - Finished errors found")
+                logger.info(f"{log_prompt} - Finished, errors found")
                 output = container_log
                 exit_code = FAIL
             else:

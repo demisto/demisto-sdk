@@ -333,7 +333,8 @@ class ValidateManager:
         num_of_packs = len(all_packs)
         all_packs.sort(key=str.lower)
 
-        with ReadMeValidator.start_mdx_server():
+        readme_validator = ReadMeValidator(file_path='')
+        with readme_validator.start_mdx_server():
             with pebble.ProcessPool(max_workers=4) as executor:
                 futures = []
                 for pack_path in all_packs:

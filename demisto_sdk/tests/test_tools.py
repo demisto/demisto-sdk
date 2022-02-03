@@ -6,10 +6,7 @@ from typing import Callable
 import pytest
 from _pytest import tmpdir
 
-from demisto_sdk.commands.common.tools import get_content_file_type_dump
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
-
-xsoar_yaml = XSOAR_YAML()
+from demisto_sdk.commands.common.tools import get_content_file_type_dump, xsoar_yaml
 
 
 def create_temp_file(tmp_path: tmpdir.tmp_path, file_content: str, filename: str = 'file.txt') -> str:
@@ -50,5 +47,6 @@ def test_get_content_file_type_dump(file_path: str, expected: Callable[[str], st
         -  Ensure the method is 'yaml.dump' if the file is a yml file
         -  Ensure the method is 'str' if the file is any other unknown type
     """
+    print()
     assert get_content_file_type_dump(file_path) == expected or \
         get_content_file_type_dump(file_path).func == expected.func

@@ -61,6 +61,16 @@ class ExampleReturnClass:
     _title = "This is some example data"
 
 
+@dataclass
+class DemistoParameters:
+    """
+    Demisto Parameters
+    :param  example_integration_param: Example Param
+    """
+    example_integration_param: str
+    credentials: dict
+
+
 @COMMANDS.command("fake-command")
 def fake_command(fake_argument: str) -> ExampleReturnClass:
     """

@@ -316,6 +316,7 @@ def command_from_function(command_name: str, func: Callable) -> dict:
 
 
 def build_script_commands_from_register(command_register):
+    """Given the command register, iterate through the different types of commands and return"""
     commands = []
     for command_name, func in command_register.commands.items():
         if command_name == "test-module":
@@ -375,3 +376,44 @@ def rename(integration_dict: dict, new_integration_name: str):
     integration_dict["commonfields"]["id"] = new_integration_name
 
     return integration_dict
+
+
+def build_integration_dict(
+        commands,
+        demisto_param_class,
+        script,
+        script_name,
+        category="Authentication",
+        description="",
+        docker_image="demisto/python3:3.9.5.21272",
+        feed=False,
+        fetch=False,
+        runonce=False,
+        image=None,
+):
+    d = {
+        "category": category,
+        "description": description,
+        "commonfields": {
+            "id": script_name,
+            "version": -1
+        },
+        "name": script_name,
+        "display": script_name.replace("_", " "),
+        "configuration": build_configuration_from_param_class(demisto_param_class),
+        "script": {
+            "commands": commands,
+            "script": script,
+            "type": "python",
+            "subtype": "python3",
+            "dockerimage": docker_image,
+            "feed": feed,
+            "fetch": fetch,
+            "runonce": runonce,
+        },
+    }
+
+    if image:
+        d["image"] = image
+
+    return d

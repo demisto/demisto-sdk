@@ -79,3 +79,60 @@ def fake_command_list_argument_dict():
         ],
         "outputs": None
     }
+
+
+def grid_field_result():
+    return [
+        {
+            "associatedToAll": True,
+            "caseInsensitive": True,
+            "version": -1,
+            "sla": 0,
+            "shouldCommit": True,
+            "threshold": 72,
+            "propagationLabels": [
+                "all"
+            ],
+            "name": "This is some example data",
+            "isReadOnly": False,
+            "editForm": True,
+            "commitMessage": "Field edited",
+            "type": "grid",
+            "defaultRows": [
+                {}
+            ],
+            "unsearchable": False,
+            "breachScript": "",
+            "shouldPublish": True,
+            "description": "Auto Generated",
+            "columns": [
+                {
+                    "displayName": "example_attr",
+                    "isReadOnly": False,
+                    "required": False,
+                    "isDefault": True,
+                    "type": "shortText",
+                    "width": 150,
+                    "script": "",
+                    "fieldCalcScript": "",
+                    "key": "exampleattr"
+                }
+            ],
+            "group": 0,
+            "required": False
+        }
+    ]
+
+
+def integration_params_result():
+    return [
+        {
+            "name": "example_integration_param",
+            "type": 0,
+            "display": "Example Param"
+        },
+        {
+            "name": "credentials",
+            "type": 9
+        }
+    ]

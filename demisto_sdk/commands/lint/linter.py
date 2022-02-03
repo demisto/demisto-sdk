@@ -919,7 +919,7 @@ class Linter:
                     output = container_obj.logs().decode('utf-8')
                     exit_code = FAIL
                 else:
-                    logger.info(f"{log_prompt} - Finished errors found")
+                    logger.error(f"{log_prompt} - Finished errors found")
                     exit_code = FAIL
             elif container_exit_code in [3, 4]:
                 # 3-Internal error happened while executing tests
@@ -929,7 +929,7 @@ class Linter:
                 output = container_obj.logs().decode('utf-8')
             else:
                 # Any other container exit code
-                logger.info(f"{log_prompt} - Finished errors found")
+                logger.error(f"{log_prompt} - Finished errors found")
                 exit_code = FAIL
             # Remove container if not needed
             if keep_container:

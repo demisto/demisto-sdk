@@ -1047,7 +1047,7 @@ def get_dev_requirements(py_version, envs_dirs_base):
 
 
 def get_dict_from_file(path: str, use_ryaml: bool = False,
-                       raises_error: bool = True) -> Tuple[Dict, Union[str, None]]:
+                       raises_error: bool = True, clear_cache: bool = False) -> Tuple[Dict, Union[str, None]]:
     """
     Get a dict representing the file
 
@@ -1063,10 +1063,10 @@ def get_dict_from_file(path: str, use_ryaml: bool = False,
         if path:
             if path.endswith('.yml'):
                 if use_ryaml:
-                    return get_ryaml(path), 'yml'
-                return get_yaml(path), 'yml'
+                    return get_ryaml(path, cache_clear=clear_cache), 'yml'
+                return get_yaml(path, cache_clear=clear_cache), 'yml'
             elif path.endswith('.json'):
-                return get_json(path), 'json'
+                return get_json(path, cache_clear=clear_cache), 'json'
             elif path.endswith('.py'):
                 return {}, 'py'
     except FileNotFoundError as e:

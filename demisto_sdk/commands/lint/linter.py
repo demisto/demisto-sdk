@@ -876,7 +876,7 @@ class Linter:
             uid = os.getuid() or 4000
             logger.debug(f'{log_prompt} - user uid for running lint/test: {uid}')  # lgtm[py/clear-text-logging-sensitive-data]
             container_obj: docker.models.containers.Container = self._docker_client.containers.run(
-                name=container_name, image="demisto/python3", memory="6mb", command='python -c "[1] * 100000000"',
+                name=container_name, image="demisto/python3", mem_limit="6mb", command='python -c "[1] * 100000000"',
                 user=f"{uid}:4000", detach=True, environment=self._facts["env_vars"])
             stream_docker_container_output(container_obj.logs(stream=True))
             # Waiting for container to be finished

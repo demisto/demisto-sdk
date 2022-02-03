@@ -21,7 +21,7 @@ from demisto_sdk.commands.format.format_constants import (
     VERSION_6_0_0)
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
-xsoar_yaml = XSOAR_YAML()
+xsoar_yaml = XSOAR_YAML(allow_duplicate_keys=True)
 
 
 class BaseUpdate:

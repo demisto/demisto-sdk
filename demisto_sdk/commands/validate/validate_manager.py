@@ -1332,7 +1332,7 @@ class ValidateManager:
         if not self.no_configuration_prints:
             click.echo(f"Validating against {self.prev_ver}")
 
-            if self.branch_name == self.prev_ver or self.branch_name == self.prev_ver.replace('origin/', ''):
+            if self.branch_name in [self.prev_ver, self.prev_ver.replace('origin/', '')]:  # pragma: no cover
                 click.echo("Running only on last commit")
 
             elif self.is_circle:

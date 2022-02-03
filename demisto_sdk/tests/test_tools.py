@@ -45,7 +45,7 @@ def test_get_content_file_type_dump(file_path: str, expected: Callable[[str], st
 
         Then
         -  Ensure the method is 'json.dumps' if the file is a json file
-        -  Ensure the method is 'yaml.dump' if the file is a yml file
+        -  Ensure the method is 'xsoar_yaml.dumps' if the file is a yml file
         -  Ensure the method is 'str' if the file is any other unknown type
     """
     print()

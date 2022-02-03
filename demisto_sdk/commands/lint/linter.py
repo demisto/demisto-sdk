@@ -32,7 +32,7 @@ from demisto_sdk.commands.common.tools import (get_all_docker_images,
 from demisto_sdk.commands.lint.commands_builder import (
     build_bandit_command, build_flake8_command, build_mypy_command,
     build_pwsh_analyze_command, build_pwsh_test_command, build_pylint_command,
-    build_vulture_command, build_xsoar_linter_command)
+    build_pytest_command, build_vulture_command, build_xsoar_linter_command)
 from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, RERUN, RL,
                                                SUCCESS, WARNING,
                                                add_tmp_lint_files,
@@ -872,11 +872,12 @@ class Linter:
         test_json = {}
         try:
             # Running pytest container
-            # cov = '' if no_coverage else self._pack_abs_dir.stem
+            cov = '' if no_coverage else self._pack_abs_dir.stem
             uid = os.getuid() or 4000
             logger.debug(f'{log_prompt} - user uid for running lint/test: {uid}')  # lgtm[py/clear-text-logging-sensitive-data]
             container_obj: docker.models.containers.Container = self._docker_client.containers.run(
-                name=container_name, image="demisto/python3", mem_limit="6mb", command='python -c "[1] * 100000000"',
+                name=container_name, image=test_image, command=[build_pytest_command(test_xml=test_xml, json=True,
+                                                                                     cov=cov)],
                 user=f"{uid}:4000", detach=True, environment=self._facts["env_vars"])
             stream_docker_container_output(container_obj.logs(stream=True))
             # Waiting for container to be finished

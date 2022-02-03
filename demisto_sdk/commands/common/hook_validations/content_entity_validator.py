@@ -207,7 +207,7 @@ class ContentEntityValidator(BaseValidator):
                 missing_test_playbook_configurations = json.dumps(
                     {'integrations': content_item_id, 'playbookID': '<TestPlaybook ID>'},
                     indent=4)
-                no_tests_key = xsoar_yaml.dump({'tests': ['No tests']})
+                no_tests_key = xsoar_yaml.dumps({'tests': ['No tests']})
                 error_message, error_code = Errors.integration_not_registered(self.file_path,
                                                                               missing_test_playbook_configurations,
                                                                               no_tests_key)

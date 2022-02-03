@@ -569,7 +569,7 @@ class TestPostmanCodeGen:
 
         integration_code = config.generate_integration_python_code()
         integration_obj = config.generate_integration_yml()
-        integration_yml = xsoar_yaml.dump(integration_obj.to_dict())
+        integration_yml = xsoar_yaml.dumps(integration_obj.to_dict())
 
         assert "foo = args.get('foo')" in integration_code
         assert "virus_name = args.get('virus_name')" in integration_code
@@ -633,7 +633,7 @@ class TestPostmanCodeGen:
 
         integration_code = config.generate_integration_python_code()
         integration_obj = config.generate_integration_yml()
-        integration_yml = xsoar_yaml.dump(integration_obj.to_dict())
+        integration_yml = xsoar_yaml.dumps(integration_obj.to_dict())
 
         assert "foo_a = args.get('foo_a')" in integration_code
         assert "def test_report_request(self, foo_a, resource_b, a, b, c)" in integration_code
@@ -836,7 +836,7 @@ class TestPostmanCodeGen:
 
         integration_code = config.generate_integration_python_code()
         integration_obj = config.generate_integration_yml()
-        integration_yml = xsoar_yaml.dump(integration_obj.to_dict())
+        integration_yml = xsoar_yaml.dumps(integration_obj.to_dict())
 
         assert 'def test_create_group_request(self, test_name, test_id, test_key):' in integration_code
         assert 'data = {"test_filter": {"test_key": test_key}, "test_id": test_id, "test_name": test_name}' in integration_code

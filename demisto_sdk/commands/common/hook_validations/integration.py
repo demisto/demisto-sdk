@@ -907,7 +907,7 @@ class IntegrationValidator(ContentEntityValidator):
             for param in FETCH_REQUIRED_PARAMS:
                 if param not in params:
                     error_message, error_code = Errors.parameter_missing_from_yml(param.get('name'),
-                                                                                  xsoar_yaml.dump(param))
+                                                                                  xsoar_yaml.dumps(param))
                     if self.handle_error(error_message, error_code, file_path=self.file_path,
                                          suggested_fix=Errors.suggest_fix(self.file_path)):
                         fetch_params_exist = False
@@ -934,13 +934,13 @@ class IntegrationValidator(ContentEntityValidator):
 
             if not first_fetch_param:
                 error_message, error_code = Errors.parameter_missing_from_yml_not_community_contributor(
-                    'first_fetch', xsoar_yaml.dump(FIRST_FETCH_PARAM))
+                    'first_fetch', xsoar_yaml.dumps(FIRST_FETCH_PARAM))
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     fetch_params_exist = False
 
             if not max_fetch_param:
                 error_message, error_code = Errors.parameter_missing_from_yml_not_community_contributor(
-                    'max_fetch', xsoar_yaml.dump(MAX_FETCH_PARAM))
+                    'max_fetch', xsoar_yaml.dumps(MAX_FETCH_PARAM))
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     fetch_params_exist = False
 
@@ -982,7 +982,7 @@ class IntegrationValidator(ContentEntityValidator):
             if not is_valid:
                 param_structure = dict(equal_key_values, **contained_key_values, name=required_param.get('name'))
                 error_message, error_code = Errors.parameter_missing_for_feed(required_param.get('name'),
-                                                                              xsoar_yaml.dump(param_structure))
+                                                                              xsoar_yaml.dumps(param_structure))
                 if self.handle_error(error_message, error_code, file_path=self.file_path,
                                      suggested_fix=Errors.suggest_fix(self.file_path)):
                     params_exist = False

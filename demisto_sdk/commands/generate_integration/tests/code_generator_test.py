@@ -231,7 +231,7 @@ class TestCodeGenerator:
 
         integration_code = config.generate_integration_python_code()
         integration_yml = config.generate_integration_yml()
-        integration_yml_str = xsoar_yaml.dump(integration_yml.to_dict())
+        integration_yml_str = xsoar_yaml.dumps(integration_yml.to_dict())
 
         assert "outputs=response.get('scans')" in integration_code
         assert 'contextPath: VirusTotalTest.TestScan.scans.field1' in integration_yml_str

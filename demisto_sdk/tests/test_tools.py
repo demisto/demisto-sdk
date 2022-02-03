@@ -48,6 +48,5 @@ def test_get_content_file_type_dump(file_path: str, expected: Callable[[str], st
         -  Ensure the method is 'xsoar_yaml.dumps' if the file is a yml file
         -  Ensure the method is 'str' if the file is any other unknown type
     """
-    print()
     assert get_content_file_type_dump(file_path) == expected or \
         get_content_file_type_dump(file_path).func == expected.func

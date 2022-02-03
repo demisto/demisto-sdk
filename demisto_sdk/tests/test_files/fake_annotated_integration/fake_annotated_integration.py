@@ -46,6 +46,11 @@ class CommandRegister:
 COMMANDS = CommandRegister()
 
 
+class ExampleEnum(enum.Enum):
+    EXAMPLE_FIRST_OPTION = "FirstOption"
+    EXAMPLE_SECOND_OPTION = "SecondOption"
+
+
 @dataclass
 class ExampleReturnClass:
     """
@@ -74,11 +79,6 @@ def fake_command_optional_argument(fake_optional_argument: str = "default_value"
     pass
 
 
-class ExampleEnum(enum.Enum):
-    EXAMPLE_FIRST_OPTION = "FirstOption"
-    EXAMPLE_SECOND_OPTION = "SecondOption"
-
-
 @COMMANDS.command("fake-command-enum-argument")
 def fake_command_optional_argument(fake_enum_argument: ExampleEnum):
     """
@@ -94,4 +94,11 @@ def fake_command_optional_argument(fake_list_argument: list):
     This is an example command with a list argument.
     :param fake_list_argument: This is a fake argument
     """
+    pass
+
+
+@COMMANDS.command("test-module")
+def test_module_command():
+    """This is the example test-module command. Though it is registered, it should not appear in the
+    integration YAML"""
     pass

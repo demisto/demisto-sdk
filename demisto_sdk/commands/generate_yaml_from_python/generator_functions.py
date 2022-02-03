@@ -254,6 +254,11 @@ def handle_enum(e):
 
 
 def command_from_function(command_name: str, func: Callable) -> dict:
+    """
+    Converts a python function into an integration command dictionary.
+    :param command_name: Name of the command in the integration
+    :param func: Callable python function
+    """
     docstring = parse(func.__doc__) # type:ignore
 
     command = {

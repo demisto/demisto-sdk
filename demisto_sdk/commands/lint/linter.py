@@ -443,7 +443,7 @@ class Linter:
             logger.error(f"{log_prompt}- Finished, errors found")
             status = FAIL
         if exit_code & WARNING:
-            logger.info(f"{log_prompt} - Finished, warnings found")
+            logger.warning(f"{log_prompt} - Finished, warnings found")
             if not status:
                 status = WARNING
         # if pylint did not run and failure exit code has been returned from run commnad

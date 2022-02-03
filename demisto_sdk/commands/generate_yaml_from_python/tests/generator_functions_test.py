@@ -12,6 +12,8 @@ from demisto_sdk.tests.test_files.fake_annotated_integration.output_dicts import
     [
         ("fake-command", fake_command_dict()),
         ("fake-command-optional-argument", fake_command_optional_argument_dict()),
+        ("fake-command-enum-argument", fake_command_enum_argument_dict()),
+        ("fake-command-list-argument", fake_command_list_argument_dict())
     ]
 )
 def test_command_from_function(fake_command_name, test_result_dict):

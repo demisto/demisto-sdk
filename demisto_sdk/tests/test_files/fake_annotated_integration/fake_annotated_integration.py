@@ -1,5 +1,6 @@
 from typing import Callable
 from dataclasses import dataclass
+import enum
 
 
 class CommandRegister:
@@ -58,16 +59,39 @@ class ExampleReturnClass:
 @COMMANDS.command("fake-command")
 def fake_command(fake_argument: str) -> ExampleReturnClass:
     """
-    This is an example command.
+    This is an example command with a simple, mandatory string argument.
     :param fake_argument: This is a fake argument
     """
     pass
 
 
 @COMMANDS.command("fake-command-optional-argument")
-def fake_command_optional_argument(fake_optional_argument: str = ""):
+def fake_command_optional_argument(fake_optional_argument: str = "default_value"):
     """
-    This is an example command.
+    This is an example command with a simple, optional argument with a default value.
     :param fake_optional_argument: This is a fake argument
+    """
+    pass
+
+
+class ExampleEnum(enum.Enum):
+    EXAMPLE_FIRST_OPTION = "FirstOption"
+    EXAMPLE_SECOND_OPTION = "SecondOption"
+
+
+@COMMANDS.command("fake-command-enum-argument")
+def fake_command_optional_argument(fake_enum_argument: ExampleEnum):
+    """
+    This is an example command with a mandatory argument with predefined values.
+    :param fake_enum_argument: This is a fake argument
+    """
+    pass
+
+
+@COMMANDS.command("fake-command-list-argument")
+def fake_command_optional_argument(fake_list_argument: list):
+    """
+    This is an example command with a list argument.
+    :param fake_list_argument: This is a fake argument
     """
     pass

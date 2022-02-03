@@ -123,8 +123,8 @@ def check_configuration_file(command, args):
 )
 @pass_config
 def main(config, version, release_notes):
-    # import dotenv
-    # dotenv.load_dotenv()  # Load a .env file from the cwd.
+    import dotenv
+    dotenv.load_dotenv()  # Load a .env file from the cwd.
     config.configuration = Configuration()
     if not os.getenv('DEMISTO_SDK_SKIP_VERSION_CHECK') or version:  # If the key exists/called to version
         cur_version = get_distribution('demisto-sdk').version

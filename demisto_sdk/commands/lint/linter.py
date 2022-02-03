@@ -930,7 +930,7 @@ class Linter:
                 output = container_obj.logs().decode('utf-8')
             else:
                 # Any other container exit code
-                logger.error(f"{log_prompt} - Finished, errors found")
+                logger.error(f"{log_prompt} - Finished, docker container error found ({container_exit_code})")
                 exit_code = FAIL
             # Remove container if not needed
             if keep_container:

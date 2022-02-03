@@ -1,3 +1,6 @@
+'''
+    This file contains functions that are related to the coverage reports but not used in the demisto-sdk source.
+'''
 import json
 from datetime import datetime, timedelta
 from typing import Optional
@@ -7,7 +10,6 @@ import requests
 from demisto_sdk.commands.common.logger import logging_setup
 
 ONE_DAY = timedelta(days=1)
-IMAGE_URL = 'https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-graph.png'
 LATEST_URL = 'https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-min.json'
 HISTORY_URL = 'https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/history/coverage-min/{date}.json'
 
@@ -15,8 +17,21 @@ HISTORY_URL = 'https://storage.googleapis.com/marketplace-dist-dev/code-coverage
 logger = logging_setup(2)
 
 
-def get_total_coverage(date: Optional[datetime] = None, filename: Optional[str] = None) -> Optional[float]:
+def get_total_coverage(filename: Optional[str] = None, date: Optional[datetime] = None) -> float:
+    '''
+        Args:
+            filename:   The path to the coverage.json/coverage-min.json file.
+            date:       A datetime object.
+        Returns:
+            A float representing the total coverage that was found.
+                from file in case that filename was given.
+                from history bucket in case that date was given.
+                from latest bucket in any other case.
+            Or
+                0.0 if any errors were encountered.
+    '''
     coverage_field = 'total_coverage'
+    assert not(filename and date), 'you should provide a filename or date not both.'
     try:
         if filename:
             with open(filename, 'r') as report_file:
@@ -45,7 +60,15 @@ def yield_dates(start_date: datetime, end_date: datetime):
         temp_time += ONE_DAY
 
 
-def create_coverage_graph(filename: str, start_date: datetime):
+def create_coverage_graph(start_date: datetime, filename: str):
+    '''
+        Args:
+            start_date: The date to start collecting coverage information.
+            filename:   The path to the png file containing the coverage graph.
+        Creates:
+            A graoh in png format representing the coverage information per day.
+
+    '''
     cover_list = []
     date_list = []
     for date in yield_dates(start_date, datetime.now()):

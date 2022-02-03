@@ -1,6 +1,8 @@
 import os
 from datetime import datetime
 
+import pytest
+
 from demisto_sdk.commands.coverage_analyze.tests.helpers_test import (
     JSON_MIN_DATA_FILE, TEST_DATA_DIR, read_file)
 from demisto_sdk.commands.coverage_analyze.tools import (HISTORY_URL,
@@ -24,3 +26,7 @@ class TestGetTotalCoverage:
         date = datetime.now()
         requests_mock.get(HISTORY_URL.format(date=date.strftime('%Y-%m-%d')), text=read_file(JSON_MIN_DATA_FILE))
         assert get_total_coverage(date=date) == 52.38326848249027
+
+    def test_get_total_coverage_assert(self):
+        with pytest.raises(AssertionError):
+            get_total_coverage(filename=JSON_MIN_DATA_FILE, date=datetime.now())

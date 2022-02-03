@@ -8,9 +8,11 @@ from pathlib import Path
 
 import pytest
 
+import demisto_sdk.commands.common.tools as tools
 import demisto_sdk.commands.common.update_id_set as uis
 from demisto_sdk.commands.common.constants import (DEFAULT_JOB_FROM_VERSION,
-                                                   JOBS_DIR, FileType)
+                                                   JOBS_DIR, FileType,
+                                                   MarketplaceVersions)
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.update_id_set import (
     add_item_to_exclusion_dict, does_dict_have_alternative_key,
@@ -82,8 +84,8 @@ class TestPacksMetadata:
         Then
             - parsing all the data from file successfully
         """
-        mocker.patch.object(uis, 'get_pack_name', return_value='Pack1')
-        mocker.patch.object(uis, 'get_mp_types_from_metadata_by_item', return_value=['xsoar', 'marketplacev2'])
+        mocker.patch.object(tools, 'get_pack_name', return_value='Pack1')
+        mocker.patch.object(tools, 'get_mp_types_from_metadata_by_item', return_value=['xsoar', 'marketplacev2'])
 
         pack = repo.create_pack("Pack1")
         pack.pack_metadata.write_json(metadata_file_content)
@@ -286,6 +288,7 @@ class TestDuplicates:
                 'fromVersion': '5.0.0',
                 'kind': 'Details',
                 'path': 'Layouts/layout-details-urlrep.json',
+                'marketplaces': ['xsoar'],
                 'pack': first_pack,
                 'source': first_source
             }
@@ -296,6 +299,7 @@ class TestDuplicates:
                 'typeID': 'urlRep',
                 'kind': 'Details',
                 'path': 'Layouts/layout-details-urlrep2.json',
+                'marketplaces': ['xsoar'],
                 'pack': second_pack,
                 'source': second_source
             }
@@ -345,6 +349,41 @@ class TestDuplicates:
         has_duplicates = has_duplicate(id_set['Layouts'], 'urlRep', 'Layouts', False)
         assert has_duplicates is False
 
+    @staticmethod
+    def test_similar_items_on_different_marketplaces():
+        """
+        Given
+            - id_set with two integrations with the same IDs with different marketplaces.
+
+        When
+            - checking for duplicate
+
+        Then
+            - Ensure duplicates not found
+        """
+
+        integrations = [
+            {
+                'Integ': {
+                    'id': 'Integ',
+                    'name': 'Integ',
+                    'pack': 'Reut',
+                    'marketplaces': ['xsoar'],
+                }
+            },
+            {
+                'Integ': {
+                    'id': 'Integ',
+                    'name': 'Integ',
+                    'pack': 'Cactus',
+                    'marketplaces': ['marketplacev2'],
+                }
+
+            },
+        ]
+        has_duplicates = has_duplicate(integrations, 'Integ', 'integrations', print_logs=False)
+        assert not has_duplicates
+
 
 class TestIntegrations:
     INTEGRATION_DATA = {
@@ -353,6 +392,7 @@ class TestIntegrations:
             "file_path": TESTS_DIR + "/test_files/DummyPack/Integrations/DummyIntegration/DummyIntegration.yml",
             "fromversion": "4.1.0",
             "source": ['github.com', 'demisto', 'demisto-sdk'],
+            "marketplaces": ["xsoar"],
             "docker_image": "demisto/python3:3.7.4.977",
             "commands": ['xdr-get-incidents',
                          'xdr-get-incident-extra-data',
@@ -373,10 +413,11 @@ class TestIntegrations:
             "incident_types": "dummy-incident-type",
             "indicator_fields": "CommonTypes",
             "indicator_types": "CommonTypes",
+            "is_fetch": True,
             "mappers": [
                 "dummy-mapper-in",
                 "dummy-mapper-out"
-            ]
+            ],
         }
     }
 
@@ -386,6 +427,7 @@ class TestIntegrations:
             "file_path": TESTS_DIR + "/test_files/DummyPack/Integrations/integration-DummyIntegration.yml",
             "fromversion": "4.1.0",
             "source": ['github.com', 'demisto', 'demisto-sdk'],
+            "marketplaces": ["xsoar"],
             "commands": ['xdr-get-incidents',
                          'xdr-get-incident-extra-data',
                          'xdr-update-incident',
@@ -405,17 +447,18 @@ class TestIntegrations:
             "incident_types": "dummy-incident-type",
             "indicator_fields": "CommonTypes",
             "indicator_types": "CommonTypes",
+            "is_fetch": True,
             "mappers": [
                 "dummy-mapper-in",
                 "dummy-mapper-out"
-            ]
+            ],
         }
     }
 
     def test_process_integration__sanity(self, mocker):
         """
         Given
-            - A valid script package folder located at Packs/DummyPack/Scripts/DummyScript.
+            - A valid script package folder located at Packs/DummyPack/Integrations/DummyIntegration.
 
         When
             - parsing script files
@@ -426,14 +469,14 @@ class TestIntegrations:
         non_unified_file_path = os.path.join(TESTS_DIR, 'test_files',
                                              'DummyPack', 'Integrations', 'DummyIntegration')
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
-        res, _ = process_integration(non_unified_file_path, True)
+        res, _ = process_integration(non_unified_file_path, {'DummyPack': {}}, MarketplaceVersions.XSOAR.value, print_logs=True)
         assert len(res) == 1
         non_unified_integration_data = res[0]
 
         unified_file_path = os.path.join(TESTS_DIR, 'test_files',
                                          'DummyPack', 'Integrations', 'integration-DummyIntegration.yml')
 
-        res, _ = process_integration(unified_file_path, True)
+        res, _ = process_integration(unified_file_path, {'DummyPack': {}}, MarketplaceVersions.XSOAR.value, print_logs=True)
         assert len(res) == 1
         unified_integration_data = res[0]
 
@@ -465,7 +508,7 @@ class TestIntegrations:
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
         test_file_path = os.path.join(TESTS_DIR, 'test_files', 'invalid_file_structures', 'integration.yml')
         with pytest.raises(Exception):
-            process_integration(test_file_path, True)
+            process_integration(test_file_path, {'DummyPack': {}}, MarketplaceVersions.XSOAR.value, print_logs=True)
 
     @staticmethod
     def test_process_integration__marketplace_mismatch(mocker):
@@ -481,7 +524,7 @@ class TestIntegrations:
         """
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=True)
         test_file_path = os.path.join(TESTS_DIR, 'test_files', 'invalid_file_structures', 'integration.yml')
-        res, _ = process_integration(test_file_path, print_logs=False)
+        res, _ = process_integration(test_file_path, {'DummyPack': {}}, MarketplaceVersions.XSOAR.value, print_logs=False)
         assert res == []
 
 
@@ -491,6 +534,7 @@ class TestScripts:
             "name": "DummyScript",
             "file_path": TESTS_DIR + "/test_files/DummyPack/Scripts/DummyScript2.yml",
             "source": ['github.com', 'demisto', 'demisto-sdk'],
+            "marketplaces": ["xsoar"],
             "fromversion": "5.0.0",
             "docker_image": "demisto/python3:3.7.3.286",
             "tests": [
@@ -504,6 +548,7 @@ class TestScripts:
             "name": "DummyScript",
             "file_path": TESTS_DIR + '/test_files/alternative_meta_fields/Script-top_level_alternative_fields.yml',
             "source": ['github.com', 'demisto', 'demisto-sdk'],
+            "marketplaces": ["xsoar"],
             "fromversion": "5.0.0",
             "docker_image": "demisto/python3:3.7.3.286",
             "tests": [
@@ -518,6 +563,7 @@ class TestScripts:
             "name": "DummyScript",
             "file_path": TESTS_DIR + '/test_files/alternative_meta_fields/Script-second_level_alternative_fields.yml',
             "source": ['github.com', 'demisto', 'demisto-sdk'],
+            "marketplaces": ["xsoar"],
             "fromversion": "5.0.0",
             "docker_image": "demisto/python3:3.7.3.286",
             "tests": [
@@ -530,10 +576,11 @@ class TestScripts:
     PACK_SCRIPT_DATA = {
         "DummyScript": {
             "name": "DummyScript",
+            "file_path": TESTS_DIR + "/test_files/Packs/DummyPack/Scripts/DummyScript/DummyScript.yml",
             "source": ['github.com', 'demisto', 'demisto-sdk'],
+            "marketplaces": ["xsoar"],
             "docker_image": "demisto/python3:3.8.2.6981",
             "pack": "DummyPack",
-            "file_path": TESTS_DIR + "/test_files/Packs/DummyPack/Scripts/DummyScript/DummyScript.yml",
         }
     }
 
@@ -543,7 +590,7 @@ class TestScripts:
         Test for getting the script data
         """
         file_path = TESTS_DIR + '/test_files/DummyPack/Scripts/DummyScript2.yml'
-        data = get_script_data(file_path)
+        data = get_script_data(file_path, packs={'DummyPack': {}})
 
         assert list(data.keys()) == list(TestScripts.SCRIPT_DATA.keys())
 
@@ -566,7 +613,7 @@ class TestScripts:
             - making sure the entry has a field called "has_alternative_meta" set to True
         """
         file_path = TESTS_DIR + '/test_files/alternative_meta_fields/Script-top_level_alternative_fields.yml'
-        data = get_script_data(file_path)
+        data = get_script_data(file_path, packs={'DummyPack': {}})
 
         assert list(data.keys()) == list(TestScripts.SCRIPT_DATA_ALTERNATIVE_TOP_LEVEL.keys())
 
@@ -589,7 +636,7 @@ class TestScripts:
             - making sure the entry has a field called "has_alternative_meta" set to True
         """
         file_path = TESTS_DIR + '/test_files/alternative_meta_fields/Script-second_level_alternative_fields.yml'
-        data = get_script_data(file_path)
+        data = get_script_data(file_path, packs={'DummyPack': {}})
 
         assert (list(data.keys()) == list(TestScripts.SCRIPT_DATA_ALTERNATIVE_SECOND_LEVEL.keys()))
 
@@ -613,7 +660,7 @@ class TestScripts:
         test_file_path = os.path.join(TESTS_DIR, 'test_files',
                                       'Packs', 'DummyPack', 'Scripts', 'DummyScript')
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
-        res, _ = process_script(test_file_path, True)
+        res, _ = process_script(test_file_path, {'DummyPack': {}}, MarketplaceVersions.XSOAR.value, print_logs=True)
         assert len(res) == 1
         data = res[0]
 
@@ -639,7 +686,7 @@ class TestScripts:
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=True)
         test_file_path = os.path.join(TESTS_DIR, 'test_files', 'invalid_file_structures', 'integration.yml')
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
-        res, _ = process_script(test_file_path, print_logs=False)
+        res, _ = process_script(test_file_path, {'DummyPack': {}}, MarketplaceVersions.XSOAR.value, print_logs=False)
         assert res == []
 
     @staticmethod
@@ -658,7 +705,7 @@ class TestScripts:
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
 
         with pytest.raises(Exception):
-            process_script(test_file_path, True)
+            process_script(test_file_path, {'DummyPack': {}}, MarketplaceVersions.XSOAR.value, print_logs=True)
 
 
 class TestPlaybooks:
@@ -667,6 +714,7 @@ class TestPlaybooks:
         "file_path": TESTS_DIR + "/test_files/DummyPack/Playbooks/DummyPlaybook.yml",
         "source": ['github.com', 'demisto', 'demisto-sdk'],
         "fromversion": "4.5.0",
+        "marketplaces": ["xsoar"],
         "filters": ["isEqualString"],
         "transformers": ["uniq"],
         "implementing_scripts": [
@@ -696,6 +744,7 @@ class TestPlaybooks:
         "file_path": TESTS_DIR + "/test_files/alternative_meta_fields/Playbook-top_level_alternative_fields.yml",
         "source": ['github.com', 'demisto', 'demisto-sdk'],
         "fromversion": "4.5.0",
+        "marketplaces": ["xsoar"],
         "filters": ["isEqualString"],
         "transformers": ["uniq"],
         "implementing_scripts": [
@@ -725,6 +774,7 @@ class TestPlaybooks:
         "name": "Dummy Playbook",
         "file_path": TESTS_DIR + "/test_files/alternative_meta_fields/Playbook-second_level_alternative_fields.yml",
         "source": ['github.com', 'demisto', 'demisto-sdk'],
+        "marketplaces": ["xsoar"],
         "fromversion": "4.5.0",
         "filters": ["isEqualString"],
         "transformers": ["uniq"],
@@ -757,7 +807,7 @@ class TestPlaybooks:
         Test for getting the playbook data
         """
         file_path = TESTS_DIR + '/test_files/DummyPack/Playbooks/DummyPlaybook.yml'
-        data = get_playbook_data(file_path)['Dummy Playbook']
+        data = get_playbook_data(file_path, packs={'DummyPack': {}})['Dummy Playbook']
         assert IsEqualFunctions.is_dicts_equal(data, TestPlaybooks.PLAYBOOK_DATA, lists_as_sets=True)
 
     @staticmethod
@@ -774,7 +824,7 @@ class TestPlaybooks:
             - making sure the entry has a field called "has_alternative_meta" set to True
         """
         file_path = TESTS_DIR + '/test_files/alternative_meta_fields/Playbook-top_level_alternative_fields.yml'
-        data = get_playbook_data(file_path)['Dummy Playbook']
+        data = get_playbook_data(file_path, packs={'DummyPack': {}})['Dummy Playbook']
 
         assert IsEqualFunctions.is_dicts_equal(data,
                                                TestPlaybooks.PLAYBOOK_DATA_ALTERNATIVE_FIELDS_TOP_LEVEL,
@@ -794,7 +844,7 @@ class TestPlaybooks:
             - making sure the entry has a field called "has_alternative_meta" set to True
         """
         file_path = TESTS_DIR + '/test_files/alternative_meta_fields/Playbook-second_level_alternative_fields.yml'
-        data = get_playbook_data(file_path)['Dummy Playbook']
+        data = get_playbook_data(file_path, packs={'DummyPack': {}})['Dummy Playbook']
         assert IsEqualFunctions.is_dicts_equal(data,
                                                TestPlaybooks.PLAYBOOK_DATA_ALTERNATIVE_FIELDS_SECOND_LEVEL,
                                                lists_as_sets=True)
@@ -812,7 +862,7 @@ class TestPlaybooks:
             - parsing all the data from file successfully
         """
         test_dir = f'{git_path()}/demisto_sdk/commands/create_id_set/tests/test_data/playbook-with-incident-fields.yml'
-        result = get_playbook_data(test_dir)
+        result = get_playbook_data(test_dir, packs={'DummyPack': {}})
         result = result.get('Arcsight - Get events related to the Case')
         assert 'name' in result.keys()
         assert 'file_path' in result.keys()
@@ -838,7 +888,7 @@ class TestPlaybooks:
         test_dir = f'{git_path()}/demisto_sdk/commands/create_id_set/tests/test_data/playbook-no-incident-fields.yml'
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
 
-        result = get_playbook_data(test_dir)
+        result = get_playbook_data(test_dir, packs={'DummyPack': {}})
         result = result.get('Arcsight - Get events related to the Case')
         assert 'name' in result.keys()
         assert 'file_path' in result.keys()
@@ -863,7 +913,7 @@ class TestPlaybooks:
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
         test_file_path = os.path.join(TESTS_DIR, 'test_files', 'invalid_file_structures', 'playbook.yml')
         with pytest.raises(Exception):
-            process_general_items(test_file_path, True, (FileType.PLAYBOOK,), get_playbook_data)
+            process_general_items(test_file_path, {'DummyPack': {}}, MarketplaceVersions.XSOAR.value, True, (FileType.PLAYBOOK,), get_playbook_data)
 
     @staticmethod
     def test_get_playbook_data_bad_graph():
@@ -880,7 +930,7 @@ class TestPlaybooks:
             - parsing flow graph from file successfully (only tasks 0 and 1 will be in the graph)
         """
         test_file_path = os.path.join(TESTS_DIR, 'test_files', 'playbook-invalid-bad-graph.yml')
-        result = get_playbook_data(test_file_path)
+        result = get_playbook_data(test_file_path, packs={'DummyPack': {}})
         playbook_data = result.get('InvalidPlaybook-BadGraph', {})
         assert playbook_data.get('name') == 'InvalidPlaybook-BadGraph'
         assert playbook_data.get('command_to_integration', {}).get('ip') == ''
@@ -902,7 +952,7 @@ class TestPlaybooks:
             - parsing flow graph from file successfully (no actual tasks will be in the graph)
         """
         test_file_path = os.path.join(TESTS_DIR, 'test_files', 'playbook-invalid-bad-graph_2.yml')
-        result = get_playbook_data(test_file_path)
+        result = get_playbook_data(test_file_path, packs={'DummyPack': {}})
         playbook_data = result.get('InvalidPlaybook-BadGraph', {})
         assert playbook_data.get('name') == 'InvalidPlaybook-BadGraph'
         assert playbook_data.get('command_to_integration', {}).get('ip') == ''
@@ -1044,7 +1094,7 @@ class TestLayouts:
                                  'test_data', 'layout-to-test.json')
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
 
-        res, _ = process_general_items(test_file, True, (FileType.LAYOUT,), get_layout_data)
+        res, _ = process_general_items(test_file, {'DummyPack': {}}, MarketplaceVersions.XSOAR.value, True, (FileType.LAYOUT,), get_layout_data)
         assert len(res) == 1
         result = res[0]
         result = result.get('urlRep')
@@ -1073,7 +1123,7 @@ class TestLayouts:
                                  'test_data', 'layout-to-test-no-types-fields.json')
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
 
-        res, _ = process_general_items(test_file, False, (FileType.LAYOUT,), get_layout_data)
+        res, _ = process_general_items(test_file, {'DummyPack': {}}, MarketplaceVersions.XSOAR.value, False, (FileType.LAYOUT,), get_layout_data)
         assert len(res) == 1
         result = res[0]
         result = result.get('urlRep')
@@ -1100,7 +1150,8 @@ class TestLayouts:
                                  'test_data', 'layoutscontainer-to-test.json')
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
 
-        res, _ = process_general_items(test_file, True, (FileType.LAYOUTS_CONTAINER,), get_layoutscontainer_data)
+        res, _ = process_general_items(test_file, {'DummyPack': {}}, MarketplaceVersions.XSOAR.value,
+                                       True, (FileType.LAYOUTS_CONTAINER,), get_layoutscontainer_data)
         assert len(res) == 1
         result = res[0]
         result = result.get('layouts_container_test')
@@ -1131,7 +1182,7 @@ class TestIncidentFields:
                                 'test_data', 'incidentfield-to-test.json')
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
 
-        res, _ = process_incident_fields(test_dir, True, [])
+        res, _ = process_incident_fields(test_dir, {'DummyPack': {}}, MarketplaceVersions.XSOAR.value, True, [])
         assert len(res) == 1
         result = res[0]
         result = result.get('incidentfield-test')
@@ -1159,7 +1210,7 @@ class TestIncidentFields:
                                 'incidentfield-top_level_alternative_fields.json')
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
 
-        res, _ = process_incident_fields(test_dir, True, [])
+        res, _ = process_incident_fields(test_dir, {'DummyPack': {}}, MarketplaceVersions.XSOAR.value, True, [])
         assert len(res) == 1
         result = res[0]
         result = result.get('incidentfield_upload_id')
@@ -1186,7 +1237,7 @@ class TestIncidentFields:
                                 'test_data', 'incidentfield-to-test-no-types_scripts.json')
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
 
-        res, _ = process_incident_fields(test_dir, True, [])
+        res, _ = process_incident_fields(test_dir, {'DummyPack': {}}, MarketplaceVersions.XSOAR.value, True, [])
         assert len(res) == 1
         result = res[0]
         result = result.get('incidentfield-test')
@@ -1210,7 +1261,7 @@ class TestIncidentFields:
         test_dir = os.path.join(git_path(), 'demisto_sdk', 'commands', 'create_id_set', 'tests',
                                 'test_data', 'incidentfield-to-test-no-types_scripts.json')
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=True)
-        res, _ = process_incident_fields(test_dir, True, [])
+        res, _ = process_incident_fields(test_dir, {'DummyPack': {}}, MarketplaceVersions.XSOAR.value, True, [])
         assert res == []
 
 
@@ -1448,6 +1499,7 @@ class TestMappers:
             "feed": False,
             "fromVersion": "6.0.0",
             "id": "ServiceNow-outgoing-mapper",
+            "marketplaces": ["xsoar"],
             "mapping": {
                 "ServiceNow Ticket": {
                     "dontMapEventToLabels": False,
@@ -1816,6 +1868,7 @@ class TestDashboard:
             }
         ],
         "name": "dummy_dashboard",
+        "marketplaces": ["xsoar"],
         "fromVersion": "6.0.0",
     }
 
@@ -1837,6 +1890,7 @@ class TestDashboard:
             }
         ],
         "name": "dummy_dashboard",
+        "marketplaces": ["xsoar"],
         "fromVersion": "6.0.0",
     }
 
@@ -1900,6 +1954,7 @@ class TestReport:
         "modified": "2020-09-23T07:54:57.783240299Z",
         "startDate": "0001-01-01T00:00:00Z",
         "name": "dummy_report",
+        "marketplaces": ["xsoar"],
         "dashboard": {
             "id": "dummy_report",
             "version": 0,
@@ -1924,6 +1979,7 @@ class TestReport:
     REPORT_NO_SCRIPT = {
         "id": "dummy_report",
         "name": "dummy_report",
+        "marketplaces": ["xsoar"],
         "dashboard": {
             "id": "dummy_report",
             "name": "dummy_report",
@@ -2010,7 +2066,7 @@ class TestGenericFunctions:
                                  'test_data', 'classifier-to-test.json')
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
 
-        res, _ = process_general_items(test_file, True, (FileType.CLASSIFIER,), get_classifier_data)
+        res, _ = process_general_items(test_file, {'': {}}, MarketplaceVersions.XSOAR.value, True, (FileType.CLASSIFIER,), get_classifier_data)
         assert len(res) == 1
         result = res[0]
         result = result.get('dummy classifier')
@@ -2037,7 +2093,7 @@ class TestGenericFunctions:
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=True)
         test_file = os.path.join(git_path(), 'demisto_sdk', 'commands', 'create_id_set', 'tests',
                                  'test_data', 'classifier-to-test.json')
-        res, _ = process_general_items(test_file, True, (FileType.CLASSIFIER,), get_classifier_data)
+        res, _ = process_general_items(test_file, {'DummyPack': {}}, MarketplaceVersions.XSOAR.value, True, (FileType.CLASSIFIER,), get_classifier_data)
         assert res == []
 
     @staticmethod
@@ -2559,7 +2615,7 @@ class TestJob:
         job_details = 'job details'
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
         job = pack.create_job(is_feed, details=job_details)
-        res = process_jobs(job.path, print_logs)
+        res = process_jobs(job.path, {pack.name: {}}, MarketplaceVersions.XSOAR.value, print_logs)
 
         captured = capsys.readouterr()
         assert len(res) == 1
@@ -2598,7 +2654,7 @@ class TestJob:
         job = pack.create_job(is_feed)
         job_path = Path(job.path)
         new_path = job_path.rename(job_path.with_suffix('.yml'))
-        res = process_jobs(str(new_path), False)
+        res = process_jobs(str(new_path), {pack.name: {}}, MarketplaceVersions.XSOAR.value, False)
         assert not res
 
     @staticmethod
@@ -2623,7 +2679,7 @@ class TestJob:
 
         job_json_path.rename(job_json_path_as_yml)
         with pytest.raises(FileNotFoundError):
-            assert not process_jobs(str(job_json_path), print_logs)
+            assert not process_jobs(str(job_json_path), {pack.name: {}}, MarketplaceVersions.XSOAR.value, print_logs)
         assert f"failed to process job {job_json_path}" in capsys.readouterr().out
 
 
@@ -2749,7 +2805,8 @@ def test_merged_id_sets_with_duplicates(caplog):
         'playbooks': [
             {
                 'playbook_foo1': {
-                    'name': 'playbook_foo1'
+                    'name': 'playbook_foo1',
+                    'marketplaces': 'xsoar',
                 }
             }
         ],
@@ -2757,7 +2814,8 @@ def test_merged_id_sets_with_duplicates(caplog):
             {
                 'ScriptFoo': {
                     'name': 'ScriptFoo',
-                    'pack': 'ScriptFoo1'
+                    'pack': 'ScriptFoo1',
+                    'marketplaces': 'xsoar',
                 }
             }
         ]
@@ -2767,7 +2825,8 @@ def test_merged_id_sets_with_duplicates(caplog):
         'playbooks': [
             {
                 'playbook_foo2': {
-                    'name': 'playbook_foo2'
+                    'name': 'playbook_foo2',
+                    'marketplaces': 'xsoar',
                 }
             }
         ],
@@ -2775,7 +2834,8 @@ def test_merged_id_sets_with_duplicates(caplog):
             {
                 'ScriptFoo': {
                     'name': 'ScriptFoo',
-                    'pack': 'ScriptFoo2'
+                    'pack': 'ScriptFoo2',
+                    'marketplaces': 'xsoar',
                 }
             }
         ]
@@ -2810,7 +2870,8 @@ def test_merged_id_sets_with_legal_duplicates(caplog):
                 'playbook_foo1': {
                     'name': 'playbook_foo1',
                     'pack': 'foo_1',
-                    "source": ['github.com', 'demisto', 'repo1'],
+                    'marketplaces': 'xsoar',
+                    'source': ['github.com', 'demisto', 'repo1'],
                 }
             }
         ],
@@ -2819,7 +2880,8 @@ def test_merged_id_sets_with_legal_duplicates(caplog):
                 'Script_Foo1': {
                     'name': 'ScriptFoo',
                     'pack': 'foo_1',
-                    "source": ['github.com', 'demisto', 'repo1'],
+                    'marketplaces': 'xsoar',
+                    'source': ['github.com', 'demisto', 'repo1'],
                 }
             }
         ]
@@ -2831,7 +2893,8 @@ def test_merged_id_sets_with_legal_duplicates(caplog):
                 'playbook_foo1': {
                     'name': 'playbook_foo1',
                     'pack': 'foo_1',
-                    "source": ['github.com', 'demisto', 'repo2'],
+                    'marketplaces': 'xsoar',
+                    'source': ['github.com', 'demisto', 'repo2'],
                 }
             }
         ],
@@ -2874,27 +2937,6 @@ def test_get_filters_and_transformers_from_complex_value():
     assert 'Length' in transformers
     assert 'isEqualString' in filters
     assert 'StringContainsArray' in filters
-
-
-def test_should_skip_item_by_mp(mocker):
-    """
-    Given
-    - path of content item, the current marketplace this id set is generated for.
-    When
-    - when creating the id set, checking a content item that is 'xsoar only' if it should be part of the mpV2
-     id set.
-    Then
-    - return True since this item should be skipped.
-
-    """
-    import demisto_sdk.commands.common.update_id_set as uis
-    mocker.patch.object(uis, 'get_mp_types_from_metadata_by_item', return_value=['xsoar'])
-    pack_path = os.path.join(TESTS_DIR, 'test_files', 'DummyPackXsoarMPOnly', 'pack_metadata.json')
-    script_path = os.path.join(TESTS_DIR, 'test_files', 'DummyPackScriptIsXsoarOnly', 'Scripts', 'DummyScript.yml')
-    res1 = should_skip_item_by_mp(pack_path, 'mpv2', {})
-    res2 = should_skip_item_by_mp(script_path, 'mpv2', {})
-    assert res1
-    assert res2
 
 
 TEST_DICTS = [
@@ -2941,6 +2983,27 @@ def test_does_dict_have_alternative_key(dict_to_test, expected_result):
     assert result == expected_result
 
 
+def test_should_skip_item_by_mp(mocker):
+    """
+    Given
+    - path of content item, the current marketplace this id set is generated for.
+    When
+    - when creating the id set, checking a content item that is 'xsoar only' if it should be part of the mpV2
+     id set.
+    Then
+    - return True since this item should be skipped.
+
+    """
+    import demisto_sdk.commands.common.tools as tools
+    mocker.patch.object(tools, 'get_mp_types_from_metadata_by_item', return_value=['xsoar'])
+    pack_path = os.path.join(TESTS_DIR, 'test_files', 'DummyPackXsoarMPOnly', 'pack_metadata.json')
+    script_path = os.path.join(TESTS_DIR, 'test_files', 'DummyPackScriptIsXsoarOnly', 'Scripts', 'DummyScript.yml')
+    res1 = should_skip_item_by_mp(pack_path, 'mpv2', {})
+    res2 = should_skip_item_by_mp(script_path, 'mpv2', {})
+    assert res1
+    assert res2
+
+
 def test_should_skip_item_by_mp_no_update_excluded_dict(mocker):
     """
     Given
@@ -2952,9 +3015,9 @@ def test_should_skip_item_by_mp_no_update_excluded_dict(mocker):
         - don't update the excluded item dict since we only want to add content items and not packs
 
     """
-    import demisto_sdk.commands.common.update_id_set as uis
+    import demisto_sdk.commands.common.tools as tools
     excluded_items_dict = {}
-    mocker.patch.object(uis, 'get_mp_types_from_metadata_by_item', return_value=['xsoar'])
+    mocker.patch.object(tools, 'get_mp_types_from_metadata_by_item', return_value=['xsoar'])
     pack_path = os.path.join(TESTS_DIR, 'test_files', 'DummyPackXsoarMPOnly', 'pack_metadata.json')
     res1 = should_skip_item_by_mp(pack_path, 'mpv2', excluded_items_dict)
     assert res1
@@ -2972,9 +3035,9 @@ def test_should_skip_item_by_mp_update_excluded_dict(mocker):
         - update the excluded item dict since we want to add content items to the dict
 
     """
-    import demisto_sdk.commands.common.update_id_set as uis
+    import demisto_sdk.commands.common.tools as tools
     excluded_items_dict = {}
-    mocker.patch.object(uis, 'get_mp_types_from_metadata_by_item', return_value=['xsoar'])
+    mocker.patch.object(tools, 'get_mp_types_from_metadata_by_item', return_value=['xsoar'])
     script_path = os.path.join(TESTS_DIR, 'test_files', 'DummyPackScriptIsXsoarOnly', 'Scripts', 'DummyScript.yml')
     res2 = should_skip_item_by_mp(script_path, 'mpv2', excluded_items_dict)
     assert excluded_items_dict

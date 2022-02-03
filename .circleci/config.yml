@@ -193,8 +193,7 @@ jobs:
             command: |
               . .tox/py37/bin/activate
               cd content
-              npm update
-              npm ci
+              npm install @mdx-js/mdx
 
               export PYTHONPATH=".:${PYTHONPATH}"
               demisto-sdk -v

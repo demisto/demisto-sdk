@@ -101,7 +101,7 @@ jobs:
     steps:
       - checkout
       - *create_requirement_files
-      - *restore_tox_37_cache
+#      - *restore_tox_37_cache
       - run:
           # install npm modules so readme tests run with mdx verification
           name: npm install

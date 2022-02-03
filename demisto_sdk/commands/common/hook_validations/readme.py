@@ -4,7 +4,7 @@ import os
 import re
 import subprocess
 import tempfile
-from contextlib2 import contextmanager
+from contextlib import contextmanager
 from functools import lru_cache
 from pathlib import Path
 from threading import Lock

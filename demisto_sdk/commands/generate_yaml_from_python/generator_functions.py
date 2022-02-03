@@ -2,7 +2,7 @@ import inspect
 import types
 from dataclasses import fields
 from docstring_parser import parse
-from typing import Union
+from typing import Union, Callable
 from enum import EnumMeta
 
 
@@ -253,8 +253,8 @@ def handle_enum(e):
     return result
 
 
-def command_from_function(command_name, func):
-    docstring = parse(func.__doc__)
+def command_from_function(command_name: str, func: Callable) -> dict:
+    docstring = parse(func.__doc__) # type:ignore
 
     command = {
         "deprecated": False,
@@ -264,7 +264,7 @@ def command_from_function(command_name, func):
         "outputs": []
     }
 
-    annotations = func.__annotations__
+    annotations = func.__annotations__  # type:ignore
     return_class = annotations.get("return")
     args = inspect.signature(func).parameters
     docstring = parse(func.__doc__)

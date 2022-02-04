@@ -1,4 +1,5 @@
 import json
+import os
 
 import pytest
 
@@ -38,3 +39,22 @@ def test_grid_field_from_class():
 def test_build_configuration_from_param_class():
     result = build_configuration_from_param_class(DemistoParameters)
     assert result == integration_params_result()
+
+
+def test_full_generator():
+    # Try with an absolute path to a file
+    path_to_this_test_file = os.path.abspath(__file__)
+    path_to_fake_integration = path_to_this_test_file.split(os.path.sep)[:-4] + ["tests", "test_files", "fake_annotated_integration", "fake_annotated_integration.py"]
+    path_to_fake_integration = os.path.sep.join(path_to_fake_integration)
+    result = PythonIntegrationGenerator.build_from_module(
+        integration_path=path_to_fake_integration,
+        integration_name="fake_annotated_integration"
+    )
+
+    assert result == full_fake_integration_result_dict()
+
+    # Try with a module path as well
+    PythonIntegrationGenerator.build_from_module(
+        integration_path="demisto_sdk.tests.test_files.fake_annotated_integration.fake_annotated_integration",
+        integration_name="fake_annotated_integration"
+    )

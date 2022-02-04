@@ -1,10 +1,11 @@
 import inspect
 import types
+import os
 from dataclasses import fields
 from docstring_parser import parse
 from typing import Union, Callable
 from enum import EnumMeta
-
+import sys
 
 class DocStringFlags:
     IGNORE_ARG = "!no-auto-argument"
@@ -381,29 +382,31 @@ def rename(integration_dict: dict, new_integration_name: str):
 def build_integration_dict(
         commands,
         demisto_param_class,
-        script,
-        script_name,
+        integration_name,
         category="Authentication",
         description="",
-        docker_image="demisto/python3:3.9.5.21272",
+        docker_image="demisto/python3:latest",
         feed=False,
         fetch=False,
         runonce=False,
-        image=None,
 ):
+    """
+    Build the complete integration dictionary, suitable to be serialized into YAML.
+    Does not include the script itself.
+    """
     d = {
         "category": category,
         "description": description,
         "commonfields": {
-            "id": script_name,
+            "id": integration_name,
             "version": -1
         },
-        "name": script_name,
-        "display": script_name.replace("_", " "),
+        "name": integration_name,
+        "display": integration_name.replace("_", " "),
         "configuration": build_configuration_from_param_class(demisto_param_class),
         "script": {
             "commands": commands,
-            "script": script,
+            "script": "-",
             "type": "python",
             "subtype": "python3",
             "dockerimage": docker_image,
@@ -413,7 +416,43 @@ def build_integration_dict(
         },
     }
 
-    if image:
-        d["image"] = image
-
     return d
+
+
+class PythonIntegrationGenerator:
+    @staticmethod
+    def build_from_module(
+            integration_path: str,
+            integration_name: str,
+            category="Authentication",
+            description="",
+            docker_image="demisto/python3:latest",
+            feed=False,
+            fetch=False,
+            runonce=False,
+    ) -> dict:
+        """
+        Builds the entire integration dictionary.
+        """
+
+        # Work out the path to the module itself
+        integration_directory = os.path.sep.join(integration_path.split(os.path.sep)[:-1])
+
+        sys.path.append(integration_directory)
+        module = __import__(integration_name)
+        demisto_param_class = module.DemistoParameters
+        command_register = get_command_register(module)
+        build_configuration_from_param_class(demisto_param_class)
+        commands = build_script_commands_from_register(command_register)
+        d = build_integration_dict(
+            commands=commands,
+            demisto_param_class=demisto_param_class,
+            integration_name=integration_name,
+            docker_image=docker_image,
+            description=description,
+            feed=feed,
+            fetch=fetch,
+            runonce=runonce,
+            category=category
+        )
+        return d

@@ -136,3 +136,114 @@ def integration_params_result():
             "type": 9
         }
     ]
+
+
+def full_fake_integration_result_dict():
+    return {
+        "category": "Authentication",
+        "description": "",
+        "commonfields": {
+            "id": "fake_annotated_integration",
+            "version": -1
+        },
+        "name": "fake_annotated_integration",
+        "display": "fake annotated integration",
+        "configuration": [
+            {
+                "name": "example_integration_param",
+                "type": 0,
+                "display": "Example Param"
+            },
+            {
+                "name": "credentials",
+                "type": 9
+            }
+        ],
+        "script": {
+            "commands": [
+                {
+                    "deprecated": False,
+                    "description": "This is an example command with a simple, mandatory string argument.",
+                    "name": "fake-command",
+                    "arguments": [
+                        {
+                            "name": "fake_argument",
+                            "isArray": False,
+                            "description": "This is a fake argument",
+                            "required": True,
+                            "secret": False,
+                            "default": False
+                        }
+                    ],
+                    "outputs": [
+                        {
+                            "contextPath": "Example.example_attr",
+                            "type": "Unknown",
+                            "description": "An Example output attribute"
+                        }
+                    ]
+                },
+                {
+                    "deprecated": False,
+                    "description": "This is an example command with a simple, optional argument with a default value.",
+                    "name": "fake-command-optional-argument",
+                    "arguments": [
+                        {
+                            "name": "fake_optional_argument",
+                            "isArray": False,
+                            "description": "This is a fake argument",
+                            "required": False,
+                            "secret": False,
+                            "default": False,
+                            "defaultValue": "default_value"
+                        }
+                    ],
+                    "outputs": None
+                },
+                {
+                    "deprecated": False,
+                    "description": "This is an example command with a mandatory argument with predefined values.",
+                    "name": "fake-command-enum-argument",
+                    "arguments": [
+                        {
+                            "name": "fake_enum_argument",
+                            "isArray": False,
+                            "description": "This is a fake argument",
+                            "required": True,
+                            "secret": False,
+                            "default": False,
+                            "predefined": [
+                                "FirstOption",
+                                "SecondOption"
+                            ],
+                            "auto": "PREDEFINED"
+                        }
+                    ],
+                    "outputs": None
+                },
+                {
+                    "deprecated": False,
+                    "description": "This is an example command with a list argument.",
+                    "name": "fake-command-list-argument",
+                    "arguments": [
+                        {
+                            "name": "fake_list_argument",
+                            "isArray": True,
+                            "description": "This is a fake argument",
+                            "required": True,
+                            "secret": False,
+                            "default": False
+                        }
+                    ],
+                    "outputs": None
+                }
+            ],
+            "script": "-",
+            "type": "python",
+            "subtype": "python3",
+            "dockerimage": "demisto/python3:latest",
+            "feed": False,
+            "fetch": False,
+            "runonce": False
+        }
+    }

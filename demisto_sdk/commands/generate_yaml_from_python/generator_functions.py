@@ -6,6 +6,8 @@ from docstring_parser import parse
 from typing import Union, Callable
 from enum import EnumMeta
 import sys
+import yaml
+
 
 class DocStringFlags:
     IGNORE_ARG = "!no-auto-argument"
@@ -260,7 +262,7 @@ def command_from_function(command_name: str, func: Callable) -> dict:
     :param command_name: Name of the command in the integration
     :param func: Callable python function
     """
-    docstring = parse(func.__doc__) # type:ignore
+    docstring = parse(func.__doc__)  # type:ignore
 
     command = {
         "deprecated": False,
@@ -419,9 +421,37 @@ def build_integration_dict(
     return d
 
 
+def merge_integration_dicts(merge_integration_dict, new_integration_dict, docker_image):
+    """Given two integration dictionaries, merge by adding any new commands"""
+    new_commands = []
+    for new_command in new_integration_dict.get('script').get('commands'):
+        new_commands.append(new_command)
+
+    new_command_names = [x.get("name") for x in new_commands]
+    for old_command in merge_integration_dict.get('script').get('commands'):
+        if old_command.get("name") not in new_command_names:
+            new_commands.append(old_command)
+
+    merge_integration_dict["script"]["commands"] = new_commands
+
+    if docker_image:
+        merge_integration_dict['script']['dockerimage'] = docker_image
+
+    return merge_integration_dict
+
+
 class PythonIntegrationGenerator:
     @staticmethod
-    def build_from_module(
+    def save_dict_as_yaml_integration_file(
+            integration_dict: dict,
+            output: str,
+            merge=False
+    ):
+        if os.path.isfile(output):
+            pass
+
+    @staticmethod
+    def build_dict_from_module(
             integration_path: str,
             integration_name: str,
             category="Authentication",

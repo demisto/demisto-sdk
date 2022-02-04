@@ -247,3 +247,34 @@ def full_fake_integration_result_dict():
             "runonce": False
         }
     }
+
+def example_merge_integration_dict():
+    return {
+        "script": {
+            "commands": [
+                {
+                    "name": "old_command_name",
+                    "description": "old"
+                }
+            ]
+
+        }
+    }
+
+
+def example_new_integration_dict():
+    return {
+        "script": {
+            "commands": [
+                {
+                    "name": "old_command_name",
+                    "description": "updated"
+                },
+                {
+                    "name": "new_command_name",
+                    "description": "new"
+                },
+            ]
+
+        }
+    }

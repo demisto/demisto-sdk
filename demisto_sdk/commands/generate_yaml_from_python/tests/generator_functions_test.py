@@ -41,12 +41,21 @@ def test_build_configuration_from_param_class():
     assert result == integration_params_result()
 
 
+def test_merge_integration_dicts():
+    merge_integration_dict = example_merge_integration_dict()
+    new_integration_dict = example_new_integration_dict()
+    result = merge_integration_dicts(merge_integration_dict, new_integration_dict, None)
+
+    assert len(result.get("script").get("commands")) == 2
+    assert result.get("script").get("commands")[0].get("description") == "updated"
+    assert result.get("script").get("commands")[1].get("description") == "new"
+
 def test_full_generator():
     # Try with an absolute path to a file
     path_to_this_test_file = os.path.abspath(__file__)
     path_to_fake_integration = path_to_this_test_file.split(os.path.sep)[:-4] + ["tests", "test_files", "fake_annotated_integration", "fake_annotated_integration.py"]
     path_to_fake_integration = os.path.sep.join(path_to_fake_integration)
-    result = PythonIntegrationGenerator.build_from_module(
+    result = PythonIntegrationGenerator.build_dict_from_module(
         integration_path=path_to_fake_integration,
         integration_name="fake_annotated_integration"
     )
@@ -54,7 +63,7 @@ def test_full_generator():
     assert result == full_fake_integration_result_dict()
 
     # Try with a module path as well
-    PythonIntegrationGenerator.build_from_module(
+    PythonIntegrationGenerator.build_dict_from_module(
         integration_path="demisto_sdk.tests.test_files.fake_annotated_integration.fake_annotated_integration",
         integration_name="fake_annotated_integration"
     )

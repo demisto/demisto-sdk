@@ -1860,7 +1860,7 @@ def ansible_codegen(**kwargs):
 
     base_name = kwargs.get('base_name')
     if base_name is None:
-        base_name = 'GeneratedIntegration'
+        base_name = 'GeneratedAnsibleIntegration'
 
     verbose = kwargs.get('verbose', False)
     fix_code = kwargs.get('fix_code', False)

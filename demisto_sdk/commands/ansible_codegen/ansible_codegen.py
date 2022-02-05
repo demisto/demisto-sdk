@@ -3,7 +3,7 @@ import os
 import re
 import shutil
 import sys
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 import autopep8
 import yaml
@@ -31,9 +31,9 @@ ANSIBLE_ONLINE_DOCS_URL_BASE = 'https://docs.ansible.com/ansible/latest/collecti
 
 class AnsibleIntegration:
     def __init__(self, base_name: str, verbose: bool = False, codegen_configuration:
-                 Optional[dict] = None, file_path: str = None, container_image: str = None, output_dir: str = ".", fix_code: bool = False):
-        self.codegen_configuration = codegen_configuration if codegen_configuration else {}
-        self.file_path = file_path
+                 Optional[dict] = {}, config_file_path: str = None, container_image: str = None, output_dir: str = ".", fix_code: bool = False):
+        self.codegen_configuration = codegen_configuration
+        self.config_file_path = config_file_path
         self.base_path = output_dir
         self.base_name = base_name
         self.name = ''
@@ -44,12 +44,12 @@ class AnsibleIntegration:
         self.host_type = 'local'
         self.test_command = None
         self.command_prefix: Optional[str] = None
-        self.ansible_modules: list[str] = []
+        self.ansible_modules: List[str] = []
         self.ignored_args: Optional[List[str]] = None
-        self.ansible_docs: dict = {}
-        self.commands: dict = {}
-        self.example_commands: list = []
-        self.parameters: list = []
+        self.ansible_docs: Dict = {}
+        self.commands: Dict = {}
+        self.example_commands: List = []
+        self.parameters: List = []
         self.verbose = verbose
         self.container_image = container_image
         self.fix_code = fix_code
@@ -59,24 +59,28 @@ class AnsibleIntegration:
         Loads the ansible codgen config
         """
 
-        if self.file_path:
+        if self.config_file_path:
             try:
-                with open(self.file_path, 'r') as config_file:
+                with open(self.config_file_path, 'r') as config_file:
                     self.codegen_configuration = yaml.load(config_file, Loader=yaml.Loader)
+
+                    if self.codegen_configuration is None:
+                        print_error('Configuration file is empty')
+                        sys.exit(1)
+
+                    self.name = str(self.codegen_configuration.get('name'))
+                    self.host_type = str(self.codegen_configuration.get('host_type'))
+                    self.display = str(self.codegen_configuration.get('display'))
+                    self.category = str(self.codegen_configuration.get('category'))
+                    self.description = str(self.codegen_configuration.get('description'))
+                    self.test_command = self.codegen_configuration.get('test_command', None)
+                    self.command_prefix = self.codegen_configuration.get('command_prefix', None)
+                    self.ansible_modules = list(self.codegen_configuration.get('ansible_modules', []))
+                    self.ignored_args = self.codegen_configuration.get('ignored_args', None)
+                    self.parameters = self.codegen_configuration.get('parameters', [])
+                    self.creds_mapping = self.codegen_configuration.get('creds_mapping', None)
             except Exception as e:
                 print_error(f'Failed to load configuration file: {e}')
-
-        self.name = str(self.codegen_configuration.get('name'))
-        self.host_type = str(self.codegen_configuration.get('host_type'))
-        self.display = str(self.codegen_configuration.get('display'))
-        self.category = str(self.codegen_configuration.get('category'))
-        self.description = str(self.codegen_configuration.get('description'))
-        self.test_command = self.codegen_configuration.get('test_command', None)
-        self.command_prefix = self.codegen_configuration.get('command_prefix', None)
-        self.ansible_modules = list(self.codegen_configuration.get('ansible_modules', []))
-        self.ignored_args = self.codegen_configuration.get('ignored_args', None)
-        self.parameters = self.codegen_configuration.get('parameters', [])
-        self.creds_mapping = self.codegen_configuration.get('creds_mapping', None)
 
         # Add concurrency tunable relating to non-local based targets
         if self.host_type != 'local':
@@ -92,11 +96,9 @@ class AnsibleIntegration:
             self.parameters.append(concurrency_factor)
 
         # Set a command_prefix if not already provided
-        if (self.command_prefix is None) and (self.name is not None):
-            if len(self.name.split(' ')) == 1:  # If the config `name` is a single word then trust the caps
-                self.command_prefix = self.name.lower()
-            else:
-                self.command_prefix = to_kebab_case(self.name)
+        if self.command_prefix is None and self.name is not None:
+            # If the config `name` is a single word then trust the caps
+            self.command_prefix = self.name.lower() if len(self.name.split(' ')) == 1 else to_kebab_case(self.name)
 
     def fetch_ansible_docs(self):
         """
@@ -147,8 +149,8 @@ class AnsibleIntegration:
         validation_message = ""
 
         # Check that config is not empty
-        if self.codegen_configuration == {}:
-            return(False, "AnsibleCodeGen Config is empty")
+        if not self.codegen_configuration:
+            return (False, "AnsibleCodeGen Config is empty")
 
         # Check for any config options not in defintion
         valid_keys = REQUIRED_KEYS + OPTIONAL_KEYS
@@ -230,7 +232,7 @@ from CommonServerPython import *  # noqa: F401
 # Import Generated code
 from AnsibleApiModule import *  # noqa: E402
 
-host_type = '{self.host_type}'
+host_type = {self.host_type}
 
 # MAIN FUNCTION
 
@@ -257,15 +259,13 @@ def main() -> None:
 '''
 
         if self.test_command is not None:
-            test_command = self.test_command
             code += '''            # This is the call made when pressing the integration Test button.
             result = generic_ansible('{}', '{}', args, int_params, host_type)
-
             if result:
                 return_results('ok')
             else:
                 return_results(result)
-'''.format(name.lower(), test_command)
+'''.format(name.lower(), self.test_command)
         else:
             code += '''            # This is the call made when pressing the integration Test button.
             return_results('This integration does not support testing from this screen. \\
@@ -590,22 +590,16 @@ factor for high performance."
                         print("Skipping arg %s as it is Deprecated" % str(arg))
                         continue
 
-                    required = False
-                    if option.get('required') is True:
-                        required = True
+                    required = option.get('required', False)
 
                     # Ansible docs have a empty list/dict as defaults....
                     defaultValue = ""
-                    if option.get('default') not in ['[]', '{}']:
-                        if option.get('default') is not None:
-                            # The default True/False str cast of bool can be confusing. Using Yes/No instead.
-                            if type(option.get('default')) is bool:
-                                if option.get('default') is True:
-                                    defaultValue = "Yes"
-                                if option.get('default') is False:
-                                    defaultValue = "No"
-                            else:
-                                defaultValue = str(option.get('default'))
+                    if option.get('default') is not None and option.get('default') not in ['[]', '{}']:
+                        # The default True/False str cast of bool can be confusing. Using Yes/No instead.
+                        if type(option.get('default')) is bool:
+                            defaultValue = "Yes" if option.get('default') else "No"
+                        else:
+                            defaultValue = str(option.get('default'))
 
                     predefined = None
                     auto = None

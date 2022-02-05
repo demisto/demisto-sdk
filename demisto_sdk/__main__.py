@@ -1858,32 +1858,26 @@ def ansible_codegen(**kwargs):
         print_error(f'The directory provided "{output_dir}" is not a directory')
         sys.exit(1)
 
-    base_name = kwargs.get('base_name')
-    if base_name is None:
-        base_name = 'GeneratedIntegration'
+    base_name = kwargs.get('base_name', 'GeneratedIntegration')
 
     verbose = kwargs.get('verbose', False)
     fix_code = kwargs.get('fix_code', False)
 
-    container_image = kwargs.get('container_image')
-    if container_image is None:
-        container_image = "demisto/ansible-runner:" + DockerImageValidator.get_docker_image_latest_tag_request('demisto/ansible-runner')
+    container_image = kwargs.get('container_image',
+                                 f"demisto/ansible-runner:{DockerImageValidator.get_docker_image_latest_tag_request('demisto/ansible-runner')}")
 
-    file_path = None
-    if kwargs.get('config_file'):
-        file_path = kwargs.get('config_file')
+    config_file_path = kwargs.get('config_file')
 
-    integration = AnsibleIntegration(base_name, verbose=verbose, container_image=container_image, output_dir=output_dir, file_path=file_path, fix_code=fix_code)
+    integration = AnsibleIntegration(base_name, verbose=verbose, container_image=container_image,
+                                     output_dir=output_dir, config_file_path=config_file_path, fix_code=fix_code)
 
-    if not kwargs.get('config_file'):
+    if not config_file_path:
         integration.save_empty_config(output_dir)
         config_path = os.path.join(output_dir, f'{base_name}_config.yml')
         print_success(f'Created empty configuration file {config_path}. ')
         command_to_run = f'demisto-sdk ansible-codegen -cf "{config_path}" -ci "{container_image}" -n "{base_name}" -o "{output_dir}"'
-        if verbose:
-            command_to_run = command_to_run + ' -v'
-        if fix_code:
-            command_to_run = command_to_run + ' -f'
+        command_to_run += ' -v' if verbose else ''
+        command_to_run += ' -f' if fix_code else ''
 
         click.echo(f'Run the command again with the created configuration file (after populating it): {command_to_run}')
         sys.exit(0)

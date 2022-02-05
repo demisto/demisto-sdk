@@ -1816,10 +1816,10 @@ def openapi_codegen(**kwargs):
     '-h', '--help'
 )
 @click.option(
-    '-ci', '--container_image', help='The ansible-runner container image to use for working with Ansible. \
+    '-ci', '--container-image', help='The ansible-runner container image to use for working with Ansible. \
         If not specified the latest demisto/ansible-runner is used', required=False)
 @click.option(
-    '-cf', '--config_file', help='The integration configuration YAML file. It is created in the first run of the command',
+    '-cf', '--config_file', help='The integration configuration YAML file. It is created in the first run of the command, and used in the second run.',
     required=False)
 @click.option(
     '-n', '--base_name', help='The base filename to use for the generated files', required=False)
@@ -1858,7 +1858,7 @@ def ansible_codegen(**kwargs):
         print_error(f'The directory provided "{output_dir}" is not a directory')
         sys.exit(1)
 
-    base_name = kwargs.get('base_name', 'GeneratedIntegration')
+    base_name = kwargs.get('base_name', 'GeneratedAnsibleIntegration')
 
     verbose = kwargs.get('verbose', False)
     fix_code = kwargs.get('fix_code', False)

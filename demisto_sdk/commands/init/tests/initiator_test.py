@@ -413,7 +413,7 @@ def test_get_remote_templates__valid(mocker, initiator):
         - Ensure file with Test.py name was created in PackName folder
         - Ensure the file's content is the same as the one we got from get_remote_file return value
     """
-    mocker.patch.object(tools, 'get_remote_file', return_value='Test im in file')
+    mocker.patch.object(tools, 'get_remote_file', return_value=b'Test im in file')
     initiator.full_output_path = PACK_NAME
     os.makedirs(PACK_NAME, exist_ok=True)
     res = initiator.get_remote_templates(['Test.py'], dir=DIR_NAME)

@@ -27,9 +27,7 @@ from demisto_sdk.commands.common.content import (Content, ContentError,
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     JSONContentObject, Script, TextObject, YAMLContentObject,
     YAMLContentUnifiedObject)
-from demisto_sdk.commands.common.tools import (alternate_item_fields,
-                                               arg_to_list, open_id_set_file,
-                                               should_alternate_field_by_item)
+from demisto_sdk.commands.common.tools import arg_to_list, open_id_set_file
 
 from .artifacts_report import ArtifactsReport, ObjectReport
 
@@ -56,7 +54,7 @@ class ArtifactsManager:
     def __init__(self, artifacts_path: str, zip: bool, packs: bool, content_version: str, suffix: str,
                  cpus: int, marketplace: str = 'xsoar', id_set_path: str = '', pack_names: str = 'all', signature_key: str = '',
                  sign_directory: Path = None, remove_test_playbooks: bool = True,
-                 filter_by_id_set: bool = False, alternate_fields: bool = False):
+                 filter_by_id_set: bool = False):
         """ Content artifacts configuration
 
         Args:
@@ -81,24 +79,19 @@ class ArtifactsManager:
         self.suffix = suffix
         self.cpus = cpus
         self.id_set_path = id_set_path
-        self.id_set: dict = {}
         self.signature_key = signature_key
         self.signDirectory = sign_directory
         self.remove_test_playbooks = remove_test_playbooks
         self.marketplace = marketplace.lower()
         self.filter_by_id_set = filter_by_id_set
         self.pack_names = arg_to_list(pack_names)
-        self.packs_section_from_id_set: dict = {}
-        self.alternate_fields = alternate_fields
+        self.packs_section_from_id_set = {}
         # run related arguments
         self.content_new_path = self.artifacts_path / 'content_new'
         self.content_test_path = self.artifacts_path / 'content_test'
         self.content_packs_path = self.artifacts_path / 'content_packs'
         self.content_all_path = self.artifacts_path / 'all_content'
         self.content_uploadable_zips_path = self.artifacts_path / 'uploadable_packs'
-
-        if self.filter_by_id_set or self.alternate_fields:
-            self.id_set = open_id_set_file(id_set_path)
 
         # inits
         self.content = Content.from_cwd()
@@ -108,11 +101,12 @@ class ArtifactsManager:
         self.exit_code = EX_SUCCESS
 
         if self.filter_by_id_set:
-            packs_section_from_id_set = self.id_set.get('Packs', {})
+            id_set = open_id_set_file(id_set_path)
+            self.packs_section_from_id_set = id_set.get('Packs', {})
             if self.pack_names == ['all']:
-                self.pack_names = list(packs_section_from_id_set.keys())
+                self.pack_names = list(self.packs_section_from_id_set.keys())
             else:
-                self.pack_names = list(set(packs_section_from_id_set.keys()).intersection(set(self.pack_names)))
+                self.pack_names = list(set(self.packs_section_from_id_set.keys()).intersection(set(self.pack_names)))
 
     def create_content_artifacts(self) -> int:
         with ArtifactsDirsHandler(self), ProcessPoolHandler(self) as pool:
@@ -167,7 +161,7 @@ class ArtifactsManager:
 
 
 class ContentItemsHandler:
-    def __init__(self, id_set=None, alternate_fields=False):
+    def __init__(self):
         self.server_min_version = parse('1.0.0')
         self.content_items: Dict[ContentItems, List] = {
             ContentItems.SCRIPTS: [],
@@ -211,8 +205,6 @@ class ContentItemsHandler:
             GENERIC_MODULES_DIR: self.add_generic_module_as_content_item,
             GENERIC_DEFINITIONS_DIR: self.add_generic_definition_as_content_item
         }
-        self.id_set = id_set
-        self.alternate_fields = alternate_fields
 
     def handle_content_item(self, content_object: ContentObject):
         """Verifies the validity of the content object and parses it to the correct entities list.
@@ -234,11 +226,6 @@ class ContentItemsHandler:
             return
 
         self.server_min_version = max(self.server_min_version, content_object.from_version)
-
-        if self.alternate_fields:
-            if should_alternate_field_by_item(content_object, self.id_set):
-                alternate_item_fields(content_object)
-                content_object.modified = True
 
         self.content_folder_name_to_func[content_object_directory](content_object)
 
@@ -621,7 +608,7 @@ def dump_packs(artifact_manager: ArtifactsManager, pool: ProcessPool) -> List[Pr
         for pack_name in artifact_manager.pack_names:
             if pack_name not in IGNORED_PACKS and pack_name in artifact_manager.packs:
                 futures.append(pool.schedule(dump_pack,
-                                             args=(artifact_manager, artifact_manager.packs[pack_name]),
+                                             args=(artifact_manager, artifact_manager.packs[pack_name])
                                              ))
 
     return futures
@@ -655,7 +642,7 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
     pack.metadata.load_user_metadata(pack.id, pack.path.name, pack.path, logger)
     pack.filter_items_by_id_set = artifact_manager.filter_by_id_set
     pack.pack_info_from_id_set = artifact_manager.packs_section_from_id_set
-    content_items_handler = ContentItemsHandler(artifact_manager.id_set, artifact_manager.alternate_fields)
+    content_items_handler = ContentItemsHandler()
     is_feed_pack = False
 
     for classifier in pack.classifiers:

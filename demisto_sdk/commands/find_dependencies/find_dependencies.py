@@ -1817,6 +1817,7 @@ class PackDependencies:
                     if verbose:
                         print(f'Found {dependency_name} pack is mandatory for {pack}')
                     dependency_graph.nodes()[dependency_name]['mandatory_for_packs'].append(pack)
+            # ('type_item_b', 'item_b'): {'pack3': [('type_item_3', 'item3')], 'pack2': [('type_item_2', 'item2')]}
 
             for dependent_item, items_depending_on_item in dependencies_items.items():
                 for pack_of_item_dependent_on, items_dependent_on in items_depending_on_item.items():
@@ -2168,7 +2169,7 @@ def calculate_single_pack_dependencies(pack: str, dependency_graph: object, verb
             del additional_data['mandatory_for_items']
             del additional_data['depending_on_packs']
             del additional_data['depending_on_items_mandatorily']
-            # This could be added as a value to the output, see issue 45798
+            # This could be added as a value to the output, see issue XXX #TODO: fix
 
         first_level_dependencies, all_level_dependencies = parse_for_pack_metadata(subgraph, pack)
     except Exception:

@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Union
 
 import ujson
 from wcmatch.pathlib import Path
@@ -50,14 +50,7 @@ class JSONObject(DictionaryBasedObject):
     def _serialize(self, dest_dir: Path):
         """Dump dictionary to json file
 
+        TODO:
+            1. Implement serialize by specific json dumping configuration - Quotes etc.
         """
-        dest_file = self._create_target_dump_dir(dest_dir) / self.normalize_file_name()
-        with open(dest_file, 'w') as file:
-            ujson.dump(self.to_dict(), file)
-        return [dest_file]
-
-    def dump(self, dest_dir: Optional[Union[Path, str]] = None):
-        if self.modified:
-            return self._serialize(dest_dir)
-        else:
-            return super().dump(dest_dir)
+        pass

@@ -1720,7 +1720,8 @@ class TestContext:
         """
         if number_of_times_executed < MAX_RETRIES:
             self.build_context.logging_module.info(
-                f'Using the retries mechanism for test {self}, more executions are needed.')
+                f'Using the retries mechanism for test {self}.\n'
+                f'Test-Playbook was executed {number_of_times_executed} times, more executions are needed.')
             self.build_context.failed_test_queue.put(self.playbook)
             return PB_Status.IN_PROGRESS
 

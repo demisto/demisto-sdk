@@ -7,6 +7,9 @@ mapping:
       id:
         type: str
         required: true
+      id_x2:
+        type: str
+        required: true
       version:
         type: int
         required: true
@@ -110,6 +113,8 @@ mapping:
     type: any
   defaultEnabled:
     type: bool
+  defaultEnabled_x2:
+    type: bool
   tests:
     type: seq
     sequence:
@@ -136,6 +141,9 @@ schema;configuration_schema:
     name:
       type: str
       required: true
+    name_x2:
+      type: str
+      required: false
     type:
       type: int
       required: true

@@ -31,7 +31,7 @@ def get_total_coverage(filename: Optional[str] = None, date: Optional[datetime] 
                 0.0 if any errors were encountered.
     '''
     coverage_field = 'total_coverage'
-    assert not(filename and date), 'you should provide a filename or date not both.'
+    assert not (filename and date), 'Provide either a filename or a date, not both.'
     try:
         if filename:
             with open(filename, 'r') as report_file:
@@ -66,7 +66,7 @@ def create_coverage_graph(start_date: datetime, filename: str):
             start_date: The date to start collecting coverage information.
             filename:   The path to the png file containing the coverage graph.
         Creates:
-            A graoh in png format representing the coverage information per day.
+            A graph of the coverage information per day.
 
     '''
     cover_list = []

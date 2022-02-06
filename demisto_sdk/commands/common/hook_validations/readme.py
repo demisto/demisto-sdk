@@ -164,7 +164,7 @@ class ReadMeValidator(BaseValidator):
         return txt
 
     @staticmethod
-    @lru_cache(None)
+    # @lru_cache(None)
     def are_modules_installed_for_verify(content_path: str) -> bool:
         """ Check the following:
             1. npm packages installed - see packs var for specific pack details.

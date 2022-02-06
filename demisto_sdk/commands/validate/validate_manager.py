@@ -334,6 +334,7 @@ class ValidateManager:
         all_packs.sort(key=str.lower)
 
         readme_validator = ReadMeValidator(file_path='')
+        readme_validator.are_modules_installed_for_verify(readme_validator.content_path)
         with readme_validator.start_mdx_server():
             with pebble.ProcessPool(max_workers=4) as executor:
                 futures = []

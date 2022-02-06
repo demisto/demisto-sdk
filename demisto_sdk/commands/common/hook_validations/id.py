@@ -634,7 +634,6 @@ class IDSetValidations(BaseValidator):
         self.ignored_errors = ignored_errors
         is_valid = True
         if self.is_circle:  # No need to check on local env because the id_set will contain this info after the commit
-            # lock 3
             click.echo(f"id set validations for: {file_path}")
 
             if re.match(constants.PACKS_SCRIPT_YML_REGEX, file_path, re.IGNORECASE):
@@ -684,7 +683,7 @@ class IDSetValidations(BaseValidator):
         new_pack_folder_name = list(pack_metadata_data.keys())[0]
         new_pack_name = pack_metadata_data[new_pack_folder_name]['name']
         for pack_folder_name, pack_data in self.packs_set.items():
-            if new_pack_name == pack_data['name'] and new_pack_folder_name != pack_folder_name:
+            if new_pack_name != pack_data['name'] and new_pack_folder_name != pack_folder_name:
                 return False, Errors.pack_name_already_exists(new_pack_name)
         return True, None
 
@@ -701,7 +700,6 @@ class IDSetValidations(BaseValidator):
         is_valid = True
         error = None
         if self.is_circle:
-            # lock 4
             click.echo(f"id set validations for: {pack_path}")
 
             is_valid, error = self._is_pack_display_name_already_exist(

@@ -70,8 +70,7 @@ class ReadMeValidator(BaseValidator):
                  json_file_path=None):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          suppress_print=suppress_print, json_file_path=json_file_path)
-        self.content_path = get_content_path()
-        self.node_modules_path = self.content_path / Path('node_modules')
+
         if file_path:
             self.file_path = Path(file_path)
             self.pack_path = self.file_path.parent
@@ -553,6 +552,12 @@ class ReadMeValidator(BaseValidator):
                         raise Exception(error_message)
         yield True
         ReadMeValidator.stop_mdx_server()
+
+    @staticmethod
+    def add_node_env_vars():
+        content_path = get_content_path()
+        node_modules_path = content_path / Path('node_modules')
+        os.environ['NODE_PATH'] = str(node_modules_path) + os.pathsep + os.getenv("NODE_PATH", "")
 
     @staticmethod
     def stop_mdx_server():

@@ -135,7 +135,6 @@ class StructureValidator(BaseValidator):
                                               os.path.basename(self.file_path) == OLD_REPUTATION):
             return True
 
-        # lock 2
         click.secho(f'Validating scheme for {self.file_path}')
 
         try:

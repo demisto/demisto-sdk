@@ -1,9 +1,6 @@
-import multiprocessing
 import os
-import subprocess
 from concurrent.futures._base import as_completed, Future
 from configparser import ConfigParser, MissingSectionHeaderError
-from pathlib import Path
 from typing import Callable, List, Optional, Set, Tuple
 
 import click
@@ -335,9 +332,7 @@ class ValidateManager:
         num_of_packs = len(all_packs)
         all_packs.sort(key=str.lower)
 
-        readme_validator = ReadMeValidator(file_path='')
-        os.environ['NODE_PATH'] = str(readme_validator.node_modules_path) + os.pathsep + os.getenv("NODE_PATH", "")
-
+        ReadMeValidator.add_node_env_vars()
         with ReadMeValidator.start_mdx_server():
             with pebble.ProcessPool(max_workers=4) as executor:
                 futures = []
@@ -480,7 +475,6 @@ class ValidateManager:
                 else:
                     validation_print += f' {Fore.GREEN}[{self.completion_percentage}%]{Fore.RESET}'
 
-            # lock1
             click.echo(validation_print)
 
         structure_validator = StructureValidator(file_path, predefined_scheme=file_type,
@@ -537,8 +531,7 @@ class ValidateManager:
             return self.validate_description(file_path, pack_error_ignore_list)
 
         elif file_type == FileType.README:
-            is_valid = self.validate_readme(file_path, pack_error_ignore_list)
-            return is_valid
+            return self.validate_readme(file_path, pack_error_ignore_list)
 
         elif file_type == FileType.REPORT:
             return self.validate_report(structure_validator, pack_error_ignore_list)

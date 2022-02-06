@@ -117,23 +117,22 @@ class ReadMeValidator(BaseValidator):
                                                               file_path=str(self.file_path))
             if not server_started:
                 return False
-        with ReadMeValidator._MDX_SERVER_LOCK:
-            readme_content = self.fix_mdx()
-            retry = Retry(total=4)
-            adapter = HTTPAdapter(max_retries=retry)
-            session = requests.Session()
-            session.mount('http://', adapter)
-            response = session.request(
-                'POST',
-                'http://localhost:6161',
-                data=readme_content.encode('utf-8'),
-                timeout=20
-            )
-            if response.status_code != 200:
-                error_message, error_code = Errors.readme_error(response.text)
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
-                    return False
-            return True
+        readme_content = self.fix_mdx()
+        retry = Retry(total=4)
+        adapter = HTTPAdapter(max_retries=retry)
+        session = requests.Session()
+        session.mount('http://', adapter)
+        response = session.request(
+            'POST',
+            'http://localhost:6161',
+            data=readme_content.encode('utf-8'),
+            timeout=20
+        )
+        if response.status_code != 200:
+            error_message, error_code = Errors.readme_error(response.text)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+        return True
 
     def is_mdx_file(self) -> bool:
         html = self.is_html_doc()
@@ -165,7 +164,7 @@ class ReadMeValidator(BaseValidator):
         return txt
 
     @staticmethod
-    # @lru_cache(None)
+    @lru_cache(None)
     def are_modules_installed_for_verify(content_path: str) -> bool:
         """ Check the following:
             1. npm packages installed - see packs var for specific pack details.

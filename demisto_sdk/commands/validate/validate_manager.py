@@ -336,23 +336,19 @@ class ValidateManager:
         all_packs.sort(key=str.lower)
 
         readme_validator = ReadMeValidator(file_path='')
-        mdx_parse_server = Path(__file__).parent.parent / 'mdx-parse-server.js'
-        ReadMeValidator._MDX_SERVER_PROCESS = subprocess.Popen(['node', str(mdx_parse_server)],
-                                                               stdout=subprocess.PIPE, text=True)
-        valid = readme_validator.are_modules_installed_for_verify(readme_validator.content_path)
-        if valid:
-            with readme_validator.start_mdx_server():
-                with pebble.ProcessPool(max_workers=4) as executor:
-                    futures = []
-                    for pack_path in all_packs:
-                        self.completion_percentage = format((count / num_of_packs) * 100, ".2f")  # type: ignore
-                        futures.append(
-                            executor.schedule(self.run_validations_on_pack, args=(pack_path,)))
-                        count += 1
-                    self.wait_futures_complete(futures_list=futures, done_fn=lambda x, y, z: all_packs_valid.add(x) and
-                                               FOUND_FILES_AND_ERRORS.extend(y) and FOUND_FILES_AND_IGNORED_ERRORS.extend(z))
 
-                return all(all_packs_valid)
+        with readme_validator.start_mdx_server():
+            with pebble.ProcessPool(max_workers=4) as executor:
+                futures = []
+                for pack_path in all_packs:
+                    self.completion_percentage = format((count / num_of_packs) * 100, ".2f")  # type: ignore
+                    futures.append(
+                        executor.schedule(self.run_validations_on_pack, args=(pack_path,)))
+                    count += 1
+                self.wait_futures_complete(futures_list=futures, done_fn=lambda x, y, z: all_packs_valid.add(x) and
+                                           FOUND_FILES_AND_ERRORS.extend(y) and FOUND_FILES_AND_IGNORED_ERRORS.extend(z))
+
+            return all(all_packs_valid)
 
     def run_validations_on_pack(self, pack_path):
         """Runs validation on all files in given pack. (i,g,a)

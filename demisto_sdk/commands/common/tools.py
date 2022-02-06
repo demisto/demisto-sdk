@@ -227,7 +227,7 @@ def get_local_remote_file(
     git_path = repo_git_util.get_local_remote_file_path(full_file_path, tag)
     file_content = repo_git_util.get_local_remote_file_content(git_path)
     if return_content:
-        return file_content
+        return bytes(file_content)
     return get_file_details(file_content, full_file_path)
 
 
@@ -294,7 +294,7 @@ def get_remote_file_from_api(
                 f'Reason: {err_msg}', fg='yellow'
             )
         return {}
-    file_content = res.text
+    file_content = res.content
     if return_content:
         return file_content
     return get_file_details(file_content, full_file_path)
@@ -2118,7 +2118,7 @@ def get_release_note_entries(version='') -> list:
 
     changelog_file_content = get_remote_file(full_file_path='CHANGELOG.md',
                                              return_content=True,
-                                             git_repo='demisto/demisto-sdk').split('\n')
+                                             git_repo='demisto/demisto-sdk').decode('utf-8').split('\n')
 
     if not version or 'dev' in version:
         version = 'Changelog'

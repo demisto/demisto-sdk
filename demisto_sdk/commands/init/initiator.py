@@ -730,7 +730,7 @@ class Initiator:
                     # Templates available only in the official repo
                     git_repo=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
                 )
-                with open(os.path.join(self.full_output_path, file), 'w') as f:
+                with open(os.path.join(self.full_output_path, file), 'wb') as f:
                     f.write(file_content)
             except Exception:
                 print_warning(f"Could not fetch remote template - {file}. Using local templates instead.")

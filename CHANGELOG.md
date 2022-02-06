@@ -2,6 +2,8 @@
 * Fixed an issue in the **create-id-set** command where similar items from different marketplaces were reported as duplicated.
 * Fixed typo in demisto-sdk init
 * Fixed an issue where the **lint** command did not handle all container exit codes.
+* Add to **validate** a validation for pack name to make sure it is unchanged.
+
 
 # 1.5.9
 * Added option to specify `External Playbook Configuration` to change inputs of Playbooks triggered as part of **test-content**
@@ -33,7 +35,6 @@
 * Added support for beta integrations in the **format** command.
 * Fixed an issue where the **postman-codegen** command failed when called with the `--config-out` flag.
 * Removed the integration documentation from the detailed description while performing **split** command to the unified yml file.
-* Add to **validate** a validation for pack name to make sure it is unchanged.
 * Removed the line which indicates the version of the product from the README.md file for new contributions.
 
 # 1.5.5

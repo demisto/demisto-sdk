@@ -67,7 +67,8 @@ def create_coverage_graph(start_date: datetime, filename: str):
             filename:   The path to the png file containing the coverage graph.
         Creates:
             A graph of the coverage information per day.
-
+        Note:
+            This function uses the `matplotlib` package, but it is not an sdk requirement please make sure that it is installed.
     '''
     cover_list = []
     date_list = []

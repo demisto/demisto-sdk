@@ -2124,13 +2124,13 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_marketplaces_in_alias(invalid_aliases: List[str]):
-        return 'The following aliases have invalid marketplaces filed value.'\
+        return 'The following aliases have invalid marketplaces field value.'\
             f'\n{invalid_aliases}\n' \
             'value of marketplaces should be ["xsoar"] only.'
 
     @staticmethod
     @error_code_decorator
     def aliases_with_inner_alias(invalid_aliases: List[str]):
-        return 'The following aliases have invalid aliases filed.'\
+        return 'The following aliases have invalid aliases field.'\
             f'\n{invalid_aliases}\n' \
-            'aliased fields can not have alias filed in them.'
+            'aliased fields can not have alias field in them.'

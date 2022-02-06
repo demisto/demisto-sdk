@@ -5,7 +5,8 @@ from typing import Dict, List, Tuple
 import click
 
 from demisto_sdk.commands.common.constants import (JOB,
-                                                   TESTS_AND_DOC_DIRECTORIES)
+                                                   TESTS_AND_DOC_DIRECTORIES,
+                                                   FileType)
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.tools import (find_type, get_files_in_dir,
                                                print_error, print_success,
@@ -283,7 +284,8 @@ def run_format_on_file(input: str, file_type: str, from_version: str, interactiv
     if file_type not in ('integration', 'playbook', 'script') and 'add_tests' in kwargs:
         # adding tests is relevant only for integrations, playbooks and scripts.
         del kwargs['add_tests']
-    if file_type != 'incidentfield':
+    if file_type != FileType.INCIDENT_FIELD and 'id_set_path' in kwargs:
+        # relevant only for incidentfield
         del kwargs['id_set_path']
     update_object = FILE_TYPE_AND_LINKED_CLASS[file_type](input=input, path=schema_path, from_version=from_version,
                                                           interactive=interactive, **kwargs)

@@ -1783,7 +1783,7 @@ def get_all_incident_and_indicator_fields_from_id_set(id_set_file, entity_type):
     return fields_list
 
 
-def is_object_in_id_set(object_name, pack_info_from_id_set):
+def is_object_in_id_set(object_id, pack_info_from_id_set):
     """
         Check if the given object is part of the packs items that are present in the Packs section in the id set.
         This is assuming that the id set is based on the version that has, under each pack, the items it contains.
@@ -1797,8 +1797,8 @@ def is_object_in_id_set(object_name, pack_info_from_id_set):
 
     """
     content_items = pack_info_from_id_set.get('ContentItems', {})
-    for items_type, items_names in content_items.items():
-        if object_name in items_names:
+    for items_type, items_ids in content_items.items():
+        if object_id in items_ids:
             return True
     return False
 
@@ -2218,6 +2218,40 @@ def get_current_repo() -> Tuple[str, str, str]:
     except git.InvalidGitRepositoryError:
         print_warning('git repo is not found')
         return "Unknown source", '', ''
+
+
+def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[str, Dict] = None) -> List:
+    """
+    Return the supporting marketplaces of the item.
+
+    Args:
+        item_path: the item path.
+        item_data: the item data.
+        packs: the pack mapping from the ID set.
+
+    Returns: the list of supporting marketplaces.
+    """
+
+    if not item_data:
+        file_type = Path(item_path).suffix
+        item_data = get_file(item_path, file_type)
+
+    # first check, check field 'marketplaces' in the item's file
+    marketplaces = item_data.get('marketplaces', [])  # type: ignore
+
+    # second check, check the metadata of the pack
+    if not marketplaces:
+        if 'pack_metadata' in item_path:
+            # default supporting marketplace
+            marketplaces = [MarketplaceVersions.XSOAR.value]
+        else:
+            pack_name = get_pack_name(item_path)
+            if packs:
+                marketplaces = packs.get(pack_name, {}).get('marketplaces', [MarketplaceVersions.XSOAR.value])
+            else:
+                marketplaces = get_mp_types_from_metadata_by_item(item_path)
+
+    return marketplaces
 
 
 def get_mp_types_from_metadata_by_item(file_path):

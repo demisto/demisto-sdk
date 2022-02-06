@@ -178,7 +178,7 @@ class TestUpdateRNManager:
         from demisto_sdk.commands.validate.validate_manager import \
             ValidateManager
         mocker.patch.object(ValidateManager, 'setup_git_params')
-        mocker.patch.object(ValidateManager, 'filter_to_relevant_files', side_effect=(lambda x: (set(x), set())))
+        mocker.patch.object(ValidateManager, 'filter_to_relevant_files', side_effect=(lambda x: (set(x), set(), True)))
         mocker.patch.object(ValidateManager, 'get_unfiltered_changed_files_from_git',
                             return_value=({'Packs/test1', 'Packs/test2'}, set(), set()))
         mocker.patch.object(UpdateReleaseNotesManager, 'check_existing_rn')

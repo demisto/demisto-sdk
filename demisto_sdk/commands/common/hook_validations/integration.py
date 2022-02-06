@@ -1429,3 +1429,22 @@ class IntegrationValidator(ContentEntityValidator):
 
         raise Exception('Could not find the pack name of the integration, '
                         'please verify the integration is in a pack')
+
+    def is_valid_ansible_integration(self):
+        """  Perform the core integration validations applicable to the ansible codegen
+        """
+        answers = [
+            self.has_no_duplicate_params(),
+            self.is_proxy_configured_correctly(),
+            self.is_insecure_configured_correctly(),
+            self.is_checkbox_param_configured_correctly(),
+            self.is_checkbox_param_configured_correctly(),
+            self.is_not_valid_display_configuration(),
+            self.is_valid_hidden_params(),
+            self.is_valid_parameters_display_name(),
+            self.default_params_have_default_additional_info(),
+            self.is_valid_category(),
+            self.is_docker_image_valid()
+        ]
+
+        return all(answers)

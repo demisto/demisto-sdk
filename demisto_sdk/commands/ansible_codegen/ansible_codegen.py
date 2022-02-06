@@ -14,8 +14,8 @@ from demisto_sdk.commands.common.hook_validations.integration import \
     IntegrationValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
-from demisto_sdk.commands.common.tools import (print_error, to_kebab_case,
-                                               to_pascal_case)
+from demisto_sdk.commands.common.tools import (print_error, print_warning,
+                                               to_kebab_case, to_pascal_case)
 from demisto_sdk.commands.generate_integration.XSOARIntegration import \
     XSOARIntegration
 
@@ -30,9 +30,8 @@ ANSIBLE_ONLINE_DOCS_URL_BASE = 'https://docs.ansible.com/ansible/latest/collecti
 
 
 class AnsibleIntegration:
-    def __init__(self, base_name: str, verbose: bool = False, codegen_configuration:
-                 Optional[dict] = {}, config_file_path: str = None, container_image: str = None, output_dir: str = ".", fix_code: bool = False):
-        self.codegen_configuration = codegen_configuration
+    def __init__(self, base_name: str, verbose: bool = False, config_file_path: str = None,
+                 container_image: str = None, output_dir: str = ".", fix_code: bool = False):
         self.config_file_path = config_file_path
         self.base_path = output_dir
         self.base_name = base_name
@@ -62,23 +61,31 @@ class AnsibleIntegration:
         if self.config_file_path:
             try:
                 with open(self.config_file_path, 'r') as config_file:
-                    self.codegen_configuration = yaml.load(config_file, Loader=yaml.Loader)
+                    codegen_configuration = yaml.load(config_file, Loader=yaml.Loader)
 
-                    if self.codegen_configuration is None:
+                    if codegen_configuration is None:
                         print_error('Configuration file is empty')
                         sys.exit(1)
 
-                    self.name = str(self.codegen_configuration.get('name'))
-                    self.host_type = str(self.codegen_configuration.get('host_type'))
-                    self.display = str(self.codegen_configuration.get('display'))
-                    self.category = str(self.codegen_configuration.get('category'))
-                    self.description = str(self.codegen_configuration.get('description'))
-                    self.test_command = self.codegen_configuration.get('test_command', None)
-                    self.command_prefix = self.codegen_configuration.get('command_prefix', None)
-                    self.ansible_modules = list(self.codegen_configuration.get('ansible_modules', []))
-                    self.ignored_args = self.codegen_configuration.get('ignored_args', None)
-                    self.parameters = self.codegen_configuration.get('parameters', [])
-                    self.creds_mapping = self.codegen_configuration.get('creds_mapping', None)
+                    # Check for any config options not in defintion
+                    valid_keys = REQUIRED_KEYS + OPTIONAL_KEYS
+                    for key, value in codegen_configuration.items():
+                        invalid_key_message = "Unused keys found in config yaml:"
+                        if key not in valid_keys:
+                            invalid_key_message += f"\n  * {key}"
+                        print_warning(invalid_key_message)
+
+                    self.name = str(codegen_configuration.get('name'))
+                    self.host_type = str(codegen_configuration.get('host_type'))
+                    self.display = str(codegen_configuration.get('display'))
+                    self.category = str(codegen_configuration.get('category'))
+                    self.description = str(codegen_configuration.get('description'))
+                    self.test_command = codegen_configuration.get('test_command', None)
+                    self.command_prefix = codegen_configuration.get('command_prefix', None)
+                    self.ansible_modules = list(codegen_configuration.get('ansible_modules', []))
+                    self.ignored_args = codegen_configuration.get('ignored_args', None)
+                    self.parameters = codegen_configuration.get('parameters', [])
+                    self.creds_mapping = codegen_configuration.get('creds_mapping', None)
             except Exception as e:
                 print_error(f'Failed to load configuration file: {e}')
 
@@ -148,32 +155,20 @@ class AnsibleIntegration:
         validation = True
         validation_message = ""
 
-        # Check that config is not empty
-        if not self.codegen_configuration:
-            return (False, "AnsibleCodeGen Config is empty")
-
-        # Check for any config options not in defintion
-        valid_keys = REQUIRED_KEYS + OPTIONAL_KEYS
-        for key, value in self.codegen_configuration.items():
-            if key not in valid_keys:
-                validation = False
-                validation_message += f"\n  * Invalid key found in config yaml: {key}"
-
         # Check that all required config options set
         for required_key in REQUIRED_KEYS:
-            if self.codegen_configuration.get(required_key, False) is False:
+            if getattr(__name__, f'self.{required_key}', False) is False:
                 validation = False
-                validation_message += f"\n  * Missing required key config in config yaml: {key}"
+                validation_message += f"\n  * Missing required key config: {required_key}"
 
         # Check config options with fixed possible values are valid
-        host_type = self.codegen_configuration.get('host_type')
 
-        if host_type not in HOST_TYPES:
+        if self.host_type not in HOST_TYPES:
             validation = False
-            validation_message += f"\n  * Invalid option for host_type: {host_type}"
+            validation_message += f"\n  * Invalid option for host_type: {self.host_type}"
 
         # Check if XSOAR config parameters provided are valid
-        if self.codegen_configuration.get('parameters') is not None:
+        if self.parameters is not None:
 
             self.print_with_verbose('Creating partial integration yaml file for config validation...')
             yaml_file = self.save_yaml(self.base_path, skip_commands=True)
@@ -187,32 +182,12 @@ class AnsibleIntegration:
                 validation = False
                 validation_message += "\n  * Failed Schema validation"
 
-            # Param Validation tests
-            param_valid = all([integration_validator.has_no_duplicate_params,
-                               integration_validator.is_proxy_configured_correctly,
-                               integration_validator.is_insecure_configured_correctly,
-                               integration_validator.is_checkbox_param_configured_correctly,
-                               integration_validator.is_checkbox_param_configured_correctly,
-                               integration_validator.is_not_valid_display_configuration,
-                               integration_validator.is_valid_hidden_params,
-                               integration_validator.is_valid_parameters_display_name,
-                               integration_validator.default_params_have_default_additional_info])
+            # Validation tests
+            param_valid = integration_validator.is_valid_ansible_integration()
 
             if param_valid is not True:
                 validation = False
-                validation_message += "\n  * Failed Param validation"
-
-            # Check category
-            category_valid = integration_validator.is_valid_category
-            if category_valid is False:
-                validation = False
-                validation_message += "\n  * Invalid category"
-
-            # Check Docker image is valid
-            container_image_valid = integration_validator.is_docker_image_valid
-            if container_image_valid is False:
-                validation = False
-                validation_message += "\n  * Failed container image validation"
+                validation_message += "\n  * Failed core integration validation"
 
         return(validation, validation_message)
 

@@ -938,6 +938,7 @@ class PB_Status:
     FAILED = 'failed'
     IN_PROGRESS = 'inprogress'
     FAILED_DOCKER_TEST = 'failed_docker_test'
+    CONFIGURATION_FAILED = 'failed_configuration'
     SECOND_PLAYBACK = 'second_playback'
 
 

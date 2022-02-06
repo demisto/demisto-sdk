@@ -1431,7 +1431,7 @@ class TestContext:
             instance_configuration = self.playbook.configuration.instance_configuration
 
             if not self.playbook.configure_integrations(self.client, self.server_context, instance_configuration):
-                return PB_Status.FAILED
+                return PB_Status.CONFIGURATION_FAILED
 
             test_module_result = self.playbook.run_test_module_on_integrations(self.client)
             if not test_module_result:
@@ -1769,7 +1769,7 @@ class TestContext:
             updated_status = self._update_complete_status(is_first_execution, is_record_run, is_first_playback_run,
                                                           is_second_playback_run, use_retries_mechanism, number_of_times_executed)
 
-        elif status == PB_Status.FAILED_DOCKER_TEST:
+        elif status == PB_Status.FAILED_DOCKER_TEST or status == PB_Status.CONFIGURATION_FAILED:
             self._add_to_failed_playbooks()
             return status
 

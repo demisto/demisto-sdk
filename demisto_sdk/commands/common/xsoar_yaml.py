@@ -4,7 +4,11 @@ from ruamel.yaml import YAML
 
 
 class XSOAR_YAML:
-    def __init__(self, preserve_quotes=True, allow_duplicate_keys=False, width=None, typ=None):
+    """
+    XSOAR wrapper to ruamel.yaml.
+    Use only this wrapper for yaml handling.
+    """
+    def __init__(self, typ=None, preserve_quotes=True, allow_duplicate_keys=False, width=5000):
         self._ryaml = YAML(typ=typ)
         self._ryaml.preserve_quotes = preserve_quotes
         self._ryaml.allow_duplicate_keys = allow_duplicate_keys
@@ -27,6 +31,14 @@ class XSOAR_YAML:
         self._ryaml.dump(data, stream)
 
     def dumps(self, data, sort_keys=False):
+        """
+
+        This function is not recommended and not efficient!
+        https://yaml.readthedocs.io/en/latest/example.html#output-of-dump-as-a-string
+
+        Used for BC to PyYAML to support dumping to string.
+        to print a YAML, it is better to use `xsoar_yaml.dump(data, sys.stdout)`
+        """
         if sort_keys:
             data = XSOAR_YAML._order_dict(data)
         string_stream = StringIO()

@@ -27,9 +27,10 @@ class BaseUpdateJSON(BaseUpdate):
                  from_version: str = '',
                  no_validate: bool = False,
                  verbose: bool = False,
+                 clear_cache: bool = False,
                  **kwargs):
         super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
-                         verbose=verbose, **kwargs)
+                         verbose=verbose, clear_cache=clear_cache, **kwargs)
 
     def set_default_values_as_needed(self):
         """Sets basic arguments of reputation commands to be default, isArray and required."""

@@ -735,7 +735,7 @@ class TestIntegrationValidation:
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
-        valid_integration_yml = get_yaml(pack_integration_path)
+        valid_integration_yml = get_yaml(pack_integration_path, cache_clear=True)
         integration = pack.create_integration('integration0', yml=valid_integration_yml)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
@@ -795,7 +795,7 @@ class TestIntegrationValidation:
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         pack = repo.create_pack('PackName')
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
-        invalid_integration_yml = get_yaml(pack_integration_path)
+        invalid_integration_yml = get_yaml(pack_integration_path, cache_clear=True)
         del invalid_integration_yml['fromversion']
         integration = pack.create_integration(yml=invalid_integration_yml)
         with ChangeCWD(pack.repo_path):
@@ -889,7 +889,7 @@ class TestIntegrationValidation:
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         pack = repo.create_pack('PackName')
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
-        invalid_integration_yml = get_yaml(pack_integration_path)
+        invalid_integration_yml = get_yaml(pack_integration_path, cache_clear=True)
         first_command_args = invalid_integration_yml['script']['commands'][0]['arguments']
         first_command_args.append(first_command_args[0])
         invalid_integration_yml['configuration'].append(
@@ -2578,7 +2578,7 @@ class TestScriptDeprecatedValidation:
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         pack = repo.create_pack('PackName')
-        invalid_script_yml = get_yaml(VALID_SCRIPT_PATH)
+        invalid_script_yml = get_yaml(VALID_SCRIPT_PATH, cache_clear=True)
         invalid_script_yml['deprecated'] = True
         script = pack.create_script(yml=invalid_script_yml)
         with ChangeCWD(pack.repo_path):
@@ -2935,12 +2935,12 @@ class TestAllFilesValidator:
         pack1 = repo.create_pack('PackName1')
         pack1.author_image.write(DEFAULT_IMAGE_BASE64)
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
-        valid_integration_yml = get_yaml(pack_integration_path)
+        valid_integration_yml = get_yaml(pack_integration_path, cache_clear=True)
         integration = pack1.create_integration('integration0', yml=valid_integration_yml)
         incident_field = pack1.create_incident_field('incident-field', content=INCIDENT_FIELD)
         dashboard = pack1.create_dashboard('dashboard', content=DASHBOARD)
 
-        valid_script_yml = get_yaml(VALID_SCRIPT_PATH)
+        valid_script_yml = get_yaml(VALID_SCRIPT_PATH, cache_clear=True)
         pack2 = repo.create_pack('PackName2')
         pack2.author_image.write(DEFAULT_IMAGE_BASE64)
         script = pack2.create_script(yml=valid_script_yml)
@@ -2979,14 +2979,14 @@ class TestAllFilesValidator:
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         pack1 = repo.create_pack('PackName1')
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
-        valid_integration_yml = get_yaml(pack_integration_path)
+        valid_integration_yml = get_yaml(pack_integration_path, cache_clear=True)
         integration = pack1.create_integration(yml=valid_integration_yml)
         incident_field_copy = INCIDENT_FIELD.copy()
         incident_field_copy['content'] = False
         incident_field = pack1.create_incident_field('incident-field', content=incident_field_copy)
         dashboard = pack1.create_dashboard('dashboard', content=DASHBOARD)
 
-        invalid_script_yml = get_yaml(VALID_SCRIPT_PATH)
+        invalid_script_yml = get_yaml(VALID_SCRIPT_PATH, cache_clear=True)
         invalid_script_yml['name'] = invalid_script_yml['name'] + "_v2"
         pack2 = repo.create_pack('PackName2')
         script = pack2.create_script(yml=invalid_script_yml)
@@ -3027,12 +3027,12 @@ class TestValidationUsingGit:
         mocker.patch.object(PackUniqueFilesValidator, 'are_valid_files', return_value='')
         pack1 = repo.create_pack('PackName1')
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
-        valid_integration_yml = get_yaml(pack_integration_path)
+        valid_integration_yml = get_yaml(pack_integration_path, cache_clear=True)
         integration = pack1.create_integration('integration0', yml=valid_integration_yml)
         incident_field = pack1.create_incident_field('incident-field', content=INCIDENT_FIELD)
         dashboard = pack1.create_dashboard('dashboard', content=DASHBOARD)
 
-        valid_script_yml = get_yaml(VALID_SCRIPT_PATH)
+        valid_script_yml = get_yaml(VALID_SCRIPT_PATH, cache_clear=True)
         pack2 = repo.create_pack('PackName2')
         script = pack2.create_script(yml=valid_script_yml)
         old_integration = pack2.create_integration('OldIntegration', yml={'toversion': '5.0.0', 'deprecated': True})

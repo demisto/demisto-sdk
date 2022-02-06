@@ -1147,7 +1147,8 @@ def find_type(
     _dict=None,
     file_type: Optional[str] = None,
     ignore_sub_categories: bool = False,
-    ignore_invalid_schema_file: bool = False
+    ignore_invalid_schema_file: bool = False,
+    clear_cache: bool = False
 ):
     """
     returns the content file type
@@ -1159,6 +1160,7 @@ def find_type(
         ignore_sub_categories (bool): ignore the sub categories, True to ignore, False otherwise.
         ignore_invalid_schema_file (bool): whether to ignore raising error on invalid schema files,
             True to ignore, False otherwise.
+        clear_cache (bool): wether to clear the cache
 
     Returns:
         FileType: string representing of the content file type, None otherwise.
@@ -1168,7 +1170,7 @@ def find_type(
         return type_by_path
     try:
         if not _dict and not file_type:
-            _dict, file_type = get_dict_from_file(path)
+            _dict, file_type = get_dict_from_file(path, clear_cache=clear_cache)
 
     except FileNotFoundError:
         # unable to find the file - hence can't identify it

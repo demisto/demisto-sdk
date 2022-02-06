@@ -528,7 +528,7 @@ class TestFormatting:
 
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
-        res = format_manager(input=target, verbose=True)
+        res = format_manager(input=target, verbose=True, clear_cache=True)
         with open(target, 'r') as f:
             yaml_content = yaml.safe_load(f)
             params = yaml_content['configuration']

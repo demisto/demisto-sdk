@@ -515,7 +515,7 @@ class TestFormattingLayoutscontainer:
     @pytest.fixture(autouse=True)
     def layoutscontainer_formatter(self, layoutscontainer_copy):
         layoutscontainer_formatter = LayoutBaseFormat(
-            input=layoutscontainer_copy, output=DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY)
+            input=layoutscontainer_copy, output=DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY, clear_cache=True)
         layoutscontainer_formatter.schema_path = LAYOUTS_CONTAINER_SCHEMA_PATH
         yield layoutscontainer_formatter
 
@@ -822,7 +822,7 @@ class TestFormattingClassifier:
 
     @pytest.fixture(autouse=True)
     def classifier_formatter(self, classifier_copy):
-        yield ClassifierJSONFormat(input=classifier_copy, output=DESTINATION_FORMAT_CLASSIFIER)
+        yield ClassifierJSONFormat(input=classifier_copy, output=DESTINATION_FORMAT_CLASSIFIER, clear_cache=True)
 
     def test_remove_unnecessary_keys(self, classifier_formatter):
         """

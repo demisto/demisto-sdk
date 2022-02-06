@@ -105,7 +105,8 @@ def format_manager(input: str = None,
                    prev_ver: str = None,
                    include_untracked: bool = False,
                    add_tests: bool = None,
-                   interactive: bool = True):
+                   interactive: bool = True,
+                   clear_cache: bool = False):
     """
     Format_manager is a function that activated format command on different type of files.
     Args:
@@ -122,6 +123,7 @@ def format_manager(input: str = None,
         include_untracked (bool): Whether to include untracked files when checking against git
         interactive (bool): Whether to run the format interactively or not (usually for contribution management)
         add_tests (bool): Whether to exclude tests automatically.
+        clear_cache (bool): wether to clear the cache
     Returns:
         int 0 in case of success 1 otherwise
     """
@@ -146,7 +148,7 @@ def format_manager(input: str = None,
         format_excluded_file = excluded_files + ['pack_metadata.json']
         for file in files:
             file_path = file.replace('\\', '/')
-            file_type = find_type(file_path)
+            file_type = find_type(file_path, clear_cache=clear_cache)
 
             current_excluded_files = format_excluded_file[:]
             dirname = os.path.dirname(file_path)

@@ -2357,7 +2357,7 @@ def get_scripts_and_commands_from_yml_data(data, file_type):
     commands = []
     detailed_commands = []
     scripts_and_pbs = []
-    if file_type == FileType.TEST_PLAYBOOK or file_type == FileType.PLAYBOOK:
+    if file_type in {FileType.TEST_PLAYBOOK, FileType.PLAYBOOK}:
         tasks = data.get('tasks')
         for task_num in tasks.keys():
             task = tasks[task_num]

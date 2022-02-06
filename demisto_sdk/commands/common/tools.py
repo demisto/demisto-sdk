@@ -2462,7 +2462,7 @@ def alternate_item_fields(content_item):
 def should_alternate_field_by_item(content_item, id_set):
     """
     Go over the given content item and check if it should be modified to use its alternative fields, which is determined
-    by the field 'has_alternative_names' in the id set.
+    by the field 'has_alternative_meta' in the id set.
     Args:
         content_item: content item object
         id_set: parsed id set dict
@@ -2477,5 +2477,5 @@ def should_alternate_field_by_item(content_item, id_set):
     id_set_item_type = id_set.get(FileTypeToIDSetKeys.get(item_type))
     for item in id_set_item_type:
         if list(item.keys())[0] == item_id:
-            return item.get(item_id, {}).get('has_alternative_name', False)
+            return item.get(item_id, {}).get('has_alternative_meta', False)
     return False

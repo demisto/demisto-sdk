@@ -110,8 +110,6 @@ mapping:
     type: any
   defaultEnabled:
     type: bool
-  defaultEnabled_x2:
-    type: bool
   tests:
     type: seq
     sequence:

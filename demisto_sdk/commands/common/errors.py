@@ -2,6 +2,7 @@ from distutils.version import LooseVersion
 from typing import Any, Dict, List, Optional
 
 import decorator
+from requests import Response
 
 from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
                                                    CONF_PATH,
@@ -228,8 +229,8 @@ ERROR_CODE = {
     "incident_type_non_existent_playbook_id": {'code': "IT104", 'ui_applicable': False, 'related_field': ''},
 
     # LI - Lists
-    "invalid_from_server_version_in_lists": {'code': "LI100", 'ui_applicable': False,
-                                             'related_field': 'fromVersion'},
+    "invalid_from_server_version_in_lists": {'code': "LI100", 'ui_applicable': False, 'related_field': 'fromVersion'},
+    "missing_from_version_in_list": {'code': "LI101", 'ui_applicable': False, 'related_field': 'fromVersion'},
 
     # LO - Layouts
     "invalid_version_in_layout": {'code': "LO100", 'ui_applicable': False, 'related_field': 'version'},
@@ -1647,14 +1648,20 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_readme_image_error(path, error_type):
-        return 'Error in readme image:\n' + {
-            'pack_readme_relative_error': Errors.pack_readme_image_relative_path_error,
-            'general_readme_relative_error': Errors.invalid_readme_image_relative_path_error,
-            'general_readme_absolute_error': Errors.invalid_readme_image_absolute_path_error,
-            'branch_name_readme_absolute_error': Errors.branch_name_in_readme_image_absolute_path_error,
-            'insert_image_link_error': Errors.invalid_readme_insert_image_link_error
-        }.get(error_type, lambda x: f'Something went wrong when testing {x}')(path)
+    def invalid_readme_image_error(path: str, error_type: str, response: Optional[Response] = None):
+        error = 'Error in readme image: '
+        if response is not None:
+            error += f'got HTTP response code {response.status_code}'
+            error += f', reason = {response.reason}' if response.reason else " "
+
+        error_body = {'pack_readme_relative_error': Errors.pack_readme_image_relative_path_error,
+                      'general_readme_relative_error': Errors.invalid_readme_image_relative_path_error,
+                      'general_readme_absolute_error': Errors.invalid_readme_image_absolute_path_error,
+                      'branch_name_readme_absolute_error': Errors.branch_name_in_readme_image_absolute_path_error,
+                      'insert_image_link_error': Errors.invalid_readme_insert_image_link_error} \
+            .get(error_type, lambda x: f'Unexpected error when testing {x}')(path)
+
+        return error + f"\n{error_body}"
 
     @staticmethod
     @error_code_decorator
@@ -1826,6 +1833,11 @@ class Errors:
     @error_code_decorator
     def invalid_from_server_version_in_lists(version_field):
         return f'{version_field} field in a list item needs to be at least 6.5.0'
+
+    @staticmethod
+    @error_code_decorator
+    def missing_from_version_in_list():
+        return 'Must have fromVersion field in list'
 
     @staticmethod
     @error_code_decorator

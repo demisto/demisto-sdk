@@ -37,7 +37,7 @@ class TestCreateImage:
 
         linter_obj._docker_client.images.build().__getitem__().short_id = exp_test_image_id
 
-        act_test_image_id, act_errors = linter_obj._docker_image_create(docker_base_image=[exp_test_image_id, 3.7])
+        act_test_image_id, act_errors = linter_obj._docker_image_create(docker_base_image=[exp_test_image_id, '3.7'])
 
         assert act_test_image_id == exp_test_image_id
         assert act_errors == exp_errors
@@ -84,9 +84,13 @@ class TestPytest:
                              argvalues=[(0, 0),
                                         (1, 1),
                                         (2, 1),
-                                        (5, 0)])
+                                        (5, 0),
+                                        (137, 1),
+                                        (139, 1),
+                                        (143, 1),
+                                        (126, 1)])
     def test_run_pytest(self, mocker, linter_obj: Linter, exp_container_exit_code: int, exp_exit_code: int):
-        exp_test_json = mocker.MagicMock()
+        exp_test_json = mocker.MagicMock() if exp_container_exit_code in [0, 1, 2, 5] else {}
 
         # Docker client mocking
         mocker.patch.object(linter_obj, '_docker_client')

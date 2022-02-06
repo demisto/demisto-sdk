@@ -1,0 +1,68 @@
+{
+    "scripts": [],
+    "playbooks": [
+      {
+            "dummy_playbook2": {
+                "name": "dummy_playbook2",
+                "file_path": "Packs/PackDependentOnExcludedPack2/Playbooks/dummy_playbook2.yml",
+                "source": [
+                    "github.com",
+                    "demisto",
+                    "content"
+                ],
+                "fromversion": "6.0.0",
+                "pack": "PackDependentOnExcludedPack2"
+            }
+      }
+    ],
+    "integrations": [],
+    "TestPlaybooks": [],
+    "Classifiers": [],
+    "Dashboards": [],
+    "IncidentFields": [],
+    "IncidentTypes": [],
+    "IndicatorFields": [],
+    "IndicatorTypes": [],
+    "Layouts": [
+    ],
+    "Reports": [],
+    "Widgets": [],
+    "Mappers": [],
+    "Packs": {
+      "PackDependentOnExcludedPack2": {
+            "name": "PackDependentOnExcludedPack2",
+            "current_version": "1.0.11",
+            "source": [
+                "github.com",
+                "demisto",
+                "content"
+            ],
+            "author": "Cortex XSOAR",
+            "certification": "certified",
+            "tags": [
+                "Incident Response"
+            ],
+            "use_cases": [
+                "Hunting",
+                "Incident Response",
+                "Rapid Breach Response"
+            ],
+            "categories": [],
+            "marketplaces": [
+                "xsoar",
+                "marketplacev2"
+            ],
+            "ContentItems": {
+                "playbooks": [
+                  "dummy_playbook2"
+                ]
+            }
+        }
+    },
+    "GenericTypes": [],
+    "GenericFields": [],
+    "GenericModules": [],
+    "GenericDefinitions": [],
+    "Lists": [],
+    "Jobs": []
+}

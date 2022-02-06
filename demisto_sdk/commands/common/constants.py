@@ -179,6 +179,7 @@ CONTENT_FILE_ENDINGS = ['py', 'yml', 'png', 'json', 'md']
 
 IGNORED_PACKS_IN_DEPENDENCY_CALC = ['NonSupported', 'Base']  # Packs that are ignored when calculating dependencies
 ALL_PACKS_DEPENDENCIES_DEFAULT_PATH = './all_packs_dependencies.json'
+ALLOWED_EMPTY_PACKS = ['Cortex911']  # Packs that are allowed to be without content items in the id_set
 
 CUSTOM_CONTENT_FILE_ENDINGS = ['yml', 'json']
 
@@ -1183,7 +1184,7 @@ FEED_REQUIRED_PARAMS = [
     }
 ]
 
-FETCH_REQUIRED_PARAMS = [
+INCIDENT_FETCH_REQUIRED_PARAMS = [
     {
         'display': 'Incident type',
         'name': 'incidentType',
@@ -1192,6 +1193,21 @@ FETCH_REQUIRED_PARAMS = [
     },
     {
         'display': 'Fetch incidents',
+        'name': 'isFetch',
+        'required': False,
+        'type': 8
+    }
+]
+
+ALERT_FETCH_REQUIRED_PARAMS = [
+    {
+        'display': 'Alert type',
+        'name': 'incidentType',
+        'required': False,
+        'type': 13
+    },
+    {
+        'display': 'Fetch alerts',
         'name': 'isFetch',
         'required': False,
         'type': 8

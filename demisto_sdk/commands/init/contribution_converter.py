@@ -263,7 +263,8 @@ class ContributionConverter:
             update_docker=True,
             verbose=True,
             assume_yes=True,
-            prev_ver='xsoar-contrib/master',  # default is demisto/master
+            include_untracked=True,
+            interactive=False,
         )
 
     def generate_readme_for_pack_content_item(self, yml_path: str, is_contribution: bool = False) -> None:

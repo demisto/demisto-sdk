@@ -3,12 +3,11 @@ from typing import Tuple
 
 import click
 
-from demisto_sdk.commands.common.constants import (BANG_COMMAND_NAMES,
-                                                   BETA_INTEGRATION,
-                                                   FEED_REQUIRED_PARAMS,
-                                                   FETCH_REQUIRED_PARAMS,
-                                                   INTEGRATION, TYPE_PWSH)
-from demisto_sdk.commands.common.tools import find_type
+from demisto_sdk.commands.common.constants import (
+    ALERT_FETCH_REQUIRED_PARAMS, BANG_COMMAND_NAMES, BETA_INTEGRATION,
+    FEED_REQUIRED_PARAMS, INCIDENT_FETCH_REQUIRED_PARAMS, INTEGRATION,
+    TYPE_PWSH, MarketplaceVersions)
+from demisto_sdk.commands.common.tools import find_type, get_item_marketplaces
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
@@ -126,9 +125,20 @@ class IntegrationYMLFormat(BaseUpdateYML):
             for param in params:
                 if 'defaultvalue' in param:
                     param.pop('defaultvalue')
-            for param in FETCH_REQUIRED_PARAMS:
-                if param not in params:
-                    self.data['configuration'].append(param)
+
+            # get the iten marketplaces to decide which are the required params
+            # if no marketplaces or xsoar in marketplaces - the required params will be INCIDENT_FETCH_REQUIRED_PARAMS (with Incident type etc. )
+            # otherwise it will be the ALERT_FETCH_REQUIRED_PARAMS (with Alert type etc. )
+            marketplaces = get_item_marketplaces(item_path=self.source_file, item_data=self.data)
+            is_xsoar_marketplace = not marketplaces or MarketplaceVersions.XSOAR.value in marketplaces
+            fetch_required_params, params_to_remove = (INCIDENT_FETCH_REQUIRED_PARAMS, ALERT_FETCH_REQUIRED_PARAMS) if is_xsoar_marketplace else (
+                ALERT_FETCH_REQUIRED_PARAMS, INCIDENT_FETCH_REQUIRED_PARAMS)
+
+            for param_to_add, param_to_remove in zip(fetch_required_params, params_to_remove):
+                if param_to_add not in params:
+                    self.data['configuration'].append(param_to_add)
+                if param_to_remove in params:
+                    self.data['configuration'].remove(param_to_remove)
 
     def set_feed_params_in_config(self):
         """

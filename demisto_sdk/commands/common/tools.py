@@ -811,11 +811,14 @@ def get_pack_name(file_path):
     Returns:
         pack name (str)
     """
-    if isinstance(file_path, Path):
-        file_path = str(file_path)
-    # the regex extracts pack name from relative paths, for example: Packs/EWSv2 -> EWSv2
-    match = re.search(rf'{PACKS_DIR_REGEX}[/\\]([^/\\]+)[/\\]?', file_path)
-    return match.group(1) if match else None
+    file_path = Path(file_path)
+    parts = file_path.parts
+    if 'Packs' not in parts:
+        return None
+    pack_name_index = parts.index('Packs') + 1
+    if len(parts) <= pack_name_index:
+        return None
+    return parts[pack_name_index]
 
 
 def get_pack_names_from_files(file_paths, skip_file_types=None):

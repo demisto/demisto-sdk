@@ -406,7 +406,7 @@ def test_use_alternative_fields(mock_single_pack_git):
         integration_yml = dict(RUYAML.load(PosixPath(pack_path, 'Integrations', 'integration-sample_packs.yml')))
         assert not any(key for key in integration_yml if key.endswith('_x2'))
         assert integration_yml['name'] == 'name_x2'
-        assert integration_yml['defaultEnabled'] == True
+        assert integration_yml['defaultEnabled']
 
         # Check Script
         script_yml = dict(RUYAML.load(PosixPath(pack_path, 'Scripts', 'script-sample_packs.yml')))

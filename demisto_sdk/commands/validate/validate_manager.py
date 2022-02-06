@@ -1,7 +1,9 @@
 import multiprocessing
 import os
+import subprocess
 from concurrent.futures._base import as_completed, Future
 from configparser import ConfigParser, MissingSectionHeaderError
+from pathlib import Path
 from typing import Callable, List, Optional, Set, Tuple
 
 import click
@@ -334,6 +336,9 @@ class ValidateManager:
         all_packs.sort(key=str.lower)
 
         readme_validator = ReadMeValidator(file_path='')
+        mdx_parse_server = Path(__file__).parent.parent / 'mdx-parse-server.js'
+        ReadMeValidator._MDX_SERVER_PROCESS = subprocess.Popen(['node', str(mdx_parse_server)],
+                                                               stdout=subprocess.PIPE, text=True)
         valid = readme_validator.are_modules_installed_for_verify(readme_validator.content_path)
         if valid:
             with readme_validator.start_mdx_server():

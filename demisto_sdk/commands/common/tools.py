@@ -2391,7 +2391,7 @@ def get_scripts_and_commands_from_yml_data(data, file_type):
     commands = []
     detailed_commands = []
     scripts_and_pbs = []
-    if file_type == FileType.TEST_PLAYBOOK or file_type == FileType.PLAYBOOK:
+    if file_type in {FileType.TEST_PLAYBOOK, FileType.PLAYBOOK}:
         tasks = data.get('tasks')
         for task_num in tasks.keys():
             task = tasks[task_num]
@@ -2446,7 +2446,7 @@ def alternate_item_fields(content_item):
     as_dict_types = (dict, CommentedMap)
     as_list_types = (list, CommentedSeq)
     current_dict = content_item.to_dict() if type(content_item) not in as_dict_types else content_item
-    copy_dict = current_dict.copy()  # for modifyting dict while iterating
+    copy_dict = current_dict.copy()  # for modifying dict while iterating
     for field, value in copy_dict.items():
         if field.endswith('_x2'):
             current_dict[field[:-3]] = value

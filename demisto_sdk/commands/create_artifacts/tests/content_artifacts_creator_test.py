@@ -404,25 +404,25 @@ def test_use_alternative_fields(mock_single_pack_git):
 
         # Check Integration
         integration_yml = dict(RUYAML.load(PosixPath(pack_path, 'Integrations', 'integration-sample_packs.yml')))
-        assert not [key for key in integration_yml if key.endswith('_x2')]
+        assert not any(key for key in integration_yml if key.endswith('_x2'))
         assert integration_yml['name'] == 'name_x2'
         assert integration_yml['defaultEnabled'] == True
 
         # Check Script
         script_yml = dict(RUYAML.load(PosixPath(pack_path, 'Scripts', 'script-sample_packs.yml')))
-        assert not [key for key in script_yml if key.endswith('_x2')]
+        assert not any(key for key in script_yml if key.endswith('_x2'))
         assert script_yml['name'] == 'name_x2'
         assert script_yml['comment'] == 'comment_x2'
         assert script_yml['commonfields']['id'] == 'id_x2'
 
         # Check Playbook
         playbook_yml = dict(RUYAML.load(PosixPath(pack_path, 'Playbooks', 'playbook-sample_packs.yml')))
-        assert not [key for key in playbook_yml if key.endswith('_x2')]
+        assert not any(key for key in playbook_yml if key.endswith('_x2'))
         assert playbook_yml['name'] == 'name_x2'
         assert playbook_yml['tasks']['task_num']['task']['scriptName'] == 'scriptName_x2'
 
         # Check IncidentField
         with open(os.path.join(pack_path, 'IncidentFields', 'incidentfield-sample_packs.json')) as json_file:
             incident_field_json = json.load(json_file)
-        assert any(key.endswith('_x2') for key in incident_field_json)
+        assert not any(key.endswith('_x2') for key in incident_field_json)
         assert incident_field_json['name'] == 'name_x2'

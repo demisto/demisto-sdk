@@ -1,6 +1,7 @@
 # Changelog
 * Fixed an issue in the **create-id-set** command where similar items from different marketplaces were reported as duplicated.
 * Fixed typo in demisto-sdk init
+* Fixed an issue where the **lint** command did not handle all container exit codes.
 * Added a version format validation to the pack_metadata.json as part of pack_unique_files checks.
 
 # 1.5.9

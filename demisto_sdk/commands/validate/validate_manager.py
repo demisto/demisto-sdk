@@ -336,8 +336,9 @@ class ValidateManager:
         all_packs.sort(key=str.lower)
 
         readme_validator = ReadMeValidator(file_path='')
+        os.environ['NODE_PATH'] = str(readme_validator.node_modules_path) + os.pathsep + os.getenv("NODE_PATH", "")
 
-        with readme_validator.start_mdx_server():
+        with ReadMeValidator.start_mdx_server():
             with pebble.ProcessPool(max_workers=4) as executor:
                 futures = []
                 for pack_path in all_packs:

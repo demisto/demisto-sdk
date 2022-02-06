@@ -117,22 +117,23 @@ class ReadMeValidator(BaseValidator):
                                                               file_path=str(self.file_path))
             if not server_started:
                 return False
-        readme_content = self.fix_mdx()
-        retry = Retry(total=4)
-        adapter = HTTPAdapter(max_retries=retry)
-        session = requests.Session()
-        session.mount('http://', adapter)
-        response = session.request(
-            'POST',
-            'http://localhost:6161',
-            data=readme_content.encode('utf-8'),
-            timeout=20
-        )
-        if response.status_code != 200:
-            error_message, error_code = Errors.readme_error(response.text)
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
-                return False
-        return True
+        with ReadMeValidator._MDX_SERVER_LOCK:
+            readme_content = self.fix_mdx()
+            retry = Retry(total=4)
+            adapter = HTTPAdapter(max_retries=retry)
+            session = requests.Session()
+            session.mount('http://', adapter)
+            response = session.request(
+                'POST',
+                'http://localhost:6161',
+                data=readme_content.encode('utf-8'),
+                timeout=20
+            )
+            if response.status_code != 200:
+                error_message, error_code = Errors.readme_error(response.text)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    return False
+            return True
 
     def is_mdx_file(self) -> bool:
         html = self.is_html_doc()

@@ -47,7 +47,7 @@ class AnsibleIntegration:
         self.ansible_modules: List[str] = []
         self.ignored_args: Optional[List[str]] = None
         self.ansible_docs: Dict = {}
-        self.commands: Dict = {}
+        self.commands: List = []
         self.example_commands: List = []
         self.parameters: List = []
         self.verbose = verbose
@@ -665,4 +665,5 @@ factor for high performance."
                     outputs.append(output_to_add)
             commands.append(XSOARIntegration.Script.Command(command_name, command_description, args, outputs))
 
+        self.commands = commands
         return commands

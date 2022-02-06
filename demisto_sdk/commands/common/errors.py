@@ -52,6 +52,7 @@ ERROR_CODE = {
     'entity_name_contains_excluded_word': {'code': 'BA111', 'ui_applicable': False, 'related_field': ''},
     "spaces_in_the_end_of_id": {'code': "BA112", 'ui_applicable': False, 'related_field': 'id'},
     "spaces_in_the_end_of_name": {'code': "BA113", 'ui_applicable': False, 'related_field': 'name'},
+    "changed_pack_name": {'code': "BA114", 'ui_applicable': False, 'related_field': 'name'},
 
     # BC - Backward Compatible
     "breaking_backwards_subtype": {'code': "BC100", 'ui_applicable': False, 'related_field': 'subtype'},
@@ -2116,3 +2117,10 @@ class Errors:
     @error_code_decorator
     def invalid_yml_file(error):
         return f'There is problem with the yml file. The error: {error}'
+
+    @staticmethod
+    @error_code_decorator
+    def changed_pack_name(original_name):
+        return f'Pack folder names cannot be changed, please rename it back to {original_name}.' \
+               f' If you wish to rename the pack, you can edit the name field in pack_metadata.json,' \
+               f' and the pack will be shown in the Marketplace accordingly.'

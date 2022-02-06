@@ -390,7 +390,7 @@ class GitUtil:
                     in self.repo.git.diff('--name-only',
                                           f'{branch}...{current_branch_or_hash}').split('\n')}
 
-    def _only_last_commit(self, prev_ver: str, requested_status: str) -> Set:
+    def _only_last_commit(self, prev_ver: str, requested_status: str) -> Set:  # pragma: no cover
         """Get all the files that were changed in the last commit of a given type when checking a branch against itself.
         Args:
             prev_ver (str): The base branch against which the comparison is made.

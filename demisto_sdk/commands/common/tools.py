@@ -2228,6 +2228,40 @@ def get_current_repo() -> Tuple[str, str, str]:
         return "Unknown source", '', ''
 
 
+def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[str, Dict] = None) -> List:
+    """
+    Return the supporting marketplaces of the item.
+
+    Args:
+        item_path: the item path.
+        item_data: the item data.
+        packs: the pack mapping from the ID set.
+
+    Returns: the list of supporting marketplaces.
+    """
+
+    if not item_data:
+        file_type = Path(item_path).suffix
+        item_data = get_file(item_path, file_type)
+
+    # first check, check field 'marketplaces' in the item's file
+    marketplaces = item_data.get('marketplaces', [])  # type: ignore
+
+    # second check, check the metadata of the pack
+    if not marketplaces:
+        if 'pack_metadata' in item_path:
+            # default supporting marketplace
+            marketplaces = [MarketplaceVersions.XSOAR.value]
+        else:
+            pack_name = get_pack_name(item_path)
+            if packs:
+                marketplaces = packs.get(pack_name, {}).get('marketplaces', [MarketplaceVersions.XSOAR.value])
+            else:
+                marketplaces = get_mp_types_from_metadata_by_item(item_path)
+
+    return marketplaces
+
+
 def get_mp_types_from_metadata_by_item(file_path):
     """
     Get the supporting marketplaces for the given content item, defined by the mp field in the metadata.

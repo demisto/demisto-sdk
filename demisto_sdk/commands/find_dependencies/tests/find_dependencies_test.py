@@ -446,6 +446,7 @@ class TestIdSetFilters:
                     "fromversion": '5.0.0',
                     "docker_image": "demisto/python3:3.8.3.8715",
                     "pack": "PrismaCloudCompute",
+                    "marketplaces": ["xsoar"],
                     "source": ['Unknown source', '', '']}
             },
             {
@@ -455,6 +456,7 @@ class TestIdSetFilters:
                     "fromversion": '5.0.0',
                     "docker_image": "demisto/python3:3.8.3.8715",
                     "pack": "PrismaCloudCompute",
+                    "marketplaces": ["xsoar"],
                     "source": ['Unknown source', '', '']}
             },
             {
@@ -464,6 +466,7 @@ class TestIdSetFilters:
                     "fromversion": '5.0.0',
                     "docker_image": "demisto/python3:3.8.3.8715",
                     "pack": "PrismaCloudCompute",
+                    "marketplaces": ["xsoar"],
                     "source": ['Unknown source', '', '']}
             },
             {
@@ -473,6 +476,7 @@ class TestIdSetFilters:
                     "fromversion": '5.0.0',
                     "docker_image": "demisto/python3:3.8.3.8715",
                     "pack": "PrismaCloudCompute",
+                    "marketplaces": ["xsoar"],
                     "source": ['Unknown source', '', '']
                 }
             }
@@ -506,6 +510,7 @@ class TestIdSetFilters:
                         "No tests"
                     ],
                     "pack": "Expanse",
+                    "marketplaces": ["xsoar"],
                     "source": ['Unknown source', '', '']
                 }
             }

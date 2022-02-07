@@ -6,8 +6,8 @@ import json
 import logging
 import os
 from functools import lru_cache
-from typing import Optional, Tuple
-from urllib.parse import urljoin
+from typing import Optional, Tuple, Union
+from urllib.parse import urljoin, urlparse
 
 import click
 import giturlparse
@@ -49,18 +49,14 @@ class GitContentConfig:
 
     ENV_REPO_HOSTNAME_NAME = 'DEMISTO_SDK_REPO_HOSTNAME'
 
-    def __init__(self, repo_name: Optional[str] = None, git_provider: Optional[GitProvider] = GitProvider.GitHub, repo_hostname: Optional[str] = None):
+    def __init__(self, repo_name: Optional[Union[str, int]] = None, git_provider: Optional[GitProvider] = GitProvider.GitHub, repo_hostname: Optional[str] = None):
         self.credentials = GitCredentials()
-        self.repo_hostname = repo_hostname or os.getenv(GitContentConfig.ENV_REPO_HOSTNAME_NAME)
+        self.repo_hostname = urlparse(repo_hostname).hostname or os.getenv(GitContentConfig.ENV_REPO_HOSTNAME_NAME)
         self.git_provider = git_provider
         if not self.repo_hostname:
             self.repo_hostname = GitContentConfig.GITHUB_USER_CONTENT if git_provider == GitProvider.GitHub else "gitlab.com"
-
-        if 'github.com' in self.repo_hostname:
+        if self.repo_hostname == 'github.com':
             self.repo_hostname = GitContentConfig.GITHUB_USER_CONTENT
-
-        if 'gitlab.com' in self.repo_hostname:
-            self.repo_hostname = 'gitlab.com'
 
         if not repo_name:  # repo_name is not specified, parsing the remote url the get the details
             try:
@@ -134,7 +130,7 @@ class GitContentConfig:
             self.gitlab_id = gitlab_id
             self.repo_hostname = gitlab_hostname
         else:  # github
-            if self.repo_hostname == GitContentConfig.GITHUB_USER_CONTENT and 'github.com' not in hostname:
+            if self.repo_hostname == GitContentConfig.GITHUB_USER_CONTENT and 'github.com' != hostname:
                 click.secho(f'Found custom github url - defaulting to demisto/content. '
                             f'Configure `{GitContentConfig.ENV_REPO_HOSTNAME_NAME}` or `repo_hostname` argument'
                             f' to the repository address. '
@@ -145,7 +141,7 @@ class GitContentConfig:
 
     @lru_cache(maxsize=10)
     def _search_gitlab_id(self, gitlab_hostname: str, repo: str) -> Optional[Tuple[Optional[str], Optional[int]]]:
-        if not gitlab_hostname or gitlab_hostname == GitContentConfig.GITHUB_USER_CONTENT or 'github.com' in gitlab_hostname:
+        if not gitlab_hostname or gitlab_hostname == GitContentConfig.GITHUB_USER_CONTENT or gitlab_hostname == 'github.com':
             return None
         try:
             res = requests.get(f"https://{gitlab_hostname}/api/v4/projects",

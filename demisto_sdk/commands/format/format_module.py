@@ -171,7 +171,8 @@ def format_manager(input: str = None,
                                                                  update_docker=update_docker,
                                                                  assume_yes=assume_yes,
                                                                  deprecate=deprecate,
-                                                                 add_tests=add_tests)
+                                                                 add_tests=add_tests,
+                                                                 clear_cache=clear_cache)
                 if err_res:
                     log_list.extend([(err_res, print_error)])
                 if info_res:

@@ -148,6 +148,8 @@ ERROR_CODE = {
                                                        'related_field': 'unsearchable'},
     'select_values_cannot_contain_empty_values': {'code': "IF116", 'ui_applicable': False,
                                                   'related_field': 'selectValues'},
+    "invalid_marketplaces_in_alias": {'code': "IF117", 'ui_applicable': False, 'related_field': 'Aliases'},
+    "aliases_with_inner_alias": {'code': "IF118", 'ui_applicable': False, 'related_field': 'Aliases'},
 
     # IM - Images
     "no_image_given": {'code': "IM100", 'ui_applicable': True, 'related_field': 'image'},
@@ -2134,13 +2136,13 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_marketplaces_in_alias(invalid_aliases: List[str]):
-        return 'The following aliases have an invalid "marketplaces" field.' \
+        return 'The following fields exist as aliases and have invalid "marketplaces" key value:' \
                f'\n{invalid_aliases}\n' \
-               'value of marketplaces should be ["xsoar"] only.'
+               'the value of the "marketplaces" key in these fields should be ["xsoar"].'
 
     @staticmethod
     @error_code_decorator
     def aliases_with_inner_alias(invalid_aliases: List[str]):
-        return 'The following aliases have an "Aliases" field:' \
-               f'\n{invalid_aliases}\n' \
-               'Aliased fields can not have aliases of their own.'
+        return "The following fields exist as aliases and therefore cannot contain an 'Aliases' key."\
+               f"\n{invalid_aliases}\n" \
+               "Please remove the key from the fields or removed the fields from the other field's Aliases list."

@@ -6,6 +6,7 @@ from typing import Optional
 import pytest
 from mock import patch
 
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.format import (update_dashboard, update_incidenttype,
                                          update_indicatortype)
 from demisto_sdk.commands.format.format_module import format_manager
@@ -502,7 +503,11 @@ def test_remove_spaces_end_of_id_and_name(pack, name):
     assert base_update_json.data['name'] == 'MyDashboard'
 
 
-def test_set_marketplaces_xsoar_only_for_aliased_fields(mocker, pack):
+@pytest.mark.parametrize(argnames='marketpalces', argvalues=[
+    [MarketplaceVersions.MarketplaceV2.value],
+    [MarketplaceVersions.XSOAR.value, MarketplaceVersions.MarketplaceV2.value]
+])
+def test_set_marketplaces_xsoar_only_for_aliased_fields(mocker, pack, marketpalces):
     """
     Given
         - An incident filed with aliases
@@ -511,19 +516,15 @@ def test_set_marketplaces_xsoar_only_for_aliased_fields(mocker, pack):
     Then
         - Ensure that the marketplaces value in the aliased filed contain only the `xsoar` marketplace
     """
-    invalid_marketplaces = {'marketplaces': ['xsoar', 'invalid_marketplaces']}
-
-    mocker.patch('demisto_sdk.commands.format.update_incidentfields.get_dict_from_file',
-                 return_value=(invalid_marketplaces, None))
-    mocker.patch.object(IncidentFieldJSONFormat, 'get_incident_fields_as_dict_from_id_set',
-                        return_value={'incident_aliased_field': {'mock_data': 'mock_data'}})
-    mocker.patch.object(IncidentFieldJSONFormat, 'save_alias_field_file')
+    mocked_filed = {'marketplaces': marketpalces}
+    mocker.patch.object(IncidentFieldJSONFormat, '_save_alias_field_file')
+    mocker.patch.object(IncidentFieldJSONFormat, '_get_incident_fields_by_aliases', return_value=[mocked_filed])
 
     tested_filed = pack.create_incident_field(name='tested_filed', content={'Aliases': [{'cliName': 'aliased_field'}]})
 
     incident_field_formatter = IncidentFieldJSONFormat(input=tested_filed.path, id_set_path='mocked_path')
-    incident_field_formatter.format_marketpalces_for_aliases()
-    updated_marketplaces = incident_field_formatter.save_alias_field_file.call_args[1]['field_data']['marketplaces']
+    incident_field_formatter.format_marketplaces_field_of_aliases()
+    updated_marketplaces = incident_field_formatter._save_alias_field_file.call_args[1]['field_data']['marketplaces']
 
     assert len(updated_marketplaces) == 1
     assert updated_marketplaces[0] == 'xsoar'

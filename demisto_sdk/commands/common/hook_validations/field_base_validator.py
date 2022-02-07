@@ -13,8 +13,9 @@ from demisto_sdk.commands.common.hook_validations.content_entity_validator impor
     ContentEntityValidator
 from demisto_sdk.commands.common.tools import (get_core_pack_list,
                                                get_dict_from_file,
+                                               get_item_marketplaces,
                                                get_pack_metadata,
-                                               get_pack_name)
+                                               get_pack_name, print_warning)
 
 # Cortex XSOAR is using a Bleve DB, those keys cannot be the cliName
 BleveMapping = {
@@ -96,7 +97,7 @@ class FieldBaseValidator(ContentEntityValidator):
             self.is_valid_version(),
             self.is_valid_required(),
             self.does_not_have_empty_select_values(),
-            self.is_aliased_fields_are_valid()
+            self.is_aliased_fields_are_valid(),
         ]
 
         core_packs_list = get_core_pack_list()
@@ -368,59 +369,63 @@ class FieldBaseValidator(ContentEntityValidator):
 
     def is_aliased_fields_are_valid(self) -> bool:
         """
-        Validates that the aliased fileds are valid.
+        Validates that the aliased fileds (filed that appear as alias in another field) are valid.
         invalid aliased filed are
-        1. field with marketplaces other than [`xsoar`]
-        2. filed with alias (aliased field with alias)
+        1. fields that are in another field's Aliases list, and present in the same marketplace of that field.
+        2. fields that are in another field's Aliases list, and also contain Aliases (nested aliasing)
 
         Returns:
             (bool): True if aliased fields are valid.
         """
-        is_invalid = None
-        aliases = self.current_file.get('Aliases', {})
-        if aliases and self.id_set_file:
-            aliased_fields = self.get_incident_fields_by_aliases(aliases)
-            aliases_with_invalid_marketplace = [alias.get("cliName") for alias in aliased_fields if self.is_alias_has_invalid_marketplaces(alias)]
 
-            if aliases_with_invalid_marketplace:
-                error_message, error_code = Errors.invalid_marketplaces_in_alias(aliases_with_invalid_marketplace)
-                is_invalid = self.handle_error(error_message, error_code, file_path=self.file_path,
-                                               warning=self.structure_validator.quite_bc)
+        if not self.id_set_file:
+            print_warning('Validate will skip due to there is no id set file')
+            return True
 
-            aliases_with_inner_alias = [alias.get("cliName") for alias in aliased_fields if self.is_alias_has_inner_alias(alias)]
-            if aliases_with_inner_alias:
-                error_message, error_code = Errors.aliases_with_inner_alias(aliases_with_inner_alias)
-                is_invalid = self.handle_error(error_message, error_code, file_path=self.file_path,
-                                               warning=self.structure_validator.quite_bc)
+        aliases = self.current_file.get('Aliases', [])
+        if not aliases:
+            return True
+
+        is_invalid = False
+        validators_and_error_generators = [
+            (self.is_alias_has_invalid_marketplaces, Errors.invalid_marketplaces_in_alias),
+            (self.is_alias_has_inner_alias, Errors.aliases_with_inner_alias),
+        ]
+        aliased_fields = self._get_incident_fields_by_aliases(aliases)
+        for validator, error_generator in validators_and_error_generators:
+            invalid_aliased = [alias.get("cliName") for alias in aliased_fields if validator(alias)]
+            if invalid_aliased:
+                error_message, error_code = error_generator(invalid_aliased)
+                is_invalid = self.handle_error(error_message, error_code, file_path=self.file_path, warning=self.structure_validator.quite_bc)
 
         return not is_invalid
 
-    def get_incident_fields_by_aliases(self, aliases: dict) -> List[dict]:
+    def _get_incident_fields_by_aliases(self, aliases: List[dict]) -> List[dict]:
+        """Get from the id_set the actual fields for the given aliases
+
+        Args:
+            aliases (list): The alias list.
+
+        Returns:
+            (list): the fileds as list of dicts.
+        """
         res = []
-        incident_fields_dict = self.get_incident_fileds_as_dict_from_id_set()
-        for alias in aliases:
-            alias_data = incident_fields_dict.get(f'incident_{alias.get("cliName")}')
-            if alias_data:
+        alias_ids: set = {f'incident_{alias.get("cliName")}' for alias in aliases}
+        incident_field_list: list = self.id_set_file.get('IncidentFields')
+
+        for incident_field in incident_field_list:
+            field_id = list(incident_field.keys())[0]
+            if field_id in alias_ids:
+                alias_data = incident_field[field_id]
                 alias_file_path = alias_data.get('file_path')
                 aliased_field, _ = get_dict_from_file(path=alias_file_path)
+                aliased_field['file_path'] = alias_file_path
                 res.append(aliased_field)
         return res
 
     def is_alias_has_invalid_marketplaces(self, aliased_field: dict) -> bool:
-        if aliased_field:
-            marketplaces = aliased_field.get('marketplaces')
-            return marketplaces is not None and (len(marketplaces) != 1 or marketplaces[0] != 'xsoar')
-        return False
+        marketplaces = get_item_marketplaces(item_path=aliased_field.get('file_path', ''), item_data=aliased_field)
+        return len(marketplaces) != 1 or marketplaces[0] != 'xsoar'
 
     def is_alias_has_inner_alias(self, aliased_field: dict) -> bool:
         return aliased_field is not None and 'Aliases' in aliased_field
-
-    def get_incident_fileds_as_dict_from_id_set(self):
-        incident_fields_dict = {}
-        if self.id_set_file:
-            incident_field_list = self.id_set_file.get('IncidentFields')
-            for incident_field in incident_field_list:
-                field_id = list(incident_field.keys())[0]
-                incident_fields_dict[field_id] = incident_field[field_id]
-
-        return incident_fields_dict

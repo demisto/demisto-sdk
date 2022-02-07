@@ -1,9 +1,10 @@
-from typing import Tuple
+from typing import List, Tuple
 
 import click
 import ujson
 
 from demisto_sdk.commands.common.tools import (get_dict_from_file,
+                                               get_item_marketplaces,
                                                open_id_set_file)
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
@@ -35,7 +36,7 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
         try:
             click.secho(f'\n================= Updating file {self.source_file} =================', fg='bright_blue')
             super().update_json()
-            self.format_marketpalces_for_aliases()
+            self.format_marketplaces_field_of_aliases()
             self.set_default_values_as_needed()
             self.save_json_to_destination_file()
             return SUCCESS_RETURN_CODE
@@ -44,42 +45,53 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
                 click.secho(f'\nFailed to update file {self.source_file}. Error: {err}', fg='red')
             return ERROR_RETURN_CODE
 
-    def format_marketpalces_for_aliases(self):
+    def format_marketplaces_field_of_aliases(self):
         """
          When formatting incident field with aliases,
          the function will update the marketplaces in the fields mapped by the aliases to be XSOAR marketplace only.
         """
 
         if not self.id_set_path:
-            click.secho('Skiping update mapped aliases as id_set_path argument are missed', fg='yellow')
+            click.secho('Skipping "Aliases" formatting as id_set_path argument is missing', fg='yellow')
 
         aliases = self.data.get('Aliases', {})
-        if aliases and self.id_set_path:
+        if aliases:
+            aliased_fields = self._get_incident_fields_by_aliases(aliases)
+            for alias_field in aliased_fields:
 
-            incident_fields_dict = self.get_incident_fields_as_dict_from_id_set()
-            for alias in aliases:
-                alais_field = incident_fields_dict.get(f'incident_{alias.get("cliName")}')
-                if alais_field:
-                    alias_field_file_path = alais_field.get('file_path')
-                    alias_orig_field, _ = get_dict_from_file(path=alias_field_file_path)
-                    marketplaces = alias_orig_field.get('marketplaces')
-                    if marketplaces and (len(marketplaces) != 1 or marketplaces[0] != 'xsoar'):
-                        alias_orig_field['marketplaces'] = ['xsoar']
-                        click.secho(f'\n================= Updating file {alias_field_file_path} =================', fg='bright_blue')
-                        self.save_alias_field_file(dest_file_path=alias_field_file_path, field_data=alias_orig_field)
+                alias_field_file_path = alias_field.pop('file_path', '')  # pop it as it's not part of the field and shouldn't be saved
+                marketplaces = get_item_marketplaces(item_path=alias_field_file_path, item_data=alias_field)
 
-    def get_incident_fields_as_dict_from_id_set(self):
-        incident_fields_dict = {}
-        if self.id_set_path:
-            id_set = open_id_set_file(self.id_set_path)
-            incident_field_list = id_set.get('IncidentFields')
-            for incident_field in incident_field_list:
-                field_id = list(incident_field.keys())[0]
-                incident_fields_dict[field_id] = incident_field[field_id]
+                if len(marketplaces) != 1 or marketplaces[0] != 'xsoar':
+                    alias_field['marketplaces'] = ['xsoar']
+                    click.secho(f'\n================= Updating file {alias_field_file_path} =================', fg='bright_blue')
+                    self._save_alias_field_file(dest_file_path=alias_field_file_path, field_data=alias_field)
 
-        return incident_fields_dict
+    def _get_incident_fields_by_aliases(self, aliases: List[dict]) -> List[dict]:
+        """Get from the id_set the actual fields for the given aliases
 
-    def save_alias_field_file(self, dest_file_path, field_data):
+        Args:
+            aliases (list): The alias list.
+
+        Returns:
+            (list): the fileds as list of dicts.
+        """
+        res = []
+        alias_ids: set = {f'incident_{alias.get("cliName")}' for alias in aliases}
+        id_set = open_id_set_file(self.id_set_path)
+        incident_field_list: list = id_set.get('IncidentFields')
+
+        for incident_field in incident_field_list:
+            field_id = list(incident_field.keys())[0]
+            if field_id in alias_ids:
+                alias_data = incident_field[field_id]
+                alias_file_path = alias_data.get('file_path')
+                aliased_field, _ = get_dict_from_file(path=alias_file_path)
+                aliased_field['file_path'] = alias_file_path
+                res.append(aliased_field)
+        return res
+
+    def _save_alias_field_file(self, dest_file_path, field_data):
         """Save formatted JSON data to destination file."""
         with open(dest_file_path, 'w') as file:
             ujson.dump(field_data, file, indent=4, encode_html_chars=True, escape_forward_slashes=False,

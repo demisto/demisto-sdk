@@ -14,8 +14,8 @@ from demisto_sdk.commands.common.constants import (
     PACKS_PACK_IGNORE_FILE_NAME, PLAYBOOKS_DIR, SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR, FileType)
 from demisto_sdk.commands.common.content import Content
+from demisto_sdk.commands.common.git_content_config import GitCredentials
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.GitContentConfig import GitCredentials
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import (
     LOG_COLORS, arg_to_list, compare_context_path_in_yml_and_readme,

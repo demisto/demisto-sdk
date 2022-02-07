@@ -6,9 +6,9 @@ import click
 import pytest
 from git import Repo
 
-from demisto_sdk.commands.common.GitContentConfig import (GitContentConfig,
-                                                          GitCredentials,
-                                                          GitProvider)
+from demisto_sdk.commands.common.git_content_config import (GitContentConfig,
+                                                            GitCredentials,
+                                                            GitProvider)
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 
 GIT_ROOT = "{}".format(git_path())

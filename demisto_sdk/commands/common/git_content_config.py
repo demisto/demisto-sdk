@@ -6,7 +6,7 @@ import json
 import logging
 import os
 from functools import lru_cache
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple
 from urllib.parse import urljoin, urlparse
 
 import click
@@ -49,7 +49,7 @@ class GitContentConfig:
 
     ENV_REPO_HOSTNAME_NAME = 'DEMISTO_SDK_REPO_HOSTNAME'
 
-    def __init__(self, repo_name: Optional[Union[str, int]] = None, git_provider: Optional[GitProvider] = GitProvider.GitHub, repo_hostname: Optional[str] = None):
+    def __init__(self, repo_name: Optional[str] = None, git_provider: Optional[GitProvider] = GitProvider.GitHub, repo_hostname: Optional[str] = None):
         self.credentials = GitCredentials()
         self.repo_hostname = urlparse(repo_hostname).hostname or os.getenv(GitContentConfig.ENV_REPO_HOSTNAME_NAME)
         self.git_provider = git_provider

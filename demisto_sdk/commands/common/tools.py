@@ -470,7 +470,10 @@ def get_last_remote_release_version():
     return ''
 
 
-def get_file(file_path, type_of_file):
+@lru_cache()
+def get_file(file_path, type_of_file, clear_cache=False):
+    if clear_cache:
+        get_file.cache_clear()
     data_dictionary = None
     with open(os.path.expanduser(file_path), mode="r", encoding="utf8") as f:
         if file_path.endswith(type_of_file):
@@ -493,11 +496,8 @@ def get_file(file_path, type_of_file):
     return {}
 
 
-@lru_cache()
 def get_yaml(file_path, cache_clear=False):
-    if cache_clear:
-        get_yaml.cache_clear()
-    return get_file(file_path, 'yml')
+    return get_file(file_path, 'yml', clear_cache=cache_clear)
 
 
 @lru_cache()
@@ -524,11 +524,8 @@ def get_ryaml(file_path: str, cache_clear: bool = False) -> dict:
     return data
 
 
-@lru_cache()
 def get_json(file_path, cache_clear=False):
-    if cache_clear:
-        get_json.cache_clear()
-    return get_file(file_path, 'json')
+    return get_file(file_path, 'json', clear_cache=cache_clear)
 
 
 def get_script_or_integration_id(file_path):

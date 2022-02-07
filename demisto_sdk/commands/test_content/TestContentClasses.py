@@ -1814,7 +1814,7 @@ class TestContext:
                     status = self._incident_and_docker_test()
                     self.playbook.configuration.number_of_times_executed += 1
                     status = self._update_playbook_status(status, is_record_run=True)
-                    result_holder[RESULT] = status == PB_Status.COMPLETED
+                    result_holder[RESULT] = status == PB_Status.SECOND_PLAYBACK
             else:
                 # If the integrations were not locked - the test has not finished it's execution
                 return False

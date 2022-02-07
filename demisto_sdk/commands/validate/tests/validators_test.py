@@ -667,7 +667,7 @@ class TestValidators:
                            "LI101"]
         ignored_list = validate_manager.create_ignored_errors_list(errors_to_check)
         assert ignored_list == ["BA101", "BA102", "BA103", "BA104", "BA105", "BA106", "BA107", "BA108", "BA109",
-                                "BA110", 'BA111', "BA112", "BA113", "BC101", "BC102", "BC103", "BC104"]
+                                "BA110", 'BA111', "BA112", "BA113", "BA114", "BC101", "BC102", "BC103", "BC104"]
 
     def test_added_files_type_using_function(self, repo, mocker):
         """
@@ -1808,3 +1808,19 @@ def test_validate_contributors_file(repo):
 
     validate_manager = ValidateManager(check_is_unskipped=False, file_path=contributors_file.path, skip_conf_json=True)
     assert validate_manager.run_validation_on_specific_files()
+
+
+def test_validate_pack_name(repo):
+    """
+    Given:
+        A file in a pack to validate.
+    When:
+        Checking if the pack name of the file is valid (the pack name is not changed).
+    Then:
+        If new file or unchanged pack then `true`, else `false`.
+
+    """
+    validator_obj = ValidateManager()
+    assert validator_obj.is_valid_pack_name('Packs/original_pack/file', None)
+    assert validator_obj.is_valid_pack_name('Packs/original_pack/file', 'Packs/original_pack/file')
+    assert not validator_obj.is_valid_pack_name('Packs/original_pack/file', 'Packs/original_pack_v2/file')

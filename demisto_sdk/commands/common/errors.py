@@ -52,6 +52,7 @@ ERROR_CODE = {
     'entity_name_contains_excluded_word': {'code': 'BA111', 'ui_applicable': False, 'related_field': ''},
     "spaces_in_the_end_of_id": {'code': "BA112", 'ui_applicable': False, 'related_field': 'id'},
     "spaces_in_the_end_of_name": {'code': "BA113", 'ui_applicable': False, 'related_field': 'name'},
+    "changed_pack_name": {'code': "BA114", 'ui_applicable': False, 'related_field': 'name'},
 
     # BC - Backward Compatible
     "breaking_backwards_subtype": {'code': "BC100", 'ui_applicable': False, 'related_field': 'subtype'},
@@ -147,10 +148,6 @@ ERROR_CODE = {
                                                        'related_field': 'unsearchable'},
     'select_values_cannot_contain_empty_values': {'code': "IF116", 'ui_applicable': False,
                                                   'related_field': 'selectValues'},
-    "invalid_marketplaces_in_alias": {'code': "IF117", 'ui_applicable': True, 'related_field': 'Aliases'},
-    "aliases_with_inner_alias": {'code': "IF118", 'ui_applicable': True, 'related_field': 'Aliases'},
-
-
 
     # IM - Images
     "no_image_given": {'code': "IM100", 'ui_applicable': True, 'related_field': 'image'},
@@ -286,6 +283,7 @@ ERROR_CODE = {
     "metadata_url_invalid": {'code': "PA127", 'ui_applicable': False, 'related_field': ''},
     "required_pack_file_does_not_exist": {'code': "PA128", 'ui_applicable': False, 'related_field': ''},
     "pack_metadata_missing_categories": {'code': "PA129", 'ui_applicable': False, 'related_field': ''},
+    "wrong_version_format": {'code': "PA130", 'ui_applicable': False, 'related_field': ''},
 
     # PB - Playbooks
     "playbook_cant_have_rolename": {'code': "PB100", 'ui_applicable': True, 'related_field': 'rolename'},
@@ -2123,14 +2121,26 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def changed_pack_name(original_name):
+        return f'Pack folder names cannot be changed, please rename it back to {original_name}.' \
+               f' If you wish to rename the pack, you can edit the name field in pack_metadata.json,' \
+               f' and the pack will be shown in the Marketplace accordingly.'
+
+    @staticmethod
+    @error_code_decorator
+    def wrong_version_format():
+        return 'Pack metadata version format is not valid. Please fill in a valid format (example: 0.0.0)'
+
+    @staticmethod
+    @error_code_decorator
     def invalid_marketplaces_in_alias(invalid_aliases: List[str]):
-        return 'The following aliases have invalid marketplaces field value.'\
-            f'\n{invalid_aliases}\n' \
-            'value of marketplaces should be ["xsoar"] only.'
+        return 'The following aliases have an invalid "marketplaces" field.' \
+               f'\n{invalid_aliases}\n' \
+               'value of marketplaces should be ["xsoar"] only.'
 
     @staticmethod
     @error_code_decorator
     def aliases_with_inner_alias(invalid_aliases: List[str]):
-        return 'The following aliases have invalid aliases field.'\
-            f'\n{invalid_aliases}\n' \
-            'aliased fields can not have alias field in them.'
+        return 'The following aliases have an "Aliases" field:' \
+               f'\n{invalid_aliases}\n' \
+               'Aliased fields can not have aliases of their own.'

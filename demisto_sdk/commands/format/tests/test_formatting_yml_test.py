@@ -10,9 +10,9 @@ import yaml
 from mock import Mock, patch
 from ruamel.yaml import YAML
 
-from demisto_sdk.commands.common.constants import (FEED_REQUIRED_PARAMS,
-                                                   FETCH_REQUIRED_PARAMS,
-                                                   INTEGRATION)
+from demisto_sdk.commands.common.constants import (
+    ALERT_FETCH_REQUIRED_PARAMS, FEED_REQUIRED_PARAMS,
+    INCIDENT_FETCH_REQUIRED_PARAMS, INTEGRATION, MarketplaceVersions)
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.integration import \
@@ -500,7 +500,7 @@ class TestFormatting:
             for param in params:
                 if 'defaultvalue' in param and param['name'] != 'feed':
                     param.pop('defaultvalue')
-            for param in FETCH_REQUIRED_PARAMS:
+            for param in INCIDENT_FETCH_REQUIRED_PARAMS:
                 assert param in yaml_content['configuration']
         os.remove(target)
         os.rmdir(path)
@@ -1283,3 +1283,30 @@ class TestFormatting:
         base_yml = IntegrationYMLFormat(input=playbook.yml.path)
         base_yml.update_id_to_equal_name()
         assert base_yml.data.get('id') == uid
+
+    @pytest.mark.parametrize(argnames='marketpalces, configs_to_be_added, configs_to_be_removed', argvalues=[
+        ([MarketplaceVersions.XSOAR.value], INCIDENT_FETCH_REQUIRED_PARAMS, ALERT_FETCH_REQUIRED_PARAMS),
+        ([MarketplaceVersions.MarketplaceV2.value], ALERT_FETCH_REQUIRED_PARAMS, INCIDENT_FETCH_REQUIRED_PARAMS),
+        ([MarketplaceVersions.MarketplaceV2.value, MarketplaceVersions.XSOAR.value], INCIDENT_FETCH_REQUIRED_PARAMS, ALERT_FETCH_REQUIRED_PARAMS),
+
+    ])
+    def test_set_fetch_params_in_config_acording_marketplaces_value(self, marketpalces, configs_to_be_added, configs_to_be_removed):
+        """
+        Given
+        - Integration yml with isfetch true.
+
+        When
+        - Running the format command.
+
+        Then
+        - Ensure that the fetch params ae according to the marketplaces values.
+        - if no marketplaces or xsoar in marketplaces - the params will be INCIDENT_FETCH_REQUIRED_PARAMS (with Incident type etc. )
+        - otherwise it will be the ALERT_FETCH_REQUIRED_PARAMS (with Alert type etc. ).
+        """
+        base_yml = IntegrationYMLFormat(SOURCE_FORMAT_INTEGRATION_VALID, path="schema_path", verbose=True)
+        base_yml.data['marketplaces'] = marketpalces
+        base_yml.data['configuration'] = configs_to_be_removed.copy()
+        base_yml.set_fetch_params_in_config()
+
+        assert all(config in base_yml.data['configuration'] for config in configs_to_be_added)
+        assert all(config not in base_yml.data['configuration'] for config in configs_to_be_removed)

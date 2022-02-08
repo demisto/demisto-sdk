@@ -1,3 +1,4 @@
+import os.path
 import re
 from typing import Dict
 
@@ -510,3 +511,17 @@ class PlaybookValidator(ContentEntityValidator):
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True
+
+    def validate_readme_exists(self):
+        playbook_path = os.path.normpath(self.file_path)
+        to_replace = os.path.splitext(playbook_path)[-1]
+        readme_path = playbook_path.replace(to_replace, '_README.md')
+        if os.path.isfile(readme_path):
+            return True
+        error_message, error_code = Errors.missing_readme_file('Playbook')
+        if self.handle_error(error_message, error_code, file_path=self.file_path,
+                             suggested_fix=Errors.suggest_fix(self.file_path, cmd="generate-docs")):
+            return False
+        return True
+
+

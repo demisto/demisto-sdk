@@ -322,6 +322,7 @@ ERROR_CODE = {
     "readme_contains_demisto_word": {'code': "RM106", 'ui_applicable': False, 'related_field': ''},
     "template_sentence_in_readme": {'code': "RM107", 'ui_applicable': False, 'related_field': ''},
     "invalid_readme_image_error": {'code': "RM108", 'ui_applicable': False, 'related_field': ''},
+    "missing_readme_file" : {'code' : "RM109", 'ui_applicable': False, 'related_field': ''},
 
     # RN - Release Notes
     "missing_release_notes": {'code': "RN100", 'ui_applicable': False, 'related_field': ''},
@@ -2130,3 +2131,8 @@ class Errors:
     @error_code_decorator
     def wrong_version_format():
         return 'Pack metadata version format is not valid. Please fill in a valid format (example: 0.0.0)'
+
+    @staticmethod
+    @error_code_decorator
+    def missing_readme_file(location):
+        return f'{location} is missing a readme file'

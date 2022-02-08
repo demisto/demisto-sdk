@@ -1436,3 +1436,16 @@ class IntegrationValidator(ContentEntityValidator):
 
         raise Exception('Could not find the pack name of the integration, '
                         'please verify the integration is in a pack')
+
+    def validate_readme_exists(self):
+        integration_path = os.path.normpath(self.file_path)
+        path_split = integration_path.split(os.sep)
+        to_replace = path_split[-1]
+        readme_path = integration_path.replace(to_replace, "README.md")
+        if os.path.isfile(readme_path):
+            return True
+        error_message, error_code = Errors.missing_readme_file('Integration')
+        if self.handle_error(error_message, error_code, file_path=self.file_path,
+                             suggested_fix=Errors.suggest_fix(self.file_path, cmd="generate-docs")):
+            return False
+        return True

@@ -1348,20 +1348,24 @@ def process_layoutscontainers(file_path: str, packs: Dict[str, Dict], marketplac
     """
 
     result: List = []
-    excluded_items_from_id_set: dict = {}
+    excluded_items_from_id_set: Dict = {}
 
     try:
         if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, packs=packs, print_logs=print_logs):
             return result, excluded_items_from_id_set
 
         if find_type(file_path) != FileType.LAYOUTS_CONTAINER:
+            if print_logs:
+                print(f'Recieved an invalid layoutcontainer file: {file_path}, Ignoring.')
             return result, excluded_items_from_id_set
 
-        # only indicator layouts are supported in marketplace v2.
         layout_data = get_layoutscontainer_data(file_path, packs=packs)
-        layout_group = next(iter(layout_data.values())).get('group')
+
+        # only indicator layouts are supported in marketplace v2.
+        layout_group = list(layout_data.values())[0].get('group')
         if marketplace == MarketplaceVersions.MarketplaceV2.value and layout_group == 'incident':
-            add_item_to_exclusion_dict(excluded_items_from_id_set, file_path, layout_data.get('id', ''))
+            print(f'incident layoutcontainer "{file_path}" is not supported in marketplace v2, excluding.')
+            add_item_to_exclusion_dict(excluded_items_from_id_set, file_path, list(layout_data.keys())[0])
             return result, excluded_items_from_id_set
 
         if print_logs:
@@ -1369,7 +1373,7 @@ def process_layoutscontainers(file_path: str, packs: Dict[str, Dict], marketplac
         result.append(layout_data)
 
     except Exception as exp:  # noqa
-        print_error(f'failed to process job {file_path}, Error: {str(exp)}')
+        print_error(f'failed to process layoutcontainer {file_path}, Error: {str(exp)}')
         raise
 
     return result, excluded_items_from_id_set

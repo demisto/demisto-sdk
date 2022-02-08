@@ -29,7 +29,6 @@ from demisto_sdk.commands.common.update_id_set import (
     process_incident_fields, process_integration, process_jobs,
     process_layoutscontainers, process_script, re_create_id_set,
     should_skip_item_by_mp)
-from TestSuite.test_tools import ChangeCWD
 from TestSuite.utils import IsEqualFunctions
 
 TESTS_DIR = f'{git_path()}/demisto_sdk/tests'
@@ -1183,17 +1182,16 @@ class TestLayouts:
             'marketplaces': ['xsoar', 'marketplacev2'],
         })
 
-        with ChangeCWD(repo.path):
-            res, excluded_items = process_layoutscontainers(layout.path, {'DummyPack': {}}, marketplace, True)
+        res, excluded_items = process_layoutscontainers(layout.path, {'DummyPack': {}}, marketplace, True)
 
         if should_exclude:
             assert not res
             assert excluded_items
+            assert 'DummyPack' in excluded_items
+            assert ('layoutscontainer', 'Reut') in excluded_items['DummyPack']
         else:
             assert len(res) == 1
-            result = res[0]
-            result = result.get('Reut')
-            assert result
+            assert res[0].get('Reut')
             assert not excluded_items
 
 

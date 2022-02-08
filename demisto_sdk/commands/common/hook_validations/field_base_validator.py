@@ -6,8 +6,8 @@ from distutils.version import LooseVersion
 from enum import IntEnum
 from typing import List, Set
 
-from demisto_sdk.commands.common.constants import \
-    DEFAULT_CONTENT_ITEM_FROM_VERSION
+from demisto_sdk.commands.common.constants import (
+    DEFAULT_CONTENT_ITEM_FROM_VERSION, MarketplaceVersions)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
@@ -369,8 +369,8 @@ class FieldBaseValidator(ContentEntityValidator):
 
     def is_aliased_fields_are_valid(self) -> bool:
         """
-        Validates that the aliased fileds (filed that appear as alias in another field) are valid.
-        invalid aliased filed are
+        Validates that the aliased fields (fields that appear as Aliases in another field) are valid.
+        invalid aliased fields are
         1. fields that are in another field's Aliases list, and present in the same marketplace of that field.
         2. fields that are in another field's Aliases list, and also contain Aliases (nested aliasing)
 
@@ -379,14 +379,14 @@ class FieldBaseValidator(ContentEntityValidator):
         """
 
         if not self.id_set_file:
-            print_warning('Validate will skip due to there is no id set file')
+            print_warning('Validate will skip since an id set file was not provided')
             return True
 
         aliases = self.current_file.get('Aliases', [])
         if not aliases:
             return True
 
-        is_invalid = False
+        is_valid = True
         validators_and_error_generators = [
             (self.is_alias_has_invalid_marketplaces, Errors.invalid_marketplaces_in_alias),
             (self.is_alias_has_inner_alias, Errors.aliases_with_inner_alias),
@@ -396,9 +396,10 @@ class FieldBaseValidator(ContentEntityValidator):
             invalid_aliased = [alias.get("cliName") for alias in aliased_fields if validator(alias)]
             if invalid_aliased:
                 error_message, error_code = error_generator(invalid_aliased)
-                is_invalid = self.handle_error(error_message, error_code, file_path=self.file_path, warning=self.structure_validator.quite_bc)
+                if self.handle_error(error_message, error_code, file_path=self.file_path, warning=self.structure_validator.quite_bc):
+                    is_valid = False
 
-        return not is_invalid
+        return is_valid
 
     def _get_incident_fields_by_aliases(self, aliases: List[dict]) -> List[dict]:
         """Get from the id_set the actual fields for the given aliases
@@ -425,7 +426,7 @@ class FieldBaseValidator(ContentEntityValidator):
 
     def is_alias_has_invalid_marketplaces(self, aliased_field: dict) -> bool:
         marketplaces = get_item_marketplaces(item_path=aliased_field.get('file_path', ''), item_data=aliased_field)
-        return len(marketplaces) != 1 or marketplaces[0] != 'xsoar'
+        return marketplaces != [MarketplaceVersions.XSOAR.value]
 
     def is_alias_has_inner_alias(self, aliased_field: dict) -> bool:
         return aliased_field is not None and 'Aliases' in aliased_field

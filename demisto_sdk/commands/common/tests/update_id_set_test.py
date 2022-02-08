@@ -22,12 +22,14 @@ from demisto_sdk.commands.common.update_id_set import (
     get_filters_and_transformers_from_playbook, get_general_data,
     get_generic_field_data, get_generic_module_data, get_generic_type_data,
     get_incident_fields_by_playbook_input, get_incident_type_data,
-    get_indicator_type_data, get_layout_data, get_layoutscontainer_data,
-    get_mapper_data, get_pack_metadata_data, get_playbook_data,
-    get_report_data, get_script_data, get_values_for_keys_recursively,
-    get_widget_data, has_duplicate, merge_id_sets, process_general_items,
-    process_incident_fields, process_integration, process_jobs, process_script,
-    re_create_id_set, should_skip_item_by_mp)
+    get_indicator_type_data, get_layout_data, get_mapper_data,
+    get_pack_metadata_data, get_playbook_data, get_report_data,
+    get_script_data, get_values_for_keys_recursively, get_widget_data,
+    has_duplicate, merge_id_sets, process_general_items,
+    process_incident_fields, process_integration, process_jobs,
+    process_layoutscontainers, process_script, re_create_id_set,
+    should_skip_item_by_mp)
+from TestSuite.test_tools import ChangeCWD
 from TestSuite.utils import IsEqualFunctions
 
 TESTS_DIR = f'{git_path()}/demisto_sdk/tests'
@@ -1150,8 +1152,7 @@ class TestLayouts:
                                  'test_data', 'layoutscontainer-to-test.json')
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
 
-        res, _ = process_general_items(test_file, {'DummyPack': {}}, MarketplaceVersions.XSOAR.value,
-                                       True, (FileType.LAYOUTS_CONTAINER,), get_layoutscontainer_data)
+        res, _ = process_layoutscontainers(test_file, {'DummyPack': {}}, MarketplaceVersions.XSOAR.value, True)
         assert len(res) == 1
         result = res[0]
         result = result.get('layouts_container_test')
@@ -1163,6 +1164,37 @@ class TestLayouts:
         assert 'file_path' in result.keys()
         assert 'incident_and_indicator_types' in result.keys()
         assert 'incident_and_indicator_fields' in result.keys()
+
+    LAYOUT_TYPE_TO_MARKETPLACE_TESTS = [
+        ('indicator', MarketplaceVersions.XSOAR.value, False),
+        ('incident', MarketplaceVersions.XSOAR.value, False),
+        ('indicator', MarketplaceVersions.MarketplaceV2.value, False),
+        ('incident', MarketplaceVersions.MarketplaceV2.value, True),
+    ]
+
+    @staticmethod
+    @pytest.mark.parametrize('layout_type, marketplace, should_exclude', LAYOUT_TYPE_TO_MARKETPLACE_TESTS)
+    def test_process_layoutcontainer__excluding_from_marketplace(layout_type, marketplace, should_exclude, repo):
+        pack = repo.create_pack(name='DummyPack')
+        layout = pack.create_layoutcontainer('Reut', {
+            'id': 'Reut',
+            'group': layout_type,
+            'detailsV2': {},
+            'marketplaces': ['xsoar', 'marketplacev2'],
+        })
+
+        with ChangeCWD(repo.path):
+            res, excluded_items = process_layoutscontainers(layout.path, {'DummyPack': {}}, marketplace, True)
+
+        if should_exclude:
+            assert not res
+            assert excluded_items
+        else:
+            assert len(res) == 1
+            result = res[0]
+            result = result.get('Reut')
+            assert result
+            assert not excluded_items
 
 
 class TestIncidentFields:

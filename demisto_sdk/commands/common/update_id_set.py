@@ -46,11 +46,11 @@ ID_SET_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Cla
 
 CONTENT_MP_V2_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
                           'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
-                          'Mappers', 'Packs', 'Lists']
+                          'Layouts', 'Mappers', 'Packs', 'Lists']
 
 ID_SET_MP_V2_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Classifiers',
                          'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
-                         'Mappers', 'Lists']
+                         'Layouts', 'Mappers', 'Lists']
 
 BUILT_IN_FIELDS = [
     "name",
@@ -1334,6 +1334,47 @@ def process_jobs(file_path: str, packs: Dict[str, Dict], marketplace: str, print
     return result
 
 
+def process_layoutscontainers(file_path: str, packs: Dict[str, Dict], marketplace: str, print_logs: bool) -> Tuple[List, Dict]:
+    """
+    Process a JSON file representing a Layoutcontainer object.
+    Args:
+        file_path: The file path from object field folder.
+        packs: the pack mapping from the ID set.
+        marketplace: the marketplace this id set is designated for.
+        print_logs: Whether to print logs to stdout.
+
+    Returns:
+        a list of Layoutcontainer data.
+    """
+
+    result: List = []
+    excluded_items_from_id_set: dict = {}
+
+    try:
+        if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, packs=packs, print_logs=print_logs):
+            return result, excluded_items_from_id_set
+
+        if find_type(file_path) != FileType.LAYOUTS_CONTAINER:
+            return result, excluded_items_from_id_set
+
+        # only indicator layouts are supported in marketplace v2.
+        layout_data = get_layoutscontainer_data(file_path, packs=packs)
+        layout_group = next(iter(layout_data.values())).get('group')
+        if marketplace == MarketplaceVersions.MarketplaceV2.value and layout_group == 'incident':
+            add_item_to_exclusion_dict(excluded_items_from_id_set, file_path, layout_data.get('id', ''))
+            return result, excluded_items_from_id_set
+
+        if print_logs:
+            print(f'adding {file_path} to id_set')
+        result.append(layout_data)
+
+    except Exception as exp:  # noqa
+        print_error(f'failed to process job {file_path}, Error: {str(exp)}')
+        raise
+
+    return result, excluded_items_from_id_set
+
+
 def process_general_items(file_path: str, packs: Dict[str, Dict], marketplace: str, print_logs: bool,
                           expected_file_types: Tuple[FileType], data_extraction_func: Callable) -> Tuple[list, dict]:
     """
@@ -1343,7 +1384,6 @@ def process_general_items(file_path: str, packs: Dict[str, Dict], marketplace: s
     * incident type
     * indicator field
     * layout
-    * layoutscontainer
     * mapper
     * playbook
     * report
@@ -2042,13 +2082,10 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                 update_excluded_items_dict(excluded_items_by_pack, excluded_items_by_type,
                                            excluded_items_from_iteration)
 
-            for arr, excluded_items_from_iteration in pool.map(partial(process_general_items,
+            for arr, excluded_items_from_iteration in pool.map(partial(process_layoutscontainers,
                                                                        packs=packs_dict,
                                                                        marketplace=marketplace,
                                                                        print_logs=print_logs,
-                                                                       expected_file_types=(
-                                                                           FileType.LAYOUTS_CONTAINER,),
-                                                                       data_extraction_func=get_layoutscontainer_data,
                                                                        ),
                                                                get_general_paths(LAYOUTS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
@@ -2249,6 +2286,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     new_ids_dict['IncidentTypes'] = sort(incident_type_list)
     new_ids_dict['IndicatorFields'] = sort(indicator_fields_list)
     new_ids_dict['IndicatorTypes'] = sort(indicator_types_list)
+    new_ids_dict['Layouts'] = sort(layouts_list)
     new_ids_dict['Lists'] = sort(lists_list)
     new_ids_dict['Jobs'] = sort(jobs_list)
     new_ids_dict['Mappers'] = sort(mappers_list)
@@ -2259,7 +2297,6 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
         new_ids_dict['GenericFields'] = sort(generic_fields_list)
         new_ids_dict['GenericModules'] = sort(generic_modules_list)
         new_ids_dict['GenericDefinitions'] = sort(generic_definitions_list)
-        new_ids_dict['Layouts'] = sort(layouts_list)
         new_ids_dict['Reports'] = sort(reports_list)
         new_ids_dict['Widgets'] = sort(widgets_list)
         new_ids_dict['Dashboards'] = sort(dashboards_list)
@@ -2269,7 +2306,6 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
         new_ids_dict['GenericFields'] = []
         new_ids_dict['GenericModules'] = []
         new_ids_dict['GenericDefinitions'] = []
-        new_ids_dict['Layouts'] = []
         new_ids_dict['Reports'] = []
         new_ids_dict['Widgets'] = []
         new_ids_dict['Dashboards'] = []

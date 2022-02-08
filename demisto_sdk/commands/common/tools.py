@@ -27,7 +27,7 @@ import requests
 import urllib3
 from packaging.version import parse
 from pebble import ProcessFuture, ProcessPool
-from ruamel.yaml import CommentedMap, CommentedSeq
+from ruamel.yaml.comments import CommentedMap, CommentedSeq
 
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK, CLASSIFIERS_DIR,

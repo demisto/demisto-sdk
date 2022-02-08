@@ -1965,6 +1965,60 @@ def integration_diff(**kwargs):
     sys.exit(1)
 
 
+# ====================== autogenerate-from-python ====================== #
+@main.command(name="autogenerate-from-python",
+              help='''Given a Python file that represents an integration, autogenerates the entire required
+              YAML by inpsecting the commands and function signatures. ''')
+@click.option(
+    '-f', '--integration_path', type=click.Path(exists=True), required=True,
+    help='Path to the integration to autogernate the YAML from.'
+)
+@click.option(
+    '-n', '--integration_name', required=True, type=str,
+    help='Name of the integration. '
+)
+@click.option(
+    '-c', '--category', type=str,
+    help='Integration category - ex. Authentication'
+)
+@click.option(
+    '-d', '--description', type=str,
+    help='Integration description.'
+)
+@click.option(
+    '--docker_image', type=str,
+    help='Integration Docker image'
+)
+@click.option(
+    '--feed', type=bool,
+    help='Intgration is indicator feed'
+)
+@click.option(
+    '--fetch', type=bool,
+    help='Integration fetches incidents'
+)
+@click.option(
+    '--runonce', type=bool,
+    help='Run once'
+)
+@click.option(
+    '--output', type=click.Path(writable=True), required=True,
+    help='Output integration YAML file.'
+)
+@click.option(
+    '--merge', type=bool,
+    help='Merge existing integration commands with output file, if it exists, instead of overwriting.'
+)
+def autogenerate_yaml_from_python(**kwargs):
+    from demisto_sdk.commands.generate_yaml_from_python.generator_functions import PythonIntegrationGenerator
+    integration_dict = PythonIntegrationGenerator.build_dict_from_module(**kwargs)
+    PythonIntegrationGenerator.save_dict_as_yaml_integration_file(
+        integration_dict=integration_dict,
+        docker_image=kwargs.get("docker_image"),
+        output=kwargs.get("output"),
+        merge=kwargs.get("merge")
+    )
+
 # ====================== convert ====================== #
 @main.command()
 @click.help_option(

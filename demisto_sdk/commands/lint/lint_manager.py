@@ -21,6 +21,7 @@ from demisto_sdk.commands.common.constants import (PACKS_PACK_META_FILE_NAME,
                                                    DemistoException)
 # Local packages
 from demisto_sdk.commands.common.logger import Colors
+from demisto_sdk.commands.common.timers import report_time_measurements
 from demisto_sdk.commands.common.tools import (find_file, find_type,
                                                get_api_module_dependencies,
                                                get_content_path,
@@ -302,7 +303,8 @@ class LintManager:
                          no_pylint: bool, no_coverage: bool, coverage_report: str,
                          no_vulture: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
                          keep_container: bool,
-                         test_xml: str, failure_report: str, docker_timeout: int) -> int:
+                         test_xml: str, failure_report: str, docker_timeout: int,
+                         time_measurements_dir: str = None) -> int:
         """ Runs the Lint command on all given packages.
 
         Args:
@@ -322,6 +324,7 @@ class LintManager:
             test_xml(str): Path for saving pytest xml results
             failure_report(str): Path for store failed packs report
             docker_timeout(int): timeout for docker requests
+            time_measurements_dir(str): the directory fo exporting the time measurements info
 
         Returns:
             int: exit code by fail exit codes by var EXIT_CODES
@@ -429,7 +432,11 @@ class LintManager:
                              pkgs_type=pkgs_type,
                              no_coverage=no_coverage,
                              coverage_report=coverage_report)
+
         self._create_failed_packs_report(lint_status=lint_status, path=failure_report)
+
+        if time_measurements_dir:
+            report_time_measurements(group_name='lint', time_measurements_dir=time_measurements_dir)
 
         # check if there were any errors during lint run , if so set to FAIL as some error codes are bigger
         # then 512 and will not cause failure on the exit code.

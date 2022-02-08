@@ -1,6 +1,9 @@
 import ast
 import json
+import logging
 from functools import partial
+
+import pytest
 
 from demisto_sdk.commands.common.constants import PB_Status
 from demisto_sdk.commands.test_content.Docker import Docker
@@ -262,3 +265,233 @@ def test_replacing_placeholders(mocker, tmp_path):
     integration = Integration(build_context, 'integration_with_placeholders', ['instance'])
     integration._set_integration_params(server_url='1.2.3.4', playbook_id='playbook_integration', is_mockable=False)
     assert '%%SERVER_HOST%%' in build_context.secret_conf.integrations[0].params.get('url')
+
+
+CASES = [
+    (  # case one input is found
+        {'id': 'pb_test',
+         'inputs': [{'key': 'Endpoint_hostname', 'value': {'simple': '', 'complex': None}, 'required': False,
+                     'description': 'The hostname of the endpoint to isolate.', 'playbookInputQuery': None},
+                    {'key': 'ManualHunting.DetectedHosts', 'value': {'simple': '', 'complex': None}, 'required': False,
+                     'description': 'Hosts that were detected as infected during the manual hunting.',
+                     'playbookInputQuery': None},
+                    {'key': 'Endpoint_ip', 'value': {'simple': '', 'complex': None}, 'required': False,
+                     'description': 'The IP of the endpoint to isolate.', 'playbookInputQuery': None},
+                    {'key': 'Endpoint_id', 'value': {'simple': '', 'complex': None}, 'required': False,
+                     'description': 'The ID of the endpoint to isolate.', 'playbookInputQuery': None}],
+         },
+        {
+            "playbookID": "pb_test",
+            "input_parameters": {
+                "Endpoint_hostname": {
+                    "simple": "test"
+                },
+            }
+        },
+        [{'key': 'Endpoint_hostname', 'value': {'simple': 'test', 'complex': None}, 'required': False,
+          'description': 'The hostname of the endpoint to isolate.', 'playbookInputQuery': None},
+         {'key': 'ManualHunting.DetectedHosts', 'value': {'simple': '', 'complex': None}, 'required': False,
+          'description': 'Hosts that were detected as infected during the manual hunting.',
+          'playbookInputQuery': None},
+         {'key': 'Endpoint_ip', 'value': {'simple': '', 'complex': None},
+          'required': False, 'description': 'The IP of the endpoint to isolate.',
+          'playbookInputQuery': None},
+         {'key': 'Endpoint_id',
+          'value': {'simple': '', 'complex': None},
+          'required': False,
+          'description': 'The ID of the endpoint to isolate.',
+          'playbookInputQuery': None}]
+
+    ),
+]
+
+
+@pytest.mark.parametrize('current, new_configuration, expected', CASES)
+def test_replacing_pb_inputs(mocker, current, new_configuration, expected):
+    """
+
+    Given: Configuration with inputs to change
+            Found configuration but running on older versions of server.
+    When: Using the external configuration in conf.json in order to change playbook inputs on testing flow in build
+    Then: Make sure the server request are correct
+
+    """
+    from demisto_client.demisto_api import DefaultApi
+
+    from demisto_sdk.commands.test_content.TestContentClasses import (
+        demisto_client, replace_external_playbook_configuration)
+
+    class clientMock(DefaultApi):
+        def generic_request(self, path, method, body=None, **kwargs):
+            if path == '/about' and method == 'GET':
+                return ("{'demistoVersion': '6.5.0'}", None, None)
+
+    def generic_request_func(self, path, method, body=None, **kwargs):
+        if path == '/playbook/inputs/pb_test' and method == 'POST':
+            assert body == expected
+        elif path == '/playbook/pb_test' and method == 'GET':
+            return current, None, None
+        else:
+            assert False  # Unexpected path
+
+    mocker.patch.object(demisto_client, 'generic_request_func', side_effect=generic_request_func)
+
+    replace_external_playbook_configuration(clientMock(), new_configuration)
+
+
+BAD_CASES = [
+    (  # case no configuration found
+        {'id': 'pb_test',
+         'inputs': [{'key': 'Endpoint_hostname', 'value': {'simple': '', 'complex': None}, 'required': False,
+                     'description': 'The hostname of the endpoint to isolate.', 'playbookInputQuery': None},
+                    {'key': 'ManualHunting.DetectedHosts', 'value': {'simple': '', 'complex': None}, 'required': False,
+                     'description': 'Hosts that were detected as infected during the manual hunting.',
+                     'playbookInputQuery': None},
+                    {'key': 'Endpoint_ip', 'value': {'simple': '', 'complex': None}, 'required': False,
+                     'description': 'The IP of the endpoint to isolate.', 'playbookInputQuery': None},
+                    {'key': 'Endpoint_id', 'value': {'simple': '', 'complex': None}, 'required': False,
+                     'description': 'The ID of the endpoint to isolate.', 'playbookInputQuery': None}],
+         },
+        {},
+        '6.5.0',
+        'External Playbook Configuration not provided, skipping re-configuration.'
+    ),
+    (  # case configuration found in older version
+        {'id': 'pb_test',
+         'inputs': [{'key': 'Endpoint_hostname', 'value': {'simple': '', 'complex': None}, 'required': False,
+                     'description': 'The hostname of the endpoint to isolate.', 'playbookInputQuery': None},
+                    {'key': 'ManualHunting.DetectedHosts', 'value': {'simple': '', 'complex': None}, 'required': False,
+                     'description': 'Hosts that were detected as infected during the manual hunting.',
+                     'playbookInputQuery': None},
+                    {'key': 'Endpoint_ip', 'value': {'simple': '', 'complex': None}, 'required': False,
+                     'description': 'The IP of the endpoint to isolate.', 'playbookInputQuery': None},
+                    {'key': 'Endpoint_id', 'value': {'simple': '', 'complex': None}, 'required': False,
+                     'description': 'The ID of the endpoint to isolate.', 'playbookInputQuery': None}],
+         },
+        {
+            "playbookID": "pb_test",
+            "input_parameters": {
+                "Endpoint_hostname": {
+                    "simple": "test"
+                },
+            }
+        },
+        '6.0.0',
+        'External Playbook not supported in versions previous to 6.2.0, skipping re-configuration.'
+    ),
+]
+
+
+@pytest.mark.parametrize('current, new_configuration, version, expected_error', BAD_CASES)
+def test_replacing_pb_inputs_fails_with_build_pass(mocker, current, new_configuration, version, expected_error):
+    """
+
+    Given: Missing configuration
+            Found configuration but running on older versions of server.
+    When: Using the external configuration in conf.json in order to change playbook inputs on testing flow in build
+    Then: Make sure the build pass without errors
+
+    """
+    from demisto_client.demisto_api import DefaultApi
+
+    from demisto_sdk.commands.test_content.TestContentClasses import (
+        demisto_client, replace_external_playbook_configuration)
+
+    class clientMock(DefaultApi):
+        def generic_request(self, path, method, body=None, **kwargs):
+            if path == '/about' and method == 'GET':
+                return str({'demistoVersion': version}), None, None
+
+    class LoggerMock(logging.Logger):
+        def info(self, text, **kwargs):
+            if text not in ['External Playbook in use, starting re-configuration.', 'Saved current configuration.']:
+                assert text == expected_error
+
+    def generic_request_func(self, path, method, body=None, **kwargs):
+        if path == '/playbook/inputs/pb_test' and method == 'POST':
+            return
+        elif path == '/playbook/pb_test' and method == 'GET':
+            return current, None, None
+        else:
+            assert False  # Unexpected path
+
+    mocker.patch.object(demisto_client, 'generic_request_func', side_effect=generic_request_func)
+
+    replace_external_playbook_configuration(clientMock(), new_configuration, LoggerMock('test logger'))
+
+
+BAD_CASES_BUILD_FAIL = [
+    (  # case configuration not found.
+        {"id": "createPlaybookErr", "status": 400, "title": "Could not create playbook",
+         "detail": "Could not create playbook", "error": "Item not found (8)", "encrypted": None, "multires": None},
+        {
+            "playbookID": "pb_test",
+            "input_parameters": {
+                "Endpoint_hostname": {
+                    "simple": "test"
+                },
+            }
+        },
+        '6.2.0',
+        'External Playbook was not found or has no inputs.'
+    ),
+    (  # case configuration was found but wrong input key given.
+        {'id': 'pb_test',
+         'inputs': [{'key': 'Endpoint_hostname', 'value': {'simple': '', 'complex': None}, 'required': False,
+                     'description': 'The hostname of the endpoint to isolate.', 'playbookInputQuery': None},
+                    {'key': 'ManualHunting.DetectedHosts', 'value': {'simple': '', 'complex': None}, 'required': False,
+                     'description': 'Hosts that were detected as infected during the manual hunting.',
+                     'playbookInputQuery': None},
+                    {'key': 'Endpoint_ip', 'value': {'simple': '', 'complex': None}, 'required': False,
+                     'description': 'The IP of the endpoint to isolate.', 'playbookInputQuery': None},
+                    {'key': 'Endpoint_id', 'value': {'simple': '', 'complex': None}, 'required': False,
+                     'description': 'The ID of the endpoint to isolate.', 'playbookInputQuery': None}],
+         },
+        {
+            "playbookID": "pb_test",
+            "input_parameters": {
+                "Endpoint_hostnames": {
+                    "simple": "test"
+                },
+            }
+        },
+        '6.2.0',
+        'Some input keys was not found in playbook: Endpoint_hostnames.'
+    ),
+
+]
+
+
+@pytest.mark.parametrize('current, new_configuration, version, expected_error', BAD_CASES_BUILD_FAIL)
+def test_replacing_pb_inputs_fails_with_build_fail(mocker, current, new_configuration, version, expected_error):
+    """
+
+    Given: Bad configuration - external playbooks is wrong
+            Bad configuration - wrong input names
+    When: Using the external configuration in conf.json in order to change playbook inputs on testing flow in build
+    Then: Make sure the error contains the relevant issue.
+
+    """
+    from demisto_client.demisto_api import DefaultApi
+
+    from demisto_sdk.commands.test_content.TestContentClasses import (
+        demisto_client, replace_external_playbook_configuration)
+
+    class clientMock(DefaultApi):
+        def generic_request(self, path, method, body=None, **kwargs):
+            if path == '/about' and method == 'GET':
+                return str({'demistoVersion': version}), None, None
+
+    def generic_request_func(self, path, method, body=None, **kwargs):
+        if path == '/playbook/inputs/pb_test' and method == 'POST':
+            return
+        elif path == '/playbook/pb_test' and method == 'GET':
+            return current, None, None
+        else:
+            assert False  # Unexpected path
+
+    mocker.patch.object(demisto_client, 'generic_request_func', side_effect=generic_request_func)
+
+    with pytest.raises(Exception) as e:
+        replace_external_playbook_configuration(clientMock(), new_configuration)
+    assert expected_error in str(e)

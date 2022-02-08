@@ -49,16 +49,17 @@ class GitContentConfig:
 
     ENV_REPO_HOSTNAME_NAME = 'DEMISTO_SDK_REPO_HOSTNAME'
 
-    def __init__(self, repo_name: Optional[str] = None, git_provider: Optional[GitProvider] = GitProvider.GitHub, repo_hostname: Optional[str] = None):
+    def __init__(self, repo_name: Optional[str] = None, git_provider: Optional[GitProvider] = GitProvider.GitHub, repo_hostname: Optional[str] = None, project_id: Optional[int] = None):
         self.credentials = GitCredentials()
-        self.repo_hostname = urlparse(repo_hostname).hostname or os.getenv(GitContentConfig.ENV_REPO_HOSTNAME_NAME)
+        parsed_hostname = urlparse(repo_hostname).hostname
+        self.repo_hostname = parsed_hostname or repo_hostname or os.getenv(GitContentConfig.ENV_REPO_HOSTNAME_NAME)
         self.git_provider = git_provider
         if not self.repo_hostname:
             self.repo_hostname = GitContentConfig.GITHUB_USER_CONTENT if git_provider == GitProvider.GitHub else "gitlab.com"
         if self.repo_hostname == 'github.com':
             self.repo_hostname = GitContentConfig.GITHUB_USER_CONTENT
 
-        if not repo_name:  # repo_name is not specified, parsing the remote url the get the details
+        if not repo_name and not project_id:  # repo_name is not specified, parsing the remote url the get the details
             try:
                 parsed_git = GitContentConfig._get_repository_properties()
                 self._set_repo_config(parsed_git)
@@ -68,6 +69,8 @@ class GitContentConfig:
         else:
             self.current_repository = repo_name
             repo_hostname, gitlab_id = self._search_gitlab_id(self.repo_hostname, repo_name) or (None, None)
+            if self._is_gitlab_exists(self.repo_hostname, project_id):
+                gitlab_id = project_id
             if gitlab_id is not None:
                 self.gitlab_id = gitlab_id
                 self.git_provider = GitProvider.GitLab
@@ -160,3 +163,19 @@ class GitContentConfig:
         except (requests.exceptions.ConnectionError, json.JSONDecodeError, AssertionError) as e:
             logging.getLogger('demisto-sdk').debug(str(e), exc_info=True)
             return None
+
+    @lru_cache(maxsize=10)
+    def _is_gitlab_exists(self, gitlab_hostname: str, project_id: int):
+        if not gitlab_hostname or gitlab_hostname == 'github.com' or not project_id:
+            return False
+        try:
+            res = requests.get(f"https://{gitlab_hostname}/api/v4/projects/{project_id}",
+                               timeout=10,
+                               verify=False)
+            if res.ok:
+                return True
+            return False
+        except requests.exceptions.ConnectionError as e:
+            logging.getLogger('demisto-sdk').debug(str(e), exc_info=True)
+            return False
+

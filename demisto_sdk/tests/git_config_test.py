@@ -6,6 +6,7 @@ import click
 import pytest
 from git import Repo
 
+from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.git_content_config import (GitContentConfig,
                                                             GitCredentials,
                                                             GitProvider)
@@ -254,7 +255,22 @@ class TestGitContentConfig:
 
         mocker.patch.object(GitContentConfig,
                             '_search_gitlab_id',
-                            return_value=('gitlab.com', 0))
+                            return_value=('gitlab.com', 3))
         git_config = GitContentConfig(custom_repo_name, git_provider=GitProvider.GitLab)
         assert git_config.current_repository == custom_repo_name
-        assert git_config.base_api == 'https://gitlab.com/api/v4/projects/0/repository'
+        assert git_config.base_api == 'https://gitlab.com/api/v4/projects/3/repository'
+
+    def test_provide_project_id(self, mocker):
+        mocker.patch.object(GitContentConfig,
+                            '_search_gitlab_id',
+                            return_value=None)
+        mocker.patch.object(GitContentConfig,
+                            '_is_gitlab_exists',
+                            return_value=True)
+
+        git_config = GitContentConfig(project_id=3, git_provider=GitProvider.GitLab, repo_hostname='code.pan.run')
+        assert git_config.gitlab_id == 3
+        assert git_config.base_api == 'https://code.pan.run/api/v4/projects/3/repository'
+
+
+

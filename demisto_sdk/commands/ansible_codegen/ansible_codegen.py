@@ -8,6 +8,9 @@ from typing import Dict, List, Optional
 import autopep8
 import yaml
 
+from demisto_sdk.commands.ansible_codegen.resources.integration_template_code import (
+    command_code, integration_code_footer, integration_code_header,
+    no_test_command_code, test_command_code)
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.docker_util import ContainerRunner
 from demisto_sdk.commands.common.hook_validations.integration import \
@@ -69,10 +72,15 @@ class AnsibleIntegration:
 
                     # Check for any config options not in defintion
                     valid_keys = REQUIRED_KEYS + OPTIONAL_KEYS
+
+                    invalid_key_message = "Unused keys found in config yaml:"
+                    invalid_keys = False
                     for key, value in codegen_configuration.items():
-                        invalid_key_message = "Unused keys found in config yaml:"
                         if key not in valid_keys:
                             invalid_key_message += f"\n  * {key}"
+                            invalid_keys = True
+
+                    if invalid_keys:
                         print_warning(invalid_key_message)
 
                     self.name = str(codegen_configuration.get('name'))
@@ -157,7 +165,7 @@ class AnsibleIntegration:
 
         # Check that all required config options set
         for required_key in REQUIRED_KEYS:
-            if getattr(__name__, f'self.{required_key}', False) is False:
+            if getattr(self, required_key, False) is False:
                 validation = False
                 validation_message += f"\n  * Missing required key config: {required_key}"
 
@@ -198,54 +206,13 @@ class AnsibleIntegration:
         Returns:
             code: The integration python code.
         """
-        name = self.name
-        code = f'''import traceback
-import ssh_agent_setup
-import demistomock as demisto  # noqa: F401
-from CommonServerPython import *  # noqa: F401
 
-# Import Generated code
-from AnsibleApiModule import *  # noqa: E402
-
-host_type = {self.host_type}
-
-# MAIN FUNCTION
-
-
-def main() -> None:
-    """main function, parses params and runs command functions
-
-    :return:
-    :rtype:
-    """
-
-    # SSH Key integration requires ssh_agent to be running in the background
-    ssh_agent_setup.setup()
-
-    # Common Inputs
-    command = demisto.command()
-    args = demisto.args()
-    int_params = demisto.params()
-    creds_mapping =  {self.creds_mapping}
-
-    try:
-
-        if command == 'test-module':
-'''
+        code = integration_code_header.format(host_type=self.host_type, creds_mapping=self.creds_mapping)
 
         if self.test_command is not None:
-            code += '''            # This is the call made when pressing the integration Test button.
-            result = generic_ansible('{}', '{}', args, int_params, host_type)
-            if result:
-                return_results('ok')
-            else:
-                return_results(result)
-'''.format(name.lower(), self.test_command)
+            code += test_command_code.format(self.name.lower(), self.test_command)
         else:
-            code += '''            # This is the call made when pressing the integration Test button.
-            return_results('This integration does not support testing from this screen. \\
-                           Please refer to the documentation for details on how to perform \\
-                           configuration tests.')'''
+            code += no_test_command_code
 
         self.print_with_verbose('Adding Ansible modules to the Python code.')
         for ansible_module in self.ansible_modules:
@@ -260,23 +227,10 @@ def main() -> None:
             else:
                 demisto_command = to_kebab_case(ansible_module)
 
-            code += "\n        elif command == '{}':\n            return_results(\
-generic_ansible('{}', '{}', args, int_params, host_type, creds_mapping))".format(
-                demisto_command, name.lower(), ansible_module)
+            code += command_code.format(
+                demisto_command, self.name.lower(), ansible_module)
 
-        code += '''
-    # Log exceptions and return errors
-    except Exception as e:
-        demisto.error(traceback.format_exc())  # print the traceback
-        return_error(f'Failed to execute {command} command.\\nError:\\n{str(e)}')
-
-
-# ENTRY POINT
-
-
-if __name__ in ('__main__', '__builtin__', 'builtins'):
-    main()
-'''
+        code += integration_code_footer
 
         self.print_with_verbose('Finished generating the Python code.')
 

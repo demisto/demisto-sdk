@@ -1499,7 +1499,7 @@ TEST_RELEASE_NOTES_TEST_BANK_3 = [
 
 
 @pytest.mark.parametrize('release_notes_content, unmatching_list, filled_expected_result', TEST_RELEASE_NOTES_TEST_BANK_3)
-def test_is_unmatching_docker_image_parsed_right(release_notes_content, unmatching_list, filled_expected_result):
+def test_update_dockerimage_in_rn_text(release_notes_content, unmatching_list, filled_expected_result):
     """
     Given
     - Case 1: RN containing a docker update, unmatching list containing one unmatching case regarding an un matched dockerimage version.

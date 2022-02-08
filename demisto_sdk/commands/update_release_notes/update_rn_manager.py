@@ -13,7 +13,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                pack_name_to_path, print_color,
                                                print_warning, suppress_stdout)
 from demisto_sdk.commands.update_release_notes.update_rn import (
-    UpdateRN, update_api_modules_dependents_rn, update_dockerimage_in_rn)
+    UpdateRN, update_api_modules_dependents_rn, update_dockerimage_in_rn_manager)
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
 

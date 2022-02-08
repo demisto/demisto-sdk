@@ -6,7 +6,6 @@ import click
 import pytest
 from git import Repo
 
-from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.git_content_config import (GitContentConfig,
                                                             GitCredentials,
                                                             GitProvider)
@@ -271,6 +270,3 @@ class TestGitContentConfig:
         git_config = GitContentConfig(project_id=3, git_provider=GitProvider.GitLab, repo_hostname='code.pan.run')
         assert git_config.gitlab_id == 3
         assert git_config.base_api == 'https://code.pan.run/api/v4/projects/3/repository'
-
-
-

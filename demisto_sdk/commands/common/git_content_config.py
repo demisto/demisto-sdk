@@ -49,7 +49,19 @@ class GitContentConfig:
 
     ENV_REPO_HOSTNAME_NAME = 'DEMISTO_SDK_REPO_HOSTNAME'
 
-    def __init__(self, repo_name: Optional[str] = None, git_provider: Optional[GitProvider] = GitProvider.GitHub, repo_hostname: Optional[str] = None, project_id: Optional[int] = None):
+    def __init__(
+            self,
+            repo_name: Optional[str] = None,
+            git_provider: Optional[GitProvider] = GitProvider.GitHub,
+            repo_hostname: Optional[str] = None,
+            project_id: Optional[int] = None
+    ):
+        """
+        @param repo_name: Name of the repo (e.g "demisto/content")
+        @param git_provider: the git provider to use (e.g GitProvider.GitHub, GitProvider.GitLab)
+        @param repo_hostname: The hostname to use (e.g "code.pan.run", "gitlab.com", "my-hostename.com")
+        @param project_id: The project id, relevant for gitlab.
+        """
         self.credentials = GitCredentials()
         parsed_hostname = urlparse(repo_hostname).hostname
         self.repo_hostname = parsed_hostname or repo_hostname or os.getenv(GitContentConfig.ENV_REPO_HOSTNAME_NAME)
@@ -67,7 +79,8 @@ class GitContentConfig:
                 click.secho('No repository was found - defaulting to demisto/content', fg='yellow')
                 self.current_repository = GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
         else:
-            self.current_repository = repo_name
+            if repo_name:
+                self.current_repository = repo_name
             repo_hostname, gitlab_id = self._search_gitlab_id(self.repo_hostname, repo_name) or (None, None)
             if self._is_gitlab_exists(self.repo_hostname, project_id):
                 gitlab_id = project_id
@@ -178,4 +191,3 @@ class GitContentConfig:
         except requests.exceptions.ConnectionError as e:
             logging.getLogger('demisto-sdk').debug(str(e), exc_info=True)
             return False
-

@@ -13,7 +13,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                pack_name_to_path, print_color,
                                                print_warning, suppress_stdout)
 from demisto_sdk.commands.update_release_notes.update_rn import (
-    UpdateRN, update_api_modules_dependents_rn)
+    UpdateRN, update_api_modules_dependents_rn, update_dockerimage_in_rn)
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
 
@@ -21,10 +21,11 @@ class UpdateReleaseNotesManager:
     def __init__(self, user_input: Optional[str] = None, update_type: Optional[str] = None,
                  pre_release: bool = False, is_all: Optional[bool] = False, text: Optional[str] = None,
                  specific_version: Optional[str] = None, id_set_path: Optional[str] = None,
-                 prev_ver: Optional[str] = None, is_force: bool = False, is_bc: bool = False):
+                 prev_ver: Optional[str] = None, is_force: bool = False, is_bc: bool = False, update_docker: bool = False):
         self.given_pack = user_input
         self.changed_packs_from_git: set = set()
         self.update_type = update_type
+        self.update_docker = update_docker
         self.pre_release: bool = False if pre_release is None else pre_release
         # update release notes to every required pack if not specified.
         self.is_all = True if not self.given_pack else is_all
@@ -58,10 +59,19 @@ class UpdateReleaseNotesManager:
         self.check_existing_rn(added_files)
 
         self.handle_api_module_change(modified_files, added_files)
-        self.create_release_notes(modified_files, added_files, old_format_files)
-        if len(self.total_updated_packs) > 1:
-            print_color('\nSuccessfully updated the following packs:\n' + '\n'.join(self.total_updated_packs),
-                        LOG_COLORS.GREEN)
+        if self.update_docker:
+            update_occured = update_dockerimage_in_rn_manager(modified_files, self.packs_existing_rn[self.given_pack])
+            if update_occured:
+                print_color('\nSuccessfully updated the docker image of the pack:' + self.given_pack,
+                            LOG_COLORS.GREEN)
+            else:
+                print_color('\nThe pack docker image is already up to date.',
+                            LOG_COLORS.RED)
+        else:
+            self.create_release_notes(modified_files, added_files, old_format_files)
+            if len(self.total_updated_packs) > 1:
+                print_color('\nSuccessfully updated the following packs:\n' + '\n'.join(self.total_updated_packs),
+                            LOG_COLORS.GREEN)
 
     def filter_to_relevant_files(self, file_set: set, validate_manager: ValidateManager) -> Tuple[set, set, bool]:
         """

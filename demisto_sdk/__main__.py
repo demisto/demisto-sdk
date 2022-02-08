@@ -2006,7 +2006,7 @@ def integration_diff(**kwargs):
     help='Output integration YAML file.'
 )
 @click.option(
-    '--merge', type=bool,
+    '--merge/--no-merge', default=False,
     help='Merge existing integration commands with output file, if it exists, instead of overwriting.'
 )
 def autogenerate_yaml_from_python(**kwargs):

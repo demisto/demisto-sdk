@@ -71,7 +71,8 @@ class GitContentConfig:
         if self.repo_hostname == 'github.com':
             self.repo_hostname = GitContentConfig.GITHUB_USER_CONTENT
 
-        if not repo_name and not project_id:  # repo_name is not specified, parsing the remote url the get the details
+        if not repo_name and not project_id:
+            # repo_name and project id are not specified, parsing the remote url the get the details
             try:
                 parsed_git = GitContentConfig._get_repository_properties()
                 self._set_repo_config(parsed_git)

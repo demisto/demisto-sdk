@@ -27,7 +27,6 @@ import requests
 import urllib3
 from packaging.version import parse
 from pebble import ProcessFuture, ProcessPool
-from ruamel.yaml.comments import CommentedMap, CommentedSeq
 
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK, CLASSIFIERS_DIR,
@@ -2398,19 +2397,17 @@ def alternate_item_fields(content_item):
         content_item: content item object
 
     """
-    as_dict_types = (dict, CommentedMap)
-    as_list_types = (list, CommentedSeq)
-    current_dict = content_item.to_dict() if type(content_item) not in as_dict_types else content_item
+    current_dict = content_item.to_dict() if not isinstance(content_item, dict) else content_item
     copy_dict = current_dict.copy()  # for modifying dict while iterating
     for field, value in copy_dict.items():
         if field.endswith('_x2'):
             current_dict[field[:-3]] = value
             current_dict.pop(field)
-        elif isinstance(current_dict[field], as_dict_types):
+        elif isinstance(current_dict[field], dict):
             alternate_item_fields(current_dict[field])
-        elif isinstance(current_dict[field], as_list_types):
+        elif isinstance(current_dict[field], list):
             for item in current_dict[field]:
-                if isinstance(item, as_dict_types):
+                if isinstance(item, dict):
                     alternate_item_fields(item)
 
 

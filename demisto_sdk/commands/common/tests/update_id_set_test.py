@@ -646,6 +646,26 @@ class TestScripts:
         assert IsEqualFunctions.is_dicts_equal(returned_data, const_data)
 
     @staticmethod
+    def test_get_script_data_script_executions_for_js_code():
+        """
+        Given
+            - A script file which contains javascript code.
+
+        When
+            - parsing scripts files
+
+        Then
+            - make sure the script_executions was parsed successfully.
+        """
+        file_path = TESTS_DIR + '/test_files/Script-js-script-code.yml'
+        script_name = 'TestScriptWithJsCode'
+        data = get_script_data(file_path, packs={'DummyPack': {}})
+
+        script_executions = data.get(script_name, {}).get('script_executions')
+        assert len(script_executions) == 2
+        assert script_executions == ['dummy_command_1', 'dummy_command_2']
+
+    @staticmethod
     def test_process_script__sanity_package(mocker):
         """
         Given

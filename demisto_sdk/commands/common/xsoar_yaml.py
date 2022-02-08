@@ -8,6 +8,7 @@ class XSOAR_YAML:
     XSOAR wrapper to ruamel.yaml.
     Use only this wrapper for yaml handling.
     """
+
     def __init__(self, typ=None, preserve_quotes=True, allow_duplicate_keys=False, width=5000):
         self._ryaml = YAML(typ=typ)
         self._ryaml.preserve_quotes = preserve_quotes

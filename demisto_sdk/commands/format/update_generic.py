@@ -72,7 +72,7 @@ class BaseUpdate:
         if not self.source_file:
             raise Exception('Please provide <source path>, <optional - destination path>.')
         try:
-            self.data, self.file_type = get_dict_from_file(self.source_file, use_xsoar_yaml=True)
+            self.data, self.file_type = get_dict_from_file(self.source_file)
         except Exception:
             raise Exception(F'Provided file {self.source_file} is not a valid file.')
         self.from_version_key = self.set_from_version_key_name()

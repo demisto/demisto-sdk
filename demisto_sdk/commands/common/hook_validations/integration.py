@@ -26,9 +26,8 @@ from demisto_sdk.commands.common.hook_validations.docker import \
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.tools import (
     _get_file_id, compare_context_path_in_yml_and_readme, get_core_pack_list,
-    get_file_version_suffix_if_exists, get_files_in_dir, get_pack_name,
-    is_iron_bank_pack, print_error, server_version_compare, get_item_marketplaces)
-
+    get_file_version_suffix_if_exists, get_files_in_dir, get_item_marketplaces,
+    get_pack_name, is_iron_bank_pack, print_error, server_version_compare)
 from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 
 xsoar_yaml = XSOAR_YAML()

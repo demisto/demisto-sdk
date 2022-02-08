@@ -27,6 +27,7 @@ import requests
 import urllib3
 from packaging.version import parse
 from pebble import ProcessFuture, ProcessPool
+from ruamel.yaml import CommentedMap, CommentedSeq
 
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK, CLASSIFIERS_DIR,
@@ -471,27 +472,8 @@ def get_file(file_path, type_of_file):
     return {}
 
 
-
-
-def get_xsoar_yaml(file_path: str) -> dict:
-    """
-    Get yml file contents using ruaml
-
-    Args:
-        file_path (string): The file path
-
-    Returns:
-        dict. The yml contents
-    """
-    try:
-        with open(os.path.expanduser(file_path), 'r') as yf:
-            data = xsoar_yaml.load(yf)
-    except FileNotFoundError as e:
-        click.echo(f'File {file_path} not found. Error was: {str(e)}', nl=True)
-    except Exception as e:
-        click.echo(
-            "{} has a structure issue of file type yml. Error was: {}".format(file_path, str(e)), nl=True)
-    return data
+def get_yaml(file_path):
+    return get_file(file_path, 'yml')
 
 
 def get_json(file_path):
@@ -1024,7 +1006,6 @@ def get_dict_from_file(path: str,
 
     Arguments:
         path - a path to the file
-        use_xsoar_yaml - Whether to use xsoar_yaml for file loading or not
         raises_error - Whether to raise a FileNotFound error if `path` is not a valid file.
 
     Returns:
@@ -1033,7 +1014,7 @@ def get_dict_from_file(path: str,
     try:
         if path:
             if path.endswith('.yml'):
-                return get_xsoar_yaml(path), 'yml'
+                return get_yaml(path), 'yml'
             elif path.endswith('.json'):
                 return get_json(path), 'json'
             elif path.endswith('.py'):

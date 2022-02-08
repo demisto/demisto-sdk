@@ -50,7 +50,7 @@ UNSUPPORTED_INPUT_ERR_MSG = 'Unsupported input. Please provide either: ' \
 class YmlUnifier:
 
     def __init__(self, input: str, dir_name=INTEGRATIONS_DIR, output: str = '',
-                 image_prefix=DEFAULT_IMAGE_PREFIX, force: bool = False):
+                 image_prefix=DEFAULT_IMAGE_PREFIX, force: bool = False, yml_modified_data=None):
 
         directory_name = ''
         # Changing relative path to current abspath fixed problem with default output file name.
@@ -86,7 +86,9 @@ class YmlUnifier:
                 break
 
         self.xsoar_yaml = XSOAR_YAML(width=50000)  # make sure long lines will not break (relevant for code section)
-        if self.yml_path:
+        if yml_modified_data:
+            self.yml_data = yml_modified_data
+        elif self.yml_path:
             with io.open(self.yml_path, 'r', encoding='utf8') as yml_file:
                 self.yml_data = self.xsoar_yaml.load(yml_file)
         else:

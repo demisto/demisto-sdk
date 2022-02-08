@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Optional, Union
 
 from ruamel.yaml.scanner import ScannerError
 from wcmatch.pathlib import EXTGLOB, NEGATE, Path
@@ -52,8 +52,14 @@ class YAMLObject(DictionaryBasedObject):
 
     def _serialize(self, dest_dir: Path):
         """Dump dictionary to yml file
+         """
+        dest_file = self._create_target_dump_dir(dest_dir) / self.normalize_file_name()
+        with open(dest_file, 'w') as file:
+            RUYAML.dump(self._as_dict, file)
+        return [dest_file]
 
-        TODO:
-            1. Implement serialize by specific yaml dumping configuration - Quotes etc.
-        """
-        pass
+    def dump(self, dest_dir: Optional[Union[Path, str]] = None):
+        if self.modified:
+            return self._serialize(dest_dir)
+        else:
+            return super().dump(dest_dir)

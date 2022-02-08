@@ -1,0 +1,24 @@
+commonfields:
+  id: id
+  version: -1
+  id_x2: id_x2
+name: name
+script: ''
+type: javascript
+tags:
+- Utility
+comment: Expose the incident owner into IncidentOwner context key
+enabled: true
+outputs:
+- contextPath: IncidentOwner.name
+  description: Incident owner full name
+- contextPath: IncidentOwner.email
+  description: Incident owner email address
+- contextPath: IncidentOwner.phone
+  description: Incident owner phone number
+- contextPath: IncidentOwner.roles
+  description: Incident owner roles
+scripttarget: 0
+fromversion: 6.0.0
+name_x2: name_x2
+comment_x2: comment_x2

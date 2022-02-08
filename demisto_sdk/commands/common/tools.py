@@ -42,8 +42,8 @@ from demisto_sdk.commands.common.constants import (
     PACKS_README_FILE_NAME, PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR,
     RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR,
-    XSOAR_CONFIG_FILE, FileType, GitContentConfig, IdSetKeys,
-    MarketplaceVersions, urljoin)
+    XSOAR_CONFIG_FILE, FileType, FileTypeToIDSetKeys, GitContentConfig,
+    IdSetKeys, MarketplaceVersions, urljoin)
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 
@@ -471,8 +471,6 @@ def get_file(file_path, type_of_file):
     return {}
 
 
-def get_yaml(file_path):
-    return get_file(file_path, 'yml')
 
 
 def get_xsoar_yaml(file_path: str) -> dict:
@@ -790,11 +788,14 @@ def get_pack_name(file_path):
     Returns:
         pack name (str)
     """
-    if isinstance(file_path, Path):
-        file_path = str(file_path)
-    # the regex extracts pack name from relative paths, for example: Packs/EWSv2 -> EWSv2
-    match = re.search(rf'{PACKS_DIR_REGEX}[/\\]([^/\\]+)[/\\]?', file_path)
-    return match.group(1) if match else None
+    file_path = Path(file_path)
+    parts = file_path.parts
+    if 'Packs' not in parts:
+        return None
+    pack_name_index = parts.index('Packs') + 1
+    if len(parts) <= pack_name_index:
+        return None
+    return parts[pack_name_index]
 
 
 def get_pack_names_from_files(file_paths, skip_file_types=None):
@@ -1016,7 +1017,7 @@ def get_dev_requirements(py_version, envs_dirs_base):
     return requirements
 
 
-def get_dict_from_file(path: str, use_xsoar_yaml: bool = False,
+def get_dict_from_file(path: str,
                        raises_error: bool = True) -> Tuple[Dict, Union[str, None]]:
     """
     Get a dict representing the file
@@ -1032,9 +1033,7 @@ def get_dict_from_file(path: str, use_xsoar_yaml: bool = False,
     try:
         if path:
             if path.endswith('.yml'):
-                if use_xsoar_yaml:
-                    return get_xsoar_yaml(path), 'yml'
-                return get_yaml(path), 'yml'
+                return get_xsoar_yaml(path), 'yml'
             elif path.endswith('.json'):
                 return get_json(path), 'json'
             elif path.endswith('.py'):
@@ -2366,7 +2365,7 @@ def get_scripts_and_commands_from_yml_data(data, file_type):
     commands = []
     detailed_commands = []
     scripts_and_pbs = []
-    if file_type == FileType.TEST_PLAYBOOK or file_type == FileType.PLAYBOOK:
+    if file_type in {FileType.TEST_PLAYBOOK, FileType.PLAYBOOK}:
         tasks = data.get('tasks')
         for task_num in tasks.keys():
             task = tasks[task_num]
@@ -2408,3 +2407,49 @@ def get_scripts_and_commands_from_yml_data(data, file_type):
             })
 
     return detailed_commands, scripts_and_pbs
+
+
+def alternate_item_fields(content_item):
+    """
+    Go over all of the given content item fields and if there is a field with an alternative name, which is marked
+    by '_x2', use that value as the value of the original field (the corresponding one without the '_x2' suffix).
+    Args:
+        content_item: content item object
+
+    """
+    as_dict_types = (dict, CommentedMap)
+    as_list_types = (list, CommentedSeq)
+    current_dict = content_item.to_dict() if type(content_item) not in as_dict_types else content_item
+    copy_dict = current_dict.copy()  # for modifying dict while iterating
+    for field, value in copy_dict.items():
+        if field.endswith('_x2'):
+            current_dict[field[:-3]] = value
+            current_dict.pop(field)
+        elif isinstance(current_dict[field], as_dict_types):
+            alternate_item_fields(current_dict[field])
+        elif isinstance(current_dict[field], as_list_types):
+            for item in current_dict[field]:
+                if isinstance(item, as_dict_types):
+                    alternate_item_fields(item)
+
+
+def should_alternate_field_by_item(content_item, id_set):
+    """
+    Go over the given content item and check if it should be modified to use its alternative fields, which is determined
+    by the field 'has_alternative_meta' in the id set.
+    Args:
+        content_item: content item object
+        id_set: parsed id set dict
+
+    Returns: True if should alterante fields, false otherwise
+
+    """
+    commonfields = content_item.get('commonfields')
+    item_id = commonfields.get('id') if commonfields else content_item.get('id')
+
+    item_type = content_item.type()
+    id_set_item_type = id_set.get(FileTypeToIDSetKeys.get(item_type))
+    for item in id_set_item_type:
+        if list(item.keys())[0] == item_id:
+            return item.get(item_id, {}).get('has_alternative_meta', False)
+    return False

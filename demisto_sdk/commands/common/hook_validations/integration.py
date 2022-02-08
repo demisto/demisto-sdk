@@ -107,6 +107,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.name_not_contain_the_type(),
             self.is_valid_endpoint_command(),
             self.is_api_token_in_credential_type(),
+            self.validate_readme_exists(),
         ]
 
         return all(answers)

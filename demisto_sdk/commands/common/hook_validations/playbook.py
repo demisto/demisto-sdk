@@ -44,6 +44,7 @@ class PlaybookValidator(ContentEntityValidator):
             self.verify_condition_tasks_has_else_path(),
             self.name_not_contain_the_type(),
             self.is_valid_with_indicators_input(),
+            self.validate_readme_exists(),
         ]
         answers = all(playbook_checks)
 

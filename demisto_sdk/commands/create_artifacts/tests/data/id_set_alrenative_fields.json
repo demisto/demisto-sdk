@@ -1,0 +1,23 @@
+{
+    "scripts": [{"id":  {"has_alternative_meta" : true}}],
+    "playbooks": [{"playbook": {"has_alternative_meta" : true}}],
+    "integrations": [{"id": {"has_alternative_meta" : true}}],
+    "TestPlaybooks": [],
+    "Classifiers": [],
+    "Dashboards": [],
+    "IncidentFields": [{"incident": {"has_alternative_meta" : true}}],
+    "IncidentTypes": [],
+    "IndicatorFields": [],
+    "IndicatorTypes": [],
+    "Layouts": [],
+    "Reports": [],
+    "Widgets": [],
+    "Mappers": [],
+    "Packs": {},
+    "GenericTypes": [],
+    "GenericFields": [],
+    "GenericModules": [],
+    "GenericDefinitions": [],
+    "Lists": [],
+    "Jobs": []
+}

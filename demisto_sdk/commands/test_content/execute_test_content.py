@@ -60,8 +60,7 @@ def _add_pr_comment(comment, logging_module):
 def execute_test_content(**kwargs):
     logging_manager = ParallelLoggingManager('Run_Tests.log', real_time_logs_only=not kwargs['nightly'])
     build_context = BuildContext(kwargs, logging_manager)
-    use_retries_mechanism = kwargs.get('use-retries-mechanism', True)
-    logging_manager.info(f'USE RETRIES: {use_retries_mechanism}')
+    use_retries_mechanism = kwargs.get('use_retries_mechanism', True)
     threads_list = []
     for server_ip, port in build_context.instances_ips.items():
         tests_execution_instance = ServerContext(build_context, server_private_ip=server_ip, tunnel_port=port,

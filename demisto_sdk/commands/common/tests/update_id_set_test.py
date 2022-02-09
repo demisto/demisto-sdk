@@ -1173,7 +1173,16 @@ class TestLayouts:
 
     @staticmethod
     @pytest.mark.parametrize('layout_type, marketplace, should_exclude', LAYOUT_TYPE_TO_MARKETPLACE_TESTS)
-    def test_process_layoutcontainer__excluding_from_marketplace(layout_type, marketplace, should_exclude, repo):
+    def test_process_layoutscontainer__excluding_from_marketplace_by_layout_type(layout_type, marketplace, should_exclude, repo):
+        """
+        Given
+            - A layoutcontainer of layout_type (incident/indicator)
+        When
+            - parsing a layoutcontainer file.
+        Then
+            - exclude incident layout from marketplace v2
+            - accept all other cases
+        """
         pack = repo.create_pack(name='DummyPack')
         layout = pack.create_layoutcontainer('Reut', {
             'id': 'Reut',
@@ -1193,6 +1202,29 @@ class TestLayouts:
             assert len(res) == 1
             assert res[0].get('Reut')
             assert not excluded_items
+
+    @staticmethod
+    def test_process_layoutscontainer__marketplace_mismatch(repo):
+        """
+        Given
+            - An indicator layoutcontainer
+        When
+            - parsing a layoutcontainer file when there is a mismatch between the item's marketplaces and the current run marketplace.
+        Then
+            - return empty list
+        """
+        pack = repo.create_pack(name='DummyPack')
+        layout = pack.create_layoutcontainer('Itay', {
+            'id': 'Itay',
+            'group': 'indicator',
+            'detailsV2': {},
+            'marketplaces': ['marketplacev2'],
+        })
+        res, excluded_items = process_layoutscontainers(layout.path, {'DummyPack': {}}, MarketplaceVersions.XSOAR.value, True)
+        assert res == []
+        assert excluded_items
+        assert 'DummyPack' in excluded_items
+        assert ('layoutscontainer', 'Itay') in excluded_items['DummyPack']
 
 
 class TestIncidentFields:

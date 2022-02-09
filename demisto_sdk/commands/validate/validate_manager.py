@@ -96,7 +96,7 @@ class ValidateManager:
             validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
             silence_init_prints=False, no_docker_checks=False, skip_dependencies=False, id_set_path=None, staged=False,
             create_id_set=False, json_file_path=None, skip_schema_check=False, debug_git=False, include_untracked=False,
-            pykwalify_logs=False, check_is_unskipped=True, quite_bc=False
+            pykwalify_logs=False, check_is_unskipped=True, quite_bc=False, run_with_multiprocessing=False
     ):
         # General configuration
         self.skip_docker_checks = False
@@ -120,6 +120,7 @@ class ValidateManager:
         self.quite_bc = quite_bc
         self.check_is_unskipped = check_is_unskipped
         self.conf_json_data = {}
+        self.run_with_multiprocessing = run_with_multiprocessing
 
         if json_file_path:
             self.json_file_path = os.path.join(json_file_path, 'validate_outputs.json') if \
@@ -194,7 +195,7 @@ class ValidateManager:
             self.conf_json_validator = ConfJsonValidator()
             self.conf_json_data = self.conf_json_validator.conf_data
 
-    def print_final_report(self, valid, all_errors: list):
+    def print_final_report(self, valid):
         self.print_ignored_files_report(self.print_ignored_files)
         self.print_ignored_errors_report(self.print_ignored_errors)
 
@@ -203,10 +204,7 @@ class ValidateManager:
             return 0
 
         else:
-            if all_errors:
-                all_failing_files = '\n'.join(all_errors)
-            else:
-                all_failing_files = '\n'.join(FOUND_FILES_AND_ERRORS)
+            all_failing_files = '\n'.join(FOUND_FILES_AND_ERRORS)
             click.secho(f"\n=========== Found errors in the following files ===========\n\n{all_failing_files}\n",
                         fg="bright_red")
 
@@ -223,7 +221,7 @@ class ValidateManager:
         """
         all_errors: list = []
         if self.validate_all:
-            is_valid, all_errors = self.run_validation_on_all_packs()
+            is_valid = self.run_validation_on_all_packs()
         elif self.use_git:
             is_valid = self.run_validation_using_git()
         elif self.file_path:
@@ -291,7 +289,7 @@ class ValidateManager:
             elif file_level == PathLevel.PACK:
                 click.secho(f'\n================= Validating pack {path} =================',
                             fg="bright_cyan")
-                res, _, _ = self.run_validations_on_pack(path)
+                res = self.run_validations_on_pack(path)
                 files_validation_result.add(res)
 
             else:
@@ -338,16 +336,19 @@ class ValidateManager:
 
         ReadMeValidator.add_node_env_vars()
         with ReadMeValidator.start_mdx_server():
-            with pebble.ProcessPool(max_workers=4) as executor:
-                futures = []
+            if self.run_with_multiprocessing:
+                with pebble.ProcessPool(max_workers=4) as executor:
+                    futures = []
+                    for pack_path in all_packs:
+                        futures.append(executor.schedule(self.run_validations_on_pack, args=(pack_path,)))
+                    self.wait_futures_complete(futures_list=futures, done_fn=lambda x, y: (all_packs_valid.add(x),
+                                               FOUND_FILES_AND_ERRORS.extend(y)))
+            else:
                 for pack_path in all_packs:
                     self.completion_percentage = format((count / num_of_packs) * 100, ".2f")  # type: ignore
-                    futures.append(
-                        executor.schedule(self.run_validations_on_pack, args=(pack_path,)))
+                    all_packs_valid.add(self.run_validations_on_pack(pack_path)[0])
                     count += 1
-                self.wait_futures_complete(futures_list=futures, done_fn=lambda x, y: (all_packs_valid.add(x), FOUND_FILES_AND_ERRORS.extend(y)))
-
-            return all(all_packs_valid), FOUND_FILES_AND_ERRORS
+            return all(all_packs_valid)
 
     def run_validations_on_pack(self, pack_path):
         """Runs validation on all files in given pack. (i,g,a)

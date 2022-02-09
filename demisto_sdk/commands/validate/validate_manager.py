@@ -221,6 +221,7 @@ class ValidateManager:
     def run_validation(self):
         """Initiates validation in accordance with mode (i,g,a)
         """
+        all_errors: list = []
         if self.validate_all:
             is_valid, all_errors = self.run_validation_on_all_packs()
         elif self.use_git:
@@ -344,8 +345,7 @@ class ValidateManager:
                     futures.append(
                         executor.schedule(self.run_validations_on_pack, args=(pack_path,)))
                     count += 1
-                self.wait_futures_complete(futures_list=futures, done_fn=lambda x, y: all_packs_valid.add(x) and
-                                           FOUND_FILES_AND_ERRORS.extend(y))
+                self.wait_futures_complete(futures_list=futures, done_fn=lambda x, y: (all_packs_valid.add(x), FOUND_FILES_AND_ERRORS.extend(y)))
 
             return all(all_packs_valid), FOUND_FILES_AND_ERRORS
 
@@ -371,7 +371,7 @@ class ValidateManager:
             else:
                 self.ignored_files.add(content_entity_path)
 
-        return all(pack_entities_validation_results), FOUND_FILES_AND_ERRORS, FOUND_FILES_AND_IGNORED_ERRORS
+        return all(pack_entities_validation_results), FOUND_FILES_AND_ERRORS
 
     def run_validation_on_content_entities(self, content_entity_dir_path, pack_error_ignore_list):
         """Gets non-pack folder and runs validation within it (Scripts, Integrations...)

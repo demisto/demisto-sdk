@@ -231,7 +231,7 @@ class ValidateManager:
             self.use_git = True
             self.is_circle = True
             is_valid = self.run_validation_using_git()
-        return self.print_final_report(is_valid, all_errors)
+        return self.print_final_report(is_valid)
 
     @staticmethod
     def detect_file_level(file_path: str) -> PathLevel:
@@ -289,8 +289,7 @@ class ValidateManager:
             elif file_level == PathLevel.PACK:
                 click.secho(f'\n================= Validating pack {path} =================',
                             fg="bright_cyan")
-                res = self.run_validations_on_pack(path)
-                files_validation_result.add(res)
+                files_validation_result.add(self.run_validations_on_pack(path)[0])
 
             else:
                 click.secho(f'\n================= Validating package {path} =================',

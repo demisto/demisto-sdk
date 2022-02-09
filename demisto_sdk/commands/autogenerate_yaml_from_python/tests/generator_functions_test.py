@@ -3,7 +3,7 @@ import os
 
 import pytest
 
-from demisto_sdk.commands.generate_yaml_from_python.generator_functions import *
+from demisto_sdk.commands.autogenerate_yaml_from_python.generator_functions import *
 from demisto_sdk.tests.test_files.fake_annotated_integration.fake_annotated_integration import (
     COMMANDS, ExampleReturnClass, DemistoParameters)
 from demisto_sdk.tests.test_files.fake_annotated_integration.output_dicts import *

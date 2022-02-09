@@ -1978,7 +1978,7 @@ def integration_diff(**kwargs):
     help='Name of the integration. '
 )
 @click.option(
-    '-c', '--category', type=str,
+    '-c', '--category', type=str, default="Authentication",
     help='Integration category - ex. Authentication'
 )
 @click.option(
@@ -1986,7 +1986,7 @@ def integration_diff(**kwargs):
     help='Integration description.'
 )
 @click.option(
-    '--docker_image', type=str,
+    '--docker_image', type=str, default=None,
     help='Integration Docker image'
 )
 @click.option(
@@ -2010,7 +2010,7 @@ def integration_diff(**kwargs):
     help='Merge existing integration commands with output file, if it exists, instead of overwriting.'
 )
 def autogenerate_yaml_from_python(**kwargs):
-    from demisto_sdk.commands.generate_yaml_from_python.generator_functions import PythonIntegrationGenerator
+    from demisto_sdk.commands.autogenerate_yaml_from_python.generator_functions import PythonIntegrationGenerator
     integration_dict = PythonIntegrationGenerator.build_dict_from_module(**kwargs)
     PythonIntegrationGenerator.save_dict_as_yaml_integration_file(
         integration_dict=integration_dict,

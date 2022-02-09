@@ -1093,3 +1093,17 @@ def test_disable_md_autolinks():
     res = disable_md_autolinks(big_str)
     assert 'http://' not in res
     assert res.count('https:<span>//</span>') == 8
+
+TEST_EMPTY_SCRIPTDATA_SECTION = [
+    ({'comment': 'some comment about the script', 'script': ''}, [''])
+]
+
+
+@pytest.mark.parametrize('yml_content, expected_result', TEST_EMPTY_SCRIPTDATA_SECTION)
+def test_generate_table_section_empty(yml_content, expected_result):
+    from demisto_sdk.commands.generate_docs.common import \
+        generate_table_section
+
+    section = generate_table_section(data, title, empty_message, text)
+
+    assert section == expected_result

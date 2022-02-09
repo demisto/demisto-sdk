@@ -23,7 +23,7 @@ class RUAMEL_Handler(XSOAR_Handler):
 
     def dump(self, data, stream, sort_keys=False):
         if sort_keys:
-            data = order_dict(data)
+            data = dict(order_dict(data))
         self._yaml.dump(data, stream)
 
     def dumps(self, data, sort_keys=False):

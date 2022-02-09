@@ -139,25 +139,34 @@ def test_generate_list_with_text_section():
     assert section == expected_section
 
 
-def test_generate_table_section_empty():
+TEST_TABLE_SECTION_EMPTY = [
+    ([], 'Script Data', 'No data found.', 'This is the metadata of the script.', ['## Script Data', '---', 'No data found.', '']),
+    ([], 'Script Data', '', '', ['']),
+    ([], 'Script Data', '', 'This is the metadata of the script.', [''])
+]
+
+
+@pytest.mark.parametrize('data, title, empty_message, text, expected_result', TEST_TABLE_SECTION_EMPTY)
+def test_generate_table_section_empty(data, title, empty_message, text, expected_result):
     """Unit test
     Given
-    - generate_table_section command
-    - script empty metadata
+    - Case 1: script empty metadata, script title, empty message to replace, text.
+    - Case 2: script empty metadata, script title.
+    - Case 3: script empty metadata, script title, text.
     When
-    - running the command on the inputs
+    - running the generate_table_section command on the inputs
     Then
     - Validate That the script metadata was created correctly.
+    - Case 1: Table section with title and empty_message as a replacement.
+    - Case 2: Empty table section.
+    - Case 3: Empty table section.
     """
     from demisto_sdk.commands.generate_docs.common import \
         generate_table_section
 
-    section = generate_table_section([], 'Script Data', 'No data found.', 'This is the metadata of the script.')
+    section = generate_table_section(data, title, empty_message, text)
 
-    expected_section = [
-        '## Script Data', '---', 'No data found.', '']
-
-    assert section == expected_section
+    assert section == expected_result
 
 
 def test_generate_table_section():

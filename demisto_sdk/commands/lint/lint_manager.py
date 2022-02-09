@@ -61,7 +61,7 @@ class LintManager:
 
     def __init__(self, input: str, git: bool, all_packs: bool, quiet: bool, verbose: int, prev_ver: str,
                  json_file_path: str = '', id_set_path: str = None, check_dependent_api_module: bool = False,
-                 failed_unit_test_file: str = ''):
+                 failed_unit_tests_file: str = ''):
 
         # Verbosity level
         self._verbose = not quiet if quiet else verbose
@@ -92,10 +92,10 @@ class LintManager:
         if json_file_path:
             if os.path.isdir(json_file_path):
                 json_file_path = os.path.join(json_file_path, 'lint_outputs.json')
-        if failed_unit_test_file:
-            if os.path.isdir(failed_unit_test_file):
-                failed_unit_test_file = os.path.join(failed_unit_test_file, 'failed_unit_tests.txt')
-        self.failed_unit_test_file = failed_unit_test_file
+        if failed_unit_tests_file:
+            if os.path.isdir(failed_unit_tests_file):
+                failed_unit_tests_file = os.path.join(failed_unit_tests_file, 'failed_unit_tests.txt')
+        self.failed_unit_tests_file = failed_unit_tests_file
         self.json_file_path = json_file_path
         self.linters_error_list: list = []
 
@@ -657,8 +657,7 @@ class LintManager:
                                 name = re.sub(pattern=r"\[.*\]",
                                               repl="",
                                               string=test_case.get("name"))
-                                print(f"yuval name is {name}\n\n\n")
-                                with open(self.failed_unit_test_file, 'a') as f:
+                                with open(self.failed_unit_tests_file, 'a') as f:
                                     f.write(name + '\n')
                                 print(wrapper_test.fill(name))
                                 if test_case.get("call", {}).get("longrepr"):

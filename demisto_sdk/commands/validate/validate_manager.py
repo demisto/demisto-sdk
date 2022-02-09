@@ -194,7 +194,7 @@ class ValidateManager:
             self.conf_json_validator = ConfJsonValidator()
             self.conf_json_data = self.conf_json_validator.conf_data
 
-    def print_final_report(self, valid):
+    def print_final_report(self, valid, all_errors: list):
         self.print_ignored_files_report(self.print_ignored_files)
         self.print_ignored_errors_report(self.print_ignored_errors)
 
@@ -203,7 +203,10 @@ class ValidateManager:
             return 0
 
         else:
-            all_failing_files = '\n'.join(FOUND_FILES_AND_ERRORS)
+            if all_errors:
+                all_failing_files = '\n'.join(all_errors)
+            else:
+                all_failing_files = '\n'.join(FOUND_FILES_AND_ERRORS)
             click.secho(f"\n=========== Found errors in the following files ===========\n\n{all_failing_files}\n",
                         fg="bright_red")
 
@@ -219,7 +222,7 @@ class ValidateManager:
         """Initiates validation in accordance with mode (i,g,a)
         """
         if self.validate_all:
-            is_valid = self.run_validation_on_all_packs()
+            is_valid, all_errors = self.run_validation_on_all_packs()
         elif self.use_git:
             is_valid = self.run_validation_using_git()
         elif self.file_path:
@@ -229,7 +232,7 @@ class ValidateManager:
             self.use_git = True
             self.is_circle = True
             is_valid = self.run_validation_using_git()
-        return self.print_final_report(is_valid)
+        return self.print_final_report(is_valid, all_errors)
 
     @staticmethod
     def detect_file_level(file_path: str) -> PathLevel:
@@ -308,7 +311,7 @@ class ValidateManager:
         for future in as_completed(futures_list):
             try:
                 result = future.result()
-                done_fn(result[0], result[1], result[2])
+                done_fn(result[0], result[1])
             except Exception as e:
                 click.secho(f'An error occurred while tried to collect result, Error: {e}', fg="bright_red")
                 raise
@@ -341,10 +344,10 @@ class ValidateManager:
                     futures.append(
                         executor.schedule(self.run_validations_on_pack, args=(pack_path,)))
                     count += 1
-                self.wait_futures_complete(futures_list=futures, done_fn=lambda x, y, z: all_packs_valid.add(x) and
-                                           FOUND_FILES_AND_ERRORS.extend(y) and FOUND_FILES_AND_IGNORED_ERRORS.extend(z))
+                self.wait_futures_complete(futures_list=futures, done_fn=lambda x, y: all_packs_valid.add(x) and
+                                           FOUND_FILES_AND_ERRORS.extend(y))
 
-            return all(all_packs_valid)
+            return all(all_packs_valid), FOUND_FILES_AND_ERRORS
 
     def run_validations_on_pack(self, pack_path):
         """Runs validation on all files in given pack. (i,g,a)

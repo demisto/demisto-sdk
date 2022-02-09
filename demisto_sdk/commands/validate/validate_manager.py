@@ -211,8 +211,9 @@ class ValidateManager:
             click.secho(f"\n=========== Found errors in the following files ===========\n\n{all_failing_files}\n",
                         fg="bright_red")
 
-            with open(self.failed_validations_file, 'a') as f:
-                f.write(all_failing_files)
+            if self.failed_validations_file:
+                with open(self.failed_validations_file, 'a') as f:
+                    f.write(all_failing_files)
 
             if self.always_valid:
                 click.secho('Found the errors above, but not failing build', fg='yellow')

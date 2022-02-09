@@ -25,6 +25,7 @@ from demisto_sdk.commands.common.hook_validations.description import \
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
+from demisto_sdk.commands.common.loaders.xsoar_yaml import XSOAR_YAML
 from demisto_sdk.commands.common.tools import (
     _get_file_id, compare_context_path_in_yml_and_readme, get_core_pack_list,
     get_file_version_suffix_if_exists, get_files_in_dir, get_item_marketplaces,

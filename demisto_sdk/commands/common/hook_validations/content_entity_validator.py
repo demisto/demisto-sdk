@@ -15,11 +15,11 @@ from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
+from demisto_sdk.commands.common.loaders.xsoar_yaml import XSOAR_YAML
 from demisto_sdk.commands.common.tools import (_get_file_id,
                                                get_file_displayed_name,
                                                is_test_config_match,
                                                run_command)
-from demisto_sdk.commands.common.loaders.xsoar_yaml import XSOAR_YAML
 
 xsoar_yaml = XSOAR_YAML()
 

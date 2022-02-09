@@ -3,6 +3,7 @@ from io import StringIO
 from ruamel.yaml import YAML
 from xsoar_loader import XSOAR_Loader
 
+
 class XSOAR_YAML(XSOAR_Loader):
     """
     XSOAR wrapper to ruamel.yaml.

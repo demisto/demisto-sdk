@@ -17,13 +17,13 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_IMAGE_PREFIX, DIR_TO_PREFIX, INTEGRATIONS_DIR, SCRIPTS_DIR,
     TYPE_TO_EXTENSION, FileType)
 from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.loaders.xsoar_yaml import XSOAR_YAML
 from demisto_sdk.commands.common.tools import (LOG_COLORS, arg_to_list,
                                                find_type, get_pack_name,
                                                get_yaml, get_yml_paths_in_dir,
                                                print_color, print_error,
                                                print_warning,
                                                server_version_compare)
-from demisto_sdk.commands.common.loaders.xsoar_yaml import XSOAR_YAML
 
 PACK_METADATA_PATH = 'pack_metadata.json'
 CONTRIBUTOR_DISPLAY_NAME = ' ({} Contribution)'

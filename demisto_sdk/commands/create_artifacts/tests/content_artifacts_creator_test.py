@@ -8,11 +8,11 @@ from shutil import copyfile, copytree, rmtree
 import pytest
 
 from demisto_sdk.commands.common.constants import PACKS_DIR, TEST_PLAYBOOKS_DIR
+from demisto_sdk.commands.common.loaders.xsoar_yaml import XSOAR_YAML
 from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.common.tools import (is_object_in_id_set,
                                                open_id_set_file, src_root)
 from TestSuite.test_tools import ChangeCWD
-from demisto_sdk.commands.common.loaders.xsoar_yaml import XSOAR_YAML
 
 TEST_DATA = src_root() / 'tests' / 'test_files'
 TEST_CONTENT_REPO = TEST_DATA / 'content_slim'
@@ -24,6 +24,7 @@ PARTIAL_ID_SET_PATH = UNIT_TEST_DATA / 'id_set_missing_packs_and_items.json'
 ALTERNATIVE_FIELDS_ID_SET_PATH = UNIT_TEST_DATA / 'id_set_alrenative_fields.json'
 
 xsoar_yaml = XSOAR_YAML()
+
 
 def same_folders(src1, src2):
     """Assert if folder contains different files"""

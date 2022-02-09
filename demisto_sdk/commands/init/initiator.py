@@ -20,11 +20,11 @@ from demisto_sdk.commands.common.constants import (
     PACK_INITIAL_VERSION, PACK_SUPPORT_OPTIONS, PLAYBOOKS_DIR, REPORTS_DIR,
     SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR, XSOAR_AUTHOR, XSOAR_SUPPORT,
     XSOAR_SUPPORT_URL, GitContentConfig)
+from demisto_sdk.commands.common.loaders.xsoar_yaml import XSOAR_YAML
 from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                get_common_server_path,
                                                get_pack_name, print_error,
                                                print_v, print_warning)
-from demisto_sdk.commands.common.loaders.xsoar_yaml import XSOAR_YAML
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
 
 xsoar_yaml = XSOAR_YAML()

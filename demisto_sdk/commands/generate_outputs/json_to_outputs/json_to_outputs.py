@@ -78,11 +78,11 @@ from typing import Dict, Optional
 
 import dateparser
 
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
                                                print_error)
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 
-xsoar_yaml = XSOAR_YAML()
+yaml = YAML_Handler()
 
 
 def input_multiline():
@@ -206,7 +206,7 @@ def parse_json(data, command_name, prefix, verbose=False, interactive=False, des
     if return_object:
         return outputs
 
-    yaml_output = xsoar_yaml.dumps(outputs, sort_keys=True)
+    yaml_output = yaml.dumps(outputs, sort_keys=True)
     return yaml_output
 
 

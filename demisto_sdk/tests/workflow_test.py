@@ -12,10 +12,10 @@ from click.testing import CliRunner
 
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.constants import AUTHOR_IMAGE_FILE_NAME
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from TestSuite.test_tools import ChangeCWD
 
-xsoar_yaml = XSOAR_YAML()
+yaml = YAML_Handler()
 
 
 class TestError(BaseException):
@@ -269,10 +269,10 @@ def modify_entity(content_repo: ContentGitRepo, monkeypatch: MonkeyPatch):
     runner = CliRunner(mix_stderr=False)
     monkeypatch.chdir(content_repo.content / "Packs" / "HelloWorld" / "Scripts" / "HelloWorldScript")
     # Modify the entity
-    script = xsoar_yaml.load(open("./HelloWorldScript.yml"))
+    script = yaml.load(open("./HelloWorldScript.yml"))
     script['args'][0]["description"] = "new description"
 
-    xsoar_yaml.dump(script, open("./HelloWorldScript.yml", "w"))
+    yaml.dump(script, open("./HelloWorldScript.yml", "w"))
     content_repo.run_command("git add .")
     monkeypatch.chdir(content_repo.content)
     res = runner.invoke(main, "update-release-notes -i Packs/HelloWorld -u revision")

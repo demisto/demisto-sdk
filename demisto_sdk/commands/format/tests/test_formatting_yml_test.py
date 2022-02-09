@@ -11,13 +11,13 @@ from mock import Mock, patch
 from demisto_sdk.commands.common.constants import (
     ALERT_FETCH_REQUIRED_PARAMS, FEED_REQUIRED_PARAMS,
     INCIDENT_FETCH_REQUIRED_PARAMS, INTEGRATION, MarketplaceVersions)
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.integration import \
     IntegrationValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import LOG_COLORS, is_string_uuid
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
@@ -38,7 +38,7 @@ from demisto_sdk.tests.constants_test import (
     SOURCE_FORMAT_TEST_PLAYBOOK, TEST_PLAYBOOK_PATH)
 from TestSuite.test_tools import ChangeCWD
 
-xsoar_yaml = XSOAR_YAML()
+yaml = YAML_Handler()
 
 INTEGRATION_TEST_ARGS = (SOURCE_FORMAT_INTEGRATION_COPY, DESTINATION_FORMAT_INTEGRATION_COPY, IntegrationYMLFormat,
                          'New Integration_copy', 'integration')
@@ -66,7 +66,7 @@ class TestFormatting:
         schema_path = os.path.normpath(
             os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format(file_type)))
         base_yml = formatter(source_path, path=schema_path)
-        xsoar_yaml.dump(base_yml.data, sys.stdout)
+        yaml.dump(base_yml.data, sys.stdout)
         stdout, _ = capsys.readouterr()
         assert '# comment' in stdout
 
@@ -270,7 +270,7 @@ class TestFormatting:
             format_obj = IntegrationYMLFormat(src_file, output=dest, path=schema_path, verbose=True)
         assert format_obj.run_format() == 0
         with open(dest) as f:
-            data = xsoar_yaml.load(f)
+            data = yaml.load(f)
         assert data['fromversion'] == '5.5.0'
         assert data['commonfields']['version'] == -1
 
@@ -298,7 +298,7 @@ class TestFormatting:
         assert os.path.isfile(saved_file_path)
 
         with open(saved_file_path, 'r') as f:
-            yaml_content = xsoar_yaml.load(f)
+            yaml_content = yaml.load(f)
             assert 'yes' in yaml_content['tasks']['27']['nexttasks']
         os.remove(saved_file_path)
 
@@ -490,7 +490,7 @@ class TestFormatting:
         )
         res = format_manager(input=target, verbose=True)
         with open(target, 'r') as f:
-            yaml_content = xsoar_yaml.load(f)
+            yaml_content = yaml.load(f)
             params = yaml_content['configuration']
             for param in params:
                 if 'defaultvalue' in param and param['name'] != 'feed':
@@ -527,7 +527,7 @@ class TestFormatting:
         shutil.copyfile(source, target)
         res = format_manager(input=target, verbose=True)
         with open(target, 'r') as f:
-            yaml_content = xsoar_yaml.load(f)
+            yaml_content = yaml.load(f)
             params = yaml_content['configuration']
             for counter, param in enumerate(params):
                 if 'defaultvalue' in param and param['name'] != 'feed':
@@ -715,7 +715,7 @@ class TestFormatting:
         # test example script file with version before 5.0.0
         src_file = f'{test_files_dir}/SlackAsk.yml'
         with open(src_file) as f:
-            data = xsoar_yaml.load(f)
+            data = yaml.load(f)
         org_docker = data['dockerimage']
         assert data['fromversion'] < '5.0.0'
         assert not data.get(
@@ -729,7 +729,7 @@ class TestFormatting:
 
         assert format_obj.run_format() == 0
         with open(dest) as f:
-            data = xsoar_yaml.load(f)
+            data = yaml.load(f)
         assert data['dockerimage'].endswith(f':{test_tag}')
         assert data['dockerimage45'] == org_docker
 
@@ -739,7 +739,7 @@ class TestFormatting:
                                           update_docker=True)
         assert format_obj.run_format() == 0
         with open(dest) as f:
-            data = xsoar_yaml.load(f)
+            data = yaml.load(f)
         assert data['script']['dockerimage'].endswith(f':{test_tag}')
         assert not data['script'].get('dockerimage45')
 
@@ -770,12 +770,12 @@ class TestFormatting:
         integration_yml_file_1 = tmp_path / 'Integration1.yml'
         integration_obj = {'dockerimage': docker_image,
                            'fromversion': '5.0.0'}
-        xsoar_yaml.dump(integration_obj, integration_yml_file_1.open('w'))
+        yaml.dump(integration_obj, integration_yml_file_1.open('w'))
 
         format_obj = ScriptYMLFormat(str(integration_yml_file_1), update_docker=True)
         format_obj.update_docker_image()
         with open(str(integration_yml_file_1)) as f:
-            data = xsoar_yaml.load(f)
+            data = yaml.load(f)
         assert data.get('dockerimage') == docker_image
 
     def test_recursive_extend_schema(self):
@@ -1157,10 +1157,10 @@ class TestFormatting:
                                                    'VMware',
                                                    'Integrations', 'integration-VMware.yml')
         with open(vmware_integration_yml_path) as f:
-            yml_example = xsoar_yaml.load(f)
+            yml_example = yaml.load(f)
         sorted_yml_file = tmp_path / 'test.yml'
         with sorted_yml_file.open('w') as f:
-            xsoar_yaml.dump(yml_example, f, sort_keys=True)  # sorting the keys to have different order
+            yaml.dump(yml_example, f, sort_keys=True)  # sorting the keys to have different order
         mocker.patch.object(BaseUpdateYML, 'get_id_and_version_path_object', return_value={'id': "vmware"})
         mocker.patch.object(update_generic, 'get_remote_file', return_value=yml_example)
         base_update_yml = BaseUpdateYML(input=str(sorted_yml_file))
@@ -1182,18 +1182,18 @@ class TestFormatting:
                                                    'VMware',
                                                    'Integrations', 'integration-VMware.yml')
         with open(vmware_integration_yml_path) as f:
-            yml_example = xsoar_yaml.load(f)
+            yml_example = yaml.load(f)
         sorted_yml_file = tmp_path / 'test.yml'
         with sorted_yml_file.open('w') as f:
-            xsoar_yaml.dump(yml_example, f, sort_keys=True)  # sorting the keys to have different order
+            yaml.dump(yml_example, f, sort_keys=True)  # sorting the keys to have different order
         with sorted_yml_file.open() as f:
-            sorted_yml = xsoar_yaml.load(f)
+            sorted_yml = yaml.load(f)
         sorted_yml['description'] = 'test'
         sorted_yml['configuration'][0]['defaultvalue'] = 'test'
         del sorted_yml['configuration'][1]['defaultvalue']
         sorted_yml['script']['commands'][0]['outputs'].append({"contextPath": "VMWare.test", "description": "VM test"})
         with sorted_yml_file.open('w') as f:
-            xsoar_yaml.dump(sorted_yml, f)
+            yaml.dump(sorted_yml, f)
 
         mocker.patch.object(BaseUpdateYML, 'get_id_and_version_path_object', return_value={'id': "vmware"})
         mocker.patch.object(update_generic, 'get_remote_file', return_value=yml_example)

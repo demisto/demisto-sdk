@@ -3,11 +3,11 @@ from typing import Callable, List, Optional
 import pytest
 from wcmatch.pathlib import Path
 
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.lint import linter
 from demisto_sdk.commands.lint.linter import Linter
 
-xsoar_yaml = XSOAR_YAML()
+yaml = YAML_Handler()
 
 
 @pytest.fixture
@@ -115,7 +115,7 @@ def create_integration(mocker) -> Callable:
             from demisto_sdk.commands.lint import linter
             mocker.patch.object(linter, 'get_python_version_from_image')
             linter.get_python_version_from_image.return_value = image_py_num
-            xsoar_yaml.dump(stream=yml_file.open(mode='w'), data=yml_dict)
+            yaml.dump(stream=yml_file.open(mode='w'), data=yml_dict)
 
         return integration_path
 

@@ -2,13 +2,13 @@ import json
 import os
 from pathlib import Path
 
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 from demisto_sdk.commands.generate_integration.code_generator import (
     IntegrationGeneratorCommand, IntegrationGeneratorConfig,
     IntegrationGeneratorOutput, json_body_to_code)
 
-xsoar_yaml = XSOAR_YAML()
+yaml = YAML_Handler()
 
 
 def test_json_body_to_code():
@@ -127,7 +127,7 @@ class TestCodeGenerator:
 
         yaml_obj = autogen_config.generate_integration_yml().to_dict()
         with open(os.path.join(self.test_integration_dir, 'VirusTotalTest.yml'), mode='r') as f:
-            expected_yml = xsoar_yaml.load(f)
+            expected_yml = yaml.load(f)
 
         assert expected_yml == yaml_obj
 
@@ -231,7 +231,7 @@ class TestCodeGenerator:
 
         integration_code = config.generate_integration_python_code()
         integration_yml = config.generate_integration_yml()
-        integration_yml_str = xsoar_yaml.dumps(integration_yml.to_dict())
+        integration_yml_str = yaml.dumps(integration_yml.to_dict())
 
         assert "outputs=response.get('scans')" in integration_code
         assert 'contextPath: VirusTotalTest.TestScan.scans.field1' in integration_yml_str

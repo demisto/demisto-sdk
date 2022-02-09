@@ -11,6 +11,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
@@ -19,9 +20,8 @@ from demisto_sdk.commands.common.tools import (_get_file_id,
                                                get_file_displayed_name,
                                                is_test_config_match,
                                                run_command)
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 
-xsoar_yaml = XSOAR_YAML()
+yaml = YAML_Handler()
 
 
 class ContentEntityValidator(BaseValidator):
@@ -207,7 +207,7 @@ class ContentEntityValidator(BaseValidator):
                 missing_test_playbook_configurations = json.dumps(
                     {'integrations': content_item_id, 'playbookID': '<TestPlaybook ID>'},
                     indent=4)
-                no_tests_key = xsoar_yaml.dumps({'tests': ['No tests']})
+                no_tests_key = yaml.dumps({'tests': ['No tests']})
                 error_message, error_code = Errors.integration_not_registered(self.file_path,
                                                                               missing_test_playbook_configurations,
                                                                               no_tests_key)

@@ -1,12 +1,12 @@
 import json
 import os
 
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 from demisto_sdk.commands.openapi_codegen.openapi_codegen import \
     OpenAPIIntegration
 
-xsoar_yaml = XSOAR_YAML()
+yaml = YAML_Handler()
 expected_command_function = '''def get_pet_by_id_command(client: Client, args: Dict[str, Any]) -> CommandResults:
     petId = args.get('petId', None)
 
@@ -89,7 +89,7 @@ class TestOpenAPICodeGen:
         integration = self.init_integration()
 
         with open(os.path.join(self.test_files_path, 'swagger_yaml.yml'), 'rb') as yaml_file:
-            expected_yaml = xsoar_yaml.load(yaml_file)
+            expected_yaml = yaml.load(yaml_file)
 
         yaml_obj = integration.generate_yaml().to_dict()
 

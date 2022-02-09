@@ -23,6 +23,7 @@ from demisto_sdk.commands.common.constants import (
     ENTITY_NAME_SEPARATORS, ENTITY_TYPE_TO_DIR, FILE_EXIST_REASON,
     FILE_NOT_IN_CC_REASON, INTEGRATIONS_DIR, PLAYBOOKS_DIR, SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR)
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                get_child_directories,
                                                get_child_files, get_code_lang,
@@ -33,11 +34,10 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                get_yaml, get_yml_paths_in_dir,
                                                print_color,
                                                retrieve_file_ending)
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 
-xsoar_yaml = XSOAR_YAML()
+yaml = YAML_Handler()
 
 
 class Downloader:
@@ -714,11 +714,11 @@ class Downloader:
 
         if file_ending == 'yml':
             with open(file_path_to_write, 'r') as yf:
-                file_yaml_object = xsoar_yaml.load(yf)
+                file_yaml_object = yaml.load(yf)
             if pack_obj_data:
                 merge(file_yaml_object, preserved_data)
             with open(file_path_to_write, 'w') as yf:
-                xsoar_yaml.dump(file_yaml_object, yf)
+                yaml.dump(file_yaml_object, yf)
 
         elif file_ending == 'json':
             file_data: dict = get_json(file_path_to_write)

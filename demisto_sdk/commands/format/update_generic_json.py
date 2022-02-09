@@ -5,13 +5,13 @@ import ujson
 
 from demisto_sdk.commands.common.constants import \
     DEFAULT_CONTENT_ITEM_TO_VERSION
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import find_type, is_uuid, print_error
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 from demisto_sdk.commands.format.format_constants import (
     ARGUMENTS_DEFAULT_VALUES, GENERIC_OBJECTS_FILE_TYPES, TO_VERSION_5_9_9)
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 
-xsoar_yaml = XSOAR_YAML()
+yaml = YAML_Handler()
 
 
 class BaseUpdateJSON(BaseUpdate):
@@ -82,7 +82,7 @@ class BaseUpdateJSON(BaseUpdate):
     def remove_null_fields(self):
         """Remove empty fields from file root."""
         with open(self.schema_path, 'r') as file_obj:
-            schema_data = xsoar_yaml.load(file_obj)
+            schema_data = yaml.load(file_obj)
         schema_fields = schema_data.get('mapping').keys()
         for field in schema_fields:
             # We want to keep 'false' and 0 values, and avoid removing fields that are required in the schema.

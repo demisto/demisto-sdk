@@ -1,10 +1,10 @@
 from pathlib import Path
 from typing import Optional
 
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from TestSuite.file import File
 
-xsoar_yaml = XSOAR_YAML()
+yaml = YAML_Handler()
 
 
 class YAML(File):
@@ -14,10 +14,10 @@ class YAML(File):
         super().__init__(tmp_path, repo_path)
 
     def write_dict(self, yml: dict):
-        xsoar_yaml.dump(yml, self._tmp_path.open('w+'))
+        yaml.dump(yml, self._tmp_path.open('w+'))
 
     def read_dict(self):
-        return xsoar_yaml.load(self._tmp_path.open())
+        return yaml.load(self._tmp_path.open())
 
     def update(self, update_obj: dict):
         yml_contents = self.read_dict()

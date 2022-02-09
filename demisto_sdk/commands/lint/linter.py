@@ -24,11 +24,11 @@ from wcmatch.pathlib import NEGATE, Path
 from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    PACKS_PACK_META_FILE_NAME,
                                                    TYPE_PWSH, TYPE_PYTHON)
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.timers import timer
 # Local packages
 from demisto_sdk.commands.common.tools import (get_all_docker_images,
                                                run_command_os)
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 from demisto_sdk.commands.lint.commands_builder import (
     build_bandit_command, build_flake8_command, build_mypy_command,
     build_pwsh_analyze_command, build_pwsh_test_command, build_pylint_command,
@@ -45,7 +45,7 @@ from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, RERUN, RL,
                                                stream_docker_container_output)
 
 logger = logging.getLogger('demisto-sdk')
-xsoar_yaml = XSOAR_YAML()
+yaml = YAML_Handler()
 
 
 class Linter:
@@ -198,7 +198,7 @@ class Linter:
         try:
 
             script_obj: Dict = {}
-            yml_obj: Dict = xsoar_yaml.load(yml_file)
+            yml_obj: Dict = yaml.load(yml_file)
             if isinstance(yml_obj, dict):
                 script_obj = yml_obj.get('script', {}) if isinstance(yml_obj.get('script'), dict) else yml_obj
             self._facts['is_script'] = True if 'Scripts' in yml_file.parts else False

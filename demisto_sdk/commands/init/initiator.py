@@ -20,14 +20,14 @@ from demisto_sdk.commands.common.constants import (
     PACK_INITIAL_VERSION, PACK_SUPPORT_OPTIONS, PLAYBOOKS_DIR, REPORTS_DIR,
     SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR, XSOAR_AUTHOR, XSOAR_SUPPORT,
     XSOAR_SUPPORT_URL, GitContentConfig)
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                get_common_server_path,
                                                get_pack_name, print_error,
                                                print_v, print_warning)
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
 
-xsoar_yaml = XSOAR_YAML()
+yaml = YAML_Handler()
 
 
 def extract_values_from_nested_dict_to_a_set(given_dictionary: dict, return_set: set):
@@ -553,7 +553,7 @@ class Initiator:
             integration (bool): Indicates if integration yml is being reformatted.
         """
         with open(os.path.join(self.full_output_path, f"{current_suffix}.yml")) as f:
-            yml_dict = xsoar_yaml.load(f)
+            yml_dict = yaml.load(f)
         yml_dict["commonfields"]["id"] = self.id
         yml_dict['name'] = self.id
 
@@ -571,7 +571,7 @@ class Initiator:
                 options_list=INTEGRATION_CATEGORIES, option_message="\nIntegration category options: \n")
 
         with open(os.path.join(self.full_output_path, f"{self.dir_name}.yml"), 'w') as f:
-            xsoar_yaml.dump(yml_dict, f)
+            yaml.dump(yml_dict, f)
 
         os.remove(os.path.join(self.full_output_path, f"{current_suffix}.yml"))
 

@@ -5,10 +5,10 @@ from typing import Dict, Optional
 import click
 
 from demisto_sdk.commands.common.constants import FileType
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.upload.uploader import Uploader
 
-xsoar_yaml = XSOAR_YAML()
+yaml = YAML_Handler()
 
 
 class ContentItemType:
@@ -379,7 +379,7 @@ class PlaybookTestsGenerator:
         """
         try:
             with open(self.integration_yml_path, 'r') as yf:
-                yaml_obj = xsoar_yaml.load(yf)
+                yaml_obj = yaml.load(yf)
 
                 yaml_obj.get('name')
         except FileNotFoundError as ex:
@@ -438,7 +438,7 @@ class PlaybookTestsGenerator:
                         f'it will be overwritten.', fg='yellow')
 
         with open(self.test_playbook_yml_path, 'w') as yf:
-            xsoar_yaml.dump(test_playbook.to_dict(), yf)
+            yaml.dump(test_playbook.to_dict(), yf)
 
             click.secho(f'Test playbook yml was saved at:\n{self.test_playbook_yml_path}\n', fg='green')
 

@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional, Union
 import autopep8
 
 import demisto_sdk.commands.common.tools as tools
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.generate_integration.base_code import (
     BASE_ARGUMENT, BASE_BASIC_AUTH, BASE_BEARER_TOKEN, BASE_CLIENT,
     BASE_CLIENT_API_KEY, BASE_CODE_TEMPLATE, BASE_CREDENTIALS, BASE_FUNCTION,
@@ -19,7 +19,7 @@ from demisto_sdk.commands.generate_integration.base_code import (
 from demisto_sdk.commands.generate_integration.XSOARIntegration import \
     XSOARIntegration
 
-xsoar_yaml = XSOAR_YAML(width=50000)
+yaml = YAML_Handler(width=50000)
 
 logger = logging.getLogger('demisto-sdk')
 
@@ -586,7 +586,7 @@ class IntegrationGeneratorConfig:
 
             path = Path(output_dir, f'integration-{self.name}.yml')
             with open(path, mode='w') as f:
-                xsoar_yaml.dump(xsoar_integration.to_dict(), f)
+                yaml.dump(xsoar_integration.to_dict(), f)
 
                 logger.info(f'Generated integration yml at:\n{os.path.abspath(path)}')
 
@@ -604,7 +604,7 @@ class IntegrationGeneratorConfig:
         try:
             logger.debug('Creating yml file...')
             with open(Path(package_dir, f'{self.name}.yml'), 'w') as fp:
-                xsoar_yaml.dump(integration_obj.to_dict(), fp)
+                yaml.dump(integration_obj.to_dict(), fp)
 
         except Exception as err:
             logger.exception(f'Failed to write integration yml file. Error: {err}')

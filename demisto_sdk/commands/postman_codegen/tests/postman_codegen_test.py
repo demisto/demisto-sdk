@@ -10,8 +10,8 @@ from click.testing import CliRunner
 
 import demisto_sdk.commands.common.tools as tools
 from demisto_sdk.__main__ import main
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 from demisto_sdk.commands.generate_integration.code_generator import (
     IntegrationGeneratorArg, IntegrationGeneratorConfig,
     IntegrationGeneratorOutput)
@@ -20,7 +20,7 @@ from demisto_sdk.commands.postman_codegen.postman_codegen import (
     find_shared_args_path, flatten_collections, generate_command_outputs,
     postman_to_autogen_configuration, update_min_unique_path)
 
-xsoar_yaml = XSOAR_YAML()
+yaml = YAML_Handler()
 
 
 class TestPostmanHelpers:
@@ -569,7 +569,7 @@ class TestPostmanCodeGen:
 
         integration_code = config.generate_integration_python_code()
         integration_obj = config.generate_integration_yml()
-        integration_yml = xsoar_yaml.dumps(integration_obj.to_dict())
+        integration_yml = yaml.dumps(integration_obj.to_dict())
 
         assert "foo = args.get('foo')" in integration_code
         assert "virus_name = args.get('virus_name')" in integration_code
@@ -633,7 +633,7 @@ class TestPostmanCodeGen:
 
         integration_code = config.generate_integration_python_code()
         integration_obj = config.generate_integration_yml()
-        integration_yml = xsoar_yaml.dumps(integration_obj.to_dict())
+        integration_yml = yaml.dumps(integration_obj.to_dict())
 
         assert "foo_a = args.get('foo_a')" in integration_code
         assert "def test_report_request(self, foo_a, resource_b, a, b, c)" in integration_code
@@ -836,7 +836,7 @@ class TestPostmanCodeGen:
 
         integration_code = config.generate_integration_python_code()
         integration_obj = config.generate_integration_yml()
-        integration_yml = xsoar_yaml.dumps(integration_obj.to_dict())
+        integration_yml = yaml.dumps(integration_obj.to_dict())
 
         assert 'def test_create_group_request(self, test_name, test_id, test_key):' in integration_code
         assert 'data = {"test_filter": {"test_key": test_key}, "test_id": test_id, "test_name": test_name}' in integration_code

@@ -8,10 +8,10 @@ from typing import Any, List, Optional, Union
 
 import autopep8
 
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.tools import camel_to_snake, print_error
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 from demisto_sdk.commands.generate_integration.base_code import (
     BASE_ARGUMENT, BASE_BASIC_AUTH, BASE_CLIENT, BASE_CODE_TEMPLATE,
     BASE_CREDENTIALS, BASE_DATA, BASE_FUNCTION, BASE_HEADER,
@@ -20,7 +20,7 @@ from demisto_sdk.commands.generate_integration.base_code import (
 from demisto_sdk.commands.generate_integration.XSOARIntegration import \
     XSOARIntegration
 
-xsoar_yaml = XSOAR_YAML()
+yaml = YAML_Handler()
 
 ILLEGAL_DESCRIPTION_CHARS = ['\n', 'br', '*', '\r', '\t', 'para', 'span', '«', '»', '<', '>']
 ILLEGAL_CODE_CHARS = ILLEGAL_DESCRIPTION_CHARS + [' ', '.', ',', '(', ')', '`', ':', "'", '"', '[', ']', '-']
@@ -839,7 +839,7 @@ class OpenAPIIntegration:
         yaml_file = os.path.join(directory, f'{self.base_name}.yml')
         try:
             with open(yaml_file, 'w') as fp:
-                xsoar_yaml.dump(self.generate_yaml().to_dict(), fp)
+                yaml.dump(self.generate_yaml().to_dict(), fp)
             return yaml_file
         except Exception as err:
             print_error(f'Error writing {yaml_file} - {err}')

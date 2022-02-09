@@ -6,8 +6,7 @@ from typing import Callable
 import pytest
 from _pytest import tmpdir
 
-from demisto_sdk.commands.common.tools import (get_content_file_type_dump,
-                                               xsoar_yaml)
+from demisto_sdk.commands.common.tools import get_content_file_type_dump, yaml
 
 
 def create_temp_file(tmp_path: tmpdir.tmp_path, file_content: str, filename: str = 'file.txt') -> str:
@@ -27,8 +26,8 @@ def create_temp_file(tmp_path: tmpdir.tmp_path, file_content: str, filename: str
 
 
 CONTENT_PARSER_INPUT = [
-    ('file_path.yml', xsoar_yaml.dumps),
-    ('file_path.yaml', xsoar_yaml.dumps),
+    ('file_path.yml', yaml.dumps),
+    ('file_path.yaml', yaml.dumps),
     ('file_path.json', partial(json.dumps, indent=4)),
     ('file_path.other', str)
 ]
@@ -45,7 +44,7 @@ def test_get_content_file_type_dump(file_path: str, expected: Callable[[str], st
 
         Then
         -  Ensure the method is 'json.dumps' if the file is a json file
-        -  Ensure the method is 'xsoar_yaml.dumps' if the file is a yml file
+        -  Ensure the method is 'yaml.dumps' if the file is a yml file
         -  Ensure the method is 'str' if the file is any other unknown type
     """
     assert get_content_file_type_dump(file_path) == expected or \

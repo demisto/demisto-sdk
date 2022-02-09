@@ -13,12 +13,12 @@ from demisto_sdk.commands.common.constants import (
     INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, INTEGRATIONS_DIR, JOBS_DIR,
     LAYOUTS_DIR, LISTS_DIR, PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR, REPORTS_DIR,
     SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR)
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import (get_child_files, get_json,
                                                get_yaml)
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 from demisto_sdk.commands.download.downloader import Downloader
 
-xsoar_yaml = XSOAR_YAML()
+yaml = YAML_Handler()
 
 
 def ordered(obj):
@@ -606,7 +606,7 @@ class TestMergeExistingFile:
                                f'{env.INTEGRATION_INSTANCE_PATH}/TestIntegration.yml', 'yml')
 
         with open(env.CUSTOM_CONTENT_INTEGRATION_PATH, 'r') as yf:
-            file_yaml_object = xsoar_yaml.load(yf)
+            file_yaml_object = yaml.load(yf)
         for field in DELETED_YML_FIELDS_BY_DEMISTO:
             obj = file_yaml_object
             dotted_path_list = field.split('.')

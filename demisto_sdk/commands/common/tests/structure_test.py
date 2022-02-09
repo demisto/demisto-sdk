@@ -18,11 +18,11 @@ from demisto_sdk.commands.common.constants import (
     PACKS_SCRIPT_TEST_PY_REGEX, PACKS_SCRIPT_YML_REGEX,
     PACKS_WIDGET_JSON_REGEX, PLAYBOOK_README_REGEX, PLAYBOOK_YML_REGEX,
     TEST_PLAYBOOK_YML_REGEX)
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.structure import (
     StructureValidator, checked_type_by_reg)
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 from demisto_sdk.tests.constants_test import (
     DASHBOARD_TARGET, DIR_LIST, INCIDENT_FIELD_TARGET,
     INDICATORFIELD_EXACT_SCHEME, INDICATORFIELD_EXTRA_FIELDS,
@@ -42,7 +42,7 @@ from TestSuite.json_based import JSONBased
 from TestSuite.pack import Pack
 from TestSuite.test_tools import ChangeCWD
 
-xsoar_yaml = XSOAR_YAML()
+yaml = YAML_Handler()
 
 
 class TestStructureValidator:
@@ -125,7 +125,7 @@ class TestStructureValidator:
     def test_fromversion_update_validation_yml_structure(self, path, old_file_path, answer):
         validator = StructureValidator(file_path=path)
         with open(old_file_path) as f:
-            validator.old_file = xsoar_yaml.load(f)
+            validator.old_file = yaml.load(f)
             assert validator.is_valid_fromversion_on_modified() is answer
 
     INPUTS_IS_ID_MODIFIED = [
@@ -137,7 +137,7 @@ class TestStructureValidator:
     def test_is_id_modified(self, current_file, old_file, answer, error):
         validator = StructureValidator(file_path=current_file)
         with open(old_file) as f:
-            validator.old_file = xsoar_yaml.load(f)
+            validator.old_file = yaml.load(f)
             assert validator.is_id_modified() is answer, error
 
     POSITIVE_ERROR = "Didn't find a slash in the ID even though it contains a slash."

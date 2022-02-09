@@ -8,6 +8,7 @@ import re
 import shlex
 import sys
 import urllib.parse
+from collections import OrderedDict
 from concurrent.futures import as_completed
 from configparser import ConfigParser, MissingSectionHeaderError
 from contextlib import contextmanager
@@ -45,10 +46,10 @@ from demisto_sdk.commands.common.constants import (
     XSOAR_CONFIG_FILE, FileType, FileTypeToIDSetKeys, GitContentConfig,
     IdSetKeys, MarketplaceVersions, urljoin)
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
+from demisto_sdk.commands.common.handlers import YAML_Handler
 
 logger = logging.getLogger("demisto-sdk")
-xsoar_yaml = XSOAR_YAML()
+yaml = YAML_Handler()
 
 urllib3.disable_warnings()
 
@@ -293,7 +294,7 @@ def get_remote_file(
     if full_file_path.endswith('json'):
         details = res.json() if res.ok else json.loads(local_content)
     elif full_file_path.endswith('yml'):
-        details = xsoar_yaml.load(file_content)
+        details = yaml.load(file_content)
     # if neither yml nor json then probably a CHANGELOG or README file.
     else:
         details = {}
@@ -350,7 +351,7 @@ def filter_packagify_changes(modified_files, added_files, removed_files, tag='ma
                 updated_added_files.add(file_path)
                 continue
             with open(file_path) as f:
-                details = xsoar_yaml.load(f)
+                details = yaml.load(f)
 
             uniq_identifier = '_'.join([
                 details['name'],
@@ -458,7 +459,7 @@ def get_file(file_path, type_of_file):
             stream = io.StringIO(replaced)
             try:
                 if type_of_file in ('yml', '.yml'):
-                    data_dictionary = xsoar_yaml.load(stream)
+                    data_dictionary = yaml.load(stream)
 
                 else:
                     data_dictionary = json.load(stream)
@@ -1623,7 +1624,7 @@ def get_content_file_type_dump(file_path: str) -> Callable[[str], str]:
     file_extension = os.path.splitext(file_path)[-1]
     curr_string_transformer: Union[partial[str], Type[str], Callable] = str
     if file_extension in ['.yml', '.yaml']:
-        curr_string_transformer = xsoar_yaml.dumps
+        curr_string_transformer = yaml.dumps
     elif file_extension == '.json':
         curr_string_transformer = partial(json.dumps, indent=4)
     return curr_string_transformer
@@ -1899,7 +1900,7 @@ def compare_context_path_in_yml_and_readme(yml_dict, readme_content):
 
 def write_yml(yml_path: str, yml_data: Dict):
     with open(yml_path, 'w') as f:
-        xsoar_yaml.dump(yml_data, f)  # ruamel preservers multilines
+        yaml.dump(yml_data, f)  # ruamel preservers multilines
 
 
 def to_kebab_case(s: str):
@@ -2431,3 +2432,11 @@ def should_alternate_field_by_item(content_item, id_set):
         if list(item.keys())[0] == item_id:
             return item.get(item_id, {}).get('has_alternative_meta', False)
     return False
+
+
+def order_dict(data):
+    """
+    Order dict by default order
+    """
+    return OrderedDict({k: order_dict(v) if isinstance(v, dict) else v
+                        for k, v in sorted(data.items())})

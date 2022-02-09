@@ -17,6 +17,7 @@ from demisto_sdk.commands.common.default_additional_info_loader import \
 from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
                                                 Errors)
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 from demisto_sdk.commands.common.hook_validations.description import \
@@ -28,9 +29,8 @@ from demisto_sdk.commands.common.tools import (
     _get_file_id, compare_context_path_in_yml_and_readme, get_core_pack_list,
     get_file_version_suffix_if_exists, get_files_in_dir, get_item_marketplaces,
     get_pack_name, is_iron_bank_pack, print_error, server_version_compare)
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 
-xsoar_yaml = XSOAR_YAML()
+yaml = YAML_Handler()
 default_additional_info = load_default_additional_info_dict()
 
 
@@ -914,7 +914,7 @@ class IntegrationValidator(ContentEntityValidator):
             for param in fetch_required_params:
                 if param not in params:
                     error_message, error_code = Errors.parameter_missing_from_yml(param.get('name'),
-                                                                                  xsoar_yaml.dumps(param))
+                                                                                  yaml.dumps(param))
                     if self.handle_error(error_message, error_code, file_path=self.file_path,
                                          suggested_fix=Errors.suggest_fix(self.file_path)):
                         fetch_params_exist = False
@@ -941,13 +941,13 @@ class IntegrationValidator(ContentEntityValidator):
 
             if not first_fetch_param:
                 error_message, error_code = Errors.parameter_missing_from_yml_not_community_contributor(
-                    'first_fetch', xsoar_yaml.dumps(FIRST_FETCH_PARAM))
+                    'first_fetch', yaml.dumps(FIRST_FETCH_PARAM))
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     fetch_params_exist = False
 
             if not max_fetch_param:
                 error_message, error_code = Errors.parameter_missing_from_yml_not_community_contributor(
-                    'max_fetch', xsoar_yaml.dumps(MAX_FETCH_PARAM))
+                    'max_fetch', yaml.dumps(MAX_FETCH_PARAM))
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     fetch_params_exist = False
 
@@ -989,7 +989,7 @@ class IntegrationValidator(ContentEntityValidator):
             if not is_valid:
                 param_structure = dict(equal_key_values, **contained_key_values, name=required_param.get('name'))
                 error_message, error_code = Errors.parameter_missing_for_feed(required_param.get('name'),
-                                                                              xsoar_yaml.dumps(param_structure))
+                                                                              yaml.dumps(param_structure))
                 if self.handle_error(error_message, error_code, file_path=self.file_path,
                                      suggested_fix=Errors.suggest_fix(self.file_path)):
                     params_exist = False

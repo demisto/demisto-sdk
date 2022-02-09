@@ -8,11 +8,11 @@ from shutil import copyfile, copytree, rmtree
 import pytest
 
 from demisto_sdk.commands.common.constants import PACKS_DIR, TEST_PLAYBOOKS_DIR
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.common.tools import (is_object_in_id_set,
                                                open_id_set_file, src_root)
 from TestSuite.test_tools import ChangeCWD
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
 
 TEST_DATA = src_root() / 'tests' / 'test_files'
 TEST_CONTENT_REPO = TEST_DATA / 'content_slim'
@@ -23,7 +23,8 @@ ARTIFACTS_EXPECTED_RESULTS = TEST_DATA / 'artifacts'
 PARTIAL_ID_SET_PATH = UNIT_TEST_DATA / 'id_set_missing_packs_and_items.json'
 ALTERNATIVE_FIELDS_ID_SET_PATH = UNIT_TEST_DATA / 'id_set_alrenative_fields.json'
 
-xsoar_yaml = XSOAR_YAML()
+yaml = YAML_Handler()
+
 
 def same_folders(src1, src2):
     """Assert if folder contains different files"""
@@ -401,20 +402,20 @@ def test_use_alternative_fields(mock_single_pack_git):
         pack_path = PosixPath(temp, 'content_packs', 'DummyPackAlternativeFields')
 
         # Check Integration
-        integration_yml = dict(xsoar_yaml.load(PosixPath(pack_path, 'Integrations', 'integration-sample_packs.yml')))
+        integration_yml = dict(yaml.load(PosixPath(pack_path, 'Integrations', 'integration-sample_packs.yml')))
         assert not any(key for key in integration_yml if key.endswith('_x2'))
         assert integration_yml['name'] == 'name_x2'
         assert integration_yml['defaultEnabled']
 
         # Check Script
-        script_yml = dict(xsoar_yaml.load(PosixPath(pack_path, 'Scripts', 'script-sample_packs.yml')))
+        script_yml = dict(yaml.load(PosixPath(pack_path, 'Scripts', 'script-sample_packs.yml')))
         assert not any(key for key in script_yml if key.endswith('_x2'))
         assert script_yml['name'] == 'name_x2'
         assert script_yml['comment'] == 'comment_x2'
         assert script_yml['commonfields']['id'] == 'id_x2'
 
         # Check Playbook
-        playbook_yml = dict(xsoar_yaml.load(PosixPath(pack_path, 'Playbooks', 'playbook-sample_packs.yml')))
+        playbook_yml = dict(yaml.load(PosixPath(pack_path, 'Playbooks', 'playbook-sample_packs.yml')))
         assert not any(key for key in playbook_yml if key.endswith('_x2'))
         assert playbook_yml['name'] == 'name_x2'
         assert playbook_yml['tasks']['task_num']['task']['scriptName'] == 'scriptName_x2'

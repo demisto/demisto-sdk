@@ -450,9 +450,10 @@ def get_last_remote_release_version():
 
 
 def get_file(file_path, type_of_file):
+    file_path = Path(file_path)
     data_dictionary = None
-    with open(os.path.expanduser(file_path), mode="r", encoding="utf8") as f:
-        if file_path.endswith(type_of_file):
+    with open(file_path.expanduser(), mode="r", encoding="utf8") as f:
+        if file_path.suffix == type_of_file:
             read_file = f.read()
             replaced = read_file.replace("simple: =", "simple: '='")
             # revert str to stream for loader

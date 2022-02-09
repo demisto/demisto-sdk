@@ -44,9 +44,9 @@ class TestGenerateTestPlaybook:
         )
 
         generator.run()
-        expected_test_playbook_yml = get_yaml(str(TestGenerateTestPlaybook.TEST_FILE_PATH / expected_yml))
-        actual_test_playbook_yml = get_yaml(str(Path(TestGenerateTestPlaybook.TEMP_DIR) /
-                                            'playbook-TestPlaybook_Test.yml'))
+        expected_test_playbook_yml = get_yaml(TestGenerateTestPlaybook.TEST_FILE_PATH / expected_yml)
+        actual_test_playbook_yml = get_yaml(Path(TestGenerateTestPlaybook.TEMP_DIR) /
+                                            'playbook-TestPlaybook_Test.yml')
 
         assert expected_test_playbook_yml == actual_test_playbook_yml
 
@@ -75,9 +75,9 @@ class TestGenerateTestPlaybook:
 
         generator.run()
 
-        expected_test_playbook_yml = get_yaml(str(TestGenerateTestPlaybook.TEST_FILE_PATH /
-                                                  'fake_integration_expected_test_playbook.yml'))
-        actual_test_playbook_yml = get_yaml(str(pack_folder / 'TestPlaybooks' / 'playbook-TestPlaybook_Test.yml'))
+        expected_test_playbook_yml = get_yaml(TestGenerateTestPlaybook.TEST_FILE_PATH /
+                                              'fake_integration_expected_test_playbook.yml')
+        actual_test_playbook_yml = get_yaml(pack_folder / 'TestPlaybooks' / 'playbook-TestPlaybook_Test.yml')
 
         assert expected_test_playbook_yml == actual_test_playbook_yml
 

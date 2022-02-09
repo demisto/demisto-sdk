@@ -1482,34 +1482,3 @@ def test_force_and_text_update_rn(repo, text, expected_rn_string):
 
     rn_string = client.build_rn_template({})
     assert rn_string == expected_rn_string
-
-TEST_RELEASE_NOTES_TEST_BANK_3 = [      
-    ('#### Integration\n##### integration name\n- Upgraded the Docker image to: *demisto/python3:3.9.5.2122*.',
-     [{'name':'integration name', 'yml_version': '*demisto/python3:3.9.4.272'}],
-     '#### Integration\n##### integration name\n- Upgraded the Docker image to: *demisto/python3:3.9.4.272*.'),
-    ('#### Integration\n##### integration name 1\n- Upgraded the Docker image to: *demisto/python3:3.9.5.2122*.'\
-     '\n##### integration name 2\n- Upgraded the Docker image to: *demisto/python3:3.9.5.2122*.'\
-     '\n##### integration name 3\n- Upgraded the Docker image to: *demisto/python3:3.9.5.2122*.',
-     [{'name':'integration name 1', 'yml_version': '*demisto/python3:3.9.4.272'},
-      {'name':'integration name 3', 'yml_version': '*demisto/python3:3.9.4.275'}],
-     '#### Integration\n##### integration name 1\n- Upgraded the Docker image to: *demisto/python3:3.9.4.272*.'\
-     '\n##### integration name 2\n- Upgraded the Docker image to: *demisto/python3:3.9.5.2122*.'\
-     '\n##### integration name 3\n- Upgraded the Docker image to: *demisto/python3:3.9.4.275*.')
-]
-
-
-@pytest.mark.parametrize('release_notes_content, unmatching_list, filled_expected_result', TEST_RELEASE_NOTES_TEST_BANK_3)
-def test_update_dockerimage_in_rn_text(release_notes_content, unmatching_list, filled_expected_result):
-    """
-    Given
-    - Case 1: RN containing a docker update, unmatching list containing one unmatching case regarding an un matched dockerimage version.
-    - Case 2: RN containing two docker updates, unmatching list containing two unmatching cases regarding an un matched dockerimage version.
-    When
-    - Running updates on the release notes
-    Then
-    - If docker image doesn't match, update the release notes according to the docker image version in the yml file.
-    - Case 1: Should alter the release notes dockerimage to be the same as the one in the unmatching list.
-    - Case 2: Should alter the release notes dockerimages to be the same as in the yml only in the relevant places
-    """
-    resulted_text = update_dockerimage_in_rn_text(unmatching_list, release_notes_content)
-    assert resulted_text == filled_expected_result

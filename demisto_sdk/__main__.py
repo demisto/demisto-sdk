@@ -1495,9 +1495,6 @@ def merge_id_sets(**kwargs):
     '--prev-ver', help='Previous branch or SHA1 commit to run checks against.'
 )
 @click.option(
-    '-ud', '--update-docker', help='Update the docker image version to be the same as the yml version.', update_docker=True
-)
-@click.option(
     "--pre_release", help="Indicates that this change should be designated a pre-release version.",
     is_flag=True)
 @click.option(
@@ -1514,9 +1511,7 @@ def update_release_notes(**kwargs):
     if kwargs.get('force') and not kwargs.get('input'):
         print_error('Please add a specific pack in order to force a release notes update.')
         sys.exit(0)
-    if kwargs.get('update_docker') and not kwargs.get('input'):
-        print_error('Please add a specific pack in order to update its docker image version.')
-        sys.exit(0)
+
     if not kwargs.get('use_git') and not kwargs.get('input'):
         click.confirm('No specific pack was given, do you want to update all changed packs?', abort=True)
 
@@ -1526,8 +1521,7 @@ def update_release_notes(**kwargs):
                                            text=kwargs.get('text'), specific_version=kwargs.get('version'),
                                            id_set_path=kwargs.get('id_set_path'), prev_ver=kwargs.get('prev_ver'),
                                            is_force=kwargs.get('force', False),
-                                           is_bc=kwargs.get('breaking_changes', False),
-                                           update_docker=kwargs.get('update_docker', False))
+                                           is_bc=kwargs.get('breaking_changes', False))
         rn_mng.manage_rn_update()
         sys.exit(0)
     except Exception as e:

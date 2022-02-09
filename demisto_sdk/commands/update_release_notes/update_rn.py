@@ -25,8 +25,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                get_pack_name, get_remote_file,
                                                get_yaml, pack_name_to_path,
                                                print_color, print_error,
-                                               print_warning, run_command, 
-                                               get_files_in_dir)
+                                               print_warning, run_command)
 
 
 class UpdateRN:
@@ -833,25 +832,3 @@ def get_from_version_at_update_rn(path: str) -> Optional[str]:
         print_warning(f'Cannot get file fromversion: "{path}" file does not exist')
         return None
     return get_from_version(path)
-
-def update_dockerimage_in_rn_manager(dir_name: str, modified_rn: str):
-    modified_rn_text = get_latest_release_notes_text(modified_rn) + "\n"
-    modified_files_list = get_files_in_dir(dir_name)
-    is_valid, error_list = release_notes.is_docker_image_same_as_yml(modified_rn_text, modified_files_list)
-    if not is_valid:
-        updated_rn_text = update_dockerimage_in_rn_text(error_list, modified_rn_text)
-        with open(modified_rn, "w") as f:
-            f.write(updated_rn_text)
-
-def update_dockerimage_in_rn_text(error_list: list, modified_rn: str) -> str:
-    for error in error_list:
-        requested_entity_line_index = modified_rn.find("##### " + error.get('name') + "\n")
-        requested_docker_line_index = modified_rn[requested_entity_line_index:].find("- Updated the Docker image")
-        + requested_entity_line_index
-        end_of_requested_docker_line_index = modified_rn[requested_docker_line_index:].find("\n")
-        + requested_docker_line_index
-        edited_rn = modified_rn[0: requested_docker_line_index]
-        edited_rn += "- Updated the Docker image to: " + error.get('yml_version') + "*."
-        edited_rn += modified_rn[end_of_requested_docker_line_index:]
-        modified_rn = edited_rn
-    return modified_rn[:-1]

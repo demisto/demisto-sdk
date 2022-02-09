@@ -2208,9 +2208,9 @@ def get_script_or_sub_playbook_tasks_from_playbook(searched_entity_name: str, ma
 
 def extract_docker_image_from_text(text):
     """
-    Strips the docker image version from a given text
+    Strips the docker image version from the text.
     Args:
-        text : the text to extract the docker image from
+        text : the text to search its docker image version note
     Return:
         str. The docker image version if exists. otherwiser, return None.
     """

@@ -409,7 +409,7 @@ TEST_RELEASE_NOTES_TEST_BANK_3 = [
 
 
 @pytest.mark.parametrize('category, release_notes_content, yaml_content, filled_expected_result', TEST_RELEASE_NOTES_TEST_BANK_3)
-def test_is_docker_image_same_as_yml(category, release_notes_content, yml_content, filled_expected_result, pack: Pack):
+def test_is_docker_image_same_as_yml(category, release_notes_content, yaml_content, filled_expected_result, pack: Pack):
     """
     Given
     - Case 1: RN containing a docker update, integration YML containing a docker update, where docker image equal in both.
@@ -431,10 +431,10 @@ def test_is_docker_image_same_as_yml(category, release_notes_content, yml_conten
         category = pack.create_integration()
     else:
         category = pack.create_script()
-    category.yml.update(yml_content)
+    category.yml.update(yaml_content)
     validator = ReleaseNotesValidator(rn.path, modified_files=[category.yml.path],
                                       pack_name=os.path.basename(pack.path))
-    assert validator.is_docker_image_same_as_yml_manager() == filled_expected_result
+    assert validator.is_docker_image_same_as_yml() == filled_expected_result
 
 
 TEST_RELEASE_NOTES_TEST_BANK_4 = [

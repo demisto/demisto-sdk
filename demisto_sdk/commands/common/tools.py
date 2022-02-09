@@ -45,7 +45,7 @@ from demisto_sdk.commands.common.constants import (
     XSOAR_CONFIG_FILE, FileType, FileTypeToIDSetKeys, GitContentConfig,
     IdSetKeys, MarketplaceVersions, urljoin)
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
+from demisto_sdk.commands.common.loaders.xsoar_yaml import XSOAR_YAML
 
 logger = logging.getLogger("demisto-sdk")
 xsoar_yaml = XSOAR_YAML()

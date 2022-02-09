@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional, Union
 import autopep8
 
 import demisto_sdk.commands.common.tools as tools
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
+from demisto_sdk.commands.common.loaders.xsoar_yaml import XSOAR_YAML
 from demisto_sdk.commands.generate_integration.base_code import (
     BASE_ARGUMENT, BASE_BASIC_AUTH, BASE_BEARER_TOKEN, BASE_CLIENT,
     BASE_CLIENT_API_KEY, BASE_CODE_TEMPLATE, BASE_CREDENTIALS, BASE_FUNCTION,

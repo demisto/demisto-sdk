@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Optional
 
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
+from demisto_sdk.commands.common.loaders.xsoar_yaml import XSOAR_YAML
 from TestSuite.file import File
 from TestSuite.test_tools import suite_join_path
 from TestSuite.yml import YAML

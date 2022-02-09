@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
+from demisto_sdk.commands.common.loaders.xsoar_yaml import XSOAR_YAML
 from demisto_sdk.commands.generate_integration.code_generator import (
     IntegrationGeneratorCommand, IntegrationGeneratorConfig,
     IntegrationGeneratorOutput, json_body_to_code)

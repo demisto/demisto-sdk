@@ -24,7 +24,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                get_common_server_path,
                                                get_pack_name, print_error,
                                                print_v, print_warning)
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
+from demisto_sdk.commands.common.loaders.xsoar_yaml import XSOAR_YAML
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
 
 xsoar_yaml = XSOAR_YAML()

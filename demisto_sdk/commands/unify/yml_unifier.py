@@ -23,7 +23,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, arg_to_list,
                                                print_color, print_error,
                                                print_warning,
                                                server_version_compare)
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
+from demisto_sdk.commands.common.loaders.xsoar_yaml import XSOAR_YAML
 
 PACK_METADATA_PATH = 'pack_metadata.json'
 CONTRIBUTOR_DISPLAY_NAME = ' ({} Contribution)'

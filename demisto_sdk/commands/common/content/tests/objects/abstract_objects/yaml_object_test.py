@@ -6,7 +6,7 @@ from demisto_sdk.commands.common.content.errors import (ContentInitializeError,
 from demisto_sdk.commands.common.content.objects.abstract_objects import \
     YAMLObject
 from demisto_sdk.commands.common.tools import src_root
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
+from demisto_sdk.commands.common.loaders.xsoar_yaml import XSOAR_YAML
 
 TEST_DATA = src_root() / 'tests' / 'test_files'
 TEST_CONTENT_REPO = TEST_DATA / 'content_slim'

@@ -15,7 +15,7 @@ from demisto_sdk.commands.common.constants import (
     SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR)
 from demisto_sdk.commands.common.tools import (get_child_files, get_json,
                                                get_yaml)
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
+from demisto_sdk.commands.common.loaders.xsoar_yaml import XSOAR_YAML
 from demisto_sdk.commands.download.downloader import Downloader
 
 xsoar_yaml = XSOAR_YAML()

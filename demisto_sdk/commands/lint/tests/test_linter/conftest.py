@@ -3,7 +3,7 @@ from typing import Callable, List, Optional
 import pytest
 from wcmatch.pathlib import Path
 
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
+from demisto_sdk.commands.common.loaders.xsoar_yaml import XSOAR_YAML
 from demisto_sdk.commands.lint import linter
 from demisto_sdk.commands.lint.linter import Linter
 

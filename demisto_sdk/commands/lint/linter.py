@@ -28,7 +28,7 @@ from demisto_sdk.commands.common.timers import timer
 # Local packages
 from demisto_sdk.commands.common.tools import (get_all_docker_images,
                                                run_command_os)
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
+from demisto_sdk.commands.common.loaders.xsoar_yaml import XSOAR_YAML
 from demisto_sdk.commands.lint.commands_builder import (
     build_bandit_command, build_flake8_command, build_mypy_command,
     build_pwsh_analyze_command, build_pwsh_test_command, build_pylint_command,

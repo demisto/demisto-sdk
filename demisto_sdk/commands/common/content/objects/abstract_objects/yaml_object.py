@@ -4,7 +4,7 @@ from ruamel.yaml.scanner import ScannerError
 from wcmatch.pathlib import EXTGLOB, NEGATE, Path
 
 import demisto_sdk.commands.common.content.errors as exc
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
+from demisto_sdk.commands.common.loaders.xsoar_yaml import XSOAR_YAML
 
 from .dictionary_based_object import DictionaryBasedObject
 

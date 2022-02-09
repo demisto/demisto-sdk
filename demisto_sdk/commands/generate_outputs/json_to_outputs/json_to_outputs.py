@@ -80,7 +80,7 @@ import dateparser
 
 from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
                                                print_error)
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
+from demisto_sdk.commands.common.loaders.xsoar_yaml import XSOAR_YAML
 
 xsoar_yaml = XSOAR_YAML()
 

@@ -12,7 +12,7 @@ from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.common.tools import (is_object_in_id_set,
                                                open_id_set_file, src_root)
 from TestSuite.test_tools import ChangeCWD
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
+from demisto_sdk.commands.common.loaders.xsoar_yaml import XSOAR_YAML
 
 TEST_DATA = src_root() / 'tests' / 'test_files'
 TEST_CONTENT_REPO = TEST_DATA / 'content_slim'

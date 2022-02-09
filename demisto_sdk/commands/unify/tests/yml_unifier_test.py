@@ -13,7 +13,7 @@ from mock import patch
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
+from demisto_sdk.commands.common.loaders.xsoar_yaml import XSOAR_YAML
 from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
 from TestSuite.test_tools import ChangeCWD
 

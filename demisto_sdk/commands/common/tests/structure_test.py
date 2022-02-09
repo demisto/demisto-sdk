@@ -22,7 +22,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.structure import (
     StructureValidator, checked_type_by_reg)
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
+from demisto_sdk.commands.common.loaders.xsoar_yaml import XSOAR_YAML
 from demisto_sdk.tests.constants_test import (
     DASHBOARD_TARGET, DIR_LIST, INCIDENT_FIELD_TARGET,
     INDICATORFIELD_EXACT_SCHEME, INDICATORFIELD_EXTRA_FIELDS,

@@ -17,7 +17,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                get_pipenv_dir,
                                                get_python_version, pascal_case,
                                                print_color, print_error)
-from demisto_sdk.commands.common.xsoar_yaml import XSOAR_YAML
+from demisto_sdk.commands.common.loaders.xsoar_yaml import XSOAR_YAML
 from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
 
 xsoar_yaml = XSOAR_YAML()

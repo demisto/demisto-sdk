@@ -1148,10 +1148,10 @@ def process_integration(file_path: str, packs: Dict[str, Dict], marketplace: str
     Process integration dir or file
 
     Arguments:
-        file_path: file path to integration file
-        packs: the pack mapping from the ID set.
-        marketplace: the marketplace this id set is designated for.
-        print_logs: whether to print logs to stdout
+        file_path: The file path to integration file.
+        packs: The pack mapping from the ID set.
+        marketplace: The marketplace this id set is designated for.
+        print_logs: Whether to print logs to stdout.
 
     Returns:
         integration data list (may be empty), a dict of excluded items from the id set
@@ -1185,6 +1185,18 @@ def process_integration(file_path: str, packs: Dict[str, Dict], marketplace: str
 
 
 def process_script(file_path: str, packs: Dict[str, Dict], marketplace: str, print_logs: bool) -> Tuple[list, dict]:
+    """
+    Process script dir or file
+
+    Arguments:
+        file_path: the file path to script file.
+        packs: The pack mapping from the ID set.
+        marketplace: The marketplace this id set is designated for.
+        print_logs: Whether to print logs to stdout.
+
+    Returns:
+        script data list (may be empty), a dict of excluded items from the id set
+    """
     res = []
     excluded_items_from_id_set: dict = {}
     try:
@@ -1216,9 +1228,9 @@ def process_incident_fields(file_path: str, packs: Dict[str, Dict], marketplace:
     """
     Process a incident_fields JSON file
     Args:
-        file_path: The file path from incident field folder
-        packs: the pack mapping from the ID set.
-        marketplace: the marketplace this id set is designated for.
+        file_path: The file path from incident field folder.
+        packs: The pack mapping from the ID set.
+        marketplace: The marketplace this id set is designated for.
         print_logs: Whether to print logs to stdout.
         incident_types: List of all the incident types in the system.
 
@@ -1246,10 +1258,10 @@ def process_indicator_types(file_path: str, packs: Dict[str, Dict], marketplace:
     Process a indicator types JSON file
     Args:
         file_path: The file path from indicator type folder
-        packs: the pack mapping from the ID set.
-        marketplace: the marketplace this id set is designated for.
-        print_logs: Whether to print logs to stdout
-        all_integrations: The integrations section in the id-set
+        packs: The pack mapping from the ID set.
+        marketplace: The marketplace this id set is designated for.
+        print_logs: Whether to print logs to stdout.
+        all_integrations: The integrations section in the id-set.
 
     Returns:
         a list of indicator type data, a dict of excluded items from the id set
@@ -1279,9 +1291,9 @@ def process_generic_items(file_path: str, packs: Dict[str, Dict], marketplace: s
     """
     Process a generic field JSON file
     Args:
-        file_path: The file path from object field folder
-        packs: the pack mapping from the ID set.
-        marketplace: the marketplace this id set is designated for.
+        file_path: The file path from object field folder.
+        packs: The pack mapping from the ID set.
+        marketplace: The marketplace this id set is designated for.
         print_logs: Whether to print logs to stdout.
         generic_types_list: List of all the generic types in the system.
 
@@ -1313,8 +1325,8 @@ def process_jobs(file_path: str, packs: Dict[str, Dict], marketplace: str, print
     Process a JSON file representing a Job object.
     Args:
         file_path: The file path from object field folder.
-        packs: the pack mapping from the ID set.
-        marketplace: the marketplace this id set is designated for.
+        packs: The pack mapping from the ID set.
+        marketplace: The marketplace this id set is designated for.
         print_logs: Whether to print logs to stdout.
 
     Returns:
@@ -1339,8 +1351,8 @@ def process_layoutscontainers(file_path: str, packs: Dict[str, Dict], marketplac
     Process a JSON file representing a Layoutcontainer object.
     Args:
         file_path: The file path from object field folder.
-        packs: the pack mapping from the ID set.
-        marketplace: the marketplace this id set is designated for.
+        packs: The pack mapping from the ID set.
+        marketplace: The marketplace this id set is designated for.
         print_logs: Whether to print logs to stdout.
 
     Returns:

@@ -1166,8 +1166,8 @@ class TestLayouts:
 
     LAYOUT_TYPE_TO_MARKETPLACE_TESTS = [
         ('indicator', MarketplaceVersions.XSOAR.value, False),
-        ('incident', MarketplaceVersions.XSOAR.value, False),
         ('indicator', MarketplaceVersions.MarketplaceV2.value, False),
+        ('incident', MarketplaceVersions.XSOAR.value, False),
         ('incident', MarketplaceVersions.MarketplaceV2.value, True),
     ]
 

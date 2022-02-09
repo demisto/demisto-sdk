@@ -1792,6 +1792,7 @@ class TestContext:
         Returns:
             True if test has finished it's execution else False
         """
+        # we want to test first playback only once (we want to skip it when using retries mechanism)
         if not self.playbook.configuration.is_first_playback_failed:
             if proxy.has_mock_file(self.playbook.configuration.playbook_id):
                 # Running first playback run on mock file

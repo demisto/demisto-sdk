@@ -434,10 +434,15 @@ def zip_packs(**kwargs) -> int:
     "--allow-skipped",
     help="Don't fail on skipped integrations or when all test playbooks are skipped.",
     is_flag=True)
+@click.option(
+    "--without-multiprocessing",
+    help="run validate all without multiprocessing, for debugging purposes.",
+    is_flag=True, default=False)
 @pass_config
 def validate(config, **kwargs):
     """Validate your content files. If no additional flags are given, will validated only committed files."""
     from demisto_sdk.commands.validate.validate_manager import ValidateManager
+    run_with_mp = kwargs.pop('without_multiprocessing', False)
     check_configuration_file('validate', kwargs)
     sys.path.append(config.configuration.env_dir)
 
@@ -475,6 +480,7 @@ def validate(config, **kwargs):
             include_untracked=kwargs.get('include_untracked'),
             quite_bc=kwargs.get('quite_bc_validation'),
             check_is_unskipped=not kwargs.get('allow_skipped', False),
+            run_with_multiprocessing=run_with_mp
         )
         return validator.run_validation()
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:

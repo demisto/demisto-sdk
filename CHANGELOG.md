@@ -4,6 +4,7 @@
 * Fixed an issue where the **lint** command did not handle all container exit codes.
 * Add to **validate** a validation for pack name to make sure it is unchanged.
 * Added a validation to the **validate** command that verifies that the version in the pack_metdata file is written in the correct format.
+* Fixed an issue in the **format** command where missing *fromVersion* field in indicator fields caused an error.
 
 # 1.5.9
 * Added option to specify `External Playbook Configuration` to change inputs of Playbooks triggered as part of **test-content**

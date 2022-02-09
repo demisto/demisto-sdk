@@ -118,7 +118,7 @@ class ReadMeValidator(BaseValidator):
             if not server_started:
                 return False
         readme_content = self.fix_mdx()
-        retry = Retry(total=4)
+        retry = Retry(total=2)
         adapter = HTTPAdapter(max_retries=retry)
         session = requests.Session()
         session.mount('http://', adapter)

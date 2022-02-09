@@ -204,7 +204,7 @@ class ValidateManager:
             return 0
 
         else:
-            all_failing_files = '\n'.join(FOUND_FILES_AND_ERRORS)
+            all_failing_files = '\n'.join(list(set(FOUND_FILES_AND_ERRORS)))
             click.secho(f"\n=========== Found errors in the following files ===========\n\n{all_failing_files}\n",
                         fg="bright_red")
 
@@ -219,7 +219,6 @@ class ValidateManager:
     def run_validation(self):
         """Initiates validation in accordance with mode (i,g,a)
         """
-        all_errors: list = []
         if self.validate_all:
             is_valid = self.run_validation_on_all_packs()
         elif self.use_git:

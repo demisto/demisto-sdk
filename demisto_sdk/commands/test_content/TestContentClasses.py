@@ -43,7 +43,7 @@ FAILED_MATCH_INSTANCE_MSG = "{} Failed to run.\n There are {} instances of {}, p
                             "the instance_name argument in conf.json. The options are:\n{}"
 ENTRY_TYPE_ERROR = 4
 DEFAULT_INTERVAL = 4
-MAX_RETRIES = 5
+MAX_RETRIES = 3
 RETRIES_THRESHOLD = MAX_RETRIES // 2
 
 SLACK_MEM_CHANNEL_ID = 'CM55V7J8K'

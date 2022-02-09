@@ -79,7 +79,7 @@ class ReleaseNotesValidator(BaseValidator):
                 return False
         return True
 
-    def is_docker_image_same_as_yml(self):
+    def is_docker_image_same_as_yml(self) -> bool:
         """
         Iterates on all modified yaml files,
         checking if the yaml is related to one of the sections in the RN and if there's a docker-image version update mentioned in the RN.
@@ -97,39 +97,41 @@ class ReleaseNotesValidator(BaseValidator):
         error_list = []
         for type, field in zip(['Integrations', 'Scripts'], ['display', 'name']):
             if(type in release_notes_categories):
-                splited_release_notes_entities = self.get_entities_from_category("\n" + release_notes_categories.get(type))
+                splited_release_notes_entities = self.get_entities_from_category(f'\n{release_notes_categories.get(type)}')
                 for modified_yml_file in modified_yml_list:
                     modified_yml_dict = get_ryaml(modified_yml_file) or {}
                     if modified_yml_dict.get(field) in splited_release_notes_entities:
-                        docker_version = self.get_docker_version_from_rn(splited_release_notes_entities.get(modified_yml_dict.get(field)) + "\n")
+                        entity_conent = splited_release_notes_entities.get(modified_yml_dict.get(field, {}), '') + "\n"
+                        docker_version = self.get_docker_version_from_rn(entity_conent)
                         if docker_version and modified_yml_dict.get("script", {}).get("dockerimage") != docker_version:
                             error_list.append({'name': modified_yml_dict.get(field),
                                                'rn_version': docker_version,
-                                               'yml_version': modified_yml_dict.get("script", {}).get("dockerimage")})  # type:ignore
+                                               'yml_version': modified_yml_dict.get("script", {}).get("dockerimage")})
         if len(error_list) > 0:
-            error_message, error_code = Errors.release_notes_docker_image_not_match_yaml(rn_file_name, error_list)
+            error_message, error_code = Errors.release_notes_docker_image_not_match_yaml(rn_file_name,
+                                                                                         error_list, self.pack_path)
             if self.handle_error(error_message, error_code, file_path=self.release_notes_file_path):
                 return False
 
         return True
 
     @staticmethod
-    def get_docker_version_from_rn(section):
+    def get_docker_version_from_rn(section: str) -> str:
         """
-        Strips the docker image version from the relevant section in the RN if noted.
+        Extract the docker image version from the relevant section in the RN if mentioned.
         Args:
-            section : the section to search its docker image version note
+            section (str): the section to search its docker image version note
         Return:
-            str. The docker image version if exists. otherwiser, return None.
+            (str): The docker image version if exists, otherwise, return None.
         """
         updates_list = section.split("\n")
         for update in updates_list:
             if "Docker image" in update and "demisto/" in update:
                 return extract_docker_image_from_text(update)
-        return None
+        return ''
 
     @staticmethod
-    def get_information_from_rn(rn: str, splitter: str):
+    def get_information_from_rn(rn: str, splitter: str) -> dict:
         """
             Extract the various categories from the release note according to the splitter
             rn : the relese notes
@@ -145,10 +147,10 @@ class ReleaseNotesValidator(BaseValidator):
                 splitted_categories_dict[category[0:category.index("\n")]] = category[category.index("\n") + 1:]
         return splitted_categories_dict
 
-    def get_categories_from_rn(self, rn: str):
+    def get_categories_from_rn(self, rn: str) -> dict:
         return self.get_information_from_rn(rn, "\n#### ")
 
-    def get_entities_from_category(self, rn: str):
+    def get_entities_from_category(self, rn: str) -> dict:
         return self.get_information_from_rn(rn, "\n##### ")
 
     @staticmethod

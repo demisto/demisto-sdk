@@ -1146,11 +1146,13 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def release_notes_docker_image_not_match_yaml(rn_file_name, un_matching_files_list: list):
+    def release_notes_docker_image_not_match_yaml(rn_file_name, un_matching_files_list: list, pack_path):
         message_to_return = f'The {rn_file_name} release notes file contains incompatible Docker images:\n'
         for un_matching_file in un_matching_files_list:
-            message_to_return += f"- {un_matching_file.get('name')}: Release notes file has dockerimage:"
-            message_to_return += f"{un_matching_file.get('rn_version')} but the YML file has dockerimage: {un_matching_file.get('yml_version')}\n"
+            message_to_return += f"- {un_matching_file.get('name')}: Release notes file has dockerimage: " \
+                                 f"{un_matching_file.get('rn_version')} but the YML file has dockerimage: " \
+                                 f"{un_matching_file.get('yml_version')}\n"
+        message_to_return += "To fix this please run:\ndemisto-sdk update-release-notes -i {pack_path}"
         return message_to_return
 
     @staticmethod

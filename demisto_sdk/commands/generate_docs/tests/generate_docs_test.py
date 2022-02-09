@@ -565,7 +565,7 @@ def test_generate_script_doc(tmp_path, mocker):
     expected_readme = os.path.join(FILES_PATH, 'docs_test', 'set_expected-README.md')
     with open(id_set_file, 'r') as f:
         id_set = json.load(f)
-    patched = mocker.patch.object(IDSetCreator, 'create_id_set', return_value=id_set)
+    patched = mocker.patch.object(IDSetCreator, 'create_id_set', return_value=[id_set, {}, {}])
     mocker.patch.object(common, 'execute_command', side_effect=handle_example)
     # because used in is random
     mocker.patch('demisto_sdk.commands.generate_docs.generate_script_doc.get_used_in', return_value=[])
@@ -644,6 +644,25 @@ class TestGenerateIntegrationDoc:
                 assert "The type of the newly created user. Possible values are: Basic, Pro, " \
                        "Corporate. Default is Basic." in fake_data
                 assert "Number of users to return. Max 300. Default is 30." in fake_data
+
+    def test_generate_integration_doc_new_contribution(self):
+        """
+        Given
+            - YML file representing a new integration contribution.
+        When
+            - Running generate_integration_doc command on the integration.
+        Then
+            - Validate that the integration README was created correctly,
+             specifically that the `xx version` line does not exists in the file.
+    """
+        fake_readme = os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), 'fake_new_contribution_README.md')
+        # Generate doc
+        generate_integration_doc(TEST_INTEGRATION_PATH, is_contribution=True)
+        with open(fake_readme) as fake_file:
+            with open(os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), 'README.md')) as real_file:
+                fake_data = fake_file.read()
+                assert fake_data == real_file.read()
+                assert "This integration was integrated and tested with version xx of" not in fake_data
 
     def test_integration_doc_credentials_display_missing(self):
         """

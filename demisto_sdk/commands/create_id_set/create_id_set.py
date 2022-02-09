@@ -9,13 +9,14 @@ from demisto_sdk.commands.common.constants import (DEFAULT_ID_SET_PATH,
                                                    GENERIC_COMMANDS_NAMES,
                                                    MP_V2_ID_SET_PATH,
                                                    MarketplaceVersions)
+from demisto_sdk.commands.common.tools import open_id_set_file
 from demisto_sdk.commands.common.update_id_set import re_create_id_set
 
 
 class IDSetCreator:
 
     def __init__(self, output: Optional[str] = '', input: Optional[str] = None, print_logs: bool = True,
-                 fail_duplicates: bool = False, marketplace: str = 'xsoar'):
+                 fail_duplicates: bool = False, marketplace: str = ''):
         """IDSetCreator
 
         Args:
@@ -33,16 +34,17 @@ class IDSetCreator:
         self.marketplace = marketplace.lower()
 
     def create_id_set(self):
-        self.id_set = re_create_id_set(
+        self.id_set, excluded_items_by_pack, excluded_items_by_type = re_create_id_set(
             id_set_path=self.output,
             pack_to_create=self.input,
             print_logs=self.print_logs,
             fail_on_duplicates=self.fail_duplicates,
             marketplace=self.marketplace
         )
+
         self.add_command_to_implementing_integrations_mapping()
         self.save_id_set()
-        return self.id_set
+        return self.id_set, excluded_items_by_pack, excluded_items_by_type
 
     def add_command_to_implementing_integrations_mapping(self):
         """
@@ -90,3 +92,19 @@ class IDSetCreator:
                 os.makedirs(intermediate_dirs, exist_ok=True)
             with open(self.output, 'w+') as id_set_file:
                 json.dump(self.id_set, id_set_file, indent=4)
+
+
+def get_id_set(id_set_path: str) -> dict:
+    """
+    Parses the content of id_set_path and returns its content.
+    Args:
+        id_set_path: The path of the id_set file
+
+    Returns:
+        The parsed content of id_set
+    """
+    if id_set_path:
+        id_set = open_id_set_file(id_set_path)
+    else:
+        id_set, _, _ = IDSetCreator(print_logs=False).create_id_set()
+    return id_set

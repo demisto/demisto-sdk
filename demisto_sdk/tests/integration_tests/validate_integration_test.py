@@ -638,7 +638,7 @@ class TestDeprecatedIntegration:
         integration = pack.create_integration(yml=valid_integration_yml)
         modified_files = {integration.yml.rel_path}
         mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files,
-                                                                                         set(), set(), set()))
+                                                                                         set(), set(), set(), True))
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
@@ -710,7 +710,7 @@ class TestDeprecatedIntegration:
 
         modified_files = {integration.yml.rel_path}
         mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, set(),
-                                                                                         set(), set()))
+                                                                                         set(), set(), True))
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
@@ -2320,7 +2320,7 @@ class TestPlaybookValidateDeprecated:
         playbook = pack.create_playbook(yml=valid_playbook_yml)
         modified_files = {playbook.yml.rel_path}
         mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, {},
-                                                                                         set(), set()))
+                                                                                         set(), set(), True))
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
@@ -2391,7 +2391,7 @@ class TestPlaybookValidateDeprecated:
         playbook = pack.create_playbook(yml=valid_playbook_yml)
         modified_files = {playbook.yml.rel_path}
         mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, {},
-                                                                                         set(), set()))
+                                                                                         set(), set(), True))
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
@@ -2659,7 +2659,7 @@ class TestScriptDeprecatedValidation:
         script = pack.create_script(yml=valid_script_yml)
         modified_files = {script.yml.rel_path}
         mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, {},
-                                                                                         set(), set()))
+                                                                                         set(), set(), True))
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
@@ -2728,7 +2728,7 @@ class TestScriptDeprecatedValidation:
         script = pack.create_script(yml=valid_script_yml)
         modified_files = {script.yml.rel_path}
         mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, {},
-                                                                                         set(), set()))
+                                                                                         set(), set(), True))
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
@@ -3067,7 +3067,7 @@ class TestValidationUsingGit:
         mocker.patch.object(ValidateManager, 'setup_git_params', return_value=True)
         mocker.patch.object(ValidateManager, 'setup_prev_ver', return_value='origin/master')
         mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, added_files,
-                                                                                         set(), old_files))
+                                                                                         set(), old_files, True))
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
@@ -3127,7 +3127,7 @@ class TestValidationUsingGit:
         mocker.patch.object(ValidateManager, 'setup_git_params', return_value=True)
         mocker.patch.object(ValidateManager, 'setup_prev_ver', return_value='origin/master')
         mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, added_files,
-                                                                                         set(), set()))
+                                                                                         set(), set(), True))
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
@@ -3179,7 +3179,7 @@ class TestValidationUsingGit:
         mocker.patch.object(ValidateManager, 'setup_git_params', return_value=True)
         mocker.patch.object(ValidateManager, 'setup_prev_ver', return_value='origin/master')
         mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, set(),
-                                                                                         set(), set()))
+                                                                                         set(), set(), True))
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
@@ -3224,7 +3224,7 @@ class TestValidationUsingGit:
         mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_meta_file', return_value=True)
         mocker.patch.object(BaseValidator, 'update_checked_flags_by_support_level', return_value=None)
         mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, set(),
-                                                                                         set(), set()))
+                                                                                         set(), set(), True))
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
@@ -3310,7 +3310,7 @@ class TestValidationUsingGit:
         mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_meta_file', return_value=True)
         mocker.patch.object(BaseValidator, 'update_checked_flags_by_support_level', return_value=None)
         mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, set(),
-                                                                                         set(), set()))
+                                                                                         set(), set(), True))
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
@@ -3355,7 +3355,7 @@ class TestValidationUsingGit:
         mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_meta_file', return_value=True)
         mocker.patch.object(BaseValidator, 'update_checked_flags_by_support_level', return_value=None)
         mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, set(),
-                                                                                         set(), set()))
+                                                                                         set(), set(), True))
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
@@ -3407,7 +3407,7 @@ class TestValidationUsingGit:
         mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_meta_file', return_value=True)
         mocker.patch.object(BaseValidator, 'update_checked_flags_by_support_level', return_value=None)
         mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, set(),
-                                                                                         set(), set()))
+                                                                                         set(), set(), True))
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 

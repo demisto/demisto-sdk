@@ -12,6 +12,8 @@ from typing import Optional, Tuple, Union
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, DEFAULT_ID_SET_PATH,
     IGNORED_PACK_NAMES, RN_HEADER_BY_FILE_TYPE, FileType)
+from demisto_sdk.commands.common.content import Content
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
@@ -49,10 +51,13 @@ class UpdateRN:
         self.should_delete_existing_rn = False
         self.pack_metadata_only = pack_metadata_only
         self.is_force = is_force
+        git_util = GitUtil(repo=Content.git())
+        self.main_branch = git_util.handle_prev_ver()[1]
         self.metadata_path = os.path.join(self.pack_path, 'pack_metadata.json')
         self.master_version = self.get_master_version()
         self.rn_path = ''
         self.is_bc = is_bc
+        self.bc_path = ''
 
     @staticmethod
     def change_image_or_desc_file_path(file_path: str) -> str:
@@ -113,7 +118,7 @@ class UpdateRN:
             file_name, file_type = self.get_changed_file_name_and_type(packfile)
             if 'yml' in packfile and file_type in [FileType.INTEGRATION, FileType.BETA_INTEGRATION,
                                                    FileType.SCRIPT] and packfile not in self.added_files:
-                docker_image_name: Optional[str] = check_docker_image_changed(packfile)
+                docker_image_name: Optional[str] = check_docker_image_changed(main_branch=self.main_branch, packfile=packfile)
             else:
                 docker_image_name = None
             changed_files[(file_name, file_type)] = {
@@ -151,6 +156,11 @@ class UpdateRN:
                 run_command(f'git add {rn_path}', exit_on_error=False)
             except RuntimeError:
                 print_warning(f'Could not add the release note files to git: {rn_path}')
+            if self.is_bc and self.bc_path:
+                try:
+                    run_command(f'git add {self.bc_path}', exit_on_error=False)
+                except RuntimeError:
+                    print_warning(f'Could not add the release note config file to git: {rn_path}')
             if self.existing_rn_changed:
                 print_color(f"Finished updating release notes for {self.pack}.", LOG_COLORS.GREEN)
                 if not self.text:
@@ -183,6 +193,7 @@ class UpdateRN:
         if not self.is_bc:
             return
         bc_file_path: str = f'''{self.pack_path}/ReleaseNotes/{new_version.replace('.', '_')}.json'''
+        self.bc_path = bc_file_path
         bc_file_data: dict = dict()
         if os.path.exists(bc_file_path):
             with open(bc_file_path, 'r') as f:
@@ -233,7 +244,7 @@ class UpdateRN:
 
     def get_master_version(self) -> str:
         """
-            Gets the current version from origin/master if available, otherwise return '0.0.0'.
+            Gets the current version from origin/master or origin/main if available, otherwise return '0.0.0'.
 
             :rtype: ``str``
             :return
@@ -243,7 +254,7 @@ class UpdateRN:
         master_current_version = '0.0.0'
         master_metadata = None
         try:
-            master_metadata = get_remote_file(self.metadata_path)
+            master_metadata = get_remote_file(self.metadata_path, tag=self.main_branch)
         except Exception as e:
             print_error(f"master branch is unreachable.\n The reason is:{e} \n "
                         f"The updated version will be taken from local metadata file instead of master")
@@ -777,18 +788,19 @@ def update_api_modules_dependents_rn(pre_release: bool, update_type: Union[str, 
     return total_updated_packs
 
 
-def check_docker_image_changed(added_or_modified_yml: str) -> Optional[str]:
+def check_docker_image_changed(main_branch: str, packfile: str) -> Optional[str]:
     """ Checks whether the docker image was changed in master.
 
         :param
-            added_or_modified_yml: The added or modified yml path
+            main_branch: The git main branch
+            packfile: The added or modified yml path
 
         :rtype: ``Optional[str]``
         :return
         The latest docker image
     """
     try:
-        diff = run_command(f'git diff origin/master -- {added_or_modified_yml}', exit_on_error=False)
+        diff = run_command(f'git diff {main_branch} -- {packfile}', exit_on_error=False)
     except RuntimeError as e:
         if any(['is outside repository' in exp for exp in e.args]):
             return None

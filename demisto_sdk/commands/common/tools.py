@@ -2,19 +2,22 @@ import argparse
 import glob
 import io
 import json
+import logging
 import os
 import re
 import shlex
 import sys
 import urllib.parse
+from concurrent.futures import as_completed
 from configparser import ConfigParser, MissingSectionHeaderError
 from contextlib import contextmanager
 from distutils.version import LooseVersion
 from enum import Enum
 from functools import lru_cache, partial
-from pathlib import Path
+from pathlib import Path, PosixPath
 from subprocess import DEVNULL, PIPE, Popen, check_output
-from typing import Callable, Dict, List, Match, Optional, Tuple, Type, Union
+from typing import (Callable, Dict, List, Match, Optional, Set, Tuple, Type,
+                    Union)
 
 import click
 import colorama
@@ -25,7 +28,9 @@ import requests
 import urllib3
 import yaml
 from packaging.version import parse
+from pebble import ProcessFuture, ProcessPool
 from ruamel.yaml import YAML
+from ruamel.yaml.comments import CommentedMap, CommentedSeq
 
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK, CLASSIFIERS_DIR,
@@ -41,8 +46,8 @@ from demisto_sdk.commands.common.constants import (
     PACKS_README_FILE_NAME, PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR,
     RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR,
-    XSOAR_CONFIG_FILE, FileType, GitContentConfig, MarketplaceVersions,
-    urljoin)
+    XSOAR_CONFIG_FILE, FileType, FileTypeToIDSetKeys, GitContentConfig,
+    IdSetKeys, MarketplaceVersions, urljoin)
 from demisto_sdk.commands.common.git_util import GitUtil
 
 urllib3.disable_warnings()
@@ -50,6 +55,7 @@ urllib3.disable_warnings()
 # inialize color palette
 colorama.init()
 
+logger = logging.getLogger("demisto-sdk")
 ryaml = YAML()
 ryaml.preserve_quotes = True
 ryaml.allow_duplicate_keys = True
@@ -309,7 +315,7 @@ def get_remote_file(
     if full_file_path.endswith('json'):
         details = res.json() if res.ok else json.loads(local_content)
     elif full_file_path.endswith('yml'):
-        details = yaml.safe_load(file_content)  # type: ignore[arg-type]
+        details = ryaml.load(file_content)
     # if neither yml nor json then probably a CHANGELOG or README file.
     else:
         details = {}
@@ -806,11 +812,14 @@ def get_pack_name(file_path):
     Returns:
         pack name (str)
     """
-    if isinstance(file_path, Path):
-        file_path = str(file_path)
-    # the regex extracts pack name from relative paths, for example: Packs/EWSv2 -> EWSv2
-    match = re.search(rf'{PACKS_DIR_REGEX}[/\\]([^/\\]+)[/\\]?', file_path)
-    return match.group(1) if match else None
+    file_path = Path(file_path)
+    parts = file_path.parts
+    if 'Packs' not in parts:
+        return None
+    pack_name_index = parts.index('Packs') + 1
+    if len(parts) <= pack_name_index:
+        return None
+    return parts[pack_name_index]
 
 
 def get_pack_names_from_files(file_paths, skip_file_types=None):
@@ -856,6 +865,10 @@ def filter_files_by_type(file_paths=None, skip_file_types=None) -> set:
 
 def pack_name_to_path(pack_name):
     return os.path.join(PACKS_DIR, pack_name)
+
+
+def pack_name_to_posix_path(pack_name):
+    return PosixPath(pack_name_to_path(pack_name))
 
 
 def get_pack_ignore_file_path(pack_name):
@@ -1124,15 +1137,26 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
 # flake8: noqa: C901
 
 
-def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignore_sub_categories: bool = False):
+def find_type(
+    path: str = '',
+    _dict=None,
+    file_type: Optional[str] = None,
+    ignore_sub_categories: bool = False,
+    ignore_invalid_schema_file: bool = False
+):
     """
     returns the content file type
 
     Arguments:
-        path - a path to the file
+         path (str): a path to the file.
+        _dict (dict): file dict representation if exists.
+        file_type (str): a string representation of the file type.
+        ignore_sub_categories (bool): ignore the sub categories, True to ignore, False otherwise.
+        ignore_invalid_schema_file (bool): whether to ignore raising error on invalid schema files,
+            True to ignore, False otherwise.
 
     Returns:
-        string representing the content file type
+        FileType: string representing of the content file type, None otherwise.
     """
     type_by_path = find_type_by_path(path)
     if type_by_path:
@@ -1144,6 +1168,12 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
     except FileNotFoundError:
         # unable to find the file - hence can't identify it
         return None
+    except ValueError as err:
+        if ignore_invalid_schema_file:
+            # invalid file schema
+            logger.debug(str(err))
+            return None
+        raise err
 
     if file_type == 'yml':
         if 'category' in _dict:
@@ -1674,17 +1704,18 @@ def camel_to_snake(camel: str) -> str:
 
 
 def open_id_set_file(id_set_path):
-    id_set = None
+    id_set = {}
     try:
         with open(id_set_path, 'r') as id_set_file:
             id_set = json.load(id_set_file)
     except IOError:
         print_warning("Could not open id_set file")
+        raise
     finally:
         return id_set
 
 
-def get_demisto_version(demisto_client: demisto_client) -> str:
+def get_demisto_version(client: demisto_client) -> str:
     """
     Args:
         demisto_client: A configured demisto_client instance
@@ -1693,7 +1724,7 @@ def get_demisto_version(demisto_client: demisto_client) -> str:
         the server version of the Demisto instance.
     """
     try:
-        resp = demisto_client.generic_request('/about', 'GET')
+        resp = client.generic_request('/about', 'GET')
         about_data = json.loads(resp[0].replace("'", '"'))
         return parse(about_data.get('demistoVersion'))  # type: ignore
     except Exception:
@@ -1753,6 +1784,26 @@ def get_all_incident_and_indicator_fields_from_id_set(id_set_file, entity_type):
                 elif entity_type == 'layout':
                     fields_list.append(field.replace('incident_', '').replace('indicator_', ''))
     return fields_list
+
+
+def is_object_in_id_set(object_id, pack_info_from_id_set):
+    """
+        Check if the given object is part of the packs items that are present in the Packs section in the id set.
+        This is assuming that the id set is based on the version that has, under each pack, the items it contains.
+
+    Args:
+        object_name: name of object of interest.
+        pack: the pack this object should belong to.
+        packs_section_from_id_set: the section under the key Packs in the previously given id set.
+
+    Returns:
+
+    """
+    content_items = pack_info_from_id_set.get('ContentItems', {})
+    for items_type, items_ids in content_items.items():
+        if object_id in items_ids:
+            return True
+    return False
 
 
 def is_string_uuid(string_to_check: str):
@@ -2159,6 +2210,21 @@ def get_script_or_sub_playbook_tasks_from_playbook(searched_entity_name: str, ma
     return searched_tasks
 
 
+def extract_docker_image_from_text(text):
+    """
+    Strips the docker image version from a given text.
+    Args:
+        text : the text to extract the docker image from
+    Return:
+        str. The docker image version if exists, otherwise, return None.
+    """
+    match = (re.search(r'(demisto/.+:([0-9]+)(((\.)[0-9]+)+))', text))
+    if match:
+        return match.group(1)
+    else:
+        return None
+
+
 def get_current_repo() -> Tuple[str, str, str]:
     try:
         git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
@@ -2170,6 +2236,40 @@ def get_current_repo() -> Tuple[str, str, str]:
     except git.InvalidGitRepositoryError:
         print_warning('git repo is not found')
         return "Unknown source", '', ''
+
+
+def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[str, Dict] = None) -> List:
+    """
+    Return the supporting marketplaces of the item.
+
+    Args:
+        item_path: the item path.
+        item_data: the item data.
+        packs: the pack mapping from the ID set.
+
+    Returns: the list of supporting marketplaces.
+    """
+
+    if not item_data:
+        file_type = Path(item_path).suffix
+        item_data = get_file(item_path, file_type)
+
+    # first check, check field 'marketplaces' in the item's file
+    marketplaces = item_data.get('marketplaces', [])  # type: ignore
+
+    # second check, check the metadata of the pack
+    if not marketplaces:
+        if 'pack_metadata' in item_path:
+            # default supporting marketplace
+            marketplaces = [MarketplaceVersions.XSOAR.value]
+        else:
+            pack_name = get_pack_name(item_path)
+            if packs:
+                marketplaces = packs.get(pack_name, {}).get('marketplaces', [MarketplaceVersions.XSOAR.value])
+            else:
+                marketplaces = get_mp_types_from_metadata_by_item(item_path)
+
+    return marketplaces
 
 
 def get_mp_types_from_metadata_by_item(file_path):
@@ -2214,3 +2314,186 @@ def get_pack_dir(path):
         if parts[index] == 'Packs':
             return parts[:index + 2]
     return []
+
+
+@contextmanager
+def ProcessPoolHandler() -> ProcessPool:
+    """ Process pool Handler which terminate all processes in case of Exception.
+
+    Yields:
+        ProcessPool: Pebble process pool.
+    """
+    with ProcessPool(max_workers=3) as pool:
+        try:
+            yield pool
+        except Exception:
+            print_error("Gracefully release all resources due to Error...")
+            raise
+        finally:
+            pool.close()
+            pool.join()
+
+
+def wait_futures_complete(futures: List[ProcessFuture], done_fn: Callable):
+    """Wait for all futures to complete, Raise exception if occurred.
+
+    Args:
+        futures: futures to wait for.
+        done_fn: Function to run on result.
+    Raises:
+        Exception: Raise caught exception for further cleanups.
+    """
+    for future in as_completed(futures):
+        try:
+            result = future.result()
+            done_fn(result)
+        except Exception as e:
+            print_error(e)
+            raise
+
+
+def get_api_module_dependencies(pkgs, id_set_path, verbose):
+    """
+    Get all paths to integrations and scripts dependent on api modules that are found in the modified files.
+    Args:
+        pkgs: the pkgs paths found as modified to run lint on (including the api module files)
+        id_set_path: path to id set
+        verbose: print found dependencies or not
+    Returns:
+        a list of the paths to the scripts and integration found dependent on the modified api modules.
+    """
+
+    id_set = open_id_set_file(id_set_path)
+    api_modules = [pkg.name for pkg in pkgs if API_MODULES_PACK in pkg.parts]
+    scripts = id_set.get(IdSetKeys.SCRIPTS.value, [])
+    integrations = id_set.get(IdSetKeys.INTEGRATIONS.value, [])
+    using_scripts, using_integrations = [], []
+    for script in scripts:
+        script_info = list(script.values())[0]
+        script_name = script_info.get('name')
+        api_module = script_info.get('api_modules', [])
+        if api_module in api_modules:
+            if verbose:
+                print(f"found script {script_name} dependent on {api_module}")
+            using_scripts.extend(list(script.values()))
+
+    for integration in integrations:
+        integration_info = list(integration.values())[0]
+        integration_name = integration_info.get('name')
+        api_module = integration_info.get('api_modules', [])
+        if api_module in api_modules:
+            if verbose:
+                print(f"found integration {integration_name} dependent on {api_module}")
+            using_integrations.extend(list(integration.values()))
+
+    using_scripts_pkg_paths = [Path(script.get('file_path')).parent.absolute() for
+                               script in using_scripts]
+    using_integrations_pkg_paths = [Path(integration.get('file_path')).parent.absolute() for
+                                    integration in using_integrations]
+    return list(set(using_integrations_pkg_paths + using_scripts_pkg_paths))
+
+
+def listdir_fullpath(dir_name: str) -> List[str]:
+    return [os.path.join(dir_name, f) for f in os.listdir(dir_name)]
+
+
+def get_scripts_and_commands_from_yml_data(data, file_type):
+    """Get the used scripts, playbooks and commands from the yml data
+
+    Args:
+        data: The yml data as extracted with get_yaml
+        file_type: The FileType of the data provided.
+
+    Return (list of found { 'id': command name, 'source': command source }, list of found script and playbook names)
+    """
+    commands = []
+    detailed_commands = []
+    scripts_and_pbs = []
+    if file_type in {FileType.TEST_PLAYBOOK, FileType.PLAYBOOK}:
+        tasks = data.get('tasks')
+        for task_num in tasks.keys():
+            task = tasks[task_num]
+            inner_task = task.get('task')
+            task_type = task.get('type')
+            if inner_task and task_type == 'regular' or task_type == 'playbook':
+                if inner_task.get('iscommand'):
+                    commands.append(inner_task.get('script'))
+                else:
+                    if task_type == 'playbook':
+                        scripts_and_pbs.append(inner_task.get('playbookName'))
+                    elif inner_task.get('scriptName'):
+                        scripts_and_pbs.append(inner_task.get('scriptName'))
+        if file_type == FileType.PLAYBOOK:
+            playbook_id = get_entity_id_by_entity_type(data, PLAYBOOKS_DIR)
+            scripts_and_pbs.append(playbook_id)
+
+    if file_type == FileType.SCRIPT:
+        script_id = get_entity_id_by_entity_type(data, SCRIPTS_DIR)
+        scripts_and_pbs = [script_id]
+        if data.get('dependson'):
+            commands = data.get('dependson').get('must', [])
+
+    if file_type == FileType.INTEGRATION:
+        integration_commands = data.get('script', {}).get('commands')
+        for integration_command in integration_commands:
+            commands.append(integration_command.get('name'))
+
+    for command in commands:
+        command_parts = command.split('|||')
+        if len(command_parts) == 2:
+            detailed_commands.append({
+                'id': command_parts[1],
+                'source': command_parts[0]
+            })
+        else:
+            detailed_commands.append({
+                'id': command_parts[0]
+            })
+
+    return detailed_commands, scripts_and_pbs
+
+
+def alternate_item_fields(content_item):
+    """
+    Go over all of the given content item fields and if there is a field with an alternative name, which is marked
+    by '_x2', use that value as the value of the original field (the corresponding one without the '_x2' suffix).
+    Args:
+        content_item: content item object
+
+    """
+    as_dict_types = (dict, CommentedMap)
+    as_list_types = (list, CommentedSeq)
+    current_dict = content_item.to_dict() if type(content_item) not in as_dict_types else content_item
+    copy_dict = current_dict.copy()  # for modifying dict while iterating
+    for field, value in copy_dict.items():
+        if field.endswith('_x2'):
+            current_dict[field[:-3]] = value
+            current_dict.pop(field)
+        elif isinstance(current_dict[field], as_dict_types):
+            alternate_item_fields(current_dict[field])
+        elif isinstance(current_dict[field], as_list_types):
+            for item in current_dict[field]:
+                if isinstance(item, as_dict_types):
+                    alternate_item_fields(item)
+
+
+def should_alternate_field_by_item(content_item, id_set):
+    """
+    Go over the given content item and check if it should be modified to use its alternative fields, which is determined
+    by the field 'has_alternative_meta' in the id set.
+    Args:
+        content_item: content item object
+        id_set: parsed id set dict
+
+    Returns: True if should alterante fields, false otherwise
+
+    """
+    commonfields = content_item.get('commonfields')
+    item_id = commonfields.get('id') if commonfields else content_item.get('id')
+
+    item_type = content_item.type()
+    id_set_item_type = id_set.get(FileTypeToIDSetKeys.get(item_type))
+    for item in id_set_item_type:
+        if list(item.keys())[0] == item_id:
+            return item.get(item_id, {}).get('has_alternative_meta', False)
+    return False

@@ -63,5 +63,12 @@ class DictionaryBasedObject(GeneralObject):
 
         return value
 
+    def get_id(self):
+        as_dict = self.to_dict()
+        if 'commonfields' in as_dict.keys():
+            return as_dict.get('commonfields', {}).get('id')
+        else:
+            return as_dict.get('id')
+
     def __contains__(self, item):
         return item in self._as_dict

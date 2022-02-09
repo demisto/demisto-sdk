@@ -10,8 +10,21 @@
             "args": [
                 "validate",
                 "-i",
-                "Packs/VirusTotal/Integrations/",
-                "-g"
+                "${env:CONTENT}/Packs/AbuseDB/Integrations/AbuseDB"
+            ]
+        },
+        {
+            "name": "Python: Lint AbuseDB with logs",
+            "type": "python",
+            "request": "launch",
+            "module": "demisto_sdk",
+            "cwd": "${env:CONTENT}",
+            "args": [
+                "update-release-notes",
+                "-i",
+                "${env:CONTENT}/Packs/AbuseDB/Integrations/AbuseDB",
+                "-j",
+                "${env:CONTENT}/.demisto-sdk-report"
             ]
         }
     ]

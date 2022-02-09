@@ -14,6 +14,8 @@ mapping:
   name:
     type: str
     required: True
+  name_x2:
+    type: str
   ownerOnly:
     type: bool
   placeholder:
@@ -25,6 +27,8 @@ mapping:
   cliName:
     type: str
     required: True
+  cliName_x2:
+    type: str
   type:
     type: str
     required: True
@@ -98,4 +102,20 @@ mapping:
     type: seq
     sequence:
       - type: str
-        enum: ['xsoar', 'marketplacev2']
+        enum: [ 'xsoar', 'marketplacev2' ]
+  Aliases:
+    type: seq
+    sequence:
+      - include: aliases_schema
+  x2_fields:
+    type: str
+
+schema;aliases_schema:
+  type: map
+  mapping:
+    cliName:
+      type: str
+    type:
+      type: str
+      enum: [ 'shortText', 'longText', 'boolean', 'singleSelect', 'multiSelect', 'date', 'user', 'role', 'number',
+              'attachments', 'tagsSelect', 'internal', 'url', 'markdown', 'grid', 'timer', 'html' ]

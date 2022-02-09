@@ -679,7 +679,7 @@ class TestRNUpdate(unittest.TestCase):
             ValidateManager
         manager = UpdateReleaseNotesManager(user_input='BitcoinAbuse')
         validate_manager: ValidateManager = ValidateManager(check_is_unskipped=False)
-        filtered_set, old_format_files = manager.filter_to_relevant_files(
+        filtered_set, old_format_files, _ = manager.filter_to_relevant_files(
             {'.gitlab/ci/.gitlab-ci.yml'}, validate_manager)
         assert filtered_set == set()
         assert old_format_files == set()
@@ -1117,7 +1117,7 @@ class TestRNUpdateUnit:
 
         mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.run_command', return_value=return_value)
 
-        assert check_docker_image_changed('test.yml') is None
+        assert check_docker_image_changed(main_branch='origin/master', packfile='test.yml') is None
 
     def test_update_docker_image_in_yml(self, mocker):
         """

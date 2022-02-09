@@ -15,7 +15,8 @@ from pkg_resources import get_distribution
 
 from demisto_sdk.commands.common.configuration import Configuration
 # Common tools
-from demisto_sdk.commands.common.constants import FileType
+from demisto_sdk.commands.common.constants import (
+    ALL_PACKS_DEPENDENCIES_DEFAULT_PATH, FileType)
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_last_remote_release_version,
                                                get_release_note_entries,
@@ -362,7 +363,7 @@ def zip_packs(**kwargs) -> int:
 @click.option(
     '-g', '--use-git', is_flag=True, show_default=True,
     default=False,
-    help='Validate changes using git - this will check current branch\'s changes against origin/master. '
+    help='Validate changes using git - this will check current branch\'s changes against origin/master or origin/main. '
          'If the --post-commit flag is supplied: validation will run only on the current branch\'s changed files '
          'that have been committed. '
          'If the --post-commit flag is not supplied: validation will run on all changed files in the current branch, '
@@ -514,6 +515,11 @@ def validate(config, **kwargs):
                                            'determines which artifacts are created for each pack. '
                                            'Default is the XSOAR marketplace, that has all of the packs '
                                            'artifacts.', default='xsoar', type=click.Choice(['xsoar', 'marketplacev2', 'v2']))
+@click.option('-fbi', '--filter-by-id-set', is_flag=True,
+              help='Whether to use the id set as content items guide, meaning only include in the packs the '
+                   'content items that appear in the id set.', default=False, hidden=True)
+@click.option('-af', '--alternate-fields', is_flag=True,
+              help='Use the alternative fields if such are present in the yml or json of the content item.', default=False, hidden=True)
 def create_content_artifacts(**kwargs) -> int:
     """Generating the following artifacts:
        1. content_new - Contains all content objects of type json,yaml (from_version < 6.0.0)
@@ -607,7 +613,7 @@ def secrets(config, **kwargs):
 @click.option("--no-pwsh-analyze", is_flag=True, help="Do NOT run powershell analyze")
 @click.option("--no-pwsh-test", is_flag=True, help="Do NOT run powershell test")
 @click.option("-kc", "--keep-container", is_flag=True, help="Keep the test container")
-@click.option("--prev-ver", default='master', help="Previous branch or SHA1 commit to run checks against")
+@click.option("--prev-ver", help="Previous branch or SHA1 commit to run checks against", default='master')
 @click.option("--test-xml", help="Path to store pytest xml results", type=click.Path(exists=True, resolve_path=True))
 @click.option("--failure-report", help="Path to store failed packs report",
               type=click.Path(exists=True, resolve_path=True))
@@ -622,6 +628,15 @@ def secrets(config, **kwargs):
 )
 @click.option("-dt", "--docker-timeout", default=60,
               help="The timeout (in seconds) for requests done by the docker client.", type=int)
+@click.option("-idp", "--id-set-path", help="Path to id_set.json, relevant for when using the "
+                                            "--check-dependent-api-module flag.",
+              type=click.Path(resolve_path=True),
+              default='Tests/id_set.json')
+@click.option("-cdam", "--check-dependent-api-module", is_flag=True, help="Run unit tests and lint on all packages that "
+              "are dependent on the found "
+              "modified api modules.", default=True)
+@click.option("--time-measurements-dir", help="Specify directory for the time measurements report file",
+              type=PathsParamType())
 def lint(**kwargs):
     """Lint command will perform:
         1. Package in host checks - flake8, bandit, mypy, vulture.
@@ -644,7 +659,9 @@ def lint(**kwargs):
         verbose=kwargs.get('verbose'),  # type: ignore[arg-type]
         quiet=kwargs.get('quiet'),  # type: ignore[arg-type]
         prev_ver=kwargs.get('prev_ver'),  # type: ignore[arg-type]
-        json_file_path=kwargs.get('json_file')  # type: ignore[arg-type]
+        json_file_path=kwargs.get('json_file'),  # type: ignore[arg-type]
+        id_set_path=kwargs.get('id_set_path'),  # type: ignore[arg-type]
+        check_dependent_api_module=kwargs.get('check_dependent_api_module'),  # type: ignore[arg-type]
     )
     return lint_manager.run_dev_packages(
         parallel=kwargs.get('parallel'),  # type: ignore[arg-type]
@@ -663,6 +680,7 @@ def lint(**kwargs):
         no_coverage=kwargs.get('no_coverage'),  # type: ignore[arg-type]
         coverage_report=kwargs.get('coverage_report'),  # type: ignore[arg-type]
         docker_timeout=kwargs.get('docker_timeout'),  # type: ignore[arg-type]
+        time_measurements_dir=kwargs.get('time_measurements_dir'),  # type: ignore[arg-type]
     )
 
 
@@ -831,6 +849,11 @@ def format(
 @click.option(
     "--insecure",
     help="Skip certificate validation", is_flag=True
+)
+@click.option(
+    "--skip_validation", is_flag=True,
+    help="Only for upload zipped packs, "
+         "if true will skip upload packs validation, use just when migrate existing custom content to packs."
 )
 @click.option(
     "-v", "--verbose",
@@ -1379,14 +1402,21 @@ def generate_docs(**kwargs):
 )
 @click.option('-mp', '--marketplace', help='The marketplace the id set are created for, that determines which packs are'
                                            ' inserted to the id set, and which items are present in the id set for '
-                                           'each pack. Default is the XSOAR marketplace, that has all of the packs ',
-              default='xsoar')
+                                           'each pack. Default is all packs exists in the content repository.',
+              default='')
 def create_id_set(**kwargs):
     """Create the content dependency tree by ids."""
     from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
+    from demisto_sdk.commands.find_dependencies.find_dependencies import \
+        remove_dependencies_from_id_set
+
     check_configuration_file('create-id-set', kwargs)
     id_set_creator = IDSetCreator(**kwargs)
-    id_set_creator.create_id_set()
+    id_set, excluded_items_by_pack, excluded_items_by_type = id_set_creator.create_id_set()
+
+    if excluded_items_by_pack:
+        remove_dependencies_from_id_set(id_set, excluded_items_by_pack, excluded_items_by_type)
+        id_set_creator.save_id_set()
 
 
 # ====================== merge-id-sets ====================== #
@@ -1507,10 +1537,11 @@ def update_release_notes(**kwargs):
     '-h', '--help'
 )
 @click.option(
-    "-i", "--input", help="Pack path to find dependencies. For example: Pack/HelloWorld", required=True,
-    type=click.Path(exists=True, dir_okay=True))
+    "-i", "--input", help="Pack path to find dependencies. For example: Pack/HelloWorld. When using the"
+                          " --get-dependent-on flag, this argument can be used multiple times.", required=False,
+    type=click.Path(exists=True, dir_okay=True), multiple=True)
 @click.option(
-    "-idp", "--id-set-path", help="Path to id set json file.", required=False)
+    "-idp", "--id-set-path", help="Path to id set json file.", required=False, default='')
 @click.option(
     "--no-update", help="Use to find the pack dependencies without updating the pack metadata.", required=False,
     is_flag=True)
@@ -1518,28 +1549,41 @@ def update_release_notes(**kwargs):
               is_flag=True)
 @click.option("--use-pack-metadata", help="Whether to update the dependencies from the pack metadata.", required=False,
               is_flag=True)
+@click.option("--all-packs-dependencies", help="Return a json file with ALL content packs dependencies. "
+                                               "The json file will be saved under the path given in the "
+                                               "'--output-path' argument", required=False, is_flag=True)
+@click.option("-o", "--output-path", help="The destination path for the packs dependencies json file. This argument is "
+              "only relevant for when using the '--all-packs-dependecies' flag.", required=False)
+@click.option("--get-dependent-on", help="Get only the packs dependent ON the given pack. Note: this flag can not be"
+                                         " used for the packs ApiModules and Base", required=False,
+              is_flag=True)
 def find_dependencies(**kwargs):
     """Find pack dependencies and update pack metadata."""
     from demisto_sdk.commands.find_dependencies.find_dependencies import \
         PackDependencies
     check_configuration_file('find-dependencies', kwargs)
     update_pack_metadata = not kwargs.get('no_update')
-    input_path: Path = Path(kwargs["input"])  # To not shadow python builtin `input`
+    input_paths = kwargs.get('input')  # since it can be multiple, received as a tuple
     verbose = kwargs.get('verbose', False)
     id_set_path = kwargs.get('id_set_path', '')
     use_pack_metadata = kwargs.get('use_pack_metadata', False)
-    if len(input_path.parts) != 2 or input_path.parts[-2] != "Packs":
-        print_error(f"Input path ({input_path}) must be formatted as 'Packs/<some pack name>'. "
-                    f"For example, Packs/HelloWorld")
-        sys.exit(1)
+    all_packs_dependencies = kwargs.get('all_packs_dependencies', False)
+    get_dependent_on = kwargs.get('get_dependent_on', False)
+    output_path = kwargs.get('output_path', ALL_PACKS_DEPENDENCIES_DEFAULT_PATH)
+
     try:
-        PackDependencies.find_dependencies(
-            pack_name=input_path.name,
+
+        PackDependencies.find_dependencies_manager(
             id_set_path=str(id_set_path),
             verbose=verbose,
             update_pack_metadata=update_pack_metadata,
-            use_pack_metadata=use_pack_metadata
+            use_pack_metadata=use_pack_metadata,
+            input_paths=input_paths,
+            all_packs_dependencies=all_packs_dependencies,
+            get_dependent_on=get_dependent_on,
+            output_path=output_path,
         )
+
     except ValueError as exp:
         print_error(str(exp))
 
@@ -1614,10 +1658,9 @@ def postman_codegen(
     )
 
     if config_out:
-        path = output / f'config-{postman_config.name}.json'
-        with open(path, mode='w+') as f:
-            json.dump(postman_config.to_dict(), f, indent=4)
-            logger.info(f'Config file generated at:\n{os.path.abspath(path)}')
+        path = Path(output) / f'config-{postman_config.name}.json'
+        path.write_text(json.dumps(postman_config.to_dict(), indent=4))
+        logger.info(f'Config file generated at:\n{str(path.absolute())}')
     else:
         # generate integration yml
         yml_path = postman_config.generate_integration_package(output, is_unified=True)
@@ -1983,8 +2026,6 @@ def error_code(config, **kwargs):
 @main.resultcallback()
 def exit_from_program(result=0, **kwargs):
     sys.exit(result)
-
-# todo: add download from demisto command
 
 
 if __name__ == '__main__':

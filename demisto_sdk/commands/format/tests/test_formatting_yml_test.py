@@ -10,9 +10,9 @@ import yaml
 from mock import Mock, patch
 from ruamel.yaml import YAML
 
-from demisto_sdk.commands.common.constants import (FEED_REQUIRED_PARAMS,
-                                                   FETCH_REQUIRED_PARAMS,
-                                                   INTEGRATION)
+from demisto_sdk.commands.common.constants import (
+    ALERT_FETCH_REQUIRED_PARAMS, FEED_REQUIRED_PARAMS,
+    INCIDENT_FETCH_REQUIRED_PARAMS, INTEGRATION, MarketplaceVersions)
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.integration import \
@@ -32,10 +32,11 @@ from demisto_sdk.tests.constants_test import (
     DESTINATION_FORMAT_SCRIPT_COPY, DESTINATION_FORMAT_TEST_PLAYBOOK,
     FEED_INTEGRATION_EMPTY_VALID, FEED_INTEGRATION_INVALID,
     FEED_INTEGRATION_VALID, GIT_ROOT, INTEGRATION_PATH, PLAYBOOK_PATH,
-    PLAYBOOK_WITH_INCIDENT_INDICATOR_SCRIPTS, SOURCE_FORMAT_INTEGRATION_COPY,
-    SOURCE_FORMAT_INTEGRATION_INVALID, SOURCE_FORMAT_INTEGRATION_VALID,
-    SOURCE_FORMAT_PLAYBOOK, SOURCE_FORMAT_PLAYBOOK_COPY,
-    SOURCE_FORMAT_SCRIPT_COPY, SOURCE_FORMAT_TEST_PLAYBOOK, TEST_PLAYBOOK_PATH)
+    PLAYBOOK_WITH_INCIDENT_INDICATOR_SCRIPTS, SOURCE_BETA_INTEGRATION_FILE,
+    SOURCE_FORMAT_INTEGRATION_COPY, SOURCE_FORMAT_INTEGRATION_INVALID,
+    SOURCE_FORMAT_INTEGRATION_VALID, SOURCE_FORMAT_PLAYBOOK,
+    SOURCE_FORMAT_PLAYBOOK_COPY, SOURCE_FORMAT_SCRIPT_COPY,
+    SOURCE_FORMAT_TEST_PLAYBOOK, TEST_PLAYBOOK_PATH)
 from TestSuite.test_tools import ChangeCWD
 
 ryaml = YAML()
@@ -497,7 +498,7 @@ class TestFormatting:
             for param in params:
                 if 'defaultvalue' in param and param['name'] != 'feed':
                     param.pop('defaultvalue')
-            for param in FETCH_REQUIRED_PARAMS:
+            for param in INCIDENT_FETCH_REQUIRED_PARAMS:
                 assert param in yaml_content['configuration']
         os.remove(target)
         os.rmdir(path)
@@ -646,13 +647,64 @@ class TestFormatting:
             - Ensure `tests` field gets the Test Playbook ID
         """
         test_files_path = os.path.join(git_path(), 'demisto_sdk', 'tests')
-        vmware_integration_yml_path = os.path.join(test_files_path, 'test_files', 'content_repo_example', 'Packs',
-                                                   'VMware',
-                                                   'Integrations', 'integration-VMware.yml')
-        formatter = IntegrationYMLFormat(input=vmware_integration_yml_path, output='')
+        integration_yml_path = os.path.join(test_files_path, 'test_files', 'Packs', 'Phishing',
+                                            'Integrations', 'integration-VMware.yml')
+        formatter = IntegrationYMLFormat(input=integration_yml_path, output='')
         res = formatter.update_tests()
         assert res is None
         assert formatter.data.get('tests') == ['VMWare Test']
+
+    def test_format_beta_integration(self):
+        """
+        Given
+            - A beta integration yml file
+        When
+            - Run format on it
+        Then
+            - Ensure the display name contains the word (Beta), the param beta is True
+        """
+
+        formatter = IntegrationYMLFormat(input=SOURCE_BETA_INTEGRATION_FILE)
+        formatter.update_beta_integration()
+        assert '(Beta)' in formatter.data['display']
+        assert formatter.data['beta'] is True
+
+    @patch('builtins.input', lambda *args: 'no')
+    def test_update_tests_on_playbook_with_test_playbook(self):
+        """
+        Given
+            - An integration file.
+        When
+            - Run format on the integration
+        Then
+            - Ensure run_format return value is 0
+            - Ensure `tests` field gets the Test Playbook ID
+        """
+        test_files_path = os.path.join(git_path(), 'demisto_sdk', 'tests')
+        playbook_yml_path = os.path.join(test_files_path, 'test_files', 'Packs', 'Phishing',
+                                         'Playbooks', 'Phishing_Investigation_-_Generic_v2_-_6_0.yml')
+        formatter = PlaybookYMLFormat(input=playbook_yml_path, output='')
+        formatter.update_tests()
+        assert set(formatter.data.get('tests')) == {'playbook-checkEmailAuthenticity-test',
+                                                    'Phishing v2 - Test - Actual Incident'}
+
+    @patch('builtins.input', lambda *args: 'no')
+    def test_update_tests_on_script_with_test_playbook(self):
+        """
+        Given
+            - An integration file.
+        When
+            - Run format on the integration
+        Then
+            - Ensure run_format return value is 0
+            - Ensure `tests` field gets the Test Playbook ID
+        """
+        test_files_path = os.path.join(git_path(), 'demisto_sdk', 'tests')
+        script_yml_path = os.path.join(test_files_path, 'test_files', 'Packs', 'Phishing', 'Scripts',
+                                       'CheckEmailAuthenticity.yml')
+        formatter = ScriptYMLFormat(input=script_yml_path, output='')
+        formatter.update_tests()
+        assert formatter.data.get('tests') == ['playbook-checkEmailAuthenticity-test']
 
     def test_update_docker_format(self, tmpdir, mocker, monkeypatch):
         """Test that script and integration formatter update docker image tag
@@ -906,6 +958,26 @@ class TestFormatting:
 
         playbook_data = playbook.yml.read_dict()
         assert playbook_data['tasks']['1']['task']['playbookId'] == "my-sub-playbook"
+
+    def test_tpb_name_format_change_new_tpb(self, repo):
+        """
+        Given:
+        - A newly created test playbook.
+
+        When:
+        - Formatting, name does not equal ID.
+
+        Then:
+        - Ensure ID value is changed to name.
+        """
+        pack = repo.create_pack('pack')
+        test_playbook = pack.create_test_playbook('LargePlaybook')
+        test_playbook.create_default_test_playbook('SamplePlaybookTest')
+        test_playbook.yml.update({'id': 'other_id'})
+        playbook_yml = TestPlaybookYMLFormat(test_playbook.yml.path, path=test_playbook.yml.path, assume_yes=True)
+
+        playbook_yml.run_format()
+        assert test_playbook.yml.read_dict().get('id') == 'SamplePlaybookTest'
 
     def test_set_fromversion_six_new_contributor_pack_no_fromversion(self, pack):
         """
@@ -1209,3 +1281,30 @@ class TestFormatting:
         base_yml = IntegrationYMLFormat(input=playbook.yml.path)
         base_yml.update_id_to_equal_name()
         assert base_yml.data.get('id') == uid
+
+    @pytest.mark.parametrize(argnames='marketpalces, configs_to_be_added, configs_to_be_removed', argvalues=[
+        ([MarketplaceVersions.XSOAR.value], INCIDENT_FETCH_REQUIRED_PARAMS, ALERT_FETCH_REQUIRED_PARAMS),
+        ([MarketplaceVersions.MarketplaceV2.value], ALERT_FETCH_REQUIRED_PARAMS, INCIDENT_FETCH_REQUIRED_PARAMS),
+        ([MarketplaceVersions.MarketplaceV2.value, MarketplaceVersions.XSOAR.value], INCIDENT_FETCH_REQUIRED_PARAMS, ALERT_FETCH_REQUIRED_PARAMS),
+
+    ])
+    def test_set_fetch_params_in_config_acording_marketplaces_value(self, marketpalces, configs_to_be_added, configs_to_be_removed):
+        """
+        Given
+        - Integration yml with isfetch true.
+
+        When
+        - Running the format command.
+
+        Then
+        - Ensure that the fetch params ae according to the marketplaces values.
+        - if no marketplaces or xsoar in marketplaces - the params will be INCIDENT_FETCH_REQUIRED_PARAMS (with Incident type etc. )
+        - otherwise it will be the ALERT_FETCH_REQUIRED_PARAMS (with Alert type etc. ).
+        """
+        base_yml = IntegrationYMLFormat(SOURCE_FORMAT_INTEGRATION_VALID, path="schema_path", verbose=True)
+        base_yml.data['marketplaces'] = marketpalces
+        base_yml.data['configuration'] = configs_to_be_removed.copy()
+        base_yml.set_fetch_params_in_config()
+
+        assert all(config in base_yml.data['configuration'] for config in configs_to_be_added)
+        assert all(config not in base_yml.data['configuration'] for config in configs_to_be_removed)

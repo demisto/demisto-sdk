@@ -1,55 +1,32 @@
 class IsEqualFunctions:
     @staticmethod
-    def is_dicts_equal(dict1: dict, dict2: dict):
-        if not isinstance(dict1, dict) or not isinstance(dict2, dict):
+    def is_dicts_equal(dict1: dict, dict2: dict, lists_as_sets: bool = False):
+        """
+        :param dict1: first value to compare
+        :param dict2: second value to compare
+        :param lists_as_sets: used when comparing lists that originate from sets, where order does not matter.
+        :return: whether the dictionaries are equal
+        """
+
+        if dict1.keys() != dict2.keys():
             return False
 
-        if sorted(list(dict1.keys())) != sorted(list(dict2.keys())):
-            return False
+        for k, v1 in dict1.items():
+            v2 = dict2[k]
 
-        for key, dict1_value in dict1.items():
-            dict2_value = dict2.get(key)
-
-            if not isinstance(dict2_value, type(dict1_value)):
-                return False
-
-            if isinstance(dict1_value, dict):
-                if not IsEqualFunctions.is_dicts_equal(dict1_value, dict2_value):
-                    return False
-
-            if isinstance(dict1_value, list):
-                IsEqualFunctions.is_lists_equal(dict1_value, dict2_value)
-
+            if isinstance(v1, dict):
+                comparison = IsEqualFunctions.is_dicts_equal(v1, v2, lists_as_sets)
+            elif isinstance(v1, list):
+                if lists_as_sets:
+                    comparison = set(v1) == set(v2)
+                else:
+                    comparison = v1 == v2
+            elif isinstance(v1, set):
+                comparison = set(v1) == set(v2)
             else:
-                if dict1_value != dict2_value:
-                    return False
+                comparison = v1 == v2
 
-        return True
-
-    @staticmethod
-    def is_lists_equal(list1: list, list2: list):
-        if not isinstance(list1, list) or not isinstance(list2, list):
-            return False
-
-        if not len(list1) == len(list2):
-            return False
-
-        for item in list1:
-            if item not in list2:
-                return False
-
-        return True
-
-    @staticmethod
-    def is_sets_equal(set1: set, set2: set):
-        if not isinstance(set1, set) or not isinstance(set2, set):
-            return False
-
-        if not len(set1) == len(set2):
-            return False
-
-        for item in set1:
-            if item not in set2:
+            if not comparison:
                 return False
 
         return True

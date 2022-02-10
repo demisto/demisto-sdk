@@ -33,7 +33,7 @@ class TestGitContentConfig:
             ('https://github.com/demisto/content-dist', 'demisto/content-dist'),
         ]
     )
-    def test_valid_githubs(self, mocker, url: str, repo_name):
+    def test_valid_githubs(self, mocker, requests_mock, url: str, repo_name):
         """
         Given:
             valid github remote urls
@@ -46,6 +46,7 @@ class TestGitContentConfig:
                             '_search_gitlab_id',
                             return_value=None)
         mocker.patch.object(Repo, 'remote', return_value=Urls([url]))
+        requests_mock.get(f'https://api.github.com/repos/{repo_name}')
         git_config = GitContentConfig()
         assert git_config.current_repository == repo_name
         assert 'githubusercontent.com' in git_config.base_api
@@ -57,7 +58,7 @@ class TestGitContentConfig:
             ('https://gitlab-ci-token:token@code.pan.run/xsoar/content-dist.git', 'xsoar/content-dist')
         ]
     )
-    def test_valid_gitlabs(self, mocker, url, repo_name):
+    def test_valid_gitlabs(self, mocker, requests_mock, url, repo_name):
         """
         Given:
             valid gitlab remote urls
@@ -66,15 +67,10 @@ class TestGitContentConfig:
         Then:
             Validate the correct repo configuration got back
         """
-        mocker.patch.object(GitContentConfig,
-                            '_search_gitlab_id',
-                            return_value=None)
-        mocker.patch.object(GitContentConfig,
-                            '_search_gitlab_id',
-                            return_value=('code.pan.run', 3606))
+        requests_mock.get("https://code.pan.run/api/v4/projects", json=[{'id': 3606}])
         mocker.patch.object(Repo, 'remote', return_value=Urls([url]))
         git_config = GitContentConfig()
-        assert not hasattr(git_config, "current_repository")  # does not relevant to gitlab at all
+        assert git_config.current_repository is None  # does not relevant to gitlab at all
         assert git_config.git_provider == GitProvider.GitLab
         assert git_config.base_api == GitContentConfig.BASE_RAW_GITLAB_LINK.format(GITLAB_HOST='code.pan.run',
                                                                                    GITLAB_ID=3606)
@@ -84,7 +80,7 @@ class TestGitContentConfig:
         assert git_config.base_api == GitContentConfig.BASE_RAW_GITLAB_LINK.format(GITLAB_HOST='code.pan.run',
                                                                                    GITLAB_ID=3606)
 
-    def test_custom_github_url(self, mocker):
+    def test_custom_github_url(self, mocker, requests_mock):
         """
         Given:
             A github remote url and the environment variable is set
@@ -97,7 +93,9 @@ class TestGitContentConfig:
                             '_search_gitlab_id',
                             return_value=None)
         custom_github = 'my-own-github-url.com'
-        url = f'https://{custom_github}/org/repo'
+        repo_name = 'org/repo'
+        requests_mock.get(f'https://api.{custom_github}/repos/{repo_name}')
+        url = f'https://{custom_github}/{repo_name}'
         mocker.patch.dict(os.environ, {GitContentConfig.ENV_REPO_HOSTNAME_NAME: custom_github})  # test with env var
         mocker.patch.object(Repo, 'remote', return_value=Urls([url]))
         git_config = GitContentConfig()
@@ -112,10 +110,16 @@ class TestGitContentConfig:
         assert git_config.current_repository == 'org/repo'
         assert git_config.base_api == f'https://raw.{custom_github}/org/repo'
 
-    def test_custom_github_url_invalid(self, mocker):
+        # test with no args, should find it with remote address
+        git_config = GitContentConfig()  # test with argument
+        assert git_config.git_provider == GitProvider.GitHub
+        assert git_config.current_repository == 'org/repo'
+        assert git_config.base_api == f'https://raw.{custom_github}/org/repo'
+
+    def test_custom_github_url_invalid(self, mocker, requests_mock):
         """
         Given:
-            A github remote url and the environment variable is not set
+            A github remote url but the repo is not exists
         When:
             Trying to get git configuration
         Then:
@@ -125,7 +129,10 @@ class TestGitContentConfig:
                             '_search_gitlab_id',
                             return_value=None)
         custom_github = 'my-own-github-url.com'
-        url = f'https://{custom_github}/org/repo'
+        repo_name = 'org/repo'
+        requests_mock.get(f'https://api.{custom_github}/repos/{repo_name}', status_code=404)
+        requests_mock.get(f'https://api.github.com/repos/{repo_name}', status_code=404)
+        url = f'https://{custom_github}/{repo_name}'
         mocker.patch.object(Repo, 'remote', return_value=Urls([url]))
         git_config = GitContentConfig()
         assert git_config.current_repository == GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
@@ -183,6 +190,7 @@ class TestGitContentConfig:
             Validate the correct repo got back - demisto/content
         """
         mocker.patch.object(Repo, 'remote', return_value=Urls(['']))
+        mocker.patch.object(GitContentConfig, '_search_github_repo', return_value=None)
         git_config = GitContentConfig()
         assert git_config.current_repository == GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
 
@@ -226,14 +234,14 @@ class TestGitContentConfig:
         requests_mock.get(search_api_url1, json=[])
         requests_mock.get(search_api_url2, json=[])
         mocker.patch.object(Repo, 'remote', return_value=Urls(["https://code.pan.run/xsoar/test"]))
-
+        mocker.patch.object(GitContentConfig, '_search_github_repo', return_value=None)
         git_config = GitContentConfig()
         assert git_config._search_gitlab_id(host, repo) is None
         assert git_config.current_repository == GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
         assert git_config.git_provider == GitProvider.GitHub
         assert git_config.base_api == DEFAULT_GITHUB_BASE_API
 
-    def test_provide_repo_name(self, mocker):
+    def test_provide_repo_name(self, mocker, requests_mock):
         """
         Given:
             A repo name argument to git config
@@ -243,12 +251,16 @@ class TestGitContentConfig:
             The git config should be as the repo name provided
         """
 
+        requests_mock.get(f'https://api.github.com/repos/{GitContentConfig.OFFICIAL_CONTENT_REPO_NAME}')
         git_config = GitContentConfig(GitContentConfig.OFFICIAL_CONTENT_REPO_NAME)
         assert git_config.current_repository == GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
         assert git_config.base_api == DEFAULT_GITHUB_BASE_API
 
         custom_repo_name = 'org/repo'
+        requests_mock.get(f'https://api.github.com/repos/{custom_repo_name}')
+        requests_mock.get('https://api.github.com/repos/demisto/demisto-sdk')
         git_config = GitContentConfig(custom_repo_name)
+
         assert git_config.current_repository == custom_repo_name
         assert git_config.base_api == f'https://raw.githubusercontent.com/{custom_repo_name}'
 
@@ -259,14 +271,16 @@ class TestGitContentConfig:
         assert git_config.current_repository == custom_repo_name
         assert git_config.base_api == 'https://gitlab.com/api/v4/projects/3/repository'
 
-    def test_provide_project_id(self, mocker):
-        mocker.patch.object(GitContentConfig,
-                            '_search_gitlab_id',
-                            return_value=None)
-        mocker.patch.object(GitContentConfig,
-                            '_is_gitlab_exists',
-                            return_value=True)
-
+    def test_provide_project_id(self, requests_mock):
+        """
+        Given:
+            Project id to gitlab
+        When:
+            Calling git config with repo based on gitlab
+        Then:
+            The git config should be as the repo name provided
+        """
+        requests_mock.get("https://code.pan.run/api/v4/projects/3")
         git_config = GitContentConfig(project_id=3, git_provider=GitProvider.GitLab, repo_hostname='code.pan.run')
         assert git_config.gitlab_id == 3
         assert git_config.base_api == 'https://code.pan.run/api/v4/projects/3/repository'

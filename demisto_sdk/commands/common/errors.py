@@ -52,6 +52,7 @@ ERROR_CODE = {
     'entity_name_contains_excluded_word': {'code': 'BA111', 'ui_applicable': False, 'related_field': ''},
     "spaces_in_the_end_of_id": {'code': "BA112", 'ui_applicable': False, 'related_field': 'id'},
     "spaces_in_the_end_of_name": {'code': "BA113", 'ui_applicable': False, 'related_field': 'name'},
+    "changed_pack_name": {'code': "BA114", 'ui_applicable': False, 'related_field': 'name'},
 
     # BC - Backward Compatible
     "breaking_backwards_subtype": {'code': "BC100", 'ui_applicable': False, 'related_field': 'subtype'},
@@ -282,6 +283,7 @@ ERROR_CODE = {
     "metadata_url_invalid": {'code': "PA127", 'ui_applicable': False, 'related_field': ''},
     "required_pack_file_does_not_exist": {'code': "PA128", 'ui_applicable': False, 'related_field': ''},
     "pack_metadata_missing_categories": {'code': "PA129", 'ui_applicable': False, 'related_field': ''},
+    "wrong_version_format": {'code': "PA130", 'ui_applicable': False, 'related_field': ''},
 
     # PB - Playbooks
     "playbook_cant_have_rolename": {'code': "PB100", 'ui_applicable': True, 'related_field': 'rolename'},
@@ -333,6 +335,7 @@ ERROR_CODE = {
     "added_release_notes_for_new_pack": {'code': "RN108", 'ui_applicable': False, 'related_field': ''},
     "modified_existing_release_notes": {'code': "RN109", 'ui_applicable': False, 'related_field': ''},
     "release_notes_config_file_missing_release_notes": {'code': "RN110", 'ui_applicable': False, 'related_field': ''},
+    "release_notes_docker_image_not_match_yaml": {'code': "RN111", 'ui_applicable': False, 'related_field': ''},
 
     # RP - Reputations (Indicator Types)
     "wrong_version_reputations": {'code': "RP100", 'ui_applicable': False, 'related_field': 'version'},
@@ -1142,6 +1145,17 @@ class Errors:
     def release_notes_config_file_missing_release_notes(config_rn_path: str):
         return f'Release notes config file {config_rn_path} is missing corresponding release notes file.\n' \
                f'''Please add release notes file: {config_rn_path.replace('json', 'md')}'''
+
+    @staticmethod
+    @error_code_decorator
+    def release_notes_docker_image_not_match_yaml(rn_file_name, un_matching_files_list: list, pack_path):
+        message_to_return = f'The {rn_file_name} release notes file contains incompatible Docker images:\n'
+        for un_matching_file in un_matching_files_list:
+            message_to_return += f"- {un_matching_file.get('name')}: Release notes file has dockerimage: " \
+                                 f"{un_matching_file.get('rn_version')} but the YML file has dockerimage: " \
+                                 f"{un_matching_file.get('yml_version')}\n"
+        message_to_return += "To fix this please run: 'demisto-sdk update-release-notes -i {pack_path}'"
+        return message_to_return
 
     @staticmethod
     @error_code_decorator
@@ -2116,3 +2130,15 @@ class Errors:
     @error_code_decorator
     def invalid_yml_file(error):
         return f'There is problem with the yml file. The error: {error}'
+
+    @staticmethod
+    @error_code_decorator
+    def changed_pack_name(original_name):
+        return f'Pack folder names cannot be changed, please rename it back to {original_name}.' \
+               f' If you wish to rename the pack, you can edit the name field in pack_metadata.json,' \
+               f' and the pack will be shown in the Marketplace accordingly.'
+
+    @staticmethod
+    @error_code_decorator
+    def wrong_version_format():
+        return 'Pack metadata version format is not valid. Please fill in a valid format (example: 0.0.0)'

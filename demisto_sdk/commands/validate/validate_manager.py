@@ -425,7 +425,6 @@ class ValidateManager:
         return True
 
     # flake8: noqa: C901
-
     def run_validations_on_file(self, file_path, pack_error_ignore_list, is_modified=False,
                                 old_file_path=None, modified_files=None, added_files=None):
         """Choose a validator to run for a single file. (i)
@@ -1740,3 +1739,4 @@ class ValidateManager:
 
             return is_valid_as_deprecated
         return None
+

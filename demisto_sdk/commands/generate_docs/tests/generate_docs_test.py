@@ -1125,9 +1125,11 @@ def test_missing_data_sections_when_generating_table_section(yml_content, expect
         generate_table_section
     from demisto_sdk.commands.generate_docs.generate_script_doc import \
         get_script_info
+
     script_pack = pack.create_script()
     script_pack.yml.update(yml_content)
 
     script_info = get_script_info(script_pack.yml.path)
-    section = generate_table_section(script_info, "Script data", )
+    section = generate_table_section(script_info, "Script data")
+
     assert section == expected_result

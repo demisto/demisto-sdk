@@ -10,6 +10,7 @@ import urllib.parse
 import uuid
 from copy import deepcopy
 from distutils.version import LooseVersion
+from math import ceil
 from pprint import pformat
 from queue import Empty, Queue
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
@@ -44,7 +45,7 @@ FAILED_MATCH_INSTANCE_MSG = "{} Failed to run.\n There are {} instances of {}, p
 ENTRY_TYPE_ERROR = 4
 DEFAULT_INTERVAL = 4
 MAX_RETRIES = 3
-RETRIES_THRESHOLD = MAX_RETRIES // 2
+RETRIES_THRESHOLD = ceil(MAX_RETRIES / 2)
 
 SLACK_MEM_CHANNEL_ID = 'CM55V7J8K'
 
@@ -767,6 +768,7 @@ class TestResults:
     def __init__(self, unmockable_integrations):
         self.succeeded_playbooks = set()
         self.failed_playbooks = set()
+        self.playbook_report = dict()
         self.skipped_tests = dict()
         self.skipped_integrations = dict()
         self.rerecorded_tests = []
@@ -790,6 +792,8 @@ class TestResults:
             skipped_tests_file.write('\n'.join(self.skipped_tests))
         with open('./Tests/skipped_integrations.txt', "w") as skipped_integrations_file:
             skipped_integrations_file.write('\n'.join(self.skipped_integrations))
+        with open('./Tests/test_playbooks_repoert.json', "w") as test_playbooks_report_file:
+            json.dump(self.playbook_report, test_playbooks_report_file)
 
     def print_test_summary(self,
                            is_ami: bool = True,
@@ -1550,7 +1554,10 @@ class TestContext:
         """
         Adds the playbook to the succeeded playbooks list
         """
-        self.build_context.tests_data_keeper.succeeded_playbooks.add(self.playbook.configuration.playbook_id)
+        name_to_add = self.playbook.configuration.playbook_id
+        if self.server_context.use_retries_mechanism and self.playbook.configuration.number_of_times_executed > 0:
+            name_to_add += f" - Successful runs: {self.playbook.configuration.number_of_successful_runs}/{self.playbook.configuration.number_of_times_executed}"
+        self.build_context.tests_data_keeper.succeeded_playbooks.add(name_to_add)
 
     def _add_to_failed_playbooks(self, is_second_playback_run: bool = False) -> None:
         """
@@ -1567,6 +1574,14 @@ class TestContext:
                 'Playback on newly created record has failed, see the following confluence page for help:\n'
                 'https://confluence.paloaltonetworks.com/display/DemistoContent/Debug+Proxy-Related+Test+Failures')
             playbook_name_to_add += ' (Second Playback)'
+        if self.server_context.use_retries_mechanism and self.playbook.configuration.number_of_times_executed > 0:
+            playbook_name_to_add +=\
+                f" - Successful runs: " \
+                f"{self.playbook.configuration.number_of_successful_runs}/{self.playbook.configuration.number_of_times_executed}"
+        self.build_context.tests_data_keeper.playbook_report[self.playbook.configuration.playbook_id] = {
+            'number_of_executions': self.playbook.configuration.number_of_times_executed,
+            'number_of_successful_runs': self.playbook.configuration.number_of_successful_runs
+        }
         self.build_context.logging_module.error(f'Test failed: {self}')
         self.build_context.tests_data_keeper.failed_playbooks.add(playbook_name_to_add)
 
@@ -1652,16 +1667,19 @@ class TestContext:
         Returns:
             PB_Status.COMPLETED if the Test-Playbook passed successfully and was added to succeeded playbooks.
             PB_Status.FAILED if the Test-Playbook failed and was added to failed playbooks.
-            PB_Status.SECOND_PLAYBACK if second playback is needed.
+            PB_Status.SECOND_PLAYBACK_REQUIRED if second playback is needed.
             PB_Status.IN_PROGRESS if more executions are needed in order to determine whether the playbook is successful or not.
         """
 
         self.build_context.logging_module.success(f'PASS: {self} succeed')
-        self.playbook.configuration.number_of_successful_runs += 1
+
+        # count successful run only when recording mockable or executing unmockable test.
+        if not is_first_playback_run and not is_second_playback_run:
+            self.playbook.configuration.number_of_successful_runs += 1
 
         # mockable test, first record passed, still need to check second playback.
         if is_first_execution and is_record_run:
-            return PB_Status.SECOND_PLAYBACK
+            return PB_Status.SECOND_PLAYBACK_REQUIRED
 
         # first/last playback passed (mockable tests) or first execution passed (unmockable tests). adding to succeeded
         # playbooks, no more executions are needed.
@@ -1687,7 +1705,7 @@ class TestContext:
         Returns:
             PB_Status.COMPLETED if the Test-Playbook passed successfully and was added to succeeded playbooks.
             PB_Status.FAILED if the Test-Playbook failed and was added to failed playbooks.
-            PB_Status.SECOND_PLAYBACK if second playback is needed.
+            PB_Status.SECOND_PLAYBACK_REQUIRED if second playback is needed.
             PB_Status.IN_PROGRESS if more executions are needed in order to determine whether the playbook is successful or not.
         """
         # in case the first playback run fails, the code should continue to record the playback.
@@ -1715,7 +1733,7 @@ class TestContext:
         Returns:
             PB_Status.COMPLETED if the Test-Playbook passed successfully and was added to succeeded playbooks.
             PB_Status.FAILED if the Test-Playbook failed and was added to failed playbooks.
-            PB_Status.SECOND_PLAYBACK if second playback is needed.
+            PB_Status.SECOND_PLAYBACK_REQUIRED if second playback is needed.
             PB_Status.IN_PROGRESS if more executions are needed in order to determine whether the playbook is successful or not.
         """
         if number_of_times_executed < MAX_RETRIES:
@@ -1727,14 +1745,14 @@ class TestContext:
 
         else:  # number_of_times_executed == MAX_RETRIES:
             # check if in most executions, the test passed.
-            if self.playbook.configuration.number_of_successful_runs > RETRIES_THRESHOLD:
+            if self.playbook.configuration.number_of_successful_runs >= RETRIES_THRESHOLD:
                 # It's not enough that the record run will pass to declare the test as successful,
                 # we need the second playback to pass as well.
                 if is_record_run:
                     self.build_context.logging_module.info(
                         f'Test-Playbook recording was executed {MAX_RETRIES} times, and passed {self.playbook.configuration.number_of_successful_runs} times.'
                         f' Running second playback.')
-                    return PB_Status.SECOND_PLAYBACK
+                    return PB_Status.SECOND_PLAYBACK_REQUIRED
                 self.build_context.logging_module.info(
                     f'Test-Playbook was executed {MAX_RETRIES} times, and passed {self.playbook.configuration.number_of_successful_runs} times.'
                     f' Adding to succeeded playbooks.')
@@ -1758,7 +1776,7 @@ class TestContext:
         Returns:
             PB_Status.COMPLETED if the Test-Playbook passed successfully and was added to succeeded playbooks.
             PB_Status.FAILED if the Test-Playbook failed and was added to failed playbooks.
-            PB_Status.SECOND_PLAYBACK if second playback is needed.
+            PB_Status.SECOND_PLAYBACK_REQUIRED if second playback is needed.
             PB_Status.IN_PROGRESS if more executions are needed in order to determine whether the playbook is successful or not.
         """
         use_retries_mechanism = self.server_context.use_retries_mechanism
@@ -1815,13 +1833,13 @@ class TestContext:
                     status = self._incident_and_docker_test()
                     self.playbook.configuration.number_of_times_executed += 1
                     status = self._update_playbook_status(status, is_record_run=True)
-                    result_holder[RESULT] = status == PB_Status.SECOND_PLAYBACK
+                    result_holder[RESULT] = status == PB_Status.SECOND_PLAYBACK_REQUIRED
             else:
                 # If the integrations were not locked - the test has not finished it's execution
                 return False
 
         # Running playback after successful record to verify the record is valid for future runs
-        if status == PB_Status.SECOND_PLAYBACK:
+        if status == PB_Status.SECOND_PLAYBACK_REQUIRED:
             self.build_context.logging_module.info(
                 f'------ Test {self} start ------ (Mock: Second playback)')
             with run_with_mock(proxy, self.playbook.configuration.playbook_id) as result_holder:
@@ -2012,8 +2030,9 @@ class ServerContext:
             self._execute_mockable_tests()
             self.build_context.logging_module.info('Running mock-disabled tests', real_time=True)
             self._execute_unmockable_tests()
-            self.build_context.logging_module.info('Running failed tests', real_time=True)
-            self._execute_failed_tests()
+            if self.use_retries_mechanism:
+                self.build_context.logging_module.info('Running failed tests', real_time=True)
+                self._execute_failed_tests()
             self.build_context.logging_module.info(f'Finished tests with server url - {self.server_url}',
                                                    real_time=True)
             self.build_context.tests_data_keeper.add_proxy_related_test_data(self.proxy)
@@ -2072,8 +2091,7 @@ def replace_external_playbook_configuration(client: DefaultApi, external_playboo
         if matching_record:
             existing_val = matching_record[0]
             existing_val['value']["simple"] = external_playbook_configuration["input_parameters"][input_].get("simple")
-            existing_val['value']["complex"] = external_playbook_configuration["input_parameters"][input_].get(
-                "complex")
+            existing_val['value']["complex"] = external_playbook_configuration["input_parameters"][input_].get("complex")
             changed_keys.append(input_)
 
         else:

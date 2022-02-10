@@ -642,7 +642,6 @@ class TestDeprecatedIntegration:
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
-        mocker.patch.object(ValidateManager, 'get_deleted_files_from_git', return_value={})
         mocker.patch.object(ValidateManager, 'validate_deleted_files', return_value=True)
         mocker.patch.object(GitUtil, 'deleted_files', return_value={})
 
@@ -714,7 +713,6 @@ class TestDeprecatedIntegration:
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
-        mocker.patch.object(ValidateManager, 'get_deleted_files_from_git', return_value={})
         mocker.patch.object(ValidateManager, 'validate_deleted_files', return_value=True)
         mocker.patch.object(GitUtil, 'deleted_files', return_value={})
 
@@ -2324,7 +2322,6 @@ class TestPlaybookValidateDeprecated:
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
-        mocker.patch.object(ValidateManager, 'get_deleted_files_from_git', return_value={})
         mocker.patch.object(ValidateManager, 'validate_deleted_files', return_value=True)
         mocker.patch.object(GitUtil, 'deleted_files', return_value={})
 
@@ -2395,7 +2392,6 @@ class TestPlaybookValidateDeprecated:
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
-        mocker.patch.object(ValidateManager, 'get_deleted_files_from_git', return_value={})
         mocker.patch.object(ValidateManager, 'validate_deleted_files', return_value=True)
         mocker.patch.object(GitUtil, 'deleted_files', return_value={})
 
@@ -2663,7 +2659,6 @@ class TestScriptDeprecatedValidation:
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
-        mocker.patch.object(ValidateManager, 'get_deleted_files_from_git', return_value={})
         mocker.patch.object(ValidateManager, 'validate_deleted_files', return_value=True)
         mocker.patch.object(GitUtil, 'deleted_files', return_value={})
 
@@ -2732,7 +2727,6 @@ class TestScriptDeprecatedValidation:
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
-        mocker.patch.object(ValidateManager, 'get_deleted_files_from_git', return_value={})
         mocker.patch.object(ValidateManager, 'validate_deleted_files', return_value=True)
         mocker.patch.object(GitUtil, 'deleted_files', return_value={})
 
@@ -3071,7 +3065,6 @@ class TestValidationUsingGit:
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
-        mocker.patch.object(ValidateManager, 'get_deleted_files_from_git', return_value={})
         mocker.patch.object(ValidateManager, 'validate_deleted_files', return_value=True)
         mocker.patch.object(GitUtil, 'deleted_files', return_value={})
 
@@ -3131,7 +3124,6 @@ class TestValidationUsingGit:
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
-        mocker.patch.object(ValidateManager, 'get_deleted_files_from_git', return_value={})
         mocker.patch.object(ValidateManager, 'validate_deleted_files', return_value=True)
         mocker.patch.object(GitUtil, 'deleted_files', return_value={})
 
@@ -3183,7 +3175,6 @@ class TestValidationUsingGit:
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
-        mocker.patch.object(ValidateManager, 'get_deleted_files_from_git', return_value={})
         mocker.patch.object(ValidateManager, 'validate_deleted_files', return_value=True)
         mocker.patch.object(GitUtil, 'deleted_files', return_value={})
 
@@ -3228,7 +3219,6 @@ class TestValidationUsingGit:
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
-        mocker.patch.object(ValidateManager, 'get_deleted_files_from_git', return_value={})
         mocker.patch.object(ValidateManager, 'validate_deleted_files', return_value=True)
         mocker.patch.object(GitUtil, 'deleted_files', return_value={})
 
@@ -3314,7 +3304,6 @@ class TestValidationUsingGit:
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
-        mocker.patch.object(ValidateManager, 'get_deleted_files_from_git', return_value={})
         mocker.patch.object(ValidateManager, 'validate_deleted_files', return_value=True)
         mocker.patch.object(GitUtil, 'deleted_files', return_value={})
 
@@ -3359,7 +3348,6 @@ class TestValidationUsingGit:
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
-        mocker.patch.object(ValidateManager, 'get_deleted_files_from_git', return_value={})
         mocker.patch.object(ValidateManager, 'validate_deleted_files', return_value=True)
         mocker.patch.object(GitUtil, 'deleted_files', return_value={})
 
@@ -3411,7 +3399,6 @@ class TestValidationUsingGit:
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
-        mocker.patch.object(ValidateManager, 'get_deleted_files_from_git', return_value={})
         mocker.patch.object(ValidateManager, 'validate_deleted_files', return_value=True)
         mocker.patch.object(GitUtil, 'deleted_files', return_value={})
 

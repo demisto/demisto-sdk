@@ -53,6 +53,7 @@ ERROR_CODE = {
     "spaces_in_the_end_of_id": {'code': "BA112", 'ui_applicable': False, 'related_field': 'id'},
     "spaces_in_the_end_of_name": {'code': "BA113", 'ui_applicable': False, 'related_field': 'name'},
     "changed_pack_name": {'code': "BA114", 'ui_applicable': False, 'related_field': 'name'},
+    "file_cannot_be_deleted": {'code': "BA115", 'ui_applicable': False,'related_field': ''},
 
     # BC - Backward Compatible
     "breaking_backwards_subtype": {'code': "BC100", 'ui_applicable': False, 'related_field': 'subtype'},
@@ -401,11 +402,6 @@ ERROR_CODE = {
         'code': "JB104",
         'ui_applicable': False,
         'related_field': 'name'
-    },
-    "file_cannot_be_deleted": {
-        'code': "BA113",
-        'ui_applicable': False,
-        'related_field': ''
     },
 }
 

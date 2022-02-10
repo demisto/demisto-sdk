@@ -667,7 +667,7 @@ class TestValidators:
                            "LI101"]
         ignored_list = validate_manager.create_ignored_errors_list(errors_to_check)
         assert ignored_list == ["BA101", "BA102", "BA103", "BA104", "BA105", "BA106", "BA107", "BA108", "BA109",
-                                "BA110", 'BA111', "BA112", "BA113", "BA114", "BC101", "BC102", "BC103", "BC104"]
+                                "BA110", 'BA111', "BA112", "BA113", "BA114", "BA115", "BC101", "BC102", "BC103", "BC104"]
 
     def test_added_files_type_using_function(self, repo, mocker):
         """
@@ -1791,16 +1791,25 @@ def test_job_unexpected_field_values_in_non_feed_job(repo, capsys,
            in stdout
 
 
-@pytest.mark.parametrize('file_set,expected_output', (({'file_path'}, "[ST113] - file file_path was deleted from git, please restore the file."),
-                         ({}, "no deleted files were found.")))
-def test_validate_deleted_files(capsys, file_set, expected_output):
-
+@pytest.mark.parametrize('file_set,expected_output,expected_result', (({'file_path_description.md'}, "[BA115] - The file file_path_description.md cannot be deleted. Please restore the file.", False),
+                         (set(), "", True),
+                         ({'integration_image.png'}, "", True)))
+def test_validate_deleted_files(capsys, file_set, expected_output, expected_result):
+    """
+    Given
+            A file_path set to validate
+    When
+            Validating the files
+    Then
+            Assert the expected result (True or False) and the expected output (if there is an expected output)
+    """
     validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
 
-    validate_manager.validate_deleted_files(file_set)
+    result = validate_manager.validate_deleted_files(file_set)
 
     stdout = capsys.readouterr().out
 
+    assert expected_result is result
     assert expected_output in stdout
 
 

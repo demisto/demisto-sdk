@@ -599,6 +599,4 @@ class GitUtil:
                                                       staged_only=staged_only, debug=debug,
                                                       include_untracked=include_untracked,
                                                       get_only_current_file_names=True)
-        deleted_files: Set[Path] = self.git_util.deleted_files(prev_ver=self.prev_ver, committed_only=self.is_circle,
-                                                    staged_only=self.staged, include_untracked=self.include_untracked)
-        return modified_files.union(added_files).union(renamed_files).union(deleted_files)
+        return modified_files.union(added_files).union(renamed_files)

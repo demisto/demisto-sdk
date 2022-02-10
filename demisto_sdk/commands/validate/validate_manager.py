@@ -14,7 +14,7 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION, DEFAULT_ID_SET_PATH, GENERIC_FIELDS_DIR,
     GENERIC_TYPES_DIR, IGNORED_PACK_NAMES, OLDEST_SUPPORTED_VERSION, PACKS_DIR,
     PACKS_PACK_META_FILE_NAME, SKIP_RELEASE_NOTES_FOR_TYPES,
-    VALIDATION_USING_GIT_IGNORABLE_DATA, FileType, PathLevel)
+    VALIDATION_USING_GIT_IGNORABLE_DATA, FileType, PathLevel, FileType_NOT_ALLOWED_TO_DELETE)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
                                                 FOUND_FILES_AND_ERRORS,
@@ -1132,17 +1132,26 @@ class ValidateManager:
         """
         return pack not in IGNORED_PACK_NAMES
 
-    def check_deleted_file(file_path):
+    @staticmethod
+    def check_allowed_to_delete_file(file_path):
+        """
+        Args:
+            file_path: The file path.
+
+        Returns: True if the file allowed to be deleted, else False.
+
+        """
         
-        return False
+        return find_type(file_path) not in FileType_NOT_ALLOWED_TO_DELETE
 
     def validate_deleted_files(self, deleted_files) -> bool:
         click.secho(f'\n================= Running validation for deleted files =================',
                     fg="bright_cyan")
 
+        is_valid = True
         for file_path in deleted_files:
-            if not check_deleted_file(file_path):
-                error_message, error_code = Errors.deleted_file(file_path)
+            if not self.check_allowed_to_delete_file(file_path):
+                error_message, error_code = Errors.file_cannot_be_deleted(file_path)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     is_valid = False
 
@@ -1531,7 +1540,6 @@ class ValidateManager:
             self.ignore_file(file_path)
             return True
         return False
-
 
     def ignore_file(self, file_path: str) -> None:
         if self.print_ignored_files:

@@ -63,9 +63,8 @@ class GitContentConfig:
         @param project_id: The project id, relevant for gitlab.
         """
         self.current_repository = repo_name if repo_name else None
-        if project_id or git_provider == GitProvider.GitLab:
+        if project_id:
             git_provider = GitProvider.GitLab
-            self.gitlab_id = project_id
 
         self.credentials = GitCredentials()
         parsed_hostname = urlparse(repo_hostname).hostname
@@ -77,7 +76,19 @@ class GitContentConfig:
             self.repo_hostname = GitContentConfig.GITHUB_USER_CONTENT
 
         parsed_git = GitContentConfig._get_repository_properties()
-        self._set_repo_config(parsed_git)
+
+        if parsed_git is None:
+            hostname = self.repo_hostname
+            organization = None
+            repo_name = self.current_repository
+        else:
+            hostname = parsed_git.host
+            organization = parsed_git.owner
+            repo_name = parsed_git.repo
+            if '@' in parsed_git.host:  # the library sometimes returns hostname as <username>@<hostname>
+                hostname = parsed_git.host.split('@')[1]  # to get proper hostname, without the username or tokens
+
+        self._set_repo_config(hostname, organization, repo_name, project_id)
 
         if self.git_provider == GitProvider.GitHub:
             # DO NOT USE os.path.join on URLs, it may cause errors
@@ -102,18 +113,10 @@ class GitContentConfig:
             return None
         return None
 
-    def _set_repo_config(self, parsed_git: Optional[giturlparse.result.GitUrlParsed]):
-        if parsed_git is None:
-            hostname = self.repo_hostname
-            repo_name = self.current_repository
-        else:
-            hostname = parsed_git.host
-            repo_name = parsed_git.repo
-            if '@' in parsed_git.host:  # the library sometimes returns hostname as <username>@<hostname>
-                hostname = parsed_git.host.split('@')[1]  # to get proper hostname, without the username or tokens
-        gitlab_id = self.gitlab_id if self.git_provider == GitProvider.GitLab else None
-        gitlab_hostname, gitlab_id = (self._search_gitlab_id(hostname, project_id=gitlab_id)) or \
-                                     (self._search_gitlab_id(self.repo_hostname, project_id=gitlab_id)) or \
+    def _set_repo_config(self, hostname, organization=None, repo_name=None, project_id=None):
+
+        gitlab_hostname, gitlab_id = (self._search_gitlab_id(hostname, project_id=project_id)) or \
+                                     (self._search_gitlab_id(self.repo_hostname, project_id=project_id)) or \
                                      (self._search_gitlab_id(hostname, repo_name=repo_name)) or \
                                      (self._search_gitlab_id(self.repo_hostname, repo_name=repo_name)) or \
                                      (None, None)
@@ -133,7 +136,7 @@ class GitContentConfig:
             self.gitlab_id = gitlab_id
             self.repo_hostname = gitlab_hostname
         else:  # github
-            current_repo = f'{parsed_git.owner}/{parsed_git.repo}' if parsed_git else self.current_repository
+            current_repo = f'{organization}/{repo_name}' if organization and repo_name else self.current_repository
             github_hostname, github_repo = self._search_github_repo(hostname, self.current_repository) or \
                 self._search_github_repo(self.repo_hostname, current_repo) \
                 or (None, None)

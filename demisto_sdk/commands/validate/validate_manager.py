@@ -1739,4 +1739,3 @@ class ValidateManager:
 
             return is_valid_as_deprecated
         return None
-

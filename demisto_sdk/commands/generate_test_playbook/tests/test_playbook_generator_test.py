@@ -122,9 +122,9 @@ class TestGenerateTestPlaybook:
 
         generator.run()
 
-        expected_test_playbook_yml = Path(TestGenerateTestPlaybook.TEST_FILE_PATH /
-                                          'fake_integration_expected_test_playbook.yml').read_text()
-        actual_test_playbook_yml = output.join('playbook-TestPlaybook_Test.yml').read_text('utf8')
+        expected_test_playbook_yml = get_yaml(Path(TestGenerateTestPlaybook.TEST_FILE_PATH /
+                                              'fake_integration_expected_test_playbook.yml'))
+        actual_test_playbook_yml = get_yaml(output.join('playbook-TestPlaybook_Test.yml'))
 
         assert expected_test_playbook_yml == actual_test_playbook_yml
 

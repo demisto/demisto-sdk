@@ -123,6 +123,7 @@ def generate_table_section(data: list, title: str, empty_message: str = '', text
             section = ['']
         return section
 
+
     section.extend([text, '    |', '    |']) if numbered_section else section.extend([text, '|', '|'])
     header_index = len(section) - 2
     for key in data[0]:

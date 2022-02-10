@@ -1794,7 +1794,7 @@ def test_job_unexpected_field_values_in_non_feed_job(repo, capsys,
 @pytest.mark.parametrize('file_set,expected_output,expected_result',
                          (({'file_description.md'}, "[BA115] - The file file_description.md cannot be deleted. Please restore the file.", False),
                           (set(), "", True),
-                          ({'integration_image.png'}, "[BA115] - The file integration_image.png cannot be deleted. Please restore the file.", False)))
+                          ({'doc_files/image.png'}, "", True)))
 def test_validate_deleted_files(capsys, file_set, expected_output, expected_result):
     """
     Given

@@ -334,4 +334,3 @@ class ContentEntityValidator(BaseValidator):
                 return False
 
         return True
-

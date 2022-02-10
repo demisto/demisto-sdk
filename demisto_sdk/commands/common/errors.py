@@ -1041,7 +1041,7 @@ class Errors:
                "If you're trying to add integation image, make sure the image name looks like the following: <integration_name>_image.png\n" \
                "If you're trying to add autho image, make sure the image name looks like the following: author_image.png and located in the pack root path.\n" \
                "Otherwise, any other image should be located under the 'doc_file' dir."
-               
+
     @staticmethod
     @error_code_decorator
     def description_missing_from_conf_json(problematic_instances):

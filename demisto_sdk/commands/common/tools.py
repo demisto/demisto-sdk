@@ -453,7 +453,7 @@ def get_file(file_path, type_of_file):
     file_path = Path(file_path)
     data_dictionary = None
     with open(file_path.expanduser(), mode="r", encoding="utf8") as f:
-        if file_path.suffix == type_of_file:
+        if type_of_file in file_path.suffix:
             read_file = f.read()
             replaced = read_file.replace("simple: =", "simple: '='")
             # revert str to stream for loader

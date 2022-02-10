@@ -21,7 +21,7 @@ class ScriptValidator(ContentEntityValidator):
     """
 
     def __init__(self, structure_validator, ignored_errors, print_as_warnings, skip_docker_check, json_file_path,
-                 is_modified, is_added):
+                 is_modified=False, is_added=False):
         super().__init__(structure_validator, ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          skip_docker_check=skip_docker_check,
                          json_file_path=json_file_path)

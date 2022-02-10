@@ -14,7 +14,7 @@ from demisto_sdk.commands.common.tools import LOG_COLORS, is_string_uuid
 class PlaybookValidator(ContentEntityValidator):
     """PlaybookValidator is designed to validate the correctness of the file structure we enter to content repo."""
 
-    def __init__(self, structure_validator, ignored_errors, print_as_warnings, json_file_path, is_modified, is_added):
+    def __init__(self, structure_validator, ignored_errors, print_as_warnings, json_file_path, is_modified=False, is_added=False):
         super().__init__(structure_validator, ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          json_file_path=json_file_path)
         self.is_modified = is_modified

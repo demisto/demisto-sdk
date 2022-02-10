@@ -647,10 +647,15 @@ class TestScripts:
         assert IsEqualFunctions.is_dicts_equal(returned_data, const_data)
 
     @staticmethod
-    def test_get_script_data_script_executions_for_js_code():
+    @pytest.mark.parametrize(argnames='code', argvalues=[
+        "executeCommand('dummy_command', {'key': 'test'});",
+        "execute_command('dummy_command', {'key': 'test'});",
+        "demisto.executeCommand('dummy_command', {'key': 'test'});",
+    ])
+    def test_get_script_data_script_executions(repo, code):
         """
         Given
-            - A script file which contains javascript code.
+            - A script file which contains different kinds of execute_command call.
 
         When
             - parsing scripts files
@@ -658,13 +663,18 @@ class TestScripts:
         Then
             - make sure the script_executions was parsed successfully.
         """
-        file_path = TESTS_DIR + '/test_files/Script-js-script-code.yml'
-        script_name = 'TestScriptWithJsCode'
-        data = get_script_data(file_path, packs={'DummyPack': {}})
+        pack = repo.create_pack(name='DummyPack')
+        script = pack.create_script(name='DummyScript', code=code, yml={
+            'script': code,
+            'type': 'python',
+            'commonfields': {
+                'id': 'DummyScript'
+            }})
+        res, _ = process_script(script.path, packs={'DummyPack': {}}, marketplace=MarketplaceVersions.XSOAR.value, print_logs=False)
+        data = res[0]
 
-        script_executions = data.get(script_name, {}).get('script_executions')
-        assert len(script_executions) == 2
-        assert script_executions == ['dummy_command_1', 'dummy_command_2']
+        script_executions = data.get('DummyScript', {}).get('script_executions')
+        assert script_executions == ['dummy_command']
 
     @staticmethod
     def test_process_script__sanity_package(mocker):

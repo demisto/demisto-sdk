@@ -528,15 +528,16 @@ class ValidateManager:
             return self.validate_report(structure_validator, pack_error_ignore_list)
 
         elif file_type == FileType.PLAYBOOK:
-            return self.validate_playbook(structure_validator, pack_error_ignore_list, file_type)
+            return self.validate_playbook(structure_validator, pack_error_ignore_list, file_type, is_modified,
+                                          is_added_file)
 
         elif file_type == FileType.INTEGRATION:
             return all([self.validate_integration(structure_validator, pack_error_ignore_list, is_modified,
-                                                  file_type), valid_in_conf])
+                                                  file_type, is_added_file), valid_in_conf])
 
         elif file_type == FileType.SCRIPT:
             return all([self.validate_script(structure_validator, pack_error_ignore_list, is_modified,
-                                             file_type), valid_in_conf])
+                                             file_type, is_added_file), valid_in_conf])
 
         elif file_type == FileType.BETA_INTEGRATION:
             return self.validate_beta_integration(structure_validator, pack_error_ignore_list)
@@ -806,10 +807,12 @@ class ValidateManager:
                                                                      json_file_path=self.json_file_path)
         return release_notes_config_validator.is_file_valid()
 
-    def validate_playbook(self, structure_validator, pack_error_ignore_list, file_type):
+    def validate_playbook(self, structure_validator, pack_error_ignore_list, file_type, is_modified, is_added):
         playbook_validator = PlaybookValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                                print_as_warnings=self.print_ignored_errors,
-                                               json_file_path=self.json_file_path)
+                                               json_file_path=self.json_file_path,
+                                               is_modified=is_modified,
+                                               is_added=is_added)
 
         deprecated_result = self.check_and_validate_deprecated(file_type=file_type,
                                                                file_path=structure_validator.file_path,
@@ -823,11 +826,14 @@ class ValidateManager:
         return playbook_validator.is_valid_playbook(validate_rn=False,
                                                     id_set_file=self.id_set_file)
 
-    def validate_integration(self, structure_validator, pack_error_ignore_list, is_modified, file_type):
+    def validate_integration(self, structure_validator, pack_error_ignore_list, is_modified, file_type, is_added):
         integration_validator = IntegrationValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                                      print_as_warnings=self.print_ignored_errors,
                                                      skip_docker_check=self.skip_docker_checks,
-                                                     json_file_path=self.json_file_path)
+                                                     json_file_path=self.json_file_path,
+                                                     is_modified=is_modified,
+                                                     is_added=is_added
+                                                     )
 
         deprecated_result = self.check_and_validate_deprecated(file_type=file_type,
                                                                file_path=structure_validator.file_path,
@@ -847,11 +853,12 @@ class ValidateManager:
                                                        check_is_unskipped=self.check_is_unskipped,
                                                        conf_json_data=self.conf_json_data)
 
-    def validate_script(self, structure_validator, pack_error_ignore_list, is_modified, file_type):
+    def validate_script(self, structure_validator, pack_error_ignore_list, is_modified, file_type, is_added):
         script_validator = ScriptValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                            print_as_warnings=self.print_ignored_errors,
                                            skip_docker_check=self.skip_docker_checks,
-                                           json_file_path=self.json_file_path)
+                                           json_file_path=self.json_file_path, is_modified=is_modified,
+                                           is_added=is_added)
 
         deprecated_result = self.check_and_validate_deprecated(file_type=file_type,
                                                                file_path=structure_validator.file_path,

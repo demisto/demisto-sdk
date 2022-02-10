@@ -14,6 +14,12 @@ from demisto_sdk.commands.common.tools import LOG_COLORS, is_string_uuid
 class PlaybookValidator(ContentEntityValidator):
     """PlaybookValidator is designed to validate the correctness of the file structure we enter to content repo."""
 
+    def __init__(self, structure_validator, ignored_errors, print_as_warnings, json_file_path, is_modified, is_added):
+        super().__init__(structure_validator, ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
+                         json_file_path=json_file_path)
+        self.is_modified = is_modified
+        self.is_added = is_added
+
     def is_valid_playbook(self, validate_rn: bool = True, id_set_file=None) -> bool:
         """Check whether the playbook is valid or not.
 
@@ -514,15 +520,21 @@ class PlaybookValidator(ContentEntityValidator):
         return True
 
     def validate_readme_exists(self):
-        playbook_path = os.path.normpath(self.file_path)
-        to_replace = os.path.splitext(playbook_path)[-1]
-        readme_path = playbook_path.replace(to_replace, '_README.md')
-        if os.path.isfile(readme_path):
+        """
+            Validates if there is a readme file in the same folder as the script file.
+            The validation is processed only on added or modified files.
+            Return:
+               True if the readme file exits False with an error otherwise
+        """
+        if self.is_added or self.is_modified:
+            playbook_path = os.path.normpath(self.file_path)
+            to_replace = os.path.splitext(playbook_path)[-1]
+            readme_path = playbook_path.replace(to_replace, '_README.md')
+            if os.path.isfile(readme_path):
+                return True
+            error_message, error_code = Errors.missing_readme_file('Playbook')
+            if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                 suggested_fix=Errors.suggest_fix(self.file_path, cmd="generate-docs")):
+                return False
             return True
-        error_message, error_code = Errors.missing_readme_file('Playbook')
-        if self.handle_error(error_message, error_code, file_path=self.file_path,
-                             suggested_fix=Errors.suggest_fix(self.file_path, cmd="generate-docs")):
-            return False
         return True
-
-

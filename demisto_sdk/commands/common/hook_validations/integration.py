@@ -42,6 +42,13 @@ class IntegrationValidator(ContentEntityValidator):
     EXPIRATION_FIELD_TYPE = 17
     ALLOWED_HIDDEN_PARAMS = {'longRunning', 'feedIncremental', 'feedReputation'}
 
+    def __init__(self, structure_validator, ignored_errors, print_as_warnings, skip_docker_check, json_file_path,
+                 is_modified, is_added):
+        super().__init__(structure_validator, ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
+                         json_file_path=json_file_path, skip_docker_check=skip_docker_check)
+        self.is_modified = is_modified
+        self.is_added = is_added
+
     def is_valid_version(self):
         # type: () -> bool
         if self.current_file.get("commonfields", {}).get('version') == self.DEFAULT_VERSION:
@@ -1439,14 +1446,24 @@ class IntegrationValidator(ContentEntityValidator):
                         'please verify the integration is in a pack')
 
     def validate_readme_exists(self):
-        integration_path = os.path.normpath(self.file_path)
-        path_split = integration_path.split(os.sep)
-        to_replace = path_split[-1]
-        readme_path = integration_path.replace(to_replace, "README.md")
-        if os.path.isfile(readme_path):
+        """
+        Validates if there is a readme file in the same folder as the script file.
+        The validation is processed only on added or modified files.
+        Return:
+            True if the readme file exits False with an error otherwise
+        """
+        if self.is_modified or self.is_added:
+            integration_path = os.path.normpath(self.file_path)
+            path_split = integration_path.split(os.sep)
+            to_replace = path_split[-1]
+            readme_path = integration_path.replace(to_replace, "README.md")
+            if os.path.isfile(readme_path):
+                return True
+            error_message, error_code = Errors.missing_readme_file('Integration')
+            if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                 suggested_fix=Errors.suggest_fix(self.file_path, cmd="generate-docs")):
+                return False
             return True
-        error_message, error_code = Errors.missing_readme_file('Integration')
-        if self.handle_error(error_message, error_code, file_path=self.file_path,
-                             suggested_fix=Errors.suggest_fix(self.file_path, cmd="generate-docs")):
-            return False
-        return True
+        else:
+            return True
+

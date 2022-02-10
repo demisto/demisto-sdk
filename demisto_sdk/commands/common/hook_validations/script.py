@@ -20,6 +20,14 @@ class ScriptValidator(ContentEntityValidator):
         also try to catch possible Backward compatibility breaks due to the preformed changes.
     """
 
+    def __init__(self, structure_validator, ignored_errors, print_as_warnings, skip_docker_check, json_file_path,
+                 is_modified, is_added):
+        super().__init__(structure_validator, ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
+                         skip_docker_check=skip_docker_check,
+                         json_file_path=json_file_path)
+        self.is_modified = is_modified
+        self.is_added = is_added
+
     def is_valid_version(self) -> bool:
         if self.current_file.get('commonfields', {}).get('version') != self.DEFAULT_VERSION:
             error_message, error_code = Errors.wrong_version()
@@ -397,20 +405,29 @@ class ScriptValidator(ContentEntityValidator):
         return True
 
     def validate_readme_exists(self):
-        script_path = os.path.normpath(self.file_path)
-        path_split = script_path.split(os.sep)
-        if path_split[-2] == 'Scripts':
-            to_replace = os.path.splitext(script_path)[-1]
-            readme_path = script_path.replace(to_replace, '_README.md')
-        else:
-            to_replace = path_split[-1]
-            readme_path = script_path.replace(to_replace, "README.md")
+        """
+        Validates if there is a readme file in the same folder as the script file.
+        The validation is processed only on added or modified files.
+        Return:
+            True if the readme file exits False with an error otherwise
+        """
+        if self.is_added or self.is_modified:
+            script_path = os.path.normpath(self.file_path)
+            path_split = script_path.split(os.sep)
+            if path_split[-2] == 'Scripts':
+                to_replace = os.path.splitext(script_path)[-1]
+                readme_path = script_path.replace(to_replace, '_README.md')
+            else:
+                to_replace = path_split[-1]
+                readme_path = script_path.replace(to_replace, "README.md")
 
-        if os.path.isfile(readme_path):
+            if os.path.isfile(readme_path):
+                return True
+            error_message, error_code = Errors.missing_readme_file('Script')
+            if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                 suggested_fix=Errors.suggest_fix(self.file_path, cmd="generate-docs")):
+                return False
             return True
-        error_message, error_code = Errors.missing_readme_file('Script')
-        if self.handle_error(error_message, error_code, file_path=self.file_path,
-                             suggested_fix=Errors.suggest_fix(self.file_path, cmd="generate-docs")):
-            return False
-        return True
+        else:
+            return True
 

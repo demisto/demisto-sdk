@@ -1098,27 +1098,28 @@ def test_disable_md_autolinks():
 
 TEST_EMPTY_SCRIPTDATA_SECTION = [
     ({'script': 'some info'}, ['']),
-    ({'subtype': 'python2'}, ['## Script data', '---', '', '| **Name** | **Description** |', '| --- | --- |', '| Script Type | python2 |', '']),
+    ({'subtype': 'python2', 'tags': []}, ['## Script data', '---', '', '| **Name** | **Description** |', '| --- | --- |', '| Script Type | python2 |', '']),
     ({'tags': []}, ['']),
     ({'fromversion': '6.0.0'}, ['## Script data', '---', '', '| **Name** | **Description** |', '| --- | --- |', '| Cortex XSOAR Version | 6.0.0 |', ''])
 ]
 
+
 @pytest.mark.parametrize('yml_content, expected_result', TEST_EMPTY_SCRIPTDATA_SECTION)
-def test_generate_table_section_empty(yml_content, expected_result, pack: Pack):
+def test_missing_data_sections_when_generating_table_section(yml_content, expected_result, pack: Pack):
     """Unit test
     Given
     - Case 1: yml with no relevant tags for 'get_script_info' function.
-    - Case 2: yml with 'subtype' section filled in.
+    - Case 2: yml with 'subtype' section filled in and empty 'tags' section.
     - Case 3: yml that contain empty 'tags' section.
     - Case 4: yml that contain 'fromversion' section that is different from 'DEFAULT_CONTENT_ITEM_FROM_VERSION' (which is 0.0.0).
     When
-    - running the get_script_info command on the inputs and then generate_table_section. 
+    - running the get_script_info command on the inputs and then generate_table_section.
     Then
     - Validate That the generated table section was created correctly.
     - Case 1: Empty table section.
-    - Case 2: Section with a title and a table containing information about the script type. 
+    - Case 2: Script data section with a title and a table containing information only about the script type.
     - Case 3: Empty table section.
-    - Case 4: Section with a title and a table containing information about the Cortex XSOAR Version.
+    - Case 4: Script data section with a title and a table containing information only about the Cortex XSOAR Version.
     """
     from demisto_sdk.commands.generate_docs.common import \
         generate_table_section

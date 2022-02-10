@@ -2835,7 +2835,7 @@ class TestImageValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', NOT_VALID_IMAGE_PATH], catch_exceptions=False)
-        assert 'The file type is not supported in the validate command.' in result.stdout
+        assert "The image's file name or location is invalid" in result.stdout
         assert result.exit_code == 1
 
 

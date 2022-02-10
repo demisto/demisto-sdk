@@ -879,7 +879,9 @@ class ValidateManager:
         integration_validator = IntegrationValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                                      print_as_warnings=self.print_ignored_errors,
                                                      skip_docker_check=self.skip_docker_checks,
-                                                     json_file_path=self.json_file_path)
+                                                     json_file_path=self.json_file_path,
+                                                     is_added=False,
+                                                     is_modified=False)
         return integration_validator.is_valid_beta_integration()
 
     def validate_image(self, file_path, pack_error_ignore_list):

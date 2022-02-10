@@ -1038,8 +1038,11 @@ class Errors:
     @error_code_decorator
     def invalid_image_name_or_location():
         return "The image file name or location is invalid\n" \
-               "If you're trying to add an integration image, make sure the image name looks like the following: <integration_name>_image.png and located in your integration folder: Packs/<MyPack>/Integrations/<MyIntegration>. For more info: https://xsoar.pan.dev/docs/integrations/package-dir#the-directory-structure-is-as-follows.\n" \
-               "If you're trying to add author image, make sure the image name looks like the following: Author_image.png and located in the pack root path. For more info: https://xsoar.pan.dev/docs/packs/packs-format#author_imagepng\n" \
+               "If you're trying to add an integration image, make sure the image name looks like the following:<integration_name>_image.png and located in" \
+               "your integration folder: Packs/<MyPack>/Integrations/<MyIntegration>. For more info: " \
+               "https://xsoar.pan.dev/docs/integrations/package-dir#the-directory-structure-is-as-follows.\n" \
+               "If you're trying to add author image, make sure the image name looks like the following: Author_image.png and located in the pack root path." \
+               "For more info: https://xsoar.pan.dev/docs/packs/packs-format#author_imagepng\n" \
                "Otherwise, any other image should be located under the 'Doc_files' dir."
 
     @staticmethod

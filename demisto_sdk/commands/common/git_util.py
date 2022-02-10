@@ -578,7 +578,7 @@ class GitUtil:
     def get_all_changed_files(self, prev_ver: str = '', committed_only: bool = False,
                               staged_only: bool = False, debug: bool = False,
                               include_untracked: bool = False) -> Set[Path]:
-        """Get a set of all changed files in the branch (modified, added, deleted and renamed)
+        """Get a set of all changed files in the branch (modified, added and renamed)
 
         Args:
             prev_ver (str): The base branch against which the comparison is made.

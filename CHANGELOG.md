@@ -1,6 +1,7 @@
 # Changelog
 
-
+# unreleaded
+* Added to **validate** a validation thjat prevents the user to delete importent files.
 # 1.6.0
 * Fixed an issue in the **create-id-set** command where similar items from different marketplaces were reported as duplicated.
 * Fixed typo in demisto-sdk init

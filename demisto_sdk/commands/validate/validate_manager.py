@@ -14,7 +14,8 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION, DEFAULT_ID_SET_PATH, GENERIC_FIELDS_DIR,
     GENERIC_TYPES_DIR, IGNORED_PACK_NAMES, OLDEST_SUPPORTED_VERSION, PACKS_DIR,
     PACKS_PACK_META_FILE_NAME, SKIP_RELEASE_NOTES_FOR_TYPES,
-    VALIDATION_USING_GIT_IGNORABLE_DATA, FileType, PathLevel, FileType_NOT_ALLOWED_TO_DELETE)
+    VALIDATION_USING_GIT_IGNORABLE_DATA, FileType,
+    FileType_NOT_ALLOWED_TO_DELETE, PathLevel)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
                                                 FOUND_FILES_AND_ERRORS,
@@ -424,6 +425,7 @@ class ValidateManager:
         return True
 
     # flake8: noqa: C901
+
     def run_validations_on_file(self, file_path, pack_error_ignore_list, is_modified=False,
                                 old_file_path=None, modified_files=None, added_files=None):
         """Choose a validator to run for a single file. (i)
@@ -1141,7 +1143,7 @@ class ValidateManager:
         Returns: True if the file allowed to be deleted, else False.
 
         """
-        
+
         return find_type(file_path) not in FileType_NOT_ALLOWED_TO_DELETE
 
     def validate_deleted_files(self, deleted_files) -> bool:

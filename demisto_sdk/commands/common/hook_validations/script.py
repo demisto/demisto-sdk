@@ -20,8 +20,8 @@ class ScriptValidator(ContentEntityValidator):
         also try to catch possible Backward compatibility breaks due to the preformed changes.
     """
 
-    def __init__(self, structure_validator, ignored_errors, print_as_warnings, skip_docker_check, json_file_path,
-                 is_modified=False, is_added=False):
+    def __init__(self, structure_validator, ignored_errors=None, print_as_warnings=False, skip_docker_check=False,
+                 json_file_path=None, is_modified=False, is_added=False):
         super().__init__(structure_validator, ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          skip_docker_check=skip_docker_check,
                          json_file_path=json_file_path)
@@ -430,4 +430,3 @@ class ScriptValidator(ContentEntityValidator):
             return True
         else:
             return True
-

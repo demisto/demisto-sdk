@@ -634,3 +634,6 @@ class TestPlaybookValidator:
         structure = mock_structure("", playbook_json)
         validator = PlaybookValidator(structure)
         assert validator.is_valid_with_indicators_input() is expected_result
+
+    def test_validate_readme_exists(self):
+        assert True

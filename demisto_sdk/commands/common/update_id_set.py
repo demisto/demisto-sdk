@@ -620,7 +620,7 @@ def get_script_data(file_path, script_code=None, packs: Dict[str, Dict] = None):
     fromversion = data_dictionary.get('fromversion')
     docker_image = data_dictionary.get('dockerimage')
     depends_on, command_to_integration = get_depends_on(data_dictionary)
-    script_executions = sorted(list(set(re.findall(r"demisto.executeCommand\(['\"](\w+)['\"].*", script_code))))
+    script_executions = sorted(list(set(re.findall(r"execute_?command\(['\"](\w+)['\"].*", script_code, re.IGNORECASE))))
     pack = get_pack_name(file_path)
     marketplaces = get_item_marketplaces(file_path, item_data=data_dictionary, packs=packs)
 

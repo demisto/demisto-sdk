@@ -60,4 +60,4 @@ class IndicatorFieldJSONFormat(BaseUpdateJSON):
         """
         indicator_field_type: str = self.data.get('type', '')
         if indicator_field_type in INDICATOR_FIELD_TYPE_TO_MIN_VERSION:
-            self.data['fromVersion'] = INDICATOR_FIELD_TYPE_TO_MIN_VERSION[indicator_field_type]
+            self.data['fromVersion'] = str(INDICATOR_FIELD_TYPE_TO_MIN_VERSION[indicator_field_type])

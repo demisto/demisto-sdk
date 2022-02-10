@@ -647,6 +647,36 @@ class TestScripts:
         assert IsEqualFunctions.is_dicts_equal(returned_data, const_data)
 
     @staticmethod
+    @pytest.mark.parametrize(argnames='code', argvalues=[
+        "executeCommand('dummy_command', {'key': 'test'});",
+        "execute_command('dummy_command', {'key': 'test'});",
+        "demisto.executeCommand('dummy_command', {'key': 'test'});",
+    ])
+    def test_get_script_data_script_executions(repo, code):
+        """
+        Given
+            - A script file which contains different kinds of execute_command call.
+
+        When
+            - parsing scripts files
+
+        Then
+            - make sure the script_executions was parsed successfully.
+        """
+        pack = repo.create_pack(name='DummyPack')
+        script = pack.create_script(name='DummyScript', code=code, yml={
+            'script': code,
+            'type': 'python',
+            'commonfields': {
+                'id': 'DummyScript'
+            }})
+        res, _ = process_script(script.path, packs={'DummyPack': {}}, marketplace=MarketplaceVersions.XSOAR.value, print_logs=False)
+        data = res[0]
+
+        script_executions = data.get('DummyScript', {}).get('script_executions')
+        assert script_executions == ['dummy_command']
+
+    @staticmethod
     def test_process_script__sanity_package(mocker):
         """
         Given

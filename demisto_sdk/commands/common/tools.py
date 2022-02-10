@@ -2210,6 +2210,21 @@ def get_script_or_sub_playbook_tasks_from_playbook(searched_entity_name: str, ma
     return searched_tasks
 
 
+def extract_docker_image_from_text(text):
+    """
+    Strips the docker image version from a given text.
+    Args:
+        text : the text to extract the docker image from
+    Return:
+        str. The docker image version if exists, otherwise, return None.
+    """
+    match = (re.search(r'(demisto/.+:([0-9]+)(((\.)[0-9]+)+))', text))
+    if match:
+        return match.group(1)
+    else:
+        return None
+
+
 def get_current_repo() -> Tuple[str, str, str]:
     try:
         git_repo = git.Repo(os.getcwd(), search_parent_directories=True)

@@ -2,7 +2,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Upload AbuseDB ",
+            "name": "Python: Upload AbuseDB",
             "type": "python",
             "request": "launch",
             "module": "demisto_sdk",
@@ -12,7 +12,7 @@
                 "-i",
                 "${env:CONTENT}/Packs/AbuseDB/Integrations/AbuseDB"
             ]
-        }, 
+        },
         {
             "name": "Python: Lint AbuseDB with logs",
             "type": "python",

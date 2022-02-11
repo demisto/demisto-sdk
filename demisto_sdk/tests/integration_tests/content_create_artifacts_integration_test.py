@@ -122,3 +122,34 @@ def test_all_packs_creation(repo):
             assert result.exit_code == 0
             assert os.path.exists(os.path.join(str(temp), 'uploadable_packs', 'Pack1.zip'))
             assert os.path.exists(os.path.join(str(temp), 'uploadable_packs', 'Pack2.zip'))
+
+
+def test_create_packs_with_filter_by_id_set(repo):
+    pack = repo.create_pack('Joey')
+    pack.pack_metadata.write_json(
+        {
+            'name': 'Joey',
+        }
+    )
+    script = pack.create_script('HowYouDoing')
+    repo.id_set.write_json({
+        'Packs': {
+            'Joey': {
+                'ContentItems': {
+                    'scripts': [
+                        'HowYouDoing',
+                    ],
+                },
+            },
+        },
+    })
+
+    dir_path = repo.make_dir()
+
+    with ChangeCWD(repo.path):
+        runner = CliRunner()
+        result = runner.invoke(main, [ARTIFACTS_CMD, '-a', dir_path, '--no-zip', '-fbi', '-idp', repo.id_set.path, '-p', 'Joey'])
+        assert result.exit_code == 0
+
+    expected_script_path = Path(dir_path) / 'content_packs' / pack.name / 'Scripts' / f'script-{script.name}.yml'
+    assert expected_script_path.exists()

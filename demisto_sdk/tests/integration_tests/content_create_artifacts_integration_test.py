@@ -135,11 +135,9 @@ def test_create_packs_with_filter_by_id_set(repo):
         - Verify that only the script in the ID set is exported to the pack artifacts.
     """
     pack = repo.create_pack('Joey')
-    pack.pack_metadata.write_json(
-        {
-            'name': 'Joey',
-        }
-    )
+    pack.pack_metadata.write_json({
+        'name': 'Joey',
+    })
     script1 = pack.create_script('HowYouDoing')
     script2 = pack.create_script('ShareFood')
     repo.id_set.write_json({

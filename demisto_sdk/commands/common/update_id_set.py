@@ -836,12 +836,20 @@ def get_incident_field_data(path: str, incident_types: List, packs: Dict[str, Di
     if field_calculations_scripts:
         all_scripts = all_scripts.union({field_calculations_scripts})
 
+    # save cliName and name of all aliases fields in a single list
+    aliases: List[str] = sum(([field['cliName'], field['name']] for field in json_data.get('Aliases', [])), [])
+    cliname = json_data.get('cliName')
+
     data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack, marketplaces=marketplaces)
 
     if all_associated_types:
         data['incident_types'] = list(all_associated_types)
     if all_scripts:
         data['scripts'] = list(all_scripts)
+    if aliases:
+        data['aliases'] = aliases
+    if cliname:
+        data['cliname'] = cliname
     if does_dict_have_alternative_key(json_data):
         data['has_alternative_meta'] = True
 

@@ -45,6 +45,8 @@ mapping:
     type: str
   defaultmapperout:
     type: str
+  defaultmapperout_x2:
+    type: str
   defaultclassifier:
     type: str
   detaileddescription:
@@ -85,7 +87,11 @@ mapping:
         type: bool
       isremotesyncin:
         type: bool
+      isremotesyncin_x2:
+        type: bool
       isremotesyncout:
+        type: bool
+      isremotesyncout_x2:
         type: bool
       commands:
         type: seq
@@ -143,6 +149,8 @@ schema;configuration_schema:
       type: bool
     hidden:
       type: bool
+    hidden_x2:
+      type: bool
     options:
       type: seq
       sequence:
@@ -188,6 +196,8 @@ schema;command_schema:
       type: int
     hidden:
       type: bool
+    hidden_x2:
+      type: bool
     polling:
       type: bool
 
@@ -220,6 +230,8 @@ schema;argument_schema:
       type: bool
     deprecated:
       type: bool
+    type:
+      type: str
 
 
 # integration->script->command->outputs

@@ -22,6 +22,8 @@ schema;field_schema:
     name:
       type: str
       required: True
+    name_x2:
+      type: str
     ownerOnly:
       type: bool
     placeholder:

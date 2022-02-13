@@ -1142,7 +1142,7 @@ def test_get_relative_path_from_packs_dir():
     ('1.3.8', ['* Updated the **secrets** command to work on forked branches.']),
     ('1.3', [])
 ])
-def test_get_release_note_entries(version, expected_result):
+def test_get_release_note_entries(requests_mock, version, expected_result):
     """
     Given:
         - Version of the demisto-sdk.
@@ -1153,6 +1153,10 @@ def test_get_release_note_entries(version, expected_result):
     Then:
         - Ensure that the result as expected.
     """
+    requests_mock.get('https://api.github.com/repos/demisto/demisto-sdk')
+    with open('test_files/test_changelog.md', 'rb') as f:
+        changelog = f.read()
+    requests_mock.get('https://raw.githubusercontent.com/demisto/demisto-sdk/master/CHANGELOG.md', content=changelog)
 
     assert get_release_note_entries(version) == expected_result
 

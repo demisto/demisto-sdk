@@ -168,13 +168,12 @@ class GitContentConfig:
                              timeout=10)
             if r.ok:
                 return github_hostname, repo_name
-            else:
-                r = requests.get(f'https://api.{api_host}/repos/{repo_name}',
-                                 verify=False,
-                                 params={'token': self.credentials.github_token},
-                                 timeout=10)
-                if r.ok:
-                    return github_hostname, repo_name
+            r = requests.get(f'https://api.{api_host}/repos/{repo_name}',
+                             verify=False,
+                             params={'token': self.credentials.github_token},
+                             timeout=10)
+            if r.ok:
+                return github_hostname, repo_name
             logging.getLogger('demisto-sdk').info(r.content)
             return None
         except requests.exceptions.ConnectionError as e:

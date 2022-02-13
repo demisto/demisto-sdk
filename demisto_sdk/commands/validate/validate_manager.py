@@ -450,6 +450,8 @@ class ValidateManager:
             return True
         elif file_type is None:
             error_message, error_code = Errors.file_type_not_supported()
+            if str(file_path).endswith('.png'):
+                error_message, error_code = Errors.invalid_image_name_or_location()
             if self.handle_error(error_message=error_message, error_code=error_code, file_path=file_path,
                                  drop_line=True):
                 return False
@@ -1463,6 +1465,8 @@ class ValidateManager:
 
         if not file_type:
             error_message, error_code = Errors.file_type_not_supported()
+            if str(file_path).endswith('.png'):
+                error_message, error_code = Errors.invalid_image_name_or_location()
             self.handle_error(error_message, error_code, file_path=file_path)
             return '', '', False
 

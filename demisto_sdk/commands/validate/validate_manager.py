@@ -436,6 +436,22 @@ class ValidateManager:
 
         return all(package_entities_validation_results)
 
+    def is_valid_pack_name(self, file_path, old_file_path):
+        """
+        Valid pack name is currently considered to be a new pack name or an existing pack.
+        If pack name is changed, will return `False`.
+        """
+        if not old_file_path:
+            return True
+        original_pack_name = get_pack_name(old_file_path)
+        new_pack_name = get_pack_name(file_path)
+        if original_pack_name != new_pack_name:
+            error_message, error_code = Errors.changed_pack_name(original_pack_name)
+            if self.handle_error(error_message=error_message, error_code=error_code, file_path=file_path,
+                                 drop_line=True):
+                return False
+        return True
+
     # flake8: noqa: C901
     def run_validations_on_file(self, file_path, pack_error_ignore_list, is_modified=False,
                                 old_file_path=None, modified_files=None, added_files=None):
@@ -452,6 +468,8 @@ class ValidateManager:
         Returns:
             bool. true if file is valid, false otherwise.
         """
+        if not self.is_valid_pack_name(file_path, old_file_path):
+            return False
         file_type = find_type(file_path)
 
         is_added_file = file_path in added_files if added_files else False
@@ -461,6 +479,8 @@ class ValidateManager:
             return True
         elif file_type is None:
             error_message, error_code = Errors.file_type_not_supported()
+            if str(file_path).endswith('.png'):
+                error_message, error_code = Errors.invalid_image_name_or_location()
             if self.handle_error(error_message=error_message, error_code=error_code, file_path=file_path,
                                  drop_line=True):
                 return False
@@ -1474,6 +1494,8 @@ class ValidateManager:
 
         if not file_type:
             error_message, error_code = Errors.file_type_not_supported()
+            if str(file_path).endswith('.png'):
+                error_message, error_code = Errors.invalid_image_name_or_location()
             self.handle_error(error_message, error_code, file_path=file_path)
             return '', '', False
 

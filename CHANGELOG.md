@@ -1,5 +1,5 @@
 # Changelog
-* Removed PYYAML library (using only ruamel instead)
+* Removed PYYAML library (using only ruamel instead).
 
 # 1.6.0
 * Fixed an issue in the **create-id-set** command where similar items from different marketplaces were reported as duplicated.

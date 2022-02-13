@@ -1,4 +1,5 @@
 # Changelog
+- Fixed an issue when filtering items using the ID set in the **create-content-artifacts** command.
 * Added the '--use-packs-known-words' argument to the **doc-review** command
 
 

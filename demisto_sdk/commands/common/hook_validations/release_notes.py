@@ -105,7 +105,7 @@ class ReleaseNotesValidator(BaseValidator):
                         docker_version = self.get_docker_version_from_rn(entity_conent)
                         yml_docker_version = modified_yml_dict.get("dockerimage") if type == 'Scripts' else \
                             modified_yml_dict.get("script", {}).get("dockerimage", '')
-                        if docker_version and yml_docker_version != docker_version:
+                        if docker_version and yml_docker_version and yml_docker_version != docker_version:
                             error_list.append({'name': modified_yml_dict.get(field),
                                                'rn_version': docker_version,
                                                'yml_version': yml_docker_version})

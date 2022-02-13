@@ -1,0 +1,4 @@
+fromversion: "6.0.0"
+category: "test"
+name: name_x2
+defaultEnabled: true

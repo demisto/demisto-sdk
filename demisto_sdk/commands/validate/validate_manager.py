@@ -182,7 +182,7 @@ class ValidateManager:
             # also do not skip id set creation unless the flag is up
             self.skip_docker_checks = True
             self.skip_pack_rn_validation = True
-            self.print_percent = True
+            self.print_percent = not self.run_with_multiprocessing  # the Multiprocessing will mismatch the percent
             self.check_is_unskipped = False
 
         if no_docker_checks:
@@ -333,7 +333,7 @@ class ValidateManager:
         all_packs.sort(key=str.lower)
 
         ReadMeValidator.add_node_env_vars()
-        with ReadMeValidator.start_mdx_server():
+        with ReadMeValidator.start_mdx_server(handle_error=self.handle_error):
             if self.run_with_multiprocessing:
                 with pebble.ProcessPool(max_workers=4) as executor:
                     futures = []

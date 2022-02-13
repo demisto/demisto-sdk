@@ -1,4 +1,3 @@
-import atexit
 import json
 import os
 import re
@@ -569,6 +568,3 @@ class ReadMeValidator(BaseValidator):
     @staticmethod
     def _get_error_lists():
         return FOUND_FILES_AND_ERRORS, FOUND_FILES_AND_IGNORED_ERRORS
-
-
-# atexit.register(ReadMeValidator.stop_mdx_server)

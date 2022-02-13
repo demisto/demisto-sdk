@@ -14,8 +14,8 @@ from spellchecker import SpellChecker
 
 from demisto_sdk.commands.common.constants import (PACKS_PACK_IGNORE_FILE_NAME,
                                                    FileType)
-from demisto_sdk.commands.common.content import (Integration, Playbook,
-                                                 ReleaseNote, Script,
+from demisto_sdk.commands.common.content import (Content, Integration,
+                                                 Playbook, ReleaseNote, Script,
                                                  path_to_pack_object)
 from demisto_sdk.commands.common.content.objects.abstract_objects import \
     TextObject
@@ -50,13 +50,19 @@ class DocReviewer:
 
         self.file_paths = file_paths if file_paths else []
         self.git_util = None
-        self.prev_ver = prev_ver if prev_ver else 'demisto/master'
 
         if use_git:
-            self.git_util = GitUtil()
+            self.git_util = GitUtil(repo=Content.git())
+            self.prev_ver = self.git_util.handle_prev_ver()[1]
+        else:
+            self.prev_ver = prev_ver if prev_ver else 'demisto/master'
 
         if release_notes_only:
             self.SUPPORTED_FILE_TYPES = [FileType.RELEASE_NOTES]
+            # if running doc-review --release-notes there is no need to consider invalid schema files of yml/json
+            self.ignore_invalid_schema_file = True
+        else:
+            self.ignore_invalid_schema_file = False
 
         self.known_words_file_paths = known_words_file_paths if known_words_file_paths else []
         self.load_known_words_from_pack = load_known_words_from_pack
@@ -124,7 +130,9 @@ class DocReviewer:
         for root, _, files in os.walk(dir_name):
             for file_name in files:
                 full_path = (os.path.join(root, file_name))
-                if find_type(full_path) in self.SUPPORTED_FILE_TYPES:
+                if find_type(
+                    full_path, ignore_invalid_schema_file=self.ignore_invalid_schema_file
+                ) in self.SUPPORTED_FILE_TYPES:
                     self.files.append(str(full_path))
 
     def gather_all_changed_files(self):
@@ -138,7 +146,9 @@ class DocReviewer:
         click.secho('Gathering all changed files from git', fg='bright_cyan')
         for file in self.gather_all_changed_files():
             file = str(file)
-            if os.path.isfile(file) and find_type(file) in self.SUPPORTED_FILE_TYPES:
+            if os.path.isfile(file) and find_type(
+                file, ignore_invalid_schema_file=self.ignore_invalid_schema_file
+            ) in self.SUPPORTED_FILE_TYPES:
                 self.files.append(file)
 
     def get_files_to_run_on(self, file_path):
@@ -149,7 +159,9 @@ class DocReviewer:
         elif os.path.isdir(file_path):
             self.get_all_md_and_yml_files_in_dir(file_path)
 
-        elif find_type(file_path) in self.SUPPORTED_FILE_TYPES:
+        elif find_type(
+            file_path, ignore_invalid_schema_file=self.ignore_invalid_schema_file
+        ) in self.SUPPORTED_FILE_TYPES:
             self.files.append(file_path)
 
     @staticmethod

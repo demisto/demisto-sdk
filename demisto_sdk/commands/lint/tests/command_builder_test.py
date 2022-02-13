@@ -7,7 +7,8 @@ import pytest
 values = [[Path("file1.py")], [Path("file1.py"), Path("file2.py")]]
 
 
-@pytest.mark.parametrize(argnames="py_num , expected_exec", argvalues=[(3.7, 'python3'), (2.7, 'python')])
+@pytest.mark.parametrize(argnames="py_num , expected_exec", argvalues=[('3.7', 'python3'), ('2.7', 'python'),
+                                                                       ('3.10', 'python3'), ('2.3.1', 'python')])
 def test_get_python_exec(py_num, expected_exec):
     """Get python exec"""
     from demisto_sdk.commands.lint.commands_builder import get_python_exec
@@ -18,7 +19,7 @@ def test_get_python_exec(py_num, expected_exec):
 def test_build_flak8_command(files):
     """Build flake8 command"""
     from demisto_sdk.commands.lint.commands_builder import build_flake8_command
-    output = build_flake8_command(files, 3.8)
+    output = build_flake8_command(files, '3.8')
     files = [str(file) for file in files]
     expected = f"python3 -m flake8 {' '.join(files)}"
     assert output == expected
@@ -29,7 +30,7 @@ def test_build_xsoar_linter_py3_command(files):
     """Build xsoar linter command"""
     from demisto_sdk.commands.lint.commands_builder import \
         build_xsoar_linter_command
-    output = build_xsoar_linter_command(files, 3.8, "base")
+    output = build_xsoar_linter_command(files, '3.8', "base")
     files = [str(file) for file in files]
     expected = f"python3 -m pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py," \
                "conftest.py,venv -E --disable=all --msg-template='{abspath}:{line}:{column}: {msg_id} {obj}: {msg}'" \
@@ -43,7 +44,7 @@ def test_build_xsoar_linter_py2_command(files):
     """Build xsoar linter command"""
     from demisto_sdk.commands.lint.commands_builder import \
         build_xsoar_linter_command
-    output = build_xsoar_linter_command(files, 2.7, "base")
+    output = build_xsoar_linter_command(files, '2.7', "base")
     files = [str(file) for file in files]
     expected = f"python2 -m pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py," \
                "conftest.py,venv -E --disable=all --msg-template='{abspath}:{line}:{column}: {msg_id} {obj}: {msg}' " \
@@ -57,7 +58,7 @@ def test_build_xsoar_linter_no_base_command(files):
     """Build xsoar linter command"""
     from demisto_sdk.commands.lint.commands_builder import \
         build_xsoar_linter_command
-    output = build_xsoar_linter_command(files, 2.7, "unsupported")
+    output = build_xsoar_linter_command(files, '2.7', "unsupported")
     files = [str(file) for file in files]
     expected = "python2 -m pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py," \
                "conftest.py,venv -E --disable=all --msg-template='{abspath}:{line}:{column}: {msg_id} {obj}: {msg}' " \
@@ -79,15 +80,16 @@ def test_build_bandit_command(files):
     assert expected == output
 
 
-@pytest.mark.parametrize(argnames="files, py_num", argvalues=[(values[0], "2.7"), (values[1], "3.7")])
-def test_build_mypy_command(files, py_num):
+@pytest.mark.parametrize(argnames="files, py_num, content_path", argvalues=[(values[0], "2.7", None), (values[1], "3.7", Path('test_path'))])
+def test_build_mypy_command(files, py_num, content_path):
     """Build Mypy command"""
     from demisto_sdk.commands.lint.commands_builder import build_mypy_command
-    output = build_mypy_command(files, py_num)
+    expected_cache_dir = 'test_path/.mypy_cache' if content_path else '/dev/null'
+    output = build_mypy_command(files, py_num, content_path)
     files = [str(file) for file in files]
     expected = f"python3 -m mypy --python-version {py_num} --check-untyped-defs --ignore-missing-imports " \
                f"--follow-imports=silent --show-column-numbers --show-error-codes --pretty --allow-redefinition " \
-               f"--show-absolute-path --cache-dir=/dev/null {' '.join(files)}"
+               f"--show-absolute-path --cache-dir={expected_cache_dir} {' '.join(files)}"
     assert expected == output
 
 
@@ -99,7 +101,7 @@ def test_build_vulture_command(files, mocker):
         build_vulture_command
     mocker.patch.object(commands_builder, 'os')
     commands_builder.os.environ.get.return_value = 20
-    output = build_vulture_command(files, Path('~/dev/content/'), 2.7)
+    output = build_vulture_command(files, Path('~/dev/content/'), '2.7')
     files = [str(item) for item in files]
     expected = f"python -m vulture --min-confidence 20 --exclude=CommonServerPython.py,demistomock.py," \
                f"CommonServerUserPython.py,conftest.py,venv {' '.join(files)}"
@@ -124,7 +126,17 @@ def test_build_pylint_command_3_9_docker():
     from demisto_sdk.commands.lint.commands_builder import build_pylint_command
     NamedFile = namedtuple('File', 'name')
     files = [NamedFile('file1')]
-    output = build_pylint_command(files, 3.9)
+    output = build_pylint_command(files, '3.9')
+    assert output.endswith(files[0].name)
+    assert 'disable=bad-option-value,unsubscriptable-object' in output
+
+
+def test_build_pylint_command_3_9_1_docker():
+    """Build Pylint command"""
+    from demisto_sdk.commands.lint.commands_builder import build_pylint_command
+    NamedFile = namedtuple('File', 'name')
+    files = [NamedFile('file1')]
+    output = build_pylint_command(files, '3.9.1')
     assert output.endswith(files[0].name)
     assert 'disable=bad-option-value,unsubscriptable-object' in output
 

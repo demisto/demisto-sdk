@@ -2,6 +2,7 @@ import argparse
 import glob
 import io
 import json
+import logging
 import os
 import re
 import shlex
@@ -29,6 +30,7 @@ import yaml
 from packaging.version import parse
 from pebble import ProcessFuture, ProcessPool
 from ruamel.yaml import YAML
+from ruamel.yaml.comments import CommentedMap, CommentedSeq
 
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK, CLASSIFIERS_DIR,
@@ -44,8 +46,8 @@ from demisto_sdk.commands.common.constants import (
     PACKS_README_FILE_NAME, PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR,
     RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR,
-    XSOAR_CONFIG_FILE, FileType, GitContentConfig, IdSetKeys,
-    MarketplaceVersions, urljoin)
+    XSOAR_CONFIG_FILE, FileType, FileTypeToIDSetKeys, GitContentConfig,
+    IdSetKeys, MarketplaceVersions, urljoin)
 from demisto_sdk.commands.common.git_util import GitUtil
 
 urllib3.disable_warnings()
@@ -53,6 +55,7 @@ urllib3.disable_warnings()
 # inialize color palette
 colorama.init()
 
+logger = logging.getLogger("demisto-sdk")
 ryaml = YAML()
 ryaml.preserve_quotes = True
 ryaml.allow_duplicate_keys = True
@@ -809,11 +812,14 @@ def get_pack_name(file_path):
     Returns:
         pack name (str)
     """
-    if isinstance(file_path, Path):
-        file_path = str(file_path)
-    # the regex extracts pack name from relative paths, for example: Packs/EWSv2 -> EWSv2
-    match = re.search(rf'{PACKS_DIR_REGEX}[/\\]([^/\\]+)[/\\]?', file_path)
-    return match.group(1) if match else None
+    file_path = Path(file_path)
+    parts = file_path.parts
+    if 'Packs' not in parts:
+        return None
+    pack_name_index = parts.index('Packs') + 1
+    if len(parts) <= pack_name_index:
+        return None
+    return parts[pack_name_index]
 
 
 def get_pack_names_from_files(file_paths, skip_file_types=None):
@@ -1131,15 +1137,26 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
 # flake8: noqa: C901
 
 
-def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignore_sub_categories: bool = False):
+def find_type(
+    path: str = '',
+    _dict=None,
+    file_type: Optional[str] = None,
+    ignore_sub_categories: bool = False,
+    ignore_invalid_schema_file: bool = False
+):
     """
     returns the content file type
 
     Arguments:
-        path - a path to the file
+         path (str): a path to the file.
+        _dict (dict): file dict representation if exists.
+        file_type (str): a string representation of the file type.
+        ignore_sub_categories (bool): ignore the sub categories, True to ignore, False otherwise.
+        ignore_invalid_schema_file (bool): whether to ignore raising error on invalid schema files,
+            True to ignore, False otherwise.
 
     Returns:
-        string representing the content file type
+        FileType: string representing of the content file type, None otherwise.
     """
     type_by_path = find_type_by_path(path)
     if type_by_path:
@@ -1151,6 +1168,12 @@ def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignor
     except FileNotFoundError:
         # unable to find the file - hence can't identify it
         return None
+    except ValueError as err:
+        if ignore_invalid_schema_file:
+            # invalid file schema
+            logger.debug(str(err))
+            return None
+        raise err
 
     if file_type == 'yml':
         if 'category' in _dict:
@@ -1692,7 +1715,7 @@ def open_id_set_file(id_set_path):
         return id_set
 
 
-def get_demisto_version(demisto_client: demisto_client) -> str:
+def get_demisto_version(client: demisto_client) -> str:
     """
     Args:
         demisto_client: A configured demisto_client instance
@@ -1701,7 +1724,7 @@ def get_demisto_version(demisto_client: demisto_client) -> str:
         the server version of the Demisto instance.
     """
     try:
-        resp = demisto_client.generic_request('/about', 'GET')
+        resp = client.generic_request('/about', 'GET')
         about_data = json.loads(resp[0].replace("'", '"'))
         return parse(about_data.get('demistoVersion'))  # type: ignore
     except Exception:
@@ -1763,7 +1786,7 @@ def get_all_incident_and_indicator_fields_from_id_set(id_set_file, entity_type):
     return fields_list
 
 
-def is_object_in_id_set(object_name, pack_info_from_id_set):
+def is_object_in_id_set(object_id, pack_info_from_id_set):
     """
         Check if the given object is part of the packs items that are present in the Packs section in the id set.
         This is assuming that the id set is based on the version that has, under each pack, the items it contains.
@@ -1777,8 +1800,8 @@ def is_object_in_id_set(object_name, pack_info_from_id_set):
 
     """
     content_items = pack_info_from_id_set.get('ContentItems', {})
-    for items_type, items_names in content_items.items():
-        if object_name in items_names:
+    for items_type, items_ids in content_items.items():
+        if object_id in items_ids:
             return True
     return False
 
@@ -2187,6 +2210,21 @@ def get_script_or_sub_playbook_tasks_from_playbook(searched_entity_name: str, ma
     return searched_tasks
 
 
+def extract_docker_image_from_text(text):
+    """
+    Strips the docker image version from a given text.
+    Args:
+        text : the text to extract the docker image from
+    Return:
+        str. The docker image version if exists, otherwise, return None.
+    """
+    match = (re.search(r'(demisto/.+:([0-9]+)(((\.)[0-9]+)+))', text))
+    if match:
+        return match.group(1)
+    else:
+        return None
+
+
 def get_current_repo() -> Tuple[str, str, str]:
     try:
         git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
@@ -2198,6 +2236,40 @@ def get_current_repo() -> Tuple[str, str, str]:
     except git.InvalidGitRepositoryError:
         print_warning('git repo is not found')
         return "Unknown source", '', ''
+
+
+def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[str, Dict] = None) -> List:
+    """
+    Return the supporting marketplaces of the item.
+
+    Args:
+        item_path: the item path.
+        item_data: the item data.
+        packs: the pack mapping from the ID set.
+
+    Returns: the list of supporting marketplaces.
+    """
+
+    if not item_data:
+        file_type = Path(item_path).suffix
+        item_data = get_file(item_path, file_type)
+
+    # first check, check field 'marketplaces' in the item's file
+    marketplaces = item_data.get('marketplaces', [])  # type: ignore
+
+    # second check, check the metadata of the pack
+    if not marketplaces:
+        if 'pack_metadata' in item_path:
+            # default supporting marketplace
+            marketplaces = [MarketplaceVersions.XSOAR.value]
+        else:
+            pack_name = get_pack_name(item_path)
+            if packs:
+                marketplaces = packs.get(pack_name, {}).get('marketplaces', [MarketplaceVersions.XSOAR.value])
+            else:
+                marketplaces = get_mp_types_from_metadata_by_item(item_path)
+
+    return marketplaces
 
 
 def get_mp_types_from_metadata_by_item(file_path):
@@ -2337,7 +2409,7 @@ def get_scripts_and_commands_from_yml_data(data, file_type):
     commands = []
     detailed_commands = []
     scripts_and_pbs = []
-    if file_type == FileType.TEST_PLAYBOOK or file_type == FileType.PLAYBOOK:
+    if file_type in {FileType.TEST_PLAYBOOK, FileType.PLAYBOOK}:
         tasks = data.get('tasks')
         for task_num in tasks.keys():
             task = tasks[task_num]
@@ -2379,3 +2451,49 @@ def get_scripts_and_commands_from_yml_data(data, file_type):
             })
 
     return detailed_commands, scripts_and_pbs
+
+
+def alternate_item_fields(content_item):
+    """
+    Go over all of the given content item fields and if there is a field with an alternative name, which is marked
+    by '_x2', use that value as the value of the original field (the corresponding one without the '_x2' suffix).
+    Args:
+        content_item: content item object
+
+    """
+    as_dict_types = (dict, CommentedMap)
+    as_list_types = (list, CommentedSeq)
+    current_dict = content_item.to_dict() if type(content_item) not in as_dict_types else content_item
+    copy_dict = current_dict.copy()  # for modifying dict while iterating
+    for field, value in copy_dict.items():
+        if field.endswith('_x2'):
+            current_dict[field[:-3]] = value
+            current_dict.pop(field)
+        elif isinstance(current_dict[field], as_dict_types):
+            alternate_item_fields(current_dict[field])
+        elif isinstance(current_dict[field], as_list_types):
+            for item in current_dict[field]:
+                if isinstance(item, as_dict_types):
+                    alternate_item_fields(item)
+
+
+def should_alternate_field_by_item(content_item, id_set):
+    """
+    Go over the given content item and check if it should be modified to use its alternative fields, which is determined
+    by the field 'has_alternative_meta' in the id set.
+    Args:
+        content_item: content item object
+        id_set: parsed id set dict
+
+    Returns: True if should alterante fields, false otherwise
+
+    """
+    commonfields = content_item.get('commonfields')
+    item_id = commonfields.get('id') if commonfields else content_item.get('id')
+
+    item_type = content_item.type()
+    id_set_item_type = id_set.get(FileTypeToIDSetKeys.get(item_type))
+    for item in id_set_item_type:
+        if list(item.keys())[0] == item_id:
+            return item.get(item_id, {}).get('has_alternative_meta', False)
+    return False

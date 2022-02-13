@@ -1,10 +1,10 @@
 """Configuring tests for the content suite
 """
+import sys
 from typing import Generator
 from unittest import mock
 
 import pytest
-import sys
 from _pytest.fixtures import FixtureRequest
 from _pytest.tmpdir import TempPathFactory, _mk_tmp
 

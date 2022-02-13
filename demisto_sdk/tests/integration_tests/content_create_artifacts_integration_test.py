@@ -122,3 +122,43 @@ def test_all_packs_creation(repo):
             assert result.exit_code == 0
             assert os.path.exists(os.path.join(str(temp), 'uploadable_packs', 'Pack1.zip'))
             assert os.path.exists(os.path.join(str(temp), 'uploadable_packs', 'Pack2.zip'))
+
+
+def test_create_packs_with_filter_by_id_set(repo):
+    """
+    Given
+        - A pack with 2 scripts
+        - An ID set including only one script
+    When
+        - running the create-content-artifacts command.
+    Then
+        - Verify that only the script in the ID set is exported to the pack artifacts.
+    """
+    pack = repo.create_pack('Joey')
+    pack.pack_metadata.write_json({
+        'name': 'Joey',
+    })
+    script1 = pack.create_script('HowYouDoing')
+    script2 = pack.create_script('ShareFood')
+    repo.id_set.write_json({
+        'Packs': {
+            'Joey': {
+                'ContentItems': {
+                    'scripts': [
+                        'HowYouDoing',
+                    ],
+                },
+            },
+        },
+    })
+
+    dir_path = repo.make_dir()
+
+    with ChangeCWD(repo.path):
+        runner = CliRunner()
+        result = runner.invoke(main, [ARTIFACTS_CMD, '-a', dir_path, '--no-zip', '-fbi', '-idp', repo.id_set.path, '-p', 'Joey'])
+        assert result.exit_code == 0
+
+    scripts_folder_path = Path(dir_path) / 'content_packs' / pack.name / 'Scripts'
+    assert (scripts_folder_path / f'script-{script1.name}.yml').exists()
+    assert not (scripts_folder_path / f'script-{script2.name}.yml').exists()

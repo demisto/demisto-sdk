@@ -18,13 +18,15 @@ from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
     API_MODULES_PACK, EXCLUDED_DISPLAY_NAME_WORDS, PACK_METADATA_CATEGORIES,
     PACK_METADATA_CERTIFICATION, PACK_METADATA_CREATED,
-    PACK_METADATA_DEPENDENCIES, PACK_METADATA_DESC, PACK_METADATA_EMAIL,
-    PACK_METADATA_FIELDS, PACK_METADATA_KEYWORDS, PACK_METADATA_NAME,
-    PACK_METADATA_SUPPORT, PACK_METADATA_TAGS, PACK_METADATA_URL,
-    PACK_METADATA_USE_CASES, PACKS_PACK_IGNORE_FILE_NAME,
+    PACK_METADATA_CURR_VERSION, PACK_METADATA_DEPENDENCIES, PACK_METADATA_DESC,
+    PACK_METADATA_EMAIL, PACK_METADATA_FIELDS, PACK_METADATA_KEYWORDS,
+    PACK_METADATA_NAME, PACK_METADATA_SUPPORT, PACK_METADATA_TAGS,
+    PACK_METADATA_URL, PACK_METADATA_USE_CASES, PACKS_PACK_IGNORE_FILE_NAME,
     PACKS_PACK_META_FILE_NAME, PACKS_README_FILE_NAME,
-    PACKS_WHITELIST_FILE_NAME)
+    PACKS_WHITELIST_FILE_NAME, VERSION_REGEX)
+from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
@@ -64,9 +66,14 @@ class PackUniqueFilesValidator(BaseValidator):
     """PackUniqueFilesValidator is designed to validate the correctness of content pack's files structure.
     Existence and validity of this files is essential."""
 
+    git_util = GitUtil(repo=Content.git())
+    main_branch = git_util.handle_prev_ver()[1]
+    if not main_branch.startswith('origin'):
+        main_branch = 'origin/' + main_branch
+
     def __init__(self, pack, pack_path=None, validate_dependencies=False, ignored_errors=None, print_as_warnings=False,
                  should_version_raise=False, id_set_path=None, suppress_print=False, private_repo=False,
-                 skip_id_set_creation=False, prev_ver='origin/master', json_file_path=None, support=None,
+                 skip_id_set_creation=False, prev_ver=main_branch, json_file_path=None, support=None,
                  empty_readme_check=True):
         """Inits the content pack validator with pack's name, pack's path, and unique files to content packs such as:
         secrets whitelist file, pack-ignore file, pack-meta file and readme file
@@ -287,7 +294,6 @@ class PackUniqueFilesValidator(BaseValidator):
         ]):
             if self.should_version_raise:
                 return self.validate_version_bump()
-
             else:
                 return True
 
@@ -301,10 +307,8 @@ class PackUniqueFilesValidator(BaseValidator):
         current_version = current_meta_file_content.get('currentVersion', '0.0.0')
         if LooseVersion(old_version) < LooseVersion(current_version):
             return True
-
         elif self._add_error(Errors.pack_metadata_version_should_be_raised(self.pack, old_version), metadata_file_path):
             return False
-
         return True
 
     def validate_pack_name(self, metadata_file_content: Dict) -> bool:
@@ -410,6 +414,11 @@ class PackUniqueFilesValidator(BaseValidator):
                                    self.pack_meta_file):
                     return False
 
+            # check format of metadata version
+            version = metadata.get(PACK_METADATA_CURR_VERSION, '0.0.0')
+            if not self._is_version_format_valid(version):
+                return False
+
         except (ValueError, TypeError):
             if self._add_error(Errors.pack_metadata_isnt_json(self.pack_meta_file), self.pack_meta_file):
                 raise BlockingValidationFailureException()
@@ -497,6 +506,21 @@ class PackUniqueFilesValidator(BaseValidator):
                 return False
         return True
 
+    def _is_version_format_valid(self, version: str) -> bool:
+        """
+        checks if the meta-data version is in the correct format
+        Args:
+            version (str): The version to check the foramt on
+
+        Returns:
+            bool: True if the version is in the correct format, otherwise false.
+        """
+        match_obj = re.match(VERSION_REGEX, version)
+        if not match_obj:
+            self._add_error(Errors.wrong_version_format(), self.pack_meta_file)
+            return False
+        return True
+
     def _is_approved_tags(self) -> bool:
         """Checks whether the tags in the pack metadata are approved
 
@@ -560,7 +584,7 @@ class PackUniqueFilesValidator(BaseValidator):
                 click.secho("Running on master branch - skipping price change validation", fg="yellow")
             return None
         try:
-            old_meta_file_content = current_repo.git.show(f'origin/master:{metadata_file_path}')
+            old_meta_file_content = current_repo.git.show(f'{self.main_branch}:{metadata_file_path}')
 
         except GitCommandError as e:
             if not self.suppress_print:

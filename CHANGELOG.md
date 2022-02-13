@@ -1,5 +1,23 @@
 # Changelog
+- Fixed an issue when filtering items using the ID set in the **create-content-artifacts** command.
+
+# 1.6.0
+* Fixed an issue in the **create-id-set** command where similar items from different marketplaces were reported as duplicated.
+* Fixed typo in demisto-sdk init
+* Fixed an issue where the **lint** command did not handle all container exit codes.
+* Add to **validate** a validation for pack name to make sure it is unchanged.
+* Added a validation to the **validate** command that verifies that the version in the pack_metdata file is written in the correct format.
+* Fixed an issue in the **format** command where missing *fromVersion* field in indicator fields caused an error.
+
+# 1.5.9
+* Added option to specify `External Playbook Configuration` to change inputs of Playbooks triggered as part of **test-content**
+* Improved performance of the **lint** command.
+* Improved performance of the **validate** command when checking README images.
+* ***create-id-set*** command - the default value of the **marketplace** argument was changed from ‘xsoar’ to all packs existing in the content repository. When using the command, make sure to pass the relevant marketplace to use.
+
+# 1.5.8
 * Fixed an issue where the command **doc-review** along with the argument `--release-notes` failed on yml/json files with invalid schema.
+* Fixed an issue where the **lint** command failed on packs using python 3.10
 
 # 1.5.7
 * Fixed an issue where reading remote yaml files failed.

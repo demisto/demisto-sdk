@@ -153,7 +153,11 @@ class ValidateManager:
                 self.git_util = None  # type: ignore[assignment]
                 self.branch_name = ''
 
-        self.prev_ver = self.setup_prev_ver(prev_ver)
+        if prev_ver and not prev_ver.startswith('origin'):
+            self.prev_ver = self.setup_prev_ver('origin/' + prev_ver)
+        else:
+            self.prev_ver = self.setup_prev_ver(prev_ver)
+
         self.check_only_schema = False
         self.always_valid = False
         self.ignored_files = set()
@@ -403,6 +407,22 @@ class ValidateManager:
 
         return all(package_entities_validation_results)
 
+    def is_valid_pack_name(self, file_path, old_file_path):
+        """
+        Valid pack name is currently considered to be a new pack name or an existing pack.
+        If pack name is changed, will return `False`.
+        """
+        if not old_file_path:
+            return True
+        original_pack_name = get_pack_name(old_file_path)
+        new_pack_name = get_pack_name(file_path)
+        if original_pack_name != new_pack_name:
+            error_message, error_code = Errors.changed_pack_name(original_pack_name)
+            if self.handle_error(error_message=error_message, error_code=error_code, file_path=file_path,
+                                 drop_line=True):
+                return False
+        return True
+
     # flake8: noqa: C901
     def run_validations_on_file(self, file_path, pack_error_ignore_list, is_modified=False,
                                 old_file_path=None, modified_files=None, added_files=None):
@@ -419,6 +439,8 @@ class ValidateManager:
         Returns:
             bool. true if file is valid, false otherwise.
         """
+        if not self.is_valid_pack_name(file_path, old_file_path):
+            return False
         file_type = find_type(file_path)
 
         is_added_file = file_path in added_files if added_files else False
@@ -428,6 +450,8 @@ class ValidateManager:
             return True
         elif file_type is None:
             error_message, error_code = Errors.file_type_not_supported()
+            if str(file_path).endswith('.png'):
+                error_message, error_code = Errors.invalid_image_name_or_location()
             if self.handle_error(error_message=error_message, error_code=error_code, file_path=file_path,
                                  drop_line=True):
                 return False
@@ -695,7 +719,7 @@ class ValidateManager:
         if not self.no_configuration_prints:
             self.print_git_config()
 
-        modified_files, added_files, changed_meta_files, old_format_files = \
+        modified_files, added_files, changed_meta_files, old_format_files, valid_types = \
             self.get_changed_files_from_git()
 
         # filter to only specified paths if given
@@ -703,7 +727,7 @@ class ValidateManager:
             modified_files, added_files, old_format_files = self.specify_files_by_status(modified_files, added_files,
                                                                                          old_format_files)
 
-        validation_results = {valid_git_setup}
+        validation_results = {valid_git_setup, valid_types}
 
         validation_results.add(self.validate_modified_files(modified_files))
         validation_results.add(self.validate_added_files(added_files, modified_files))
@@ -1250,11 +1274,17 @@ class ValidateManager:
         if prev_ver:
             return prev_ver
 
-        # check if git is connected and if demisto exists in remotes if so set prev_ver as 'demisto/master'
-        if self.git_util and self.git_util.check_if_remote_exists('demisto'):
-            return 'demisto/master'
+        # If git is connected - Use it to get prev_ver
+        if self.git_util:
+            # If demisto exists in remotes if so set prev_ver as 'demisto/master'
+            if self.git_util.check_if_remote_exists('demisto'):
+                return 'demisto/master'
 
-        # default to 'origin/master' if none of the above apply
+            # Otherwise, use git to get the primary branch
+            _, branch = self.git_util.handle_prev_ver()
+            return 'origin/' + branch
+
+        # Default to 'origin/master'
         return 'origin/master'
 
     def setup_git_params(self):
@@ -1278,8 +1308,8 @@ class ValidateManager:
             # when running against git while on release branch - show errors but don't fail the validation
             self.always_valid = True
 
-        # on master don't check RN
-        elif self.branch_name == 'master':
+        # On main or master don't check RN
+        elif self.branch_name in ['master', 'main']:
             self.skip_pack_rn_validation = True
             error_message, error_code = Errors.running_on_master_with_git()
             if self.handle_error(error_message, error_code, file_path='General',
@@ -1293,7 +1323,7 @@ class ValidateManager:
         if not self.no_configuration_prints:
             click.echo(f"Validating against {self.prev_ver}")
 
-            if self.branch_name == self.prev_ver or self.branch_name == self.prev_ver.replace('origin/', ''):
+            if self.branch_name in [self.prev_ver, self.prev_ver.replace('origin/', '')]:  # pragma: no cover
                 click.echo("Running only on last commit")
 
             elif self.is_circle:
@@ -1340,30 +1370,31 @@ class ValidateManager:
 
         return modified_files, added_files, renamed_files
 
-    def get_changed_files_from_git(self) -> Tuple[Set, Set, Set, Set]:
+    def get_changed_files_from_git(self) -> Tuple[Set, Set, Set, Set, bool]:
         """Get the added and modified after file filtration to only relevant files for validate
 
         Returns:
-            4 sets:
             - The filtered modified files (including the renamed files)
             - The filtered added files
             - The changed metadata files
             - The modified old-format files (legacy unified python files)
+            - Boolean flag that indicates whether all file types are supported
         """
 
         modified_files, added_files, renamed_files = self.get_unfiltered_changed_files_from_git()
 
         # filter files only to relevant files
-        filtered_modified, old_format_files = self.filter_to_relevant_files(modified_files)
-        filtered_renamed, _ = self.filter_to_relevant_files(renamed_files)
+        filtered_modified, old_format_files, _ = self.filter_to_relevant_files(modified_files)
+        filtered_renamed, _, renamed_files_valid_types = self.filter_to_relevant_files(renamed_files)
         filtered_modified = filtered_modified.union(filtered_renamed)
-        filtered_added, new_files_in_old_format = self.filter_to_relevant_files(added_files)
+        filtered_added, new_files_in_old_format, added_files_valid_types = self.filter_to_relevant_files(added_files)
         old_format_files = old_format_files.union(new_files_in_old_format)
+        valid_types = all([added_files_valid_types, renamed_files_valid_types])
 
         # extract metadata files from the recognised changes
         changed_meta = self.pack_metadata_extraction(modified_files, added_files, renamed_files)
 
-        return filtered_modified, filtered_added, changed_meta, old_format_files
+        return filtered_modified, filtered_added, changed_meta, old_format_files, valid_types
 
     def pack_metadata_extraction(self, modified_files, added_files, renamed_files):
         """Extract pack metadata files from the modified and added files
@@ -1387,6 +1418,7 @@ class ValidateManager:
         """Goes over file set and returns only a filtered set of only files relevant for validation"""
         filtered_set: set = set()
         old_format_files: set = set()
+        valid_types: set = set()
         for path in file_set:
             old_path = None
             if isinstance(path, tuple):
@@ -1397,9 +1429,13 @@ class ValidateManager:
                 file_path = str(path)
 
             try:
-                formatted_path = self.check_file_relevance_and_format_path(file_path, old_path, old_format_files)
+                formatted_path, old_path, valid_file_extension = self.check_file_relevance_and_format_path(file_path, old_path, old_format_files)
+                valid_types.add(valid_file_extension)
                 if formatted_path:
-                    filtered_set.add(formatted_path)
+                    if old_path:
+                        filtered_set.add((old_path, formatted_path))
+                    else:
+                        filtered_set.add(formatted_path)
 
             # handle a case where a file was deleted locally though recognised as added against master.
             except FileNotFoundError:
@@ -1408,23 +1444,31 @@ class ValidateManager:
                         click.secho(f"ignoring file {file_path}", fg='yellow')
                     self.ignored_files.add(file_path)
 
-        return filtered_set, old_format_files
+        return filtered_set, old_format_files, all(valid_types)
 
     def check_file_relevance_and_format_path(self, file_path, old_path, old_format_files):
-        """Determines if a file is relevant for validation and create any modification to the file_path if needed"""
-
+        """
+        Determines if a file is relevant for validation and create any modification to the file_path if needed
+        :returns a tuple(string, string, bool) where
+            - the first element is the path of the file that should be returned, if the file isn't relevant then returns an empty string
+            - the second element is the old path in case the file was renamed, if the file wasn't renamed then return an empty string
+            - true if the file type is supported, false otherwise
+        """
+        irrelevant_file_output = '', '', True
         if file_path.split(os.path.sep)[0] in ('.gitlab', '.circleci', '.github'):
-            return None
+            return irrelevant_file_output
 
         file_type = find_type(file_path)
 
         if self.ignore_files_irrelevant_for_validation(file_path):
-            return None
+            return irrelevant_file_output
 
         if not file_type:
             error_message, error_code = Errors.file_type_not_supported()
+            if str(file_path).endswith('.png'):
+                error_message, error_code = Errors.invalid_image_name_or_location()
             self.handle_error(error_message, error_code, file_path=file_path)
-            return None
+            return '', '', False
 
         # redirect non-test code files to the associated yml file
         if file_type in [FileType.PYTHON_FILE, FileType.POWERSHELL_FILE, FileType.JAVASCRIPT_FILE]:
@@ -1435,20 +1479,20 @@ class ValidateManager:
                 if old_path:
                     old_path = old_path.replace('.py', '.yml').replace('.ps1', '.yml').replace('.js', '.yml')
             else:
-                return None
+                return irrelevant_file_output
 
         # check for old file format
         if self.is_old_file_format(file_path, file_type):
             old_format_files.add(file_path)
-            return None
+            return irrelevant_file_output
 
         # if renamed file - return a tuple
         if old_path:
-            return old_path, file_path
+            return file_path, old_path, True
 
         # else return the file path
         else:
-            return file_path
+            return file_path, '', True
 
     def ignore_files_irrelevant_for_validation(self, file_path: str) -> bool:
         """
@@ -1618,7 +1662,7 @@ class ValidateManager:
         id_set = {}
         if not os.path.isfile(id_set_path):
             if not skip_id_set_creation:
-                id_set = IDSetCreator(print_logs=False).create_id_set()
+                id_set, _, _ = IDSetCreator(print_logs=False).create_id_set()
 
         else:
             id_set = open_id_set_file(id_set_path)

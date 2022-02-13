@@ -1,20 +1,20 @@
 {
     "version": "0.2.0",
     "configurations": [
-        // {
-        //     "name": "Python: Upload AbuseDB",
-        //     "type": "python",
-        //     "request": "launch",
-        //     "module": "demisto_sdk",
-        //     "cwd": "${env:CONTENT}",
-        //     "args": [
-        //         "upload",
-        //         "-i",
-        //         "${env:CONTENT}/Packs/AbuseDB/Integrations/AbuseDB"
-        //     ]
-        // },
         {
-            "name": "Python: update-release-notes",
+            "name": "Python: Upload AbuseDB",
+            "type": "python",
+            "request": "launch",
+            "module": "demisto_sdk",
+            "cwd": "${env:CONTENT}",
+            "args": [
+                "upload",
+                "-i",
+                "${env:CONTENT}/Packs/AbuseDB/Integrations/AbuseDB"
+            ]
+        },
+        {
+            "name": "Python: Lint AbuseDB with logs",
             "type": "python",
             "request": "launch",
             "module": "demisto_sdk",
@@ -22,9 +22,9 @@
             "args": [
                 "update-release-notes",
                 "-i",
-                "${env:CONTENT}/Packs/MicrosoftGraphApplications",
-                "-u",
-                "documentation"
+                "${env:CONTENT}/Packs/AbuseDB/Integrations/AbuseDB",
+                "-j",
+                "${env:CONTENT}/.demisto-sdk-report"
             ]
         }
     ]

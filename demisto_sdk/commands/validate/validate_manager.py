@@ -553,8 +553,10 @@ class ValidateManager:
             return self.validate_description(file_path, pack_error_ignore_list)
 
         elif file_type == FileType.README:
-            with ReadMeValidator.start_mdx_server(handle_error=self.handle_error):
-                return self.validate_readme(file_path, pack_error_ignore_list)
+            if not self.validate_all:
+                with ReadMeValidator.start_mdx_server(handle_error=self.handle_error):
+                    return self.validate_readme(file_path, pack_error_ignore_list)
+            return self.validate_readme(file_path, pack_error_ignore_list)
 
         elif file_type == FileType.REPORT:
             return self.validate_report(structure_validator, pack_error_ignore_list)

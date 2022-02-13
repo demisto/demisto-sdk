@@ -434,7 +434,7 @@ class TestDocReviewPrinting:
         )
 
         first_call = secho_mocker.mock_calls[0]
-        assert 'Files Without Misspells' in first_call.args[0]
+        assert 'Files Without Misspells' == first_call.args[0]
         assert first_call.kwargs == self.GREEN_FG
 
         second_call = secho_mocker.mock_calls[1]

@@ -177,9 +177,16 @@ class Pack:
             image: bytes = b''
     ) -> Script:
         if name is None:
-            name = f'script{len(self.integrations)}'
+            name = f'script{len(self.scripts)}'
         if yml is None:
-            yml = {}
+            yml = {
+                'commonfields': {'id': name, 'version': -1},
+                'name': name,
+                'comment': f'this is script {name}',
+                'type': 'python',
+                'subtype': 'python3',
+                'script': '-',
+            }
         script = Script(self._scripts_path, name, self._repo)
         script.build(
             code,

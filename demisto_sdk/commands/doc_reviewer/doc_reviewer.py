@@ -34,7 +34,6 @@ class DocReviewer:
     SUPPORTED_FILE_TYPES = [FileType.INTEGRATION, FileType.SCRIPT, FileType.PLAYBOOK, FileType.README,
                             FileType.DESCRIPTION, FileType.RELEASE_NOTES, FileType.BETA_INTEGRATION,
                             FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT]
-    PACKS_KNOWN_WORDS_PATH = "known_words.txt"
 
     def __init__(self, file_paths: Optional[List] = None, known_words_file_paths: Optional[List] = None,
                  no_camel_case: bool = False, no_failure: bool = False, expand_dictionary: bool = False,

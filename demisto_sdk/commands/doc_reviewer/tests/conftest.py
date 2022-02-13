@@ -1,5 +1,6 @@
-import pytest
 import os
+
+import pytest
 from _pytest.tmpdir import _mk_tmp
 
 
@@ -11,7 +12,7 @@ def valid_spelled_content_pack(pack):
     for i in range(3):
         pack.create_release_notes(
             version=f"release-note-{i}",
-            content=f"\n#### Scripts\n##### ScriptName\n- Added a feature"
+            content="\n#### Scripts\n##### ScriptName\n- Added a feature"
         )
         pack.create_integration(name=f"integration-{i}", yml={"category": "category"})
         pack.create_incident_field(name=f"incident-field-{i}", content={"test": "test"})
@@ -31,7 +32,7 @@ def invalid_spelled_content_pack(pack):
     for i in range(3):
         rn = pack.create_release_notes(
             version=f"release-note-{i}",
-            content=f"\n#### Scipt\n##### SciptName\n- Added a feature"
+            content="\n#### Scipt\n##### SciptName\n- Added a feature"
         )
         misspelled_files.add(rn.path)
         integration = pack.create_integration(

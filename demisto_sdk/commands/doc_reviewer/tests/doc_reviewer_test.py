@@ -1,17 +1,19 @@
-import pytest
-from typing import List
 from os import path
+from typing import List
 
+import pytest
+
+from demisto_sdk.commands.common.constants import FileType
+from demisto_sdk.commands.common.tools import find_type
 from demisto_sdk.commands.doc_reviewer.doc_reviewer import DocReviewer
 from TestSuite.json_based import JSONBased
-from demisto_sdk.commands.common.tools import find_type
-from demisto_sdk.commands.common.constants import FileType
 
 
 class TestDocReviewFilesAreFound:
     """
     Tests scenarios in which files are found before performing doc-review.
     """
+
     def test_find_files_from_invalid_path(self):
         """
         Given -
@@ -124,6 +126,7 @@ class TestDocReviewOnReleaseNotesOnly:
     """
     Tests scenarios which are related to executing doc-review with --release-notes
     """
+
     def test_doc_review_with_release_notes_is_skipped_on_invalid_yml_file(self, malformed_integration_yml):
         """
         Given -
@@ -225,6 +228,7 @@ class TestDocReviewPack:
     """
     Test scenarios in which the doc review is performed on new pack.
     """
+
     def test_invalid_misspelled_files_are_correct(self, invalid_spelled_content_pack):
         """
         Given -

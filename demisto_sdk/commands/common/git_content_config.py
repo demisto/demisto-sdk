@@ -133,7 +133,7 @@ class GitContentConfig:
 
         if gitlab_id is not None:
             self.git_provider = GitProvider.GitLab
-            self.gitlab_id = gitlab_id
+            self.gitlab_id: int = gitlab_id
             self.repo_hostname = gitlab_hostname
         else:  # github
             current_repo = f'{organization}/{repo_name}' if organization and repo_name else self.current_repository

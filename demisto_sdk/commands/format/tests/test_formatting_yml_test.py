@@ -772,6 +772,7 @@ class TestFormatting:
                                                                                              "previous": 'null',
                                                                                              "results": []},
                           status_code=200)
+        requests_mock.get('https://api.github.com/repos/demisto/demisto-sdk')
         integration_yml_file_1 = tmp_path / 'Integration1.yml'
         integration_obj = {'dockerimage': docker_image,
                            'fromversion': '5.0.0'}

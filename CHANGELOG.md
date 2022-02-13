@@ -4,6 +4,9 @@
 * Fixed an issue where the **lint** command did not handle all container exit codes.
 * Add to **validate** a validation for pack name to make sure it is unchanged.
 * Added a validation to the **validate** command that verifies that the version in the pack_metdata file is written in the correct format.
+* Removed PyYAML library.
+* Create a new module for file handlers, to load and dump YAML files only from the module.
+* Fixed multiple tests that loaded incorrectly the YAML.
 
 # 1.5.9
 * Added option to specify `External Playbook Configuration` to change inputs of Playbooks triggered as part of **test-content**

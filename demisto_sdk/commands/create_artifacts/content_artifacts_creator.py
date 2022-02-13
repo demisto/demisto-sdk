@@ -108,11 +108,11 @@ class ArtifactsManager:
         self.exit_code = EX_SUCCESS
 
         if self.filter_by_id_set:
-            packs_section_from_id_set = self.id_set.get('Packs', {})
+            self.packs_section_from_id_set = self.id_set.get('Packs', {})
             if self.pack_names == ['all']:
-                self.pack_names = list(packs_section_from_id_set.keys())
+                self.pack_names = list(self.packs_section_from_id_set.keys())
             else:
-                self.pack_names = list(set(packs_section_from_id_set.keys()).intersection(set(self.pack_names)))
+                self.pack_names = list(set(self.packs_section_from_id_set.keys()).intersection(set(self.pack_names)))
 
     def create_content_artifacts(self) -> int:
         with ArtifactsDirsHandler(self), ProcessPoolHandler(self) as pool:

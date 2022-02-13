@@ -793,7 +793,7 @@ class TestResults:
         with open('./Tests/skipped_integrations.txt', "w") as skipped_integrations_file:
             skipped_integrations_file.write('\n'.join(self.skipped_integrations))
         with open('./Tests/test_playbooks_report.json', "w") as test_playbooks_report_file:
-            json.dump(self.playbook_report, test_playbooks_report_file)
+            json.dump(self.playbook_report, test_playbooks_report_file, indent=4)
 
     def print_test_summary(self,
                            is_ami: bool = True,
@@ -1559,6 +1559,12 @@ class TestContext:
             name_to_add += f" - Successful runs: {self.playbook.configuration.number_of_successful_runs}/{self.playbook.configuration.number_of_times_executed}"
         self.build_context.tests_data_keeper.succeeded_playbooks.add(name_to_add)
 
+    def _add_details_to_failed_tests_report(self, playbook_name: str) -> None:
+        self.build_context.tests_data_keeper.playbook_report[playbook_name] = {
+            'number_of_executions': self.playbook.configuration.number_of_times_executed,
+            'number_of_successful_runs': self.playbook.configuration.number_of_successful_runs
+        }
+
     def _add_to_failed_playbooks(self, is_second_playback_run: bool = False) -> None:
         """
         Adds the playbook to the failed playbooks list
@@ -1578,10 +1584,8 @@ class TestContext:
             playbook_name_to_add +=\
                 f" - Successful runs: " \
                 f"{self.playbook.configuration.number_of_successful_runs}/{self.playbook.configuration.number_of_times_executed}"
-        self.build_context.tests_data_keeper.playbook_report[self.playbook.configuration.playbook_id] = {
-            'number_of_executions': self.playbook.configuration.number_of_times_executed,
-            'number_of_successful_runs': self.playbook.configuration.number_of_successful_runs
-        }
+
+        self._add_details_to_failed_tests_report(self.playbook.configuration.playbook_id)
         self.build_context.logging_module.error(f'Test failed: {self}')
         self.build_context.tests_data_keeper.failed_playbooks.add(playbook_name_to_add)
 

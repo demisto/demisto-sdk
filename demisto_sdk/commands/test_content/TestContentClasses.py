@@ -792,7 +792,7 @@ class TestResults:
             skipped_tests_file.write('\n'.join(self.skipped_tests))
         with open('./Tests/skipped_integrations.txt', "w") as skipped_integrations_file:
             skipped_integrations_file.write('\n'.join(self.skipped_integrations))
-        with open('./Tests/test_playbooks_repoert.json', "w") as test_playbooks_report_file:
+        with open('./Tests/test_playbooks_report.json', "w") as test_playbooks_report_file:
             json.dump(self.playbook_report, test_playbooks_report_file)
 
     def print_test_summary(self,

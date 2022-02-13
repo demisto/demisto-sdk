@@ -1154,7 +1154,7 @@ def test_get_release_note_entries(requests_mock, version, expected_result):
         - Ensure that the result as expected.
     """
     requests_mock.get('https://api.github.com/repos/demisto/demisto-sdk')
-    with open('test_files/test_changelog.md', 'rb') as f:
+    with open('demisto_sdk/commands/common/tests/test_files/test_changelog.md', 'rb') as f:
         changelog = f.read()
     requests_mock.get('https://raw.githubusercontent.com/demisto/demisto-sdk/master/CHANGELOG.md', content=changelog)
 

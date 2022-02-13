@@ -174,10 +174,10 @@ class GitContentConfig:
                              timeout=10)
             if r.ok:
                 return github_hostname, repo_name
-            logging.getLogger('demisto-sdk').info(r.content)
+            logging.getLogger('demisto-sdk').debug(r.content)
             return None
         except requests.exceptions.ConnectionError as e:
-            logging.getLogger('demisto-sdk').info(e)
+            logging.getLogger('demisto-sdk').debug(str(e), exc_info=True)
             return None
 
     @lru_cache(maxsize=64)

@@ -1847,3 +1847,20 @@ def test_validate_pack_name(repo):
     assert validator_obj.is_valid_pack_name('Packs/original_pack/file', None)
     assert validator_obj.is_valid_pack_name('Packs/original_pack/file', 'Packs/original_pack/file')
     assert not validator_obj.is_valid_pack_name('Packs/original_pack/file', 'Packs/original_pack_v2/file')
+
+
+def test_image_error(capsys):
+    """
+    Given
+            a image that isn't located in the right folder.
+    When
+            Validating the file
+    Then
+            Ensure an error is raised, and  the right error is given.
+    """
+    validate_manager = ValidateManager()
+    validate_manager.run_validations_on_file(IGNORED_PNG, None)
+    stdout = capsys.readouterr().out
+    expected_string, expected_code = Errors.invalid_image_name_or_location()
+    assert expected_string in stdout
+    assert expected_code in stdout

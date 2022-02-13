@@ -151,16 +151,18 @@ TEST_TABLE_SECTION_EMPTY = [
 def test_generate_table_section_empty(data, title, empty_message, text, expected_result):
     """Unit test
     Given
-    - Case 1: script empty metadata, script title, empty message to replace, text.
+    - Case 1: script empty metadata - an empty list instead of a list containing dicts with data to generate the tables from,
+    title - the table header, empty message to replace with the table if no data is given and text -
+    the text to add under the header if data is given.
     - Case 2: script empty metadata, script title.
     - Case 3: script empty metadata, script title, text.
     When
     - running the generate_table_section command on the inputs
     Then
-    - Validate That the script metadata was created correctly.
-    - Case 1: Table section with title and empty_message as a replacement.
-    - Case 2: Empty table section.
-    - Case 3: Empty table section.
+    - Validate That the section was created correctly.
+    - Case 1: Table section with title and empty_message instead of a table.
+    - Case 2: No section is created.
+    - Case 3: No section is created.
     """
     from demisto_sdk.commands.generate_docs.common import \
         generate_table_section

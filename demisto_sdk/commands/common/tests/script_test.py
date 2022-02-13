@@ -1,11 +1,12 @@
 import pytest
+import os
 from mock import patch
 
 from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from TestSuite.test_tools import ChangeCWD
-
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 
 def get_validator(current_file=None, old_file=None, file_path=""):
     with patch.object(StructureValidator, '__init__', lambda a, b: None):
@@ -630,3 +631,37 @@ class TestScriptValidator:
             validator = ScriptValidator(structure_validator)
 
             assert validator.runas_is_not_dbtrole()
+
+    README_TEST_DATA = [('Bad_practice_no_read_me/Scripts/DummyScript2.yml', False, True),
+                        ('Bad_practice_no_read_me/Scripts/DummyScript/DummyScript.yml', False, True),
+                        ('Best_practice_with_readme/Scripts/DummyScript/DummyScript.yml', True, True),
+                        ('Best_practice_with_readme/Scripts/DummyScript2.yml', True, True),
+                        ('Bad_practice_no_read_me/Scripts/DummyScript2.yml', True, False)]
+
+    @pytest.mark.parametrize("path, expected_result, is_modified", README_TEST_DATA)
+    def test_validate_readme_exists(self, path, expected_result, is_modified):
+        """
+       Given:
+           - A script yml that was added or modified to validate,
+            There are 2 different folder hierarchy for that
+
+       When:
+           - The script is missing a readme.md file in the same folder first format
+           - The script is missing a readme.md file in the same folder second format
+           - The script has a readme.md file in the same folder first format
+           - The script has a readme.md file in the same folder second format
+           - The script is missing a readme.md file in the same folder but has not been changed or added
+               (This check is for backward compatibility)
+
+       Then:
+           - Ensure readme exists validation fails
+           - Ensure readme exists validation fails
+           - Ensure readme exists validation passes
+           - Ensure readme exists validation passes
+           - Ensure readme exists validation passes
+        """
+        scripts_validator = get_validator(
+            file_path=os.path.join(f'{git_path()}', 'demisto_sdk/tests/test_files/Readme_exists', path))
+        scripts_validator.is_modified = is_modified
+        assert scripts_validator.validate_readme_exists() is expected_result
+

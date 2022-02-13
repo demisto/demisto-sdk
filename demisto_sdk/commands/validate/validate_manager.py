@@ -812,7 +812,8 @@ class ValidateManager:
                                                print_as_warnings=self.print_ignored_errors,
                                                json_file_path=self.json_file_path,
                                                is_modified=is_modified,
-                                               is_added=is_added)
+                                               is_added=is_added,
+                                               validate_all=self.validate_all)
 
         deprecated_result = self.check_and_validate_deprecated(file_type=file_type,
                                                                file_path=structure_validator.file_path,
@@ -832,7 +833,8 @@ class ValidateManager:
                                                      skip_docker_check=self.skip_docker_checks,
                                                      json_file_path=self.json_file_path,
                                                      is_modified=is_modified,
-                                                     is_added=is_added
+                                                     is_added=is_added,
+                                                     validate_all=self.validate_all
                                                      )
 
         deprecated_result = self.check_and_validate_deprecated(file_type=file_type,
@@ -858,7 +860,8 @@ class ValidateManager:
                                            print_as_warnings=self.print_ignored_errors,
                                            skip_docker_check=self.skip_docker_checks,
                                            json_file_path=self.json_file_path, is_modified=is_modified,
-                                           is_added=is_added)
+                                           is_added=is_added,
+                                           validate_all=self.validate_all)
 
         deprecated_result = self.check_and_validate_deprecated(file_type=file_type,
                                                                file_path=structure_validator.file_path,

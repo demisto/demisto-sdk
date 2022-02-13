@@ -43,11 +43,12 @@ class IntegrationValidator(ContentEntityValidator):
     ALLOWED_HIDDEN_PARAMS = {'longRunning', 'feedIncremental', 'feedReputation'}
 
     def __init__(self, structure_validator, ignored_errors=None, print_as_warnings=False, skip_docker_check=False,
-                 json_file_path=None, is_modified=False, is_added=False):
+                 json_file_path=None, is_modified=False, is_added=False, validate_all=True):
         super().__init__(structure_validator, ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          json_file_path=json_file_path, skip_docker_check=skip_docker_check)
         self.is_modified = is_modified
         self.is_added = is_added
+        self.validate_all = validate_all
 
     def is_valid_version(self):
         # type: () -> bool
@@ -1452,7 +1453,7 @@ class IntegrationValidator(ContentEntityValidator):
         Return:
             True if the readme file exits False with an error otherwise
         """
-        if self.is_modified or self.is_added:
+        if self.is_modified or self.is_added or not self.validate_all:
             integration_path = os.path.normpath(self.file_path)
             path_split = integration_path.split(os.sep)
             to_replace = path_split[-1]

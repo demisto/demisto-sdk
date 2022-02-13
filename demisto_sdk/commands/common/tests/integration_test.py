@@ -1396,3 +1396,29 @@ class TestisContextChanged:
             res = validator.is_context_correct_in_readme()
             assert res == expected
         patcher.stop()
+
+    README_TEST_DATA = [('Best_practice_with_readme/Integrations/DummyIntegration.yml', True, True),
+                        ('Bad_practice_no_read_me/Integrations/DummyIntegration.yml', False, True),
+                        ('Bad_practice_no_read_me/Integrations/DummyIntegration.yml', True, False)]
+
+    @pytest.mark.parametrize("path, expected_result, is_added", README_TEST_DATA)
+    def test_validate_readme_exists(self, path, expected_result, is_added):
+        """
+       Given:
+           - An integration yml that was added or modified to validate
+
+       When:
+           - The integration is missing a readme.md file in the same folder
+           - The integration has a readme.md file in the same folder
+           - The integration is missing a readme.md file in the same folder but has not been changed or added
+               (This check is for backward compatibility)
+
+       Then:
+           - Ensure readme exists validation fails
+           - Ensure readme exists validation passes
+           - Ensure readme exists validation passes
+        """
+        structure_validator = mock_structure(
+            file_path=os.path.join(f'{git_path()}', 'demisto_sdk/tests/test_files/Readme_exists', path))
+        integration_validator = IntegrationValidator(structure_validator, is_added=is_added)
+        assert integration_validator.validate_readme_exists() is expected_result

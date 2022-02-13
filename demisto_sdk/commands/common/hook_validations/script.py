@@ -21,12 +21,13 @@ class ScriptValidator(ContentEntityValidator):
     """
 
     def __init__(self, structure_validator, ignored_errors=None, print_as_warnings=False, skip_docker_check=False,
-                 json_file_path=None, is_modified=False, is_added=False):
+                 json_file_path=None, is_modified=False, is_added=False, validate_all=True):
         super().__init__(structure_validator, ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          skip_docker_check=skip_docker_check,
                          json_file_path=json_file_path)
         self.is_modified = is_modified
         self.is_added = is_added
+        self.validate_all = validate_all
 
     def is_valid_version(self) -> bool:
         if self.current_file.get('commonfields', {}).get('version') != self.DEFAULT_VERSION:
@@ -411,7 +412,7 @@ class ScriptValidator(ContentEntityValidator):
         Return:
             True if the readme file exits False with an error otherwise
         """
-        if self.is_added or self.is_modified:
+        if self.is_added or self.is_modified or not self.validate_all:
             script_path = os.path.normpath(self.file_path)
             path_split = script_path.split(os.sep)
             if path_split[-2] == 'Scripts':

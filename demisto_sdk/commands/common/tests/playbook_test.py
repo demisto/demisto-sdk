@@ -1,3 +1,4 @@
+import os.path
 from typing import Optional
 
 import pytest
@@ -11,7 +12,7 @@ from demisto_sdk.tests.constants_test import (
     CONTENT_REPO_EXAMPLE_ROOT, INVALID_PLAYBOOK_UNHANDLED_CONDITION,
     INVALID_TEST_PLAYBOOK_UNHANDLED_CONDITION)
 from TestSuite.test_tools import ChangeCWD
-
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 
 def mock_structure(file_path=None, current_file=None, old_file=None):
     # type: (Optional[str], Optional[dict], Optional[dict]) -> StructureValidator
@@ -623,7 +624,7 @@ class TestPlaybookValidator:
         - The playbook with input from indicators, includes all valid fields.
         - The playbook with input from indicators, is not set on quietmode.
         - The playbook with input from indicators, one of the tasks does not have quiet mode on.
-        -The playbook with input from indicators, one of the tasks continues on error
+        - The playbook with input from indicators, one of the tasks continues on error
 
         Then
         - Ensure validation passes.
@@ -635,5 +636,28 @@ class TestPlaybookValidator:
         validator = PlaybookValidator(structure)
         assert validator.is_valid_with_indicators_input() is expected_result
 
-    def test_validate_readme_exists(self):
-        assert True
+    README_TEST_DATA = [('Bad_practice_no_read_me/Playbooks/DummyPlaybook.yml', False, True),
+                        ('Best_practice_with_readme/Playbooks/DummyPlaybook.yml', True, True),
+                        ('Bad_practice_no_read_me/Playbooks/DummyPlaybook.yml', True, False)]
+
+    @pytest.mark.parametrize("path, expected_result, is_modified", README_TEST_DATA)
+    def test_validate_readme_exists(self, path, expected_result, is_modified):
+        """
+        Given:
+            - A playbook yml that was added or modified to validate
+
+        When:
+            - The playbook is missing a readme.md file in the same folder
+            - The playbook has a readme.md file in the same folder
+            - The playbook is missing a readme.md file in the same folder but has not been changed or added
+                (This check is for backward compatibility)
+
+        Then:
+            - Ensure readme exists validation fails
+            - Ensure readme exists validation passes
+            - Ensure readme exists validation passes
+        """
+        structure_validator = mock_structure(
+            file_path=os.path.join(f'{git_path()}', 'demisto_sdk/tests/test_files/Readme_exists', path))
+        playbook_validator = PlaybookValidator(structure_validator, is_modified=is_modified)
+        assert playbook_validator.validate_readme_exists() is expected_result

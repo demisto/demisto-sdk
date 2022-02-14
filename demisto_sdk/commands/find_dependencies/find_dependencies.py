@@ -207,11 +207,11 @@ class PackDependencies:
     @staticmethod
     def _is_item_match(item_details: dict, base_condition: bool, exclude_ignored_dependencies: bool, marketplace: str) -> bool:
         """
-        Whether the item matches the criterias:
+        Whether the item matches the criteria:
             * matches the base condition.
             * relevant to the marketplaces server versions.
             * not in an excluded pack.
-            * part of the desired marketplce.
+            * part of the desired marketplace.
 
         Args:
             item_details: item info from the ID set.
@@ -255,7 +255,7 @@ class PackDependencies:
             marketplace: The dependency calculation desired marketplace.
 
         Returns:
-            tuppele of:
+            tuple of:
                 set: found pack ids and
                 dict: found {pack, (item_type, item_id)} ids
 
@@ -357,10 +357,10 @@ class PackDependencies:
             command (str): integration command.
             id_set (dict): id set json.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
-            marketplace: The dependency calculation desired marketplace.
+            marketplace (str): The dependency calculation desired marketplace.
 
         Returns:
-            tuppele of:
+            tuple of:
             set: found pack ids
             dict: found {pack, (item_type, item_id)} ids
         """

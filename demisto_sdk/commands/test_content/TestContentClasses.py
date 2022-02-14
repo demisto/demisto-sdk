@@ -1559,19 +1559,45 @@ class TestContext:
             name_to_add += f" - Successful runs: {self.playbook.configuration.number_of_successful_runs}/{self.playbook.configuration.number_of_times_executed}"
         self.build_context.tests_data_keeper.succeeded_playbooks.add(name_to_add)
 
-    def _add_details_to_failed_tests_report(self, playbook_name: str) -> None:
+    def _add_details_to_failed_tests_report(self, playbook_name: str, failed_stage: str) -> None:
+        """
+        Adds the relevant details to the failed tests report.
+
+        Args:
+            playbook_name: The test's name.
+            failed_stage: The stage where the test failed.
+        """
         self.build_context.tests_data_keeper.playbook_report[playbook_name] = {
             'number_of_executions': self.playbook.configuration.number_of_times_executed,
-            'number_of_successful_runs': self.playbook.configuration.number_of_successful_runs
+            'number_of_successful_runs': self.playbook.configuration.number_of_successful_runs,
+            'failed_stage': failed_stage
         }
 
-    def _add_to_failed_playbooks(self, is_second_playback_run: bool = False) -> None:
+    @staticmethod
+    def _get_failed_stage(status: Optional[str], is_second_playback_run: bool = False) -> str:
+        """
+        Gets the test failed stage.
+
+        Args:
+            status: what is the test status.
+            is_second_playback_run: Is The playbook run on a second playback after a freshly created record.
+        """
+        if is_second_playback_run:
+            return 'Second playback'
+        if status == PB_Status.FAILED_DOCKER_TEST:
+            return 'Docker test'
+        if status == PB_Status.CONFIGURATION_FAILED:
+            return 'Configuration'
+        return 'Execution'
+
+    def _add_to_failed_playbooks(self, is_second_playback_run: bool = False, status: Optional[str] = None) -> None:
         """
         Adds the playbook to the failed playbooks list
 
         Args:
             is_second_playback_run: Is The playbook run on a second playback after a freshly created record
         """
+        failed_stage = self._get_failed_stage(status, is_second_playback_run)
         playbook_name_to_add = self.playbook.configuration.playbook_id
         if not self.playbook.is_mockable:
             playbook_name_to_add += " (Mock Disabled)"
@@ -1580,12 +1606,8 @@ class TestContext:
                 'Playback on newly created record has failed, see the following confluence page for help:\n'
                 'https://confluence.paloaltonetworks.com/display/DemistoContent/Debug+Proxy-Related+Test+Failures')
             playbook_name_to_add += ' (Second Playback)'
-        if self.server_context.use_retries_mechanism and self.playbook.configuration.number_of_times_executed > 0:
-            playbook_name_to_add +=\
-                f" - Successful runs: " \
-                f"{self.playbook.configuration.number_of_successful_runs}/{self.playbook.configuration.number_of_times_executed}"
 
-        self._add_details_to_failed_tests_report(self.playbook.configuration.playbook_id)
+        self._add_details_to_failed_tests_report(self.playbook.configuration.playbook_id, failed_stage)
         self.build_context.logging_module.error(f'Test failed: {self}')
         self.build_context.tests_data_keeper.failed_playbooks.add(playbook_name_to_add)
 
@@ -1792,7 +1814,7 @@ class TestContext:
                                                           is_second_playback_run, use_retries_mechanism, number_of_times_executed)
 
         elif status == PB_Status.FAILED_DOCKER_TEST or status == PB_Status.CONFIGURATION_FAILED:
-            self._add_to_failed_playbooks()
+            self._add_to_failed_playbooks(status=status)
             return status
 
         else:  # test-playbook failed

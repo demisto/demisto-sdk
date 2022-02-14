@@ -334,13 +334,14 @@ class TestStructureValidator:
             'content': True,
             'type': 'longText',
             'Aliases': [{
-                "cliName": "alias field",
-                "type": "shortText"
-            }]
+                "cliName": "aliasfield",
+                "type": "shortText",
+                "name": "Alias Field",
+            }],
         }
         incident_field: JSONBased = pack.create_incident_field(
             'incident-field-test',
-            content=field_content
+            content=field_content,
         )
         structure = StructureValidator(incident_field.path)
         assert structure.is_valid_scheme()

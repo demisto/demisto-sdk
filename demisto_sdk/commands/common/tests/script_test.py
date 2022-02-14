@@ -1,12 +1,13 @@
-import pytest
 import os
+
+import pytest
 from mock import patch
 
 from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
-from TestSuite.test_tools import ChangeCWD
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from TestSuite.test_tools import ChangeCWD
 
 
 def get_validator(current_file=None, old_file=None, file_path=""):
@@ -665,4 +666,3 @@ class TestScriptValidator:
             file_path=os.path.join(f'{git_path()}', 'demisto_sdk/tests/test_files/Readme_exists', path))
         scripts_validator.is_modified = is_modified
         assert scripts_validator.validate_readme_exists() is expected_result
-

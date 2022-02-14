@@ -8,11 +8,11 @@ from demisto_sdk.commands.common.hook_validations.playbook import \
     PlaybookValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.tests.constants_test import (
     CONTENT_REPO_EXAMPLE_ROOT, INVALID_PLAYBOOK_UNHANDLED_CONDITION,
     INVALID_TEST_PLAYBOOK_UNHANDLED_CONDITION)
 from TestSuite.test_tools import ChangeCWD
-from demisto_sdk.commands.common.legacy_git_tools import git_path
 
 
 def mock_structure(file_path=None, current_file=None, old_file=None):
@@ -662,4 +662,3 @@ class TestPlaybookValidator:
             file_path=os.path.join(f'{git_path()}', 'demisto_sdk/tests/test_files/Readme_exists', path))
         playbook_validator = PlaybookValidator(structure_validator, is_modified=is_modified)
         assert playbook_validator.validate_readme_exists() is expected_result
-

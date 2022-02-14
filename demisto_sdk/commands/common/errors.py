@@ -25,6 +25,7 @@ ALLOWED_IGNORE_ERRORS = [
     'RM100', 'RM102', 'RM104', 'RM106',
     'RP102', 'RP104',
     'SC100', 'SC101', 'SC105', 'SC106',
+    'IM101'
 ]
 
 PRESET_ERROR_TO_IGNORE = {
@@ -151,7 +152,7 @@ ERROR_CODE = {
 
     # IM - Images
     "no_image_given": {'code': "IM100", 'ui_applicable': True, 'related_field': 'image'},
-    "image_too_large": {'code': "IM101", 'ui_applicable': True, 'related_field': 'image'},
+    "invalid_logo": {'code': "IM101", 'ui_applicable': True, 'related_field': 'image'},
     "image_in_package_and_yml": {'code': "IM102", 'ui_applicable': False, 'related_field': 'image'},
     "not_an_image_file": {'code': "IM103", 'ui_applicable': False, 'related_field': 'image'},
     "no_image_field_in_yml": {'code': "IM104", 'ui_applicable': True, 'related_field': 'image'},
@@ -987,8 +988,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def image_too_large():
-        return "Too large logo, please update the logo to be under 10kB"
+    def invalid_logo():
+        return "Logo is invalid. The requirements are a logo up to 10kB with dimensions of 120x50."
 
     @staticmethod
     @error_code_decorator

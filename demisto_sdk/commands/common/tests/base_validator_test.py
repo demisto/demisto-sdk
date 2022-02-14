@@ -445,7 +445,7 @@ class TestJsonOutput:
         json_path = os.path.join(repo.path, 'valid_json.json')
         open(json_path, "x")
         base = BaseValidator(json_file_path=json_path)
-        ui_applicable_error_message, ui_applicable_error_code = Errors.image_too_large()
+        ui_applicable_error_message, ui_applicable_error_code = Errors.invalid_logo()
         expected_json_1 = [
             {
                 'filePath': integration.yml.path,

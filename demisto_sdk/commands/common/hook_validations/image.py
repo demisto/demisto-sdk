@@ -8,6 +8,7 @@ from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.tools import get_yaml, os, re
+from PIL import Image
 
 
 class ImageValidator(BaseValidator):
@@ -18,12 +19,15 @@ class ImageValidator(BaseValidator):
         _is_valid (bool): the attribute which saves the valid/in-valid status of the current file.
     """
     IMAGE_MAX_SIZE = 10 * 1024  # 10kB
+    IMAGE_WIDTH = 120
+    IMAGE_HEIGHT = 50
 
     def __init__(self, file_path, ignored_errors=None, print_as_warnings=False, suppress_print=False,
-                 json_file_path=None):
+                 json_file_path=None, is_new_file=False):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          suppress_print=suppress_print, json_file_path=json_file_path)
         self._is_valid = True
+        self.is_new_file = is_new_file
         self.file_path = ''
         if file_path.endswith('.png'):
             self.file_path = file_path
@@ -51,7 +55,8 @@ class ImageValidator(BaseValidator):
             return self._is_valid
 
         is_existing_image = False
-        self.validate_size(allow_empty_image_file=True)
+        if self.is_new_file:
+            self.validate_size(allow_empty_image_file=True)
         if '.png' not in self.file_path:
             is_existing_image = self.is_existing_image()
         if is_existing_image or '.png' in self.file_path:
@@ -61,18 +66,25 @@ class ImageValidator(BaseValidator):
 
         return self._is_valid
 
-    def validate_size(self, allow_empty_image_file: bool, maximum_size: int = IMAGE_MAX_SIZE) -> None:
+    def validate_size(self,
+                      allow_empty_image_file: bool,
+                      maximum_size: int = IMAGE_MAX_SIZE,
+                      allowed_width: int = IMAGE_WIDTH,
+                      allowed_height: int = IMAGE_HEIGHT) -> None:
         """
         Checks if image has a valid size.
         if 'allow_empty_image_file' is true, checks that the image file is not empty.
         Args:
             allow_empty_image_file (bool): Whether empty image file is an error.
             maximum_size (int): Maximum allowed size.
+            allowed_height (int): the allowed height of the image
+            allowed_width (int): the allowed weight of the image
         """
         if re.match(IMAGE_REGEX, self.file_path, re.IGNORECASE):
             image_size = os.path.getsize(self.file_path)
-            if image_size > maximum_size:  # disable-secrets-detection
-                error_message, error_code = Errors.image_too_large()
+            width, height = Image.open(self.file_path).size
+            if image_size > maximum_size or (width, height) != (allowed_width, allowed_height):  # disable-secrets-detection
+                error_message, error_code = Errors.invalid_logo()
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self._is_valid = False
 
@@ -85,7 +97,7 @@ class ImageValidator(BaseValidator):
             image = data_dictionary.get('image', '')
             image_size = int(((len(image) - 22) / 4) * 3)
             if image_size > self.IMAGE_MAX_SIZE:  # disable-secrets-detection
-                error_message, error_code = Errors.image_too_large()
+                error_message, error_code = Errors.invalid_logo()
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self._is_valid = False
 

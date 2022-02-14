@@ -55,6 +55,7 @@ python-dotenv = "*"
 importlib-resources = "*"
 dictdiffer = "*"
 setuptools = "*"
+pillow = "*"
 
 [dev-packages]
 mitmproxy = "==5.1.0"

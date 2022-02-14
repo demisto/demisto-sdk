@@ -14,7 +14,6 @@ from demisto_client.demisto_api.rest import ApiException
 from dictor import dictor
 from flatten_dict import unflatten
 from mergedeep import merge
-from ruamel.yaml import YAML
 from tabulate import tabulate
 from urllib3.exceptions import MaxRetryError
 
@@ -24,6 +23,7 @@ from demisto_sdk.commands.common.constants import (
     ENTITY_NAME_SEPARATORS, ENTITY_TYPE_TO_DIR, FILE_EXIST_REASON,
     FILE_NOT_IN_CC_REASON, INTEGRATIONS_DIR, PLAYBOOKS_DIR, SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR)
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                get_child_directories,
                                                get_child_files, get_code_lang,
@@ -36,6 +36,8 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                retrieve_file_ending)
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
+
+yaml = YAML_Handler()
 
 
 class Downloader:
@@ -711,14 +713,12 @@ class Downloader:
                                           dictor(pack_obj_data, field)}, splitter='dot')
 
         if file_ending == 'yml':
-            ryaml = YAML()
-            ryaml.preserve_quotes = True  # type: ignore
             with open(file_path_to_write, 'r') as yf:
-                file_yaml_object = ryaml.load(yf)
+                file_yaml_object = yaml.load(yf)
             if pack_obj_data:
                 merge(file_yaml_object, preserved_data)
             with open(file_path_to_write, 'w') as yf:
-                ryaml.dump(file_yaml_object, yf)
+                yaml.dump(file_yaml_object, yf)
 
         elif file_ending == 'json':
             file_data: dict = get_json(file_path_to_write)

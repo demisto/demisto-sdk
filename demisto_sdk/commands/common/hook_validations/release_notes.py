@@ -14,7 +14,7 @@ from demisto_sdk.commands.common.tools import (extract_docker_image_from_text,
                                                get_latest_release_notes_text,
                                                get_pack_name,
                                                get_release_notes_file_path,
-                                               get_ryaml)
+                                               get_yaml)
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
 
@@ -99,14 +99,16 @@ class ReleaseNotesValidator(BaseValidator):
             if(type in release_notes_categories):
                 splited_release_notes_entities = self.get_entities_from_category(f'\n{release_notes_categories.get(type)}')
                 for modified_yml_file in modified_yml_list:
-                    modified_yml_dict = get_ryaml(modified_yml_file) or {}
+                    modified_yml_dict = get_yaml(modified_yml_file) or {}
                     if modified_yml_dict.get(field) in splited_release_notes_entities:
                         entity_conent = splited_release_notes_entities.get(modified_yml_dict.get(field, {}), '') + "\n"
                         docker_version = self.get_docker_version_from_rn(entity_conent)
-                        if docker_version and modified_yml_dict.get("script", {}).get("dockerimage") != docker_version:
+                        yml_docker_version = modified_yml_dict.get("dockerimage") if type == 'Scripts' else \
+                            modified_yml_dict.get("script", {}).get("dockerimage", '')
+                        if docker_version and yml_docker_version and yml_docker_version != docker_version:
                             error_list.append({'name': modified_yml_dict.get(field),
                                                'rn_version': docker_version,
-                                               'yml_version': modified_yml_dict.get("script", {}).get("dockerimage")})
+                                               'yml_version': yml_docker_version})
         if len(error_list) > 0:
             error_message, error_code = Errors.release_notes_docker_image_not_match_yaml(rn_file_name,
                                                                                          error_list, self.pack_path)

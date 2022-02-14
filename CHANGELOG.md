@@ -1,4 +1,6 @@
 # Changelog
+* Removed PYYAML library (using only ruamel instead).
+* Fixed an issue when filtering items using the ID set in the **create-content-artifacts** command.
 * Added a retries mechanism to the **test-content** command to stabilize the build process.
 
 # 1.6.0

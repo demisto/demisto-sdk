@@ -400,9 +400,9 @@ TEST_RELEASE_NOTES_TEST_BANK_3 = [
     ('Integration', '#### Integrations\n##### Integration name\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.',
      {'display': 'Integration name', 'script': {'dockerimage': 'demisto/python3:3.9.5.21272'}}, True),
     ('Script', '\n#### Scripts\n##### Script name\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.',
-     {'name': 'Script name', 'script': {'dockerimage': 'demisto/python3:3.9.5.21272'}}, True),
+     {'name': 'Script name', 'dockerimage': 'demisto/python3:3.9.5.21272'}, True),
     ('Script', '\n#### Scripts\n##### Script name\n- Upgraded the Docker image to: *demisto/python3:3.9.5.2122*.',
-     {'name': 'Script name', 'script': {'dockerimage': 'demisto/python3:3.9.4.272'}}, False),
+     {'name': 'Script name', 'dockerimage': 'demisto/python3:3.9.4.272'}, False),
     ('Integration', '#### Integrations\n##### Integration name\n- Moved the Pack to Cortex XSOAR support instead of community support.',
      {'display': 'Integration name', 'script': {'dockerimage': 'demisto/python3:3.9.5.21272'}}, True),
 ]

@@ -1,4 +1,7 @@
 # Changelog
+- Fixed an issue when filtering items using the ID set in the **create-content-artifacts** command.
+
+# 1.6.0
 * Fixed an issue in the **create-id-set** command where similar items from different marketplaces were reported as duplicated.
 * Fixed typo in demisto-sdk init
 * Fixed an issue where the **lint** command did not handle all container exit codes.

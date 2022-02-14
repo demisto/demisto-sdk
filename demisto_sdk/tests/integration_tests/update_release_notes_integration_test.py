@@ -69,8 +69,6 @@ def test_update_release_notes_new_integration(demisto_client, mocker):
         os.remove(rn_path)
 
     result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", join('Packs', 'FeedAzureValid')])
-    print(rn_path)
-    print(result.output)
     assert result.exit_code == 0
     assert os.path.isfile(rn_path)
     assert not result.exception

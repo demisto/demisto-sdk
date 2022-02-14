@@ -6,16 +6,17 @@ from pathlib import Path
 from typing import Callable
 
 import pytest
-import yaml
-import yamlordereddictloader
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
     INTEGRATION_CATEGORIES, MARKETPLACE_LIVE_DISCUSSIONS, MARKETPLACES,
     PACK_INITIAL_VERSION, PACK_SUPPORT_OPTIONS, XSOAR_AUTHOR, XSOAR_SUPPORT,
     XSOAR_SUPPORT_URL)
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.init.initiator import Initiator
 from TestSuite.test_tools import ChangeCWD
+
+yaml = YAML_Handler()
 
 DIR_NAME = 'DirName'
 PACK_NAME = 'PackName'
@@ -340,7 +341,7 @@ def test_yml_reformatting(monkeypatch, tmp_path, initiator):
     initiator.dir_name = dir_name
     initiator.yml_reformatting(current_suffix=initiator.HELLO_WORLD_INTEGRATION, integration=True)
     with open(full_output_path / f'{dir_name}.yml', 'r') as f:
-        yml_dict = yaml.load(f, Loader=yamlordereddictloader.SafeLoader)
+        yml_dict = yaml.load(f)
         assert yml_dict == OrderedDict({
             'commonfields': OrderedDict({
                 'id': 'HelloWorld'

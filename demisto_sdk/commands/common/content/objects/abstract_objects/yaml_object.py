@@ -1,16 +1,14 @@
 from typing import Optional, Union
 
-from ruamel.yaml import YAML
 from ruamel.yaml.scanner import ScannerError
 from wcmatch.pathlib import EXTGLOB, NEGATE, Path
 
 import demisto_sdk.commands.common.content.errors as exc
+from demisto_sdk.commands.common.handlers import YAML_Handler
 
 from .dictionary_based_object import DictionaryBasedObject
 
-RUYAML = YAML(typ='rt')
-RUYAML.preserve_quotes = True  # type: ignore
-RUYAML.width = 50000  # type: ignore
+yaml = YAML_Handler(typ='rt', width=50000)
 
 
 class YAMLObject(DictionaryBasedObject):
@@ -48,7 +46,7 @@ class YAMLObject(DictionaryBasedObject):
     def _unserialize(self):
         """Load yaml to dictionary"""
         try:
-            self._as_dict = RUYAML.load(self.path)
+            self._as_dict = yaml.load(self.path)
         except ScannerError as e:
             raise exc.ContentSerializeError(self, self.path, e.problem)
 
@@ -57,7 +55,7 @@ class YAMLObject(DictionaryBasedObject):
          """
         dest_file = self._create_target_dump_dir(dest_dir) / self.normalize_file_name()
         with open(dest_file, 'w') as file:
-            RUYAML.dump(self._as_dict, file)
+            yaml.dump(self._as_dict, file)
         return [dest_file]
 
     def dump(self, dest_dir: Optional[Union[Path, str]] = None):

@@ -36,8 +36,12 @@ class DetailsCollector:
                 # Here it is
                 if self.collect_data:
                     print("collecting")
+                    # Here we can collect details from function declaration and builtins.
                     self.docs[command_name] = func.__doc__
                 else:
+                    # Here we can send back the details provided to be used in function
+                    # and reduce code duplication.
+                    kwargs['command_name'] = command_name
                     func(*args, **kwargs)
             return get_out_info
 

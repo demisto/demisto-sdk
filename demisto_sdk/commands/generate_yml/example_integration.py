@@ -11,9 +11,9 @@ details = DetailsCollector(conf="some configuration")
 
 # Adding a decorator from the DetailsCollector object in the following way
 @details.add_command(command_name='first_command')
-def this_is_a_command():
+def this_is_a_command(command_name):
     """Some Documentation"""
-    print(f"hello {details}")
+    print(f"my command name is {command_name}")
 
 
 # Example of helper function not being affected by the DetailsCollector
@@ -23,12 +23,13 @@ def this_is_a_helper_func():
 
 
 # Multiple usage of the same decorator are welcome.
+# To not use the kwargs sent, we need to use **kwargs in function declaration.
 @details.add_command(command_name='other_command')
-def this_is_another_command(arg1):
+def this_is_another_command(arg1, **kwargs):
     """Some other command"""
-    print(f"other command with {arg1}")
+    print(f"other command with arg {arg1}")
 
 
-# This is called as a sanity check making sure the decorators do not interrupt the
+# This is called as a sanity check making sure the decorators do not interrupt the run
 this_is_a_command()
 this_is_another_command("hello")

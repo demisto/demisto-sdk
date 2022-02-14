@@ -67,6 +67,6 @@ class YMLGenerator:
         print(f"{self.details_collector.commands}")
 
 
-# Example Usage of generating yml file.
+# Example Usage of generating yml file. Will be positioned where unify is called.
 yml_generator = YMLGenerator(filename='./example_integration.py')
 yml_generator.generate()

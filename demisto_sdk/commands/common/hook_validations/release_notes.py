@@ -14,7 +14,7 @@ from demisto_sdk.commands.common.tools import (extract_docker_image_from_text,
                                                get_latest_release_notes_text,
                                                get_pack_name,
                                                get_release_notes_file_path,
-                                               get_ryaml)
+                                               get_yaml)
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
 
@@ -99,7 +99,7 @@ class ReleaseNotesValidator(BaseValidator):
             if(type in release_notes_categories):
                 splited_release_notes_entities = self.get_entities_from_category(f'\n{release_notes_categories.get(type)}')
                 for modified_yml_file in modified_yml_list:
-                    modified_yml_dict = get_ryaml(modified_yml_file) or {}
+                    modified_yml_dict = get_yaml(modified_yml_file) or {}
                     if modified_yml_dict.get(field) in splited_release_notes_entities:
                         entity_conent = splited_release_notes_entities.get(modified_yml_dict.get(field, {}), '') + "\n"
                         docker_version = self.get_docker_version_from_rn(entity_conent)

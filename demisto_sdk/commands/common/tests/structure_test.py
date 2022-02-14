@@ -5,7 +5,6 @@ from shutil import copyfile
 from typing import List, Tuple
 
 import pytest
-from ruamel.yaml import YAML
 
 from demisto_sdk.commands.common.constants import (
     CODE_FILES_REGEX, PACKAGE_YML_FILE_REGEX,
@@ -19,6 +18,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_SCRIPT_TEST_PY_REGEX, PACKS_SCRIPT_YML_REGEX,
     PACKS_WIDGET_JSON_REGEX, PLAYBOOK_README_REGEX, PLAYBOOK_YML_REGEX,
     TEST_PLAYBOOK_YML_REGEX)
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.structure import (
@@ -30,8 +30,7 @@ from demisto_sdk.tests.constants_test import (
     INTEGRATION_TARGET, INVALID_DASHBOARD_PATH, INVALID_INTEGRATION_ID_PATH,
     INVALID_INTEGRATION_YML_1, INVALID_INTEGRATION_YML_2,
     INVALID_INTEGRATION_YML_3, INVALID_INTEGRATION_YML_4,
-    INVALID_INTEGRATION_YML_5, INVALID_LAYOUT_CONTAINER_PATH,
-    INVALID_LAYOUT_PATH, INVALID_PLAYBOOK_ID_PATH, INVALID_PLAYBOOK_PATH,
+    INVALID_LAYOUT_CONTAINER_PATH, INVALID_LAYOUT_PATH, INVALID_PLAYBOOK_PATH,
     INVALID_REPUTATION_FILE, INVALID_WIDGET_PATH, LAYOUT_TARGET,
     LAYOUTS_CONTAINER_TARGET, PLAYBOOK_PACK_TARGET, PLAYBOOK_TARGET,
     VALID_DASHBOARD_PATH, VALID_INTEGRATION_ID_PATH,
@@ -42,6 +41,8 @@ from demisto_sdk.tests.constants_test import (
 from TestSuite.json_based import JSONBased
 from TestSuite.pack import Pack
 from TestSuite.test_tools import ChangeCWD
+
+yaml = YAML_Handler()
 
 
 class TestStructureValidator:
@@ -124,7 +125,7 @@ class TestStructureValidator:
     def test_fromversion_update_validation_yml_structure(self, path, old_file_path, answer):
         validator = StructureValidator(file_path=path)
         with open(old_file_path) as f:
-            validator.old_file = YAML(typ='safe', pure=True).load(f)
+            validator.old_file = yaml.load(f)
             assert validator.is_valid_fromversion_on_modified() is answer
 
     INPUTS_IS_ID_MODIFIED = [
@@ -136,7 +137,7 @@ class TestStructureValidator:
     def test_is_id_modified(self, current_file, old_file, answer, error):
         validator = StructureValidator(file_path=current_file)
         with open(old_file) as f:
-            validator.old_file = YAML(typ='safe', pure=True).load(f)
+            validator.old_file = yaml.load(f)
             assert validator.is_id_modified() is answer, error
 
     POSITIVE_ERROR = "Didn't find a slash in the ID even though it contains a slash."
@@ -145,8 +146,6 @@ class TestStructureValidator:
         (VALID_INTEGRATION_ID_PATH, True, POSITIVE_ERROR),
         (INVALID_INTEGRATION_ID_PATH, False, NEGATIVE_ERROR),
         (VALID_PLAYBOOK_ID_PATH, True, POSITIVE_ERROR),
-        (INVALID_PLAYBOOK_ID_PATH, False, NEGATIVE_ERROR)
-
     ]
 
     @pytest.mark.parametrize('path, answer, error', INPUTS_IS_FILE_WITHOUT_SLASH)
@@ -318,30 +317,6 @@ class TestStructureValidator:
             assert not validator.is_valid_file()
         captured = capsys.readouterr().out
         assert f'Missing the field "{missing_field}" in root' in captured
-
-    def test_invalid_yml(self, capsys):
-        """
-        Given
-                An integration yml file, with duplicate field "display: Fetch indicators"
-
-        When
-                Validating the file
-        Then
-                Ensure the structure validator raises a suitable error
-        """
-        validator = StructureValidator(file_path=INVALID_INTEGRATION_YML_5,
-                                       predefined_scheme='integration')
-        exception = f"[ERROR]: {INVALID_INTEGRATION_YML_5}: [ST113] - There is problem with the yml file. The error: while constructing a mapping\n" \
-                    f"  in \"{INVALID_INTEGRATION_YML_5}\", line 6, column 3\n" \
-                    f"found duplicate key \"display\" with value \"Fetch indicators\" (original value: \"Fetch indicators\")\n" \
-                    f"  in \"{INVALID_INTEGRATION_YML_5}\", line 8, column 3\n\n" \
-                    f"To suppress this check see:\n" \
-                    f"    http://yaml.readthedocs.io/en/latest/api.html#duplicate-keys\n\n" \
-                    f"Duplicate keys will become an error in future releases, and are errors\n" \
-                    f"by default when using the new API.\n\n"
-        assert not validator.is_valid_yml()
-        err_msg = capsys.readouterr()
-        assert exception in err_msg
 
     def test_validate_field_with_aliases__valid(self, pack: Pack):
         """

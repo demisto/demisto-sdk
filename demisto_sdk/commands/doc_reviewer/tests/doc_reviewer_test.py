@@ -352,13 +352,13 @@ def test_find_known_words_from_pack(repo, known_words_content, expected_known_wo
 def test_camel_case_split():
     """
     Given
-    - A CamelCase word
+        - A CamelCase word
 
     When
-    - Running camel_case_split on it.
+        - Running camel_case_split on it.
 
     Then
-    - Ensure result is a list of the split words in the camel case.
+        - Ensure result is a list of the split words in the camel case.
     """
     camel_1 = 'ThisIsCamelCase'
     result = DocReviewer.camel_case_split(camel_1)

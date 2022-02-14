@@ -8,6 +8,7 @@ from demisto_sdk.commands.common.hook_validations.structure import \
 from TestSuite.test_tools import ChangeCWD
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 
+
 def get_validator(current_file=None, old_file=None, file_path=""):
     with patch.object(StructureValidator, '__init__', lambda a, b: None):
         structure = StructureValidator("")

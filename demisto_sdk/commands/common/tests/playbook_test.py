@@ -14,6 +14,7 @@ from demisto_sdk.tests.constants_test import (
 from TestSuite.test_tools import ChangeCWD
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 
+
 def mock_structure(file_path=None, current_file=None, old_file=None):
     # type: (Optional[str], Optional[dict], Optional[dict]) -> StructureValidator
     with patch.object(StructureValidator, '__init__', lambda a, b: None):
@@ -661,3 +662,4 @@ class TestPlaybookValidator:
             file_path=os.path.join(f'{git_path()}', 'demisto_sdk/tests/test_files/Readme_exists', path))
         playbook_validator = PlaybookValidator(structure_validator, is_modified=is_modified)
         assert playbook_validator.validate_readme_exists() is expected_result
+

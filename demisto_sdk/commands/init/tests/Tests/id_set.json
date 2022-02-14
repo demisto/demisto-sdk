@@ -1,0 +1,23 @@
+{
+    "scripts": [],
+    "playbooks": [],
+    "integrations": [],
+    "TestPlaybooks": [],
+    "Classifiers": [],
+    "IncidentFields": [],
+    "IncidentTypes": [],
+    "IndicatorFields": [],
+    "IndicatorTypes": [],
+    "Layouts": [],
+    "Lists": [],
+    "Jobs": [],
+    "Mappers": [],
+    "Packs": {},
+    "GenericTypes": [],
+    "GenericFields": [],
+    "GenericModules": [],
+    "GenericDefinitions": [],
+    "Reports": [],
+    "Widgets": [],
+    "Dashboards": []
+}

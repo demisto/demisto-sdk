@@ -22,7 +22,7 @@ ALLOWED_IGNORE_ERRORS = [
     'MP106',
     'PA113', 'PA116', 'PA124', 'PA125', 'PA127', 'PA129',
     'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112', 'PB114', 'PB115', 'PB116', 'PB107',
-    'RM100', 'RM102', 'RM104', 'RM106',
+    'RM100', 'RM102', 'RM104', 'RM106', 'RM110',
     'RP102', 'RP104',
     'SC100', 'SC101', 'SC105', 'SC106',
 ]
@@ -2162,4 +2162,3 @@ class Errors:
         return f'Pack writen by a partner or pack containing playbooks must have a full pack README.md file,' \
                f' with pack information. \n' \
                f' Please refer to https://xsoar.pan.dev/docs/documentation/pack-docs#pack-readme for more information'
-

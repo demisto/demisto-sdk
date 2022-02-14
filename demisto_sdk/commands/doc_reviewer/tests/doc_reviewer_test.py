@@ -353,6 +353,7 @@ def test_camel_case_split():
     """
     Given
     - A CamelCase word
+
     When
     - Running camel_case_split on it.
 

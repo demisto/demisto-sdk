@@ -65,7 +65,6 @@ def test_is_file_valid_mdx_server(mocker, current, answer):
         assert ReadMeValidator._MDX_SERVER_PROCESS is not None
 
 
-
 def test_are_modules_installed_for_verify_false_res(tmp_path):
     r = str(tmp_path / "README.md")
     with open(r, 'w') as f:

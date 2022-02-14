@@ -1,5 +1,5 @@
 import os
-from concurrent.futures._base import as_completed, Future
+from concurrent.futures._base import Future, as_completed
 from configparser import ConfigParser, MissingSectionHeaderError
 from typing import Callable, List, Optional, Set, Tuple
 
@@ -339,8 +339,9 @@ class ValidateManager:
                     futures = []
                     for pack_path in all_packs:
                         futures.append(executor.schedule(self.run_validations_on_pack, args=(pack_path,)))
-                    self.wait_futures_complete(futures_list=futures, done_fn=lambda x, y: (all_packs_valid.add(x),
-                                               FOUND_FILES_AND_ERRORS.extend(y)))
+                    self.wait_futures_complete(futures_list=futures,
+                                               done_fn=lambda x, y: (all_packs_valid.add(x),  # type: ignore
+                                                                     FOUND_FILES_AND_ERRORS.extend(y)))  # type: ignore
             else:
                 for pack_path in all_packs:
                     self.completion_percentage = format((count / num_of_packs) * 100, ".2f")  # type: ignore

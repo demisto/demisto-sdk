@@ -101,26 +101,6 @@ class TestDocReviewFilesAreFound:
         for file in doc_review.files:
             assert find_type(path=file) in doc_review.SUPPORTED_FILE_TYPES
 
-    def test_find_unsupported_files(self, valid_spelled_content_pack):
-        """
-        Given -
-            valid pack directory path.
-
-        When -
-            trying to find unsupported files from a directory.
-
-        Then -
-            Ensure that the unsupported files such as incident fields/layouts
-            are not added for the files to do doc-review.
-        """
-        doc_review = DocReviewer(file_path=valid_spelled_content_pack.path)
-        doc_review.get_files_to_run_on()
-
-        for incident_field in valid_spelled_content_pack.incident_fields:
-            assert incident_field.path not in doc_review.files
-        for layout in valid_spelled_content_pack.layouts:
-            assert layout.path not in doc_review.files
-
 
 class TestDocReviewOnReleaseNotesOnly:
     """
@@ -283,21 +263,6 @@ class TestDocReviewPack:
         assert len(doc_reviewer.files_with_misspells) == 0
         assert doc_reviewer.files_with_misspells == set()
 
-    def test_invalid_spelled_files_with_known_words(self, known_words_path, misspelled_integration):
-        """
-        Given -
-            misspelled integration yml and known_words.txt file path containing thw word 'invalidd'
-
-        When -
-            Running doc-review on misspelled files.
-
-        Then -
-            Ensure doc-review succeed and there aren't any misspelled files found.
-        """
-        doc_reviewer = DocReviewer(file_path=misspelled_integration.path, known_words_file_path=known_words_path)
-        assert doc_reviewer.run_doc_review()
-        assert not doc_reviewer.files_with_misspells
-
 
 @pytest.mark.usefixtures("are_mock_calls_supported_in_python_version")
 class TestDocReviewPrinting:
@@ -401,7 +366,7 @@ class TestDocReviewPrinting:
     def test_printing_invalid_spelled_release_notes(self, mocker):
         """
         Given -
-            Release-notes reported as invalid spelled files.
+            Misspelled Release-notes.
 
         When -
             Printing files report.
@@ -419,7 +384,7 @@ class TestDocReviewPrinting:
         assert 'file1\nfile2' in second_call.args[0]
         assert second_call.kwargs == self.BRIGHT_RED_FG
 
-    def test_printing_both_invalid_and_valid_spelled_files(self, mocker):
+    def test_printing_mixed_report(self, mocker):
         """
         Given -
             Files reported as both valid/invalid spelled files.
@@ -451,96 +416,60 @@ class TestDocReviewPrinting:
         assert forth_call.kwargs == self.BRIGHT_RED_FG
 
 
-class TestWordsSpelling:
+WORDS = [
+    ('invalidd', True, False),
+    ('wordd', True, False),
+    ('bizzaree', True, False),
+    ('Heloo', True, False),
+    ('tellllllllll', True, False),
+    ('InvaliddWord', True, False),
+    ('HelloWorrld', True, False),
+    ('VeryGoooodddd', True, False),
+    ('WordsTxxt', True, False),
+    ('SommmmeTest', True, False),
+    ('NotAGoooodSpelllledWordddd', True, False),
+    ('invalid', False, False),
+    ('word', False, False),
+    ('old', False, False),
+    ('bizzare', False, False),
+    ('Hello', False, False),
+    ('tell', False, False),
+    ('InvalidWord', False, False),
+    ('HelloWorld', False, False),
+    ('VeryGood', False, False),
+    ('SomeWord', False, False),
+    ('SomeTest', False, False),
+    ('InvalidWord', True, True),
+    ('HelloWorld', True, True),
+    ('VeryGoodBoy', True, True),
+    ('SomeWord', True, True),
+    ('SomeTest', True, True),
+    ('AGoodSpelledWord', True, True),
+]
+
+
+@pytest.mark.parametrize('word, is_invalid_word, no_camelcase', WORDS)
+def test_check_word_functionality(word, is_invalid_word, no_camelcase):
     """
-    Test scenarios of doc-review of single words.
+    Given -
+        Case1: A misspelled word (including CamelCase words).
+        Case2: A valid spelled word (including CamelCase words).
+        Case3: A valid spelled CamelCase word with no_camel_case=True
+
+    When -
+        Checking word's spelling.
+
+    Then -
+        Case1: Ensure the word is part of the 'unknown' words.
+        Case2: Ensure the word is not part of the 'unknown' words.
+        Case3: Ensure the CamelCase word is part of the 'unknown' words (which means it's a misspelled word!).
     """
-    MISSPELLED_WORDS = [
-        'invalidd',
-        'wordd',
-        'oldd',
-        'bizzaree',
-        'Heloo',
-        'tellllllllll',
-        'InvaliddWord',
-        'HelloWorrld',
-        'VeryGoooodddd',
-        'WordsTxxt',
-        'SommmmeTest',
-        'NotAGoooodSpelllledWordddd'
-    ]
-
-    @pytest.mark.parametrize('misspelled_word', MISSPELLED_WORDS)
-    def test_check_word_on_misspelled_words(self, misspelled_word):
-        """
-        Given -
-            A misspelled word (including CamelCase words).
-
-        When -
-            Checking word's spelling.
-
-        Then -
-            Ensure the word is part of the 'unknown' words.
-        """
-        doc_reviewer = DocReviewer(file_path='')
-        doc_reviewer.check_word(word=misspelled_word)
-        assert misspelled_word in doc_reviewer.unknown_words
-
-    VALID_SPELLED_WORDS = [
-        'invalid',
-        'word',
-        'old',
-        'bizzare',
-        'Hello',
-        'tell',
-        'InvalidWord',
-        'HelloWorld',
-        'VeryGood',
-        'SomeWord',
-        'SomeTest',
-        'AGoodSpelledWord'
-    ]
-
-    @pytest.mark.parametrize('valid_spelled_word', VALID_SPELLED_WORDS)
-    def test_check_word_on_valid_spelled_words(self, valid_spelled_word):
-        """
-        Given -
-            A valid spelled word (including CamelCase words).
-
-        When -
-            Checking word's spelling.
-
-        Then -
-            Ensure the word is not part of the 'unknown' words.
-        """
-        doc_reviewer = DocReviewer(file_path='')
-        doc_reviewer.check_word(word=valid_spelled_word)
-        assert valid_spelled_word not in doc_reviewer.unknown_words
-
-    VALID_SPELLED_CAMELCASE_WORDS = [
-        'InvalidWord',
-        'HelloWorld',
-        'VeryGoodBoy',
-        'SomeWord',
-        'SomeTest',
-        'AGoodSpelledWord'
-    ]
-
-    @pytest.mark.parametrize('valid_camel_case_spelled_word', VALID_SPELLED_CAMELCASE_WORDS)
-    def test_check_word_with_no_camelcase_on_valid_spelled_words_fails(self, valid_camel_case_spelled_word):
-        """
-        Given -
-            A valid spelled CamelCase word.
-
-        When -
-            Checking word's spelling without considering CamelCase words.
-
-        Then -
-            Ensure the CamelCase word is part of the 'unknown' words (which means it's a misspelled word!).
-        """
-        doc_reviewer = DocReviewer(file_path='', no_camel_case=True)
-        doc_reviewer.check_word(word=valid_camel_case_spelled_word)
-        assert valid_camel_case_spelled_word in doc_reviewer.unknown_words
+    doc_reviewer = DocReviewer(file_path='', no_camel_case=no_camelcase)
+    doc_reviewer.check_word(word=word)
+    if is_invalid_word:
+        assert word in doc_reviewer.unknown_words
+    else:
+        assert word not in doc_reviewer.unknown_words
 
 
 def test_camel_case_split():

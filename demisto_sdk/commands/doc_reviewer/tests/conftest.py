@@ -1,7 +1,4 @@
-import os
-
 import pytest
-from _pytest.tmpdir import _mk_tmp
 
 
 @pytest.fixture()
@@ -53,15 +50,3 @@ def misspelled_integration(invalid_spelled_content_pack):
     Returns a misspelled integration.
     """
     return invalid_spelled_content_pack[0].integrations[0]
-
-
-@pytest.fixture()
-def known_words_path(request, tmp_path_factory):
-    """
-    Creates a known-words.txt file.
-    """
-    file_path = os.path.join(str(_mk_tmp(request, tmp_path_factory)), 'know-words.txt')
-    with open(file_path, 'w') as f:
-        f.write('invalidd\n')
-
-    return file_path

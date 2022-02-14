@@ -235,7 +235,7 @@ class PackUniqueFilesValidator(BaseValidator):
         playbooks_path = os.path.join(self.pack_path, "Playbooks")
         contains_playbooks = os.path.exists(playbooks_path) and len(os.listdir(playbooks_path)) != 0
         if (self.support == 'partner' or contains_playbooks) and self._check_if_file_is_empty(self.readme_file):
-            if self._add_error(Errors.empty_readme_error(), self.readme_file):
+            if self._add_error(Errors.empty_readme_partner_playbooks(), self.readme_file):
                 return False
 
         return True

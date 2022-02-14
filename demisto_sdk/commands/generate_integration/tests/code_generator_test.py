@@ -2,12 +2,13 @@ import json
 import os
 from pathlib import Path
 
-import yaml
-
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.generate_integration.code_generator import (
     IntegrationGeneratorCommand, IntegrationGeneratorConfig,
     IntegrationGeneratorOutput, json_body_to_code)
+
+yaml = YAML_Handler()
 
 
 def test_json_body_to_code():
@@ -114,8 +115,6 @@ class TestCodeGenerator:
         Then
         - ensure it generates the yml successfully and the yml is the exact as expected yml from test_files folder
        """
-        import yaml
-
         from demisto_sdk.commands.common.hook_validations.docker import \
             DockerImageValidator
 
@@ -128,10 +127,9 @@ class TestCodeGenerator:
 
         yaml_obj = autogen_config.generate_integration_yml().to_dict()
         with open(os.path.join(self.test_integration_dir, 'VirusTotalTest.yml'), mode='r') as f:
-            expected_yml = f.read()
+            expected_yml = yaml.load(f)
 
-        actual_yml = yaml.dump(yaml_obj)
-        assert expected_yml == actual_yml
+        assert expected_yml == yaml_obj
 
     def test_generate_integration_package(self, tmpdir, mocker):
         """
@@ -233,7 +231,7 @@ class TestCodeGenerator:
 
         integration_code = config.generate_integration_python_code()
         integration_yml = config.generate_integration_yml()
-        integration_yml_str = yaml.dump(integration_yml.to_dict())
+        integration_yml_str = yaml.dumps(integration_yml.to_dict())
 
         assert "outputs=response.get('scans')" in integration_code
         assert 'contextPath: VirusTotalTest.TestScan.scans.field1' in integration_yml_str

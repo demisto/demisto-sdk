@@ -1,11 +1,12 @@
 from pathlib import Path
 from typing import Optional
 
-import yaml
-
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from TestSuite.file import File
 from TestSuite.test_tools import suite_join_path
 from TestSuite.yml import YAML
+
+yaml = YAML_Handler()
 
 
 class Playbook:
@@ -50,13 +51,13 @@ class Playbook:
         """
         default_playbook_dir = 'assets/default_playbook'
         with open(suite_join_path(default_playbook_dir, 'playbook-sample.yml')) as yml_file:
-            yml = yaml.safe_load(yml_file)
+            yml = yaml.load(yml_file)
             yml['id'] = yml['name'] = name
             self.build(yml=yml)
 
     def create_default_test_playbook(self, name: str = 'SamplePlaybookTest'):
         default_test_playbook_dir = 'assets/default_playbook'
         with open(suite_join_path(default_test_playbook_dir, 'playbook-sample.yml')) as yml_file:
-            yml = yaml.safe_load(yml_file)
+            yml = yaml.load(yml_file)
             yml['id'] = yml['name'] = name
             self.build(yml=yml)

@@ -8,6 +8,7 @@ import re
 import shlex
 import sys
 import urllib.parse
+from collections import OrderedDict
 from concurrent.futures import as_completed
 from configparser import ConfigParser, MissingSectionHeaderError
 from contextlib import contextmanager
@@ -16,8 +17,7 @@ from enum import Enum
 from functools import lru_cache, partial
 from pathlib import Path, PosixPath
 from subprocess import DEVNULL, PIPE, Popen, check_output
-from typing import (Callable, Dict, List, Match, Optional, Set, Tuple, Type,
-                    Union)
+from typing import Callable, Dict, List, Match, Optional, Tuple, Type, Union
 
 import click
 import colorama
@@ -26,11 +26,8 @@ import git
 import giturlparse
 import requests
 import urllib3
-import yaml
 from packaging.version import parse
 from pebble import ProcessFuture, ProcessPool
-from ruamel.yaml import YAML
-from ruamel.yaml.comments import CommentedMap, CommentedSeq
 
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK, CLASSIFIERS_DIR,
@@ -49,16 +46,15 @@ from demisto_sdk.commands.common.constants import (
     XSOAR_CONFIG_FILE, FileType, FileTypeToIDSetKeys, GitContentConfig,
     IdSetKeys, MarketplaceVersions, urljoin)
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.handlers import YAML_Handler
+
+logger = logging.getLogger("demisto-sdk")
+yaml = YAML_Handler()
 
 urllib3.disable_warnings()
 
 # inialize color palette
 colorama.init()
-
-logger = logging.getLogger("demisto-sdk")
-ryaml = YAML()
-ryaml.preserve_quotes = True
-ryaml.allow_duplicate_keys = True
 
 
 class LOG_COLORS:
@@ -74,23 +70,6 @@ LOG_VERBOSE = False
 LAYOUT_CONTAINER_FIELDS = {'details', 'detailsV2', 'edit', 'close', 'mobile', 'quickView', 'indicatorsQuickView',
                            'indicatorsDetails'}
 SDK_PYPI_VERSION = r'https://pypi.org/pypi/demisto-sdk/json'
-
-
-class XsoarLoader(yaml.SafeLoader):
-    """
-    New yaml loader based on SafeLoader which can handle the XSOAR related changes in yml.
-    """
-
-    def reference(self, node):
-        """
-        !reference - found in gitlab ci files.
-        handle !reference tag by turning its line into a string.
-        """
-        build_string = '!reference ' + str(self.construct_sequence(node))
-        return self.construct_yaml_str(yaml.ScalarNode(tag='!reference', value=build_string))
-
-
-XsoarLoader.add_constructor('!reference', XsoarLoader.reference)
 
 
 def set_log_verbose(verbose: bool):
@@ -315,7 +294,7 @@ def get_remote_file(
     if full_file_path.endswith('json'):
         details = res.json() if res.ok else json.loads(local_content)
     elif full_file_path.endswith('yml'):
-        details = ryaml.load(file_content)
+        details = yaml.load(file_content)
     # if neither yml nor json then probably a CHANGELOG or README file.
     else:
         details = {}
@@ -372,7 +351,7 @@ def filter_packagify_changes(modified_files, added_files, removed_files, tag='ma
                 updated_added_files.add(file_path)
                 continue
             with open(file_path) as f:
-                details = yaml.safe_load(f.read())
+                details = yaml.load(f)
 
             uniq_identifier = '_'.join([
                 details['name'],
@@ -471,16 +450,17 @@ def get_last_remote_release_version():
 
 
 def get_file(file_path, type_of_file):
+    file_path = Path(file_path)
     data_dictionary = None
-    with open(os.path.expanduser(file_path), mode="r", encoding="utf8") as f:
-        if file_path.endswith(type_of_file):
+    with open(file_path.expanduser(), mode="r", encoding="utf8") as f:
+        if type_of_file in file_path.suffix:
             read_file = f.read()
             replaced = read_file.replace("simple: =", "simple: '='")
             # revert str to stream for loader
             stream = io.StringIO(replaced)
             try:
                 if type_of_file in ('yml', '.yml'):
-                    data_dictionary = yaml.load(stream, Loader=XsoarLoader)
+                    data_dictionary = yaml.load(stream)
 
                 else:
                     data_dictionary = json.load(stream)
@@ -495,27 +475,6 @@ def get_file(file_path, type_of_file):
 
 def get_yaml(file_path):
     return get_file(file_path, 'yml')
-
-
-def get_ryaml(file_path: str) -> dict:
-    """
-    Get yml file contents using ruaml
-
-    Args:
-        file_path (string): The file path
-
-    Returns:
-        dict. The yml contents
-    """
-    try:
-        with open(os.path.expanduser(file_path), 'r') as yf:
-            data = ryaml.load(yf)
-    except FileNotFoundError as e:
-        click.echo(f'File {file_path} not found. Error was: {str(e)}', nl=True)
-    except Exception as e:
-        click.echo(
-            "{} has a structure issue of file type yml. Error was: {}".format(file_path, str(e)), nl=True)
-    return data
 
 
 def get_json(file_path):
@@ -1041,14 +1000,13 @@ def get_dev_requirements(py_version, envs_dirs_base):
     return requirements
 
 
-def get_dict_from_file(path: str, use_ryaml: bool = False,
+def get_dict_from_file(path: str,
                        raises_error: bool = True) -> Tuple[Dict, Union[str, None]]:
     """
     Get a dict representing the file
 
     Arguments:
         path - a path to the file
-        use_ryaml - Whether to use ryaml for file loading or not
         raises_error - Whether to raise a FileNotFound error if `path` is not a valid file.
 
     Returns:
@@ -1057,8 +1015,6 @@ def get_dict_from_file(path: str, use_ryaml: bool = False,
     try:
         if path:
             if path.endswith('.yml'):
-                if use_ryaml:
-                    return get_ryaml(path), 'yml'
                 return get_yaml(path), 'yml'
             elif path.endswith('.json'):
                 return get_json(path), 'json'
@@ -1669,7 +1625,7 @@ def get_content_file_type_dump(file_path: str) -> Callable[[str], str]:
     file_extension = os.path.splitext(file_path)[-1]
     curr_string_transformer: Union[partial[str], Type[str], Callable] = str
     if file_extension in ['.yml', '.yaml']:
-        curr_string_transformer = yaml.dump
+        curr_string_transformer = yaml.dumps
     elif file_extension == '.json':
         curr_string_transformer = partial(json.dumps, indent=4)
     return curr_string_transformer
@@ -1944,11 +1900,8 @@ def compare_context_path_in_yml_and_readme(yml_dict, readme_content):
 
 
 def write_yml(yml_path: str, yml_data: Dict):
-    ryaml = YAML()
-    ryaml.allow_duplicate_keys = True
-    ryaml.preserve_quotes = True
     with open(yml_path, 'w') as f:
-        ryaml.dump(yml_data, f)  # ruamel preservers multilines
+        yaml.dump(yml_data, f)  # ruamel preservers multilines
 
 
 def to_kebab_case(s: str):
@@ -2210,6 +2163,21 @@ def get_script_or_sub_playbook_tasks_from_playbook(searched_entity_name: str, ma
     return searched_tasks
 
 
+def extract_docker_image_from_text(text):
+    """
+    Strips the docker image version from a given text.
+    Args:
+        text : the text to extract the docker image from
+    Return:
+        str. The docker image version if exists, otherwise, return None.
+    """
+    match = (re.search(r'(demisto/.+:([0-9]+)(((\.)[0-9]+)+))', text))
+    if match:
+        return match.group(1)
+    else:
+        return None
+
+
 def get_current_repo() -> Tuple[str, str, str]:
     try:
         git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
@@ -2446,19 +2414,17 @@ def alternate_item_fields(content_item):
         content_item: content item object
 
     """
-    as_dict_types = (dict, CommentedMap)
-    as_list_types = (list, CommentedSeq)
-    current_dict = content_item.to_dict() if type(content_item) not in as_dict_types else content_item
+    current_dict = content_item.to_dict() if not isinstance(content_item, dict) else content_item
     copy_dict = current_dict.copy()  # for modifying dict while iterating
     for field, value in copy_dict.items():
         if field.endswith('_x2'):
             current_dict[field[:-3]] = value
             current_dict.pop(field)
-        elif isinstance(current_dict[field], as_dict_types):
+        elif isinstance(current_dict[field], dict):
             alternate_item_fields(current_dict[field])
-        elif isinstance(current_dict[field], as_list_types):
+        elif isinstance(current_dict[field], list):
             for item in current_dict[field]:
-                if isinstance(item, as_dict_types):
+                if isinstance(item, dict):
                     alternate_item_fields(item)
 
 
@@ -2482,3 +2448,11 @@ def should_alternate_field_by_item(content_item, id_set):
         if list(item.keys())[0] == item_id:
             return item.get(item_id, {}).get('has_alternative_meta', False)
     return False
+
+
+def order_dict(data):
+    """
+    Order dict by default order
+    """
+    return OrderedDict({k: order_dict(v) if isinstance(v, dict) else v
+                        for k, v in sorted(data.items())})

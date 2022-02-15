@@ -1,4 +1,5 @@
 # Changelog
+* Added the '--use-packs-known-words' argument to the **doc-review** command
 * Removed PYYAML library (using only ruamel instead).
 * Fixed an issue when filtering items using the ID set in the **create-content-artifacts** command.
 * Fixed an issue where a table was generated with empty description column in the **generate_table_section** command.

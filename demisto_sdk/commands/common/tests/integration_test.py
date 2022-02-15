@@ -24,7 +24,7 @@ FEED_REQUIRED_PARAMS_STRUCTURE = [dict(required_param.get('must_equal'), **requi
 
 
 def mock_structure(file_path=None, current_file=None, old_file=None, quite_bc=False):
-    # type: (Optional[str], Optional[dict], Optional[dict]) -> StructureValidator
+    # type: (Optional[str], Optional[dict], Optional[dict], Optional[bool]) -> StructureValidator
     with patch.object(StructureValidator, '__init__', lambda a, b: None):
         structure = StructureValidator(file_path)
         structure.is_valid = True
@@ -844,7 +844,6 @@ class TestIntegrationValidator:
         Then
             - an integration with an invalid file path is invalid.
         """
-
         structure_validator = StructureValidator(integration.yml.path, predefined_scheme='integration')
         validator = IntegrationValidator(structure_validator)
         validator.file_path = 'Packs/VirusTotal/Integrations/VirusTotal/integration-VirusTotal_5.5.yml'

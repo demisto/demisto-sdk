@@ -13,7 +13,7 @@ if [[ $1 == "-h" ]]; then
   printf "This script creates environment for developing demisto-sdk, The following steps are done:
   1. Installing virtualenv-wrapper.
   2. Create virtualenv \"${VIRTUALENV_NAME}\".
-  3. Installing in virtualenv demisto-sdk as editable version.
+  3. Installing in virtualenv demisto-sdk as editable version
 
 Notes:
   1. This script requires python3 installed.

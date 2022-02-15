@@ -54,7 +54,6 @@ python-dotenv = "*"
 importlib-resources = "*"
 dictdiffer = "*"
 setuptools = "*"
-requests-mock = "*"
 
 [dev-packages]
 mitmproxy = "==5.1.0"

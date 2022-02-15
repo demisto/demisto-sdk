@@ -89,6 +89,7 @@ class TestPackUniqueFilesValidator:
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_readme_and_pack_description', return_value=True)
         mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_readme_images', return_value=True)
+        # mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_meta_file', return_value=True)
         mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
         assert not self.validator.are_valid_files(id_set_validations=False)
         fake_validator = PackUniqueFilesValidator('fake')

@@ -4,11 +4,15 @@
 """
     Demisto SDK
 """
-import configparser
+import json
+from pathlib import Path
+from typing import List
 
 from setuptools import find_packages, setup  # noqa: H301
 
 NAME = "demisto-sdk"
+
+
 # To install the library, run the following
 #
 # python setup.py install
@@ -17,9 +21,14 @@ NAME = "demisto-sdk"
 # http://pypi.python.org/pypi/setuptools
 
 # Converting Pipfile to requirements style list because setup expects requirements.txt file.
-parser = configparser.ConfigParser()
-parser.read("Pipfile")
-install_requires = [f'{key}{value}'.replace('\"', '').replace('*', '') for key, value in parser['packages'].items()]
+def get_requirements(path: Path = Path(__file__).parent / 'Pipfile.lock', key='default') -> List[str]:
+    """Converts Pipfile.lock to list of requirements"""
+    with path.open(encoding='utf8') as stream:
+        packs = json.load(stream)[key]
+    parsed_packs = [f'{pack}{value["version"]}{"; " + value["markers"] if value.get("markers") else ""}'
+                    for pack, value in packs.items()]
+    return parsed_packs
+
 
 with open('README.md', 'r') as f:
     readme = f.read()
@@ -33,8 +42,8 @@ setup(
     description="A Python library for the Demisto SDK",
     author_email="",
     url="https://github.com/demisto/demisto-sdk",
-    keywords=["Demisto"],
-    install_requires=install_requires,
+    keywords=["Demisto", "Cortex XSOAR"],
+    install_requires=get_requirements(),
     packages=find_packages(),
     include_package_data=True,
     entry_points={
@@ -49,8 +58,11 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: Implementation :: CPython'
     ],
+
     python_requires=">=3.7",
     author="Demisto"
 )

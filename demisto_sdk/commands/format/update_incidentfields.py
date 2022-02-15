@@ -56,10 +56,8 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
 
         aliases = self.data.get('Aliases', {})
         if aliases:
-            aliased_fields = self._get_incident_fields_by_aliases(aliases)
-            for alias_field in aliased_fields:
+            for alias_field, alias_field_file_path in self._get_incident_fields_by_aliases(aliases):
 
-                alias_field_file_path = alias_field.pop('file_path', '')  # pop it as it's not part of the field and shouldn't be saved
                 marketplaces = get_item_marketplaces(item_path=alias_field_file_path, item_data=alias_field)
 
                 if len(marketplaces) != 1 or marketplaces[0] != 'xsoar':
@@ -67,16 +65,15 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
                     click.secho(f'\n================= Updating file {alias_field_file_path} =================', fg='bright_blue')
                     self._save_alias_field_file(dest_file_path=alias_field_file_path, field_data=alias_field)
 
-    def _get_incident_fields_by_aliases(self, aliases: List[dict]) -> List[dict]:
+    def _get_incident_fields_by_aliases(self, aliases: List[dict]):
         """Get from the id_set the actual fields for the given aliases
 
         Args:
             aliases (list): The alias list.
 
         Returns:
-            (list): the fileds as list of dicts.
+            A generator that generates a tuple with the incident field and it's path for each alias in the given list.
         """
-        res = []
         alias_ids: set = {f'incident_{alias.get("cliName")}' for alias in aliases}
         id_set = open_id_set_file(self.id_set_path)
         incident_field_list: list = id_set.get('IncidentFields')
@@ -87,9 +84,8 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
                 alias_data = incident_field[field_id]
                 alias_file_path = alias_data.get('file_path')
                 aliased_field, _ = get_dict_from_file(path=alias_file_path)
-                aliased_field['file_path'] = alias_file_path
-                res.append(aliased_field)
-        return res
+
+                yield aliased_field, alias_file_path
 
     def _save_alias_field_file(self, dest_file_path, field_data):
         """Save formatted JSON data to destination file."""

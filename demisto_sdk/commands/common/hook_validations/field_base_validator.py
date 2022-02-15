@@ -391,26 +391,24 @@ class FieldBaseValidator(ContentEntityValidator):
             (self.is_alias_has_invalid_marketplaces, Errors.invalid_marketplaces_in_alias),
             (self.is_alias_has_inner_alias, Errors.aliases_with_inner_alias),
         ]
-        aliased_fields = self._get_incident_fields_by_aliases(aliases)
         for validator, error_generator in validators_and_error_generators:
-            invalid_aliased = [alias.get("cliName") for alias in aliased_fields if validator(alias)]
-            if invalid_aliased:
-                error_message, error_code = error_generator(invalid_aliased)
+            invalid_aliases = [alias.get("cliName") for alias in self._get_incident_fields_by_aliases(aliases) if validator(alias)]
+            if invalid_aliases:
+                error_message, error_code = error_generator(invalid_aliases)
                 if self.handle_error(error_message, error_code, file_path=self.file_path, warning=self.structure_validator.quite_bc):
                     is_valid = False
 
         return is_valid
 
-    def _get_incident_fields_by_aliases(self, aliases: List[dict]) -> List[dict]:
+    def _get_incident_fields_by_aliases(self, aliases: List[dict]):
         """Get from the id_set the actual fields for the given aliases
 
         Args:
             aliases (list): The alias list.
 
         Returns:
-            (list): the fileds as list of dicts.
+            A generator that generates a tuple with the incident field for each alias in the given list.
         """
-        res = []
         alias_ids: set = {f'incident_{alias.get("cliName")}' for alias in aliases}
         incident_field_list: list = self.id_set_file.get('IncidentFields')
 
@@ -421,8 +419,7 @@ class FieldBaseValidator(ContentEntityValidator):
                 alias_file_path = alias_data.get('file_path')
                 aliased_field, _ = get_dict_from_file(path=alias_file_path)
                 aliased_field['file_path'] = alias_file_path
-                res.append(aliased_field)
-        return res
+                yield aliased_field
 
     def is_alias_has_invalid_marketplaces(self, aliased_field: dict) -> bool:
         marketplaces = get_item_marketplaces(item_path=aliased_field.get('file_path', ''), item_data=aliased_field)

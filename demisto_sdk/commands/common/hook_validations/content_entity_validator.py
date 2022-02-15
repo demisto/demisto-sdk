@@ -337,10 +337,16 @@ class ContentEntityValidator(BaseValidator):
 
         return True
 
-    def validate_readme_exists(self, caller, is_modified, is_added, validate_all):
+    def validate_readme_exists(self, caller: str, is_modified: bool, is_added: bool, validate_all: bool):
         """
-            Validates if there is a readme file in the same folder as the script file.
+            Validates if there is a readme file in the same folder as the caller file.
             The validation is processed only on added or modified files.
+
+            Args:
+                caller: (str) who called this check integration/script/playbook
+                is_modified: (bool) was this file modified
+                is_added: (bool) was this file added
+                validate_all: (bool) is the validation being run with -a
             Return:
                True if the readme file exits False with an error otherwise
         """

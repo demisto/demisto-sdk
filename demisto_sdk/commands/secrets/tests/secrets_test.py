@@ -85,12 +85,11 @@ class TestSecrets:
 
         pack = repo.create_pack('pack')
         integration = pack.create_integration('integration')
-        integration.yml.write_dict({'deprecated': "print('This is our dummy code') a = 100 b = 300 c = a + b "
-                                                  "API_KEY = OIifdsnsjkgnj3254nkdfsjKNJD0345 # this is our secret "
+        integration.yml.write_dict({'deprecated': "API_KEY = OIifdsnsjkgnj3254nkdfsjKNJD0345 # this is our secret \n"
                                                   "some_dict = { 'some_foo': 100docker  print(some_dict.some_foo)"})
 
         secrets_found = validator.search_potential_secrets([integration.yml.path])
-        assert secrets_found[integration.yml.path][2] == ['OIifdsnsjkgnj3254nkdfsjKNJD0345']
+        assert secrets_found[integration.yml.path][1] == ['OIifdsnsjkgnj3254nkdfsjKNJD0345']
 
     def test_ignore_entropy(self, repo):
         """

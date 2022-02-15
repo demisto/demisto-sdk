@@ -1055,7 +1055,7 @@ class TestIsFetchParamsExist:
         # missing param in configuration
         self.validator.current_file['configuration'] = [t for t in self.validator.current_file['configuration']
                                                         if t['name'] != 'incidentType']
-        assert self.validator.is_valid_fetch() is False, 'is_valid_fetch() returns True instead False'    
+        assert self.validator.is_valid_fetch() is False, 'is_valid_fetch() returns True instead False'
 
     def test_missing_max_fetch_text(self, capsys):
         # missing param in configuration

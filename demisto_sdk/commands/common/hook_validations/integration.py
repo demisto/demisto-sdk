@@ -918,7 +918,7 @@ class IntegrationValidator(ContentEntityValidator):
                     for param in params:
                         if param.get('name') == fetch_required_param.get('name'):
                             error_message, error_code = Errors.parameter_is_malformed(fetch_required_param.get('name'),
-                            yaml.dumps(fetch_required_param))
+                                                                                      yaml.dumps(fetch_required_param))
                     if not error_message:
                         error_message, error_code = Errors.parameter_missing_from_yml(fetch_required_param.get('name'))
                     if self.handle_error(error_message, error_code, file_path=self.file_path,

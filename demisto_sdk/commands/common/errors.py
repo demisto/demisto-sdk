@@ -713,7 +713,7 @@ class Errors:
     @error_code_decorator
     def parameter_missing_from_yml(name):
         return f'A required parameter "{name}" is missing from the YAML file.'
-    
+
     @staticmethod
     @error_code_decorator
     def parameter_is_malformed(name, correct_format):

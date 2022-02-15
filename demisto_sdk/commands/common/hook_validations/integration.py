@@ -89,6 +89,7 @@ class IntegrationValidator(ContentEntityValidator):
         """
         answers = [
             super().is_valid_file(validate_rn),
+            super().validate_readme_exists("integration", self.is_modified, self.is_added, self.validate_all),
             self.is_valid_subtype(),
             self.is_valid_default_array_argument_in_reputation_command(),
             self.is_valid_default_argument(),
@@ -115,7 +116,6 @@ class IntegrationValidator(ContentEntityValidator):
             self.name_not_contain_the_type(),
             self.is_valid_endpoint_command(),
             self.is_api_token_in_credential_type(),
-            self.validate_readme_exists(),
         ]
 
         return all(answers)
@@ -1445,25 +1445,3 @@ class IntegrationValidator(ContentEntityValidator):
 
         raise Exception('Could not find the pack name of the integration, '
                         'please verify the integration is in a pack')
-
-    def validate_readme_exists(self):
-        """
-        Validates if there is a readme file in the same folder as the script file.
-        The validation is processed only on added or modified files.
-        Return:
-            True if the readme file exits False with an error otherwise
-        """
-        if self.is_modified or self.is_added or not self.validate_all:
-            integration_path = os.path.normpath(self.file_path)
-            path_split = integration_path.split(os.sep)
-            to_replace = path_split[-1]
-            readme_path = integration_path.replace(to_replace, "README.md")
-            if os.path.isfile(readme_path):
-                return True
-            error_message, error_code = Errors.missing_readme_file('Integration')
-            if self.handle_error(error_message, error_code, file_path=self.file_path,
-                                 suggested_fix=Errors.suggest_fix(self.file_path, cmd="generate-docs")):
-                return False
-            return True
-        else:
-            return True

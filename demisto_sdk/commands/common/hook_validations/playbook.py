@@ -1,4 +1,3 @@
-import os.path
 import re
 from typing import Dict
 
@@ -38,6 +37,7 @@ class PlaybookValidator(ContentEntityValidator):
             return True
         playbook_checks = [
             super().is_valid_file(validate_rn),
+            super().validate_readme_exists("playbook", self.is_modified, self.is_added, self.validate_all),
             self.is_valid_version(),
             self.is_id_equals_name(),
             self.is_no_rolename(),
@@ -52,7 +52,6 @@ class PlaybookValidator(ContentEntityValidator):
             self.verify_condition_tasks_has_else_path(),
             self.name_not_contain_the_type(),
             self.is_valid_with_indicators_input(),
-            self.validate_readme_exists(),
         ]
         answers = all(playbook_checks)
 
@@ -519,24 +518,4 @@ class PlaybookValidator(ContentEntityValidator):
             error_message, error_code = Errors.playbook_tasks_continue_on_error(continue_tasks)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
-        return True
-
-    def validate_readme_exists(self):
-        """
-            Validates if there is a readme file in the same folder as the script file.
-            The validation is processed only on added or modified files.
-            Return:
-               True if the readme file exits False with an error otherwise
-        """
-        if self.is_added or self.is_modified or not self.validate_all:
-            playbook_path = os.path.normpath(self.file_path)
-            to_replace = os.path.splitext(playbook_path)[-1]
-            readme_path = playbook_path.replace(to_replace, '_README.md')
-            if os.path.isfile(readme_path):
-                return True
-            error_message, error_code = Errors.missing_readme_file('Playbook')
-            if self.handle_error(error_message, error_code, file_path=self.file_path,
-                                 suggested_fix=Errors.suggest_fix(self.file_path, cmd="generate-docs")):
-                return False
-            return True
         return True

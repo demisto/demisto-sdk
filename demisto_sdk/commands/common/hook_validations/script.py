@@ -74,6 +74,7 @@ class ScriptValidator(ContentEntityValidator):
         """Check whether the script is valid or not"""
         is_script_valid = all([
             super().is_valid_file(validate_rn),
+            super().validate_readme_exists("script", self.is_modified, self.is_added, self.validate_all),
             self.is_valid_subtype(),
             self.is_id_equals_name(),
             self.is_docker_image_valid(),
@@ -82,7 +83,6 @@ class ScriptValidator(ContentEntityValidator):
             self.is_there_separators_in_names(),
             self.name_not_contain_the_type(),
             self.runas_is_not_dbtrole(),
-            self.validate_readme_exists(),
         ])
         # check only on added files
         if not self.old_file:
@@ -404,30 +404,3 @@ class ScriptValidator(ContentEntityValidator):
                 self.is_valid = False
                 return False
         return True
-
-    def validate_readme_exists(self):
-        """
-        Validates if there is a readme file in the same folder as the script file.
-        The validation is processed only on added or modified files.
-        Return:
-            True if the readme file exits False with an error otherwise
-        """
-        if self.is_added or self.is_modified or not self.validate_all:
-            script_path = os.path.normpath(self.file_path)
-            path_split = script_path.split(os.sep)
-            if path_split[-2] == 'Scripts':
-                to_replace = os.path.splitext(script_path)[-1]
-                readme_path = script_path.replace(to_replace, '_README.md')
-            else:
-                to_replace = path_split[-1]
-                readme_path = script_path.replace(to_replace, "README.md")
-
-            if os.path.isfile(readme_path):
-                return True
-            error_message, error_code = Errors.missing_readme_file('Script')
-            if self.handle_error(error_message, error_code, file_path=self.file_path,
-                                 suggested_fix=Errors.suggest_fix(self.file_path, cmd="generate-docs")):
-                return False
-            return True
-        else:
-            return True

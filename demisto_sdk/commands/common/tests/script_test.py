@@ -665,4 +665,6 @@ class TestScriptValidator:
         scripts_validator = get_validator(
             file_path=os.path.join(f'{git_path()}', 'demisto_sdk/tests/test_files/Readme_exists', path))
         scripts_validator.is_modified = is_modified
-        assert scripts_validator.validate_readme_exists() is expected_result
+        assert scripts_validator.validate_readme_exists("script", scripts_validator.is_modified,
+                                                        scripts_validator.is_added,
+                                                        scripts_validator.validate_all) is expected_result

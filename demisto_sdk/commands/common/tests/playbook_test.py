@@ -661,4 +661,6 @@ class TestPlaybookValidator:
         structure_validator = mock_structure(
             file_path=os.path.join(f'{git_path()}', 'demisto_sdk/tests/test_files/Readme_exists', path))
         playbook_validator = PlaybookValidator(structure_validator, is_modified=is_modified)
-        assert playbook_validator.validate_readme_exists() is expected_result
+        assert playbook_validator.validate_readme_exists("playbook", playbook_validator.is_modified,
+                                                         playbook_validator.is_added,
+                                                         playbook_validator.validate_all) is expected_result

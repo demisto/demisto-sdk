@@ -1421,4 +1421,6 @@ class TestisContextChanged:
         structure_validator = mock_structure(
             file_path=os.path.join(f'{git_path()}', 'demisto_sdk/tests/test_files/Readme_exists', path))
         integration_validator = IntegrationValidator(structure_validator, is_added=is_added)
-        assert integration_validator.validate_readme_exists() is expected_result
+        assert integration_validator.validate_readme_exists("integration", integration_validator.is_modified,
+                                                            integration_validator.is_added,
+                                                            integration_validator.validate_all) is expected_result

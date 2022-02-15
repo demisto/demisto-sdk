@@ -1,4 +1,5 @@
 import json
+import os
 import re
 from abc import abstractmethod
 from distutils.version import LooseVersion
@@ -334,4 +335,38 @@ class ContentEntityValidator(BaseValidator):
                     suggested_fix=Errors.suggest_fix(self.file_path)):
                 return False
 
+        return True
+
+    def validate_readme_exists(self, caller, is_modified, is_added, validate_all):
+        """
+            Validates if there is a readme file in the same folder as the script file.
+            The validation is processed only on added or modified files.
+            Return:
+               True if the readme file exits False with an error otherwise
+        """
+        if is_added or is_modified or not validate_all:
+            file_path = os.path.normpath(self.file_path)
+            path_split = file_path.split(os.sep)
+            readme_path = ""
+            if caller == "playbook":
+                to_replace = os.path.splitext(path_split[-1])[-1]
+                readme_path = file_path.replace(to_replace, '_README.md')
+            elif caller == "integration":
+                to_replace = path_split[-1]
+                readme_path = file_path.replace(to_replace, "README.md")
+            elif caller == "script":
+                if path_split[-2] == 'Scripts':
+                    to_replace = os.path.splitext(file_path)[-1]
+                    readme_path = file_path.replace(to_replace, '_README.md')
+                else:
+                    to_replace = path_split[-1]
+                    readme_path = file_path.replace(to_replace, "README.md")
+
+            if os.path.isfile(readme_path):
+                return True
+            error_message, error_code = Errors.missing_readme_file(caller)
+            if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                 suggested_fix=Errors.suggest_fix(self.file_path, cmd="generate-docs")):
+                return False
+            return True
         return True

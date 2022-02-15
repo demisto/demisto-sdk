@@ -205,7 +205,7 @@ class PackDependencies:
         return list(filter(lambda s: next(iter(s.values())).get('pack') == pack_id, items_list))
 
     @staticmethod
-    def _is_item_match(item_details: dict, base_condition: bool, exclude_ignored_dependencies: bool, marketplace: str) -> bool:
+    def _should_add_item_as_dependency(item_details: dict, base_condition: bool, exclude_ignored_dependencies: bool, marketplace: str) -> bool:
         """
         Whether the item matches the criteria:
             * matches the base condition.
@@ -269,11 +269,11 @@ class PackDependencies:
             item_id = list(item.keys())[0]
             item_details = list(item.values())[0]
 
-            if PackDependencies._is_item_match(item_details,
-                                               item_details.get('name', '') in items_names,
-                                               exclude_ignored_dependencies,
-                                               marketplace,
-                                               ):
+            if PackDependencies._should_add_item_as_dependency(item_details,
+                                                               item_details.get('name', '') in items_names,
+                                                               exclude_ignored_dependencies,
+                                                               marketplace,
+                                                               ):
                 pack_name = item_details.get('pack')
                 pack_names.add(pack_name)
                 packs_and_items_dict.setdefault(pack_name, []).append((item_type, item_id))
@@ -333,11 +333,11 @@ class PackDependencies:
                 if item_type == 'incidentfield':
                     is_item_id_match = is_item_id_match or set(item_possible_ids).intersection(id_set_item_aliases)
 
-                if PackDependencies._is_item_match(item_details,
-                                                   is_item_id_match,
-                                                   exclude_ignored_dependencies,
-                                                   marketplace,
-                                                   ):
+                if PackDependencies._should_add_item_as_dependency(item_details,
+                                                                   is_item_id_match,
+                                                                   exclude_ignored_dependencies,
+                                                                   marketplace,
+                                                                   ):
                     pack_name = item_details.get('pack')
                     pack_names.add(pack_name)
                     packs_and_items_dict.setdefault(pack_name, []).extend([(item_type, item_id)])
@@ -370,11 +370,11 @@ class PackDependencies:
             item_id = list(item.keys())[0]
             item_details = list(item.values())[0]
 
-            if PackDependencies._is_item_match(item_details,
-                                               command in item_details.get('commands', []),
-                                               exclude_ignored_dependencies,
-                                               marketplace,
-                                               ):
+            if PackDependencies._should_add_item_as_dependency(item_details,
+                                                               command in item_details.get('commands', []),
+                                                               exclude_ignored_dependencies,
+                                                               marketplace,
+                                                               ):
                 pack_name = item_details.get('pack')
                 pack_names.add(pack_name)
                 packs_and_items_dict.setdefault(pack_name, []).extend([('integration', item_id)])

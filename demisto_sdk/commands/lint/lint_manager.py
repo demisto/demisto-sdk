@@ -94,7 +94,7 @@ class LintManager:
                 json_file_path = os.path.join(json_file_path, 'lint_outputs.json')
         if failed_unit_tests_file:
             if os.path.isdir(failed_unit_tests_file):
-                failed_unit_tests_file = os.path.join(failed_unit_tests_file, 'failed_unit_tests.txt')
+                failed_unit_tests_file = os.path.join(failed_unit_tests_file, 'failed_unit_tests.json')
         self.failed_unit_tests_file = failed_unit_tests_file
         self.json_file_path = json_file_path
         self.linters_error_list: list = []
@@ -652,14 +652,16 @@ class LintManager:
                 for image in pkgs_status[fail_pack]["images"]:
                     tests = image.get("pytest_json", {}).get("report", {}).get("tests")
                     if tests:
+                        failing_unit_tests_dict: dict = {}
                         for test_case in tests:
                             if test_case.get("call", {}).get("outcome") == "failed":
                                 name = re.sub(pattern=r"\[.*\]",
                                               repl="",
                                               string=test_case.get("name"))
-                                if self.failed_unit_tests_file:
-                                    with open(self.failed_unit_tests_file, 'a') as f:
-                                        f.write(name + '\n')
+                                tmp = name.split('::')
+                                test_file_name = tmp[0]
+                                failing_unit_test = tmp[1]
+                                failing_unit_tests_dict.get(test_file_name, []).append(failing_unit_test)
                                 print(wrapper_test.fill(name))
                                 if test_case.get("call", {}).get("longrepr"):
                                     print(wrapper_docker_image.fill(image['image']))
@@ -670,6 +672,9 @@ class LintManager:
                                         else:
                                             print(wrapper_sec_error.fill(test_case.get("call", {}).get("longrepr")[i]))
                                     print('\n')
+                        if self.failed_unit_tests_file:
+                            with open(self.failed_unit_tests_file, 'a') as f:
+                                json.dump(failing_unit_tests_dict, f)
                     else:
                         print(wrapper_docker_image.fill(image['image']))
                         errors = image.get("pytest_errors", {})

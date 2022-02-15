@@ -661,7 +661,7 @@ class LintManager:
                                 tmp = name.split('::')
                                 test_file_name = tmp[0]
                                 failing_unit_test = tmp[1]
-                                failing_unit_tests_dict.get(test_file_name, []).append(failing_unit_test)
+                                failing_unit_tests_dict.setdefault(test_file_name, []).append(failing_unit_test)
                                 print(wrapper_test.fill(name))
                                 if test_case.get("call", {}).get("longrepr"):
                                     print(wrapper_docker_image.fill(image['image']))

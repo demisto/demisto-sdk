@@ -1284,7 +1284,7 @@ class TestIncidentFields:
         assert 'toversion' in result.keys()
         assert 'incident_types' in result.keys()
         assert 'scripts' in result.keys()
-        assert 'Aliases' in result.keys()
+        assert 'aliases' in result.keys()
 
     @staticmethod
     def test_process_incident_fields_with_alternative_fields(mocker):

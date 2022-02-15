@@ -8,6 +8,7 @@ from click.testing import CliRunner
 from git import GitCommandError
 
 from demisto_sdk.__main__ import main
+from TestSuite.pack import Pack
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (PACK_METADATA_DESC,
                                                    PACK_METADATA_SUPPORT,
@@ -776,3 +777,11 @@ class TestPackUniqueFilesValidator:
             assert not res
             assert f'Partners must provide a non-empty author image under the path {author_image_path}.' in \
                    self.validator.get_errors()
+
+    def test_is_right_version(self,repo, pack: Pack):
+        pack = repo.create_pack('MyPack')
+        self.validator.metadata_content = {"currentVersion": "1.0.1"}
+        self.validator.pack_path = pack.path
+        pack.release_notes = ["1_0_1.md"]
+        res = self.validator._is_right_version()
+        assert res == True

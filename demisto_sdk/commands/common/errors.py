@@ -285,6 +285,7 @@ ERROR_CODE = {
     "required_pack_file_does_not_exist": {'code': "PA128", 'ui_applicable': False, 'related_field': ''},
     "pack_metadata_missing_categories": {'code': "PA129", 'ui_applicable': False, 'related_field': ''},
     "wrong_version_format": {'code': "PA130", 'ui_applicable': False, 'related_field': ''},
+    "pack_metadata_version_diff_from_rn": {'code': "PA131", 'ui_applicable': False, 'related_field': ''},
 
     # PB - Playbooks
     "playbook_cant_have_rolename": {'code': "PB100", 'ui_applicable': True, 'related_field': 'rolename'},
@@ -2149,3 +2150,10 @@ class Errors:
     @error_code_decorator
     def wrong_version_format():
         return 'Pack metadata version format is not valid. Please fill in a valid format (example: 0.0.0)'
+
+    @staticmethod
+    @error_code_decorator
+    def pack_metadata_version_diff_from_rn(rn_version, pack_metadata_version):
+        return f'There is a difference between the version in the pack metadata' \
+               f'file and the version of the latest release note.\n expected pack metadata to be {rn_version} '\
+               f'instead found {pack_metadata_version}.'    

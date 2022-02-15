@@ -5,6 +5,7 @@ import io
 import json
 import os
 import re
+import glob
 from datetime import datetime
 from distutils.version import LooseVersion
 from pathlib import Path
@@ -128,6 +129,19 @@ class PackUniqueFilesValidator(BaseValidator):
     def _get_pack_file_path(self, file_name=''):
         """Returns the full file path to pack's file"""
         return os.path.join(self.pack_path, file_name)
+    
+    def _get_pack_latest_rn_version(self):
+        """Returns the version of the latest release note in the Pack"""
+        try:
+            path = os.path.join(self.pack_path, "ReleaseNotes")
+            list_of_files = glob.glob(path + '/*') # * means all if need specific format then *.csv
+            latest_rn_path =  max(list_of_files, key=os.path.getctime)
+        except:
+            self._add_error(Errors.missing_release_notes_for_pack(self.pack), self.pack)
+            return False        
+        rn_name = latest_rn_path[latest_rn_path.rindex('/') + 1:latest_rn_path.rindex('.')]
+        return rn_name.replace('_','.')
+        
 
     def _is_pack_file_exists(self, file_name: str, is_required: bool = False):
         """
@@ -287,6 +301,7 @@ class PackUniqueFilesValidator(BaseValidator):
             self._is_pack_meta_file_structure_valid(),
             self._is_valid_contributor_pack_support_details(),
             self._is_approved_usecases(),
+            self._is_right_version(),
             self._is_approved_tags(),
             self._is_price_changed(),
             self._is_valid_support_type(),
@@ -539,6 +554,24 @@ class PackUniqueFilesValidator(BaseValidator):
         except (ValueError, TypeError):
             if self._add_error(Errors.pack_metadata_non_approved_tags(non_approved_tags), self.pack_meta_file):
                 return False
+        return True
+
+    def _is_right_version(self):
+        """Checks whether the currentVersion field in the pack metadata match the version of the latest release note.
+
+        Return:
+             bool: True if the versions are match, otherwise False
+        """
+        metadata_file_path = self._get_pack_file_path(self.pack_meta_file)
+        current_meta_file_content = get_json(metadata_file_path)
+        current_version = current_meta_file_content.get('currentVersion', '0.0.0')
+        rn_version = self._get_pack_latest_rn_version()
+        if not rn_version:
+            return False
+        if LooseVersion(rn_version) == LooseVersion(current_version):
+            return True
+        elif self._add_error(Errors.pack_metadata_version_diff_from_rn(rn_version, current_version), metadata_file_path):
+            return False
         return True
 
     def _contains_use_case(self):

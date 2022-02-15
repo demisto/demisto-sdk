@@ -162,6 +162,7 @@ ERROR_CODE = {
     "invalid_image_name": {'code': "IM107", 'ui_applicable': False, 'related_field': 'image'},
     "image_is_empty": {'code': "IM108", 'ui_applicable': True, 'related_field': 'image'},
     "author_image_is_missing": {'code': "IM109", 'ui_applicable': True, 'related_field': 'image'},
+    "invalid_image_name_or_location": {'code': "IM110", 'ui_applicable': True, 'related_field': 'image'},
 
     # IN - Integrations
     "wrong_display_name": {'code': "IN100", 'ui_applicable': True, 'related_field': '<parameter-name>.display'},
@@ -337,6 +338,7 @@ ERROR_CODE = {
     "added_release_notes_for_new_pack": {'code': "RN108", 'ui_applicable': False, 'related_field': ''},
     "modified_existing_release_notes": {'code': "RN109", 'ui_applicable': False, 'related_field': ''},
     "release_notes_config_file_missing_release_notes": {'code': "RN110", 'ui_applicable': False, 'related_field': ''},
+    "release_notes_docker_image_not_match_yaml": {'code': "RN111", 'ui_applicable': False, 'related_field': ''},
 
     # RP - Reputations (Indicator Types)
     "wrong_version_reputations": {'code': "RP100", 'ui_applicable': False, 'related_field': 'version'},
@@ -1036,6 +1038,17 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def invalid_image_name_or_location():
+        return "The image file name or location is invalid\n" \
+               "If you're trying to add an integration image, make sure the image name looks like the following:<integration_name>_image.png and located in" \
+               "your integration folder: Packs/<MyPack>/Integrations/<MyIntegration>. For more info: " \
+               "https://xsoar.pan.dev/docs/integrations/package-dir#the-directory-structure-is-as-follows.\n" \
+               "If you're trying to add author image, make sure the image name looks like the following: Author_image.png and located in the pack root path." \
+               "For more info: https://xsoar.pan.dev/docs/packs/packs-format#author_imagepng\n" \
+               "Otherwise, any other image should be located under the 'Doc_files' dir."
+
+    @staticmethod
+    @error_code_decorator
     def description_missing_from_conf_json(problematic_instances):
         return "Those instances don't have description:\n{}".format('\n'.join(problematic_instances))
 
@@ -1146,6 +1159,17 @@ class Errors:
     def release_notes_config_file_missing_release_notes(config_rn_path: str):
         return f'Release notes config file {config_rn_path} is missing corresponding release notes file.\n' \
                f'''Please add release notes file: {config_rn_path.replace('json', 'md')}'''
+
+    @staticmethod
+    @error_code_decorator
+    def release_notes_docker_image_not_match_yaml(rn_file_name, un_matching_files_list: list, pack_path):
+        message_to_return = f'The {rn_file_name} release notes file contains incompatible Docker images:\n'
+        for un_matching_file in un_matching_files_list:
+            message_to_return += f"- {un_matching_file.get('name')}: Release notes file has dockerimage: " \
+                                 f"{un_matching_file.get('rn_version')} but the YML file has dockerimage: " \
+                                 f"{un_matching_file.get('yml_version')}\n"
+        message_to_return += "To fix this please run: 'demisto-sdk update-release-notes -i {pack_path}'"
+        return message_to_return
 
     @staticmethod
     @error_code_decorator
@@ -2115,11 +2139,6 @@ class Errors:
     def runas_is_dbotrole():
         return 'The runas value is DBotRole, it may cause access and exposure of sensitive data. ' \
                'Please consider changing it.'
-
-    @staticmethod
-    @error_code_decorator
-    def invalid_yml_file(error):
-        return f'There is problem with the yml file. The error: {error}'
 
     @staticmethod
     @error_code_decorator

@@ -108,11 +108,11 @@ class ArtifactsManager:
         self.exit_code = EX_SUCCESS
 
         if self.filter_by_id_set:
-            packs_section_from_id_set = self.id_set.get('Packs', {})
+            self.packs_section_from_id_set = self.id_set.get('Packs', {})
             if self.pack_names == ['all']:
-                self.pack_names = list(packs_section_from_id_set.keys())
+                self.pack_names = list(self.packs_section_from_id_set.keys())
             else:
-                self.pack_names = list(set(packs_section_from_id_set.keys()).intersection(set(self.pack_names)))
+                self.pack_names = list(set(self.packs_section_from_id_set.keys()).intersection(set(self.pack_names)))
 
     def create_content_artifacts(self) -> int:
         with ArtifactsDirsHandler(self), ProcessPoolHandler(self) as pool:
@@ -686,6 +686,9 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
     for job in pack.jobs:
         content_items_handler.handle_content_item(job)
         pack_report += dump_pack_conditionally(artifact_manager, job)
+    for layout in pack.layouts:
+        content_items_handler.handle_content_item(layout)
+        pack_report += dump_pack_conditionally(artifact_manager, layout)
     for list_item in pack.lists:
         content_items_handler.handle_content_item(list_item)
         pack_report += dump_pack_conditionally(artifact_manager, list_item)
@@ -721,9 +724,6 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
         for generic_field in pack.generic_fields:
             content_items_handler.handle_content_item(generic_field)
             pack_report += dump_pack_conditionally(artifact_manager, generic_field)
-        for layout in pack.layouts:
-            content_items_handler.handle_content_item(layout)
-            pack_report += dump_pack_conditionally(artifact_manager, layout)
         for pre_process_rule in pack.pre_process_rules:
             content_items_handler.handle_content_item(pre_process_rule)
             pack_report += dump_pack_conditionally(artifact_manager, pre_process_rule)

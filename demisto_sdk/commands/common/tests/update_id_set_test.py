@@ -22,12 +22,13 @@ from demisto_sdk.commands.common.update_id_set import (
     get_filters_and_transformers_from_playbook, get_general_data,
     get_generic_field_data, get_generic_module_data, get_generic_type_data,
     get_incident_fields_by_playbook_input, get_incident_type_data,
-    get_indicator_type_data, get_layout_data, get_layoutscontainer_data,
-    get_mapper_data, get_pack_metadata_data, get_playbook_data,
-    get_report_data, get_script_data, get_values_for_keys_recursively,
-    get_widget_data, has_duplicate, merge_id_sets, process_general_items,
-    process_incident_fields, process_integration, process_jobs, process_script,
-    re_create_id_set, should_skip_item_by_mp)
+    get_indicator_type_data, get_layout_data, get_mapper_data,
+    get_pack_metadata_data, get_playbook_data, get_report_data,
+    get_script_data, get_values_for_keys_recursively, get_widget_data,
+    has_duplicate, merge_id_sets, process_general_items,
+    process_incident_fields, process_integration, process_jobs,
+    process_layoutscontainers, process_script, re_create_id_set,
+    should_skip_item_by_mp)
 from TestSuite.utils import IsEqualFunctions
 
 TESTS_DIR = f'{git_path()}/demisto_sdk/tests'
@@ -646,6 +647,36 @@ class TestScripts:
         assert IsEqualFunctions.is_dicts_equal(returned_data, const_data)
 
     @staticmethod
+    @pytest.mark.parametrize(argnames='code', argvalues=[
+        "executeCommand('dummy_command', {'key': 'test'});",
+        "execute_command('dummy_command', {'key': 'test'});",
+        "demisto.executeCommand('dummy_command', {'key': 'test'});",
+    ])
+    def test_get_script_data_script_executions(repo, code):
+        """
+        Given
+            - A script file which contains different kinds of execute_command call.
+
+        When
+            - parsing scripts files
+
+        Then
+            - make sure the script_executions was parsed successfully.
+        """
+        pack = repo.create_pack(name='DummyPack')
+        script = pack.create_script(name='DummyScript', code=code, yml={
+            'script': code,
+            'type': 'python',
+            'commonfields': {
+                'id': 'DummyScript'
+            }})
+        res, _ = process_script(script.path, packs={'DummyPack': {}}, marketplace=MarketplaceVersions.XSOAR.value, print_logs=False)
+        data = res[0]
+
+        script_executions = data.get('DummyScript', {}).get('script_executions')
+        assert script_executions == ['dummy_command']
+
+    @staticmethod
     def test_process_script__sanity_package(mocker):
         """
         Given
@@ -1150,8 +1181,7 @@ class TestLayouts:
                                  'test_data', 'layoutscontainer-to-test.json')
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
 
-        res, _ = process_general_items(test_file, {'DummyPack': {}}, MarketplaceVersions.XSOAR.value,
-                                       True, (FileType.LAYOUTS_CONTAINER,), get_layoutscontainer_data)
+        res, _ = process_layoutscontainers(test_file, {'DummyPack': {}}, MarketplaceVersions.XSOAR.value, True)
         assert len(res) == 1
         result = res[0]
         result = result.get('layouts_container_test')
@@ -1163,6 +1193,68 @@ class TestLayouts:
         assert 'file_path' in result.keys()
         assert 'incident_and_indicator_types' in result.keys()
         assert 'incident_and_indicator_fields' in result.keys()
+
+    LAYOUT_TYPE_TO_MARKETPLACE_TESTS = [
+        ('indicator', MarketplaceVersions.XSOAR.value, False),
+        ('indicator', MarketplaceVersions.MarketplaceV2.value, False),
+        ('incident', MarketplaceVersions.XSOAR.value, False),
+        ('incident', MarketplaceVersions.MarketplaceV2.value, True),
+    ]
+
+    @staticmethod
+    @pytest.mark.parametrize('layout_type, marketplace, should_exclude', LAYOUT_TYPE_TO_MARKETPLACE_TESTS)
+    def test_process_layoutscontainer__excluding_from_marketplace_by_layout_type(layout_type, marketplace, should_exclude, repo):
+        """
+        Given
+            - A layoutcontainer of layout_type (incident/indicator)
+        When
+            - parsing a layoutcontainer file.
+        Then
+            - exclude incident layout from marketplace v2
+            - accept all other cases
+        """
+        pack = repo.create_pack(name='DummyPack')
+        layout = pack.create_layoutcontainer('Reut', {
+            'id': 'Reut',
+            'group': layout_type,
+            'detailsV2': {},
+            'marketplaces': ['xsoar', 'marketplacev2'],
+        })
+
+        res, excluded_items = process_layoutscontainers(layout.path, {'DummyPack': {}}, marketplace, True)
+
+        if should_exclude:
+            assert not res
+            assert excluded_items
+            assert 'DummyPack' in excluded_items
+            assert ('layoutscontainer', 'Reut') in excluded_items['DummyPack']
+        else:
+            assert len(res) == 1
+            assert res[0].get('Reut')
+            assert not excluded_items
+
+    @staticmethod
+    def test_process_layoutscontainer__marketplace_mismatch(repo):
+        """
+        Given
+            - An indicator layoutcontainer
+        When
+            - parsing a layoutcontainer file when there is a mismatch between the item's marketplaces and the current run marketplace.
+        Then
+            - return empty list
+        """
+        pack = repo.create_pack(name='DummyPack')
+        layout = pack.create_layoutcontainer('Itay', {
+            'id': 'Itay',
+            'group': 'indicator',
+            'detailsV2': {},
+            'marketplaces': ['marketplacev2'],
+        })
+        res, excluded_items = process_layoutscontainers(layout.path, {'DummyPack': {}}, MarketplaceVersions.XSOAR.value, True)
+        assert res == []
+        assert excluded_items
+        assert 'DummyPack' in excluded_items
+        assert ('layoutscontainer', 'Itay') in excluded_items['DummyPack']
 
 
 class TestIncidentFields:
@@ -1192,6 +1284,7 @@ class TestIncidentFields:
         assert 'toversion' in result.keys()
         assert 'incident_types' in result.keys()
         assert 'scripts' in result.keys()
+        assert 'aliases' in result.keys()
 
     @staticmethod
     def test_process_incident_fields_with_alternative_fields(mocker):

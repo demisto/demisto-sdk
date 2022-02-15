@@ -563,7 +563,7 @@ class PackUniqueFilesValidator(BaseValidator):
              bool: True if the versions are match, otherwise False
         """
         metadata_file_path = self._get_pack_file_path(self.pack_meta_file)
-        current_meta_file_content = get_json(metadata_file_path)
+        current_meta_file_content = self.metadata_content
         current_version = current_meta_file_content.get('currentVersion', '0.0.0')
         rn_version = self._get_pack_latest_rn_version()
         if not rn_version:

@@ -2141,11 +2141,6 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_yml_file(error):
-        return f'There is problem with the yml file. The error: {error}'
-
-    @staticmethod
-    @error_code_decorator
     def changed_pack_name(original_name):
         return f'Pack folder names cannot be changed, please rename it back to {original_name}.' \
                f' If you wish to rename the pack, you can edit the name field in pack_metadata.json,' \

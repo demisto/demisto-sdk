@@ -140,7 +140,7 @@ class PackUniqueFilesValidator(BaseValidator):
             return False
         if list_of_versions:
             list_of_versions.sort(key=LooseVersion)
-            return list_of_versions[0]
+            return list_of_versions[-1]
         else:
             return False
 

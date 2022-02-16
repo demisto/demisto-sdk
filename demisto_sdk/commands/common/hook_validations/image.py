@@ -8,7 +8,7 @@ from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.tools import get_yaml, os, re
-from PIL import Image
+import imagesize
 
 
 class ImageValidator(BaseValidator):
@@ -80,12 +80,15 @@ class ImageValidator(BaseValidator):
         """
         if re.match(IMAGE_REGEX, self.file_path, re.IGNORECASE):
             image_size = os.path.getsize(self.file_path)
-            width, height = Image.open(self.file_path).size
-            if image_size > maximum_size or (width, height) != (allowed_width, allowed_height):  # disable-secrets-detection
-                error_message, error_code = Errors.invalid_logo()
+            if image_size > maximum_size:  # disable-secrets-detection
+                error_message, error_code = Errors.image_too_large()
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self._is_valid = False
-
+            width, height = imagesize.get(self.file_path)
+            if (width, height) != (allowed_width, allowed_height):
+                error_message, error_code = Errors.invalid_image_dimensions()
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    self._is_valid = False
         else:
             data_dictionary = get_yaml(self.file_path)
 
@@ -95,7 +98,7 @@ class ImageValidator(BaseValidator):
             image = data_dictionary.get('image', '')
             image_size = int(((len(image) - 22) / 4) * 3)
             if image_size > self.IMAGE_MAX_SIZE:  # disable-secrets-detection
-                error_message, error_code = Errors.invalid_logo()
+                error_message, error_code = Errors.image_too_large()
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self._is_valid = False
 

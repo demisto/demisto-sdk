@@ -131,10 +131,9 @@ jobs:
         - run:
             name: Pre-commit
             command: |
-              . .tox/py37/bin/activate
+              pip install pre-commit
               pre-commit --version
               pre-commit run -a
-              deactivate
   checkout-content:
       docker:
         - image: circleci/python:3.8.3-buster-node

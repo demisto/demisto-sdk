@@ -470,7 +470,7 @@ def get_last_remote_release_version():
     return ''
 
 
-@lru_cache()
+@lru_cache(maxsize=10000)
 def get_file(file_path, type_of_file, clear_cache=False):
     if clear_cache:
         get_file.cache_clear()
@@ -500,7 +500,7 @@ def get_yaml(file_path, cache_clear=False):
     return get_file(file_path, 'yml', clear_cache=cache_clear)
 
 
-@lru_cache()
+@lru_cache(maxsize=10000)
 def get_ryaml(file_path: str, cache_clear: bool = False) -> dict:
     """
     Get yml file contents using ruaml

@@ -367,6 +367,8 @@ class ContentEntityValidator(BaseValidator):
                 else:
                     to_replace = path_split[-1]
                     readme_path = file_path.replace(to_replace, "README.md")
+            else:
+                return True
 
             if os.path.isfile(readme_path):
                 return True

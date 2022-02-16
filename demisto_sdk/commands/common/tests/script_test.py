@@ -656,11 +656,11 @@ class TestScriptValidator:
                (This check is for backward compatibility)
 
        Then:
-           - Ensure readme exists validation fails
-           - Ensure readme exists validation fails
-           - Ensure readme exists validation passes
-           - Ensure readme exists validation passes
-           - Ensure readme exists validation passes
+           - Ensure readme exists and validation fails
+           - Ensure readme exists and validation fails
+           - Ensure readme exists and validation passes
+           - Ensure readme exists and validation passes
+           - Ensure readme exists and validation passes
         """
         scripts_validator = get_validator(
             file_path=os.path.join(f'{git_path()}', 'demisto_sdk/tests/test_files/Readme_exists', path))

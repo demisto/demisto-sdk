@@ -9,11 +9,13 @@ from typing import Callable, Generator, Optional, Tuple
 import pytest
 from _pytest.monkeypatch import MonkeyPatch
 from click.testing import CliRunner
-from ruamel import yaml
 
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.constants import AUTHOR_IMAGE_FILE_NAME
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from TestSuite.test_tools import ChangeCWD
+
+yaml = YAML_Handler()
 
 
 class TestError(BaseException):
@@ -267,10 +269,10 @@ def modify_entity(content_repo: ContentGitRepo, monkeypatch: MonkeyPatch):
     runner = CliRunner(mix_stderr=False)
     monkeypatch.chdir(content_repo.content / "Packs" / "HelloWorld" / "Scripts" / "HelloWorldScript")
     # Modify the entity
-    script = yaml.safe_load(open("./HelloWorldScript.yml"))
+    script = yaml.load(open("./HelloWorldScript.yml"))
     script['args'][0]["description"] = "new description"
 
-    yaml.safe_dump(script, open("./HelloWorldScript.yml", "w"))
+    yaml.dump(script, open("./HelloWorldScript.yml", "w"))
     content_repo.run_command("git add .")
     monkeypatch.chdir(content_repo.content)
     res = runner.invoke(main, "update-release-notes -i Packs/HelloWorld -u revision")

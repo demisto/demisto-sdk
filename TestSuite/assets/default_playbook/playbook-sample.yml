@@ -45,10 +45,10 @@ tasks:
       iscommand: false
       brand: ""
     scriptarguments:
-      all:
-        simple: "yes"
       index: {}
-      key: {}
+      key:
+        simple:
+          "ilan"
       keysToKeep: {}
       subplaybook: {}
     separatecontext: false

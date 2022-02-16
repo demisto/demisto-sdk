@@ -7,8 +7,6 @@ from distutils.version import LooseVersion
 from typing import Dict, List
 
 import click
-import yaml
-import yamlordereddictloader
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
@@ -23,11 +21,14 @@ from demisto_sdk.commands.common.constants import (
     SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR, XSOAR_AUTHOR, XSOAR_SUPPORT,
     XSOAR_SUPPORT_URL)
 from demisto_sdk.commands.common.git_content_config import GitContentConfig
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                get_common_server_path,
                                                get_pack_name, print_error,
                                                print_v, print_warning)
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
+
+yaml = YAML_Handler()
 
 
 def extract_values_from_nested_dict_to_a_set(given_dictionary: dict, return_set: set):
@@ -553,7 +554,7 @@ class Initiator:
             integration (bool): Indicates if integration yml is being reformatted.
         """
         with open(os.path.join(self.full_output_path, f"{current_suffix}.yml")) as f:
-            yml_dict = yaml.load(f, Loader=yamlordereddictloader.SafeLoader)
+            yml_dict = yaml.load(f)
         yml_dict["commonfields"]["id"] = self.id
         yml_dict['name'] = self.id
 
@@ -571,11 +572,7 @@ class Initiator:
                 options_list=INTEGRATION_CATEGORIES, option_message="\nIntegration category options: \n")
 
         with open(os.path.join(self.full_output_path, f"{self.dir_name}.yml"), 'w') as f:
-            yaml.dump(
-                yml_dict,
-                f,
-                Dumper=yamlordereddictloader.SafeDumper,
-                default_flow_style=False)
+            yaml.dump(yml_dict, f)
 
         os.remove(os.path.join(self.full_output_path, f"{current_suffix}.yml"))
 

@@ -7,16 +7,17 @@ import shutil
 
 import pytest
 import requests
-import yaml
-import yamlordereddictloader
 from click.testing import CliRunner
 from mock import patch
 
 from demisto_sdk.__main__ import main
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
 from TestSuite.test_tools import ChangeCWD
+
+yaml = YAML_Handler()
 
 TEST_VALID_CODE = '''import demistomock as demisto
 from CommonServerPython import *
@@ -267,9 +268,9 @@ def test_insert_image_to_yml():
             image_data = unifier.image_prefix + base64.b64encode(image_data).decode('utf-8')
         with open(f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB.yml", mode="r", encoding="utf-8") \
                 as yml_file:
-            yml_unified_test = yaml.load(yml_file, Loader=yamlordereddictloader.SafeLoader)
+            yml_unified_test = yaml.load(yml_file)
         with open(f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB.yml", "r") as yml:
-            yml_data = yaml.safe_load(yml)
+            yml_data = yaml.load(yml)
         yml_unified, found_img_path = unifier.insert_image_to_yml(yml_data, yml_unified_test)
         yml_unified_test['image'] = image_data
         assert found_img_path == f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB_image.png"
@@ -292,7 +293,7 @@ def test_insert_image_to_yml_without_image(tmp_path):
     integration_dir.mkdir()
     integration_yml = integration_dir / 'SomeIntegration.yml'
     integration_obj = {'id': 'SomeIntegration'}
-    yaml.dump(integration_obj, integration_yml.open('w'), default_flow_style=False)
+    yaml.dump(integration_obj, integration_yml.open('w'))
     unifier = YmlUnifier(str(integration_dir))
     yml_unified, found_img_path = unifier.insert_image_to_yml(integration_obj, integration_obj)
     assert yml_unified == integration_obj
@@ -368,7 +369,7 @@ def test_insert_script_to_yml(package_path, dir_name, file_path):
         unifier.dir_name = dir_name
         unifier.is_script_package = dir_name == 'Scripts'
         with open(file_path + ".yml", "r") as yml:
-            test_yml_data = yaml.safe_load(yml)
+            test_yml_data = yaml.load(yml)
 
         test_yml_unified = copy.deepcopy(test_yml_data)
 
@@ -402,7 +403,7 @@ def test_insert_script_to_yml_exceptions(package_path, dir_name, file_path):
         unifier.dir_name = dir_name
         unifier.is_script_package = dir_name == 'Scripts'
         with open(file_path + ".yml", "r") as yml:
-            test_yml_data = yaml.safe_load(yml)
+            test_yml_data = yaml.load(yml)
         if dir_name == "Scripts":
             test_yml_data['script'] = 'blah'
         else:

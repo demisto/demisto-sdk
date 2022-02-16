@@ -22,9 +22,7 @@ from demisto_sdk.commands.format.format_constants import (
     VERSION_6_0_0)
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
-ryaml = YAML()
-ryaml.allow_duplicate_keys = True
-ryaml.preserve_quotes = True  # type: ignore
+yaml = YAML_Handler(allow_duplicate_keys=True)
 
 
 class BaseUpdate:
@@ -54,7 +52,6 @@ class BaseUpdate:
                  assume_yes: bool = False,
                  interactive: bool = True,
                  deprecate: bool = False,
-                 clear_cache: bool = False,
                  **kwargs):
         self.source_file = input
         self.output_file = self.set_output_file_path(output)
@@ -76,6 +73,7 @@ class BaseUpdate:
         if not self.source_file:
             raise Exception('Please provide <source path>, <optional - destination path>.')
         try:
+            self.data, self.file_type = get_dict_from_file(self.source_file)
             self.data, self.file_type = get_dict_from_file(self.source_file, use_ryaml=True, clear_cache=clear_cache)
         except Exception:
             raise Exception(F'Provided file {self.source_file} is not a valid file.')

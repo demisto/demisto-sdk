@@ -8,6 +8,7 @@ import re
 import shlex
 import sys
 import urllib.parse
+from collections import OrderedDict
 from concurrent.futures import as_completed
 from configparser import ConfigParser, MissingSectionHeaderError
 from contextlib import contextmanager
@@ -16,8 +17,7 @@ from enum import Enum
 from functools import lru_cache, partial
 from pathlib import Path, PosixPath
 from subprocess import DEVNULL, PIPE, Popen, check_output
-from typing import (Callable, Dict, List, Match, Optional, Set, Tuple, Type,
-                    Union)
+from typing import Callable, Dict, List, Match, Optional, Tuple, Type, Union
 
 import click
 import colorama
@@ -26,11 +26,8 @@ import git
 import giturlparse
 import requests
 import urllib3
-import yaml
 from packaging.version import parse
 from pebble import ProcessFuture, ProcessPool
-from ruamel.yaml import YAML
-from ruamel.yaml.comments import CommentedMap, CommentedSeq
 
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK, CLASSIFIERS_DIR,
@@ -49,16 +46,15 @@ from demisto_sdk.commands.common.constants import (
     XSOAR_CONFIG_FILE, FileType, FileTypeToIDSetKeys, GitContentConfig,
     IdSetKeys, MarketplaceVersions, urljoin)
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.handlers import YAML_Handler
+
+logger = logging.getLogger("demisto-sdk")
+yaml = YAML_Handler()
 
 urllib3.disable_warnings()
 
 # inialize color palette
 colorama.init()
-
-logger = logging.getLogger("demisto-sdk")
-ryaml = YAML()
-ryaml.preserve_quotes = True
-ryaml.allow_duplicate_keys = True
 
 
 class LOG_COLORS:
@@ -74,23 +70,6 @@ LOG_VERBOSE = False
 LAYOUT_CONTAINER_FIELDS = {'details', 'detailsV2', 'edit', 'close', 'mobile', 'quickView', 'indicatorsQuickView',
                            'indicatorsDetails'}
 SDK_PYPI_VERSION = r'https://pypi.org/pypi/demisto-sdk/json'
-
-
-class XsoarLoader(yaml.SafeLoader):
-    """
-    New yaml loader based on SafeLoader which can handle the XSOAR related changes in yml.
-    """
-
-    def reference(self, node):
-        """
-        !reference - found in gitlab ci files.
-        handle !reference tag by turning its line into a string.
-        """
-        build_string = '!reference ' + str(self.construct_sequence(node))
-        return self.construct_yaml_str(yaml.ScalarNode(tag='!reference', value=build_string))
-
-
-XsoarLoader.add_constructor('!reference', XsoarLoader.reference)
 
 
 def set_log_verbose(verbose: bool):
@@ -315,7 +294,7 @@ def get_remote_file(
     if full_file_path.endswith('json'):
         details = res.json() if res.ok else json.loads(local_content)
     elif full_file_path.endswith('yml'):
-        details = ryaml.load(file_content)
+        details = yaml.load(file_content)
     # if neither yml nor json then probably a CHANGELOG or README file.
     else:
         details = {}
@@ -372,7 +351,7 @@ def filter_packagify_changes(modified_files, added_files, removed_files, tag='ma
                 updated_added_files.add(file_path)
                 continue
             with open(file_path) as f:
-                details = yaml.safe_load(f.read())
+                details = yaml.load(f)
 
             uniq_identifier = '_'.join([
                 details['name'],
@@ -474,16 +453,17 @@ def get_last_remote_release_version():
 def get_file(file_path, type_of_file, clear_cache=False):
     if clear_cache:
         get_file.cache_clear()
+    file_path = Path(file_path)
     data_dictionary = None
-    with open(os.path.expanduser(file_path), mode="r", encoding="utf8") as f:
-        if file_path.endswith(type_of_file):
+    with open(file_path.expanduser(), mode="r", encoding="utf8") as f:
+        if type_of_file in file_path.suffix:
             read_file = f.read()
             replaced = read_file.replace("simple: =", "simple: '='")
             # revert str to stream for loader
             stream = io.StringIO(replaced)
             try:
                 if type_of_file in ('yml', '.yml'):
-                    data_dictionary = yaml.load(stream, Loader=XsoarLoader)
+                    data_dictionary = yaml.load(stream)
 
                 else:
                     data_dictionary = json.load(stream)
@@ -500,32 +480,8 @@ def get_yaml(file_path, cache_clear=False):
     return get_file(file_path, 'yml', clear_cache=cache_clear)
 
 
-@lru_cache(maxsize=10000)
-def get_ryaml(file_path: str, cache_clear: bool = False) -> dict:
-    """
-    Get yml file contents using ruaml
-
-    Args:
-        file_path (string): The file path
-        cache_clear (bool): wether to clear the cache
-    Returns:
-        dict. The yml contents
-    """
-    if cache_clear:
-        get_ryaml.cache_clear()
-    try:
-        with open(os.path.expanduser(file_path), 'r') as yf:
-            data = ryaml.load(yf)
-    except FileNotFoundError as e:
-        click.echo(f'File {file_path} not found. Error was: {str(e)}', nl=True)
-    except Exception as e:
-        click.echo(
-            "{} has a structure issue of file type yml. Error was: {}".format(file_path, str(e)), nl=True)
-    return data
-
-
-def get_json(file_path, cache_clear=False):
-    return get_file(file_path, 'json', clear_cache=cache_clear)
+def get_json(file_path):
+    return get_file(file_path, 'json')
 
 
 def get_script_or_integration_id(file_path):
@@ -1063,8 +1019,8 @@ def get_dict_from_file(path: str, use_ryaml: bool = False,
     try:
         if path:
             if path.endswith('.yml'):
-                if use_ryaml:
-                    return get_ryaml(path, cache_clear=clear_cache), 'yml'
+                return get_yaml(path), 'yml'
+            if use_ryaml:
                 return get_yaml(path, cache_clear=clear_cache), 'yml'
             elif path.endswith('.json'):
                 return get_json(path, cache_clear=clear_cache), 'json'

@@ -77,10 +77,12 @@ import sys
 from typing import Dict, Optional
 
 import dateparser
-import yaml
 
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
                                                print_error)
+
+yaml = YAML_Handler()
 
 
 def input_multiline():
@@ -204,7 +206,7 @@ def parse_json(data, command_name, prefix, verbose=False, interactive=False, des
     if return_object:
         return outputs
 
-    yaml_output = yaml.safe_dump(outputs, default_flow_style=False)
+    yaml_output = yaml.dumps(outputs, sort_keys=True)
     return yaml_output
 
 

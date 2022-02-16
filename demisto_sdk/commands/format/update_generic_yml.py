@@ -3,21 +3,19 @@ import os
 from typing import Dict, List, Optional
 
 import click
-from ruamel.yaml import YAML
 
 from demisto_sdk.commands.common.constants import (ENTITY_TYPE_TO_DIR,
                                                    INTEGRATION, PLAYBOOK,
                                                    TEST_PLAYBOOKS_DIR,
                                                    FileType)
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import (
     _get_file_id, find_type, get_entity_id_by_entity_type,
     get_not_registered_tests, get_scripts_and_commands_from_yml_data, get_yaml,
     is_uuid, listdir_fullpath)
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 
-ryaml = YAML()
-ryaml.allow_duplicate_keys = True
-ryaml.preserve_quotes = True  # type: ignore
+yaml = YAML_Handler()
 
 
 class BaseUpdateYML(BaseUpdate):
@@ -102,7 +100,7 @@ class BaseUpdateYML(BaseUpdate):
         if self.source_file != self.output_file and self.verbose:
             click.secho(f'Saving output YML file to {self.output_file} \n', fg='white')
         with open(self.output_file, 'w') as f:
-            ryaml.dump(self.data, f)  # ruamel preservers multilines
+            yaml.dump(self.data, f)  # ruamel preservers multilines
 
     def copy_tests_from_old_file(self):
         """Copy the tests key from old file if exists.

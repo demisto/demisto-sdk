@@ -14,6 +14,7 @@ from demisto_sdk.commands.generate_docs.generate_integration_doc import (
     get_command_examples)
 from demisto_sdk.commands.generate_docs.generate_script_doc import \
     generate_script_doc
+from TestSuite.pack import Pack
 
 FILES_PATH = os.path.normpath(os.path.join(__file__, git_path(), 'demisto_sdk', 'tests', 'test_files'))
 FAKE_ID_SET = get_json(os.path.join(FILES_PATH, 'fake_id_set.json'))
@@ -139,25 +140,36 @@ def test_generate_list_with_text_section():
     assert section == expected_section
 
 
-def test_generate_table_section_empty():
+TEST_TABLE_SECTION_EMPTY = [
+    ([], 'Script Data', 'No data found.', 'This is the metadata of the script.', ['## Script Data', '---', 'No data found.', '']),
+    ([], 'Script Data', '', '', ['']),
+    ([], 'Script Data', '', 'This is the metadata of the script.', [''])
+]
+
+
+@pytest.mark.parametrize('data, title, empty_message, text, expected_result', TEST_TABLE_SECTION_EMPTY)
+def test_generate_table_section_empty(data, title, empty_message, text, expected_result):
     """Unit test
     Given
-    - generate_table_section command
-    - script empty metadata
+    - Case 1: script empty metadata - an empty list instead of a list containing dicts with data to generate the tables from,
+    title - the table header, empty message to replace with the table if no data is given and text -
+    the text to add under the header if data is given.
+    - Case 2: script empty metadata, script title.
+    - Case 3: script empty metadata, script title, text.
     When
-    - running the command on the inputs
+    - running the generate_table_section command on the inputs
     Then
-    - Validate That the script metadata was created correctly.
+    - Validate That the section was created correctly.
+    - Case 1: Table section with title and empty_message instead of a table.
+    - Case 2: No section is created.
+    - Case 3: No section is created.
     """
     from demisto_sdk.commands.generate_docs.common import \
         generate_table_section
 
-    section = generate_table_section([], 'Script Data', 'No data found.', 'This is the metadata of the script.')
+    section = generate_table_section(data, title, empty_message, text)
 
-    expected_section = [
-        '## Script Data', '---', 'No data found.', '']
-
-    assert section == expected_section
+    assert section == expected_result
 
 
 def test_generate_table_section():
@@ -1084,3 +1096,41 @@ def test_disable_md_autolinks():
     res = disable_md_autolinks(big_str)
     assert 'http://' not in res
     assert res.count('https:<span>//</span>') == 8
+
+
+TEST_EMPTY_SCRIPTDATA_SECTION = [
+    ({'script': 'some info'}, ['']),
+    ({'subtype': 'python2', 'tags': []}, ['## Script data', '---', '', '| **Name** | **Description** |', '| --- | --- |', '| Script Type | python2 |', '']),
+    ({'tags': []}, ['']),
+    ({'fromversion': '6.0.0'}, ['## Script data', '---', '', '| **Name** | **Description** |', '| --- | --- |', '| Cortex XSOAR Version | 6.0.0 |', ''])
+]
+
+
+@pytest.mark.parametrize('yml_content, expected_result', TEST_EMPTY_SCRIPTDATA_SECTION)
+def test_missing_data_sections_when_generating_table_section(yml_content, expected_result, pack: Pack):
+    """Unit test
+    Given
+    - Case 1: yml with no relevant tags for 'get_script_info' function.
+    - Case 2: yml with 'subtype' section filled in and empty 'tags' section.
+    - Case 3: yml that contain empty 'tags' section.
+    - Case 4: yml that contain 'fromversion' section that is different from 'DEFAULT_CONTENT_ITEM_FROM_VERSION' (which is 0.0.0).
+    When
+    - running the get_script_info command on the inputs and then generate_table_section.
+    Then
+    - Validate That the generated table section was created correctly.
+    - Case 1: Empty table section.
+    - Case 2: Script data section with a title and a table containing information only about the script type.
+    - Case 3: Empty table section.
+    - Case 4: Script data section with a title and a table containing information only about the Cortex XSOAR Version.
+    """
+    from demisto_sdk.commands.generate_docs.common import \
+        generate_table_section
+    from demisto_sdk.commands.generate_docs.generate_script_doc import \
+        get_script_info
+
+    script_pack = pack.create_script()
+    script_pack.yml.write_dict(yml_content)
+
+    script_info = get_script_info(script_pack.yml.path)
+    section = generate_table_section(script_info, "Script data")
+    assert section == expected_result

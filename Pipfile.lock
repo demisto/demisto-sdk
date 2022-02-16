@@ -927,14 +927,6 @@
             "index": "pypi",
             "version": "==4.6.3"
         },
-        "pip": {
-            "hashes": [
-                "sha256:c146f331f0805c77017c6bb9740cec4a49a0d4582d0c3cc8244b057f83eca359",
-                "sha256:f29d589df8c8ab99c060e68ad294c4a9ed896624f6368c5349d70aa581b333d0"
-            ],
-            "markers": "python_version >= '3.7'",
-            "version": "==22.0.3"
-        },
         "pipenv": {
             "hashes": [
                 "sha256:3b80b4512934b9d8e8ce12c988394642ff96bb697680e5b092e59af503178327",
@@ -1439,7 +1431,7 @@
                 "sha256:e2cb6c6b5b604af38597403e9852872d7f534962ae2954c7f35efcb1ccacf4a4"
             ],
             "markers": "python_full_version >= '3.6.0'",
-            "version": "==2.1"
+            "version": "==2.1.0"
         },
         "ujson": {
             "hashes": [

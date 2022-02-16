@@ -13,8 +13,8 @@ from demisto_sdk.commands.common.constants import (PACK_METADATA_DESC,
                                                    PACK_METADATA_SUPPORT,
                                                    PACK_METADATA_TAGS,
                                                    PACK_METADATA_USE_CASES,
-                                                   PACKS_README_FILE_NAME,
                                                    PACKS_PACK_META_FILE_NAME,
+                                                   PACKS_README_FILE_NAME,
                                                    XSOAR_SUPPORT)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
@@ -808,6 +808,6 @@ class TestPackUniqueFilesValidator:
         self.validator.pack_path = pack.path
         self.validator.pack_meta_file = PACKS_PACK_META_FILE_NAME
         if create_rn:
-            pack.create_release_notes(version = rn_version)
+            pack.create_release_notes(version=rn_version)
         res = self.validator._is_right_version()
         assert res == expected_results

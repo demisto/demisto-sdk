@@ -1,11 +1,11 @@
 """
 This module is designed to validate the existence and structure of content pack essential files in content.
 """
+import glob
 import io
 import json
 import os
 import re
-import glob
 from datetime import datetime
 from distutils.version import LooseVersion
 from pathlib import Path
@@ -129,19 +129,18 @@ class PackUniqueFilesValidator(BaseValidator):
     def _get_pack_file_path(self, file_name=''):
         """Returns the full file path to pack's file"""
         return os.path.join(self.pack_path, file_name)
-    
+
     def _get_pack_latest_rn_version(self):
         """Returns the version of the latest release note in the Pack"""
         try:
             path = os.path.join(self.pack_path, "ReleaseNotes")
-            list_of_files = glob.glob(path + '/*') # * means all if need specific format then *.csv
-            latest_rn_path =  max(list_of_files, key=os.path.getctime)
-        except:
+            list_of_files = glob.glob(path + '/*')  # * means all if need specific format then *.csv
+            latest_rn_path = max(list_of_files, key=os.path.getctime)
+        except Exception:
             self._add_error(Errors.missing_release_notes_for_pack(self.pack), self.pack)
-            return False        
+            return False
         rn_name = latest_rn_path[latest_rn_path.rindex('/') + 1:latest_rn_path.rindex('.')]
-        return rn_name.replace('_','.')
-        
+        return rn_name.replace('_', '.')
 
     def _is_pack_file_exists(self, file_name: str, is_required: bool = False):
         """

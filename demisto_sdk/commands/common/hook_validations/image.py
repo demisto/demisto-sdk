@@ -90,7 +90,7 @@ class ImageValidator(BaseValidator):
             if should_validate_dimensions:
                 width, height = imagesize.get(self.file_path)
                 if (width, height) != (allowed_width, allowed_height):
-                    error_message, error_code = Errors.invalid_image_dimensions()
+                    error_message, error_code = Errors.invalid_image_dimensions(width, height)
                     if self.handle_error(error_message, error_code, file_path=self.file_path):
                         self._is_valid = False
         else:

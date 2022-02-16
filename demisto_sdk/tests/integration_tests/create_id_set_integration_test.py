@@ -1,8 +1,10 @@
 import json
+import os
 
 from click.testing import CliRunner
 
 from demisto_sdk.__main__ import main
+from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
 from TestSuite.utils import IsEqualFunctions
 
@@ -123,3 +125,92 @@ class TestCreateIdSet:  # Use classes to speed up test - multi threaded py pytes
         assert IsEqualFunctions.is_dicts_equal(id_set_result, expected_id_set)
         assert result.exit_code == 0
         assert result.stderr == ""
+
+    @staticmethod
+    def test_excluded_items_contain_aliased_field(mocker, repo: Repo):
+        """
+        Given
+            - An xsoar-only incident field.
+            - An incident field with alias of the first field.
+            - A mapper using the xsoar-only field.
+
+        When
+            creating an ID set for marketplacev2
+
+        Then
+            the ID set should not filter the mapper.
+
+        """
+        host = {
+            'id': 'incident_host',
+            'name': 'Host',
+            'cliName': 'host',
+            'marketplaces': ['xsoar'],
+        }
+        common_types_pack = repo.create_pack('CommonTypes')
+        common_types_pack.pack_metadata.write_json({
+            'name': 'CommonTypes',
+            'currentVersion': '1.0.0',
+            'marketplaces': ['xsoar', 'marketplacev2'],
+        })
+        common_types_pack.create_incident_field('Host', content=host)
+        common_types_pack.create_incident_type('IncidentType')
+        host_name = {
+            'id': 'incident_hostname',
+            'name': 'Host Name',
+            'cliName': 'hostname',
+            'marketplaces': ['xsoar', 'marketplacev2'],
+            'Aliases': [
+                {
+                    'cliName': 'host',
+                    'type': 'shortText',
+                    'name': 'Host',
+                }
+            ]
+        }
+
+        core_alert_fields_pack = repo.create_pack('CoreAlertFields')
+        core_alert_fields_pack.pack_metadata.write_json({
+            'name': 'CoreAlertFields',
+            'currentVersion': '1.0.0',
+            'marketplaces': ['marketplacev2'],
+        })
+        core_alert_fields_pack.create_incident_field('HostName', content=host_name)
+        mapper = {
+            'id': 'Mapper',
+            'type': 'mapping-incoming',
+            'mapping': {
+                'IncidentType': {
+                    'dontMapEventToLabels': False,
+                    'internalMapping': {
+                        'Host': {
+                            'simple': 'blabla'
+                        },
+                    }
+                }
+            }
+
+        }
+        pack = repo.create_pack('MapperPack')
+        pack.pack_metadata.write_json({
+            'name': 'MapperPack',
+            'currentVersion': '1.0.0',
+            'marketplaces': ['xsoar', 'marketplacev2'],
+        })
+        pack.create_mapper('Mapper', content=mapper)
+
+        with ChangeCWD(repo.path):
+            # Circle froze on 3.7 dut to high usage of processing power.
+            # pool = Pool(processes=cpu_count() * 2) is the line that in charge of the multiprocessing initiation,
+            # so changing `cpu_count` return value to 1 still gives you multiprocessing but with only 2 processors,
+            # and not the maximum amount.
+            import demisto_sdk.commands.common.update_id_set as uis
+            mocker.patch.object(uis, 'cpu_count', return_value=1)
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [CREATE_ID_SET_CMD, '-o', 'id_set_result.json', '--marketplace', 'marketplacev2'],
+                                   catch_exceptions=False)
+            assert result.exit_code == 0
+
+        with open(os.path.join(repo.path, 'id_set_result.json')) as file_:
+            id_set = json.load(file_)
+        assert len(id_set['Mappers']) == 1

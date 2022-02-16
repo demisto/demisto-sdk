@@ -4,7 +4,6 @@ This module is designed to validate the existence and structure of content pack 
 import glob
 import io
 import json
-from operator import truediv
 import os
 import re
 from datetime import datetime

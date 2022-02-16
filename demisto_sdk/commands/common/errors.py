@@ -22,7 +22,7 @@ ALLOWED_IGNORE_ERRORS = [
     'MP106',
     'PA113', 'PA116', 'PA124', 'PA125', 'PA127', 'PA129',
     'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112', 'PB114', 'PB115', 'PB116', 'PB107',
-    'RM100', 'RM102', 'RM104', 'RM106', 'RM110',
+    'RM100', 'RM102', 'RM104', 'RM106',
     'RP102', 'RP104',
     'SC100', 'SC101', 'SC105', 'SC106',
 ]
@@ -323,7 +323,6 @@ ERROR_CODE = {
     "readme_contains_demisto_word": {'code': "RM106", 'ui_applicable': False, 'related_field': ''},
     "template_sentence_in_readme": {'code': "RM107", 'ui_applicable': False, 'related_field': ''},
     "invalid_readme_image_error": {'code': "RM108", 'ui_applicable': False, 'related_field': ''},
-    "empty_readme_partner_playbooks": {'code': "RM110", 'ui_applicable': False, 'related_field': ''},
 
     # RN - Release Notes
     "missing_release_notes": {'code': "RN100", 'ui_applicable': False, 'related_field': ''},
@@ -2152,10 +2151,3 @@ class Errors:
     @error_code_decorator
     def wrong_version_format():
         return 'Pack metadata version format is not valid. Please fill in a valid format (example: 0.0.0)'
-
-    @staticmethod
-    @error_code_decorator
-    def empty_readme_partner_playbooks():
-        return "Pack writen by a partner or pack containing playbooks must have a full README.md file"\
-               "with pack information. Please refer to https://xsoar.pan.dev/docs/documentation/pack-docs#pack-readme"\
-               "for more information"

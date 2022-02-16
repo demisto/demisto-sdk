@@ -353,7 +353,6 @@ class ContentEntityValidator(BaseValidator):
         if is_added or is_modified or not validate_all:
             file_path = os.path.normpath(self.file_path)
             path_split = file_path.split(os.sep)
-            readme_path = ""
             if caller == "playbook":
                 to_replace = os.path.splitext(path_split[-1])[-1]
                 readme_path = file_path.replace(to_replace, '_README.md')

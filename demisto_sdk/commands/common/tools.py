@@ -480,7 +480,10 @@ def get_yaml(file_path, cache_clear=False):
     return get_file(file_path, 'yml', clear_cache=cache_clear)
 
 
-def get_json(file_path):
+@lru_cache(maxsize=10000)
+def get_json(file_path, cache_clear=False):
+    if cache_clear:
+        get_json.cache_clear()
     return get_file(file_path, 'json')
 
 
@@ -1020,8 +1023,6 @@ def get_dict_from_file(path: str, use_ryaml: bool = False,
         if path:
             if path.endswith('.yml'):
                 return get_yaml(path), 'yml'
-            if use_ryaml:
-                return get_yaml(path, cache_clear=clear_cache), 'yml'
             elif path.endswith('.json'):
                 return get_json(path, cache_clear=clear_cache), 'json'
             elif path.endswith('.py'):

@@ -6,11 +6,10 @@ from typing import Any, Dict, Optional, Set, Union
 
 import click
 import dictdiffer
-import yaml
-from ruamel.yaml import YAML
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION, INTEGRATION, PLAYBOOK)
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_dict_from_file,
                                                get_pack_metadata,
                                                get_remote_file,
@@ -52,6 +51,7 @@ class BaseUpdate:
                  assume_yes: bool = False,
                  interactive: bool = True,
                  deprecate: bool = False,
+                 clear_cache: bool = False,
                  **kwargs):
         self.source_file = input
         self.output_file = self.set_output_file_path(output)
@@ -73,8 +73,7 @@ class BaseUpdate:
         if not self.source_file:
             raise Exception('Please provide <source path>, <optional - destination path>.')
         try:
-            self.data, self.file_type = get_dict_from_file(self.source_file)
-            self.data, self.file_type = get_dict_from_file(self.source_file, use_ryaml=True, clear_cache=clear_cache)
+            self.data, self.file_type = get_dict_from_file(self.source_file, clear_cache=clear_cache)
         except Exception:
             raise Exception(F'Provided file {self.source_file} is not a valid file.')
         self.from_version_key = self.set_from_version_key_name()
@@ -114,7 +113,7 @@ class BaseUpdate:
     def remove_unnecessary_keys(self):
         """Removes keys that are in file but not in schema of file type"""
         with open(self.schema_path, 'r') as file_obj:
-            schema = yaml.safe_load(file_obj)
+            schema = yaml.load(file_obj)
             extended_schema = self.recursive_extend_schema(schema, schema)
         if self.verbose:
             print('Removing Unnecessary fields from file')
@@ -317,7 +316,7 @@ class BaseUpdate:
             List of keys that should be deleted in file
         """
         with open(self.schema_path, 'r') as file_obj:
-            a = yaml.safe_load(file_obj)
+            a = yaml.load(file_obj)
         schema_fields = a.get('mapping').keys()
         arguments_to_remove = set(self.data.keys()) - set(schema_fields)
         return arguments_to_remove

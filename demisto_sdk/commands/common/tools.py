@@ -8,6 +8,7 @@ import re
 import shlex
 import sys
 import urllib.parse
+from collections import OrderedDict
 from concurrent.futures import as_completed
 from configparser import ConfigParser, MissingSectionHeaderError
 from contextlib import contextmanager
@@ -1005,14 +1006,13 @@ def get_dev_requirements(py_version, envs_dirs_base):
     return requirements
 
 
-def get_dict_from_file(path: str, use_ryaml: bool = False,
+def get_dict_from_file(path: str,
                        raises_error: bool = True, clear_cache: bool = False) -> Tuple[Dict, Union[str, None]]:
     """
     Get a dict representing the file
 
     Arguments:
         path - a path to the file
-        use_ryaml - Whether to use ryaml for file loading or not
         raises_error - Whether to raise a FileNotFound error if `path` is not a valid file.
 
     Returns:
@@ -1633,7 +1633,7 @@ def get_content_file_type_dump(file_path: str) -> Callable[[str], str]:
     file_extension = os.path.splitext(file_path)[-1]
     curr_string_transformer: Union[partial[str], Type[str], Callable] = str
     if file_extension in ['.yml', '.yaml']:
-        curr_string_transformer = yaml.dump
+        curr_string_transformer = yaml.dumps
     elif file_extension == '.json':
         curr_string_transformer = partial(json.dumps, indent=4)
     return curr_string_transformer
@@ -1908,11 +1908,8 @@ def compare_context_path_in_yml_and_readme(yml_dict, readme_content):
 
 
 def write_yml(yml_path: str, yml_data: Dict):
-    ryaml = YAML()
-    ryaml.allow_duplicate_keys = True
-    ryaml.preserve_quotes = True
     with open(yml_path, 'w') as f:
-        ryaml.dump(yml_data, f)  # ruamel preservers multilines
+        yaml.dump(yml_data, f)  # ruamel preservers multilines
 
 
 def to_kebab_case(s: str):
@@ -2174,6 +2171,21 @@ def get_script_or_sub_playbook_tasks_from_playbook(searched_entity_name: str, ma
     return searched_tasks
 
 
+def extract_docker_image_from_text(text):
+    """
+    Strips the docker image version from a given text.
+    Args:
+        text : the text to extract the docker image from
+    Return:
+        str. The docker image version if exists, otherwise, return None.
+    """
+    match = (re.search(r'(demisto/.+:([0-9]+)(((\.)[0-9]+)+))', text))
+    if match:
+        return match.group(1)
+    else:
+        return None
+
+
 def get_current_repo() -> Tuple[str, str, str]:
     try:
         git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
@@ -2410,19 +2422,17 @@ def alternate_item_fields(content_item):
         content_item: content item object
 
     """
-    as_dict_types = (dict, CommentedMap)
-    as_list_types = (list, CommentedSeq)
-    current_dict = content_item.to_dict() if type(content_item) not in as_dict_types else content_item
+    current_dict = content_item.to_dict() if not isinstance(content_item, dict) else content_item
     copy_dict = current_dict.copy()  # for modifying dict while iterating
     for field, value in copy_dict.items():
         if field.endswith('_x2'):
             current_dict[field[:-3]] = value
             current_dict.pop(field)
-        elif isinstance(current_dict[field], as_dict_types):
+        elif isinstance(current_dict[field], dict):
             alternate_item_fields(current_dict[field])
-        elif isinstance(current_dict[field], as_list_types):
+        elif isinstance(current_dict[field], list):
             for item in current_dict[field]:
-                if isinstance(item, as_dict_types):
+                if isinstance(item, dict):
                     alternate_item_fields(item)
 
 
@@ -2446,3 +2456,11 @@ def should_alternate_field_by_item(content_item, id_set):
         if list(item.keys())[0] == item_id:
             return item.get(item_id, {}).get('has_alternative_meta', False)
     return False
+
+
+def order_dict(data):
+    """
+    Order dict by default order
+    """
+    return OrderedDict({k: order_dict(v) if isinstance(v, dict) else v
+                        for k, v in sorted(data.items())})

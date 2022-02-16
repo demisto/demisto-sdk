@@ -1414,9 +1414,9 @@ class TestisContextChanged:
                (This check is for backward compatibility)
 
        Then:
-           - Ensure readme exists validation fails
-           - Ensure readme exists validation passes
-           - Ensure readme exists validation passes
+           - Ensure readme exists and validation fails
+           - Ensure readme exists and validation passes
+           - Ensure readme exists and validation passes
         """
         structure_validator = mock_structure(
             file_path=os.path.join(f'{git_path()}', 'demisto_sdk/tests/test_files/Readme_exists', path))

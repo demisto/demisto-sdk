@@ -161,6 +161,7 @@ ERROR_CODE = {
     "invalid_image_name": {'code': "IM107", 'ui_applicable': False, 'related_field': 'image'},
     "image_is_empty": {'code': "IM108", 'ui_applicable': True, 'related_field': 'image'},
     "author_image_is_missing": {'code': "IM109", 'ui_applicable': True, 'related_field': 'image'},
+    "invalid_image_name_or_location": {'code': "IM110", 'ui_applicable': True, 'related_field': 'image'},
 
     # IN - Integrations
     "wrong_display_name": {'code': "IN100", 'ui_applicable': True, 'related_field': '<parameter-name>.display'},
@@ -1033,6 +1034,17 @@ class Errors:
     @error_code_decorator
     def author_image_is_missing(image_path: str):
         return f'Partners must provide a non-empty author image under the path {image_path}.'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_image_name_or_location():
+        return "The image file name or location is invalid\n" \
+               "If you're trying to add an integration image, make sure the image name looks like the following:<integration_name>_image.png and located in" \
+               "your integration folder: Packs/<MyPack>/Integrations/<MyIntegration>. For more info: " \
+               "https://xsoar.pan.dev/docs/integrations/package-dir#the-directory-structure-is-as-follows.\n" \
+               "If you're trying to add author image, make sure the image name looks like the following: Author_image.png and located in the pack root path." \
+               "For more info: https://xsoar.pan.dev/docs/packs/packs-format#author_imagepng\n" \
+               "Otherwise, any other image should be located under the 'Doc_files' dir."
 
     @staticmethod
     @error_code_decorator
@@ -2126,11 +2138,6 @@ class Errors:
     def runas_is_dbotrole():
         return 'The runas value is DBotRole, it may cause access and exposure of sensitive data. ' \
                'Please consider changing it.'
-
-    @staticmethod
-    @error_code_decorator
-    def invalid_yml_file(error):
-        return f'There is problem with the yml file. The error: {error}'
 
     @staticmethod
     @error_code_decorator

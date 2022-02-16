@@ -3,10 +3,12 @@ from pathlib import Path
 from typing import Dict, Optional
 
 import click
-from ruamel.yaml import YAML
 
 from demisto_sdk.commands.common.constants import FileType
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.upload.uploader import Uploader
+
+yaml = YAML_Handler()
 
 
 class ContentItemType:
@@ -375,11 +377,9 @@ class PlaybookTestsGenerator:
         local directory
 
         """
-        ryaml = YAML()
-        ryaml.preserve_quotes = True
         try:
             with open(self.integration_yml_path, 'r') as yf:
-                yaml_obj = ryaml.load(yf)
+                yaml_obj = yaml.load(yf)
 
                 yaml_obj.get('name')
         except FileNotFoundError as ex:
@@ -438,7 +438,7 @@ class PlaybookTestsGenerator:
                         f'it will be overwritten.', fg='yellow')
 
         with open(self.test_playbook_yml_path, 'w') as yf:
-            ryaml.dump(test_playbook.to_dict(), yf)
+            yaml.dump(test_playbook.to_dict(), yf)
 
             click.secho(f'Test playbook yml was saved at:\n{self.test_playbook_yml_path}\n', fg='green')
 

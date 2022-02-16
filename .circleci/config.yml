@@ -123,7 +123,7 @@ jobs:
 
   precommit-checks:
       docker:
-        - image: circleci/python:3.8.3-buster-node
+        - image: cimg/python:3.10
       steps:
         - checkout
         - attach_workspace:
@@ -136,7 +136,7 @@ jobs:
               pre-commit run -a
   checkout-content:
       docker:
-        - image: circleci/python:3.8.3-buster-node
+        - image: cimg/python:3.10
       steps:
         - checkout
         - run:
@@ -237,7 +237,7 @@ jobs:
             path: /tmp/lint_env_installation.log
   create-content-artifacts:
       docker:
-        - image: circleci/python:3.8.3-buster-node
+        - image: cimg/python:3.10
       steps:
         - checkout
         - attach_workspace:

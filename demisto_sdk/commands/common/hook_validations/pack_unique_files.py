@@ -4,6 +4,7 @@ This module is designed to validate the existence and structure of content pack 
 import glob
 import io
 import json
+from operator import truediv
 import os
 import re
 from datetime import datetime
@@ -137,7 +138,6 @@ class PackUniqueFilesValidator(BaseValidator):
             list_of_files = glob.glob(path + '/*')  # * means all if need specific format then *.csv
             latest_rn_path = max(list_of_files, key=os.path.getctime)
         except Exception:
-            self._add_error(Errors.missing_release_notes_for_pack(self.pack), self.pack)
             return False
         rn_name = latest_rn_path[latest_rn_path.rindex('/') + 1:latest_rn_path.rindex('.')]
         return rn_name.replace('_', '.')
@@ -565,7 +565,10 @@ class PackUniqueFilesValidator(BaseValidator):
         current_meta_file_content = self.metadata_content
         current_version = current_meta_file_content.get('currentVersion', '0.0.0')
         rn_version = self._get_pack_latest_rn_version()
+        if not rn_version and current_version == '1.0.0':
+            return True
         if not rn_version:
+            self._add_error(Errors.missing_release_notes_for_pack(self.pack), self.pack)
             return False
         if LooseVersion(rn_version) == LooseVersion(current_version):
             return True

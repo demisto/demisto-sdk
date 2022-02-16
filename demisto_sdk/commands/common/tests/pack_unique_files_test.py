@@ -784,6 +784,7 @@ class TestPackUniqueFilesValidator:
         ({"currentVersion": "1.0.2"}, "1.0.1", True, False),
         ({"currentVersion": "1.0.1"}, "1.0.2", True, False),
         ({"currentVersion": "1.0.1"}, "1.0.2", False, False),
+        ({"currentVersion": "1.0.0"}, "1.0.2", False, True),
     ])
     def test_is_right_version(self, repo, pack_metadata, rn_version, create_rn, expected_results):
         """
@@ -791,7 +792,8 @@ class TestPackUniqueFilesValidator:
         - Case 1: Pack containing rn and pack_metadata with equal versions.
         - Case 2: Pack containing rn and pack_metadata with rn versions lower than pack_metadata.
         - Case 3: Pack containing rn and pack_metadata with rn versions higher than pack_metadata.
-        - Case 4: Pack with pack_metadata but no rn.
+        - Case 4: Pack with pack_metadata version higher than 1.0.0 but no rn.
+        - Case 5: Pack with pack_metadata version 1.0.0 and no rn.
 
         When
         - Running test_is_right_version command on pack.
@@ -802,6 +804,7 @@ class TestPackUniqueFilesValidator:
         - Case 2: Should return False.
         - Case 3: Should return False.
         - Case 4: Should return False.
+        - Case 5: Should return True.
         """
         pack = repo.create_pack('MyPack')
         self.validator.metadata_content = pack_metadata

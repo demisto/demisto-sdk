@@ -8,7 +8,6 @@ import re
 import shlex
 import sys
 import urllib.parse
-from collections import OrderedDict
 from concurrent.futures import as_completed
 from configparser import ConfigParser, MissingSectionHeaderError
 from contextlib import contextmanager

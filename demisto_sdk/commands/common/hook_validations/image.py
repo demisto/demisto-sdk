@@ -23,11 +23,10 @@ class ImageValidator(BaseValidator):
     IMAGE_HEIGHT = 50
 
     def __init__(self, file_path, ignored_errors=None, print_as_warnings=False, suppress_print=False,
-                 json_file_path=None, is_new_file=False):
+                 json_file_path=None):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          suppress_print=suppress_print, json_file_path=json_file_path)
         self._is_valid = True
-        self.is_new_file = is_new_file
         self.file_path = ''
         if file_path.endswith('.png'):
             self.file_path = file_path
@@ -55,8 +54,7 @@ class ImageValidator(BaseValidator):
             return self._is_valid
 
         is_existing_image = False
-        if self.is_new_file:
-            self.validate_size(allow_empty_image_file=True)
+        self.validate_size(allow_empty_image_file=True)
         if '.png' not in self.file_path:
             is_existing_image = self.is_existing_image()
         if is_existing_image or '.png' in self.file_path:

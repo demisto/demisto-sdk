@@ -1021,7 +1021,7 @@ def get_dict_from_file(path: str,
     try:
         if path:
             if path.endswith('.yml'):
-                return get_yaml(path), 'yml'
+                return get_yaml(path, cache_clear=clear_cache), 'yml'
             elif path.endswith('.json'):
                 return get_json(path, cache_clear=clear_cache), 'json'
             elif path.endswith('.py'):

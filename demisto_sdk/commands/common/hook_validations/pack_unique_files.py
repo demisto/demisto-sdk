@@ -133,13 +133,16 @@ class PackUniqueFilesValidator(BaseValidator):
     def _get_pack_latest_rn_version(self):
         """Returns the version of the latest release note in the Pack"""
         try:
-            path = os.path.join(self.pack_path, "ReleaseNotes")
-            list_of_files = glob.glob(path + '/*')  # * means all if need specific format then *.csv
-            latest_rn_path = max(list_of_files, key=os.path.getctime)
+            list_of_files = glob.glob(self.pack_path + '/ReleaseNotes/*')
+            list_of_versions = [(version[version.rindex('/') + 1:version.rindex('.')]).replace('_', '.') for version in list_of_files]
+            print(list_of_versions)
         except Exception:
             return False
-        rn_name = latest_rn_path[latest_rn_path.rindex('/') + 1:latest_rn_path.rindex('.')]
-        return rn_name.replace('_', '.')
+        if list_of_versions:
+            list_of_versions.sort(key=LooseVersion)
+            return list_of_versions[0]
+        else:
+            return False
 
     def _is_pack_file_exists(self, file_name: str, is_required: bool = False):
         """

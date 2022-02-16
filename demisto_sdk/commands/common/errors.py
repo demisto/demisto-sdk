@@ -1049,7 +1049,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_image_dimensions(width: int , height: int):
+    def invalid_image_dimensions(width: int, height: int):
         return f'The image dimensions are {width}x{height}. The requirements are 120x50.'
 
     @staticmethod

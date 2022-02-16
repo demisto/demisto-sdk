@@ -1,6 +1,8 @@
 import base64
 import glob
 
+import imagesize
+
 from demisto_sdk.commands.common.constants import (
     DEFAULT_DBOT_IMAGE_BASE64, DEFAULT_IMAGE_BASE64, IMAGE_REGEX,
     PACKS_INTEGRATION_NON_SPLIT_YML_REGEX)
@@ -8,7 +10,6 @@ from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.tools import get_yaml, os, re
-import imagesize
 
 
 class ImageValidator(BaseValidator):
@@ -54,7 +55,7 @@ class ImageValidator(BaseValidator):
             return self._is_valid
 
         is_existing_image = False
-        self.validate_size(allow_empty_image_file=True)
+        self.validate_size(allow_empty_image_file=True, should_validate_dimensions=True)
         if '.png' not in self.file_path:
             is_existing_image = self.is_existing_image()
         if is_existing_image or '.png' in self.file_path:
@@ -67,6 +68,7 @@ class ImageValidator(BaseValidator):
     def validate_size(self,
                       allow_empty_image_file: bool,
                       maximum_size: int = IMAGE_MAX_SIZE,
+                      should_validate_dimensions: bool = False,
                       allowed_width: int = IMAGE_WIDTH,
                       allowed_height: int = IMAGE_HEIGHT) -> None:
         """
@@ -75,6 +77,7 @@ class ImageValidator(BaseValidator):
         Args:
             allow_empty_image_file (bool): Whether empty image file is an error.
             maximum_size (int): Maximum allowed size.
+            should_validate_dimensions (bool): Should validate the image dimensions.
             allowed_height (int): the allowed height of the image
             allowed_width (int): the allowed weight of the image
         """
@@ -84,11 +87,12 @@ class ImageValidator(BaseValidator):
                 error_message, error_code = Errors.image_too_large()
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self._is_valid = False
-            width, height = imagesize.get(self.file_path)
-            if (width, height) != (allowed_width, allowed_height):
-                error_message, error_code = Errors.invalid_image_dimensions()
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
-                    self._is_valid = False
+            if should_validate_dimensions:
+                width, height = imagesize.get(self.file_path)
+                if (width, height) != (allowed_width, allowed_height):
+                    error_message, error_code = Errors.invalid_image_dimensions()
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                        self._is_valid = False
         else:
             data_dictionary = get_yaml(self.file_path)
 

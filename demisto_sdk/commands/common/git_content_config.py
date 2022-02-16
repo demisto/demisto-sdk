@@ -215,6 +215,6 @@ class GitContentConfig:
                 return gitlab_hostname, gitlab_id
             return None
 
-        except (requests.exceptions.ConnectionError, json.JSONDecodeError) as e:
+        except (requests.exceptions.ConnectionError, json.JSONDecodeError, AssertionError) as e:
             logger.debug(str(e), exc_info=True)
             return None

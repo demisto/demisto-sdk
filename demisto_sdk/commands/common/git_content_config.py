@@ -17,6 +17,8 @@ from git import InvalidGitRepositoryError
 
 from demisto_sdk.commands.common.git_util import GitUtil
 
+logger = logging.getLogger(__name__)
+
 
 class GitProvider(enum.Enum):
     GitHub = 'github'
@@ -152,7 +154,7 @@ class GitContentConfig:
                 self.repo_hostname = github_hostname
                 self.current_repository = github_repo
 
-    @lru_cache(maxsize=64)
+    @lru_cache(maxsize=128)
     def _search_github_repo(self, github_hostname, repo_name):
         if not github_hostname or not repo_name:
             return None
@@ -174,13 +176,13 @@ class GitContentConfig:
                              timeout=10)
             if r.ok:
                 return github_hostname, repo_name
-            logging.getLogger('demisto-sdk').debug(r.text)
+            logger.debug(r.content)
             return None
         except requests.exceptions.ConnectionError as e:
-            logging.getLogger('demisto-sdk').debug(str(e), exc_info=True)
+            logger.debug(str(e), exc_info=True)
             return None
 
-    @lru_cache(maxsize=64)
+    @lru_cache(maxsize=128)
     def _search_gitlab_id(self, gitlab_hostname: str, repo_name: Optional[str] = None,
                           project_id: Optional[int] = None) -> \
             Optional[Tuple[Optional[str], Optional[int]]]:
@@ -213,6 +215,6 @@ class GitContentConfig:
                 return gitlab_hostname, gitlab_id
             return None
 
-        except (requests.exceptions.ConnectionError, json.JSONDecodeError, AssertionError) as e:
-            logging.getLogger('demisto-sdk').debug(str(e), exc_info=True)
+        except (requests.exceptions.ConnectionError, json.JSONDecodeError) as e:
+            logger.debug(str(e), exc_info=True)
             return None

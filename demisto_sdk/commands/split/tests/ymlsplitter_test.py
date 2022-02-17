@@ -2,12 +2,12 @@ import base64
 import os
 from pathlib import Path
 
-from TestSuite.test_tools import ChangeCWD
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import DEFAULT_IMAGE_BASE64
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
+from TestSuite.test_tools import ChangeCWD
 
 yaml = YAML_Handler()
 

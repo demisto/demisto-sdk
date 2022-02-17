@@ -55,6 +55,7 @@ class ImageValidator(BaseValidator):
             return self._is_valid
 
         is_existing_image = False
+        # validating dimensions as well because validating integration image
         self.validate_size(allow_empty_image_file=True, should_validate_dimensions=True)
         if '.png' not in self.file_path:
             is_existing_image = self.is_existing_image()
@@ -77,7 +78,7 @@ class ImageValidator(BaseValidator):
         Args:
             allow_empty_image_file (bool): Whether empty image file is an error.
             maximum_size (int): Maximum allowed size.
-            should_validate_dimensions (bool): Should validate the image dimensions (Not being validated on AuthorImages)
+            should_validate_dimensions (bool): Should validate the image dimensions.
             allowed_height (int): the allowed height of the image
             allowed_width (int): the allowed weight of the image
         """

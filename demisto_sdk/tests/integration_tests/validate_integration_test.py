@@ -2850,7 +2850,7 @@ class TestImageValidation:
         - Ensure validate fails on dimensions error and asks to change the image.
         """
         pack = repo.create_pack("PackName")
-        with open('Tests/invalid_integration_image.png', 'rb') as f:
+        with open(f'{git_path()}/demisto_sdk/tests/integration_tests/Tests/invalid_integration_image.png', 'rb') as f:
             image = f.read()
         integration = pack.create_integration(image=image)
         image_path = integration.image.path

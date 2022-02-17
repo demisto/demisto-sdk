@@ -2838,6 +2838,32 @@ class TestImageValidation:
         assert "The image file name or location is invalid" in result.stdout
         assert result.exit_code == 1
 
+    def test_invalid_image_size(self, repo):
+        """
+        Given
+        - An image with bad dimensions and bad size.
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate fails on dimensions error and asks to change the image.
+        """
+        pack = repo.create_pack("PackName")
+        with open('Tests/invalid_integration_image.png', 'rb') as f:
+            image = f.read()
+        integration = pack.create_integration(image=image)
+        image_path = integration.image.path
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', image_path], catch_exceptions=False)
+        assert f'Validating {image_path} as image' in result.stdout
+        assert 'IM111' in result.stdout
+        assert 'IM101' in result.stdout
+        assert '120x50' in result.stdout
+        assert '10kB' in result.stdout
+        assert result.exit_code == 1
+
 
 class TestAuthorImageValidation:
     def test_author_image_valid(self, repo, mocker):

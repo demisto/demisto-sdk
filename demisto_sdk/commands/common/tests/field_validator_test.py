@@ -463,20 +463,22 @@ class TestFieldValidator:
         """
 
         tested_field = pack.create_incident_field('tested_field', {'Aliases': [{'cliName': 'aliased_field'}]})
+        incident_aliased_field = {'name': 'incident_aliased_field', 'cliName': 'aliasedfield'}
+        if marketplaces:
+            incident_aliased_field['marketplaces'] = marketplaces
 
-        aliased_field = pack.create_incident_field('aliased_field', {'marketplaces': marketplaces, 'cliName': 'aliased_field'})
         mocked_id_set = {
-            'IncidentFields': [{'incident_aliased_field': {'name': 'incident_aliased_field', 'file_path': aliased_field.path}}]
+            'IncidentFields': [{'incident_aliased_field': incident_aliased_field}]
         }
         structure = StructureValidator(tested_field.path)
         validator = FieldBaseValidator(structure, set(), set(), id_set_file=mocked_id_set)
         assert validator.is_aliased_fields_are_valid() == expected
 
-    @pytest.mark.parametrize('aliased_field_data, expected', [
-        ({'Aliases': [{'cliName': 'test'}], 'cliName': 'aliased_field'}, False),
-        ({'cliName': 'aliased_field'}, True),
+    @pytest.mark.parametrize('aliases, expected', [
+        (['test', 'aliased_field'], False),
+        ([], True),
     ])
-    def test_is_inner_alias_in_aliased_field(self, pack, aliased_field_data: dict, expected: bool):
+    def test_is_inner_alias_in_aliased_field(self, pack, aliases: list, expected: bool):
         """
         Given
         - A field with aliases values.
@@ -488,11 +490,14 @@ class TestFieldValidator:
         - Ensure the expected bool is returned according to whether the aliased field have inner alias or not.
         """
 
-        tested_field = pack.create_incident_field('tested_field', {'Aliases': [{'cliName': 'aliased_field'}]})
+        tested_field = pack.create_incident_field('tested_field', {'Aliases': [{'cliName': 'aliasedfield'}]})
 
-        aliased_field = pack.create_incident_field('aliased_field', aliased_field_data)
+        incident_aliased_field = {'name': 'incident_aliasedfield', 'cliname': 'aliasedfield'}
+        if aliases:
+            incident_aliased_field['aliases'] = aliases
+
         mocked_id_set = {
-            'IncidentFields': [{'incident_aliased_field': {'name': 'incident_aliased_field', 'file_path': aliased_field.path}}]
+            'IncidentFields': [{'incident_aliasedfield': incident_aliased_field}]
         }
         structure = StructureValidator(tested_field.path)
         validator = FieldBaseValidator(structure, set(), set(), id_set_file=mocked_id_set)

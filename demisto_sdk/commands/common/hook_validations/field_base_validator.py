@@ -12,8 +12,6 @@ from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 from demisto_sdk.commands.common.tools import (get_core_pack_list,
-                                               get_dict_from_file,
-                                               get_item_marketplaces,
                                                get_pack_metadata,
                                                get_pack_name, print_warning)
 
@@ -392,7 +390,7 @@ class FieldBaseValidator(ContentEntityValidator):
             (self.is_alias_has_inner_alias, Errors.aliases_with_inner_alias),
         ]
         for validator, error_generator in validators_and_error_generators:
-            invalid_aliases = [alias.get("cliName") for alias in self._get_incident_fields_by_aliases(aliases) if validator(alias)]
+            invalid_aliases = [alias.get("cliname") for alias in self._get_incident_fields_by_aliases(aliases) if validator(alias)]
             if invalid_aliases:
                 error_message, error_code = error_generator(invalid_aliases)
                 if self.handle_error(error_message, error_code, file_path=self.file_path, warning=self.structure_validator.quite_bc):
@@ -415,15 +413,11 @@ class FieldBaseValidator(ContentEntityValidator):
         for incident_field in incident_field_list:
             field_id = list(incident_field.keys())[0]
             if field_id in alias_ids:
-                alias_data = incident_field[field_id]
-                alias_file_path = alias_data.get('file_path')
-                aliased_field, _ = get_dict_from_file(path=alias_file_path)
-                aliased_field['file_path'] = alias_file_path
+                aliased_field = incident_field[field_id]
                 yield aliased_field
 
     def is_alias_has_invalid_marketplaces(self, aliased_field: dict) -> bool:
-        marketplaces = get_item_marketplaces(item_path=aliased_field.get('file_path', ''), item_data=aliased_field)
-        return marketplaces != [MarketplaceVersions.XSOAR.value]
+        return aliased_field.get('marketplaces', [MarketplaceVersions.XSOAR.value]) != [MarketplaceVersions.XSOAR.value]
 
     def is_alias_has_inner_alias(self, aliased_field: dict) -> bool:
-        return aliased_field is not None and 'Aliases' in aliased_field
+        return aliased_field is not None and 'aliases' in aliased_field

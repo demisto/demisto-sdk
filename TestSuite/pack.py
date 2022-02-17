@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import List, Optional
 
+from TestSuite.test_tools import suite_join_path
 from demisto_sdk.commands.common.constants import DEFAULT_IMAGE_BASE64
 from TestSuite.file import File
 from TestSuite.integration import Integration
@@ -154,6 +155,9 @@ class Pack:
             name = f'integration_{len(self.integrations)}'
         if yml is None:
             yml = {}
+        if image is None:
+            with open(suite_join_path('assets/default_integration', 'sample_image.png'), 'rb') as image_file:
+                image = image_file.read()
         integration = Integration(self._integrations_path, name, self._repo)
         integration.build(
             code,

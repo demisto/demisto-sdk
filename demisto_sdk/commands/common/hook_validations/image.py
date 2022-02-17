@@ -77,7 +77,7 @@ class ImageValidator(BaseValidator):
         Args:
             allow_empty_image_file (bool): Whether empty image file is an error.
             maximum_size (int): Maximum allowed size.
-            should_validate_dimensions (bool): Should validate the image dimensions.
+            should_validate_dimensions (bool): Should validate the image dimensions (Not being validated on AuthorImages)
             allowed_height (int): the allowed height of the image
             allowed_width (int): the allowed weight of the image
         """

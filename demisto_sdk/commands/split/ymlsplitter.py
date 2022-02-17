@@ -76,7 +76,7 @@ class YmlSplitter:
     def get_output_path(self):
         """Get processed output path
         """
-        output_path = self.output
+        output_path = Path(self.output).resolve()
         if self.autocreate_dir and output_path.name in {'Integrations', 'Scripts'}:
             code_name = self.yml_data.get("name")
             if not code_name:

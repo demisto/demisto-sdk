@@ -3,6 +3,7 @@
 * Removed PYYAML library (using only ruamel instead).
 * Fixed an issue when filtering items using the ID set in the **create-content-artifacts** command.
 * Fixed an issue in the **generate-docs** command where tables were generated with an empty description column.
+* Fixed an issue in the **split** command where splitting failed when using relative input/output paths.
 * Added warning when inferred files are missing.
 
 # 1.6.0

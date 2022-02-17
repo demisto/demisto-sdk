@@ -1,7 +1,6 @@
 from pathlib import Path
 from typing import List, Optional
 
-from TestSuite.test_tools import suite_join_path
 from demisto_sdk.commands.common.constants import DEFAULT_IMAGE_BASE64
 from TestSuite.file import File
 from TestSuite.integration import Integration
@@ -10,6 +9,7 @@ from TestSuite.json_based import JSONBased
 from TestSuite.playbook import Playbook
 from TestSuite.script import Script
 from TestSuite.secrets import Secrets
+from TestSuite.test_tools import suite_join_path
 from TestSuite.text_based import TextBased
 
 

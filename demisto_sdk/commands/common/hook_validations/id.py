@@ -13,7 +13,7 @@ from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.tools import (
-    get_script_or_sub_playbook_tasks_from_playbook, get_yaml, get_file)
+    get_script_or_sub_playbook_tasks_from_playbook, get_yaml, get_file, get_item_from_id_set)
 from demisto_sdk.commands.common.update_id_set import (
     get_classifier_data, get_incident_field_data, get_incident_type_data,
     get_integration_data, get_layout_data, get_layouts_scripts_ids,
@@ -708,7 +708,7 @@ class IDSetValidations(BaseValidator):
 
 
 
-def is_missing_alternative_fields(data, field, id_set):
+def get_missing_alternative_fields(data, field, id_set):
     """
     Check if the given field for the given item data has an alternative in the id_set.
     For example, if the field is playbookName, search the id set for that playbook and check if there is a 'name_x2' for
@@ -720,31 +720,34 @@ def is_missing_alternative_fields(data, field, id_set):
         id_set: The alreday existing id set.
 
     Returns:
-        Returns the item missing from data
+        Returns the alternative field value missing from data
     """
-    if 'playbook' in field:
-        header = 'playbooks'
-    elif 'script' in field:
-        header = 'scripts'
 
-    # The given field represents an id
-    if 'id' in field or 'Id' in field:
-        for item in id_set[header]:
-            nested_item_data = item.get(field, {})
-            if nested_item_data.get('id_x2') and f'{field}_x2' not in data:
-                return {'id_x2': nested_item_data.get('id_x2')}
+    possible_script_fields = ['fieldCalcScript', 'script', 'scriptName', 'must', 'should']
+    possible_playbook_fields = ['playbookId', 'playbookName']
 
-    # The given field represents a name
-    elif 'name' in field or 'Name' in field:
-        for item in id_set[header]:
-            if data.get(field) in list(item.values())[0].values():
-                nested_item_data = list(item.values())[0]
-                if nested_item_data.get('name_x2') and f'{field}_x2' not in data:
-                    return {'name_x2': nested_item_data.get('name_x2')}
+    if field in possible_playbook_fields:
+        id_set_section = id_set['playbooks']
+    elif field in possible_script_fields:
+        id_set_section = id_set['scripts']
+    else:
+        raise # TODO: handle exceptions
 
-    return {}
 
-# TODO: relocate functions
+    item_info = get_item_from_id_set(data[field], id_set_section)
+    item_inner_info = list(item_info.values())[0]
+    item_id_x2 = item_inner_info.get('id_x2')
+    item_name_x2 = item_inner_info.get('name_x2')
+
+    if item_info.get(data[field]) and item_id_x2:
+        return item_id_x2
+
+    if item_inner_info.get('name') and item_name_x2:
+        return item_name_x2
+
+    return None
+
+    # TODO: relocate functions
 
 def validate_alternative_fields_of_nested_item(item_path: str, file_type: str, id_set_file: dict):
     """
@@ -759,28 +762,26 @@ def validate_alternative_fields_of_nested_item(item_path: str, file_type: str, i
         constants.FileType.INCIDENT_TYPE: ['playbookId'],
         constants.FileType.INCIDENT_FIELD: ['fieldCalcScript', 'script'],
         constants.FileType.PLAYBOOK: ['playbookName', 'playbookId', 'scriptName'],
-        constants.FileType.SCRIPT: []
         }
 
-    if file_type_item_dict.get(file_type):
-        if file_type in [constants.FileType.PLAYBOOK, constants.FileType.SCRIPT]:
+    possible_alternative_fields = file_type_item_dict.get(file_type)
+
+    if possible_alternative_fields:
+        if file_type == constants.FileType.PLAYBOOK:
             item_data = get_file(item_path, 'yml')
+            for task_info in list(item_data.get('tasks', {}).values()):
+                # Go over all the tasks in the playbook, looking for subplaybooks or scripts
+                task_sub_info = task_info.get('task', {})
+                for field in possible_alternative_fields:
+                    if task_sub_info.get(field):
+                        if get_missing_alternative_fields(task_sub_info, field, id_set_file):
+                            return False
         else:
             item_data = get_file(item_path, 'json')
-        possible_alternative_fields = file_type_item_dict[file_type]
-
-        # This is a playbook
-        if item_data.get('tasks'):
-            for sought_field in possible_alternative_fields:
-                for key, value in item_data.get('tasks').items():
-                    if is_missing_alternative_fields(value.get('task', {}), sought_field, id_set_file):
-                        return False
-
-        # This is not a playbook
-        else:
+            # go over all fields searching for scripts or playbooks
             for field in item_data:
-                for sought_field in possible_alternative_fields:
-                    if is_missing_alternative_fields(item_data, sought_field, id_set_file):
+                if field in possible_alternative_fields:
+                    if get_missing_alternative_fields(item_data, field, id_set_file):
                         return False
 
     return True

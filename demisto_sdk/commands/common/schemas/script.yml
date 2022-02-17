@@ -50,9 +50,6 @@ mapping:
   dependson:
     type: map
     allowempty: True
-  dependson_x2:
-    type: map
-    allowempty: True
   outputs:
     type: seq
     sequence:

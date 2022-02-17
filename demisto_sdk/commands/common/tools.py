@@ -2398,3 +2398,20 @@ def get_scripts_and_commands_from_yml_data(data, file_type):
             })
 
     return detailed_commands, scripts_and_pbs
+
+def get_item_from_id_set(item_identifier, id_set_section):
+    """
+    Get the item info from the id set section given, using the item's identifier.
+    The identifier can be either the item's name or id.
+    Args:
+        item_identifier: id or name of sought after item.
+        id_set_section: section of id set of the type of the sought after item.
+
+    Returns:
+        the item's info from the id set.
+    """
+
+    for item in id_set_section:
+        if item_identifier in [list(item.keys())[0], list(item.values())[0].get('name')]:
+            return item
+    return None

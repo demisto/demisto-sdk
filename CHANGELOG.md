@@ -2,6 +2,9 @@
 * Added the '--use-packs-known-words' argument to the **doc-review** command
 * Removed PYYAML library (using only ruamel instead).
 * Fixed an issue when filtering items using the ID set in the **create-content-artifacts** command.
+* Fixed an issue in the **generate-docs** command where tables were generated with an empty description column.
+* Fixed an issue in the **split** command where splitting failed when using relative input/output paths.
+* Added warning when inferred files are missing.
 * Added to **validate** a validation for integration image dimensions, which should be 120x50px.
 
 # 1.6.0

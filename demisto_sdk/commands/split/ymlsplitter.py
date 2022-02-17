@@ -54,8 +54,8 @@ class YmlSplitter:
                  no_common_server: bool = False, no_auto_create_dir: bool = False, configuration: Configuration = None,
                  base_name: str = '', no_readme: bool = False, no_pipenv: bool = False,
                  no_logging: bool = False, no_basic_fmt: bool = False, new_module_file: bool = False):
-        self.input = Path(input)
-        self.output = Path(output) if output else Path(self.input.parent)
+        self.input = Path(input).resolve()
+        self.output = (Path(output) if output else Path(self.input.parent)).resolve()
         self.demisto_mock = not no_demisto_mock
         self.common_server = not no_common_server
         self.file_type = file_type
@@ -76,7 +76,7 @@ class YmlSplitter:
     def get_output_path(self):
         """Get processed output path
         """
-        output_path = Path(self.output).resolve()
+        output_path = Path(self.output)
         if self.autocreate_dir and output_path.name in {'Integrations', 'Scripts'}:
             code_name = self.yml_data.get("name")
             if not code_name:

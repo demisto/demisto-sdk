@@ -12,7 +12,7 @@ from enum import Enum
 from functools import partial
 from multiprocessing import Pool, cpu_count
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import click
 import networkx
@@ -135,14 +135,16 @@ def does_dict_have_alternative_key(data: dict) -> bool:
     return False
 
 
-def get_alternative_fields(data: dict) -> dict:
+def get_alternative_fields(data: dict) -> Union[bool, dict]:
     """
     Check if the data dict has fields ending with '_x2'. First check if there are alternative name and id
     and return them, if not then check all other fields.
     Args:
         data (dict): the data dict to search in
 
-    Returns: True if found such a key, else False
+    Returns: dict with alternative fields of id and name,
+            or
+            True if there are other alternative fields, else False
     """
     # We first check specifically for name and id, not in the recursive call, to avoid catching cases of
     # nested items having an alternative name or id.
@@ -151,32 +153,9 @@ def get_alternative_fields(data: dict) -> dict:
     if id_x2 or name_x2:
         return {'id_x2': id_x2, 'name_x2': name_x2}
 
-    return {'other_x2': True} if iterate_dict_alternative_fields(data) else {}
-          # TODO: think about a better way
-
-
-
-def iterate_dict_alternative_fields(data: dict):
-    """
-        Check if a key that ends with "_x2" exists in the dict (including inner levels)
-        Args:
-            data (dict): the data dict to search in
-
-        Returns: True if found such a key, else False
-
-    """
-
-    # start searching in the first level keys
-    for key in data:
-        if isinstance(key, str) and key.endswith('_x2'):
-            return True
-
-    for key, value in data.items():
-        if isinstance(value, dict):
-            if does_dict_have_alternative_key(value):
-                return True
-
-    return False
+    # if we reached this part, then there may be an alternative field but it is not one that is specifically in
+    # the id set (like id or name). in this case return the
+    return does_dict_have_alternative_key(data)
 
 
 def should_skip_item_by_mp(file_path: str, marketplace: str, excluded_items_from_id_set: dict,
@@ -648,10 +627,11 @@ def get_playbook_data(file_path: str, packs: Dict[str, Dict] = None) -> dict:
         playbook_data['lists'] = implementing_lists
     if alternative_fields:
         playbook_data['has_alternative_meta'] = True
-    if alternative_fields.get('id_x2'):
-        playbook_data['id_x2'] = alternative_fields['id_x2']
-    if alternative_fields.get('name_x2'):
-        playbook_data['name_x2'] = alternative_fields['name_x2']
+        if isinstance(alternative_fields, dict):
+            if alternative_fields.get('id_x2'):
+                playbook_data['id_x2'] = alternative_fields['id_x2']
+            if alternative_fields.get('name_x2'):
+                playbook_data['name_x2'] = alternative_fields['name_x2']
 
     return {id_: playbook_data}
 
@@ -691,10 +671,11 @@ def get_script_data(file_path, script_code=None, packs: Dict[str, Dict] = None):
         script_data['tests'] = tests
     if alternative_fields:
         script_data['has_alternative_meta'] = True
-    if alternative_fields.get('id_x2'):
-        script_data['id_x2'] = alternative_fields['id_x2']
-    if alternative_fields.get('name_x2'):
-        script_data['name_x2'] = alternative_fields['name_x2']
+        if isinstance(alternative_fields, dict):
+            if alternative_fields.get('id_x2'):
+                playbook_data['id_x2'] = alternative_fields['id_x2']
+            if alternative_fields.get('name_x2'):
+                playbook_data['name_x2'] = alternative_fields['name_x2']
 
     return {id_: script_data}
 
@@ -907,11 +888,12 @@ def get_incident_field_data(path: str, incident_types: List, packs: Dict[str, Di
     if cli_name:
         data['cliname'] = cli_name
     if alternative_fields:
-        data['has_alternative_meta'] = True
-    if alternative_fields.get('id_x2'):
-        data['id_x2'] = alternative_fields['id_x2']
-    if alternative_fields.get('name_x2'):
-        data['name_x2'] = alternative_fields['name_x2']
+        script_data['has_alternative_meta'] = True
+        if isinstance(alternative_fields, dict):
+            if alternative_fields.get('id_x2'):
+                data['id_x2'] = alternative_fields['id_x2']
+            if alternative_fields.get('name_x2'):
+                data['name_x2'] = alternative_fields['name_x2']
     return {id_: data}
 
 
@@ -1110,7 +1092,7 @@ def get_mapper_data(path: str, packs: Dict[str, Dict] = None):
 
     incidents_fields = {incident_field for incident_field in incidents_fields if incident_field not in BUILT_IN_FIELDS}
     data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack, marketplaces=marketplaces)
-    alternative_fields = get_alternative_fields(json_data) # TODO: check finction does_dict_have_alternative_key
+    alternative_fields = get_alternative_fields(json_data)
 
     if incidents_types:
         data['incident_types'] = list(incidents_types)
@@ -1123,12 +1105,12 @@ def get_mapper_data(path: str, packs: Dict[str, Dict] = None):
     if definition_id:
         data['definitionId'] = definition_id
     if alternative_fields:
-        # this used to be     if does_dict_have_alternative_key(json_data): TODO: check
-        data['has_alternative_meta'] = True
-    if alternative_fields.get('id_x2'):
-        data['id_x2'] = alternative_fields['id_x2']
-    if alternative_fields.get('name_x2'):
-        data['name_x2'] = alternative_fields['name_x2']
+        script_data['has_alternative_meta'] = True
+        if isinstance(alternative_fields, dict):
+            if alternative_fields.get('id_x2'):
+                data['id_x2'] = alternative_fields['id_x2']
+            if alternative_fields.get('name_x2'):
+                data['name_x2'] = alternative_fields['name_x2']
 
     return {id_: data}
 

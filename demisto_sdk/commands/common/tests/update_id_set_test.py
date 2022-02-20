@@ -3073,8 +3073,8 @@ TEST_DICTS = [
 
 
 @pytest.mark.parametrize('dict_to_test, expected_result', TEST_DICTS)
-def test_iterate_dict_alternative_fields(dict_to_test, expected_result):
-    result = iterate_dict_alternative_fields(dict_to_test)
+def test_does_dict_have_alternative_key(dict_to_test, expected_result):
+    result = does_dict_have_alternative_key(dict_to_test)
     assert result == expected_result
 
 

@@ -673,9 +673,9 @@ def get_script_data(file_path, script_code=None, packs: Dict[str, Dict] = None):
         script_data['has_alternative_meta'] = True
         if isinstance(alternative_fields, dict):
             if alternative_fields.get('id_x2'):
-                playbook_data['id_x2'] = alternative_fields['id_x2']
+                script_data['id_x2'] = alternative_fields['id_x2']
             if alternative_fields.get('name_x2'):
-                playbook_data['name_x2'] = alternative_fields['name_x2']
+                script_data['name_x2'] = alternative_fields['name_x2']
 
     return {id_: script_data}
 
@@ -888,7 +888,7 @@ def get_incident_field_data(path: str, incident_types: List, packs: Dict[str, Di
     if cli_name:
         data['cliname'] = cli_name
     if alternative_fields:
-        script_data['has_alternative_meta'] = True
+        data['has_alternative_meta'] = True
         if isinstance(alternative_fields, dict):
             if alternative_fields.get('id_x2'):
                 data['id_x2'] = alternative_fields['id_x2']
@@ -1105,7 +1105,7 @@ def get_mapper_data(path: str, packs: Dict[str, Dict] = None):
     if definition_id:
         data['definitionId'] = definition_id
     if alternative_fields:
-        script_data['has_alternative_meta'] = True
+        data['has_alternative_meta'] = True
         if isinstance(alternative_fields, dict):
             if alternative_fields.get('id_x2'):
                 data['id_x2'] = alternative_fields['id_x2']

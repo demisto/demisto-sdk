@@ -557,7 +557,8 @@ class TestScripts:
             "tests": [
                 "No test - no need to test widget"
             ],
-            "has_alternative_meta": True
+            "has_alternative_meta": True,
+            "name_x2": "Exampke name"
         }
     }
 
@@ -572,7 +573,8 @@ class TestScripts:
             "tests": [
                 "No test - no need to test widget"
             ],
-            "has_alternative_meta": True
+            "has_alternative_meta": True,
+            "id_x2": "ExampleID"
         }
     }
 
@@ -800,7 +802,9 @@ class TestPlaybooks:
             "Palo Alto Networks - Malware Remediation",
             "autofocus-sample-analysis"
         ],
-        "has_alternative_meta": True
+        "has_alternative_meta": True,
+        "id_x2": "Example ID",
+        "name_x2": "Example name"
     }
 
     PLAYBOOK_DATA_ALTERNATIVE_FIELDS_SECOND_LEVEL = {

@@ -45,9 +45,10 @@ class BaseUpdateYML(BaseUpdate):
                  assume_yes: bool = False,
                  deprecate: bool = False,
                  add_tests: bool = True,
-                 interactive: bool = True):
+                 interactive: bool = True,
+                 id_set_path: str = ''):
         super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
-                         verbose=verbose, assume_yes=assume_yes, interactive=interactive)
+                         verbose=verbose, assume_yes=assume_yes, interactive=interactive, id_set_path=id_set_path)
         self.id_and_version_location = self.get_id_and_version_path_object()
         self.deprecate = deprecate
         self.add_tests = add_tests

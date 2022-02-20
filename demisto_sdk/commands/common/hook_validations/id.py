@@ -723,15 +723,5 @@ def validate_alternative_fields_of_nested_item(item_data: dict, file_type: str, 
         True if there are missing alternative fields, False otherwise.
 
     """
-    file_type_item_dict = {
-        constants.FileType.INCIDENT_TYPE: ['playbookId'],
-        constants.FileType.INCIDENT_FIELD: ['fieldCalcScript', 'script'],
-        constants.FileType.PLAYBOOK: ['playbookName', 'playbookId', 'scriptName'],
-        }
 
-    possible_alternative_fields = file_type_item_dict.get(file_type)
-
-    if possible_alternative_fields:
-        return add_missing_alternative_fields(possible_alternative_fields, item_data, file_type, id_set_file)
-
-    return True
+    return not add_missing_alternative_fields(item_data, file_type, id_set_file)

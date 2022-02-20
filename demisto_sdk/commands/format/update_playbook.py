@@ -29,10 +29,11 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
                  assume_yes: bool = False,
                  deprecate: bool = False,
                  add_tests: bool = False,
-                 interactive: bool = True):
+                 interactive: bool = True,
+                 id_set_path: str = ''):
         super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
                          verbose=verbose, assume_yes=assume_yes, deprecate=deprecate, add_tests=add_tests,
-                         interactive=interactive)
+                         interactive=interactive, id_set_path=id_set_path)
 
     def add_description(self):
         """Add empty description to playbook and tasks."""
@@ -258,12 +259,16 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
             self.delete_sourceplaybookid()
             self.update_playbook_task_name()
             self.remove_empty_fields_from_scripts()
+            self.add_alternative_fields()
             super().run_format()
             return SUCCESS_RETURN_CODE
         except Exception as err:
             if self.verbose:
                 click.secho(f'\nFailed to update file {self.source_file}. Error: {err}', fg='red')
             return ERROR_RETURN_CODE
+
+    def add_alternative_fields(self):
+        super().add_alternative_fields(FileType.PLAYBOOK)
 
 
 class TestPlaybookYMLFormat(BasePlaybookYMLFormat):

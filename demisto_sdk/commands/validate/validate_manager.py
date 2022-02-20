@@ -497,8 +497,9 @@ class ValidateManager:
             return False
 
         if not validate_alternative_fields_of_nested_item(structure_validator.current_file, file_type, self.id_set_file):
-            self.handle_error(error_message='Alternative fields were found for nested item in file, please add them to the file.',
-                              file_path=file_path, error_code='ADD', suggested_fix='Add the field to the file') # TODO: extend comment
+            self.handle_error(error_message='Alternative fields of nested items were found and are missing from '
+                                            'this file, please add them to the file.',
+                              file_path=file_path, error_code='ADD')
             return False
 
         # conf.json validation

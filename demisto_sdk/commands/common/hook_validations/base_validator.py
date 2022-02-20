@@ -232,6 +232,3 @@ class BaseValidator:
         json_contents.append(formatted_error_output)
         with open(self.json_file_path, 'w') as f:
             json.dump(json_contents, f, indent=4)
-
-
-    def add_alternative_fields(self):

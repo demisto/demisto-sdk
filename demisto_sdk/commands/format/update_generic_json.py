@@ -56,6 +56,7 @@ class BaseUpdateJSON(BaseUpdate):
         self.remove_unnecessary_keys()
         self.remove_spaces_end_of_id_and_name()
         source_file_type = find_type(self.source_file)
+        super().add_alternative_fields(source_file_type)
         if source_file_type in GENERIC_OBJECTS_FILE_TYPES:
             self.set_fromVersion(from_version=self.from_version, file_type=source_file_type)
         else:

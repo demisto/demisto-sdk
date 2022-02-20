@@ -13,7 +13,9 @@ from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_dict_from_file,
                                                get_pack_metadata,
                                                get_remote_file,
-                                               is_file_from_content_repo)
+                                               is_file_from_content_repo,
+                                               add_missing_alternative_fields,
+                                               open_id_set_file)
 from demisto_sdk.commands.format.format_constants import (
     DEFAULT_VERSION, ERROR_RETURN_CODE, GENERIC_OBJECTS_DEFAULT_FROMVERSION,
     GENERIC_OBJECTS_FILE_TYPES, NEW_FILE_DEFAULT_5_5_0_FROMVERSION,
@@ -64,6 +66,8 @@ class BaseUpdate:
         self.assume_yes = assume_yes
         self.interactive = interactive
         self.updated_ids: Dict = {}
+        self.id_set_path = kwargs.get('id_set_path')
+        self.id_set = {}
         if not self.no_validate:
             self.validate_manager = ValidateManager(silence_init_prints=True, skip_conf_json=True,
                                                     skip_dependencies=True, skip_pack_rn_validation=True,
@@ -377,3 +381,10 @@ class BaseUpdate:
         if self.old_file:
             diff = dictdiffer.diff(self.old_file, self.data)
             self.data = dictdiffer.patch(diff, self.old_file)
+
+    def add_alternative_fields(self, item_type):
+        if not self.id_set_path:
+            click.secho('Skipping alternative fields formatting as id_set_path argument is missing', fg='yellow')
+        else:
+            self.id_set = open_id_set_file(self.id_set_path)
+            add_missing_alternative_fields(self.data, item_type, self.id_set)

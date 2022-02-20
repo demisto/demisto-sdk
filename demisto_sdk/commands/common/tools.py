@@ -21,6 +21,7 @@ from typing import Callable, Dict, List, Match, Optional, Tuple, Type, Union
 
 import click
 import colorama
+import copy
 import demisto_client
 import git
 import giturlparse
@@ -2475,14 +2476,11 @@ def get_item_from_id_set(item_identifier, id_set_section):
     return None
 
 
-def add_missing_alternative_fields(possible_alternative_fields: list, item_data: dict, item_type: str,
-                                   id_set_file: dict):
+def add_missing_alternative_fields(item_data: dict, item_type: str, id_set_file: dict):
     """
    Checks if there are missing alternative fields in the given data, and adds the missing alternative fields to the
    data. Determining whether the item has an alterntaive field is done by the id set.
     Args:
-        possible_alternative_fields: The list of fields (can be nested fields) that may have an
-        alternative field in the given data.
         item_data: The extracted data of the item from yml\json.
         item_type: The type of content item the data belongs to.
         id_set_file: Loaded id set.
@@ -2490,23 +2488,31 @@ def add_missing_alternative_fields(possible_alternative_fields: list, item_data:
     Returns:
         True if there are missing alternative fields, False otherwise.
     """
-    was_alternated = False
+    file_type_item_dict = {
+        FileType.INCIDENT_TYPE: ['playbookId'],
+        FileType.INCIDENT_FIELD: ['fieldCalcScript', 'script'],
+        FileType.PLAYBOOK: ['playbookName', 'playbookId', 'scriptName'],
+    }
 
-    if file_type == constants.FileType.PLAYBOOK:
-        for task_info in list(item_data.get('tasks', {}).values()):
-            # Go over all the tasks in the playbook, looking for subplaybooks or scripts
-            task_sub_info = task_info.get('task', {})
-            for field in possible_alternative_fields:
-                if task_sub_info.get(field):
-                    task_sub_info.update(get_missing_alternative_fields(task_sub_info, field, id_set_file))
+    possible_alternative_fields = file_type_item_dict.get(item_type)
+    was_alternated = False
+    if possible_alternative_fields:
+        if item_type == FileType.PLAYBOOK:
+            for task_info in list(item_data.get('tasks', {}).values()):
+                # Go over all the tasks in the playbook, looking for subplaybooks or scripts
+                task_sub_info = task_info.get('task', {})
+                for field in possible_alternative_fields:
+                    missing_alternative_fields = get_missing_alternative_fields(task_sub_info, field, id_set_file)
+                    if task_sub_info.get(field) and missing_alternative_fields:
+                        task_sub_info.update(missing_alternative_fields)
+                        was_alternated = True
+        else:
+            # Go over all fields searching for scripts or playbooks
+            item_data_copy = copy.deepcopy(item_data)
+            for field in item_data_copy:
+                if field in possible_alternative_fields:
+                    item_data.update(get_missing_alternative_fields(item_data, field, id_set_file))
                     was_alternated = True
-    else:
-        # Go over all fields searching for scripts or playbooks
-        item_data_copy = item_data.deepcopy()
-        for field in item_data_copy:
-            if field in possible_alternative_fields:
-                item_data.update(get_missing_alternative_fields(item_data, field, id_set_file))
-                was_alternated = True
 
     return was_alternated
 
@@ -2535,15 +2541,16 @@ def get_missing_alternative_fields(data, field, id_set):
         # this means the field is in possible_script_fields:
         id_set_section = id_set['scripts']
 
-    item_info = get_item_from_id_set(data[field], id_set_section)
-    item_inner_info = list(item_info.values())[0]
-    item_id_x2 = item_inner_info.get('id_x2')
-    item_name_x2 = item_inner_info.get('name_x2')
+    item_info = get_item_from_id_set(data.get(field), id_set_section)
+    if item_info:
+        item_inner_info = list(item_info.values())[0]
+        item_id_x2 = item_inner_info.get('id_x2')
+        item_name_x2 = item_inner_info.get('name_x2')
 
-    if item_info.get(data[field]) and item_id_x2:
-        return {f'{field}_x2': item_id_x2}
+        if item_info.get(data[field]) and item_id_x2:
+            return {f'{field}_x2': item_id_x2}
 
-    if item_inner_info.get('name') and item_name_x2:
-        return {f'{field}_x2': item_name_x2}
+        if item_inner_info.get('name') and item_name_x2:
+            return {f'{field}_x2': item_name_x2}
 
     return None

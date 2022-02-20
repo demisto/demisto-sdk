@@ -344,6 +344,13 @@ class PackUniqueFilesValidator(BaseValidator):
         lowercase_name = pack_name.lower()
         return not any(excluded_word in lowercase_name for excluded_word in EXCLUDED_DISPLAY_NAME_WORDS)
 
+
+    def _is_empty_dir(self, path: Path) -> bool:
+        if next(path.iterdir(), None):
+            return False
+        return True
+
+
     def _is_pack_meta_file_structure_valid(self):
         """Check if pack_metadata.json structure is json parse-able and valid"""
         try:
@@ -401,11 +408,13 @@ class PackUniqueFilesValidator(BaseValidator):
                                            self.pack_meta_file):
                             return False
 
-            # check metadata categories isn't an empty list
-            if not metadata[PACK_METADATA_CATEGORIES]:
-                if self._add_error(Errors.pack_metadata_missing_categories(self.pack_meta_file),
-                                   self.pack_meta_file):
-                    return False
+            # check metadata categories isn't an empty list, only if it is an integration.
+            pack_path: Path = Path(self.pack_path) / 'integration'
+            if pack_path.exists() and not self._is_empty_dir(path=pack_path):
+                if not metadata[PACK_METADATA_CATEGORIES]:
+                    if self._add_error(Errors.pack_metadata_missing_categories(self.pack_meta_file),
+                                       self.pack_meta_file):
+                        return False
 
             # if the field 'certification' exists, check that its value is set to 'certified' or 'verified'
             certification = metadata.get(PACK_METADATA_CERTIFICATION)

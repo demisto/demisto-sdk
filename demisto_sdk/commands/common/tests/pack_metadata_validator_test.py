@@ -40,11 +40,15 @@ class TestPackMetadataValidator:
         os.path.join(FILES_PATH, 'pack_metadata_invalid_format_version.json'),
     ])
     def test_metadata_validator_invalid__non_breaking(self, mocker, metadata):
+        from pathlib import Path
+
         mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
         mocker.patch.object(PackUniqueFilesValidator, '_read_file_content',
                             return_value=TestPackMetadataValidator.read_file(metadata))
         mocker.patch.object(PackUniqueFilesValidator, '_is_pack_file_exists', return_value=True)
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
+        mocker.patch.object(Path, 'exists', return_value=True)
+        mocker.patch.object(PackUniqueFilesValidator, '_is_empty_dir', return_value=False)
 
         validator = PackUniqueFilesValidator('fake')
         assert not validator.validate_pack_meta_file()
@@ -140,16 +144,44 @@ class TestPackMetadataValidator:
             assert not validator._is_pack_meta_file_structure_valid()
 
     def test_metadata_validator_empty_categories(self, mocker):
+        from pathlib import Path
         metadata = os.path.join(self.__class__.FILES_PATH, 'pack_metadata_empty_categories.json')
         mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
         mocker.patch.object(PackUniqueFilesValidator, '_read_file_content',
                             return_value=TestPackMetadataValidator.read_file(metadata))
         mocker.patch.object(PackUniqueFilesValidator, '_is_pack_file_exists', return_value=True)
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
-
+        mocker.patch.object(Path, 'exists', return_value=True)
+        mocker.patch.object(PackUniqueFilesValidator, '_is_empty_dir', return_value=False)
         validator = PackUniqueFilesValidator('fake')
         assert not validator.validate_pack_meta_file()
         assert "[PA129] - pack_metadata.json - Missing categories" in validator.get_errors()
+
+    def test_metadata_validator_empty_categories_none_integration(self, mocker):
+        from pathlib import Path
+        metadata = os.path.join(self.__class__.FILES_PATH, 'pack_metadata_empty_categories.json')
+        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
+        mocker.patch.object(PackUniqueFilesValidator, '_read_file_content',
+                            return_value=TestPackMetadataValidator.read_file(metadata))
+        mocker.patch.object(PackUniqueFilesValidator, '_is_pack_file_exists', return_value=True)
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
+        mocker.patch.object(Path, 'exists', return_value=False)
+        mocker.patch.object(PackUniqueFilesValidator, '_is_empty_dir', return_value=False)
+        validator = PackUniqueFilesValidator('fake')
+        assert validator.validate_pack_meta_file()
+
+    def test_metadata_validator_empty_categories_empty_integration(self, mocker):
+        from pathlib import Path
+        metadata = os.path.join(self.__class__.FILES_PATH, 'pack_metadata_empty_categories.json')
+        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
+        mocker.patch.object(PackUniqueFilesValidator, '_read_file_content',
+                            return_value=TestPackMetadataValidator.read_file(metadata))
+        mocker.patch.object(PackUniqueFilesValidator, '_is_pack_file_exists', return_value=True)
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
+        mocker.patch.object(Path, 'exists', return_value=True)
+        mocker.patch.object(PackUniqueFilesValidator, '_is_empty_dir', return_value=True)
+        validator = PackUniqueFilesValidator('fake')
+        assert validator.validate_pack_meta_file()
 
     def test_metadata_validator_invalid_version_add_error(self, mocker):
         """

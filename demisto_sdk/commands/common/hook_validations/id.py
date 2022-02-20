@@ -51,19 +51,19 @@ class IDSetValidations(BaseValidator):
                  print_as_warnings=False, suppress_print=False, id_set_file=None, json_file_path=None):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          suppress_print=suppress_print, json_file_path=json_file_path)
-        #self.is_circle = is_circle
+        self.is_circle = is_circle
         self.configuration = configuration
-        #if not is_test_run and self.is_circle:
-        self.id_set_file = id_set_file
-        self.script_set = self.id_set_file[self.SCRIPTS_SECTION]
-        self.playbook_set = self.id_set_file[self.PLAYBOOK_SECTION]
-        self.integration_set = self.id_set_file[self.INTEGRATION_SECTION]
-        self.test_playbook_set = self.id_set_file[self.TEST_PLAYBOOK_SECTION]
-        self.classifiers_set = self.id_set_file[self.CLASSIFIERS_SECTION]
-        self.layouts_set = self.id_set_file[self.LAYOUTS_SECTION]
-        self.mappers_set = self.id_set_file[self.MAPPERS_SECTION]
-        self.incident_types_set = self.id_set_file[self.INCIDENT_TYPES_SECTION]
-        self.packs_set = self.id_set_file[self.PACKS_SECTION]
+        if not is_test_run and self.is_circle:
+            self.id_set_file = id_set_file
+            self.script_set = self.id_set_file[self.SCRIPTS_SECTION]
+            self.playbook_set = self.id_set_file[self.PLAYBOOK_SECTION]
+            self.integration_set = self.id_set_file[self.INTEGRATION_SECTION]
+            self.test_playbook_set = self.id_set_file[self.TEST_PLAYBOOK_SECTION]
+            self.classifiers_set = self.id_set_file[self.CLASSIFIERS_SECTION]
+            self.layouts_set = self.id_set_file[self.LAYOUTS_SECTION]
+            self.mappers_set = self.id_set_file[self.MAPPERS_SECTION]
+            self.incident_types_set = self.id_set_file[self.INCIDENT_TYPES_SECTION]
+            self.packs_set = self.id_set_file[self.PACKS_SECTION]
 
     def _is_incident_type_default_playbook_found(self, incident_type_data):
         """Check if the default playbook of an incident type is in the id_set

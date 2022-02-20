@@ -904,7 +904,8 @@ class ValidateManager:
     def validate_incident_field(self, structure_validator, pack_error_ignore_list, is_modified, is_added_file):
         incident_field_validator = IncidentFieldValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                                           print_as_warnings=self.print_ignored_errors,
-                                                          json_file_path=self.json_file_path)
+                                                          json_file_path=self.json_file_path,
+                                                          id_set_file=self.id_set_file)
         if is_modified and self.is_backward_check:
             return all([incident_field_validator.is_valid_file(validate_rn=False, is_new_file=not is_modified,
                                                                use_git=self.use_git,

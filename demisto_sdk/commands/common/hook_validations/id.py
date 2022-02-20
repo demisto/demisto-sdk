@@ -709,19 +709,3 @@ class IDSetValidations(BaseValidator):
                 get_pack_metadata_data(f'{pack_path}/pack_metadata.json', False))
 
         return is_valid, error
-
-
-def validate_alternative_fields_of_nested_item(item_data: dict, file_type: str, id_set_file: dict):
-    """
-        Checks if the given item has alternative fields missing from its data, using the id set.
-    Args:
-        item_data: The extracted data of the item from yml\json.
-        item_type: The type of content item the data belongs to.
-        id_set_file: Loaded id set.
-
-    Returns:
-        True if there are missing alternative fields, False otherwise.
-
-    """
-
-    return not add_missing_alternative_fields(item_data, file_type, id_set_file)

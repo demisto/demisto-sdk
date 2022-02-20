@@ -43,7 +43,7 @@ from demisto_sdk.commands.common.hook_validations.generic_module import \
     GenericModuleValidator
 from demisto_sdk.commands.common.hook_validations.generic_type import \
     GenericTypeValidator
-from demisto_sdk.commands.common.hook_validations.id import IDSetValidations, validate_alternative_fields_of_nested_item
+from demisto_sdk.commands.common.hook_validations.id import IDSetValidations
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.hook_validations.incident_field import \
     IncidentFieldValidator
@@ -83,7 +83,7 @@ from demisto_sdk.commands.common.hook_validations.xsoar_config_json import \
 from demisto_sdk.commands.common.tools import (
     find_type, get_api_module_ids, get_api_module_integrations_set,
     get_pack_ignore_file_path, get_pack_name, get_pack_names_from_files,
-    get_relative_path_from_packs_dir, get_yaml, open_id_set_file)
+    get_relative_path_from_packs_dir, get_yaml, open_id_set_file, add_missing_alternative_fields)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 
@@ -139,7 +139,7 @@ class ValidateManager:
                                                    ignored_errors=None,
                                                    print_as_warnings=self.print_ignored_errors,
                                                    id_set_file=self.id_set_file,
-                                                   json_file_path=json_file_path) if validate_id_set else None # TODO: run also when running local with id set
+                                                   json_file_path=json_file_path) if validate_id_set else None
 
         try:
             self.git_util = GitUtil(repo=Content.git())
@@ -496,7 +496,7 @@ class ValidateManager:
                                                                                         pack_error_ignore_list):
             return False
 
-        if not validate_alternative_fields_of_nested_item(structure_validator.current_file, file_type, self.id_set_file):
+        if not self.validate_alternative_fields_of_nested_item(structure_validator.current_file, file_type):
             self.handle_error(error_message='Alternative fields of nested items were found and are missing from '
                                             'this file, please add them to the file.',
                               file_path=file_path, error_code='ADD')
@@ -1722,3 +1722,17 @@ class ValidateManager:
 
             return is_valid_as_deprecated
         return None
+
+    def validate_alternative_fields_of_nested_item(self, item_data: dict, file_type: str):
+        """
+            Checks if the given item has alternative fields missing from its data, using the id set.
+        Args:
+            item_data: The extracted data of the item from yml\json.
+            item_type: The type of content item the data belongs to.
+
+        Returns:
+            True if there are missing alternative fields, False otherwise.
+
+        """
+
+        return not add_missing_alternative_fields(item_data, file_type, self.id_set_file)

@@ -19,12 +19,13 @@ import requests.exceptions
 import urllib3.exceptions
 from jinja2 import Environment, FileSystemLoader, exceptions
 from packaging.version import parse
-from ruamel.yaml import YAML
 from wcmatch.pathlib import NEGATE, Path
 
 from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    PACKS_PACK_META_FILE_NAME,
                                                    TYPE_PWSH, TYPE_PYTHON)
+from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.timers import timer
 # Local packages
 from demisto_sdk.commands.common.tools import (get_all_docker_images,
                                                run_command_os)
@@ -44,6 +45,7 @@ from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, RERUN, RL,
                                                stream_docker_container_output)
 
 logger = logging.getLogger('demisto-sdk')
+yaml = YAML_Handler()
 
 
 class Linter:
@@ -105,6 +107,7 @@ class Linter:
             "warning_code": SUCCESS,
         }
 
+    @timer(group_name='lint')
     def run_dev_packages(self, no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool, no_vulture: bool,
                          no_xsoar_linter: bool, no_pwsh_analyze: bool, no_pwsh_test: bool, no_test: bool, modules: dict,
                          keep_container: bool, test_xml: str, no_coverage: bool) -> dict:
@@ -166,6 +169,7 @@ class Linter:
             self._pkg_lint_status['exit_code'] += FAIL
         return self._pkg_lint_status
 
+    @timer(group_name='lint')
     def _gather_facts(self, modules: dict) -> bool:
         """ Gathering facts about the package - python version, docker images, valid docker image, yml parsing
         Args:
@@ -194,7 +198,7 @@ class Linter:
         try:
 
             script_obj: Dict = {}
-            yml_obj: Dict = YAML().load(yml_file)
+            yml_obj: Dict = yaml.load(yml_file)
             if isinstance(yml_obj, dict):
                 script_obj = yml_obj.get('script', {}) if isinstance(yml_obj.get('script'), dict) else yml_obj
             self._facts['is_script'] = True if 'Scripts' in yml_file.parts else False
@@ -225,8 +229,7 @@ class Linter:
             if self._facts["docker_engine"]:
                 # Getting python version from docker image - verifying if not valid docker image configured
                 for image in self._facts["images"]:
-                    py_num: str = get_python_version_from_image(image=image[0], timeout=self.docker_timeout,
-                                                                log_prompt=log_prompt)
+                    py_num: str = get_python_version_from_image(image=image[0], timeout=self.docker_timeout)
                     image[1] = py_num
                     logger.info(f"{self._pack_name} - Facts - {image[0]} - Python {py_num}")
                     if not self._facts["python_version"]:
@@ -316,6 +319,7 @@ class Linter:
                 self._facts['lint_unittest_files'].append(lint_file)
                 self._facts["lint_files"].remove(lint_file)
 
+    @timer(group_name='lint')
     def _run_lint_in_host(self, no_flake8: bool, no_bandit: bool, no_mypy: bool, no_vulture: bool,
                           no_xsoar_linter: bool):
         """ Run lint check on host
@@ -371,6 +375,7 @@ class Linter:
                 else:
                     self._pkg_lint_status[f"{lint_check}_errors"] = "\n".join(other)
 
+    @timer(group_name='lint')
     def _run_flake8(self, py_num: str, lint_files: List[Path]) -> Tuple[int, str]:
         """ Runs flake8 in pack dir
 
@@ -386,11 +391,11 @@ class Linter:
         logger.info(f"{log_prompt} - Start")
         stdout, stderr, exit_code = run_command_os(command=build_flake8_command(lint_files, py_num),
                                                    cwd=self._content_repo)
-        logger.debug(f"{log_prompt} - Finished exit-code: {exit_code}")
-        logger.debug(f"{log_prompt} - Finished stdout: {RL if stdout else ''}{stdout}")
-        logger.debug(f"{log_prompt} - Finished stderr: {RL if stderr else ''}{stderr}")
+        logger.debug(f"{log_prompt} - Finished, exit-code: {exit_code}")
+        logger.debug(f"{log_prompt} - Finished, stdout: {RL if stdout else ''}{stdout}")
+        logger.debug(f"{log_prompt} - Finished, stderr: {RL if stderr else ''}{stderr}")
         if stderr or exit_code:
-            logger.info(f"{log_prompt}- Finished errors found")
+            logger.error(f"{log_prompt}- Finished, errors found")
             if stderr:
                 return FAIL, stderr
             else:
@@ -400,6 +405,7 @@ class Linter:
 
         return SUCCESS, ""
 
+    @timer(group_name='lint')
     def _run_xsoar_linter(self, py_num: str, lint_files: List[Path]) -> Tuple[int, str]:
         """ Runs Xsaor linter in pack dir
 
@@ -435,10 +441,10 @@ class Linter:
                 command=build_xsoar_linter_command(lint_files, py_num, self._facts.get('support_level', 'base')),
                 cwd=self._pack_abs_dir, env=myenv)
         if exit_code & FAIL_PYLINT:
-            logger.info(f"{log_prompt}- Finished errors found")
+            logger.error(f"{log_prompt}- Finished, errors found")
             status = FAIL
         if exit_code & WARNING:
-            logger.info(f"{log_prompt} - Finished warnings found")
+            logger.warning(f"{log_prompt} - Finished, warnings found")
             if not status:
                 status = WARNING
         # if pylint did not run and failure exit code has been returned from run commnad
@@ -452,17 +458,18 @@ class Linter:
             else:
                 stdout = "Xsoar linter could not run, please make sure you have" \
                          " the necessary Pylint version for both py2 and py3"
-            logger.info(f"{log_prompt}- Finished errors found")
+            logger.error(f"{log_prompt}- Finished, errors found")
 
-        logger.debug(f"{log_prompt} - Finished exit-code: {exit_code}")
-        logger.debug(f"{log_prompt} - Finished stdout: {RL if stdout else ''}{stdout}")
-        logger.debug(f"{log_prompt} - Finished stderr: {RL if stderr else ''}{stderr}")
+        logger.debug(f"{log_prompt} - Finished, exit-code: {exit_code}")
+        logger.debug(f"{log_prompt} - Finished, stdout: {RL if stdout else ''}{stdout}")
+        logger.debug(f"{log_prompt} - Finished, stderr: {RL if stderr else ''}{stderr}")
 
         if not exit_code:
             logger.info(f"{log_prompt} - Successfully finished")
 
         return status, stdout
 
+    @timer(group_name='lint')
     def _run_bandit(self, lint_files: List[Path]) -> Tuple[int, str]:
         """ Run bandit in pack dir
 
@@ -477,11 +484,11 @@ class Linter:
         logger.info(f"{log_prompt} - Start")
         stdout, stderr, exit_code = run_command_os(command=build_bandit_command(lint_files),
                                                    cwd=self._pack_abs_dir)
-        logger.debug(f"{log_prompt} - Finished exit-code: {exit_code}")
-        logger.debug(f"{log_prompt} - Finished stdout: {RL if stdout else ''}{stdout}")
-        logger.debug(f"{log_prompt} - Finished stderr: {RL if stderr else ''}{stderr}")
+        logger.debug(f"{log_prompt} - Finished, exit-code: {exit_code}")
+        logger.debug(f"{log_prompt} - Finished, stdout: {RL if stdout else ''}{stdout}")
+        logger.debug(f"{log_prompt} - Finished, stderr: {RL if stderr else ''}{stderr}")
         if stderr or exit_code:
-            logger.info(f"{log_prompt}- Finished Finished errors found")
+            logger.error(f"{log_prompt}- Finished, errors found")
             if stderr:
                 return FAIL, stderr
             else:
@@ -491,6 +498,7 @@ class Linter:
 
         return SUCCESS, ""
 
+    @timer(group_name='lint')
     def _run_mypy(self, py_num: str, lint_files: List[Path]) -> Tuple[int, str]:
         """ Run mypy in pack dir
 
@@ -505,13 +513,13 @@ class Linter:
         log_prompt = f"{self._pack_name} - Mypy"
         logger.info(f"{log_prompt} - Start")
         with add_typing_module(lint_files=lint_files, python_version=py_num):
-            stdout, stderr, exit_code = run_command_os(command=build_mypy_command(files=lint_files, version=py_num),
-                                                       cwd=self._pack_abs_dir)
-        logger.debug(f"{log_prompt} - Finished exit-code: {exit_code}")
-        logger.debug(f"{log_prompt} - Finished stdout: {RL if stdout else ''}{stdout}")
-        logger.debug(f"{log_prompt} - Finished stderr: {RL if stderr else ''}{stderr}")
+            mypy_command = build_mypy_command(files=lint_files, version=py_num, content_repo=self._content_repo)
+            stdout, stderr, exit_code = run_command_os(command=mypy_command, cwd=self._pack_abs_dir)
+        logger.debug(f"{log_prompt} - Finished, exit-code: {exit_code}")
+        logger.debug(f"{log_prompt} - Finished, stdout: {RL if stdout else ''}{stdout}")
+        logger.debug(f"{log_prompt} - Finished, stderr: {RL if stderr else ''}{stderr}")
         if stderr or exit_code:
-            logger.info(f"{log_prompt}- Finished Finished errors found")
+            logger.error(f"{log_prompt}- Finished, errors found")
             if stderr:
                 return FAIL, stderr
             else:
@@ -521,6 +529,7 @@ class Linter:
 
         return SUCCESS, ""
 
+    @timer(group_name='lint')
     def _run_vulture(self, py_num: str, lint_files: List[Path]) -> Tuple[int, str]:
         """ Run mypy in pack dir
 
@@ -538,11 +547,11 @@ class Linter:
                                                                                  pack_path=self._pack_abs_dir,
                                                                                  py_num=py_num),
                                                    cwd=self._pack_abs_dir)
-        logger.debug(f"{log_prompt} - Finished exit-code: {exit_code}")
-        logger.debug(f"{log_prompt} - Finished stdout: {RL if stdout else ''}{stdout}")
-        logger.debug(f"{log_prompt} - Finished stderr: {RL if stderr else ''}{stderr}")
+        logger.debug(f"{log_prompt} - Finished, exit-code: {exit_code}")
+        logger.debug(f"{log_prompt} - Finished, stdout: {RL if stdout else ''}{stdout}")
+        logger.debug(f"{log_prompt} - Finished, stderr: {RL if stderr else ''}{stderr}")
         if stderr or exit_code:
-            logger.info(f"{log_prompt}- Finished Finished errors found")
+            logger.error(f"{log_prompt}- Finished, errors found")
             if stderr:
                 return FAIL, stderr
             else:
@@ -552,6 +561,7 @@ class Linter:
 
         return SUCCESS, ""
 
+    @timer(group_name='lint')
     def _run_lint_on_docker_image(self, no_pylint: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
                                   keep_container: bool, test_xml: str, no_coverage: bool):
         """ Run lint check on docker image
@@ -649,6 +659,7 @@ class Linter:
         except docker.errors.APIError:
             return False
 
+    @timer(group_name='lint')
     def _docker_image_create(self, docker_base_image: List[Any]) -> Tuple[str, str]:
         """ Create docker image:
             1. Installing 'build base' if required in alpine images version - https://wiki.alpinelinux.org/wiki/GCC
@@ -764,6 +775,7 @@ class Linter:
             if platform.system() != 'Darwin' or 'Connection broken' not in str(err):
                 raise
 
+    @timer(group_name='lint')
     def _docker_run_pylint(self, test_image: str, keep_container: bool) -> Tuple[int, str]:
         """ Run Pylint in created test image
 
@@ -809,7 +821,7 @@ class Linter:
                 # 2-Error message issued
                 exit_code = FAIL
                 output = container_log
-                logger.info(f"{log_prompt} - Finished errors found")
+                logger.error(f"{log_prompt} - Finished, errors found")
             elif container_exit_code in [4, 8, 16]:
                 # 4-Warning message issued
                 # 8-refactor message issued
@@ -837,6 +849,7 @@ class Linter:
             output = str(e)
         return exit_code, output
 
+    @timer(group_name='lint')
     def _docker_run_pytest(self, test_image: str, keep_container: bool, test_xml: str, no_coverage: bool = False) -> Tuple[int, str, dict]:
         """ Run Pytest in created test image
 
@@ -908,7 +921,7 @@ class Linter:
                     output = container_obj.logs().decode('utf-8')
                     exit_code = FAIL
                 else:
-                    logger.info(f"{log_prompt} - Finished errors found")
+                    logger.error(f"{log_prompt} - Finished, errors found")
                     exit_code = FAIL
             elif container_exit_code in [3, 4]:
                 # 3-Internal error happened while executing tests
@@ -916,6 +929,10 @@ class Linter:
                 logger.critical(f"{log_prompt} - Usage error")
                 exit_code = RERUN
                 output = container_obj.logs().decode('utf-8')
+            else:
+                # Any other container exit code
+                logger.error(f"{log_prompt} - Finished, docker container error found ({container_exit_code})")
+                exit_code = FAIL
             # Remove container if not needed
             if keep_container:
                 print(f"{log_prompt} - Container name {container_name}")
@@ -977,7 +994,7 @@ class Linter:
             if container_exit_code:
                 # 1-fatal message issued
                 # 2-Error message issued
-                logger.info(f"{log_prompt} - Finished errors found")
+                logger.error(f"{log_prompt} - Finished, errors found")
                 output = container_log
                 exit_code = FAIL
             else:
@@ -1042,7 +1059,7 @@ class Linter:
             if container_exit_code:
                 # 1-fatal message issued
                 # 2-Error message issued
-                logger.info(f"{log_prompt} - Finished errors found")
+                logger.error(f"{log_prompt} - Finished, errors found")
                 output = container_log
                 exit_code = FAIL
             else:

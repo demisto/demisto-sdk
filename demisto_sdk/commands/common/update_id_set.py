@@ -26,10 +26,12 @@ from demisto_sdk.commands.common.constants import (
     LAYOUTS_DIR, LISTS_DIR, MAPPERS_DIR, MP_V2_ID_SET_PATH, REPORTS_DIR,
     SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR, FileType,
     MarketplaceVersions)
-from demisto_sdk.commands.common.tools import (
-    LOG_COLORS, find_type, get_current_repo, get_file, get_json,
-    get_mp_types_from_metadata_by_item, get_pack_name, get_yaml, print_color,
-    print_error, print_warning)
+from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
+                                               get_current_repo, get_file,
+                                               get_item_marketplaces, get_json,
+                                               get_pack_name, get_yaml,
+                                               print_color, print_error,
+                                               print_warning)
 from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
 
 CONTENT_ENTITIES = ['Packs', 'Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
@@ -44,12 +46,11 @@ ID_SET_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Cla
 
 CONTENT_MP_V2_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
                           'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
-                          'Mappers', 'Packs', 'Lists', 'Jobs']
+                          'Layouts', 'Mappers', 'Packs', 'Lists']
 
 ID_SET_MP_V2_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Classifiers',
                          'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
-                         'Mappers', 'Lists', 'Jobs']
-
+                         'Layouts', 'Mappers', 'Lists']
 
 BUILT_IN_FIELDS = [
     "name",
@@ -94,6 +95,46 @@ BUILT_IN_FIELDS = [
 ]
 
 
+def add_item_to_exclusion_dict(excluded_items_from_id_set: dict, file_path: str, item_id: str) -> None:
+    """
+    Adds an item to the exclusion dict
+
+    Args:
+        excluded_items_from_id_set: the dict that holds the excluded items, aggregated by packs
+        file_path: the file path of the item
+        item_id: the ID of the item
+
+    """
+    pack_name = get_pack_name(file_path)
+    item_type = find_type(file_path, ignore_sub_categories=True).value
+
+    item_type = "classifier" if item_type == "classifier_5_9_9" else item_type
+    excluded_items_from_id_set[pack_name] = {(item_type, item_id)}  # set of tuples
+
+
+def does_dict_have_alternative_key(data: dict) -> bool:
+    """
+        Check if a key that ends with "_x2" exists in the dict (including inner levels)
+        Args:
+            data (dict): the data dict to search in
+
+        Returns: True if found such a key, else False
+
+    """
+
+    # start searching in the first level keys
+    for key in data:
+        if isinstance(key, str) and key.endswith('_x2'):
+            return True
+
+    for key, value in data.items():
+        if isinstance(value, dict):
+            if does_dict_have_alternative_key(value):
+                return True
+
+    return False
+
+
 def get_alternative_fields(data: dict) -> dict:
     """
     Check if the data dict has fields ending with '_x2'. First check if there are alternative name and id
@@ -117,13 +158,14 @@ def get_alternative_fields(data: dict) -> dict:
 
 def iterate_dict_alternative_fields(data: dict):
     """
-    Check if a key that ends with "_x2" exists in the dict (including inner levels)
-    Args:
-        data (dict): the data dict to search in
+        Check if a key that ends with "_x2" exists in the dict (including inner levels)
+        Args:
+            data (dict): the data dict to search in
 
-    Returns: True if found such a key, else False
+        Returns: True if found such a key, else False
 
     """
+
     # start searching in the first level keys
     for key in data:
         if isinstance(key, str) and key.endswith('_x2'):
@@ -131,12 +173,14 @@ def iterate_dict_alternative_fields(data: dict):
 
     for key, value in data.items():
         if isinstance(value, dict):
-            if iterate_dict_alternative_fields(value):
+            if does_dict_have_alternative_key(value):
                 return True
 
     return False
 
-def should_skip_item_by_mp(file_path: str, marketplace: str, print_logs: bool = False):
+
+def should_skip_item_by_mp(file_path: str, marketplace: str, excluded_items_from_id_set: dict,
+                           packs: Dict[str, Dict] = None, print_logs: bool = False):
     """
     Checks if the item given (as path) should be part of the current generated id set.
      The checks are in this order:
@@ -148,28 +192,35 @@ def should_skip_item_by_mp(file_path: str, marketplace: str, print_logs: bool = 
     Args:
         file_path: path to content item
         marketplace: the marketplace this current generated id set is for
+        excluded_items_from_id_set: the dict that holds the excluded items, aggregated by packs
+        packs: the pack mapping from the ID set.
+        print_logs: whether to pring logs
 
     Returns: True if should be skipped, else False
 
     """
 
+    if not marketplace:
+        return False
+
     # first check, check field 'marketplaces' in the item's file
     file_type = Path(file_path).suffix
     try:
         item_data = get_file(file_path, file_type)
-        if item_data.get('marketplaces'):
-            if marketplace not in item_data.get('marketplaces'):
-                if print_logs:
-                    print(f'Skipping {file_path} due to mismatch with the given marketplace')
-                return True
     except (ValueError, FileNotFoundError, IsADirectoryError):
         return True
 
-    # second check, check the metadata of the pack
-    if marketplace not in get_mp_types_from_metadata_by_item(file_path):
+    item_marketplaces = get_item_marketplaces(file_path, item_data=item_data, packs=packs)
+    if marketplace not in item_marketplaces:
         if print_logs:
             print(f'Skipping {file_path} due to mismatch with the given marketplace')
+
+        if "pack_metadata" not in file_path:  # only add pack items to the exclusion dict, not whole packs
+            add_item_to_exclusion_dict(excluded_items_from_id_set, file_path,
+                                       item_data.get("id", item_data.get('commonfields', {}).get('id', '')))
         return True
+
+    return False
 
 
 def build_tasks_graph(playbook_data):
@@ -358,7 +409,7 @@ def get_integration_api_modules(file_path, data_dictionary, is_unified_integrati
     return unifier.check_api_module_imports(integration_script_code)[1]
 
 
-def get_integration_data(file_path):
+def get_integration_data(file_path, packs: Dict[str, Dict] = None):
     data_dictionary = get_yaml(file_path)
 
     is_unified_integration = data_dictionary.get('script', {}).get('script', '') not in ['-', '']
@@ -377,7 +428,9 @@ def get_integration_data(file_path):
     integration_api_modules = get_integration_api_modules(file_path, data_dictionary, is_unified_integration)
     default_classifier = data_dictionary.get('defaultclassifier')
     default_incident_type = data_dictionary.get('defaultIncidentType')
+    is_fetch = data_dictionary.get('script', {}).get('isfetch', False)
     is_feed = data_dictionary.get('script', {}).get('feed', False)
+    marketplaces = get_item_marketplaces(file_path, item_data=data_dictionary, packs=packs)
     mappers = set()
 
     deprecated_commands = []
@@ -392,7 +445,9 @@ def get_integration_data(file_path):
                                                  name=name,
                                                  to_version=toversion,
                                                  from_version=fromversion,
-                                                 pack=pack)
+                                                 pack=pack,
+                                                 marketplaces=marketplaces,
+                                                 )
     if docker_image:
         integration_data['docker_image'] = docker_image
     if cmd_list:
@@ -411,6 +466,8 @@ def get_integration_data(file_path):
         integration_data['mappers'] = list(mappers)
     if default_incident_type and default_incident_type != '':
         integration_data['incident_types'] = default_incident_type
+    if is_fetch:
+        integration_data['is_fetch'] = is_fetch
     if is_feed:
         # if the integration is a feed it should be dependent on CommonTypes
         integration_data['indicator_fields'] = COMMON_TYPES_PACK
@@ -533,7 +590,7 @@ def get_dependent_incident_and_indicator_fields(data_dictionary):
     return dependent_incident_fields, dependent_indicator_fields
 
 
-def get_playbook_data(file_path: str) -> dict:
+def get_playbook_data(file_path: str, packs: Dict[str, Dict] = None) -> dict:
     data_dictionary = get_yaml(file_path)
     graph = build_tasks_graph(data_dictionary)
 
@@ -543,6 +600,7 @@ def get_playbook_data(file_path: str) -> dict:
     tests = data_dictionary.get('tests')
     toversion = data_dictionary.get('toversion')
     fromversion = data_dictionary.get('fromversion')
+    marketplaces = get_item_marketplaces(file_path, item_data=data_dictionary, packs=packs)
 
     implementing_scripts, implementing_scripts_skippable = get_task_ids_from_playbook('scriptName',
                                                                                       data_dictionary,
@@ -560,7 +618,7 @@ def get_playbook_data(file_path: str) -> dict:
     dependent_incident_fields, dependent_indicator_fields = get_dependent_incident_and_indicator_fields(data_dictionary)
 
     playbook_data = create_common_entity_data(path=file_path, name=name, to_version=toversion,
-                                              from_version=fromversion, pack=pack)
+                                              from_version=fromversion, pack=pack, marketplaces=marketplaces)
 
     transformers, filters = get_filters_and_transformers_from_playbook(data_dictionary)
 
@@ -598,7 +656,7 @@ def get_playbook_data(file_path: str) -> dict:
     return {id_: playbook_data}
 
 
-def get_script_data(file_path, script_code=None):
+def get_script_data(file_path, script_code=None, packs: Dict[str, Dict] = None):
     data_dictionary = get_yaml(file_path)
     id_ = data_dictionary.get('commonfields', {}).get('id', '-')
     if script_code is None:
@@ -612,11 +670,12 @@ def get_script_data(file_path, script_code=None):
     fromversion = data_dictionary.get('fromversion')
     docker_image = data_dictionary.get('dockerimage')
     depends_on, command_to_integration = get_depends_on(data_dictionary)
-    script_executions = sorted(list(set(re.findall(r"demisto.executeCommand\(['\"](\w+)['\"].*", script_code))))
+    script_executions = sorted(list(set(re.findall(r"execute_?command\(['\"](\w+)['\"].*", script_code, re.IGNORECASE))))
     pack = get_pack_name(file_path)
+    marketplaces = get_item_marketplaces(file_path, item_data=data_dictionary, packs=packs)
 
     script_data = create_common_entity_data(path=file_path, name=name, to_version=toversion, from_version=fromversion,
-                                            pack=pack)
+                                            pack=pack, marketplaces=marketplaces)
     alternative_fields = get_alternative_fields(data_dictionary)
     if deprecated:
         script_data['deprecated'] = deprecated
@@ -699,7 +758,7 @@ def get_values_for_keys_recursively(json_object: dict, keys_to_search: list) -> 
     return values
 
 
-def get_layout_data(path):
+def get_layout_data(path: str, packs: Dict[str, Dict] = None):
     json_data = get_json(path)
 
     layout = json_data.get('layout', {})
@@ -711,13 +770,14 @@ def get_layout_data(path):
     toversion = json_data.get('toVersion')
     kind = json_data.get('kind')
     pack = get_pack_name(path)
+    marketplaces = get_item_marketplaces(path, item_data=json_data, packs=packs)
     incident_indicator_types_dependency = {id_}
     incident_indicator_fields_dependency = get_values_for_keys_recursively(json_data, ['fieldId'])
     definition_id = json_data.get('definitionId')
     tabs = layout.get('tabs', [])
     scripts = get_layouts_scripts_ids(tabs)
 
-    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack, marketplaces=marketplaces)
     if type_:
         data['typeID'] = type_
     if type_name:
@@ -771,15 +831,18 @@ def get_layouts_scripts_ids(layout_tabs):
     return scripts
 
 
-def get_layoutscontainer_data(path):
+def get_layoutscontainer_data(path: str, packs: Dict[str, Dict] = None):
     json_data = get_json(path)
     layouts_container_fields = ["group", "edit", "indicatorsDetails", "indicatorsQuickView", "quickView", "close",
                                 "details", "detailsV2", "mobile"]
     pack = get_pack_name(path)
+    marketplaces = get_item_marketplaces(path, item_data=json_data, packs=packs)
     data = create_common_entity_data(path=path, name=json_data.get('name'),
                                      to_version=json_data.get('toVersion'),
                                      from_version=json_data.get('fromVersion'),
-                                     pack=pack)
+                                     pack=pack,
+                                     marketplaces=marketplaces,
+                                     )
     data.update(OrderedDict({field: json_data[field] for field in layouts_container_fields if json_data.get(field)}))
 
     id_ = json_data.get('id')
@@ -797,7 +860,7 @@ def get_layoutscontainer_data(path):
     return {id_: data}
 
 
-def get_incident_field_data(path, incidents_types_list):
+def get_incident_field_data(path: str, incident_types: List, packs: Dict[str, Dict] = None):
     json_data = get_json(path)
 
     id_ = json_data.get('id')
@@ -805,6 +868,7 @@ def get_incident_field_data(path, incidents_types_list):
     fromversion = json_data.get('fromVersion')
     toversion = json_data.get('toVersion')
     pack = get_pack_name(path)
+    marketplaces = get_item_marketplaces(path, item_data=json_data, packs=packs)
     all_associated_types: set = set()
     all_scripts = set()
 
@@ -817,7 +881,7 @@ def get_incident_field_data(path, incidents_types_list):
         all_associated_types = all_associated_types.union(set(system_associated_types))
 
     if 'all' in all_associated_types:
-        all_associated_types = {list(incident_type.keys())[0] for incident_type in incidents_types_list}
+        all_associated_types = {list(incident_type.keys())[0] for incident_type in incident_types}
 
     scripts = json_data.get('script')
     if scripts:
@@ -827,12 +891,21 @@ def get_incident_field_data(path, incidents_types_list):
     if field_calculations_scripts:
         all_scripts = all_scripts.union({field_calculations_scripts})
 
-    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
+    # save cliName and name of all aliases fields in a single list
+    aliases: List[str] = sum(([field['cliName'], field['name']] for field in json_data.get('Aliases', [])), [])
+    cli_name = json_data.get('cliName')
+
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack, marketplaces=marketplaces)
+
     alternative_fields = get_alternative_fields(json_data)
     if all_associated_types:
         data['incident_types'] = list(all_associated_types)
     if all_scripts:
         data['scripts'] = list(all_scripts)
+    if aliases:
+        data['aliases'] = aliases
+    if cli_name:
+        data['cliname'] = cli_name
     if alternative_fields:
         data['has_alternative_meta'] = True
     if alternative_fields.get('id_x2'):
@@ -842,7 +915,7 @@ def get_incident_field_data(path, incidents_types_list):
     return {id_: data}
 
 
-def get_indicator_type_data(path, all_integrations):
+def get_indicator_type_data(path: str, all_integrations: List, packs: Dict[str, Dict] = None):
     json_data = get_json(path)
 
     id_ = json_data.get('id')
@@ -851,6 +924,7 @@ def get_indicator_type_data(path, all_integrations):
     toversion = json_data.get('toVersion')
     reputation_command = json_data.get('reputationCommand')
     pack = get_pack_name(path)
+    marketplaces = get_item_marketplaces(path, item_data=json_data, packs=packs)
     all_scripts: set = set()
     associated_integrations = set()
 
@@ -869,7 +943,7 @@ def get_indicator_type_data(path, all_integrations):
         if integration_commands and reputation_command in integration_commands:
             associated_integrations.add(integration_name)
 
-    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack, marketplaces=marketplaces)
     if associated_integrations:
         data['integrations'] = list(associated_integrations)
     if all_scripts:
@@ -878,7 +952,7 @@ def get_indicator_type_data(path, all_integrations):
     return {id_: data}
 
 
-def get_incident_type_data(path):
+def get_incident_type_data(path: str, packs: Dict[str, Dict] = None):
     json_data = get_json(path)
 
     id_ = json_data.get('id')
@@ -888,8 +962,9 @@ def get_incident_type_data(path):
     playbook_id = json_data.get('playbookId')
     pre_processing_script = json_data.get('preProcessingScript')
     pack = get_pack_name(path)
+    marketplaces = get_item_marketplaces(path, item_data=json_data, packs=packs)
 
-    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack, marketplaces=marketplaces)
     if playbook_id and playbook_id != '':
         data['playbooks'] = playbook_id
     if pre_processing_script and pre_processing_script != '':
@@ -898,7 +973,7 @@ def get_incident_type_data(path):
     return {id_: data}
 
 
-def get_classifier_data(path):
+def get_classifier_data(path: str, packs: Dict[str, Dict] = None):
     json_data = get_json(path)
 
     id_ = json_data.get('id')
@@ -906,6 +981,7 @@ def get_classifier_data(path):
     fromversion = json_data.get('fromVersion')
     toversion = json_data.get('toVersion')
     pack = get_pack_name(path)
+    marketplaces = get_item_marketplaces(path, item_data=json_data, packs=packs)
     incidents_types = set()
     transformers: List[str] = []
     filters: List[str] = []
@@ -924,7 +1000,7 @@ def get_classifier_data(path):
         if complex_value:
             transformers, filters = get_filters_and_transformers_from_complex_value(complex_value)
 
-    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack, marketplaces=marketplaces)
     if incidents_types:
         data['incident_types'] = list(incidents_types)
     if filters:
@@ -937,7 +1013,7 @@ def get_classifier_data(path):
     return {id_: data}
 
 
-def create_common_entity_data(path, name, to_version, from_version, pack):
+def create_common_entity_data(path, name, to_version, from_version, pack, marketplaces):
     data = OrderedDict()
     if name:
         data['name'] = name
@@ -949,19 +1025,19 @@ def create_common_entity_data(path, name, to_version, from_version, pack):
         data['fromversion'] = from_version
     if pack:
         data['pack'] = pack
+    data['marketplaces'] = marketplaces
+
     return data
 
 
-def get_pack_metadata_data(file_path, print_logs: bool, marketplace: str = 'xsoar'):
+def get_pack_metadata_data(file_path, print_logs: bool, marketplace: str = ''):
     try:
         if print_logs:
             print(f'adding {file_path} to id_set')
 
-        if should_skip_item_by_mp(file_path, marketplace, print_logs):
+        if should_skip_item_by_mp(file_path, marketplace, {}, print_logs=print_logs):
             return {}
 
-        if print_logs:
-            print(f'adding {file_path} to id_set')
         json_data = get_json(file_path)
         pack_data = {
             "name": json_data.get('name'),
@@ -972,7 +1048,7 @@ def get_pack_metadata_data(file_path, print_logs: bool, marketplace: str = 'xsoa
             "tags": json_data.get('tags', []),
             "use_cases": json_data.get('useCases', []),
             "categories": json_data.get('categories', []),
-            "marketplaces": json_data.get('marketplaces', []),
+            "marketplaces": json_data.get('marketplaces', [MarketplaceVersions.XSOAR.value]),
         }
 
         pack_id = get_pack_name(file_path)
@@ -983,7 +1059,7 @@ def get_pack_metadata_data(file_path, print_logs: bool, marketplace: str = 'xsoa
         raise
 
 
-def get_mapper_data(path):
+def get_mapper_data(path: str, packs: Dict[str, Dict] = None):
     json_data = get_json(path)
 
     id_ = json_data.get('id')
@@ -992,6 +1068,7 @@ def get_mapper_data(path):
     fromversion = json_data.get('fromVersion')
     toversion = json_data.get('toVersion')
     pack = get_pack_name(path)
+    marketplaces = get_item_marketplaces(path, item_data=json_data, packs=packs)
     incidents_types = set()
     incidents_fields: set = set()
     all_transformers = set()
@@ -1032,8 +1109,8 @@ def get_mapper_data(path):
                 all_filters.update(filters)
 
     incidents_fields = {incident_field for incident_field in incidents_fields if incident_field not in BUILT_IN_FIELDS}
-    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
-    alternative_fields = get_alternative_fields(json_data)
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack, marketplaces=marketplaces)
+    alternative_fields = get_alternative_fields(json_data) # TODO: check finction does_dict_have_alternative_key
 
     if incidents_types:
         data['incident_types'] = list(incidents_types)
@@ -1046,6 +1123,7 @@ def get_mapper_data(path):
     if definition_id:
         data['definitionId'] = definition_id
     if alternative_fields:
+        # this used to be     if does_dict_have_alternative_key(json_data): TODO: check
         data['has_alternative_meta'] = True
     if alternative_fields.get('id_x2'):
         data['id_x2'] = alternative_fields['id_x2']
@@ -1055,7 +1133,7 @@ def get_mapper_data(path):
     return {id_: data}
 
 
-def get_widget_data(path):
+def get_widget_data(path: str, packs: Dict[str, Dict] = None):
     json_data = get_json(path)
 
     id_ = json_data.get('id')
@@ -1063,37 +1141,40 @@ def get_widget_data(path):
     fromversion = json_data.get('fromVersion')
     toversion = json_data.get('toVersion')
     pack = get_pack_name(path)
+    marketplaces = get_item_marketplaces(path, item_data=json_data, packs=packs)
     scripts = ''
 
     # if the widget is script based - add it to the dependencies of the widget
     if json_data.get('dataType') == 'scripts':
         scripts = json_data.get('query')
 
-    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack, marketplaces=marketplaces)
     if scripts:
         data['scripts'] = [scripts]
 
     return {id_: data}
 
 
-def get_dashboard_data(path):
+def get_dashboard_data(path: str, packs: Dict[str, Dict] = None):
     dashboard_data = get_json(path)
     layouts = dashboard_data.get('layout', {})
-    return parse_dashboard_or_report_data(layouts, dashboard_data, path)
+    return parse_dashboard_or_report_data(path, dashboard_data, layouts, packs)
 
 
-def get_report_data(path):
+def get_report_data(path: str, packs: Dict[str, Dict] = None):
     report_data = get_json(path)
     layouts = report_data.get('dashboard', {}).get('layout')
-    return parse_dashboard_or_report_data(layouts, report_data, path)
+    return parse_dashboard_or_report_data(path, report_data, layouts, packs)
 
 
-def parse_dashboard_or_report_data(all_layouts, data_file_json, path):
+def parse_dashboard_or_report_data(path: str, data_file_json: Dict, all_layouts: List, packs: Dict[str, Dict] = None):
     id_ = data_file_json.get('id')
     name = data_file_json.get('name', '')
     fromversion = data_file_json.get('fromVersion')
     toversion = data_file_json.get('toVersion')
     pack = get_pack_name(path)
+    marketplaces = get_item_marketplaces(path, item_data=data_file_json, packs=packs)
+
     scripts = set()
     if all_layouts:
         for layout in all_layouts:
@@ -1101,14 +1182,14 @@ def parse_dashboard_or_report_data(all_layouts, data_file_json, path):
             if widget_data.get('dataType') == 'scripts':
                 scripts.add(widget_data.get('query'))
 
-    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack, marketplaces=marketplaces)
     if scripts:
         data['scripts'] = list(scripts)
 
     return {id_: data}
 
 
-def get_general_data(path):
+def get_general_data(path: str, packs: Dict[str, Dict] = None):
     json_data = get_json(path)
     id_ = json_data.get('id')
     brandname = json_data.get('brandName', '')
@@ -1116,8 +1197,9 @@ def get_general_data(path):
     fromversion = json_data.get('fromVersion')
     toversion = json_data.get('toVersion')
     pack = get_pack_name(path)
+    marketplaces = get_item_marketplaces(path, item_data=json_data, packs=packs)
 
-    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack, marketplaces=marketplaces)
     if brandname:  # for classifiers
         data['name'] = brandname
     return {id_: data}
@@ -1135,161 +1217,190 @@ def get_depends_on(data_dict):
     return depends_on_list, command_to_integration
 
 
-def process_integration(file_path: str, print_logs: bool, marketplace: str = 'xsoar') -> list:
+def process_integration(file_path: str, packs: Dict[str, Dict], marketplace: str, print_logs: bool) -> Tuple[list, dict]:
     """
     Process integration dir or file
 
     Arguments:
-        file_path (str): file path to integration file
-        print_logs (bool): whether to print logs to stdout
-        marketplace (str): the marketplace this id set is designated for (xsoar or )
+        file_path: The file path to integration file.
+        packs: The pack mapping from the ID set.
+        marketplace: The marketplace this id set is designated for.
+        print_logs: Whether to print logs to stdout.
 
     Returns:
-        list: integration data list (may be empty)
+        integration data list (may be empty), a dict of excluded items from the id set
     """
     res = []
+    excluded_items_from_id_set: dict = {}
     try:
         if os.path.isfile(file_path):
-            if should_skip_item_by_mp(file_path, marketplace, print_logs):
-                return []
+            if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, packs=packs, print_logs=print_logs):
+                return [], excluded_items_from_id_set
             if find_type(file_path) in (FileType.INTEGRATION, FileType.BETA_INTEGRATION):
                 if print_logs:
                     print(f'adding {file_path} to id_set')
-                res.append(get_integration_data(file_path))
+                res.append(get_integration_data(file_path, packs=packs))
         else:
             # package integration
             package_name = os.path.basename(file_path)
             file_path = os.path.join(file_path, '{}.yml'.format(package_name))
-            if should_skip_item_by_mp(file_path, marketplace, print_logs):
-                return []
+            if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, packs=packs, print_logs=print_logs):
+                return [], excluded_items_from_id_set
             if os.path.isfile(file_path):
                 # locally, might have leftover dirs without committed files
                 if print_logs:
                     print(f'adding {file_path} to id_set')
-                res.append(get_integration_data(file_path))
+                res.append(get_integration_data(file_path, packs=packs))
     except Exception as exp:  # noqa
         print_error(f'failed to process {file_path}, Error: {str(exp)}')
         raise
 
-    return res
+    return res, excluded_items_from_id_set
 
 
-def process_script(file_path: str, print_logs: bool, marketplace: str = 'xsoar') -> list:
+def process_script(file_path: str, packs: Dict[str, Dict], marketplace: str, print_logs: bool) -> Tuple[list, dict]:
+    """
+    Process script dir or file
+
+    Arguments:
+        file_path: the file path to script file.
+        packs: The pack mapping from the ID set.
+        marketplace: The marketplace this id set is designated for.
+        print_logs: Whether to print logs to stdout.
+
+    Returns:
+        script data list (may be empty), a dict of excluded items from the id set
+    """
     res = []
+    excluded_items_from_id_set: dict = {}
     try:
         if os.path.isfile(file_path):
-            if should_skip_item_by_mp(file_path, marketplace, print_logs):
-                return []
+            if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, packs=packs, print_logs=print_logs):
+                return [], excluded_items_from_id_set
             if find_type(file_path) == FileType.SCRIPT:
                 if print_logs:
                     print(f'adding {file_path} to id_set')
-                res.append(get_script_data(file_path))
+                res.append(get_script_data(file_path, packs=packs))
         else:
             # package script
             unifier = YmlUnifier(file_path)
             yml_path, code = unifier.get_script_or_integration_package_data()
-            if should_skip_item_by_mp(yml_path, marketplace, print_logs):
-                return []
+            if should_skip_item_by_mp(yml_path, marketplace, excluded_items_from_id_set, packs=packs, print_logs=print_logs):
+                return [], excluded_items_from_id_set
             if print_logs:
                 print(f'adding {file_path} to id_set')
-            res.append(get_script_data(yml_path, script_code=code))
+            res.append(get_script_data(yml_path, script_code=code, packs=packs))
     except Exception as exp:  # noqa
         print_error(f'failed to process {file_path}, Error: {str(exp)}')
         raise
 
-    return res
+    return res, excluded_items_from_id_set
 
 
-def process_incident_fields(file_path: str, print_logs: bool, incidents_types_list: list, marketplace: str = 'xsoar') -> list:
+def process_incident_fields(file_path: str, packs: Dict[str, Dict], marketplace: str, print_logs: bool, incident_types: List) -> \
+        Tuple[list, dict]:
     """
     Process a incident_fields JSON file
     Args:
-        file_path: The file path from incident field folder
+        file_path: The file path from incident field folder.
+        packs: The pack mapping from the ID set.
+        marketplace: The marketplace this id set is designated for.
         print_logs: Whether to print logs to stdout.
-        incidents_types_list: List of all the incident types in the system.
+        incident_types: List of all the incident types in the system.
 
     Returns:
-        a list of incident field data.
+        a list of incident field data, a dict of excluded items from the id set
     """
     res = []
+    excluded_items_from_id_set: dict = {}
     try:
-        if should_skip_item_by_mp(file_path, marketplace, print_logs):
-            return []
+        if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, packs=packs, print_logs=print_logs):
+            return [], excluded_items_from_id_set
         if find_type(file_path) == FileType.INCIDENT_FIELD:
             if print_logs:
                 print(f'adding {file_path} to id_set')
-            res.append(get_incident_field_data(file_path, incidents_types_list))
+            res.append(get_incident_field_data(file_path, incident_types, packs=packs))
     except Exception as exp:  # noqa
         print_error(f'failed to process {file_path}, Error: {str(exp)}')
         raise
-    return res
+    return res, excluded_items_from_id_set
 
 
-def process_indicator_types(file_path: str, print_logs: bool, all_integrations: list, marketplace: str = 'xsoar') -> list:
+def process_indicator_types(file_path: str, packs: Dict[str, Dict], marketplace: str, print_logs: bool, all_integrations: list) -> \
+        Tuple[list, dict]:
     """
     Process a indicator types JSON file
     Args:
         file_path: The file path from indicator type folder
-        print_logs: Whether to print logs to stdout
-        all_integrations: The integrations section in the id-set
+        packs: The pack mapping from the ID set.
+        marketplace: The marketplace this id set is designated for.
+        print_logs: Whether to print logs to stdout.
+        all_integrations: The integrations section in the id-set.
 
     Returns:
-        a list of indicator type data.
+        a list of indicator type data, a dict of excluded items from the id set
     """
     res = []
+    excluded_items_from_id_set: dict = {}
+
     try:
-        if should_skip_item_by_mp(file_path, marketplace, print_logs):
+        if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, packs=packs, print_logs=print_logs):
             if print_logs:
                 print(f'Skipping {file_path} due to mismatch with the marketplace this id set is generated for.')
-            return []
+            return [], excluded_items_from_id_set
         # ignore old reputations.json files
         if not os.path.basename(file_path) == 'reputations.json' and find_type(file_path) == FileType.REPUTATION:
             if print_logs:
                 print(f'adding {file_path} to id_set')
-            res.append(get_indicator_type_data(file_path, all_integrations))
+            res.append(get_indicator_type_data(file_path, all_integrations, packs=packs))
     except Exception as exp:  # noqa
         print_error(f'failed to process {file_path}, Error: {str(exp)}')
         raise
 
-    return res
+    return res, excluded_items_from_id_set
 
 
-def process_generic_items(file_path: str, print_logs: bool, marketplace: str = 'xsoar',
-                          generic_types_list: list = None) -> list:
+def process_generic_items(file_path: str, packs: Dict[str, Dict], marketplace: str, print_logs: bool,
+                          generic_types_list: list = None) -> Tuple[list, dict]:
     """
     Process a generic field JSON file
     Args:
-        file_path: The file path from object field folder
+        file_path: The file path from object field folder.
+        packs: The pack mapping from the ID set.
+        marketplace: The marketplace this id set is designated for.
         print_logs: Whether to print logs to stdout.
         generic_types_list: List of all the generic types in the system.
-        generic_modules_list: List of all the generic modules in the system.
 
     Returns:
-        a list of generic items data: fields or types.
+        a list of generic items data: fields or types, a dict of excluded items from the id set
     """
     res = []
+    excluded_items_from_id_set: dict = {}
+
     try:
-        if should_skip_item_by_mp(file_path, marketplace, print_logs):
-            return []
+        if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, packs=packs, print_logs=print_logs):
+            return [], excluded_items_from_id_set
         if find_type(file_path) == FileType.GENERIC_FIELD:
             if print_logs:
                 print(f'adding {file_path} to id_set')
-            res.append(get_generic_field_data(file_path, generic_types_list))
+            res.append(get_generic_field_data(file_path, generic_types_list, packs=packs))
         elif find_type(file_path) == FileType.GENERIC_TYPE:
             if print_logs:
                 print(f'adding {file_path} to id_set')
-            res.append(get_generic_type_data(file_path))
+            res.append(get_generic_type_data(file_path, packs=packs))
     except Exception as exp:  # noqa
         print_error(f'failed to process {file_path}, Error: {str(exp)}')
         raise
-    return res
+    return res, excluded_items_from_id_set
 
 
-def process_jobs(file_path: str, print_logs: bool, marketplace: str = 'xsoar') -> list:
+def process_jobs(file_path: str, packs: Dict[str, Dict], marketplace: str, print_logs: bool) -> list:
     """
     Process a JSON file representing a Job object.
     Args:
-        file_path: The file path from object field folder
+        file_path: The file path from object field folder.
+        packs: The pack mapping from the ID set.
+        marketplace: The marketplace this id set is designated for.
         print_logs: Whether to print logs to stdout.
 
     Returns:
@@ -1297,20 +1408,65 @@ def process_jobs(file_path: str, print_logs: bool, marketplace: str = 'xsoar') -
     """
     result: List = []
     try:
-        if should_skip_item_by_mp(file_path, marketplace, print_logs):
+        if should_skip_item_by_mp(file_path, marketplace, {}, packs=packs, print_logs=print_logs):
             return []
         if find_type(file_path) == FileType.JOB:
             if print_logs:
                 print(f'adding {file_path} to id_set')
-            result.append(get_job_data(file_path, print_logs))
+            result.append(get_job_data(file_path, packs=packs))
     except Exception as exp:  # noqa
         print_error(f'failed to process job {file_path}, Error: {str(exp)}')
         raise
     return result
 
 
-def process_general_items(file_path: str, print_logs: bool, expected_file_types: Tuple[FileType],
-                          data_extraction_func: Callable, marketplace: str = 'xsoar') -> list:
+def process_layoutscontainers(file_path: str, packs: Dict[str, Dict], marketplace: str, print_logs: bool) -> Tuple[List, Dict]:
+    """
+    Process a JSON file representing a Layoutcontainer object.
+    Args:
+        file_path: The file path from object field folder.
+        packs: The pack mapping from the ID set.
+        marketplace: The marketplace this id set is designated for.
+        print_logs: Whether to print logs to stdout.
+
+    Returns:
+        a list of Layoutcontainer data.
+    """
+
+    result: List = []
+    excluded_items_from_id_set: Dict = {}
+
+    try:
+        if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, packs=packs, print_logs=print_logs):
+            return result, excluded_items_from_id_set
+
+        if find_type(file_path) != FileType.LAYOUTS_CONTAINER:
+            if print_logs:
+                print(f'Recieved an invalid layoutcontainer file: {file_path}, Ignoring.')
+            return result, excluded_items_from_id_set
+
+        layout_data = get_layoutscontainer_data(file_path, packs=packs)
+
+        # only indicator layouts are supported in marketplace v2.
+        layout_group = list(layout_data.values())[0].get('group')
+        if marketplace == MarketplaceVersions.MarketplaceV2.value and layout_group == 'incident':
+            print(f'incident layoutcontainer "{file_path}" is not supported in marketplace v2, excluding.')
+            add_item_to_exclusion_dict(excluded_items_from_id_set, file_path, list(layout_data.keys())[0])
+            return result, excluded_items_from_id_set
+
+        if print_logs:
+            print(f'adding {file_path} to id_set')
+        result.append(layout_data)
+
+    except Exception as exp:  # noqa
+        print_error(f'failed to process layoutcontainer {file_path}, Error: {str(exp)}')
+        raise
+
+    return result, excluded_items_from_id_set
+
+
+def process_general_items(file_path: str, packs: Dict[str, Dict], marketplace: str, print_logs: bool,
+                          expected_file_types: Tuple[FileType], data_extraction_func: Callable) -> Tuple[list, dict]:
     """
     Process a general item file.
     expected file in one of the following:
@@ -1318,7 +1474,6 @@ def process_general_items(file_path: str, print_logs: bool, expected_file_types:
     * incident type
     * indicator field
     * layout
-    * layoutscontainer
     * mapper
     * playbook
     * report
@@ -1327,35 +1482,40 @@ def process_general_items(file_path: str, print_logs: bool, expected_file_types:
 
     Args:
         file_path: The file path from an item folder
+        packs: the pack mapping from the ID set.
+        marketplace: the marketplace this id set is designated for.
         print_logs: Whether to print logs to stdout
         expected_file_types: specific file type to parse, will ignore the rest
         data_extraction_func: a function that given a file path will return an id-set data dict.
-        marketplace: the marketplace this id set is generated for
+
     Returns:
-        a list of item data.
+        a list of item data, a dict of excluded items from the id set
     """
     res = []
+    excluded_items_from_id_set: dict = {}
     try:
         if find_type(file_path) in expected_file_types:
-            if should_skip_item_by_mp(file_path, marketplace, print_logs):
-                return []
+            if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, packs=packs, print_logs=print_logs):
+                return [], excluded_items_from_id_set
             if print_logs:
                 print(f'adding {file_path} to id_set')
-            res.append(data_extraction_func(file_path))
+            res.append(data_extraction_func(file_path, packs=packs))
     except Exception as exp:  # noqa
         print_error(f'failed to process {file_path}, Error: {str(exp)}')
         raise
 
-    return res
+    return res, excluded_items_from_id_set
 
 
-def process_test_playbook_path(file_path: str, print_logs: bool, marketplace: str = 'xsoar') -> tuple:
+def process_test_playbook_path(file_path: str, packs: Dict[str, Dict], marketplace: str, print_logs: bool) -> tuple:
     """
     Process a yml file in the test playbook dir. Maybe either a script or playbook
 
     Arguments:
-        file_path {string} -- path to yaml file
-        print_logs {bool} -- whether to print logs to stdout
+        file_path: path to yaml file
+        packs: the pack mapping from the ID set.
+        marketplace: the marketplace this id set is designated for.
+        print_logs: whether to print logs to stdout
 
     Returns:
         pair -- first element is a playbook second is a script. each may be None
@@ -1365,12 +1525,12 @@ def process_test_playbook_path(file_path: str, print_logs: bool, marketplace: st
     try:
         if print_logs:
             print(f'adding {file_path} to id_set')
-        if should_skip_item_by_mp(file_path, marketplace, print_logs):
+        if should_skip_item_by_mp(file_path, marketplace, {}, packs=packs, print_logs=print_logs):
             return None, None
         if find_type(file_path) == FileType.TEST_SCRIPT:
-            script = get_script_data(file_path)
+            script = get_script_data(file_path, packs=packs)
         if find_type(file_path) == FileType.TEST_PLAYBOOK:
-            playbook = get_playbook_data(file_path)
+            playbook = get_playbook_data(file_path, packs=packs)
     except Exception as exp:  # noqa
         print_error(f'failed to process {file_path}, Error: {str(exp)}')
         raise
@@ -1466,7 +1626,7 @@ def get_generic_entities_paths(path, pack_to_create):
     return files
 
 
-def get_generic_type_data(path):
+def get_generic_type_data(path, packs: Dict[str, Dict] = None):
     json_data = get_json(path)
 
     id_ = json_data.get('id')
@@ -1475,10 +1635,11 @@ def get_generic_type_data(path):
     toversion = json_data.get('toVersion')
     playbook_id = json_data.get('playbookId')
     pack = get_pack_name(path)
+    marketplaces = get_item_marketplaces(path, item_data=json_data, packs=packs)
     definitionId = json_data.get('definitionId')
     layout = json_data.get('layout')
 
-    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack, marketplaces=marketplaces)
     if playbook_id and playbook_id != '':
         data['playbooks'] = playbook_id
     if definitionId:
@@ -1495,7 +1656,7 @@ def get_module_id_from_definition_id(definition_id: str, generic_modules_list: l
             return module_id
 
 
-def get_generic_field_data(path, generic_types_list):
+def get_generic_field_data(path, generic_types_list, packs: Dict[str, Dict] = None):
     json_data = get_json(path)
 
     id_ = json_data.get('id')
@@ -1503,6 +1664,7 @@ def get_generic_field_data(path, generic_types_list):
     fromversion = json_data.get('fromVersion')
     toversion = json_data.get('toVersion')
     pack = get_pack_name(path)
+    marketplaces = get_item_marketplaces(path, item_data=json_data, packs=packs)
     all_associated_types: set = set()
     all_scripts = set()
     definitionId = json_data.get('definitionId')
@@ -1526,7 +1688,7 @@ def get_generic_field_data(path, generic_types_list):
     if field_calculations_scripts:
         all_scripts = all_scripts.union({field_calculations_scripts})
 
-    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack, marketplaces=marketplaces)
 
     if all_associated_types:
         data['generic_types'] = list(all_associated_types)
@@ -1538,29 +1700,30 @@ def get_generic_field_data(path, generic_types_list):
     return {id_: data}
 
 
-def get_job_data(path: str, print_logs: bool):
+def get_job_data(path: str, packs: Dict[str, Dict] = None):
     json_data = get_json(path)
+    marketplaces = get_item_marketplaces(path, item_data=json_data, packs=packs)
 
     data = create_common_entity_data(path=path,
                                      name=json_data.get('name'),
                                      to_version=json_data.get('toVersion'),
                                      from_version=json_data.get('fromVersion'),
-                                     pack=get_pack_name(path))
+                                     pack=get_pack_name(path),
+                                     marketplaces=marketplaces
+                                     )
     data['playbookId'] = json_data.get('playbookId')
     data['selectedFeeds'] = json_data.get('selectedFeeds', [])
     data['details'] = json_data.get('details', [])
 
-    if print_logs:
-        print(f'adding {path} to id_set')
-
     return {json_data.get('id'): data}
 
 
-def get_generic_module_data(path):
+def get_generic_module_data(path, packs: Dict[str, Dict] = None):
     json_data = get_json(path)
     id_ = json_data.get('id')
     name = json_data.get('name', '')
     pack = get_pack_name(path)
+    marketplaces = get_item_marketplaces(path, item_data=json_data, packs=packs)
     fromversion = json_data.get('fromVersion')
     toversion = json_data.get('toVersion')
     definitionIds = json_data.get('definitionIds', [])
@@ -1569,7 +1732,7 @@ def get_generic_module_data(path):
         'title': view.get('title'),
         'dashboards': [tab.get('dashboard', {}).get('id') for tab in view.get('tabs', [])]} for view in views}
 
-    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack)
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack, marketplaces=marketplaces)
     if definitionIds:
         data['definitionIds'] = definitionIds
     if views:
@@ -1578,13 +1741,16 @@ def get_generic_module_data(path):
     return {id_: data}
 
 
-def get_list_data(path: str):
+def get_list_data(path: str, packs: Dict[str, Dict] = None):
     json_data = get_json(path)
+    marketplaces = get_item_marketplaces(path, item_data=json_data, packs=packs)
     data = create_common_entity_data(path=path,
                                      name=json_data.get('name'),
                                      to_version=json_data.get('toVersion'),
                                      from_version=json_data.get('fromVersion'),
-                                     pack=get_pack_name(path))
+                                     pack=get_pack_name(path),
+                                     marketplaces=marketplaces,
+                                     )
 
     return {json_data.get('id'): data}
 
@@ -1691,18 +1857,18 @@ def merge_id_sets(first_id_set_dict: dict, second_id_set_dict: dict, print_logs:
 
 def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_create=None,  # noqa : C901
                      objects_to_create: list = None, print_logs: bool = True, fail_on_duplicates: bool = False,
-                     marketplace: str = 'xsoar'):
+                     marketplace: str = ''):
     """Re create the id-set
 
     Args:
-        id_set_path (str, optional): If passed an empty string will use default path (dependeing on mp type).
-        Pass in None to avoid saving the id-set.
+        id_set_path: If passed an empty string will use default path (dependeing on mp type).
+            Pass in None to avoid saving the id-set.
         pack_to_create: The input path. the default is the content repo.
-        objects_to_create (list, optional): The content items this id set will contain. Defaults are set
-        depending on the mp type.
+        objects_to_create: The content items this id set will contain. Defaults are set
+            depending on the mp type.
+        print_logs: Whether to print logs or not
         fail_on_duplicates: If value is True an error will be raised if duplicates are found
         marketplace: The marketplace the id set is created for.
-        print_logs: Whether to print logs or not
 
     Returns: id-set object
     """
@@ -1778,6 +1944,8 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     lists_list = []
     jobs_list = []
     packs_dict: Dict[str, Dict] = {}
+    excluded_items_by_pack: Dict[str, set] = {}
+    excluded_items_by_type: Dict[str, set] = {}
 
     pool = Pool(processes=int(cpu_count()))
 
@@ -1798,54 +1966,67 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
 
         if 'Integrations' in objects_to_create:
             print_color("\nStarting iteration over Integrations", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_integration,
-                                        print_logs=print_logs,
-                                        marketplace=marketplace,
-                                        ),
-                                get_integrations_paths(pack_to_create)):
+            for arr, excluded_items_from_iteration in pool.map(partial(process_integration,
+                                                                       packs=packs_dict,
+                                                                       marketplace=marketplace,
+                                                                       print_logs=print_logs,
+                                                                       ),
+                                                               get_integrations_paths(pack_to_create)):
 
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('integrations', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('integrations',
+                                                                                               []).append(_id)
                 integration_list.extend(arr)
+                update_excluded_items_dict(excluded_items_by_pack, excluded_items_by_type,
+                                           excluded_items_from_iteration)
 
         progress_bar.update(1)
 
         if 'Playbooks' in objects_to_create:
             print_color("\nStarting iteration over Playbooks", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_general_items,
-                                        print_logs=print_logs,
-                                        expected_file_types=(FileType.PLAYBOOK,),
-                                        data_extraction_func=get_playbook_data,
-                                        marketplace=marketplace,
-                                        ),
-                                get_playbooks_paths(pack_to_create)):
+            for arr, excluded_items_from_iteration in pool.map(partial(process_general_items,
+                                                                       packs=packs_dict,
+                                                                       marketplace=marketplace,
+                                                                       print_logs=print_logs,
+                                                                       expected_file_types=(FileType.PLAYBOOK,),
+                                                                       data_extraction_func=get_playbook_data,
+                                                                       ),
+                                                               get_playbooks_paths(pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('playbooks', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('playbooks', []).append(
+                            _id)
                 playbooks_list.extend(arr)
+                update_excluded_items_dict(excluded_items_by_pack, excluded_items_by_type,
+                                           excluded_items_from_iteration)
 
         progress_bar.update(1)
 
         if 'Scripts' in objects_to_create:
             print_color("\nStarting iteration over Scripts", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_script,
-                                        print_logs=print_logs,
-                                        marketplace=marketplace,
-                                        ),
-                                get_general_paths(SCRIPTS_DIR, pack_to_create)):
+            for arr, excluded_items_from_iteration in pool.map(partial(process_script,
+                                                                       packs=packs_dict,
+                                                                       marketplace=marketplace,
+                                                                       print_logs=print_logs,
+                                                                       ),
+                                                               get_general_paths(SCRIPTS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('scripts', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('scripts', []).append(
+                            _id)
                 scripts_list.extend(arr)
+                update_excluded_items_dict(excluded_items_by_pack, excluded_items_by_type,
+                                           excluded_items_from_iteration)
 
         progress_bar.update(1)
 
         if 'TestPlaybooks' in objects_to_create:
             print_color("\nStarting iteration over TestPlaybooks", LOG_COLORS.GREEN)
             for pair in pool.map(partial(process_test_playbook_path,
-                                         print_logs=print_logs,
+                                         packs=packs_dict,
                                          marketplace=marketplace,
+                                         print_logs=print_logs,
                                          ),
                                  get_general_paths(TEST_PLAYBOOKS_DIR, pack_to_create)):
                 if pair[0]:
@@ -1857,253 +2038,324 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
 
         if 'Classifiers' in objects_to_create:
             print_color("\nStarting iteration over Classifiers", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_general_items,
-                                        print_logs=print_logs,
-                                        expected_file_types=(FileType.CLASSIFIER, FileType.OLD_CLASSIFIER),
-                                        data_extraction_func=get_classifier_data,
-                                        marketplace=marketplace,
-                                        ),
-                                get_general_paths(CLASSIFIERS_DIR, pack_to_create)):
+            for arr, excluded_items_from_iteration in pool.map(partial(process_general_items,
+                                                                       packs=packs_dict,
+                                                                       marketplace=marketplace,
+                                                                       print_logs=print_logs,
+                                                                       expected_file_types=(
+                                                                           FileType.CLASSIFIER,
+                                                                           FileType.OLD_CLASSIFIER),
+                                                                       data_extraction_func=get_classifier_data,
+                                                                       ),
+                                                               get_general_paths(CLASSIFIERS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('classifiers', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('classifiers',
+                                                                                               []).append(_id)
                 classifiers_list.extend(arr)
+                update_excluded_items_dict(excluded_items_by_pack, excluded_items_by_type,
+                                           excluded_items_from_iteration)
 
         progress_bar.update(1)
 
         if 'Dashboards' in objects_to_create:
             print_color("\nStarting iteration over Dashboards", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_general_items,
-                                        print_logs=print_logs,
-                                        expected_file_types=(FileType.DASHBOARD,),
-                                        data_extraction_func=get_dashboard_data,
-                                        marketplace=marketplace,
-                                        ),
-                                get_general_paths(DASHBOARDS_DIR, pack_to_create)):
+            for arr, excluded_items_from_iteration in pool.map(partial(process_general_items,
+                                                                       packs=packs_dict,
+                                                                       marketplace=marketplace,
+                                                                       print_logs=print_logs,
+                                                                       expected_file_types=(FileType.DASHBOARD,),
+                                                                       data_extraction_func=get_dashboard_data,
+                                                                       ),
+                                                               get_general_paths(DASHBOARDS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('dashboards', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('dashboards', []).append(
+                            _id)
                 dashboards_list.extend(arr)
+                update_excluded_items_dict(excluded_items_by_pack, excluded_items_by_type,
+                                           excluded_items_from_iteration)
 
         progress_bar.update(1)
 
         if 'IncidentTypes' in objects_to_create:
             print_color("\nStarting iteration over Incident Types", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_general_items,
-                                        print_logs=print_logs,
-                                        expected_file_types=(FileType.INCIDENT_TYPE,),
-                                        data_extraction_func=get_incident_type_data,
-                                        marketplace=marketplace,
-                                        ),
-                                get_general_paths(INCIDENT_TYPES_DIR, pack_to_create)):
+            for arr, excluded_items_from_iteration in pool.map(partial(process_general_items,
+                                                                       packs=packs_dict,
+                                                                       marketplace=marketplace,
+                                                                       print_logs=print_logs,
+                                                                       expected_file_types=(FileType.INCIDENT_TYPE,),
+                                                                       data_extraction_func=get_incident_type_data,
+                                                                       ),
+                                                               get_general_paths(INCIDENT_TYPES_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('incidentTypes', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('incidentTypes',
+                                                                                               []).append(_id)
                 incident_type_list.extend(arr)
+                update_excluded_items_dict(excluded_items_by_pack, excluded_items_by_type,
+                                           excluded_items_from_iteration)
 
         progress_bar.update(1)
 
         # Has to be called after 'IncidentTypes' is called
         if 'IncidentFields' in objects_to_create:
             print_color("\nStarting iteration over Incident Fields", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_incident_fields,
-                                        print_logs=print_logs,
-                                        incidents_types_list=incident_type_list,
-                                        marketplace=marketplace,
-                                        ),
-                                get_general_paths(INCIDENT_FIELDS_DIR, pack_to_create)):
+            for arr, excluded_items_from_iteration in pool.map(partial(process_incident_fields,
+                                                                       packs=packs_dict,
+                                                                       marketplace=marketplace,
+                                                                       print_logs=print_logs,
+                                                                       incident_types=incident_type_list,
+                                                                       ),
+                                                               get_general_paths(INCIDENT_FIELDS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('incidentFields', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('incidentFields',
+                                                                                               []).append(_id)
                 incident_fields_list.extend(arr)
+                update_excluded_items_dict(excluded_items_by_pack, excluded_items_by_type,
+                                           excluded_items_from_iteration)
 
         progress_bar.update(1)
 
         if 'IndicatorFields' in objects_to_create:
             print_color("\nStarting iteration over Indicator Fields", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_general_items,
-                                        print_logs=print_logs,
-                                        expected_file_types=(FileType.INDICATOR_FIELD,),
-                                        data_extraction_func=get_general_data,
-                                        marketplace=marketplace,
-                                        ),
-                                get_general_paths(INDICATOR_FIELDS_DIR, pack_to_create)):
+            for arr, excluded_items_from_iteration in pool.map(partial(process_general_items,
+                                                                       packs=packs_dict,
+                                                                       marketplace=marketplace,
+                                                                       print_logs=print_logs,
+                                                                       expected_file_types=(FileType.INDICATOR_FIELD,),
+                                                                       data_extraction_func=get_general_data,
+                                                                       ),
+                                                               get_general_paths(INDICATOR_FIELDS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('indicatorFields', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('indicatorFields',
+                                                                                               []).append(_id)
                 indicator_fields_list.extend(arr)
+                update_excluded_items_dict(excluded_items_by_pack, excluded_items_by_type,
+                                           excluded_items_from_iteration)
 
         progress_bar.update(1)
 
         # Has to be called after 'Integrations' is called
         if 'IndicatorTypes' in objects_to_create:
             print_color("\nStarting iteration over Indicator Types", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_indicator_types,
-                                        print_logs=print_logs,
-                                        all_integrations=integration_list,
-                                        marketplace=marketplace,
-                                        ),
-                                get_general_paths(INDICATOR_TYPES_DIR, pack_to_create)):
+            for arr, excluded_items_from_iteration in pool.map(partial(process_indicator_types,
+                                                                       packs=packs_dict,
+                                                                       marketplace=marketplace,
+                                                                       print_logs=print_logs,
+                                                                       all_integrations=integration_list,
+                                                                       ),
+                                                               get_general_paths(INDICATOR_TYPES_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('indicatorTypes', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('indicatorTypes',
+                                                                                               []).append(_id)
                 indicator_types_list.extend(arr)
+                update_excluded_items_dict(excluded_items_by_pack, excluded_items_by_type,
+                                           excluded_items_from_iteration)
 
         progress_bar.update(1)
 
         if 'Layouts' in objects_to_create:
             print_color("\nStarting iteration over Layouts", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_general_items,
-                                        print_logs=print_logs,
-                                        expected_file_types=(FileType.LAYOUT,),
-                                        data_extraction_func=get_layout_data,
-                                        marketplace=marketplace,
-                                        ),
-                                get_general_paths(LAYOUTS_DIR, pack_to_create)):
+            for arr, excluded_items_from_iteration in pool.map(partial(process_general_items,
+                                                                       packs=packs_dict,
+                                                                       marketplace=marketplace,
+                                                                       print_logs=print_logs,
+                                                                       expected_file_types=(FileType.LAYOUT,),
+                                                                       data_extraction_func=get_layout_data,
+                                                                       ),
+                                                               get_general_paths(LAYOUTS_DIR, pack_to_create)):
                 layouts_list.extend(arr)
-            for arr in pool.map(partial(process_general_items,
-                                        print_logs=print_logs,
-                                        expected_file_types=(FileType.LAYOUTS_CONTAINER,),
-                                        data_extraction_func=get_layoutscontainer_data,
-                                        marketplace=marketplace,
-                                        ),
-                                get_general_paths(LAYOUTS_DIR, pack_to_create)):
+                update_excluded_items_dict(excluded_items_by_pack, excluded_items_by_type,
+                                           excluded_items_from_iteration)
+
+            for arr, excluded_items_from_iteration in pool.map(partial(process_layoutscontainers,
+                                                                       packs=packs_dict,
+                                                                       marketplace=marketplace,
+                                                                       print_logs=print_logs,
+                                                                       ),
+                                                               get_general_paths(LAYOUTS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('layouts', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('layouts', []).append(
+                            _id)
                 layouts_list.extend(arr)
+                update_excluded_items_dict(excluded_items_by_pack, excluded_items_by_type,
+                                           excluded_items_from_iteration)
 
         progress_bar.update(1)
 
         if 'Reports' in objects_to_create:
             print_color("\nStarting iteration over Reports", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_general_items,
-                                        print_logs=print_logs,
-                                        expected_file_types=(FileType.REPORT,),
-                                        data_extraction_func=get_report_data,
-                                        marketplace=marketplace,
-                                        ),
-                                get_general_paths(REPORTS_DIR, pack_to_create)):
+            for arr, excluded_items_from_iteration in pool.map(partial(process_general_items,
+                                                                       packs=packs_dict,
+                                                                       marketplace=marketplace,
+                                                                       print_logs=print_logs,
+                                                                       expected_file_types=(FileType.REPORT,),
+                                                                       data_extraction_func=get_report_data,
+                                                                       ),
+                                                               get_general_paths(REPORTS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('reports', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('reports', []).append(
+                            _id)
                 reports_list.extend(arr)
+                update_excluded_items_dict(excluded_items_by_pack, excluded_items_by_type,
+                                           excluded_items_from_iteration)
 
         progress_bar.update(1)
 
         if 'Widgets' in objects_to_create:
             print_color("\nStarting iteration over Widgets", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_general_items,
-                                        print_logs=print_logs,
-                                        expected_file_types=(FileType.WIDGET,),
-                                        data_extraction_func=get_widget_data,
-                                        marketplace=marketplace,
-                                        ),
-                                get_general_paths(WIDGETS_DIR, pack_to_create)):
+            for arr, excluded_items_from_iteration in pool.map(partial(process_general_items,
+                                                                       packs=packs_dict,
+                                                                       marketplace=marketplace,
+                                                                       print_logs=print_logs,
+                                                                       expected_file_types=(FileType.WIDGET,),
+                                                                       data_extraction_func=get_widget_data,
+                                                                       ),
+                                                               get_general_paths(WIDGETS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('widgets', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('widgets', []).append(
+                            _id)
                 widgets_list.extend(arr)
+                update_excluded_items_dict(excluded_items_by_pack, excluded_items_by_type,
+                                           excluded_items_from_iteration)
 
         progress_bar.update(1)
 
         if 'Mappers' in objects_to_create:
             print_color("\nStarting iteration over Mappers", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_general_items,
-                                        print_logs=print_logs,
-                                        expected_file_types=(FileType.MAPPER,),
-                                        data_extraction_func=get_mapper_data,
-                                        marketplace=marketplace,
-                                        ),
-                                get_general_paths(MAPPERS_DIR, pack_to_create)):
+            for arr, excluded_items_from_iteration in pool.map(partial(process_general_items,
+                                                                       packs=packs_dict,
+                                                                       marketplace=marketplace,
+                                                                       print_logs=print_logs,
+                                                                       expected_file_types=(FileType.MAPPER,),
+                                                                       data_extraction_func=get_mapper_data,
+                                                                       ),
+                                                               get_general_paths(MAPPERS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('mappers', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('mappers', []).append(
+                            _id)
                 mappers_list.extend(arr)
+                update_excluded_items_dict(excluded_items_by_pack, excluded_items_by_type,
+                                           excluded_items_from_iteration)
 
         progress_bar.update(1)
 
         if 'Lists' in objects_to_create:
             print_color("\nStarting iteration over Lists", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_general_items,
-                                        print_logs=print_logs,
-                                        expected_file_types=(FileType.LISTS,),
-                                        data_extraction_func=get_list_data,
-                                        marketplace=marketplace,
-                                        ),
-                                get_general_paths(LISTS_DIR, pack_to_create)):
+            for arr, excluded_items_from_iteration in pool.map(partial(process_general_items,
+                                                                       packs=packs_dict,
+                                                                       marketplace=marketplace,
+                                                                       print_logs=print_logs,
+                                                                       expected_file_types=(FileType.LISTS,),
+                                                                       data_extraction_func=get_list_data,
+                                                                       ),
+                                                               get_general_paths(LISTS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
                         packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('lists', []).append(_id)
                 lists_list.extend(arr)
+                update_excluded_items_dict(excluded_items_by_pack, excluded_items_by_type,
+                                           excluded_items_from_iteration)
 
         progress_bar.update(1)
 
         if 'GenericDefinitions' in objects_to_create:
             print_color("\nStarting iteration over Generic Definitions", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_general_items,
-                                        expected_file_types=(FileType.GENERIC_DEFINITION,),
-                                        data_extraction_func=get_general_data,
-                                        print_logs=print_logs,
-                                        marketplace=marketplace,
-                                        ),
-                                get_general_paths(GENERIC_DEFINITIONS_DIR, pack_to_create)):
+            for arr, excluded_items_from_iteration in pool.map(partial(process_general_items,
+                                                                       packs=packs_dict,
+                                                                       marketplace=marketplace,
+                                                                       print_logs=print_logs,
+                                                                       expected_file_types=(
+                                                                           FileType.GENERIC_DEFINITION,),
+                                                                       data_extraction_func=get_general_data,
+                                                                       ),
+                                                               get_general_paths(GENERIC_DEFINITIONS_DIR,
+                                                                                 pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('genericDefinitions', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('genericDefinitions',
+                                                                                               []).append(_id)
                 generic_definitions_list.extend(arr)
+                update_excluded_items_dict(excluded_items_by_pack, excluded_items_by_type,
+                                           excluded_items_from_iteration)
 
         progress_bar.update(1)
 
         if 'GenericModules' in objects_to_create:
             print_color("\nStarting iteration over Generic Modules", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_general_items,
-                                        print_logs=print_logs,
-                                        expected_file_types=(FileType.GENERIC_MODULE,),
-                                        data_extraction_func=get_generic_module_data,
-                                        marketplace=marketplace,
-                                        ),
-                                get_general_paths(GENERIC_MODULES_DIR, pack_to_create)):
+            for arr, excluded_items_from_iteration in pool.map(partial(process_general_items,
+                                                                       packs=packs_dict,
+                                                                       marketplace=marketplace,
+                                                                       print_logs=print_logs,
+                                                                       expected_file_types=(FileType.GENERIC_MODULE,),
+                                                                       data_extraction_func=get_generic_module_data,
+                                                                       ),
+                                                               get_general_paths(GENERIC_MODULES_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('genericModules', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('genericModules',
+                                                                                               []).append(_id)
                 generic_modules_list.extend(arr)
+                update_excluded_items_dict(excluded_items_by_pack, excluded_items_by_type,
+                                           excluded_items_from_iteration)
 
         progress_bar.update(1)
 
         if 'GenericTypes' in objects_to_create:
             print_color("\nStarting iteration over Generic Types", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_generic_items,
-                                        print_logs=print_logs,
-                                        marketplace=marketplace,
-                                        ),
-                                get_generic_entities_paths(GENERIC_TYPES_DIR, pack_to_create)):
+            for arr, excluded_items_from_iteration in pool.map(partial(process_generic_items,
+                                                                       packs=packs_dict,
+                                                                       marketplace=marketplace,
+                                                                       print_logs=print_logs,
+                                                                       ),
+                                                               get_generic_entities_paths(GENERIC_TYPES_DIR,
+                                                                                          pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('genericTypes', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('genericTypes',
+                                                                                               []).append(_id)
                 generic_types_list.extend(arr)
+                update_excluded_items_dict(excluded_items_by_pack, excluded_items_by_type,
+                                           excluded_items_from_iteration)
 
         progress_bar.update(1)
 
         # Has to be called after 'GenericTypes' is called
         if 'GenericFields' in objects_to_create:
             print_color("\nStarting iteration over Generic Fields", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_generic_items,
-                                        print_logs=print_logs,
-                                        generic_types_list=generic_types_list,
-                                        marketplace=marketplace,
-                                        ),
-                                get_generic_entities_paths(GENERIC_FIELDS_DIR, pack_to_create)):
+            for arr, excluded_items_from_iteration in pool.map(partial(process_generic_items,
+                                                                       packs=packs_dict,
+                                                                       marketplace=marketplace,
+                                                                       print_logs=print_logs,
+                                                                       generic_types_list=generic_types_list,
+                                                                       ),
+                                                               get_generic_entities_paths(GENERIC_FIELDS_DIR,
+                                                                                          pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('genericFields', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('genericFields',
+                                                                                               []).append(_id)
                 generic_fields_list.extend(arr)
+                update_excluded_items_dict(excluded_items_by_pack, excluded_items_by_type,
+                                           excluded_items_from_iteration)
 
         progress_bar.update(1)
 
         if 'Jobs' in objects_to_create:
             print_color("\nStarting iteration over Jobs", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_jobs, print_logs=print_logs, marketplace=marketplace, ),
+            for arr in pool.map(partial(process_jobs,
+                                        packs=packs_dict,
+                                        marketplace=marketplace,
+                                        print_logs=print_logs,
+                                        ),
                                 get_general_paths(JOBS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
@@ -2124,17 +2376,17 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     new_ids_dict['IncidentTypes'] = sort(incident_type_list)
     new_ids_dict['IndicatorFields'] = sort(indicator_fields_list)
     new_ids_dict['IndicatorTypes'] = sort(indicator_types_list)
+    new_ids_dict['Layouts'] = sort(layouts_list)
     new_ids_dict['Lists'] = sort(lists_list)
     new_ids_dict['Jobs'] = sort(jobs_list)
     new_ids_dict['Mappers'] = sort(mappers_list)
     new_ids_dict['Packs'] = packs_dict
 
-    if marketplace == MarketplaceVersions.XSOAR.value:
+    if marketplace != MarketplaceVersions.MarketplaceV2.value:
         new_ids_dict['GenericTypes'] = sort(generic_types_list)
         new_ids_dict['GenericFields'] = sort(generic_fields_list)
         new_ids_dict['GenericModules'] = sort(generic_modules_list)
         new_ids_dict['GenericDefinitions'] = sort(generic_definitions_list)
-        new_ids_dict['Layouts'] = sort(layouts_list)
         new_ids_dict['Reports'] = sort(reports_list)
         new_ids_dict['Widgets'] = sort(widgets_list)
         new_ids_dict['Dashboards'] = sort(dashboards_list)
@@ -2144,24 +2396,24 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
         new_ids_dict['GenericFields'] = []
         new_ids_dict['GenericModules'] = []
         new_ids_dict['GenericDefinitions'] = []
-        new_ids_dict['Layouts'] = []
         new_ids_dict['Reports'] = []
         new_ids_dict['Widgets'] = []
         new_ids_dict['Dashboards'] = []
 
     exec_time = time.time() - start_time
     print_color("Finished the creation of the id_set. Total time: {} seconds".format(exec_time), LOG_COLORS.GREEN)
+
     duplicates = find_duplicates(new_ids_dict, print_logs, marketplace)
     if any(duplicates) and fail_on_duplicates:
         raise Exception(f'The following ids were found duplicates\n{json.dumps(duplicates, indent=4)}\n')
 
-    return new_ids_dict
+    return new_ids_dict, excluded_items_by_pack, excluded_items_by_type
 
 
 def find_duplicates(id_set, print_logs, marketplace):
     lists_to_return = []
 
-    entities = ID_SET_ENTITIES if marketplace == 'xsoar' else ID_SET_MP_V2_ENTITIES
+    entities = ID_SET_ENTITIES if marketplace != 'marketplacev2' else ID_SET_MP_V2_ENTITIES
 
     for object_type in entities:
         if print_logs:
@@ -2174,6 +2426,7 @@ def find_duplicates(id_set, print_logs, marketplace):
             if has_duplicate(objects, id_to_check, object_type, print_logs, is_create_new=True):
                 dup_list.append(id_to_check)
         lists_to_return.append(dup_list)
+
     if print_logs:
         print_color("Checking diff for Incident and Indicator Fields", LOG_COLORS.GREEN)
 
@@ -2189,7 +2442,8 @@ def find_duplicates(id_set, print_logs, marketplace):
     return lists_to_return
 
 
-def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=True, external_object=None, is_create_new=False):
+def has_duplicate(id_set_subset_list, id_to_check, object_type, print_logs=True, external_object=None,
+                  is_create_new=False):
     """
     Finds if id_set_subset_list contains a duplicate items with the same id_to_check.
 
@@ -2218,6 +2472,10 @@ def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=
         dict1_to_version = LooseVersion(dict1.get('toversion', DEFAULT_CONTENT_ITEM_TO_VERSION))
         dict2_to_version = LooseVersion(dict2.get('toversion', DEFAULT_CONTENT_ITEM_TO_VERSION))
 
+        # Check whether the items belong to the same marketplaces
+        if not set(dict1.get('marketplaces', [])).intersection(set(dict2.get('marketplaces', []))):
+            continue
+
         # Checks if the Layouts kind is different then they are not duplicates
         if object_type == 'Layouts':
             if dict1.get('kind', '') != dict2.get('kind', ''):
@@ -2228,7 +2486,7 @@ def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=
         # If they have the same pack name and the same source they actually the same entity.
         # Added to support merge between two id-sets that contain the same pack.
         if not is_create_new and \
-                dict1.get('pack') == dict2.get('pack') and\
+                dict1.get('pack') == dict2.get('pack') and \
                 is_same_source(dict1.get('source'), dict2.get('source')):
             return False
 
@@ -2242,14 +2500,14 @@ def has_duplicate(id_set_subset_list, id_to_check, object_type=None, print_logs=
             dict2_from_version <= dict1_from_version < dict2_to_version,  # will catch (C, B), (B, A), (C, A)
             dict2_from_version < dict1_to_version <= dict2_to_version,  # will catch (C, B), (C, A)
         ]):
-            print_warning(f'The following {object_type} have the same ID ({id_to_check}) and their versions overlap: '
+            print_warning(f'There are several {object_type} with the same ID ({id_to_check}) and their versions overlap: '
                           f'1) "{dict1_from_version}-{dict1_to_version}", '
                           f'2) "{dict2_from_version}-{dict2_to_version}".')
             return True
 
         if print_logs and dict1.get('name') != dict2.get('name'):
-            print_warning('The following {} have the same ID ({}) but different names: '
-                          '"{}", "{}".'.format(object_type, id_to_check, dict1.get('name'), dict2.get('name')))
+            print_warning(f'The following {object_type} have the same ID ({id_to_check}) but different names: '
+                          f'"{dict1.get("name")}", "{dict2.get("name")}".')
 
     return False
 
@@ -2273,3 +2531,34 @@ def is_same_source(source1, source2) -> bool:
 def sort(data):
     data.sort(key=lambda r: list(r.keys())[0].lower())  # Sort data by key value
     return data
+
+
+def update_excluded_items_dict(excluded_items_by_pack: dict, excluded_items_by_type: dict,
+                               excluded_items_to_add: dict):
+    """
+    Adds the items from 'excluded_items_to_add' to the exclusion dicts.
+
+    Args:
+        excluded_items_by_pack: the current dictionary of items to exclude from the id_set, aggregated by packs
+        excluded_items_by_type: a dictionary of items to exclude from the id_set, aggregated by type
+        excluded_items_to_add: a dictionary of items to add to the exclusion dict, aggregated by packs
+
+    Example of excluded_items_by_pack:
+    {
+        'Expanse': {('integration', 'Expanse')},
+        'ExpanseV2': {('script', 'ExpanseEvidenceDynamicSection'), ('indicatorfield', 'indicator_expansedomain')}
+        ...
+    }
+
+    Example of excluded_items_by_type:
+    {
+        'integration': {'integration1', 'integration2' ...}
+        'script' : {'script1' ...},
+        'playbook' : {...}
+        ...
+    }
+    """
+    for key, val in excluded_items_to_add.items():
+        excluded_items_by_pack.setdefault(key, set()).update(val)
+        for tuple_item in val:
+            excluded_items_by_type.setdefault(tuple_item[0], set()).update([tuple_item[1]])

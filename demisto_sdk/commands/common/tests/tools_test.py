@@ -22,14 +22,14 @@ from demisto_sdk.commands.common.tools import (
     find_type, get_code_lang, get_current_repo, get_dict_from_file,
     get_entity_id_by_entity_type, get_entity_name_by_entity_type,
     get_file_displayed_name, get_file_version_suffix_if_exists,
-    get_files_in_dir, get_ignore_pack_skipped_tests, get_last_release_version,
-    get_last_remote_release_version, get_latest_release_notes_text,
-    get_pack_metadata, get_relative_path_from_packs_dir,
-    get_release_note_entries, get_release_notes_file_path, get_ryaml,
-    get_scripts_and_commands_from_yml_data, get_test_playbook_id,
-    get_to_version, get_yaml, has_remote_configured, is_origin_content_repo,
-    is_pack_path, is_uuid, retrieve_file_ending, run_command_os,
-    server_version_compare, to_kebab_case)
+    get_files_in_dir, get_ignore_pack_skipped_tests, get_item_marketplaces,
+    get_last_release_version, get_last_remote_release_version,
+    get_latest_release_notes_text, get_pack_metadata,
+    get_relative_path_from_packs_dir, get_release_note_entries,
+    get_release_notes_file_path, get_scripts_and_commands_from_yml_data,
+    get_test_playbook_id, get_to_version, get_yaml, has_remote_configured,
+    is_origin_content_repo, is_pack_path, is_uuid, retrieve_file_ending,
+    run_command_os, server_version_compare, to_kebab_case)
 from demisto_sdk.tests.constants_test import (DUMMY_SCRIPT_PATH, IGNORED_PNG,
                                               INDICATORFIELD_EXTRA_FIELDS,
                                               SOURCE_FORMAT_INTEGRATION_COPY,
@@ -515,8 +515,8 @@ def test_run_command_os(command, cwd):
 
 
 class TestGetFile:
-    def test_get_ryaml(self):
-        file_data = get_ryaml(SOURCE_FORMAT_INTEGRATION_COPY)
+    def test_get_yaml(self):
+        file_data = get_yaml(SOURCE_FORMAT_INTEGRATION_COPY)
         assert file_data
         assert file_data.get('name') is not None
 
@@ -1561,7 +1561,7 @@ YML_DATA_CASES = [(get_yaml(VALID_INTEGRATION_TEST_PATH), FileType.INTEGRATION,
                    ['ReadFile', 'Get Original Email - Gmail']),
                   (get_yaml(VALID_PLAYBOOK_ID_PATH), FileType.PLAYBOOK, [{'id': 'setIncident', 'source': 'Builtin'},
                                                                          {'id': 'closeInvestigation',
-                                                                          'source': 'Builtin'},
+                                                                                'source': 'Builtin'},
                                                                          {'id': 'setIncident', 'source': 'Builtin'}],
                    ['Account Enrichment - Generic', 'EmailAskUser', 'ADGetUser', 'IP Enrichment - Generic',
                     'IP Enrichment - Generic', 'AssignAnalystToIncident', 'access_investigation_-_generic']),
@@ -1579,3 +1579,75 @@ def test_get_scripts_and_commands_from_yml_data(data, file_type, expected_comman
     commands, scripts = get_scripts_and_commands_from_yml_data(data=data, file_type=file_type)
     assert commands == expected_commands
     assert scripts == expected_scripts
+
+
+class TestGetItemMarketplaces:
+    @staticmethod
+    def test_item_has_marketplaces_field():
+        """
+        Given
+            - item declares marketplaces
+        When
+            - getting the marketplaces of an item
+        Then
+            - return the item's marketplaces
+        """
+        item_data = {
+            'name': 'Integration',
+            'marketplaces': ['xsoar', 'marketplacev2'],
+        }
+        marketplaces = get_item_marketplaces('Packs/PackID/Integrations/Integration/Integration.yml', item_data=item_data)
+
+        assert 'xsoar' in marketplaces
+        assert 'marketplacev2' in marketplaces
+
+    @staticmethod
+    def test_only_pack_has_marketplaces():
+        """
+        Given
+            - item does not declare marketplaces
+            - pack declares marketplaces
+        When
+            - getting the marketplaces of an item
+        Then
+            - return the pack's marketplaces
+        """
+        item_data = {
+            'name': 'Integration',
+            'pack': 'PackID',
+        }
+        packs = {
+            'PackID': {
+                'id': 'PackID',
+                'marketplaces': ['xsoar', 'marketplacev2'],
+            }
+        }
+        marketplaces = get_item_marketplaces('Packs/PackID/Integrations/Integration/Integration.yml', item_data=item_data, packs=packs)
+
+        assert 'xsoar' in marketplaces
+        assert 'marketplacev2' in marketplaces
+
+    @staticmethod
+    def test_no_marketplaces_specified():
+        """
+        Given
+            - item does not declare marketplaces
+            - pack does not declare marketplaces
+        When
+            - getting the marketplaces of an item
+        Then
+            - return the default marketplaces (only xsoar)
+        """
+        item_data = {
+            'name': 'Integration',
+            'pack': 'PackID',
+        }
+        packs = {
+            'PackID': {
+                'id': 'PackID',
+            }
+        }
+        marketplaces = get_item_marketplaces('Packs/PackID/Integrations/Integration/Integration.yml', item_data=item_data, packs=packs)
+
+        assert len(marketplaces) == 1
+        assert 'xsoar' in marketplaces

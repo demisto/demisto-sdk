@@ -679,6 +679,10 @@ class IDSetValidations(BaseValidator):
         Returns:
             bool. Whether the metadata file is valid or not.
         """
+
+        if not pack_metadata_data:
+            return False, None
+
         new_pack_folder_name = list(pack_metadata_data.keys())[0]
         new_pack_name = pack_metadata_data[new_pack_folder_name]['name']
         for pack_folder_name, pack_data in self.packs_set.items():

@@ -4,8 +4,6 @@ from abc import abstractmethod
 from distutils.version import LooseVersion
 from typing import Optional
 
-import yaml
-
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION, ENTITY_NAME_SEPARATORS,
     EXCLUDED_DISPLAY_NAME_WORDS, FEATURE_BRANCHES,
@@ -13,6 +11,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
@@ -21,6 +20,8 @@ from demisto_sdk.commands.common.tools import (_get_file_id,
                                                get_file_displayed_name,
                                                is_test_config_match,
                                                run_command)
+
+yaml = YAML_Handler()
 
 
 class ContentEntityValidator(BaseValidator):
@@ -206,7 +207,7 @@ class ContentEntityValidator(BaseValidator):
                 missing_test_playbook_configurations = json.dumps(
                     {'integrations': content_item_id, 'playbookID': '<TestPlaybook ID>'},
                     indent=4)
-                no_tests_key = yaml.dump({'tests': ['No tests']})
+                no_tests_key = yaml.dumps({'tests': ['No tests']})
                 error_message, error_code = Errors.integration_not_registered(self.file_path,
                                                                               missing_test_playbook_configurations,
                                                                               no_tests_key)

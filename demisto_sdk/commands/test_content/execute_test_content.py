@@ -11,6 +11,7 @@ from demisto_sdk.commands.test_content.TestContentClasses import (
 
 SKIPPED_CONTENT_COMMENT = 'The following integrations/tests were collected by the CI build but are currently skipped. ' \
                           'The collected tests are related to this pull request and might be critical.'
+COVERAGE_REPORT_COMMENT = 'Link to the unit tests coverage report'
 
 
 def _handle_github_response(response, logging_module) -> dict:
@@ -28,6 +29,9 @@ def _add_pr_comment(comment, logging_module):
     query = '?q={}+repo:demisto/content+org:demisto+is:pr+is:open+head:{}+is:open'.format(sha1, branch_name)
     url = 'https://api.github.com/search/issues'
     headers = {'Authorization': 'Bearer ' + token}
+
+    is_skipped_tests_flow = 'The following integrations/tests were collected' in comment
+
     try:
         response = requests.get(url + query, headers=headers, verify=False)
         res = _handle_github_response(response, logging_module)
@@ -40,7 +44,8 @@ def _add_pr_comment(comment, logging_module):
                 response = requests.get(issue_url, headers=headers, verify=False)
                 issue_comments = _handle_github_response(response, logging_module)
                 for existing_comment in issue_comments:
-                    if SKIPPED_CONTENT_COMMENT in existing_comment.get('body'):
+                    if (is_skipped_tests_flow and SKIPPED_CONTENT_COMMENT in existing_comment.get('body', '')) or \
+                            (not is_skipped_tests_flow and COVERAGE_REPORT_COMMENT in existing_comment.get('body', '')):
                         comment_url = existing_comment.get('url')
                         requests.delete(comment_url, headers=headers, verify=False)
                 response = requests.post(issue_url, json={'body': comment}, headers=headers, verify=False)

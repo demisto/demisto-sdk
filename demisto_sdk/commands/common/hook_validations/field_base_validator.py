@@ -4,16 +4,16 @@ This module is designed to validate the correctness of incident field entities i
 import re
 from distutils.version import LooseVersion
 from enum import IntEnum
-from typing import Set
+from typing import List, Set
 
-from demisto_sdk.commands.common.constants import \
-    DEFAULT_CONTENT_ITEM_FROM_VERSION
+from demisto_sdk.commands.common.constants import (
+    DEFAULT_CONTENT_ITEM_FROM_VERSION, MarketplaceVersions)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 from demisto_sdk.commands.common.tools import (get_core_pack_list,
                                                get_pack_metadata,
-                                               get_pack_name)
+                                               get_pack_name, print_warning)
 
 # Cortex XSOAR is using a Bleve DB, those keys cannot be the cliName
 BleveMapping = {
@@ -57,11 +57,12 @@ class FieldBaseValidator(ContentEntityValidator):
     """
 
     def __init__(self, structure_validator, field_types: Set[str], prohibited_cli_names: Set[str], ignored_errors=False,
-                 print_as_warnings=False, json_file_path=None, **kwargs):
+                 print_as_warnings=False, json_file_path=None, id_set_file=None, **kwargs):
         super().__init__(structure_validator, ignored_errors, print_as_warnings,
                          json_file_path=json_file_path, **kwargs)
         self.field_types = field_types
         self.prohibited_cli_names = prohibited_cli_names
+        self.id_set_file = id_set_file
 
     def is_backward_compatible(self):
         """
@@ -93,7 +94,8 @@ class FieldBaseValidator(ContentEntityValidator):
             self.is_valid_cli_name(),
             self.is_valid_version(),
             self.is_valid_required(),
-            self.does_not_have_empty_select_values()
+            self.does_not_have_empty_select_values(),
+            self.is_aliased_fields_are_valid(),
         ]
 
         core_packs_list = get_core_pack_list()
@@ -295,7 +297,7 @@ class FieldBaseValidator(ContentEntityValidator):
         Returns:
             (bool): True if field name starts with `itemPrefixes` or pack name, false otherwise.
         """
-        ignored_packs = ['Common Types']
+        ignored_packs = ['Common Types', 'Core Alert Fields']
         pack_metadata = get_pack_metadata(self.file_path)
         pack_name = pack_metadata.get('name')
         name_prefixes = pack_metadata.get('itemPrefix', []) if pack_metadata.get('itemPrefix') else [pack_name]
@@ -362,3 +364,60 @@ class FieldBaseValidator(ContentEntityValidator):
                                  warning=self.structure_validator.quite_bc):
                 return False
         return True
+
+    def is_aliased_fields_are_valid(self) -> bool:
+        """
+        Validates that the aliased fields (fields that appear as Aliases in another field) are valid.
+        invalid aliased fields are
+        1. fields that are in another field's Aliases list, and present in the same marketplace of that field.
+        2. fields that are in another field's Aliases list, and also contain Aliases (nested aliasing)
+
+        Returns:
+            (bool): True if aliased fields are valid.
+        """
+
+        if not self.id_set_file:
+            print_warning('Validate will skip since an id set file was not provided')
+            return True
+
+        aliases = self.current_file.get('Aliases', [])
+        if not aliases:
+            return True
+
+        is_valid = True
+        validators_and_error_generators = [
+            (self.is_alias_has_invalid_marketplaces, Errors.invalid_marketplaces_in_alias),
+            (self.is_alias_has_inner_alias, Errors.aliases_with_inner_alias),
+        ]
+        for validator, error_generator in validators_and_error_generators:
+            invalid_aliases = [alias.get("cliname") for alias in self._get_incident_fields_by_aliases(aliases) if validator(alias)]
+            if invalid_aliases:
+                error_message, error_code = error_generator(invalid_aliases)
+                if self.handle_error(error_message, error_code, file_path=self.file_path, warning=self.structure_validator.quite_bc):
+                    is_valid = False
+
+        return is_valid
+
+    def _get_incident_fields_by_aliases(self, aliases: List[dict]):
+        """Get from the id_set the actual fields for the given aliases
+
+        Args:
+            aliases (list): The alias list.
+
+        Returns:
+            A generator that generates a tuple with the incident field for each alias in the given list.
+        """
+        alias_ids: set = {f'incident_{alias.get("cliName")}' for alias in aliases}
+        incident_field_list: list = self.id_set_file.get('IncidentFields')
+
+        for incident_field in incident_field_list:
+            field_id = list(incident_field.keys())[0]
+            if field_id in alias_ids:
+                aliased_field = incident_field[field_id]
+                yield aliased_field
+
+    def is_alias_has_invalid_marketplaces(self, aliased_field: dict) -> bool:
+        return aliased_field.get('marketplaces', [MarketplaceVersions.XSOAR.value]) != [MarketplaceVersions.XSOAR.value]
+
+    def is_alias_has_inner_alias(self, aliased_field: dict) -> bool:
+        return aliased_field is not None and 'aliases' in aliased_field

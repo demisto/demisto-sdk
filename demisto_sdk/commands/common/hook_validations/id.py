@@ -13,7 +13,7 @@ from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.tools import (
-    get_script_or_sub_playbook_tasks_from_playbook, get_yaml, get_file, add_missing_alternative_fields)
+    get_script_or_sub_playbook_tasks_from_playbook, get_yaml)
 from demisto_sdk.commands.common.update_id_set import (
     get_classifier_data, get_incident_field_data, get_incident_type_data,
     get_integration_data, get_layout_data, get_layouts_scripts_ids,

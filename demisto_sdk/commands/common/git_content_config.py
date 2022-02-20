@@ -59,10 +59,11 @@ class GitContentConfig:
             project_id: Optional[int] = None
     ):
         """
-        @param repo_name: Name of the repo (e.g "demisto/content")
-        @param git_provider: the git provider to use (e.g GitProvider.GitHub, GitProvider.GitLab)
-        @param repo_hostname: The hostname to use (e.g "code.pan.run", "gitlab.com", "my-hostename.com")
-        @param project_id: The project id, relevant for gitlab.
+        Args:
+            repo_name: Name of the repo (e.g "demisto/content")
+            git_provider: The git provider to use (e.g GitProvider.GitHub, GitProvider.GitLab)
+            repo_hostname: The hostname to use (e.g "code.pan.run", "gitlab.com", "my-hostename.com")
+            project_id: The project id, relevant for gitlab.
         """
         self.current_repository = repo_name if repo_name else None
         if project_id:
@@ -117,10 +118,10 @@ class GitContentConfig:
 
     def _set_repo_config(self, hostname, organization=None, repo_name=None, project_id=None):
 
-        gitlab_hostname, gitlab_id = (self._search_gitlab_id(hostname, project_id=project_id)) or \
-                                     (self._search_gitlab_id(self.repo_hostname, project_id=project_id)) or \
-                                     (self._search_gitlab_id(hostname, repo_name=repo_name)) or \
-                                     (self._search_gitlab_id(self.repo_hostname, repo_name=repo_name)) or \
+        gitlab_hostname, gitlab_id = (self._search_gitlab_repo(hostname, project_id=project_id)) or \
+                                     (self._search_gitlab_repo(self.repo_hostname, project_id=project_id)) or \
+                                     (self._search_gitlab_repo(hostname, repo_name=repo_name)) or \
+                                     (self._search_gitlab_repo(self.repo_hostname, repo_name=repo_name)) or \
                                      (None, None)
 
         if self.git_provider == GitProvider.GitLab and gitlab_id is None:
@@ -143,11 +144,12 @@ class GitContentConfig:
                 self._search_github_repo(self.repo_hostname, current_repo) \
                 or (None, None)
             self.git_provider = GitProvider.GitHub
-            if not github_hostname or not github_repo:
-                click.secho(f'Could not find repo - defaulting to demisto/content. '
-                            f'Configure `{GitContentConfig.ENV_REPO_HOSTNAME_NAME}` or `repo_hostname` argument'
-                            f' to the repository address. '
-                            f'defaulting to demisto/content', fg='yellow')
+            if not github_hostname or not github_repo:  # github was not found.
+                click.secho(f'If your repo is in private github repo, '
+                            f'configure `{GitCredentials.ENV_GITLAB_TOKEN_NAME}` environment variable '
+                            f'or configure `{GitContentConfig.ENV_REPO_HOSTNAME_NAME}` environment variable',
+                            fg='yellow')
+                click.secho('Could not find the repository name on gitlab - defaulting to demisto/content', fg='yellow')
                 self.current_repository = GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
                 self.repo_hostname = GitContentConfig.GITHUB_USER_CONTENT
             else:
@@ -155,7 +157,17 @@ class GitContentConfig:
                 self.current_repository = github_repo
 
     @lru_cache(maxsize=128)
-    def _search_github_repo(self, github_hostname, repo_name):
+    def _search_github_repo(self, github_hostname, repo_name) -> Optional[Tuple[str, str]]:
+        f"""
+        Searches the github API for the repo
+        Args:
+            github_hostname: hostname of github.
+            repo_name: repository name in this structure: "<org_name>/<repo_name>".
+
+        Returns:
+            If found -  a tuple of the github hostname and the repo name that was found.
+            If not found - 'None`
+        """
         if not github_hostname or not repo_name:
             return None
         api_host = github_hostname if github_hostname != GitContentConfig.GITHUB_USER_CONTENT else 'github.com'
@@ -183,9 +195,22 @@ class GitContentConfig:
             return None
 
     @lru_cache(maxsize=128)
-    def _search_gitlab_id(self, gitlab_hostname: str, repo_name: Optional[str] = None,
-                          project_id: Optional[int] = None) -> \
-            Optional[Tuple[Optional[str], Optional[int]]]:
+    def _search_gitlab_repo(self, gitlab_hostname: str, repo_name: Optional[str] = None,
+                            project_id: Optional[int] = None) -> \
+            Optional[Tuple[str, int]]:
+        """
+        Searches the gitlab API for the repo.
+        One of `repo_name` or `project_id` is mandatory.
+        Args:
+            gitlab_hostname: hostname of gitlab.
+            repo_name: The repo name to search.
+            project_id: The project id to search
+
+        Returns:
+            If found - A tuple of the gitlab hostname and the gitlab id.
+            If not found - `None`.
+
+        """
         if not gitlab_hostname or \
                 gitlab_hostname == GitContentConfig.GITHUB_USER_CONTENT or \
                 gitlab_hostname == 'github.com':

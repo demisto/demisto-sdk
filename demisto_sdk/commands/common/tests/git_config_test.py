@@ -236,7 +236,7 @@ class TestGitContentConfig:
         mocker.patch.object(Repo, 'remote', return_value=Urls(["https://code.pan.run/xsoar/test"]))
         mocker.patch.object(GitContentConfig, '_search_github_repo', return_value=None)
         git_config = GitContentConfig()
-        assert git_config._search_gitlab_id(host, repo) is None
+        assert git_config._search_gitlab_repo(host, repo) is None
         assert git_config.current_repository == GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
         assert git_config.git_provider == GitProvider.GitHub
         assert git_config.base_api == DEFAULT_GITHUB_BASE_API

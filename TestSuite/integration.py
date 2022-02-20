@@ -23,18 +23,16 @@ class Integration:
         if not create_unified:
             self._tmpdir_integration_path = tmpdir / f'{self.name}'
             self._tmpdir_integration_path.mkdir()
+            self.readme = File(self._tmpdir_integration_path / 'README.md', self._repo.path)
         else:
             self._tmpdir_integration_path = tmpdir
+            self.readme = File(self._tmpdir_integration_path / f'{self.name}_README.md', self._repo.path)
         # if creating a unified yaml
         self.create_unified = create_unified
 
         self.path = str(self._tmpdir_integration_path)
         self.code = File(self._tmpdir_integration_path / f'{self.name}.py', self._repo.path)
         self.yml = YAML(self._tmpdir_integration_path / f'{self.name}.yml', self._repo.path)
-        if create_unified:
-            self.readme = File(self._tmpdir_integration_path / f'{self.name}_README.md', self._repo.path)
-        else:
-            self.readme = File(self._tmpdir_integration_path / 'README.md', self._repo.path)
         self.description = File(self._tmpdir_integration_path / f'{self.name}_description.md', self._repo.path)
         self.changelog = File(self._tmpdir_integration_path / 'CHANGELOG.md', self._repo.path)
         self.image = File(self._tmpdir_integration_path / f'{self.name}_image.png', self._repo.path)

@@ -7,7 +7,8 @@ from mock import mock_open, patch
 
 from demisto_sdk.commands.common.constants import (
     ALERT_FETCH_REQUIRED_PARAMS, FEED_REQUIRED_PARAMS, FIRST_FETCH_PARAM,
-    INCIDENT_FETCH_REQUIRED_PARAMS, MAX_FETCH_PARAM, MarketplaceVersions, INTEGRATION)
+    INCIDENT_FETCH_REQUIRED_PARAMS, INTEGRATION, MAX_FETCH_PARAM,
+    MarketplaceVersions)
 from demisto_sdk.commands.common.default_additional_info_loader import \
     load_default_additional_info_dict
 from demisto_sdk.commands.common.hook_validations.integration import \

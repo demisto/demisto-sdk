@@ -8,7 +8,8 @@ from typing import Optional
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION, ENTITY_NAME_SEPARATORS,
     EXCLUDED_DISPLAY_NAME_WORDS, FEATURE_BRANCHES,
-    GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION, OLDEST_SUPPORTED_VERSION, PLAYBOOK, SCRIPT, INTEGRATION)
+    GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION, INTEGRATION,
+    OLDEST_SUPPORTED_VERSION, PLAYBOOK, SCRIPT)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -371,4 +372,3 @@ class ContentEntityValidator(BaseValidator):
         if self.handle_error(error_message, error_code, file_path=self.file_path,
                              suggested_fix=Errors.suggest_fix(self.file_path, cmd="generate-docs")):
             return False
-

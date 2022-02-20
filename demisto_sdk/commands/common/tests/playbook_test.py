@@ -4,16 +4,16 @@ from typing import Optional
 import pytest
 from mock import patch
 
+from demisto_sdk.commands.common.constants import PLAYBOOK
 from demisto_sdk.commands.common.hook_validations.playbook import \
     PlaybookValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
-from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.tests.constants_test import (
     CONTENT_REPO_EXAMPLE_ROOT, INVALID_PLAYBOOK_UNHANDLED_CONDITION,
     INVALID_TEST_PLAYBOOK_UNHANDLED_CONDITION)
 from TestSuite.test_tools import ChangeCWD
-from demisto_sdk.commands.common.constants import PLAYBOOK
+
 
 def mock_structure(file_path=None, current_file=None, old_file=None):
     # type: (Optional[str], Optional[dict], Optional[dict]) -> StructureValidator
@@ -637,41 +637,12 @@ class TestPlaybookValidator:
         validator = PlaybookValidator(structure)
         assert validator.is_valid_with_indicators_input() is expected_result
 
-    README_TEST_DATA = [('Bad_practice_no_read_me/Playbooks/DummyPlaybook.yml', False, True),
-                        ('Best_practice_with_readme/Playbooks/DummyPlaybook.yml', True, True),
-                        ('Bad_practice_no_read_me/Playbooks/DummyPlaybook.yml', True, False)]
+    README_TEST_DATA = [(True, False, False),
+                        (False, False, True),
+                        (True, True, True),
+                        ]
 
-    @pytest.mark.parametrize("path, expected_result, is_modified", README_TEST_DATA)
-    def test_validate_readme_exists(self, path, expected_result, is_modified):
-        """
-        Given:
-            - A playbook yml that was added or modified to validate
-
-        When:
-            - The playbook is missing a readme.md file in the same folder
-            - The playbook has a readme.md file in the same folder
-            - The playbook is missing a readme.md file in the same folder but has not been changed or added
-                (This check is for backward compatibility)
-
-        Then:
-            - Ensure readme exists and validation fails
-            - Ensure readme exists and validation passes
-            - Ensure readme exists and validation passes
-        """
-        structure_validator = mock_structure(
-            file_path=os.path.join(f'{git_path()}', 'demisto_sdk/tests/test_files/Readme_exists', path))
-        playbook_validator = PlaybookValidator(structure_validator, is_modified=is_modified)
-        playbook_validator.structure_validator.file_type = PLAYBOOK
-        assert playbook_validator.validate_readme_exists(playbook_validator.is_modified,
-                                                         playbook_validator.is_added,
-                                                         playbook_validator.validate_all) is expected_result
-
-    README_TEST_DATA1 = [(True, False, False),
-                         (False, False, True),
-                         (True, True, True),
-                         ]
-
-    @pytest.mark.parametrize("remove_readme, validate_all, expected_result", README_TEST_DATA1)
+    @pytest.mark.parametrize("remove_readme, validate_all, expected_result", README_TEST_DATA)
     def test_validate_readme_exists(self, repo, remove_readme, validate_all, expected_result):
         """
               Given:

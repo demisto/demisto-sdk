@@ -8,7 +8,7 @@ from typing import Optional
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION, ENTITY_NAME_SEPARATORS,
     EXCLUDED_DISPLAY_NAME_WORDS, FEATURE_BRANCHES,
-    GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION, OLDEST_SUPPORTED_VERSION)
+    GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION, OLDEST_SUPPORTED_VERSION, PLAYBOOK, SCRIPT, INTEGRATION)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -337,42 +337,38 @@ class ContentEntityValidator(BaseValidator):
 
         return True
 
-    def validate_readme_exists(self, caller: str, is_modified: bool, is_added: bool, validate_all: bool):
+    def validate_readme_exists(self, validate_all: bool):
         """
             Validates if there is a readme file in the same folder as the caller file.
             The validation is processed only on added or modified files.
 
             Args:
-                caller: (str) who called this check integration/script/playbook
-                is_modified: (bool) was this file modified
-                is_added: (bool) was this file added
                 validate_all: (bool) is the validation being run with -a
             Return:
                True if the readme file exits False with an error otherwise
         """
-        if is_added or is_modified or not validate_all:
-            file_path = os.path.normpath(self.file_path)
-            path_split = file_path.split(os.sep)
-            if caller == "playbook":
-                to_replace = os.path.splitext(path_split[-1])[-1]
+        if validate_all:
+            return True
+        file_path = os.path.normpath(self.file_path)
+        path_split = file_path.split(os.sep)
+        file_type = self.structure_validator.file_type
+        if file_type == PLAYBOOK:
+            to_replace = os.path.splitext(path_split[-1])[-1]
+            readme_path = file_path.replace(to_replace, '_README.md')
+        elif file_type == SCRIPT or INTEGRATION:
+            if path_split[-2] in ['Scripts', 'Integrations']:
+                to_replace = os.path.splitext(file_path)[-1]
                 readme_path = file_path.replace(to_replace, '_README.md')
-            elif caller == "integration":
+            else:
                 to_replace = path_split[-1]
                 readme_path = file_path.replace(to_replace, "README.md")
-            elif caller == "script":
-                if path_split[-2] == 'Scripts':
-                    to_replace = os.path.splitext(file_path)[-1]
-                    readme_path = file_path.replace(to_replace, '_README.md')
-                else:
-                    to_replace = path_split[-1]
-                    readme_path = file_path.replace(to_replace, "README.md")
-            else:
-                return True
+        else:
+            return True
 
-            if os.path.isfile(readme_path):
-                return True
-            error_message, error_code = Errors.missing_readme_file(caller)
-            if self.handle_error(error_message, error_code, file_path=self.file_path,
-                                 suggested_fix=Errors.suggest_fix(self.file_path, cmd="generate-docs")):
-                return False
-        return True
+        if os.path.isfile(readme_path):
+            return True
+        error_message, error_code = Errors.missing_readme_file(file_type)
+        if self.handle_error(error_message, error_code, file_path=self.file_path,
+                             suggested_fix=Errors.suggest_fix(self.file_path, cmd="generate-docs")):
+            return False
+

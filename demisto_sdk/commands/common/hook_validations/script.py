@@ -21,12 +21,10 @@ class ScriptValidator(ContentEntityValidator):
     """
 
     def __init__(self, structure_validator, ignored_errors=None, print_as_warnings=False, skip_docker_check=False,
-                 json_file_path=None, is_modified=False, is_added=False, validate_all=True):
+                 json_file_path=None, validate_all=True):
         super().__init__(structure_validator, ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          skip_docker_check=skip_docker_check,
                          json_file_path=json_file_path)
-        self.is_modified = is_modified
-        self.is_added = is_added
         self.validate_all = validate_all
 
     def is_valid_version(self) -> bool:
@@ -74,7 +72,7 @@ class ScriptValidator(ContentEntityValidator):
         """Check whether the script is valid or not"""
         is_script_valid = all([
             super().is_valid_file(validate_rn),
-            super().validate_readme_exists("script", self.is_modified, self.is_added, self.validate_all),
+            self.validate_readme_exists(self.validate_all),
             self.is_valid_subtype(),
             self.is_id_equals_name(),
             self.is_docker_image_valid(),

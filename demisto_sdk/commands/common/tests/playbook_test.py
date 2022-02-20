@@ -13,7 +13,7 @@ from demisto_sdk.tests.constants_test import (
     CONTENT_REPO_EXAMPLE_ROOT, INVALID_PLAYBOOK_UNHANDLED_CONDITION,
     INVALID_TEST_PLAYBOOK_UNHANDLED_CONDITION)
 from TestSuite.test_tools import ChangeCWD
-
+from demisto_sdk.commands.common.constants import PLAYBOOK
 
 def mock_structure(file_path=None, current_file=None, old_file=None):
     # type: (Optional[str], Optional[dict], Optional[dict]) -> StructureValidator
@@ -661,6 +661,40 @@ class TestPlaybookValidator:
         structure_validator = mock_structure(
             file_path=os.path.join(f'{git_path()}', 'demisto_sdk/tests/test_files/Readme_exists', path))
         playbook_validator = PlaybookValidator(structure_validator, is_modified=is_modified)
-        assert playbook_validator.validate_readme_exists("playbook", playbook_validator.is_modified,
+        playbook_validator.structure_validator.file_type = PLAYBOOK
+        assert playbook_validator.validate_readme_exists(playbook_validator.is_modified,
                                                          playbook_validator.is_added,
                                                          playbook_validator.validate_all) is expected_result
+
+    README_TEST_DATA1 = [(True, False, False),
+                         (False, False, True),
+                         (True, True, True),
+                         ]
+
+    @pytest.mark.parametrize("remove_readme, validate_all, expected_result", README_TEST_DATA1)
+    def test_validate_readme_exists(self, repo, remove_readme, validate_all, expected_result):
+        """
+              Given:
+                  - An integration yml that was added or modified to validate
+
+              When:
+                  - The integration is missing a readme.md file in the same folder
+                  - The integration has a readme.md file in the same folder
+                  - The integration is missing a readme.md file in the same folder but has not been changed or added
+                      (This check is for backward compatibility)
+
+              Then:
+                  - Ensure readme exists and validation fails
+                  - Ensure readme exists and validation passes
+                  - Ensure readme exists and validation passes
+        """
+        read_me_pack = repo.create_pack('README_test')
+        playbook = read_me_pack.create_playbook('playbook1')
+
+        with ChangeCWD(playbook.path):
+            structure_validator = mock_structure(file_path=playbook.yml.path)
+            playbook_validator = PlaybookValidator(structure_validator, validate_all=validate_all)
+            playbook_validator.structure_validator.file_type = PLAYBOOK
+            if remove_readme:
+                os.remove(playbook.readme.path)
+            assert playbook_validator.validate_readme_exists(playbook_validator.validate_all) is expected_result

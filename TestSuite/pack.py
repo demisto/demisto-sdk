@@ -65,6 +65,7 @@ class Pack:
         self.path = str(self._pack_path)
 
         # Create repo structure
+
         self._integrations_path = self._pack_path / 'Integrations'
         self._integrations_path.mkdir()
 
@@ -148,13 +149,14 @@ class Pack:
             readme: Optional[str] = None,
             description: Optional[str] = None,
             changelog: Optional[str] = None,
-            image: Optional[bytes] = None
+            image: Optional[bytes] = None,
+            create_unified=False
     ) -> Integration:
         if name is None:
             name = f'integration_{len(self.integrations)}'
         if yml is None:
             yml = {}
-        integration = Integration(self._integrations_path, name, self._repo)
+        integration = Integration(self._integrations_path, name, self._repo, create_unified=create_unified)
         integration.build(
             code,
             yml,
@@ -174,7 +176,8 @@ class Pack:
             readme: str = '',
             description: str = '',
             changelog: str = '',
-            image: bytes = b''
+            image: bytes = b'',
+            create_unified=False
     ) -> Script:
         if name is None:
             name = f'script{len(self.scripts)}'
@@ -187,7 +190,7 @@ class Pack:
                 'subtype': 'python3',
                 'script': '-',
             }
-        script = Script(self._scripts_path, name, self._repo)
+        script = Script(self._scripts_path, name, self._repo, create_unified=create_unified)
         script.build(
             code,
             yml,

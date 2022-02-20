@@ -7,7 +7,7 @@ from mock import mock_open, patch
 
 from demisto_sdk.commands.common.constants import (
     ALERT_FETCH_REQUIRED_PARAMS, FEED_REQUIRED_PARAMS, FIRST_FETCH_PARAM,
-    INCIDENT_FETCH_REQUIRED_PARAMS, MAX_FETCH_PARAM, MarketplaceVersions)
+    INCIDENT_FETCH_REQUIRED_PARAMS, MAX_FETCH_PARAM, MarketplaceVersions, INTEGRATION)
 from demisto_sdk.commands.common.default_additional_info_loader import \
     load_default_additional_info_dict
 from demisto_sdk.commands.common.hook_validations.integration import \
@@ -1397,30 +1397,37 @@ class TestisContextChanged:
             assert res == expected
         patcher.stop()
 
-    README_TEST_DATA = [('Best_practice_with_readme/Integrations/DummyIntegration.yml', True, True),
-                        ('Bad_practice_no_read_me/Integrations/DummyIntegration.yml', False, True),
-                        ('Bad_practice_no_read_me/Integrations/DummyIntegration.yml', True, False)]
+    README_TEST_DATA = [(False, False, True),
+                        (False, True, True),
+                        (True, False, False),
+                        ]
 
-    @pytest.mark.parametrize("path, expected_result, is_added", README_TEST_DATA)
-    def test_validate_readme_exists(self, path, expected_result, is_added):
+    @pytest.mark.parametrize("remove_readme, validate_all, expected_result", README_TEST_DATA)
+    @pytest.mark.parametrize("unified", [True, False])
+    def test_validate_readme_exists(self, repo, unified, remove_readme, validate_all, expected_result):
         """
-       Given:
-           - An integration yml that was added or modified to validate
+              Given:
+                  - An integration yml that was added or modified to validate
 
-       When:
-           - The integration is missing a readme.md file in the same folder
-           - The integration has a readme.md file in the same folder
-           - The integration is missing a readme.md file in the same folder but has not been changed or added
-               (This check is for backward compatibility)
+              When:
+                    All the tests occur twice for unified integrations = [True - False]
+                  - The integration is missing a readme.md file in the same folder
+                  - The integration has a readme.md file in the same folder
+                  - The integration is missing a readme.md file in the same folder but has not been changed or added
+                      (This check is for backward compatibility)
 
-       Then:
-           - Ensure readme exists and validation fails
-           - Ensure readme exists and validation passes
-           - Ensure readme exists and validation passes
+              Then:
+                  - Ensure readme exists and validation fails
+                  - Ensure readme exists and validation passes
+                  - Ensure readme exists and validation passes
         """
-        structure_validator = mock_structure(
-            file_path=os.path.join(f'{git_path()}', 'demisto_sdk/tests/test_files/Readme_exists', path))
-        integration_validator = IntegrationValidator(structure_validator, is_added=is_added)
-        assert integration_validator.validate_readme_exists("integration", integration_validator.is_modified,
-                                                            integration_validator.is_added,
-                                                            integration_validator.validate_all) is expected_result
+        read_me_pack = repo.create_pack('README_test')
+        integration = read_me_pack.create_integration('integration1', create_unified=unified)
+
+        with ChangeCWD(integration.path):
+            structure_validator = mock_structure(file_path=integration.yml.path)
+            integration_validator = IntegrationValidator(structure_validator, validate_all=validate_all)
+            integration_validator.structure_validator.file_type = INTEGRATION
+            if remove_readme:
+                os.remove(integration.readme.path)
+            assert integration_validator.validate_readme_exists(integration_validator.validate_all) is expected_result

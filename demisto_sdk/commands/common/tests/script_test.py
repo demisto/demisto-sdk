@@ -8,6 +8,7 @@ from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from TestSuite.test_tools import ChangeCWD
+from demisto_sdk.commands.common.constants import SCRIPT
 
 
 def get_validator(current_file=None, old_file=None, file_path=""):
@@ -634,37 +635,46 @@ class TestScriptValidator:
 
             assert validator.runas_is_not_dbtrole()
 
-    README_TEST_DATA = [('Bad_practice_no_read_me/Scripts/DummyScript2.yml', False, True),
-                        ('Bad_practice_no_read_me/Scripts/DummyScript/DummyScript.yml', False, True),
-                        ('Best_practice_with_readme/Scripts/DummyScript/DummyScript.yml', True, True),
-                        ('Best_practice_with_readme/Scripts/DummyScript2.yml', True, True),
-                        ('Bad_practice_no_read_me/Scripts/DummyScript2.yml', True, False)]
+    README_TEST_DATA = [(True, False, False),
+                        (False, False, True),
+                        (True, True, True),
+                        ]
 
-    @pytest.mark.parametrize("path, expected_result, is_modified", README_TEST_DATA)
-    def test_validate_readme_exists(self, path, expected_result, is_modified):
+    @pytest.mark.parametrize("remove_readme, validate_all, expected_result", README_TEST_DATA)
+    @pytest.mark.parametrize("unified", [True, False])
+    def test_validate_readme_exists(self, repo, unified, remove_readme, validate_all, expected_result):
         """
-       Given:
-           - A script yml that was added or modified to validate,
-            There are 2 different folder hierarchy for that
+              Given:
+                  - An integration yml that was added or modified to validate
 
-       When:
-           - The script is missing a readme.md file in the same folder first format
-           - The script is missing a readme.md file in the same folder second format
-           - The script has a readme.md file in the same folder first format
-           - The script has a readme.md file in the same folder second format
-           - The script is missing a readme.md file in the same folder but has not been changed or added
-               (This check is for backward compatibility)
+              When:
+                    All the tests occur twice for unified integrations = [True - False]
+                  - The integration is missing a readme.md file in the same folder
+                  - The integration has a readme.md file in the same folder
+                  - The integration is missing a readme.md file in the same folder but has not been changed or added
+                      (This check is for backward compatibility)
 
-       Then:
-           - Ensure readme exists and validation fails
-           - Ensure readme exists and validation fails
-           - Ensure readme exists and validation passes
-           - Ensure readme exists and validation passes
-           - Ensure readme exists and validation passes
+              Then:
+                  - Ensure readme exists and validation fails
+                  - Ensure readme exists and validation passes
+                  - Ensure readme exists and validation passes
         """
-        scripts_validator = get_validator(
-            file_path=os.path.join(f'{git_path()}', 'demisto_sdk/tests/test_files/Readme_exists', path))
-        scripts_validator.is_modified = is_modified
-        assert scripts_validator.validate_readme_exists("script", scripts_validator.is_modified,
-                                                        scripts_validator.is_added,
-                                                        scripts_validator.validate_all) is expected_result
+        read_me_pack = repo.create_pack('README_test')
+        script = read_me_pack.create_script('script1', create_unified=unified)
+
+        with ChangeCWD(script.path):
+            scripts_validator = get_validator(file_path=script.yml.path)
+            scripts_validator.validate_all = validate_all
+            scripts_validator.structure_validator.file_type = SCRIPT
+            if remove_readme:
+                os.remove(script.readme.path)
+            assert scripts_validator.validate_readme_exists(scripts_validator.validate_all) is expected_result
+
+
+
+
+
+
+
+
+

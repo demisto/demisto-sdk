@@ -14,11 +14,9 @@ class PlaybookValidator(ContentEntityValidator):
     """PlaybookValidator is designed to validate the correctness of the file structure we enter to content repo."""
 
     def __init__(self, structure_validator, ignored_errors=None, print_as_warnings=False, json_file_path=None,
-                 is_modified=False, is_added=False, validate_all=True):
+                 validate_all=True):
         super().__init__(structure_validator, ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          json_file_path=json_file_path)
-        self.is_modified = is_modified
-        self.is_added = is_added
         self.validate_all = validate_all
 
     def is_valid_playbook(self, validate_rn: bool = True, id_set_file=None) -> bool:
@@ -37,7 +35,7 @@ class PlaybookValidator(ContentEntityValidator):
             return True
         playbook_checks = [
             super().is_valid_file(validate_rn),
-            super().validate_readme_exists("playbook", self.is_modified, self.is_added, self.validate_all),
+            self.validate_readme_exists(self.validate_all),
             self.is_valid_version(),
             self.is_id_equals_name(),
             self.is_no_rolename(),

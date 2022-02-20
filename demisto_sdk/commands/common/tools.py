@@ -2415,3 +2415,77 @@ def get_item_from_id_set(item_identifier, id_set_section):
         if item_identifier in [list(item.keys())[0], list(item.values())[0].get('name')]:
             return item
     return None
+
+
+def add_missing_alternative_fields(possible_alternative_fields: list, item_data: dict, item_type: str,
+                                   id_set_file: dict):
+    """
+   Checks if there are missing alternative fields in the given data, and adds the missing alternative fields to the
+   data. Determining whether the item has an alterntaive field is done by the id set.
+    Args:
+        possible_alternative_fields: The list of fields (can be nested fields) that may have an
+        alternative field in the given data.
+        item_data: The extracted data of the item from yml\json.
+        item_type: The type of content item the data belongs to.
+        id_set_file: Loaded id set.
+
+    Returns:
+        True if there are missing alternative fields, False otherwise.
+    """
+    was_alternated = False
+
+    if file_type == constants.FileType.PLAYBOOK:
+        for task_info in list(item_data.get('tasks', {}).values()):
+            # Go over all the tasks in the playbook, looking for subplaybooks or scripts
+            task_sub_info = task_info.get('task', {})
+            for field in possible_alternative_fields:
+                if task_sub_info.get(field):
+                    task_sub_info.update(get_missing_alternative_fields(task_sub_info, field, id_set_file))
+                    was_alternated = True
+    else:
+        # Go over all fields searching for scripts or playbooks
+        item_data_copy = item_data.deepcopy()
+        for field in item_data_copy:
+            if field in possible_alternative_fields:
+                item_data.update(get_missing_alternative_fields(item_data, field, id_set_file))
+                was_alternated = True
+
+    return was_alternated
+
+def get_missing_alternative_fields(data, field, id_set):
+    """
+    Check if the given field for the given item data has an alternative in the id_set.
+    For example, if the field is playbookName, search the id set for that playbook and check if there is a 'name_x2' for
+    that playbook.
+    Args:
+        data: The item's data retrived from its yml or json. if the item is a playbook, the data represents a data
+        section under tasks > *task_id* > task
+        field: The field of interest.
+        id_set: The alreday existing id set.
+
+    Returns:
+        Returns the alternative field value missing from data
+    """
+
+    possible_script_fields = ['fieldCalcScript', 'script', 'scriptName', 'must', 'should']
+    possible_playbook_fields = ['playbookId', 'playbookName']
+
+    if field in possible_playbook_fields:
+        id_set_section = id_set['playbooks']
+    else:
+        # According to the way 'field' is generated in the calling function,
+        # this means the field is in possible_script_fields:
+        id_set_section = id_set['scripts']
+
+    item_info = get_item_from_id_set(data[field], id_set_section)
+    item_inner_info = list(item_info.values())[0]
+    item_id_x2 = item_inner_info.get('id_x2')
+    item_name_x2 = item_inner_info.get('name_x2')
+
+    if item_info.get(data[field]) and item_id_x2:
+        return {f'{field}_x2': item_id_x2}
+
+    if item_inner_info.get('name') and item_name_x2:
+        return {f'{field}_x2': item_name_x2}
+
+    return None

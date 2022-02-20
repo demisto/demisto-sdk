@@ -13,7 +13,7 @@ from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.tools import (
-    get_script_or_sub_playbook_tasks_from_playbook, get_yaml, get_file, get_item_from_id_set)
+    get_script_or_sub_playbook_tasks_from_playbook, get_yaml, get_file, add_missing_alternative_fields)
 from demisto_sdk.commands.common.update_id_set import (
     get_classifier_data, get_incident_field_data, get_incident_type_data,
     get_integration_data, get_layout_data, get_layouts_scripts_ids,
@@ -707,55 +707,16 @@ class IDSetValidations(BaseValidator):
         return is_valid, error
 
 
-
-def get_missing_alternative_fields(data, field, id_set):
+def validate_alternative_fields_of_nested_item(item_data: dict, file_type: str, id_set_file: dict):
     """
-    Check if the given field for the given item data has an alternative in the id_set.
-    For example, if the field is playbookName, search the id set for that playbook and check if there is a 'name_x2' for
-    that playbook.
+        Checks if the given item has alternative fields missing from its data, using the id set.
     Args:
-        data: The item's data retrived from its yml or json. if the item is a playbook, the data represents a data
-        section under tasks > *task_id* > task
-        field: The field of interest.
-        id_set: The alreday existing id set.
+        item_data: The extracted data of the item from yml\json.
+        item_type: The type of content item the data belongs to.
+        id_set_file: Loaded id set.
 
     Returns:
-        Returns the alternative field value missing from data
-    """
-
-    possible_script_fields = ['fieldCalcScript', 'script', 'scriptName', 'must', 'should']
-    possible_playbook_fields = ['playbookId', 'playbookName']
-
-    if field in possible_playbook_fields:
-        id_set_section = id_set['playbooks']
-    elif field in possible_script_fields:
-        id_set_section = id_set['scripts']
-    else:
-        raise # TODO: handle exceptions
-
-
-    item_info = get_item_from_id_set(data[field], id_set_section)
-    item_inner_info = list(item_info.values())[0]
-    item_id_x2 = item_inner_info.get('id_x2')
-    item_name_x2 = item_inner_info.get('name_x2')
-
-    if item_info.get(data[field]) and item_id_x2:
-        return item_id_x2
-
-    if item_inner_info.get('name') and item_name_x2:
-        return item_name_x2
-
-    return None
-
-    # TODO: relocate functions
-
-def validate_alternative_fields_of_nested_item(item_path: str, file_type: str, id_set_file: dict):
-    """
-
-    Args:
-        file_path:
-
-    Returns:
+        True if there are missing alternative fields, False otherwise.
 
     """
     file_type_item_dict = {
@@ -767,30 +728,6 @@ def validate_alternative_fields_of_nested_item(item_path: str, file_type: str, i
     possible_alternative_fields = file_type_item_dict.get(file_type)
 
     if possible_alternative_fields:
-        if file_type == constants.FileType.PLAYBOOK:
-            item_data = get_file(item_path, 'yml')
-            for task_info in list(item_data.get('tasks', {}).values()):
-                # Go over all the tasks in the playbook, looking for subplaybooks or scripts
-                task_sub_info = task_info.get('task', {})
-                for field in possible_alternative_fields:
-                    if task_sub_info.get(field):
-                        if get_missing_alternative_fields(task_sub_info, field, id_set_file):
-                            return False
-        else:
-            item_data = get_file(item_path, 'json')
-            # go over all fields searching for scripts or playbooks
-            for field in item_data:
-                if field in possible_alternative_fields:
-                    if get_missing_alternative_fields(item_data, field, id_set_file):
-                        return False
+        return add_missing_alternative_fields(possible_alternative_fields, item_data, file_type, id_set_file)
 
     return True
-
-    # 1. check if the item is using any nested items
-    # 2. check if that item had an alternative name or id via searching for it in the id set
-    # 3. in format only: if so, take it from the id set and add it to the yml\json
-
-    # playbooks: iterate over all keys under 'tasks', if there is playbook name or id, add, also same with scriptname and script, what about integration commands?
-    # scripts: may rely on integration commands, needs to check, also on scripts
-    # incidenttypes: can only rely on playbook id
-    # incidentfields: ask

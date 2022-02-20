@@ -103,7 +103,7 @@ def test_unmockable_playbook_passes_on_first_run(mocker, tmp_path):
     server_context.execute_tests()
     assert incident_test_mock.call_count == 1
     assert not build_context.tests_data_keeper.failed_playbooks  # empty set
-    assert 'unmocked_playbook - Successful runs: 1/1' in build_context.tests_data_keeper.succeeded_playbooks
+    assert 'unmocked_playbook' in build_context.tests_data_keeper.succeeded_playbooks
 
 
 def test_unmockable_playbook_passes_most_of_the_time(mocker, tmp_path):
@@ -126,8 +126,9 @@ def test_unmockable_playbook_passes_most_of_the_time(mocker, tmp_path):
 
     assert incident_test_mock.call_count == 3
     assert not build_context.tests_data_keeper.failed_playbooks
-    assert 'unmocked_playbook - Successful runs: 2/3' in build_context.tests_data_keeper.succeeded_playbooks
-    assert 'Test-Playbook was executed 3 times, and passed 2 times. Adding to succeeded playbooks.' == logs.info.call_args_list[14][0][0]
+    assert 'unmocked_playbook' in build_context.tests_data_keeper.succeeded_playbooks
+    assert any('Test-Playbook was executed 3 times, and passed 2 times. Adding to succeeded playbooks.' in [log_item][0][0] for
+               log_item in logs.info.call_args_list)
 
 
 def test_unmockable_playbook_fails_every_time(mocker, tmp_path):
@@ -149,9 +150,10 @@ def test_unmockable_playbook_fails_every_time(mocker, tmp_path):
     server_context.execute_tests()
 
     assert incident_test_mock.call_count == 3
-    assert 'unmocked_playbook (Mock Disabled) - Successful runs: 0/3' in build_context.tests_data_keeper.failed_playbooks
+    assert 'unmocked_playbook (Mock Disabled)' in build_context.tests_data_keeper.failed_playbooks
     assert not build_context.tests_data_keeper.succeeded_playbooks
-    assert 'Test-Playbook was executed 3 times, and passed 0 times. Adding to failed playbooks.' == logs.info.call_args_list[14][0][0]
+    assert any('Test-Playbook was executed 3 times, and passed only 0 times. Adding to failed playbooks.' in [log_item][0][0] for
+               log_item in logs.info.call_args_list)
 
 
 def test_unmockable_playbook_fails_most_of_the_times(mocker, tmp_path):
@@ -173,9 +175,10 @@ def test_unmockable_playbook_fails_most_of_the_times(mocker, tmp_path):
     server_context.execute_tests()
 
     assert incident_test_mock.call_count == 3
-    assert 'unmocked_playbook (Mock Disabled) - Successful runs: 1/3' in build_context.tests_data_keeper.failed_playbooks
+    assert 'unmocked_playbook (Mock Disabled)' in build_context.tests_data_keeper.failed_playbooks
     assert not build_context.tests_data_keeper.succeeded_playbooks
-    assert 'Test-Playbook was executed 3 times, and passed 1 times. Adding to failed playbooks.' == logs.info.call_args_list[14][0][0]
+    assert any('Test-Playbook was executed 3 times, and passed only 1 times. Adding to failed playbooks.' in [log_item][0][0] for
+               log_item in logs.info.call_args_list)
 
 
 # Mockable
@@ -220,7 +223,7 @@ def test_mockable_playbook_second_playback_passes(mocker, tmp_path):
     server_context.execute_tests()
 
     assert incident_test_mock.call_count == 3
-    assert 'mocked_playbook - Successful runs: 1/1' in build_context.tests_data_keeper.succeeded_playbooks
+    assert 'mocked_playbook' in build_context.tests_data_keeper.succeeded_playbooks
     assert not build_context.tests_data_keeper.failed_playbooks
 
 
@@ -241,9 +244,10 @@ def test_mockable_playbook_recording_passes_most_of_the_time_Playback_pass(mocke
                  incident_test_mock.run_incident_test)
     server_context.execute_tests()
 
+    data_keeper = build_context.tests_data_keeper
     assert incident_test_mock.call_count == 5
-    assert 'mocked_playbook - Successful runs: 2/3' in build_context.tests_data_keeper.succeeded_playbooks
-    assert not build_context.tests_data_keeper.failed_playbooks
+    assert 'mocked_playbook' in data_keeper.succeeded_playbooks
+    assert not data_keeper.failed_playbooks
 
 
 def test_mockable_playbook_recording_passes_most_of_the_time_playback_fails(mocker, tmp_path):
@@ -263,9 +267,13 @@ def test_mockable_playbook_recording_passes_most_of_the_time_playback_fails(mock
                  incident_test_mock.run_incident_test)
     server_context.execute_tests()
 
+    data_keeper = build_context.tests_data_keeper
     assert incident_test_mock.call_count == 5
-    assert not build_context.tests_data_keeper.succeeded_playbooks
-    assert 'mocked_playbook (Second Playback) - Successful runs: 2/3' in build_context.tests_data_keeper.failed_playbooks
+    assert not data_keeper.succeeded_playbooks
+    assert 'mocked_playbook (Second Playback)' in data_keeper.failed_playbooks
+    assert data_keeper.playbook_report['mocked_playbook'][0]['number_of_executions'] == 3
+    assert data_keeper.playbook_report['mocked_playbook'][0]['number_of_successful_runs'] == 2
+    assert data_keeper.playbook_report['mocked_playbook'][0]['failed_stage'] == 'Second playback'
 
 
 def test_mockable_playbook_recording_fails_most_of_the_time(mocker, tmp_path):
@@ -286,9 +294,13 @@ def test_mockable_playbook_recording_fails_most_of_the_time(mocker, tmp_path):
                  incident_test_mock.run_incident_test)
     server_context.execute_tests()
 
+    data_keeper = build_context.tests_data_keeper
     assert incident_test_mock.call_count == 4
-    assert not build_context.tests_data_keeper.succeeded_playbooks
-    assert 'mocked_playbook - Successful runs: 1/3' in build_context.tests_data_keeper.failed_playbooks
+    assert not data_keeper.succeeded_playbooks
+    assert 'mocked_playbook' in data_keeper.failed_playbooks
+    assert data_keeper.playbook_report['mocked_playbook'][0]['number_of_executions'] == 3
+    assert data_keeper.playbook_report['mocked_playbook'][0]['number_of_successful_runs'] == 1
+    assert data_keeper.playbook_report['mocked_playbook'][0]['failed_stage'] == 'Execution'
 
 
 def test_mockable_playbook_recording_fails_every_time(mocker, tmp_path):
@@ -309,9 +321,13 @@ def test_mockable_playbook_recording_fails_every_time(mocker, tmp_path):
                  incident_test_mock.run_incident_test)
     server_context.execute_tests()
 
+    data_keeper = build_context.tests_data_keeper
     assert incident_test_mock.call_count == 4
-    assert not build_context.tests_data_keeper.succeeded_playbooks
-    assert 'mocked_playbook - Successful runs: 0/3' in build_context.tests_data_keeper.failed_playbooks
+    assert not data_keeper.succeeded_playbooks
+    assert 'mocked_playbook' in data_keeper.failed_playbooks
+    assert data_keeper.playbook_report['mocked_playbook'][0]['number_of_executions'] == 3
+    assert data_keeper.playbook_report['mocked_playbook'][0]['number_of_successful_runs'] == 0
+    assert data_keeper.playbook_report['mocked_playbook'][0]['failed_stage'] == 'Execution'
 
 
 def test_mockable_playbook_second_playback_fails(mocker, tmp_path):
@@ -332,9 +348,13 @@ def test_mockable_playbook_second_playback_fails(mocker, tmp_path):
                  incident_test_mock.run_incident_test)
     server_context.execute_tests()
 
+    data_keeper = build_context.tests_data_keeper
     assert incident_test_mock.call_count == 3
-    assert not build_context.tests_data_keeper.succeeded_playbooks
-    assert 'mocked_playbook (Second Playback) - Successful runs: 1/1' in build_context.tests_data_keeper.failed_playbooks
+    assert not data_keeper.succeeded_playbooks
+    assert 'mocked_playbook (Second Playback)' in data_keeper.failed_playbooks
+    assert data_keeper.playbook_report['mocked_playbook'][0]['number_of_executions'] == 1
+    assert data_keeper.playbook_report['mocked_playbook'][0]['number_of_successful_runs'] == 1
+    assert data_keeper.playbook_report['mocked_playbook'][0]['failed_stage'] == 'Second playback'
 
 
 def test_docker_thresholds_for_non_pwsh_integrations(mocker):

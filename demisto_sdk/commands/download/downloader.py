@@ -569,35 +569,6 @@ class Downloader:
 
         return custom_content_object
 
-    def build_system_content_object(self, file_path: str) -> dict:
-        """
-        Build the custom content object represents a custom content entity instance.
-        For example: integration-HelloWorld.yml downloaded from Demisto.
-        """
-        file_data, file_ending = get_dict_from_file(file_path)  # For example: yml, for integration files
-        file_type = find_type(path=file_path, _dict=file_data, file_type=file_ending)  # For example: integration
-        if file_type:
-            file_type = file_type.value
-
-        file_entity = self.file_type_to_entity(file_data, file_type)  # For example: Integrations
-        file_id: str = get_entity_id_by_entity_type(file_data, file_entity)
-        file_name: str = get_entity_name_by_entity_type(file_data, file_entity)
-
-        custom_content_object: dict = {
-            'id': file_id,
-            'name': file_name,
-            'path': file_path,
-            'entity': file_entity,
-            'type': file_type,
-            'file_ending': ITEM_TYPE_TO_PREFIX[self.system_item_type].replace('.', ''),
-        }
-
-        file_code_language = get_code_lang(file_data, file_entity)
-        if file_code_language:
-            custom_content_object['code_lang'] = file_code_language
-
-        return custom_content_object
-
     @staticmethod
     def file_type_to_entity(file_data: dict, file_type: str) -> str:
         """

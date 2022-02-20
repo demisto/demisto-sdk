@@ -123,8 +123,8 @@ def check_configuration_file(command, args):
 )
 @pass_config
 def main(config, version, release_notes):
-    import dotenv
-    dotenv.load_dotenv()  # Load a .env file from the cwd.
+    # import dotenv
+    # dotenv.load_dotenv()  # Load a .env file from the cwd.
     config.configuration = Configuration()
     if not os.getenv('DEMISTO_SDK_SKIP_VERSION_CHECK') or version:  # If the key exists/called to version
         cur_version = get_distribution('demisto-sdk').version
@@ -925,6 +925,12 @@ def upload(**kwargs):
     "-a", "--all-custom-content", help="Download all available custom content files", is_flag=True)
 @click.option(
     "-fmt", "--run-format", help="Whether to run demisto-sdk format on downloaded files or not", is_flag=True)
+@click.option(
+    "--system", help="Download system items", is_flag=True, default=False)
+@click.option(
+    "-it", "--item-type", help="The items type to download, use just when downloading system items",
+    type=click.Choice(['IncidentType', 'IndicatorType', 'Field', 'Layout', 'Playbook', 'Automation', 'Classifier',
+                       'Mapper'], case_sensitive=False))
 def download(**kwargs):
     """Download custom content from Demisto instance.
     DEMISTO_BASE_URL environment variable should contain the Demisto server base URL.

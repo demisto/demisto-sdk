@@ -635,40 +635,40 @@ class IDSetValidations(BaseValidator):
         """
         self.ignored_errors = ignored_errors
         is_valid = True
-        #if self.is_circle:  # No need to check on local env because the id_set will contain this info after the commit
-        click.echo(f"id set validations for: {file_path}")
+        if self.is_circle:  # No need to check on local env because the id_set will contain this info after the commit
+            click.echo(f"id set validations for: {file_path}")
 
-        if re.match(constants.PACKS_SCRIPT_YML_REGEX, file_path, re.IGNORECASE):
-            unifier = YmlUnifier(os.path.dirname(file_path))
-            yml_path, code = unifier.get_script_or_integration_package_data()
-            item_data = get_script_data(yml_path, script_code=code)
-            is_valid = self._is_non_real_command_found(item_data)
-        elif file_type == constants.FileType.INCIDENT_TYPE:
-            item_data = OrderedDict(get_incident_type_data(file_path))
-            is_valid = self._is_incident_type_default_playbook_found(item_data)
-        elif file_type == constants.FileType.INCIDENT_FIELD:
-            item_data = OrderedDict(get_incident_field_data(file_path, []))
-            is_valid = self._is_incident_field_scripts_found(item_data, file_path)
-        elif file_type == constants.FileType.LAYOUTS_CONTAINER:
-            item_data = OrderedDict(get_layoutscontainer_data(file_path))
-            is_valid = self._is_layouts_container_scripts_found(item_data, file_path)
-        elif file_type == constants.FileType.LAYOUT:
-            item_data = OrderedDict(get_layout_data(file_path))
-            is_valid = self._is_layout_scripts_found(item_data, file_path)
-        elif file_type == constants.FileType.INTEGRATION:
-            item_data = get_integration_data(file_path)
-            is_valid = self._is_integration_classifier_and_mapper_found(item_data)
-        elif file_type == constants.FileType.CLASSIFIER:
-            item_data = get_classifier_data(file_path)
-            is_valid = self._is_classifier_incident_types_found(item_data)
-        elif file_type == constants.FileType.MAPPER:
-            item_data = get_mapper_data(file_path)
-            is_valid = self._is_mapper_incident_types_found(item_data)
-        elif file_type == constants.FileType.PLAYBOOK:
-            item_data = get_playbook_data(file_path)
-            playbook_answers = [self._are_playbook_entities_versions_valid(item_data, file_path),
-                                self.is_subplaybook_name_valid(item_data, file_path)]
-            is_valid = all(playbook_answers)
+            if re.match(constants.PACKS_SCRIPT_YML_REGEX, file_path, re.IGNORECASE):
+                unifier = YmlUnifier(os.path.dirname(file_path))
+                yml_path, code = unifier.get_script_or_integration_package_data()
+                item_data = get_script_data(yml_path, script_code=code)
+                is_valid = self._is_non_real_command_found(item_data)
+            elif file_type == constants.FileType.INCIDENT_TYPE:
+                item_data = OrderedDict(get_incident_type_data(file_path))
+                is_valid = self._is_incident_type_default_playbook_found(item_data)
+            elif file_type == constants.FileType.INCIDENT_FIELD:
+                item_data = OrderedDict(get_incident_field_data(file_path, []))
+                is_valid = self._is_incident_field_scripts_found(item_data, file_path)
+            elif file_type == constants.FileType.LAYOUTS_CONTAINER:
+                item_data = OrderedDict(get_layoutscontainer_data(file_path))
+                is_valid = self._is_layouts_container_scripts_found(item_data, file_path)
+            elif file_type == constants.FileType.LAYOUT:
+                item_data = OrderedDict(get_layout_data(file_path))
+                is_valid = self._is_layout_scripts_found(item_data, file_path)
+            elif file_type == constants.FileType.INTEGRATION:
+                item_data = get_integration_data(file_path)
+                is_valid = self._is_integration_classifier_and_mapper_found(item_data)
+            elif file_type == constants.FileType.CLASSIFIER:
+                item_data = get_classifier_data(file_path)
+                is_valid = self._is_classifier_incident_types_found(item_data)
+            elif file_type == constants.FileType.MAPPER:
+                item_data = get_mapper_data(file_path)
+                is_valid = self._is_mapper_incident_types_found(item_data)
+            elif file_type == constants.FileType.PLAYBOOK:
+                item_data = get_playbook_data(file_path)
+                playbook_answers = [self._are_playbook_entities_versions_valid(item_data, file_path),
+                                    self.is_subplaybook_name_valid(item_data, file_path)]
+                is_valid = all(playbook_answers)
 
         return is_valid
 

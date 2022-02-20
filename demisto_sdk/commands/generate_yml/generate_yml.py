@@ -5,9 +5,9 @@ import types
 
 class YMLGenerator:
     """The YMLGenerator class preforms the following:
-        1. Obtain the relevant DetailsCollector object from the specified python file.
+        1. Obtain the relevant YMLMetadataCollector object from the specified python file.
         2. Make a list of the decorated functions from the specified python file.
-        3. Use DetailsCollector to collect the details from the relevant python file.
+        3. Use metadata_collector to collect the details from the relevant python file.
         4. Generate YML file based on the details collected.
     """
 
@@ -21,12 +21,12 @@ class YMLGenerator:
 
     def import_the_details_collector(self):
         """Find the details object in the python file and import it."""
-        spec = importlib.util.spec_from_file_location("details", self.filename)
+        spec = importlib.util.spec_from_file_location("metadata_collector", self.filename)
         # The self.file_import object will be used later to identify wrapped functions.
         self.file_import = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(self.file_import)
         # Here we assume the details_collector object will be called 'details'.
-        self.details_collector = self.file_import.details
+        self.details_collector = self.file_import.metadata_collector
 
     def generate(self):
         """The main method. Collect details and write the yml file."""
@@ -45,8 +45,8 @@ class YMLGenerator:
         """Collect the wrapped functions from the python file."""
         for item in dir(self.file_import):
             new_function = getattr(self.file_import, item)
-            # if it is a DetailsCollector wrapper, add it to the list.
-            if callable(new_function) and isinstance(new_function, types.FunctionType) and 'DetailsCollector' in repr(new_function):
+            # if it is a YMLMetadataCollector wrapper, add it to the list.
+            if callable(new_function) and isinstance(new_function, types.FunctionType) and 'YMLMetadataCollector' in repr(new_function):
                 print(f"item {item}")
                 self.functions.append(new_function)
 

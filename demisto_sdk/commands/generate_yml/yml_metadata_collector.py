@@ -1,8 +1,8 @@
 """This file is a part of the generating yml design. Generating a yml file from a python file."""
 
 
-class DetailsCollector:
-    """The DetailsCollector class provides decorators for integration
+class YMLMetadataCollector:
+    """The YMLMetadataCollector class provides decorators for integration
     functions which contain details relevant to yml generation.
 
     If collect_data is set to true, calling the decorated functions will result in

@@ -50,7 +50,6 @@ class ContentEntityValidator(BaseValidator):
             self.name_does_not_contain_excluded_word(),
             self.is_there_spaces_in_the_end_of_name(),
             self.is_there_spaces_in_the_end_of_id(),
-            self.validate_alternative_fields_of_nested_item()
         ]
         return all(tests)
 

@@ -161,7 +161,5 @@ schema;important_schema:
     description:
       type: str
       required: True
-    description_x2:
-      type: str
     related:
       type: str

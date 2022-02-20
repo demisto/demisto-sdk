@@ -365,16 +365,16 @@ class TestDocReviewPrinting:
         for i in range(2, len(secho_mocker.mock_calls)):
             assert 'Files Without Misspells' not in secho_mocker.mock_calls[i].args
 
-    def test_printing_invalid_spelled_release_notes(self, mocker):
+    def test_printing_malformed_release_notes(self, mocker):
         """
         Given -
-            Misspelled Release-notes.
+            Malformed release-note.
 
         When -
             Printing files report.
 
         Then -
-            Ensure only the release-notes files are printed.
+            Ensure 'Malformed Release Notes' is printed.
         """
         secho_mocker = self.get_file_report_mocker(mocker=mocker, files_type=self.SpelledFileType.INVALID_RELEASE_NOTES)
 
@@ -395,7 +395,7 @@ class TestDocReviewPrinting:
             Printing files report.
 
         Then -
-            Ensure both files misspelled and correctly spelled are printed.
+            Ensure both files misspelled and correctly spelled files are printed.
         """
         secho_mocker = self.get_file_report_mocker(
             mocker=mocker, files_type=self.SpelledFileType.BOTH_INVALID_AND_VALID

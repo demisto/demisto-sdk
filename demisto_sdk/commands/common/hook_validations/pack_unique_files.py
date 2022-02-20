@@ -212,8 +212,8 @@ class PackUniqueFilesValidator(BaseValidator):
     def validate_pack_readme_images(self):
         readme_file_path = os.path.join(self.pack_path, self.readme_file)
         readme_validator = ReadMeValidator(readme_file_path)
-        errors = readme_validator.check_readme_relative_image_paths(is_pack_readme=True) + \
-            readme_validator.check_readme_absolute_image_paths(is_pack_readme=True)
+        errors = readme_validator.check_readme_relative_image_paths(is_pack_readme=True)
+        errors += readme_validator.check_readme_absolute_image_paths(is_pack_readme=True)
         if errors:
             self._errors.extend(errors)
             return False
@@ -344,12 +344,10 @@ class PackUniqueFilesValidator(BaseValidator):
         lowercase_name = pack_name.lower()
         return not any(excluded_word in lowercase_name for excluded_word in EXCLUDED_DISPLAY_NAME_WORDS)
 
-
     def _is_empty_dir(self, path: Path) -> bool:
         if next(path.iterdir(), None):
             return False
         return True
-
 
     def _is_pack_meta_file_structure_valid(self):
         """Check if pack_metadata.json structure is json parse-able and valid"""

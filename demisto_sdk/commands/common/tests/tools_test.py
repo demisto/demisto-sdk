@@ -14,7 +14,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_PACK_IGNORE_FILE_NAME, PLAYBOOKS_DIR, SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR, FileType)
 from demisto_sdk.commands.common.content import Content
-from demisto_sdk.commands.common.git_content_config import GitCredentials
+from demisto_sdk.commands.common.git_content_config import GitCredentials, GitContentConfig
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import (
@@ -249,7 +249,7 @@ class TestGetRemoteFile:
     def test_get_remote_file_sanity(self):
         hello_world_yml = tools.get_remote_file(
             'Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml',
-            git_repo=self.content_repo
+            git_content_config=GitContentConfig(repo_name=self.content_repo)
         )
         assert hello_world_yml
         assert hello_world_yml['commonfields']['id'] == 'HelloWorld'
@@ -258,7 +258,7 @@ class TestGetRemoteFile:
         hello_world_py = tools.get_remote_file(
             'Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.py',
             return_content=True,
-            git_repo=self.content_repo
+            git_content_config=GitContentConfig(repo_name=self.content_repo)
         )
         assert hello_world_py
 
@@ -266,7 +266,7 @@ class TestGetRemoteFile:
         hello_world_py = tools.get_remote_file(
             'Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.py',
             return_content=True,
-            git_repo=self.content_repo
+            git_content_config=GitContentConfig(repo_name=self.content_repo)
         )
         hello_world_text = hello_world_py.decode()
         assert isinstance(hello_world_py, bytes)
@@ -278,7 +278,7 @@ class TestGetRemoteFile:
         hello_world_yml = tools.get_remote_file(
             'Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml',
             'master',
-            git_repo=self.content_repo
+            git_content_config=GitContentConfig(repo_name=self.content_repo)
         )
         assert hello_world_yml
         assert hello_world_yml['commonfields']['id'] == 'HelloWorld'
@@ -287,7 +287,7 @@ class TestGetRemoteFile:
         gmail_yml = tools.get_remote_file(
             'Integrations/Gmail/Gmail.yml',
             '19.10.0',
-            git_repo=self.content_repo
+            git_content_config=GitContentConfig(repo_name=self.content_repo)
         )
         assert gmail_yml
         assert gmail_yml['commonfields']['id'] == 'Gmail'
@@ -296,7 +296,7 @@ class TestGetRemoteFile:
         gmail_yml = tools.get_remote_file(
             'Integrations/Gmail/Gmail.yml',
             'origin/19.10.0',
-            git_repo=self.content_repo
+            git_content_config=GitContentConfig(repo_name=self.content_repo)
         )
         assert gmail_yml
         assert gmail_yml['commonfields']['id'] == 'Gmail'
@@ -305,7 +305,7 @@ class TestGetRemoteFile:
         invalid_yml = tools.get_remote_file(
             'Integrations/File/File.yml',
             '19.10.0',
-            git_repo=self.content_repo
+            git_content_config=GitContentConfig(repo_name=self.content_repo)
         )
         assert not invalid_yml
 
@@ -313,7 +313,7 @@ class TestGetRemoteFile:
         invalid_yml = tools.get_remote_file(
             'Integrations/Gmail/Gmail.yml',
             'NoSuchBranch',
-            git_repo=self.content_repo
+            git_content_config=GitContentConfig(repo_name=self.content_repo)
         )
         assert not invalid_yml
 
@@ -321,7 +321,7 @@ class TestGetRemoteFile:
         invalid_yml = tools.get_remote_file(
             'Integrations/Gmail/Gmail.yml',
             'origin/NoSuchBranch',
-            git_repo=self.content_repo
+            git_content_config=GitContentConfig(repo_name=self.content_repo)
         )
         assert not invalid_yml
 
@@ -329,7 +329,7 @@ class TestGetRemoteFile:
         hello_world_readme = tools.get_remote_file(
             'Packs/HelloWorld/README.md',
             'master',
-            git_repo=self.content_repo
+            git_content_config=GitContentConfig(repo_name=self.content_repo)
         )
         assert hello_world_readme == {}
 

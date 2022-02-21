@@ -725,7 +725,7 @@ class Initiator:
                     os.path.join(path, filename),
                     return_content=True,
                     # Templates available only in the official repo
-                    git_repo=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
+                    git_content_config=GitContentConfig(repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME)
                 )
                 with open(os.path.join(self.full_output_path, file), 'wb') as f:
                     f.write(file_content)

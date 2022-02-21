@@ -178,7 +178,7 @@ def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
 core_pack_list: Optional[
     list] = None  # Initiated in get_core_pack_list function. Here to create a "cached" core_pack_list
 
-
+@lru_cache(maxsize=128)
 def get_core_pack_list() -> list:
     """Getting the core pack list from Github content
 
@@ -190,7 +190,8 @@ def get_core_pack_list() -> list:
         return core_pack_list
     if not is_external_repository():
         core_pack_list = get_remote_file(
-            'Tests/Marketplace/core_packs_list.json', git_repo=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
+            'Tests/Marketplace/core_packs_list.json',
+            git_content_config=GitContentConfig(repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME)
         ) or []
     else:
         # no core packs in external repos.
@@ -214,26 +215,23 @@ def get_local_remote_file(
 
 def get_remote_file_from_api(
         full_file_path: str,
+        git_content_config: GitContentConfig,
         tag: str = 'master',
         return_content: bool = False,
         suppress_print: bool = False,
-        git_repo: Optional[str] = None,
-        git_provider: GitProvider = GitProvider.GitHub,
-        git_hostname: Optional[str] = None,
 ):
-    git_config = GitContentConfig(git_repo, git_provider, git_hostname)
-    if git_config.git_provider == GitProvider.GitLab:
+    if git_content_config.git_provider == GitProvider.GitLab:
         full_file_path_quote_plus = urllib.parse.quote_plus(full_file_path)
-        git_path = urljoin(git_config.base_api, 'files', full_file_path_quote_plus, 'raw')
+        git_path = urljoin(git_content_config.base_api, 'files', full_file_path_quote_plus, 'raw')
     else:  # github
-        git_path = urljoin(git_config.base_api, tag, full_file_path)
+        git_path = urljoin(git_content_config.base_api, tag, full_file_path)
 
     github_token: Optional[str] = None
     gitlab_token: Optional[str] = None
     try:
-        github_token = git_config.credentials.github_token
-        gitlab_token = git_config.credentials.gitlab_token
-        if git_config.git_provider == GitProvider.GitLab:
+        github_token = git_content_config.credentials.github_token
+        gitlab_token = git_content_config.credentials.gitlab_token
+        if git_content_config.git_provider == GitProvider.GitLab:
             res = requests.get(git_path,
                                params={'ref': tag},
                                headers={'PRIVATE-TOKEN': gitlab_token},
@@ -260,13 +258,13 @@ def get_remote_file_from_api(
         if not suppress_print:
             if is_external_repository():
                 click.secho(
-                    f'You are working in a private repository: "{git_config.current_repository}".\n'
+                    f'You are working in a private repository: "{git_content_config.current_repository}".\n'
                     f'The github/gitlab token in your environment is undefined.\n'
                     f'Getting file from local repository instead. \n'
                     f'If you wish to get the file from the remote repository, \n'
                     f'Please define your github or gitlab token in your environment.\n'
-                    f'`export {git_config.credentials.ENV_GITHUB_TOKEN_NAME}=<TOKEN> or`\n'
-                    f'export {git_config.credentials.ENV_GITLAB_TOKEN_NAME}=<TOKEN>', fg='yellow'
+                    f'`export {git_content_config.credentials.ENV_GITHUB_TOKEN_NAME}=<TOKEN> or`\n'
+                    f'export {git_content_config.credentials.ENV_GITLAB_TOKEN_NAME}=<TOKEN>', fg='yellow'
                 )
 
             click.secho(
@@ -295,15 +293,13 @@ def get_file_details(
     return file_details
 
 
-# @lru_cache(maxsize=64)
+@lru_cache(maxsize=128)
 def get_remote_file(
         full_file_path: str,
         tag: str = 'master',
         return_content: bool = False,
         suppress_print: bool = False,
-        git_repo: Optional[str] = None,
-        git_provider: GitProvider = GitProvider.GitHub,
-        git_hostname: Optional[str] = None,
+        git_content_config: GitContentConfig = None,
 ):
     """
     Args:
@@ -311,22 +307,20 @@ def get_remote_file(
         tag: The branch name. default is 'master'
         return_content: Determines whether to return the file's raw content or the dict representation of it.
         suppress_print: whether to suppress the warning message in case the file was not found.
-        git_repo: The repository to grab the file from
-        git_hostname: The hostname to run with (for instance `github.com`)
-        git_provider: Enum to specify git provider
+        git_content_config: The content config to take the file from
     Returns:
         The file content in the required format.
 
     """
     tag = tag.replace('origin/', '').replace('demisto/', '')
-    if not git_repo:
+    if not git_content_config:
         try:
             return get_local_remote_file(full_file_path, tag, return_content)
         except Exception as e:
             if not suppress_print:
                 click.secho(f"Could not get local remote file because of: {str(e)}\n"
                             f"Searching the remote file content with the API.")
-    return get_remote_file_from_api(full_file_path, tag, return_content, suppress_print, git_repo, git_provider, git_hostname)
+    return get_remote_file_from_api(full_file_path, git_content_config, tag, return_content, suppress_print)
 
 
 def filter_files_on_pack(pack: str, file_paths_list=str()) -> set:
@@ -1987,7 +1981,7 @@ def get_approved_usecases() -> list:
     """
     return get_remote_file(
         'Tests/Marketplace/approved_usecases.json',
-        git_repo=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
+        git_content_config=GitContentConfig(repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME)
     ).get('approved_list', [])
 
 
@@ -1999,7 +1993,7 @@ def get_approved_tags() -> list:
     """
     return get_remote_file(
         'Tests/Marketplace/approved_tags.json',
-        git_repo=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
+        git_content_config=GitContentConfig(repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME)
     ).get('approved_list', [])
 
 
@@ -2076,7 +2070,8 @@ def get_release_note_entries(version='') -> list:
 
     changelog_file_content = get_remote_file(full_file_path='CHANGELOG.md',
                                              return_content=True,
-                                             git_repo='demisto/demisto-sdk').decode('utf-8').split('\n')
+                                             git_content_config=GitContentConfig(repo_name='demisto/demisto-sdk')
+                                             ).decode('utf-8').split('\n')
 
     if not version or 'dev' in version:
         version = 'Changelog'

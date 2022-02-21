@@ -81,9 +81,10 @@ from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 from demisto_sdk.commands.common.hook_validations.xsoar_config_json import \
     XSOARConfigJsonValidator
 from demisto_sdk.commands.common.tools import (
-    find_type, get_api_module_ids, get_api_module_integrations_set,
-    get_pack_ignore_file_path, get_pack_name, get_pack_names_from_files,
-    get_relative_path_from_packs_dir, get_yaml, open_id_set_file, add_missing_alternative_fields)
+    check_and_add_missing_alternative_fields, find_type, get_api_module_ids,
+    get_api_module_integrations_set, get_pack_ignore_file_path, get_pack_name,
+    get_pack_names_from_files, get_relative_path_from_packs_dir, get_yaml,
+    open_id_set_file)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 
@@ -382,7 +383,8 @@ class ValidateManager:
         for file_name in os.listdir(package_path):
             file_path = os.path.join(package_path, file_name)
             if file_path.endswith('.yml') or file_path.endswith('.md'):
-                package_entities_validation_results.add(self.run_validations_on_file(file_path, pack_error_ignore_list))
+                res = self.run_validations_on_file(file_path, pack_error_ignore_list)
+                package_entities_validation_results.add(res)
 
             else:
                 self.ignored_files.add(file_path)
@@ -496,11 +498,15 @@ class ValidateManager:
                                                                                         pack_error_ignore_list):
             return False
 
-        if not self.validate_alternative_fields_of_nested_item(structure_validator.current_file, file_type):
-            self.handle_error(error_message='Alternative fields of nested items were found and are missing from '
-                                            'this file, please add them to the file.',
-                              file_path=file_path, error_code='ADD')
-            return False
+        # alternative fields validation
+        if self.id_set_file:
+            if not self.validate_alternative_fields_of_nested_item(structure_validator.current_file, file_type):
+                self.handle_error(error_message='Alternative fields of nested items were found and are missing from '
+                                                'this file, please add them to the file.',
+                                  file_path=file_path, error_code='ADD')
+                return False
+        else:
+            click.secho('Skipping alterntive fields validations since a valid id set file was not provided', fg='yellow')
 
         # conf.json validation
         valid_in_conf = True
@@ -1724,7 +1730,7 @@ class ValidateManager:
         return None
 
     def validate_alternative_fields_of_nested_item(self, item_data: dict, file_type: str):
-        """
+        r"""
             Checks if the given item has alternative fields missing from its data, using the id set.
         Args:
             item_data: The extracted data of the item from yml\json.
@@ -1735,4 +1741,4 @@ class ValidateManager:
 
         """
 
-        return not add_missing_alternative_fields(item_data, file_type, self.id_set_file)
+        return not check_and_add_missing_alternative_fields(item_data, file_type, self.id_set_file)

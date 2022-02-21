@@ -135,7 +135,7 @@ def does_dict_have_alternative_key(data: dict) -> bool:
     return False
 
 
-def get_alternative_fields(data: dict) -> Union[bool, dict]:
+def get_alternative_fields_from_data(data: dict) -> Union[bool, dict]:
     """
     Check if the data dict has fields ending with '_x2'. First check if there are alternative name and id
     and return them, if not then check all other fields.
@@ -601,7 +601,7 @@ def get_playbook_data(file_path: str, packs: Dict[str, Dict] = None) -> dict:
 
     transformers, filters = get_filters_and_transformers_from_playbook(data_dictionary)
 
-    alternative_fields = get_alternative_fields(data_dictionary)
+    alternative_fields = get_alternative_fields_from_data(data_dictionary)
 
     if implementing_scripts:
         playbook_data['implementing_scripts'] = implementing_scripts
@@ -656,7 +656,7 @@ def get_script_data(file_path, script_code=None, packs: Dict[str, Dict] = None):
 
     script_data = create_common_entity_data(path=file_path, name=name, to_version=toversion, from_version=fromversion,
                                             pack=pack, marketplaces=marketplaces)
-    alternative_fields = get_alternative_fields(data_dictionary)
+    alternative_fields = get_alternative_fields_from_data(data_dictionary)
     if deprecated:
         script_data['deprecated'] = deprecated
     if depends_on:
@@ -878,7 +878,7 @@ def get_incident_field_data(path: str, incident_types: List, packs: Dict[str, Di
 
     data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack, marketplaces=marketplaces)
 
-    alternative_fields = get_alternative_fields(json_data)
+    alternative_fields = get_alternative_fields_from_data(json_data)
     if all_associated_types:
         data['incident_types'] = list(all_associated_types)
     if all_scripts:
@@ -1092,7 +1092,7 @@ def get_mapper_data(path: str, packs: Dict[str, Dict] = None):
 
     incidents_fields = {incident_field for incident_field in incidents_fields if incident_field not in BUILT_IN_FIELDS}
     data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack, marketplaces=marketplaces)
-    alternative_fields = get_alternative_fields(json_data)
+    alternative_fields = get_alternative_fields_from_data(json_data)
 
     if incidents_types:
         data['incident_types'] = list(incidents_types)

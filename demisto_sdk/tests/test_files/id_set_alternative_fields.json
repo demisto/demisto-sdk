@@ -1,0 +1,75 @@
+{
+    "scripts": [{
+            "GetCampaignIndicatorsByIncidentId": {
+                "name": "GetCampaignIndicatorsByIncidentId",
+                "file_path": "Packs/Campaign/Scripts/GetCampaignIndicatorsByIncidentId/GetCampaignIndicatorsByIncidentId.yml",
+                "source": [
+                    "github.com",
+                    "demisto",
+                    "content"
+                ],
+                "fromversion": "5.5.0",
+                "pack": "Campaign",
+                "docker_image": "demisto/pandas:1.0.0.23402",
+                "tests": [
+                    "No tests (auto formatted)"
+                ],
+                "has_altertnative_fields": true,
+                "name_x2": "GetCampaignIndicatorsByIncidentId_x2"
+
+            }
+        }],
+    "playbooks": [{
+            "Panorama Query Logs": {
+                "name": "Panorama Query Logs",
+                "file_path": "Packs/PAN-OS/Playbooks/playbook-Panorama_Query_Logs.yml",
+                "source": [
+                    "github.com",
+                    "demisto",
+                    "content"
+                ],
+                "fromversion": "5.0.0",
+                "pack": "PAN-OS",
+                "implementing_playbooks": [
+                    "GenericPolling"
+                ],
+                "command_to_integration": {
+                    "panorama-query-logs": [
+                        "Panorama"
+                    ],
+                    "panorama-get-logs": [
+                        "Panorama"
+                    ],
+                    "panorama-check-logs-status": [
+                        "Panorama"
+                    ]
+                },
+                "tests": [
+                    "Panorama Query Logs - Test"
+                ],
+                "filters": [
+                    "isEqualString"
+                ],
+            "has_alternative_fields": true,
+            "name_x2": "Panorama Query Logs_x2"}
+        }],
+    "integrations": [],
+    "TestPlaybooks": [],
+    "Classifiers": [],
+    "IncidentFields": [],
+    "IncidentTypes": [],
+    "IndicatorFields": [],
+    "IndicatorTypes": [],
+    "Lists": [],
+    "Jobs": [],
+    "Mappers": [],
+    "Packs": {},
+    "GenericTypes": [],
+    "GenericFields": [],
+    "GenericModules": [],
+    "GenericDefinitions": [],
+    "Layouts": [],
+    "Reports": [],
+    "Widgets": [],
+    "Dashboards": []
+}

@@ -10,11 +10,12 @@ import dictdiffer
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION, INTEGRATION, PLAYBOOK)
 from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.common.tools import (LOG_COLORS, get_dict_from_file,
+from demisto_sdk.commands.common.tools import (LOG_COLORS,
+                                               check_and_add_missing_alternative_fields,
+                                               get_dict_from_file,
                                                get_pack_metadata,
                                                get_remote_file,
                                                is_file_from_content_repo,
-                                               add_missing_alternative_fields,
                                                open_id_set_file)
 from demisto_sdk.commands.format.format_constants import (
     DEFAULT_VERSION, ERROR_RETURN_CODE, GENERIC_OBJECTS_DEFAULT_FROMVERSION,
@@ -387,4 +388,4 @@ class BaseUpdate:
             click.secho('Skipping alternative fields formatting as id_set_path argument is missing', fg='yellow')
         else:
             self.id_set = open_id_set_file(self.id_set_path)
-            add_missing_alternative_fields(self.data, item_type, self.id_set)
+            check_and_add_missing_alternative_fields(self.data, item_type, self.id_set)

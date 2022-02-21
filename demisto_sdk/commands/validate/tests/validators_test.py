@@ -73,7 +73,10 @@ from demisto_sdk.tests.constants_test import (
     VALID_ONE_LINE_CHANGELOG_PATH, VALID_ONE_LINE_LIST_CHANGELOG_PATH,
     VALID_PACK, VALID_PLAYBOOK_CONDITION, VALID_REPUTATION_PATH,
     VALID_SCRIPT_PATH, VALID_TEST_PLAYBOOK_PATH, VALID_WIDGET_PATH,
-    WIDGET_TARGET)
+    WIDGET_TARGET, ALTERNATIVE_FIELDS_ID_SET_PATH, ALTERNATIVE_FIELDS_INVALID_INCIDENT_FIELD_PATH,
+    ALTERNATIVE_FIELDS_INVALID_PLAYBOOK_PATH, ALTERNATIVE_FIELDS_VALID_INCDENT_FIELD_PATH,
+    ALTERNATIVE_FIELDS_VALID_PLAYBOOK_PATH)
+
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import \
     INCIDENT_FIELD
 from TestSuite.pack import Pack
@@ -398,6 +401,7 @@ class TestValidators:
         mocker.patch.object(IntegrationValidator, 'has_no_fromlicense_key_in_contributions_integration',
                             return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_api_token_in_credential_type', return_value=True)
+        mocker.patch.object(tools, 'get_missing_alternative_fields', return_value={})
         validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
         assert validate_manager.run_validation_on_specific_files()
 
@@ -1841,3 +1845,19 @@ def test_image_error(capsys):
     expected_string, expected_code = Errors.invalid_image_name_or_location()
     assert expected_string in stdout
     assert expected_code in stdout
+
+def test_alternative_fields(mocker):
+    """
+    Given
+            file with or without alternative names for sub items in that file.
+    When
+            Validating the file
+    Then
+            Find the alternative fields if there are any and return the validate result.
+    """
+    mocker.patch.object(PlaybookValidator, 'is_script_id_valid', return_value=True)
+    validate_manager = ValidateManager(id_set_path=ALTERNATIVE_FIELDS_ID_SET_PATH)
+    assert not validate_manager.run_validations_on_file(ALTERNATIVE_FIELDS_INVALID_INCIDENT_FIELD_PATH, None)
+    assert not validate_manager.run_validations_on_file(ALTERNATIVE_FIELDS_INVALID_PLAYBOOK_PATH, None)
+    assert validate_manager.run_validations_on_file(ALTERNATIVE_FIELDS_VALID_INCDENT_FIELD_PATH, None)
+    assert validate_manager.run_validations_on_file(ALTERNATIVE_FIELDS_VALID_PLAYBOOK_PATH, None)

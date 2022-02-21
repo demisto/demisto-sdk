@@ -1,4 +1,5 @@
 import argparse
+import copy
 import glob
 import io
 import json
@@ -21,7 +22,6 @@ from typing import Callable, Dict, List, Match, Optional, Tuple, Type, Union
 
 import click
 import colorama
-import copy
 import demisto_client
 import git
 import giturlparse
@@ -2458,6 +2458,7 @@ def order_dict(data):
     return OrderedDict({k: order_dict(v) if isinstance(v, dict) else v
                         for k, v in sorted(data.items())})
 
+
 def get_item_from_id_set(item_identifier, id_set_section):
     """
     Get the item info from the id set section given, using the item's identifier.
@@ -2476,8 +2477,8 @@ def get_item_from_id_set(item_identifier, id_set_section):
     return None
 
 
-def add_missing_alternative_fields(item_data: dict, item_type: str, id_set_file: dict):
-    """
+def check_and_add_missing_alternative_fields(item_data: dict, item_type: str, id_set_file: dict):
+    r"""
    Checks if there are missing alternative fields in the given data, and adds the missing alternative fields to the
    data. Determining whether the item has an alterntaive field is done by the id set.
     Args:
@@ -2511,10 +2512,13 @@ def add_missing_alternative_fields(item_data: dict, item_type: str, id_set_file:
             item_data_copy = copy.deepcopy(item_data)
             for field in item_data_copy:
                 if field in possible_alternative_fields:
-                    item_data.update(get_missing_alternative_fields(item_data, field, id_set_file))
-                    was_alternated = True
+                    missing_alternative_fields = get_missing_alternative_fields(item_data, field, id_set_file)
+                    if missing_alternative_fields:
+                        item_data.update(get_missing_alternative_fields(item_data, field, id_set_file))
+                        was_alternated = True
 
     return was_alternated
+
 
 def get_missing_alternative_fields(data, field, id_set):
     """
@@ -2533,13 +2537,14 @@ def get_missing_alternative_fields(data, field, id_set):
 
     possible_script_fields = ['fieldCalcScript', 'script', 'scriptName', 'must', 'should']
     possible_playbook_fields = ['playbookId', 'playbookName']
+    alternative_field = f'{field}_x2'
 
     if field in possible_playbook_fields:
-        id_set_section = id_set['playbooks']
+        id_set_section = id_set.get('playbooks')
     else:
         # According to the way 'field' is generated in the calling function,
         # this means the field is in possible_script_fields:
-        id_set_section = id_set['scripts']
+        id_set_section = id_set.get('scripts')
 
     item_info = get_item_from_id_set(data.get(field), id_set_section)
     if item_info:
@@ -2547,10 +2552,10 @@ def get_missing_alternative_fields(data, field, id_set):
         item_id_x2 = item_inner_info.get('id_x2')
         item_name_x2 = item_inner_info.get('name_x2')
 
-        if item_info.get(data[field]) and item_id_x2:
-            return {f'{field}_x2': item_id_x2}
+        if item_info.get(data[field]) and item_id_x2 and alternative_field not in data:
+            return {alternative_field: item_id_x2}
 
-        if item_inner_info.get('name') and item_name_x2:
-            return {f'{field}_x2': item_name_x2}
+        if item_inner_info.get('name') and item_name_x2 and alternative_field not in data:
+            return {alternative_field: item_name_x2}
 
-    return None
+    return {}

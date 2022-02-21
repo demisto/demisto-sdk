@@ -15,8 +15,6 @@ from demisto_sdk.commands.common.constants import (DEFAULT_JOB_FROM_VERSION,
                                                    MarketplaceVersions)
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.update_id_set import (
-    find_duplicates, get_classifier_data,
-    get_dashboard_data, get_fields_by_script_argument,
     add_item_to_exclusion_dict, does_dict_have_alternative_key,
     find_duplicates, get_classifier_data, get_dashboard_data,
     get_fields_by_script_argument,

@@ -22,11 +22,7 @@
             "cwd": "/Users/yhayun/dev/demisto/content",
             "justMyCode": false,
             "args": [
-<<<<<<< HEAD
                 "upload",
-=======
-                "update-release-notes",
->>>>>>> parent of 3ffbb484 (reverted files)
                 "-i",
                 "/Users/yhayun/dev/demisto/content/Packs/CommonTypes/IndicatorTypes"
             ]

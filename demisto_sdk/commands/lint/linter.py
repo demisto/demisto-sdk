@@ -653,7 +653,7 @@ class Linter:
         try:
             self._docker_client.login(username=docker_user,
                                       password=docker_pass,
-                                      registry="https://index.docker.io/v1")
+                                      registry='https://index.docker.io/v1')
             return self._docker_client.ping()
         except docker.errors.APIError:
             return False
@@ -702,7 +702,8 @@ class Linter:
         test_image = None
         try:
             logger.info(f"{log_prompt} - Trying to pull existing image {test_image_name}")
-            test_image = self._docker_client.images.pull(test_image_name)
+            registry = os.getenv("DOCKER_REGISTRY")
+            test_image = self._docker_client.images.pull(f'{registry}/{test_image_name}' if registry else test_image_name)
         except (docker.errors.APIError, docker.errors.ImageNotFound):
             logger.info(f"{log_prompt} - Unable to find image {test_image_name}")
         # Creatng new image if existing image isn't found

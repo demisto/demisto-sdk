@@ -120,8 +120,7 @@ class ReleaseNotesValidator(BaseValidator):
                                                'rn_version': rn_docker_ver,
                                                'yml_version': modified_yml_docker_ver})
         if error_list:
-            error_message, error_code = Errors.release_notes_docker_image_not_match_yaml(rn_file_name, error_list,
-                                                                                         self.pack_path)
+            error_message, error_code = Errors.docker_rn_mismatch(rn_file_name, error_list, self.pack_path)
             if self.handle_error(error_message, error_code, file_path=self.release_notes_file_path):
                 return False
 

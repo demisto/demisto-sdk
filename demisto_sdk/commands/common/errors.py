@@ -1162,17 +1162,17 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def release_notes_docker_image_not_match_yaml(rn_file_name, un_matching_files_list: list, pack_path):
-        message = f'The {rn_file_name} release notes file contains incompatible Docker images:\n'
-        for un_matching_file in un_matching_files_list:
-            rn_version = un_matching_file.get('rn_version')
-            yml_version = un_matching_file.get('yml_version')
+    def docker_rn_mismatch(rn_file_name: str, mismatching_files: List[dict], pack_path: str):
+        message = f'The docker image release notes in {rn_file_name} do not match the actual docker images used:\n'
+        for mismatching_file in mismatching_files:
+            rn_version = mismatching_file.get('rn_version')
+            yml_version = mismatching_file.get('yml_version')
             if yml_version and not rn_version:
                 message = f"docker image version update (to {yml_version}) is missing from release notes"
             else:
-                message += f"- {un_matching_file.get('name')}: Release notes file has dockerimage: " \
-                                     f"{rn_version} but the YML file has dockerimage: " \
-                                     f"{yml_version}\n"
+                message += f"- {mismatching_file.get('name')}: " \
+                           f"Release notes mention an update in docker image {rn_version}, " \
+                           f"but the YML file uses {yml_version}\n"
         message += f"To fix these issues, run demisto-sdk update-release-notes -i {pack_path}"
         return message
 

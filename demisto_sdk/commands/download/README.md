@@ -64,7 +64,7 @@ If there are files that exist both in the output directory and are specified in 
 * **--it, --item-type**
 
     The items type to download, use just when downloading system items.
-    
+
 
 ### Asumptions
 For consistency, we assume that for each integration or script the folder containing it will have the same name as the integration/script name with no separators. For example the integration `Test Integration_Full-Name`, will be under `~/.../Packs/TestPack/Integrations/TestIntegrationFullName/`.

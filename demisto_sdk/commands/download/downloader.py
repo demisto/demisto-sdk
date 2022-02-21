@@ -7,7 +7,7 @@ import re
 import shutil
 import tarfile
 from tempfile import mkdtemp
-from typing import Dict, List
+from typing import Dict, List, Union
 
 import demisto_client.demisto_api
 from demisto_client.demisto_api.rest import ApiException
@@ -118,7 +118,6 @@ class Downloader:
         self.all_custom_content_objects: List[dict] = list()
         self.files_not_downloaded: List[list] = list()
         self.custom_content: List[dict] = list()
-        self.system_content: List[dict] = list()
         self.pack_content: Dict[str, list] = {entity: list() for entity in CONTENT_ENTITIES_DIRS}
         self.num_merged_files = 0
         self.num_added_files = 0
@@ -236,39 +235,61 @@ class Downloader:
             print_color(f'Exception raised when fetching custom content:\n{e}', LOG_COLORS.NATIVE)
             return False
 
+    def build_req_params(self):
+        endpoint = ITEM_TYPE_TO_ENDPOINT[self.system_item_type]
+        req_type = ITEM_TYPE_TO_REQUEST_TYPE[self.system_item_type]
+        verify = (not self.insecure) if self.insecure else None  # set to None so demisto_client will use env var DEMISTO_VERIFY_SSL
+        self.client = demisto_client.configure(verify_ssl=verify)
+
+        req_body: dict = {}
+        if self.system_item_type in ['Playbook', 'Classifier', 'Mapper']:
+            filter_by_names = ' or '.join(self.input_files)
+            req_body = {"query": f"name:{filter_by_names}"}
+
+        return endpoint, req_type, req_body
+
+    def get_system_automation(self, req_type):
+        automation_list: list = []
+        for script in self.input_files:
+            endpoint = f"automation/load/{script}"
+            api_response = demisto_client.generic_request_func(self.client, endpoint, req_type)
+            automation_list.append(ast.literal_eval(api_response[0]))
+        return automation_list
+
+    def arrange_response(self, system_items_list):
+        if self.system_item_type == 'Playbook':
+            system_items_list = system_items_list.get('playbooks')
+
+        if self.system_item_type in ['Classifier', 'Mapper']:
+            system_items_list = system_items_list.get('classifiers')
+
+        return system_items_list
+
+    def build_file_name(self, item):
+        item_name: str = item.get('name') or item.get('id')
+        return item_name.replace('/', ' ').replace(' ', '_') + ITEM_TYPE_TO_PREFIX[self.system_item_type]
+
     def fetch_system_content(self):
         """
         Fetches the system content from Demisto into a temporary dir.
         :return: True if fetched successfully, False otherwise
         """
         try:
-            automation_list: list = []
-            endpoint = ITEM_TYPE_TO_ENDPOINT[self.system_item_type]
-            req_type = ITEM_TYPE_TO_REQUEST_TYPE[self.system_item_type]
-            req_body = ''
-            verify = (
-                not self.insecure) if self.insecure else None  # set to None so demisto_client will use env var DEMISTO_VERIFY_SSL
-            self.client = demisto_client.configure(verify_ssl=verify)
-            if self.system_item_type in ['Playbook', 'Classifier', 'Mapper']:
-                filter_by_names = ' or '.join(self.input_files)
-                req_body = {"query": f"name:{filter_by_names}"}
-            if self.system_item_type == 'Automation':
-                for script in self.input_files:
-                    endpoint = f"automation/load/{script}"
-                    api_response: tuple = demisto_client.generic_request_func(self.client, endpoint, req_type)
-                    automation_list.append(ast.literal_eval(api_response[0]))
-                item_list = automation_list
-            else:
-                api_response: tuple = demisto_client.generic_request_func(self.client, endpoint, req_type, body=req_body)
-                item_list = ast.literal_eval(api_response[0])
-            if self.system_item_type == 'Playbook':
-                item_list = item_list.get('playbooks')
-            if self.system_item_type in ['Classifier', 'Mapper']:
-                item_list = item_list.get('classifiers')
+            system_items_list: Union
+            endpoint, req_type, req_body = self.build_req_params()
 
-            for item in item_list:
-                file_name: str = item.get('name') or item.get('id')
-                file_path: str = os.path.join(self.system_content_temp_dir, file_name.replace(' ', '_').replace('/', ' ') + ITEM_TYPE_TO_PREFIX[self.system_item_type])
+            if self.system_item_type == 'Automation':
+                system_items_list = self.get_system_automation(req_type)
+
+            else:
+                api_response = demisto_client.generic_request_func(self.client, endpoint, req_type, body=req_body)
+                system_items_list = ast.literal_eval(api_response[0])
+
+            self.arrange_response(system_items_list)
+
+            for item in system_items_list:
+                file_name: str = self.build_file_name(item)
+                file_path: str = os.path.join(self.system_content_temp_dir, file_name)
                 with open(file_path, 'w') as file:
                     if file_path.endswith('json'):
                         json.dump(item, file)

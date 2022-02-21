@@ -5,7 +5,8 @@ from typing import Dict, List, Tuple
 import click
 
 from demisto_sdk.commands.common.constants import (JOB,
-                                                   TESTS_AND_DOC_DIRECTORIES)
+                                                   TESTS_AND_DOC_DIRECTORIES,
+                                                   FileType)
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.tools import (find_type, get_files_in_dir,
                                                print_error, print_success,
@@ -106,6 +107,7 @@ def format_manager(input: str = None,
                    include_untracked: bool = False,
                    add_tests: bool = None,
                    interactive: bool = True,
+                   id_set_path: str = None,
                    clear_cache: bool = False):
     """
     Format_manager is a function that activated format command on different type of files.
@@ -123,6 +125,7 @@ def format_manager(input: str = None,
         include_untracked (bool): Whether to include untracked files when checking against git
         interactive (bool): Whether to run the format interactively or not (usually for contribution management)
         add_tests (bool): Whether to exclude tests automatically.
+        id_set_path (str): The path of the id_set.json file.
         clear_cache (bool): wether to clear the cache
     Returns:
         int 0 in case of success 1 otherwise
@@ -171,8 +174,7 @@ def format_manager(input: str = None,
                                                                  update_docker=update_docker,
                                                                  assume_yes=assume_yes,
                                                                  deprecate=deprecate,
-                                                                 add_tests=add_tests,
-                                                                 clear_cache=clear_cache)
+                                                                 add_tests=add_tests)
                 if err_res:
                     log_list.extend([(err_res, print_error)])
                 if info_res:

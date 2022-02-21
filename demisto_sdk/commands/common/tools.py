@@ -178,6 +178,7 @@ def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
 core_pack_list: Optional[
     list] = None  # Initiated in get_core_pack_list function. Here to create a "cached" core_pack_list
 
+
 @lru_cache(maxsize=128)
 def get_core_pack_list() -> list:
     """Getting the core pack list from Github content
@@ -215,11 +216,13 @@ def get_local_remote_file(
 
 def get_remote_file_from_api(
         full_file_path: str,
-        git_content_config: GitContentConfig,
+        git_content_config: Optional[GitContentConfig],
         tag: str = 'master',
         return_content: bool = False,
         suppress_print: bool = False,
 ):
+    if not git_content_config:
+        git_content_config = GitContentConfig()
     if git_content_config.git_provider == GitProvider.GitLab:
         full_file_path_quote_plus = urllib.parse.quote_plus(full_file_path)
         git_path = urljoin(git_content_config.base_api, 'files', full_file_path_quote_plus, 'raw')
@@ -299,7 +302,7 @@ def get_remote_file(
         tag: str = 'master',
         return_content: bool = False,
         suppress_print: bool = False,
-        git_content_config: GitContentConfig = None,
+        git_content_config: Optional[GitContentConfig] = None,
 ):
     """
     Args:

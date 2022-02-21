@@ -158,7 +158,7 @@ class GitContentConfig:
 
     @lru_cache(maxsize=128)
     def _search_github_repo(self, github_hostname, repo_name) -> Optional[Tuple[str, str]]:
-        f"""
+        """
         Searches the github API for the repo
         Args:
             github_hostname: hostname of github.

@@ -1168,11 +1168,11 @@ class Errors:
             rn_version = mismatching_file.get('rn_version')
             yml_version = mismatching_file.get('yml_version')
             if yml_version and not rn_version:
-                message = f"docker image version update (to {yml_version}) is missing from release notes"
+                message = f"docker image version update (to {yml_version}) is missing from release notes.\n "
             else:
                 message += f"- {mismatching_file.get('name')}: " \
                            f"Release notes mention an update in docker image {rn_version}, " \
-                           f"but the YML file uses {yml_version}\n"
+                           f"but the YML file uses {yml_version}.\n "
         message += f"To fix these issues, run demisto-sdk update-release-notes -i {pack_path}"
         return message
 

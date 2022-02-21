@@ -50,7 +50,7 @@ UPLOAD_SUPPORTED_ENTITIES = [
 
     FileType.INCIDENT_TYPE,
     FileType.INCIDENT_FIELD,
-    # FileType.REPUTATION,  currently not supported by demisto-py
+    FileType.REPUTATION,
     FileType.INDICATOR_FIELD,
 
     FileType.WIDGET,

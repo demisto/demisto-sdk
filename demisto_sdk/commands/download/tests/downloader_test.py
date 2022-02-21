@@ -3,6 +3,7 @@ import shutil
 from pathlib import Path
 
 import pytest
+from _pytest import monkeypatch
 from mock import patch
 
 from demisto_sdk.commands.common.constants import (
@@ -704,16 +705,18 @@ class TestVerifyPackPath:
 
 
 @pytest.mark.parametrize('input, system, it, insecure, endpoint, req_type, req_body', [
-        (['PB1', 'PB2'], True, 'Playbook', False, '/playbook/search', 'POST', {"query": f"name:PB1 or PB2"}),
-        (['Mapper1', 'Mapper2'], True, 'Mapper', True, '/classifier/search', 'POST',
-         {"query": f"name:Mapper1 or Mapper2"}),
-        (['Field1', 'Field2'], True, 'Field', True, '/incidentfields', 'GET', {}),
-        (['Classifier1', 'Classifier2'], True, 'Classifier', False, '/classifier/search', 'POST',
-         {"query": f"name:Classifier1 or Classifier2"}),
+    (['PB1', 'PB2'], True, 'Playbook', False, '/playbook/search', 'POST', {"query": "name:PB1 or PB2"}),
+    (['Mapper1', 'Mapper2'], True, 'Mapper', True, '/classifier/search', 'POST',
+     {"query": "name:Mapper1 or Mapper2"}),
+    (['Field1', 'Field2'], True, 'Field', True, '/incidentfields', 'GET', {}),
+    (['Classifier1', 'Classifier2'], True, 'Classifier', False, '/classifier/search', 'POST',
+     {"query": "name:Classifier1 or Classifier2"}),
 
 ])
-def test_build_req_params(input, system, it, insecure, endpoint, req_type, req_body):
+def test_build_req_params(input, system, it, insecure, endpoint, req_type, req_body, monkeypatch):
     with patch.object(Downloader, "__init__", lambda x, y, z: None):
+        monkeypatch.setenv('DEMISTO_BASE_URL', 'http://demisto.instance.com:8080/')
+        monkeypatch.setenv('DEMISTO_API_KEY', 'API_KEY')
         downloader = Downloader('', '')
         downloader.system_item_type = it
         downloader.insecure = insecure

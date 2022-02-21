@@ -188,7 +188,6 @@ class GitContentConfig:
                              timeout=10)
             if r.ok:
                 return github_hostname, repo_name
-            logger.debug(r.content)
             return None
         except requests.exceptions.ConnectionError as e:
             logger.debug(str(e), exc_info=True)

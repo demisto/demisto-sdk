@@ -251,7 +251,7 @@ def get_remote_file_from_api(
                 )
 
         res.raise_for_status()
-    except Exception as exc:
+    except requests.exceptions.RequestException as exc:
         # Replace token secret if needed
         err_msg: str = str(exc).replace(github_token, 'XXX') if github_token else str(exc)
         err_msg = err_msg.replace(gitlab_token, 'XXX') if gitlab_token else err_msg
